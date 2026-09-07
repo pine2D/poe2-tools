@@ -69,8 +69,13 @@ describe('translateBuild', () => {
   })
 
   it('关闭传奇注入', () => {
-    const { build } = translateBuild(sample(), miniIndex, { ...base, annotateUniques: false })
+    const { build, report } = translateBuild(sample(), miniIndex, {
+      ...base,
+      annotateUniques: false,
+    })
     expect(build.inventory_slots?.[1]?.additional_text).toBeUndefined()
+    // annotateUniques: false 时不产生 unique_name 报告行
+    expect(report.fields.some((f) => f.path.endsWith('.unique_name'))).toBe(false)
   })
 
   it('报告按字段路径分组并统计', () => {
@@ -78,16 +83,20 @@ describe('translateBuild', () => {
     expect(report.fields.map((f) => f.path)).toEqual([
       'description',
       'inventory_slots[0].additional_text',
+      'inventory_slots[1].unique_name',
       'inventory_slots[2].additional_text',
+      'inventory_slots[2].unique_name',
       'inventory_slots[3].additional_text',
+      'inventory_slots[3].unique_name',
       'skills[0].additional_text',
       'skills[0].support_skills[1].additional_text',
       'passives[1].additional_text',
     ])
-    // candidates：Weapon1 的 2 条编号行 + skills[0] 的 1 条编号行 + 命中的名称行 4 条（Pyrophyte Staff ×2、Ruby Ring ×2）
-    expect(report.candidates).toBe(7)
-    expect(report.translated).toBe(6)
-    // 词缀口径：Weapon1 两条编号行（1 命中）+ skills[0] 一条（命中）
+    // candidates：Weapon1 的 2 条编号行 + skills[0] 的 1 条编号行 + 命中的名称行 4 条（Pyrophyte
+    // Staff ×2、Ruby Ring ×2）+ 传奇名行 3 条（Belt1 命中、Ring1 未命中、Ring2 命中）
+    expect(report.candidates).toBe(10)
+    expect(report.translated).toBe(8)
+    // 词缀口径：Weapon1 两条编号行（1 命中）+ skills[0] 一条（命中），传奇名不计入
     expect(report.modCandidates).toBe(3)
     expect(report.modTranslated).toBe(2)
   })
@@ -105,8 +114,27 @@ describe('translateBuild', () => {
     expect(twice.inventory_slots?.[3]?.additional_text).toBe('<unique>{稳步印记}\n红宝石戒指')
   })
 
+  it('双语模式下对已翻译输出再翻译一次，结果不变（幂等）', () => {
+    const bilingual = { ...base, bilingual: true }
+    const once = translateBuild(sample(), miniIndex, bilingual).build
+    const twice = translateBuild(once, miniIndex, bilingual).build
+    expect(twice).toEqual(once)
+  })
+
   it('inventory_slots 不是数组时不崩溃', () => {
     const odd = { name: 'x', inventory_slots: 'nope' } as unknown as BuildFile
     expect(translateBuild(odd, miniIndex, base).build).toEqual(odd)
+
+    const oddSkills = { name: 'x', skills: 'x' } as unknown as BuildFile
+    expect(translateBuild(oddSkills, miniIndex, base).build).toEqual(oddSkills)
+
+    const oddPassives = { name: 'x', passives: [null, 3] } as unknown as BuildFile
+    expect(translateBuild(oddPassives, miniIndex, base).build).toEqual(oddPassives)
+
+    const oddSupport = {
+      name: 'x',
+      skills: [{ id: 'a', support_skills: 'nope' }],
+    } as unknown as BuildFile
+    expect(() => translateBuild(oddSupport, miniIndex, base)).not.toThrow()
   })
 })

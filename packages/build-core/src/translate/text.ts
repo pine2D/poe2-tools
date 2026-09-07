@@ -6,6 +6,7 @@ import { translateModLine, translateNameLine } from './lines'
 export type LineStatus = 'translated' | 'untranslated' | 'kept'
 
 export interface LineReport {
+  // 输入行号。一行被标记语法切成多段时，多条报告会共享同一个 line，不是唯一键。
   line: number
   kind: 'mod' | 'name'
   status: LineStatus
@@ -60,7 +61,11 @@ function translateNodes(
     for (const [i, segment] of segments.entries()) {
       // 文本节点的首段延续当前行；之后每个换行进入下一行
       if (i > 0) cursor.line += 1
-      translatedSegments.push(translateLine(segment, cursor.line, index, options, report))
+      // 上一段取自输入（同一文本节点内），首段为 undefined；用于识别"已是双语对"
+      const previousSegment = i > 0 ? segments[i - 1] : undefined
+      translatedSegments.push(
+        translateLine(segment, cursor.line, index, options, report, previousSegment),
+      )
     }
     out.push({ kind: 'text', value: translatedSegments.join('\n') })
   }
@@ -73,6 +78,7 @@ function translateLine(
   index: DictIndex,
   options: TextOptions,
   report: LineReport[],
+  previousSegment: string | undefined,
 ): string {
   const parts = parseLine(line)
   if (parts.body === '') return line
@@ -102,10 +108,25 @@ function translateLine(
       body: hit.text,
       trailing: parts.trailing,
     })
-    return options.bilingual ? `${output}\n${' '.repeat(parts.marker.length)}${parts.body}` : output
+    return options.bilingual
+      ? `${output}\n${' '.repeat(parts.marker.length)}${parts.body}${parts.trailing}`
+      : output
   }
   const name = translateNameLine(parts.body, index)
   if (name === null) {
+    report.push({
+      line: lineNo,
+      kind: 'name',
+      status: 'kept',
+      original: parts.body,
+      translated: null,
+      statId: null,
+    })
+    return line
+  }
+  // 双语模式下，若这一行本身就是紧跟在其译名之后的原文行（上一段就是这行的译文），
+  // 说明输入已经是双语对：不再重写，避免对已翻译输出再次翻译时把译文行重复叠加。
+  if (options.bilingual && previousSegment !== undefined && previousSegment.trim() === name) {
     report.push({
       line: lineNo,
       kind: 'name',
@@ -129,5 +150,5 @@ function translateLine(
     body: name,
     trailing: parts.trailing,
   })
-  return options.bilingual ? `${output}\n${parts.marker}${parts.body}` : output
+  return options.bilingual ? `${output}\n${parts.marker}${parts.body}${parts.trailing}` : output
 }

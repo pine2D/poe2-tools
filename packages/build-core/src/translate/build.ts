@@ -1,5 +1,5 @@
 import type { DictIndex } from '../dict/index'
-import type { BuildFile, BuildInventorySlot } from '../format/types'
+import type { BuildFile } from '../format/types'
 import { type LineReport, translateText } from './text'
 
 export interface BuildTranslateOptions {
@@ -12,6 +12,8 @@ export interface FieldReport {
   lines: LineReport[]
 }
 
+// candidates/translated 含名称行与传奇名注入行，恒偏高，只作总览用；命中率门禁请用
+// modTranslated / modCandidates（词缀口径，不含名称与传奇名）。
 export interface TranslateReport {
   fields: FieldReport[]
   candidates: number
@@ -59,7 +61,25 @@ export function translateBuild(
     for (const [i, slot] of build.inventory_slots.entries()) {
       if (!isHolder(slot)) continue
       translateField(slot, 'additional_text', `inventory_slots[${i}].additional_text`)
-      if (options.annotateUniques) annotateUnique(slot as BuildInventorySlot, index)
+      if (options.annotateUniques) {
+        const uniqueName = slot.unique_name
+        const hitName = annotateUnique(slot, index)
+        if (typeof uniqueName === 'string') {
+          fields.push({
+            path: `inventory_slots[${i}].unique_name`,
+            lines: [
+              {
+                line: 0,
+                kind: 'name',
+                status: hitName === null ? 'untranslated' : 'translated',
+                original: uniqueName,
+                translated: hitName,
+                statId: null,
+              },
+            ],
+          })
+        }
+      }
     }
   }
 
@@ -106,17 +126,20 @@ export function translateBuild(
   return { build, report: { fields, candidates, translated, modCandidates, modTranslated } }
 }
 
-function annotateUnique(slot: BuildInventorySlot, index: DictIndex): void {
-  if (typeof slot.unique_name !== 'string') return
-  const name = index.uniques.get(slot.unique_name)
-  if (name === undefined) return
+// 命中词典则在 additional_text 前置一行 <unique>{译名} 并返回译名；未命中或无 unique_name 返回 null
+function annotateUnique(slot: Holder, index: DictIndex): string | null {
+  const uniqueName = slot.unique_name
+  if (typeof uniqueName !== 'string') return null
+  const name = index.uniques.get(uniqueName)
+  if (name === undefined) return null
   const line = `<unique>{${name}}`
   const existing = slot.additional_text
   if (typeof existing !== 'string' || existing === '') {
     slot.additional_text = line
-    return
+    return name
   }
   // 幂等：已经注入过就不再重复
-  if (existing === line || existing.startsWith(`${line}\n`)) return
+  if (existing === line || existing.startsWith(`${line}\n`)) return name
   slot.additional_text = `${line}\n${existing}`
+  return name
 }

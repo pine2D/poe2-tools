@@ -71,6 +71,14 @@ describe('translateText', () => {
     expect(result.text).toBe('红宝石戒指\nRuby Ring\n1. +10 最大生命\n   +10 to maximum Life')
     // 报告行号始终是输入行号，不随双语输出增行而变
     expect(result.lines.map((l) => l.line)).toEqual([0, 1])
+    // 对输出再翻译一次，结果不变（幂等）
+    const again = translateText(result.text, miniIndex, { bilingual: true })
+    expect(again.text).toBe(result.text)
+  })
+
+  it('双语模式保留正文与追加原文行的尾随空白', () => {
+    const result = translateText('Ruby Ring  ', miniIndex, { bilingual: true })
+    expect(result.text).toBe('红宝石戒指  \nRuby Ring  ')
   })
 
   it('行内标记把编号行切碎：不匹配、不计入候选（已知限制）', () => {

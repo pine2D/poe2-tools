@@ -17,9 +17,9 @@ describe('端到端：rich.build → zh-CN', () => {
     })
     const expected = readFileSync(`${fixtures}rich.expected.zh-CN.build`, 'utf8')
     expect(serializeBuildFile(build)).toBe(expected.trimEnd())
-    // 编号行 8 条 + 命中的名称行 3 条（Pyrophyte Staff、Any Charm、Ruby Ring）
-    expect(report.candidates).toBe(11)
-    expect(report.translated).toBe(10)
+    // 编号行 8 条 + 命中的名称行 3 条（Pyrophyte Staff、Any Charm、Ruby Ring）+ 命中的传奇名 1 条（Belt1）
+    expect(report.candidates).toBe(12)
+    expect(report.translated).toBe(11)
     expect(report.modCandidates).toBe(8)
     expect(report.modTranslated).toBe(7)
   })
