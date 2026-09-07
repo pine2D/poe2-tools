@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "source": "_overrides/classes.json",
+    "tier": "manual",
+    "gameVersion": "0.5.5",
+    "fetchedAt": "2026-09-07",
+    "count": 8
+  },
+  "entries": {
+    "Ranger": "遊俠",
+    "Huntress": "女獵人",
+    "Warrior": "戰士",
+    "Mercenary": "傭兵",
+    "Druid": "德魯伊",
+    "Witch": "女巫",
+    "Sorceress": "女術者",
+    "Monk": "僧侶"
+  }
+}

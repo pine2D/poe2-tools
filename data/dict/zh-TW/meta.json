@@ -1,0 +1,165 @@
+{
+  "locale": "zh-TW",
+  "gameVersion": "0.5.5",
+  "leagueName": "禁忌儀式",
+  "builtAt": "2026-09-07T11:29:43.375Z",
+  "sources": [
+    {
+      "name": "trade2-en-stats",
+      "url": "https://www.pathofexile.com/api/trade2/data/stats",
+      "sha256": "55c534f64e0eba3336c3468b36a5d4ed42cfd19476e52b72c2cfcd33e3b50b4a",
+      "fetchedAt": "2026-09-07T11:29:23.892Z",
+      "fromCache": true
+    },
+    {
+      "name": "trade2-zh-TW-stats",
+      "url": "https://pathofexile.tw/api/trade2/data/stats",
+      "sha256": "03f0be1fa411ba6b22786164a31c3b47f265d7256034408199723fe9c8fe81a8",
+      "fetchedAt": "2026-09-07T11:29:29.352Z",
+      "fromCache": true
+    },
+    {
+      "name": "repoe-passives-default",
+      "url": "https://raw.githubusercontent.com/repoe-fork/poe2/master/data/passive_skill_trees/Default.json",
+      "sha256": "8983cc6c04e60a85a1f475894d1b1b41de418cec2fd17d18d1a514a88b0073f6",
+      "fetchedAt": "2026-09-07T11:29:26.405Z",
+      "fromCache": true
+    },
+    {
+      "name": "poe2db-tree-zh-TW",
+      "url": "https://poe2db.tw/data/passive-skill-tree/4.5/data_tw.json?5",
+      "sha256": "118423693e2fab1999bc571705db94b91def786cc321c01f0792709a23292920",
+      "fetchedAt": "2026-09-07T11:29:30.653Z",
+      "fromCache": true
+    }
+  ],
+  "counts": {
+    "stats": 3720,
+    "passives": 5032,
+    "ascendancies": 23,
+    "classes": 8,
+    "inventories": 14
+  },
+  "audit": {
+    "stats": {
+      "enIds": 8214,
+      "targetIds": 5841,
+      "joined": 3720,
+      "missingInTarget": 2374,
+      "groupMismatch": 0,
+      "placeholderMismatch": [
+        "explicit.stat_1867725690#0"
+      ],
+      "duplicateIds": 78,
+      "multiPlaceholder": 38,
+      "orderApplied": 0,
+      "residualSuffix": [],
+      "mergedSameText": 2197
+    },
+    "passives": {
+      "repoeNodes": 5152,
+      "joined": 5032,
+      "missingInTree": 0,
+      "idMismatch": 0,
+      "emptyName": 120,
+      "duplicateId": 0
+    },
+    "problems": {
+      "total": 16,
+      "byTable": {
+        "stats": 16
+      },
+      "sample": [
+        {
+          "table": "stats",
+          "key": "#% increased movement speed",
+          "problem": "与 pseudo.pseudo_increased_movement_speed 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% increased block chance",
+          "problem": "与 explicit.stat_2481353198 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% increased experience gain",
+          "problem": "与 explicit.stat_57434274 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "vaal pact",
+          "problem": "与 explicit.stat_2257118425 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "glancing blows",
+          "problem": "与 explicit.stat_4266776872 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "giant's blood",
+          "problem": "与 explicit.stat_1875158664 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "blood magic",
+          "problem": "与 explicit.stat_2801937280 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "iron reflexes",
+          "problem": "与 explicit.stat_326965591 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "unwavering stance",
+          "problem": "与 explicit.stat_1683578560 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "zealot's oath",
+          "problem": "与 explicit.stat_1315418254 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "eldritch battery",
+          "problem": "与 explicit.stat_2262736444 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "pain attunement",
+          "problem": "与 explicit.stat_98977150 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "delirium fog in map lasts # additional seconds before dissipating",
+          "problem": "与 explicit.stat_3226351972 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% to all maximum resistances",
+          "problem": "与 explicit.stat_569299859 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% additional physical damage reduction",
+          "problem": "与 explicit.stat_3771516363 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% increased armour, evasion and energy shield",
+          "problem": "与 explicit.stat_3523867985 键冲突"
+        }
+      ]
+    }
+  },
+  "coverage": {
+    "synthetic": {
+      "files": 2,
+      "modCandidates": 8,
+      "modTranslated": 7,
+      "rate": 0.875
+    },
+    "local": null
+  }
+}

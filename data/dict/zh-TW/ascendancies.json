@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "source": "_overrides/ascendancies.json",
+    "tier": "manual",
+    "gameVersion": "0.5.5",
+    "fetchedAt": "2026-09-07",
+    "count": 23
+  },
+  "entries": {
+    "Ranger1": "銳眼",
+    "Ranger3": "追獵者",
+    "Huntress1": "亞馬遜",
+    "Huntress2": "魂靈行者",
+    "Huntress3": "儀式行者",
+    "Warrior1": "泰坦",
+    "Warrior2": "戰爭使者",
+    "Warrior3": "奇塔弗工匠",
+    "Mercenary1": "智勇軍師",
+    "Mercenary2": "女巫獵人",
+    "Mercenary3": "古靈軍團",
+    "Druid1": "天啟先知",
+    "Druid2": "狂徒薩滿",
+    "Witch1": "獄火師",
+    "Witch2": "血法師",
+    "Witch3": "巫妖",
+    "Witch3b": "深淵妖巫",
+    "Sorceress1": "風暴編織者",
+    "Sorceress2": "時空幻術師",
+    "Sorceress3": "瓦拉什塔門徒",
+    "Monk1": "武聖",
+    "Monk2": "祈靈者",
+    "Monk3": "夏烏拉侍僧"
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "locale": "zh-TW",
+  "generatedAt": "2026-09-07T11:29:43.375Z",
+  "note": "多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
+  "entries": [
+    {
+      "key": "explicit.stat_3032590688#0",
+      "en": "Adds # to # Physical Damage to Attacks",
+      "text": "攻擊附加#至#物理傷害"
+    },
+    {
+      "key": "explicit.stat_1754445556#0",
+      "en": "Adds # to # Lightning damage to Attacks",
+      "text": "攻擊附加#至#閃電傷害"
+    },
+    {
+      "key": "explicit.stat_4067062424#0",
+      "en": "Adds # to # Cold damage to Attacks",
+      "text": "攻擊附加#至#冰冷傷害"
+    },
+    {
+      "key": "explicit.stat_1573130764#0",
+      "en": "Adds # to # Fire damage to Attacks",
+      "text": "攻擊附加#至#火焰傷害"
+    },
+    {
+      "key": "explicit.stat_1940865751#0",
+      "en": "Adds # to # Physical Damage",
+      "text": "附加#至#物理傷害"
+    },
+    {
+      "key": "explicit.stat_3336890334#0",
+      "en": "Adds # to # Lightning Damage",
+      "text": "附加#至#閃電傷害"
+    },
+    {
+      "key": "explicit.stat_709508406#0",
+      "en": "Adds # to # Fire Damage",
+      "text": "附加#至#火焰傷害"
+    },
+    {
+      "key": "explicit.stat_2881298780#0",
+      "en": "# to # Physical Thorns damage",
+      "text": "#至#點物理荊棘傷害"
+    },
+    {
+      "key": "explicit.stat_1037193709#0",
+      "en": "Adds # to # Cold Damage",
+      "text": "附加#至#冰冷傷害"
+    },
+    {
+      "key": "explicit.stat_849987426#0",
+      "en": "Allies in your Presence deal # to # added Attack Fire Damage",
+      "text": "處於你存在範圍中的友方造成#至#額外攻擊火焰傷害"
+    },
+    {
+      "key": "explicit.stat_2347036682#0",
+      "en": "Allies in your Presence deal # to # added Attack Cold Damage",
+      "text": "處於你存在範圍中的友方造成#至#額外攻擊冰冷傷害"
+    },
+    {
+      "key": "explicit.stat_2854751904#0",
+      "en": "Allies in your Presence deal # to # added Attack Lightning Damage",
+      "text": "處於你存在範圍中的友方造成#至#額外攻擊閃電傷害"
+    },
+    {
+      "key": "explicit.stat_1574590649#0",
+      "en": "Allies in your Presence deal # to # added Attack Physical Damage",
+      "text": "處於你存在範圍中的友方造成#至#額外攻擊物理傷害"
+    },
+    {
+      "key": "explicit.stat_674553446#0",
+      "en": "Adds # to # Chaos Damage to Attacks",
+      "text": "攻擊附加#至#混沌傷害"
+    },
+    {
+      "key": "explicit.stat_3111921451#0",
+      "en": "Adds # to # Lightning Damage to Attacks per 20 Intelligence",
+      "text": "每20點智慧，攻擊附加#至#閃電傷害"
+    },
+    {
+      "key": "explicit.stat_1993950627#0",
+      "en": "# to # Fire Thorns damage",
+      "text": "#至#點火焰荊棘傷害"
+    },
+    {
+      "key": "explicit.stat_331648983#0",
+      "en": "When you reload, triggers Gemini Surge to alternately\ngain # Cold Surge or # Fire Surge",
+      "text": "當你裝填時，觸發雙靈波動，\n交替獲得#冰冷波動或#火焰波動"
+    },
+    {
+      "key": "explicit.stat_258955603#0",
+      "en": "Alternating every 5 seconds:\nTake #% more Damage from Hits\nTake #% more Damage over time",
+      "text": "每隔5秒替換：\n承受#%更多擊中傷害\n承受#%更多持續傷害"
+    },
+    {
+      "key": "explicit.stat_2163764037#0",
+      "en": "Gain Physical Thorns damage equal to #% - #% of maximum Life",
+      "text": "獲得等同於最大生命#%-#%的物理荊棘傷害"
+    },
+    {
+      "key": "explicit.stat_3926910174#0",
+      "en": "# to # added Physical Thorns damage per Runic Plate",
+      "text": "每層符文鎧甲附加#至#物理荊棘傷害"
+    },
+    {
+      "key": "explicit.stat_1955786041#0",
+      "en": "Has # to # Physical damage, # to # per Boss's Face Broken",
+      "text": "擁有#至#物理傷害，頭目每被打爛一張臉即#至#"
+    },
+    {
+      "key": "explicit.stat_3835522656#0",
+      "en": "Adds # to # Lightning Damage to Unarmed Melee Hits",
+      "text": "空手近戰擊中附加#至#閃電傷害"
+    },
+    {
+      "key": "explicit.stat_4186798932#0",
+      "en": "# to # Added Attack Fire Damage per 25 Strength",
+      "text": "每25力量附加#至#攻擊火焰傷害"
+    },
+    {
+      "key": "explicit.stat_1515531208#0",
+      "en": "# to # Cold Thorns damage",
+      "text": "#至#點冰冷荊棘傷害"
+    },
+    {
+      "key": "explicit.stat_2223678961#0",
+      "en": "Adds # to # Chaos damage",
+      "text": "附加#至#混沌傷害"
+    },
+    {
+      "key": "explicit.stat_3893788785#0",
+      "en": "Bow Attacks consume #% of your maximum Life Flask Charges if possible to deal added Physical damage equal to #% of Flask's Life Recovery amount",
+      "text": "情況許可時，弓的攻擊會消耗你所擁有最大生命藥劑充能的#%，造成等同於藥劑生命恢復量#%的附加物理傷害"
+    },
+    {
+      "key": "explicit.stat_2036307261#0",
+      "en": "Hits with this weapon have # to # Added Physical Damage per 1% Block Chance",
+      "text": "每擁有1%格擋機率，以此武器造成的擊中即附加#至#物理傷害"
+    },
+    {
+      "key": "explicit.stat_566086661#0",
+      "en": "Attacks with this Weapon have Added Cold Damage equal to #% to #% of maximum Mana",
+      "text": "以此武器攻擊時會附加等同於#%至#%最大魔力的冰冷傷害"
+    },
+    {
+      "key": "explicit.stat_1695767482#0",
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of\nyour maximum Life as Physical damage per second",
+      "text": "格擋時對目標造成持續#秒的腐化之血\n每秒造成等同於你最大生命#%的物理傷害"
+    },
+    {
+      "key": "explicit.stat_262946222#0",
+      "en": "Allies in your Presence deal # to # added Attack Chaos Damage",
+      "text": "處於你存在範圍中的友方造成#至#附加攻擊混沌傷害"
+    },
+    {
+      "key": "explicit.stat_287294012#0",
+      "en": "# to # Fire Thorns damage per 100 maximum Life",
+      "text": "每100點最大生命，附加#至#點火焰荊棘傷害"
+    },
+    {
+      "key": "rune.stat_3738367433#0",
+      "en": "Bonded: Adds # to # Physical Damage to Attacks",
+      "text": "命定: 攻擊附加#至#物理傷害"
+    },
+    {
+      "key": "rune.stat_3308150554#0",
+      "en": "Bonded: Adds # to # Fire damage to Attacks",
+      "text": "命定: 攻擊附加#至#火焰傷害"
+    },
+    {
+      "key": "rune.stat_90012347#0",
+      "en": "Adds # to # Lightning Damage against Shocked Enemies",
+      "text": "對感電的敵人附加#至#閃電傷害"
+    },
+    {
+      "key": "rune.stat_3734640451#0",
+      "en": "Adds # to # Cold Damage against Chilled Enemies",
+      "text": "對冰緩敵人附加#至#冰冷傷害"
+    },
+    {
+      "key": "rune.stat_627339348#0",
+      "en": "Adds # to # Fire Damage to Attacks against Ignited Enemies",
+      "text": "對點燃敵人的攻擊附加#至#火焰傷害"
+    },
+    {
+      "key": "rune.stat_757050353#0",
+      "en": "# to # Lightning Thorns damage",
+      "text": "#至#點閃電荊棘傷害"
+    },
+    {
+      "key": "rune.stat_1386257341#0",
+      "en": "Bonded: # to # Physical Thorns damage",
+      "text": "命定: #至#點物理荊棘傷害"
+    }
+  ]
+}

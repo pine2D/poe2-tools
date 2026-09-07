@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "source": "_overrides/inventories.json",
+    "tier": "manual",
+    "gameVersion": "0.5.5",
+    "fetchedAt": "2026-09-07",
+    "count": 14
+  },
+  "entries": {
+    "Weapon1": "武器1",
+    "Weapon2": "武器2",
+    "Offhand1": "副手1",
+    "Offhand2": "副手2",
+    "Helm1": "頭盔",
+    "BodyArmour1": "胸甲",
+    "Gloves1": "手套",
+    "Boots1": "靴子",
+    "Amulet1": "項鍊",
+    "Belt1": "腰帶",
+    "Ring1": "戒指1",
+    "Ring2": "戒指2",
+    "Flask1": "藥劑",
+    "Charm1": "魔符"
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "locale": "zh-CN",
+  "generatedAt": "2026-09-07T11:29:43.375Z",
+  "note": "多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
+  "entries": [
+    {
+      "key": "explicit.stat_3032590688#0",
+      "en": "Adds # to # Physical Damage to Attacks",
+      "text": "攻击附加 # - # 物理伤害"
+    },
+    {
+      "key": "explicit.stat_1754445556#0",
+      "en": "Adds # to # Lightning damage to Attacks",
+      "text": "攻击附加 # - # 基础闪电伤害"
+    },
+    {
+      "key": "explicit.stat_4067062424#0",
+      "en": "Adds # to # Cold damage to Attacks",
+      "text": "攻击附加 # - # 基础冰霜伤害"
+    },
+    {
+      "key": "explicit.stat_1573130764#0",
+      "en": "Adds # to # Fire damage to Attacks",
+      "text": "攻击附加 # - # 基础火焰伤害"
+    },
+    {
+      "key": "explicit.stat_1940865751#0",
+      "en": "Adds # to # Physical Damage",
+      "text": "附加 # - # 物理伤害"
+    },
+    {
+      "key": "explicit.stat_3336890334#0",
+      "en": "Adds # to # Lightning Damage",
+      "text": "附加 # - # 闪电伤害"
+    },
+    {
+      "key": "explicit.stat_709508406#0",
+      "en": "Adds # to # Fire Damage",
+      "text": "附加 # - # 火焰伤害"
+    },
+    {
+      "key": "explicit.stat_2881298780#0",
+      "en": "# to # Physical Thorns damage",
+      "text": "# - # 物理荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_1037193709#0",
+      "en": "Adds # to # Cold Damage",
+      "text": "附加 # - # 冰霜伤害"
+    },
+    {
+      "key": "explicit.stat_849987426#0",
+      "en": "Allies in your Presence deal # to # added Attack Fire Damage",
+      "text": "在场的友军附加 # - # 攻击火焰伤害"
+    },
+    {
+      "key": "explicit.stat_2347036682#0",
+      "en": "Allies in your Presence deal # to # added Attack Cold Damage",
+      "text": "在场的友军附加 # - # 攻击冰霜伤害"
+    },
+    {
+      "key": "explicit.stat_2854751904#0",
+      "en": "Allies in your Presence deal # to # added Attack Lightning Damage",
+      "text": "在场的友军附加 # - # 攻击闪电伤害"
+    },
+    {
+      "key": "explicit.stat_1574590649#0",
+      "en": "Allies in your Presence deal # to # added Attack Physical Damage",
+      "text": "在场的友军附加 # - # 攻击物理伤害"
+    },
+    {
+      "key": "explicit.stat_674553446#0",
+      "en": "Adds # to # Chaos Damage to Attacks",
+      "text": "攻击附加 # - # 基础混沌伤害"
+    },
+    {
+      "key": "explicit.stat_3111921451#0",
+      "en": "Adds # to # Lightning Damage to Attacks per 20 Intelligence",
+      "text": "每 20 智慧使攻击的附加 # - # 闪电伤害"
+    },
+    {
+      "key": "explicit.stat_1993950627#0",
+      "en": "# to # Fire Thorns damage",
+      "text": "# - # 火焰荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_331648983#0",
+      "en": "When you reload, triggers Gemini Surge to alternately\ngain # Cold Surge or # Fire Surge",
+      "text": "当你装填时，触发双灵涌动\n交替获得 # 次冰霜涌动或 # 次火焰涌动"
+    },
+    {
+      "key": "explicit.stat_258955603#0",
+      "en": "Alternating every 5 seconds:\nTake #% more Damage from Hits\nTake #% more Damage over time",
+      "text": "每 5 秒交替：\n受到的击中伤害总增 #%\n受到的持续伤害总增 #%"
+    },
+    {
+      "key": "explicit.stat_2163764037#0",
+      "en": "Gain Physical Thorns damage equal to #% - #% of maximum Life",
+      "text": "获得相当于生命上限 #% - #% 的 物理荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_3926910174#0",
+      "en": "# to # added Physical Thorns damage per Runic Plate",
+      "text": "每有一个符文护板，附加 # - # 物理荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_1955786041#0",
+      "en": "Has # to # Physical damage, # to # per Boss's Face Broken",
+      "text": "具有 # - # 物理伤害，且每有一层首领破相，# 到 # 伤害"
+    },
+    {
+      "key": "explicit.stat_3835522656#0",
+      "en": "Adds # to # Lightning Damage to Unarmed Melee Hits",
+      "text": "徒手近战击中时附加 # 到 # 点闪电伤害"
+    },
+    {
+      "key": "explicit.stat_4186798932#0",
+      "en": "# to # Added Attack Fire Damage per 25 Strength",
+      "text": "每有 25 点力量，附加 # - # 攻击火焰伤害"
+    },
+    {
+      "key": "explicit.stat_1515531208#0",
+      "en": "# to # Cold Thorns damage",
+      "text": "# - # 冰霜荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_2223678961#0",
+      "en": "Adds # to # Chaos damage",
+      "text": "该装备附加 # - # 基础混沌伤害"
+    },
+    {
+      "key": "explicit.stat_3893788785#0",
+      "en": "Bow Attacks consume #% of your maximum Life Flask Charges if possible to deal added Physical damage equal to #% of Flask's Life Recovery amount",
+      "text": "弓类攻击尽量消耗生命上限药剂充能的 #%，附加相当于药剂生命回复量 #% 的物理伤害"
+    },
+    {
+      "key": "explicit.stat_2036307261#0",
+      "en": "Hits with this weapon have # to # Added Physical Damage per 1% Block Chance",
+      "text": "使用该武器击中时，每有 1% 格挡几率，附加 # - # 的物理伤害"
+    },
+    {
+      "key": "explicit.stat_566086661#0",
+      "en": "Attacks with this Weapon have Added Cold Damage equal to #% to #% of maximum Mana",
+      "text": "使用该武器攻击时附加冰霜伤害，等同于魔力上限的 #% 至 #%"
+    },
+    {
+      "key": "explicit.stat_1695767482#0",
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of\nyour maximum Life as Physical damage per second",
+      "text": "格挡时施加腐化之血，持续 # 秒，\n每秒造成相当于你生命上限 #% 的物理伤害"
+    },
+    {
+      "key": "explicit.stat_262946222#0",
+      "en": "Allies in your Presence deal # to # added Attack Chaos Damage",
+      "text": "在场的友军附加 # - # 攻击混沌伤害"
+    },
+    {
+      "key": "explicit.stat_287294012#0",
+      "en": "# to # Fire Thorns damage per 100 maximum Life",
+      "text": "每有 100 点生命上限，获得 # - # 火焰荆棘伤害"
+    },
+    {
+      "key": "rune.stat_3738367433#0",
+      "en": "Bonded: Adds # to # Physical Damage to Attacks",
+      "text": "羁绊： 攻击附加 # - # 物理伤害"
+    },
+    {
+      "key": "rune.stat_3308150554#0",
+      "en": "Bonded: Adds # to # Fire damage to Attacks",
+      "text": "羁绊： 攻击附加 # - # 基础火焰伤害"
+    },
+    {
+      "key": "rune.stat_90012347#0",
+      "en": "Adds # to # Lightning Damage against Shocked Enemies",
+      "text": "对被感电敌人附加 # - # 基础闪电伤害"
+    },
+    {
+      "key": "rune.stat_3734640451#0",
+      "en": "Adds # to # Cold Damage against Chilled Enemies",
+      "text": "对冰缓敌人附加 # - # 基础冰霜伤害"
+    },
+    {
+      "key": "rune.stat_627339348#0",
+      "en": "Adds # to # Fire Damage to Attacks against Ignited Enemies",
+      "text": "攻击点燃目标时附加 # - # 基础火焰伤害"
+    },
+    {
+      "key": "rune.stat_757050353#0",
+      "en": "# to # Lightning Thorns damage",
+      "text": "# - # 闪电荆棘伤害"
+    },
+    {
+      "key": "rune.stat_1386257341#0",
+      "en": "Bonded: # to # Physical Thorns damage",
+      "text": "羁绊： # - # 物理荆棘伤害"
+    },
+    {
+      "key": "rune.stat_1888719480#0",
+      "en": "Bonded: Adds # to # Physical Damage",
+      "text": "羁绊： 附加 # - # 基础物理伤害"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "source": "_overrides/ascendancies.json",
+    "tier": "manual",
+    "gameVersion": "0.5",
+    "fetchedAt": "2026-09-07",
+    "count": 23
+  },
+  "entries": {
+    "Ranger1": "锐眼",
+    "Ranger3": "追猎者",
+    "Huntress1": "亚马逊",
+    "Huntress2": "灵魂行者",
+    "Huntress3": "仪祭师",
+    "Warrior1": "泰坦",
+    "Warrior2": "战争使者",
+    "Warrior3": "奇塔弗匠师",
+    "Mercenary1": "战术家",
+    "Mercenary2": "猎巫人",
+    "Mercenary3": "古灵使徒斗士",
+    "Druid1": "神谕者",
+    "Druid2": "萨满",
+    "Witch1": "驱炎使",
+    "Witch2": "命源法师",
+    "Witch3": "巫妖",
+    "Witch3b": "深渊巫妖",
+    "Sorceress1": "风暴编织者",
+    "Sorceress2": "塑时术师",
+    "Sorceress3": "瓦拉煞的门徒",
+    "Monk1": "武圣",
+    "Monk2": "祈求者",
+    "Monk3": "夏乌拉追随者"
+  }
+}
