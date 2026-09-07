@@ -20,8 +20,9 @@ export interface ProblemSummary {
   sample: DictProblem[]
 }
 
-// meta.json 里只放 stats 审计的摘要；多占位符清单单独写到 _review/multi-placeholder.json
-export type StatsAuditSummary = Omit<StatsAudit, 'multiPlaceholderIds'>
+// meta.json 里只放 stats 审计的摘要；多占位符清单与字面数字清单分别单独写到
+// _review/multi-placeholder.json 与 _review/literal-number.json
+export type StatsAuditSummary = Omit<StatsAudit, 'multiPlaceholderIds' | 'literalNumberIds'>
 
 export interface DictMetaFile {
   locale: Locale

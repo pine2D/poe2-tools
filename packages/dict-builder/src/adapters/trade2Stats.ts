@@ -41,6 +41,15 @@ export interface StatsAudit {
   orderApplied: number
   residualSuffix: string[]
   mergedSameText: number
+  // pseudo 组从不印在装备上：整组跳过，这里记录被跳过的 en 条目数
+  excludedEntries: number
+  // 常量数字写成字面量的词缀（如 "per 20 Dexterity"）：消费端归一化后永远匹配不上，先只做度量
+  literalNumber: number
+  literalNumberIds: MultiPlaceholderEntry[]
+  // 国服未翻译、译文与原文字面相同的词缀条数
+  untranslatedSameAsEn: number
+  // stat-order.json 里没有被任何输出条目消费的键
+  unusedOrderKeys: string[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -84,9 +93,12 @@ interface Occurrence {
   text: string
 }
 
+// pseudo 组是交易站筛选器的聚合项（如 "# Desecrated Prefix Modifiers"），从不印在装备上；
+// 其中的词条会抢在 explicit 之前被索引并产出错译，整组跳过
 function textsById(response: Trade2StatsResponse): Map<string, Occurrence[]> {
   const map = new Map<string, Occurrence[]>()
   for (const group of response.result) {
+    if (group.id === 'pseudo') continue
     for (const entry of group.entries) {
       const occurrence: Occurrence = { group: group.id, text: entry.text }
       const list = map.get(entry.id)
@@ -95,6 +107,20 @@ function textsById(response: Trade2StatsResponse): Map<string, Occurrence[]> {
     }
   }
   return map
+}
+
+function countPseudoEntries(response: Trade2StatsResponse): number {
+  let count = 0
+  for (const group of response.result) {
+    if (group.id === 'pseudo') count += group.entries.length
+  }
+  return count
+}
+
+// 交易站个别词条把说明写成多行（如 "Recover #% of Life\nevery 4 seconds"）；折成单行再剥后缀，
+// 避免换行混进编号行；匹配侧本就由 templateKey 折叠空白，不受影响
+function foldMultiline(text: string): string {
+  return text.replace(/\s*\r?\n\s*/g, ' ')
 }
 
 // 剥离后仍以短括号词结尾：可能是名单没收录的新后缀，只作审计信号
@@ -109,6 +135,7 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
   const target = textsById(input.target)
   const entries: StatEntry[] = []
   const seen = new Set<string>()
+  const usedOrderKeys = new Set<string>()
   const audit: StatsAudit = {
     enIds: en.size,
     targetIds: target.size,
@@ -122,6 +149,11 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
     orderApplied: 0,
     residualSuffix: [],
     mergedSameText: 0,
+    excludedEntries: countPseudoEntries(input.en),
+    literalNumber: 0,
+    literalNumberIds: [],
+    untranslatedSameAsEn: 0,
+    unusedOrderKeys: [],
   }
   for (const [id, enList] of en) {
     const targetList = target.get(id)
@@ -146,8 +178,8 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
         continue
       }
       const key = variantKey(id, k)
-      const enStripped = stripTradeSuffix(occurrence.text, 'en')
-      const textStripped = stripTradeSuffix(targetText, input.locale)
+      const enStripped = stripTradeSuffix(foldMultiline(occurrence.text), 'en')
+      const textStripped = stripTradeSuffix(foldMultiline(targetText), input.locale)
       const enCount = countPlaceholders(enStripped)
       const textCount = countPlaceholders(textStripped)
       // 占位符个数不一致：不输出（运行期本就 fail-closed），order 也救不了，留给 2b 的整句直出
@@ -169,7 +201,23 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
         audit.multiPlaceholder += 1
         audit.multiPlaceholderIds.push({ key, en: enStripped, text: textStripped })
       }
-      const order = input.orderOverrides[key] ?? (k === 0 ? input.orderOverrides[id] : undefined)
+      if (/\d/.test(enStripped)) {
+        audit.literalNumber += 1
+        audit.literalNumberIds.push({ key, en: enStripped, text: textStripped })
+      }
+      if (textStripped === enStripped) audit.untranslatedSameAsEn += 1
+      const exactOrder = input.orderOverrides[key]
+      let order: number[] | undefined
+      if (exactOrder !== undefined) {
+        order = exactOrder
+        usedOrderKeys.add(key)
+      } else if (k === 0) {
+        const plainOrder = input.orderOverrides[id]
+        if (plainOrder !== undefined) {
+          order = plainOrder
+          usedOrderKeys.add(id)
+        }
+      }
       if (order === undefined) {
         entries.push({ id, en: enStripped, text: textStripped })
       } else {
@@ -178,6 +226,9 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
       }
       audit.joined += 1
     }
+  }
+  for (const orderKey of Object.keys(input.orderOverrides)) {
+    if (!usedOrderKeys.has(orderKey)) audit.unusedOrderKeys.push(orderKey)
   }
   return {
     dict: { _meta: { ...input.meta, tier: 'primary', count: entries.length }, entries },

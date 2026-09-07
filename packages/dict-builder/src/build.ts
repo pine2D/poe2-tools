@@ -266,12 +266,18 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
     await writeJson(join(localeDir, 'ascendancies.json'), bundle.ascendancies)
     await writeJson(join(localeDir, 'classes.json'), bundle.classes)
     await writeJson(join(localeDir, 'inventories.json'), bundle.inventories)
-    const { multiPlaceholderIds, ...statsAudit } = stats.audit
+    const { multiPlaceholderIds, literalNumberIds, ...statsAudit } = stats.audit
     await writeJson(join(localeDir, '_review', 'multi-placeholder.json'), {
       locale,
       generatedAt: options.now,
       note: '多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json',
       entries: multiPlaceholderIds,
+    })
+    await writeJson(join(localeDir, '_review', 'literal-number.json'), {
+      locale,
+      generatedAt: options.now,
+      note: '含字面数字的词缀：当前消费端无法命中，归一化变体方案见 2b 计划',
+      entries: literalNumberIds,
     })
     const meta: DictMetaFile = {
       locale,

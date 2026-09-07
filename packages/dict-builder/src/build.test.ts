@@ -98,7 +98,7 @@ describe('runBuild', () => {
     for (const locale of ['zh-CN', 'zh-TW']) {
       const dir = join(opts.dictDir, locale)
       const stats = JSON.parse(await readFile(join(dir, 'stats.json'), 'utf8'))
-      expect(stats.entries).toHaveLength(5)
+      expect(stats.entries).toHaveLength(6)
       expect(stats._meta.tier).toBe('primary')
       const passives = JSON.parse(await readFile(join(dir, 'passives.json'), 'utf8'))
       expect(Object.keys(passives.entries)).toEqual(['strength16', 'dexterity30_'])
@@ -114,18 +114,25 @@ describe('runBuild', () => {
       expect(meta.locale).toBe(locale)
       expect(meta.builtAt).toBe('2026-09-07T00:00:00.000Z')
       expect(meta.counts).toEqual({
-        stats: 5,
+        stats: 6,
         passives: 2,
         ascendancies: 23,
         classes: 8,
         inventories: 14,
       })
-      expect(meta.audit.stats.placeholderMismatch).toEqual(['pseudo.pseudo_desecrated#0'])
+      expect(meta.audit.stats.placeholderMismatch).toEqual(['explicit.stat_charm_slot#0'])
       expect(meta.audit.stats.multiPlaceholderIds).toBeUndefined()
+      expect(meta.audit.stats.literalNumberIds).toBeUndefined()
       const review = JSON.parse(
         await readFile(join(dir, '_review', 'multi-placeholder.json'), 'utf8'),
       )
       expect(review.entries.map((e: { key: string }) => e.key)).toEqual(['explicit.stat_recover#0'])
+      const literalReview = JSON.parse(
+        await readFile(join(dir, '_review', 'literal-number.json'), 'utf8'),
+      )
+      expect(literalReview.entries.map((e: { key: string }) => e.key)).toEqual([
+        'explicit.stat_literal#0',
+      ])
       expect(meta.coverage.synthetic).toEqual({
         files: 2,
         modCandidates: 8,
@@ -174,7 +181,7 @@ describe('runBuild', () => {
     expect(blocked.ok).toBe(false)
     expect(Object.keys(blocked.regressions)).toEqual(['zh-CN', 'zh-TW'])
     const untouched = JSON.parse(await readFile(join(opts.dictDir, 'zh-CN', 'stats.json'), 'utf8'))
-    expect(untouched.entries).toHaveLength(5)
+    expect(untouched.entries).toHaveLength(6)
 
     const allowed = await runBuild({
       ...opts,
@@ -184,7 +191,7 @@ describe('runBuild', () => {
     })
     expect(allowed.ok).toBe(true)
     const rewritten = JSON.parse(await readFile(join(opts.dictDir, 'zh-CN', 'stats.json'), 'utf8'))
-    expect(rewritten.entries).toHaveLength(4)
+    expect(rewritten.entries).toHaveLength(5)
   })
 
   it('关闭 poe2db 时不产出 passives、不请求 poe2db，并删除上一次留下的 passives.json', async () => {
@@ -216,6 +223,6 @@ describe('runBuild', () => {
     expect(logs.some((m) => m.includes('降级'))).toBe(true)
     await expect(readFile(join(opts.dictDir, 'zh-CN', 'passives.json'), 'utf8')).rejects.toThrow()
     const stats = JSON.parse(await readFile(join(opts.dictDir, 'zh-CN', 'stats.json'), 'utf8'))
-    expect(stats.entries).toHaveLength(5)
+    expect(stats.entries).toHaveLength(6)
   })
 })

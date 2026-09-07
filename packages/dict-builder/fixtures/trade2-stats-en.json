@@ -25,6 +25,12 @@
           "id": "explicit.stat_recover",
           "text": "Recover #% of Life over # seconds",
           "type": "explicit"
+        },
+        { "id": "explicit.stat_charm_slot", "text": "Has # Charm Slot", "type": "explicit" },
+        {
+          "id": "explicit.stat_literal",
+          "text": "Recover #% of Life\nevery 4 seconds",
+          "type": "explicit"
         }
       ]
     },

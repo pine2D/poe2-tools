@@ -12,7 +12,9 @@
           "text": "地图包含 # 个额外的保险箱",
           "type": "explicit"
         },
-        { "id": "explicit.stat_recover", "text": "在 # 秒内回复 #% 生命", "type": "explicit" }
+        { "id": "explicit.stat_recover", "text": "在 # 秒内回复 #% 生命", "type": "explicit" },
+        { "id": "explicit.stat_charm_slot", "text": "有一个咒符栏", "type": "explicit" },
+        { "id": "explicit.stat_literal", "text": "每 4 秒\n回复 #% 生命", "type": "explicit" }
       ]
     },
     {

@@ -22,12 +22,16 @@ describe('buildStatsDict', () => {
     en,
     target: zh,
     locale: 'zh-CN',
-    // 不带 #k 的键作用于第 0 个变体；带 #1 的键只作用于第 1 个变体
-    orderOverrides: { 'explicit.stat_recover': [1, 0], 'explicit.stat_strongbox#1': [0] },
+    // 不带 #k 的键作用于第 0 个变体；带 #1 的键只作用于第 1 个变体；stat_nope 覆盖表里没有对应条目
+    orderOverrides: {
+      'explicit.stat_recover': [1, 0],
+      'explicit.stat_strongbox#1': [0],
+      'explicit.stat_nope': [0],
+    },
     meta,
   })
 
-  it('按 id 对齐、剥离后缀，同键同译文的跨组重复只留一条', () => {
+  it('按 id 对齐、剥离后缀，同键同译文的跨组重复只留一条，pseudo 组整组跳过，多行词条折成单行', () => {
     expect(dict.entries).toEqual([
       { id: 'explicit.stat_life', en: '+# to maximum Life', text: '+# 最大生命' },
       { id: 'explicit.stat_armour_local', en: '#% increased Armour', text: '护甲提高 #%' },
@@ -48,18 +52,23 @@ describe('buildStatsDict', () => {
         text: '在 # 秒内回复 #% 生命',
         order: [1, 0],
       },
+      {
+        id: 'explicit.stat_literal',
+        en: 'Recover #% of Life every 4 seconds',
+        text: '每 4 秒 回复 #% 生命',
+      },
     ])
-    expect(dict._meta).toEqual({ ...meta, tier: 'primary', count: 5 })
+    expect(dict._meta).toEqual({ ...meta, tier: 'primary', count: 6 })
   })
 
   it('审计计数', () => {
     expect(audit).toEqual({
-      enIds: 7,
-      targetIds: 6,
-      joined: 5,
+      enIds: 8,
+      targetIds: 7,
+      joined: 6,
       missingInTarget: 1,
       groupMismatch: 0,
-      placeholderMismatch: ['pseudo.pseudo_desecrated#0'],
+      placeholderMismatch: ['explicit.stat_charm_slot#0'],
       duplicateIds: 1,
       multiPlaceholder: 1,
       multiPlaceholderIds: [
@@ -72,6 +81,17 @@ describe('buildStatsDict', () => {
       orderApplied: 2,
       residualSuffix: [],
       mergedSameText: 1,
+      excludedEntries: 1,
+      literalNumber: 1,
+      literalNumberIds: [
+        {
+          key: 'explicit.stat_literal#0',
+          en: 'Recover #% of Life every 4 seconds',
+          text: '每 4 秒 回复 #% 生命',
+        },
+      ],
+      untranslatedSameAsEn: 0,
+      unusedOrderKeys: ['explicit.stat_nope'],
     })
   })
 })
