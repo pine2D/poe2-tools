@@ -1,0 +1,29 @@
+{
+  "result": [
+    {
+      "id": "explicit",
+      "label": "固定",
+      "entries": [
+        { "id": "explicit.stat_life", "text": "+# 最大生命", "type": "explicit" },
+        { "id": "explicit.stat_armour_local", "text": "护甲提高 #% (区域)", "type": "explicit" },
+        { "id": "explicit.stat_strongbox", "text": "区域内有一个额外的保险箱", "type": "explicit" },
+        {
+          "id": "explicit.stat_strongbox",
+          "text": "地图包含 # 个额外的保险箱",
+          "type": "explicit"
+        },
+        { "id": "explicit.stat_recover", "text": "在 # 秒内回复 #% 生命", "type": "explicit" }
+      ]
+    },
+    {
+      "id": "fractured",
+      "label": "分裂",
+      "entries": [{ "id": "fractured.stat_life", "text": "+# 最大生命", "type": "fractured" }]
+    },
+    {
+      "id": "pseudo",
+      "label": "综合",
+      "entries": [{ "id": "pseudo.pseudo_desecrated", "text": "渎灵前缀", "type": "pseudo" }]
+    }
+  ]
+}

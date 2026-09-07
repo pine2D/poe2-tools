@@ -1,0 +1,50 @@
+{
+  "result": [
+    {
+      "id": "explicit",
+      "label": "Explicit",
+      "entries": [
+        { "id": "explicit.stat_life", "text": "+# to maximum Life", "type": "explicit" },
+        {
+          "id": "explicit.stat_armour_local",
+          "text": "#% increased Armour (Local)",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_strongbox",
+          "text": "Area contains an additional Strongbox",
+          "type": "explicit"
+        },
+        {
+          "id": "explicit.stat_strongbox",
+          "text": "Map contains # additional Strongboxes",
+          "type": "explicit"
+        },
+        { "id": "explicit.stat_only_en", "text": "Only in English realm", "type": "explicit" },
+        {
+          "id": "explicit.stat_recover",
+          "text": "Recover #% of Life over # seconds",
+          "type": "explicit"
+        }
+      ]
+    },
+    {
+      "id": "fractured",
+      "label": "Fractured",
+      "entries": [
+        { "id": "fractured.stat_life", "text": "+# to maximum Life", "type": "fractured" }
+      ]
+    },
+    {
+      "id": "pseudo",
+      "label": "Pseudo",
+      "entries": [
+        {
+          "id": "pseudo.pseudo_desecrated",
+          "text": "# Desecrated Prefix Modifiers",
+          "type": "pseudo"
+        }
+      ]
+    }
+  ]
+}
