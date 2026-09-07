@@ -21,6 +21,12 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(@types/node@26.4.1)(vite@8.2.2(@types/node@26.4.1))
 
+  packages/build-core:
+    devDependencies:
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+
 packages:
 
   '@biomejs/biome@2.5.12':

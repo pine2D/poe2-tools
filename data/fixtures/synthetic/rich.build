@@ -1,0 +1,51 @@
+{
+  "name": "Synthetic Rich - 0.5.5",
+  "author": "poe2-tools",
+  "link": "https://example.invalid/build",
+  "description": "<l>{<gold>{Leveling notes}}\nUse any staff until Act 3.",
+  "ascendancy": "Sorceress3",
+  "passives": [
+    "strength16",
+    { "id": "attributes30_", "additional_text": "<m>{<red>{Strength +5 is needed here}}" },
+    "AscendancyWitch1Notable4"
+  ],
+  "skills": [
+    {
+      "id": "Metadata/Items/Gems/SkillGemFlameblast",
+      "level_interval": [52, 100],
+      "additional_text": "Main skill",
+      "support_skills": [
+        "Metadata/Items/Gem/SupportGemConsideredCasting",
+        {
+          "id": "Metadata/Items/Gems/SupportGemSearingFlameTwo",
+          "level_interval": [1, 100],
+          "additional_text": "Take <green>{BEFORE} the totem"
+        }
+      ]
+    },
+    "Metadata/Items/Gems/SkillGemFirestorm"
+  ],
+  "inventory_slots": [
+    {
+      "additional_text": "Pyrophyte Staff\n1. 149% increased Spell Damage\n2. +7 to Level of all Fire Spell Skills\n3. Adds 2 to 4 Physical Damage to Attacks",
+      "inventory_id": "Weapon1",
+      "level_interval": [16, 100],
+      "slot_x": 0,
+      "slot_y": 0
+    },
+    { "inventory_id": "Belt1", "unique_name": "Surefooted Sigil", "slot_x": 0, "slot_y": 0 },
+    {
+      "additional_text": "<silver>{Any Charm}\n\n<grey>{Stat Priority\n-------------------\n1. +10 to maximum Life\n2. 20% increased Movement Speed}",
+      "inventory_id": "Charm1",
+      "slot_x": 2,
+      "slot_y": 0,
+      "level_interval": [1, 100]
+    },
+    {
+      "additional_text": "Ruby Ring\n1. +4.4% to Critical Hit Chance\n2. -10% to Fire Resistance\n3. 3% increased Attack Speed per 25 Dexterity",
+      "inventory_id": "Ring2",
+      "weapon_set": 0,
+      "extra_field": { "keep": true }
+    }
+  ]
+}
