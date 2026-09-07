@@ -4,189 +4,9 @@
     "gameVersion": "0.5.5",
     "fetchedAt": "2026-09-07T11:29:29.352Z",
     "tier": "primary",
-    "count": 3720
+    "count": 3684
   },
   "entries": [
-    {
-      "id": "pseudo.pseudo_total_cold_resistance",
-      "en": "+#% total to Cold Resistance",
-      "text": "+#% 冰冷抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_fire_resistance",
-      "en": "+#% total to Fire Resistance",
-      "text": "+#% 火焰抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_lightning_resistance",
-      "en": "+#% total to Lightning Resistance",
-      "text": "+#% 閃電抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_elemental_resistance",
-      "en": "+#% total Elemental Resistance",
-      "text": "+#% 元素抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_chaos_resistance",
-      "en": "+#% total to Chaos Resistance",
-      "text": "+#% 總混沌抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_resistance",
-      "en": "+#% total Resistance",
-      "text": "+#% 總抗性"
-    },
-    {
-      "id": "pseudo.pseudo_count_resistances",
-      "en": "# total Resistances",
-      "text": "# 總抗性"
-    },
-    {
-      "id": "pseudo.pseudo_count_elemental_resistances",
-      "en": "# total Elemental Resistances",
-      "text": "# 元素抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_all_elemental_resistances",
-      "en": "+#% total to all Elemental Resistances",
-      "text": "+#% 元素抗性"
-    },
-    {
-      "id": "pseudo.pseudo_total_strength",
-      "en": "+# total to Strength",
-      "text": "+# 力量"
-    },
-    {
-      "id": "pseudo.pseudo_total_dexterity",
-      "en": "+# total to Dexterity",
-      "text": "+# 敏捷"
-    },
-    {
-      "id": "pseudo.pseudo_total_intelligence",
-      "en": "+# total to Intelligence",
-      "text": "+# 智慧"
-    },
-    {
-      "id": "pseudo.pseudo_total_all_attributes",
-      "en": "+# total to all Attributes",
-      "text": "+# 全能力"
-    },
-    {
-      "id": "pseudo.pseudo_total_attributes",
-      "en": "+# total to Attributes",
-      "text": "+# 全能力"
-    },
-    {
-      "id": "pseudo.pseudo_total_life",
-      "en": "+# total maximum Life",
-      "text": "+# 最大生命"
-    },
-    {
-      "id": "pseudo.pseudo_total_mana",
-      "en": "+# total maximum Mana",
-      "text": "+# 最大魔力"
-    },
-    {
-      "id": "pseudo.pseudo_total_energy_shield",
-      "en": "+# total maximum Energy Shield",
-      "text": "+# 最大能量護盾"
-    },
-    {
-      "id": "pseudo.pseudo_increased_energy_shield",
-      "en": "#% total increased maximum Energy Shield",
-      "text": "增加 #% 最大能量護盾"
-    },
-    {
-      "id": "pseudo.pseudo_increased_movement_speed",
-      "en": "#% increased Movement Speed",
-      "text": "#% 增加移動速度"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_enchant_mods",
-      "en": "# Enchant Modifiers",
-      "text": "# 附魔詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_implicit_mods",
-      "en": "# Implicit Modifiers",
-      "text": "# 固定詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_prefix_mods",
-      "en": "# Prefix Modifiers",
-      "text": "# 前綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_suffix_mods",
-      "en": "# Suffix Modifiers",
-      "text": "# 後綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_affix_mods",
-      "en": "# Modifiers",
-      "text": "# 詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_desecrated_prefix_mods",
-      "en": "# Desecrated Prefix Modifiers",
-      "text": "#褻瀆前綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_desecrated_suffix_mods",
-      "en": "# Desecrated Suffix Modifiers",
-      "text": "#褻瀆後綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_desecrated_mods",
-      "en": "# Desecrated Modifiers",
-      "text": "#褻瀆詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_unrevealed_prefix_mods",
-      "en": "# Unrevealed Prefix Modifiers",
-      "text": "#未揭露前綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_unrevealed_suffix_mods",
-      "en": "# Unrevealed Suffix Modifiers",
-      "text": "#未揭露後綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_unrevealed_mods",
-      "en": "# Unrevealed Modifiers",
-      "text": "#未揭露詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_empty_prefix_mods",
-      "en": "# Empty Prefix Modifiers",
-      "text": "# 空前綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_empty_suffix_mods",
-      "en": "# Empty Suffix Modifiers",
-      "text": "# 空後綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_empty_affix_mods",
-      "en": "# Empty Modifiers",
-      "text": "# 空詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_fractured_mods",
-      "en": "# Fractured Modifiers",
-      "text": "# 破裂詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_crafted_mods",
-      "en": "# Crafted Modifiers",
-      "text": "# 工藝詞綴"
-    },
-    {
-      "id": "pseudo.pseudo_number_of_uses_remaining",
-      "en": "# uses remaining",
-      "text": "# 次剩餘使用次數"
-    },
     {
       "id": "explicit.stat_1050105434",
       "en": "# to maximum Mana",
@@ -2239,8 +2059,8 @@
     },
     {
       "id": "explicit.stat_603021645",
-      "en": "When a Party Member in your Presence Casts a Spell, you\nSacrifice #% of Mana and they Leech that Mana",
-      "text": "你存在範圍內的隊員施放法術時，\n你獻祭#%的魔力，而隊伍成員會偷取該魔力"
+      "en": "When a Party Member in your Presence Casts a Spell, you Sacrifice #% of Mana and they Leech that Mana",
+      "text": "你存在範圍內的隊員施放法術時， 你獻祭#%的魔力，而隊伍成員會偷取該魔力"
     },
     {
       "id": "explicit.stat_2734787892",
@@ -2434,7 +2254,7 @@
     },
     {
       "id": "explicit.stat_842299438",
-      "en": "Bolts fired by Crossbow Attacks have #% chance to not\nexpend Ammunition if you've Reloaded Recently",
+      "en": "Bolts fired by Crossbow Attacks have #% chance to not expend Ammunition if you've Reloaded Recently",
       "text": "若你近期裝填過時，十字弓攻擊發射的弩箭有#%機率不會消耗彈藥"
     },
     {
@@ -3029,8 +2849,8 @@
     },
     {
       "id": "explicit.stat_2894895028",
-      "en": "Damage over Time bypasses your Energy Shield\nWhile not on Full Life, Sacrifice #% of maximum Mana per Second to Recover that much Life",
-      "text": "未處於生命全滿狀態時，持續傷害會穿透你的能量護盾，\n每秒獻祭#%魔力並恢復等量生命"
+      "en": "Damage over Time bypasses your Energy Shield While not on Full Life, Sacrifice #% of maximum Mana per Second to Recover that much Life",
+      "text": "未處於生命全滿狀態時，持續傷害會穿透你的能量護盾， 每秒獻祭#%魔力並恢復等量生命"
     },
     {
       "id": "explicit.stat_4256314560",
@@ -4244,8 +4064,8 @@
     },
     {
       "id": "explicit.stat_1013492127",
-      "en": "Spells fire # additional Projectiles\nSpells fire Projectiles in a circle",
-      "text": "法術發射#個額外投射物\n法術的投射物以環狀射出"
+      "en": "Spells fire # additional Projectiles Spells fire Projectiles in a circle",
+      "text": "法術發射#個額外投射物 法術的投射物以環狀射出"
     },
     {
       "id": "explicit.stat_4195198267",
@@ -4264,8 +4084,8 @@
     },
     {
       "id": "explicit.stat_2626360934",
-      "en": "Wind Skills which can be boosted by Elemental Ground Surfaces count\nas being boosted by Chilled Ground",
-      "text": "可被元素地面強化的疾風技能視為\n受到冰緩地面強化"
+      "en": "Wind Skills which can be boosted by Elemental Ground Surfaces count as being boosted by Chilled Ground",
+      "text": "可被元素地面強化的疾風技能視為 受到冰緩地面強化"
     },
     {
       "id": "explicit.stat_793801176",
@@ -4319,8 +4139,8 @@
     },
     {
       "id": "explicit.stat_1602191394",
-      "en": "#% increased Rarity of Items found\nYour other Modifiers to Rarity of Items found do not apply",
-      "text": "增加#%找到物品的稀有度\n使你其他的物品稀有度詞綴無效"
+      "en": "#% increased Rarity of Items found Your other Modifiers to Rarity of Items found do not apply",
+      "text": "增加#%找到物品的稀有度 使你其他的物品稀有度詞綴無效"
     },
     {
       "id": "explicit.stat_1602294220",
@@ -4479,8 +4299,8 @@
     },
     {
       "id": "explicit.stat_331648983",
-      "en": "When you reload, triggers Gemini Surge to alternately\ngain # Cold Surge or # Fire Surge",
-      "text": "當你裝填時，觸發雙靈波動，\n交替獲得#冰冷波動或#火焰波動"
+      "en": "When you reload, triggers Gemini Surge to alternately gain # Cold Surge or # Fire Surge",
+      "text": "當你裝填時，觸發雙靈波動， 交替獲得#冰冷波動或#火焰波動"
     },
     {
       "id": "explicit.stat_2920970371",
@@ -4514,7 +4334,7 @@
     },
     {
       "id": "explicit.stat_3538915253",
-      "en": "On Hitting an enemy, gains maximum added Lightning damage equal to\nthe enemy's Power for 20 seconds, up to a total of #",
+      "en": "On Hitting an enemy, gains maximum added Lightning damage equal to the enemy's Power for 20 seconds, up to a total of #",
       "text": "擊中敵人時，在20秒內獲得等同於敵人強度的最大附加閃電傷害，最高總計#"
     },
     {
@@ -4719,8 +4539,8 @@
     },
     {
       "id": "explicit.stat_3407300125",
-      "en": "Increases and Reductions to Mana Regeneration Rate also\napply to Energy Shield Recharge Rate",
-      "text": "魔力回復率增減也會\n套用於能量護盾充能率"
+      "en": "Increases and Reductions to Mana Regeneration Rate also apply to Energy Shield Recharge Rate",
+      "text": "魔力回復率增減也會 套用於能量護盾充能率"
     },
     {
       "id": "explicit.stat_300723956",
@@ -4849,8 +4669,8 @@
     },
     {
       "id": "explicit.stat_2224139044",
-      "en": "Every second Slam Skill you use while Shapeshifted is Ancestrally Boosted\nEvery second Strike Skill you use while Shapeshifted is Ancestrally Boosted",
-      "text": "變形時你使用的每第二個重擊技能會受到先祖強化\n變形時你使用的每第二個打擊技能會受到先祖強化"
+      "en": "Every second Slam Skill you use while Shapeshifted is Ancestrally Boosted Every second Strike Skill you use while Shapeshifted is Ancestrally Boosted",
+      "text": "變形時你使用的每第二個重擊技能會受到先祖強化 變形時你使用的每第二個打擊技能會受到先祖強化"
     },
     {
       "id": "explicit.stat_525523040",
@@ -4949,8 +4769,8 @@
     },
     {
       "id": "explicit.stat_258955603",
-      "en": "Alternating every 5 seconds:\nTake #% more Damage from Hits\nTake #% more Damage over time",
-      "text": "每隔5秒替換：\n承受#%更多擊中傷害\n承受#%更多持續傷害"
+      "en": "Alternating every 5 seconds: Take #% more Damage from Hits Take #% more Damage over time",
+      "text": "每隔5秒替換： 承受#%更多擊中傷害 承受#%更多持續傷害"
     },
     {
       "id": "explicit.stat_1321104829",
@@ -4994,8 +4814,8 @@
     },
     {
       "id": "explicit.stat_3418590244",
-      "en": "Can only be applied to Precursor Tower Maps\nCompleting the Tower makes all nearby Maps accessible",
-      "text": "只能使用在先行者高塔地圖\n完成高塔會使周遭地圖改為可進入狀態"
+      "en": "Can only be applied to Precursor Tower Maps Completing the Tower makes all nearby Maps accessible",
+      "text": "只能使用在先行者高塔地圖 完成高塔會使周遭地圖改為可進入狀態"
     },
     {
       "id": "explicit.stat_3605834869",
@@ -5714,8 +5534,8 @@
     },
     {
       "id": "explicit.stat_627896047",
-      "en": "Can Attack as though using a One Handed Mace while both of your hand slots are empty\nUnarmed Attacks that would use an Equipped One Hand Mace's damage use this Item's damage",
-      "text": "當你的雙手欄位為空時，可視同使用單手錘進行攻擊\n使用裝備單手錘傷害的空手攻擊會使用此物品的傷害"
+      "en": "Can Attack as though using a One Handed Mace while both of your hand slots are empty Unarmed Attacks that would use an Equipped One Hand Mace's damage use this Item's damage",
+      "text": "當你的雙手欄位為空時，可視同使用單手錘進行攻擊 使用裝備單手錘傷害的空手攻擊會使用此物品的傷害"
     },
     {
       "id": "explicit.stat_1955786041",
@@ -5959,8 +5779,8 @@
     },
     {
       "id": "explicit.stat_19819865",
-      "en": "#% chance to revive one of your Persistent Minions when you kill an\n enemy affected by Abyssal Wasting",
-      "text": "你擊殺受深淵耗損影響的目標時\n有#%機率使你的其中一名持續召喚物復甦"
+      "en": "#% chance to revive one of your Persistent Minions when you kill an enemy affected by Abyssal Wasting",
+      "text": "你擊殺受深淵耗損影響的目標時 有#%機率使你的其中一名持續召喚物復甦"
     },
     {
       "id": "explicit.stat_2480962043",
@@ -5994,8 +5814,8 @@
     },
     {
       "id": "explicit.stat_223138829",
-      "en": "Inflict Elemental Exposure to Enemies 3 metres in front of you\nfor 4 seconds, every 0.25 seconds while raised",
-      "text": "對你前方3公尺內敵人施加元素曝曬，\n持續4秒，舉起時每0.25秒觸發"
+      "en": "Inflict Elemental Exposure to Enemies 3 metres in front of you for 4 seconds, every 0.25 seconds while raised",
+      "text": "對你前方3公尺內敵人施加元素曝曬， 持續4秒，舉起時每0.25秒觸發"
     },
     {
       "id": "explicit.stat_3642528642|4",
@@ -6174,8 +5994,8 @@
     },
     {
       "id": "explicit.stat_1509533589",
-      "en": "Enemies take #% increased Damage for each Elemental Ailment type among\nyour Ailments on them",
-      "text": "你對敵人施加的異常狀態中每有一種元素異常狀態，增加#%\n敵人承受的傷害"
+      "en": "Enemies take #% increased Damage for each Elemental Ailment type among your Ailments on them",
+      "text": "你對敵人施加的異常狀態中每有一種元素異常狀態，增加#% 敵人承受的傷害"
     },
     {
       "id": "explicit.stat_3679769182",
@@ -6214,8 +6034,8 @@
     },
     {
       "id": "explicit.stat_2051332707",
-      "en": "Enemies you kill while they are affected by Abyssal Wasting\n grant #% increased Flask Charges",
-      "text": "增加#%你擊殺受深淵耗損影響的目標時\n獲得的藥劑充能"
+      "en": "Enemies you kill while they are affected by Abyssal Wasting grant #% increased Flask Charges",
+      "text": "增加#%你擊殺受深淵耗損影響的目標時 獲得的藥劑充能"
     },
     {
       "id": "explicit.stat_3891922348",
@@ -6254,8 +6074,8 @@
     },
     {
       "id": "explicit.stat_3418580811|22",
-      "en": "Remembrancing # songworthy deeds by the line of Medved\nPassives in radius are Conquered by the Kalguur",
-      "text": "緬懷#個梅德偉血脈值得歌頌的事蹟\n範圍內的天賦受卡爾葛征服"
+      "en": "Remembrancing # songworthy deeds by the line of Medved Passives in radius are Conquered by the Kalguur",
+      "text": "緬懷#個梅德偉血脈值得歌頌的事蹟 範圍內的天賦受卡爾葛征服"
     },
     {
       "id": "explicit.stat_4123841473",
@@ -6364,8 +6184,8 @@
     },
     {
       "id": "explicit.stat_3418580811|23",
-      "en": "Remembrancing # songworthy deeds by the line of Olroth\nPassives in radius are Conquered by the Kalguur",
-      "text": "緬懷#個奧爾羅斯血脈值得歌頌的事蹟\n範圍內的天賦受卡爾葛征服"
+      "en": "Remembrancing # songworthy deeds by the line of Olroth Passives in radius are Conquered by the Kalguur",
+      "text": "緬懷#個奧爾羅斯血脈值得歌頌的事蹟 範圍內的天賦受卡爾葛征服"
     },
     {
       "id": "explicit.stat_3743375737",
@@ -6404,8 +6224,8 @@
     },
     {
       "id": "explicit.stat_3881997959",
-      "en": "Increases Movement Speed by 25%, plus 1% per # Evasion Rating, up to a maximum of 75%\nOther Modifiers to Movement Speed except for Sprinting do not apply",
-      "text": "增加25%移動速度，每#點閃避值額外增加1%，上限為75%。\n除套用至衝刺以外的其他移動速度詞綴將失效"
+      "en": "Increases Movement Speed by 25%, plus 1% per # Evasion Rating, up to a maximum of 75% Other Modifiers to Movement Speed except for Sprinting do not apply",
+      "text": "增加25%移動速度，每#點閃避值額外增加1%，上限為75%。 除套用至衝刺以外的其他移動速度詞綴將失效"
     },
     {
       "id": "explicit.stat_3249412463",
@@ -6614,8 +6434,8 @@
     },
     {
       "id": "explicit.stat_3418580811|21",
-      "en": "Remembrancing # songworthy deeds by the line of Vorana\nPassives in radius are Conquered by the Kalguur",
-      "text": "緬懷#個沃拉娜血脈值得歌頌的事蹟\n範圍內的天賦受卡爾葛征服"
+      "en": "Remembrancing # songworthy deeds by the line of Vorana Passives in radius are Conquered by the Kalguur",
+      "text": "緬懷#個沃拉娜血脈值得歌頌的事蹟 範圍內的天賦受卡爾葛征服"
     },
     {
       "id": "explicit.stat_1000739259",
@@ -6719,8 +6539,8 @@
     },
     {
       "id": "explicit.stat_1580426064",
-      "en": "Cannot use Life Flasks\nNon-Unique Life Flasks apply their Effects constantly\nRecovery from Life Flasks cannot be Instant\nRecovery from your Life Flasks cannot be applied to anything other than you",
-      "text": "無法使用生命藥劑\n非傳奇生命藥劑將持續套用其效果\n來自生命藥劑的恢復無法為立即恢復\n來自生命藥劑的恢復僅能套用於你"
+      "en": "Cannot use Life Flasks Non-Unique Life Flasks apply their Effects constantly Recovery from Life Flasks cannot be Instant Recovery from your Life Flasks cannot be applied to anything other than you",
+      "text": "無法使用生命藥劑 非傳奇生命藥劑將持續套用其效果 來自生命藥劑的恢復無法為立即恢復 來自生命藥劑的恢復僅能套用於你"
     },
     {
       "id": "explicit.stat_1726353460",
@@ -6789,8 +6609,8 @@
     },
     {
       "id": "explicit.stat_3451259830",
-      "en": "#% chance to gain Onslaught for 3 seconds when you kill an\n enemy affected by Abyssal Wasting",
-      "text": "你擊殺受深淵耗損影響的目標時\n有#%機率獲得猛攻，持續3秒"
+      "en": "#% chance to gain Onslaught for 3 seconds when you kill an enemy affected by Abyssal Wasting",
+      "text": "你擊殺受深淵耗損影響的目標時 有#%機率獲得猛攻，持續3秒"
     },
     {
       "id": "explicit.stat_2915988346",
@@ -6824,8 +6644,8 @@
     },
     {
       "id": "explicit.stat_4128965096",
-      "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill\nRemove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
-      "text": "每使用擲彈技能#次獲得1層炸裂節奏\n擁有10層時移除所有炸裂節奏並獲得炸裂狂熱，持續10秒"
+      "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill Remove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
+      "text": "每使用擲彈技能#次獲得1層炸裂節奏 擁有10層時移除所有炸裂節奏並獲得炸裂狂熱，持續10秒"
     },
     {
       "id": "explicit.stat_1175213674",
@@ -6894,8 +6714,8 @@
     },
     {
       "id": "explicit.stat_885925163",
-      "en": "Copy a random Modifier from each enemy in your Presence when\nyou Shapeshift to an Animal form\nModifiers gained this way are lost after # seconds or when you next Shapeshift",
-      "text": "當你變形成動物型態時，從你存在中的每一名敵人複製一條詞綴\n以此方式獲得的詞綴會在#秒後或是下一次變形時失去"
+      "en": "Copy a random Modifier from each enemy in your Presence when you Shapeshift to an Animal form Modifiers gained this way are lost after # seconds or when you next Shapeshift",
+      "text": "當你變形成動物型態時，從你存在中的每一名敵人複製一條詞綴 以此方式獲得的詞綴會在#秒後或是下一次變形時失去"
     },
     {
       "id": "explicit.stat_1243721142",
@@ -7209,8 +7029,8 @@
     },
     {
       "id": "explicit.stat_1777740627",
-      "en": "Life that would be lost by taking Damage is instead Reserved\nuntil you take no Damage to Life for # second",
-      "text": "將承受傷害損失的生命改為保留，\n直到你#秒內沒受到傷害"
+      "en": "Life that would be lost by taking Damage is instead Reserved until you take no Damage to Life for # second",
+      "text": "將承受傷害損失的生命改為保留， 直到你#秒內沒受到傷害"
     },
     {
       "id": "explicit.stat_3948285912",
@@ -7394,8 +7214,8 @@
     },
     {
       "id": "explicit.stat_1695767482",
-      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of\nyour maximum Life as Physical damage per second",
-      "text": "格擋時對目標造成持續#秒的腐化之血\n每秒造成等同於你最大生命#%的物理傷害"
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
+      "text": "格擋時對目標造成持續#秒的腐化之血 每秒造成等同於你最大生命#%的物理傷害"
     },
     {
       "id": "explicit.stat_2306588612",
@@ -7434,8 +7254,8 @@
     },
     {
       "id": "explicit.stat_461663422",
-      "en": "#% increased Effect of Jewel Socket Passive Skills\ncontaining Corrupted Magic Jewels",
-      "text": "增加#%含有已汙染魔法珠寶的\n珠寶插槽天賦效果"
+      "en": "#% increased Effect of Jewel Socket Passive Skills containing Corrupted Magic Jewels",
+      "text": "增加#%含有已汙染魔法珠寶的 珠寶插槽天賦效果"
     },
     {
       "id": "explicit.stat_1705072014",
@@ -7554,7 +7374,7 @@
     },
     {
       "id": "explicit.stat_2422708892|32349",
-      "en": "Passives in Radius of Giant's Blood can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Giant's Blood can be Allocated without being connected to your tree",
       "text": "範圍巨人之血內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7569,7 +7389,7 @@
     },
     {
       "id": "explicit.stat_2422708892|18684",
-      "en": "Passives in Radius of Avatar of Fire can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Avatar of Fire can be Allocated without being connected to your tree",
       "text": "範圍火之化身內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7579,7 +7399,7 @@
     },
     {
       "id": "explicit.stat_2422708892|37484",
-      "en": "Passives in Radius of Primal Hunger can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Primal Hunger can be Allocated without being connected to your tree",
       "text": "範圍原初飢餓內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7594,7 +7414,7 @@
     },
     {
       "id": "explicit.stat_2422708892|19288",
-      "en": "Passives in Radius of Glancing Blows can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Glancing Blows can be Allocated without being connected to your tree",
       "text": "範圍側身之擊內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7639,7 +7459,7 @@
     },
     {
       "id": "explicit.stat_2422708892|45202",
-      "en": "Passives in Radius of Ancestral Bond can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Ancestral Bond can be Allocated without being connected to your tree",
       "text": "範圍先祖魂約內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7664,7 +7484,7 @@
     },
     {
       "id": "explicit.stat_2422708892|55048",
-      "en": "Passives in Radius of Pain Attunement can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Pain Attunement can be Allocated without being connected to your tree",
       "text": "範圍苦痛靈曲內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7679,7 +7499,7 @@
     },
     {
       "id": "explicit.stat_2422708892|46742",
-      "en": "Passives in Radius of Elemental Equilibrium can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Elemental Equilibrium can be Allocated without being connected to your tree",
       "text": "範圍元素之相內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7744,17 +7564,17 @@
     },
     {
       "id": "explicit.stat_2422708892|34497",
-      "en": "Passives in Radius of Heartstopper can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Heartstopper can be Allocated without being connected to your tree",
       "text": "範圍心靈永止內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_2422708892|25100",
-      "en": "Passives in Radius of Oasis can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Oasis can be Allocated without being connected to your tree",
       "text": "範圍幻景綠洲內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_2422708892|14226",
-      "en": "Passives in Radius of Dance with Death can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Dance with Death can be Allocated without being connected to your tree",
       "text": "範圍和死共舞內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7769,12 +7589,12 @@
     },
     {
       "id": "explicit.stat_2422708892|56605",
-      "en": "Passives in Radius of Bulwark can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Bulwark can be Allocated without being connected to your tree",
       "text": "範圍守護內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_2422708892|33369",
-      "en": "Passives in Radius of Vaal Pact can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Vaal Pact can be Allocated without being connected to your tree",
       "text": "範圍瓦爾冥約內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7804,7 +7624,7 @@
     },
     {
       "id": "explicit.stat_2422708892|56349",
-      "en": "Passives in Radius of Chaos Inoculation can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Chaos Inoculation can be Allocated without being connected to your tree",
       "text": "範圍異靈之體內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7814,7 +7634,7 @@
     },
     {
       "id": "explicit.stat_2422708892|33404",
-      "en": "Passives in Radius of Eternal Youth can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Eternal Youth can be Allocated without being connected to your tree",
       "text": "範圍青春永駐內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7834,13 +7654,13 @@
     },
     {
       "id": "explicit.stat_2422708892|39935",
-      "en": "Passives in Radius of Necromantic Talisman can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Necromantic Talisman can be Allocated without being connected to your tree",
       "text": "範圍靈能魔符內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_3492740640",
-      "en": "Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds\nLose all Runic Bindings when you Shapeshift to gain that much Unbound Potential",
-      "text": "法術擊中時獲得1層符文束縛，每0.5秒不超過一次\n當你變形時失去所有符文束縛以獲得同等數量的無縛潛能"
+      "en": "Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds Lose all Runic Bindings when you Shapeshift to gain that much Unbound Potential",
+      "text": "法術擊中時獲得1層符文束縛，每0.5秒不超過一次 當你變形時失去所有符文束縛以獲得同等數量的無縛潛能"
     },
     {
       "id": "explicit.stat_1311130924",
@@ -7854,28 +7674,28 @@
     },
     {
       "id": "explicit.stat_3418580811|27",
-      "en": "Glorifying the defilement of # souls in tribute to Tecrod\nPassives in radius are Conquered by the Abyssals\nDesecration makes this item unstable",
-      "text": "以#個玷污的靈魂榮耀特克羅德之名\n半徑範圍內的天賦受深淵族征服\n褻瀆此物品會使其變得不穩定"
+      "en": "Glorifying the defilement of # souls in tribute to Tecrod Passives in radius are Conquered by the Abyssals Desecration makes this item unstable",
+      "text": "以#個玷污的靈魂榮耀特克羅德之名 半徑範圍內的天賦受深淵族征服 褻瀆此物品會使其變得不穩定"
     },
     {
       "id": "explicit.stat_2422708892|33979",
-      "en": "Passives in Radius of Conduit can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Conduit can be Allocated without being connected to your tree",
       "text": "範圍能量連結內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_2422708892|51749",
-      "en": "Passives in Radius of Blood Magic can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Blood Magic can be Allocated without being connected to your tree",
       "text": "範圍祭血術內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_2422708892|14540",
-      "en": "Passives in Radius of Unwavering Stance can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Unwavering Stance can be Allocated without being connected to your tree",
       "text": "範圍烈士意志內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
       "id": "explicit.stat_3418580811|28",
-      "en": "Glorifying the defilement of # souls in tribute to Ulaman\nPassives in radius are Conquered by the Abyssals\nDesecration makes this item unstable",
-      "text": "以#個玷污的靈魂榮耀烏拉曼之名\n半徑範圍內的天賦受深淵族征服\n褻瀆此物品會使其變得不穩定"
+      "en": "Glorifying the defilement of # souls in tribute to Ulaman Passives in radius are Conquered by the Abyssals Desecration makes this item unstable",
+      "text": "以#個玷污的靈魂榮耀烏拉曼之名 半徑範圍內的天賦受深淵族征服 褻瀆此物品會使其變得不穩定"
     },
     {
       "id": "explicit.stat_2760344900",
@@ -7884,7 +7704,7 @@
     },
     {
       "id": "explicit.stat_2422708892|52",
-      "en": "Passives in Radius of Zealot's Oath can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Zealot's Oath can be Allocated without being connected to your tree",
       "text": "範圍狂熱者的誓言內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7894,7 +7714,7 @@
     },
     {
       "id": "explicit.stat_2422708892|44017",
-      "en": "Passives in Radius of Resolute Technique can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Resolute Technique can be Allocated without being connected to your tree",
       "text": "範圍堅毅之心內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7904,8 +7724,8 @@
     },
     {
       "id": "explicit.stat_3418580811|25",
-      "en": "Glorifying the defilement of # souls in tribute to Kulemak\nPassives in radius are Conquered by the Abyssals\nDesecration makes this item unstable",
-      "text": "以#個玷污的靈魂榮耀骷髏馬克之名\n半徑範圍內的天賦受深淵族征服\n褻瀆此物品會使其變得不穩定"
+      "en": "Glorifying the defilement of # souls in tribute to Kulemak Passives in radius are Conquered by the Abyssals Desecration makes this item unstable",
+      "text": "以#個玷污的靈魂榮耀骷髏馬克之名 半徑範圍內的天賦受深淵族征服 褻瀆此物品會使其變得不穩定"
     },
     {
       "id": "explicit.stat_3470876581",
@@ -7919,7 +7739,7 @@
     },
     {
       "id": "explicit.stat_2422708892|28492",
-      "en": "Passives in Radius of Iron Reflexes can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Iron Reflexes can be Allocated without being connected to your tree",
       "text": "範圍霸體內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7939,7 +7759,7 @@
     },
     {
       "id": "explicit.stat_2422708892|47759",
-      "en": "Passives in Radius of Whispers of Doom can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Whispers of Doom can be Allocated without being connected to your tree",
       "text": "範圍滅世之語內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -7999,7 +7819,7 @@
     },
     {
       "id": "explicit.stat_2422708892|45918",
-      "en": "Passives in Radius of Mind Over Matter can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Mind Over Matter can be Allocated without being connected to your tree",
       "text": "範圍心靈昇華內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -8079,8 +7899,8 @@
     },
     {
       "id": "explicit.stat_3418580811|26",
-      "en": "Glorifying the defilement of # souls in tribute to Kurgal\nPassives in radius are Conquered by the Abyssals\nDesecration makes this item unstable",
-      "text": "以#個玷污的靈魂榮耀柯戈之名\n半徑範圍內的天賦受深淵族征服\n褻瀆此物品會使其變得不穩定"
+      "en": "Glorifying the defilement of # souls in tribute to Kurgal Passives in radius are Conquered by the Abyssals Desecration makes this item unstable",
+      "text": "以#個玷污的靈魂榮耀柯戈之名 半徑範圍內的天賦受深淵族征服 褻瀆此物品會使其變得不穩定"
     },
     {
       "id": "explicit.stat_3588388638",
@@ -8159,12 +7979,12 @@
     },
     {
       "id": "explicit.stat_3927679277",
-      "en": "#% chance when collecting an Elemental Infusion to gain an\nadditional Elemental Infusion of the same type",
+      "en": "#% chance when collecting an Elemental Infusion to gain an additional Elemental Infusion of the same type",
       "text": "拾取元素灌注時，有#%機率獲得額外一個同類型的元素灌注"
     },
     {
       "id": "explicit.stat_2422708892|41861",
-      "en": "Passives in Radius of Trusted Kinship can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Trusted Kinship can be Allocated without being connected to your tree",
       "text": "範圍可信之情內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -8229,8 +8049,8 @@
     },
     {
       "id": "explicit.stat_3418580811|24",
-      "en": "Glorifying the defilement of # souls in tribute to Amanamu\nPassives in radius are Conquered by the Abyssals\nDesecration makes this item unstable",
-      "text": "以#個玷污的靈魂榮耀阿姆納姆之名\n半徑範圍內的天賦受深淵族征服\n褻瀆此物品會使其變得不穩定"
+      "en": "Glorifying the defilement of # souls in tribute to Amanamu Passives in radius are Conquered by the Abyssals Desecration makes this item unstable",
+      "text": "以#個玷污的靈魂榮耀阿姆納姆之名 半徑範圍內的天賦受深淵族征服 褻瀆此物品會使其變得不穩定"
     },
     {
       "id": "explicit.stat_656291658",
@@ -8319,7 +8139,7 @@
     },
     {
       "id": "explicit.stat_2422708892|57513",
-      "en": "Passives in Radius of Eldritch Battery can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Eldritch Battery can be Allocated without being connected to your tree",
       "text": "範圍異能魔力內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -8359,8 +8179,8 @@
     },
     {
       "id": "explicit.stat_971590056",
-      "en": "Inflict Anaemia on Hit\nAnaemia allows # Corrupted Blood debuffs to be inflicted on enemies",
-      "text": "擊中時施加缺血\n缺血允許敵人被施加#層腐化之血減益"
+      "en": "Inflict Anaemia on Hit Anaemia allows # Corrupted Blood debuffs to be inflicted on enemies",
+      "text": "擊中時施加缺血 缺血允許敵人被施加#層腐化之血減益"
     },
     {
       "id": "explicit.stat_448592698|143",
@@ -8399,7 +8219,7 @@
     },
     {
       "id": "explicit.stat_2422708892|49547",
-      "en": "Passives in Radius of Scarred Faith can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Scarred Faith can be Allocated without being connected to your tree",
       "text": "範圍創傷信仰內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -8489,7 +8309,7 @@
     },
     {
       "id": "explicit.stat_2422708892|61942",
-      "en": "Passives in Radius of Lord of the Wilds can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Lord of the Wilds can be Allocated without being connected to your tree",
       "text": "範圍荒野領主內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -8979,7 +8799,7 @@
     },
     {
       "id": "explicit.stat_2422708892|25520",
-      "en": "Passives in Radius of Resonance can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Resonance can be Allocated without being connected to your tree",
       "text": "範圍共鳴內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -9129,7 +8949,7 @@
     },
     {
       "id": "explicit.stat_2422708892|9085",
-      "en": "Passives in Radius of Crimson Assault can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Crimson Assault can be Allocated without being connected to your tree",
       "text": "範圍緋紅攻擊內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -9389,7 +9209,7 @@
     },
     {
       "id": "explicit.stat_2422708892|49363",
-      "en": "Passives in Radius of Wildsurge Incantation can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Wildsurge Incantation can be Allocated without being connected to your tree",
       "text": "範圍荒野湧浪咒內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -9439,8 +9259,8 @@
     },
     {
       "id": "explicit.stat_436406826",
-      "en": "Players are Marked for Death for # seconds\nafter killing a Rare or Unique monster",
-      "text": "擊殺1隻稀有或傳奇怪物後\n玩家受到死亡印記，持續#秒"
+      "en": "Players are Marked for Death for # seconds after killing a Rare or Unique monster",
+      "text": "擊殺1隻稀有或傳奇怪物後 玩家受到死亡印記，持續#秒"
     },
     {
       "id": "explicit.stat_448592698|82",
@@ -9699,7 +9519,7 @@
     },
     {
       "id": "explicit.stat_2422708892|11230",
-      "en": "Passives in Radius of Ritual Cadence can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Ritual Cadence can be Allocated without being connected to your tree",
       "text": "範圍祭祀終章內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -9744,7 +9564,7 @@
     },
     {
       "id": "explicit.stat_2422708892|64601",
-      "en": "Passives in Radius of Hollow Palm Technique can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Hollow Palm Technique can be Allocated without being connected to your tree",
       "text": "範圍空掌之術內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -10009,8 +9829,8 @@
     },
     {
       "id": "explicit.stat_3128077011",
-      "en": "#% increased Effect of Jewel Socket Passive Skills\ncontaining Corrupted Rare Jewels",
-      "text": "增加#%含有已汙染稀有珠寶的\n珠寶插槽天賦效果"
+      "en": "#% increased Effect of Jewel Socket Passive Skills containing Corrupted Rare Jewels",
+      "text": "增加#%含有已汙染稀有珠寶的 珠寶插槽天賦效果"
     },
     {
       "id": "explicit.stat_1099200124",
@@ -10294,7 +10114,7 @@
     },
     {
       "id": "explicit.stat_2422708892|42680",
-      "en": "Passives in Radius of Blackflame Covenant can be Allocated\nwithout being connected to your tree",
+      "en": "Passives in Radius of Blackflame Covenant can be Allocated without being connected to your tree",
       "text": "範圍黯炎盟約內的天賦可以在沒有連結你的天賦樹下被配置"
     },
     {
@@ -10774,7 +10594,7 @@
     },
     {
       "id": "explicit.stat_1617268696",
-      "en": "Burning Enemies you kill have a #% chance to Explode, dealing a\ntenth of their maximum Life as Fire Damage",
+      "en": "Burning Enemies you kill have a #% chance to Explode, dealing a tenth of their maximum Life as Fire Damage",
       "text": "你擊殺的燃燒敵人有#%機率爆炸，造成等同於其最大生命十分之一的火焰傷害"
     },
     {
@@ -11184,8 +11004,8 @@
     },
     {
       "id": "explicit.stat_2889807051",
-      "en": "Melee Hits count as Rampage Kills\nRampage",
-      "text": "近戰擊中視為暴怒擊殺\n暴怒"
+      "en": "Melee Hits count as Rampage Kills Rampage",
+      "text": "近戰擊中視為暴怒擊殺 暴怒"
     },
     {
       "id": "explicit.stat_2954116742|56806",
@@ -11834,8 +11654,8 @@
     },
     {
       "id": "explicit.stat_1217651243",
-      "en": "Breaches expand to at least # metre in radius\nBreaches remain open while there are alive Breach Monsters",
-      "text": "裂痕擴展半徑至少為#公尺\n只要仍有存活的裂痕怪物，裂痕就會保持開啟的狀態"
+      "en": "Breaches expand to at least # metre in radius Breaches remain open while there are alive Breach Monsters",
+      "text": "裂痕擴展半徑至少為#公尺 只要仍有存活的裂痕怪物，裂痕就會保持開啟的狀態"
     },
     {
       "id": "explicit.stat_2954116742|21453",
@@ -12579,18 +12399,18 @@
     },
     {
       "id": "implicit.stat_4041853756",
-      "en": "Adds Irradiated to a Map \n# use remaining",
-      "text": "在地圖內加入照耀區域\n剩餘#次使用"
+      "en": "Adds Irradiated to a Map # use remaining",
+      "text": "在地圖內加入照耀區域 剩餘#次使用"
     },
     {
       "id": "implicit.stat_3879011313",
-      "en": "Adds a Mirror of Delirium to a Map \n# use remaining",
-      "text": "在地圖內加入一個譫妄之鏡\n剩餘#次使用次數"
+      "en": "Adds a Mirror of Delirium to a Map # use remaining",
+      "text": "在地圖內加入一個譫妄之鏡 剩餘#次使用次數"
     },
     {
       "id": "implicit.stat_2219129443",
-      "en": "Adds an Otherworldy Breach to a Map \n# use remaining",
-      "text": "在地圖內加入一個裂痕\n剩餘#次使用次數"
+      "en": "Adds an Otherworldy Breach to a Map # use remaining",
+      "text": "在地圖內加入一個裂痕 剩餘#次使用次數"
     },
     {
       "id": "implicit.stat_958696139",
@@ -12599,13 +12419,13 @@
     },
     {
       "id": "implicit.stat_3376302538",
-      "en": "Empowers the Map Boss of a Map \n# use remaining",
+      "en": "Empowers the Map Boss of a Map # use remaining",
       "text": "強化帶有頭目的地圖剩餘#次使用"
     },
     {
       "id": "implicit.stat_3166002380",
-      "en": "Adds Ritual Altars to a Map \n# use remaining",
-      "text": "在地圖內加入祭祀神壇\n剩餘#次使用"
+      "en": "Adds Ritual Altars to a Map # use remaining",
+      "text": "在地圖內加入祭祀神壇 剩餘#次使用"
     },
     {
       "id": "implicit.stat_462041840",
@@ -12614,13 +12434,13 @@
     },
     {
       "id": "implicit.stat_2369421690",
-      "en": "Adds Abysses to a Map \n# use remaining",
-      "text": "在地圖內加入一個深淵\n剩餘#次使用次數"
+      "en": "Adds Abysses to a Map # use remaining",
+      "text": "在地圖內加入一個深淵 剩餘#次使用次數"
     },
     {
       "id": "implicit.stat_3035440454",
-      "en": "Adds Vaal Beacons to a Map \n# use remaining",
-      "text": "在地圖內加入瓦爾烽塔\n剩餘#次使用次數"
+      "en": "Adds Vaal Beacons to a Map # use remaining",
+      "text": "在地圖內加入瓦爾烽塔 剩餘#次使用次數"
     },
     {
       "id": "implicit.stat_1541903247",
@@ -12789,8 +12609,8 @@
     },
     {
       "id": "implicit.stat_1714888636",
-      "en": "Adds a Kalguuran Expedition to a Map \n# use remaining",
-      "text": "在地圖內加入一個卡爾葛墓地\n剩餘#次使用次數"
+      "en": "Adds a Kalguuran Expedition to a Map # use remaining",
+      "text": "在地圖內加入一個卡爾葛墓地 剩餘#次使用次數"
     },
     {
       "id": "implicit.stat_2650263616",
@@ -15869,7 +15689,7 @@
     },
     {
       "id": "rune.stat_3909696841",
-      "en": "Bonded: #% chance when collecting an Elemental Infusion to gain an\nadditional Elemental Infusion of the same type",
+      "en": "Bonded: #% chance when collecting an Elemental Infusion to gain an additional Elemental Infusion of the same type",
       "text": "命定: 拾取元素灌注時，有#%機率獲得額外一個同類型的元素灌注"
     },
     {
@@ -16384,8 +16204,8 @@
     },
     {
       "id": "rune.stat_2703838669",
-      "en": "#% increased Movement Speed per 15 Spirit, up to a maximum of 40%\nOther Modifiers to Movement Speed except for Sprinting do not apply",
-      "text": "每15精魂增加#%移動速度，上限為40%。\n除套用至衝刺的外其他移動速度詞墜將失效"
+      "en": "#% increased Movement Speed per 15 Spirit, up to a maximum of 40% Other Modifiers to Movement Speed except for Sprinting do not apply",
+      "text": "每15精魂增加#%移動速度，上限為40%。 除套用至衝刺的外其他移動速度詞墜將失效"
     },
     {
       "id": "rune.stat_4129869957",
@@ -16469,8 +16289,8 @@
     },
     {
       "id": "rune.stat_2691854696",
-      "en": "Bonded: Damage of Enemies Hitting you is Unlucky if\nyour Runic Ward has been damaged Recently",
-      "text": "命定: 若你的符文保護近期被傷害\n敵人擊中你的傷害很不幸"
+      "en": "Bonded: Damage of Enemies Hitting you is Unlucky if your Runic Ward has been damaged Recently",
+      "text": "命定: 若你的符文保護近期被傷害 敵人擊中你的傷害很不幸"
     },
     {
       "id": "rune.stat_2200571612",
@@ -16704,7 +16524,7 @@
     },
     {
       "id": "rune.stat_3557924960",
-      "en": "Gain #% of Damage as Extra Damage of a random Element per\nRune Socketed in Equipped Items",
+      "en": "Gain #% of Damage as Extra Damage of a random Element per Rune Socketed in Equipped Items",
       "text": "裝備的物品中每鑲嵌一個符文，即獲得等同於#%傷害的額外隨機元素傷害"
     },
     {
@@ -16884,8 +16704,8 @@
     },
     {
       "id": "rune.stat_967155385",
-      "en": "Prevent #% of Damage from Deflected Hits if you've\nDeflected no Hits Recently",
-      "text": "若你近期沒有偏斜擊中，\n避免#%來自偏斜擊中的傷害"
+      "en": "Prevent #% of Damage from Deflected Hits if you've Deflected no Hits Recently",
+      "text": "若你近期沒有偏斜擊中， 避免#%來自偏斜擊中的傷害"
     },
     {
       "id": "rune.stat_1678831767",
@@ -16984,8 +16804,8 @@
     },
     {
       "id": "rune.stat_2241849004",
-      "en": "Energy Shield Recharge starts after spending a total of\n 2000 Mana, no more than once every 2 seconds",
-      "text": "消耗2000魔力後開始充能能量護盾，\n效果每2秒只能觸發一次"
+      "en": "Energy Shield Recharge starts after spending a total of 2000 Mana, no more than once every 2 seconds",
+      "text": "消耗2000魔力後開始充能能量護盾， 效果每2秒只能觸發一次"
     },
     {
       "id": "rune.stat_1354252351",
@@ -17049,7 +16869,7 @@
     },
     {
       "id": "rune.stat_2444976134",
-      "en": "Gain Maximum Energy Shield equal to #% of total\nStrength Requirements of Equipped Armour Items",
+      "en": "Gain Maximum Energy Shield equal to #% of total Strength Requirements of Equipped Armour Items",
       "text": "獲得等同於所裝備護甲物品總力量需求#%的最大能量護盾"
     },
     {
@@ -17139,8 +16959,8 @@
     },
     {
       "id": "rune.stat_4282982513",
-      "en": "Increases and Reductions to Movement Speed also\n apply to Energy Shield Recharge Rate",
-      "text": "移動速度的增減同時套用到\n能量護盾充能率"
+      "en": "Increases and Reductions to Movement Speed also apply to Energy Shield Recharge Rate",
+      "text": "移動速度的增減同時套用到 能量護盾充能率"
     },
     {
       "id": "rune.stat_4111152445",

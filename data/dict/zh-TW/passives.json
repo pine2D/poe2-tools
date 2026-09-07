@@ -4,7 +4,7 @@
     "gameVersion": "0.5.5",
     "fetchedAt": "2026-09-07T11:29:30.653Z",
     "tier": "gray",
-    "count": 5032
+    "count": 4927
   },
   "entries": {
     "lightning14": {
@@ -170,10 +170,6 @@
     "monkchakra23": {
       "en": "Non-Damaging Ailment Magnitude",
       "text": "非傷害型異常狀態幅度"
-    },
-    "AscendancyDuelist3Notable5": {
-      "en": "[DNT-UNUSED] Duelist3Notable5",
-      "text": "[DNT-UNUSED] Duelist3Notable5"
     },
     "shield13": {
       "en": "Shield Block",
@@ -343,10 +339,6 @@
       "en": "Fire Damage",
       "text": "火焰傷害"
     },
-    "AscendancyShadow1Notable5": {
-      "en": "[DNT-UNUSED] Shadow1Notable5",
-      "text": "[DNT-UNUSED] Shadow1Notable5"
-    },
     "fire53_": {
       "en": "Ignite Magnitude and Poison Magnitude",
       "text": "點燃幅度和中毒幅度"
@@ -422,10 +414,6 @@
     "armour_and_evasion32": {
       "en": "Armour and Evasion",
       "text": "護甲和閃避"
-    },
-    "AscendancyShadow2Notable7": {
-      "en": "[DNT-UNUSED] Shadow2Notable7",
-      "text": "[DNT-UNUSED] Shadow2Notable7"
     },
     "getting_hit17": {
       "en": "Thorns",
@@ -675,10 +663,6 @@
       "en": "Totem Damage",
       "text": "圖騰傷害"
     },
-    "AscendancyTemplar2Notable6": {
-      "en": "[DNT-UNUSED] Templar2Notable6",
-      "text": "[DNT-UNUSED] Templar2Notable6"
-    },
     "azmerianimals28": {
       "en": "Damage",
       "text": "傷害"
@@ -694,10 +678,6 @@
     "witch_sorceress_notable2": {
       "en": "Pure Energy",
       "text": "純淨能量"
-    },
-    "AscendancyTemplar1Notable2": {
-      "en": "[DNT-UNUSED] Templar1Notable2",
-      "text": "[DNT-UNUSED] Templar1Notable2"
     },
     "dexterity110": {
       "en": "Dexterity",
@@ -1091,10 +1071,6 @@
       "en": "Unbound Encore",
       "text": "無縛安可"
     },
-    "AscendancyDuelist3Notable1": {
-      "en": "[DNT-UNUSED] Duelist3Notable1",
-      "text": "[DNT-UNUSED] Duelist3Notable1"
-    },
     "pin4": {
       "en": "Pin Buildup",
       "text": "釘身累積"
@@ -1419,10 +1395,6 @@
       "en": "Unbothering Cold",
       "text": "無礙嚴寒"
     },
-    "AscendancyMarauder2Notable5": {
-      "en": "[DNT-UNUSED] Marauder2Notable5",
-      "text": "[DNT-UNUSED] Marauder2Notable5"
-    },
     "oracle_beast_corruption1": {
       "en": "Stun and Elemental Threshold",
       "text": "暈眩和元素異常門檻"
@@ -1558,10 +1530,6 @@
     "stun18": {
       "en": "Flip the Script",
       "text": "扭轉局勢"
-    },
-    "AscendancyTemplar1Notable6": {
-      "en": "[DNT-UNUSED] Templar1Notable6",
-      "text": "[DNT-UNUSED] Templar1Notable6"
     },
     "daze_1": {
       "en": "Seeing Stars",
@@ -1879,10 +1847,6 @@
       "en": "Power Shots",
       "text": "強擊矢"
     },
-    "AscendancyMarauder2Notable8": {
-      "en": "[DNT-UNUSED] Marauder2Notable8",
-      "text": "[DNT-UNUSED] Marauder2Notable8"
-    },
     "shapeshifting1": {
       "en": "Shapeshifted Damage",
       "text": "型態幻型傷害"
@@ -2107,10 +2071,6 @@
       "en": "Cold Mastery",
       "text": "冰冷專精"
     },
-    "AscendancyDuelist2Notable5": {
-      "en": "[DNT-UNUSED] Duelist2Notable5",
-      "text": "[DNT-UNUSED] Duelist2Notable5"
-    },
     "being_surrounded1": {
       "en": "Armour while Surrounded",
       "text": "遭包圍時的護甲"
@@ -2294,10 +2254,6 @@
     "bow18": {
       "en": "Pierce the Heart",
       "text": "一箭穿心"
-    },
-    "AscendancyTemplar3Notable6_": {
-      "en": "[DNT-UNUSED] Templar3Notable6",
-      "text": "[DNT-UNUSED] Templar3Notable6"
     },
     "warcries14_": {
       "en": "Internal Bleeding",
@@ -2518,10 +2474,6 @@
     "criticals26": {
       "en": "Leaping Ambush",
       "text": "跳躍伏擊"
-    },
-    "AscendancyMarauder1Notable2": {
-      "en": "[DNT-UNUSED] Marauder1Notable2",
-      "text": "[DNT-UNUSED] Marauder1Notable2"
     },
     "flail18": {
       "en": "Spiked Whip",
@@ -2959,10 +2911,6 @@
       "en": "Poison Duration",
       "text": "中毒持續時間"
     },
-    "AscendancyShadow3Notable2": {
-      "en": "[DNT-UNUSED] Shadow3Notable2",
-      "text": "[DNT-UNUSED] Shadow3Notable2"
-    },
     "AscendancyRanger3Notable7_5": {
       "en": "Bleeding Concoction",
       "text": "流血混合物"
@@ -3327,10 +3275,6 @@
       "en": "Minion Attack and Cast Speed",
       "text": "召喚物攻擊和施法速度"
     },
-    "AscendancyTemplar3Notable1": {
-      "en": "[DNT-UNUSED] Templar3Notable1",
-      "text": "[DNT-UNUSED] Templar3Notable1"
-    },
     "life_leech15": {
       "en": "Bloodthirsty",
       "text": "嗜血的"
@@ -3478,10 +3422,6 @@
     "armour_and_evasion1": {
       "en": "Armour and Evasion",
       "text": "護甲和閃避"
-    },
-    "AscendancyShadow1Notable7": {
-      "en": "[DNT-UNUSED] Shadow1Notable7",
-      "text": "[DNT-UNUSED] Shadow1Notable7"
     },
     "lightning_penetration14": {
       "en": "Lightning Damage",
@@ -3731,10 +3671,6 @@
       "en": "Projectile Damage",
       "text": "投射物傷害"
     },
-    "AscendancyDuelist1Notable1": {
-      "en": "[DNT-UNUSED] Duelist1Notable1",
-      "text": "[DNT-UNUSED] Duelist1Notable1"
-    },
     "cold56": {
       "en": "Cold Damage",
       "text": "冰冷傷害"
@@ -3831,10 +3767,6 @@
       "en": "Life Mastery",
       "text": "生命專精"
     },
-    "AscendancyMarauder1Notable4_": {
-      "en": "[DNT-UNUSED] Marauder1Notable4",
-      "text": "[DNT-UNUSED] Marauder1Notable4"
-    },
     "slowed_enemies23_": {
       "en": "Temporal Mastery",
       "text": "時間專精"
@@ -3874,10 +3806,6 @@
     "quivers3": {
       "en": "Quiver Effect",
       "text": "箭袋效果"
-    },
-    "AscendancyShadow3Notable6_": {
-      "en": "[DNT-UNUSED] Shadow3Notable6",
-      "text": "[DNT-UNUSED] Shadow3Notable6"
     },
     "spell_suppression9": {
       "en": "Ailment Threshold",
@@ -3935,10 +3863,6 @@
       "en": "Path of the Sorceress",
       "text": "女術者之道"
     },
-    "AscendancyShadow1Notable1": {
-      "en": "[DNT-UNUSED] Shadow1Notable1",
-      "text": "[DNT-UNUSED] Shadow1Notable1"
-    },
     "Sprint6": {
       "en": "Evasion while Sprinting",
       "text": "衝刺時的閃避"
@@ -3954,10 +3878,6 @@
     "ranged21": {
       "en": "Adaptable Assault",
       "text": "可適應攻擊"
-    },
-    "AscendancyMarauder3Notable5": {
-      "en": "[DNT-UNUSED] Marauder3Notable5",
-      "text": "[DNT-UNUSED] Marauder3Notable5"
     },
     "physical6": {
       "en": "Physical Damage",
@@ -4131,10 +4051,6 @@
       "en": "Bleeding Duration",
       "text": "流血持續時間"
     },
-    "AscendancyMarauder1Notable8___": {
-      "en": "[DNT-UNUSED] Marauder1Notable8",
-      "text": "[DNT-UNUSED] Marauder1Notable8"
-    },
     "evasion_and_energy_shield13": {
       "en": "Shadow Dancing",
       "text": "影之舞"
@@ -4203,10 +4119,6 @@
       "en": "Offering Duration",
       "text": "奉獻持續時間"
     },
-    "AscendancyTemplar1Notable5": {
-      "en": "[DNT-UNUSED] Templar1Notable5",
-      "text": "[DNT-UNUSED] Templar1Notable5"
-    },
     "AscendancySorceress1Small7": {
       "en": "Chill Duration",
       "text": "冰緩持續時間"
@@ -4246,10 +4158,6 @@
     "elemental43": {
       "en": "Elemental Damage",
       "text": "元素傷害"
-    },
-    "AscendancyDruid3Notable3": {
-      "en": "[DNT-UNUSED] Druid3Notable3",
-      "text": "[DNT-UNUSED] Druid3Notable3"
     },
     "mana_regeneration21": {
       "en": "Mana Regeneration",
@@ -4395,10 +4303,6 @@
       "en": "Later Rage Loss Start",
       "text": "盛怒損失較晚開始"
     },
-    "AscendancyMarauder1Notable5_": {
-      "en": "[DNT-UNUSED] Marauder1Notable5",
-      "text": "[DNT-UNUSED] Marauder1Notable5"
-    },
     "rage42": {
       "en": "Rage on Ignite",
       "text": "點燃時獲得盛怒"
@@ -4510,10 +4414,6 @@
     "getting_hit23": {
       "en": "Thorn Critical Damage",
       "text": "荊棘暴擊傷害"
-    },
-    "AscendancyDuelist2Notable8": {
-      "en": "[DNT-UNUSED] Duelist2Notable8",
-      "text": "[DNT-UNUSED] Duelist2Notable8"
     },
     "mastery_minionoffence192": {
       "en": "Minion Offence Mastery",
@@ -4791,10 +4691,6 @@
       "en": "Spell Critical Damage",
       "text": "法術暴擊傷害"
     },
-    "AscendancyShadow2Notable3": {
-      "en": "[DNT-UNUSED] Shadow2Notable3",
-      "text": "[DNT-UNUSED] Shadow2Notable3"
-    },
     "azmerianimals38": {
       "en": "Evasion",
       "text": "閃避"
@@ -4878,10 +4774,6 @@
     "area_of_effect15": {
       "en": "Area of Effect and Damage",
       "text": "範圍效果和傷害"
-    },
-    "AscendancyTemplar1Notable7": {
-      "en": "[DNT-UNUSED] Templar1Notable7",
-      "text": "[DNT-UNUSED] Templar1Notable7"
     },
     "exploiting_elemental_ailments3": {
       "en": "Damage against Ailments",
@@ -5086,10 +4978,6 @@
     "energy_shield_recovery38": {
       "en": "Energy Shield Recoup",
       "text": "能量護盾補償"
-    },
-    "AscendancyDuelist3Notable4": {
-      "en": "[DNT-UNUSED] Duelist3Notable4",
-      "text": "[DNT-UNUSED] Duelist3Notable4"
     },
     "intelligence66": {
       "en": "Attribute",
@@ -5547,10 +5435,6 @@
       "en": "Projectile Damage",
       "text": "投射物傷害"
     },
-    "AscendancyMarauder3Notable6": {
-      "en": "[DNT-UNUSED] Marauder3Notable6",
-      "text": "[DNT-UNUSED] Marauder3Notable6"
-    },
     "slow_attacks2_": {
       "en": "Attack Damage",
       "text": "攻擊傷害"
@@ -5562,10 +5446,6 @@
     "cold_penetration25": {
       "en": "Breath of Ice",
       "text": "寒冰之息"
-    },
-    "AscendancyTemplar2Notable7": {
-      "en": "[DNT-UNUSED] Templar2Notable7",
-      "text": "[DNT-UNUSED] Templar2Notable7"
     },
     "life_recoup30": {
       "en": "Life Recoup Speed",
@@ -5722,10 +5602,6 @@
     "lightning19": {
       "en": "Lightning Damage",
       "text": "閃電傷害"
-    },
-    "AscendancyMarauder3Notable2": {
-      "en": "[DNT-UNUSED] Marauder3Notable2",
-      "text": "[DNT-UNUSED] Marauder3Notable2"
     },
     "AscendancySorceress2Small1": {
       "en": "Buff Expiry Rate",
@@ -5935,10 +5811,6 @@
       "en": "Supportive Ancestors",
       "text": "祖靈之援"
     },
-    "AscendancyDruid3Notable5": {
-      "en": "[DNT-UNUSED] Druid3Notable5",
-      "text": "[DNT-UNUSED] Druid3Notable5"
-    },
     "area_spells16": {
       "en": "Area Damage",
       "text": "範圍傷害"
@@ -6006,10 +5878,6 @@
     "AscendancyWitch1Small1": {
       "en": "Life",
       "text": "生命"
-    },
-    "AscendancyShadow1Notable6": {
-      "en": "[DNT-UNUSED] Shadow1Notable6",
-      "text": "[DNT-UNUSED] Shadow1Notable6"
     },
     "mastery_companion293": {
       "en": "Companion Mastery",
@@ -6135,10 +6003,6 @@
       "en": "Erraticism",
       "text": "反覆無常"
     },
-    "AscendancyDruid3Notable1": {
-      "en": "[DNT-UNUSED] Druid3Notable1",
-      "text": "[DNT-UNUSED] Druid3Notable1"
-    },
     "deflect56": {
       "en": "Deflection",
       "text": "偏斜"
@@ -6167,10 +6031,6 @@
       "en": "Caster Mastery",
       "text": "法術專精"
     },
-    "AscendancyShadow1Notable4": {
-      "en": "[DNT-UNUSED] Shadow1Notable4",
-      "text": "[DNT-UNUSED] Shadow1Notable4"
-    },
     "AscendancyWarrior3Notable6_3": {
       "en": "Spiked Plates",
       "text": "尖刺鎧甲"
@@ -6178,10 +6038,6 @@
     "stun_threshold_if_no_recent_stun15": {
       "en": "Stun Threshold if no recent Stun",
       "text": "近期沒有暈眩的暈眩門檻"
-    },
-    "AscendancyTemplar2Notable8": {
-      "en": "[DNT-UNUSED] Templar2Notable8",
-      "text": "[DNT-UNUSED] Templar2Notable8"
     },
     "criticals19": {
       "en": "Attack and Cast Speed on Critical",
@@ -6519,10 +6375,6 @@
       "en": "Evasion and Energy Shield",
       "text": "閃避和能量護盾"
     },
-    "AscendancyMarauder2Notable4": {
-      "en": "[DNT-UNUSED] Marauder2Notable4",
-      "text": "[DNT-UNUSED] Marauder2Notable4"
-    },
     "azmerianimals24_": {
       "en": "The Quick Fox",
       "text": "迅捷飛狐"
@@ -6554,10 +6406,6 @@
     "armour_and_evasion7": {
       "en": "Armour and Evasion",
       "text": "護甲和閃避"
-    },
-    "AscendancyTemplar3Notable3": {
-      "en": "[DNT-UNUSED] Templar3Notable3",
-      "text": "[DNT-UNUSED] Templar3Notable3"
     },
     "armour_break34": {
       "en": "Breakage",
@@ -6702,10 +6550,6 @@
     "ranged6": {
       "en": "Projectile Damage",
       "text": "投射物傷害"
-    },
-    "AscendancyShadow1Notable3": {
-      "en": "[DNT-UNUSED] Shadow1Notable3",
-      "text": "[DNT-UNUSED] Shadow1Notable3"
     },
     "block20": {
       "en": "Shield Defences",
@@ -7123,10 +6967,6 @@
       "en": "Self Immolation",
       "text": "自焚"
     },
-    "AscendancyMarauder3Notable8": {
-      "en": "[DNT-UNUSED] Marauder3Notable8",
-      "text": "[DNT-UNUSED] Marauder3Notable8"
-    },
     "life_regeneration5": {
       "en": "Life Regeneration on Low Life",
       "text": "貧血時的生命回復"
@@ -7179,17 +7019,9 @@
       "en": "Life Regeneration Rate",
       "text": "生命回復率"
     },
-    "AscendancyDuelist1Notable7": {
-      "en": "[DNT-UNUSED] Duelist1Notable7",
-      "text": "[DNT-UNUSED] Duelist1Notable7"
-    },
     "mana_flasks7": {
       "en": "Mana Flask Charges Used",
       "text": "使用的魔力藥劑充能"
-    },
-    "AscendancyMarauder3Notable7": {
-      "en": "[DNT-UNUSED] Marauder3Notable7",
-      "text": "[DNT-UNUSED] Marauder3Notable7"
     },
     "two_handed10": {
       "en": "Two Handed Damage and Stun",
@@ -7803,10 +7635,6 @@
       "en": "Flask Mastery",
       "text": "藥劑專精"
     },
-    "AscendancyTemplar1Notable4": {
-      "en": "[DNT-UNUSED] Templar1Notable4",
-      "text": "[DNT-UNUSED] Templar1Notable4"
-    },
     "AscendancyMonk3Small8": {
       "en": "Damage as Chaos",
       "text": "額外混沌傷害"
@@ -8175,10 +8003,6 @@
       "en": "Attribute",
       "text": "能力"
     },
-    "AscendancyShadow2Notable5": {
-      "en": "[DNT-UNUSED] Shadow2Notable5",
-      "text": "[DNT-UNUSED] Shadow2Notable5"
-    },
     "chill_and_freeze3": {
       "en": "Freeze Buildup",
       "text": "冰凍累積"
@@ -8190,10 +8014,6 @@
     "attack_speed33": {
       "en": "Mass Hysteria",
       "text": "群體癲狂"
-    },
-    "AscendancyTemplar3Notable5": {
-      "en": "[DNT-UNUSED] Templar3Notable5",
-      "text": "[DNT-UNUSED] Templar3Notable5"
     },
     "power_charges9": {
       "en": "The Power Within",
@@ -8234,10 +8054,6 @@
     "mastery_energyshield102_": {
       "en": "Energy Shield Mastery",
       "text": "能量護盾專精"
-    },
-    "AscendancyDuelist3Notable2__": {
-      "en": "[DNT-UNUSED] Duelist3Notable2",
-      "text": "[DNT-UNUSED] Duelist3Notable2"
     },
     "strength19": {
       "en": "Attribute",
@@ -8523,10 +8339,6 @@
       "en": "Pressure Points",
       "text": "壓力點"
     },
-    "AscendancyShadow3Notable8": {
-      "en": "[DNT-UNUSED] Shadow3Notable8",
-      "text": "[DNT-UNUSED] Shadow3Notable8"
-    },
     "weapon_swapping2": {
       "en": "Stun Threshold",
       "text": "暈眩門檻"
@@ -8539,10 +8351,6 @@
       "en": "Damage vs Full Life",
       "text": "對滿血敵人的傷害"
     },
-    "AscendancyTemplar2Notable4": {
-      "en": "[DNT-UNUSED] Templar2Notable4",
-      "text": "[DNT-UNUSED] Templar2Notable4"
-    },
     "rage27": {
       "en": "Invigorating Hate",
       "text": "激發仇恨"
@@ -8550,10 +8358,6 @@
     "companions62__": {
       "en": "Attack Damage and Companion Damage as Chaos",
       "text": "攻擊傷害和盟友額外混沌傷害"
-    },
-    "AscendancyDruid3Start": {
-      "en": "[DNT] Unused",
-      "text": "狂野之心"
     },
     "AscendancyWitch3Notable6": {
       "en": "Eternal Life",
@@ -8602,10 +8406,6 @@
     "area_of_effect20": {
       "en": "Area of Effect",
       "text": "影響範圍"
-    },
-    "AscendancyMarauder2Notable2": {
-      "en": "[DNT-UNUSED] Marauder2Notable2",
-      "text": "[DNT-UNUSED] Marauder2Notable2"
     },
     "armour_break16_": {
       "en": "The Molten One's Gift",
@@ -8811,17 +8611,9 @@
       "en": "Chakra of Thought",
       "text": "思維脈輪"
     },
-    "AscendancyShadow1Notable2": {
-      "en": "[DNT-UNUSED] Shadow1Notable2",
-      "text": "[DNT-UNUSED] Shadow1Notable2"
-    },
     "buckler17": {
       "en": "Stun Threshold during Parry",
       "text": "招架期間的暈眩門檻"
-    },
-    "AscendancyShadow2Notable1_": {
-      "en": "[DNT-UNUSED] Shadow2Notable1",
-      "text": "[DNT-UNUSED] Shadow2Notable1"
     },
     "AscendancyWarrior1Small8": {
       "en": "Armour",
@@ -8919,10 +8711,6 @@
       "en": "Energy Shield Delay",
       "text": "能量護盾延遲"
     },
-    "AscendancyDuelist2Notable4_": {
-      "en": "[DNT-UNUSED] Duelist2Notable4",
-      "text": "[DNT-UNUSED] Duelist2Notable4"
-    },
     "warcries18": {
       "en": "Guttural Roar",
       "text": "喉鳴咆哮"
@@ -8987,10 +8775,6 @@
       "en": "Thorns",
       "text": "荊棘"
     },
-    "AscendancyShadow3Notable4": {
-      "en": "[DNT-UNUSED] Shadow3Notable4",
-      "text": "[DNT-UNUSED] Shadow3Notable4"
-    },
     "armour_break18": {
       "en": "Armour Break",
       "text": "護甲破壞"
@@ -9050,10 +8834,6 @@
     "block22": {
       "en": "Block",
       "text": "格擋"
-    },
-    "AscendancyShadow3Notable3": {
-      "en": "[DNT-UNUSED] Shadow3Notable3",
-      "text": "[DNT-UNUSED] Shadow3Notable3"
     },
     "AscendancyMercenary1Small6": {
       "en": "Armour and Evasion",
@@ -9407,10 +9187,6 @@
       "en": "Increased Duration",
       "text": "增加持續時間"
     },
-    "AscendancyMarauder2Notable3": {
-      "en": "[DNT-UNUSED] Marauder2Notable3",
-      "text": "[DNT-UNUSED] Marauder2Notable3"
-    },
     "elemental_attacks8": {
       "en": "Catalysis",
       "text": "催化"
@@ -9427,25 +9203,13 @@
       "en": "Attack Damage and Presence Area",
       "text": "攻擊傷害和存在範圍"
     },
-    "AscendancyMarauder1Notable3": {
-      "en": "[DNT-UNUSED] Marauder1Notable3",
-      "text": "[DNT-UNUSED] Marauder1Notable3"
-    },
     "oracle_duration_physical8": {
       "en": "Increased Duration",
       "text": "增加持續時間"
     },
-    "AscendancyMarauder3Notable1": {
-      "en": "[DNT-UNUSED] Marauder3Notable1",
-      "text": "[DNT-UNUSED] Marauder3Notable1"
-    },
     "being_surrounded2": {
       "en": "Armour while Surrounded",
       "text": "遭包圍時的護甲"
-    },
-    "AscendancyDruid3Notable4": {
-      "en": "[DNT-UNUSED] Druid3Notable4",
-      "text": "[DNT-UNUSED] Druid3Notable4"
     },
     "block24": {
       "en": "Shield Defences",
@@ -9482,10 +9246,6 @@
     "infusion8": {
       "en": "Infusion Duration",
       "text": "灌注傷害"
-    },
-    "AscendancyDuelist1Notable2_": {
-      "en": "[DNT-UNUSED] Duelist1Notable2",
-      "text": "[DNT-UNUSED] Duelist1Notable2"
     },
     "energy_shield_and_armour29_": {
       "en": "Iron Slippers",
@@ -9662,10 +9422,6 @@
     "intelligence34": {
       "en": "Attribute",
       "text": "能力"
-    },
-    "AscendancyDuelist1Notable8": {
-      "en": "[DNT-UNUSED] Duelist1Notable8",
-      "text": "[DNT-UNUSED] Duelist1Notable8"
     },
     "mastery_duration_6463": {
       "en": "Duration Mastery",
@@ -10163,10 +9919,6 @@
       "en": "Soulless Form",
       "text": "無魂型態"
     },
-    "AscendancyDruid3Notable2": {
-      "en": "[DNT-UNUSED] Druid3Notable2",
-      "text": "[DNT-UNUSED] Druid3Notable2"
-    },
     "companions6": {
       "en": "Unspoken Bond",
       "text": "不可言喻的連結"
@@ -10611,10 +10363,6 @@
       "en": "Rage when Hit",
       "text": "遭敵人擊中時，獲得盛怒"
     },
-    "AscendancyMarauder1Notable1_": {
-      "en": "[DNT-UNUSED] Marauder1Notable1",
-      "text": "[DNT-UNUSED] Marauder1Notable1"
-    },
     "AscendancyMercenary3Small1": {
       "en": "Skill Gem Quality",
       "text": "技能寶石品質"
@@ -10750,10 +10498,6 @@
     "cold60__": {
       "en": "Cold Damage",
       "text": "冰冷傷害"
-    },
-    "AscendancyDruid3Notable7": {
-      "en": "[DNT-UNUSED] Druid3Notable7",
-      "text": "[DNT-UNUSED] Druid3Notable7"
     },
     "oracle_iron_blood2_": {
       "en": "Armour while Bleeding",
@@ -11035,10 +10779,6 @@
       "en": "Armour and Evasion",
       "text": "護甲和閃避"
     },
-    "AscendancyDuelist2Notable6": {
-      "en": "[DNT-UNUSED] Duelist2Notable6",
-      "text": "[DNT-UNUSED] Duelist2Notable6"
-    },
     "stun_threshold2": {
       "en": "Stun Threshold",
       "text": "暈眩門檻"
@@ -11142,10 +10882,6 @@
     "lightning41": {
       "en": "Essence of the Storm",
       "text": "暴風精髓"
-    },
-    "AscendancyDuelist3Notable8": {
-      "en": "[DNT-UNUSED] Duelist3Notable8",
-      "text": "[DNT-UNUSED] Duelist3Notable8"
     },
     "chill_and_freeze20": {
       "en": "Freeze Buildup",
@@ -11711,10 +11447,6 @@
       "en": "Life Mastery",
       "text": "生命專精"
     },
-    "AscendancyShadow2Notable2": {
-      "en": "[DNT-UNUSED] Shadow2Notable2",
-      "text": "[DNT-UNUSED] Shadow2Notable2"
-    },
     "shock_mitigation10": {
       "en": "Lightning Damage",
       "text": "閃電曝曬效果"
@@ -12039,10 +11771,6 @@
       "en": "Slow Effect on You",
       "text": "你身上的緩速效果"
     },
-    "AscendancyDuelist2Notable7": {
-      "en": "[DNT-UNUSED] Duelist2Notable7",
-      "text": "[DNT-UNUSED] Duelist2Notable7"
-    },
     "fire_penetration10": {
       "en": "Fire Penetration",
       "text": "火焰穿透"
@@ -12227,10 +11955,6 @@
       "en": "Life Regeneration",
       "text": "生命回復"
     },
-    "AscendancyDruid3Notable8": {
-      "en": "[DNT-UNUSED] Druid3Notable8",
-      "text": "[DNT-UNUSED] Druid3Notable8"
-    },
     "stun_threshold_if_no_recent_stun14": {
       "en": "Stun Threshold if no recent Stun",
       "text": "近期沒有暈眩的暈眩門檻"
@@ -12278,10 +12002,6 @@
     "slowed_enemies10": {
       "en": "Chronomancy",
       "text": "時空法術"
-    },
-    "AscendancyDuelist2Notable3": {
-      "en": "[DNT-UNUSED] Duelist2Notable3",
-      "text": "[DNT-UNUSED] Duelist2Notable3"
     },
     "life_recoup27": {
       "en": "Life Regeneration Rate and Presence",
@@ -12331,17 +12051,9 @@
       "en": "Taste for Blood",
       "text": "血味"
     },
-    "AscendancyDuelist2Notable2_": {
-      "en": "[DNT-UNUSED] Duelist2Notable2",
-      "text": "[DNT-UNUSED] Duelist2Notable2"
-    },
     "one_handed8": {
       "en": "One Handed Attack Speed",
       "text": "單手武器攻擊速度"
-    },
-    "AscendancyMarauder2Notable1": {
-      "en": "[DNT-UNUSED] Marauder2Notable1",
-      "text": "[DNT-UNUSED] Marauder2Notable1"
     },
     "frenzy_charges7_": {
       "en": "Frenetic",
@@ -12414,10 +12126,6 @@
     "oracle_forbidden_path1_": {
       "en": "Minion Life",
       "text": "召喚物生命"
-    },
-    "AscendancyDuelist3Notable7": {
-      "en": "[DNT-UNUSED] Duelist3Notable7",
-      "text": "[DNT-UNUSED] Duelist3Notable7"
     },
     "mastery_totem_6749": {
       "en": "Totem Mastery",
@@ -12610,10 +12318,6 @@
     "mastery_attack_6299": {
       "en": "Attack Mastery",
       "text": "攻擊專精"
-    },
-    "AscendancyTemplar1Notable1": {
-      "en": "[DNT-UNUSED] Templar1Notable1",
-      "text": "[DNT-UNUSED] Templar1Notable1"
     },
     "shapeshifting35": {
       "en": "Shapeshifting Armour applies to Elemental Damage Hits",
@@ -12883,10 +12587,6 @@
       "en": "Fire Penetration",
       "text": "火焰穿透"
     },
-    "AscendancyShadow2Notable4": {
-      "en": "[DNT-UNUSED] Shadow2Notable4",
-      "text": "[DNT-UNUSED] Shadow2Notable4"
-    },
     "armour_and_evasion43": {
       "en": "Deflection",
       "text": "偏斜"
@@ -13071,10 +12771,6 @@
       "en": "Tides of Change",
       "text": "變革浪潮"
     },
-    "AscendancyMarauder1Notable6": {
-      "en": "[DNT-UNUSED] Marauder1Notable6",
-      "text": "[DNT-UNUSED] Marauder1Notable6"
-    },
     "energy_shield_recovery32_": {
       "en": "Energy Shield Delay",
       "text": "能量護盾延遲"
@@ -13226,10 +12922,6 @@
     "oracle_life_corruption2": {
       "en": "Life Costs",
       "text": "生命消耗"
-    },
-    "AscendancyDuelist3Notable3": {
-      "en": "[DNT-UNUSED] Duelist3Notable3",
-      "text": "[DNT-UNUSED] Duelist3Notable3"
     },
     "daze_14": {
       "en": "Shock Chance and Lightning Damage",
@@ -13667,10 +13359,6 @@
       "en": "Cold Damage",
       "text": "冰冷傷害"
     },
-    "AscendancyMarauder2Notable7": {
-      "en": "[DNT-UNUSED] Marauder2Notable7",
-      "text": "[DNT-UNUSED] Marauder2Notable7"
-    },
     "slowed_enemies13": {
       "en": "Slow Effect and Hinder Duration",
       "text": "緩速效果和阻礙持續時間"
@@ -14091,10 +13779,6 @@
       "en": "Frightening Shield",
       "text": "可怖重盾"
     },
-    "AscendancyShadow3Notable1": {
-      "en": "[DNT-UNUSED] Shadow3Notable1",
-      "text": "[DNT-UNUSED] Shadow3Notable1"
-    },
     "slowed_enemies5": {
       "en": "Slow Effect",
       "text": "緩速效果"
@@ -14202,10 +13886,6 @@
     "AscendancySorceress3Notable2": {
       "en": "The Fourth Teaching",
       "text": "第四教誨"
-    },
-    "AscendancyTemplar1Notable8_": {
-      "en": "[DNT-UNUSED] Templar1Notable8",
-      "text": "[DNT-UNUSED] Templar1Notable8"
     },
     "remnant10": {
       "en": "Arcane Remnants",
@@ -14663,10 +14343,6 @@
       "en": "Grenade Damage",
       "text": "擲彈傷害"
     },
-    "AscendancyTemplar2Notable1": {
-      "en": "[DNT-UNUSED] Templar2Notable1",
-      "text": "[DNT-UNUSED] Templar2Notable1"
-    },
     "oracle_thorns2": {
       "en": "Thorns",
       "text": "荊棘"
@@ -14750,10 +14426,6 @@
     "intelligence8": {
       "en": "Attribute",
       "text": "能力"
-    },
-    "AscendancyMarauder3Notable3": {
-      "en": "[DNT-UNUSED] Marauder3Notable3",
-      "text": "[DNT-UNUSED] Marauder3Notable3"
     },
     "attributes12": {
       "en": "Attribute",
@@ -14863,10 +14535,6 @@
       "en": "Grenade Cooldown Recovery Rate",
       "text": "擲彈冷卻時間恢復率"
     },
-    "AscendancyDuelist3Notable6": {
-      "en": "[DNT-UNUSED] Duelist3Notable6",
-      "text": "[DNT-UNUSED] Duelist3Notable6"
-    },
     "charms12": {
       "en": "Charm Effect",
       "text": "護符效果"
@@ -14894,10 +14562,6 @@
     "mastery_attack278": {
       "en": "Attack Mastery",
       "text": "攻擊專精"
-    },
-    "AscendancyDuelist1Notable6": {
-      "en": "[DNT-UNUSED] Duelist1Notable6",
-      "text": "[DNT-UNUSED] Duelist1Notable6"
     },
     "AscendancyWitch2Small2": {
       "en": "Spell Critical Chance",
@@ -15042,10 +14706,6 @@
     "deflect25": {
       "en": "Deflection",
       "text": "偏斜"
-    },
-    "AscendancyTemplar3Notable2": {
-      "en": "[DNT-UNUSED] Templar3Notable2",
-      "text": "[DNT-UNUSED] Templar3Notable2"
     },
     "chill_and_freeze31_": {
       "en": "Blessing of the Moon",
@@ -15747,10 +15407,6 @@
       "en": "Life Mastery",
       "text": "生命專精"
     },
-    "AscendancyTemplar2Notable2": {
-      "en": "[DNT-UNUSED] Templar2Notable2",
-      "text": "[DNT-UNUSED] Templar2Notable2"
-    },
     "slow_mitigation10_": {
       "en": "Attack Damage while Moving",
       "text": "移動時攻擊傷害"
@@ -15951,17 +15607,9 @@
       "en": "Fortify Mastery",
       "text": "護體專精"
     },
-    "AscendancyShadow2Notable8": {
-      "en": "[DNT-UNUSED] Shadow2Notable8",
-      "text": "[DNT-UNUSED] Shadow2Notable8"
-    },
     "mastery_cold_6394": {
       "en": "Cold Mastery",
       "text": "冰冷專精"
-    },
-    "AscendancyDuelist2Notable1": {
-      "en": "[DNT-UNUSED] Duelist2Notable1",
-      "text": "[DNT-UNUSED] Duelist2Notable1"
     },
     "mastery_aura_6313": {
       "en": "Aura Mastery",
@@ -16582,10 +16230,6 @@
     "dagger14": {
       "en": "Dagger Critical Damage",
       "text": "匕首：暴擊傷害"
-    },
-    "AscendancyTemplar2Notable5": {
-      "en": "[DNT-UNUSED] Templar2Notable5",
-      "text": "[DNT-UNUSED] Templar2Notable5"
     },
     "mana_regeneration30": {
       "en": "Arcane Surge on Critical Hit",
@@ -17359,10 +17003,6 @@
       "en": "Night's Bite",
       "text": "夜之噬"
     },
-    "AscendancyTemplar3Notable4": {
-      "en": "[DNT-UNUSED] Templar3Notable4",
-      "text": "[DNT-UNUSED] Templar3Notable4"
-    },
     "mastery_projectile_6652": {
       "en": "Projectile Mastery",
       "text": "投射物專精"
@@ -17839,10 +17479,6 @@
       "en": "Frenzy Charge Duration",
       "text": "狂怒球持續時間"
     },
-    "AscendancyDuelist1Notable5": {
-      "en": "[DNT-UNUSED] Duelist1Notable5",
-      "text": "[DNT-UNUSED] Duelist1Notable5"
-    },
     "physical10": {
       "en": "Physical Damage",
       "text": "物理傷害"
@@ -17974,10 +17610,6 @@
     "quivers6": {
       "en": "Projectile Speed",
       "text": "投射物速度"
-    },
-    "AscendancyShadow2Notable6": {
-      "en": "[DNT-UNUSED] Shadow2Notable6",
-      "text": "[DNT-UNUSED] Shadow2Notable6"
     },
     "blind9": {
       "en": "Pocket Sand",
@@ -18239,10 +17871,6 @@
       "en": "Life Recoup",
       "text": "生命補償"
     },
-    "AscendancyShadow3Notable7": {
-      "en": "[DNT-UNUSED] Shadow3Notable7",
-      "text": "[DNT-UNUSED] Shadow3Notable7"
-    },
     "power_endurance_charges6": {
       "en": "Thirst for Endurance",
       "text": "耐力渴求"
@@ -18262,10 +17890,6 @@
     "warcries6": {
       "en": "Empowered Attack Damage",
       "text": "強化攻擊傷害"
-    },
-    "AscendancyDuelist1Notable3": {
-      "en": "[DNT-UNUSED] Duelist1Notable3",
-      "text": "[DNT-UNUSED] Duelist1Notable3"
     },
     "area_attacks14": {
       "en": "Area Damage",
@@ -18406,10 +18030,6 @@
     "maximum_resistances11": {
       "en": "Armour Applies to Lightning Damage Hits",
       "text": "護甲值套用於閃電傷害擊中"
-    },
-    "AscendancyTemplar3Notable7": {
-      "en": "[DNT-UNUSED] Templar3Notable7",
-      "text": "[DNT-UNUSED] Templar3Notable7"
     },
     "oracle_totems5": {
       "en": "Totem Area of Effect",
@@ -18586,10 +18206,6 @@
     "totems25": {
       "en": "Totem Placement Speed",
       "text": "圖騰放置速度"
-    },
-    "AscendancyDruid3Notable6": {
-      "en": "[DNT-UNUSED] Druid3Notable6",
-      "text": "[DNT-UNUSED] Druid3Notable6"
     },
     "wyvern4": {
       "en": "Scales of the Wyvern",
@@ -18886,10 +18502,6 @@
     "strength75": {
       "en": "Attribute",
       "text": "能力"
-    },
-    "AscendancyDuelist1Notable4": {
-      "en": "[DNT-UNUSED] Duelist1Notable4",
-      "text": "[DNT-UNUSED] Duelist1Notable4"
     },
     "templar598": {
       "en": "TEMPLAR",
@@ -19271,10 +18883,6 @@
       "en": "Minion Defence Mastery",
       "text": "召喚物防禦專精"
     },
-    "AscendancyMarauder1Notable7": {
-      "en": "[DNT-UNUSED] Marauder1Notable7",
-      "text": "[DNT-UNUSED] Marauder1Notable7"
-    },
     "intelligence58": {
       "en": "Attribute",
       "text": "能力"
@@ -19334,10 +18942,6 @@
     "cold_penetration9": {
       "en": "Cold Penetration",
       "text": "冰冷穿透"
-    },
-    "AscendancyTemplar2Notable3": {
-      "en": "[DNT-UNUSED] Templar2Notable3",
-      "text": "[DNT-UNUSED] Templar2Notable3"
     },
     "minion_defence42": {
       "en": "Living Death",
@@ -19458,10 +19062,6 @@
     "mastery_fire119": {
       "en": "Fire Mastery",
       "text": "火焰專精"
-    },
-    "AscendancyShadow1Notable8": {
-      "en": "[DNT-UNUSED] Shadow1Notable8",
-      "text": "[DNT-UNUSED] Shadow1Notable8"
     },
     "banners4_": {
       "en": "Banner Glory Gained",
@@ -19595,10 +19195,6 @@
       "en": "Vigorous Remnants",
       "text": "蓬勃痕跡"
     },
-    "AscendancyMarauder3Notable4": {
-      "en": "[DNT-UNUSED] Marauder3Notable4",
-      "text": "[DNT-UNUSED] Marauder3Notable4"
-    },
     "poison30": {
       "en": "Stacking Toxins",
       "text": "疊加毒素"
@@ -19606,10 +19202,6 @@
     "deflect45": {
       "en": "Deflection",
       "text": "偏斜"
-    },
-    "AscendancyTemplar1Notable3": {
-      "en": "[DNT-UNUSED] Templar1Notable3",
-      "text": "[DNT-UNUSED] Templar1Notable3"
     },
     "oracle_movement_cooldown4": {
       "en": "Cooldown Recovery Rate",
@@ -19662,10 +19254,6 @@
     "warcries32": {
       "en": "Warcry Cooldown",
       "text": "戰吼冷卻時間"
-    },
-    "AscendancyShadow3Notable5": {
-      "en": "[DNT-UNUSED] Shadow3Notable5",
-      "text": "[DNT-UNUSED] Shadow3Notable5"
     },
     "mastery_thorns308": {
       "en": "Thorns Mastery",
@@ -19975,17 +19563,9 @@
       "en": "Rage Mastery",
       "text": "盛怒專精"
     },
-    "AscendancyTemplar3Notable8": {
-      "en": "[DNT-UNUSED] Templar3Notable8",
-      "text": "[DNT-UNUSED] Templar3Notable8"
-    },
     "evasion16": {
       "en": "Evasion",
       "text": "閃避"
-    },
-    "AscendancyMarauder2Notable6": {
-      "en": "[DNT-UNUSED] Marauder2Notable6",
-      "text": "[DNT-UNUSED] Marauder2Notable6"
     },
     "armour_break20": {
       "en": "Armour Break Effect",

@@ -1,0 +1,777 @@
+{
+  "locale": "zh-CN",
+  "generatedAt": "2026-09-07T12:27:24.151Z",
+  "note": "含字面数字的词缀：当前消费端无法命中，归一化变体方案见 2b 计划",
+  "entries": [
+    {
+      "key": "explicit.stat_434750362#0",
+      "en": "#% increased Area of Effect for Attacks per 10 Intelligence",
+      "text": "每 10 智慧使攻击效果范围提高 #%"
+    },
+    {
+      "key": "explicit.stat_1791136590#0",
+      "en": "#% increased Weapon Damage per 10 Strength",
+      "text": "每 10 力量使武器伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_889691035#0",
+      "en": "#% increased Attack Speed per 10 Dexterity",
+      "text": "每 10 敏捷使攻击速度提高 #%"
+    },
+    {
+      "key": "explicit.stat_3371943724#0",
+      "en": "Trigger Decompose every 1.2 metres travelled",
+      "text": "每移动 1.2 米触发一次降解"
+    },
+    {
+      "key": "explicit.stat_2412053423#0",
+      "en": "#% increased Spell Damage per 10 Spirit",
+      "text": "每 10 点精魂使法术伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_2356156926#0",
+      "en": "Drop Ignited Ground while moving, which lasts 8 seconds and Ignites as though dealing Fire Damage equal to #% of your maximum Life",
+      "text": "移动时留下点燃地面，持续 8 秒并造成点燃，视作造成你的生命上限的 #% 的火焰伤害"
+    },
+    {
+      "key": "explicit.stat_78985352#0",
+      "en": "#% chance to Intimidate Enemies for 4 seconds on Hit",
+      "text": "击中有 #% 的几率威吓敌人 4 秒"
+    },
+    {
+      "key": "explicit.stat_796381300#0",
+      "en": "Gain 0% to #% increased Movement Speed at random when Hit, until Hit again",
+      "text": "被击中时移动速度提高0% - #%，直到被再次击中"
+    },
+    {
+      "key": "explicit.stat_3314057862#0",
+      "en": "Ignites you inflict spread to other Enemies that stay within 1.5 metres for 1 second",
+      "text": "你造成的点燃扩散给在 1.5 米停留 1 秒的其他敌人"
+    },
+    {
+      "key": "explicit.stat_720908147#0",
+      "en": "#% increased Attack Speed per 20 Dexterity",
+      "text": "每 20 敏捷使攻击速度提高 #%"
+    },
+    {
+      "key": "explicit.stat_3111921451#0",
+      "en": "Adds # to # Lightning Damage to Attacks per 20 Intelligence",
+      "text": "每 20 智慧使攻击的附加 # - # 闪电伤害"
+    },
+    {
+      "key": "explicit.stat_3764198549#0",
+      "en": "Every 3 seconds, Consume a nearby Corpse to Recover #% of maximum Life",
+      "text": "每 3 秒消耗附近的一个灵柩，并恢复 #% 的生命"
+    },
+    {
+      "key": "explicit.stat_2323782229#0",
+      "en": "Slaying Rare Monsters in Area pauses the Delirium Mirror Timer for 1 second",
+      "text": "击败区域内的稀有怪物使惊悸迷雾之镜的倒计时暂停 1 秒"
+    },
+    {
+      "key": "explicit.stat_2323782229#1",
+      "en": "Slaying Rare Monsters in Map pauses the Delirium Mirror Timer for 1 second",
+      "text": "击败地图内的稀有怪物使惊悸迷雾之镜的倒计时暂停 1 秒"
+    },
+    {
+      "key": "explicit.stat_1457411584#0",
+      "en": "Every 4 seconds, Recover 1 Life for every # Life Recovery per second from Regeneration",
+      "text": "每隔 4 秒，恢复中每有 # 点每秒生命回复，为你回复 1 点生命"
+    },
+    {
+      "key": "explicit.stat_4258409981#0",
+      "en": "Deal #% increased Damage with Hits to Rare or Unique Enemies for each second they've ever been in your Presence, up to a maximum of 200%",
+      "text": "稀有或传奇敌人每在场一秒，对其造成的击中伤害提高 #%，上限为 200%"
+    },
+    {
+      "key": "explicit.stat_2910761524#0",
+      "en": "#% chance for Spell Skills to fire 2 additional Projectiles",
+      "text": "法术技能有 #% 的几率发射 2 个额外投射物"
+    },
+    {
+      "key": "explicit.stat_2301852600#0",
+      "en": "Deal #% of Overkill damage to enemies within 2 metres of the enemy killed",
+      "text": "对被击败的敌人 2 米内的敌人造成相当于溢出伤害 #% 的伤害"
+    },
+    {
+      "key": "explicit.stat_2777675751#0",
+      "en": "Using a Mana Flask grants Guard equal to #% of Flask's recovery amount for 4 seconds",
+      "text": "使用魔力药剂时，获得等同于药剂回复量 #% 的防卫，持续 4 秒"
+    },
+    {
+      "key": "explicit.stat_2838161567#0",
+      "en": "Skills reserve 50% less Spirit",
+      "text": "技能保留的精魂总降 50%"
+    },
+    {
+      "key": "explicit.stat_664606484#0",
+      "en": "Abyssal Monsters have #% increased Effectiveness for each closed Pit, up to 100%",
+      "text": "每关闭一个巨坑，深渊怪物的效能提高 #%，最高可达 100%"
+    },
+    {
+      "key": "explicit.stat_65133983#0",
+      "en": "Drop Shocked Ground while moving, lasting 8 seconds",
+      "text": "移动时留下感电地面，持续 8 秒"
+    },
+    {
+      "key": "explicit.stat_1207006772#0",
+      "en": "# to Deflection Rating per 50 missing Energy Shield",
+      "text": "每损失 50 点能量护盾使偏转值 #"
+    },
+    {
+      "key": "explicit.stat_2443032293#0",
+      "en": "Gain # Guard for 0.5 seconds per Combo expended when using Skills",
+      "text": "使用技能时，每消耗一个连击，获得 # 层 防卫，持续 0.5 秒"
+    },
+    {
+      "key": "explicit.stat_3538915253#0",
+      "en": "On Hitting an enemy, gains maximum added Lightning damage equal to the enemy's Power for 20 seconds, up to a total of #",
+      "text": "击中敌人时，获得相当于敌人威力值的 额外闪电伤害上限，最多 #，持续 20 秒"
+    },
+    {
+      "key": "explicit.stat_2348696937#0",
+      "en": "Spells have a #% chance to inflict Withered for 4 seconds on Hit",
+      "text": "法术击中时有 #% 的几率造成 4 秒的死亡凋零"
+    },
+    {
+      "key": "explicit.stat_1312381104#0",
+      "en": "Regenerate # Life per second for every 10 Intelligence",
+      "text": "每有 10 点智慧，每秒再生 # 点生命"
+    },
+    {
+      "key": "explicit.stat_39209842#0",
+      "en": "Creates Ignited Ground for 4 seconds when used, Igniting enemies as though dealing Fire damage equal to #% of your maximum Life",
+      "text": "使用时造成持续 4 秒的燃烧地面，地面点燃敌人时造成等同你生命上限 #% 的火焰伤害"
+    },
+    {
+      "key": "explicit.stat_1273508088#0",
+      "en": "Gain 1 Druidic Prowess for every 20 total Rage spent",
+      "text": "每消耗总计 20 点怒火，获得 1 点德鲁伊之力"
+    },
+    {
+      "key": "explicit.stat_2134207902#0",
+      "en": "+100% of Armour also applies to Lightning Damage",
+      "text": "+100% 的护甲同样作用于闪电伤害"
+    },
+    {
+      "key": "explicit.stat_170426423#0",
+      "en": "Non-Channelling Spells have #% increased Critical Hit Chance per 100 maximum Life",
+      "text": "每 100 生命上限使非吟唱法术的暴击率提高 #%"
+    },
+    {
+      "key": "explicit.stat_1027889455#0",
+      "en": "Non-Channelling Spells deal #% increased Damage per 100 maximum Life",
+      "text": "每 100 生命上限使非吟唱法术的伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_258955603#0",
+      "en": "Alternating every 5 seconds: Take #% more Damage from Hits Take #% more Damage over time",
+      "text": "每 5 秒交替： 受到的击中伤害总增 #% 受到的持续伤害总增 #%"
+    },
+    {
+      "key": "explicit.stat_1895552497#0",
+      "en": "Every 5 Rage also grants #% of Damage taken Recouped as Life",
+      "text": "每 5 点怒火使所受伤害的 #% 吸纳为生命"
+    },
+    {
+      "key": "explicit.stat_469006068#0",
+      "en": "Gain Guard equal to #% of missing Energy Shield for 4 seconds when you Dodge Roll",
+      "text": "闪避翻滚时，获得相当于失去的能量护盾 #% 的 防卫，持续 4 秒"
+    },
+    {
+      "key": "explicit.stat_2516303866#0",
+      "en": "Your Critical Damage Bonus is 250%",
+      "text": "你的暴击伤害加成为 250%"
+    },
+    {
+      "key": "explicit.stat_1910039112#0",
+      "en": "Every 3 seconds during Effect, deal #% of Mana spent in those seconds as Chaos Damage to Enemies within 3 metres",
+      "text": "生效期间每过 3 秒，对 3 米内的敌人造成这几秒内消耗魔力的 #% 的混沌伤害"
+    },
+    {
+      "key": "explicit.stat_2482970488#0",
+      "en": "Gain 1 Dark Whisper every second there is a Cursed Enemy in your Presence",
+      "text": "若你在场范围内有一个被诅咒的敌人，则每秒获得 1 个暗言"
+    },
+    {
+      "key": "explicit.stat_986616727#0",
+      "en": "Curses you inflict spread to enemies within 3 metres when Cursed enemy dies",
+      "text": "被诅咒的敌人被击败时，你施加的诅咒传播给 3 米内的敌人"
+    },
+    {
+      "key": "explicit.stat_4117005593#0",
+      "en": "Skills gain #% of Damage as Chaos Damage per 3 Life Cost",
+      "text": "技能每消耗 3 点生命，获得相当于伤害 #% 的混沌伤害"
+    },
+    {
+      "key": "explicit.stat_3156445245#0",
+      "en": "#% less Movement and Skill Speed per Dodge Roll in the past 20 seconds",
+      "text": "过去 20 秒内的每次闪避翻滚使移动速度和技能速度总降 #%"
+    },
+    {
+      "key": "explicit.stat_2913235441#0",
+      "en": "When you kill a Rare monster, you gain its Modifiers for 60 seconds",
+      "text": "当你击败稀有怪物时，获得它的词缀，持续 60 秒"
+    },
+    {
+      "key": "explicit.stat_4186798932#0",
+      "en": "# to # Added Attack Fire Damage per 25 Strength",
+      "text": "每有 25 点力量，附加 # - # 攻击火焰伤害"
+    },
+    {
+      "key": "explicit.stat_4106787208#0",
+      "en": "Spear Skills inflict a Bloodstone Lance on Hit, up to a maximum of 30 on each target",
+      "text": "使用战矛技能击中时造成血岩长枪，对每个目标造成的上限为 30 枚"
+    },
+    {
+      "key": "explicit.stat_1867725690#0",
+      "en": "Hits with this Weapon have #% chance to Trigger Molten Shower per 25 Strength",
+      "text": "每有 25 点力量，使用该武器击中时有 #% 的几率触发熔岩骤雨"
+    },
+    {
+      "key": "explicit.stat_4238331303#0",
+      "en": "Immobilise enemies at #% buildup instead of 100%",
+      "text": "积蓄至 #% 时使敌人不可移动，而非 100%"
+    },
+    {
+      "key": "explicit.stat_3605616594#0",
+      "en": "Gain Onslaught for 4 seconds when a Minion Dies",
+      "text": "当召唤生物被击败时，获得猛攻，持续 4 秒"
+    },
+    {
+      "key": "explicit.stat_3775736880#0",
+      "en": "Gain 1 Fear Incarnate when you Cull a target",
+      "text": "终结敌人时，获得 1 个恐惧化身"
+    },
+    {
+      "key": "explicit.stat_1291132817#0",
+      "en": "+1 to Armour per Strength",
+      "text": "每点力量使护甲 +1"
+    },
+    {
+      "key": "explicit.stat_3452816629#0",
+      "en": "1% more Unarmed Damage per # Strength",
+      "text": "每有 # 点力量，徒手伤害总增 1%"
+    },
+    {
+      "key": "explicit.stat_4274637468#0",
+      "en": "Convert #% of maximum Life to twice as much Armour per 1% Chaos Resistance above 0%",
+      "text": "每有高于 0% 的 1% 混沌抗性上限，将生命上限的 #% 转化为双倍的护甲"
+    },
+    {
+      "key": "explicit.stat_740421489#0",
+      "en": "Ice Crystals have #% increased maximum Life per 5% Cold Resistance you have",
+      "text": "每有 5% 冰霜抗性，冰晶生命上限提高 #%"
+    },
+    {
+      "key": "explicit.stat_2480962043#0",
+      "en": "Skills which require Glory generate # Glory every 2 seconds",
+      "text": "需要荣耀的技能每 2 秒再生 # 点荣耀"
+    },
+    {
+      "key": "explicit.stat_223138829#0",
+      "en": "Inflict Elemental Exposure to Enemies 3 metres in front of you for 4 seconds, every 0.25 seconds while raised",
+      "text": "举起时，每 0.25 秒对你前方 3 米内的敌人施加 元素曝露，持续 4 秒"
+    },
+    {
+      "key": "explicit.stat_3843734793#0",
+      "en": "Non-Channelling Spells deal #% increased Damage per 100 maximum Mana",
+      "text": "每 100 点魔力上限使非吟唱法术的伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_1367999357#0",
+      "en": "Non-Channelling Skills have #% increased Spell Critical Hit Chance per 100 maximum Mana",
+      "text": "每 100 点魔力上限使非吟唱法术的暴击率提高 #%"
+    },
+    {
+      "key": "explicit.stat_3044685077#0",
+      "en": "# to Spirit while you have at least 200 Strength",
+      "text": "当你至少有 200 力量时，精魂 #"
+    },
+    {
+      "key": "explicit.stat_891466814#0",
+      "en": "Create a Fragment of Divinity in your Presence every 4 seconds",
+      "text": "在你的在场范围内，每 4 秒创造一个神圣碎片"
+    },
+    {
+      "key": "explicit.stat_3628041050#0",
+      "en": "Enemies in your Presence gain 1 Gruelling Madness each second",
+      "text": "你在场范围内的敌人每秒获得 1 点煎熬疯狂"
+    },
+    {
+      "key": "explicit.stat_1282318918#0",
+      "en": "# to Spirit while you have at least 200 Intelligence",
+      "text": "当你至少有 200 智慧时，精魂 #"
+    },
+    {
+      "key": "explicit.stat_1500744699#0",
+      "en": "Maximum Chance to Evade is 50%",
+      "text": "闪避几率上限为 50%"
+    },
+    {
+      "key": "explicit.stat_4245905059#0",
+      "en": "Non-Channelling Spells have #% increased Magnitude of Ailments per 100 maximum Life",
+      "text": "每 100 点生命上限使非吟唱法术的异常状态强度提高 #%"
+    },
+    {
+      "key": "explicit.stat_2694614739#0",
+      "en": "# to Spirit while you have at least 200 Dexterity",
+      "text": "当你至少有 200 敏捷时，精魂 #"
+    },
+    {
+      "key": "explicit.stat_34174842#0",
+      "en": "#% increased Cast Speed per 20 Spirit",
+      "text": "每 20 点精魂，施法速度提高 #%"
+    },
+    {
+      "key": "explicit.stat_324579579#0",
+      "en": "#% increased Attack Speed per 20 Spirit",
+      "text": "每 20 点精魂，攻击速度提高 #%"
+    },
+    {
+      "key": "explicit.stat_3881997959#0",
+      "en": "Increases Movement Speed by 25%, plus 1% per # Evasion Rating, up to a maximum of 75% Other Modifiers to Movement Speed except for Sprinting do not apply",
+      "text": "提高移动速度 25%，每 # 点闪避值额外提高 1%，最高 75% 其他除冲刺外的移动速度词缀无法生效"
+    },
+    {
+      "key": "explicit.stat_3387008487#0",
+      "en": "Defend with 200% of Armour",
+      "text": "以 200% 的护甲防御"
+    },
+    {
+      "key": "explicit.stat_1850249186#0",
+      "en": "#% increased Spell Damage per 100 maximum Mana",
+      "text": "每 100 魔力上限使法术伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_3960211755#0",
+      "en": "Maximum Physical Damage Reduction is 50%",
+      "text": "物理伤害上限减免为 50%"
+    },
+    {
+      "key": "explicit.stat_2469544361#0",
+      "en": "Gain #% of Cold damage as Extra Fire damage per 1% Chill Magnitude on enemy",
+      "text": "敌人身上每有 1% 的冰缓强度，获得相当于 #% 冰霜伤害的额外火焰伤害"
+    },
+    {
+      "key": "explicit.stat_343703314#0",
+      "en": "Gain 1 Runefather's Boast per Power of targets affected by Runefather's Challenge you kill",
+      "text": "击败受符文先祖的挑战影响的目标时，目标每有一点威力值，获得 1 层符文先祖的加持"
+    },
+    {
+      "key": "explicit.stat_774222208#0",
+      "en": "Inflicts Runefather's Challenge on enemies # metres in front of you when raised, no more than once every 2 seconds",
+      "text": "举起盾牌时，对前方 # 米内的敌人施加符文先祖的挑战，每 2 秒只能施加一次"
+    },
+    {
+      "key": "explicit.stat_2706625504#0",
+      "en": "Projectiles have #% increased Critical Hit Chance against Enemies further than 6m",
+      "text": "投射物对 6 米外的敌人的暴击几率提高 #%"
+    },
+    {
+      "key": "explicit.stat_3451259830#0",
+      "en": "#% chance to gain Onslaught for 3 seconds when you kill an enemy affected by Abyssal Wasting",
+      "text": "击败受到深渊耗散影响的敌人时 有 #% 的几率获得猛攻，持续 3 秒"
+    },
+    {
+      "key": "explicit.stat_4128965096#0",
+      "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill Remove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
+      "text": "每使用 # 次榴弹技能，获得 1 层爆破韵律 达到 10 层时，移除所有爆破韵律并获得持续 10 秒的爆破热忱"
+    },
+    {
+      "key": "explicit.stat_3161573445#0",
+      "en": "Regenerate #% of maximum Life per Second if you've used a Life Flask in the past 10 seconds",
+      "text": "生命在你过去 10 秒内使用过生命药剂的情况下每秒再生 #%"
+    },
+    {
+      "key": "explicit.stat_2825946427#0",
+      "en": "Projectiles deal #% increased Damage with Hits against Enemies further than 6m",
+      "text": "投射物对 6 米外的敌人造成的击中伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_3134931479#0",
+      "en": "Abyssal Wasting you inflict also gives targets 10% chance to explode on death, dealing a tenth of their life as Physical Damage",
+      "text": "你施加的深渊耗散同样使目标有 10% 的几率在死亡时爆炸，造成相当于生命值十分之一的物理伤害"
+    },
+    {
+      "key": "explicit.stat_2036307261#0",
+      "en": "Hits with this weapon have # to # Added Physical Damage per 1% Block Chance",
+      "text": "使用该武器击中时，每有 1% 格挡几率，附加 # - # 的物理伤害"
+    },
+    {
+      "key": "explicit.stat_2531622767#0",
+      "en": "#% increased Block chance per 100 total Item Armour on Equipped Armour Items",
+      "text": "已装备护甲物品每有 100 点物品护甲值，格挡几率提高 #%"
+    },
+    {
+      "key": "explicit.stat_2818518881#0",
+      "en": "#% increased Spell Damage per 10 Intelligence",
+      "text": "每 10 点智慧会使法术伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_3491815140#0",
+      "en": "#% increased Spell Damage per 100 Maximum Life",
+      "text": "每 100 点生命上限使法术伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_2573406169#0",
+      "en": "Projectiles have #% increased Critical Damage Bonus against Enemies within 2m",
+      "text": "投射物对 2 米内的敌人的暴击伤害加成提高 #%"
+    },
+    {
+      "key": "explicit.stat_2468595624#0",
+      "en": "Projectiles deal #% increased Damage with Hits against Enemies within 2m",
+      "text": "投射物对 2 米内的敌人造成的击中伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_679087890#0",
+      "en": "Defend against Hits as though you had #% more Armour per 1% current Energy Shield",
+      "text": "当前每有 1% 能量护盾，对击中以总增 #% 的护甲防御"
+    },
+    {
+      "key": "explicit.stat_2879778895#0",
+      "en": "Every 10 seconds, gain a random non-damaging Shrine buff for 20 seconds",
+      "text": "每 10 秒获得一个随机的非伤害性神龛增益，持续 20 秒"
+    },
+    {
+      "key": "explicit.stat_3138344128#0",
+      "en": "Defend with 200% of Armour during effect",
+      "text": "效果期间以 200% 的护甲防御"
+    },
+    {
+      "key": "explicit.stat_347220474#0",
+      "en": "#% increased Spell damage for each 200 total Mana you have Spent Recently",
+      "text": "你近期每消耗 200 魔力，法术伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_2650053239#0",
+      "en": "#% increased Cost of Skills for each 200 total Mana Spent Recently",
+      "text": "近期内每消耗总计 200 魔力都使技能消耗提高 #%"
+    },
+    {
+      "key": "explicit.stat_2890792988#0",
+      "en": "Your Hits can Penetrate Elemental Resistances down to a minimum of -50%",
+      "text": "你的击中可以穿透元素抗性，最多降低 至 -50%"
+    },
+    {
+      "key": "explicit.stat_3581035970#0",
+      "en": "#% increased Spirit Reservation Efficiency of Buff Skills per 100 Maximum Life",
+      "text": "每 100 点生命上限使增益技能的精魂保留效能提高 #%"
+    },
+    {
+      "key": "explicit.stat_3076483222|64921#0",
+      "en": "Sacrifice up to 10 Vaal Orbs to receive double on Trial completion",
+      "text": "献祭最多 10 瓦尔宝珠 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|62634#0",
+      "en": "Sacrifice up to 20 Exalted Orbs to receive double on Trial completion",
+      "text": "献祭最多 20 崇高石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_2749595652#0",
+      "en": "#% chance for Skills to retain 40% of Glory on use",
+      "text": "使用技能时，有 #% 的几率保留 40% 的荣耀"
+    },
+    {
+      "key": "explicit.stat_2896801635#0",
+      "en": "Convert 100% of maximum Energy Shield to maximum Divinity",
+      "text": "将能量护盾上限的 100% 转化为神性上限"
+    },
+    {
+      "key": "explicit.stat_3076483222|49977#0",
+      "en": "Sacrifice up to 10 Chaos Orbs to receive double on Trial completion",
+      "text": "献祭最多 10 混沌石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|54496#0",
+      "en": "Sacrifice up to 20 Regal Orbs to receive double on Trial completion",
+      "text": "献祭最多 20 富豪石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|20358#0",
+      "en": "Sacrifice up to 10 Orbs of Alchemy to receive double on Trial completion",
+      "text": "献祭最多 10 点金石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3492740640#0",
+      "en": "Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds Lose all Runic Bindings when you Shapeshift to gain that much Unbound Potential",
+      "text": "使用法术击中时获得 1 点符文咒缚，每 0.5 秒只能获得一次 变形时，损失所有符文咒缚以获得等量的潜能释放"
+    },
+    {
+      "key": "explicit.stat_2991045011#0",
+      "en": "Recover #% of Maximum Mana when you expend at least 10 Combo",
+      "text": "消耗至少 10 个连击时，恢复 #% 魔力上限"
+    },
+    {
+      "key": "explicit.stat_4033618138#0",
+      "en": "Recover #% of Maximum Life when you expend at least 10 Combo",
+      "text": "消耗至少 10 个连击时，恢复 #% 生命上限"
+    },
+    {
+      "key": "explicit.stat_2148576938#0",
+      "en": "Gain Overencumbrance for 4 seconds when you Dodge Roll",
+      "text": "闪避翻滚时，获得 4 秒过量累赘"
+    },
+    {
+      "key": "explicit.stat_3076483222|4897#0",
+      "en": "Sacrifice up to 20 Armourer's Scraps to receive double on Trial completion",
+      "text": "献祭最多 20 护甲片 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|19846#0",
+      "en": "Sacrifice up to 20 Artificer's Orbs to receive double on Trial completion",
+      "text": "献祭最多 20 巧匠石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|32821#0",
+      "en": "Sacrifice up to 20 Blacksmith's Whetstones to receive double on Trial completion",
+      "text": "献祭最多 20 磨刀石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3302775221#0",
+      "en": "+# maximum Rage if you've used a Skill that Requires Glory in the past 20 seconds",
+      "text": "过去 20 秒内每使用一次需要荣耀的技能时，怒火上限 +#"
+    },
+    {
+      "key": "explicit.stat_3526763442#0",
+      "en": "#% increased Minion Damage per different Command Skill used in the past 15 seconds",
+      "text": "过去 15 秒内每使用过一个不同的命令技能，召唤生物造成的伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_1345486764#0",
+      "en": "+1 to Maximum Spirit per # Maximum Life",
+      "text": "每 # 生命上限使精魂上限 +1"
+    },
+    {
+      "key": "explicit.stat_287294012#0",
+      "en": "# to # Fire Thorns damage per 100 maximum Life",
+      "text": "每有 100 点生命上限，获得 # - # 火焰荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_797289402#0",
+      "en": "#% increased Lightning Damage if you've collected a Lightning Infusion in the last 8 seconds",
+      "text": "若你在过去 8 秒内收集了一个闪电灌注，闪电伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_1002535626#0",
+      "en": "#% increased Cold Damage if you've collected a Cold Infusion in the last 8 seconds",
+      "text": "若你在过去 8 秒内收集了一个冰霜灌注，冰霜伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_3076483222|38303#0",
+      "en": "Sacrifice up to 20 Arcanist's Etchers to receive double on Trial completion",
+      "text": "献祭最多 20 奥术师的铭刻 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|19854#0",
+      "en": "Sacrifice up to 3 Orb of Annulments to receive double on Trial completion",
+      "text": "献祭最多 3 剥离石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3987691524#0",
+      "en": "Inherent Rage loss starts 1 second later",
+      "text": "固有的怒火损失延迟 1 秒开始"
+    },
+    {
+      "key": "explicit.stat_4224832423#0",
+      "en": "#% chance for Spell Skills to fire 8 additional Projectiles in a circle",
+      "text": "法术技能有 #% 的几率以环状方式发射额外 8 个投射物"
+    },
+    {
+      "key": "explicit.stat_3076483222|45026#0",
+      "en": "Sacrifice up to 3 Orbs of Chance to receive double on Trial completion",
+      "text": "献祭最多 3 机会石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3858572996#0",
+      "en": "#% increased Fire Damage if you've collected a Fire Infusion in the last 8 seconds",
+      "text": "若你在过去 8 秒内收集了一个火焰灌注，火焰伤害提高 #%"
+    },
+    {
+      "key": "explicit.stat_3076483222|136#0",
+      "en": "Sacrifice up to 20 Glassblower's Baubles to receive double on Trial completion",
+      "text": "献祭最多 20 玻璃弹珠 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|53954#0",
+      "en": "Sacrifice up to 10 Gemcutter's Prisms to receive double on Trial completion",
+      "text": "献祭最多 10 宝石匠的棱镜 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_2408625104#0",
+      "en": "Players and their Minions deal no damage for 3 out of every 10 seconds",
+      "text": "每 10 秒中，玩家及其召唤生物有 3 秒不能造成伤害"
+    },
+    {
+      "key": "explicit.stat_3076483222|61382#0",
+      "en": "Sacrifice up to 2 Divine Orbs to receive double on Trial completion",
+      "text": "献祭最多 3 神圣石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_2150661403#0",
+      "en": "Skills have #% chance to not remove Elemental Infusions but still count as consuming them if you've lost an Archon Buff in the past 6 seconds",
+      "text": "若你在过去6秒内失去过执政官增益，技能有 #% 的几率不移除元素灌注，但仍视作已消耗"
+    },
+    {
+      "key": "explicit.stat_3076483222|30874#0",
+      "en": "Sacrifice up to 10 Greater Regal Orbs to receive double on Trial completion",
+      "text": "献祭最多 10 个高级富豪石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|8084#0",
+      "en": "Sacrifice up to 10 Greater Exalted Orbs to receive double on Trial completion",
+      "text": "献祭最多 10 个高级崇高石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_2408276841#0",
+      "en": "#% increased Energy Shield Recharge Rate per 4 Strength",
+      "text": "每有 4 点力量，能量护盾充能率提高 #%"
+    },
+    {
+      "key": "explicit.stat_3076483222|42106#0",
+      "en": "Sacrifice up to 5 Greater Chaos Orbs to receive double on Trial completion",
+      "text": "献祭最多 5 个高级混沌石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|51981#0",
+      "en": "Sacrifice up to 3 Perfect Regal Orbs to receive double on Trial completion",
+      "text": "献祭最多 3 个完美富豪石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|6774#0",
+      "en": "Sacrifice up to 3 Perfect Exalted Orbs to receive double on Trial completion",
+      "text": "献祭最多 3 个完美崇高石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_3076483222|56025#0",
+      "en": "Sacrifice up to 3 Perfect Chaos Orbs to receive double on Trial completion",
+      "text": "献祭最多 3 个完美混沌石 个，完成试炼时可获得双倍返还"
+    },
+    {
+      "key": "explicit.stat_233359425#0",
+      "en": "+# maximum Rage for each time you've used a Skill that Requires Glory in the past 6 seconds, up to 5 times",
+      "text": "过去 6 秒内每次使用需要荣耀的技能时，怒火上限 +#，最多 5 次"
+    },
+    {
+      "key": "implicit.stat_958696139#0",
+      "en": "Grants 1 additional Skill Slot",
+      "text": "获得 1 个额外技能栏位"
+    },
+    {
+      "key": "implicit.stat_4077843608#0",
+      "en": "Has 1 Socket",
+      "text": "有 1 个插槽"
+    },
+    {
+      "key": "implicit.stat_2728425538#0",
+      "en": "Skills Gain #% of damage as Extra Lightning damage per 50 Runic Ward Cost",
+      "text": "每消耗 50 点符文结界，技能获得等同于伤害 #% 的额外闪电伤害"
+    },
+    {
+      "key": "rune.stat_610569665#0",
+      "en": "# to Spirit per 2 Levels",
+      "text": "每 2 级 # 精魂"
+    },
+    {
+      "key": "rune.stat_103837384#0",
+      "en": "Bonded: 1% more Runic Ward Regeneration rate per #% of maximum Runic Ward lost from Hits Recently, up to 100% more",
+      "text": "羁绊： 你近期因击中失去的每 #% 符文结界上限，使符文结界再生率总增 1%，最多总增 100%"
+    },
+    {
+      "key": "rune.stat_1963589548#0",
+      "en": "Every 4 seconds, gain Guard equal to #% of maximum Runic Ward for 2 seconds",
+      "text": "每 4 秒，获得相当于符文结界上限 #% 的 防卫，持续 2 秒"
+    },
+    {
+      "key": "rune.stat_2703838669#0",
+      "en": "#% increased Movement Speed per 15 Spirit, up to a maximum of 40% Other Modifiers to Movement Speed except for Sprinting do not apply",
+      "text": "每 15 点精魂使移动速度提高 #%，最高 40% 其他除冲刺外的移动速度词缀无法生效"
+    },
+    {
+      "key": "rune.stat_2616640048#0",
+      "en": "On Hitting an enemy, gains maximum added Cold damage equal to the enemy's Power for 20 seconds, up to a total of #",
+      "text": "击中敌人时，获得等同于敌人威力值的附加冰霜伤害上限，持续 20 秒，最多总共获得 #"
+    },
+    {
+      "key": "rune.stat_1197632982#0",
+      "en": "# to Armour per 1 Spirit",
+      "text": "每 1 点精魂提供 # 点护甲"
+    },
+    {
+      "key": "rune.stat_162036024#0",
+      "en": "1% increased Energy Shield Recharge Rate per # maximum Runic Ward",
+      "text": "每 # 点符文结界上限使能量护盾充能速度提高 1%"
+    },
+    {
+      "key": "rune.stat_2785209416#0",
+      "en": "# to maximum Life per 8 Armour on Equipped Helmet",
+      "text": "已装备的头盔每有 8 点护甲，生命上限 #"
+    },
+    {
+      "key": "rune.stat_901336307#0",
+      "en": "Gain 1 Endurance Charge on reaching Low Life, only once every 2 seconds",
+      "text": "低血时获得 1 个耐力能量球，每 2 秒只能获得次"
+    },
+    {
+      "key": "rune.stat_687156079#0",
+      "en": "# to Accuracy Rating per 1 Item Evasion Rating on Equipped Helmet",
+      "text": "装备头盔每有 1 点物品闪避值，命中 #"
+    },
+    {
+      "key": "rune.stat_280497929#0",
+      "en": "# to maximum Mana per 2 Item Energy Shield on Equipped Helmet",
+      "text": "已装备头盔每有 2 点物品能量护盾，魔力上限 #"
+    },
+    {
+      "key": "rune.stat_3863682550#0",
+      "en": "Gain Guard equal to #% of maximum Life for 4 seconds on taking Savage Hit",
+      "text": "受到凶蛮击中时，获得等同于生命上限 #% 的 防卫，持续 4 秒"
+    },
+    {
+      "key": "rune.stat_282990844#0",
+      "en": "+# to Deflection Rating per 10 maximum Runic Ward",
+      "text": "每 10 点符文结界上限使偏转值 +#"
+    },
+    {
+      "key": "rune.stat_2838678452#0",
+      "en": "+# to Stun Threshold per 10 maximum Runic Ward",
+      "text": "每 10 点符文结界上限，+# 晕眩阈值"
+    },
+    {
+      "key": "rune.stat_3370077792#0",
+      "en": "Enemies you Critically Hit get #% increased Life Regeneration Rate for 4 seconds",
+      "text": "你暴击击中的敌人生命回复速度提高 #%，持续 4 秒"
+    },
+    {
+      "key": "rune.stat_2241849004#0",
+      "en": "Energy Shield Recharge starts after spending a total of 2000 Mana, no more than once every 2 seconds",
+      "text": "总共消耗 2000 点魔力后，能量护盾充能开始，每 2 秒最多触发一次"
+    },
+    {
+      "key": "rune.stat_3903510399#0",
+      "en": "Gain Armour equal to #% of Life Lost from Hits in the past 8 seconds",
+      "text": "在过去 8 秒内被击中时，根据损失的生命值获得相当于 #% 的护甲"
+    },
+    {
+      "key": "rune.stat_293832783#0",
+      "en": "When you stop Sprinting, gain Guard equal to #% of maximum Life per second spent Sprinting, up to a maximum of 20%, for 4 seconds",
+      "text": "停止冲刺时，每冲刺了一秒，获得等同于生命上限 #% 的防卫，最多获得 20%，持续 4 秒"
+    },
+    {
+      "key": "rune.stat_625805922#0",
+      "en": "Bonded: #% increased Block chance per 100 total Item Armour on Equipped Armour Items",
+      "text": "羁绊： 已装备护甲物品每有 100 点物品护甲值，格挡几率提高 #%"
+    },
+    {
+      "key": "sanctum.stat_3870327403#0",
+      "en": "#% chance if you were to lose all your Honour to have 1 Honour instead",
+      "text": "如果你即将失去所有荣誉，有 #% 的几率改为保留 1 点荣誉"
+    },
+    {
+      "key": "sanctum.stat_4191312223#0",
+      "en": "Maximum Honour is 1",
+      "text": "荣誉上限为 1"
+    }
+  ]
+}

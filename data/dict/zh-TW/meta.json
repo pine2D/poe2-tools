@@ -2,7 +2,7 @@
   "locale": "zh-TW",
   "gameVersion": "0.5.5",
   "leagueName": "禁忌儀式",
-  "builtAt": "2026-09-07T11:29:43.375Z",
+  "builtAt": "2026-09-07T12:27:24.151Z",
   "sources": [
     {
       "name": "trade2-en-stats",
@@ -31,20 +31,34 @@
       "sha256": "118423693e2fab1999bc571705db94b91def786cc321c01f0792709a23292920",
       "fetchedAt": "2026-09-07T11:29:30.653Z",
       "fromCache": true
+    },
+    {
+      "name": "poe2db-tree-page",
+      "url": "https://poe2db.tw/cn/passive-skill-tree",
+      "sha256": "9b01f1dc26388528058165d97dd8a5b94362bf81e9e32e067c56f81cee24fee8",
+      "fetchedAt": "2026-09-07T11:29:24.711Z",
+      "fromCache": true
+    },
+    {
+      "name": "poe2db-tree-bundle",
+      "url": "https://cdn.poe2db.tw/js/passive-skill-tree.e0cc6da0156e37d5.js",
+      "sha256": "49991101a2ee2111e9f392b549a9dd62d41a5b244ea15adbc64fbd1b1224bfcd",
+      "fetchedAt": "2026-09-07T11:29:25.218Z",
+      "fromCache": true
     }
   ],
   "counts": {
-    "stats": 3720,
-    "passives": 5032,
+    "stats": 3684,
+    "passives": 4927,
     "ascendancies": 23,
     "classes": 8,
     "inventories": 14
   },
   "audit": {
     "stats": {
-      "enIds": 8214,
-      "targetIds": 5841,
-      "joined": 3720,
+      "enIds": 8178,
+      "targetIds": 5805,
+      "joined": 3684,
       "missingInTarget": 2374,
       "groupMismatch": 0,
       "placeholderMismatch": [
@@ -54,27 +68,28 @@
       "multiPlaceholder": 38,
       "orderApplied": 0,
       "residualSuffix": [],
-      "mergedSameText": 2197
+      "mergedSameText": 2197,
+      "excludedEntries": 36,
+      "literalNumber": 153,
+      "untranslatedSameAsEn": 33,
+      "unusedOrderKeys": [],
+      "unusedWinnerKeys": []
     },
     "passives": {
       "repoeNodes": 5152,
-      "joined": 5032,
+      "joined": 4927,
       "missingInTree": 0,
       "idMismatch": 0,
-      "emptyName": 120,
-      "duplicateId": 0
+      "emptyName": 112,
+      "duplicateId": 0,
+      "dntSkipped": 113
     },
     "problems": {
-      "total": 16,
+      "total": 15,
       "byTable": {
-        "stats": 16
+        "stats": 15
       },
       "sample": [
-        {
-          "table": "stats",
-          "key": "#% increased movement speed",
-          "problem": "与 pseudo.pseudo_increased_movement_speed 键冲突"
-        },
         {
           "table": "stats",
           "key": "#% increased block chance",

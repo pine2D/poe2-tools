@@ -1,6 +1,6 @@
 {
   "locale": "zh-CN",
-  "generatedAt": "2026-09-07T11:29:43.375Z",
+  "generatedAt": "2026-09-07T12:27:24.151Z",
   "note": "多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
   "entries": [
     {
@@ -85,13 +85,13 @@
     },
     {
       "key": "explicit.stat_331648983#0",
-      "en": "When you reload, triggers Gemini Surge to alternately\ngain # Cold Surge or # Fire Surge",
-      "text": "当你装填时，触发双灵涌动\n交替获得 # 次冰霜涌动或 # 次火焰涌动"
+      "en": "When you reload, triggers Gemini Surge to alternately gain # Cold Surge or # Fire Surge",
+      "text": "当你装填时，触发双灵涌动 交替获得 # 次冰霜涌动或 # 次火焰涌动"
     },
     {
       "key": "explicit.stat_258955603#0",
-      "en": "Alternating every 5 seconds:\nTake #% more Damage from Hits\nTake #% more Damage over time",
-      "text": "每 5 秒交替：\n受到的击中伤害总增 #%\n受到的持续伤害总增 #%"
+      "en": "Alternating every 5 seconds: Take #% more Damage from Hits Take #% more Damage over time",
+      "text": "每 5 秒交替： 受到的击中伤害总增 #% 受到的持续伤害总增 #%"
     },
     {
       "key": "explicit.stat_2163764037#0",
@@ -145,8 +145,8 @@
     },
     {
       "key": "explicit.stat_1695767482#0",
-      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of\nyour maximum Life as Physical damage per second",
-      "text": "格挡时施加腐化之血，持续 # 秒，\n每秒造成相当于你生命上限 #% 的物理伤害"
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
+      "text": "格挡时施加腐化之血，持续 # 秒， 每秒造成相当于你生命上限 #% 的物理伤害"
     },
     {
       "key": "explicit.stat_262946222#0",
