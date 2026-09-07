@@ -1,0 +1,26 @@
+{
+  "name": "poe2-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "《流放之路 2》辅助工具集",
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run --passWithNoTests",
+    "build": "pnpm -r --if-present run build",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "dict:build": "pnpm --filter @poe2-tools/dict-builder run build-dict",
+    "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}

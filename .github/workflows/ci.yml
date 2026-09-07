@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
+  # 冒烟：GitHub Actions 出口能否访问国服交易站静态端点。词典生成是否能放进 CI 取决于此。
+  # 手动触发；不下载、不提交任何数据，只打印状态码与条目数。
+  smoke-cn-trade-api:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 请求 poe.game.qq.com trade2 stats
+        run: |
+          code=$(curl -sS -o /tmp/stats.json -w '%{http_code}' \
+            -H 'User-Agent: poe2-tools-ci-smoke (github.com/pine2D/poe2-tools)' \
+            'https://poe.game.qq.com/api/trade2/data/stats' || echo 'curl-failed')
+          echo "HTTP $code"
+          python3 -c "import json;d=json.load(open('/tmp/stats.json'));print('groups', len(d['result']), 'entries', sum(len(g['entries']) for g in d['result']))" || echo '响应不是预期 JSON'
+          test "$code" = "200"

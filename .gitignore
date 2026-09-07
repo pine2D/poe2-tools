@@ -1,0 +1,28 @@
+# superpowers 流程文档与底稿（research/specs/plans 等）仅本地保留，不入库
+/docs/superpowers/
+/.superpowers/
+
+# Node / pnpm
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+*.log
+
+# 本地密钥与个人代理配置
+.env
+.env.*
+!.env.example
+/CLAUDE.local.md
+/.claude/settings.local.json
+/.agents/
+/.codex/
+
+# 第三方导出的真实 .build 样本与抓取缓存：只在本地
+/data/fixtures/local/
+/data/cache/
+
+# 系统文件
+.DS_Store
+Thumbs.db
