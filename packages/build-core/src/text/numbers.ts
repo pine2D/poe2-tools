@@ -39,12 +39,15 @@ export function stripLeadingSign(template: string): string {
 }
 
 export function templateKey(template: string): string {
-  return stripLeadingSign(template).trim().toLowerCase()
+  return stripLeadingSign(template).trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
 // 把源行的正负号搬到译文模板第一个 '#' 前：该处已有符号则替换，没有则插入。
 // 中文模板的符号常在句尾（"所有火焰法术技能等级 +#"），不能只看句首。
+// 源行没有前导符号（sign === ''）时不动译文模板：模板里可能本就带着符号（如 "+#% 火焰抗性"），
+// 不能因为源行漏写符号就把模板里已有的符号剥掉。
 export function applySign(template: string, sign: Sign): string {
+  if (sign === '') return template
   const at = template.indexOf('#')
   if (at === -1) return template
   const prev = at > 0 ? template.charAt(at - 1) : ''

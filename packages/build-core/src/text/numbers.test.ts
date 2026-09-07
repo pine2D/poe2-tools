@@ -62,12 +62,22 @@ describe('前导符号与模板键', () => {
     expect(templateKey('-#% to Fire Resistance ')).toBe('#% to fire resistance')
     expect(templateKey('#% Increased Spell Damage')).toBe(templateKey('#% increased spell damage'))
   })
+  it('templateKey 把内部连续空白（含 NBSP）归一为单个空格', () => {
+    expect(templateKey('+#  to maximum Life')).toBe('# to maximum life')
+  })
   it('applySign', () => {
     expect(applySign('+#% 火焰抗性', '-')).toBe('-#% 火焰抗性')
     expect(applySign('+#% 火焰抗性', '+')).toBe('+#% 火焰抗性')
-    expect(applySign('+#% 火焰抗性', '')).toBe('#% 火焰抗性')
     expect(applySign('法术伤害提高 #%', '-')).toBe('法术伤害提高 -#%')
     expect(applySign('所有火焰法术技能等级 +#', '-')).toBe('所有火焰法术技能等级 -#')
     expect(applySign('无占位符', '-')).toBe('无占位符')
+  })
+  it('applySign：源行没有前导符号时不动译文模板（不剥掉模板里已有的符号）', () => {
+    expect(applySign('+#% 火焰抗性', '')).toBe('+#% 火焰抗性')
+    expect(applySign('召唤物所有元素抗性 +#%', '')).toBe('召唤物所有元素抗性 +#%')
+    expect(applySign('冷却时间 -#%', '')).toBe('冷却时间 -#%')
+  })
+  it('applySign：多个 # 时只动第一个', () => {
+    expect(applySign('攻击附加 # - # 物理伤害', '+')).toBe('攻击附加 +# - # 物理伤害')
   })
 })

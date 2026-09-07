@@ -12,10 +12,13 @@ export interface DictMeta {
 }
 
 // en：英文模板（数字为 '#'）；text：目标语言模板（交易站消歧后缀已在生成期剥离）
+// order：可选，声明占位符取值顺序——译文模板第 k 个 '#' 取源行第 order[k] 个数字（0 起）；
+// 缺省按源行数字的出现顺序回填。
 export interface StatEntry {
   id: string
   en: string
   text: string
+  order?: readonly number[]
 }
 
 export interface StatsDict {

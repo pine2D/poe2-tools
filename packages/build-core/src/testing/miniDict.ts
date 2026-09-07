@@ -13,7 +13,7 @@ const meta = (count: number): DictMeta => ({
 export const miniBundle: DictBundle = {
   locale: 'zh-CN',
   stats: {
-    _meta: meta(8),
+    _meta: meta(11),
     entries: [
       { id: 'explicit.stat_life', en: '+# to maximum Life', text: '+# 最大生命' },
       { id: 'explicit.stat_spell', en: '#% increased Spell Damage', text: '法术伤害提高 #%' },
@@ -34,6 +34,22 @@ export const miniBundle: DictBundle = {
         id: 'explicit.stat_as_dex',
         en: '#% increased Attack Speed per 25 Dexterity',
         text: '每 25 点敏捷使攻击速度提高 #%',
+      },
+      {
+        id: 'explicit.stat_minion_res',
+        en: 'Minions have +#% to all Elemental Resistances',
+        text: '召唤物所有元素抗性 +#%',
+      },
+      {
+        id: 'explicit.stat_cd',
+        en: 'Grenade Skills have -#% to Cooldown',
+        text: '手榴弹技能冷却时间 -#%',
+      },
+      {
+        id: 'explicit.stat_recover',
+        en: 'Recover #% of Life over # seconds',
+        text: '在 # 秒内回复 #% 生命',
+        order: [1, 0],
       },
     ],
   },

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { buildDictIndex } from '../dict/index'
+import type { DictBundle } from '../dict/types'
 import { miniIndex } from '../testing/miniDict'
 import { translateModLine, translateNameLine } from './lines'
 
@@ -32,6 +34,41 @@ describe('translateModLine', () => {
   })
   it('未收录返回 null', () => {
     expect(translateModLine('Grenade Skills have +1 Cooldown Use', miniIndex)).toBeNull()
+  })
+  it('符号嵌在模板中间，且不是源行首字符时不误判为前导符号', () => {
+    expect(
+      translateModLine('Minions have +15% to all Elemental Resistances', miniIndex)?.text,
+    ).toBe('召唤物所有元素抗性 +15%')
+    expect(translateModLine('Grenade Skills have -20% to Cooldown', miniIndex)?.text).toBe(
+      '手榴弹技能冷却时间 -20%',
+    )
+  })
+  it('作者漏写正号：源行没有符号时不剥掉译文模板里已有的符号', () => {
+    expect(translateModLine('25% to Fire Resistance', miniIndex)?.text).toBe('+25% 火焰抗性')
+  })
+  it('order：译文占位符按声明顺序取源行数字', () => {
+    expect(translateModLine('Recover 25% of Life over 3 seconds', miniIndex)?.text).toBe(
+      '在 3 秒内回复 25% 生命',
+    )
+  })
+  it('order 长度与数字个数不一致时 fail-closed 返回 null', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-CN',
+      stats: {
+        _meta: {
+          source: 'test',
+          tier: 'manual',
+          gameVersion: '0.0.0',
+          fetchedAt: '2026-09-07',
+          count: 1,
+        },
+        entries: [
+          { id: 'test.bad_order', en: 'Recover #% of Life', text: '回复 #% 生命', order: [0, 0] },
+        ],
+      },
+    }
+    const index = buildDictIndex(bundle)
+    expect(translateModLine('Recover 25% of Life', index)).toBeNull()
   })
 })
 

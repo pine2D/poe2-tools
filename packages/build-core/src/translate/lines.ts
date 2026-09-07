@@ -6,13 +6,33 @@ export interface ModTranslation {
   text: string
 }
 
-// 编号词缀行正文 → 目标语言。数字归一化后按模板键查 stats，回填数字；任何一步失败返回 null。
+// 按词典条目声明的 order 重排源行数字：译文第 k 个 '#' 取源行第 order[k] 个数字。
+// 未声明 order 时按原顺序；order 长度与数字个数不一致，或下标越界，一律 fail-closed 返回 null。
+function orderNumbers(
+  numbers: readonly string[],
+  order: readonly number[] | undefined,
+): string[] | null {
+  if (order === undefined) return [...numbers]
+  if (order.length !== numbers.length) return null
+  const reordered: string[] = []
+  for (const i of order) {
+    const value = numbers[i]
+    if (value === undefined) return null
+    reordered.push(value)
+  }
+  return reordered
+}
+
+// 编号词缀行正文 → 目标语言。数字归一化后按模板键查 stats，按 order（若声明）重排后回填；
+// 任何一步失败返回 null。
 export function translateModLine(body: string, index: DictIndex): ModTranslation | null {
   const { template, numbers } = normalizeNumbers(body)
   const entry = index.statsByKey.get(templateKey(template))
   if (entry === undefined) return null
+  const ordered = orderNumbers(numbers, entry.order)
+  if (ordered === null) return null
   const target = applySign(entry.text, leadingSign(template))
-  const filled = fillNumbers(target, numbers)
+  const filled = fillNumbers(target, ordered)
   return filled === null ? null : { statId: entry.id, text: filled }
 }
 
