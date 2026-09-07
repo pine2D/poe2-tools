@@ -31,6 +31,7 @@ describe('buildDictIndex', () => {
     expect(index.bases.size).toBe(0)
     expect(index.gems.size).toBe(0)
     expect(index.inventories.size).toBe(0)
+    expect(index.classes.size).toBe(0)
   })
 
   it('微型词典各表都建了索引', () => {
@@ -40,5 +41,7 @@ describe('buildDictIndex', () => {
     expect(miniIndex.passives.get('strength16')?.text).toBeDefined()
     expect(miniIndex.ascendancies.get('Sorceress3')).toBeDefined()
     expect(miniIndex.inventories.get('Weapon1')).toBeDefined()
+    expect(miniIndex.classes.get('Sorceress')).toBe('魔巫')
+    expect(miniIndex.ascendancies.get('Sorceress3')).toBe('瓦拉煞的门徒')
   })
 })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildFile } from '../format/types'
 import { miniIndex } from '../testing/miniDict'
-import { describeBuild, gemKey } from './describe'
+import { classCodeOf, describeBuild, gemKey } from './describe'
 
 describe('gemKey', () => {
   it('两种前缀都取末段', () => {
@@ -10,6 +10,18 @@ describe('gemKey', () => {
       'SupportGemConsideredCasting',
     )
     expect(gemKey('NoSlash')).toBe('NoSlash')
+  })
+})
+
+describe('classCodeOf', () => {
+  it('升华代号取字母前缀', () => {
+    expect(classCodeOf('Sorceress3')).toBe('Sorceress')
+    expect(classCodeOf('Witch3b')).toBe('Witch')
+    expect(classCodeOf('Mercenary1')).toBe('Mercenary')
+  })
+  it('不符合形态时原样返回', () => {
+    expect(classCodeOf('weird')).toBe('weird')
+    expect(classCodeOf('')).toBe('')
   })
 })
 
@@ -38,7 +50,12 @@ describe('describeBuild', () => {
 
   it('升华、宝石、天赋、槽位', () => {
     const model = describeBuild(build, miniIndex)
-    expect(model.ascendancy).toEqual({ code: 'Sorceress3', text: '女巫 · 第三升华（测试）' })
+    expect(model.ascendancy).toEqual({
+      code: 'Sorceress3',
+      text: '瓦拉煞的门徒',
+      classCode: 'Sorceress',
+      classText: '魔巫',
+    })
     expect(model.skills).toEqual([
       {
         id: 'Metadata/Items/Gems/SkillGemFlameblast',

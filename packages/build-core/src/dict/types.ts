@@ -58,4 +58,6 @@ export interface DictBundle {
   passives?: NamedDict
   ascendancies?: NamesTable
   inventories?: NamesTable
+  // 职业代号（升华代号去掉尾部序号，如 Sorceress）→ 职业名
+  classes?: NamesTable
 }

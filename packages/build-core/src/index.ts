@@ -30,7 +30,7 @@ export type {
 export type { MarkupNode } from './markup/tokenize'
 export { renderMarkup, tokenizeMarkup } from './markup/tokenize'
 export type { PreviewModel, PreviewName, PreviewSkill, PreviewSlot } from './preview/describe'
-export { describeBuild, gemKey } from './preview/describe'
+export { classCodeOf, describeBuild, gemKey } from './preview/describe'
 export type { LineParts, ParsedLine } from './text/lines'
 export { formatLine, parseLine } from './text/lines'
 export type { Normalized, Sign } from './text/numbers'

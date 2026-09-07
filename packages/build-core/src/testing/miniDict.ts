@@ -73,7 +73,8 @@ export const miniBundle: DictBundle = {
       AscendancyWitch1Notable4: { en: 'Notable', text: '核心天赋' },
     },
   },
-  ascendancies: { _meta: meta(1), entries: { Sorceress3: '女巫 · 第三升华（测试）' } },
+  ascendancies: { _meta: meta(2), entries: { Sorceress3: '瓦拉煞的门徒', Witch3b: '深渊巫妖' } },
+  classes: { _meta: meta(2), entries: { Sorceress: '魔巫', Witch: '女巫' } },
   inventories: {
     _meta: meta(4),
     entries: { Weapon1: '主手', Belt1: '腰带', Charm1: '魔符', Ring2: '戒指 2' },

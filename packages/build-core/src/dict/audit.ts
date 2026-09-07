@@ -12,8 +12,8 @@ function countPlaceholders(text: string): number {
   return (text.match(/#/g) ?? []).length
 }
 
-// (a) 无 order 时 en/text 的 '#' 个数必须一致；(b) 有 order 时其长度须等于 text 的 '#' 数、
-// 每个下标须 < en 的 '#' 数，且互不重复
+// (a) 无 order 时 en/text 的 '#' 个数必须一致；(b) 有 order 时其长度须同时等于 en 与 text 的 '#' 数，
+// 每个下标须是 [0, enCount) 内的整数且互不重复
 function auditStatEntry(problems: DictProblem[], entry: StatEntry): void {
   const enCount = countPlaceholders(entry.en)
   const textCount = countPlaceholders(entry.text)
@@ -27,9 +27,12 @@ function auditStatEntry(problems: DictProblem[], entry: StatEntry): void {
     }
     return
   }
-  const indicesInRange = entry.order.every((i) => i < enCount)
+  // (b) 有 order 时：长度须同时等于 en 与 text 的 '#' 数（运行期按源行数字个数校验，回填按 text 的 '#' 数），
+  //     每个下标须是 [0, enCount) 内的整数，且互不重复
+  const lengthOk = entry.order.length === enCount && entry.order.length === textCount
+  const indicesOk = entry.order.every((i) => Number.isInteger(i) && i >= 0 && i < enCount)
   const noDuplicates = new Set(entry.order).size === entry.order.length
-  if (entry.order.length !== textCount || !indicesInRange || !noDuplicates) {
+  if (!lengthOk || !indicesOk || !noDuplicates) {
     problems.push({ table: 'stats', key: entry.id, problem: 'order 与占位符个数或下标不匹配' })
   }
 }
@@ -80,5 +83,6 @@ export function auditDictBundle(bundle: DictBundle): DictProblem[] {
   auditNamedDict(problems, 'passives', bundle.passives)
   auditTextRecord(problems, 'ascendancies', bundle.ascendancies?.entries)
   auditTextRecord(problems, 'inventories', bundle.inventories?.entries)
+  auditTextRecord(problems, 'classes', bundle.classes?.entries)
   return problems
 }

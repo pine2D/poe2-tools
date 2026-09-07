@@ -113,7 +113,7 @@ function parseNamesTable(table: string, raw: unknown): NamesTable | string {
   return { _meta: meta, entries }
 }
 
-// raw 应为对象，可含键 stats/items/gems/passives/ascendancies/inventories（均可缺省，缺省即不
+// raw 应为对象，可含键 stats/items/gems/passives/ascendancies/inventories/classes（均可缺省，缺省即不
 // 放进 bundle）；未知键忽略。逐表校验，失败时指出表名与第一处不合法的位置。
 export function parseDictBundle(raw: unknown, locale: Locale): ParseDictResult {
   if (!isRecord(raw)) return { ok: false, error: '词典数据不是对象' }
@@ -147,6 +147,11 @@ export function parseDictBundle(raw: unknown, locale: Locale): ParseDictResult {
     const inventories = parseNamesTable('inventories', raw.inventories)
     if (typeof inventories === 'string') return { ok: false, error: inventories }
     bundle.inventories = inventories
+  }
+  if (raw.classes !== undefined) {
+    const classes = parseNamesTable('classes', raw.classes)
+    if (typeof classes === 'string') return { ok: false, error: classes }
+    bundle.classes = classes
   }
   return { ok: true, bundle }
 }

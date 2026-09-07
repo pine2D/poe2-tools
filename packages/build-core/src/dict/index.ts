@@ -10,6 +10,7 @@ export interface DictIndex {
   passives: Map<string, NamedEntry>
   ascendancies: Map<string, string>
   inventories: Map<string, string>
+  classes: Map<string, string>
 }
 
 function toMap<T>(record: Record<string, T> | undefined): Map<string, T> {
@@ -31,5 +32,6 @@ export function buildDictIndex(bundle: DictBundle): DictIndex {
     passives: toMap(bundle.passives?.entries),
     ascendancies: toMap(bundle.ascendancies?.entries),
     inventories: toMap(bundle.inventories?.entries),
+    classes: toMap(bundle.classes?.entries),
   }
 }

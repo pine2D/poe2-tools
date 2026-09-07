@@ -17,6 +17,7 @@ describe('parseDictBundle', () => {
     expect(index.passives.size).toBe(Object.keys(miniBundle.passives?.entries ?? {}).length)
     expect(index.ascendancies.size).toBe(Object.keys(miniBundle.ascendancies?.entries ?? {}).length)
     expect(index.inventories.size).toBe(Object.keys(miniBundle.inventories?.entries ?? {}).length)
+    expect(index.classes.size).toBe(Object.keys(miniBundle.classes?.entries ?? {}).length)
     // 抽样几条
     expect(index.statsByKey.get('# to maximum life')?.id).toBe('explicit.stat_life')
     expect(index.bases.get('Pyrophyte Staff')).toBe('炎种长杖')
@@ -71,5 +72,26 @@ describe('parseDictBundle', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.error).toContain('stats')
+  })
+
+  it('classes 表按 NamesTable 校验', () => {
+    const bad = parseDictBundle(
+      {
+        classes: {
+          _meta: {
+            source: 't',
+            tier: 'manual',
+            gameVersion: '0',
+            fetchedAt: '2026-09-07',
+            count: 1,
+          },
+          entries: { Witch: 1 },
+        },
+      },
+      'zh-CN',
+    )
+    expect(bad.ok).toBe(false)
+    if (bad.ok) return
+    expect(bad.error).toContain('classes')
   })
 })

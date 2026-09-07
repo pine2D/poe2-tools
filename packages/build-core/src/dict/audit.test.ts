@@ -29,25 +29,80 @@ describe('auditDictBundle', () => {
     expect(problems[0]).toMatchObject({ table: 'stats', key: 'bad.count' })
   })
 
-  it('order 声明与占位符个数或下标不匹配 → 记 problem', () => {
+  it('order 下标越界、为负、非整数 → 各记 problem', () => {
+    const cases: Array<readonly number[]> = [
+      [2, 0],
+      [-1, 0],
+      [0.5, 1],
+    ]
+    for (const order of cases) {
+      const bundle: DictBundle = {
+        locale: 'zh-CN',
+        stats: {
+          _meta: meta(1),
+          entries: [
+            {
+              id: 'bad.order',
+              en: 'Recover #% of Life over # seconds',
+              text: '在 # 秒内回复 #% 生命',
+              order,
+            },
+          ],
+        },
+      }
+      const problems = auditDictBundle(bundle)
+      expect(problems).toHaveLength(1)
+      expect(problems[0]).toMatchObject({ table: 'stats', key: 'bad.order' })
+    }
+  })
+
+  it('order 长度必须同时等于 en 与 text 的 # 数', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-CN',
+      stats: {
+        _meta: meta(1),
+        // en 2 个 #，text 1 个 #，order 长度 1：与 text 相符但与 en 不符 → 运行期恒 fail-closed，审计必须报
+        entries: [{ id: 'short.order', en: 'Adds # to # Damage', text: '附加 # 伤害', order: [0] }],
+      },
+    }
+    expect(auditDictBundle(bundle)).toHaveLength(1)
+  })
+
+  it('合法的 order 不报 problem', () => {
     const bundle: DictBundle = {
       locale: 'zh-CN',
       stats: {
         _meta: meta(1),
         entries: [
           {
-            id: 'bad.order',
+            id: 'ok.order',
             en: 'Recover #% of Life over # seconds',
             text: '在 # 秒内回复 #% 生命',
-            // 下标 2 越界（en 只有 2 个 #）
-            order: [2, 0],
+            order: [1, 0],
           },
         ],
       },
     }
-    const problems = auditDictBundle(bundle)
-    expect(problems).toHaveLength(1)
-    expect(problems[0]).toMatchObject({ table: 'stats', key: 'bad.order' })
+    expect(auditDictBundle(bundle)).toEqual([])
+  })
+
+  it('order 下标重复 → 记 problem', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-CN',
+      stats: {
+        _meta: meta(1),
+        // 长度与范围都合法，只有重复不合法
+        entries: [
+          {
+            id: 'dup.order',
+            en: 'Recover #% of Life over # seconds',
+            text: '在 # 秒内回复 #% 生命',
+            order: [0, 0],
+          },
+        ],
+      },
+    }
+    expect(auditDictBundle(bundle)).toHaveLength(1)
   })
 
   it('templateKey(en) 冲突：第二条起每条各记一条 problem', () => {
@@ -77,10 +132,11 @@ describe('auditDictBundle', () => {
       passives: { _meta: meta(1), entries: { EmptyPassive: { en: 'Empty', text: '' } } },
       ascendancies: { _meta: meta(1), entries: { EmptyAsc: '' } },
       inventories: { _meta: meta(1), entries: { EmptyInv: '' } },
+      classes: { _meta: meta(1), entries: { EmptyClass: '' } },
     }
     const problems = auditDictBundle(bundle)
     expect(problems.map((p) => p.table).sort()).toEqual(
-      ['ascendancies', 'gems', 'inventories', 'items.bases', 'passives'].sort(),
+      ['ascendancies', 'classes', 'gems', 'inventories', 'items.bases', 'passives'].sort(),
     )
   })
 })

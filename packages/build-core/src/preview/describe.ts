@@ -21,7 +21,12 @@ export interface PreviewSlot {
 }
 
 export interface PreviewModel {
-  ascendancy: { code: string; text: string | null } | null
+  ascendancy: {
+    code: string
+    text: string | null
+    classCode: string
+    classText: string | null
+  } | null
   skills: PreviewSkill[]
   passives: PreviewName[]
   slots: PreviewSlot[]
@@ -31,6 +36,12 @@ export interface PreviewModel {
 export function gemKey(id: string): string {
   const at = id.lastIndexOf('/')
   return at === -1 ? id : id.slice(at + 1)
+}
+
+// 升华代号 = 职业名 + 序号（+ 可选改版字母），如 Sorceress3、Witch3b；职业代号取字母前缀
+export function classCodeOf(ascendancy: string): string {
+  const match = /^([A-Za-z]+?)\d+[a-z]?$/.exec(ascendancy)
+  return match?.[1] ?? ascendancy
 }
 
 // parseBuildFile 是宽松的，畸形字段会原样进来：只认数组，其他形态一律当空
@@ -81,7 +92,15 @@ function describeSlot(slot: BuildInventorySlot, index: DictIndex): PreviewSlot {
 export function describeBuild(build: BuildFile, index: DictIndex): PreviewModel {
   const code = typeof build.ascendancy === 'string' ? build.ascendancy : null
   return {
-    ascendancy: code === null ? null : { code, text: index.ascendancies.get(code) ?? null },
+    ascendancy:
+      code === null
+        ? null
+        : {
+            code,
+            text: index.ascendancies.get(code) ?? null,
+            classCode: classCodeOf(code),
+            classText: index.classes.get(classCodeOf(code)) ?? null,
+          },
     skills: toArray<string | BuildSkill>(build.skills).map((s) => describeSkill(s, index)),
     passives: toArray<unknown>(build.passives).map((p) => passiveName(idOf(p), index)),
     slots: toArray<unknown>(build.inventory_slots)
