@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "note": "inventory_id → 三语槽位类别名（不含编号，编号由 slot_x 交给上层拼）。除 魔符=Charm 有官方文本印证外，其余为通用译法，待与 poe.game.qq.com UI 核对。Offhand2 未在样本中出现，按命名对称推断。",
+    "updatedAt": "2026-09-07"
+  },
+  "entries": {
+    "Weapon1": { "en": "Weapon 1", "zh-CN": "武器1", "zh-TW": "武器1" },
+    "Weapon2": { "en": "Weapon 2", "zh-CN": "武器2", "zh-TW": "武器2" },
+    "Offhand1": { "en": "Off-hand 1", "zh-CN": "副手1", "zh-TW": "副手1" },
+    "Offhand2": { "en": "Off-hand 2", "zh-CN": "副手2", "zh-TW": "副手2" },
+    "Helm1": { "en": "Helmet", "zh-CN": "头盔", "zh-TW": "頭盔" },
+    "BodyArmour1": { "en": "Body Armour", "zh-CN": "胸甲", "zh-TW": "胸甲" },
+    "Gloves1": { "en": "Gloves", "zh-CN": "手套", "zh-TW": "手套" },
+    "Boots1": { "en": "Boots", "zh-CN": "靴子", "zh-TW": "靴子" },
+    "Amulet1": { "en": "Amulet", "zh-CN": "项链", "zh-TW": "項鍊" },
+    "Belt1": { "en": "Belt", "zh-CN": "腰带", "zh-TW": "腰帶" },
+    "Ring1": { "en": "Ring 1", "zh-CN": "戒指1", "zh-TW": "戒指1" },
+    "Ring2": { "en": "Ring 2", "zh-CN": "戒指2", "zh-TW": "戒指2" },
+    "Flask1": { "en": "Flask", "zh-CN": "药剂", "zh-TW": "藥劑" },
+    "Charm1": { "en": "Charm", "zh-CN": "魔符", "zh-TW": "魔符" }
+  }
+}

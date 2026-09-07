@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "note": "升华代号 → 三语名。白名单来自 PoB2 tree.json（8 职业 23 升华）；Witch3 与 Witch3b 是版本内改版，两条都保留供旧存档兼容。中文名来自 poe2db 树 JSON classes[].ascendancies[]。",
+    "updatedAt": "2026-09-07"
+  },
+  "entries": {
+    "Ranger1": { "en": "Deadeye", "class": "Ranger", "zh-CN": "锐眼", "zh-TW": "銳眼" },
+    "Ranger3": { "en": "Pathfinder", "class": "Ranger", "zh-CN": "追猎者", "zh-TW": "追獵者" },
+    "Huntress1": { "en": "Amazon", "class": "Huntress", "zh-CN": "亚马逊", "zh-TW": "亞馬遜" },
+    "Huntress2": { "en": "Spirit Walker", "class": "Huntress", "zh-CN": "灵魂行者", "zh-TW": "魂靈行者" },
+    "Huntress3": { "en": "Ritualist", "class": "Huntress", "zh-CN": "仪祭师", "zh-TW": "儀式行者" },
+    "Warrior1": { "en": "Titan", "class": "Warrior", "zh-CN": "泰坦", "zh-TW": "泰坦" },
+    "Warrior2": { "en": "Warbringer", "class": "Warrior", "zh-CN": "战争使者", "zh-TW": "戰爭使者" },
+    "Warrior3": { "en": "Smith of Kitava", "class": "Warrior", "zh-CN": "奇塔弗匠师", "zh-TW": "奇塔弗工匠" },
+    "Mercenary1": { "en": "Tactician", "class": "Mercenary", "zh-CN": "战术家", "zh-TW": "智勇軍師" },
+    "Mercenary2": { "en": "Witchhunter", "class": "Mercenary", "zh-CN": "猎巫人", "zh-TW": "女巫獵人" },
+    "Mercenary3": { "en": "Gemling Legionnaire", "class": "Mercenary", "zh-CN": "古灵使徒斗士", "zh-TW": "古靈軍團" },
+    "Druid1": { "en": "Oracle", "class": "Druid", "zh-CN": "神谕者", "zh-TW": "天啟先知" },
+    "Druid2": { "en": "Shaman", "class": "Druid", "zh-CN": "萨满", "zh-TW": "狂徒薩滿" },
+    "Witch1": { "en": "Infernalist", "class": "Witch", "zh-CN": "驱炎使", "zh-TW": "獄火師" },
+    "Witch2": { "en": "Blood Mage", "class": "Witch", "zh-CN": "命源法师", "zh-TW": "血法師" },
+    "Witch3": { "en": "Lich", "class": "Witch", "zh-CN": "巫妖", "zh-TW": "巫妖", "replaceBy": "Witch3b" },
+    "Witch3b": { "en": "Abyssal Lich", "class": "Witch", "zh-CN": "深渊巫妖", "zh-TW": "深淵妖巫", "replace": "Witch3" },
+    "Sorceress1": { "en": "Stormweaver", "class": "Sorceress", "zh-CN": "风暴编织者", "zh-TW": "風暴編織者" },
+    "Sorceress2": { "en": "Chronomancer", "class": "Sorceress", "zh-CN": "塑时术师", "zh-TW": "時空幻術師" },
+    "Sorceress3": { "en": "Disciple of Varashta", "class": "Sorceress", "zh-CN": "瓦拉煞的门徒", "zh-TW": "瓦拉什塔門徒" },
+    "Monk1": { "en": "Martial Artist", "class": "Monk", "zh-CN": "武圣", "zh-TW": "武聖" },
+    "Monk2": { "en": "Invoker", "class": "Monk", "zh-CN": "祈求者", "zh-TW": "祈靈者" },
+    "Monk3": { "en": "Acolyte of Chayula", "class": "Monk", "zh-CN": "夏乌拉追随者", "zh-TW": "夏烏拉侍僧" }
+  }
+}

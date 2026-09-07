@@ -1,0 +1,10 @@
+{
+  "_meta": {
+    "note": "按 locale 分节。键为 <stat id>#<组内第 k 次出现>（k 从 0 起，#0 可省略）→ 译文占位符取值顺序（译文第 k 个 # 取源行第 order[k] 个数字，0 起）。只适用于 en 与译文 # 个数一致、仅语序不同的条目；两服是独立翻译，语序各自判断；待复核清单见 data/dict/<locale>/_review/multi-placeholder.json。",
+    "updatedAt": "2026-09-07"
+  },
+  "entries": {
+    "zh-CN": {},
+    "zh-TW": {}
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "note": "职业代号（升华代号去掉尾部序号）→ 三语职业名。来源同 ascendancies.json。",
+    "updatedAt": "2026-09-07"
+  },
+  "entries": {
+    "Ranger": { "en": "Ranger", "zh-CN": "游侠", "zh-TW": "遊俠" },
+    "Huntress": { "en": "Huntress", "zh-CN": "女猎手", "zh-TW": "女獵人" },
+    "Warrior": { "en": "Warrior", "zh-CN": "战士", "zh-TW": "戰士" },
+    "Mercenary": { "en": "Mercenary", "zh-CN": "佣兵", "zh-TW": "傭兵" },
+    "Druid": { "en": "Druid", "zh-CN": "德鲁伊", "zh-TW": "德魯伊" },
+    "Witch": { "en": "Witch", "zh-CN": "女巫", "zh-TW": "女巫" },
+    "Sorceress": { "en": "Sorceress", "zh-CN": "魔巫", "zh-TW": "女術者" },
+    "Monk": { "en": "Monk", "zh-CN": "行者", "zh-TW": "僧侶" }
+  }
+}
