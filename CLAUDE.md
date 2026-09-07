@@ -14,18 +14,23 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core` 已实现并有单元与端到端测试（合成 fixture）；词典生成
-（dict-builder）与静态站（build-l10n）尚未开始，仓库里没有真实词典。更新本段时只写事实，
-不把"计划"写成"已完成"。
+当前状态：`packages/build-core` 与 `packages/dict-builder` 已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+词缀、天赋、升华、职业、槽位词典。物品基底 / 传奇 / 宝石的中文名（需 poe2db 页面桥接）与静态站
+`apps/build-l10n` 尚未开始。更新本段时只写事实，不把"计划"写成"已完成"。
 
 ## 仓库地图
 
 - `packages/build-core/`：纯 TypeScript、无 DOM。`.build` 无损解析与序列化、标记语法分词、
   词典匹配、翻译管线。浏览器与 Node 共用。
-- `packages/dict-builder/`：Node 脚本。抓取官方交易站三服数据、灰区来源适配器、生成 `data/dict/`。
+- `packages/dict-builder/`：Node 脚本（tsx 运行）。`cache.ts` 是唯一发网络请求的模块（按日缓存到
+  `data/cache/`，`--offline` 复用）；`adapters/` 是"已解析 JSON → 词典类型"的纯函数；`build.ts` 编排并
+  写 `data/dict/<locale>/`，`check.ts` 做结构校验、审计与覆盖率回归门禁。
 - `apps/build-l10n/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。
-- `data/dict/<locale>/`：生成的词典，入库并标注 generated；按来源等级分文件
-  （`*.primary.json` / `*.gray.json`），`meta.json` 记录来源、游戏版本、抓取时间与哈希。
+- `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
+  `ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的 `_meta.tier`，灰区表可整体
+  删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率基线；`_review/` 是待人工复核清单。
+- `data/dict/_overrides/`：手工三语表（升华、职业、槽位）与配置（`versions.json` 各服版本、
+  `stat-order.json` 占位符顺序）。改这里 → 重跑 `pnpm dict:build`。
 - `data/fixtures/synthetic/`：自造的最小 `.build` 样本，入库。`data/fixtures/local/`：第三方
   导出的真实样本，只在本地，永不提交。
 - `docs/build-format.md`：`.build` 格式速查与本仓库的翻译字段清单（权威来源：GGG 开发者文档
@@ -61,8 +66,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 - 非平凡逻辑先写一个能复现问题的最小测试，再写最小实现。
 - 保留工作树中的无关修改；不顺手格式化任务外文件。
 - 新增数据源：先在 `docs/data-sources.md` 登记许可与风险等级，再写适配器。
-- 词典更新：运行 `pnpm dict:build`，检查 diff 与 `meta.json`，用独立提交
-  `chore(dict): 更新词典至 <游戏版本>`。
+- 词典更新：先按各服实际版本改 `data/dict/_overrides/versions.json`，运行 `pnpm dict:build`，检查日志里的
+  审计计数与覆盖率，再用独立提交 `chore(dict): 更新词典至 <游戏版本>`。覆盖率下降需先查原因，不要直接
+  `--allow-regression`。
 - 涉及游戏内渲染的结论（中文是否显示、`name` 截断、国服客户端行为）必须来自真机；未验证就
   明确写"待验收"。
 - 文档与用户可见文本用简体中文；标识符用英文；代码注释用简体中文。
@@ -71,9 +77,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm verify        # typecheck + lint + test + build，与 CI 同构
-pnpm dict:build    # 生成词典（尚未实现）
-pnpm dict:check    # 词典新鲜度与覆盖率检查（尚未实现）
+pnpm verify        # typecheck + lint + test + build + dict:check，与 CI 同构
+pnpm dict:build    # 联网生成词典（按日缓存；--offline 复用缓存；--allow-regression 放行覆盖率下降）
+pnpm dict:check    # 入库词典的结构校验、审计与覆盖率回归比较
 ```
 
 ## 隐私与合规
