@@ -14,7 +14,9 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：仓库骨架阶段，尚无业务代码与词典。更新本段时只写事实，不把"计划"写成"已完成"。
+当前状态：`packages/build-core` 已实现并有单元与端到端测试（合成 fixture）；词典生成
+（dict-builder）与静态站（build-l10n）尚未开始，仓库里没有真实词典。更新本段时只写事实，
+不把"计划"写成"已完成"。
 
 ## 仓库地图
 

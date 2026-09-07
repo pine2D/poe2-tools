@@ -1,0 +1,74 @@
+{
+  "name": "Synthetic Rich - 0.5.5",
+  "author": "poe2-tools",
+  "link": "https://example.invalid/build",
+  "description": "<l>{<gold>{Leveling notes}}\nUse any staff until Act 3.",
+  "ascendancy": "Sorceress3",
+  "passives": [
+    "strength16",
+    {
+      "id": "attributes30_",
+      "additional_text": "<m>{<red>{Strength +5 is needed here}}"
+    },
+    "AscendancyWitch1Notable4"
+  ],
+  "skills": [
+    {
+      "id": "Metadata/Items/Gems/SkillGemFlameblast",
+      "level_interval": [
+        52,
+        100
+      ],
+      "additional_text": "Main skill",
+      "support_skills": [
+        "Metadata/Items/Gem/SupportGemConsideredCasting",
+        {
+          "id": "Metadata/Items/Gems/SupportGemSearingFlameTwo",
+          "level_interval": [
+            1,
+            100
+          ],
+          "additional_text": "Take <green>{BEFORE} the totem"
+        }
+      ]
+    },
+    "Metadata/Items/Gems/SkillGemFirestorm"
+  ],
+  "inventory_slots": [
+    {
+      "additional_text": "炎种长杖\n1. 法术伤害提高 149%\n2. 所有火焰法术技能等级 +7\n3. 攻击附加 2 - 4 物理伤害",
+      "inventory_id": "Weapon1",
+      "level_interval": [
+        16,
+        100
+      ],
+      "slot_x": 0,
+      "slot_y": 0
+    },
+    {
+      "inventory_id": "Belt1",
+      "unique_name": "Surefooted Sigil",
+      "slot_x": 0,
+      "slot_y": 0,
+      "additional_text": "<unique>{稳步印记}"
+    },
+    {
+      "additional_text": "<silver>{任意魔符}\n\n<grey>{Stat Priority\n-------------------\n1. +10 最大生命\n2. 移动速度提高 20%}",
+      "inventory_id": "Charm1",
+      "slot_x": 2,
+      "slot_y": 0,
+      "level_interval": [
+        1,
+        100
+      ]
+    },
+    {
+      "additional_text": "红宝石戒指\n1. +4.4% 暴击率\n2. -10% 火焰抗性\n3. 3% increased Attack Speed per 25 Dexterity",
+      "inventory_id": "Ring2",
+      "weapon_set": 0,
+      "extra_field": {
+        "keep": true
+      }
+    }
+  ]
+}
