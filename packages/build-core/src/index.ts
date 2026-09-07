@@ -1,5 +1,9 @@
+export type { DictProblem } from './dict/audit'
+export { auditDictBundle } from './dict/audit'
 export type { DictIndex } from './dict/index'
 export { buildDictIndex } from './dict/index'
+export type { ParseDictResult } from './dict/load'
+export { parseDictBundle } from './dict/load'
 export type {
   DictBundle,
   DictMeta,
