@@ -1,0 +1,14 @@
+{
+  "nodes": {
+    "root": { "skill": 0 },
+    "6015": {
+      "skill": 6015,
+      "id": "strength16",
+      "name": "属性",
+      "stats": ["+5 任意[Attributes|属性]"]
+    },
+    "49657": { "skill": 49657, "id": "dexterity30_", "name": "属性" },
+    "111": { "skill": 111, "id": "connector1", "name": "" },
+    "333": { "skill": 333, "id": "other_id", "name": "错配" }
+  }
+}

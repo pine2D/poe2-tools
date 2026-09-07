@@ -1,0 +1,9 @@
+{
+  "passives": {
+    "6015": { "id": "strength16", "hash": 6015, "name": "Attribute", "is_notable": false },
+    "49657": { "id": "dexterity30_", "hash": 49657, "name": "Attribute", "is_notable": false },
+    "111": { "id": "connector1", "hash": 111, "name": "", "is_notable": false },
+    "222": { "id": "orphan1", "hash": 222, "name": "Orphan", "is_notable": true },
+    "333": { "id": "mismatch1", "hash": 333, "name": "Mismatch", "is_notable": false }
+  }
+}
