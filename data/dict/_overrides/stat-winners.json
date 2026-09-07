@@ -1,0 +1,7 @@
+{
+  "_meta": {
+    "note": "同一模板键（build-core templateKey(en)）对应多条不同译文时，指定哪条 stat id 优先进入索引。按 locale 分节；键为模板键（小写、去前导符号、空白折叠），值为 stat id。审计里 unusedWinnerKeys 非空说明键写错或已消失。",
+    "updatedAt": "2026-09-07"
+  },
+  "entries": { "zh-CN": {}, "zh-TW": {} }
+}

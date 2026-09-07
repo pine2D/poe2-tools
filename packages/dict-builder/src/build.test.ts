@@ -211,7 +211,7 @@ describe('runBuild', () => {
     expect(meta.counts.passives).toBe(0)
   })
 
-  it('poe2db 树 JSON 抓取失败时只降级并告警，primary 表照常产出', async () => {
+  it('poe2db 树 JSON 抓取失败时只降级并告警，本次不更新该 locale 的词典（primary 表也不写）', async () => {
     const { fetchImpl } = fakeFetch(read('trade2-stats-zh-CN.json'), [
       'https://poe2db.tw/data/passive-skill-tree/9.9/data_cn.json?5',
       'https://poe2db.tw/data/passive-skill-tree/9.9/data_tw.json?5',
@@ -220,9 +220,8 @@ describe('runBuild', () => {
     const opts = await options(fetchImpl, '2026-09-07', { log: (m) => logs.push(m) })
     const result = await runBuild(opts)
     expect(result.ok).toBe(true)
-    expect(logs.some((m) => m.includes('降级'))).toBe(true)
+    expect(logs.some((m) => m.includes('不更新'))).toBe(true)
+    await expect(readFile(join(opts.dictDir, 'zh-CN', 'stats.json'), 'utf8')).rejects.toThrow()
     await expect(readFile(join(opts.dictDir, 'zh-CN', 'passives.json'), 'utf8')).rejects.toThrow()
-    const stats = JSON.parse(await readFile(join(opts.dictDir, 'zh-CN', 'stats.json'), 'utf8'))
-    expect(stats.entries).toHaveLength(6)
   })
 })

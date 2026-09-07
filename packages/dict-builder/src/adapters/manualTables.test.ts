@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { parseOverrideTable, parseStatOrder, parseVersions, toNamesTable } from './manualTables'
+import {
+  parseOverrideTable,
+  parseStatOrder,
+  parseStatWinners,
+  parseVersions,
+  toNamesTable,
+} from './manualTables'
 
 const overrides = fileURLToPath(new URL('../../../../data/dict/_overrides/', import.meta.url))
 const read = (file: string): unknown => JSON.parse(readFileSync(`${overrides}${file}`, 'utf8'))
@@ -67,5 +73,16 @@ describe('versions 与 stat-order', () => {
       'zh-TW': {},
     })
     expect(() => parseStatOrder({ entries: { 'zh-TW': { 'a.b': ['x'] } } })).toThrow('zh-TW.a.b')
+  })
+  it('parseStatWinners 按 locale 分节并校验字符串值', () => {
+    expect(parseStatWinners(read('stat-winners.json'))).toEqual({ 'zh-CN': {}, 'zh-TW': {} })
+    expect(
+      parseStatWinners({ entries: { 'zh-CN': { '#% increased spirit': 'b.second' } } }),
+    ).toEqual({
+      'zh-CN': { '#% increased spirit': 'b.second' },
+      'zh-TW': {},
+    })
+    expect(() => parseStatWinners({ entries: { 'zh-TW': { k: 1 } } })).toThrow('zh-TW.k')
+    expect(() => parseStatWinners({})).toThrow('entries')
   })
 })

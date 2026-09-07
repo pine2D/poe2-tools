@@ -6,6 +6,7 @@ import { auditDictBundle, type DictBundle, type Locale } from '@poe2-tools/build
 import {
   parseOverrideTable,
   parseStatOrder,
+  parseStatWinners,
   parseVersions,
   toNamesTable,
 } from './adapters/manualTables'
@@ -61,6 +62,8 @@ interface Poe2dbContext {
   version: string
   repoe: ReturnType<typeof parseRepoePassives>
   repoeFetched: Fetched
+  pageFetched: Fetched | null
+  bundleFetched: Fetched | null
 }
 
 interface PassivesOutcome {
@@ -92,17 +95,21 @@ async function preparePoe2db(
   fetchOptions: FetchOptions,
 ): Promise<Poe2dbContext | null> {
   let version: string | null = null
+  let pageFetched: Fetched | null = null
+  let bundleFetched: Fetched | null = null
   try {
     const page = await fetchCached('poe2db-tree-page', POE2DB_TREE_PAGE_URL, {
       ...fetchOptions,
       ext: 'html',
     })
+    pageFetched = page
     const file = findTreeBundleFile(page.body)
     if (file !== null) {
       const bundle = await fetchCached('poe2db-tree-bundle', bundleUrl(file), {
         ...fetchOptions,
         ext: 'js',
       })
+      bundleFetched = bundle
       version = findTreeVersion(bundle.body)
     }
   } catch (error) {
@@ -118,7 +125,13 @@ async function preparePoe2db(
       REPOE_PASSIVES_URL,
       fetchOptions,
     )
-    return { version, repoe: parseRepoePassives(JSON.parse(repoeFetched.body)), repoeFetched }
+    return {
+      version,
+      repoe: parseRepoePassives(JSON.parse(repoeFetched.body)),
+      repoeFetched,
+      pageFetched,
+      bundleFetched,
+    }
   } catch (error) {
     options.log(`警告：天赋链路降级，不产出 passives（${errorMessage(error)}）`)
     return null
@@ -168,6 +181,9 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
   const orderOverrides = parseStatOrder(
     await readJson(join(options.overridesDir, 'stat-order.json')),
   )
+  const winnerOverrides = parseStatWinners(
+    await readJson(join(options.overridesDir, 'stat-winners.json')),
+  )
   const tables = {
     ascendancies: parseOverrideTable(
       'ascendancies',
@@ -203,6 +219,7 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
       target: parseTrade2Stats(JSON.parse(targetFetched.body)),
       locale,
       orderOverrides: orderOverrides[locale],
+      winners: winnerOverrides[locale],
       meta: {
         source: `trade2 ${TRADE2_HOSTS[locale]}`,
         gameVersion,
@@ -246,6 +263,20 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
     if (passives !== null) {
       bundle.passives = passives.result.dict
       sources.push(...passives.sources)
+    }
+    if (poe2db !== null) {
+      if (poe2db.pageFetched !== null)
+        sources.push(sourceRecord('poe2db-tree-page', poe2db.pageFetched))
+      if (poe2db.bundleFetched !== null)
+        sources.push(sourceRecord('poe2db-tree-bundle', poe2db.bundleFetched))
+    }
+    // 灰区总开关开启但本次链路失败（版本/repoe 抓取失败，或该 locale 的树 JSON 抓取失败）：
+    // 不产出半成品，本次整体不更新该 locale 的词典（primary 表也不写），与回归门禁同样处理为 continue
+    if (options.poe2db && passives === null) {
+      options.log(
+        `警告：${locale} 灰区链路失败，本次不更新该 locale 的词典（用 --no-poe2db 可只产出 primary 表）`,
+      )
+      continue
     }
 
     const problems = auditDictBundle(bundle)

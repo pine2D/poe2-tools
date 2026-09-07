@@ -28,6 +28,7 @@ describe('buildStatsDict', () => {
       'explicit.stat_strongbox#1': [0],
       'explicit.stat_nope': [0],
     },
+    winners: {},
     meta,
   })
 
@@ -92,6 +93,59 @@ describe('buildStatsDict', () => {
       ],
       untranslatedSameAsEn: 0,
       unusedOrderKeys: ['explicit.stat_nope'],
+      unusedWinnerKeys: [],
     })
+  })
+})
+
+describe('buildStatsDict：winners 仲裁同键冲突', () => {
+  const enTwo = parseTrade2Stats({
+    result: [
+      {
+        id: 'explicit',
+        label: 'Explicit',
+        entries: [
+          { id: 'a.first', text: '#% increased Spirit', type: 'explicit' },
+          { id: 'b.second', text: '#% increased Spirit', type: 'explicit' },
+        ],
+      },
+    ],
+  })
+  const zhTwo = parseTrade2Stats({
+    result: [
+      {
+        id: 'explicit',
+        label: '固定',
+        entries: [
+          { id: 'a.first', text: '本装备精魂提高 #%', type: 'explicit' },
+          { id: 'b.second', text: '精魂提高 #%', type: 'explicit' },
+        ],
+      },
+    ],
+  })
+
+  it('winners 命中时把指定 id 移到同一模板键最前', () => {
+    const { dict, audit } = buildStatsDict({
+      en: enTwo,
+      target: zhTwo,
+      locale: 'zh-CN',
+      orderOverrides: {},
+      winners: { '#% increased spirit': 'b.second' },
+      meta,
+    })
+    expect(dict.entries.map((e) => e.id)).toEqual(['b.second', 'a.first'])
+    expect(audit.unusedWinnerKeys).toEqual([])
+  })
+
+  it('winners 键找不到对应条目时记入 unusedWinnerKeys', () => {
+    const { audit } = buildStatsDict({
+      en: enTwo,
+      target: zhTwo,
+      locale: 'zh-CN',
+      orderOverrides: {},
+      winners: { nokey: 'x' },
+      meta,
+    })
+    expect(audit.unusedWinnerKeys).toEqual(['nokey'])
   })
 })

@@ -1,5 +1,5 @@
 // 唯一发生网络请求的模块。按日缓存原始响应体（不加壳）与侧车溯源信息；离线时复用最近一次。
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { sha256 } from './util/json'
 
@@ -64,8 +64,22 @@ function metaPathOf(bodyPath: string, ext: string): string {
   return `${bodyPath.slice(0, -(ext.length + 1))}.meta.json`
 }
 
-function fallbackMeta(url: string, ua: string, body: string): CacheMeta {
-  return { url, fetchedAt: '', httpStatus: 0, sha256: sha256(body), lastModified: null, ua }
+// 侧车缺失时的兜底溯源：fetchedAt 取正文文件的 mtime，不再留空串
+async function fallbackMeta(
+  url: string,
+  ua: string,
+  body: string,
+  bodyPath: string,
+): Promise<CacheMeta> {
+  const info = await stat(bodyPath)
+  return {
+    url,
+    fetchedAt: info.mtime.toISOString(),
+    httpStatus: 0,
+    sha256: sha256(body),
+    lastModified: null,
+    ua,
+  }
 }
 
 export async function fetchCached(
@@ -83,7 +97,8 @@ export async function fetchCached(
   if (cachedPath !== null) {
     const body = await readFile(cachedPath, 'utf8')
     const meta =
-      (await readMeta(metaPathOf(cachedPath, ext))) ?? fallbackMeta(url, options.ua, body)
+      (await readMeta(metaPathOf(cachedPath, ext))) ??
+      (await fallbackMeta(url, options.ua, body, cachedPath))
     return { body, meta, fromCache: true, path: cachedPath }
   }
   if (options.offline) throw new Error(`离线模式下没有 ${name} 的缓存（${options.cacheDir}）`)
@@ -109,7 +124,7 @@ export async function fetchCached(
 
 async function existing(path: string): Promise<string | null> {
   try {
-    await readFile(path, { encoding: 'utf8', flag: 'r' })
+    await stat(path)
     return path
   } catch {
     return null

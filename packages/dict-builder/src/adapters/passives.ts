@@ -27,6 +27,8 @@ export interface PassivesAudit {
   idMismatch: number
   emptyName: number
   duplicateId: number
+  // repoe 或树节点的 name 以 "[DNT"（Do Not Translate）开头：占位/未使用节点，跳过并计数
+  dntSkipped: number
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -73,10 +75,15 @@ export function buildPassivesDict(
     idMismatch: 0,
     emptyName: 0,
     duplicateId: 0,
+    dntSkipped: 0,
   }
   for (const [hash, passive] of Object.entries(repoe.passives)) {
     audit.repoeNodes += 1
     const node = tree.nodes[hash]
+    if (passive.name.startsWith('[DNT') || node?.name?.startsWith('[DNT') === true) {
+      audit.dntSkipped += 1
+      continue
+    }
     if (node === undefined) {
       audit.missingInTree += 1
       continue

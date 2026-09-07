@@ -9,6 +9,7 @@
     },
     "49657": { "skill": 49657, "id": "dexterity30_", "name": "属性" },
     "111": { "skill": 111, "id": "connector1", "name": "" },
-    "333": { "skill": 333, "id": "other_id", "name": "错配" }
+    "333": { "skill": 333, "id": "other_id", "name": "错配" },
+    "444": { "skill": 444, "id": "AscendancyTemplar1Notable2", "name": "[DNT-UNUSED] Old" }
   }
 }

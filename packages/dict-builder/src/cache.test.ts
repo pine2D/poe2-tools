@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type FetchLike, fetchCached } from './cache'
+import { sha256 } from './util/json'
 
 const dirs: string[] = []
 afterEach(async () => {
@@ -109,6 +110,23 @@ describe('fetchCached', () => {
       }),
     ).rejects.toThrow('503')
     expect(await readdir(cacheDir)).toEqual([])
+  })
+
+  it('只写正文不写侧车时，fetchedAt 取文件 mtime 而非空串', async () => {
+    const cacheDir = await tempDir()
+    await writeFile(join(cacheDir, 'y-2026-09-07.json'), 'body-only', 'utf8')
+    const { fetchImpl, calls } = fakeFetch('never')
+    const result = await fetchCached('y', 'https://example.invalid/y', {
+      cacheDir,
+      today: '2026-09-07',
+      offline: false,
+      ua: 'test-ua',
+      fetchImpl,
+    })
+    expect(calls).toHaveLength(0)
+    expect(result.fromCache).toBe(true)
+    expect(result.meta.fetchedAt).not.toBe('')
+    expect(result.meta.sha256).toBe(sha256('body-only'))
   })
 
   it('ext 参数决定缓存文件扩展名', async () => {

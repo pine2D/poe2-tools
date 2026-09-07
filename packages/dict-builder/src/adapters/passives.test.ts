@@ -34,12 +34,13 @@ describe('buildPassivesDict', () => {
   })
   it('审计计数', () => {
     expect(audit).toEqual({
-      repoeNodes: 5,
+      repoeNodes: 6,
       joined: 2,
       missingInTree: 1,
       idMismatch: 1,
       emptyName: 1,
       duplicateId: 0,
+      dntSkipped: 1,
     })
   })
 })

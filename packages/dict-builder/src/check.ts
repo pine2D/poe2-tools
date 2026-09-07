@@ -49,6 +49,10 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 function percent(rate: number | null): string {
   return rate === null ? '—' : `${(rate * 100).toFixed(1)}%`
 }
@@ -59,11 +63,24 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   for (const locale of options.locales) {
     const localeDir = join(options.dictDir, locale)
     const raw: Record<string, unknown> = {}
+    const empty: CoverageSets = { synthetic: null, local: null }
+    let jsonError: string | null = null
     for (const table of TABLES) {
       const path = join(localeDir, `${table}.json`)
-      if (await exists(path)) raw[table] = await readJson(path)
+      if (!(await exists(path))) continue
+      try {
+        raw[table] = await readJson(path)
+      } catch (error) {
+        jsonError = `${locale}/${table}.json 不是合法 JSON（${errorMessage(error)}）`
+        break
+      }
     }
-    const empty: CoverageSets = { synthetic: null, local: null }
+    if (jsonError !== null) {
+      details[locale] = { parseError: jsonError, problems: 0, coverage: empty, regressions: [] }
+      ok = false
+      options.log(`${locale}：词典结构错误——${jsonError}`)
+      continue
+    }
     if (Object.keys(raw).length === 0) {
       details[locale] = {
         parseError: `${locale} 没有任何词典文件（${localeDir}）`,

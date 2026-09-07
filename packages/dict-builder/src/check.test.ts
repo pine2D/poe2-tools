@@ -118,6 +118,19 @@ describe('runCheck', () => {
     expect(result.details['zh-CN']?.parseError).toContain('stats')
   })
 
+  it('词典文件不是合法 JSON → 失败并给出解析错误，不抛裸异常', async () => {
+    const { dictDir, local } = await buildOnce()
+    await writeFile(join(dictDir, 'zh-CN', 'stats.json'), '{not json', 'utf8')
+    const result = await runCheck({
+      locales: ['zh-CN'],
+      dictDir,
+      fixtureDirs: { synthetic, local },
+      log: () => {},
+    })
+    expect(result.ok).toBe(false)
+    expect(result.details['zh-CN']?.parseError).toContain('stats.json')
+  })
+
   it('没有词典文件的 locale → 失败', async () => {
     const dictDir = await tempDir('poe2-check-empty-')
     const local = await tempDir('poe2-check-local-')

@@ -18,6 +18,7 @@ export interface StatsBuildInput {
   target: Trade2StatsResponse
   locale: Locale
   orderOverrides: Record<string, number[]>
+  winners: Record<string, string>
   meta: { source: string; gameVersion: string; fetchedAt: string }
 }
 
@@ -50,6 +51,8 @@ export interface StatsAudit {
   untranslatedSameAsEn: number
   // stat-order.json 里没有被任何输出条目消费的键
   unusedOrderKeys: string[]
+  // stat-winners.json 里没有对上任何条目的键
+  unusedWinnerKeys: string[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -154,6 +157,7 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
     literalNumberIds: [],
     untranslatedSameAsEn: 0,
     unusedOrderKeys: [],
+    unusedWinnerKeys: [],
   }
   for (const [id, enList] of en) {
     const targetList = target.get(id)
@@ -229,6 +233,21 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
   }
   for (const orderKey of Object.keys(input.orderOverrides)) {
     if (!usedOrderKeys.has(orderKey)) audit.unusedOrderKeys.push(orderKey)
+  }
+  // 仲裁同键冲突：把 winners 指定的 id 移到该模板键所有条目最前，相对顺序其余不变
+  for (const [winnerKey, winnerId] of Object.entries(input.winners)) {
+    const winnerIndex = entries.findIndex(
+      (entry) => entry.id === winnerId && templateKey(entry.en) === winnerKey,
+    )
+    if (winnerIndex === -1) {
+      audit.unusedWinnerKeys.push(winnerKey)
+      continue
+    }
+    const groupStart = entries.findIndex((entry) => templateKey(entry.en) === winnerKey)
+    if (groupStart < winnerIndex) {
+      const [winner] = entries.splice(winnerIndex, 1)
+      if (winner !== undefined) entries.splice(groupStart, 0, winner)
+    }
   }
   return {
     dict: { _meta: { ...input.meta, tier: 'primary', count: entries.length }, entries },

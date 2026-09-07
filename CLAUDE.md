@@ -48,9 +48,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 - 标记语法（`<red>{...}`、`<b>{...}`、`<rgb(r,g,b)>{...}`，可嵌套）原样保留，翻译只作用于
   标记内外的文本节点；花括号配对不能被破坏。无法解析的标记按纯文本透传。
 - 未命中词典的行保留英文原文并在预览中标记；不做模糊猜测替换。
-- 词典来源分两级并分文件：primary（官方交易站三服 API、GGG 官方数据导出、PoB2 仓库 MIT 数据）
-  与 gray（poe2db.tw 等无明确授权的来源）。灰区适配器必须带总开关、限速与标识性 User-Agent，
-  能整体下线而不影响 primary 覆盖的功能。
+- 词典来源分三级并按表分文件：primary（官方交易站三服 API、GGG 官方数据导出、PoB2 仓库 MIT 数据）、
+  gray（poe2db.tw 等无明确授权的来源）、manual（`data/dict/_overrides/` 手工表）；等级记在每张表的
+  `_meta.tier`。灰区适配器必须带总开关、限速与标识性 User-Agent，能整体下线而不影响 primary 覆盖的功能。
 - 禁止把专有或无授权数据文件放进仓库：「PoE2'说'中文」浏览器扩展（All Rights Reserved）、
   PoeCharm2 的 CSV（无 LICENSE）、PobTools-zh 数据包、任何客户端解包产物。只允许学习其结构。
 - 不解包游戏客户端；不调用需要 OAuth 的 GGG API；官方交易站静态端点只在构建期抓取并缓存，
