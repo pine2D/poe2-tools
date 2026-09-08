@@ -251,6 +251,33 @@ describe('runBuild', () => {
     expect(tw.warnings).toContain('zh-CN 灰区链路失败，本次未更新')
   })
 
+  it('某 locale 灰区链路再次失败时，不删除、不覆盖上一次已写入的旧词典文件', async () => {
+    const first = fakeFetch(read('trade2-stats-zh-CN.json'))
+    const opts = await options(first.fetchImpl, '2026-09-07')
+    await runBuild(opts)
+    const dir = join(opts.dictDir, 'zh-CN')
+    const before = {
+      stats: JSON.parse(await readFile(join(dir, 'stats.json'), 'utf8')),
+      passives: JSON.parse(await readFile(join(dir, 'passives.json'), 'utf8')),
+      gems: JSON.parse(await readFile(join(dir, 'gems.json'), 'utf8')),
+      items: JSON.parse(await readFile(join(dir, 'items.json'), 'utf8')),
+    }
+    expect(before.stats.entries).toHaveLength(6)
+
+    const second = fakeFetch(read('trade2-stats-zh-CN.json'), [poe2dbListUrl('cn', 'Gem')])
+    const result = await runBuild({ ...opts, fetchImpl: second.fetchImpl, today: '2026-09-08' })
+    expect(result.skipped).toEqual(['zh-CN'])
+
+    const after = {
+      stats: JSON.parse(await readFile(join(dir, 'stats.json'), 'utf8')),
+      passives: JSON.parse(await readFile(join(dir, 'passives.json'), 'utf8')),
+      gems: JSON.parse(await readFile(join(dir, 'gems.json'), 'utf8')),
+      items: JSON.parse(await readFile(join(dir, 'items.json'), 'utf8')),
+    }
+    expect(after).toEqual(before)
+    expect(after.stats.entries).toHaveLength(6)
+  })
+
   it('us 列表页解析不到条目（软 404）时所有 locale 都不写', async () => {
     const { fetchImpl, calls } = fakeFetch(read('trade2-stats-zh-CN.json'))
     const opts = await options(fetchImpl, '2026-09-07')

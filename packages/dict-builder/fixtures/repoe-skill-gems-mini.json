@@ -4,11 +4,17 @@
     "gem_type": "active"
   },
   "Metadata/Items/Gem/SupportGemConsideredCasting": {
-    "base_item": { "id": "Metadata/Items/Gem/SupportGemConsideredCasting", "display_name": "Considered Casting" },
+    "base_item": {
+      "id": "Metadata/Items/Gem/SupportGemConsideredCasting",
+      "display_name": "Considered Casting"
+    },
     "gem_type": "support"
   },
   "Metadata/Items/Gem/SupportGemMorrigansInsight": {
-    "base_item": { "id": "Metadata/Items/Gem/SupportGemMorrigansInsight", "display_name": "Mórrigan's Insight" },
+    "base_item": {
+      "id": "Metadata/Items/Gem/SupportGemMorrigansInsight",
+      "display_name": "Mórrigan's Insight"
+    },
     "gem_type": "support"
   },
   "Metadata/Items/Gems/SupportGemUnleash": {
@@ -16,7 +22,10 @@
     "gem_type": "support"
   },
   "Metadata/Items/Gem/SkillGemAscendancyUnleash": {
-    "base_item": { "id": "Metadata/Items/Gem/SkillGemAscendancyUnleash", "display_name": "Unleash" },
+    "base_item": {
+      "id": "Metadata/Items/Gem/SkillGemAscendancyUnleash",
+      "display_name": "Unleash"
+    },
     "gem_type": "active"
   },
   "Metadata/Items/Gem/SkillGemComingSoon": {
@@ -24,7 +33,10 @@
     "gem_type": "active"
   },
   "Metadata/Items/Gem/SkillGemDntAxeChop": {
-    "base_item": { "id": "Metadata/Items/Gem/SkillGemDntAxeChop", "display_name": "[DNT-UNUSED] Axe Chop" },
+    "base_item": {
+      "id": "Metadata/Items/Gem/SkillGemDntAxeChop",
+      "display_name": "[DNT-UNUSED] Axe Chop"
+    },
     "gem_type": "active"
   },
   "Metadata/Items/Gem/SkillGemSpectre": {
@@ -32,7 +44,10 @@
     "gem_type": "active"
   },
   "Metadata/Items/Gem/SkillGemAscendancySummonSandDjinn": {
-    "base_item": { "id": "Metadata/Items/Gem/SkillGemAscendancySummonSandDjinn", "display_name": "Kelari, the Tainted Sands" },
+    "base_item": {
+      "id": "Metadata/Items/Gem/SkillGemAscendancySummonSandDjinn",
+      "display_name": "Kelari, the Tainted Sands"
+    },
     "gem_type": "active"
   },
   "Metadata/Items/Gem/SkillGemRenamedGem": {

@@ -15,10 +15,30 @@
       "label": "Accessories",
       "entries": [
         { "type": "Dousing Charm", "text": "Dousing Charm" },
-        { "type": "Dousing Charm", "text": "Beira's Anguish Dousing Charm", "name": "Beira's Anguish", "flags": { "unique": true } },
-        { "type": "Silver Charm", "text": "The Fall of the Axe Silver Charm", "name": "The Fall of the Axe", "flags": { "unique": true } },
-        { "type": "Slim Mace", "text": "Mjölner Slim Mace", "name": "Mjölner", "flags": { "unique": true } },
-        { "type": "Iron Ring", "text": "Lost Unique Iron Ring", "name": "Lost Unique", "flags": { "unique": true } }
+        {
+          "type": "Dousing Charm",
+          "text": "Beira's Anguish Dousing Charm",
+          "name": "Beira's Anguish",
+          "flags": { "unique": true }
+        },
+        {
+          "type": "Silver Charm",
+          "text": "The Fall of the Axe Silver Charm",
+          "name": "The Fall of the Axe",
+          "flags": { "unique": true }
+        },
+        {
+          "type": "Slim Mace",
+          "text": "Mjölner Slim Mace",
+          "name": "Mjölner",
+          "flags": { "unique": true }
+        },
+        {
+          "type": "Iron Ring",
+          "text": "Lost Unique Iron Ring",
+          "name": "Lost Unique",
+          "flags": { "unique": true }
+        }
       ]
     },
     {

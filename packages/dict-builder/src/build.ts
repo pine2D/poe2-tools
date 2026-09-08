@@ -437,7 +437,7 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
     await writeJson(join(localeDir, '_review', 'multi-placeholder.json'), {
       locale,
       generatedAt: options.now,
-      note: '多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json',
+      note: '多占位符词缀清单（按变体前的英文模板统计；字面数字变体机器推导的 order 不入清单）：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json',
       entries: multiPlaceholderIds,
     })
     await writeJson(join(localeDir, '_review', 'literal-number.json'), {

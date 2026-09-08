@@ -10,7 +10,7 @@
       "**",
       "!data/dict",
       "!data/fixtures",
-      "!packages/dict-builder/fixtures",
+      "!packages/dict-builder/fixtures/*.html",
       "!**/dist"
     ]
   },
