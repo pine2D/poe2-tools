@@ -31,7 +31,13 @@ export function translateModLine(body: string, index: DictIndex): ModTranslation
   if (entry === undefined) return null
   const ordered = orderNumbers(numbers, entry.order)
   if (ordered === null) return null
-  const target = applySign(entry.text, leadingSign(template))
+  // 前导符号跟着源行第一个数字：找出译文里接收该数字的占位符序号（order 未声明时即第一个）。
+  const signPlaceholderIndex = entry.order === undefined ? 0 : entry.order.indexOf(0)
+  const target = applySign(
+    entry.text,
+    leadingSign(template),
+    signPlaceholderIndex === -1 ? 0 : signPlaceholderIndex,
+  )
   const filled = fillNumbers(target, ordered)
   return filled === null ? null : { statId: entry.id, text: filled }
 }

@@ -51,6 +51,35 @@ describe('translateModLine', () => {
       '在 3 秒内回复 25% 生命',
     )
   })
+  it('order 非恒等时，前导符号落到接收源行首个数字的占位符上（而非模板第一个 #）', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-CN',
+      stats: {
+        _meta: {
+          source: 'test',
+          tier: 'manual',
+          gameVersion: '0.0.0',
+          fetchedAt: '2026-09-07',
+          count: 1,
+        },
+        entries: [
+          {
+            id: 'x',
+            en: '+# maximum Rage in the past # seconds',
+            text: '过去 # 秒内怒火上限 +#',
+            order: [1, 0],
+          },
+        ],
+      },
+    }
+    const index = buildDictIndex(bundle)
+    expect(translateModLine('+30 maximum Rage in the past 4 seconds', index)?.text).toBe(
+      '过去 4 秒内怒火上限 +30',
+    )
+    expect(translateModLine('-30 maximum Rage in the past 4 seconds', index)?.text).toBe(
+      '过去 4 秒内怒火上限 -30',
+    )
+  })
   it('order 长度与数字个数不一致时 fail-closed 返回 null', () => {
     const bundle: DictBundle = {
       locale: 'zh-CN',

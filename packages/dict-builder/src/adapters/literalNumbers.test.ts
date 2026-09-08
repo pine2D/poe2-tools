@@ -62,6 +62,24 @@ describe('toLiteralVariant', () => {
     })
   })
 
+  it('前导符号 + 非恒等 order 仍产出变体（不跳过）', () => {
+    expect(
+      toLiteralVariant({
+        id: 'a',
+        en: '+# to Maximum Spirit per 100 Maximum Life',
+        text: '每 100 生命上限使精魂上限 +#',
+      }),
+    ).toEqual({
+      kind: 'variant',
+      entry: {
+        id: 'a',
+        en: '+# to Maximum Spirit per # Maximum Life',
+        text: '每 # 生命上限使精魂上限 +#',
+        order: [1, 0],
+      },
+    })
+  })
+
   it('text 缺少该数字或数字集合不一致：跳过', () => {
     expect(
       toLiteralVariant({

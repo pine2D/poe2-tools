@@ -80,4 +80,9 @@ describe('前导符号与模板键', () => {
   it('applySign：多个 # 时只动第一个', () => {
     expect(applySign('攻击附加 # - # 物理伤害', '+')).toBe('攻击附加 +# - # 物理伤害')
   })
+  it('applySign：placeholderIndex 指定第 k 个 # 时符号落在该处', () => {
+    expect(applySign('每 # 秒 +#', '+', 1)).toBe('每 # 秒 +#')
+    expect(applySign('每 # 秒 #', '-', 1)).toBe('每 # 秒 -#')
+    expect(applySign('每 # 秒 #', '+', 0)).toBe('每 +# 秒 #')
+  })
 })
