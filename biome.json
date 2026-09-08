@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!data/dict", "!data/fixtures", "!**/dist"]
+    "includes": [
+      "**",
+      "!data/dict",
+      "!data/fixtures",
+      "!packages/dict-builder/fixtures",
+      "!**/dist"
+    ]
   },
   "formatter": {
     "enabled": true,

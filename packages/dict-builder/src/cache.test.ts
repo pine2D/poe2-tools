@@ -142,4 +142,25 @@ describe('fetchCached', () => {
     })
     expect(result.path).toBe(join(cacheDir, 'page-2026-09-07.html'))
   })
+
+  it('minIntervalMs：两次真实请求之间至少间隔指定毫秒，命中缓存不等待', async () => {
+    const cacheDir = await tempDir()
+    const { fetchImpl } = fakeFetch('<html></html>')
+    const options = {
+      cacheDir,
+      today: '2026-09-07',
+      offline: false,
+      ua: 'test-ua',
+      fetchImpl,
+      ext: 'html',
+      minIntervalMs: 80,
+    }
+    const started = Date.now()
+    await fetchCached('poe2db-list-us-Gem', 'https://example.invalid/us/Gem', options)
+    await fetchCached('poe2db-list-cn-Gem', 'https://example.invalid/cn/Gem', options)
+    expect(Date.now() - started).toBeGreaterThanOrEqual(75)
+    const before = Date.now()
+    await fetchCached('poe2db-list-cn-Gem', 'https://example.invalid/cn/Gem', options)
+    expect(Date.now() - before).toBeLessThan(60)
+  })
 })

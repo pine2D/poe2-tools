@@ -1,4 +1,5 @@
 // 唯一发生网络请求的模块。按日缓存原始响应体（不加壳）与侧车溯源信息；离线时复用最近一次。
+// poe2db 页面抓取要求串行且相邻真实请求至少间隔 minIntervalMs：由模块级 lastNetworkAt 统一节流。
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { sha256 } from './util/json'
@@ -29,6 +30,8 @@ export interface FetchOptions {
   ua: string
   fetchImpl?: FetchLike
   ext?: string
+  // 与上一次真实网络请求的最小间隔（毫秒）；命中缓存不等待
+  minIntervalMs?: number
 }
 
 export interface Fetched {
@@ -39,6 +42,12 @@ export interface Fetched {
 }
 
 const defaultFetch: FetchLike = (url, init) => fetch(url, init)
+
+let lastNetworkAt = 0
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -104,6 +113,9 @@ export async function fetchCached(
   if (options.offline) throw new Error(`离线模式下没有 ${name} 的缓存（${options.cacheDir}）`)
 
   const fetchImpl = options.fetchImpl ?? defaultFetch
+  const wait = lastNetworkAt + (options.minIntervalMs ?? 0) - Date.now()
+  if (wait > 0) await sleep(wait)
+  lastNetworkAt = Date.now()
   const response = await fetchImpl(url, {
     headers: { 'User-Agent': options.ua, Accept: ext === 'json' ? 'application/json' : '*/*' },
   })

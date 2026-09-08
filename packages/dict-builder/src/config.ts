@@ -33,11 +33,61 @@ export function trade2Url(realm: Trade2Realm, endpoint: Trade2Endpoint): string 
 export const REPOE_PASSIVES_URL =
   'https://raw.githubusercontent.com/repoe-fork/poe2/master/data/passive_skill_trees/Default.json'
 
+export const REPOE_SKILL_GEMS_URL =
+  'https://raw.githubusercontent.com/repoe-fork/poe2/master/data/skill_gems.json'
+
 // poe2db 天赋树：页面里引用的 bundle 文件名带哈希，bundle 里硬编码模板版本（当前 4.5）
 export const POE2DB_TREE_PAGE_URL = 'https://poe2db.tw/cn/passive-skill-tree'
 export const POE2DB_JS_BASE = 'https://cdn.poe2db.tw/js/'
 export const POE2DB_TREE_FALLBACK_VERSION = '4.5'
-export const POE2DB_LANG: Record<Locale, string> = { 'zh-CN': 'cn', 'zh-TW': 'tw' }
+export type Poe2dbLang = 'us' | 'cn' | 'tw'
+export const POE2DB_EN_LANG: Poe2dbLang = 'us'
+export const POE2DB_LANG: Record<Locale, Poe2dbLang> = { 'zh-CN': 'cn', 'zh-TW': 'tw' }
+
+// poe2db 列表页：只抓这些页面，不抓详情页。相邻真实请求至少间隔 POE2DB_MIN_INTERVAL_MS
+export const POE2DB_MIN_INTERVAL_MS = 1500
+export const POE2DB_GEM_LIST = 'Gem'
+export const POE2DB_UNIQUE_LIST = 'Unique_item'
+// 装备分类页：按 trade2 en /items 的装备类分组（accessory / armour / flask / jewel / weapon，1543 个 type）
+// 反查得到的最小完备名单，实测 100% 覆盖；站上另有 Claws / Relics / Traps / Tablet / Waystones 等分类页，
+// 当前没有对应的 trade2 type，不抓
+export const POE2DB_BASE_LISTS: readonly string[] = [
+  'Amulets',
+  'Belts',
+  'Body_Armours',
+  'Boots',
+  'Bows',
+  'Bucklers',
+  'Charms',
+  'Crossbows',
+  'Daggers',
+  'Flails',
+  'Foci',
+  'Gloves',
+  'Helmets',
+  'Jewels',
+  'Life_Flasks',
+  'Mana_Flasks',
+  'One_Hand_Axes',
+  'One_Hand_Maces',
+  'One_Hand_Swords',
+  'Quarterstaves',
+  'Quivers',
+  'Rings',
+  'Sceptres',
+  'Shields',
+  'Spears',
+  'Staves',
+  'Talismans',
+  'Two_Hand_Axes',
+  'Two_Hand_Maces',
+  'Two_Hand_Swords',
+  'Wands',
+]
+
+export function poe2dbListUrl(lang: Poe2dbLang, slug: string): string {
+  return `https://poe2db.tw/${lang}/${slug}`
+}
 
 export function poe2dbTreeUrl(version: string, locale: Locale): string {
   return `https://poe2db.tw/data/passive-skill-tree/${version}/data_${POE2DB_LANG[locale]}.json?5`
