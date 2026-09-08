@@ -56,7 +56,7 @@ describe('buildStatsDict', () => {
       {
         id: 'explicit.stat_literal',
         en: 'Recover #% of Life every 4 seconds',
-        text: '每 4 秒 回复 #% 生命',
+        text: '每 4 秒回复 #% 生命',
       },
     ])
     expect(dict._meta).toEqual({ ...meta, tier: 'primary', count: 6 })
@@ -88,10 +88,11 @@ describe('buildStatsDict', () => {
         {
           key: 'explicit.stat_literal#0',
           en: 'Recover #% of Life every 4 seconds',
-          text: '每 4 秒 回复 #% 生命',
+          text: '每 4 秒回复 #% 生命',
         },
       ],
       untranslatedSameAsEn: 0,
+      untranslatedDemoted: 0,
       unusedOrderKeys: ['explicit.stat_nope'],
       unusedWinnerKeys: [],
     })
@@ -147,5 +148,48 @@ describe('buildStatsDict：winners 仲裁同键冲突', () => {
       meta,
     })
     expect(audit.unusedWinnerKeys).toEqual(['nokey'])
+  })
+})
+
+describe('buildStatsDict：同键未翻译条目降位', () => {
+  const en = parseTrade2Stats({
+    result: [
+      {
+        id: 'explicit',
+        label: 'Explicit',
+        entries: [
+          { id: 'opt.value', text: 'Eldritch Battery', type: 'explicit' },
+          { id: 'keystone.real', text: 'Eldritch Battery', type: 'explicit' },
+          { id: 'lonely.same', text: 'Only English', type: 'explicit' },
+        ],
+      },
+    ],
+  })
+  const zh = parseTrade2Stats({
+    result: [
+      {
+        id: 'explicit',
+        label: '固定',
+        entries: [
+          { id: 'opt.value', text: 'Eldritch Battery', type: 'explicit' },
+          { id: 'keystone.real', text: '异能魔力', type: 'explicit' },
+          { id: 'lonely.same', text: 'Only English', type: 'explicit' },
+        ],
+      },
+    ],
+  })
+
+  it('未翻译条目排到有译文的同键条目之后；没有同键译文的未翻译条目原地不动', () => {
+    const { dict, audit } = buildStatsDict({
+      en,
+      target: zh,
+      locale: 'zh-CN',
+      orderOverrides: {},
+      winners: {},
+      meta,
+    })
+    expect(dict.entries.map((e) => e.id)).toEqual(['keystone.real', 'lonely.same', 'opt.value'])
+    expect(audit.untranslatedDemoted).toBe(1)
+    expect(audit.untranslatedSameAsEn).toBe(2)
   })
 })

@@ -22,4 +22,8 @@ describe('stripTradeSuffix', () => {
       '(Local) at start only strips trailing',
     )
   })
+  it('剥离后去掉尾随空白（交易站个别词条末尾带空格）', () => {
+    expect(stripTradeSuffix('Gain # Rage on Hit ', 'en')).toBe('Gain # Rage on Hit')
+    expect(stripTradeSuffix('护甲提高 #% (区域) ', 'zh-CN')).toBe('护甲提高 #%')
+  })
 })

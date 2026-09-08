@@ -23,5 +23,5 @@ const PATTERNS: Record<'en' | Locale, RegExp> = {
 }
 
 export function stripTradeSuffix(text: string, lang: 'en' | Locale): string {
-  return text.replace(PATTERNS[lang], '')
+  return text.replace(PATTERNS[lang], '').trimEnd()
 }

@@ -49,6 +49,8 @@ export interface StatsAudit {
   literalNumberIds: MultiPlaceholderEntry[]
   // 国服未翻译、译文与原文字面相同的词缀条数
   untranslatedSameAsEn: number
+  // 同键既有译文又有未翻译条目时，被移到末尾的未翻译条目数
+  untranslatedDemoted: number
   // stat-order.json 里没有被任何输出条目消费的键
   unusedOrderKeys: string[]
   // stat-winners.json 里没有对上任何条目的键
@@ -121,9 +123,16 @@ function countPseudoEntries(response: Trade2StatsResponse): number {
 }
 
 // 交易站个别词条把说明写成多行（如 "Recover #% of Life\nevery 4 seconds"）；折成单行再剥后缀，
-// 避免换行混进编号行；匹配侧本就由 templateKey 折叠空白，不受影响
+// 避免换行混进编号行。换行两侧都是 CJK 字符时直接相连（中文不用空格分词），否则留一个空格
+const CJK = /[　-〿㐀-䶿一-鿿豈-﫿＀-￯]/
 function foldMultiline(text: string): string {
-  return text.replace(/\s*\r?\n\s*/g, ' ')
+  const parts = text.split(/\s*\r?\n\s*/)
+  let folded = parts[0] ?? ''
+  for (const part of parts.slice(1)) {
+    const direct = CJK.test(folded.slice(-1)) && CJK.test(part.charAt(0))
+    folded = direct ? `${folded}${part}` : `${folded} ${part}`
+  }
+  return folded.trim()
 }
 
 // 剥离后仍以短括号词结尾：可能是名单没收录的新后缀，只作审计信号
@@ -131,6 +140,23 @@ const RESIDUAL_SUFFIX = /[（(][^（()）]{1,10}[)）]\s*$/u
 
 function variantKey(id: string, k: number): string {
   return `${id}#${k}`
+}
+
+// 同一模板键下既有译文也有未翻译（text === en）的条目时，把未翻译的排到最后，避免它们抢先进入索引
+// （如 "Eldritch Battery" 既是 keystone 词缀又是 stat_3831171903 的选项值，后者国服未翻译）
+function demoteUntranslated(entries: StatEntry[]): number {
+  const translatedKeys = new Set<string>()
+  for (const entry of entries) {
+    if (entry.text !== entry.en) translatedKeys.add(templateKey(entry.en))
+  }
+  const kept: StatEntry[] = []
+  const demoted: StatEntry[] = []
+  for (const entry of entries) {
+    if (entry.text === entry.en && translatedKeys.has(templateKey(entry.en))) demoted.push(entry)
+    else kept.push(entry)
+  }
+  entries.splice(0, entries.length, ...kept, ...demoted)
+  return demoted.length
 }
 
 export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit: StatsAudit } {
@@ -156,6 +182,7 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
     literalNumber: 0,
     literalNumberIds: [],
     untranslatedSameAsEn: 0,
+    untranslatedDemoted: 0,
     unusedOrderKeys: [],
     unusedWinnerKeys: [],
   }
@@ -234,6 +261,7 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
   for (const orderKey of Object.keys(input.orderOverrides)) {
     if (!usedOrderKeys.has(orderKey)) audit.unusedOrderKeys.push(orderKey)
   }
+  audit.untranslatedDemoted = demoteUntranslated(entries)
   // 仲裁同键冲突：把 winners 指定的 id 移到该模板键所有条目最前，相对顺序其余不变
   for (const [winnerKey, winnerId] of Object.entries(input.winners)) {
     const winnerIndex = entries.findIndex(
