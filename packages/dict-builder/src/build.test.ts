@@ -123,6 +123,7 @@ describe('runBuild', () => {
       expect(meta.audit.stats.placeholderMismatch).toEqual(['explicit.stat_charm_slot#0'])
       expect(meta.audit.stats.multiPlaceholderIds).toBeUndefined()
       expect(meta.audit.stats.literalNumberIds).toBeUndefined()
+      expect(meta.audit.stats.literalSkipped).toBeUndefined()
       const review = JSON.parse(
         await readFile(join(dir, '_review', 'multi-placeholder.json'), 'utf8'),
       )
@@ -133,6 +134,7 @@ describe('runBuild', () => {
       expect(literalReview.entries.map((e: { key: string }) => e.key)).toEqual([
         'explicit.stat_literal#0',
       ])
+      expect(literalReview.skipped).toEqual([])
       expect(meta.coverage.synthetic).toEqual({
         files: 2,
         modCandidates: 8,

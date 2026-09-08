@@ -1,6 +1,7 @@
 // 官方交易站 /api/trade2/data/stats：三服 stat id 同构，按 id 对齐即可得到 en → 目标语言的词缀模板。
 import { type Locale, type StatEntry, type StatsDict, templateKey } from '@poe2-tools/build-core'
 import { countPlaceholders } from '../util/json'
+import { toLiteralVariant } from './literalNumbers'
 import { stripTradeSuffix } from './tradeSuffix'
 
 export interface Trade2StatEntry {
@@ -28,6 +29,10 @@ export interface MultiPlaceholderEntry {
   text: string
 }
 
+export interface LiteralSkip extends MultiPlaceholderEntry {
+  reason: 'ambiguous' | 'mismatch'
+}
+
 // 键形式 <id>#<k>：k 是该 id 在组内第几次出现（Area / Map 语境变体）
 export interface StatsAudit {
   enIds: number
@@ -44,9 +49,12 @@ export interface StatsAudit {
   mergedSameText: number
   // pseudo 组从不印在装备上：整组跳过，这里记录被跳过的 en 条目数
   excludedEntries: number
-  // 常量数字写成字面量的词缀（如 "per 20 Dexterity"）：消费端归一化后永远匹配不上，先只做度量
+  // 含字面数字（如 "per 20 Dexterity"）的词缀数；能对应的已改写成全归一化变体（literalVariant），
+  // 对应不上的保持原样并列在 literalSkipped（消费端永远匹配不上）
   literalNumber: number
   literalNumberIds: MultiPlaceholderEntry[]
+  literalVariant: number
+  literalSkipped: LiteralSkip[]
   // 国服未翻译、译文与原文字面相同的词缀条数
   untranslatedSameAsEn: number
   // 同键既有译文又有未翻译条目时，被移到末尾的未翻译条目数
@@ -181,6 +189,8 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
     excludedEntries: countPseudoEntries(input.en),
     literalNumber: 0,
     literalNumberIds: [],
+    literalVariant: 0,
+    literalSkipped: [],
     untranslatedSameAsEn: 0,
     untranslatedDemoted: 0,
     unusedOrderKeys: [],
@@ -212,49 +222,58 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
       const enStripped = stripTradeSuffix(foldMultiline(occurrence.text), 'en')
       const textStripped = stripTradeSuffix(foldMultiline(targetText), input.locale)
       const enCount = countPlaceholders(enStripped)
-      const textCount = countPlaceholders(textStripped)
-      // 占位符个数不一致：不输出（运行期本就 fail-closed），order 也救不了，留给 2b 的整句直出
-      if (enCount !== textCount) {
+      // 占位符个数不一致：不输出（运行期本就 fail-closed），order 也救不了
+      if (enCount !== countPlaceholders(textStripped)) {
         audit.placeholderMismatch.push(key)
         continue
       }
+      // order 只来自覆盖表：精确键 <id>#<k>；第 0 个变体也接受不带 #k 的键
+      const orderKey =
+        input.orderOverrides[key] !== undefined
+          ? key
+          : k === 0 && input.orderOverrides[id] !== undefined
+            ? id
+            : null
+      const order = orderKey === null ? undefined : input.orderOverrides[orderKey]
+      const draft: StatEntry =
+        order === undefined
+          ? { id, en: enStripped, text: textStripped }
+          : { id, en: enStripped, text: textStripped, order }
+      // 字面数字改写成全归一化变体；对应不上的保持原样并记审计
+      const literal = toLiteralVariant(draft)
+      const entry = literal.kind === 'variant' ? literal.entry : draft
       // 同一模板键且译文相同（explicit / fractured / crafted… 分组间的同文本词缀）只留先出现的一条
-      const mergeKey = JSON.stringify([templateKey(enStripped), textStripped])
+      const mergeKey = JSON.stringify([templateKey(entry.en), entry.text])
       if (seen.has(mergeKey)) {
         audit.mergedSameText += 1
         continue
       }
       seen.add(mergeKey)
       // 以下审计只统计真正输出的条目
+      if (orderKey !== null) {
+        usedOrderKeys.add(orderKey)
+        audit.orderApplied += 1
+      }
       if (RESIDUAL_SUFFIX.test(enStripped) || RESIDUAL_SUFFIX.test(textStripped))
         audit.residualSuffix.push(key)
       if (enCount >= 2) {
         audit.multiPlaceholder += 1
         audit.multiPlaceholderIds.push({ key, en: enStripped, text: textStripped })
       }
-      if (/\d/.test(enStripped)) {
+      if (literal.kind !== 'unchanged') {
         audit.literalNumber += 1
         audit.literalNumberIds.push({ key, en: enStripped, text: textStripped })
       }
+      if (literal.kind === 'variant') audit.literalVariant += 1
+      if (literal.kind === 'skipped')
+        audit.literalSkipped.push({
+          key,
+          en: enStripped,
+          text: textStripped,
+          reason: literal.reason,
+        })
       if (textStripped === enStripped) audit.untranslatedSameAsEn += 1
-      const exactOrder = input.orderOverrides[key]
-      let order: number[] | undefined
-      if (exactOrder !== undefined) {
-        order = exactOrder
-        usedOrderKeys.add(key)
-      } else if (k === 0) {
-        const plainOrder = input.orderOverrides[id]
-        if (plainOrder !== undefined) {
-          order = plainOrder
-          usedOrderKeys.add(id)
-        }
-      }
-      if (order === undefined) {
-        entries.push({ id, en: enStripped, text: textStripped })
-      } else {
-        entries.push({ id, en: enStripped, text: textStripped, order })
-        audit.orderApplied += 1
-      }
+      entries.push(entry)
       audit.joined += 1
     }
   }

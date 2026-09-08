@@ -55,8 +55,9 @@ describe('buildStatsDict', () => {
       },
       {
         id: 'explicit.stat_literal',
-        en: 'Recover #% of Life every 4 seconds',
-        text: '每 4 秒回复 #% 生命',
+        en: 'Recover #% of Life every # seconds',
+        text: '每 # 秒回复 #% 生命',
+        order: [1, 0],
       },
     ])
     expect(dict._meta).toEqual({ ...meta, tier: 'primary', count: 6 })
@@ -91,6 +92,8 @@ describe('buildStatsDict', () => {
           text: '每 4 秒回复 #% 生命',
         },
       ],
+      literalVariant: 1,
+      literalSkipped: [],
       untranslatedSameAsEn: 0,
       untranslatedDemoted: 0,
       unusedOrderKeys: ['explicit.stat_nope'],

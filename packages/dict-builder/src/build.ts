@@ -294,7 +294,7 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
     await writeJson(join(localeDir, 'ascendancies.json'), bundle.ascendancies)
     await writeJson(join(localeDir, 'classes.json'), bundle.classes)
     await writeJson(join(localeDir, 'inventories.json'), bundle.inventories)
-    const { multiPlaceholderIds, literalNumberIds, ...statsAudit } = stats.audit
+    const { multiPlaceholderIds, literalNumberIds, literalSkipped, ...statsAudit } = stats.audit
     await writeJson(join(localeDir, '_review', 'multi-placeholder.json'), {
       locale,
       generatedAt: options.now,
@@ -304,8 +304,9 @@ export async function runBuild(options: BuildOptions): Promise<BuildResult> {
     await writeJson(join(localeDir, '_review', 'literal-number.json'), {
       locale,
       generatedAt: options.now,
-      note: '含字面数字的词缀：当前消费端无法命中，归一化变体方案见 2b 计划',
+      note: '含字面数字的词缀：entries 是全部（变体前原文）；skipped 是无法对应（text 缺该数字或同一数字在 en 里重复）而保持原样、运行期永远匹配不上的条目',
       entries: literalNumberIds,
+      skipped: literalSkipped,
     })
     const meta: DictMetaFile = {
       locale,
