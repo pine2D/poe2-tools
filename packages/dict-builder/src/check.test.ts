@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { runBuild } from './build'
 import type { FetchLike } from './cache'
 import { runCheck } from './check'
-import { POE2DB_TREE_PAGE_URL, REPOE_PASSIVES_URL, trade2Url } from './config'
+import { fixtureBodies } from './testing/fakeBodies'
 
 const fixtures = fileURLToPath(new URL('../fixtures/', import.meta.url))
 const overridesDir = fileURLToPath(new URL('../../../data/dict/_overrides/', import.meta.url))
@@ -24,21 +24,7 @@ async function tempDir(prefix: string): Promise<string> {
   return dir
 }
 
-const bodies = new Map<string, string>([
-  [trade2Url('en', 'stats'), read('trade2-stats-en.json')],
-  [trade2Url('zh-CN', 'stats'), read('trade2-stats-zh-CN.json')],
-  [trade2Url('zh-CN', 'leagues'), '{"result":[]}'],
-  [
-    POE2DB_TREE_PAGE_URL,
-    '<script src="https://cdn.poe2db.tw/js/passive-skill-tree.abc123.js"></script>',
-  ],
-  ['https://cdn.poe2db.tw/js/passive-skill-tree.abc123.js', 'x({poe2version:"9.9"})'],
-  [REPOE_PASSIVES_URL, read('repoe-default-mini.json')],
-  [
-    'https://poe2db.tw/data/passive-skill-tree/9.9/data_cn.json?5',
-    read('poe2db-tree-cn-mini.json'),
-  ],
-])
+const bodies = fixtureBodies(read, read('trade2-stats-zh-CN.json'))
 const fetchImpl: FetchLike = async (url) => {
   const body = bodies.get(url)
   return {
@@ -57,6 +43,7 @@ async function buildOnce(): Promise<{ dictDir: string; local: string }> {
     offline: false,
     allowRegression: false,
     poe2db: true,
+    poe2dbIntervalMs: 0,
     today: '2026-09-07',
     now: '2026-09-07T00:00:00.000Z',
     cacheDir: await tempDir('poe2-check-cache-'),
@@ -86,6 +73,7 @@ describe('runCheck', () => {
       modCandidates: 8,
       modTranslated: 1,
       rate: 0.125,
+      namesTranslated: 0,
     })
   })
 

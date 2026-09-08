@@ -28,7 +28,13 @@ describe('listBuildFiles', () => {
 describe('measureCoverage', () => {
   it('合成样本：8 条编号行命中 3 条', async () => {
     const coverage = await measureCoverage(bundle, await listBuildFiles(synthetic))
-    expect(coverage).toEqual({ files: 2, modCandidates: 8, modTranslated: 3, rate: 0.375 })
+    expect(coverage).toEqual({
+      files: 2,
+      modCandidates: 8,
+      modTranslated: 3,
+      rate: 0.375,
+      namesTranslated: 0,
+    })
   })
   it('没有候选行时 rate 为 null', async () => {
     expect(await measureCoverage(bundle, [])).toEqual({
@@ -36,6 +42,7 @@ describe('measureCoverage', () => {
       modCandidates: 0,
       modTranslated: 0,
       rate: null,
+      namesTranslated: 0,
     })
   })
 })
@@ -46,6 +53,7 @@ describe('findRegressions', () => {
     modCandidates: 8,
     modTranslated: 0,
     rate,
+    namesTranslated: 0,
   })
   it('下降超过阈值才算回归', () => {
     // 下降 0.2 个百分点在阈值内

@@ -1,5 +1,7 @@
 // data/dict/<locale>/meta.json：溯源、计数、审计与覆盖率基线。gameVersion 按 locale 分别记录。
 import type { DictProblem, Locale } from '@poe2-tools/build-core'
+import type { GemsAudit } from './adapters/gems'
+import type { ItemsAudit } from './adapters/items'
 import type { PassivesAudit } from './adapters/passives'
 import type { StatsAudit } from './adapters/trade2Stats'
 import type { Fetched } from './cache'
@@ -34,8 +36,16 @@ export interface DictMetaFile {
   builtAt: string
   sources: SourceRecord[]
   counts: Record<string, number>
-  audit: { stats: StatsAuditSummary; passives: PassivesAudit | null; problems: ProblemSummary }
+  audit: {
+    stats: StatsAuditSummary
+    passives: PassivesAudit | null
+    gems: GemsAudit | null
+    items: ItemsAudit | null
+    problems: ProblemSummary
+  }
   coverage: CoverageSets
+  // 本次构建的降级与告警（灰区链路失败、列表页冲突等）；全局的每个 locale 都带
+  warnings: string[]
 }
 
 export function sourceRecord(name: string, fetched: Fetched): SourceRecord {
@@ -68,7 +78,8 @@ function parseCoverage(raw: unknown): Coverage | null {
   )
     return null
   if (rate !== null && typeof rate !== 'number') return null
-  return { files, modCandidates, modTranslated, rate }
+  const namesTranslated = typeof raw.namesTranslated === 'number' ? raw.namesTranslated : 0
+  return { files, modCandidates, modTranslated, rate, namesTranslated }
 }
 
 // 读取上一次构建的覆盖率作为基线；文件不存在或结构不对都当没有基线

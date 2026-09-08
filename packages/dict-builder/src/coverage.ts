@@ -14,6 +14,8 @@ export interface Coverage {
   modCandidates: number
   modTranslated: number
   rate: number | null
+  // 名称行（备注首行基底名、标记内的基底名）与 unique_name 的命中数；未命中的名称行在报告里是 kept，没有分母，只记录不门禁
+  namesTranslated: number
 }
 
 export type FixtureSet = 'synthetic' | 'local'
@@ -38,7 +40,13 @@ export async function measureCoverage(
   files: readonly string[],
 ): Promise<Coverage> {
   const index = buildDictIndex(bundle)
-  const coverage: Coverage = { files: 0, modCandidates: 0, modTranslated: 0, rate: null }
+  const coverage: Coverage = {
+    files: 0,
+    modCandidates: 0,
+    modTranslated: 0,
+    rate: null,
+    namesTranslated: 0,
+  }
   for (const file of files) {
     const parsed = parseBuildFile(await readFile(file, 'utf8'))
     if (!parsed.ok) continue
@@ -46,6 +54,7 @@ export async function measureCoverage(
     coverage.files += 1
     coverage.modCandidates += report.modCandidates
     coverage.modTranslated += report.modTranslated
+    coverage.namesTranslated += report.translated - report.modTranslated
   }
   if (coverage.modCandidates > 0) coverage.rate = coverage.modTranslated / coverage.modCandidates
   return coverage

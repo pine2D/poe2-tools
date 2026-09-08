@@ -3,7 +3,15 @@ import { parseArgs } from 'node:util'
 import type { Locale } from '@poe2-tools/build-core'
 import { runBuild } from './build'
 import { runCheck } from './check'
-import { CACHE_DIR, DICT_DIR, FIXTURE_DIRS, LOCALES, OVERRIDES_DIR, poe2dbEnabled } from './config'
+import {
+  CACHE_DIR,
+  DICT_DIR,
+  FIXTURE_DIRS,
+  LOCALES,
+  OVERRIDES_DIR,
+  POE2DB_MIN_INTERVAL_MS,
+  poe2dbEnabled,
+} from './config'
 
 const USAGE = [
   '用法：',
@@ -73,6 +81,7 @@ async function main(argv: readonly string[]): Promise<number> {
       offline: parsed.offline,
       allowRegression: parsed.allowRegression,
       poe2db: poe2dbEnabled() && !parsed.noPoe2db,
+      poe2dbIntervalMs: POE2DB_MIN_INTERVAL_MS,
       today: now.slice(0, 10),
       now,
       cacheDir: CACHE_DIR,
@@ -81,6 +90,7 @@ async function main(argv: readonly string[]): Promise<number> {
       fixtureDirs: FIXTURE_DIRS,
       log,
     })
+    if (result.skipped.length > 0) log(`本次未更新：${result.skipped.join('、')}`)
     return result.ok ? 0 : 1
   }
   if (command === 'check') {
