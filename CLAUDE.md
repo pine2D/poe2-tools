@@ -27,10 +27,11 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   写 `data/dict/<locale>/`，`check.ts` 做结构校验、审计与覆盖率回归门禁。
 - `apps/build-l10n/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
-  `ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的 `_meta.tier`，灰区表可整体
-  删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率基线；`_review/` 是待人工复核清单。
+  `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
+  `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率
+  基线；`_review/` 是待人工复核清单。
 - `data/dict/_overrides/`：手工三语表（升华、职业、槽位）与配置（`versions.json` 各服版本、
-  `stat-order.json` 占位符顺序）。改这里 → 重跑 `pnpm dict:build`。
+  `stat-order.json` 占位符顺序、`stat-winners.json` 同键冲突取舍）。改这里 → 重跑 `pnpm dict:build`。
 - `data/fixtures/synthetic/`：自造的最小 `.build` 样本，入库。`data/fixtures/local/`：第三方
   导出的真实样本，只在本地，永不提交。
 - `docs/build-format.md`：`.build` 格式速查与本仓库的翻译字段清单（权威来源：GGG 开发者文档

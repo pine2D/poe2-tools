@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "note": "同一模板键（build-core templateKey(en)）对应多条不同译文时，指定哪条 stat id 优先进入索引。按 locale 分节；键为模板键（小写、去前导符号、空白折叠），值为 stat id。审计里 unusedWinnerKeys 非空说明键写错或已消失。未翻译（text === en）的同键条目由生成期自动降位，不必写在这里。首批取舍：zh-CN '#% increased spirit' 选通用译文（explicit.stat_1416406066）而非带“该装备”的局部变体；其余冲突两译文等价，保留先出现的。字面数字变体会把 `per N Dexterity`、`+#% of Armour…` 这类原本独立的条目合并成同一模板键，仲裁写在这里：armour 一条选无前导符号的 rune 模板（源行有符号时 applySign 会补上，没有就不凭空加）；zh-TW 的 attack speed 一条是为了避开 explicit.stat_889691035 译文里的错字“便”。",
+    "note": "同一模板键（build-core templateKey(en)）对应多条不同译文时，指定哪条 stat id 优先进入索引。按 locale 分节；键为模板键（小写、去前导符号、空白折叠），值为 stat id。审计里 unusedWinnerKeys 非空说明键写错或已消失。未翻译（text === en）的同键条目由生成期自动降位，不必写在这里。首批取舍：zh-CN '#% increased spirit' 选通用译文（explicit.stat_1416406066）而非带“该装备”的局部变体；其余冲突两译文等价，保留先出现的。字面数字变体会把 `per N Dexterity`、`+#% of Armour…` 这类原本独立的条目合并成同一模板键，仲裁写在这里：armour 一条选无前导符号的 rune 模板（源行有符号时 applySign 会补上，没有就不凭空加）；zh-TW 的 attack speed 一条是为了避开 explicit.stat_889691035 译文里的错字“便”。已知无法消歧：zh-CN 'allocates puppet master chance'（explicit.stat_2954116742|14258 与 |62210 英文同文、中文分别为 隐秘之手 / 无尽之舞），上游数据本身无区分信息，保持先到先得。",
     "updatedAt": "2026-09-07"
   },
   "entries": {
