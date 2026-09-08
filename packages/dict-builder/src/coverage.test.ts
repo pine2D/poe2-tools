@@ -20,19 +20,23 @@ const bundle: DictBundle = {
 describe('listBuildFiles', () => {
   it('列出 .build，排除期望输出文件，目录不存在返回空', async () => {
     const files = await listBuildFiles(synthetic)
-    expect(files.map((f) => f.split('/').at(-1))).toEqual(['minimal.build', 'rich.build'])
+    expect(files.map((f) => f.split('/').at(-1))).toEqual([
+      'minimal.build',
+      'mods.build',
+      'rich.build',
+    ])
     expect(await listBuildFiles('/nonexistent/dir')).toEqual([])
   })
 })
 
 describe('measureCoverage', () => {
-  it('合成样本：8 条编号行命中 3 条', async () => {
+  it('合成样本：21 条编号行命中 6 条', async () => {
     const coverage = await measureCoverage(bundle, await listBuildFiles(synthetic))
     expect(coverage).toEqual({
-      files: 2,
-      modCandidates: 8,
-      modTranslated: 3,
-      rate: 0.375,
+      files: 3,
+      modCandidates: 21,
+      modTranslated: 6,
+      rate: 6 / 21,
       namesTranslated: 0,
     })
   })

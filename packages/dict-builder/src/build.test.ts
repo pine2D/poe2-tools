@@ -128,13 +128,13 @@ describe('runBuild', () => {
         'explicit.stat_literal#0',
       ])
       expect(literalReview.skipped).toEqual([])
-      expect(meta.coverage.synthetic).toEqual({
-        files: 2,
-        modCandidates: 8,
-        modTranslated: 1,
-        rate: 0.125,
-        namesTranslated: 0,
+      expect(meta.coverage.synthetic).toMatchObject({
+        files: 3,
+        modCandidates: 21,
+        modTranslated: 2,
+        namesTranslated: 2,
       })
+      expect(meta.coverage.synthetic.rate).toBeCloseTo(2 / 21, 10)
       expect(meta.coverage.local).toBeNull()
       expect(meta.sources.map((s: { name: string }) => s.name)).toContain(`trade2-${locale}-stats`)
       // 真实 versions.json 的 en 与 zh-CN 目前版本不同，会带一条"跨版本 join"提示；除此之外不应有告警
@@ -175,7 +175,7 @@ describe('runBuild', () => {
     const good = fakeFetch(read('trade2-stats-zh-CN.json'))
     const opts = await options(good.fetchImpl, '2026-09-07')
     await runBuild(opts)
-    // 去掉所有分组里的 stat_life（explicit 与 fractured 译文相同，只删一组会被另一组顶上）后，合成样本命中从 1/8 降到 0/8
+    // 去掉所有分组里的 stat_life（explicit 与 fractured 译文相同，只删一组会被另一组顶上）后，合成样本命中从 2/21 降到 0/21
     const degraded = JSON.parse(read('trade2-stats-zh-CN.json'))
     for (const group of degraded.result) {
       group.entries = group.entries.filter((e: { id: string }) => !e.id.endsWith('.stat_life'))

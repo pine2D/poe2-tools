@@ -68,13 +68,13 @@ describe('runCheck', () => {
     })
     expect(result.ok).toBe(true)
     expect(result.details['zh-CN']).toMatchObject({ parseError: null, regressions: [] })
-    expect(result.details['zh-CN']?.coverage.synthetic).toEqual({
-      files: 2,
-      modCandidates: 8,
-      modTranslated: 1,
-      rate: 0.125,
-      namesTranslated: 0,
+    expect(result.details['zh-CN']?.coverage.synthetic).toMatchObject({
+      files: 3,
+      modCandidates: 21,
+      modTranslated: 2,
+      namesTranslated: 2,
     })
+    expect(result.details['zh-CN']?.coverage.synthetic?.rate).toBeCloseTo(2 / 21, 10)
   })
 
   it('词典被削弱后覆盖率低于基线 → 失败', async () => {

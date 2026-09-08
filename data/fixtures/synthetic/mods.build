@@ -1,0 +1,31 @@
+{
+  "name": "Synthetic Mods - 0.5.5",
+  "author": "poe2-tools",
+  "inventory_slots": [
+    {
+      "additional_text": "Ashen Staff\n1. 120% increased Spell Damage\n2. Adds 12 to 24 Physical Damage to Attacks\n3. 25% increased Cast Speed",
+      "inventory_id": "Weapon1",
+      "slot_x": 0,
+      "slot_y": 0
+    },
+    {
+      "additional_text": "Emerald Ring\n1. +45 to maximum Life\n2. -12% to Fire Resistance\n3. +2.5% to Critical Hit Chance\n4. 3% increased Attack Speed per 10 Dexterity",
+      "inventory_id": "Ring1",
+      "slot_x": 0,
+      "slot_y": 0
+    },
+    {
+      "additional_text": "Stat priority\n1. 30% increased Movement Speed",
+      "inventory_id": "Charm1",
+      "unique_name": "Beira's Anguish",
+      "slot_x": 0,
+      "slot_y": 0
+    },
+    {
+      "additional_text": "<red>{Cryptic Crown}\n1. +30 to Spirit\n2. 40% increased Energy Shield\n3. 15% increased Rarity of Items found\n4. +5 to all Attributes\n5. 20% increased Gold found in this Area",
+      "inventory_id": "Helm1",
+      "slot_x": 0,
+      "slot_y": 0
+    }
+  ]
+}
