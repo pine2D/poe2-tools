@@ -1,0 +1,47 @@
+{
+  "Metadata/Items/Gems/SkillGemFlameblast": {
+    "base_item": { "id": "Metadata/Items/Gems/SkillGemFlameblast", "display_name": "Flameblast" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SupportGemConsideredCasting": {
+    "base_item": { "id": "Metadata/Items/Gem/SupportGemConsideredCasting", "display_name": "Considered Casting" },
+    "gem_type": "support"
+  },
+  "Metadata/Items/Gem/SupportGemMorrigansInsight": {
+    "base_item": { "id": "Metadata/Items/Gem/SupportGemMorrigansInsight", "display_name": "Mórrigan's Insight" },
+    "gem_type": "support"
+  },
+  "Metadata/Items/Gems/SupportGemUnleash": {
+    "base_item": { "id": "Metadata/Items/Gems/SupportGemUnleash", "display_name": "Unleash" },
+    "gem_type": "support"
+  },
+  "Metadata/Items/Gem/SkillGemAscendancyUnleash": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemAscendancyUnleash", "display_name": "Unleash" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemComingSoon": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemComingSoon", "display_name": "Coming Soon" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemDntAxeChop": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemDntAxeChop", "display_name": "[DNT-UNUSED] Axe Chop" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemSpectre": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemSpectre", "display_name": "Spectre: {0}" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemAscendancySummonSandDjinn": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemAscendancySummonSandDjinn", "display_name": "Kelari, the Tainted Sands" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemRenamedGem": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemRenamedGem", "display_name": "Renamed Gem" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemOnlyEnglish": {
+    "base_item": { "id": "Metadata/Items/Gem/SkillGemOnlyEnglish", "display_name": "Only English" },
+    "gem_type": "active"
+  },
+  "Metadata/Items/Gem/SkillGemNoBase": { "base_item": null, "gem_type": "active" }
+}
