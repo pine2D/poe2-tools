@@ -1,6 +1,6 @@
 {
   "locale": "zh-TW",
-  "generatedAt": "2026-09-07T12:27:24.151Z",
+  "generatedAt": "2026-09-08T09:57:17.857Z",
   "note": "多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
   "entries": [
     {
@@ -34,14 +34,14 @@
       "text": "附加#至#閃電傷害"
     },
     {
-      "key": "explicit.stat_709508406#0",
-      "en": "Adds # to # Fire Damage",
-      "text": "附加#至#火焰傷害"
-    },
-    {
       "key": "explicit.stat_2881298780#0",
       "en": "# to # Physical Thorns damage",
       "text": "#至#點物理荊棘傷害"
+    },
+    {
+      "key": "explicit.stat_709508406#0",
+      "en": "Adds # to # Fire Damage",
+      "text": "附加#至#火焰傷害"
     },
     {
       "key": "explicit.stat_1037193709#0",
@@ -86,12 +86,12 @@
     {
       "key": "explicit.stat_331648983#0",
       "en": "When you reload, triggers Gemini Surge to alternately gain # Cold Surge or # Fire Surge",
-      "text": "當你裝填時，觸發雙靈波動， 交替獲得#冰冷波動或#火焰波動"
+      "text": "當你裝填時，觸發雙靈波動，交替獲得#冰冷波動或#火焰波動"
     },
     {
       "key": "explicit.stat_258955603#0",
       "en": "Alternating every 5 seconds: Take #% more Damage from Hits Take #% more Damage over time",
-      "text": "每隔5秒替換： 承受#%更多擊中傷害 承受#%更多持續傷害"
+      "text": "每隔5秒替換：承受#%更多擊中傷害承受#%更多持續傷害"
     },
     {
       "key": "explicit.stat_2163764037#0",
@@ -104,9 +104,9 @@
       "text": "每層符文鎧甲附加#至#物理荊棘傷害"
     },
     {
-      "key": "explicit.stat_1955786041#0",
-      "en": "Has # to # Physical damage, # to # per Boss's Face Broken",
-      "text": "擁有#至#物理傷害，頭目每被打爛一張臉即#至#"
+      "key": "explicit.stat_2223678961#0",
+      "en": "Adds # to # Chaos damage",
+      "text": "附加#至#混沌傷害"
     },
     {
       "key": "explicit.stat_3835522656#0",
@@ -119,14 +119,14 @@
       "text": "每25力量附加#至#攻擊火焰傷害"
     },
     {
+      "key": "explicit.stat_1955786041#0",
+      "en": "Has # to # Physical damage, # to # per Boss's Face Broken",
+      "text": "擁有#至#物理傷害，頭目每被打爛一張臉即#至#"
+    },
+    {
       "key": "explicit.stat_1515531208#0",
       "en": "# to # Cold Thorns damage",
       "text": "#至#點冰冷荊棘傷害"
-    },
-    {
-      "key": "explicit.stat_2223678961#0",
-      "en": "Adds # to # Chaos damage",
-      "text": "附加#至#混沌傷害"
     },
     {
       "key": "explicit.stat_3893788785#0",
@@ -139,14 +139,14 @@
       "text": "每擁有1%格擋機率，以此武器造成的擊中即附加#至#物理傷害"
     },
     {
+      "key": "explicit.stat_1695767482#0",
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
+      "text": "格擋時對目標造成持續#秒的腐化之血每秒造成等同於你最大生命#%的物理傷害"
+    },
+    {
       "key": "explicit.stat_566086661#0",
       "en": "Attacks with this Weapon have Added Cold Damage equal to #% to #% of maximum Mana",
       "text": "以此武器攻擊時會附加等同於#%至#%最大魔力的冰冷傷害"
-    },
-    {
-      "key": "explicit.stat_1695767482#0",
-      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
-      "text": "格擋時對目標造成持續#秒的腐化之血 每秒造成等同於你最大生命#%的物理傷害"
     },
     {
       "key": "explicit.stat_262946222#0",

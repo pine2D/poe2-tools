@@ -2,74 +2,555 @@
   "locale": "zh-CN",
   "gameVersion": "0.5",
   "leagueName": "奥杜尔秘符",
-  "builtAt": "2026-09-07T12:27:24.151Z",
+  "builtAt": "2026-09-08T09:57:17.857Z",
   "sources": [
     {
       "name": "trade2-en-stats",
       "url": "https://www.pathofexile.com/api/trade2/data/stats",
-      "sha256": "55c534f64e0eba3336c3468b36a5d4ed42cfd19476e52b72c2cfcd33e3b50b4a",
-      "fetchedAt": "2026-09-07T11:29:23.892Z",
-      "fromCache": true
+      "sha256": "efc51925a6cb64b8ab001d841c922675a7d9fb8cf34b032a8384a68407e1b916",
+      "fetchedAt": "2026-09-08T09:57:18.730Z",
+      "fromCache": false
     },
     {
       "name": "trade2-zh-CN-stats",
       "url": "https://poe.game.qq.com/api/trade2/data/stats",
-      "sha256": "a714d4a0514960f9df11d381ef4062e69f014808a708400d13536109dda22414",
-      "fetchedAt": "2026-09-07T11:29:26.744Z",
-      "fromCache": true
-    },
-    {
-      "name": "repoe-passives-default",
-      "url": "https://raw.githubusercontent.com/repoe-fork/poe2/master/data/passive_skill_trees/Default.json",
-      "sha256": "8983cc6c04e60a85a1f475894d1b1b41de418cec2fd17d18d1a514a88b0073f6",
-      "fetchedAt": "2026-09-07T11:29:26.405Z",
-      "fromCache": true
-    },
-    {
-      "name": "poe2db-tree-zh-CN",
-      "url": "https://poe2db.tw/data/passive-skill-tree/4.5/data_cn.json?5",
-      "sha256": "b60e1c4e76fd22c4891eb03136366da5f07db0daf68f1f3c14ae4f7505be53c0",
-      "fetchedAt": "2026-09-07T11:29:27.759Z",
-      "fromCache": true
+      "sha256": "8820c12e876fddd40c5335a191f6fd9b803a502b2cd74f54c7b3ebca10fb0d41",
+      "fetchedAt": "2026-09-08T09:58:14.141Z",
+      "fromCache": false
     },
     {
       "name": "poe2db-tree-page",
       "url": "https://poe2db.tw/cn/passive-skill-tree",
       "sha256": "9b01f1dc26388528058165d97dd8a5b94362bf81e9e32e067c56f81cee24fee8",
-      "fetchedAt": "2026-09-07T11:29:24.711Z",
-      "fromCache": true
+      "fetchedAt": "2026-09-08T09:57:20.147Z",
+      "fromCache": false
     },
     {
       "name": "poe2db-tree-bundle",
       "url": "https://cdn.poe2db.tw/js/passive-skill-tree.e0cc6da0156e37d5.js",
       "sha256": "49991101a2ee2111e9f392b549a9dd62d41a5b244ea15adbc64fbd1b1224bfcd",
-      "fetchedAt": "2026-09-07T11:29:25.218Z",
-      "fromCache": true
+      "fetchedAt": "2026-09-08T09:57:21.257Z",
+      "fromCache": false
+    },
+    {
+      "name": "repoe-passives-default",
+      "url": "https://raw.githubusercontent.com/repoe-fork/poe2/master/data/passive_skill_trees/Default.json",
+      "sha256": "8983cc6c04e60a85a1f475894d1b1b41de418cec2fd17d18d1a514a88b0073f6",
+      "fetchedAt": "2026-09-08T09:57:22.868Z",
+      "fromCache": false
+    },
+    {
+      "name": "repoe-skill-gems",
+      "url": "https://raw.githubusercontent.com/repoe-fork/poe2/master/data/skill_gems.json",
+      "sha256": "b97567af6c741101a550a6ed6b269d8f3398aae4ff7e783b7905b090eea9fb93",
+      "fetchedAt": "2026-09-08T09:57:23.419Z",
+      "fromCache": false
+    },
+    {
+      "name": "trade2-en-items",
+      "url": "https://www.pathofexile.com/api/trade2/data/items",
+      "sha256": "22e36cae00cd7d95053ef759e6a574117c8b695b955968d6f9d3d59d208f032a",
+      "fetchedAt": "2026-09-08T09:57:23.797Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Gem",
+      "url": "https://poe2db.tw/us/Gem",
+      "sha256": "2ea322c05004c67edc9f03438f577f6ff4deb68ab11a0243181ebe18274d300e",
+      "fetchedAt": "2026-09-08T09:57:26.673Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Unique_item",
+      "url": "https://poe2db.tw/us/Unique_item",
+      "sha256": "f1d672baaadb0e2bf7720e482afacb40317bc059e8d18e783f01c4a404f16c28",
+      "fetchedAt": "2026-09-08T09:57:27.445Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Amulets",
+      "url": "https://poe2db.tw/us/Amulets",
+      "sha256": "639ab6b7494b85dd7e853bbd205acb259f56c6f4ec3d4b61768a128ff6d10e3a",
+      "fetchedAt": "2026-09-08T09:57:28.977Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Belts",
+      "url": "https://poe2db.tw/us/Belts",
+      "sha256": "d8cc944cbee6208038869c124ffb0782a4f1fb4c2e4768f772b0dfa9d3963401",
+      "fetchedAt": "2026-09-08T09:57:30.175Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Body_Armours",
+      "url": "https://poe2db.tw/us/Body_Armours",
+      "sha256": "7004785ce0635fb5c9dd60fb45efab6e7d563be32ab222a6c66ab93046666c7e",
+      "fetchedAt": "2026-09-08T09:57:31.812Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Boots",
+      "url": "https://poe2db.tw/us/Boots",
+      "sha256": "0f7945aa6bc5f354c662dd23747366d951680b27560e4c818d9ebdf1e63057cb",
+      "fetchedAt": "2026-09-08T09:57:33.168Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Bows",
+      "url": "https://poe2db.tw/us/Bows",
+      "sha256": "3970a26c558b4df70351a1f65ae6be5d60a17f803759f88adbc1f623bf144bff",
+      "fetchedAt": "2026-09-08T09:57:34.810Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Bucklers",
+      "url": "https://poe2db.tw/us/Bucklers",
+      "sha256": "44e98aaced485107ea240b45ab20da192d2d0615c8e654dbf1267c5d08adbbd4",
+      "fetchedAt": "2026-09-08T09:57:36.302Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Charms",
+      "url": "https://poe2db.tw/us/Charms",
+      "sha256": "1a3367470ddebe730d5788f5eb12562055e83d7835db76da8ce2077a55a81985",
+      "fetchedAt": "2026-09-08T09:57:37.674Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Crossbows",
+      "url": "https://poe2db.tw/us/Crossbows",
+      "sha256": "40d95fcd734c447acf1801ee3b9b2185a3a17bad2bc1e19f956c1d21742ffcbc",
+      "fetchedAt": "2026-09-08T09:57:39.575Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Daggers",
+      "url": "https://poe2db.tw/us/Daggers",
+      "sha256": "20b5a9d2e6537e56905bdb8453fe92f0872be1ed880a922c617e2dbdfabe1e77",
+      "fetchedAt": "2026-09-08T09:57:40.677Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Flails",
+      "url": "https://poe2db.tw/us/Flails",
+      "sha256": "fe732852653c2d072e49e8ce6c8980826804dadd3923d2f1c3778c55b2a3759c",
+      "fetchedAt": "2026-09-08T09:57:42.197Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Foci",
+      "url": "https://poe2db.tw/us/Foci",
+      "sha256": "cd6c51ce1f75620fffe6919e56a9822d6cc2dd495a36a202798e06554314d161",
+      "fetchedAt": "2026-09-08T09:57:43.806Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Gloves",
+      "url": "https://poe2db.tw/us/Gloves",
+      "sha256": "ff16a47d2c0cd4fda4a1702a86039970ab939a4ef64cd52841f1c3665ab410d4",
+      "fetchedAt": "2026-09-08T09:57:45.331Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Helmets",
+      "url": "https://poe2db.tw/us/Helmets",
+      "sha256": "966507b7db8e38152926831224da6b9ef02147e2a2ef44763a6c5c4743bc8985",
+      "fetchedAt": "2026-09-08T09:57:46.688Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Jewels",
+      "url": "https://poe2db.tw/us/Jewels",
+      "sha256": "bce074e5ab3554be9c979b98729672bdfa54cb44bf2086b42b1e19151ccdb423",
+      "fetchedAt": "2026-09-08T09:57:48.174Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Life_Flasks",
+      "url": "https://poe2db.tw/us/Life_Flasks",
+      "sha256": "1656373ddeb1944fff6d1125efe401304da9da256dc95280a769b1ea56908079",
+      "fetchedAt": "2026-09-08T09:57:50.120Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Mana_Flasks",
+      "url": "https://poe2db.tw/us/Mana_Flasks",
+      "sha256": "af3c67b68249f1ba5ab968fb63d48226bba5802bf31d7664fab5ae2499a6f302",
+      "fetchedAt": "2026-09-08T09:57:51.253Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-One_Hand_Axes",
+      "url": "https://poe2db.tw/us/One_Hand_Axes",
+      "sha256": "f6b6a171d1d8a4fb73a2856e84b43b8eb6e6bc543eae6f8dbb0940b19d56fa41",
+      "fetchedAt": "2026-09-08T09:57:52.802Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-One_Hand_Maces",
+      "url": "https://poe2db.tw/us/One_Hand_Maces",
+      "sha256": "0f98398f8705f1d9dc6e5b5a81aa114dab2639d461230f8c2dd90504850a295e",
+      "fetchedAt": "2026-09-08T09:57:54.305Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-One_Hand_Swords",
+      "url": "https://poe2db.tw/us/One_Hand_Swords",
+      "sha256": "aba908c6ed3032705b02ac74692636db9776f74e8fa7c20ac584bc059caf76b6",
+      "fetchedAt": "2026-09-08T09:57:55.856Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Quarterstaves",
+      "url": "https://poe2db.tw/us/Quarterstaves",
+      "sha256": "317fad4689bfe173065f3d6bd087ad668a6bcec7e472dce00a734c06d44c3fe5",
+      "fetchedAt": "2026-09-08T09:57:57.324Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Quivers",
+      "url": "https://poe2db.tw/us/Quivers",
+      "sha256": "bdc17f858350e1471378f5d377572827011e9e77b73029842fac2fa0bfbca239",
+      "fetchedAt": "2026-09-08T09:57:58.941Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Rings",
+      "url": "https://poe2db.tw/us/Rings",
+      "sha256": "905a77be1fe6fea6ac33fd700bdf8e0b8b74b1f3071a916144acf6b6d8722ea5",
+      "fetchedAt": "2026-09-08T09:58:00.326Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Sceptres",
+      "url": "https://poe2db.tw/us/Sceptres",
+      "sha256": "6ff5a2501f5f972fe4a2235944005493a1dbbe68db8163e1fe0c9788d90c6e68",
+      "fetchedAt": "2026-09-08T09:58:01.955Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Shields",
+      "url": "https://poe2db.tw/us/Shields",
+      "sha256": "ba0c6971970f22967fe787959f28496c8543ae343e3f69e8f28e9e7d0dbc8344",
+      "fetchedAt": "2026-09-08T09:58:03.188Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Spears",
+      "url": "https://poe2db.tw/us/Spears",
+      "sha256": "78543b0d5c978c404886139dbc1c2d36eb0a200a3c8adc9e7e5919ac04ca7cad",
+      "fetchedAt": "2026-09-08T09:58:04.828Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Staves",
+      "url": "https://poe2db.tw/us/Staves",
+      "sha256": "4a3bdd9ce82c91eeaa9629860fb997f7ab7a7fdcf9d9c90700d97128e6265f23",
+      "fetchedAt": "2026-09-08T09:58:06.322Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Talismans",
+      "url": "https://poe2db.tw/us/Talismans",
+      "sha256": "d195fdcb6cd8cb4d9c79ce5c34908dabd31ae7407196b1b005ce1906e34f688a",
+      "fetchedAt": "2026-09-08T09:58:07.692Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Two_Hand_Axes",
+      "url": "https://poe2db.tw/us/Two_Hand_Axes",
+      "sha256": "3a1d1b9fb3e32edaf7e27681f9550785875374359b941c6f0538f670f46ceaaf",
+      "fetchedAt": "2026-09-08T09:58:09.303Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Two_Hand_Maces",
+      "url": "https://poe2db.tw/us/Two_Hand_Maces",
+      "sha256": "696237c86df95eeccfb5b1225228cc10bf643c848b6ab5fe151c975aa6afced8",
+      "fetchedAt": "2026-09-08T09:58:10.816Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Two_Hand_Swords",
+      "url": "https://poe2db.tw/us/Two_Hand_Swords",
+      "sha256": "ea28c3129677ed199c86fc73a78f17d7083a9e7eb55adcf195129bd2c42f4f42",
+      "fetchedAt": "2026-09-08T09:58:12.306Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-us-Wands",
+      "url": "https://poe2db.tw/us/Wands",
+      "sha256": "4602dd878d8c62c0a99a2d59f17af2a54e62029e9b41b73332dc4c4436faea5a",
+      "fetchedAt": "2026-09-08T09:58:13.806Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-tree-zh-CN",
+      "url": "https://poe2db.tw/data/passive-skill-tree/4.5/data_cn.json?5",
+      "sha256": "b60e1c4e76fd22c4891eb03136366da5f07db0daf68f1f3c14ae4f7505be53c0",
+      "fetchedAt": "2026-09-08T09:58:16.566Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Gem",
+      "url": "https://poe2db.tw/cn/Gem",
+      "sha256": "2b73624541e40379ea18f4ad3b406a34be446748de220ce077e21d141ac4b9e8",
+      "fetchedAt": "2026-09-08T09:58:18.148Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Unique_item",
+      "url": "https://poe2db.tw/cn/Unique_item",
+      "sha256": "5370f9151499e4615ec878d369a8c44ecb9902c7102f224080357dfb715a3055",
+      "fetchedAt": "2026-09-08T09:58:19.214Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Amulets",
+      "url": "https://poe2db.tw/cn/Amulets",
+      "sha256": "e4c1bdfe3f1c7cba217f859df853b0f012516d229d9efec478f1da4e8557656a",
+      "fetchedAt": "2026-09-08T09:58:20.915Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Belts",
+      "url": "https://poe2db.tw/cn/Belts",
+      "sha256": "2835c414742835f062b7421198ae0465ef1bc26377153338a9d6c8ae1dfb21d8",
+      "fetchedAt": "2026-09-08T09:58:22.061Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Body_Armours",
+      "url": "https://poe2db.tw/cn/Body_Armours",
+      "sha256": "34ce7ad5ad5d0c14dfa904d8ce77341b48317302972d10f29804630d11dfe47c",
+      "fetchedAt": "2026-09-08T09:58:23.815Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Boots",
+      "url": "https://poe2db.tw/cn/Boots",
+      "sha256": "b1c0ecfaea572ec78ceaf098ff9647754130da03f8cc464f0cdb87999bd158e0",
+      "fetchedAt": "2026-09-08T09:58:25.460Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Bows",
+      "url": "https://poe2db.tw/cn/Bows",
+      "sha256": "c5b5e5be35a89114ecd4be416a19ab8fcc75239247acfe12614cd81b6ec8bdc6",
+      "fetchedAt": "2026-09-08T09:58:26.809Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Bucklers",
+      "url": "https://poe2db.tw/cn/Bucklers",
+      "sha256": "1cad76494f00682bb3430678b195d2dad975631a97bcf438671e461c3212daf9",
+      "fetchedAt": "2026-09-08T09:58:28.312Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Charms",
+      "url": "https://poe2db.tw/cn/Charms",
+      "sha256": "3fbbcfff8ca276aa4c3cee58ddc504ce42134735133d8abe6f56382b13159ed2",
+      "fetchedAt": "2026-09-08T09:58:29.673Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Crossbows",
+      "url": "https://poe2db.tw/cn/Crossbows",
+      "sha256": "65925756a22b56618823cedb94c81b513c31bed8b66f42234f53a507d2b80931",
+      "fetchedAt": "2026-09-08T09:58:31.321Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Daggers",
+      "url": "https://poe2db.tw/cn/Daggers",
+      "sha256": "ce6d0f1de7b819cdc6788e85f9a11cccebbea558bf6e9656a3e20f2d34e4cd21",
+      "fetchedAt": "2026-09-08T09:58:32.810Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Flails",
+      "url": "https://poe2db.tw/cn/Flails",
+      "sha256": "be9ba38e441ca7dccae64d53b490d5ad721fe387a11be4fb7eec88a5c0a66d28",
+      "fetchedAt": "2026-09-08T09:58:34.315Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Foci",
+      "url": "https://poe2db.tw/cn/Foci",
+      "sha256": "c902cbff428c7d4091cbcf2c22735a5ffd6d8dc6164b6274e0113a26b007faa3",
+      "fetchedAt": "2026-09-08T09:58:35.799Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Gloves",
+      "url": "https://poe2db.tw/cn/Gloves",
+      "sha256": "7646fe5456f2f81f69d7077c6730c484455f52aec7c60f8424605bbf01c40a86",
+      "fetchedAt": "2026-09-08T09:58:37.327Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Helmets",
+      "url": "https://poe2db.tw/cn/Helmets",
+      "sha256": "dd9d11bc37b56ba33cdbb7b5c4181bf34a7aae4d919c42b48dd2b97ee4eeff6b",
+      "fetchedAt": "2026-09-08T09:58:38.697Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Jewels",
+      "url": "https://poe2db.tw/cn/Jewels",
+      "sha256": "96b8c8617327b0f3dc6d24d693228fd0f540e992beee52be999d6db55750f380",
+      "fetchedAt": "2026-09-08T09:58:40.171Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Life_Flasks",
+      "url": "https://poe2db.tw/cn/Life_Flasks",
+      "sha256": "b1283bfd88651d649c781fd95e3e875e5f6cbe0d325a728dd8ab655904032fe6",
+      "fetchedAt": "2026-09-08T09:58:42.291Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Mana_Flasks",
+      "url": "https://poe2db.tw/cn/Mana_Flasks",
+      "sha256": "fa79a94f91b4144cfaceede1ecd77dbd9dd76cabb8bd0cd69230f2e57118a7cf",
+      "fetchedAt": "2026-09-08T09:58:43.613Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-One_Hand_Axes",
+      "url": "https://poe2db.tw/cn/One_Hand_Axes",
+      "sha256": "66052343591998b1ea27245981eae9ce0473246239c1eb13571e9d5b9369fef1",
+      "fetchedAt": "2026-09-08T09:58:44.571Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-One_Hand_Maces",
+      "url": "https://poe2db.tw/cn/One_Hand_Maces",
+      "sha256": "8f94b4c43c71c015b05923e22307b00a5cdea2abb49b4f335524d614f9956c7f",
+      "fetchedAt": "2026-09-08T09:58:46.320Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-One_Hand_Swords",
+      "url": "https://poe2db.tw/cn/One_Hand_Swords",
+      "sha256": "abd0252116e42766420442158bc878fdfa5daae24ceaa8446b0eaaa8e468f22e",
+      "fetchedAt": "2026-09-08T09:58:47.812Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Quarterstaves",
+      "url": "https://poe2db.tw/cn/Quarterstaves",
+      "sha256": "d3b28f7c5fb956e706af4a2387223ebfe15e36a244bd3f0c2556080fc8961b27",
+      "fetchedAt": "2026-09-08T09:58:49.308Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Quivers",
+      "url": "https://poe2db.tw/cn/Quivers",
+      "sha256": "f7f690c835191227f330c59bded9eab67eb5304084c1a1a62cddc28bf077ec5c",
+      "fetchedAt": "2026-09-08T09:58:50.668Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Rings",
+      "url": "https://poe2db.tw/cn/Rings",
+      "sha256": "55ef70596dd43c3d2350ac203e68ffe3723d58dc4996d4850c08fa65a04e4b7b",
+      "fetchedAt": "2026-09-08T09:58:52.194Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Sceptres",
+      "url": "https://poe2db.tw/cn/Sceptres",
+      "sha256": "140a37c6e08df5d5312e6ee7bb54c4782f6e702a74743727b7ba807e12c8d68d",
+      "fetchedAt": "2026-09-08T09:58:53.953Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Shields",
+      "url": "https://poe2db.tw/cn/Shields",
+      "sha256": "418d1231511f111751b39b2ea19b67d7bea7a353d61500bb1305945b88741e75",
+      "fetchedAt": "2026-09-08T09:58:55.194Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Spears",
+      "url": "https://poe2db.tw/cn/Spears",
+      "sha256": "8efcfcba44f260399b51519768abfa0765d225a651ee4b27ae23418eec18b351",
+      "fetchedAt": "2026-09-08T09:58:56.818Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Staves",
+      "url": "https://poe2db.tw/cn/Staves",
+      "sha256": "05ce1b2fc5c8641c4fbd945b2909d33a6c881bb46ece94a19bb56aa8b6a7cdcd",
+      "fetchedAt": "2026-09-08T09:58:58.073Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Talismans",
+      "url": "https://poe2db.tw/cn/Talismans",
+      "sha256": "d46c23c80da53d2ed7d04c05962cf896ed91bbdd10bfe4d39db0ab541cc3a89a",
+      "fetchedAt": "2026-09-08T09:58:59.818Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Two_Hand_Axes",
+      "url": "https://poe2db.tw/cn/Two_Hand_Axes",
+      "sha256": "0db238a4954c5aade5369824f58d0df59b2f029fc92a2a8a6dba81ad460f80a4",
+      "fetchedAt": "2026-09-08T09:59:01.311Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Two_Hand_Maces",
+      "url": "https://poe2db.tw/cn/Two_Hand_Maces",
+      "sha256": "1fa7c93d8084e9e9cc4b492a013e1624ea99e292281e6c5b4d69741827a6420a",
+      "fetchedAt": "2026-09-08T09:59:02.826Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Two_Hand_Swords",
+      "url": "https://poe2db.tw/cn/Two_Hand_Swords",
+      "sha256": "bf657ba314116d62c799fe4c24fcd029e1ffd9babce7deb38e760373b2a1cdd7",
+      "fetchedAt": "2026-09-08T09:59:04.315Z",
+      "fromCache": false
+    },
+    {
+      "name": "poe2db-list-cn-Wands",
+      "url": "https://poe2db.tw/cn/Wands",
+      "sha256": "46152e2ef97ca71042f34010bdc02f5cb657dbeb1b46ad8729a6d5377551b17a",
+      "fetchedAt": "2026-09-08T09:59:05.822Z",
+      "fromCache": false
     }
   ],
   "counts": {
-    "stats": 3677,
+    "stats": 3676,
     "passives": 4927,
+    "gems": 1072,
+    "bases": 1543,
+    "uniques": 445,
     "ascendancies": 23,
     "classes": 8,
     "inventories": 14
   },
   "audit": {
     "stats": {
-      "enIds": 8178,
+      "enIds": 8180,
       "targetIds": 7452,
-      "joined": 3677,
-      "missingInTarget": 759,
+      "joined": 3676,
+      "missingInTarget": 761,
       "groupMismatch": 0,
       "placeholderMismatch": [],
       "duplicateIds": 76,
       "multiPlaceholder": 39,
       "orderApplied": 0,
       "residualSuffix": [],
-      "mergedSameText": 3818,
+      "mergedSameText": 3819,
       "excludedEntries": 36,
-      "literalNumber": 154,
+      "literalNumber": 153,
+      "literalVariant": 150,
       "untranslatedSameAsEn": 33,
+      "untranslatedDemoted": 9,
       "unusedOrderKeys": [],
       "unusedWinnerKeys": []
     },
@@ -82,21 +563,66 @@
       "duplicateId": 0,
       "dntSkipped": 113
     },
+    "gems": {
+      "candidates": 1117,
+      "joined": 1072,
+      "missingInEn": 45,
+      "enMismatch": [],
+      "missingInTarget": 0,
+      "sameAsEn": 2,
+      "repoeGems": 1191,
+      "noBaseItem": 0,
+      "skippedPlaceholder": 74,
+      "duplicateKey": 0
+    },
+    "items": {
+      "bases": {
+        "candidates": 1543,
+        "joined": 1543,
+        "missingInEn": 0,
+        "enMismatch": [],
+        "missingInTarget": 0,
+        "sameAsEn": 2
+      },
+      "uniques": {
+        "candidates": 464,
+        "joined": 445,
+        "missingInEn": 19,
+        "enMismatch": [],
+        "missingInTarget": 0,
+        "sameAsEn": 1
+      }
+    },
     "problems": {
-      "total": 13,
+      "total": 14,
       "byTable": {
-        "stats": 13
+        "stats": 14
       },
       "sample": [
         {
           "table": "stats",
           "key": "#% increased spirit",
-          "problem": "与 explicit.stat_3984865854 键冲突"
+          "problem": "与 explicit.stat_1416406066 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% of armour also applies to lightning damage",
+          "problem": "与 rune.stat_2200571612 键冲突"
         },
         {
           "table": "stats",
           "key": "# to all attributes",
           "problem": "与 explicit.stat_1379411836 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "allocates puppet master chance",
+          "problem": "与 explicit.stat_2954116742|14258 键冲突"
+        },
+        {
+          "table": "stats",
+          "key": "#% increased armour, evasion and energy shield",
+          "problem": "与 explicit.stat_3523867985 键冲突"
         },
         {
           "table": "stats",
@@ -142,27 +668,27 @@
           "table": "stats",
           "key": "pain attunement",
           "problem": "与 explicit.stat_98977150 键冲突"
-        },
-        {
-          "table": "stats",
-          "key": "allocates puppet master chance",
-          "problem": "与 explicit.stat_2954116742|14258 键冲突"
-        },
-        {
-          "table": "stats",
-          "key": "#% increased armour, evasion and energy shield",
-          "problem": "与 explicit.stat_3523867985 键冲突"
         }
       ]
     }
   },
   "coverage": {
     "synthetic": {
-      "files": 2,
-      "modCandidates": 8,
-      "modTranslated": 7,
-      "rate": 0.875
+      "files": 3,
+      "modCandidates": 21,
+      "modTranslated": 21,
+      "rate": 1,
+      "namesTranslated": 7
     },
-    "local": null
-  }
+    "local": {
+      "files": 13,
+      "modCandidates": 284,
+      "modTranslated": 282,
+      "rate": 0.9929577464788732,
+      "namesTranslated": 160
+    }
+  },
+  "warnings": [
+    "items / gems 为跨版本 join：英文侧 0.5.5，zh-CN 侧 0.5"
+  ]
 }

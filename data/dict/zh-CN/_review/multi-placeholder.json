@@ -1,6 +1,6 @@
 {
   "locale": "zh-CN",
-  "generatedAt": "2026-09-07T12:27:24.151Z",
+  "generatedAt": "2026-09-08T09:57:17.857Z",
   "note": "多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
   "entries": [
     {
@@ -34,14 +34,14 @@
       "text": "附加 # - # 闪电伤害"
     },
     {
-      "key": "explicit.stat_709508406#0",
-      "en": "Adds # to # Fire Damage",
-      "text": "附加 # - # 火焰伤害"
-    },
-    {
       "key": "explicit.stat_2881298780#0",
       "en": "# to # Physical Thorns damage",
       "text": "# - # 物理荆棘伤害"
+    },
+    {
+      "key": "explicit.stat_709508406#0",
+      "en": "Adds # to # Fire Damage",
+      "text": "附加 # - # 火焰伤害"
     },
     {
       "key": "explicit.stat_1037193709#0",
@@ -86,12 +86,12 @@
     {
       "key": "explicit.stat_331648983#0",
       "en": "When you reload, triggers Gemini Surge to alternately gain # Cold Surge or # Fire Surge",
-      "text": "当你装填时，触发双灵涌动 交替获得 # 次冰霜涌动或 # 次火焰涌动"
+      "text": "当你装填时，触发双灵涌动交替获得 # 次冰霜涌动或 # 次火焰涌动"
     },
     {
       "key": "explicit.stat_258955603#0",
       "en": "Alternating every 5 seconds: Take #% more Damage from Hits Take #% more Damage over time",
-      "text": "每 5 秒交替： 受到的击中伤害总增 #% 受到的持续伤害总增 #%"
+      "text": "每 5 秒交替：受到的击中伤害总增 #% 受到的持续伤害总增 #%"
     },
     {
       "key": "explicit.stat_2163764037#0",
@@ -104,9 +104,9 @@
       "text": "每有一个符文护板，附加 # - # 物理荆棘伤害"
     },
     {
-      "key": "explicit.stat_1955786041#0",
-      "en": "Has # to # Physical damage, # to # per Boss's Face Broken",
-      "text": "具有 # - # 物理伤害，且每有一层首领破相，# 到 # 伤害"
+      "key": "explicit.stat_2223678961#0",
+      "en": "Adds # to # Chaos damage",
+      "text": "该装备附加 # - # 基础混沌伤害"
     },
     {
       "key": "explicit.stat_3835522656#0",
@@ -119,14 +119,14 @@
       "text": "每有 25 点力量，附加 # - # 攻击火焰伤害"
     },
     {
+      "key": "explicit.stat_1955786041#0",
+      "en": "Has # to # Physical damage, # to # per Boss's Face Broken",
+      "text": "具有 # - # 物理伤害，且每有一层首领破相，# 到 # 伤害"
+    },
+    {
       "key": "explicit.stat_1515531208#0",
       "en": "# to # Cold Thorns damage",
       "text": "# - # 冰霜荆棘伤害"
-    },
-    {
-      "key": "explicit.stat_2223678961#0",
-      "en": "Adds # to # Chaos damage",
-      "text": "该装备附加 # - # 基础混沌伤害"
     },
     {
       "key": "explicit.stat_3893788785#0",
@@ -139,14 +139,14 @@
       "text": "使用该武器击中时，每有 1% 格挡几率，附加 # - # 的物理伤害"
     },
     {
+      "key": "explicit.stat_1695767482#0",
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
+      "text": "格挡时施加腐化之血，持续 # 秒，每秒造成相当于你生命上限 #% 的物理伤害"
+    },
+    {
       "key": "explicit.stat_566086661#0",
       "en": "Attacks with this Weapon have Added Cold Damage equal to #% to #% of maximum Mana",
       "text": "使用该武器攻击时附加冰霜伤害，等同于魔力上限的 #% 至 #%"
-    },
-    {
-      "key": "explicit.stat_1695767482#0",
-      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
-      "text": "格挡时施加腐化之血，持续 # 秒， 每秒造成相当于你生命上限 #% 的物理伤害"
     },
     {
       "key": "explicit.stat_262946222#0",

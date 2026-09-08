@@ -1,0 +1,4299 @@
+{
+  "_meta": {
+    "source": "repoe-fork/poe2 + poe2db.tw",
+    "gameVersion": "0.5.5",
+    "fetchedAt": "2026-09-08T09:59:11.558Z",
+    "tier": "gray",
+    "count": 1072
+  },
+  "entries": {
+    "SkillGemAbyssalLivingBomb": {
+      "en": "Untether",
+      "text": "解脫"
+    },
+    "SkillGemAlchemistsBoon": {
+      "en": "Alchemist's Boon",
+      "text": "煉金師恩惠"
+    },
+    "SkillGemAncestralCry": {
+      "en": "Ancestral Cry",
+      "text": "先祖戰吼"
+    },
+    "SkillGemArchmage": {
+      "en": "Archmage",
+      "text": "大法師"
+    },
+    "SkillGemArmourPiercingRounds": {
+      "en": "Armour Piercing Rounds",
+      "text": "穿甲彈藥"
+    },
+    "SkillGemAscendancyAlignFate": {
+      "en": "Align Fate",
+      "text": "命運同調"
+    },
+    "SkillGemAscendancyAncestralSpirits": {
+      "en": "Ancestral Spirits",
+      "text": "先祖之魂"
+    },
+    "SkillGemAscendancyBleedingConcoction": {
+      "en": "Bleeding Concoction",
+      "text": "流血混合物"
+    },
+    "SkillGemAscendancyBloodBoil": {
+      "en": "Blood Boil",
+      "text": "鮮血沸騰"
+    },
+    "SkillGemAscendancyCommandFireDjinnFlameRunes": {
+      "en": "Ruzhan's Trap",
+      "text": "魯兹安的陷阱"
+    },
+    "SkillGemAscendancyCommandFireDjinnMassFusillade": {
+      "en": "Ruzhan's Fury",
+      "text": "魯兹安的怒火"
+    },
+    "SkillGemAscendancyCommandFireDjinnMeteor": {
+      "en": "Ruzhan's Reckoning",
+      "text": "魯兹安的清算"
+    },
+    "SkillGemAscendancyCommandSandDaggerSlam": {
+      "en": "Kelari's Judgment",
+      "text": "克拉里的審判"
+    },
+    "SkillGemAscendancyCommandSandExplodeTeleport": {
+      "en": "Kelari's Deception",
+      "text": "克拉里的欺瞞"
+    },
+    "SkillGemAscendancyCommandWaterDjinnESRecharge": {
+      "en": "Navira's Well",
+      "text": "納維拉的水井"
+    },
+    "SkillGemAscendancyCommandWaterDjinnGroundBurst": {
+      "en": "Navira's Fracturing",
+      "text": "納維拉的封凍"
+    },
+    "SkillGemAscendancyCommandWaterDjinnOasis": {
+      "en": "Navira's Oasis",
+      "text": "納維拉的綠洲"
+    },
+    "SkillGemAscendancyCorpseBeetles": {
+      "en": "Kelari's Malediction",
+      "text": "克拉里的惡言"
+    },
+    "SkillGemAscendancyDemonForm": {
+      "en": "Demon Form",
+      "text": "惡魔變身"
+    },
+    "SkillGemAscendancyElementalExpression": {
+      "en": "Elemental Expression",
+      "text": "元素表現"
+    },
+    "SkillGemAscendancyElementalStorm": {
+      "en": "Elemental Storm",
+      "text": "元素風暴"
+    },
+    "SkillGemAscendancyEncasedInJade": {
+      "en": "Encase in Jade",
+      "text": "包覆於翠玉中"
+    },
+    "SkillGemAscendancyExplosiveConcoction": {
+      "en": "Explosive Concoction",
+      "text": "爆裂物"
+    },
+    "SkillGemAscendancyFireSpellOnHit": {
+      "en": "Fire Spell on Hit",
+      "text": "擊中時火焰法術"
+    },
+    "SkillGemAscendancyFulminatingConcoction": {
+      "en": "Fulminating Concoction",
+      "text": "烈性混合物"
+    },
+    "SkillGemAscendancyHollowFocus": {
+      "en": "Hollow Focus",
+      "text": "空無專注"
+    },
+    "SkillGemAscendancyHollowForm": {
+      "en": "Hollow Form",
+      "text": "空無型態"
+    },
+    "SkillGemAscendancyHollowResonance": {
+      "en": "Hollow Resonance",
+      "text": "空無共鳴"
+    },
+    "SkillGemAscendancyInevitableAgony": {
+      "en": "Inevitable Agony",
+      "text": "命定苦痛"
+    },
+    "SkillGemAscendancyInfuseWeapon": {
+      "en": "Elemental Surge",
+      "text": "元素波動"
+    },
+    "SkillGemAscendancyIntoTheBreach": {
+      "en": "Into the Breach",
+      "text": "遁入裂痕"
+    },
+    "SkillGemAscendancyLifeRemnants": {
+      "en": "Life Remnants",
+      "text": "生命痕跡"
+    },
+    "SkillGemAscendancyManifestWeapon": {
+      "en": "Manifest Weapon",
+      "text": "幻化武器"
+    },
+    "SkillGemAscendancyMeditate": {
+      "en": "Meditate",
+      "text": "冥想"
+    },
+    "SkillGemAscendancyMirageDeadeye": {
+      "en": "Mirage Deadeye",
+      "text": "幻影銳眼"
+    },
+    "SkillGemAscendancyMomentOfVulnerability": {
+      "en": "Moment of Vulnerability",
+      "text": "可趁之刻"
+    },
+    "SkillGemAscendancyPoisonousConcoction": {
+      "en": "Acidic Concoction",
+      "text": "酸性靈藥"
+    },
+    "SkillGemAscendancyQueensProcession": {
+      "en": "Queen's Procession",
+      "text": "女王進軍"
+    },
+    "SkillGemAscendancyRitualSacrifice": {
+      "en": "Ritual Sacrifice",
+      "text": "儀式獻祭"
+    },
+    "SkillGemAscendancyShatteringConcoction": {
+      "en": "Shattering Concoction",
+      "text": "粉碎混合物"
+    },
+    "SkillGemAscendancySorceryWard": {
+      "en": "Sorcery Ward",
+      "text": "巫術護盾"
+    },
+    "SkillGemAscendancySummonFireDjinn": {
+      "en": "Ruzhan, the Blazing Sword",
+      "text": "赤炎利劍．魯兹安"
+    },
+    "SkillGemAscendancySummonInfernalHound": {
+      "en": "Summon Infernal Hound",
+      "text": "召喚獄炎獵犬"
+    },
+    "SkillGemAscendancySummonSandDjinn": {
+      "en": "Kelari, the Tainted Sands",
+      "text": "黯染飛砂．克拉里"
+    },
+    "SkillGemAscendancySummonWaterDjinn": {
+      "en": "Navira, the Last Mirage",
+      "text": "最終幻象．納維拉"
+    },
+    "SkillGemAscendancyTemperWeapon": {
+      "en": "Temper Weapon",
+      "text": "鍛鍊武器"
+    },
+    "SkillGemAscendancyTemporalRift": {
+      "en": "Temporal Rift",
+      "text": "時空裂隙"
+    },
+    "SkillGemAscendancyTimeFreeze": {
+      "en": "Time Freeze",
+      "text": "時間凍結"
+    },
+    "SkillGemAscendancyTimeSnap": {
+      "en": "Time Snap",
+      "text": "時間短縮"
+    },
+    "SkillGemAscendancyUnboundAvatar": {
+      "en": "Unbound Avatar",
+      "text": "無縛化身"
+    },
+    "SkillGemAscendancyUnleash": {
+      "en": "Unleash",
+      "text": "釋放"
+    },
+    "SkillGemAscendancyVividStampede": {
+      "en": "Vivid Stampede",
+      "text": "靈現奔竄"
+    },
+    "SkillGemAscendancyVoidIllusion": {
+      "en": "Void Illusion",
+      "text": "虛空幻影"
+    },
+    "SkillGemAscendanyMetaDeadeyeMarks": {
+      "en": "Called Shots",
+      "text": "預告射擊"
+    },
+    "SkillGemAttrition": {
+      "en": "Attrition",
+      "text": "損耗"
+    },
+    "SkillGemBarkskin": {
+      "en": "Barkskin",
+      "text": "木質外膚"
+    },
+    "SkillGemBearFuryOfTheMountain": {
+      "en": "Fury of the Mountain",
+      "text": "山嶺之怒"
+    },
+    "SkillGemBerserk": {
+      "en": "Berserk",
+      "text": "狂戰"
+    },
+    "SkillGemBlackPowderBlitz": {
+      "en": "Black Powder Blitz",
+      "text": "火藥疾行"
+    },
+    "SkillGemBlink": {
+      "en": "Blink",
+      "text": "閃現"
+    },
+    "SkillGemBlinkSandPlayer": {
+      "en": "Blink",
+      "text": "閃現"
+    },
+    "SkillGemBloodhoundsMark": {
+      "en": "Bloodhound's Mark",
+      "text": "鮮血獵犬印記"
+    },
+    "SkillGemBoneBlast": {
+      "en": "Bone Blast",
+      "text": "骨之爆破"
+    },
+    "SkillGemBoneCage": {
+      "en": "Bone Cage",
+      "text": "骨牢"
+    },
+    "SkillGemBonestorm": {
+      "en": "Bonestorm",
+      "text": "骸骨風暴"
+    },
+    "SkillGemChaoticInfusion": {
+      "en": "Chaotic Surge",
+      "text": "混沌波動"
+    },
+    "SkillGemChargeInfusion": {
+      "en": "Charge Regulation",
+      "text": "充能調節"
+    },
+    "SkillGemClusterGrenade": {
+      "en": "Cluster Grenade",
+      "text": "集束擲彈"
+    },
+    "SkillGemColdSnap": {
+      "en": "Snap",
+      "text": "迸裂"
+    },
+    "SkillGemCombatFrenzy": {
+      "en": "Combat Frenzy",
+      "text": "戰鬥狂怒"
+    },
+    "SkillGemConvalescence": {
+      "en": "Convalescence",
+      "text": "恢復期"
+    },
+    "SkillGemCrossbowRequiem": {
+      "en": "Requiem",
+      "text": "安魂曲"
+    },
+    "SkillGemCullTheWeak": {
+      "en": "Cull The Weak",
+      "text": "撲殺弱者"
+    },
+    "SkillGemDarkEffigy": {
+      "en": "Dark Effigy",
+      "text": "黑暗雕像"
+    },
+    "SkillGemDefianceBanner": {
+      "en": "Defiance Banner",
+      "text": "反抗之旗"
+    },
+    "SkillGemDetonateMinion": {
+      "en": "Detonate Minion",
+      "text": "引爆召喚物"
+    },
+    "SkillGemDetonatingArrow": {
+      "en": "Detonating Arrow",
+      "text": "爆破箭矢"
+    },
+    "SkillGemDreadBanner": {
+      "en": "Dread Banner",
+      "text": "恐懼之旗"
+    },
+    "SkillGemElectrocutingArrow": {
+      "en": "Electrocuting Arrow",
+      "text": "電極箭矢"
+    },
+    "SkillGemElementalConflux": {
+      "en": "Elemental Conflux",
+      "text": "元素匯流"
+    },
+    "SkillGemElementalInvocation": {
+      "en": "Elemental Invocation",
+      "text": "元素祈願"
+    },
+    "SkillGemElementalSiphon": {
+      "en": "Elemental Siphon",
+      "text": "元素虹吸"
+    },
+    "SkillGemElementalSundering": {
+      "en": "Elemental Sundering",
+      "text": "元素崩裂"
+    },
+    "SkillGemElementalWeakness": {
+      "en": "Elemental Weakness",
+      "text": "元素要害"
+    },
+    "SkillGemEmergencyReload": {
+      "en": "Emergency Reload",
+      "text": "緊急裝填"
+    },
+    "SkillGemEntangle": {
+      "en": "Entangle",
+      "text": "纏繞"
+    },
+    "SkillGemExplodingPoisonToad": {
+      "en": "Bursting Fen Toad",
+      "text": "爆發沼地蟾蜍"
+    },
+    "SkillGemExplosiveGrenade": {
+      "en": "Explosive Grenade",
+      "text": "爆炸擲彈"
+    },
+    "SkillGemExplosiveShot": {
+      "en": "Explosive Shot",
+      "text": "爆炸箭矢"
+    },
+    "SkillGemExplosiveSpear": {
+      "en": "Explosive Spear",
+      "text": "爆炸長矛"
+    },
+    "SkillGemFangsOfFrost": {
+      "en": "Fangs of Frost",
+      "text": "刺骨寒冰"
+    },
+    "SkillGemFeastOfFlesh": {
+      "en": "Feast of Flesh",
+      "text": "血肉盛宴"
+    },
+    "SkillGemFeralInvocation": {
+      "en": "Feral Invocation",
+      "text": "野性祈求"
+    },
+    "SkillGemFireball": {
+      "en": "Fireball",
+      "text": "火球"
+    },
+    "SkillGemFlashGrenade": {
+      "en": "Flash Grenade",
+      "text": "閃光擲彈"
+    },
+    "SkillGemForgeHammer": {
+      "en": "Forge Hammer",
+      "text": "鍛造之錘"
+    },
+    "SkillGemFortifyingCry": {
+      "en": "Fortifying Cry",
+      "text": "堅韌之吼"
+    },
+    "SkillGemFragmentationRounds": {
+      "en": "Fragmentation Rounds",
+      "text": "分裂彈藥"
+    },
+    "SkillGemFreezingMark": {
+      "en": "Freezing Mark",
+      "text": "冰凍印記"
+    },
+    "SkillGemFreezingSalvo": {
+      "en": "Freezing Salvo",
+      "text": "凍結齊射"
+    },
+    "SkillGemFrostDarts": {
+      "en": "Frost Darts",
+      "text": "寒霜之鏢"
+    },
+    "SkillGemFrozenLocus": {
+      "en": "Frozen Locus",
+      "text": "寒冰軌跡"
+    },
+    "SkillGemFulmination": {
+      "en": "Fulmination",
+      "text": "劇烈爆發"
+    },
+    "SkillGemGalvanicShards": {
+      "en": "Galvanic Shards",
+      "text": "電能碎片"
+    },
+    "SkillGemGasArrow": {
+      "en": "Gas Arrow",
+      "text": "毒氣箭矢"
+    },
+    "SkillGemGasGrenade": {
+      "en": "Gas Grenade",
+      "text": "毒氣擲彈"
+    },
+    "SkillGemGatheringStorm": {
+      "en": "Gathering Storm",
+      "text": "風暴凝聚"
+    },
+    "SkillGemGeminiSurge": {
+      "en": "Gemini Surge",
+      "text": "雙靈波動"
+    },
+    "SkillGemGlacialBolt": {
+      "en": "Glacial Bolt",
+      "text": "冰川弩箭"
+    },
+    "SkillGemGrimFeast": {
+      "en": "Grim Feast",
+      "text": "冷酷之宴"
+    },
+    "SkillGemHailstormRounds": {
+      "en": "Hailstorm Rounds",
+      "text": "冰雹彈藥"
+    },
+    "SkillGemHammerOfTheGods": {
+      "en": "Hammer of the Gods",
+      "text": "眾神之錘"
+    },
+    "SkillGemHandOfChayula": {
+      "en": "Hand of Chayula",
+      "text": "夏烏拉之手"
+    },
+    "SkillGemHeartOfIce": {
+      "en": "Heart of Ice",
+      "text": "冰雪之心"
+    },
+    "SkillGemHeraldOfBlood": {
+      "en": "Herald of Blood",
+      "text": "鮮血之捷"
+    },
+    "SkillGemHeraldOfPlague": {
+      "en": "Herald of Plague",
+      "text": "瘟疫之捷"
+    },
+    "SkillGemHighVelocityRounds": {
+      "en": "High Velocity Rounds",
+      "text": "高速彈藥"
+    },
+    "SkillGemHydra": {
+      "en": "Hydra Familiar",
+      "text": "九頭蛇近親"
+    },
+    "SkillGemIceFragments": {
+      "en": "Ice Fragments",
+      "text": "寒冰碎片"
+    },
+    "SkillGemIceShards": {
+      "en": "Ice Shards",
+      "text": "寒冰碎片"
+    },
+    "SkillGemIceShot": {
+      "en": "Ice Shot",
+      "text": "冰霜射擊"
+    },
+    "SkillGemIceTippedArrows": {
+      "en": "Ice-Tipped Arrows",
+      "text": "冰鏃箭矢"
+    },
+    "SkillGemIcestorm": {
+      "en": "Icestorm",
+      "text": "冰風暴"
+    },
+    "SkillGemIncendiaryShot": {
+      "en": "Incendiary Shot",
+      "text": "烈焰射擊"
+    },
+    "SkillGemIronWard": {
+      "en": "Iron Ward",
+      "text": "鋼鐵守護"
+    },
+    "SkillGemLightningRod": {
+      "en": "Lightning Rod",
+      "text": "雷霆之杖"
+    },
+    "SkillGemLivingBombPlayer": {
+      "en": "Living Bomb",
+      "text": "活體炸彈"
+    },
+    "SkillGemLunarAssault": {
+      "en": "Lunar Assault",
+      "text": "月光突襲"
+    },
+    "SkillGemMagmaBarrier": {
+      "en": "Magma Barrier",
+      "text": "熔岩屏障"
+    },
+    "SkillGemMagneticSalvo": {
+      "en": "Magnetic Salvo",
+      "text": "電磁齊射"
+    },
+    "SkillGemMalice": {
+      "en": "Malice",
+      "text": "絕滅恨惡"
+    },
+    "SkillGemManaDrain": {
+      "en": "Mana Drain",
+      "text": "魔力吸取"
+    },
+    "SkillGemManaRemnants": {
+      "en": "Mana Remnants",
+      "text": "魔力痕跡"
+    },
+    "SkillGemMantraOfDestruction": {
+      "en": "Mantra of Destruction",
+      "text": "毀滅神咒"
+    },
+    "SkillGemMirageArcher": {
+      "en": "Mirage Archer",
+      "text": "幻影射手"
+    },
+    "SkillGemMoltenBlast": {
+      "en": "Molten Blast",
+      "text": "熔火爆破"
+    },
+    "SkillGemMortarCannon": {
+      "en": "Mortar Cannon",
+      "text": "迫擊砲"
+    },
+    "SkillGemOilBarrage": {
+      "en": "Oil Barrage",
+      "text": "黏油轟擊"
+    },
+    "SkillGemOilGrenade": {
+      "en": "Oil Grenade",
+      "text": "燃油擲彈"
+    },
+    "SkillGemOverwhelmingPresence": {
+      "en": "Overwhelming Presence",
+      "text": "壓倒性的存在"
+    },
+    "SkillGemParry": {
+      "en": "Parry",
+      "text": "招架"
+    },
+    "SkillGemPerfectStrike": {
+      "en": "Perfect Strike",
+      "text": "完美打擊"
+    },
+    "SkillGemPermafrostBolts": {
+      "en": "Permafrost Bolts",
+      "text": "永凍弩箭"
+    },
+    "SkillGemPhantasmalArrow": {
+      "en": "Phantasmal Arrow",
+      "text": "幻影箭矢"
+    },
+    "SkillGemPinnacleOfPower": {
+      "en": "Pinnacle of Power",
+      "text": "力量巔峰"
+    },
+    "SkillGemPlasmaBlast": {
+      "en": "Plasma Blast",
+      "text": "電漿強擊矢"
+    },
+    "SkillGemPlayerDefault1HAxe": {
+      "en": "Axe Slash",
+      "text": "斧鉞斬"
+    },
+    "SkillGemPlayerDefault1HMace": {
+      "en": "Mace Strike",
+      "text": "錘之打擊"
+    },
+    "SkillGemPlayerDefault1HSword": {
+      "en": "Sword Slash",
+      "text": "劍刃斬"
+    },
+    "SkillGemPlayerDefault2HAxe": {
+      "en": "Axe Slash",
+      "text": "斧鉞斬"
+    },
+    "SkillGemPlayerDefault2HMace": {
+      "en": "Mace Strike",
+      "text": "錘之打擊"
+    },
+    "SkillGemPlayerDefault2HSword": {
+      "en": "Sword Slash",
+      "text": "劍刃斬"
+    },
+    "SkillGemPlayerDefaultAxeAxe": {
+      "en": "Axe Slash",
+      "text": "斧鉞斬"
+    },
+    "SkillGemPlayerDefaultBow": {
+      "en": "Bow Shot",
+      "text": "弓箭射擊"
+    },
+    "SkillGemPlayerDefaultClaw": {
+      "en": "Claw Stab",
+      "text": "利爪刺擊"
+    },
+    "SkillGemPlayerDefaultClawClaw": {
+      "en": "Claw Stab",
+      "text": "利爪刺擊"
+    },
+    "SkillGemPlayerDefaultCrossbow": {
+      "en": "Crossbow Shot",
+      "text": "十字弓射擊"
+    },
+    "SkillGemPlayerDefaultDagger": {
+      "en": "Dagger Stab",
+      "text": "匕首刺擊"
+    },
+    "SkillGemPlayerDefaultDaggerDagger": {
+      "en": "Dagger Stab",
+      "text": "匕首刺擊"
+    },
+    "SkillGemPlayerDefaultFlail": {
+      "en": "Flail Strike",
+      "text": "鏈錘打擊"
+    },
+    "SkillGemPlayerDefaultGrenadeLauncher": {
+      "en": "Grenade",
+      "text": "爆彈投擲"
+    },
+    "SkillGemPlayerDefaultMaceMace": {
+      "en": "Mace Strike",
+      "text": "錘之打擊"
+    },
+    "SkillGemPlayerDefaultQuarterstaff": {
+      "en": "Quarterstaff Strike",
+      "text": "細杖打擊"
+    },
+    "SkillGemPlayerDefaultSpear": {
+      "en": "Spear Stab",
+      "text": "長矛刺擊"
+    },
+    "SkillGemPlayerDefaultSpearOffHand": {
+      "en": "Spear Stab",
+      "text": "長矛刺擊"
+    },
+    "SkillGemPlayerDefaultSpearThrow": {
+      "en": "Spear Throw",
+      "text": "長矛投擲"
+    },
+    "SkillGemPlayerDefaultSwordSword": {
+      "en": "Sword Slash",
+      "text": "劍刃斬"
+    },
+    "SkillGemPlayerDefaultUnarmed": {
+      "en": "Punch",
+      "text": "正拳"
+    },
+    "SkillGemPlaytestAttack": {
+      "en": "Playtest Attack",
+      "text": "測試攻擊"
+    },
+    "SkillGemPlaytestSlam": {
+      "en": "Playtest Slam",
+      "text": "測試重擊"
+    },
+    "SkillGemPlaytestSpell": {
+      "en": "Playtest Spell",
+      "text": "測試法術"
+    },
+    "SkillGemPoisonBurstArrow": {
+      "en": "Poisonburst Arrow",
+      "text": "毒爆箭矢"
+    },
+    "SkillGemPrimalAvatar": {
+      "en": "Primal Avatar",
+      "text": "荒野化身"
+    },
+    "SkillGemPrimalBounty": {
+      "en": "Primal Bounty",
+      "text": "原始賞金"
+    },
+    "SkillGemPrimalStrikes": {
+      "en": "Primal Strikes",
+      "text": "原始打擊"
+    },
+    "SkillGemProfaneRitual": {
+      "en": "Profane Ritual",
+      "text": "瀆神祭祀"
+    },
+    "SkillGemRagingSpirits": {
+      "en": "Raging Spirits",
+      "text": "憤怒狂靈"
+    },
+    "SkillGemRake": {
+      "en": "Rake",
+      "text": "陰爪"
+    },
+    "SkillGemRapidShot": {
+      "en": "Rapid Shot",
+      "text": "疾射"
+    },
+    "SkillGemRavenousSwarm": {
+      "en": "Ravenous Swarm",
+      "text": "貪婪蟲群"
+    },
+    "SkillGemReapersInvocation": {
+      "en": "Reaper's Invocation",
+      "text": "收割者的祈願"
+    },
+    "SkillGemResonatingShield": {
+      "en": "Resonating Shield",
+      "text": "共鳴之盾"
+    },
+    "SkillGemSacrifice": {
+      "en": "Sacrifice",
+      "text": "獻祭"
+    },
+    "SkillGemSanguineRevelry": {
+      "en": "Sanguine Revelry",
+      "text": "腥紅狂歡"
+    },
+    "SkillGemScavengedPlating": {
+      "en": "Scavenged Plating",
+      "text": "拾荒者護板"
+    },
+    "SkillGemShardScavenger": {
+      "en": "Shard Scavenger",
+      "text": "碎片清除者"
+    },
+    "SkillGemShieldBlock": {
+      "en": "Raise Shield",
+      "text": "展開護盾"
+    },
+    "SkillGemShieldWall": {
+      "en": "Shield Wall",
+      "text": "盾牆"
+    },
+    "SkillGemShockburstRounds": {
+      "en": "Shockburst Rounds",
+      "text": "震爆彈藥"
+    },
+    "SkillGemShockchainArrow": {
+      "en": "Shockchain Arrow",
+      "text": "電鍊箭矢"
+    },
+    "SkillGemSiegeCascade": {
+      "en": "Siege Cascade",
+      "text": "圍城爆發"
+    },
+    "SkillGemSiphonElements": {
+      "en": "Siphon Elements",
+      "text": "虹吸元素"
+    },
+    "SkillGemSiphoningStrike": {
+      "en": "Siphoning Strike",
+      "text": "虹吸打擊"
+    },
+    "SkillGemSnipe": {
+      "en": "Snipe",
+      "text": "狙擊"
+    },
+    "SkillGemSolarOrb": {
+      "en": "Solar Orb",
+      "text": "日耀球"
+    },
+    "SkillGemSoulOffering": {
+      "en": "Soul Offering",
+      "text": "靈魂獻祭"
+    },
+    "SkillGemSpearOfSolaris": {
+      "en": "Spear of Solaris",
+      "text": "日耀長矛"
+    },
+    "SkillGemSpellslinger": {
+      "en": "Spellslinger",
+      "text": "拋法者"
+    },
+    "SkillGemStampede": {
+      "en": "Stampede",
+      "text": "踐踏"
+    },
+    "SkillGemStormLance": {
+      "en": "Storm Lance",
+      "text": "風暴之槍"
+    },
+    "SkillGemStormWave": {
+      "en": "Storm Wave",
+      "text": "風暴浪湧"
+    },
+    "SkillGemStormblastBolts": {
+      "en": "Stormblast Bolts",
+      "text": "雷暴彈藥"
+    },
+    "SkillGemStormcallerArrow": {
+      "en": "Stormcaller Arrow",
+      "text": "風暴呼喚箭矢"
+    },
+    "SkillGemTameBeast": {
+      "en": "Tame Beast",
+      "text": "馴獸"
+    },
+    "SkillGemTempestBell": {
+      "en": "Tempest Bell",
+      "text": "風暴之鐘"
+    },
+    "SkillGemThrashingVines": {
+      "en": "Thrashing Vines",
+      "text": "藤蔓痛打"
+    },
+    "SkillGemThunderousLeap": {
+      "en": "Thunderous Leap",
+      "text": "雷霆跳躍"
+    },
+    "SkillGemTimeOfNeed": {
+      "en": "Time of Need",
+      "text": "緊急時刻"
+    },
+    "SkillGemTornadoShot": {
+      "en": "Tornado Shot",
+      "text": "龍捲射擊"
+    },
+    "SkillGemToxicDomain": {
+      "en": "Toxic Domain",
+      "text": "毒素領域"
+    },
+    "SkillGemToxicGrowth": {
+      "en": "Toxic Growth",
+      "text": "毒素植栽"
+    },
+    "SkillGemTriggeredAbyssalApparition": {
+      "en": "Abyssal Apparition",
+      "text": "深淵幻象"
+    },
+    "SkillGemTrinity": {
+      "en": "Trinity",
+      "text": "三相"
+    },
+    "SkillGemTwister": {
+      "en": "Twister",
+      "text": "旋風"
+    },
+    "SkillGemUnearth": {
+      "en": "Unearth",
+      "text": "屍術矢"
+    },
+    "SkillGemUniqueBreachLightningBolt": {
+      "en": "Lightning Bolt",
+      "text": "雷彈"
+    },
+    "SkillGemUniqueDuskVigilTriggeredBlazingCluster": {
+      "en": "Ember Fusillade",
+      "text": "餘燼齊射"
+    },
+    "SkillGemUniqueEarthboundTriggeredSpark": {
+      "en": "Spark",
+      "text": "電球"
+    },
+    "SkillGemUnusable": {
+      "en": "Removed Skill",
+      "text": "已移除技能"
+    },
+    "SkillGemVaultingImpact": {
+      "en": "Vaulting Impact",
+      "text": "跳躍衝擊"
+    },
+    "SkillGemVineArrow": {
+      "en": "Vine Arrow",
+      "text": "藤蔓箭矢"
+    },
+    "SkillGemVoltaicMark": {
+      "en": "Voltaic Mark",
+      "text": "電流印記"
+    },
+    "SkillGemWarBanner": {
+      "en": "War Banner",
+      "text": "戰爭之旗"
+    },
+    "SkillGemWhirlwindLance": {
+      "en": "Whirlwind Lance",
+      "text": "旋風之槍"
+    },
+    "SkillGemWildProtector": {
+      "en": "Wild Protector",
+      "text": "荒野守護"
+    },
+    "SkillGemWindDancer": {
+      "en": "Wind Dancer",
+      "text": "風魔舞者"
+    },
+    "SkillGemWindSerpentsFury": {
+      "en": "Wind Serpent's Fury",
+      "text": "勁風蝮蛇之怒"
+    },
+    "SkillGemWingBlast": {
+      "en": "Wing Blast",
+      "text": "翅翼猛襲"
+    },
+    "SkillGemWitheringPresence": {
+      "en": "Withering Presence",
+      "text": "凋零光環"
+    },
+    "SkillGemWolfArcticHowl": {
+      "en": "Arctic Howl",
+      "text": "極地狂嚎"
+    },
+    "SkillGemWolfCrossSlash": {
+      "en": "Cross Slash",
+      "text": "縱橫劈斬"
+    },
+    "SkillGemWolfLunarBlessing": {
+      "en": "Lunar Blessing",
+      "text": "月光賜福"
+    },
+    "SkillGemWolfShred": {
+      "en": "Shred",
+      "text": "裂碎"
+    },
+    "SkillGemWyvernDevour": {
+      "en": "Devour",
+      "text": "吞噬"
+    },
+    "SkillGemWyvernFlameBreath": {
+      "en": "Flame Breath",
+      "text": "火焰吐息"
+    },
+    "SupportGemAbidingHex": {
+      "en": "Abiding Hex",
+      "text": "永久咒術"
+    },
+    "SupportGemAblation": {
+      "en": "Sacrificial Offering",
+      "text": "犧牲奉獻"
+    },
+    "SupportGemAcrimony": {
+      "en": "Acrimony",
+      "text": "毒辣"
+    },
+    "SupportGemAdhere": {
+      "en": "Adhesive Grenades I",
+      "text": "黏性擲彈 I"
+    },
+    "SupportGemAdhereThree": {
+      "en": "Adhesive Grenades III",
+      "text": "黏性擲彈 III"
+    },
+    "SupportGemAdhereTwo": {
+      "en": "Adhesive Grenades II",
+      "text": "黏性擲彈 II"
+    },
+    "SupportGemAdmixture": {
+      "en": "Admixture",
+      "text": "混合劑"
+    },
+    "SupportGemAdvancingStorm": {
+      "en": "Advancing Storm",
+      "text": "推進風暴"
+    },
+    "SupportGemAlignment": {
+      "en": "Alignment I",
+      "text": "聯合 I"
+    },
+    "SupportGemAlignmentThree": {
+      "en": "Alignment III",
+      "text": "聯合 III"
+    },
+    "SupportGemAlignmentTwo": {
+      "en": "Alignment II",
+      "text": "聯合 II"
+    },
+    "SupportGemAmanamusTithe": {
+      "en": "Amanamu's Tithe",
+      "text": "阿姆那姆的稅賦"
+    },
+    "SupportGemAmbrosia": {
+      "en": "Ambrosia",
+      "text": "仙饌蜜酒"
+    },
+    "SupportGemAmbrosiaTwo": {
+      "en": "Ambrosia II",
+      "text": "仙饌蜜酒 II"
+    },
+    "SupportGemAmmoConservation": {
+      "en": "Ammo Conservation I",
+      "text": "彈藥保存 I"
+    },
+    "SupportGemAmmoConservationFour": {
+      "en": "Arjun's Medal",
+      "text": "亞瓊的獎章"
+    },
+    "SupportGemAmmoConservationThree": {
+      "en": "Ammo Conservation III",
+      "text": "彈藥保存 III"
+    },
+    "SupportGemAmmoConservationTwo": {
+      "en": "Ammo Conservation II",
+      "text": "彈藥保存 II"
+    },
+    "SupportGemAncestralAid": {
+      "en": "Ancestral Aid",
+      "text": "先祖援助"
+    },
+    "SupportGemAncestralCall": {
+      "en": "Ancestral Call I",
+      "text": "先祖怒嚎 I"
+    },
+    "SupportGemAncestralCallThree": {
+      "en": "Ancestral Call III",
+      "text": "先祖怒嚎 III"
+    },
+    "SupportGemAncestralCallTwo": {
+      "en": "Ancestral Call II",
+      "text": "先祖怒嚎 II"
+    },
+    "SupportGemAncestralUrgency": {
+      "en": "Urgent Totems I",
+      "text": "應急圖騰 I"
+    },
+    "SupportGemAncestralUrgencyThree": {
+      "en": "Urgent Totems III",
+      "text": "應急圖騰 III"
+    },
+    "SupportGemAncestralUrgencyTwo": {
+      "en": "Urgent Totems II",
+      "text": "應急圖騰 II"
+    },
+    "SupportGemArakaalisLust": {
+      "en": "Arakaali's Lust",
+      "text": "艾爾卡莉之慾"
+    },
+    "SupportGemArbitersIgnition": {
+      "en": "Arbiter's Ignition",
+      "text": "仲裁者的燃灼"
+    },
+    "SupportGemArbitersReach": {
+      "en": "Arbiter's Reach",
+      "text": "仲裁者的延伸"
+    },
+    "SupportGemArmourExplosion": {
+      "en": "Armour Explosion",
+      "text": "護甲爆破"
+    },
+    "SupportGemArmsLength": {
+      "en": "Arms Length",
+      "text": "伸手可及"
+    },
+    "SupportGemAstralProjection": {
+      "en": "Astral Projection",
+      "text": "星空投影"
+    },
+    "SupportGemAtzirisAllure": {
+      "en": "Atziri's Allure",
+      "text": "阿茲里的魅惑"
+    },
+    "SupportGemAtzirisCall": {
+      "en": "Atziri's Call",
+      "text": "阿茲里的呼喚"
+    },
+    "SupportGemAtzirisCommunion": {
+      "en": "Atziri's Communion",
+      "text": "阿茲里的共融"
+    },
+    "SupportGemAtzirisImpatience": {
+      "en": "Atziri's Impatience",
+      "text": "阿茲里的不耐"
+    },
+    "SupportGemAutoReload": {
+      "en": "Auto Reload",
+      "text": "自動裝填"
+    },
+    "SupportGemBarbs": {
+      "en": "Barbs I",
+      "text": "倒刺 I"
+    },
+    "SupportGemBarbsThree": {
+      "en": "Barbs III",
+      "text": "倒刺 III"
+    },
+    "SupportGemBarbsTwo": {
+      "en": "Barbs II",
+      "text": "倒刺 II"
+    },
+    "SupportGemBattershout": {
+      "en": "Battershout",
+      "text": "猛擊吶喊"
+    },
+    "SupportGemBidding": {
+      "en": "Bidding I",
+      "text": "出價 I"
+    },
+    "SupportGemBiddingThree": {
+      "en": "Bidding III",
+      "text": "出價 III"
+    },
+    "SupportGemBiddingTwo": {
+      "en": "Bidding II",
+      "text": "出價 II"
+    },
+    "SupportGemBlindside": {
+      "en": "Blindside",
+      "text": "偷襲"
+    },
+    "SupportGemBloodintheEyes": {
+      "en": "Hobble",
+      "text": "跛行"
+    },
+    "SupportGemBoneShrapnel": {
+      "en": "Bone Shrapnel",
+      "text": "骨片"
+    },
+    "SupportGemBrambleslam": {
+      "en": "Brambleslam",
+      "text": "荊棘猛擊"
+    },
+    "SupportGemBranchingFissures": {
+      "en": "Branching Fissures I",
+      "text": "分岔裂縫 I"
+    },
+    "SupportGemBranchingFissuresTwo": {
+      "en": "Branching Fissures II",
+      "text": "分岔裂縫 II"
+    },
+    "SupportGemBreachlordsAmalgam": {
+      "en": "Breachlord's Amalgam",
+      "text": "裂痕領主的融合"
+    },
+    "SupportGemBreachlordsRift": {
+      "en": "Breachlord's Rift",
+      "text": "裂痕領主的裂隙"
+    },
+    "SupportGemBreakEndurance": {
+      "en": "Break Endurance",
+      "text": "打破忍耐"
+    },
+    "SupportGemBrink": {
+      "en": "Brink I",
+      "text": "邊緣 I"
+    },
+    "SupportGemBrinkTwo": {
+      "en": "Brink II",
+      "text": "邊緣 II"
+    },
+    "SupportGemBurgeon": {
+      "en": "Burgeon I",
+      "text": "萌發 I"
+    },
+    "SupportGemBurgeonTwo": {
+      "en": "Burgeon II",
+      "text": "萌發 II"
+    },
+    "SupportGemCadence": {
+      "en": "Cadence",
+      "text": "終止"
+    },
+    "SupportGemCaltrops": {
+      "en": "Caltrops",
+      "text": "蒺藜"
+    },
+    "SupportGemCapacitor": {
+      "en": "Energy Capacitor",
+      "text": "儲能"
+    },
+    "SupportGemCatharsis": {
+      "en": "Catharsis",
+      "text": "宣洩"
+    },
+    "SupportGemCathasBrilliance": {
+      "en": "Catha's Brilliance",
+      "text": "凱莎的輝煌"
+    },
+    "SupportGemChaoticFreeze": {
+      "en": "Chaotic Freeze",
+      "text": "混沌冰凍"
+    },
+    "SupportGemChargedShots": {
+      "en": "Charged Shots I",
+      "text": "充能射擊 I"
+    },
+    "SupportGemChargedShotsTwo": {
+      "en": "Charged Shots II",
+      "text": "充能射擊 II"
+    },
+    "SupportGemCharmBounty": {
+      "en": "Charm Bounty",
+      "text": "護符恩惠"
+    },
+    "SupportGemClash": {
+      "en": "Clash",
+      "text": "交鋒"
+    },
+    "SupportGemCombatReload": {
+      "en": "Ratha's Assault",
+      "text": "菈妲的強襲"
+    },
+    "SupportGemCommandment": {
+      "en": "Commandment",
+      "text": "誡命"
+    },
+    "SupportGemCommiserate": {
+      "en": "Commiserate",
+      "text": "憐憫"
+    },
+    "SupportGemConcoct": {
+      "en": "Concoct I",
+      "text": "調製 I"
+    },
+    "SupportGemConcoctTwo": {
+      "en": "Concoct II",
+      "text": "調製 II"
+    },
+    "SupportGemConsideredCasting": {
+      "en": "Considered Casting",
+      "text": "細思施法"
+    },
+    "SupportGemCoolHeaded": {
+      "en": "Cool Headed",
+      "text": "冷靜"
+    },
+    "SupportGemCorpseConservation": {
+      "en": "Corpse Conservation",
+      "text": "屍體保存"
+    },
+    "SupportGemCracklingBarrier": {
+      "en": "Crackling Barrier",
+      "text": "電流屏障"
+    },
+    "SupportGemCrater": {
+      "en": "Crater",
+      "text": "隕石坑"
+    },
+    "SupportGemCrazedMinions": {
+      "en": "Crazed Minions",
+      "text": "發狂召喚物"
+    },
+    "SupportGemCrystallineShards": {
+      "en": "Crystalline Shards",
+      "text": "結晶碎片"
+    },
+    "SupportGemCullingStrike": {
+      "en": "Culling Strike I",
+      "text": "撲殺 I"
+    },
+    "SupportGemCullingStrikeTwo": {
+      "en": "Culling Strike II",
+      "text": "撲殺 II"
+    },
+    "SupportGemCulmination": {
+      "en": "Culmination I",
+      "text": "頂點 I"
+    },
+    "SupportGemCulminationTwo": {
+      "en": "Culmination II",
+      "text": "頂點 II"
+    },
+    "SupportGemCursedGround": {
+      "en": "Cursed Ground",
+      "text": "詛咒地面"
+    },
+    "SupportGemDanseMacabre": {
+      "en": "Danse Macabre",
+      "text": "骷髏之舞"
+    },
+    "SupportGemDaressosPassion": {
+      "en": "Daresso's Passion",
+      "text": "德瑞索的熱情"
+    },
+    "SupportGemDauntless": {
+      "en": "Dauntless",
+      "text": "無畏"
+    },
+    "SupportGemDazingCry": {
+      "en": "Dazing Cry",
+      "text": "目眩戰吼"
+    },
+    "SupportGemDazzle": {
+      "en": "Dazzle",
+      "text": "目眩"
+    },
+    "SupportGemDeadlyResolve": {
+      "en": "Deadly Resolve",
+      "text": "致死決意"
+    },
+    "SupportGemDeathmarch": {
+      "en": "Deathmarch",
+      "text": "死亡行進"
+    },
+    "SupportGemDecayingHex": {
+      "en": "Decaying Hex",
+      "text": "腐朽咒術"
+    },
+    "SupportGemDefy": {
+      "en": "Defy I",
+      "text": "違抗 I"
+    },
+    "SupportGemDefyTwo": {
+      "en": "Defy II",
+      "text": "違抗 II"
+    },
+    "SupportGemDelayedGratification": {
+      "en": "Delayed Gratification",
+      "text": "延遲滿足感"
+    },
+    "SupportGemDelayedReaction": {
+      "en": "Delayed Reaction",
+      "text": "延遲反應"
+    },
+    "SupportGemDeliberation": {
+      "en": "Deliberation",
+      "text": "審慎"
+    },
+    "SupportGemDerange": {
+      "en": "Derange",
+      "text": "精神錯亂"
+    },
+    "SupportGemDesperation": {
+      "en": "Desperation",
+      "text": "絕望"
+    },
+    "SupportGemDiallasDesire": {
+      "en": "Dialla's Desire",
+      "text": "達拉的渴望"
+    },
+    "SupportGemDireStrike": {
+      "en": "Direstrike I",
+      "text": "極惡打擊 I"
+    },
+    "SupportGemDireStrikeTwo": {
+      "en": "Direstrike II",
+      "text": "極惡打擊 II"
+    },
+    "SupportGemDissipate": {
+      "en": "Harmonic Remnants I",
+      "text": "和諧的痕跡 I"
+    },
+    "SupportGemDissipateTwo": {
+      "en": "Harmonic Remnants II",
+      "text": "和諧的痕跡 II"
+    },
+    "SupportGemDoedresUndoing": {
+      "en": "Doedre's Undoing",
+      "text": "德瑞的毀滅"
+    },
+    "SupportGemDomain": {
+      "en": "Persistent Ground I",
+      "text": "持續地面 I"
+    },
+    "SupportGemDomainThree": {
+      "en": "Persistent Ground III",
+      "text": "持續地面 III"
+    },
+    "SupportGemDomainTwo": {
+      "en": "Persistent Ground II",
+      "text": "持續地面 II"
+    },
+    "SupportGemDoubleBarrel": {
+      "en": "Double Barrel I",
+      "text": "雙管 I"
+    },
+    "SupportGemDoubleBarrelThree": {
+      "en": "Double Barrel III",
+      "text": "雙管 III"
+    },
+    "SupportGemDoubleBarrelTwo": {
+      "en": "Double Barrel II",
+      "text": "雙管 II"
+    },
+    "SupportGemDreamersKnell": {
+      "en": "Dreamer's Knell",
+      "text": "幻夢者的喪鐘"
+    },
+    "SupportGemDurability": {
+      "en": "Durability",
+      "text": "耐久"
+    },
+    "SupportGemEmbitter": {
+      "en": "Embitter",
+      "text": "激怒"
+    },
+    "SupportGemEnduringImpact": {
+      "en": "Enduring Impact I",
+      "text": "堅忍衝擊 I"
+    },
+    "SupportGemEnduringImpactTwo": {
+      "en": "Enduring Impact II",
+      "text": "堅忍衝擊 II"
+    },
+    "SupportGemEnergyRetention": {
+      "en": "Energy Retention",
+      "text": "能量保留"
+    },
+    "SupportGemEnormity": {
+      "en": "Hulking Minions",
+      "text": "巨大召喚物"
+    },
+    "SupportGemEshsProwess": {
+      "en": "Esh's Prowess",
+      "text": "艾許的威能"
+    },
+    "SupportGemEshsRadiance": {
+      "en": "Esh's Radiance",
+      "text": "艾許的光芒"
+    },
+    "SupportGemExcise": {
+      "en": "Excise",
+      "text": "切除"
+    },
+    "SupportGemExcoriate": {
+      "en": "Excoriate",
+      "text": "痛斥"
+    },
+    "SupportGemExecrate": {
+      "en": "Execrate",
+      "text": "咒怨"
+    },
+    "SupportGemExpanse": {
+      "en": "Expanse",
+      "text": "廣闊區域"
+    },
+    "SupportGemExpedite": {
+      "en": "Short Fuse I",
+      "text": "易怒 I"
+    },
+    "SupportGemExpediteTwo": {
+      "en": "Short Fuse II",
+      "text": "易怒 II"
+    },
+    "SupportGemExtraction": {
+      "en": "Extraction",
+      "text": "提取"
+    },
+    "SupportGemFerocity": {
+      "en": "Ferocity",
+      "text": "狂暴"
+    },
+    "SupportGemFigurehead": {
+      "en": "Selfless Remnants",
+      "text": "無私痕跡"
+    },
+    "SupportGemFirstBlood": {
+      "en": "First Blood",
+      "text": "浴血鬥士"
+    },
+    "SupportGemFlamePillar": {
+      "en": "Flame Pillar",
+      "text": "火炎之柱"
+    },
+    "SupportGemFlamepierce": {
+      "en": "Flamepierce",
+      "text": "烈焰穿透"
+    },
+    "SupportGemFlow": {
+      "en": "Flow",
+      "text": "流動"
+    },
+    "SupportGemFluke": {
+      "en": "Fluke",
+      "text": "僥倖"
+    },
+    "SupportGemFlukeTwo": {
+      "en": "Ixchel's Torment",
+      "text": "薩雷許的折磨"
+    },
+    "SupportGemFocusedCurse": {
+      "en": "Focused Curse",
+      "text": "專注詛咒"
+    },
+    "SupportGemFreezefork": {
+      "en": "Freezefork",
+      "text": "冰凍之叉"
+    },
+    "SupportGemFreshClip": {
+      "en": "Fresh Clip I",
+      "text": "全新彈夾 I"
+    },
+    "SupportGemFreshClipTwo": {
+      "en": "Fresh Clip II",
+      "text": "全新彈夾 II"
+    },
+    "SupportGemFrozenSpite": {
+      "en": "Frozen Spite",
+      "text": "凍結怨恨"
+    },
+    "SupportGemGambleshot": {
+      "en": "Gambleshot",
+      "text": "博弈射擊"
+    },
+    "SupportGemGarukhansResolve": {
+      "en": "Garukhan's Resolve",
+      "text": "卡洛翰的決心"
+    },
+    "SupportGemGlacier": {
+      "en": "Glacier",
+      "text": "冰河"
+    },
+    "SupportGemGreatwood": {
+      "en": "Cirel's Cultivation",
+      "text": "西瑞爾的耕植"
+    },
+    "SupportGemGreatwoodTwo": {
+      "en": "Greatwood II",
+      "text": "大森林 II"
+    },
+    "SupportGemGrudge": {
+      "en": "Relentless Rage",
+      "text": "無盡怒火"
+    },
+    "SupportGemGuatelitzi": {
+      "en": "Guatelitzi's Ablation",
+      "text": "瓜特利斯的消融"
+    },
+    "SupportGemHaemocrystals": {
+      "en": "Haemocrystals",
+      "text": "血晶"
+    },
+    "SupportGemHardyTotems": {
+      "en": "Hardy Totems I",
+      "text": "堅韌圖騰 I"
+    },
+    "SupportGemHardyTotemsThree": {
+      "en": "Tawhoa's Tending",
+      "text": "塔赫亞的照顧"
+    },
+    "SupportGemHardyTotemsTwo": {
+      "en": "Hardy Totems II",
+      "text": "堅韌圖騰 II"
+    },
+    "SupportGemHayoxisFulmination": {
+      "en": "Hayoxi's Fulmination",
+      "text": "荷霖蔡的轟鳴"
+    },
+    "SupportGemHeft": {
+      "en": "Heft",
+      "text": "分量"
+    },
+    "SupportGemHelbrymsHide": {
+      "en": "Helbrym's Hide",
+      "text": "海爾賓姆的躲藏"
+    },
+    "SupportGemHerDeclaration": {
+      "en": "Her Declaration",
+      "text": "她的宣告"
+    },
+    "SupportGemHinder": {
+      "en": "Hinder",
+      "text": "阻礙"
+    },
+    "SupportGemHitAndRun": {
+      "en": "Hit and Run",
+      "text": "打帶跑"
+    },
+    "SupportGemHoarfrost": {
+      "en": "Hoarfrost",
+      "text": "白霜"
+    },
+    "SupportGemHolyDescent": {
+      "en": "Holy Descent",
+      "text": "神聖血統"
+    },
+    "SupportGemIcicle": {
+      "en": "Icicle",
+      "text": "冰柱"
+    },
+    "SupportGemImpale": {
+      "en": "Impale",
+      "text": "穿刺"
+    },
+    "SupportGemImpetus": {
+      "en": "Boundless Energy I",
+      "text": "無盡能量 I"
+    },
+    "SupportGemImpetusTwo": {
+      "en": "Boundless Energy II",
+      "text": "無盡能量 II"
+    },
+    "SupportGemIncision": {
+      "en": "Incision",
+      "text": "切割"
+    },
+    "SupportGemInhibitor": {
+      "en": "Inhibitor",
+      "text": "抑制劑"
+    },
+    "SupportGemInnervate": {
+      "en": "Innervate",
+      "text": "亢奮"
+    },
+    "SupportGemIntenseAgony": {
+      "en": "Intense Agony",
+      "text": "劇烈苦痛"
+    },
+    "SupportGemInterlude": {
+      "en": "Remnant Potency I",
+      "text": "痕跡強度 I"
+    },
+    "SupportGemInterludeThree": {
+      "en": "Remnant Potency III",
+      "text": "痕跡強度 III"
+    },
+    "SupportGemInterludeTwo": {
+      "en": "Remnant Potency II",
+      "text": "痕跡強度 II"
+    },
+    "SupportGemIronwood": {
+      "en": "Reinforced Totems I",
+      "text": "強化圖騰 I"
+    },
+    "SupportGemIronwoodTwo": {
+      "en": "Reinforced Totems II",
+      "text": "強化圖騰 II"
+    },
+    "SupportGemKalisasCrescendo": {
+      "en": "Kalisa's Crescendo",
+      "text": "卡莉莎的漸強"
+    },
+    "SupportGemKaomsMadness": {
+      "en": "Kaom's Madness",
+      "text": "岡姆的癲狂"
+    },
+    "SupportGemKhatalsRejuvenation": {
+      "en": "Khatal's Rejuvenation",
+      "text": "卡塔爾的恢復"
+    },
+    "SupportGemKnightsAnthem": {
+      "en": "Styrn's Anthem",
+      "text": "斯塔恩的贊歌"
+    },
+    "SupportGemKulemaksDominion": {
+      "en": "Kulemak's Dominion",
+      "text": "骷髏馬克的支配"
+    },
+    "SupportGemKurgalsLeash": {
+      "en": "Kurgal's Leash",
+      "text": "柯戈的繩索"
+    },
+    "SupportGemLastGasp": {
+      "en": "Last Gasp",
+      "text": "臨終恐息"
+    },
+    "SupportGemLeverage": {
+      "en": "Leverage",
+      "text": "槓桿"
+    },
+    "SupportGemLivingLightning": {
+      "en": "Living Lightning",
+      "text": "活躍閃電"
+    },
+    "SupportGemLivingLightningTwo": {
+      "en": "Living Lightning II",
+      "text": "活躍閃電 II"
+    },
+    "SupportGemLongFuse": {
+      "en": "Long Fuse I",
+      "text": "長引線 I"
+    },
+    "SupportGemLongFuseTwo": {
+      "en": "Long Fuse II",
+      "text": "長引線 II"
+    },
+    "SupportGemLoyalty": {
+      "en": "Loyalty",
+      "text": "忠誠"
+    },
+    "SupportGemMagnetism": {
+      "en": "Magnetic Remnants",
+      "text": "磁性痕跡"
+    },
+    "SupportGemMalady": {
+      "en": "Malady",
+      "text": "疾病"
+    },
+    "SupportGemMedvedsFelling": {
+      "en": "Medved's Felling",
+      "text": "梅德偉的殞落"
+    },
+    "SupportGemMinionInstability": {
+      "en": "Minion Instability",
+      "text": "復仇之靈"
+    },
+    "SupportGemMinionPact": {
+      "en": "Minion Pact I",
+      "text": "召喚物契約 I"
+    },
+    "SupportGemMinionPactTwo": {
+      "en": "Minion Pact II",
+      "text": "召喚物契約 II"
+    },
+    "SupportGemMorganasTempest": {
+      "en": "Morgana's Tempest",
+      "text": "魔甘娜的風暴"
+    },
+    "SupportGemMorrigansInsight": {
+      "en": "Mórrigan's Insight",
+      "text": "莫里根的洞察"
+    },
+    "SupportGemMuster": {
+      "en": "Muster",
+      "text": "召集"
+    },
+    "SupportGemMysticism": {
+      "en": "Mysticism I",
+      "text": "秘術 I"
+    },
+    "SupportGemMysticismTwo": {
+      "en": "Mysticism II",
+      "text": "秘術 II"
+    },
+    "SupportGemNadir": {
+      "en": "Nadir",
+      "text": "消沉"
+    },
+    "SupportGemNimbleReload": {
+      "en": "Nimble Reload",
+      "text": "靈活裝填"
+    },
+    "SupportGemOutmaneuver": {
+      "en": "Outmaneuver",
+      "text": "出奇制勝"
+    },
+    "SupportGemOverextend": {
+      "en": "Overextend",
+      "text": "過分擴張"
+    },
+    "SupportGemPayload": {
+      "en": "Payload",
+      "text": "承載"
+    },
+    "SupportGemPerfectedEndurance": {
+      "en": "Perfected Endurance",
+      "text": "絕對堅毅"
+    },
+    "SupportGemPerfection": {
+      "en": "Perfection",
+      "text": "完美"
+    },
+    "SupportGemPietysMercy": {
+      "en": "Dominus' Grasp",
+      "text": "神主的掌握"
+    },
+    "SupportGemPoisonSpores": {
+      "en": "Poison Spores",
+      "text": "劇毒孢子"
+    },
+    "SupportGemPotential": {
+      "en": "Potential",
+      "text": "潛力"
+    },
+    "SupportGemPracticedCombo": {
+      "en": "Practiced Combo",
+      "text": "熟練連擊"
+    },
+    "SupportGemProfanity": {
+      "en": "Profanity I",
+      "text": "褻瀆 I"
+    },
+    "SupportGemProfanityTwo": {
+      "en": "Profanity II",
+      "text": "褻瀆 II"
+    },
+    "SupportGemPrototypeSeventeen": {
+      "en": "Prototype Seventeen",
+      "text": "十七號原型機"
+    },
+    "SupportGemPunchThrough": {
+      "en": "Punch Through",
+      "text": "透勁拳"
+    },
+    "SupportGemPursuit": {
+      "en": "Pursuit I",
+      "text": "追擊 I"
+    },
+    "SupportGemPursuitThree": {
+      "en": "Pursuit III",
+      "text": "追擊 III"
+    },
+    "SupportGemPursuitTwo": {
+      "en": "Pursuit II",
+      "text": "追擊 II"
+    },
+    "SupportGemQuillBurst": {
+      "en": "Quill Burst",
+      "text": "驟羽爆發"
+    },
+    "SupportGemRageforged": {
+      "en": "Rageforged I",
+      "text": "盛怒鍛造 I"
+    },
+    "SupportGemRageforgedTwo": {
+      "en": "Rageforged II",
+      "text": "盛怒鍛造 II"
+    },
+    "SupportGemRagingCry": {
+      "en": "Raging Cry",
+      "text": "憤怒戰吼"
+    },
+    "SupportGemRakiatasFlow": {
+      "en": "Rakiata's Flow",
+      "text": "萊基亞塔的流動"
+    },
+    "SupportGemRally": {
+      "en": "Rally",
+      "text": "集結"
+    },
+    "SupportGemReach": {
+      "en": "Overreach",
+      "text": "無遠弗屆"
+    },
+    "SupportGemRearm": {
+      "en": "Rearm I",
+      "text": "重新佈署 I"
+    },
+    "SupportGemRearmTwo": {
+      "en": "Rearm II",
+      "text": "重新佈署 II"
+    },
+    "SupportGemRefraction": {
+      "en": "Refraction I",
+      "text": "折射 I"
+    },
+    "SupportGemRefractionThree": {
+      "en": "Refraction III",
+      "text": "折射 III"
+    },
+    "SupportGemRefractionTwo": {
+      "en": "Refraction II",
+      "text": "折射 II"
+    },
+    "SupportGemRetaliate": {
+      "en": "Retaliate I",
+      "text": "報復 I"
+    },
+    "SupportGemRetaliateTwo": {
+      "en": "Retaliate II",
+      "text": "報復 II"
+    },
+    "SupportGemRetort": {
+      "en": "Frenzied Riposte",
+      "text": "狂亂反擊"
+    },
+    "SupportGemRetreat": {
+      "en": "Retreat I",
+      "text": "撤退 I"
+    },
+    "SupportGemRetreatThree": {
+      "en": "Retreat III",
+      "text": "撤退 III"
+    },
+    "SupportGemRetreatTwo": {
+      "en": "Retreat II",
+      "text": "撤退 II"
+    },
+    "SupportGemReverberate": {
+      "en": "Reverberate",
+      "text": "回響"
+    },
+    "SupportGemRicochet": {
+      "en": "Ricochet I",
+      "text": "彈射 I"
+    },
+    "SupportGemRicochetThree": {
+      "en": "Ricochet III",
+      "text": "彈射 III"
+    },
+    "SupportGemRicochetTwo": {
+      "en": "Ricochet II",
+      "text": "彈射 II"
+    },
+    "SupportGemRigwaldsFerocity": {
+      "en": "Rigwald's Ferocity",
+      "text": "瑞佛的狂暴"
+    },
+    "SupportGemRime": {
+      "en": "Rime",
+      "text": "霧淞"
+    },
+    "SupportGemRip": {
+      "en": "Rip",
+      "text": "撕毀"
+    },
+    "SupportGemRitualisticCurse": {
+      "en": "Ritualistic Curse",
+      "text": "儀式詛咒"
+    },
+    "SupportGemRomirasRequital": {
+      "en": "Romira's Requital",
+      "text": "羅米拉的報復"
+    },
+    "SupportGemRupture": {
+      "en": "Rupture",
+      "text": "殘破"
+    },
+    "SupportGemRustedSpikes": {
+      "en": "Rusted Spikes",
+      "text": "銹蝕尖刺"
+    },
+    "SupportGemSacrificialLamb": {
+      "en": "Sacrificial Lamb I",
+      "text": "獻祭羔羊 I"
+    },
+    "SupportGemSacrificialLambTwo": {
+      "en": "Sacrificial Lamb II",
+      "text": "獻祭羔羊 II"
+    },
+    "SupportGemSalvo": {
+      "en": "Salvo",
+      "text": "齊射"
+    },
+    "SupportGemSeeRed": {
+      "en": "See Red",
+      "text": "赤紅目光"
+    },
+    "SupportGemSeraphsHeart": {
+      "en": "Seraph's Heart",
+      "text": "神使之心"
+    },
+    "SupportGemShockingLeap": {
+      "en": "Shocking Leap",
+      "text": "震擊之躍"
+    },
+    "SupportGemShockingRift": {
+      "en": "Electromagnetism",
+      "text": "磁化電極"
+    },
+    "SupportGemSingleOut": {
+      "en": "Mark for Death",
+      "text": "死亡標記"
+    },
+    "SupportGemSingleOutTwo": {
+      "en": "Mark for Death II",
+      "text": "死亡標記 II"
+    },
+    "SupportGemSkitteringStone": {
+      "en": "Skittering Stone I",
+      "text": "飛掠之石 I"
+    },
+    "SupportGemSkitteringStoneTwo": {
+      "en": "Skittering Stone II",
+      "text": "飛掠之石 II"
+    },
+    "SupportGemSoulbreaker": {
+      "en": "Soulbreaker",
+      "text": "破魂者"
+    },
+    "SupportGemSpar": {
+      "en": "Spar",
+      "text": "打擊練習"
+    },
+    "SupportGemSpectralVolley": {
+      "en": "Spectral Volley",
+      "text": "靈體齊射"
+    },
+    "SupportGemSpellCascade": {
+      "en": "Spell Cascade",
+      "text": "秘能爆發"
+    },
+    "SupportGemSplinteringTotem": {
+      "en": "Splinter Totem I",
+      "text": "殘片圖騰 I"
+    },
+    "SupportGemSplinteringTotemTwo": {
+      "en": "Splinter Totem II",
+      "text": "殘片圖騰 II"
+    },
+    "SupportGemStaticShocks": {
+      "en": "Static Shocks",
+      "text": "靜電震盪"
+    },
+    "SupportGemSteadfast": {
+      "en": "Steadfast I",
+      "text": "穩若泰山 I"
+    },
+    "SupportGemSteadfastTwo": {
+      "en": "Steadfast II",
+      "text": "穩若泰山 II"
+    },
+    "SupportGemStoicism": {
+      "en": "Stoicism I",
+      "text": "堅忍 I"
+    },
+    "SupportGemStoicismTwo": {
+      "en": "Stoicism II",
+      "text": "堅忍 II"
+    },
+    "SupportGemStompingGround": {
+      "en": "Stomping Ground",
+      "text": "重踏地面"
+    },
+    "SupportGemStormchain": {
+      "en": "Stormchain",
+      "text": "風暴之鏈"
+    },
+    "SupportGemStreamlinedRounds": {
+      "en": "Streamlined Rounds",
+      "text": "子彈如流"
+    },
+    "SupportGemStripAway": {
+      "en": "Potent Exposure",
+      "text": "強力曝曬"
+    },
+    "SupportGemStrongHearted": {
+      "en": "Strong Hearted",
+      "text": "不屈之心"
+    },
+    "SupportGemStyrnsFerocity": {
+      "en": "Styrn's Ferocity",
+      "text": "斯塔恩的暴行"
+    },
+    "SupportGemStyrnsMountain": {
+      "en": "Styrn's Mountain",
+      "text": "斯塔恩的山巔"
+    },
+    "SupportGemSuffuse": {
+      "en": "Encroaching Ground",
+      "text": "進逼地面"
+    },
+    "SupportGemSwiftAffliction": {
+      "en": "Swift Affliction I",
+      "text": "極速苦痛 I"
+    },
+    "SupportGemSwiftAfflictionThree": {
+      "en": "Swift Affliction III",
+      "text": "極速苦痛 III"
+    },
+    "SupportGemSwiftAfflictionTwo": {
+      "en": "Swift Affliction II",
+      "text": "極速苦痛 II"
+    },
+    "SupportGemSyzygy": {
+      "en": "Syzygy",
+      "text": "朔望"
+    },
+    "SupportGemTacatisIre": {
+      "en": "Tacati's Ire",
+      "text": "特卡蒂的憤怒"
+    },
+    "SupportGemTangmazusThurible": {
+      "en": "Tangmazu's Thurible",
+      "text": "湯馬祖的提爐"
+    },
+    "SupportGemTasaliosRhythm": {
+      "en": "Tasalio's Rhythm",
+      "text": "塔薩里奧的律動"
+    },
+    "SupportGemTear": {
+      "en": "Tear",
+      "text": "撕裂"
+    },
+    "SupportGemTecrodsRevenge": {
+      "en": "Tecrod's Revenge",
+      "text": "特克羅德的復仇"
+    },
+    "SupportGemThornskin": {
+      "en": "Thornskin I",
+      "text": "荊棘之皮 I"
+    },
+    "SupportGemThornskinTwo": {
+      "en": "Thornskin II",
+      "text": "荊棘之皮 II"
+    },
+    "SupportGemTireless": {
+      "en": "Tireless",
+      "text": "孜孜不倦"
+    },
+    "SupportGemTremors": {
+      "en": "Tremors",
+      "text": "威震"
+    },
+    "SupportGemTrickstersShard": {
+      "en": "Trickster's Shard",
+      "text": "欺詐者的碎片"
+    },
+    "SupportGemTulsAvalanche": {
+      "en": "Tul's Avalanche",
+      "text": "托沃的雪崩"
+    },
+    "SupportGemTulsStillness": {
+      "en": "Tul's Stillness",
+      "text": "托沃的寧靜"
+    },
+    "SupportGemTumult": {
+      "en": "Tumult",
+      "text": "紛亂"
+    },
+    "SupportGemTwofold": {
+      "en": "Heightened Charges",
+      "text": "能量球增強"
+    },
+    "SupportGemUhtredsAugury": {
+      "en": "Uhtred's Augury",
+      "text": "烏特雷的占卜術"
+    },
+    "SupportGemUhtredsConstellation": {
+      "en": "Uhtred's Constellation",
+      "text": "烏特雷的星座"
+    },
+    "SupportGemUhtredsExodus": {
+      "en": "Uhtred's Exodus",
+      "text": "烏特雷的出走"
+    },
+    "SupportGemUhtredsOmen": {
+      "en": "Uhtred's Omen",
+      "text": "烏特雷的徵兆"
+    },
+    "SupportGemUhtredsRite": {
+      "en": "Uhtred's Rite",
+      "text": "烏特雷的儀式"
+    },
+    "SupportGemUnabating": {
+      "en": "Unabating",
+      "text": "勢頭不減"
+    },
+    "SupportGemUnbending": {
+      "en": "Unbending",
+      "text": "永不屈服"
+    },
+    "SupportGemUndermine": {
+      "en": "Undermine",
+      "text": "破壞"
+    },
+    "SupportGemUnerringPower": {
+      "en": "Unerring Power",
+      "text": "精準力量"
+    },
+    "SupportGemUnsteadyTempo": {
+      "en": "Unsteady Tempo",
+      "text": "不穩節奏"
+    },
+    "SupportGemUntouchable": {
+      "en": "Untouchable",
+      "text": "無法觸碰"
+    },
+    "SupportGemUnyielding": {
+      "en": "Unyielding",
+      "text": "屹立不搖"
+    },
+    "SupportGemUpheaval": {
+      "en": "Upheaval I",
+      "text": "動亂 I"
+    },
+    "SupportGemUpheavalTwo": {
+      "en": "Upheaval II",
+      "text": "動亂 II"
+    },
+    "SupportGemUpwelling": {
+      "en": "Upwelling I",
+      "text": "湧升流 I"
+    },
+    "SupportGemUpwellingTwo": {
+      "en": "Upwelling II",
+      "text": "湧升流 I"
+    },
+    "SupportGemUulNetolsEmbrace": {
+      "en": "Uul-Netol's Embrace",
+      "text": "烏爾尼多的擁抱"
+    },
+    "SupportGemVanguard": {
+      "en": "Vanguard I",
+      "text": "無懼先鋒 I"
+    },
+    "SupportGemVanguardTwo": {
+      "en": "Vanguard II",
+      "text": "無懼先鋒 II"
+    },
+    "SupportGemVarashtasBlessing": {
+      "en": "Varashta's Blessing",
+      "text": "瓦拉什塔的祝福"
+    },
+    "SupportGemVerglas": {
+      "en": "Verglas",
+      "text": "冰淞"
+    },
+    "SupportGemVolatilePower": {
+      "en": "Volatile Power",
+      "text": "不穩定的力量"
+    },
+    "SupportGemVolatility": {
+      "en": "Volatility",
+      "text": "易爆"
+    },
+    "SupportGemVolcanicEruption": {
+      "en": "Volcanic Eruption",
+      "text": "火山迸發"
+    },
+    "SupportGemVolt": {
+      "en": "Volt",
+      "text": "電壓"
+    },
+    "SupportGemVoranasSiege": {
+      "en": "Vorana's Siege",
+      "text": "沃拉娜的圍攻"
+    },
+    "SupportGemVruunsAftermath": {
+      "en": "Vruun's Aftermath",
+      "text": "弗倫的餘波"
+    },
+    "SupportGemVruunsInevitability": {
+      "en": "Vruun's Inevitability",
+      "text": "弗倫的必然"
+    },
+    "SupportGemWarmBlooded": {
+      "en": "Warm Blooded",
+      "text": "滿腔熱血"
+    },
+    "SupportGemWildshards": {
+      "en": "Wildshards I",
+      "text": "野性碎片 I"
+    },
+    "SupportGemWildshardsThree": {
+      "en": "Sione's Temper",
+      "text": "西奧妮的鍛鍊"
+    },
+    "SupportGemWildshardsTwo": {
+      "en": "Wildshards II",
+      "text": "野性碎片 II"
+    },
+    "SupportGemXibaquasRending": {
+      "en": "Xibaqua's Rending",
+      "text": "賽巴昆的撕裂"
+    },
+    "SupportGemXophsPyre": {
+      "en": "Xoph's Pyre",
+      "text": "索伏的燃焰"
+    },
+    "SupportGemZarokhsRefrain": {
+      "en": "Zarokh's Refrain",
+      "text": "澤洛克的克制"
+    },
+    "SupportGemZenith": {
+      "en": "Zenith I",
+      "text": "極盛 I"
+    },
+    "SupportGemZenithTwo": {
+      "en": "Zenith II",
+      "text": "極盛 II"
+    },
+    "SupportGemZerphisLegacy": {
+      "en": "Zerphi's Infamy",
+      "text": "澤佛伊的惡名"
+    },
+    "SkillGemAbyssalPact": {
+      "en": "Abyssal Pact",
+      "text": "深淵冥約"
+    },
+    "SkillGemAncestralWarriorTotem": {
+      "en": "Ancestral Warrior Totem",
+      "text": "先祖戰士圖騰"
+    },
+    "SkillGemAncientGifts": {
+      "en": "Wildwood's Gifts",
+      "text": "荒林禮贈"
+    },
+    "SkillGemAnimusExchange": {
+      "en": "Animus Exchange",
+      "text": "意志轉換"
+    },
+    "SkillGemAnimusSplinters": {
+      "en": "Animus Splinters",
+      "text": "意志斷片"
+    },
+    "SkillGemArc": {
+      "en": "Arc",
+      "text": "電弧"
+    },
+    "SkillGemArchonOfChayula": {
+      "en": "Archon of Chayula",
+      "text": "夏烏拉統治者"
+    },
+    "SkillGemArcticArmour": {
+      "en": "Arctic Armour",
+      "text": "極地裝甲"
+    },
+    "SkillGemArmourBreaker": {
+      "en": "Armour Breaker",
+      "text": "護甲碎擊"
+    },
+    "SkillGemArtilleryBallista": {
+      "en": "Siege Ballista",
+      "text": "攻城炮台"
+    },
+    "SkillGemAscendancyApocalypse": {
+      "en": "Apocalypse",
+      "text": "壞滅災變"
+    },
+    "SkillGemAscendancySupportingFire": {
+      "en": "Supporting Fire",
+      "text": "支援火力"
+    },
+    "SkillGemAscendancyVirtuousBarrier": {
+      "en": "Virtuous Barrier",
+      "text": "高尚禦盾"
+    },
+    "SkillGemAzmerianSwarm": {
+      "en": "Azmerian Swarms",
+      "text": "阿茲莫里群落"
+    },
+    "SkillGemAzmerianWolf": {
+      "en": "Azmerian Wolf",
+      "text": "阿茲莫里巨狼"
+    },
+    "SkillGemBallLightning": {
+      "en": "Ball Lightning",
+      "text": "天雷之珠"
+    },
+    "SkillGemBarrage": {
+      "en": "Barrage",
+      "text": "彈幕"
+    },
+    "SkillGemBarrierInvocation": {
+      "en": "Barrier Invocation",
+      "text": "屏障祈願"
+    },
+    "SkillGemBearMaul": {
+      "en": "Maul",
+      "text": "爪擊"
+    },
+    "SkillGemBearRampage": {
+      "en": "Rampage",
+      "text": "暴怒"
+    },
+    "SkillGemBindSpectre": {
+      "en": "Bind Spectre",
+      "text": "束縛幽魂"
+    },
+    "SkillGemBitterDead": {
+      "en": "Bitter Dead",
+      "text": "苦澀衰亡"
+    },
+    "SkillGemBlasphemy": {
+      "en": "Blasphemy",
+      "text": "瀆神"
+    },
+    "SkillGemBloodHunt": {
+      "en": "Blood Hunt",
+      "text": "鮮血狩獵"
+    },
+    "SkillGemBoneOffering": {
+      "en": "Bone Offering",
+      "text": "骸骨奉獻"
+    },
+    "SkillGemBoneshatter": {
+      "en": "Boneshatter",
+      "text": "碎骨"
+    },
+    "SkillGemBriarpatch": {
+      "en": "Briarpatch",
+      "text": "荊棘叢"
+    },
+    "SkillGemCastCurseOnBlock": {
+      "en": "Curse on Block",
+      "text": "格擋時詛咒"
+    },
+    "SkillGemCastOnBlock": {
+      "en": "Cast on Block",
+      "text": "格擋時施放"
+    },
+    "SkillGemCastOnCharmUse": {
+      "en": "Cast on Charm Use",
+      "text": "使用護符時施放"
+    },
+    "SkillGemCastOnCritical": {
+      "en": "Cast on Critical",
+      "text": "暴擊時施放"
+    },
+    "SkillGemCastOnDeath": {
+      "en": "Cast on Death",
+      "text": "死亡時施放"
+    },
+    "SkillGemCastOnDodge": {
+      "en": "Cast on Dodge",
+      "text": "閃避時施放"
+    },
+    "SkillGemCastOnElementalAilment": {
+      "en": "Cast on Elemental Ailment",
+      "text": "元素異常狀態時施放"
+    },
+    "SkillGemCastOnFreeze": {
+      "en": "Cast on Freeze",
+      "text": "冰凍時施放"
+    },
+    "SkillGemCastOnIgnite": {
+      "en": "Cast on Ignite",
+      "text": "點燃時施放"
+    },
+    "SkillGemCastOnMeleeKill": {
+      "en": "Cast on Melee Kill",
+      "text": "近戰擊殺時施放"
+    },
+    "SkillGemCastOnMeleeStun": {
+      "en": "Cast on Melee Stun",
+      "text": "近戰擊暈時施放"
+    },
+    "SkillGemCastOnMinionDeath": {
+      "en": "Cast on Minion Death",
+      "text": "召喚物死亡時施放"
+    },
+    "SkillGemCastOnShock": {
+      "en": "Cast on Shock",
+      "text": "感電時施放"
+    },
+    "SkillGemCastWhenDamageTaken": {
+      "en": "Cast when Damage Taken",
+      "text": "受傷時施放"
+    },
+    "SkillGemCastWhenStunned": {
+      "en": "Cast when Stunned",
+      "text": "暈眩時施放"
+    },
+    "SkillGemCastWhileChannelling": {
+      "en": "Cast while Channelling",
+      "text": "引導時施放"
+    },
+    "SkillGemChaosbolt": {
+      "en": "Chaos Bolt",
+      "text": "混沌弩箭"
+    },
+    "SkillGemChargedStaff": {
+      "en": "Charged Staff",
+      "text": "充能長杖"
+    },
+    "SkillGemCoilingBolts": {
+      "en": "Coiling Bolts",
+      "text": "寂纏彈"
+    },
+    "SkillGemComet": {
+      "en": "Comet",
+      "text": "彗星"
+    },
+    "SkillGemConductiveRunes": {
+      "en": "Conductive Runes",
+      "text": "傳導符文"
+    },
+    "SkillGemConductivity": {
+      "en": "Conductivity",
+      "text": "導電"
+    },
+    "SkillGemContagion": {
+      "en": "Contagion",
+      "text": "瘟疫"
+    },
+    "SkillGemCorpseCloud": {
+      "en": "Decompose",
+      "text": "分解"
+    },
+    "SkillGemCorpsewadeCorpseCloud": {
+      "en": "Decompose",
+      "text": "分解"
+    },
+    "SkillGemCracklingPalm": {
+      "en": "Crackling Palm",
+      "text": "閃光掌"
+    },
+    "SkillGemCrushingFear": {
+      "en": "Crushing Fear",
+      "text": "死懼碎擊"
+    },
+    "SkillGemDarkPact": {
+      "en": "Dark Pact",
+      "text": "暗夜血契"
+    },
+    "SkillGemDarkTempest": {
+      "en": "His Dark Horizon",
+      "text": "他的黑暗視界"
+    },
+    "SkillGemDemonMagus": {
+      "en": "Demon Magus",
+      "text": "惡魔瑪格思"
+    },
+    "SkillGemDespair": {
+      "en": "Despair",
+      "text": "絕望"
+    },
+    "SkillGemDetonateDead": {
+      "en": "Detonate Dead",
+      "text": "屍體爆破"
+    },
+    "SkillGemDetonateLiving": {
+      "en": "Detonate Living",
+      "text": "活體引爆"
+    },
+    "SkillGemDiscipline": {
+      "en": "Discipline",
+      "text": "紀律"
+    },
+    "SkillGemDisengage": {
+      "en": "Disengage",
+      "text": "脫離戰鬥"
+    },
+    "SkillGemEarthquake": {
+      "en": "Earthquake",
+      "text": "震地"
+    },
+    "SkillGemEarthshatter": {
+      "en": "Earthshatter",
+      "text": "碎地重擊"
+    },
+    "SkillGemEmberFusillade": {
+      "en": "Ember Fusillade",
+      "text": "餘燼齊射"
+    },
+    "SkillGemEnervatingNova": {
+      "en": "Enervating Nova",
+      "text": "超能新星"
+    },
+    "SkillGemEnfeeble": {
+      "en": "Enfeeble",
+      "text": "衰弱"
+    },
+    "SkillGemEscapeShot": {
+      "en": "Escape Shot",
+      "text": "逃脫之矢"
+    },
+    "SkillGemEssenceDrain": {
+      "en": "Essence Drain",
+      "text": "靈魂吸取"
+    },
+    "SkillGemEternalMarch": {
+      "en": "Eternal March",
+      "text": "永恆行軍"
+    },
+    "SkillGemEternalRage": {
+      "en": "Eternal Rage",
+      "text": "無盡怒火"
+    },
+    "SkillGemExplosiveTransmutation": {
+      "en": "Explosive Transmutation",
+      "text": "爆炸轉化"
+    },
+    "SkillGemExsanguinate": {
+      "en": "Exsanguinate",
+      "text": "抽血"
+    },
+    "SkillGemEyeOfWinter": {
+      "en": "Eye of Winter",
+      "text": "凜冬之眼"
+    },
+    "SkillGemFallingThunder": {
+      "en": "Falling Thunder",
+      "text": "崩雷鳴"
+    },
+    "SkillGemFerociousRoar": {
+      "en": "Ferocious Roar",
+      "text": "兇猛怒吼"
+    },
+    "SkillGemFirebolt": {
+      "en": "Firebolt",
+      "text": "火彈"
+    },
+    "SkillGemFirestorm": {
+      "en": "Firestorm",
+      "text": "烈炎風暴"
+    },
+    "SkillGemFlameWall": {
+      "en": "Flame Wall",
+      "text": "烈焰之牆"
+    },
+    "SkillGemFlameblast": {
+      "en": "Flameblast",
+      "text": "烈焰爆破"
+    },
+    "SkillGemFlammability": {
+      "en": "Flammability",
+      "text": "易燃"
+    },
+    "SkillGemFlickerStrike": {
+      "en": "Flicker Strike",
+      "text": "閃現打擊"
+    },
+    "SkillGemFragmentsOfThePast": {
+      "en": "Fragments Of The Past",
+      "text": "往昔碎片"
+    },
+    "SkillGemFreezingShards": {
+      "en": "Freezing Shards",
+      "text": "冰凍裂片"
+    },
+    "SkillGemFrostBomb": {
+      "en": "Frost Bomb",
+      "text": "寒霜爆"
+    },
+    "SkillGemFrostWall": {
+      "en": "Frost Wall",
+      "text": "冰牆"
+    },
+    "SkillGemFrostbolt": {
+      "en": "Frostbolt",
+      "text": "寒冰彈"
+    },
+    "SkillGemFrostflameNova": {
+      "en": "Frostflame Nova",
+      "text": "霜火新星"
+    },
+    "SkillGemFuriousSlam": {
+      "en": "Furious Slam",
+      "text": "狂暴重擊"
+    },
+    "SkillGemFuturePast": {
+      "en": "Future-Past",
+      "text": "未來昔日"
+    },
+    "SkillGemGalvanicField": {
+      "en": "Galvanic Field",
+      "text": "電光領域"
+    },
+    "SkillGemGelidPalm": {
+      "en": "Gelid Palm",
+      "text": "冰冽掌"
+    },
+    "SkillGemGhostDance": {
+      "en": "Ghost Dance",
+      "text": "鬼魂之舞"
+    },
+    "SkillGemGlacialCascade": {
+      "en": "Glacial Cascade",
+      "text": "冰川之刺"
+    },
+    "SkillGemGlacialClash": {
+      "en": "Soaring Midnight",
+      "text": "午夜飛掠"
+    },
+    "SkillGemGlacialLance": {
+      "en": "Glacial Lance",
+      "text": "冰川之槍"
+    },
+    "SkillGemGraveCommand": {
+      "en": "His Grave Command",
+      "text": "他的死墓命令"
+    },
+    "SkillGemGrimPillars": {
+      "en": "Grim Pillars",
+      "text": "恐怖之柱"
+    },
+    "SkillGemHarbingerOfMadness": {
+      "en": "Harbinger of Madness",
+      "text": "神諭之狂"
+    },
+    "SkillGemHazardousHoldout": {
+      "en": "Kinetic Bash",
+      "text": "動能猛擊"
+    },
+    "SkillGemHeraldOfAsh": {
+      "en": "Herald of Ash",
+      "text": "灰燼之捷"
+    },
+    "SkillGemHeraldOfIce": {
+      "en": "Herald of Ice",
+      "text": "冰霜之捷"
+    },
+    "SkillGemHeraldOfThunder": {
+      "en": "Herald of Thunder",
+      "text": "閃電之捷"
+    },
+    "SkillGemHexblast": {
+      "en": "Hexblast",
+      "text": "咒術枯萎"
+    },
+    "SkillGemHisFoulEmergence": {
+      "en": "His Foul Emergence",
+      "text": "他的惡臭降臨"
+    },
+    "SkillGemHisWinnowingFlame": {
+      "en": "His Winnowing Flame",
+      "text": "他的飛舞烈焰"
+    },
+    "SkillGemHollowShell": {
+      "en": "Hollow Shell",
+      "text": "空無披甲"
+    },
+    "SkillGemHyenaCackle": {
+      "en": "Cackling Companions",
+      "text": "奸笑鬣狗群"
+    },
+    "SkillGemHypothermia": {
+      "en": "Hypothermia",
+      "text": "急凍"
+    },
+    "SkillGemIceNova": {
+      "en": "Ice Nova",
+      "text": "冰霜新星"
+    },
+    "SkillGemIceStrike": {
+      "en": "Ice Strike",
+      "text": "霜星連擊"
+    },
+    "SkillGemImpurity": {
+      "en": "Impurity",
+      "text": "不淨"
+    },
+    "SkillGemIncinerate": {
+      "en": "Incinerate",
+      "text": "燒毀"
+    },
+    "SkillGemInfernalCry": {
+      "en": "Infernal Cry",
+      "text": "煉獄戰吼"
+    },
+    "SkillGemKillingPalm": {
+      "en": "Killing Palm",
+      "text": "摧命之掌"
+    },
+    "SkillGemLeapSlam": {
+      "en": "Leap Slam",
+      "text": "躍擊"
+    },
+    "SkillGemLeylines": {
+      "en": "Leylines",
+      "text": "地脈"
+    },
+    "SkillGemLightningArrow": {
+      "en": "Lightning Arrow",
+      "text": "閃電箭矢"
+    },
+    "SkillGemLightningBolt": {
+      "en": "Lightning Bolt",
+      "text": "雷彈"
+    },
+    "SkillGemLightningConduit": {
+      "en": "Lightning Conduit",
+      "text": "導雷"
+    },
+    "SkillGemLightningSpear": {
+      "en": "Lightning Spear",
+      "text": "閃電長矛"
+    },
+    "SkillGemLightningSpellOnHit": {
+      "en": "Thundergod's Wrath",
+      "text": "雷神之怒"
+    },
+    "SkillGemLightningWarp": {
+      "en": "Lightning Warp",
+      "text": "閃電傳送"
+    },
+    "SkillGemLingeringIllusion": {
+      "en": "Lingering Illusion",
+      "text": "殘留幻象"
+    },
+    "SkillGemManaTempest": {
+      "en": "Mana Tempest",
+      "text": "魔力暴風"
+    },
+    "SkillGemMidnightStar": {
+      "en": "Midnight Zenith",
+      "text": "午夜天頂"
+    },
+    "SkillGemMirrorOfRefraction": {
+      "en": "Mirror of Refraction",
+      "text": "鏡面折射"
+    },
+    "SkillGemMistRaven": {
+      "en": "Mist Raven",
+      "text": "迷霧渡鴉"
+    },
+    "SkillGemMoltenCrash": {
+      "en": "Molten Crash",
+      "text": "熔岩破滅"
+    },
+    "SkillGemMoltenShower": {
+      "en": "Molten Shower",
+      "text": "熔火噴濺"
+    },
+    "SkillGemOrbOfStorms": {
+      "en": "Orb of Storms",
+      "text": "風暴漩渦"
+    },
+    "SkillGemPainOffering": {
+      "en": "Pain Offering",
+      "text": "劇痛獻祭"
+    },
+    "SkillGemPlagueBearer": {
+      "en": "Plague Bearer",
+      "text": "病疫之難"
+    },
+    "SkillGemPowerSiphon": {
+      "en": "Power Siphon",
+      "text": "力量抽取"
+    },
+    "SkillGemPoweredByVerisium": {
+      "en": "Powered by Verisium",
+      "text": "維里西姆強化"
+    },
+    "SkillGemPurityOfFire": {
+      "en": "Purity of Fire",
+      "text": "火焰淨化"
+    },
+    "SkillGemPurityOfIce": {
+      "en": "Purity of Ice",
+      "text": "冰霜淨化"
+    },
+    "SkillGemPurityOfLightning": {
+      "en": "Purity of Lightning",
+      "text": "閃電淨化"
+    },
+    "SkillGemRainOfArrows": {
+      "en": "Rain of Arrows",
+      "text": "箭雨"
+    },
+    "SkillGemRainOfBlades": {
+      "en": "Rain of Blades",
+      "text": "刀刃之雨"
+    },
+    "SkillGemRaiseZombie": {
+      "en": "Raise Zombie",
+      "text": "殭屍復甦"
+    },
+    "SkillGemRapidAssault": {
+      "en": "Rapid Assault",
+      "text": "極速進攻"
+    },
+    "SkillGemReap": {
+      "en": "Reap",
+      "text": "收割"
+    },
+    "SkillGemRefutation": {
+      "en": "Refutation",
+      "text": "駁斥"
+    },
+    "SkillGemRemnantsOfKalguur": {
+      "en": "Remnants of Kalguur",
+      "text": "卡爾葛之痕"
+    },
+    "SkillGemRend": {
+      "en": "Rend",
+      "text": "撕扯"
+    },
+    "SkillGemRepulsion": {
+      "en": "Repulsion",
+      "text": "排斥"
+    },
+    "SkillGemRhoaMount": {
+      "en": "Rhoa Mount",
+      "text": "恐喙鳥坐騎"
+    },
+    "SkillGemRighteousDescent": {
+      "en": "Righteous Descent",
+      "text": "神翼懲降"
+    },
+    "SkillGemRipwireBallista": {
+      "en": "Artillery Ballista",
+      "text": "火砲砲塔"
+    },
+    "SkillGemRollingMagma": {
+      "en": "Rolling Magma",
+      "text": "熔岩翻騰"
+    },
+    "SkillGemRollingSlam": {
+      "en": "Rolling Slam",
+      "text": "翻騰重擊"
+    },
+    "SkillGemRunicReprieve": {
+      "en": "Runic Reprieve",
+      "text": "符文喘息"
+    },
+    "SkillGemRunicTempering": {
+      "en": "Runic Tempering",
+      "text": "符文冶鍊"
+    },
+    "SkillGemSavageFury": {
+      "en": "Savage Fury",
+      "text": "殘猛狂怒"
+    },
+    "SkillGemScatteringCalamity": {
+      "en": "His Scattering Calamity",
+      "text": "他的散布災禍"
+    },
+    "SkillGemSeismicCry": {
+      "en": "Seismic Cry",
+      "text": "裂地戰吼"
+    },
+    "SkillGemShatteringPalm": {
+      "en": "Shattering Palm",
+      "text": "粉碎之掌"
+    },
+    "SkillGemShatteringSpite": {
+      "en": "Shattering Spite",
+      "text": "憎惡碎綻"
+    },
+    "SkillGemShieldCharge": {
+      "en": "Shield Charge",
+      "text": "重盾衝鋒"
+    },
+    "SkillGemShockwaveTotem": {
+      "en": "Shockwave Totem",
+      "text": "震波圖騰"
+    },
+    "SkillGemShroud": {
+      "en": "Shroud",
+      "text": "幽影"
+    },
+    "SkillGemSigilOfLife": {
+      "en": "Rite of Restoration",
+      "text": "新生之儀"
+    },
+    "SkillGemSigilOfPower": {
+      "en": "Sigil of Power",
+      "text": "咒符之力"
+    },
+    "SkillGemSkeletalArsonist": {
+      "en": "Skeletal Arsonist",
+      "text": "骷髏縱火者"
+    },
+    "SkillGemSkeletalBrute": {
+      "en": "Skeletal Brute",
+      "text": "骷髏巨獸"
+    },
+    "SkillGemSkeletalCleric": {
+      "en": "Skeletal Cleric",
+      "text": "骷髏牧師"
+    },
+    "SkillGemSkeletalFrostMage": {
+      "en": "Skeletal Frost Mage",
+      "text": "骷髏霜寒法師"
+    },
+    "SkillGemSkeletalReaver": {
+      "en": "Skeletal Reaver",
+      "text": "骷髏掠奪者"
+    },
+    "SkillGemSkeletalSniper": {
+      "en": "Skeletal Sniper",
+      "text": "骷髏狙擊手"
+    },
+    "SkillGemSkeletalStormMage": {
+      "en": "Skeletal Storm Mage",
+      "text": "骷髏風暴法師"
+    },
+    "SkillGemSkeletalWarrior": {
+      "en": "Skeletal Sniper",
+      "text": "骷髏狙擊手"
+    },
+    "SkillGemSkeletalWarriorWeaponSkill": {
+      "en": "Skeletal Warrior",
+      "text": "骷髏戰士"
+    },
+    "SkillGemSkyfall": {
+      "en": "Skyfall",
+      "text": "天墜"
+    },
+    "SkillGemSmashToSmithereens": {
+      "en": "Smash to Smithereens",
+      "text": "轟碎重擊"
+    },
+    "SkillGemSnipersMark": {
+      "en": "Sniper's Mark",
+      "text": "狙擊者印記"
+    },
+    "SkillGemSoulrend": {
+      "en": "Soulrend",
+      "text": "靈體撕裂"
+    },
+    "SkillGemSpark": {
+      "en": "Spark",
+      "text": "電球"
+    },
+    "SkillGemSpearfield": {
+      "en": "Spearfield",
+      "text": "長矛之錐"
+    },
+    "SkillGemSpellTotem": {
+      "en": "Spell Totem",
+      "text": "法術圖騰"
+    },
+    "SkillGemSpinningInferno": {
+      "en": "Spinning Inferno",
+      "text": "旋轉獄火"
+    },
+    "SkillGemSpiralVolley": {
+      "en": "Spiral Volley",
+      "text": "螺旋之弦"
+    },
+    "SkillGemSpiralingConspiracy": {
+      "en": "Spiraling Conspiracy",
+      "text": "邪鴉旋纏"
+    },
+    "SkillGemSpiritVessel": {
+      "en": "Spirit Vessel",
+      "text": "靈魂容器"
+    },
+    "SkillGemStaggeringPalm": {
+      "en": "Staggering Palm",
+      "text": "撼敵之掌"
+    },
+    "SkillGemStarbornOnslaught": {
+      "en": "Starborn Onslaught",
+      "text": "星裔猛襲"
+    },
+    "SkillGemSummonMercenaryCompanion": {
+      "en": "Summon Companion",
+      "text": "召喚盟友"
+    },
+    "SkillGemSunder": {
+      "en": "Sunder",
+      "text": "大地震擊"
+    },
+    "SkillGemSuperchargedSlam": {
+      "en": "Supercharged Slam",
+      "text": "超載重擊"
+    },
+    "SkillGemTempestFlurry": {
+      "en": "Tempest Flurry",
+      "text": "暴風亂舞"
+    },
+    "SkillGemTemporalChains": {
+      "en": "Temporal Chains",
+      "text": "時空鎖鏈"
+    },
+    "SkillGemTheStarsAnswer": {
+      "en": "The Stars Answer",
+      "text": "群星回應"
+    },
+    "SkillGemThunderstorm": {
+      "en": "Thunderstorm",
+      "text": "閃電風暴"
+    },
+    "SkillGemTornado": {
+      "en": "Tornado",
+      "text": "龍捲風"
+    },
+    "SkillGemTrailOfCaltrops": {
+      "en": "Trail of Caltrops",
+      "text": "蒺藜之徑"
+    },
+    "SkillGemTriskelionCascade": {
+      "en": "Triskelion Cascade",
+      "text": "三曲爆發"
+    },
+    "SkillGemUniqueAtziriHerald": {
+      "en": "Herald of the Royal Queen",
+      "text": "女皇之捷"
+    },
+    "SkillGemValakosCharge": {
+      "en": "Valako's Charge",
+      "text": "瓦拉庫的衝鋒"
+    },
+    "SkillGemVerisiumManifestation": {
+      "en": "Verisium Manifestations",
+      "text": "維里西姆顯化"
+    },
+    "SkillGemVileDisruption": {
+      "en": "His Vile Intrusion",
+      "text": "他的惡毒入侵"
+    },
+    "SkillGemVolatileDead": {
+      "en": "Volatile Dead",
+      "text": "致命之息"
+    },
+    "SkillGemVolcanicFissure": {
+      "en": "Volcanic Fissure",
+      "text": "炎火脈動"
+    },
+    "SkillGemVolcano": {
+      "en": "Volcano",
+      "text": "火山"
+    },
+    "SkillGemVoltaicBarrier": {
+      "en": "Voltaic Barrier",
+      "text": "伏打電盾"
+    },
+    "SkillGemVoltaicGrenade": {
+      "en": "Voltaic Grenade",
+      "text": "電流擲彈"
+    },
+    "SkillGemVulnerability": {
+      "en": "Vulnerability",
+      "text": "脆弱"
+    },
+    "SkillGemWalkingCalamity": {
+      "en": "Walking Calamity",
+      "text": "行走災厄"
+    },
+    "SkillGemWardboundMinions": {
+      "en": "Wardbound Minions",
+      "text": "戰縛召喚物"
+    },
+    "SkillGemWaveOfFrost": {
+      "en": "Wave of Frost",
+      "text": "寒冰波"
+    },
+    "SkillGemWhirlingAssault": {
+      "en": "Whirling Assault",
+      "text": "迴旋擊"
+    },
+    "SkillGemWhirlingSlash": {
+      "en": "Whirling Slash",
+      "text": "迴旋斬"
+    },
+    "SkillGemWindBlast": {
+      "en": "Wind Blast",
+      "text": "破風爆裂"
+    },
+    "SkillGemWither": {
+      "en": "Wither",
+      "text": "死亡凋零"
+    },
+    "SkillGemWolfPack": {
+      "en": "Wolf Pack",
+      "text": "召喚惡狼"
+    },
+    "SkillGemWolfPounce": {
+      "en": "Pounce",
+      "text": "猛撲"
+    },
+    "SupportEnervation": {
+      "en": "Enervation",
+      "text": "削弱"
+    },
+    "SupportGemAcceleration": {
+      "en": "Projectile Acceleration I",
+      "text": "投射物加速 I"
+    },
+    "SupportGemAccelerationThree": {
+      "en": "Projectile Acceleration III",
+      "text": "投射物加速 III"
+    },
+    "SupportGemAccelerationTwo": {
+      "en": "Projectile Acceleration II",
+      "text": "投射物加速 II"
+    },
+    "SupportGemAftershock": {
+      "en": "Aftershock I",
+      "text": "餘震 I"
+    },
+    "SupportGemAftershockThree": {
+      "en": "Aftershock III",
+      "text": "餘震 III"
+    },
+    "SupportGemAftershockTwo": {
+      "en": "Aftershock II",
+      "text": "餘震 II"
+    },
+    "SupportGemAhnsCitadel": {
+      "en": "Ahn's Citadel",
+      "text": "漢恩的城塞"
+    },
+    "SupportGemAilithLineage": {
+      "en": "Ailith's Chimes",
+      "text": "艾里絲的管鐘"
+    },
+    "SupportGemAmbush": {
+      "en": "Ambush",
+      "text": "伏擊"
+    },
+    "SupportGemArcaneSurge": {
+      "en": "Arcane Surge",
+      "text": "秘能波動"
+    },
+    "SupportGemArcaneTempo": {
+      "en": "Rapid Casting I",
+      "text": "疾速施法 I"
+    },
+    "SupportGemArcaneTempoThree": {
+      "en": "Rapid Casting III",
+      "text": "疾速施法 III"
+    },
+    "SupportGemArcaneTempoTwo": {
+      "en": "Rapid Casting II",
+      "text": "疾速施法 II"
+    },
+    "SupportGemAtaluiBloodletting": {
+      "en": "Atalui's Bloodletting",
+      "text": "阿特路伊的出血"
+    },
+    "SupportGemBehead": {
+      "en": "Behead I",
+      "text": "斬首 I"
+    },
+    "SupportGemBeheadTwo": {
+      "en": "Behead II",
+      "text": "斬首 II"
+    },
+    "SupportGemBhatairsVengeance": {
+      "en": "Bhatair's Vengeance",
+      "text": "瓦特爾的復仇"
+    },
+    "SupportGemBitingFrost": {
+      "en": "Biting Frost I",
+      "text": "刺骨冰霜I"
+    },
+    "SupportGemBitingFrostTwo": {
+      "en": "Biting Frost II",
+      "text": "刺骨冰霜II"
+    },
+    "SupportGemBlazingCritical": {
+      "en": "Blazing Critical",
+      "text": "燃焰暴擊"
+    },
+    "SupportGemBlind": {
+      "en": "Blind I",
+      "text": "致盲 I"
+    },
+    "SupportGemBlindTwo": {
+      "en": "Blind II",
+      "text": "致盲 II"
+    },
+    "SupportGemBloodlust": {
+      "en": "Bloodlust",
+      "text": "嗜血"
+    },
+    "SupportGemBludgeon": {
+      "en": "Knockback",
+      "text": "擊退"
+    },
+    "SupportGemBounty": {
+      "en": "Bounty I",
+      "text": "寶物 I"
+    },
+    "SupportGemBountyTwo": {
+      "en": "Bounty II",
+      "text": "懸賞 II"
+    },
+    "SupportGemBreakPosture": {
+      "en": "Break Posture",
+      "text": "破壞姿態"
+    },
+    "SupportGemBrittleArmour": {
+      "en": "Brittle Armour",
+      "text": "易碎鎧甲"
+    },
+    "SupportGemBrutality": {
+      "en": "Brutality I",
+      "text": "野性殘暴 I"
+    },
+    "SupportGemBrutalityThree": {
+      "en": "Brutality III",
+      "text": "野性殘暴 III"
+    },
+    "SupportGemBrutalityTwo": {
+      "en": "Brutality II",
+      "text": "野性殘暴 II"
+    },
+    "SupportGemBrutusBrain": {
+      "en": "Brutus' Brain",
+      "text": "布魯特斯的腦"
+    },
+    "SupportGemBullseye": {
+      "en": "Heightened Accuracy I",
+      "text": "強化命中 I"
+    },
+    "SupportGemBullseyeTwo": {
+      "en": "Heightened Accuracy II",
+      "text": "強化命中 II"
+    },
+    "SupportGemBurningInscription": {
+      "en": "Burning Inscription",
+      "text": "爆燃銘文"
+    },
+    "SupportGemBurstingPlague": {
+      "en": "Bursting Plague",
+      "text": "爆裂瘟疫"
+    },
+    "SupportGemCannibalism": {
+      "en": "Cannibalism I",
+      "text": "食人 I"
+    },
+    "SupportGemCannibalismTwo": {
+      "en": "Cannibalism II",
+      "text": "食人 II"
+    },
+    "SupportGemCatalysingElements": {
+      "en": "Catalysing Elements",
+      "text": "催化元素"
+    },
+    "SupportGemChain": {
+      "en": "Chain I",
+      "text": "連鎖 I"
+    },
+    "SupportGemChainThree": {
+      "en": "Chain III",
+      "text": "連鎖 III"
+    },
+    "SupportGemChainTwo": {
+      "en": "Chain II",
+      "text": "連鎖 II"
+    },
+    "SupportGemChanceToFreeze": {
+      "en": "Chance to Freeze",
+      "text": "冰凍機率"
+    },
+    "SupportGemChaosInfusion": {
+      "en": "Chaos Attunement",
+      "text": "混沌同調"
+    },
+    "SupportGemChaosMastery": {
+      "en": "Chaos Mastery",
+      "text": "混沌專精"
+    },
+    "SupportGemChargedMark": {
+      "en": "Charged Mark",
+      "text": "蓄電印記"
+    },
+    "SupportGemClarity": {
+      "en": "Clarity I",
+      "text": "清晰 I"
+    },
+    "SupportGemClarityTwo": {
+      "en": "Clarity II",
+      "text": "清晰 II"
+    },
+    "SupportGemCloseCombat": {
+      "en": "Close Combat I",
+      "text": "近身戰 I"
+    },
+    "SupportGemCloseCombatTwo": {
+      "en": "Close Combat II",
+      "text": "近身戰 II"
+    },
+    "SupportGemColdExposure": {
+      "en": "Cold Exposure",
+      "text": "冰冷曝曬"
+    },
+    "SupportGemColdInfusion": {
+      "en": "Cold Attunement",
+      "text": "冰冷同調"
+    },
+    "SupportGemColdMastery": {
+      "en": "Cold Mastery",
+      "text": "冰冷專精"
+    },
+    "SupportGemColdPenetration": {
+      "en": "Cold Penetration",
+      "text": "冰冷穿透"
+    },
+    "SupportGemComboFinisher": {
+      "en": "Combo Finisher I",
+      "text": "連擊終結輔助 I"
+    },
+    "SupportGemComboFinisherTwo": {
+      "en": "Combo Finisher II",
+      "text": "連擊終結輔助 II"
+    },
+    "SupportGemComorbidity": {
+      "en": "Escalating Poison",
+      "text": "遞增之毒"
+    },
+    "SupportGemConcentratedEffect": {
+      "en": "Concentrated Area",
+      "text": "集中範圍"
+    },
+    "SupportGemConcussiveRunes": {
+      "en": "Concussive Runes",
+      "text": "震盪符文"
+    },
+    "SupportGemConcussiveSpells": {
+      "en": "Concussive Spells",
+      "text": "震盪法術"
+    },
+    "SupportGemConduction": {
+      "en": "Shock",
+      "text": "感電"
+    },
+    "SupportGemControlledDestruction": {
+      "en": "Controlled Destruction",
+      "text": "精準破壞"
+    },
+    "SupportGemControlledHazard": {
+      "en": "Controlled Hazard",
+      "text": "危險抑制"
+    },
+    "SupportGemCorrosion": {
+      "en": "Corrosion",
+      "text": "衰敗"
+    },
+    "SupportGemCorruptingCry": {
+      "en": "Corrupting Cry I",
+      "text": "汙染戰吼 I"
+    },
+    "SupportGemCorruptingCryThree": {
+      "en": "Paquate's Pact",
+      "text": "帕科特的協議"
+    },
+    "SupportGemCorruptingCryTwo": {
+      "en": "Corrupting Cry II",
+      "text": "汙染戰吼 II"
+    },
+    "SupportGemCoursingCurrent": {
+      "en": "Shock Conduction",
+      "text": "感電傳導"
+    },
+    "SupportGemCoursingCurrentTwo": {
+      "en": "Shock Conduction II",
+      "text": "感電傳導II"
+    },
+    "SupportGemCreepingChill": {
+      "en": "Creeping Chill",
+      "text": "寒冰蔓延"
+    },
+    "SupportGemCrescendo": {
+      "en": "Crescendo I",
+      "text": "逐漸增強 I"
+    },
+    "SupportGemCrescendoThree": {
+      "en": "Crescendo III",
+      "text": "逐漸增強 III"
+    },
+    "SupportGemCrescendoTwo": {
+      "en": "Crescendo II",
+      "text": "逐漸增強 II"
+    },
+    "SupportGemDeadlyCurrent": {
+      "en": "Coursing Current",
+      "text": "雷鳴湍流"
+    },
+    "SupportGemDeadlyHeralds": {
+      "en": "Deadly Herald",
+      "text": "致命先驅"
+    },
+    "SupportGemDeadlyPoison": {
+      "en": "Deadly Poison I",
+      "text": "致命毒藥 I"
+    },
+    "SupportGemDeadlyPoisonTwo": {
+      "en": "Deadly Poison II",
+      "text": "致命毒藥 II"
+    },
+    "SupportGemDeceleration": {
+      "en": "Projectile Deceleration I",
+      "text": "投射物減速 I"
+    },
+    "SupportGemDecelerationTwo": {
+      "en": "Projectile Deceleration II",
+      "text": "投射物減速 II"
+    },
+    "SupportGemDeepCuts": {
+      "en": "Deep Cuts I",
+      "text": "深度切割 I"
+    },
+    "SupportGemDeepCutsTwo": {
+      "en": "Deep Cuts II",
+      "text": "深度切割 II"
+    },
+    "SupportGemDeepFreeze": {
+      "en": "Deep Freeze",
+      "text": "深度冰凍"
+    },
+    "SupportGemDemolisher": {
+      "en": "Armour Demolisher I",
+      "text": "護甲破壞者 I"
+    },
+    "SupportGemDemolisherTwo": {
+      "en": "Armour Demolisher II",
+      "text": "護甲破壞者 II"
+    },
+    "SupportGemDespoiler": {
+      "en": "Lasting Ground",
+      "text": "持續性地面"
+    },
+    "SupportGemDevastate": {
+      "en": "Devastate",
+      "text": "蹂躪"
+    },
+    "SupportGemDiscombobulate": {
+      "en": "Daze",
+      "text": "目眩"
+    },
+    "SupportGemDrainAilments": {
+      "en": "Drain Ailments",
+      "text": "汲取異常狀態"
+    },
+    "SupportGemEchoingCry": {
+      "en": "Echoing Cry",
+      "text": "迴響戰吼"
+    },
+    "SupportGemEinharsBeastrite": {
+      "en": "Einhar's Beastrite",
+      "text": "埃哈的野獸儀式"
+    },
+    "SupportGemElectrocute": {
+      "en": "Electrocute",
+      "text": "電刑"
+    },
+    "SupportGemElementalArmy": {
+      "en": "Elemental Army",
+      "text": "元素軍隊"
+    },
+    "SupportGemElementalDischarge": {
+      "en": "Elemental Discharge",
+      "text": "元素解放"
+    },
+    "SupportGemElementalFocus": {
+      "en": "Elemental Focus",
+      "text": "元素專注"
+    },
+    "SupportGemEmpoweredSparks": {
+      "en": "Empowered Sparks I",
+      "text": "強化電球I"
+    },
+    "SupportGemEmpoweredSparksTwo": {
+      "en": "Empowered Sparks II",
+      "text": "強化電球II"
+    },
+    "SupportGemEncumbrance": {
+      "en": "Slow Potency",
+      "text": "緩速強度"
+    },
+    "SupportGemEnergyBarrier": {
+      "en": "Energy Barrier",
+      "text": "能量屏障"
+    },
+    "SupportGemEnragedWarcry": {
+      "en": "Enraged Warcry I",
+      "text": "激怒戰吼 I"
+    },
+    "SupportGemEnragedWarcryTwo": {
+      "en": "Enraged Warcry II",
+      "text": "激怒戰吼 II"
+    },
+    "SupportGemEnvenom": {
+      "en": "Poison I",
+      "text": "中毒 I"
+    },
+    "SupportGemEnvenomThree": {
+      "en": "Poison III",
+      "text": "中毒 III"
+    },
+    "SupportGemEnvenomTwo": {
+      "en": "Poison II",
+      "text": "中毒 II"
+    },
+    "SupportGemEonyrsThunder": {
+      "en": "Eonyr's Thunder",
+      "text": "伊歐涅的雷霆"
+    },
+    "SupportGemEssenceHarvest": {
+      "en": "Essence Harvest",
+      "text": "精髓收割"
+    },
+    "SupportGemEternalFlame": {
+      "en": "Eternal Flame I",
+      "text": "永恆烈焰 I"
+    },
+    "SupportGemEternalFlameThree": {
+      "en": "Eternal Flame III",
+      "text": "永恆烈焰 III"
+    },
+    "SupportGemEternalFlameTwo": {
+      "en": "Eternal Flame II",
+      "text": "永恆烈焰 II"
+    },
+    "SupportGemEternalMark": {
+      "en": "Eternal Mark",
+      "text": "永恆印記"
+    },
+    "SupportGemExecute": {
+      "en": "Execute I",
+      "text": "處刑 I"
+    },
+    "SupportGemExecuteThree": {
+      "en": "Execute III",
+      "text": "處刑 III"
+    },
+    "SupportGemExecuteTwo": {
+      "en": "Execute II",
+      "text": "處刑 II"
+    },
+    "SupportGemExpand": {
+      "en": "Expand",
+      "text": "擴展"
+    },
+    "SupportGemExploitWeakness": {
+      "en": "Exploit Weakness",
+      "text": "攻其之弱"
+    },
+    "SupportGemExplosiveGrowth": {
+      "en": "Accelerated Growth",
+      "text": "飛速生長"
+    },
+    "SupportGemExplosiveGrowthTwo": {
+      "en": "Accelerated Growth II",
+      "text": "飛速生長II"
+    },
+    "SupportGemExposingCry": {
+      "en": "Exposing Cry",
+      "text": "暴露戰吼"
+    },
+    "SupportGemFanTheFlames": {
+      "en": "Fan The Flames",
+      "text": "灼炎扇舞I"
+    },
+    "SupportGemFanTheFlamesTwo": {
+      "en": "Fan The Flames II",
+      "text": "灼炎扇舞II"
+    },
+    "SupportGemFastForward": {
+      "en": "Compressed Duration I",
+      "text": "縮短持續時間 I"
+    },
+    "SupportGemFastForwardTwo": {
+      "en": "Compressed Duration II",
+      "text": "縮短持續時間 II"
+    },
+    "SupportGemFeedingFrenzy": {
+      "en": "Feeding Frenzy I",
+      "text": "豢養狂熱 I"
+    },
+    "SupportGemFeedingFrenzyTwo": {
+      "en": "Feeding Frenzy II",
+      "text": "豢養狂熱 II"
+    },
+    "SupportGemFieryDeath": {
+      "en": "Fiery Death",
+      "text": "火熱死寂"
+    },
+    "SupportGemFireExposure": {
+      "en": "Fire Exposure",
+      "text": "火焰曝曬"
+    },
+    "SupportGemFireInfusion": {
+      "en": "Fire Attunement",
+      "text": "火焰同調"
+    },
+    "SupportGemFireMastery": {
+      "en": "Fire Mastery",
+      "text": "火焰專精"
+    },
+    "SupportGemFirePenetration": {
+      "en": "Fire Penetration I",
+      "text": "火焰穿透 I"
+    },
+    "SupportGemFirePenetrationTwo": {
+      "en": "Fire Penetration II",
+      "text": "火焰穿透 II"
+    },
+    "SupportGemFistOfKalguur": {
+      "en": "Fist Of Kalguur",
+      "text": "卡爾葛之拳"
+    },
+    "SupportGemFistOfWar": {
+      "en": "Fist of War I",
+      "text": "拳霸 I"
+    },
+    "SupportGemFistOfWarThree": {
+      "en": "Fist of War III",
+      "text": "拳霸 III"
+    },
+    "SupportGemFistOfWarTwo": {
+      "en": "Fist of War II",
+      "text": "拳霸 II"
+    },
+    "SupportGemFontofBlood": {
+      "en": "Font of Blood",
+      "text": "鮮血器皿"
+    },
+    "SupportGemFontofMana": {
+      "en": "Font of Mana",
+      "text": "魔力器皿"
+    },
+    "SupportGemFontofRage": {
+      "en": "Font of Rage",
+      "text": "盛怒器皿"
+    },
+    "SupportGemFork": {
+      "en": "Fork",
+      "text": "分岔"
+    },
+    "SupportGemFortress": {
+      "en": "Fortress I",
+      "text": "堡壘 I"
+    },
+    "SupportGemFortressTwo": {
+      "en": "Fortress II",
+      "text": "堡壘 II"
+    },
+    "SupportGemFrostNexus": {
+      "en": "Frost Nexus",
+      "text": "冰霜匯聚"
+    },
+    "SupportGemFrostfire": {
+      "en": "Frostfire",
+      "text": "霜火"
+    },
+    "SupportGemFrozenVortex": {
+      "en": "Frozen Vortex",
+      "text": "凍結漩渦"
+    },
+    "SupportGemFusillade": {
+      "en": "Fusillade",
+      "text": "聚靈之杖"
+    },
+    "SupportGemGlaciation": {
+      "en": "Freeze",
+      "text": "冰凍"
+    },
+    "SupportGemGorge": {
+      "en": "Gorge",
+      "text": "峽谷"
+    },
+    "SupportGemHealingRunes": {
+      "en": "Healing Runes",
+      "text": "治癒符文"
+    },
+    "SupportGemHeavySwing": {
+      "en": "Heavy Swing",
+      "text": "沉重揮擊"
+    },
+    "SupportGemHeightenedCurse": {
+      "en": "Heightened Curse",
+      "text": "增強詛咒"
+    },
+    "SupportGemHerbalism": {
+      "en": "Herbalism I",
+      "text": "藥草學 I"
+    },
+    "SupportGemHerbalismTwo": {
+      "en": "Herbalism II",
+      "text": "藥草學 II"
+    },
+    "SupportGemHexBloom": {
+      "en": "Hex Bloom",
+      "text": "咒術綻放"
+    },
+    "SupportGemHourglass": {
+      "en": "Hourglass",
+      "text": "沙漏"
+    },
+    "SupportGemIceBite": {
+      "en": "Ice Bite I",
+      "text": "霜咬 I"
+    },
+    "SupportGemIceBiteTwo": {
+      "en": "Ice Bite II",
+      "text": "霜咬 II"
+    },
+    "SupportGemIgnition": {
+      "en": "Ignite I",
+      "text": "點燃 I"
+    },
+    "SupportGemIgnitionThree": {
+      "en": "Ignite III",
+      "text": "點燃 III"
+    },
+    "SupportGemIgnitionTwo": {
+      "en": "Ignite II",
+      "text": "點燃 II"
+    },
+    "SupportGemImmolate": {
+      "en": "Immolate",
+      "text": "犧牲"
+    },
+    "SupportGemImpactShockwave": {
+      "en": "Impact Shockwave",
+      "text": "衝擊震波"
+    },
+    "SupportGemImpendingDoom": {
+      "en": "Impending Doom",
+      "text": "末日厄運"
+    },
+    "SupportGemInevitableCritical": {
+      "en": "Inexorable Critical I",
+      "text": "無情暴擊 I"
+    },
+    "SupportGemInevitableCriticalTwo": {
+      "en": "Inexorable Critical II",
+      "text": "無情暴擊 II"
+    },
+    "SupportGemInfernalLegion": {
+      "en": "Infernal Legion I",
+      "text": "煉獄軍團 I"
+    },
+    "SupportGemInfernalLegionThree": {
+      "en": "Infernal Legion III",
+      "text": "煉獄軍團 III"
+    },
+    "SupportGemInfernalLegionTwo": {
+      "en": "Infernal Legion II",
+      "text": "煉獄軍團 II"
+    },
+    "SupportGemInfusion": {
+      "en": "Infusion",
+      "text": "注入"
+    },
+    "SupportGemIngenuity": {
+      "en": "Cooldown Recovery I",
+      "text": "冷卻時間恢復 I"
+    },
+    "SupportGemIngenuityTwo": {
+      "en": "Cooldown Recovery II",
+      "text": "冷卻時間恢復 II"
+    },
+    "SupportGemInspiration": {
+      "en": "Efficiency I",
+      "text": "效率 I"
+    },
+    "SupportGemInspirationTwo": {
+      "en": "Efficiency II",
+      "text": "效率 II"
+    },
+    "SupportGemInvocation": {
+      "en": "Invocation",
+      "text": "祈願"
+    },
+    "SupportGemJaggedGround": {
+      "en": "Jagged Ground I",
+      "text": "碎裂地面 I"
+    },
+    "SupportGemJaggedGroundTwo": {
+      "en": "Jagged Ground II",
+      "text": "碎裂地面 II"
+    },
+    "SupportGemLacerate": {
+      "en": "Bleed I",
+      "text": "流血 I"
+    },
+    "SupportGemLacerateFour": {
+      "en": "Bleed IV",
+      "text": "流血 IV"
+    },
+    "SupportGemLacerateThree": {
+      "en": "Bleed III",
+      "text": "流血 III"
+    },
+    "SupportGemLacerateTwo": {
+      "en": "Bleed II",
+      "text": "流血 II"
+    },
+    "SupportGemLastingShock": {
+      "en": "Lasting Shock",
+      "text": "持續感電"
+    },
+    "SupportGemLifeBounty": {
+      "en": "Life Bounty",
+      "text": "生命恩惠"
+    },
+    "SupportGemLifeDrain": {
+      "en": "Life Drain",
+      "text": "生命吸取"
+    },
+    "SupportGemLifeThief": {
+      "en": "Life Leech I",
+      "text": "生命偷取 I"
+    },
+    "SupportGemLifeThiefThree": {
+      "en": "Life Leech III",
+      "text": "生命偷取 III"
+    },
+    "SupportGemLifeThiefTwo": {
+      "en": "Life Leech II",
+      "text": "生命偷取 II"
+    },
+    "SupportGemLifetap": {
+      "en": "Lifetap",
+      "text": "活栓"
+    },
+    "SupportGemLightningExposure": {
+      "en": "Lightning Exposure",
+      "text": "閃電曝曬"
+    },
+    "SupportGemLightningInfusion": {
+      "en": "Lightning Attunement",
+      "text": "閃電同調"
+    },
+    "SupportGemLightningMastery": {
+      "en": "Lightning Mastery",
+      "text": "閃電專精"
+    },
+    "SupportGemLightningPenetration": {
+      "en": "Lightning Penetration",
+      "text": "閃電穿透"
+    },
+    "SupportGemLockdown": {
+      "en": "Lockdown",
+      "text": "封鎖"
+    },
+    "SupportGemLongshot": {
+      "en": "Longshot I",
+      "text": "遠程射擊 I"
+    },
+    "SupportGemLongshotTwo": {
+      "en": "Longshot II",
+      "text": "遠程射擊 II"
+    },
+    "SupportGemMagnifiedEffect": {
+      "en": "Magnified Area I",
+      "text": "增幅光環 I"
+    },
+    "SupportGemMagnifiedEffectTwo": {
+      "en": "Magnified Area II",
+      "text": "增幅光環 II"
+    },
+    "SupportGemMaim": {
+      "en": "Maim",
+      "text": "癱瘓"
+    },
+    "SupportGemManaBounty": {
+      "en": "Mana Bounty",
+      "text": "魔力恩惠"
+    },
+    "SupportGemManaFlare": {
+      "en": "Mana Flare",
+      "text": "魔力閃焰"
+    },
+    "SupportGemMarkOfSiphoning": {
+      "en": "Mark of Siphoning",
+      "text": "汲取印記"
+    },
+    "SupportGemMarkOfSiphoningTwo": {
+      "en": "Mark of Siphoning II",
+      "text": "汲取印記 II"
+    },
+    "SupportGemMartialTempo": {
+      "en": "Rapid Attacks I",
+      "text": "疾速攻擊 I"
+    },
+    "SupportGemMartialTempoThree": {
+      "en": "Rapid Attacks III",
+      "text": "疾速攻擊 III"
+    },
+    "SupportGemMartialTempoTwo": {
+      "en": "Rapid Attacks II",
+      "text": "疾速攻擊 II"
+    },
+    "SupportGemMeatShield": {
+      "en": "Meat Shield I",
+      "text": "肉盾 I"
+    },
+    "SupportGemMeatShieldTwo": {
+      "en": "Meat Shield II",
+      "text": "肉盾 II"
+    },
+    "SupportGemMinionMastery": {
+      "en": "Minion Mastery",
+      "text": "召喚物專精"
+    },
+    "SupportGemMinionMeleeSplash": {
+      "en": "Minion Splash I",
+      "text": "召喚物擴散I"
+    },
+    "SupportGemMinionMeleeSplashTwo": {
+      "en": "Minion Splash II",
+      "text": "召喚物擴散II"
+    },
+    "SupportGemMobility": {
+      "en": "Mobility",
+      "text": "機動性"
+    },
+    "SupportGemMomentum": {
+      "en": "Momentum",
+      "text": "氣勢"
+    },
+    "SupportGemMurderousIntent": {
+      "en": "Murderous Intent",
+      "text": "殺人意圖"
+    },
+    "SupportGemNeuralOverload": {
+      "en": "Neural Overload",
+      "text": "神經超載"
+    },
+    "SupportGemNovaProjectiles": {
+      "en": "Nova Projectiles I",
+      "text": "新星投射物I"
+    },
+    "SupportGemNovaProjectilesTwo": {
+      "en": "Nova Projectiles II",
+      "text": "新星投射物II"
+    },
+    "SupportGemOisinsOath": {
+      "en": "Oisín's Oath",
+      "text": "歐辛的誓言"
+    },
+    "SupportGemOlrothsHubris": {
+      "en": "Olroth's Hubris",
+      "text": "奧爾羅斯的傲慢"
+    },
+    "SupportGemOpeningMove": {
+      "en": "Opening Move",
+      "text": "先聲奪人"
+    },
+    "SupportGemOverabundance": {
+      "en": "Overabundance I",
+      "text": "過剩 I"
+    },
+    "SupportGemOverabundanceThree": {
+      "en": "Overabundance III",
+      "text": "過剩 III"
+    },
+    "SupportGemOverabundanceTwo": {
+      "en": "Overabundance II",
+      "text": "過剩 II"
+    },
+    "SupportGemOvercharge": {
+      "en": "Overcharge",
+      "text": "強化聚能"
+    },
+    "SupportGemOverpower": {
+      "en": "Stun I",
+      "text": "暈眩 I"
+    },
+    "SupportGemOverpowerThree": {
+      "en": "Stun III",
+      "text": "暈眩 III"
+    },
+    "SupportGemOverpowerTwo": {
+      "en": "Stun II",
+      "text": "暈眩 II"
+    },
+    "SupportGemPerpetualCharge": {
+      "en": "Perpetual Charge",
+      "text": "永恆充能"
+    },
+    "SupportGemPersistence": {
+      "en": "Prolonged Duration I",
+      "text": "延長持續時間 I"
+    },
+    "SupportGemPersistenceThree": {
+      "en": "Prolonged Duration III",
+      "text": "延長持續時間 III"
+    },
+    "SupportGemPersistenceTwo": {
+      "en": "Prolonged Duration II",
+      "text": "延長持續時間 II"
+    },
+    "SupportGemPhysicalMastery": {
+      "en": "Physical Mastery",
+      "text": "物理專精"
+    },
+    "SupportGemPierce": {
+      "en": "Pierce I",
+      "text": "穿透 I"
+    },
+    "SupportGemPierceThree": {
+      "en": "Pierce III",
+      "text": "穿透 III"
+    },
+    "SupportGemPierceTwo": {
+      "en": "Pierce II",
+      "text": "穿透 II"
+    },
+    "SupportGemPin": {
+      "en": "Pin I",
+      "text": "釘身 I"
+    },
+    "SupportGemPinThree": {
+      "en": "Pin III",
+      "text": "釘身 III"
+    },
+    "SupportGemPinTwo": {
+      "en": "Pin II",
+      "text": "釘身 II"
+    },
+    "SupportGemPinpointCritical": {
+      "en": "Pinpoint Critical",
+      "text": "精確暴擊"
+    },
+    "SupportGemPracticalMagic": {
+      "en": "Practical Magic I",
+      "text": "實用魔法 I"
+    },
+    "SupportGemPracticalMagicTwo": {
+      "en": "Practical Magic II",
+      "text": "實用魔法 II"
+    },
+    "SupportGemPrecision": {
+      "en": "Precision I",
+      "text": "精準 I"
+    },
+    "SupportGemPrecisionTwo": {
+      "en": "Precision II",
+      "text": "精準 II"
+    },
+    "SupportGemPremeditation": {
+      "en": "Premeditation",
+      "text": "預謀"
+    },
+    "SupportGemPrimalArmament": {
+      "en": "Elemental Armament I",
+      "text": "元素武裝 I"
+    },
+    "SupportGemPrimalArmamentThree": {
+      "en": "Elemental Armament III",
+      "text": "元素武裝 III"
+    },
+    "SupportGemPrimalArmamentTwo": {
+      "en": "Elemental Armament II",
+      "text": "元素武裝 II"
+    },
+    "SupportGemProfusion": {
+      "en": "Charge Profusion I",
+      "text": "充能滿盈 I"
+    },
+    "SupportGemProfusionTwo": {
+      "en": "Charge Profusion II",
+      "text": "充能滿盈 II"
+    },
+    "SupportGemRage": {
+      "en": "Rage I",
+      "text": "盛怒 I"
+    },
+    "SupportGemRageThree": {
+      "en": "Rage III",
+      "text": "盛怒 III"
+    },
+    "SupportGemRageTwo": {
+      "en": "Rage II",
+      "text": "盛怒 II"
+    },
+    "SupportGemRendingApex": {
+      "en": "Rending Apex",
+      "text": "撕裂頂點"
+    },
+    "SupportGemRisingTempest": {
+      "en": "Rising Tempest",
+      "text": "崛起風暴"
+    },
+    "SupportGemRuneforgedBlades": {
+      "en": "Runeforged Blades",
+      "text": "符煉刀刃"
+    },
+    "SupportGemRunicExtraction": {
+      "en": "Runic Extraction",
+      "text": "符文提取"
+    },
+    "SupportGemRunicInfusion": {
+      "en": "Runic Infusion",
+      "text": "符文灌注"
+    },
+    "SupportGemRuthless": {
+      "en": "Ruthless",
+      "text": "殘暴"
+    },
+    "SupportGemScattershot": {
+      "en": "Multishot I",
+      "text": "多重射擊 I"
+    },
+    "SupportGemScattershotTwo": {
+      "en": "Multishot II",
+      "text": "多重射擊 II"
+    },
+    "SupportGemScouringFlame": {
+      "en": "Scouring Flame",
+      "text": "淨化烈焰"
+    },
+    "SupportGemSearingFlame": {
+      "en": "Searing Flame I",
+      "text": "燒灼烈焰 I"
+    },
+    "SupportGemSearingFlameTwo": {
+      "en": "Searing Flame II",
+      "text": "燒灼烈焰 II"
+    },
+    "SupportGemSecondWind": {
+      "en": "Second Wind I",
+      "text": "恢復 I"
+    },
+    "SupportGemSecondWindThree": {
+      "en": "Second Wind III",
+      "text": "恢復 III"
+    },
+    "SupportGemSecondWindTwo": {
+      "en": "Second Wind II",
+      "text": "恢復 II"
+    },
+    "SupportGemShockSiphon": {
+      "en": "Shock Siphon",
+      "text": "電擊虹吸"
+    },
+    "SupportGemSlamAftershocks": {
+      "en": "Tectonic Slams",
+      "text": "震波猛擊"
+    },
+    "SupportGemSoulDrain": {
+      "en": "Soul Drain",
+      "text": "魂魄吸取"
+    },
+    "SupportGemSoulThief": {
+      "en": "Mana Leech",
+      "text": "魔力偷取"
+    },
+    "SupportGemSpellEcho": {
+      "en": "Spell Echo",
+      "text": "法術迴響"
+    },
+    "SupportGemSplinter": {
+      "en": "Armour Break I",
+      "text": "護甲破壞 I"
+    },
+    "SupportGemSplinterThree": {
+      "en": "Armour Break III",
+      "text": "護甲破壞 III"
+    },
+    "SupportGemSplinterTwo": {
+      "en": "Armour Break II",
+      "text": "護甲破壞 II"
+    },
+    "SupportGemSpreadingFrost": {
+      "en": "Spreading Frost",
+      "text": "擴散寒冰"
+    },
+    "SupportGemStormfire": {
+      "en": "Stormfire",
+      "text": "烈風暴"
+    },
+    "SupportGemSupercritical": {
+      "en": "Supercritical",
+      "text": "超暴擊"
+    },
+    "SupportGemThrillOfTheKill": {
+      "en": "Thrill of the Kill",
+      "text": "殺戮渴望"
+    },
+    "SupportGemThrillOfTheKillTwo": {
+      "en": "Thrill of the Kill II",
+      "text": "殺戮渴望II"
+    },
+    "SupportGemUnbreakable": {
+      "en": "Unbreakable",
+      "text": "堅不可破"
+    },
+    "SupportGemUnleash": {
+      "en": "Unleash",
+      "text": "釋放"
+    },
+    "SupportGemUruksSmelting": {
+      "en": "Uruk's Smelting",
+      "text": "厄羅克的鍛鍊"
+    },
+    "SupportGemVilentasPropulsion": {
+      "en": "Vilenta's Propulsion",
+      "text": "范尼達的奮進"
+    },
+    "SupportGemVitality": {
+      "en": "Vitality I",
+      "text": "活力 I"
+    },
+    "SupportGemVitalityTwo": {
+      "en": "Vitality II",
+      "text": "活力 II"
+    },
+    "SupportGemWildfire": {
+      "en": "Wildfire",
+      "text": "燐火"
+    },
+    "SupportGemWindWave": {
+      "en": "Wind Wave",
+      "text": "疾風之波"
+    },
+    "SupportGemWindowOfOpportunity": {
+      "en": "Window of Opportunity I",
+      "text": "機會之窗 I"
+    },
+    "SupportGemWindowOfOpportunityTwo": {
+      "en": "Window of Opportunity II",
+      "text": "機會之窗 II"
+    },
+    "SupportGemWitheringTouch": {
+      "en": "Withering Touch",
+      "text": "凋零之觸"
+    },
+    "SupportGemZarokhsRevolt": {
+      "en": "Zarokh's Revolt",
+      "text": "澤洛克的反叛"
+    },
+    "SupportOlrothsConviction": {
+      "en": "Olroth's Conviction",
+      "text": "奧爾羅斯的信念"
+    },
+    "UniqueSkillGemHeraldOfAsh": {
+      "en": "Herald of Ash",
+      "text": "灰燼之捷"
+    },
+    "UniqueSkillGemHeraldOfIce": {
+      "en": "Herald of Ice",
+      "text": "冰霜之捷"
+    },
+    "UniqueSkillGemHeraldOfThunder": {
+      "en": "Herald of Thunder",
+      "text": "閃電之捷"
+    },
+    "UniqueSkillGemWitheringPresence": {
+      "en": "Withering Presence",
+      "text": "凋零光環"
+    },
+    "SkillGemStaffConsecrate": {
+      "en": "Consecrate",
+      "text": "奉獻"
+    },
+    "SkillGemStaffUnleash": {
+      "en": "Unleash",
+      "text": "釋放"
+    }
+  }
+}

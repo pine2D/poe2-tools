@@ -1,7 +1,7 @@
 {
   "locale": "zh-CN",
-  "generatedAt": "2026-09-07T12:27:24.151Z",
-  "note": "含字面数字的词缀：当前消费端无法命中，归一化变体方案见 2b 计划",
+  "generatedAt": "2026-09-08T09:57:17.857Z",
+  "note": "含字面数字的词缀：entries 是全部（变体前原文）；skipped 是无法对应（text 缺该数字或同一数字在 en 里重复）而保持原样、运行期永远匹配不上的条目",
   "entries": [
     {
       "key": "explicit.stat_434750362#0",
@@ -49,19 +49,9 @@
       "text": "你造成的点燃扩散给在 1.5 米停留 1 秒的其他敌人"
     },
     {
-      "key": "explicit.stat_720908147#0",
-      "en": "#% increased Attack Speed per 20 Dexterity",
-      "text": "每 20 敏捷使攻击速度提高 #%"
-    },
-    {
       "key": "explicit.stat_3111921451#0",
       "en": "Adds # to # Lightning Damage to Attacks per 20 Intelligence",
       "text": "每 20 智慧使攻击的附加 # - # 闪电伤害"
-    },
-    {
-      "key": "explicit.stat_3764198549#0",
-      "en": "Every 3 seconds, Consume a nearby Corpse to Recover #% of maximum Life",
-      "text": "每 3 秒消耗附近的一个灵柩，并恢复 #% 的生命"
     },
     {
       "key": "explicit.stat_2323782229#0",
@@ -72,6 +62,11 @@
       "key": "explicit.stat_2323782229#1",
       "en": "Slaying Rare Monsters in Map pauses the Delirium Mirror Timer for 1 second",
       "text": "击败地图内的稀有怪物使惊悸迷雾之镜的倒计时暂停 1 秒"
+    },
+    {
+      "key": "explicit.stat_3764198549#0",
+      "en": "Every 3 seconds, Consume a nearby Corpse to Recover #% of maximum Life",
+      "text": "每 3 秒消耗附近的一个灵柩，并恢复 #% 的生命"
     },
     {
       "key": "explicit.stat_1457411584#0",
@@ -99,9 +94,9 @@
       "text": "使用魔力药剂时，获得等同于药剂回复量 #% 的防卫，持续 4 秒"
     },
     {
-      "key": "explicit.stat_2838161567#0",
-      "en": "Skills reserve 50% less Spirit",
-      "text": "技能保留的精魂总降 50%"
+      "key": "explicit.stat_65133983#0",
+      "en": "Drop Shocked Ground while moving, lasting 8 seconds",
+      "text": "移动时留下感电地面，持续 8 秒"
     },
     {
       "key": "explicit.stat_664606484#0",
@@ -109,9 +104,9 @@
       "text": "每关闭一个巨坑，深渊怪物的效能提高 #%，最高可达 100%"
     },
     {
-      "key": "explicit.stat_65133983#0",
-      "en": "Drop Shocked Ground while moving, lasting 8 seconds",
-      "text": "移动时留下感电地面，持续 8 秒"
+      "key": "explicit.stat_2838161567#0",
+      "en": "Skills reserve 50% less Spirit",
+      "text": "技能保留的精魂总降 50%"
     },
     {
       "key": "explicit.stat_1207006772#0",
@@ -124,19 +119,14 @@
       "text": "使用技能时，每消耗一个连击，获得 # 层 防卫，持续 0.5 秒"
     },
     {
-      "key": "explicit.stat_3538915253#0",
-      "en": "On Hitting an enemy, gains maximum added Lightning damage equal to the enemy's Power for 20 seconds, up to a total of #",
-      "text": "击中敌人时，获得相当于敌人威力值的 额外闪电伤害上限，最多 #，持续 20 秒"
-    },
-    {
       "key": "explicit.stat_2348696937#0",
       "en": "Spells have a #% chance to inflict Withered for 4 seconds on Hit",
       "text": "法术击中时有 #% 的几率造成 4 秒的死亡凋零"
     },
     {
-      "key": "explicit.stat_1312381104#0",
-      "en": "Regenerate # Life per second for every 10 Intelligence",
-      "text": "每有 10 点智慧，每秒再生 # 点生命"
+      "key": "explicit.stat_3538915253#0",
+      "en": "On Hitting an enemy, gains maximum added Lightning damage equal to the enemy's Power for 20 seconds, up to a total of #",
+      "text": "击中敌人时，获得相当于敌人威力值的额外闪电伤害上限，最多 #，持续 20 秒"
     },
     {
       "key": "explicit.stat_39209842#0",
@@ -144,19 +134,14 @@
       "text": "使用时造成持续 4 秒的燃烧地面，地面点燃敌人时造成等同你生命上限 #% 的火焰伤害"
     },
     {
+      "key": "explicit.stat_1312381104#0",
+      "en": "Regenerate # Life per second for every 10 Intelligence",
+      "text": "每有 10 点智慧，每秒再生 # 点生命"
+    },
+    {
       "key": "explicit.stat_1273508088#0",
       "en": "Gain 1 Druidic Prowess for every 20 total Rage spent",
       "text": "每消耗总计 20 点怒火，获得 1 点德鲁伊之力"
-    },
-    {
-      "key": "explicit.stat_2134207902#0",
-      "en": "+100% of Armour also applies to Lightning Damage",
-      "text": "+100% 的护甲同样作用于闪电伤害"
-    },
-    {
-      "key": "explicit.stat_170426423#0",
-      "en": "Non-Channelling Spells have #% increased Critical Hit Chance per 100 maximum Life",
-      "text": "每 100 生命上限使非吟唱法术的暴击率提高 #%"
     },
     {
       "key": "explicit.stat_1027889455#0",
@@ -164,9 +149,19 @@
       "text": "每 100 生命上限使非吟唱法术的伤害提高 #%"
     },
     {
+      "key": "explicit.stat_170426423#0",
+      "en": "Non-Channelling Spells have #% increased Critical Hit Chance per 100 maximum Life",
+      "text": "每 100 生命上限使非吟唱法术的暴击率提高 #%"
+    },
+    {
+      "key": "explicit.stat_2134207902#0",
+      "en": "+100% of Armour also applies to Lightning Damage",
+      "text": "+100% 的护甲同样作用于闪电伤害"
+    },
+    {
       "key": "explicit.stat_258955603#0",
       "en": "Alternating every 5 seconds: Take #% more Damage from Hits Take #% more Damage over time",
-      "text": "每 5 秒交替： 受到的击中伤害总增 #% 受到的持续伤害总增 #%"
+      "text": "每 5 秒交替：受到的击中伤害总增 #% 受到的持续伤害总增 #%"
     },
     {
       "key": "explicit.stat_1895552497#0",
@@ -204,44 +199,14 @@
       "text": "技能每消耗 3 点生命，获得相当于伤害 #% 的混沌伤害"
     },
     {
-      "key": "explicit.stat_3156445245#0",
-      "en": "#% less Movement and Skill Speed per Dodge Roll in the past 20 seconds",
-      "text": "过去 20 秒内的每次闪避翻滚使移动速度和技能速度总降 #%"
-    },
-    {
       "key": "explicit.stat_2913235441#0",
       "en": "When you kill a Rare monster, you gain its Modifiers for 60 seconds",
       "text": "当你击败稀有怪物时，获得它的词缀，持续 60 秒"
     },
     {
-      "key": "explicit.stat_4186798932#0",
-      "en": "# to # Added Attack Fire Damage per 25 Strength",
-      "text": "每有 25 点力量，附加 # - # 攻击火焰伤害"
-    },
-    {
-      "key": "explicit.stat_4106787208#0",
-      "en": "Spear Skills inflict a Bloodstone Lance on Hit, up to a maximum of 30 on each target",
-      "text": "使用战矛技能击中时造成血岩长枪，对每个目标造成的上限为 30 枚"
-    },
-    {
-      "key": "explicit.stat_1867725690#0",
-      "en": "Hits with this Weapon have #% chance to Trigger Molten Shower per 25 Strength",
-      "text": "每有 25 点力量，使用该武器击中时有 #% 的几率触发熔岩骤雨"
-    },
-    {
-      "key": "explicit.stat_4238331303#0",
-      "en": "Immobilise enemies at #% buildup instead of 100%",
-      "text": "积蓄至 #% 时使敌人不可移动，而非 100%"
-    },
-    {
-      "key": "explicit.stat_3605616594#0",
-      "en": "Gain Onslaught for 4 seconds when a Minion Dies",
-      "text": "当召唤生物被击败时，获得猛攻，持续 4 秒"
-    },
-    {
-      "key": "explicit.stat_3775736880#0",
-      "en": "Gain 1 Fear Incarnate when you Cull a target",
-      "text": "终结敌人时，获得 1 个恐惧化身"
+      "key": "explicit.stat_3156445245#0",
+      "en": "#% less Movement and Skill Speed per Dodge Roll in the past 20 seconds",
+      "text": "过去 20 秒内的每次闪避翻滚使移动速度和技能速度总降 #%"
     },
     {
       "key": "explicit.stat_1291132817#0",
@@ -254,9 +219,39 @@
       "text": "每有 # 点力量，徒手伤害总增 1%"
     },
     {
-      "key": "explicit.stat_4274637468#0",
-      "en": "Convert #% of maximum Life to twice as much Armour per 1% Chaos Resistance above 0%",
-      "text": "每有高于 0% 的 1% 混沌抗性上限，将生命上限的 #% 转化为双倍的护甲"
+      "key": "explicit.stat_4186798932#0",
+      "en": "# to # Added Attack Fire Damage per 25 Strength",
+      "text": "每有 25 点力量，附加 # - # 攻击火焰伤害"
+    },
+    {
+      "key": "explicit.stat_1867725690#0",
+      "en": "Hits with this Weapon have #% chance to Trigger Molten Shower per 25 Strength",
+      "text": "每有 25 点力量，使用该武器击中时有 #% 的几率触发熔岩骤雨"
+    },
+    {
+      "key": "explicit.stat_3605616594#0",
+      "en": "Gain Onslaught for 4 seconds when a Minion Dies",
+      "text": "当召唤生物被击败时，获得猛攻，持续 4 秒"
+    },
+    {
+      "key": "explicit.stat_4106787208#0",
+      "en": "Spear Skills inflict a Bloodstone Lance on Hit, up to a maximum of 30 on each target",
+      "text": "使用战矛技能击中时造成血岩长枪，对每个目标造成的上限为 30 枚"
+    },
+    {
+      "key": "explicit.stat_4238331303#0",
+      "en": "Immobilise enemies at #% buildup instead of 100%",
+      "text": "积蓄至 #% 时使敌人不可移动，而非 100%"
+    },
+    {
+      "key": "explicit.stat_3775736880#0",
+      "en": "Gain 1 Fear Incarnate when you Cull a target",
+      "text": "终结敌人时，获得 1 个恐惧化身"
+    },
+    {
+      "key": "explicit.stat_223138829#0",
+      "en": "Inflict Elemental Exposure to Enemies 3 metres in front of you for 4 seconds, every 0.25 seconds while raised",
+      "text": "举起时，每 0.25 秒对你前方 3 米内的敌人施加元素曝露，持续 4 秒"
     },
     {
       "key": "explicit.stat_740421489#0",
@@ -264,14 +259,14 @@
       "text": "每有 5% 冰霜抗性，冰晶生命上限提高 #%"
     },
     {
+      "key": "explicit.stat_4274637468#0",
+      "en": "Convert #% of maximum Life to twice as much Armour per 1% Chaos Resistance above 0%",
+      "text": "每有高于 0% 的 1% 混沌抗性上限，将生命上限的 #% 转化为双倍的护甲"
+    },
+    {
       "key": "explicit.stat_2480962043#0",
       "en": "Skills which require Glory generate # Glory every 2 seconds",
       "text": "需要荣耀的技能每 2 秒再生 # 点荣耀"
-    },
-    {
-      "key": "explicit.stat_223138829#0",
-      "en": "Inflict Elemental Exposure to Enemies 3 metres in front of you for 4 seconds, every 0.25 seconds while raised",
-      "text": "举起时，每 0.25 秒对你前方 3 米内的敌人施加 元素曝露，持续 4 秒"
     },
     {
       "key": "explicit.stat_3843734793#0",
@@ -314,14 +309,14 @@
       "text": "每 100 点生命上限使非吟唱法术的异常状态强度提高 #%"
     },
     {
-      "key": "explicit.stat_2694614739#0",
-      "en": "# to Spirit while you have at least 200 Dexterity",
-      "text": "当你至少有 200 敏捷时，精魂 #"
-    },
-    {
       "key": "explicit.stat_34174842#0",
       "en": "#% increased Cast Speed per 20 Spirit",
       "text": "每 20 点精魂，施法速度提高 #%"
+    },
+    {
+      "key": "explicit.stat_2694614739#0",
+      "en": "# to Spirit while you have at least 200 Dexterity",
+      "text": "当你至少有 200 敏捷时，精魂 #"
     },
     {
       "key": "explicit.stat_324579579#0",
@@ -334,24 +329,24 @@
       "text": "提高移动速度 25%，每 # 点闪避值额外提高 1%，最高 75% 其他除冲刺外的移动速度词缀无法生效"
     },
     {
-      "key": "explicit.stat_3387008487#0",
-      "en": "Defend with 200% of Armour",
-      "text": "以 200% 的护甲防御"
-    },
-    {
       "key": "explicit.stat_1850249186#0",
       "en": "#% increased Spell Damage per 100 maximum Mana",
       "text": "每 100 魔力上限使法术伤害提高 #%"
     },
     {
-      "key": "explicit.stat_3960211755#0",
-      "en": "Maximum Physical Damage Reduction is 50%",
-      "text": "物理伤害上限减免为 50%"
+      "key": "explicit.stat_3387008487#0",
+      "en": "Defend with 200% of Armour",
+      "text": "以 200% 的护甲防御"
     },
     {
       "key": "explicit.stat_2469544361#0",
       "en": "Gain #% of Cold damage as Extra Fire damage per 1% Chill Magnitude on enemy",
       "text": "敌人身上每有 1% 的冰缓强度，获得相当于 #% 冰霜伤害的额外火焰伤害"
+    },
+    {
+      "key": "explicit.stat_3960211755#0",
+      "en": "Maximum Physical Damage Reduction is 50%",
+      "text": "物理伤害上限减免为 50%"
     },
     {
       "key": "explicit.stat_343703314#0",
@@ -369,19 +364,14 @@
       "text": "投射物对 6 米外的敌人的暴击几率提高 #%"
     },
     {
-      "key": "explicit.stat_3451259830#0",
-      "en": "#% chance to gain Onslaught for 3 seconds when you kill an enemy affected by Abyssal Wasting",
-      "text": "击败受到深渊耗散影响的敌人时 有 #% 的几率获得猛攻，持续 3 秒"
-    },
-    {
       "key": "explicit.stat_4128965096#0",
       "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill Remove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
-      "text": "每使用 # 次榴弹技能，获得 1 层爆破韵律 达到 10 层时，移除所有爆破韵律并获得持续 10 秒的爆破热忱"
+      "text": "每使用 # 次榴弹技能，获得 1 层爆破韵律达到 10 层时，移除所有爆破韵律并获得持续 10 秒的爆破热忱"
     },
     {
-      "key": "explicit.stat_3161573445#0",
-      "en": "Regenerate #% of maximum Life per Second if you've used a Life Flask in the past 10 seconds",
-      "text": "生命在你过去 10 秒内使用过生命药剂的情况下每秒再生 #%"
+      "key": "explicit.stat_3451259830#0",
+      "en": "#% chance to gain Onslaught for 3 seconds when you kill an enemy affected by Abyssal Wasting",
+      "text": "击败受到深渊耗散影响的敌人时有 #% 的几率获得猛攻，持续 3 秒"
     },
     {
       "key": "explicit.stat_2825946427#0",
@@ -389,9 +379,9 @@
       "text": "投射物对 6 米外的敌人造成的击中伤害提高 #%"
     },
     {
-      "key": "explicit.stat_3134931479#0",
-      "en": "Abyssal Wasting you inflict also gives targets 10% chance to explode on death, dealing a tenth of their life as Physical Damage",
-      "text": "你施加的深渊耗散同样使目标有 10% 的几率在死亡时爆炸，造成相当于生命值十分之一的物理伤害"
+      "key": "explicit.stat_3161573445#0",
+      "en": "Regenerate #% of maximum Life per Second if you've used a Life Flask in the past 10 seconds",
+      "text": "生命在你过去 10 秒内使用过生命药剂的情况下每秒再生 #%"
     },
     {
       "key": "explicit.stat_2036307261#0",
@@ -402,6 +392,11 @@
       "key": "explicit.stat_2531622767#0",
       "en": "#% increased Block chance per 100 total Item Armour on Equipped Armour Items",
       "text": "已装备护甲物品每有 100 点物品护甲值，格挡几率提高 #%"
+    },
+    {
+      "key": "explicit.stat_3134931479#0",
+      "en": "Abyssal Wasting you inflict also gives targets 10% chance to explode on death, dealing a tenth of their life as Physical Damage",
+      "text": "你施加的深渊耗散同样使目标有 10% 的几率在死亡时爆炸，造成相当于生命值十分之一的物理伤害"
     },
     {
       "key": "explicit.stat_2818518881#0",
@@ -434,24 +429,24 @@
       "text": "每 10 秒获得一个随机的非伤害性神龛增益，持续 20 秒"
     },
     {
-      "key": "explicit.stat_3138344128#0",
-      "en": "Defend with 200% of Armour during effect",
-      "text": "效果期间以 200% 的护甲防御"
-    },
-    {
-      "key": "explicit.stat_347220474#0",
-      "en": "#% increased Spell damage for each 200 total Mana you have Spent Recently",
-      "text": "你近期每消耗 200 魔力，法术伤害提高 #%"
-    },
-    {
       "key": "explicit.stat_2650053239#0",
       "en": "#% increased Cost of Skills for each 200 total Mana Spent Recently",
       "text": "近期内每消耗总计 200 魔力都使技能消耗提高 #%"
     },
     {
+      "key": "explicit.stat_3138344128#0",
+      "en": "Defend with 200% of Armour during effect",
+      "text": "效果期间以 200% 的护甲防御"
+    },
+    {
       "key": "explicit.stat_2890792988#0",
       "en": "Your Hits can Penetrate Elemental Resistances down to a minimum of -50%",
       "text": "你的击中可以穿透元素抗性，最多降低 至 -50%"
+    },
+    {
+      "key": "explicit.stat_347220474#0",
+      "en": "#% increased Spell damage for each 200 total Mana you have Spent Recently",
+      "text": "你近期每消耗 200 魔力，法术伤害提高 #%"
     },
     {
       "key": "explicit.stat_3581035970#0",
@@ -496,7 +491,7 @@
     {
       "key": "explicit.stat_3492740640#0",
       "en": "Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds Lose all Runic Bindings when you Shapeshift to gain that much Unbound Potential",
-      "text": "使用法术击中时获得 1 点符文咒缚，每 0.5 秒只能获得一次 变形时，损失所有符文咒缚以获得等量的潜能释放"
+      "text": "使用法术击中时获得 1 点符文咒缚，每 0.5 秒只能获得一次变形时，损失所有符文咒缚以获得等量的潜能释放"
     },
     {
       "key": "explicit.stat_2991045011#0",
@@ -719,14 +714,14 @@
       "text": "装备头盔每有 1 点物品闪避值，命中 #"
     },
     {
-      "key": "rune.stat_280497929#0",
-      "en": "# to maximum Mana per 2 Item Energy Shield on Equipped Helmet",
-      "text": "已装备头盔每有 2 点物品能量护盾，魔力上限 #"
-    },
-    {
       "key": "rune.stat_3863682550#0",
       "en": "Gain Guard equal to #% of maximum Life for 4 seconds on taking Savage Hit",
       "text": "受到凶蛮击中时，获得等同于生命上限 #% 的 防卫，持续 4 秒"
+    },
+    {
+      "key": "rune.stat_280497929#0",
+      "en": "# to maximum Mana per 2 Item Energy Shield on Equipped Helmet",
+      "text": "已装备头盔每有 2 点物品能量护盾，魔力上限 #"
     },
     {
       "key": "rune.stat_282990844#0",
@@ -772,6 +767,26 @@
       "key": "sanctum.stat_4191312223#0",
       "en": "Maximum Honour is 1",
       "text": "荣誉上限为 1"
+    }
+  ],
+  "skipped": [
+    {
+      "key": "explicit.stat_1910039112#0",
+      "en": "Every 3 seconds during Effect, deal #% of Mana spent in those seconds as Chaos Damage to Enemies within 3 metres",
+      "text": "生效期间每过 3 秒，对 3 米内的敌人造成这几秒内消耗魔力的 #% 的混沌伤害",
+      "reason": "ambiguous"
+    },
+    {
+      "key": "explicit.stat_4128965096#0",
+      "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill Remove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
+      "text": "每使用 # 次榴弹技能，获得 1 层爆破韵律达到 10 层时，移除所有爆破韵律并获得持续 10 秒的爆破热忱",
+      "reason": "ambiguous"
+    },
+    {
+      "key": "explicit.stat_3076483222|61382#0",
+      "en": "Sacrifice up to 2 Divine Orbs to receive double on Trial completion",
+      "text": "献祭最多 3 神圣石 个，完成试炼时可获得双倍返还",
+      "reason": "mismatch"
     }
   ]
 }
