@@ -75,7 +75,16 @@ describe('versions 与 stat-order', () => {
     expect(() => parseStatOrder({ entries: { 'zh-TW': { 'a.b': ['x'] } } })).toThrow('zh-TW.a.b')
   })
   it('parseStatWinners 按 locale 分节并校验字符串值', () => {
-    expect(parseStatWinners(read('stat-winners.json'))).toEqual({ 'zh-CN': {}, 'zh-TW': {} })
+    expect(parseStatWinners(read('stat-winners.json'))).toEqual({
+      'zh-CN': {
+        '#% increased spirit': 'explicit.stat_1416406066',
+        '#% of armour also applies to lightning damage': 'rune.stat_2200571612',
+      },
+      'zh-TW': {
+        '#% of armour also applies to lightning damage': 'rune.stat_2200571612',
+        '#% increased attack speed per # dexterity': 'explicit.stat_720908147',
+      },
+    })
     expect(
       parseStatWinners({ entries: { 'zh-CN': { '#% increased spirit': 'b.second' } } }),
     ).toEqual({
