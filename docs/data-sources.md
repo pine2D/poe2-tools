@@ -23,7 +23,7 @@
 
 | 来源 | 覆盖 | 语言 | 获取 | 风险 | 开关 |
 |---|---|---|---|---|---|
-| `poe2db.tw/us/`、`/cn/`、`/tw/`；`cdn.poe2db.tw`（天赋树 bundle） | 天赋节点中文名、宝石中文名、物品基底与传奇中文名；/us/ 页英文名仅作 join 校验锚点，不进词典 | en（us，仅校验）、zh-CN、zh-TW（各自独立翻译） | 天赋树 JSON：/data/passive-skill-tree/<模板版本>/data_{cn,tw}.json?5，模板版本从 /cn/passive-skill-tree 页面引用的 bundle 里解析（当前 4.5），解析失败回退写死值并告警；物品 / 宝石中文名：列表页 /{us,cn,tw}/Gem、/Unique_item 与 31 个装备分类页（Amulets … Wands，名单在 packages/dict-builder/src/config.ts，按 trade2 en /items 装备类分组反查得到的最小完备名单），按站内 slug 对齐，us 页英文名与 primary 源规范名逐字符相等才采纳；只抓列表页不抓详情页，所有 poe2db 请求串行、相邻请求 ≥ 1.5 s、按日缓存（列表页缓存约 80 MB / 天），全新构建 99 页（2026-09-07 压测 81 页无限流） | robots.txt 仅 Allow: /；无 LICENSE / ToS；wiki 文章 CC BY-NC-SA 3.0，数据库页未明确 | `DICT_ENABLE_POE2DB`，默认开，可关 |
+| `poe2db.tw/us/`、`/cn/`、`/tw/`；`cdn.poe2db.tw`（天赋树 bundle） | 天赋节点中文名、宝石中文名、物品基底与传奇中文名；/us/ 页英文名仅作 join 校验锚点，不进词典 | en（us，仅校验）、zh-CN、zh-TW（各自独立翻译） | 天赋树 JSON：/data/passive-skill-tree/<模板版本>/data_{cn,tw}.json?5，模板版本从 /cn/passive-skill-tree 页面引用的 bundle 里解析（当前 4.5），解析失败回退写死值并告警；物品 / 宝石中文名：列表页 /{us,cn,tw}/Gem、/Unique_item 与 31 个装备分类页（Amulets … Wands，名单在 packages/dict-builder/src/config.ts，按 trade2 en /items 装备类分组反查得到的最小完备名单），按站内 slug 对齐，us 页英文名与 primary 源规范名逐字符相等才采纳；只抓列表页不抓详情页，所有 poe2db 请求串行、相邻请求 ≥ 1.5 s、按日缓存（列表页缓存约 80 MB / 天），全新构建 99 页（2026-09-07 压测 81 页无限流）（2026-09-08 构建：宝石 1072 / 基底 1543 / 传奇 445 条，各 locale 见 meta.json） | robots.txt 仅 Allow: /；无 LICENSE / ToS；wiki 文章 CC BY-NC-SA 3.0，数据库页未明确 | `DICT_ENABLE_POE2DB`，默认开，可关 |
 
 ## 禁止
 
