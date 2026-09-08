@@ -9,6 +9,7 @@ import {
   measureCoverageSets,
 } from './coverage'
 import { readBaseline } from './meta'
+import { errorMessage } from './util/error'
 import { readJson } from './util/json'
 
 export interface CheckOptions {
@@ -47,10 +48,6 @@ async function exists(path: string): Promise<boolean> {
   } catch {
     return false
   }
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
 }
 
 function percent(rate: number | null): string {

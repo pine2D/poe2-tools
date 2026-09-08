@@ -36,6 +36,7 @@ import {
   sourceRecord,
   summarizeProblems,
 } from './meta'
+import { errorMessage } from './util/error'
 import { readJson, writeJson } from './util/json'
 
 export interface BuildOptions {
@@ -69,10 +70,6 @@ interface Poe2dbContext {
 interface PassivesOutcome {
   result: ReturnType<typeof buildPassivesDict>
   sources: SourceRecord[]
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
 }
 
 function firstLeagueText(raw: unknown): string | null {
