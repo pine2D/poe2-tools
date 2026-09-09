@@ -1,0 +1,41 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/build-l10n/**'
+      - 'packages/build-core/**'
+      - 'data/dict/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'tsconfig.base.json'
+      - 'vitest.config.ts'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# Cloudflare Pages：仓库变量 CF_PAGES_PROJECT 未设置时整个 job 跳过；
+# 令牌与账号 id 只从 secrets 读，仓库里不出现任何凭据或项目名
+jobs:
+  pages:
+    if: vars.CF_PAGES_PROJECT != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @poe2-tools/build-l10n build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/build-l10n/dist --project-name=${{ vars.CF_PAGES_PROJECT }}
