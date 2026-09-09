@@ -4,6 +4,7 @@ import { saveBlob, textBlob, uniqueNames, zipBlob, zipName } from './download'
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 describe('uniqueNames', () => {
@@ -43,7 +44,8 @@ describe('textBlob / zipName', () => {
 })
 
 describe('saveBlob', () => {
-  it('创建对象 URL、点击下载链接、释放 URL', () => {
+  it('创建对象 URL、点击下载链接、延迟释放 URL（Firefox 同步 revoke 会掐断下载）', () => {
+    vi.useFakeTimers()
     const createObjectURL = vi.fn(() => 'blob:test')
     const revokeObjectURL = vi.fn()
     Object.assign(URL, { createObjectURL, revokeObjectURL })
@@ -51,7 +53,9 @@ describe('saveBlob', () => {
     saveBlob(textBlob('{}'), 'x.build')
     expect(createObjectURL).toHaveBeenCalledOnce()
     expect(click).toHaveBeenCalledOnce()
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:test')
+    expect(revokeObjectURL).not.toHaveBeenCalled()
     expect(document.querySelector('a[download]')).toBeNull()
+    vi.runAllTimers()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:test')
   })
 })

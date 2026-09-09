@@ -120,6 +120,7 @@ export function App({ fetchImpl }: AppProps) {
         <aside className="app__side">
           <DropZone onFiles={onFiles} onPaste={onPaste} />
           <FileList
+            sources={sources}
             results={results}
             selectedId={selectedId}
             onSelect={setSelectedId}

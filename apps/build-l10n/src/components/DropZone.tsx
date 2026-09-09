@@ -47,7 +47,7 @@ export function DropZone({ onFiles, onPaste }: DropZoneProps) {
         multiple
         accept=".build,application/json"
         onChange={pick}
-        hidden
+        className="visually-hidden"
       />
       <textarea
         aria-label="粘贴 .build 内容"

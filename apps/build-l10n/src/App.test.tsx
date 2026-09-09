@@ -107,4 +107,13 @@ describe('App', () => {
     render(<App fetchImpl={fakeDictFetch(miniBundle, { omit: ['stats'] })} />)
     await screen.findByText('词典加载失败：zh-CN/stats.json：HTTP 404')
   })
+
+  it('词典加载期间文件列表不消失，覆盖率位置显示"待词典就绪"且下载禁用', async () => {
+    render(<App fetchImpl={() => new Promise(() => {})} />)
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    expect(screen.getByText('待词典就绪')).toBeDefined()
+    const download = screen.getByLabelText('下载 rich.build') as HTMLButtonElement
+    expect(download.disabled).toBe(true)
+  })
 })

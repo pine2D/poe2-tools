@@ -47,5 +47,6 @@ export function saveBlob(blob: Blob, name: string): void {
   document.body.append(anchor)
   anchor.click()
   anchor.remove()
-  URL.revokeObjectURL(url)
+  // 部分浏览器（Firefox）在点击后同步 revoke 会掐断尚未开始的下载，延迟释放规避
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
