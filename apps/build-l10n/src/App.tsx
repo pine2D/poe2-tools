@@ -6,6 +6,7 @@ import { OptionsBar } from './components/OptionsBar'
 import { createDictLoader, type FetchJson, type LoadedDict } from './dict/loadDict'
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { pastedSource, readFiles } from './files/readSources'
+import { Preview } from './preview/Preview'
 import {
   type SourceFile,
   type TranslateOptions,
@@ -128,9 +129,9 @@ export function App({ fetchImpl }: AppProps) {
         </aside>
         <main className="app__main">
           {selected?.ok ? (
-            <pre className="output">{selected.file.output}</pre>
+            <Preview file={selected.file} />
           ) : (
-            <p className="placeholder">选择左侧文件查看输出</p>
+            <p className="placeholder">选择左侧文件查看对照预览</p>
           )}
         </main>
       </div>
