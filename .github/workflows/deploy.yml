@@ -48,8 +48,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @poe2-tools/build-l10n build
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/build-l10n/dist --project-name=${{ vars.CF_PAGES_PROJECT }}
+      # 不用 cloudflare/wrangler-action：它检测到 pnpm 后会在 monorepo 根执行 `pnpm add wrangler`，被 pnpm 拒绝（ERR_PNPM_ADDING_TO_ROOT）。
+      # 直接用 pnpm dlx 跑与本地相同的命令；凭据只从 secrets 读；--branch=main 确保 detached HEAD 下仍发布到生产环境。
+      - name: 发布到 Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm dlx wrangler@4 pages deploy apps/build-l10n/dist --project-name="${{ vars.CF_PAGES_PROJECT }}" --branch=main
