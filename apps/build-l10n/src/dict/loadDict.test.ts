@@ -1,3 +1,4 @@
+// @vitest-environment node
 import type { DictBundle } from '@poe2-tools/build-core'
 import { describe, expect, it } from 'vitest'
 import { miniBundle } from '../../../../packages/build-core/src/testing/miniDict'
