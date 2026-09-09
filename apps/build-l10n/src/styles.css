@@ -1,20 +1,136 @@
+/* build-l10n 样式表：令牌层 → 控件 → 骨架 → 组件 → 响应式 → 无障碍兜底。
+   取值来自 docs/superpowers/research/2026-09-09-ui-redesign-research.md §5.1，
+   注释里的对比度按 WCAG 2.1 相对亮度公式计算。金色只做品牌 / 标题 / 强调，命中与状态不用金色。 */
+
 :root {
   color-scheme: dark;
-  --bg: #15171c;
-  --panel: #1e2129;
-  --panel-2: #262a34;
-  --border: #2c303a;
-  --text: #e6e1d6;
-  --muted: #8f8a80;
-  --accent: #c9a24a;
-  --miss: #b5423a;
-  --ok: #5e9c5a;
-  font-family: system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 14px;
+
+  /* 表面与描边：暖近黑实色底逐级提亮；层级用描边与内高光表达，不用落地阴影 */
+  --surface-0: #0e0d0b;
+  --surface-1: #16140f;
+  --surface-2: #1d1a14;
+  --surface-3: #262117;
+  --surface-hover: #2e2819;
+  --hairline: rgba(217, 192, 120, 0.12);
+  --hairline-strong: rgba(217, 192, 120, 0.22);
+  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --rule-fade: linear-gradient(90deg, transparent, rgba(217, 192, 120, 0.45), transparent);
+
+  /* 文本：括号内为 vs surface-0 / surface-2 / surface-3 的对比度 */
+  --text: #ede6d6; /* 15.6 / 14.0 / 12.9 */
+  --text-2: #b8ae99; /* 8.8 / 7.9 / 7.3 */
+  --text-3: #9a9280; /* 6.3 / 5.6 / 5.2 */
+
+  /* 品牌金 */
+  --gold-100: #f2e4b8; /* 15.3 / 13.7 / 12.6 */
+  --gold-300: #d9c078; /* 10.9 / 9.7 / 9.0 */
+  --gold-500: #c29e6c; /* 7.8 / 6.9 / 6.4 */
+  --bronze-600: #8a6a38; /* 3.9 / 3.5 / 3.2，仅用于非文本；第二期覆盖率轨的底槽用 */
+
+  /* 语义色：与金色彻底分家 */
+  --warn: #e5a93d; /* 未命中 9.3 / 8.3 / 7.7 */
+  --warn-wash: rgba(229, 169, 61, 0.1);
+  --danger: #e8695c; /* 错误 6.1 / 5.5 / 5.0 */
+  --keep: #aa9e82; /* 原样保留 7.3 / 6.5 / 6.0；第二期逐行三态的「原样保留」用 */
+  --info: #3fc7bf; /* 提示 9.4 / 8.4 / 7.7；第二期 ⓘ 说明气泡与状态徽章用 */
+  --rarity-unique: #c87b3a; /* 传奇名 5.9 / 5.2 / 4.8 */
+
+  /* 主按钮（官方 ember 渐变）：文字 #e7c878 对最亮的一档底 #5a2c08 是 7.2 */
+  --cta-face: linear-gradient(180deg, #1b0e05, #4a2408 61%, #5a2c08 89%, #0a0705 95%, #3c3429 96%);
+  --cta-border: #4a4137;
+  --cta-text: #e7c878;
+
+  /* 字体栈：只用系统字体，不引任何外部字体文件。
+     --font-ui 本期无引用（body 走 --font-zh-cn），留给第二期需要纯拉丁字形的眉标 / 数字位。 */
+  --font-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-zh-cn:
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+  --font-zh-tw:
+    "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", "Source Han Sans TC", system-ui, sans-serif;
+  --font-pair:
+    ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", "PingFang SC", sans-serif;
+
+  /* 字号阶（基准 15px） */
+  --fs-h1: 22px;
+  --fs-h2: 18px;
+  --fs-h3: 15.5px;
+  --fs-body: 15px;
+  --fs-pair: 14px;
+  --fs-label: 13px;
+  --fs-micro: 11.5px;
+
+  /* 间距阶（4px 基数） */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 48px;
+
+  /* 圆角上限 10px：工具类界面不用大圆角 */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 10px;
+
+  /* 动效与焦点。焦点环是 outline 简写值：全站没有任何组件规则会去改 outline，
+     box-shadow 则会被 .options > button（同特异性、更靠后）和
+     .filelist__item button[aria-label^="移除"]（0,2,1）覆盖掉，所以不能用 box-shadow 做焦点指示。 */
+  --dur-fast: 120ms;
+  --dur-drop: 140ms;
+  --ease: ease-out;
+  --focus-ring: 2px solid var(--gold-300);
+
+  /* 过渡别名：Task 2–4 逐段换掉旧组件规则，期间旧规则仍要取得到颜色。Task 5 删掉这 7 行。 */
+  --bg: var(--surface-0);
+  --panel: var(--surface-1);
+  --panel-2: var(--surface-3);
+  --border: var(--hairline);
+  --muted: var(--text-3);
+  --accent: var(--gold-300);
+  --miss: var(--danger);
 }
+
 * {
   box-sizing: border-box;
 }
+
+body {
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--text);
+  font-family: var(--font-zh-cn);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 译文列在第二期会带 lang="zh-TW"；这条规则先就位，届时自动换台服字形 */
+:lang(zh-TW) {
+  font-family: var(--font-zh-tw);
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+}
+
+code,
+pre {
+  font-family: var(--font-pair);
+}
+
+::selection {
+  background: rgba(217, 192, 120, 0.24);
+  color: var(--text);
+}
+
+::placeholder {
+  color: var(--text-3);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -26,10 +142,17 @@
   white-space: nowrap;
   border: 0;
 }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
+
+/* 焦点指示只用 outline：组件规则会重写 box-shadow（主 CTA 加投影、幽灵按钮写 none），
+   用 box-shadow 做焦点环会被它们覆盖；outline 无人改动，forced-colors 下还会被系统色接管 */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 button,
 .button {
