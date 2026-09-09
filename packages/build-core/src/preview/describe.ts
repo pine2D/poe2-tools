@@ -12,6 +12,8 @@ export interface PreviewSkill extends PreviewName {
 }
 
 export interface PreviewSlot {
+  // inventory_slots 的原始下标：非对象元素会被过滤，下游按它对 FieldReport 的路径
+  rawIndex: number
   inventoryId: string
   label: string | null
   slotX: number
@@ -77,9 +79,10 @@ function describeSkill(entry: string | BuildSkill, index: DictIndex): PreviewSki
   }
 }
 
-function describeSlot(slot: BuildInventorySlot, index: DictIndex): PreviewSlot {
+function describeSlot(slot: BuildInventorySlot, rawIndex: number, index: DictIndex): PreviewSlot {
   const uniqueName = typeof slot.unique_name === 'string' ? slot.unique_name : null
   return {
+    rawIndex,
     inventoryId: typeof slot.inventory_id === 'string' ? slot.inventory_id : '',
     label: index.inventories.get(slot.inventory_id) ?? null,
     slotX: typeof slot.slot_x === 'number' ? slot.slot_x : 0,
@@ -103,8 +106,10 @@ export function describeBuild(build: BuildFile, index: DictIndex): PreviewModel 
           },
     skills: toArray<string | BuildSkill>(build.skills).map((s) => describeSkill(s, index)),
     passives: toArray<unknown>(build.passives).map((p) => passiveName(idOf(p), index)),
-    slots: toArray<unknown>(build.inventory_slots)
-      .filter((s): s is BuildInventorySlot => s !== null && typeof s === 'object')
-      .map((s) => describeSlot(s, index)),
+    slots: toArray<unknown>(build.inventory_slots).flatMap((slot, rawIndex) =>
+      slot !== null && typeof slot === 'object'
+        ? [describeSlot(slot as BuildInventorySlot, rawIndex, index)]
+        : [],
+    ),
   }
 }

@@ -83,6 +83,7 @@ describe('describeBuild', () => {
     ])
     expect(model.slots).toEqual([
       {
+        rawIndex: 0,
         inventoryId: 'Weapon1',
         label: '主手',
         slotX: 0,
@@ -91,6 +92,7 @@ describe('describeBuild', () => {
         additionalText: 'x',
       },
       {
+        rawIndex: 1,
         inventoryId: 'Belt1',
         label: '腰带',
         slotX: 0,
@@ -99,6 +101,7 @@ describe('describeBuild', () => {
         additionalText: null,
       },
       {
+        rawIndex: 2,
         inventoryId: 'Charm1',
         label: '魔符',
         slotX: 2,
@@ -107,6 +110,7 @@ describe('describeBuild', () => {
         additionalText: null,
       },
       {
+        rawIndex: 3,
         inventoryId: 'Unknown9',
         label: null,
         slotX: 0,
@@ -134,5 +138,17 @@ describe('describeBuild', () => {
     } as unknown as BuildFile
     expect(() => describeBuild(odd, miniIndex)).not.toThrow()
     expect(describeBuild(odd, miniIndex).slots).toEqual([])
+  })
+
+  it('槽位 rawIndex 是 inventory_slots 的原始下标（非对象元素被过滤但不占位）', () => {
+    // 畸形元素故意不合类型，与文件里其他畸形输入用例同样写法
+    const mixed = {
+      name: 'mixed',
+      inventory_slots: [3, { inventory_id: 'Ring1' }, null, { inventory_id: 'Ring2' }],
+    } as unknown as BuildFile
+    expect(describeBuild(mixed, miniIndex).slots.map((s) => [s.rawIndex, s.inventoryId])).toEqual([
+      [1, 'Ring1'],
+      [3, 'Ring2'],
+    ])
   })
 })
