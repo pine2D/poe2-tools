@@ -57,7 +57,7 @@ textarea {
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 .app__header {
   display: flex;
@@ -81,6 +81,7 @@ textarea {
 .app__body {
   display: grid;
   grid-template-columns: 320px 1fr;
+  grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
@@ -220,7 +221,9 @@ textarea {
   border-radius: 4px;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-family:
+    ui-monospace, "Cascadia Mono", Consolas, "Sarasa Mono SC", "Noto Sans Mono CJK SC",
+    "Microsoft YaHei", monospace;
   font-size: 0.85rem;
 }
 .pair__col--en {

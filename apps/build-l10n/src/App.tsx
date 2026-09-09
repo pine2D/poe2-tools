@@ -63,6 +63,18 @@ export function App({ fetchImpl }: AppProps) {
     }
   }, [loader, locale])
 
+  // 兜底：拖到 DropZone 区域外松手时浏览器会打开/导航到该文件，丢失当前页面状态；
+  // DropZone 自身的 onDrop 已 preventDefault，这里在冒泡到 window 时再挡一次
+  useEffect(() => {
+    const stop = (event: Event) => event.preventDefault()
+    window.addEventListener('dragover', stop)
+    window.addEventListener('drop', stop)
+    return () => {
+      window.removeEventListener('dragover', stop)
+      window.removeEventListener('drop', stop)
+    }
+  }, [])
+
   const results = useMemo<TranslateResult[]>(
     () =>
       dictState.status === 'ready'
