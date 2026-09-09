@@ -48,6 +48,7 @@ export function FileList({
             <span className="filelist__rate">{rateText(result)}</span>
             <button
               type="button"
+              className="cta"
               aria-label={`下载 ${source.name}`}
               disabled={result === undefined || !result.ok}
               onClick={() => onDownload(source.id)}

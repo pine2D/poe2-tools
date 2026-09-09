@@ -13,6 +13,12 @@
   --surface-hover: #2e2819;
   --hairline: rgba(217, 192, 120, 0.12);
   --hairline-strong: rgba(217, 192, 120, 0.22);
+  /* 可交互控件的功能性边界（WCAG 1.4.11 非文本对比度 ≥3:1）：--hairline / --hairline-strong
+     在暗色面上只有 1.06–1.91:1，够不到线，但那两个仍然是对的——装饰性分隔线（字标竖线、
+     卡片外框、区块淡出线）保持不变。这个令牌只给「这里能操作」的三处边框单开一档：
+     按钮基态、输入框/下拉框、拖放区虚线框。#85795d 暖灰棕（非金色，不与品牌金混淆），
+     WCAG 2.1 相对亮度实算 vs surface-0/1/2/3：4.5 / 4.3 / 4.0 / 3.7，四个面全部 ≥3:1。 */
+  --control-border: #85795d;
   --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
   --rule-fade: linear-gradient(90deg, transparent, rgba(217, 192, 120, 0.45), transparent);
 
@@ -75,8 +81,8 @@
   --r-lg: 10px;
 
   /* 动效与焦点。焦点环是 outline 简写值：全站没有任何组件规则会去改 outline，
-     box-shadow 则会被 .options > button（同特异性、更靠后）和
-     .filelist__item button[aria-label^="移除"]（0,2,1）覆盖掉，所以不能用 box-shadow 做焦点指示。 */
+     box-shadow 则会被 .cta（主 CTA）和 .filelist__item button[aria-label^="移除"]（0,2,1）
+     两处组件规则覆盖掉，所以不能用 box-shadow 做焦点指示。 */
   --dur-fast: 120ms;
   --dur-drop: 140ms;
   --ease: ease-out;
@@ -155,7 +161,7 @@ button,
   gap: var(--sp-2);
   min-height: 34px;
   padding: 0 14px;
-  border: 1px solid var(--hairline-strong);
+  border: 1px solid var(--control-border); /* 功能边界，见 :root 里的对比度注释 */
   border-radius: var(--r-md);
   background: var(--surface-3);
   box-shadow: var(--inset-light);
@@ -185,9 +191,13 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* 主 CTA：全站只有「全部下载」与文件行的「下载」两处（owner 拍板：主场景是导入即下载） */
-.options > button,
-button[aria-label^="下载"] {
+/* 主 CTA：全站只有「全部下载」（OptionsBar.tsx）与文件行的「下载」（FileList.tsx）两处
+   （owner 拍板：主场景是导入即下载）。两颗按钮在 TSX 里都显式带 className="cta"，
+   不再靠「是 .options 的直接子元素」或「aria-label 以‘下载’开头」这类结构 / 文案耦合选中——
+   第二期顶栏加重试按钮、或者哪天把 aria-label 文案从「下载」改成别的词，都不会静默误命中
+   或漏命中这份样式。.cta 基态 (0,1,0) 仍然压得过通用 button 系列规则：class 数量已经更高，
+   不需要再叠 button 元素选择器。 */
+.cta {
   border-color: var(--cta-border);
   background: var(--cta-face);
   box-shadow:
@@ -197,15 +207,13 @@ button[aria-label^="下载"] {
   font-weight: 600;
 }
 
-.options > button:hover:not(:disabled),
-button[aria-label^="下载"]:hover:not(:disabled) {
+.cta:hover:not(:disabled) {
   border-color: var(--gold-500);
   background: var(--cta-face);
   color: var(--gold-100);
 }
 
-.options > button:disabled,
-button[aria-label^="下载"]:disabled {
+.cta:disabled {
   border-color: var(--hairline);
   background: var(--surface-2);
   color: var(--text-3);
@@ -216,7 +224,7 @@ select,
 textarea {
   min-height: 34px;
   padding: 6px 10px;
-  border: 1px solid var(--hairline-strong);
+  border: 1px solid var(--control-border); /* 功能边界，见 :root 里的对比度注释 */
   border-radius: var(--r-md);
   background: var(--surface-0);
   color: var(--text);
@@ -386,7 +394,7 @@ input[type="checkbox"] {
   gap: var(--sp-3);
   min-height: 120px;
   padding: var(--sp-5) var(--sp-4);
-  border: 1px dashed var(--hairline-strong);
+  border: 1px dashed var(--control-border); /* 功能边界，见 :root 里的对比度注释 */
   border-radius: var(--r-lg);
   background: var(--surface-2);
   text-align: center;
@@ -420,8 +428,9 @@ input[type="checkbox"] {
 
 /* 两行式：首行「文件名 + 覆盖率」，次行「下载（主）+ 移除（次）」。
    340px 侧栏里四元素挤一行会把文件名截成 pasted-1.b…，所以不分宽度一律两行。
-   下载 / 移除两颗按钮在 FileList.tsx 里没有 class，只能按 aria-label 前缀选中，
-   改 FileList.tsx 的 aria-label 文案时必须同步改这里。 */
+   下载按钮在 FileList.tsx 里带 className="cta"，样式选中不再依赖位置或文案；
+   移除按钮仍然没有 class，只能按 aria-label 前缀选中，改 FileList.tsx 的
+   「移除」aria-label 文案时还是要同步改这里。 */
 .filelist__item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -434,7 +443,7 @@ input[type="checkbox"] {
   transition: background-color var(--dur-fast) var(--ease);
 }
 
-.filelist__item button[aria-label^="下载"] {
+.filelist__item .cta {
   grid-column: 1;
   justify-self: start;
 }
@@ -768,17 +777,19 @@ button.filelist__name[aria-current="true"] {
   }
 }
 
-/* ≤560：触控尺寸 */
+/* ≤560：触控尺寸统一抬到 44px。同一条媒体查询里之前只抬了按钮（40px），
+   select 停在 34px、.options label 停在 32px，三档并存——这屏上仅有的四个可点控件
+   高矮不齐，切换目标语言又是最核心的一次交互，所以一并补齐。
+   button.filelist__name 必须显式列在选择器里：它的基态是 `button.filelist__name`(0,2,1)，
+   压得过通用 `button`(0,0,1)，「选中文件」是侧栏主动作，不能被漏掉。
+   textarea 不在这份名单里——侧栏里唯一的 textarea 是拖放区的粘贴框，已经 76px 高，不需要再抬。 */
 @media (max-width: 560px) {
   button,
-  .button {
-    min-height: 40px;
-  }
-
-  /* 上面那条是元素选择器 (0,0,1)，压不过基态的 `button.filelist__name`(0,2,1)，
-     而「选中文件」是侧栏主动作，必须单独把它抬到 40px */
+  .button,
+  select,
+  .options label,
   button.filelist__name {
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .options {
@@ -786,7 +797,7 @@ button.filelist__name[aria-current="true"] {
     width: 100%;
   }
 
-  .options > button {
+  .options > .cta {
     width: 100%;
   }
 
@@ -833,8 +844,7 @@ button.filelist__name[aria-current="true"] {
     filter: none;
   }
 
-  .options > button,
-  button[aria-label^="下载"] {
+  .cta {
     background: ButtonFace;
     color: ButtonText;
   }

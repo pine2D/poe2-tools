@@ -39,7 +39,7 @@ export function OptionsBar(props: OptionsBarProps) {
         />
         传奇名注入
       </label>
-      <button type="button" onClick={onDownloadAll} disabled={!canDownload}>
+      <button type="button" className="cta" onClick={onDownloadAll} disabled={!canDownload}>
         全部下载
       </button>
     </div>
