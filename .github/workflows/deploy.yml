@@ -17,7 +17,21 @@ on:
 # Cloudflare Pages：仓库变量 CF_PAGES_PROJECT 未设置时整个 job 跳过；
 # 令牌与账号 id 只从 secrets 读，仓库里不出现任何凭据或项目名
 jobs:
+  # 与 ci.yml 的 verify job 相同：部署前先确保 typecheck / lint / test / build / dict:check 全过
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
   pages:
+    needs: verify
     if: vars.CF_PAGES_PROJECT != ''
     runs-on: ubuntu-latest
     permissions:
