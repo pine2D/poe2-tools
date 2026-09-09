@@ -1,0 +1,24 @@
+:root {
+  color-scheme: dark;
+  --bg: #15171c;
+  --panel: #1e2129;
+  --text: #e6e1d6;
+  --muted: #8f8a80;
+  --accent: #c9a24a;
+  --miss: #b5423a;
+  font-family: system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+.app__header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2c303a;
+}
+.app__header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
