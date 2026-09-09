@@ -92,8 +92,15 @@ export async function loadDict(
 ): Promise<LoadDictResult> {
   const raw: Record<string, unknown> = {}
   const missing: DictTable[] = []
-  for (const table of DICT_TABLES) {
-    const result = await fetchTable(dictUrl(base, locale, `${table}.json`), fetchImpl)
+  // 七张表并发取，取回后按 DICT_TABLES 固定顺序遍历套用判定，
+  // 保证报错信息稳定指向顺序中第一张出问题的表
+  const tableFetches = await Promise.all(
+    DICT_TABLES.map(async (table) => ({
+      table,
+      result: await fetchTable(dictUrl(base, locale, `${table}.json`), fetchImpl),
+    })),
+  )
+  for (const { table, result } of tableFetches) {
     if (result.kind === 'ok') {
       raw[table] = result.value
       continue
