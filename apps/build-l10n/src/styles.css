@@ -535,94 +535,184 @@ button.filelist__name[aria-current="true"] {
 .placeholder {
   margin: 0;
 }
+/* ---------- 预览区 ---------- */
+
+.preview {
+  max-width: 1000px;
+}
+
 .preview__section {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--sp-7);
 }
+
+/* 区块标题下的两端淡出分隔线：生态母题，比一条通栏实线安静 */
 .preview__section h2 {
-  font-size: 1rem;
-  color: var(--accent);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.25rem;
+  position: relative;
+  margin: 0 0 var(--sp-4);
+  padding-bottom: var(--sp-2);
+  color: var(--gold-300);
+  font-size: var(--fs-h2);
+  line-height: 1.35;
 }
+
+.preview__section h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--rule-fade);
+}
+
+/* 「未命中（n）」这一档小标题；卡片里的 h3 在下面单独定义，靠书写顺序压过本规则 */
+.preview__section > h3 {
+  margin: var(--sp-5) 0 var(--sp-2);
+  color: var(--text);
+  font-size: var(--fs-h3);
+}
+
 .overview {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
-  margin: 0 0 0.75rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-5);
+  margin: 0 0 var(--sp-5);
 }
+
 .overview dt {
-  color: var(--muted);
+  color: var(--text-2);
+  font-size: var(--fs-label);
 }
+
 .overview dd {
   margin: 0;
+  font-variant-numeric: tabular-nums;
 }
+
 .card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  box-shadow: var(--inset-light);
 }
+
 .card h3 {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
   display: flex;
-  gap: 1rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  color: var(--text);
+  font-size: var(--fs-h3);
 }
+
 .card__unique,
 .supports li,
 .passives li {
   display: flex;
-  gap: 1rem;
+  align-items: baseline;
   flex-wrap: wrap;
-  margin: 0.25rem 0;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
 }
+
 .supports,
 .passives {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0 0;
+  margin: var(--sp-3) 0 0;
 }
+
 .en {
-  color: var(--muted);
+  color: var(--text-2);
 }
+
 .zh {
   color: var(--text);
 }
+
+/* 传奇基底名按稀有度上色（官方 #af6025 提亮到可读档）。放在 .en 之后，避免降序特异性 */
+.card__unique .en {
+  color: var(--rarity-unique); /* 5.2 vs surface-2 */
+}
+
+/* 未命中清单：左侧琥珀色条 + 等宽原文 + 弱化路径，不靠颜色单独承载语义 */
+.unmatched {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.unmatched li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  padding-left: var(--sp-3);
+  border-left: 2px solid var(--warn);
+}
+
+.unmatched code {
+  color: var(--text);
+  font-size: var(--fs-pair);
+}
+
+.unmatched small {
+  margin-left: 0;
+  color: var(--text-3);
+  font-size: var(--fs-micro);
+}
+
+/* 对照区：一块面板 + 一条贯通的中缝，读起来是一份对照稿而不是两块文本 */
 .pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--surface-0);
+  overflow: hidden;
 }
+
 .pair__col {
   margin: 0;
-  padding: 0.5rem;
-  background: var(--bg);
-  border-radius: 4px;
+  padding: var(--sp-3) 14px;
+  font-family: var(--font-pair);
+  font-size: var(--fs-pair);
+  line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family:
-    ui-monospace, "Cascadia Mono", Consolas, "Sarasa Mono SC", "Noto Sans Mono CJK SC",
-    "Microsoft YaHei", monospace;
-  font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
+
 .pair__col--en {
-  color: var(--muted);
+  color: var(--text-2);
 }
+
+.pair__col--zh {
+  border-left: 1px solid var(--hairline);
+  color: var(--text);
+}
+
+/* 宝石 / 天赋列表项里的对照区要独占一行，不跟着 en/zh 挤在同一 flex 行 */
+.supports li > .pair,
+.passives li > .pair {
+  flex: 1 0 100%;
+}
+
+/* 未命中行：颜色 + 底纹 + 点线下划线三重冗余；点线在 forced-colors 下依然存在 */
 .line--miss {
-  background: rgba(181, 66, 58, 0.25);
-  color: #f0b7b2;
-}
-.unmatched {
-  padding-left: 1.25rem;
-}
-.unmatched small {
-  margin-left: 0.5rem;
-  color: var(--muted);
-}
-.output {
-  white-space: pre-wrap;
-  word-break: break-word;
+  color: var(--warn); /* 8.0 vs 叠加底纹后的底色 */
+  background: var(--warn-wash);
+  text-decoration: underline dotted var(--warn);
+  text-underline-offset: 3px;
 }
 @media (max-width: 900px) {
   .app__body {
