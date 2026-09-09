@@ -154,73 +154,237 @@ textarea:focus-visible,
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
+/* ---------- 控件 ---------- */
+
 button,
 .button {
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  box-shadow: var(--inset-light);
   color: var(--text);
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-  font: inherit;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
+
+button:hover:not(:disabled),
+.button:hover {
+  background: var(--surface-hover);
+  border-color: var(--hairline-strong);
+}
+
 button:disabled {
-  opacity: 0.45;
+  background: var(--surface-2);
+  border-color: var(--hairline);
+  box-shadow: none;
+  color: var(--text-3); /* 5.6 vs surface-2 */
   cursor: not-allowed;
 }
+
+/* 主 CTA：全站只有「全部下载」与文件行的「下载」两处（owner 拍板：主场景是导入即下载） */
+.options > button,
+button[aria-label^="下载"] {
+  border-color: var(--cta-border);
+  background: var(--cta-face);
+  box-shadow:
+    var(--inset-light),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+  color: var(--cta-text);
+  font-weight: 600;
+}
+
+.options > button:hover:not(:disabled),
+button[aria-label^="下载"]:hover:not(:disabled) {
+  border-color: var(--gold-500);
+  background: var(--cta-face);
+  color: var(--gold-100);
+}
+
+.options > button:disabled,
+button[aria-label^="下载"]:disabled {
+  border-color: var(--hairline);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-weight: 400;
+}
+
 select,
 textarea {
-  font: inherit;
-  background: var(--panel);
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-0);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  transition: border-color var(--dur-fast) var(--ease);
 }
+
+select:hover,
+textarea:hover {
+  border-color: var(--gold-500);
+}
+
+/* 箭头是内联 data URI，不发任何请求 */
+select {
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23b8ae99' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  appearance: none;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--font-pair);
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--gold-500);
+  cursor: pointer;
+}
+
+/* ---------- 骨架 ---------- */
+
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
 }
+
+/* sticky 只在宽屏有意义：宽屏是 .app 满高 + 各列独立滚动，顶栏本来就不会滚走；
+   ≤900 改成整页文档滚动后 sticky 才真的生效，而那时顶栏换行后高达 169–213px，
+   常驻会吃掉窄屏 25% 视口，所以 Task 5 的 ≤900 断点把它改回 static。 */
 .app__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
+  gap: var(--sp-5);
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-6);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+  box-shadow: var(--inset-light);
 }
+
+.app__brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding-right: var(--sp-5);
+  border-right: 1px solid var(--hairline);
+}
+
+/* 全站唯一的金渐变裁切。-webkit-background-clip 那行不能省：
+   -webkit-text-fill-color 的支持面比无前缀的 background-clip:text（Chromium 120+ / Safari 14+）大得多，
+   只写无前缀版时，微信 X5 内核与老 iOS Safari 会「文字填充透明 + 背景没被裁切」→ 标题整个看不见。
+   两行都写齐之后，真正不支持裁切的老内核才会退回 color 的实色兜底。 */
 .app__header h1 {
   margin: 0;
-  font-size: 1.25rem;
-  color: var(--accent);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--gold-100);
+  background: linear-gradient(180deg, #fff7e4 0%, #f2e4b8 38%, #d6b473 74%, #9c7a3e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 1px #000);
 }
+
+.app__subtitle {
+  margin: 0;
+  color: var(--text-3); /* 6.0 vs surface-1 */
+  font-size: var(--fs-micro);
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 .options {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--sp-3) var(--sp-4);
   flex-wrap: wrap;
 }
+
+.options label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  color: var(--text-2);
+  font-size: var(--fs-label);
+  cursor: pointer;
+}
+
+/* 第一个 label 是 select 的说明文字（`<label for="locale-select">`，点它会聚焦下拉框），
+   语义上比后面的复选框标签轻一档，只弱化颜色，光标保持默认的 pointer */
+.options > label:first-of-type {
+  color: var(--text-3);
+}
+
 .app__body {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
+
 .app__side {
-  border-right: 1px solid var(--border);
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  border-right: 1px solid var(--hairline);
+  background: var(--surface-1);
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3226 transparent;
 }
+
 .app__main {
-  padding: 1rem 1.5rem;
+  padding: var(--sp-6) var(--sp-8) var(--sp-8);
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3226 transparent;
 }
+
 .app__footer {
-  padding: 0.5rem 1.5rem;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--sp-6);
+  border-top: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--fs-label);
+  font-variant-numeric: tabular-nums;
 }
 .dropzone {
   display: flex;

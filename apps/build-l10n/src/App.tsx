@@ -118,7 +118,10 @@ export function App({ fetchImpl }: AppProps) {
   return (
     <div className="app">
       <header className="app__header">
-        <h1>build-l10n</h1>
+        <div className="app__brand">
+          <h1>PoE2 构筑汉化</h1>
+          <p className="app__subtitle">流放之路 2 构筑汉化</p>
+        </div>
         <OptionsBar
           locale={locale}
           options={options}
