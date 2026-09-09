@@ -81,15 +81,6 @@
   --dur-drop: 140ms;
   --ease: ease-out;
   --focus-ring: 2px solid var(--gold-300);
-
-  /* 过渡别名：Task 2–4 逐段换掉旧组件规则，期间旧规则仍要取得到颜色。Task 5 删掉这 7 行。 */
-  --bg: var(--surface-0);
-  --panel: var(--surface-1);
-  --panel-2: var(--surface-3);
-  --border: var(--hairline);
-  --muted: var(--text-3);
-  --accent: var(--gold-300);
-  --miss: var(--danger);
 }
 
 * {
@@ -714,11 +705,146 @@ button.filelist__name[aria-current="true"] {
   text-decoration: underline dotted var(--warn);
   text-underline-offset: 3px;
 }
-@media (max-width: 900px) {
+/* ---------- 响应式：1280 / 900 / 560 ---------- */
+
+@media (max-width: 1280px) {
   .app__body {
-    grid-template-columns: 1fr;
+    grid-template-columns: 300px minmax(0, 1fr);
   }
+
+  .app__main {
+    padding: var(--sp-5) var(--sp-6) var(--sp-7);
+  }
+}
+
+/* ≤900：单列 + 整页文档滚动。旧版只改了列数，主区落进自动行把侧栏挤成一条缝 */
+@media (max-width: 900px) {
+  .app {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* 整页文档滚动后 sticky 才真正生效，而顶栏换行后 560 宽 169px、390 宽 213px，
+     常驻会吃掉窄屏四分之一视口（真机还要再减地址栏），比改版前更差 —— 所以窄屏取消吸顶 */
+  .app__header {
+    position: static;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .app__brand {
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .app__body {
+    display: block;
+  }
+
+  .app__side {
+    padding: var(--sp-4);
+    border-right: none;
+    border-bottom: 1px solid var(--hairline);
+    overflow: visible;
+  }
+
+  .app__main {
+    padding: var(--sp-5) var(--sp-4) var(--sp-7);
+    overflow: visible;
+  }
+
+  .app__footer {
+    padding: 0 var(--sp-4);
+  }
+
   .pair {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pair__col--zh {
+    border-top: 1px solid var(--hairline);
+    border-left: none;
+  }
+}
+
+/* ≤560：触控尺寸 */
+@media (max-width: 560px) {
+  button,
+  .button {
+    min-height: 40px;
+  }
+
+  /* 上面那条是元素选择器 (0,0,1)，压不过基态的 `button.filelist__name`(0,2,1)，
+     而「选中文件」是侧栏主动作，必须单独把它抬到 40px */
+  button.filelist__name {
+    min-height: 40px;
+  }
+
+  .options {
+    gap: var(--sp-3);
+    width: 100%;
+  }
+
+  .options > button {
+    width: 100%;
+  }
+
+  .app__main {
+    padding: var(--sp-4) var(--sp-3) var(--sp-6);
+  }
+
+  .card {
+    padding: var(--sp-4);
+  }
+
+  .filelist__item {
+    gap: var(--sp-3);
+  }
+}
+
+/* ---------- 无障碍兜底 ---------- */
+
+/* DropZone 的「选择 .build 文件」是 <label class="button" for="file-input"> + 隐藏的
+   <input id="file-input" class="visually-hidden">。拿到焦点的是那个 input，它 1px 高又被
+   clip-path 裁掉，焦点环根本看不见；label 写在 input 前面，兄弟选择器用不了，只能用 :has()
+   把焦点态转嫁到可见的 label 上。不支持 :has() 的老内核退回「无可见焦点」，与改版前持平。 */
+.dropzone:has(#file-input:focus-visible) .button {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* 全站只有这几处声明了 transition：逐个归零，不用 * + !important 引入优先级黑洞 */
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .button,
+  select,
+  textarea,
+  .dropzone,
+  .filelist__item {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .app__header h1 {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    filter: none;
+  }
+
+  .options > button,
+  button[aria-label^="下载"] {
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .line--miss {
+    background: none;
+    color: CanvasText;
+  }
+
+  .pair__col--zh {
+    border-left-color: CanvasText;
   }
 }
