@@ -386,61 +386,154 @@ input[type="checkbox"] {
   font-size: var(--fs-label);
   font-variant-numeric: tabular-nums;
 }
+/* ---------- 侧栏：拖放区与文件列表 ---------- */
+
 .dropzone {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 1px dashed var(--border);
-  border-radius: 6px;
+  align-items: stretch;
+  gap: var(--sp-3);
+  min-height: 120px;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
   text-align: center;
+  transition:
+    background-color var(--dur-drop) var(--ease),
+    border-color var(--dur-drop) var(--ease);
 }
+
 .dropzone--over {
-  border-color: var(--accent);
+  border-color: var(--gold-500);
+  background: var(--surface-3);
 }
+
 .dropzone p {
   margin: 0;
-  color: var(--muted);
+  color: var(--text-2);
 }
+
+.dropzone textarea {
+  min-height: 76px;
+}
+
 .filelist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
   list-style: none;
   padding: 0;
-  margin: 1rem 0 0;
+  margin: 0;
 }
+
+/* 两行式：首行「文件名 + 覆盖率」，次行「下载（主）+ 移除（次）」。
+   340px 侧栏里四元素挤一行会把文件名截成 pasted-1.b…，所以不分宽度一律两行。
+   下载 / 移除两颗按钮在 FileList.tsx 里没有 class，只能按 aria-label 前缀选中，
+   改 FileList.tsx 的 aria-label 文案时必须同步改这里。 */
 .filelist__item {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  gap: 0.4rem;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  padding: 0.4rem 0.5rem;
-  border-radius: 4px;
+  gap: var(--sp-2) var(--sp-3);
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  transition: background-color var(--dur-fast) var(--ease);
 }
+
+.filelist__item button[aria-label^="下载"] {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.filelist__item:hover {
+  background: var(--surface-2);
+}
+
 .filelist__item--active {
-  background: var(--panel-2);
+  border-color: var(--hairline);
+  background: var(--surface-3);
 }
-.filelist__name {
-  text-align: left;
-  border: none;
-  background: none;
+
+/* 幽灵文字按钮。必须写成 `button.filelist__name`（0,2,1）：通用的
+   `button:hover:not(:disabled)` 是 (0,2,1)，光写 `.filelist__name:hover`(0,2,0) 压不过它，
+   鼠标划过文件名时会浮出一块 --surface-hover 的实心按钮底。基态一并写成同样的形式保持成对。 */
+button.filelist__name {
+  display: block;
+  justify-content: flex-start;
+  min-height: 28px;
   padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  box-shadow: none;
+  color: var(--text);
+  font-size: var(--fs-body);
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.filelist__rate {
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
+
+button.filelist__name:hover {
+  background: none;
+  color: var(--gold-500);
 }
+
+/* 基态已是 (0,2,1)，选中态必须同样带元素选择器才压得过它 */
+button.filelist__name[aria-current="true"] {
+  color: var(--gold-300);
+  font-weight: 600;
+}
+
+/* 覆盖率与「解析失败」「待词典就绪」共用这一格，统一取中性色：
+   语义不靠这格的颜色承载，解析失败由下面带红色左条的 .filelist__error 单独表达 */
+.filelist__rate {
+  justify-self: end;
+  color: var(--text-2);
+  font-size: var(--fs-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.filelist__item button[aria-label^="移除"] {
+  grid-column: 2;
+  justify-self: end;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--text-3);
+}
+
+.filelist__item button[aria-label^="移除"]:hover {
+  border-color: var(--hairline-strong);
+  background: var(--surface-hover);
+  color: var(--danger); /* 4.6 vs surface-hover */
+}
+
+/* 解析错误：现状 3.2:1 不达 AA（审计 P1-4），改用 --danger 并加左侧色条，不只靠颜色 */
 .filelist__error {
   grid-column: 1 / -1;
   margin: 0;
-  color: var(--miss);
-  font-size: 0.85em;
+  padding-left: var(--sp-2);
+  border-left: 2px solid var(--danger);
+  color: var(--danger); /* 5.5 vs surface-2，5.0 vs surface-3 */
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
+
 .filelist__empty,
 .placeholder,
 .muted {
-  color: var(--muted);
+  color: var(--text-3);
+}
+
+.placeholder {
+  margin: 0;
 }
 .preview__section {
   margin-bottom: 1.5rem;
