@@ -101,6 +101,101 @@ describe('translateModLine', () => {
   })
 })
 
+describe('translateModLine：reduced ↔ increased 对调', () => {
+  it('词典只有 increased 形式时，reduced 行按对调后的键命中，译文表述词一并对调（zh-CN 提高→降低）', () => {
+    expect(translateModLine('25% reduced Spell Damage', miniIndex)).toEqual({
+      statId: 'explicit.stat_spell',
+      text: '法术伤害降低 25%',
+    })
+  })
+  it('zh-TW 用 增加→減少', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-TW',
+      stats: {
+        _meta: {
+          source: 't',
+          tier: 'primary',
+          gameVersion: '0',
+          fetchedAt: '2026-09-09',
+          count: 1,
+        },
+        entries: [
+          {
+            id: 'explicit.stat_attr',
+            en: '#% increased Attribute Requirements',
+            text: '增加#%能力值需求',
+          },
+        ],
+      },
+    }
+    expect(
+      translateModLine('20% reduced Attribute Requirements', buildDictIndex(bundle))?.text,
+    ).toBe('減少20%能力值需求')
+  })
+  it('词典自带 reduced 形式的条目走原键，不做对调', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-CN',
+      stats: {
+        _meta: {
+          source: 't',
+          tier: 'primary',
+          gameVersion: '0',
+          fetchedAt: '2026-09-09',
+          count: 2,
+        },
+        entries: [
+          {
+            id: 'explicit.stat_cost_inc',
+            en: '#% increased Mana Cost of Skills',
+            text: '技能魔力消耗提高 #%',
+          },
+          {
+            id: 'explicit.stat_cost_red',
+            en: '#% reduced Mana Cost of Skills',
+            text: '技能魔力消耗降低 #%',
+          },
+        ],
+      },
+    }
+    expect(translateModLine('10% reduced Mana Cost of Skills', buildDictIndex(bundle))).toEqual({
+      statId: 'explicit.stat_cost_red',
+      text: '技能魔力消耗降低 10%',
+    })
+  })
+  it('译文表述词不唯一、源行 reduced 不唯一或源行另含 increased 时放弃对调，返回 null', () => {
+    const bundle: DictBundle = {
+      locale: 'zh-CN',
+      stats: {
+        _meta: {
+          source: 't',
+          tier: 'primary',
+          gameVersion: '0',
+          fetchedAt: '2026-09-09',
+          count: 2,
+        },
+        entries: [
+          // 译文有两个"提高"，无法判定该换哪个
+          { id: 'a', en: '#% increased Damage while Focused', text: '专注时伤害提高 #%，持续提高' },
+          // 源行含两个 reduced、或 reduced 与 increased 并存时，源侧守卫直接放弃，不会查到这条
+          {
+            id: 'b',
+            en: '#% increased Attack and #% increased Cast Speed',
+            text: '攻击速度提高 #%，施法速度提高 #%',
+          },
+        ],
+      },
+    }
+    const index = buildDictIndex(bundle)
+    expect(translateModLine('5% reduced Damage while Focused', index)).toBeNull()
+    expect(translateModLine('5% reduced Attack and 5% increased Cast Speed', index)).toBeNull()
+    expect(translateModLine('5% reduced Attack and 5% reduced Cast Speed', index)).toBeNull()
+  })
+  it('行首大写 Reduced 同样对调；对调后仍未收录返回 null', () => {
+    expect(translateModLine('30% Reduced Spell Damage', miniIndex)?.text).toBe('法术伤害降低 30%')
+    expect(translateModLine('30% reduced Frost Damage', miniIndex)).toBeNull()
+  })
+})
+
 describe('translateNameLine', () => {
   it('基底名', () => {
     expect(translateNameLine('Pyrophyte Staff', miniIndex)).toBe('炎种长杖')

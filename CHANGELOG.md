@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 词缀匹配增加 reduced / increased 对调回退：交易站词典只登记 increased 形式，攻略里 `25% reduced Attribute Requirements` 这类写法现在按对调后的模板命中，译文表述词一并对调（zh-CN 提高→降低，zh-TW 增加→減少）；英文或译文里表述词不唯一时仍按未命中处理。
+
 ## [0.1.0] - 2026-09-09
 
 ### Added
