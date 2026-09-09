@@ -6,7 +6,7 @@
 
 | 工具 | 状态 | 说明 |
 |---|---|---|
-| `build-l10n` | 核心库与词典生成已完成（词缀 / 天赋 / 升华 / 职业 / 槽位 / 物品基底 / 传奇 / 宝石），静态站界面未开始 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
+| `build-l10n` | 0.1.0：核心库、词典与静态站界面已完成；游戏内加载待真机验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
 
 ## 快速开始
 
@@ -16,6 +16,23 @@ pnpm verify
 ```
 
 需要 Node 24 与 pnpm 11。
+
+## 使用 build-l10n
+
+```bash
+pnpm dev            # 本地启动静态站（先把 data/dict 同步到 apps/build-l10n/public/dict）
+pnpm --filter @poe2-tools/build-l10n build   # 产物在 apps/build-l10n/dist
+```
+
+浏览器里拖入或粘贴 `.build` 文件 → 选目标语言 → 查看对照预览 → 下载。所有处理都在浏览器本地完成，不上传文件。
+
+### 部署到 Cloudflare Pages
+
+1. 在 Cloudflare 控制台新建 Pages 项目（直接上传类型，不连接 Git）。
+2. 仓库 Settings → Secrets and variables → Actions：
+   - Variables：`CF_PAGES_PROJECT` = Pages 项目名
+   - Secrets：`CLOUDFLARE_API_TOKEN`（权限 Cloudflare Pages: Edit）、`CLOUDFLARE_ACCOUNT_ID`
+3. 推送到 `main`（或手动触发 `deploy` workflow）。变量未设置时 workflow 自动跳过。令牌只放 GitHub secrets，不写进仓库任何文件。
 
 ## 目录
 
