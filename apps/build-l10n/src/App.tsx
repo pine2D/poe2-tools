@@ -8,6 +8,8 @@ import { OptionsBar } from './components/OptionsBar'
 import { createDictLoader, type FetchJson, type LoadedDict } from './dict/loadDict'
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { pastedSource, readFiles } from './files/readSources'
+import { buildFieldRows } from './preview/fields'
+import { jumpTo, meterCells } from './preview/locate'
 import { Preview } from './preview/Preview'
 import {
   type SourceFile,
@@ -146,6 +148,18 @@ export function App({ fetchImpl }: AppProps) {
         : [],
     [dictState, sources, options],
   )
+  // 侧栏迷你轨与概览卡的轨用同一个 meterCells，两处的第 N 格必定是同一行
+  const meters = useMemo(
+    () =>
+      new Map(
+        results.flatMap((result) =>
+          result.ok
+            ? [[result.id, meterCells(buildFieldRows(result.file, options.bilingual))] as const]
+            : [],
+        ),
+      ),
+    [results, options.bilingual],
+  )
   const selected = results.find((result) => result.id === selectedId) ?? null
   const translated = results.flatMap((result) => (result.ok ? [result.file] : []))
 
@@ -223,7 +237,16 @@ export function App({ fetchImpl }: AppProps) {
         />
       )
     }
-    if (selected?.ok) return <Preview file={selected.file} />
+    if (selected?.ok) {
+      return (
+        <Preview
+          file={selected.file}
+          locale={locale}
+          bilingual={options.bilingual}
+          onDownload={() => downloadOne(selected.id)}
+        />
+      )
+    }
     return <p className="hint">从文件列表里选一个，查看中英对照</p>
   }
 
@@ -262,9 +285,14 @@ export function App({ fetchImpl }: AppProps) {
               sources={sources}
               results={results}
               selectedId={selectedId}
+              meters={meters}
               onSelect={setSelectedId}
               onRemove={remove}
               onDownload={downloadOne}
+              onJump={(id, domId) => {
+                setSelectedId(id)
+                jumpTo(domId)
+              }}
             />
             {dictState.status === 'ready' && (
               <p className="app__side-note">

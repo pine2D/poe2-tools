@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SourceFile, TranslateResult } from '../translate/runTranslation'
+import type { MeterCell } from './CoverageMeter'
 import { FileList } from './FileList'
 
 afterEach(() => {
@@ -17,7 +18,13 @@ const results = [
   { ok: false, id: 'b', name: 'b.build', error: '不是合法 JSON' },
 ] as unknown as TranslateResult[]
 
-const noop = { onSelect: vi.fn(), onRemove: vi.fn(), onDownload: vi.fn() }
+const noop = {
+  meters: new Map<string, MeterCell[]>(),
+  onSelect: vi.fn(),
+  onRemove: vi.fn(),
+  onDownload: vi.fn(),
+  onJump: vi.fn(),
+}
 
 describe('FileList', () => {
   it('两行式：首行文件名与覆盖率，次行下载与移除', () => {
@@ -76,14 +83,44 @@ describe('FileList', () => {
         sources={sources}
         results={results}
         selectedId={null}
+        meters={new Map()}
         onSelect={onSelect}
         onRemove={onRemove}
         onDownload={vi.fn()}
+        onJump={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'a.build' }))
     expect(onSelect).toHaveBeenCalledWith('a')
     fireEvent.click(screen.getByLabelText('移除 b.build'))
     expect(onRemove).toHaveBeenCalledWith('b')
+  })
+
+  it('次行有迷你覆盖率轨，点缺口把文件 id 与目标行一起交回去', () => {
+    const onJump = vi.fn()
+    const meters = new Map<string, MeterCell[]>([
+      [
+        'a',
+        [
+          { domId: 'line-a-0', where: '主手 · 第 1 行', hit: true },
+          { domId: 'line-a-1', where: '主手 · 第 2 行', hit: false },
+        ],
+      ],
+    ])
+    const { container } = render(
+      <FileList
+        sources={sources}
+        results={results}
+        selectedId="a"
+        meters={meters}
+        onSelect={vi.fn()}
+        onRemove={vi.fn()}
+        onDownload={vi.fn()}
+        onJump={onJump}
+      />,
+    )
+    expect(container.querySelectorAll('.meter--sm')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: '跳到未命中：主手 · 第 2 行' }))
+    expect(onJump).toHaveBeenCalledWith('a', 'line-a-1')
   })
 })

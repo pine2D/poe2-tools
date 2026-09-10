@@ -832,10 +832,6 @@ button.badge__retry:hover:not(:disabled) {
   gap: var(--sp-3);
 }
 
-.filelist__ops .cta {
-  flex: 1;
-}
-
 .filelist__status--ok {
   color: var(--gold-300);
 }
@@ -1171,6 +1167,14 @@ button.filelist__remove:hover:not(:disabled) {
 
 .meter--sm .meter__cell--miss {
   height: 10px;
+}
+
+/* 侧栏文件行的迷你轨吃掉次行剩余宽度，下载按钮回到自然宽度。
+   写在这里而不是 .filelist 那一段：它的特异度 (0,2,0) 高于上面的 .meter (0,1,0)，
+   放在 .meter 之前会触发 Biome 的 noDescendingSpecificity。 */
+.filelist__ops .meter {
+  flex: 1;
+  min-width: 0;
 }
 
 /* 图例里的两个小样本，形状与轨里一致 */

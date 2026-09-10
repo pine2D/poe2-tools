@@ -42,6 +42,10 @@ function upload(name: string, text: string) {
   })
 }
 
+// 概览卡的下载按钮与文件行的同名（都是「下载 rich.build」），只在侧栏列表里找。
+// 不能用 within(getByRole('listitem'))：主区还有 .misslist / .supports / .passives 的 <li>。
+const inFileList = () => within(screen.getByRole('list', { name: '已导入文件' }))
+
 describe('App', () => {
   it('上传文件 → 列表显示覆盖率 → 下载得到译文', async () => {
     await renderReady()
@@ -50,7 +54,7 @@ describe('App', () => {
     // 文件名在列表按钮与（Task 5 起）概览里都会出现：按角色找列表按钮
     await screen.findByRole('button', { name: 'rich.build' })
     expect(screen.getByText('88%')).toBeDefined()
-    fireEvent.click(screen.getByLabelText('下载 rich.build'))
+    fireEvent.click(inFileList().getByLabelText('下载 rich.build'))
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)
   })
@@ -61,7 +65,7 @@ describe('App', () => {
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
     fireEvent.click(screen.getByLabelText('双语（保留英文原行）'))
-    fireEvent.click(screen.getByLabelText('下载 rich.build'))
+    fireEvent.click(inFileList().getByLabelText('下载 rich.build'))
     expect(await blobs[0]?.text()).toContain('149% increased Spell Damage')
     upload('rich2.build', rich)
     await screen.findByRole('button', { name: 'rich2.build' })
@@ -77,7 +81,7 @@ describe('App', () => {
     fireEvent.click(screen.getByText('添加粘贴内容'))
     await screen.findByRole('button', { name: 'pasted-1.build' })
     // 覆盖率破折号只看列表项（概览里无升华也显示破折号）
-    expect(within(screen.getByRole('listitem')).getByText('—')).toBeDefined()
+    expect(inFileList().getByText('—')).toBeDefined()
     fireEvent.change(screen.getByLabelText('粘贴 .build 内容'), { target: { value: 'not json' } })
     fireEvent.click(screen.getByText('添加粘贴内容'))
     await screen.findByRole('button', { name: 'pasted-2.build' })

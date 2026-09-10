@@ -1,5 +1,6 @@
 // 未命中的「人话定位」与跳转。审计 P1-6：现状把 inventory_slots[4].additional_text
 // 这种 JSON 路径直接甩给玩家，既不易读也不可点。
+import type { MeterCell } from '../components/CoverageMeter'
 import type { FieldWithRows } from './fields'
 import { spanText } from './markup'
 import type { PairRow } from './rows'
@@ -44,6 +45,20 @@ export function collectMisses(fields: readonly FieldWithRows[]): MissEntry[] {
     }
   }
   return misses
+}
+
+// 覆盖率轨的格子：一格 = 一条编号行（kind === 'mod'），顺序就是预览里的显示顺序。
+// 概览卡与侧栏文件行共用这一份构造，两处的第 N 格必定是同一行。
+export function meterCells(fields: readonly FieldWithRows[]): MeterCell[] {
+  return fields.flatMap(({ entry, rows }) =>
+    rows
+      .filter((row) => row.kind === 'mod')
+      .map((row) => ({
+        domId: rowDomId(entry.path, row.index),
+        where: `${entry.label} · ${rowLabel(row)}`,
+        hit: row.status === 'translated',
+      })),
+  )
 }
 
 // 跳转：滚到视口中间并把焦点移过去，键盘用户跳过去之后 Tab 能从那一行继续。
