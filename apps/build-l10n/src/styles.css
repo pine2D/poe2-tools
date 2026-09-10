@@ -2223,13 +2223,19 @@ button.misslist__go:hover:not(:disabled) {
     filter: none;
   }
 
-  .meter__cell--hit {
+  .meter__cell--hit,
+  .swatch {
     background: CanvasText;
   }
 
-  .meter__cell--miss {
+  /* 空心格与图例里那枚空心样本原先只靠 inset box-shadow 画框，而 box-shadow 在强制配色下
+     被整条丢弃：轨上的缺口和图例样本会双双变成一块看不见的白，「缺口为未命中」那半句
+     图例就没有对应物了。改用 border 画同一个框——box-sizing 是 border-box，尺寸不变。 */
+  .meter__cell--miss,
+  .swatch--miss {
+    border: 2px solid CanvasText;
     background: Canvas;
-    box-shadow: inset 0 0 0 2px CanvasText;
+    box-shadow: none;
   }
 
   /* box-shadow 在高对比度下被直接丢弃，而 radio 本体是 .visually-hidden，
