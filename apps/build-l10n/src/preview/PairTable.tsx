@@ -60,7 +60,11 @@ export function PairTable({ path, rows, injected, locale, baseName, emptyText }:
         // role 与 aria-label 必须成对出现：裸 <span> 是 generic role，单挂 aria-label 无效。
         // 写成一个整体套上 / 整体不套的 props——Biome 的 useAriaPropsSupportedByRole 只看得懂
         // 静态 role，`role={missed ? 'note' : undefined}` 会被它当成「没有 role」而报错。
-        const note = missed ? ({ role: 'note', 'aria-label': '未命中' } as const) : {}
+        // I-1：基底名未收录与编号行真未命中是两种不同性质，aria-label 分开措辞，
+        // 不能让读屏用户把「词典没收这个基底名」听成「这一行没翻译」。
+        const note = missed
+          ? ({ role: 'note', 'aria-label': base ? '基底名未收录' : '未命中' } as const)
+          : {}
         // 基底名行**只占两个 span-2 单元、没有序号格**（mockup 的 `.tip > .base` 就是这样）。
         // 若照普通行渲染四个 span，这一行会吃掉 1+2+1+2 = 6 列，第二个 span-2 挤不下就换行，
         // 整张卡从第一行起对照结构全散——rich.build 的 Weapon1 / Charm1 / Ring2 都会中招。
@@ -80,7 +84,7 @@ export function PairTable({ path, rows, injected, locale, baseName, emptyText }:
               </span>
               <span className={`${baseClass} tip__base--zh`} lang={zhLang} {...note}>
                 {row.zh === null ? null : <MarkupText spans={row.zh} />}
-                {missed && <span className="tip__tag tip__tag--miss">未命中 · 保留英文</span>}
+                {missed && <span className="tip__tag tip__tag--miss">基底名未收录</span>}
                 {row.kept.map((line, i) => (
                   <span
                     // biome-ignore lint/suspicious/noArrayIndexKey: 位置就是保留行的身份，内容可重复

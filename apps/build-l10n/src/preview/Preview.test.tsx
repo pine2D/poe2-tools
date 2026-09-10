@@ -116,12 +116,46 @@ describe('Preview 卡片', () => {
     expect(screen.getByText('Lv 52–100')).toBeDefined()
   })
 
-  it('传奇槽位：卡头有「传奇」标签，注入的中文名单独一行', () => {
-    show()
+  it('传奇槽位命中词典：卡头显示英文名与中文译名，卡体仍保留传奇名注入行（C-1）', () => {
+    const { container } = show()
     expect(screen.getByText('腰带')).toBeDefined()
     expect(screen.getByText('传奇')).toBeDefined()
-    expect(screen.getByText('稳步印记')).toBeDefined()
+    const head = container.querySelector('.card--unique .card__head')
+    expect(head?.querySelector('.namepair__en')?.textContent).toBe('Surefooted Sigil')
+    expect(head?.querySelector('.namepair__zh')?.textContent).toBe('稳步印记')
+    expect(head?.querySelector('.namepair__zh--miss')).toBeNull()
+    // 卡体「传奇名注入」的既有逻辑不受影响；中文译名因此在卡头与卡体各出现一次
     expect(screen.getByText('传奇名注入')).toBeDefined()
+    expect(screen.getAllByText('稳步印记')).toHaveLength(2)
+  })
+
+  it('传奇槽位未命中词典：卡头保留英文名并标出未命中，不吞掉这条信息（C-1）', () => {
+    const missText = JSON.stringify({
+      name: 'Unique Miss',
+      inventory_slots: [
+        {
+          inventory_id: 'Belt1',
+          unique_name: 'Totally Unknown Unique Item',
+          slot_x: 0,
+          slot_y: 0,
+        },
+      ],
+    })
+    const missResult = translateSource(
+      { id: 'f2', name: 'uniq-miss.build', text: missText },
+      dict,
+      { bilingual: false, annotateUniques: true },
+    )
+    if (!missResult.ok) throw new Error(missResult.error)
+    const { container } = render(
+      <Preview file={missResult.file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />,
+    )
+    const head = container.querySelector('.card--unique .card__head')
+    expect(head?.querySelector('.namepair__en')?.textContent).toBe('Totally Unknown Unique Item')
+    expect(head?.querySelector('.namepair__zh--miss')?.textContent).toBe('未命中')
+    expect(screen.getByLabelText('未命中')).toBeDefined()
+    // 未命中不进覆盖率分母（口径不变，只统计编号行），卡体 emptyText 也保留
+    expect(container.querySelector('.tip--empty')?.textContent).toBe('这个槽位没有备注')
   })
 
   it('未命中行左右两列都标出来，命中行安静', () => {

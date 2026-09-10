@@ -148,7 +148,10 @@ describe('PairTable', () => {
         ]}
       />,
     )
-    expect(screen.getAllByLabelText('未命中')).toHaveLength(2)
+    // I-1：基底名未收录与编号行真未命中的文案与 aria-label 分开措辞，不能混用「未命中」
+    expect(screen.getAllByLabelText('基底名未收录')).toHaveLength(2)
+    expect(screen.getByText('基底名未收录')).toBeDefined()
+    expect(screen.queryByLabelText('未命中')).toBeNull()
   })
 
   it('同样是首行 kept，非槽位字段（构筑说明）只算原样', () => {

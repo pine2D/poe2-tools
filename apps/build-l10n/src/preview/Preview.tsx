@@ -110,7 +110,7 @@ function Overview(props: {
           {first === undefined ? (
             <span className="cov__allhit">
               <Icon name="check" size={15} />
-              全部命中
+              编号行全部命中
             </span>
           ) : (
             <>
@@ -181,7 +181,26 @@ function SlotCard(props: {
     <article className={slot.uniqueName === null ? 'card' : 'card card--unique'}>
       <div className="card__head">
         <h3>{slotLabel(slot)}</h3>
-        {slot.uniqueName !== null && <span className="chip chip--unique">传奇</span>}
+        {slot.uniqueName !== null && (
+          <>
+            <span className="chip chip--unique">传奇</span>
+            {/* 传奇名的卡头对照：C-1 修复——只有 unique_name、没有 additional_text 的槽位
+                此前预览里连英文名都不出现；命中显示中文译名，未命中保留英文名并用
+                role="note" + aria-label 标出（非颜色线索），不进覆盖率分母，只做卡头标记 */}
+            <span className="namepair">
+              <span className="namepair__en" lang="en">
+                {slot.uniqueName}
+              </span>
+              {slot.uniqueText === null ? (
+                <span className="namepair__zh namepair__zh--miss" role="note" aria-label="未命中">
+                  未命中
+                </span>
+              ) : (
+                <span className="namepair__zh">{slot.uniqueText}</span>
+              )}
+            </span>
+          </>
+        )}
         {bilingual && <span className="chip chip--bi">双语</span>}
         <CardCount rows={entry.rows} />
         <span className="card__id" lang="en">
