@@ -304,6 +304,13 @@ input[type="checkbox"] {
   text-transform: uppercase;
 }
 
+/* 图标一律块级 + 不参与压缩：内联 SVG 默认是 inline，会带上基线间隙，
+   而它们全都住在 flex 行里，flex:none 保证窄屏不被挤扁 */
+.icon {
+  display: block;
+  flex: none;
+}
+
 /* ---------- 骨架 ---------- */
 
 .app {
