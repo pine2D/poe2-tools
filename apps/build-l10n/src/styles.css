@@ -1201,130 +1201,465 @@ button.filelist__remove:hover:not(:disabled) {
   margin-bottom: var(--sp-7);
 }
 
-/* 区块标题下的两端淡出分隔线：生态母题，比一条通栏实线安静 */
+/* 区块头：英文眉标 + 中文标题 + 计数，下面压一条两端淡出线 */
+.sec__eyebrow {
+  margin-bottom: 2px;
+}
+
+.sec__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
 .preview__section h2 {
-  position: relative;
-  margin: 0 0 var(--sp-4);
-  padding-bottom: var(--sp-2);
+  margin: 0;
   color: var(--gold-300);
   font-size: var(--fs-h2);
   line-height: 1.35;
+  letter-spacing: 0.04em;
 }
 
-.preview__section h2::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--rule-fade);
-}
-
-/* 「未命中（n）」这一档小标题；卡片里的 h3 在下面单独定义，靠书写顺序压过本规则 */
-.preview__section > h3 {
-  margin: var(--sp-5) 0 var(--sp-2);
-  color: var(--text);
-  font-size: var(--fs-h3);
-}
-
-.overview {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: var(--sp-3) var(--sp-5);
-  margin: 0 0 var(--sp-5);
-}
-
-.overview dt {
-  color: var(--text-2);
-  font-size: var(--fs-label);
-}
-
-.overview dd {
-  margin: 0;
+.sec__count {
+  color: var(--text-3);
+  font-family: var(--font-pair);
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 
-.card {
-  margin-bottom: var(--sp-5);
-  padding: var(--sp-5);
-  border: 1px solid var(--hairline);
+.sec__rule {
+  display: block;
+  height: 1px;
+  margin: var(--sp-3) 0 var(--sp-5);
+  background: var(--rule-fade);
+}
+
+/* ---------- 概览卡：全站唯一带四角刻痕的卡片 ---------- */
+
+.ov {
+  position: relative;
+  padding: var(--sp-6) var(--sp-7);
+  border: 1px solid var(--hairline-strong);
   border-radius: var(--r-lg);
   background: var(--surface-2);
   box-shadow: var(--inset-light);
 }
 
-.card h3 {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
-  margin: 0 0 var(--sp-3);
-  color: var(--text);
-  font-size: var(--fs-h3);
+.ov__corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(217, 192, 120, 0.55);
 }
 
-.card__unique,
-.supports li,
-.passives li {
+.ov__corner--1 {
+  top: 6px;
+  left: 6px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.ov__corner--2 {
+  top: 6px;
+  right: 6px;
+  border-left: 0;
+  border-bottom: 0;
+}
+
+.ov__corner--3 {
+  bottom: 6px;
+  left: 6px;
+  border-right: 0;
+  border-top: 0;
+}
+
+.ov__corner--4 {
+  bottom: 6px;
+  right: 6px;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* 主场景是「导入即下载」：下载入口摆在概览卡最上面，比顶栏更靠近内容 */
+.ov__act {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  gap: var(--sp-4);
   flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.ov__hint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.cov {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 var(--sp-7);
+}
+
+.cov__lab {
+  margin: 0 0 var(--sp-1);
+  color: var(--text-3);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+}
+
+/* 覆盖率大数字：Cinzel 只承载孤立数字，这里前后没有字母，不会出现 1/I 混淆 */
+.cov__num {
+  margin: 0;
+  color: var(--gold-300);
+  font-family: var(--font-display);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cov__num small {
+  margin-left: 2px;
+  color: var(--gold-500);
+  font-size: 20px;
+}
+
+/* 100% 才升级成金渐变裁切 —— 全站金渐变配额的第二处（第一处是顶栏字标），
+   把「全部命中」做成一个可被期待的仪式，99% 的时间屏幕上没有金色块 */
+.cov__num--full {
+  background: linear-gradient(180deg, #fff7e4 0%, #f2e4b8 38%, #d6b473 74%, #9c7a3e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+.cov__frac {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cov__meterwrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.cov__legend {
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--text-3);
+  font-size: 11.5px;
+}
+
+.cov__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cov__jump {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-2);
+}
+
+.cov__missnum,
+.cov__allhit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cov__missnum {
+  color: var(--warn); /* 8.3 vs surface-2 */
+}
+
+.cov__allhit {
+  color: var(--gold-300);
+}
+
+.ov__rule {
+  display: block;
+  height: 1px;
+  margin: var(--sp-5) 0 var(--sp-4);
+  background: var(--rule-fade);
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline; /* 两列字号不同，不对齐基线会差 1px（第一期 M-11） */
+  gap: var(--sp-3) var(--sp-5);
   margin: 0;
 }
 
-.supports,
-.passives {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  list-style: none;
-  padding: 0;
-  margin: var(--sp-3) 0 0;
+.meta dt {
+  color: var(--text-3);
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
 }
 
-.en {
-  color: var(--text-2);
-}
-
-.zh {
+.meta dd {
+  margin: 0;
   color: var(--text);
+  font-size: 14px;
 }
 
-/* 传奇基底名按稀有度上色（官方 #af6025 提亮到可读档）。放在 .en 之后，避免降序特异性 */
-.card__unique .en {
-  color: var(--rarity-unique); /* 5.2 vs surface-2 */
+.meta__asc {
+  color: var(--rarity-unique); /* 5.3 vs surface-2 */
 }
 
-/* 未命中清单：左侧琥珀色条 + 等宽原文 + 弱化路径，不靠颜色单独承载语义 */
-.unmatched {
+.meta__mono {
+  color: var(--text-2);
+  font-family: var(--font-pair);
+  font-size: 13px;
+}
+
+/* 未命中清单：人话定位 + 原文 + 定位按钮，整条带琥珀左条 */
+.misslist {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
   list-style: none;
+  margin: var(--sp-5) 0 0;
   padding: 0;
-  margin: 0;
 }
 
-.unmatched li {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  padding-left: var(--sp-3);
+.misslist li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px 12px;
+  border: 1px solid rgba(229, 169, 61, 0.28);
   border-left: 2px solid var(--warn);
+  border-radius: var(--r-md);
+  background: var(--surface-0);
 }
 
-.unmatched code {
+.misslist__where {
+  color: var(--warn); /* 9.3 vs surface-0 */
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.misslist__text {
+  color: var(--text-2);
+  font-family: var(--font-pair);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.misslist__go {
+  min-height: 28px;
+  padding: 0 10px;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--gold-500);
+  font-size: 12px;
+}
+
+button.misslist__go:hover:not(:disabled) {
+  border-color: var(--hairline-strong);
+  background: var(--surface-hover);
+  color: var(--gold-100);
+}
+
+/* ---------- 卡片 ---------- */
+
+.card {
+  position: relative;
+  margin-bottom: var(--sp-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  box-shadow: var(--inset-light);
+  overflow: hidden;
+}
+
+/* 左侧 2px 稀有度边：普通白、传奇橙、宝石青、天赋古铜 */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--mk-silver);
+  opacity: 0.75;
+}
+
+.card--unique::before {
+  background: var(--rarity-unique);
+}
+
+.card--gem::before {
+  background: var(--rarity-gem);
+}
+
+.card--passive::before {
+  background: var(--bronze-600);
+}
+
+/* 卡头三段式：中文名 + 标签 + 计数 + 右端 inventory_id */
+.card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+}
+
+.card__head h3 {
+  margin: 0;
   color: var(--text);
-  font-size: var(--fs-pair);
+  font-size: var(--fs-h3);
+  font-weight: 600;
 }
 
-.unmatched small {
-  margin-left: 0;
+.card__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--text-3);
-  font-size: var(--fs-micro);
+  font-family: var(--font-pair);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 有未命中就变琥珀 + 三角，不点轨也知道该看哪张卡（报告 §5.4 G5） */
+.card__count--short {
+  color: var(--warn);
+}
+
+/* inventory_id 是字母数字混排（Weapon1 / Belt1），**绝不能**用 Cinzel：
+   实测 WEAPON1 会渲染成 WEAPONI。走等宽字体。 */
+.card__id {
+  margin-left: auto;
+  color: var(--bronze-text); /* 5.7 vs surface-1 */
+  font-family: var(--font-pair);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+}
+
+.chip {
+  padding: 4px 7px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chip--unique {
+  border-color: rgba(200, 123, 58, 0.5);
+  background: rgba(200, 123, 58, 0.1);
+  color: var(--rarity-unique);
+}
+
+.chip--bi {
+  border-color: rgba(170, 158, 130, 0.4);
+  color: var(--keep);
+}
+
+/* 宝石 / 天赋的名字对：英文小字在前，中文在后 */
+.namepair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.namepair__en {
+  color: var(--text-3);
+  font-family: var(--font-pair);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.namepair__zh {
+  color: var(--text);
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.namepair__zh--gem {
+  color: var(--rarity-gem); /* 8.4 vs surface-1 */
+}
+
+/* 写在 --gem 之后，未命中的宝石名要压过宝石青 */
+.namepair__zh--miss {
+  color: var(--warn); /* 8.8 vs surface-1 */
+  font-weight: 400;
+}
+
+.supports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.supports > li {
+  position: relative;
+  padding: var(--sp-3) var(--sp-5) var(--sp-3) 40px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.supports > li:last-child {
+  border-bottom: 0;
+}
+
+/* 辅助宝石前面的折线，表示「挂在上面那颗主宝石下」 */
+.supports > li::before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: 20px;
+  width: 8px;
+  height: 8px;
+  border-left: 1px solid var(--bronze-600);
+  border-bottom: 1px solid var(--bronze-600);
+}
+
+.supports .namepair__zh {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.passives {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.passives > li {
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.passives > li:last-child {
+  border-bottom: 0;
 }
 
 /* 对照表：序号 / 原文 / 序号 / 译文 四列，一条源行 = 一个 grid 行，左右天然同高。
@@ -1455,6 +1790,15 @@ button.filelist__remove:hover:not(:disabled) {
   color: var(--warn);
 }
 
+/* `.tip` 是 align-items: start，未命中的几个格子各按自己的内容高度收缩：译文格多一枚
+   「未命中 · 保留英文」文字签就比原文格高一截，同一行左右两片琥珀底纹上下不齐（Task 4 遗留）。
+   改成拉满整个 grid 行，底纹高度一致；行高仍由最高的那一格决定，没有多出来的空白。 */
+.tip__n--miss,
+.tip__t--miss,
+.tip__base--miss {
+  align-self: stretch;
+}
+
 /* 原样：作者的自由文本，不是错误，用中性卡其而不是警示色 */
 .tip__t--keep.tip__t--zh {
   color: var(--keep); /* 6.6 vs surface-2 */
@@ -1525,6 +1869,15 @@ button.filelist__remove:hover:not(:disabled) {
 
 .tip--empty::before {
   display: none;
+}
+
+/* 支援宝石 / 天赋的对照表嵌在 <li> 里，左右内边距由 li 提供，表格自己不再加一层。
+   写在 `.tip` 之后：它是 (0,2,0)，放在 (0,1,0) 的 `.tip` 之前会触发 noDescendingSpecificity
+   （与 `.filelist__ops .meter` 同款处理）。 */
+.supports .tip,
+.passives .tip {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* 跳转落点不要贴到主区顶边。基底名行的落点是英文那格（.tip__base），也要算上。
@@ -1618,6 +1971,29 @@ button.filelist__remove:hover:not(:disabled) {
   .tip__n--right {
     padding-right: 8px;
   }
+
+  /* 覆盖率三段（大数字 / 轨 / 跳转）改上下堆叠，跳转那段跟着左对齐 */
+  .cov {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+
+  .cov__jump {
+    align-items: flex-start;
+  }
+
+  .ov {
+    padding: var(--sp-5);
+  }
+
+  /* 定位文案换到自己一行，原文与「定位」按钮共用第二行，窄屏不挤成三条缝 */
+  .misslist li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .misslist__where {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ≤560：触控尺寸统一抬到 44px。同一条媒体查询里之前只抬了按钮（40px），
@@ -1667,8 +2043,22 @@ button.filelist__remove:hover:not(:disabled) {
     padding: var(--sp-4) var(--sp-3) var(--sp-6);
   }
 
-  .card {
-    padding: var(--sp-4);
+  /* 卡片本身不再有内边距（卡头与对照表各自撑边），窄屏收的是卡头那一条 */
+  .card__head {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  /* 卡头在窄屏会换行，inventory_id 再靠 margin-left:auto 推到右边就会孤零零占一整行 */
+  .card__id {
+    margin-left: 0;
+  }
+
+  .cov__num {
+    font-size: 36px;
+  }
+
+  button.misslist__go {
+    min-height: 44px;
   }
 
   .filelist__item {
@@ -1755,13 +2145,41 @@ button.filelist__remove:hover:not(:disabled) {
     color: ButtonText;
   }
 
-  .line--miss {
+  /* 高对比度模式下自定义色全被系统色接管：未命中不能只剩底纹，
+     必须留下形状（左竖条）与文字签这两条非颜色线索 */
+  .tip__n--miss,
+  .tip__t--miss,
+  .tip__base--miss {
     background: none;
     color: CanvasText;
   }
 
-  .pair__col--zh {
-    border-left-color: CanvasText;
+  .tip__n--miss {
+    border-left: 3px solid CanvasText;
+  }
+
+  .tip__tag {
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+
+  .tip::before {
+    background: CanvasText;
+  }
+
+  .cov__num--full {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    filter: none;
+  }
+
+  .meter__cell--hit {
+    background: CanvasText;
+  }
+
+  .meter__cell--miss {
+    background: Canvas;
+    box-shadow: inset 0 0 0 2px CanvasText;
   }
 
   /* box-shadow 在高对比度下被直接丢弃，而 radio 本体是 .visually-hidden，
