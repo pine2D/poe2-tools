@@ -2,6 +2,23 @@
    取值来自 docs/superpowers/research/2026-09-09-ui-redesign-research.md §5.1，
    注释里的对比度按 WCAG 2.1 相对亮度公式计算。金色只做品牌 / 标题 / 强调，命中与状态不用金色。 */
 
+/* Cinzel 拉丁子集，自托管（SIL Open Font License 1.1，全文见 public/fonts/OFL.txt 与
+   README「字体与许可」）。浏览器只向本站请求这一个字体文件，不向任何第三方域名发请求。
+   子集只含 ASCII 与少量标点（配方见 README），可变字重 500–700，约 16 KB。
+   font-display: swap —— 眉标是装饰性小字，先用 Georgia 兜底渲染、字体到位再换，
+   不让它阻塞首屏。unicode-range 限死拉丁区，汉字不会误落到这个字体上。
+   硬规则：Cinzel 是纯大写石刻体，1/0 与 I/O 几乎无法区分，**不承载任何字母数字混排的
+   字符串**（inventory_id、版本号、文件名、行号一律走 --font-ui 或 --font-pair）；
+   只有「纯字母的短标签」与「孤立的数字」可以用它。 */
+@font-face {
+  font-family: "Cinzel Subset";
+  src: url("/fonts/Cinzel-subset.woff2") format("woff2");
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00B7, U+2013-2014, U+2022, U+2026;
+}
+
 :root {
   color-scheme: dark;
 
@@ -272,6 +289,19 @@ input[type="checkbox"] {
   margin: 0;
   accent-color: var(--gold-500);
   cursor: pointer;
+}
+
+/* 英文眉标：全站唯一用 Cinzel 的地方之一。纯拉丁全大写才加字距（CJK 一律不加）。
+   颜色用 --bronze-text 而不是 --bronze-600：11px 属正文档，要 ≥4.5:1。 */
+.eyebrow {
+  display: block;
+  color: var(--bronze-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 /* ---------- 骨架 ---------- */

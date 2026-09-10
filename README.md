@@ -52,6 +52,25 @@ docs/data-sources.md    数据源登记表
 - [数据源登记表](docs/data-sources.md)
 - 开发规范见 [`CLAUDE.md`](CLAUDE.md)
 
+## 字体与许可
+
+`apps/build-l10n/public/fonts/Cinzel-subset.woff2` 是 [Cinzel](https://github.com/google/fonts/tree/main/ofl/cinzel)
+的拉丁子集，随站自托管，浏览器不向任何第三方域名发字体请求（`fonts.googleapis.com` 与
+`web.poecdn.com` 都是明令禁止的）。只用于英文眉标（`OVERVIEW` / `GEAR` / `GEMS` / `PASSIVES`）、
+空态的三步罗马数字与覆盖率数字；中文一律使用系统字体，不引任何 CJK 网络字体。
+
+授权为 SIL Open Font License 1.1，全文见同目录的 `OFL.txt`；本仓库的 MIT 许可**不覆盖**这个字体文件。
+
+子集配方（重新生成时照此执行，产物应在 16 KB 上下）：
+
+```bash
+fonttools varLib.instancer Cinzel[wght].ttf wght=500:700 -o Cinzel-500-700.ttf
+pyftsubset Cinzel-500-700.ttf \
+  --unicodes="U+0020-007E,U+00A0,U+00B7,U+2013-2014,U+2022,U+2026" \
+  --layout-features='kern,liga' --flavor=woff2 \
+  --output-file=Cinzel-subset.woff2
+```
+
 ## 许可
 
 代码采用 MIT 许可（见 `LICENSE`）。词典中的游戏文本版权归 Grinding Gear Games 及腾讯所有，
