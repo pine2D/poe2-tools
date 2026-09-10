@@ -120,7 +120,6 @@ export function App({ fetchImpl }: AppProps) {
       <header className="app__header">
         <div className="app__brand">
           <h1>PoE2 构筑汉化</h1>
-          <p className="app__subtitle">流放之路 2 构筑汉化</p>
         </div>
         <OptionsBar
           locale={locale}

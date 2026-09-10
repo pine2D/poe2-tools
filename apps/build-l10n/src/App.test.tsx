@@ -117,10 +117,9 @@ describe('App', () => {
     expect(download.disabled).toBe(true)
   })
 
-  it('顶栏字标是产品名 + 中文副标题，不再是内部包名', async () => {
+  it('顶栏字标是产品名，不再是内部包名', async () => {
     await renderReady()
     expect(screen.getByRole('heading', { level: 1, name: 'PoE2 构筑汉化' })).toBeDefined()
-    expect(screen.getByText('流放之路 2 构筑汉化')).toBeDefined()
     expect(screen.queryByText('build-l10n')).toBeNull()
   })
 })
