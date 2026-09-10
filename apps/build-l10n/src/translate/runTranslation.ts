@@ -22,13 +22,6 @@ export interface SourceFile {
   text: string
 }
 
-// 同一 path + line 可能出现多条（一行被标记语法切成多段），消费方不得当唯一键
-export interface UnmatchedLine {
-  path: string
-  line: number
-  text: string
-}
-
 export interface TranslatedFile {
   id: string
   name: string
@@ -37,7 +30,6 @@ export interface TranslatedFile {
   output: string
   report: TranslateReport
   preview: PreviewModel
-  unmatched: UnmatchedLine[]
   // modTranslated / modCandidates；没有编号行时为 null
   rate: number | null
 }
@@ -59,13 +51,8 @@ export function translateSource(
   const parsed = parseBuildFile(source.text)
   if (!parsed.ok) return { ok: false, id: source.id, name: source.name, error: parsed.error }
   const { build, report } = translateBuild(parsed.build, dict.index, options)
-  const unmatched: UnmatchedLine[] = []
-  for (const field of report.fields) {
-    for (const line of field.lines) {
-      if (line.kind === 'mod' && line.status === 'untranslated')
-        unmatched.push({ path: field.path, line: line.line, text: line.original })
-    }
-  }
+  // 未命中清单不在这里算：2b 起由 preview/locate.ts 的 collectMisses 从行模型里取，
+  // 它给的是「戒指 2 · 第 3 行」这种人话定位 + 可跳转的 DOM id，界面上只消费那一份。
   return {
     ok: true,
     id: source.id,
@@ -78,7 +65,6 @@ export function translateSource(
       output: serializeBuildFile(build, { indent: detectIndent(source.text) }),
       report,
       preview: describeBuild(build, dict.index),
-      unmatched,
       rate: report.modCandidates === 0 ? null : report.modTranslated / report.modCandidates,
     },
   }

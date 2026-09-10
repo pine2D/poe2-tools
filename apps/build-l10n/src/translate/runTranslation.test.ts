@@ -25,7 +25,7 @@ describe('detectIndent', () => {
 })
 
 describe('translateSource', () => {
-  it('rich.build → 输出与期望文件相同，覆盖率与未命中清单正确', () => {
+  it('rich.build → 输出与期望文件相同，覆盖率正确', () => {
     const result = translateSource(
       { id: 'f1', name: 'rich.build', text: read('rich.build') },
       dict,
@@ -35,13 +35,6 @@ describe('translateSource', () => {
     if (!result.ok) return
     expect(result.file.output).toBe(read('rich.expected.zh-CN.build').trimEnd())
     expect(result.file.rate).toBe(7 / 8)
-    expect(result.file.unmatched).toEqual([
-      {
-        path: 'inventory_slots[3].additional_text',
-        line: 3,
-        text: '3% increased Attack Speed per 25 Dexterity',
-      },
-    ])
     expect(result.file.preview.skills[0]?.text).toBe('烈焰冲击')
     expect(result.file.input.inventory_slots).toHaveLength(4)
   })

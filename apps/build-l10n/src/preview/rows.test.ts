@@ -1,13 +1,19 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import type { FieldReport, TranslateReport } from '@poe2-tools/build-core'
 import { describe, expect, it } from 'vitest'
 import { miniBundle, miniIndex } from '../../../../packages/build-core/src/testing/miniDict'
 import type { LoadedDict } from '../dict/loadDict'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
 import { translateSource } from '../translate/runTranslation'
-import { fieldReport } from './lines'
 import { spanText } from './markup'
 import { buildRows } from './rows'
+
+// 原先住在 preview/lines.ts 里，生产代码改用 fields.ts 的 buildFieldRows 之后就只剩测试在用，
+// 整个模块已删；这里留一个本地夹具，别再为它单开一个生产模块。
+function fieldReport(report: TranslateReport, path: string): FieldReport | undefined {
+  return report.fields.find((field) => field.path === path)
+}
 
 const fixtures = `${resolve(dirname(fsPathFromMetaUrl(import.meta.url)), '../../../../data/fixtures/synthetic')}/`
 const raw = readFileSync(`${fixtures}rich.build`, 'utf8')

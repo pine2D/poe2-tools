@@ -6,6 +6,10 @@
 // 未命中格是真按钮。66 条编号行（真实上限，报告 §3.4）全做成按钮会往 Tab 序里
 // 塞 66 个停靠点，而用户唯一想去的地方就是那几条缺口。
 //
+// 只有概览轨（lg）的缺口是按钮。侧栏文件行的迷你轨（sm）整条是装饰：它的缺口格
+// 在 ≤560 只有 10px 高，远够不到 44px 触控目标；而跳转已经由概览轨与未命中清单承担，
+// 每份文件再塞一串按钮进 Tab 序只会把「下一份文件」推得更远。
+//
 // 不做聚合降级：真实数据最小 7、中位数 9、最大 66，格宽下限 6px + 超宽换行足够。
 
 export interface MeterCell {
@@ -19,31 +23,40 @@ export interface MeterCell {
 export interface CoverageMeterProps {
   cells: readonly MeterCell[]
   size?: 'sm' | 'lg'
-  onJump(domId: string): void
+  /** 可访问名的前缀，用来和同一页上的另一条轨区分（侧栏文件行传文件名） */
+  label?: string
+  /** 只有 lg 轨的缺口是按钮；sm 轨整条是装饰，不需要这个回调 */
+  onJump?(domId: string): void
 }
 
-export function CoverageMeter({ cells, size = 'lg', onJump }: CoverageMeterProps) {
+export function CoverageMeter({ cells, size = 'lg', label, onJump }: CoverageMeterProps) {
   if (cells.length === 0) return null
   const hit = cells.filter((cell) => cell.hit).length
   const miss = cells.length - hit
+  const summary = `共 ${cells.length} 条编号行，命中 ${hit} 条，未命中 ${miss} 条`
+  const decorative = size === 'sm'
   return (
     // fieldset 而非 span + role="group"：Biome 的 useSemanticElements 要求 role="group"
     // 落在原生就有该隐含角色的元素上；fieldset 天然是 group，aria-label 直接覆盖它的
     // accessible name 计算（不需要 legend）。.meter 里重置掉浏览器默认的边框 / 内边距。
     <fieldset
-      className={size === 'sm' ? 'meter meter--sm' : 'meter'}
-      aria-label={`共 ${cells.length} 条编号行，命中 ${hit} 条，未命中 ${miss} 条`}
+      className={size === 'sm' ? 'meter meter--sm' : 'meter meter--lg'}
+      aria-label={label === undefined ? summary : `${label}：${summary}`}
     >
       {cells.map((cell) =>
-        cell.hit ? (
-          <span key={cell.domId} className="meter__cell meter__cell--hit" aria-hidden="true" />
+        cell.hit || decorative ? (
+          <span
+            key={cell.domId}
+            className={cell.hit ? 'meter__cell meter__cell--hit' : 'meter__cell meter__cell--miss'}
+            aria-hidden="true"
+          />
         ) : (
           <button
             key={cell.domId}
             type="button"
             className="meter__cell meter__cell--miss"
             aria-label={`跳到未命中：${cell.where}`}
-            onClick={() => onJump(cell.domId)}
+            onClick={() => onJump?.(cell.domId)}
           />
         ),
       )}

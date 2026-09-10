@@ -9,7 +9,7 @@ import { createDictLoader, type FetchJson, type LoadedDict } from './dict/loadDi
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { pastedSource, readFiles } from './files/readSources'
 import { buildFieldRows } from './preview/fields'
-import { jumpTo, meterCells } from './preview/locate'
+import { meterCells } from './preview/locate'
 import { Preview } from './preview/Preview'
 import {
   type SourceFile,
@@ -148,7 +148,7 @@ export function App({ fetchImpl }: AppProps) {
         : [],
     [dictState, sources, options],
   )
-  // 侧栏迷你轨与概览卡的轨用同一个 meterCells，两处的第 N 格必定是同一行
+  // 侧栏迷你装饰轨与概览卡的轨用同一个 meterCells，两处的第 N 格必定是同一行
   const meters = useMemo(
     () =>
       new Map(
@@ -289,14 +289,6 @@ export function App({ fetchImpl }: AppProps) {
               onSelect={setSelectedId}
               onRemove={remove}
               onDownload={downloadOne}
-              // 已知边界，别当 bug 修：点的是**当前未选中**那份文件的缺口时，目标行还没渲染
-              // 到 DOM 里，jumpTo 会安静地什么都不做（它本来就有 node === null 的守卫），
-              // 效果是「只切换选中文件」——这已经是用户此刻最需要的动作。点当前选中文件的缺口
-              // 则照常滚动 + 移焦点。真正的「选中后再滚」要一个 effect 排队，属第三期。
-              onJump={(id, domId) => {
-                setSelectedId(id)
-                jumpTo(domId)
-              }}
             />
             {dictState.status === 'ready' && (
               <p className="app__side-note">

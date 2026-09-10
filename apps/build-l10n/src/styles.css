@@ -894,6 +894,31 @@ button.filelist__name[aria-current="true"]:hover {
   white-space: nowrap;
 }
 
+/* 三枚「下载」的主次（owner 裁定）：概览卡的「下载此文件」是主 CTA——主场景是导入即下载，
+   眼睛落在内容上时手边就有；顶栏「全部下载」管多文件批量；侧栏文件行这枚只是「顺手下这一份」，
+   降为次级幽灵态，三枚同权会把视线打散。TSX 里仍显式保留 className="cta"（2b 的组件接口与
+   FileList 测试都按它选中，不为了换个皮就动接口），样式在这里覆盖回幽灵：选择器必须带元素名，
+   `button.filelist__download`(0,1,1) 才压得过 `.cta`(0,1,0)，:disabled 那条同理要 (0,2,1)。 */
+button.filelist__download {
+  border-color: var(--hairline-strong);
+  background: none;
+  box-shadow: none;
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+button.filelist__download:hover:not(:disabled) {
+  border-color: var(--gold-500);
+  background: var(--surface-hover);
+  color: var(--gold-300);
+}
+
+button.filelist__download:disabled {
+  border-color: var(--hairline);
+  background: none;
+  color: var(--text-3);
+}
+
 button.filelist__remove {
   width: 30px;
   min-height: 30px;
@@ -1133,7 +1158,6 @@ button.filelist__remove:hover:not(:disabled) {
 .meter__cell {
   flex: 1 1 0;
   min-width: 6px; /* 真实上限 66 格，900px 卡里每格 ≈10px；下限保证极端情况仍可点 */
-  max-width: 26px;
   padding: 0;
   border: 0;
   border-radius: 2px;
@@ -1149,16 +1173,21 @@ button.filelist__remove:hover:not(:disabled) {
   height: 18px;
   background: var(--warn-wash);
   box-shadow: inset 0 0 0 1px var(--warn);
-  cursor: pointer;
 }
 
-.meter__cell--miss:hover {
-  background: rgba(229, 169, 61, 0.24);
+/* 格宽上限分两档（mockup 的取值）：概览轨在中列要铺满，26px 的旧上限会让 8 格的轨
+   缩在左边一小截、右边空掉一大片；侧栏迷你轨反过来要窄，不能长得像概览轨。 */
+.meter--lg .meter__cell {
+  max-width: 52px;
 }
 
 .meter--sm {
   min-height: 10px;
   gap: 2px;
+}
+
+.meter--sm .meter__cell {
+  max-width: 22px;
 }
 
 .meter--sm .meter__cell--hit {
@@ -1167,6 +1196,17 @@ button.filelist__remove:hover:not(:disabled) {
 
 .meter--sm .meter__cell--miss {
   height: 10px;
+}
+
+/* 只有概览轨（lg）的缺口是按钮，才给「可点」的暗示；侧栏迷你轨整条是装饰
+   （见 CoverageMeter.tsx：≤560 那种 10px 高的格子远够不到 44px 触控目标）。
+   写在 .meter--sm 之后：这两条是 (0,2,0) / (0,3,0)，放前面会触发 noDescendingSpecificity。 */
+.meter--lg .meter__cell--miss {
+  cursor: pointer;
+}
+
+.meter--lg .meter__cell--miss:hover {
+  background: rgba(229, 169, 61, 0.24);
 }
 
 /* 侧栏文件行的迷你轨吃掉次行剩余宽度，下载按钮回到自然宽度。
@@ -1604,7 +1644,7 @@ button.misslist__go:hover:not(:disabled) {
 }
 
 .namepair__zh--gem {
-  color: var(--rarity-gem); /* 8.4 vs surface-1 */
+  color: var(--rarity-gem); /* 8.4 vs surface-2 / 8.9 vs surface-1 */
 }
 
 /* 写在 --gem 之后，未命中的宝石名要压过宝石青 */
@@ -1715,7 +1755,7 @@ button.misslist__go:hover:not(:disabled) {
   padding-bottom: var(--sp-2);
   border-bottom: 1px solid transparent;
   border-image: var(--rule-fade-short) 1;
-  color: var(--rarity-unique);
+  color: var(--text);
   font-size: 15px;
   overflow-wrap: anywhere;
 }
@@ -1728,6 +1768,14 @@ button.misslist__go:hover:not(:disabled) {
 .tip__base--miss {
   background: var(--warn-wash);
   color: var(--warn);
+}
+
+/* 基底名按稀有度取色：普通装备是正文色（上面的 .tip__base），传奇卡才染橙。
+   `:not(.tip__base--miss)` 保证未命中的琥珀不被压掉——没命中词典的名字不能长得像正常译名。
+   宝石卡不需要对应规则：宝石既不注入传奇名、PairTable 又是 baseName={false}，
+   `.card--gem .tip__base` 在 DOM 里根本不存在，宝石名的青色由 .namepair__zh--gem 承担。 */
+.card--unique .tip__base:not(.tip__base--miss) {
+  color: var(--rarity-unique);
 }
 
 .tip__n {
@@ -1945,7 +1993,10 @@ button.misslist__go:hover:not(:disabled) {
     overflow: visible;
   }
 
-  /* 窄屏改上下堆叠：中缝去掉，译文列头压一条横线表示"下面是译文" */
+  /* 窄屏改上下堆叠：中缝去掉。列头在单列下会变成「原文 · EN」「译文 · 简体中文」两条
+     紧挨着的标签，而下面的内容再逐行 EN / ZH 交替，读者对不上哪条标签管哪一行（Task 7 审阅）。
+     改为整行隐藏列头，转而在每个译文格左侧压一条古铜竖条 + 缩进，EN 在上 ZH 在下成对可读；
+     ≥901 的四列对照仍然靠列头，不受影响。 */
   .tip {
     grid-template-columns: 26px minmax(0, 1fr);
     padding: var(--sp-3) var(--sp-4) var(--sp-4);
@@ -1955,21 +2006,19 @@ button.misslist__go:hover:not(:disabled) {
     display: none;
   }
 
-  .tip__lab--zh,
-  .tip__base--zh,
-  .tip__n--right,
-  .tip__t--zh {
-    padding-left: 0;
-  }
-
-  .tip__lab--zh {
-    margin-top: var(--sp-3);
-    padding-top: var(--sp-3);
-    border-top: 1px solid var(--hairline);
+  .tip__lab {
+    display: none;
   }
 
   .tip__n--right {
+    padding-left: 0;
     padding-right: 8px;
+  }
+
+  .tip__t--zh,
+  .tip__base--zh {
+    padding-left: var(--sp-3);
+    border-left: 2px solid var(--bronze-600);
   }
 
   /* 覆盖率三段（大数字 / 轨 / 跳转）改上下堆叠，跳转那段跟着左对齐 */
@@ -2102,8 +2151,9 @@ button.misslist__go:hover:not(:disabled) {
     border-top: 1px solid var(--hairline);
   }
 
-  /* 触控目标 ≥44px 对这种细格子不适用，改为放宽最小宽度并保证有缝可点 */
-  .meter__cell {
+  /* 触控目标 ≥44px 对这种细格子不适用，改为放宽最小宽度并保证有缝可点。
+     只管概览轨：侧栏迷你轨已经整条改成装饰，这一档没有触控目标可言。 */
+  .meter--lg .meter__cell {
     min-width: 10px;
   }
 }

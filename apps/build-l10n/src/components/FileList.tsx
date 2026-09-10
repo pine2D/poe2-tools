@@ -7,13 +7,11 @@ export interface FileListProps {
   sources: readonly SourceFile[]
   results: readonly TranslateResult[]
   selectedId: string | null
-  /** 每份文件的编号行明细，画成次行的迷你轨；解析失败或词典未就绪时给空数组 */
+  /** 每份文件的编号行明细，画成次行的迷你装饰轨；解析失败或词典未就绪时给空数组 */
   meters: ReadonlyMap<string, readonly MeterCell[]>
   onSelect(id: string): void
   onRemove(id: string): void
   onDownload(id: string): void
-  /** 点迷你轨的缺口：先选中这份文件，再跳到那一行 */
-  onJump(id: string, domId: string): void
 }
 
 // 词典未就绪（切 locale 或首次加载）时 results 可能暂时为空，这里仍按 sources 渲染
@@ -50,7 +48,6 @@ export function FileList({
   onSelect,
   onRemove,
   onDownload,
-  onJump,
 }: FileListProps) {
   // 空列表由 App 的空态引导区承担，这里不再自造第二句空文案
   if (sources.length === 0) return null
@@ -86,11 +83,10 @@ export function FileList({
               <span className="filelist__rate">{rateText(result)}</span>
             </div>
             <div className="filelist__ops">
-              <CoverageMeter
-                cells={meters.get(source.id) ?? []}
-                size="sm"
-                onJump={(domId) => onJump(source.id, domId)}
-              />
+              {/* 迷你轨只回答「这份文件缺口多不多」，整条是装饰（见 CoverageMeter.tsx）。
+                  aria-label 带上文件名，否则多文件时读屏里会有 N 条同名的「共 x 条编号行…」，
+                  再加上概览卡那条，一页最多能撞出 N+1 个重名的 group。 */}
+              <CoverageMeter cells={meters.get(source.id) ?? []} size="sm" label={source.name} />
               <button
                 type="button"
                 className="cta filelist__download"

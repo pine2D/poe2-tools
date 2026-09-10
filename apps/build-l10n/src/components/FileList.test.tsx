@@ -23,7 +23,6 @@ const noop = {
   onSelect: vi.fn(),
   onRemove: vi.fn(),
   onDownload: vi.fn(),
-  onJump: vi.fn(),
 }
 
 describe('FileList', () => {
@@ -87,7 +86,6 @@ describe('FileList', () => {
         onSelect={onSelect}
         onRemove={onRemove}
         onDownload={vi.fn()}
-        onJump={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'a.build' }))
@@ -96,8 +94,7 @@ describe('FileList', () => {
     expect(onRemove).toHaveBeenCalledWith('b')
   })
 
-  it('次行有迷你覆盖率轨，点缺口把文件 id 与目标行一起交回去', () => {
-    const onJump = vi.fn()
+  it('次行有迷你覆盖率轨，整条是装饰且可访问名带文件名', () => {
     const meters = new Map<string, MeterCell[]>([
       [
         'a',
@@ -116,11 +113,13 @@ describe('FileList', () => {
         onSelect={vi.fn()}
         onRemove={vi.fn()}
         onDownload={vi.fn()}
-        onJump={onJump}
       />,
     )
     expect(container.querySelectorAll('.meter--sm')).toHaveLength(1)
-    fireEvent.click(screen.getByRole('button', { name: '跳到未命中：主手 · 第 2 行' }))
-    expect(onJump).toHaveBeenCalledWith('a', 'line-a-1')
+    // 缺口不再是按钮：跳转只由概览轨与未命中清单承担
+    expect(screen.queryByRole('button', { name: '跳到未命中：主手 · 第 2 行' })).toBeNull()
+    expect(
+      screen.getByRole('group', { name: 'a.build：共 2 条编号行，命中 1 条，未命中 1 条' }),
+    ).toBeDefined()
   })
 })

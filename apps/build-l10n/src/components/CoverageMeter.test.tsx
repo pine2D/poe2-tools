@@ -44,9 +44,27 @@ describe('CoverageMeter', () => {
     expect(container.querySelector('.meter')).toBeNull()
   })
 
-  it('sm 尺寸加一个修饰类，格子结构不变', () => {
-    const { container } = render(<CoverageMeter cells={cells} size="sm" onJump={vi.fn()} />)
-    expect(container.querySelector('.meter')?.getAttribute('class')).toContain('meter--sm')
-    expect(container.querySelectorAll('.meter__cell')).toHaveLength(3)
+  it('lg / sm 各有一个修饰类，格子结构不变', () => {
+    const { container } = render(<CoverageMeter cells={cells} onJump={vi.fn()} />)
+    expect(container.querySelector('.meter')?.getAttribute('class')).toContain('meter--lg')
+    cleanup()
+    const sm = render(<CoverageMeter cells={cells} size="sm" />)
+    expect(sm.container.querySelector('.meter')?.getAttribute('class')).toContain('meter--sm')
+    expect(sm.container.querySelectorAll('.meter__cell')).toHaveLength(3)
+  })
+
+  it('sm 轨整条是装饰：缺口格不是按钮，也不进 Tab 序', () => {
+    const { container } = render(<CoverageMeter cells={cells} size="sm" />)
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    const miss = container.querySelector('.meter__cell--miss')
+    expect(miss?.tagName).toBe('SPAN')
+    expect(miss?.getAttribute('aria-hidden')).toBe('true')
+  })
+
+  it('label 前缀进可访问名，多条轨同页时不重名', () => {
+    render(<CoverageMeter cells={cells} size="sm" label="a.build" />)
+    expect(
+      screen.getByRole('group', { name: 'a.build：共 3 条编号行，命中 2 条，未命中 1 条' }),
+    ).toBeDefined()
   })
 })

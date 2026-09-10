@@ -6,7 +6,6 @@ import { miniBundle, miniIndex } from '../../../../packages/build-core/src/testi
 import type { LoadedDict } from '../dict/loadDict'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
 import { translateSource } from '../translate/runTranslation'
-import { fieldReport, splitLines } from './lines'
 import { Preview } from './Preview'
 
 afterEach(() => {
@@ -44,15 +43,6 @@ function stubScroll() {
 function show() {
   return render(<Preview file={file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
 }
-
-describe('lines 工具', () => {
-  it('按路径取字段报告、分行', () => {
-    expect(fieldReport(file.report, 'inventory_slots[3].additional_text')?.lines).toHaveLength(4)
-    expect(fieldReport(file.report, 'nope')).toBeUndefined()
-    expect(splitLines('a\nb')).toEqual(['a', 'b'])
-    expect(splitLines(null)).toEqual([])
-  })
-})
 
 describe('Preview 概览卡', () => {
   it('覆盖率是一个大数字 + 分数 + 一条轨', () => {
