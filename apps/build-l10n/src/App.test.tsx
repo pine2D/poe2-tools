@@ -33,7 +33,7 @@ function interceptDownloads(): Blob[] {
 
 async function renderReady() {
   render(<App fetchImpl={fakeDictFetch(miniBundle)} />)
-  await screen.findByText('词典就绪：zh-CN 0.0.0（测试联盟）')
+  await screen.findByText('词典就绪')
 }
 
 function upload(name: string, text: string) {
@@ -65,7 +65,7 @@ describe('App', () => {
     expect(await blobs[0]?.text()).toContain('149% increased Spell Damage')
     upload('rich2.build', rich)
     await screen.findByRole('button', { name: 'rich2.build' })
-    fireEvent.click(screen.getByText('全部下载'))
+    fireEvent.click(screen.getByRole('button', { name: '全部下载' }))
     expect(blobs[1]?.type).toBe('application/zip')
   })
 
@@ -86,7 +86,7 @@ describe('App', () => {
     await waitFor(() => expect(screen.queryByText('pasted-2.build')).toBeNull())
   })
 
-  it('切换 locale 重新加载词典；词典加载失败时显示错误', async () => {
+  it('切换 locale 重新加载词典；词典加载失败时可以重试', async () => {
     const calls: string[] = []
     const inner = fakeDictFetch(miniBundle)
     render(
@@ -97,15 +97,33 @@ describe('App', () => {
         }}
       />,
     )
-    await screen.findByText('词典就绪：zh-CN 0.0.0（测试联盟）')
-    fireEvent.change(screen.getByLabelText('目标语言'), { target: { value: 'zh-TW' } })
-    await screen.findByText('词典就绪：zh-TW 0.0.0（测试联盟）')
-    expect(calls.some((u) => u.includes('/zh-TW/stats.json'))).toBe(true)
+    await screen.findByText('词典就绪')
+    fireEvent.click(screen.getByLabelText('繁体中文（台服）'))
+    await waitFor(() => expect(calls.some((u) => u.includes('/zh-TW/stats.json'))).toBe(true))
+    await screen.findByText('词典就绪')
   })
 
-  it('primary 表缺失 → 页脚显示加载失败', async () => {
-    render(<App fetchImpl={fakeDictFetch(miniBundle, { omit: ['stats'] })} />)
-    await screen.findByText('词典加载失败：zh-CN/stats.json：HTTP 404')
+  it('primary 表缺失 → 顶栏徽章报失败，主区给出原因与重试', async () => {
+    let attempt = 0
+    const good = fakeDictFetch(miniBundle)
+    render(
+      <App
+        fetchImpl={async (url) => {
+          attempt += 1
+          // 首轮 7 张表并发请求（stats 是第 1 次）；stats 失败会让 loadDict 提前返回，
+          // meta.json 根本不会取，所以第一轮总共只有 7 次调用，第 8 次起放行。
+          if (attempt <= 7 && url.includes('/stats.json'))
+            return { ok: false, status: 404, json: async () => null }
+          return good(url)
+        }}
+      />,
+    )
+    await screen.findByText('词典加载失败')
+    expect(screen.getByText('zh-CN/stats.json：HTTP 404')).toBeDefined()
+    // 主区错误卡的按钮叫「重新加载词典」，徽章里的叫「重试加载词典」，两个名字不撞
+    expect(screen.getByRole('button', { name: '重新加载词典' })).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '重试加载词典' }))
+    await screen.findByText('词典就绪')
   })
 
   it('词典加载期间文件列表不消失，覆盖率位置显示"待词典就绪"且下载禁用', async () => {

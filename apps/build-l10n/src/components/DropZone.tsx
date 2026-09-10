@@ -1,11 +1,12 @@
 import { type ChangeEvent, type DragEvent, useState } from 'react'
 
 export interface DropZoneProps {
+  variant?: 'rail' | 'hero'
   onFiles(files: File[]): void
   onPaste(text: string): void
 }
 
-export function DropZone({ onFiles, onPaste }: DropZoneProps) {
+export function DropZone({ variant = 'rail', onFiles, onPaste }: DropZoneProps) {
   const [draft, setDraft] = useState('')
   const [over, setOver] = useState(false)
 
@@ -28,7 +29,13 @@ export function DropZone({ onFiles, onPaste }: DropZoneProps) {
 
   return (
     <section
-      className={over ? 'dropzone dropzone--over' : 'dropzone'}
+      className={[
+        'dropzone',
+        variant === 'hero' ? 'dropzone--hero' : '',
+        over ? 'dropzone--over' : '',
+      ]
+        .filter((name) => name !== '')
+        .join(' ')}
       aria-label="文件输入"
       onDragOver={(event) => {
         event.preventDefault()
