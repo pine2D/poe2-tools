@@ -1381,9 +1381,10 @@ button.filelist__remove:hover:not(:disabled) {
   }
 
   /* box-shadow 在高对比度下被直接丢弃，而 radio 本体是 .visually-hidden，
-     没有原生指示可回落 —— 不补这条「当前目标语言」完全不可辨 */
+     没有原生指示可回落 —— 不补这条「当前目标语言」完全不可辨。
+     不加 forced-color-adjust: none：退出强制配色后金字在 Windows
+     高对比度亮色主题下对比度只有约 1.9:1，系统色回落反而更好。 */
   .seg__item--on {
-    forced-color-adjust: none;
     outline: 2px solid Highlight;
     outline-offset: -1px;
   }
