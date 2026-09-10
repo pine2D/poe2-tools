@@ -43,6 +43,9 @@
   --control-edge: rgba(217, 192, 120, 0.5);
   --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
   --rule-fade: linear-gradient(90deg, transparent, rgba(217, 192, 120, 0.45), transparent);
+  /* 单端淡出的分隔线：左实右虚，用在基底名与编号词缀之间（= 游戏提示框里名字下面那条线）。
+     2a 修复轮按零引用纪律删过一次，2b Task 4 的 .tip__base 起重新消费。 */
+  --rule-fade-short: linear-gradient(90deg, rgba(217, 192, 120, 0.45), transparent);
   /* 应用底：一层几乎看不见的暖光晕 + 58° 细斜纹。非文本装饰，最亮处相对底色抬升 <1%，
      不参与任何对比度判据；缺了它整页就是一块死平的近黑（mockup-1 .app 的配方）。 */
   --app-wash:
@@ -1304,6 +1307,7 @@ button.filelist__remove:hover:not(:disabled) {
   border-image: var(--rule-fade-short) 1;
   color: var(--rarity-unique);
   font-size: 15px;
+  overflow-wrap: anywhere;
 }
 
 .tip__base--zh {

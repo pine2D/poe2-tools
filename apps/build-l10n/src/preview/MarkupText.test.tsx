@@ -39,6 +39,12 @@ describe('MarkupText', () => {
     expect(container.querySelectorAll('.num')).toHaveLength(0)
   })
 
+  it('带单位后缀的写法不切半截数字，30s 整体不算数值', () => {
+    const container = renderLine('30s cooldown')
+    expect(container.textContent).toBe('30s cooldown')
+    expect(container.querySelectorAll('.num')).toHaveLength(0)
+  })
+
   it('紧跟着字母的百分数仍然是数值，只高亮数字本身', () => {
     const container = renderLine('+42% increased')
     expect(container.textContent).toBe('+42% increased')

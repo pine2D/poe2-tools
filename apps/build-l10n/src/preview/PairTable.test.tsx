@@ -50,6 +50,8 @@ describe('PairTable', () => {
     )
     // 左右两个序号格都写标号，所以是 2 个而不是 1 个
     expect(screen.getAllByText('1')).toHaveLength(2)
+    // 一条编号行恰好填满四列：序号 / 原文 / 序号 / 译文，多一格少一格都会让整张卡错位
+    expect(container.querySelectorAll('.tip__n, .tip__t')).toHaveLength(4)
     // MarkupText 会把 "+10" 单独包成 <span class="num">，正文因此不再是一个整体文本节点，
     // getByText 的 getNodeText() 只看直接子文本节点，这里必须用 textContent 比对
     expect(container.textContent).toContain('+10 to maximum Life')
@@ -188,7 +190,7 @@ describe('PairTable', () => {
   })
 
   it('传奇名注入行单独渲染，列头写明目标语言', () => {
-    render(
+    const { container } = render(
       <PairTable
         {...common}
         baseName
@@ -200,6 +202,9 @@ describe('PairTable', () => {
     expect(screen.getByText('稳步印记')).toBeDefined()
     expect(screen.getByText('传奇名注入')).toBeDefined()
     expect(screen.getByText('译文 · 简体中文')).toBeDefined()
+    // 注入行同样是两个 span-2 单元填满四列，不产生序号格
+    expect(container.querySelectorAll('.tip__base')).toHaveLength(2)
+    expect(container.querySelectorAll('.tip__n, .tip__t')).toHaveLength(0)
   })
 
   it('一行都没有时给一句人话，不是一张空面板', () => {
