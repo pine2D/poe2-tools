@@ -1249,48 +1249,217 @@ button.filelist__remove:hover:not(:disabled) {
   font-size: var(--fs-micro);
 }
 
-/* 对照区：一块面板 + 一条贯通的中缝，读起来是一份对照稿而不是两块文本 */
-.pair {
+/* 对照表：序号 / 原文 / 序号 / 译文 四列，一条源行 = 一个 grid 行，左右天然同高。
+   中缝是一条上下淡出的竖线，把「两块独立文本」变成「一份对照稿」。 */
+.tip {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-sm);
-  background: var(--surface-0);
-  overflow: hidden;
-}
-
-.pair__col {
-  margin: 0;
-  padding: var(--sp-3) 14px;
+  grid-template-columns: 26px minmax(0, calc(50% - 26px)) 46px minmax(0, calc(50% - 46px));
+  align-items: start;
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
   font-family: var(--font-pair);
   font-size: var(--fs-pair);
   line-height: 1.65;
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(217, 192, 120, 0.28) 14%,
+    rgba(217, 192, 120, 0.28) 86%,
+    transparent
+  );
+}
+
+/* 列头：全站第二处用 Cinzel 的地方（纯拉丁短标签，安全） */
+.tip__lab {
+  grid-column: span 2;
+  padding-bottom: var(--sp-2);
+  color: var(--bronze-text); /* 5.4 vs surface-2 */
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.tip__lab--zh {
+  padding-left: 22px;
+}
+
+/* 基底名行：跨两列，稀有度色，下面压一条单端淡出线（= 游戏提示框里名字与词缀之间那条线）。
+   一行 = 两个 span-2 单元（英文 + 译文），没有序号格，正好填满四列。 */
+.tip__base {
+  grid-column: span 2;
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid transparent;
+  border-image: var(--rule-fade-short) 1;
+  color: var(--rarity-unique);
+  font-size: 15px;
+}
+
+.tip__base--zh {
+  padding-left: 22px;
+}
+
+/* 基底名没在词典里命中：与编号行的未命中同款琥珀，别让它看起来像正常的稀有度色 */
+.tip__base--miss {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+.tip__n {
+  padding: 2px 8px 2px 0;
+  color: var(--bronze-text);
+  font-size: 12.5px;
+  text-align: right;
+  user-select: none;
+}
+
+.tip__n--right {
+  padding-left: 24px;
+  padding-right: 6px;
+}
+
+.tip__t {
+  padding: 2px 12px 2px 0;
+  color: var(--text-2);
   overflow-wrap: anywhere;
 }
 
-.pair__col--en {
-  color: var(--text-2);
-}
-
-.pair__col--zh {
-  border-left: 1px solid var(--hairline);
+.tip__t--zh {
+  padding-left: 24px;
   color: var(--text);
 }
 
-/* 宝石 / 天赋列表项里的对照区要独占一行，不跟着 en/zh 挤在同一 flex 行 */
-.supports li > .pair,
-.passives li > .pair {
-  flex: 1 0 100%;
+/* 数值高亮：原文列比正文亮一档，译文列是金 —— mockup 对照区最抢眼的签名
+   （`.tip .t .num` / `.tip .t.zh .num`）。三条都是 (0,2,0)，靠书写顺序决胜负，
+   所以 --zh 写在基础之后、--miss 又写在 --zh 之后（未命中的译文格里还是英文，
+   不能染成"已翻译"的金色）。 */
+.tip__t .num,
+.tip__base .num {
+  color: var(--text);
+  font-weight: 500;
 }
 
-/* 未命中行：颜色 + 底纹 + 点线下划线三重冗余；点线在 forced-colors 下依然存在 */
-.line--miss {
-  color: var(--warn); /* 8.0 vs 叠加底纹后的底色 */
+.tip__t--zh .num,
+.tip__base--zh .num {
+  color: var(--gold-100);
+}
+
+.tip__t--miss .num,
+.tip__base--miss .num {
+  color: var(--warn);
+}
+
+/* 未命中：颜色 + 底纹 + 左竖条 + 序号变 ! + 行尾文字签，五重冗余，
+   去掉任意一项都还能辨认（WCAG 1.4.1 不靠颜色单独承载信息） */
+.tip__n--miss {
+  border-left: 2px solid var(--warn);
   background: var(--warn-wash);
-  text-decoration: underline dotted var(--warn);
-  text-underline-offset: 3px;
+  color: var(--warn); /* 7.0 vs 叠加底纹后的底色 */
+  font-weight: 600;
+  text-align: center;
+  padding-left: 4px;
+}
+
+.tip__t--miss {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+/* 原样：作者的自由文本，不是错误，用中性卡其而不是警示色 */
+.tip__t--keep.tip__t--zh {
+  color: var(--keep); /* 6.6 vs surface-2 */
+}
+
+.tip__tag {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 3px 6px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  font-family: var(--font-zh-cn);
+  font-size: 11px;
+  line-height: 1;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+.tip__tag--miss {
+  border-color: rgba(229, 169, 61, 0.45);
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+.tip__tag--keep {
+  color: var(--keep);
+}
+
+.tip__tag--inject {
+  border-color: rgba(200, 123, 58, 0.5);
+  color: var(--rarity-unique);
+}
+
+/* 繁体译文列：压过 styles.css:107 那条 `:lang(zh-TW)`（0,1,0），换成含台服黑体的等宽栈，
+   繁体与简体两列的字形口径一致，数字仍然按 tabular-nums 对齐。 */
+.tip__t--zh:lang(zh-TW),
+.tip__base--zh:lang(zh-TW) {
+  font-family: var(--font-pair-tw);
+}
+
+/* 双语保留的英文原行：作为同一 grid 行里的第二子行，行数永远等于源行数 */
+.tip__keep {
+  display: block;
+  padding-top: 2px;
+  color: var(--keep);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tip__keep .icon {
+  display: inline-block;
+  margin-right: var(--sp-1);
+  color: var(--bronze-text);
+  vertical-align: -1px;
+}
+
+.tip--empty {
+  display: block;
+  color: var(--text-3);
+  font-family: var(--font-zh-cn);
+  font-size: 13px;
+}
+
+.tip--empty p {
+  margin: 0;
+}
+
+.tip--empty::before {
+  display: none;
+}
+
+/* 跳转落点不要贴到主区顶边。基底名行的落点是英文那格（.tip__base），也要算上。
+   顺便给所有 tabIndex={-1} 的落点一个显式焦点环：styles.css:145 那份 :focus-visible
+   名单只有 a/button/input/select/textarea/.button，序号格不在里面，程序化 focus()
+   能不能命中 :focus-visible 又要看浏览器启发式，靠 UA 默认环是碰运气。 */
+.tip__n,
+.tip__base {
+  scroll-margin-top: var(--sp-6);
+}
+
+[tabindex="-1"]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 /* ---------- 响应式：1280 / 900 / 560 ---------- */
 
@@ -1344,13 +1513,31 @@ button.filelist__remove:hover:not(:disabled) {
     overflow: visible;
   }
 
-  .pair {
-    grid-template-columns: minmax(0, 1fr);
+  /* 窄屏改上下堆叠：中缝去掉，译文列头压一条横线表示"下面是译文" */
+  .tip {
+    grid-template-columns: 26px minmax(0, 1fr);
+    padding: var(--sp-3) var(--sp-4) var(--sp-4);
   }
 
-  .pair__col--zh {
+  .tip::before {
+    display: none;
+  }
+
+  .tip__lab--zh,
+  .tip__base--zh,
+  .tip__n--right,
+  .tip__t--zh {
+    padding-left: 0;
+  }
+
+  .tip__lab--zh {
+    margin-top: var(--sp-3);
+    padding-top: var(--sp-3);
     border-top: 1px solid var(--hairline);
-    border-left: none;
+  }
+
+  .tip__n--right {
+    padding-right: 8px;
   }
 }
 

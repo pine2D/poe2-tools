@@ -11,7 +11,10 @@ import { type MarkupSpan, markupClass, resolveRgbTag } from './markup'
 // （split 会在**每一处**匹配上切开，与有没有 g 标志无关，奇数下标就是数值）。
 // 形状：可选正负号 + 数字 + 若干「.或, 接数字」+ 可选百分号。
 // 结尾必须是数字或 %，所以编号行的 "1." 只会吃掉 "1"，句点留给正文。
-const NUMBER = /([-+]?\d+(?:[.,]\d+)*%?)/
+// 两侧的断言挡住词内数字：T17 / L10N / 2H 这类词整体是名字，不是可高亮的数值。
+// 左侧连数字一起挡（不能只挡字母）——否则 "T17" 的 "1" 被字母挡住后，
+// 引擎会退到 "7" 上重来，仍然切出一个 .num。
+const NUMBER = /(?<![A-Za-z0-9])([-+]?\d+(?:[.,]\d+)*%?)(?![A-Za-z])/
 
 function withNumbers(text: string, key: string): ReactNode {
   const parts = text.split(NUMBER)

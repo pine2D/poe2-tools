@@ -33,6 +33,20 @@ describe('MarkupText', () => {
     expect([...container.querySelectorAll('.num')].map((n) => n.textContent)).toEqual(['3%', '25'])
   })
 
+  it('词内的数字不算数值，T17 这类词不被切开', () => {
+    const container = renderLine('T17 map')
+    expect(container.textContent).toBe('T17 map')
+    expect(container.querySelectorAll('.num')).toHaveLength(0)
+  })
+
+  it('紧跟着字母的百分数仍然是数值，只高亮数字本身', () => {
+    const container = renderLine('+42% increased')
+    expect(container.textContent).toBe('+42% increased')
+    const nums = container.querySelectorAll('.num')
+    expect(nums).toHaveLength(1)
+    expect(nums[0]?.textContent).toBe('+42%')
+  })
+
   it('标记内部的数值同样高亮，且 .num 在颜色 span 里面', () => {
     const container = renderLine('<red>{149% increased Spell Damage}')
     const outer = container.querySelector('span')
