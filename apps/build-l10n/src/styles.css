@@ -8,7 +8,7 @@
    font-display: swap —— 眉标是装饰性小字，先用 Georgia 兜底渲染、字体到位再换，
    不让它阻塞首屏。unicode-range 限死拉丁区，汉字不会误落到这个字体上。
    硬规则：Cinzel 是纯大写石刻体，1/0 与 I/O 几乎无法区分，**不承载任何字母数字混排的
-   字符串**（inventory_id、版本号、文件名、行号一律走 --font-ui 或 --font-pair）；
+   字符串**（inventory_id、版本号、文件名、行号一律走 --font-pair）；
    只有「纯字母的短标签」与「孤立的数字」可以用它。 */
 @font-face {
   font-family: "Cinzel Subset";
@@ -43,7 +43,6 @@
   --control-edge: rgba(217, 192, 120, 0.5);
   --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
   --rule-fade: linear-gradient(90deg, transparent, rgba(217, 192, 120, 0.45), transparent);
-  --rule-fade-short: linear-gradient(90deg, rgba(217, 192, 120, 0.42), transparent 78%);
   /* 应用底：一层几乎看不见的暖光晕 + 58° 细斜纹。非文本装饰，最亮处相对底色抬升 <1%，
      不参与任何对比度判据；缺了它整页就是一块死平的近黑（mockup-1 .app 的配方）。 */
   --app-wash:
@@ -85,7 +84,6 @@
 
   /* 字体栈。--font-display 在 Task 2 里由 @font-face 提供，中文一律走系统字体。 */
   --font-display: "Cinzel Subset", "Trajan Pro", Georgia, "Times New Roman", serif;
-  --font-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-zh-cn:
     "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
   --font-zh-tw:
@@ -94,8 +92,11 @@
      退成比例字体会让编号词缀行彻底失去对齐，而对齐正是这个界面存在的理由（第一期 M-4）。 */
   --font-pair: ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", "PingFang SC", monospace;
 
-  /* 字号阶（基准 15px） */
-  --fs-display: 32px;
+  /* 字号阶（基准 15px）。--fs-display 原计划 32px（空态主句是一句话说明），修订记录第 10 条
+     把 .empty__hero 改回「产品名、40px、金渐变裁切」（mockup .estate .hero 的配方）之后忘了
+     同步这张表，实现时把 40px 直接硬编码在规则里，令牌反而零引用（I-4）；这里补上 40px，
+     .empty__hero 与 2b 的覆盖率大数字将来共用同一档。 */
+  --fs-display: 40px;
   --fs-h1: 22px;
   --fs-h2: 18px;
   --fs-h3: 15.5px;
@@ -508,12 +509,17 @@ button.badge__retry:hover:not(:disabled) {
   cursor: pointer;
 }
 
+/* I-3：方框是复选框未勾选时唯一的状态指示，不适用「带文字标签控件走 --hairline-strong」
+   的豁免——那条豁免成立是因为控件的识别手段是它自己的文字标签，而这里标签只说得清
+   「双语（保留英文原行）」是什么，说不清有没有勾。--hairline-strong 叠在顶栏 --surface-1
+   上实算只有 1.62:1（基本不可见）；换成 --control-edge（边框即唯一信号的控件专用令牌）
+   实算 3.45:1，达 WCAG 1.4.11 的 3:1。 */
 .opt input[type="checkbox"] {
   appearance: none;
   width: 16px;
   height: 16px;
   margin: 0;
-  border: 1px solid var(--hairline-strong);
+  border: 1px solid var(--control-edge);
   border-radius: var(--r-sm);
   background: var(--surface-0);
   cursor: pointer;
@@ -925,7 +931,7 @@ button.filelist__remove:hover:not(:disabled) {
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 2px #000) drop-shadow(0 0 1px #000)
     drop-shadow(0 0 3px rgba(117, 1, 1, 0.45));
-  font-size: 40px;
+  font-size: var(--fs-display);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.06em;
@@ -1260,13 +1266,17 @@ button.filelist__remove:hover:not(:disabled) {
    高矮不齐，切换目标语言又是最核心的一次交互，所以一并补齐。
    button.filelist__name 必须显式列在选择器里：它的基态是 `button.filelist__name`(0,2,1)，
    压得过通用 `button`(0,0,1)，「选中文件」是侧栏主动作，不能被漏掉。
+   button.badge__retry 同理：基态 `button.badge__retry`(0,1,1) 压得过裸 `button`(0,0,1)，
+   之前只写了裸 button，24px 的基态选择器赢了 44px 的名单（I-2）；它是词典加载失败时
+   顶栏唯一的恢复动作，手机上正是最需要它的场景，必须显式列出来。
    textarea 不在这份名单里——侧栏里唯一的 textarea 是拖放区的粘贴框，已经 76px 高，不需要再抬。 */
 @media (max-width: 560px) {
   button,
   .button,
   .options label,
   .seg__item,
-  button.filelist__name {
+  button.filelist__name,
+  button.badge__retry {
     min-height: 44px;
   }
 
@@ -1315,12 +1325,22 @@ button.filelist__remove:hover:not(:disabled) {
     padding: var(--sp-7) var(--sp-4) var(--sp-6);
   }
 
+  /* 28px 是独立字面量，不进 --fs-* 阶梯：最近的两档是 --fs-h1(22px) 与
+     --fs-display(40px)，中间没有台阶落得下；只为这一个窄屏断点开一档不值得（I-4）。 */
   .empty__hero {
     font-size: 28px;
   }
 
   .empty__lede {
     font-size: 16px;
+  }
+
+  /* I-5：去掉 max-width 后三个 item 各自换行成独立一行，但容器仍是
+     justify-content: center，于是每行按自己的宽度各自居中，I / II / III 落在三个不同的
+     x 上。改成单列纵向堆叠 + 拉伸到容器全宽，三个圆圈的左边距因此对齐到同一条竖线。 */
+  .steps {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .steps__item {
@@ -1389,8 +1409,11 @@ button.filelist__remove:hover:not(:disabled) {
     outline-offset: -1px;
   }
 
+  /* C-1：自绘方框在强制配色下会保留站点色而周围换成系统色（Canvas），
+     未勾选反而更像已勾选、已勾选的浅金勾又几乎看不见，两个开关的真实状态因此读反。
+     交回原生渲染，由系统按高对比度配色画方框与勾——一期的原生复选框在这一档本来就是对的。 */
   .opt input[type="checkbox"] {
-    forced-color-adjust: none;
+    appearance: auto;
   }
 
   .badge--error {

@@ -23,9 +23,13 @@ export function EmptyState({ dictVersion, onFiles, onPaste }: EmptyStateProps) {
           顶栏字标是压缩过的「PoE2 构筑汉化」，这里写全称，两处不重复也不打架。 */}
       <h2 className="empty__hero">流放之路 2 构筑汉化</h2>
       <span className="empty__rule" />
+      {/* 显式字符串而非多行 JSX 文本：JSX 会把「文本 + 换行 + 文本」的行间换行折成一个
+          U+0020，之前恰好落在两个中文字之间（I-1）。用 {'…'} 整句写成一个字面量，
+          Biome 不会拆行，也就不会再夹进杂散空格。 */}
       <p className="empty__lede">
-        把英文攻略里的构筑备注翻成中文：基底名、传奇名与编号词缀行按国服或台服术语替换，
-        未命中的行保留英文并标出来。下载回来的文件可以直接放进 Build Planner 目录。
+        {
+          '把英文攻略里的构筑备注翻成中文：基底名、传奇名与编号词缀行按国服或台服术语替换，未命中的行保留英文并标出来。下载回来的文件可以直接放进 Build Planner 目录。'
+        }
       </p>
       <ol className="steps">
         {STEPS.map((step) => (
