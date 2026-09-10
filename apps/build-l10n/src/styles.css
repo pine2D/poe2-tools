@@ -77,6 +77,31 @@
   --info: #3fc7bf; /* 9.4 / 8.9 / 8.4 / 7.7；词典就绪徽章的状态点 */
   --rarity-unique: #c87b3a; /* 传奇名 5.9 / 5.6 / 5.3 / 4.8 */
 
+  /* 标记语法还原色：策略是「保色相、只提明度」（research-cjk-typography.md §4.2）。
+     括号里是 vs --surface-2 的实算对比度，全部 ≥4.5:1。
+     --mk-black 是有意的偏离：暗底上真用黑就是不可见，退成可读的暖灰。 */
+  --mk-red: #e8695c; /* 5.5，官方 #d20000 只有 3.1 */
+  --mk-orange: #e0904a; /* 6.8 */
+  --mk-yellow: #e6d45a; /* 11.5 */
+  --mk-green: #6fcf5e; /* 8.9 */
+  --mk-blue: #8888ff; /* 5.8，官网 .colourAugmented 原值 */
+  --mk-indigo: #a79bff; /* 7.3 */
+  --mk-violet: #d79be8; /* 8.1 */
+  --mk-black: #8c8574; /* 4.7 */
+  --mk-white: #ede6d6; /* 14.0 */
+  --mk-grey: #9a9280; /* 5.6，官方 #7f7f7f 只有 3.4 */
+  --mk-bronze: #c9a46a; /* 7.4 */
+  --mk-silver: #c8c8c8; /* 10.4，官网 .normal 原值 */
+  --mk-gold: #e6e066; /* 12.6，官网 .rareitem #ff7 压明度 */
+  --mk-unique: #c87b3a; /* 5.3，= --rarity-unique */
+  --rarity-gem: #3fc7bf; /* 8.4，宝石名 */
+
+  /* 台服译文列专用的等宽栈：`:lang(zh-TW)`（styles.css:107）会直接命中译文格并把它
+     换成比例字体 --font-zh-tw，繁体列因此丢掉 tabular-nums 对齐，同一界面出现两套
+     字形口径。把台服黑体插进等宽栈，简繁两列就一致了。Task 4 的 .tip 规则消费它。 */
+  --font-pair-tw:
+    ui-monospace, "Cascadia Mono", Consolas, "Microsoft JhengHei", "PingFang TC", monospace;
+
   /* 主按钮（官方 ember 渐变）：文字 #e7c878 对最亮的一档底 #5a2c08 是 7.2 */
   --cta-face: linear-gradient(180deg, #1b0e05, #4a2408 61%, #5a2c08 89%, #0a0705 95%, #3c3429 96%);
   --cta-border: #4a4137;
@@ -1021,6 +1046,74 @@ button.filelist__remove:hover:not(:disabled) {
 }
 
 /* ---------- 预览区 ---------- */
+
+/* 标记语法：颜色标签只管 color，字号标签只管 font-size，字形标签只管 font-weight /
+   font-style / text-decoration，三类互不干扰，可以嵌套叠加 */
+.mk-red {
+  color: var(--mk-red);
+}
+.mk-orange {
+  color: var(--mk-orange);
+}
+.mk-yellow {
+  color: var(--mk-yellow);
+}
+.mk-green {
+  color: var(--mk-green);
+}
+.mk-blue {
+  color: var(--mk-blue);
+}
+.mk-indigo {
+  color: var(--mk-indigo);
+}
+.mk-violet {
+  color: var(--mk-violet);
+}
+.mk-black {
+  color: var(--mk-black);
+}
+.mk-white {
+  color: var(--mk-white);
+}
+.mk-grey {
+  color: var(--mk-grey);
+}
+.mk-bronze {
+  color: var(--mk-bronze);
+}
+.mk-silver {
+  color: var(--mk-silver);
+}
+.mk-gold {
+  color: var(--mk-gold);
+}
+.mk-unique {
+  color: var(--mk-unique);
+}
+
+.mk-s {
+  font-size: 0.86em;
+}
+.mk-m {
+  font-size: 1.1em;
+}
+.mk-l {
+  font-size: 1.24em;
+}
+.mk-b {
+  font-weight: 700;
+}
+.mk-i {
+  font-style: italic;
+}
+.mk-u {
+  text-decoration: underline;
+}
+.mk-r {
+  font-weight: 400;
+  font-style: normal;
+}
 
 .preview {
   max-width: 1000px;
