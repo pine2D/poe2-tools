@@ -5,7 +5,12 @@
 :root {
   color-scheme: dark;
 
-  /* 表面与描边：暖近黑实色底逐级提亮；层级用描边与内高光表达，不用落地阴影 */
+  /* 表面与描边：暖近黑实色底逐级提亮；层级用描边与内高光表达，不用落地阴影。
+     品牌金的 RGB 三元组 217,192,120 在下面重复出现是**有意**的：改成
+     `--gold-rgb: 217 192 120` + `rgb(var(--gold-rgb) / .12)` 需要 `rgb(r g b / a)`
+     空格语法（Chrome 65+ / Safari 12.1+），微信 X5 一类老内核解析失败会让整条
+     border-color 声明作废并回落到 currentColor（文字色的边框，比现在难看得多），
+     所以宁可留四份字面量。 */
   --surface-0: #0e0d0b;
   --surface-1: #16140f;
   --surface-2: #1d1a14;
@@ -13,50 +18,67 @@
   --surface-hover: #2e2819;
   --hairline: rgba(217, 192, 120, 0.12);
   --hairline-strong: rgba(217, 192, 120, 0.22);
-  /* 可交互控件的功能性边界（WCAG 1.4.11 非文本对比度 ≥3:1）：--hairline / --hairline-strong
-     在暗色面上只有 1.06–1.91:1，够不到线，但那两个仍然是对的——装饰性分隔线（字标竖线、
-     卡片外框、区块淡出线）保持不变。这个令牌只给「这里能操作」的三处边框单开一档：
-     按钮基态、输入框/下拉框、拖放区虚线框。#85795d 暖灰棕（非金色，不与品牌金混淆），
-     WCAG 2.1 相对亮度实算 vs surface-0/1/2/3：4.5 / 4.3 / 4.0 / 3.7，四个面全部 ≥3:1。 */
-  --control-border: #85795d;
+  /* 只给「唯一识别手段就是边框」的控件用：粘贴框与拖放区虚线框（空框子，没有文字标签，
+     边框一没就不知道那儿能操作）。等效实色 #746642 / #786a44 / #7b6d46 / #807048，
+     对 surface-0/1/2/3 实算 3.44 / 3.46 / 3.40 / 3.30，全部 ≥3:1（WCAG 1.4.11）。
+     带文字标签的按钮不用它——标签本身就是识别手段，边框只需 --hairline-strong，
+     这样顶栏不再是一圈泥褐描边（第一期 #85795d 是 4.0–4.5:1 的去饱和卡其）。 */
+  --control-edge: rgba(217, 192, 120, 0.5);
   --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
   --rule-fade: linear-gradient(90deg, transparent, rgba(217, 192, 120, 0.45), transparent);
+  --rule-fade-short: linear-gradient(90deg, rgba(217, 192, 120, 0.42), transparent 78%);
+  /* 应用底：一层几乎看不见的暖光晕 + 58° 细斜纹。非文本装饰，最亮处相对底色抬升 <1%，
+     不参与任何对比度判据；缺了它整页就是一块死平的近黑（mockup-1 .app 的配方）。 */
+  --app-wash:
+    radial-gradient(1100px 520px at 52% -8%, rgba(194, 158, 108, 0.055), transparent 68%),
+    repeating-linear-gradient(58deg, rgba(255, 255, 255, 0.013) 0 1px, transparent 1px 4px);
+  --scrollbar-thumb: #3a3226;
 
-  /* 文本：括号内为 vs surface-0 / surface-2 / surface-3 的对比度 */
-  --text: #ede6d6; /* 15.6 / 14.0 / 12.9 */
-  --text-2: #b8ae99; /* 8.8 / 7.9 / 7.3 */
-  --text-3: #9a9280; /* 6.3 / 5.6 / 5.2 */
+  /* 文本：括号内为 vs surface-0 / surface-1 / surface-2 / surface-3 的对比度 */
+  --text: #ede6d6; /* 15.6 / 14.8 / 14.0 / 12.9 */
+  --text-2: #b8ae99; /* 8.8 / 8.4 / 7.9 / 7.3 */
+  /* mockup-1 这一档是 #8c8574，在 surface-3 上只有 4.36:1；报告 §5.1 改动 1 要求换成
+     下面这个值，处处 ≥5:1。这是本期唯一刻意不跟 mockup 的中性色。 */
+  --text-3: #9a9280; /* 6.3 / 6.0 / 5.6 / 5.2 */
 
   /* 品牌金 */
-  --gold-100: #f2e4b8; /* 15.3 / 13.7 / 12.6 */
-  --gold-300: #d9c078; /* 10.9 / 9.7 / 9.0 */
-  --gold-500: #c29e6c; /* 7.8 / 6.9 / 6.4 */
-  --bronze-600: #8a6a38; /* 3.9 / 3.5 / 3.2，仅用于非文本；第二期覆盖率轨的底槽用 */
+  --gold-100: #f2e4b8; /* 15.3 / 14.5 / 13.7 / 12.6 */
+  --gold-300: #d9c078; /* 10.9 / 10.3 / 9.7 / 9.0 */
+  --gold-500: #c29e6c; /* 7.8 / 7.4 / 6.9 / 6.4 */
+  /* 3.9 / 3.7 / 3.5 / 3.2：达图形 3:1，**不得承载文字**。本期用于分段控件的轨底描边；
+     第二期 B 的覆盖率轨命中格用它。B 期若不做覆盖率轨，这个令牌必须删掉。 */
+  --bronze-600: #8a6a38;
+  /* 6.0 / 5.7 / 5.4 / 5.0：mockup 用 --bz 直接写英文眉标与 inventory_id，那是 mockup
+     自己的 a11y 缺陷（3.5:1 的正文）。同族但可读的一档，眉标 / 版本号 / 脚注用它。 */
+  --bronze-text: #a88c50;
 
   /* 语义色：与金色彻底分家 */
-  --warn: #e5a93d; /* 未命中 9.3 / 8.3 / 7.7 */
+  --warn: #e5a93d; /* 未命中 9.3 / 8.8 / 8.3 / 7.7 */
   --warn-wash: rgba(229, 169, 61, 0.1);
-  --danger: #e8695c; /* 错误 6.1 / 5.5 / 5.0 */
-  --keep: #aa9e82; /* 原样保留 7.3 / 6.5 / 6.0；第二期逐行三态的「原样保留」用 */
-  --info: #3fc7bf; /* 提示 9.4 / 8.4 / 7.7；第二期 ⓘ 说明气泡与状态徽章用 */
-  --rarity-unique: #c87b3a; /* 传奇名 5.9 / 5.2 / 4.8 */
+  --danger: #e8695c; /* 错误 6.1 / 5.8 / 5.5 / 5.0 */
+  /* 7.3 / 6.9 / 6.6 / 6.0；第二期 B 逐行三态的「原样」用。B 期不做就必须删。 */
+  --keep: #aa9e82;
+  --info: #3fc7bf; /* 9.4 / 8.9 / 8.4 / 7.7；词典就绪徽章的状态点 */
+  --rarity-unique: #c87b3a; /* 传奇名 5.9 / 5.6 / 5.3 / 4.8 */
 
   /* 主按钮（官方 ember 渐变）：文字 #e7c878 对最亮的一档底 #5a2c08 是 7.2 */
   --cta-face: linear-gradient(180deg, #1b0e05, #4a2408 61%, #5a2c08 89%, #0a0705 95%, #3c3429 96%);
   --cta-border: #4a4137;
   --cta-text: #e7c878;
 
-  /* 字体栈：只用系统字体，不引任何外部字体文件。
-     --font-ui 本期无引用（body 走 --font-zh-cn），留给第二期需要纯拉丁字形的眉标 / 数字位。 */
+  /* 字体栈。--font-display 在 Task 2 里由 @font-face 提供，中文一律走系统字体。 */
+  --font-display: "Cinzel Subset", "Trajan Pro", Georgia, "Times New Roman", serif;
   --font-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-zh-cn:
     "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
   --font-zh-tw:
     "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", "Source Han Sans TC", system-ui, sans-serif;
-  --font-pair:
-    ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", "PingFang SC", sans-serif;
+  /* 末位必须是 monospace 而不是 sans-serif：Linux / Android 上前五个都可能缺席，
+     退成比例字体会让编号词缀行彻底失去对齐，而对齐正是这个界面存在的理由（第一期 M-4）。 */
+  --font-pair: ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", "PingFang SC", monospace;
 
   /* 字号阶（基准 15px） */
+  --fs-display: 32px;
   --fs-h1: 22px;
   --fs-h2: 18px;
   --fs-h3: 15.5px;
@@ -64,6 +86,7 @@
   --fs-pair: 14px;
   --fs-label: 13px;
   --fs-micro: 11.5px;
+  --fs-eyebrow: 11px;
 
   /* 间距阶（4px 基数） */
   --sp-1: 4px;
@@ -74,15 +97,16 @@
   --sp-6: 24px;
   --sp-7: 32px;
   --sp-8: 48px;
+  --sp-9: 64px;
 
-  /* 圆角上限 10px：工具类界面不用大圆角 */
+  /* 圆角上限 10px：工具类界面不用大圆角。--r-full 只给状态徽章的胶囊。 */
   --r-sm: 4px;
   --r-md: 8px;
   --r-lg: 10px;
+  --r-full: 999px;
 
   /* 动效与焦点。焦点环是 outline 简写值：全站没有任何组件规则会去改 outline，
-     box-shadow 则会被 .cta（主 CTA）和 .filelist__item button[aria-label^="移除"]（0,2,1）
-     两处组件规则覆盖掉，所以不能用 box-shadow 做焦点指示。 */
+     box-shadow 则会被 .cta 与幽灵按钮覆盖掉，所以不能用 box-shadow 做焦点指示。 */
   --dur-fast: 120ms;
   --dur-drop: 140ms;
   --ease: ease-out;
@@ -95,7 +119,8 @@
 
 body {
   margin: 0;
-  background: var(--surface-0);
+  background: var(--app-wash), var(--surface-0);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-zh-cn);
   font-size: var(--fs-body);
@@ -161,7 +186,8 @@ button,
   gap: var(--sp-2);
   min-height: 34px;
   padding: 0 14px;
-  border: 1px solid var(--control-border); /* 功能边界，见 :root 里的对比度注释 */
+  /* 按钮的识别手段是它自己的文字标签，边框只做装饰，用发丝金而不是实色卡其 */
+  border: 1px solid var(--hairline-strong);
   border-radius: var(--r-md);
   background: var(--surface-3);
   box-shadow: var(--inset-light);
@@ -220,38 +246,24 @@ button:disabled {
   font-weight: 400;
 }
 
-select,
 textarea {
   min-height: 34px;
   padding: 6px 10px;
-  border: 1px solid var(--control-border); /* 功能边界，见 :root 里的对比度注释 */
+  /* 空框子没有文字标签，边框就是唯一的「这里能输入」信号，必须 ≥3:1 */
+  border: 1px solid var(--control-edge);
   border-radius: var(--r-md);
   background: var(--surface-0);
   color: var(--text);
-  font-family: inherit;
+  font-family: var(--font-pair);
   font-size: var(--fs-label);
   line-height: 1.5;
+  width: 100%;
+  resize: vertical;
   transition: border-color var(--dur-fast) var(--ease);
 }
 
-select:hover,
 textarea:hover {
   border-color: var(--gold-500);
-}
-
-/* 箭头是内联 data URI，不发任何请求 */
-select {
-  padding-right: 30px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23b8ae99' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  appearance: none;
-}
-
-textarea {
-  width: 100%;
-  resize: vertical;
-  font-family: var(--font-pair);
 }
 
 input[type="checkbox"] {
@@ -355,14 +367,14 @@ input[type="checkbox"] {
   background: var(--surface-1);
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: #3a3226 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .app__main {
   padding: var(--sp-6) var(--sp-8) var(--sp-8);
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: #3a3226 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .app__footer {
@@ -385,7 +397,7 @@ input[type="checkbox"] {
   gap: var(--sp-3);
   min-height: 120px;
   padding: var(--sp-5) var(--sp-4);
-  border: 1px dashed var(--control-border); /* 功能边界，见 :root 里的对比度注释 */
+  border: 1.5px dashed var(--control-edge);
   border-radius: var(--r-lg);
   background: var(--surface-2);
   text-align: center;
