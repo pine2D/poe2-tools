@@ -1,5 +1,6 @@
 import type { SourceFile } from '../translate/runTranslation'
 import { formatRate, type TranslateResult } from '../translate/runTranslation'
+import { Icon, type IconName } from './Icon'
 
 export interface FileListProps {
   sources: readonly SourceFile[]
@@ -12,6 +13,25 @@ export interface FileListProps {
 
 // 词典未就绪（切 locale 或首次加载）时 results 可能暂时为空，这里仍按 sources 渲染
 // 每一行，未匹配到结果的行显示"待词典就绪"并禁用下载，避免整份列表闪没
+type RowKind = 'ok' | 'error' | 'pending'
+
+function kindOf(result: TranslateResult | undefined): RowKind {
+  if (result === undefined) return 'pending'
+  return result.ok ? 'ok' : 'error'
+}
+
+const STATUS_ICON: Record<RowKind, IconName> = {
+  ok: 'check',
+  error: 'warning',
+  pending: 'refresh',
+}
+
+const STATUS_TITLE: Record<RowKind, string> = {
+  ok: '已翻译',
+  error: '解析失败',
+  pending: '等待词典',
+}
+
 function rateText(result: TranslateResult | undefined): string {
   if (result === undefined) return '待词典就绪'
   return result.ok ? formatRate(result.file.rate) : '解析失败'
@@ -25,11 +45,13 @@ export function FileList({
   onRemove,
   onDownload,
 }: FileListProps) {
-  if (sources.length === 0) return <p className="filelist__empty">还没有文件</p>
+  // 空列表由 App 的空态引导区承担，这里不再自造第二句空文案
+  if (sources.length === 0) return null
   return (
-    <ul className="filelist">
+    <ul className="filelist" aria-label="已导入文件">
       {sources.map((source) => {
         const result = results.find((item) => item.id === source.id)
+        const kind = kindOf(result)
         return (
           <li
             key={source.id}
@@ -37,31 +59,45 @@ export function FileList({
               source.id === selectedId ? 'filelist__item filelist__item--active' : 'filelist__item'
             }
           >
-            <button
-              type="button"
-              className="filelist__name"
-              aria-current={source.id === selectedId ? 'true' : undefined}
-              onClick={() => onSelect(source.id)}
-            >
-              {source.name}
-            </button>
-            <span className="filelist__rate">{rateText(result)}</span>
-            <button
-              type="button"
-              className="cta"
-              aria-label={`下载 ${source.name}`}
-              disabled={result === undefined || !result.ok}
-              onClick={() => onDownload(source.id)}
-            >
-              下载
-            </button>
-            <button
-              type="button"
-              aria-label={`移除 ${source.name}`}
-              onClick={() => onRemove(source.id)}
-            >
-              移除
-            </button>
+            <div className="filelist__top">
+              {/* 状态既有图标又有名字：不靠颜色单独承载 */}
+              <Icon
+                name={STATUS_ICON[kind]}
+                size={15}
+                title={STATUS_TITLE[kind]}
+                className={`filelist__status filelist__status--${kind}`}
+              />
+              <button
+                type="button"
+                className="filelist__name"
+                title={source.name}
+                aria-current={source.id === selectedId ? 'true' : undefined}
+                onClick={() => onSelect(source.id)}
+              >
+                {source.name}
+              </button>
+              <span className="filelist__rate">{rateText(result)}</span>
+            </div>
+            <div className="filelist__ops">
+              <button
+                type="button"
+                className="cta filelist__download"
+                aria-label={`下载 ${source.name}`}
+                disabled={result === undefined || !result.ok}
+                onClick={() => onDownload(source.id)}
+              >
+                <Icon name="download" size={13} />
+                下载
+              </button>
+              <button
+                type="button"
+                className="filelist__remove"
+                aria-label={`移除 ${source.name}`}
+                onClick={() => onRemove(source.id)}
+              >
+                <Icon name="close" size={14} />
+              </button>
+            </div>
             {result !== undefined && !result.ok && (
               <p className="filelist__error">{result.error}</p>
             )}

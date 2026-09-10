@@ -253,6 +253,11 @@ export function App({ fetchImpl }: AppProps) {
         {!empty && (
           <aside className="app__side">
             <DropZone onFiles={onFiles} onPaste={onPaste} />
+            <div className="rail-h">
+              <span className="eyebrow">Files</span>
+              <span className="rail-h__zh">文件</span>
+              <span className="rail-h__n">{sources.length}</span>
+            </div>
             <FileList
               sources={sources}
               results={results}

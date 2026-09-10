@@ -716,51 +716,111 @@ button.badge__retry:hover:not(:disabled) {
   margin-top: var(--sp-6);
 }
 
+/* 侧栏区块头：英文眉标 + 中文 + 右对齐计数，压一条发丝下边线（mockup .rail-h） */
+.rail-h {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.rail-h__zh {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+/* 计数是孤立数字，但紧邻拉丁眉标，仍走等宽体避免 Cinzel 的 1/I 混淆 */
+.rail-h__n {
+  margin-left: auto;
+  color: var(--text-3);
+  font-family: var(--font-pair);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .filelist {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--sp-2);
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-/* 两行式：首行「文件名 + 覆盖率」，次行「下载（主）+ 移除（次）」。
+/* 两行式卡片：首行「状态图标 + 文件名 + 覆盖率」，次行「下载（主）+ 移除（幽灵图标）」。
    340px 侧栏里四元素挤一行会把文件名截成 pasted-1.b…，所以不分宽度一律两行。
-   下载按钮在 FileList.tsx 里带 className="cta"，样式选中不再依赖位置或文案；
-   移除按钮仍然没有 class，只能按 aria-label 前缀选中，改 FileList.tsx 的
-   「移除」aria-label 文案时还是要同步改这里。 */
+   两颗按钮都带显式 class，样式不再依赖位置或 aria-label 文案（第一期 I-3 的根治）。 */
 .filelist__item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--sp-2) var(--sp-3);
-  min-height: 44px;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid transparent;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: var(--inset-light);
   transition: background-color var(--dur-fast) var(--ease);
 }
 
-.filelist__item .cta {
-  grid-column: 1;
-  justify-self: start;
-}
-
 .filelist__item:hover {
-  background: var(--surface-2);
+  background: var(--surface-3);
 }
 
+/* 选中态：左侧一条 3px 金实条 + 更亮的底，比换边框色更好扫 */
 .filelist__item--active {
-  border-color: var(--hairline);
+  border-color: var(--hairline-strong);
   background: var(--surface-3);
+}
+
+.filelist__item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--sp-2);
+  bottom: var(--sp-2);
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--gold-300);
+}
+
+.filelist__top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.filelist__ops {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.filelist__ops .cta {
+  flex: 1;
+}
+
+.filelist__status--ok {
+  color: var(--gold-300);
+}
+
+.filelist__status--error {
+  color: var(--danger);
+}
+
+.filelist__status--pending {
+  color: var(--text-3);
 }
 
 /* 幽灵文字按钮。必须写成 `button.filelist__name`（0,2,1）：通用的
    `button:hover:not(:disabled)` 是 (0,2,1)，光写 `.filelist__name:hover`(0,2,0) 压不过它，
-   鼠标划过文件名时会浮出一块 --surface-hover 的实心按钮底。基态一并写成同样的形式保持成对。 */
+   鼠标划过文件名时会浮出一块 --surface-hover 的实心按钮底。 */
 button.filelist__name {
   display: block;
+  flex: 1;
+  min-width: 0;
   justify-content: flex-start;
   min-height: 28px;
   padding: 0;
@@ -769,7 +829,8 @@ button.filelist__name {
   background: none;
   box-shadow: none;
   color: var(--text);
-  font-size: var(--fs-body);
+  font-family: var(--font-pair);
+  font-size: 13px;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -787,38 +848,44 @@ button.filelist__name[aria-current="true"] {
   font-weight: 600;
 }
 
-/* 覆盖率与「解析失败」「待词典就绪」共用这一格，统一取中性色：
-   语义不靠这格的颜色承载，解析失败由下面带红色左条的 .filelist__error 单独表达 */
+/* 选中行 hover 仍要有反馈：不加这条的话选中态的 --gold-300 会盖掉 hover 的 --gold-500，
+   鼠标划过当前文件时视觉零变化（第一期 M-2） */
+button.filelist__name[aria-current="true"]:hover {
+  color: var(--gold-100);
+}
+
+/* 覆盖率数字：Cinzel 只承载孤立数字，这里没有相邻字母，不会出现 1/I 混淆 */
 .filelist__rate {
-  justify-self: end;
-  color: var(--text-2);
-  font-size: var(--fs-label);
+  color: var(--gold-300);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.filelist__item button[aria-label^="移除"] {
-  grid-column: 2;
-  justify-self: end;
+button.filelist__remove {
+  width: 30px;
+  min-height: 30px;
+  padding: 0;
   border-color: transparent;
   background: none;
   box-shadow: none;
   color: var(--text-3);
 }
 
-.filelist__item button[aria-label^="移除"]:hover {
+button.filelist__remove:hover:not(:disabled) {
   border-color: var(--hairline-strong);
   background: var(--surface-hover);
   color: var(--danger); /* 4.6 vs surface-hover */
 }
 
-/* 解析错误：现状 3.2:1 不达 AA（审计 P1-4），改用 --danger 并加左侧色条，不只靠颜色 */
+/* 解析错误：改用 --danger 并加左侧色条，不只靠颜色 */
 .filelist__error {
-  grid-column: 1 / -1;
   margin: 0;
   padding-left: var(--sp-2);
   border-left: 2px solid var(--danger);
-  color: var(--danger); /* 5.5 vs surface-2，5.0 vs surface-3 */
+  color: var(--danger); /* 5.5 vs surface-2 */
   font-size: var(--fs-label);
   line-height: 1.5;
   white-space: pre-wrap;
@@ -1237,6 +1304,11 @@ button.filelist__name[aria-current="true"] {
 
   .filelist__item {
     gap: var(--sp-3);
+  }
+
+  button.filelist__remove {
+    width: 44px;
+    min-height: 44px;
   }
 
   .empty {
