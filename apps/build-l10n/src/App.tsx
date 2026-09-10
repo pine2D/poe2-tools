@@ -1,6 +1,7 @@
 import type { Locale } from '@poe2-tools/build-core'
 import { useEffect, useMemo, useState } from 'react'
 import { DropZone } from './components/DropZone'
+import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
 import { Icon } from './components/Icon'
 import { OptionsBar } from './components/OptionsBar'
@@ -92,15 +93,6 @@ function ErrorCard(props: {
         <code>{detail}</code>
       </details>
     </section>
-  )
-}
-
-// Task 5 会换成 components/EmptyState.tsx；本任务只保证顶栏改造能独立跑起来
-function EmptyStateSlot(props: { onFiles(files: File[]): void; onPaste(text: string): void }) {
-  return (
-    <div className="empty">
-      <DropZone variant="hero" onFiles={props.onFiles} onPaste={props.onPaste} />
-    </div>
   )
 }
 
@@ -213,7 +205,15 @@ export function App({ fetchImpl }: AppProps) {
         </>
       )
     }
-    if (empty) return <EmptyStateSlot onFiles={onFiles} onPaste={onPaste} />
+    if (empty) {
+      return (
+        <EmptyState
+          dictVersion={dictState.status === 'ready' ? dictVersion(dictState.dict) : null}
+          onFiles={onFiles}
+          onPaste={onPaste}
+        />
+      )
+    }
     if (selected !== null && !selected.ok) {
       return (
         <ErrorCard

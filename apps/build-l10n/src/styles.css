@@ -596,11 +596,6 @@ button.badge__retry:hover:not(:disabled) {
   color: var(--text-3);
 }
 
-/* 词典失败 + 空态时错误卡与 hero 拖放区同框，给一段呼吸 */
-.errorcard + .dropzone--hero {
-  margin-top: var(--sp-6);
-}
-
 .app__body {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
@@ -628,15 +623,23 @@ button.badge__retry:hover:not(:disabled) {
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
+/* 空态与「词典失败 + 无文件」两种情况下 .app__side 整条不渲染，.app__main 就是
+   .app__body 网格里唯一的子元素。网格自动布局不会跳过缺席的第一列，不补一句
+   独占两栏，空态引导区会被压进隐式的 340px 第一栏，右边净空整片。 */
+.app__main:only-child {
+  grid-column: 1 / -1;
+}
+
 /* ---------- 侧栏：拖放区与文件列表 ---------- */
 
 .dropzone {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--sp-3);
+  align-items: center;
+  gap: var(--sp-2);
   min-height: 120px;
   padding: var(--sp-5) var(--sp-4);
+  /* 空框子的边框就是唯一的「这里能操作」信号，用 ≥3:1 的 --control-edge */
   border: 1.5px dashed var(--control-edge);
   border-radius: var(--r-lg);
   background: var(--surface-2);
@@ -647,17 +650,70 @@ button.badge__retry:hover:not(:disabled) {
 }
 
 .dropzone--over {
-  border-color: var(--gold-500);
+  border-style: solid;
+  border-color: var(--gold-300);
   background: var(--surface-3);
 }
 
-.dropzone p {
+.dropzone__icon {
+  color: var(--gold-500);
+  opacity: 0.85;
+  margin-bottom: var(--sp-1);
+}
+
+.dropzone__title {
   margin: 0;
-  color: var(--text-2);
+  color: var(--text);
+  font-size: 14.5px;
+}
+
+.dropzone__hint {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12.5px;
 }
 
 .dropzone textarea {
   min-height: 76px;
+  text-align: left;
+}
+
+.dropzone__trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  margin: var(--sp-1) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+/* 空态里的大号拖放区 */
+.dropzone--hero {
+  width: 100%;
+  max-width: 720px;
+  min-height: 200px;
+  gap: var(--sp-3);
+  padding: var(--sp-7) var(--sp-6);
+}
+
+.dropzone--hero .dropzone__title {
+  font-size: 18px;
+}
+
+.dropzone--hero .dropzone__hint {
+  font-size: 13.5px;
+}
+
+/* 词典失败 + 空态时错误卡与 hero 拖放区同框，给一段呼吸。
+   放在 .dropzone--hero 规则组之后：biome noDescendingSpecificity 要求
+   低特异性选择器不能出现在高特异性同名选择器之后，这条 (0,2,0) 组合选择器
+   与上面几条同级或更高，顺序不能再反过来。 */
+.errorcard + .dropzone--hero {
+  margin-top: var(--sp-6);
 }
 
 .filelist {
@@ -772,6 +828,125 @@ button.filelist__name[aria-current="true"] {
 .muted {
   color: var(--text-3);
 }
+
+/* ---------- 空态引导区 ---------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--sp-9) var(--sp-6) var(--sp-8);
+  text-align: center;
+}
+
+.empty__eyebrow {
+  margin-bottom: var(--sp-2);
+}
+
+/* 空态最大的一块 = 产品名，40px 金渐变裁切 + 三重投影（mockup-1 .estate .hero 的配方）。
+   金渐变裁切全站三处：顶栏字标、这里、第二期 B 的 100% 覆盖率数字。前两处同屏但一大一小、
+   一左上一居中，是同一个品牌记号的两次出现；第三处只在已加载态、100% 时才有，不同屏。
+   forced-colors 下由 Step 8 的兜底把渐变还原成实色。 */
+.empty__hero {
+  margin: 0;
+  color: var(--gold-100);
+  background: linear-gradient(180deg, #fff7e4 0%, #f2e4b8 38%, #d6b473 74%, #9c7a3e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 2px #000) drop-shadow(0 0 1px #000)
+    drop-shadow(0 0 3px rgba(117, 1, 1, 0.45));
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+
+.empty__rule {
+  width: 260px;
+  height: 1px;
+  margin: var(--sp-4) 0 18px;
+  background: var(--rule-fade);
+}
+
+.empty__lede {
+  max-width: 640px;
+  margin: 0;
+  color: var(--text);
+  font-size: 19px;
+  line-height: 1.65;
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2) 0;
+  list-style: none;
+  margin: 28px 0 30px;
+  padding: 0;
+}
+
+.steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 260px;
+  padding: 0 var(--sp-5);
+  text-align: left;
+}
+
+.steps__item + .steps__item {
+  border-left: 1px solid var(--hairline);
+}
+
+/* 罗马数字：纯字母，落在 Cinzel 的安全区里 */
+.steps__key {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  color: var(--bronze-text); /* 5.7 vs surface-0 */
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.steps__text {
+  color: var(--text-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.steps__title {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.empty__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-5) 0 0;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.empty__sep {
+  width: 1px;
+  height: 12px;
+  background: var(--hairline-strong);
+}
+
 /* ---------- 预览区 ---------- */
 
 .preview {
@@ -1063,6 +1238,28 @@ button.filelist__name[aria-current="true"] {
   .filelist__item {
     gap: var(--sp-3);
   }
+
+  .empty {
+    padding: var(--sp-7) var(--sp-4) var(--sp-6);
+  }
+
+  .empty__hero {
+    font-size: 28px;
+  }
+
+  .empty__lede {
+    font-size: 16px;
+  }
+
+  .steps__item {
+    max-width: none;
+    padding: var(--sp-2) 0;
+  }
+
+  .steps__item + .steps__item {
+    border-left: none;
+    border-top: 1px solid var(--hairline);
+  }
 }
 
 /* ---------- 无障碍兜底 ---------- */
@@ -1090,7 +1287,8 @@ button.filelist__name[aria-current="true"] {
 }
 
 @media (forced-colors: active) {
-  .app__header h1 {
+  .app__header h1,
+  .empty__hero {
     background: none;
     -webkit-text-fill-color: currentColor;
     filter: none;
