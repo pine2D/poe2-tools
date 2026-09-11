@@ -156,6 +156,7 @@
      box-shadow 则会被 .cta 与幽灵按钮覆盖掉，所以不能用 box-shadow 做焦点指示。 */
   --dur-fast: 120ms;
   --dur-drop: 140ms;
+  --dur-mid: 220ms; /* 进场 / 展开一类「有位移」的动效，比 hover 慢一档 */
   --ease: ease-out;
   --focus-ring: 2px solid var(--gold-300);
 }
@@ -644,6 +645,64 @@ button.badge__retry:hover:not(:disabled) {
 .hint {
   margin: 0;
   color: var(--text-3);
+}
+
+/* 落地引导条：固定在视口底部居中。不用 position: sticky —— 主区与侧栏各自滚动，
+   sticky 会被裁在某一栏里。bottom 算上安全区，免得被 iPhone 的手势条吞掉一半。 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: min(560px, calc(100vw - 2 * var(--sp-4)));
+  padding: 10px var(--sp-3) 10px var(--sp-4);
+  transform: translateX(-50%);
+  border: 1px solid var(--hairline-strong);
+  border-left: 3px solid var(--gold-500);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  box-shadow:
+    var(--inset-light),
+    0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  animation: toast-in var(--dur-mid) var(--ease) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.toast__text {
+  margin: 0;
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+button.toast__close {
+  width: 28px;
+  min-height: 28px;
+  flex: none;
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--text-3);
+}
+
+button.toast__close:hover:not(:disabled) {
+  border-color: var(--hairline-strong);
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .app__body {
@@ -2317,6 +2376,11 @@ button.misslist__go:hover:not(:disabled) {
   .filelist__item {
     transition: none;
   }
+
+  /* 有位移的动画整条关掉，而不是缩短：前庭敏感用户要的是「不动」，不是「动得快」 */
+  .toast {
+    animation: none;
+  }
 }
 
 @media (forced-colors: active) {
@@ -2393,5 +2457,10 @@ button.misslist__go:hover:not(:disabled) {
 
   .badge--error {
     border-color: CanvasText;
+  }
+
+  .toast {
+    border-color: CanvasText;
+    box-shadow: none;
   }
 }

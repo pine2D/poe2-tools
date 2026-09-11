@@ -57,6 +57,9 @@ describe('App', () => {
     fireEvent.click(inFileList().getByLabelText('下载 rich.build'))
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)
+    // 下载是任务流的最后一步，点完必须说清文件去哪儿（研究报告 G8 / P2-11）
+    expect(await screen.findByText(/已下载 rich\.build/)).toBeDefined()
+    expect(screen.getByText(/放进 Build Planner 目录后同名替换/)).toBeDefined()
   })
 
   it('双语选项改变输出；全部下载在多文件时给 zip', async () => {

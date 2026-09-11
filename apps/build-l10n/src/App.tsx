@@ -1,10 +1,11 @@
 import type { Locale } from '@poe2-tools/build-core'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DropZone } from './components/DropZone'
 import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
 import { Icon } from './components/Icon'
 import { OptionsBar } from './components/OptionsBar'
+import { Toast } from './components/Toast'
 import { createDictLoader, type FetchJson, type LoadedDict } from './dict/loadDict'
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { pastedSource, readFiles } from './files/readSources'
@@ -111,6 +112,12 @@ export function App({ fetchImpl }: AppProps) {
   const [pasteCount, setPasteCount] = useState(0)
   // 重试用：createDictLoader 不缓存失败结果，所以再调一次就是真的重来一遍
   const [reloadKey, setReloadKey] = useState(0)
+  // 下载后的落地引导条。onClose 必须是稳定身份：Toast 用它做自动消失的定时器依赖，
+  // 每次渲染换一个新函数会让 4 秒的倒计时被不断重置，条永远不会自己消失。
+  const [toast, setToast] = useState<string | null>(null)
+  const closeToast = useCallback(() => {
+    setToast(null)
+  }, [])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 不出现在 effect 体里是故意的——它就是「重跑一次」的开关，删掉重试按钮会失效
   useEffect(() => {
@@ -182,14 +189,20 @@ export function App({ fetchImpl }: AppProps) {
   }
   const downloadOne = (id: string) => {
     const result = results.find((item) => item.id === id)
-    if (result?.ok) saveBlob(textBlob(result.file.output), result.file.name)
+    if (!result?.ok) return
+    saveBlob(textBlob(result.file.output), result.file.name)
+    setToast(`已下载 ${result.file.name}，放进 Build Planner 目录后同名替换`)
   }
   const downloadAll = () => {
     if (translated.length === 1) {
       const only = translated[0]
-      if (only !== undefined) saveBlob(textBlob(only.output), only.name)
+      if (only === undefined) return
+      saveBlob(textBlob(only.output), only.name)
+      setToast(`已下载 ${only.name}，放进 Build Planner 目录后同名替换`)
     } else if (translated.length > 1) {
-      saveBlob(zipBlob(translated), zipName(locale))
+      const name = zipName(locale)
+      saveBlob(zipBlob(translated), name)
+      setToast(`已下载 ${name}，解压后放进 Build Planner 目录同名替换`)
     }
   }
   // 文案固定「全部下载」（既有术语），这次点下去到底发生什么写在 title 里
@@ -301,6 +314,7 @@ export function App({ fetchImpl }: AppProps) {
         )}
         <main className="app__main">{renderMain()}</main>
       </div>
+      {toast !== null && <Toast message={toast} onClose={closeToast} />}
     </div>
   )
 }
