@@ -64,17 +64,28 @@ export function DropZone({ variant = 'rail', onFiles, onPaste }: DropZoneProps) 
         onChange={pick}
         className="visually-hidden"
       />
-      <p className="dropzone__hint">支持一次拖入多个文件 · 也可以把文件内容粘贴到下面</p>
-      <textarea
-        aria-label="粘贴 .build 内容"
-        rows={variant === 'hero' ? 3 : 4}
-        placeholder="或把 .build 文件内容粘贴到这里"
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-      />
-      <button type="button" onClick={submitPaste} disabled={draft.trim() === ''}>
-        添加粘贴内容
-      </button>
+      <p className="dropzone__hint">支持一次拖入多个文件 · 也可以粘贴文件内容</p>
+      {/* 粘贴入口收进折叠（mockup 侧栏就是一行「或粘贴内容 ⌄」）：常驻的 76px 文本框把侧栏
+          顶部撑成了输入表单，而拖拽与「选择文件」才是主路径。用原生 <details>/<summary>：
+          键盘、可访问名、展开状态全由浏览器给，老内核不支持时整块展开（退化成现状）。 */}
+      <details className="paste">
+        <summary className="paste__toggle">
+          或粘贴内容
+          <Icon name="chevron-down" size={12} className="paste__chev" />
+        </summary>
+        <div className="paste__body">
+          <textarea
+            aria-label="粘贴 .build 内容"
+            rows={variant === 'hero' ? 3 : 4}
+            placeholder="把 .build 文件内容粘贴到这里"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <button type="button" onClick={submitPaste} disabled={draft.trim() === ''}>
+            添加粘贴内容
+          </button>
+        </div>
+      </details>
       <p className="dropzone__trust">
         <Icon name="lock" size={13} />
         文件只在你的浏览器里解析，不会上传到任何服务器

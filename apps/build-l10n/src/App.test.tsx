@@ -148,7 +148,7 @@ describe('App', () => {
   it('空态只有一块引导区：没有侧栏、没有两句互相矛盾的空文案', async () => {
     await renderReady()
     // level 2 把它与顶栏那个 <h1> 字标分开
-    expect(screen.getByRole('heading', { level: 2, name: '流放之路 2 构筑汉化' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 2, name: 'PoE2 构筑汉化' })).toBeDefined()
     expect(screen.queryByText('还没有文件')).toBeNull()
     expect(screen.queryByText(/选择左侧文件/)).toBeNull()
     // 全站只有一个拖放区，所以「选择 .build 文件」不会一名两指
@@ -156,6 +156,6 @@ describe('App', () => {
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
     // 有文件之后引导区让位给预览，侧栏出现
-    expect(screen.queryByRole('heading', { level: 2, name: '流放之路 2 构筑汉化' })).toBeNull()
+    expect(screen.queryByRole('heading', { level: 2, name: 'PoE2 构筑汉化' })).toBeNull()
   })
 })

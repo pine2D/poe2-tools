@@ -712,6 +712,54 @@ button.badge__retry:hover:not(:disabled) {
   text-align: left;
 }
 
+/* 粘贴入口的折叠开关：一行虚线下划线的次级链接（mockup .drop .paste 的配方）。list-style 与
+   ::-webkit-details-marker 两条都要写（新内核 / 老 WebKit 与微信 X5），少一条会留下系统三角。 */
+.paste {
+  width: 100%;
+}
+
+.paste__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 1px;
+  border-bottom: 1px dashed rgba(194, 158, 108, 0.4);
+  color: var(--gold-500);
+  font-size: 12.5px;
+  list-style: none;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.paste__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.paste__toggle:hover {
+  color: var(--gold-100);
+}
+
+.paste__toggle:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.paste__chev {
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.paste[open] .paste__chev {
+  transform: rotate(180deg);
+}
+
+.paste__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  text-align: left;
+}
+
 .dropzone__trust {
   display: flex;
   align-items: center;
@@ -2208,6 +2256,8 @@ button.misslist__go:hover:not(:disabled) {
   .seg__item,
   .opt input[type="checkbox"],
   .dropzone,
+  .paste__toggle,
+  .paste__chev,
   .filelist__item {
     transition: none;
   }

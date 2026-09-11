@@ -9,7 +9,7 @@ afterEach(() => {
 describe('EmptyState', () => {
   it('一眼说清这是什么、怎么用、文件去哪儿', () => {
     render(<EmptyState dictVersion="zh-CN 0.5（奥杜尔秘符）" onFiles={vi.fn()} onPaste={vi.fn()} />)
-    expect(screen.getByRole('heading', { level: 2, name: '流放之路 2 构筑汉化' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 2, name: 'PoE2 构筑汉化' })).toBeDefined()
     expect(screen.getByText(/未命中的行保留英文并标出来/)).toBeDefined()
     // I-1 回归：lede 曾在两个中文字之间夹进一个 JSX 折行产生的杂散空格，
     // 这条断言要求「术语替换，」与「未命中」中间没有任何字符。

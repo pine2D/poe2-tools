@@ -2,7 +2,7 @@
 // 全部用 <path> 表达（圆和矩形也转成 path），渲染逻辑因此只有一个分支。
 // 颜色一律 currentColor，由使用处的 color 决定；尺寸由 size 决定，不写死。
 
-// 零引用纪律（第一期 M-5）：这 12 个名字全部在 A / B 两期内被消费，多一个都不留。
+// 零引用纪律（第一期 M-5）：这 13 个名字全部在 A / B 两期内被消费，多一个都不留。
 export type IconName =
   | 'brand'
   | 'upload'
@@ -16,6 +16,7 @@ export type IconName =
   | 'locate'
   | 'lock'
   | 'arrow-down'
+  | 'chevron-down'
 
 const PATHS: Record<IconName, readonly string[]> = {
   // 品牌：双层菱形，取自 mockup-1 的字标图标
@@ -38,6 +39,8 @@ const PATHS: Record<IconName, readonly string[]> = {
     'M8 10V7a4 4 0 0 1 8 0v3',
   ],
   'arrow-down': ['M12 4v14', 'm6 13 6 6 6-6'],
+  // 折叠指示：拖放区「或粘贴内容 ⌄」与 ≤560 侧栏抽屉共用，展开时由 CSS 旋转 180°
+  'chevron-down': ['m6 9 6 6 6-6'],
 }
 
 export const ICON_NAMES: readonly IconName[] = Object.keys(PATHS) as IconName[]

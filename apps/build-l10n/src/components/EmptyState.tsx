@@ -20,8 +20,9 @@ export function EmptyState({ dictVersion, onFiles, onPaste }: EmptyStateProps) {
     <div className="empty">
       <span className="eyebrow empty__eyebrow">Build Planner Localization</span>
       {/* 空态最大的一块必须是产品名（mockup State B 的 .hero 就是产品名，40px 金渐变裁切）。
-          顶栏字标是压缩过的「PoE2 构筑汉化」，这里写全称，两处不重复也不打架。 */}
-      <h2 className="empty__hero">流放之路 2 构筑汉化</h2>
+          与顶栏字标用同一个名字：把 GGG / 腾讯的注册译名放进品牌位有合规成本（研究报告
+          §7「品类识别 vs 商标合规」，owner 对 Q1 的拍板是退到「PoE2 构筑汉化」）。 */}
+      <h2 className="empty__hero">PoE2 构筑汉化</h2>
       <span className="empty__rule" />
       {/* 显式字符串而非多行 JSX 文本：JSX 会把「文本 + 换行 + 文本」的行间换行折成一个
           U+0020，之前恰好落在两个中文字之间（I-1）。用 {'…'} 整句写成一个字面量，
