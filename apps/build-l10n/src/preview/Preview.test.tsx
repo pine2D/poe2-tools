@@ -280,4 +280,62 @@ describe('Preview 仅看未命中', () => {
       true,
     )
   })
+
+  // P-1：构筑说明卡此前的显示条件是「没开筛选」，开着筛选时它一律消失。未命中若正好落在
+  // 构筑说明里，清单的「定位」、「跳到第一处」与 N 键的目标行就都不在 DOM 里，跳转静默失败。
+  it('未命中只在构筑说明里时，筛选仍留着这张卡，不然定位与 N 键都够不着', () => {
+    const text = JSON.stringify({
+      name: 'Desc Miss',
+      description: 'Leveling notes\n1. Utterly Unknown Affix Line',
+    })
+    const descOnly = translateSource({ id: 'f4', name: 'desc.build', text }, dict, {
+      bilingual: false,
+      annotateUniques: true,
+    })
+    if (!descOnly.ok) throw new Error(descOnly.error)
+    render(<Preview file={descOnly.file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: '仅看未命中' }))
+    expect(screen.getByRole('heading', { level: 3, name: '构筑说明' })).toBeDefined()
+    // 槽位 / 宝石 / 天赋三区都空，各说一句「这一区没有未命中」而不是「没有装备槽位」
+    expect(screen.getAllByText('这一区没有未命中')).toHaveLength(3)
+  })
+})
+
+describe('Preview 快捷键', () => {
+  it('N 依次跳到每一处未命中，跳完回到第一处', () => {
+    const scroll = stubScroll()
+    show()
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(scroll).toHaveBeenCalledWith({ block: 'center' })
+    expect(document.activeElement?.id).toBe('line-inventory-slots-3-additional-text-3')
+    // rich.build 只有一处未命中，再按一次还是它（取模回绕，不会卡住）
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(document.activeElement?.id).toBe('line-inventory-slots-3-additional-text-3')
+  })
+
+  it('F 切换筛选，与按钮同一个开关', () => {
+    show()
+    const toggle = screen.getByRole('button', { name: '仅看未命中' })
+    fireEvent.keyDown(window, { key: 'f' })
+    expect(toggle.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.keyDown(window, { key: 'f' })
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('全命中的文件按 F 不清空主区：开关本来就是禁用的，快捷键不能绕过它', () => {
+    showAllHit()
+    fireEvent.keyDown(window, { key: 'f' })
+    expect(screen.getByRole('button', { name: '仅看未命中' }).getAttribute('aria-pressed')).toBe(
+      'false',
+    )
+    expect(screen.getByText('主手')).toBeDefined()
+  })
+
+  it('键位在界面上写着，不是只有知道的人才会用', () => {
+    show()
+    expect(screen.getByText('跳下一处未命中')).toBeDefined()
+    expect(screen.getByText('仅看未命中', { selector: '.cov__keys span' })).toBeDefined()
+    const keys = screen.getAllByText(/^[NF]$/)
+    expect(keys.map((node) => node.tagName)).toEqual(['KBD', 'KBD'])
+  })
 })

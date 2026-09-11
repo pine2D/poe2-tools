@@ -1,5 +1,5 @@
 import type { Locale, PreviewName, PreviewSkill, PreviewSlot } from '@poe2-tools/build-core'
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { CoverageMeter } from '../components/CoverageMeter'
 import { Icon } from '../components/Icon'
 import type { TranslatedFile } from '../translate/runTranslation'
@@ -9,6 +9,7 @@ import { collectMisses, jumpTo, type MissEntry, meterCells } from './locate'
 // fields < locate < PairTable < rows。写错顺序 `biome check .` 会直接报错。
 import { PairTable } from './PairTable'
 import type { PairRow } from './rows'
+import { useHotkeys } from './useHotkeys'
 import { type MissFilter, useMissFilter } from './useMissFilter'
 
 export interface PreviewProps {
@@ -119,6 +120,16 @@ function Overview(props: {
             <span>
               <span className="swatch swatch--miss" />
               缺口为未命中
+            </span>
+          </p>
+          <p className="cov__keys">
+            <span>
+              <kbd className="kbd">N</kbd>
+              跳下一处未命中
+            </span>
+            <span>
+              <kbd className="kbd">F</kbd>
+              仅看未命中
             </span>
           </p>
         </div>
@@ -362,6 +373,20 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
   const byPath = useMemo(() => new Map(fields.map((item) => [item.entry.path, item])), [fields])
   const misses = useMemo(() => collectMisses(fields), [fields])
   const filter = useMissFilter(misses.length > 0)
+  // N 键的游标：按一次跳一处，到底回绕。换文件或换选项后未命中清单会变，游标归零，
+  // 免得下一次 N 从中间某处开始。
+  const cursor = useRef(0)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: misses 不出现在 effect 体里是故意的——它是「清单换了一份」的触发器，去掉它游标就再也不会归零
+  useEffect(() => {
+    cursor.current = 0
+  }, [misses])
+  const next = useCallback(() => {
+    if (misses.length === 0) return
+    const target = misses[cursor.current % misses.length]
+    cursor.current = (cursor.current + 1) % misses.length
+    if (target !== undefined) jumpTo(target.domId)
+  }, [misses])
+  useHotkeys({ next, toggleFilter: filter.toggle })
   const { preview } = file
   const description = byPath.get('description')
   const only = filter.only
@@ -393,7 +418,9 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
           filter={filter}
           onDownload={onDownload}
         />
-        {description !== undefined && !only && (
+        {/* P-1：筛选开着时也得留下含未命中的构筑说明——否则清单的「定位」、「跳到第一处」
+            与 N 键都会指向一个不在 DOM 里的行，跳转静默失败。判据与三区同一个 hasMiss。 */}
+        {description !== undefined && (!only || hasMiss(description)) && (
           <article className="card">
             <div className="card__head">
               <h3>构筑说明</h3>
