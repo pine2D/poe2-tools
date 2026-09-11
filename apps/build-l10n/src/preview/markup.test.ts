@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { contrastRatio } from '../testing/contrast'
 import { markupClass, resolveRgbTag, sliceSpans, spanText, splitMarkupLines } from './markup'
 
 describe('splitMarkupLines', () => {
@@ -62,13 +63,25 @@ describe('markupClass', () => {
 })
 
 describe('resolveRgbTag', () => {
-  it('识别 rgb(...) 并按需提亮到 4.5:1', () => {
-    // 亮色原样返回
-    expect(resolveRgbTag('rgb(255, 255, 255)')).toBe('#ffffff')
-    // 暗红在 #1d1a14 上远不达标，会被向白提亮
-    const lifted = resolveRgbTag('rgb(120, 0, 0)')
-    expect(lifted).not.toBeNull()
-    expect(lifted).not.toBe('#780000')
+  it('一次算出深浅两套值：深色主题向白提亮，浅色主题向黑压暗', () => {
+    // 暗红在深底上远不达标 → 提亮；在浅底上本来就够 → 原样
+    const dark = resolveRgbTag('rgb(120, 0, 0)')
+    expect(dark).not.toBeNull()
+    expect(dark?.dark).not.toBe('#780000')
+    expect(dark?.light).toBe('#780000')
+    // 纯白在浅底上不可见 → 压暗；在深底上原样
+    const white = resolveRgbTag('rgb(255, 255, 255)')
+    expect(white?.dark).toBe('#ffffff')
+    expect(white?.light).not.toBe('#ffffff')
+  })
+
+  it('两套值都真的达标（按各自的卡片底算 ≥4.5:1）', () => {
+    for (const raw of ['rgb(120, 0, 0)', 'rgb(255, 255, 255)', 'rgb(128, 128, 128)']) {
+      const color = resolveRgbTag(raw)
+      expect(color).not.toBeNull()
+      expect(contrastRatio(color?.dark ?? '', '#1d1a14')).toBeGreaterThanOrEqual(4.4)
+      expect(contrastRatio(color?.light ?? '', '#fffdf8')).toBeGreaterThanOrEqual(4.4)
+    }
   })
 
   it('不是 rgb 标签就返回 null', () => {

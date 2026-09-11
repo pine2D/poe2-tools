@@ -1396,6 +1396,16 @@ button.filelist__remove:hover:not(:disabled) {
   color: var(--mk-unique);
 }
 
+/* <rgb(r,g,b)>{…} 的运行时计算色：MarkupText 把深浅两套值写成自定义属性，这里按主题选。
+   两条规则的顺序不能反：浅色那条特异性更高（(0,1,1) vs (0,1,0)），本来也压得过。 */
+.mk-rgb {
+  color: var(--mk-rgb-d);
+}
+
+:root[data-theme="light"] .mk-rgb {
+  color: var(--mk-rgb-l);
+}
+
 .mk-s {
   font-size: 0.86em;
 }

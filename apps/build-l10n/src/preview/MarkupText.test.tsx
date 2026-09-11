@@ -86,8 +86,16 @@ describe('MarkupText', () => {
     expect(container.querySelectorAll('span[class]')).toHaveLength(0)
   })
 
-  it('rgb 自定义色写成内联 color', () => {
+  it('rgb 自定义色写成两套自定义属性，由 CSS 选主题', () => {
     const container = renderLine('<rgb(255, 255, 255)>{x}')
-    expect(container.querySelector('span')?.getAttribute('style')).toContain('color')
+    const span = container.querySelector('span')
+    expect(span?.getAttribute('class')).toBe('mk-rgb')
+    const style = span?.getAttribute('style') ?? ''
+    expect(style).toContain('--mk-rgb-d')
+    expect(style).toContain('--mk-rgb-l')
+    // 两套值必须不同，否则等于没做主题
+    const dark = /--mk-rgb-d:\s*([^;]+)/.exec(style)?.[1]?.trim()
+    const light = /--mk-rgb-l:\s*([^;]+)/.exec(style)?.[1]?.trim()
+    expect(dark).not.toBe(light)
   })
 })

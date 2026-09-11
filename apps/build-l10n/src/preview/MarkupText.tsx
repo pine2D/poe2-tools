@@ -4,7 +4,7 @@
 //     有几百段，给每个字都包一层既臃肿又让 CSS 选择器难写；
 //  2. 数值高亮只在渲染时切，不动 markup.ts 的 MarkupSpan 模型 —— 那里的字符偏移是
 //     sliceSpans 摘标号前缀的依据，往数据里再切一层会把偏移搞乱。
-import { Fragment, type ReactNode } from 'react'
+import { type CSSProperties, Fragment, type ReactNode } from 'react'
 import { type MarkupSpan, markupClass, resolveRgbTag } from './markup'
 
 // 捕获组让 String.prototype.split 的结果变成「普通文本 / 数值」交替的数组
@@ -32,11 +32,15 @@ function withNumbers(text: string, key: string): ReactNode {
   )
 }
 
-function spanStyle(tags: readonly string[]): { color: string } | undefined {
-  // 自定义色取最内层的一个
+// 自定义色取最内层的一个，写成两个自定义属性；.mk-rgb 那条 CSS 规则负责按主题选值。
+// 断言成 CSSProperties 是必要的：React 支持 style 里的自定义属性，但它的类型定义只列了
+// 标准属性名，没有断言过不了 typecheck。
+function spanStyle(tags: readonly string[]): CSSProperties | undefined {
   for (let i = tags.length - 1; i >= 0; i -= 1) {
     const color = resolveRgbTag(tags[i] ?? '')
-    if (color !== null) return { color }
+    if (color !== null) {
+      return { '--mk-rgb-d': color.dark, '--mk-rgb-l': color.light } as CSSProperties
+    }
   }
   return undefined
 }
@@ -45,8 +49,9 @@ export function MarkupText({ spans }: { spans: readonly MarkupSpan[] }) {
   return (
     <>
       {spans.map((span, i) => {
-        const className = markupClass(span.tags)
+        const named = markupClass(span.tags)
         const style = spanStyle(span.tags)
+        const className = style === undefined ? named : `${named} mk-rgb`.trim()
         const key = `${i}:${span.text}`
         const body = withNumbers(span.text, key)
         if (className === '' && style === undefined) return <Fragment key={key}>{body}</Fragment>
