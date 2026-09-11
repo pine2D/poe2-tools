@@ -43,11 +43,15 @@ export function CoverageMeter({ cells, size = 'lg', label, onJump }: CoverageMet
       className={size === 'sm' ? 'meter meter--sm' : 'meter meter--lg'}
       aria-label={label === undefined ? summary : `${label}：${summary}`}
     >
+      {/* 装饰格的 title 挂在 aria-hidden 元素上，只对明眼用户生效，读屏由整条轨的 aria-label
+          承担；按钮格的 aria-label 与 title 并存，可访问名仍取 aria-label。迷你轨（sm）整条
+          不挂：66 个 tooltip 是噪音，而它本来就不可点。 */}
       {cells.map((cell) =>
         cell.hit || decorative ? (
           <span
             key={cell.domId}
             className={cell.hit ? 'meter__cell meter__cell--hit' : 'meter__cell meter__cell--miss'}
+            title={decorative ? undefined : cell.where}
             aria-hidden="true"
           />
         ) : (
@@ -55,6 +59,7 @@ export function CoverageMeter({ cells, size = 'lg', label, onJump }: CoverageMet
             key={cell.domId}
             type="button"
             className="meter__cell meter__cell--miss"
+            title={cell.where}
             aria-label={`跳到未命中：${cell.where}`}
             onClick={() => onJump?.(cell.domId)}
           />

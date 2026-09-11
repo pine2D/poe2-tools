@@ -46,15 +46,11 @@ export function EmptyState({ dictVersion, onFiles, onPaste }: EmptyStateProps) {
         ))}
       </ol>
       <DropZone variant="hero" onFiles={onFiles} onPaste={onPaste} />
+      {/* 分隔竖线改由 CSS 伪元素生成（M-10）：独立的 <span> 在 390 换行后会悬在行尾，
+          伪元素跟着后一段走，换行时自然不出现。 */}
       <p className="empty__foot">
-        {dictVersion !== null && (
-          <>
-            <span>词典 {dictVersion}</span>
-            <span className="empty__sep" />
-          </>
-        )}
+        {dictVersion !== null && <span>词典 {dictVersion}</span>}
         <span>简体（国服）与繁体（台服）两套术语，各自独立</span>
-        <span className="empty__sep" />
         <span>未命中的行保留英文原文，不做猜测替换</span>
       </p>
     </div>

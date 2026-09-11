@@ -1,5 +1,5 @@
 import type { Locale } from '@poe2-tools/build-core'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropZone } from './components/DropZone'
 import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
@@ -118,6 +118,10 @@ export function App({ fetchImpl }: AppProps) {
   const closeToast = useCallback(() => {
     setToast(null)
   }, [])
+  // ≤560 的侧栏抽屉。默认收起：手机首屏要先给「概览卡 + 下载 CTA」，而不是一屏文件管理。
+  // >560 时这个状态没有任何 CSS 消费它，侧栏照常常驻（见 styles.css 的 ≤560 断点）。
+  const [sideOpen, setSideOpen] = useState(false)
+  const sideToggle = useRef<HTMLButtonElement>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 不出现在 effect 体里是故意的——它就是「重跑一次」的开关，删掉重试按钮会失效
   useEffect(() => {
@@ -182,6 +186,16 @@ export function App({ fetchImpl }: AppProps) {
     const n = pasteCount + 1
     setPasteCount(n)
     addSources([pastedSource(text, n)])
+  }
+  const selectFile = (id: string) => {
+    setSelectedId(id)
+    // 抽屉开着才收起并交还焦点：≤560 收起后 <aside> 会 display:none，刚被点击的
+    // .filelist__name 随之消失，焦点被重置到 <body>——键盘与 VoiceOver 用户正好在
+    // 「选文件 → 看概览」的中间丢掉光标。>560 时 sideOpen 恒 false，这里什么都不做。
+    if (sideOpen) {
+      setSideOpen(false)
+      sideToggle.current?.focus()
+    }
   }
   const remove = (id: string) => {
     setSources((previous) => previous.filter((source) => source.id !== id))
@@ -287,30 +301,47 @@ export function App({ fetchImpl }: AppProps) {
       </header>
       <div className="app__body">
         {!empty && (
-          <aside className="app__side">
-            <DropZone onFiles={onFiles} onPaste={onPaste} />
-            <div className="rail-h">
-              <span className="eyebrow">Files</span>
-              <span className="rail-h__zh">文件</span>
-              <span className="rail-h__n">{sources.length}</span>
-            </div>
-            <FileList
-              sources={sources}
-              results={results}
-              selectedId={selectedId}
-              meters={meters}
-              onSelect={setSelectedId}
-              onRemove={remove}
-              onDownload={downloadOne}
-            />
-            {dictState.status === 'ready' && (
-              <p className="app__side-note">
-                词典 {dictVersion(dictState.dict)}
-                <br />
-                未命中的行保留英文原文，不做猜测替换
-              </p>
-            )}
-          </aside>
+          <>
+            {/* ≤560 才出现的抽屉开关。>560 时 display:none —— 它必须真的不占 grid 单元，
+                否则 .app__body 的两列会被挤成三份。放在 {!empty} 分支里也是硬要求：
+                空态时 <main> 必须仍是 .app__body 的唯一子元素，:only-child 才成立。 */}
+            <button
+              type="button"
+              className="app__sidetoggle"
+              ref={sideToggle}
+              aria-controls="app-side"
+              aria-expanded={sideOpen}
+              onClick={() => setSideOpen((open) => !open)}
+            >
+              <Icon name="chevron-down" size={14} className="app__sidechev" />
+              文件 · {selected?.name ?? sources[0]?.name ?? '未选择'}
+              <span className="app__sidecount">{sources.length}</span>
+            </button>
+            <aside id="app-side" className={sideOpen ? 'app__side app__side--open' : 'app__side'}>
+              <DropZone onFiles={onFiles} onPaste={onPaste} />
+              <div className="rail-h">
+                <span className="eyebrow">Files</span>
+                <span className="rail-h__zh">文件</span>
+                <span className="rail-h__n">{sources.length}</span>
+              </div>
+              <FileList
+                sources={sources}
+                results={results}
+                selectedId={selectedId}
+                meters={meters}
+                onSelect={selectFile}
+                onRemove={remove}
+                onDownload={downloadOne}
+              />
+              {dictState.status === 'ready' && (
+                <p className="app__side-note">
+                  词典 {dictVersion(dictState.dict)}
+                  <br />
+                  未命中的行保留英文原文，不做猜测替换
+                </p>
+              )}
+            </aside>
+          </>
         )}
         <main className="app__main">{renderMain()}</main>
       </div>

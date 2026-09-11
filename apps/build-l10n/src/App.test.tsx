@@ -161,4 +161,21 @@ describe('App', () => {
     // 有文件之后引导区让位给预览，侧栏出现
     expect(screen.queryByRole('heading', { level: 2, name: 'PoE2 构筑汉化' })).toBeNull()
   })
+
+  it('侧栏抽屉：开关声明了它控制谁，点一次展开、选中文件后自动收起', async () => {
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const toggle = screen.getByRole('button', { name: /^文件 · / })
+    expect(toggle.getAttribute('aria-controls')).toBe('app-side')
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    // 选一份文件之后抽屉收起，主区立刻露出来（≤560 的核心动线）
+    fireEvent.click(screen.getByRole('button', { name: 'rich.build' }))
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    // 焦点必须交还给开关：≤560 下 <aside> 随即 display:none，刚被点击的文件按钮
+    // 连同它一起消失，不接住的话焦点掉回 <body>，键盘与读屏用户在核心动线正中间丢掉光标
+    expect(document.activeElement).toBe(toggle)
+  })
 })

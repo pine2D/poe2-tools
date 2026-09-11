@@ -2,6 +2,8 @@
    取值来自 docs/superpowers/research/2026-09-09-ui-redesign-research.md §5.1，
    注释里的对比度按 WCAG 2.1 相对亮度公式计算。金色只做品牌 / 标题 / 强调，命中与状态不用金色。 */
 
+/* ==== FILE: tokens.css ==== */
+
 /* Cinzel 拉丁子集，自托管（SIL Open Font License 1.1，全文见 public/fonts/OFL.txt 与
    README「字体与许可」）。浏览器只向本站请求这一个字体文件，不向任何第三方域名发请求。
    子集只含 ASCII 与少量标点（配方见 README），可变字重 500–700，约 16 KB。
@@ -154,12 +156,16 @@
 
   /* 动效与焦点。焦点环是 outline 简写值：全站没有任何组件规则会去改 outline，
      box-shadow 则会被 .cta 与幽灵按钮覆盖掉，所以不能用 box-shadow 做焦点指示。 */
-  --dur-fast: 120ms;
+  /* 任务书第三期把 hover / 焦点过渡定在 150–300ms（研究报告 §5.1 写的是 120ms，
+     以任务书为准，是一处有意分歧）；--dur-drop 不动，拖拽反馈越跟手越好。 */
+  --dur-fast: 160ms;
   --dur-drop: 140ms;
   --dur-mid: 220ms; /* 进场 / 展开一类「有位移」的动效，比 hover 慢一档 */
   --ease: ease-out;
   --focus-ring: 2px solid var(--gold-300);
 }
+
+/* ==== FILE: base.css ==== */
 
 * {
   box-sizing: border-box;
@@ -223,6 +229,8 @@ textarea:focus-visible,
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
+/* ==== FILE: controls.css ==== */
+
 /* ---------- 控件 ---------- */
 
 button,
@@ -356,12 +364,24 @@ input[type="checkbox"] {
   text-align: center;
 }
 
+/* ==== FILE: layout.css ==== */
+
 /* ---------- 骨架 ---------- */
 
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
+}
+
+/* iOS Safari 的 100vh 含地址栏，底部内容会被吃掉一截。用 @supports 包住而不是写两条
+   height：老内核解析不了 dvh 时整条声明作废即可，不依赖「后写的覆盖先写的」这种更脆的假设。
+   ≤900 那档的 min-height 不能写在这里——@supports 不改特异度，而响应式分区里同特异度的
+   `min-height: 100vh` 在它之后，会把它压掉；那一条写在 ≤900 块内部（见响应式分区）。 */
+@supports (height: 100dvh) {
+  .app {
+    height: 100dvh;
+  }
 }
 
 /* 顶栏三段式：品牌 | 控制区 | 状态区。中列 minmax(0, 1fr) 让控制区自己换行而不撑破网格；
@@ -729,6 +749,38 @@ button.toast__close:hover:not(:disabled) {
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
+/* ≤560 的侧栏抽屉开关。基态 display:none —— 它必须真的不占 .app__body 的 grid 单元，
+   否则两列会被挤成三份（.app__main:only-child 那条空态规则同理，见 App.tsx 的注释）。 */
+.app__sidetoggle {
+  display: none;
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  border-radius: 0;
+  border-width: 0 0 1px;
+  border-color: var(--hairline);
+  background: var(--surface-1);
+  box-shadow: none;
+  font-size: 13px;
+}
+
+.app__sidechev {
+  color: var(--gold-500);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.app__sidetoggle[aria-expanded="true"] .app__sidechev {
+  transform: rotate(180deg);
+}
+
+.app__sidecount {
+  margin-left: auto;
+  color: var(--text-3);
+  font-family: var(--font-pair);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .app__main {
   padding: var(--sp-6) var(--sp-8) var(--sp-8);
   overflow: auto;
@@ -742,6 +794,8 @@ button.toast__close:hover:not(:disabled) {
 .app__main:only-child {
   grid-column: 1 / -1;
 }
+
+/* ==== FILE: sidebar.css ==== */
 
 /* ---------- 侧栏：拖放区与文件列表 ---------- */
 
@@ -1078,6 +1132,8 @@ button.filelist__remove:hover:not(:disabled) {
   color: var(--text-3);
 }
 
+/* ==== FILE: empty.css ==== */
+
 /* ---------- 空态引导区 ---------- */
 
 .empty {
@@ -1184,18 +1240,29 @@ button.filelist__remove:hover:not(:disabled) {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2) var(--sp-5);
+  gap: var(--sp-2) 0;
   margin: var(--sp-5) 0 0;
   color: var(--text-3);
   font-size: 12.5px;
 }
 
-.empty__sep {
+/* 分隔符改由伪元素生成：独立的 <span> 换行后会悬在行尾，390 下肉眼可见两条悬空竖线
+   （2a 审查 M-10）。伪元素跟着后一段走，换行时自然不出现。列间距一并交给它的
+   margin——容器的 column-gap 归零，否则两份会叠成 40px。 */
+.empty__foot span + span::before {
+  content: "";
+  display: inline-block;
   width: 1px;
   height: 12px;
+  margin: 0 var(--sp-5);
   background: var(--hairline-strong);
+  vertical-align: -2px;
 }
 
+/* ==== FILE: meter.css ==== */
+/* 注意：紧随其后的 .mk-* 一族按分区表属于 table.css（它们只给对照区与天赋备注上色）。
+   本期不挪动任何规则，所以它们物理上落在这一段里；第三期 B 剪切时把这一块单独
+   移进 table.css 即可——.mk-* 落在子 <span> 上，与任何其它规则都不同元素，级联不变。 */
 /* ---------- 预览区 ---------- */
 
 /* 标记语法：颜色标签只管 color，字号标签只管 font-size，字形标签只管 font-weight /
@@ -1336,6 +1403,12 @@ button.filelist__remove:hover:not(:disabled) {
   background: var(--warn-strong);
 }
 
+/* 命中格也给一档 hover：整条轨现在都有 title，鼠标停哪儿都该有反馈。
+   命中格不可点，所以只变色、不变 cursor。 */
+.meter--lg .meter__cell--hit:hover {
+  background: var(--gold-500);
+}
+
 /* 侧栏文件行的迷你轨吃掉次行剩余宽度，下载按钮回到自然宽度。
    写在这里而不是 .filelist 那一段：它的特异度 (0,2,0) 高于上面的 .meter (0,1,0)，
    放在 .meter 之前会触发 Biome 的 noDescendingSpecificity。 */
@@ -1359,6 +1432,8 @@ button.filelist__remove:hover:not(:disabled) {
   background: var(--warn-wash);
   box-shadow: inset 0 0 0 1px var(--warn);
 }
+
+/* ==== FILE: overview.css ==== */
 
 .preview {
   max-width: 1000px;
@@ -1574,7 +1649,10 @@ button.filelist__remove:hover:not(:disabled) {
   color: var(--gold-300);
 }
 
-/* 「仅看未命中」开关：按下态用与未命中同族的琥珀，不用金色（金色只做品牌与标题）。 */
+/* 「仅看未命中」开关。裸类 .ov__filter 有意不写任何规则：它的基态就是 .button，补一条
+   display / gap 只会把图标与文字的间距改得和旁边的「跳到第一处」不一样。它在 TSX 里是
+   --on 的基名，也是第三期 B 的接口契约，保留。
+   按下态用与未命中同族的琥珀，不用金色（金色只做品牌与标题）。 */
 .ov__filter--on {
   border-color: rgba(229, 169, 61, 0.5);
   background: var(--warn-wash);
@@ -1683,6 +1761,8 @@ button.misslist__go:hover:not(:disabled) {
   color: var(--gold-100);
 }
 
+/* ==== FILE: cards.css ==== */
+
 /* ---------- 卡片 ---------- */
 
 .card {
@@ -1693,6 +1773,39 @@ button.misslist__go:hover:not(:disabled) {
   background: var(--surface-2);
   box-shadow: var(--inset-light);
   overflow: hidden;
+}
+
+/* 卡片进入淡入：全站唯一一处「元素出现」的动效（任务书上限 1–2 处）。只给主区卡片，逐张
+   40ms 错开、最多错到第 4 张——再往后错，长列表最后一张要等半秒才出现，反而像卡了。
+   计数用 :nth-of-type 而不是 :nth-child（对 Task 7 简报的更正）：卡片前面还有眉标 <span>、
+   卡头 <div>、分隔线 <span> 三个兄弟，用 :nth-child 的话每个区块的第一张卡就已经是第 4 个
+   子元素，三条规则同时退化成「所有卡片都是 120ms」，实测 animation-delay 全是 0.12s，
+   错开根本没发生。:nth-of-type 只数 <article>，每个区块内从第一张卡开始数。 */
+.preview .card {
+  animation: card-in var(--dur-mid) var(--ease) both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview .card:nth-of-type(2) {
+  animation-delay: 40ms;
+}
+
+.preview .card:nth-of-type(3) {
+  animation-delay: 80ms;
+}
+
+.preview .card:nth-of-type(n + 4) {
+  animation-delay: 120ms;
 }
 
 /* 左侧 2px 稀有度边：普通白、传奇橙、宝石青、天赋古铜 */
@@ -1870,6 +1983,8 @@ button.misslist__go:hover:not(:disabled) {
 .passives > li:last-child {
   border-bottom: 0;
 }
+
+/* ==== FILE: table.css ==== */
 
 /* 对照表：序号 / 原文 / 序号 / 译文 四列，一条源行 = 一个 grid 行，左右天然同高。
    中缝是一条上下淡出的竖线，把「两块独立文本」变成「一份对照稿」。 */
@@ -2124,10 +2239,15 @@ button.misslist__go:hover:not(:disabled) {
   scroll-margin-top: var(--sp-6);
 }
 
+/* 注意：下面这条按性质属于 a11y.css，但它紧挨着上面的跳转落点规则、且 a11y 分区在
+   responsive 之后，本期不挪规则就只能留在这一段；第三期 B 剪切时单独挪过去即可
+   （它是 (0,1,0) 的属性选择器，全站没有第二条规则命中同一元素，级联不变）。 */
 [tabindex="-1"]:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
+/* ==== FILE: responsive.css ==== */
+
 /* ---------- 响应式：1280 / 900 / 560 ---------- */
 
 @media (max-width: 1280px) {
@@ -2145,6 +2265,14 @@ button.misslist__go:hover:not(:disabled) {
   .app {
     height: auto;
     min-height: 100vh;
+  }
+
+  /* dvh 版本必须写在上面那条之后：@supports 不改特异度，放进骨架分区那个 @supports 里
+     会被本块同特异度的 min-height: 100vh 压掉（这一条是对 Task 7 简报的更正）。 */
+  @supports (height: 100dvh) {
+    .app {
+      min-height: 100dvh;
+    }
   }
 
   /* 三段各占一行：品牌 150px + 状态 200px+ 再加中间控制区，390 视口一定横向溢出 */
@@ -2226,6 +2354,18 @@ button.misslist__go:hover:not(:disabled) {
 
   .ov {
     padding: var(--sp-5);
+  }
+
+  /* 空态脚注从这一档起开始换行（实测 820 起两行、390 起三行）。伪元素分隔符会落到
+     新行的行首，变成一根行首悬空竖线——与 M-10 原本的「行尾悬空」是同一种坏相，只是换了
+     一头。窄屏整条去掉，改由换行本身分隔；列间距交还给容器的 gap（宽屏一行时才由分隔符
+     自己的 margin 提供），否则同一行上的两段会贴在一起。 */
+  .empty__foot {
+    gap: var(--sp-2) var(--sp-5);
+  }
+
+  .empty__foot span + span::before {
+    content: none;
   }
 
   /* 定位文案换到自己一行，原文与「定位」按钮共用第二行，窄屏不挤成三条缝 */
@@ -2359,7 +2499,49 @@ button.misslist__go:hover:not(:disabled) {
   .cov__keys {
     display: none;
   }
+
+  /* 本期新增的四个可点控件一并进 44px 名单。折叠开关是 <summary> 不是 button，
+     通用名单管不到它，必须显式列出来。 */
+  .paste__toggle,
+  button.ov__filter,
+  button.toast__close,
+  button.app__sidetoggle {
+    min-height: 44px;
+  }
+
+  /* iOS Safari 对 font-size < 16px 的输入控件会在聚焦时放大整页，放大后横向就溢出且退不回去 */
+  textarea {
+    font-size: 16px;
+  }
+
+  /* 抽屉：收起时侧栏整条不渲染，主区首屏直接是概览卡与下载 CTA。
+     --open 必须写在基态之后（同为 (0,1,0)，靠顺序决胜负）。 */
+  .app__sidetoggle {
+    display: inline-flex;
+  }
+
+  .app__side {
+    display: none;
+  }
+
+  .app__side--open {
+    display: flex;
+  }
+
+  /* 安全区：刘海屏横放与手势条。用 max() 保证竖放时不比原来窄。 */
+  .app__header {
+    padding-left: max(var(--sp-4), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--sp-4), env(safe-area-inset-right, 0px));
+  }
+
+  .app__main {
+    padding-left: max(var(--sp-3), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--sp-3), env(safe-area-inset-right, 0px));
+    padding-bottom: calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+  }
 }
+
+/* ==== FILE: a11y.css ==== */
 
 /* ---------- 无障碍兜底 ---------- */
 
@@ -2388,6 +2570,10 @@ button.misslist__go:hover:not(:disabled) {
 
   /* 有位移的动画整条关掉，而不是缩短：前庭敏感用户要的是「不动」，不是「动得快」 */
   .toast {
+    animation: none;
+  }
+
+  .preview .card {
     animation: none;
   }
 }
@@ -2453,6 +2639,13 @@ button.misslist__go:hover:not(:disabled) {
      不加 forced-color-adjust: none：退出强制配色后金字在 Windows
      高对比度亮色主题下对比度只有约 1.9:1，系统色回落反而更好。 */
   .seg__item--on {
+    outline: 2px solid Highlight;
+    outline-offset: -1px;
+  }
+
+  /* 「仅看未命中」的按下态在强制配色下只剩系统色，琥珀底与琥珀边全部丢失，
+     aria-pressed 就没有任何视觉对应物了。补一条与上面同款的 outline 当形状冗余。 */
+  .ov__filter--on {
     outline: 2px solid Highlight;
     outline-offset: -1px;
   }

@@ -59,6 +59,21 @@ describe('useHotkeys', () => {
     expect(next).not.toHaveBeenCalled()
   })
 
+  it('长按不连跳：autorepeat 的 keydown 一概忽略', () => {
+    const next = vi.fn()
+    const toggleFilter = vi.fn()
+    render(<Harness next={next} toggleFilter={toggleFilter} />)
+    // 按住 N 不放，浏览器会按系统重复率连发 keydown（event.repeat === true）。不挡的话
+    // 游标一秒跳掉几十处未命中，松手时用户早已不知道自己停在哪一行。
+    fireEvent.keyDown(window, { key: 'n', repeat: true })
+    fireEvent.keyDown(window, { key: 'f', repeat: true })
+    expect(next).not.toHaveBeenCalled()
+    expect(toggleFilter).not.toHaveBeenCalled()
+    // 第一下（repeat 为 false）照常触发
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(next).toHaveBeenCalledTimes(1)
+  })
+
   it('别的键一概不管，卸载后不再监听', () => {
     const next = vi.fn()
     const { unmount } = render(<Harness next={next} toggleFilter={vi.fn()} />)

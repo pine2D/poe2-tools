@@ -122,16 +122,20 @@ function Overview(props: {
               缺口为未命中
             </span>
           </p>
-          <p className="cov__keys">
-            <span>
-              <kbd className="kbd">N</kbd>
-              跳下一处未命中
-            </span>
-            <span>
-              <kbd className="kbd">F</kbd>
-              仅看未命中
-            </span>
-          </p>
+          {/* 全命中时整条不出现：N 没有可跳的目标、F 的开关正是禁用的，两枚键位都指向空动作。
+              判据与右边那句「编号行全部命中」同源（misses 只算编号行）。 */}
+          {misses.length > 0 && (
+            <p className="cov__keys">
+              <span>
+                <kbd className="kbd">N</kbd>
+                跳下一处未命中
+              </span>
+              <span>
+                <kbd className="kbd">F</kbd>
+                仅看未命中
+              </span>
+            </p>
+          )}
         </div>
         <div className="cov__jump">
           {first === undefined ? (
@@ -389,7 +393,10 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
   useHotkeys({ next, toggleFilter: filter.toggle })
   const { preview } = file
   const description = byPath.get('description')
-  const only = filter.only
+  // 渲染期再与「还有没有未命中」求一次交：useMissFilter 的自动复位住在 useEffect 里，
+  // 而三区是渲染期算的——换一份全命中的文件时，复位之前有整整一帧三区全是
+  // 「这一区没有未命中」。hook 里的复位保留（它管的是开关自身的状态），这里只补那一帧。
+  const only = filter.only && misses.length > 0
   // 筛选按卡过滤：留下的卡完整显示所有行——判断一条词缀行翻得对不对要看上下文，
   // 只留孤零零一行反而更难用。
   const slots = preview.slots.filter(

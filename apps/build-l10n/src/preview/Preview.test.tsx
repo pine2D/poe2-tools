@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { useLayoutEffect } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { miniBundle, miniIndex } from '../../../../packages/build-core/src/testing/miniDict'
 import type { LoadedDict } from '../dict/loadDict'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
-import { translateSource } from '../translate/runTranslation'
+import { type TranslatedFile, translateSource } from '../translate/runTranslation'
 import { Preview } from './Preview'
 
 afterEach(() => {
@@ -222,25 +223,32 @@ describe('Preview 卡片', () => {
   })
 })
 
-// 一份「一条未命中都没有」的文件：筛选开关禁用，F 键也必须跟着不生效（Task 5 会验后半句）
+// 一份「一条未命中都没有」的文件：筛选开关禁用，F 键也必须跟着不生效（Task 5 会验后半句）。
+// 拆成模块级常量而不是每次现算：Task 7 的「归零那一帧」探针要把同一份 file 当作新 prop 传进去。
+const cleanResult = translateSource(
+  {
+    id: 'f3',
+    name: 'clean.build',
+    text: JSON.stringify({
+      name: 'All Hit',
+      inventory_slots: [
+        {
+          inventory_id: 'Weapon1',
+          slot_x: 0,
+          slot_y: 0,
+          additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
+        },
+      ],
+    }),
+  },
+  dict,
+  { bilingual: false, annotateUniques: true },
+)
+if (!cleanResult.ok) throw new Error(cleanResult.error)
+const allHitFile = cleanResult.file
+
 function showAllHit() {
-  const text = JSON.stringify({
-    name: 'All Hit',
-    inventory_slots: [
-      {
-        inventory_id: 'Weapon1',
-        slot_x: 0,
-        slot_y: 0,
-        additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
-      },
-    ],
-  })
-  const clean = translateSource({ id: 'f3', name: 'clean.build', text }, dict, {
-    bilingual: false,
-    annotateUniques: true,
-  })
-  if (!clean.ok) throw new Error(clean.error)
-  return render(<Preview file={clean.file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
+  return render(<Preview file={allHitFile} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
 }
 
 describe('Preview 仅看未命中', () => {
@@ -337,5 +345,35 @@ describe('Preview 快捷键', () => {
     expect(screen.getByText('仅看未命中', { selector: '.cov__keys span' })).toBeDefined()
     const keys = screen.getAllByText(/^[NF]$/)
     expect(keys.map((node) => node.tagName)).toEqual(['KBD', 'KBD'])
+  })
+
+  // 全命中的文件里 N 没有可跳的目标、F 的开关又正是禁用的：两枚键位提示都指向空动作。
+  // 与同一张卡上「编号行全部命中」取同一个判据，整条提示随未命中清单一起消失。
+  it('一条未命中都没有时，键位提示整条不出现', () => {
+    expect(showAllHit().container.querySelector('.cov__keys')).toBeNull()
+    cleanup()
+    expect(show().container.querySelector('.cov__keys')).not.toBeNull()
+  })
+})
+
+describe('Preview 筛选归零', () => {
+  // useMissFilter 的自动复位住在 useEffect 里，而三区的过滤是渲染期按 filter.only 算的：
+  // 筛选开着时换一份全命中的文件，复位 effect 之前有整整一帧「三区全是这一区没有未命中」。
+  // 父组件的 useLayoutEffect 恰好排在子组件的 passive effect 之前，用它当探针就看得见那一帧。
+  it('换成全命中的文件时不闪一帧空屏', () => {
+    const frames: string[] = []
+    function Probe({ shown }: { shown: TranslatedFile }) {
+      useLayoutEffect(() => {
+        frames.push(document.body.textContent ?? '')
+      })
+      return <Preview file={shown} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />
+    }
+    const { rerender } = render(<Probe shown={file} />)
+    fireEvent.click(screen.getByRole('button', { name: '仅看未命中' }))
+    frames.length = 0
+    rerender(<Probe shown={allHitFile} />)
+    expect(frames).not.toHaveLength(0)
+    expect(frames.some((text) => text.includes('这一区没有未命中'))).toBe(false)
+    expect(screen.getByText('主手')).toBeDefined()
   })
 })

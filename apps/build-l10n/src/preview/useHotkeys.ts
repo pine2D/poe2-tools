@@ -23,6 +23,9 @@ export function useHotkeys({ next, toggleFilter }: Hotkeys): void {
     const onKey = (event: KeyboardEvent): void => {
       if (event.ctrlKey || event.metaKey || event.altKey) return
       if (event.isComposing || event.key === 'Process') return
+      // 按住不放时浏览器按系统重复率连发 keydown：N 会一秒跳掉几十处未命中、F 会把筛选
+      // 来回抖成随机状态。只认第一下。
+      if (event.repeat) return
       if (isTypingTarget(event.target)) return
       const key = event.key.toLowerCase()
       if (key === 'n') {

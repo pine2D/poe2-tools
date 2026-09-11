@@ -67,4 +67,17 @@ describe('CoverageMeter', () => {
       screen.getByRole('group', { name: 'a.build：共 3 条编号行，命中 2 条，未命中 1 条' }),
     ).toBeDefined()
   })
+
+  it('概览轨每格挂 title，鼠标停上去知道这是哪一行；迷你轨不挂', () => {
+    const { container } = render(<CoverageMeter cells={cells} onJump={() => {}} />)
+    const titles = [...container.querySelectorAll('.meter__cell')].map((cell) =>
+      cell.getAttribute('title'),
+    )
+    expect(titles).toEqual(cells.map((cell) => cell.where))
+    cleanup()
+    const mini = render(<CoverageMeter cells={cells} size="sm" label="a.build" />).container
+    for (const cell of mini.querySelectorAll('.meter__cell')) {
+      expect(cell.getAttribute('title')).toBeNull()
+    }
+  })
 })
