@@ -1,0 +1,135 @@
+/* 通用控件：按钮与主 CTA、文本框、复选框、英文眉标、图标、键帽。
+   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
+
+/* ---------- 控件 ---------- */
+
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 34px;
+  padding: 0 14px;
+  /* 按钮的识别手段是它自己的文字标签，边框只做装饰，用发丝金而不是实色卡其 */
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  box-shadow: var(--inset-light);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+button:hover:not(:disabled),
+.button:hover {
+  background: var(--surface-hover);
+  border-color: var(--hairline-strong);
+}
+
+button:disabled {
+  background: var(--surface-2);
+  border-color: var(--hairline);
+  box-shadow: none;
+  color: var(--text-3); /* 5.6 vs surface-2 */
+  cursor: not-allowed;
+}
+
+/* 主 CTA：全站只有「全部下载」（OptionsBar.tsx）与文件行的「下载」（FileList.tsx）两处
+   （owner 拍板：主场景是导入即下载）。两颗按钮在 TSX 里都显式带 className="cta"，
+   不再靠「是 .options 的直接子元素」或「aria-label 以‘下载’开头」这类结构 / 文案耦合选中——
+   第二期顶栏加重试按钮、或者哪天把 aria-label 文案从「下载」改成别的词，都不会静默误命中
+   或漏命中这份样式。.cta 基态 (0,1,0) 仍然压得过通用 button 系列规则：class 数量已经更高，
+   不需要再叠 button 元素选择器。 */
+.cta {
+  border-color: var(--cta-border);
+  background: var(--cta-face);
+  box-shadow:
+    var(--inset-light),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+  color: var(--cta-text);
+  font-weight: 600;
+}
+
+.cta:hover:not(:disabled) {
+  border-color: var(--gold-500);
+  background: var(--cta-face);
+  color: var(--gold-100);
+}
+
+.cta:disabled {
+  border-color: var(--hairline);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+textarea {
+  min-height: 34px;
+  padding: 6px 10px;
+  /* 空框子没有文字标签，边框就是唯一的「这里能输入」信号，必须 ≥3:1 */
+  border: 1px solid var(--control-edge);
+  border-radius: var(--r-md);
+  background: var(--surface-0);
+  color: var(--text);
+  font-family: var(--font-pair);
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  width: 100%;
+  resize: vertical;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+textarea:hover {
+  border-color: var(--gold-500);
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--gold-500);
+  cursor: pointer;
+}
+
+/* 英文眉标：全站唯一用 Cinzel 的地方之一。纯拉丁全大写才加字距（CJK 一律不加）。
+   颜色用 --bronze-text 而不是 --bronze-600：11px 属正文档，要 ≥4.5:1。 */
+.eyebrow {
+  display: block;
+  color: var(--bronze-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-eyebrow);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* 图标一律块级 + 不参与压缩：内联 SVG 默认是 inline，会带上基线间隙，
+   而它们全都住在 flex 行里，flex:none 保证窄屏不被挤扁 */
+.icon {
+  display: block;
+  flex: none;
+}
+
+/* 键帽：等宽 + 一圈发丝边，不是按钮，别给 hover */
+.kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-0);
+  color: var(--bronze-text);
+  font-family: var(--font-pair);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}

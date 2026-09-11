@@ -9,7 +9,7 @@ import { blend, contrastRatio } from './testing/contrast'
 import { fsPathFromMetaUrl } from './testing/fsPath'
 
 const here = dirname(fsPathFromMetaUrl(import.meta.url))
-const css = readFileSync(resolve(here, 'styles.css'), 'utf8')
+const css = readFileSync(resolve(here, 'styles/tokens.css'), 'utf8')
 
 function block(selector: string): Map<string, string> {
   const start = css.indexOf(`${selector} {`)

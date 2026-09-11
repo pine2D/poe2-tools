@@ -1,0 +1,241 @@
+/* 令牌层：@font-face 与深浅两套 :root。
+   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
+
+/* Cinzel 拉丁子集，自托管（SIL Open Font License 1.1，全文见 public/fonts/OFL.txt 与
+   README「字体与许可」）。浏览器只向本站请求这一个字体文件，不向任何第三方域名发请求。
+   子集只含 ASCII 与少量标点（配方见 README），可变字重 500–700，约 16 KB。
+   font-display: swap —— 眉标是装饰性小字，先用 Georgia 兜底渲染、字体到位再换，
+   不让它阻塞首屏。unicode-range 限死拉丁区，汉字不会误落到这个字体上。
+   硬规则：Cinzel 是纯大写石刻体，1/0 与 I/O 几乎无法区分，**不承载任何字母数字混排的
+   字符串**（inventory_id、版本号、文件名、行号一律走 --font-pair）；
+   只有「纯字母的短标签」与「孤立的数字」可以用它。 */
+@font-face {
+  font-family: "Cinzel Subset";
+  src: url("/fonts/Cinzel-subset.woff2") format("woff2");
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00B7, U+2013-2014, U+2022, U+2026;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* 表面与描边：暖近黑实色底逐级提亮；层级用描边与内高光表达，不用落地阴影。
+     品牌金的 RGB 三元组 217,192,120 在下面重复出现是**有意**的：改成
+     `--gold-rgb: 217 192 120` + `rgb(var(--gold-rgb) / .12)` 需要 `rgb(r g b / a)`
+     空格语法（Chrome 65+ / Safari 12.1+），微信 X5 一类老内核解析失败会让整条
+     border-color 声明作废并回落到 currentColor（文字色的边框，比现在难看得多），
+     所以宁可留四份字面量。 */
+  --surface-0: #0e0d0b;
+  --surface-1: #16140f;
+  --surface-2: #1d1a14;
+  --surface-3: #262117;
+  --surface-hover: #2e2819;
+  --hairline: rgba(217, 192, 120, 0.12);
+  --hairline-strong: rgba(217, 192, 120, 0.22);
+  /* 只给「唯一识别手段就是边框」的控件用：粘贴框与拖放区虚线框（空框子，没有文字标签，
+     边框一没就不知道那儿能操作）。等效实色 #746642 / #786a44 / #7b6d46 / #807048，
+     对 surface-0/1/2/3 实算 3.44 / 3.46 / 3.40 / 3.30，全部 ≥3:1（WCAG 1.4.11）。
+     带文字标签的按钮不用它——标签本身就是识别手段，边框只需 --hairline-strong，
+     这样顶栏不再是一圈泥褐描边（第一期 #85795d 是 4.0–4.5:1 的去饱和卡其）。 */
+  --control-edge: rgba(217, 192, 120, 0.5);
+  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --rule-fade: linear-gradient(90deg, transparent, rgba(217, 192, 120, 0.45), transparent);
+  /* 单端淡出的分隔线：左实右虚，用在基底名与编号词缀之间（= 游戏提示框里名字下面那条线）。
+     2a 修复轮按零引用纪律删过一次，2b Task 4 的 .tip__base 起重新消费。 */
+  --rule-fade-short: linear-gradient(90deg, rgba(217, 192, 120, 0.45), transparent);
+  /* 应用底：一层几乎看不见的暖光晕 + 58° 细斜纹。非文本装饰，最亮处相对底色抬升 <1%，
+     不参与任何对比度判据；缺了它整页就是一块死平的近黑（mockup-1 .app 的配方）。 */
+  --app-wash:
+    radial-gradient(1100px 520px at 52% -8%, rgba(194, 158, 108, 0.055), transparent 68%),
+    repeating-linear-gradient(58deg, rgba(255, 255, 255, 0.013) 0 1px, transparent 1px 4px);
+  --scrollbar-thumb: #3a3226;
+
+  /* 文本：括号内为 vs surface-0 / surface-1 / surface-2 / surface-3 的对比度 */
+  --text: #ede6d6; /* 15.6 / 14.8 / 14.0 / 12.9 */
+  --text-2: #b8ae99; /* 8.8 / 8.4 / 7.9 / 7.3 */
+  /* mockup-1 这一档是 #8c8574，在 surface-3 上只有 4.36:1；报告 §5.1 改动 1 要求换成
+     下面这个值，处处 ≥5:1。这是本期唯一刻意不跟 mockup 的中性色。 */
+  --text-3: #9a9280; /* 6.3 / 6.0 / 5.6 / 5.2 */
+
+  /* 品牌金 */
+  --gold-100: #f2e4b8; /* 15.3 / 14.5 / 13.7 / 12.6 */
+  --gold-300: #d9c078; /* 10.9 / 10.3 / 9.7 / 9.0 */
+  --gold-500: #c29e6c; /* 7.8 / 7.4 / 6.9 / 6.4 */
+  /* 3.9 / 3.7 / 3.5 / 3.2：达图形 3:1，**不得承载文字**。本期用于分段控件的轨底描边；
+     第二期 B 的覆盖率轨命中格用它。B 期若不做覆盖率轨，这个令牌必须删掉。 */
+  --bronze-600: #8a6a38;
+  /* 6.0 / 5.7 / 5.4 / 5.0：mockup 用 --bz 直接写英文眉标与 inventory_id，那是 mockup
+     自己的 a11y 缺陷（3.5:1 的正文）。同族但可读的一档，眉标 / 版本号 / 脚注用它。 */
+  --bronze-text: #a88c50;
+
+  /* 语义色：与金色彻底分家 */
+  --warn: #e5a93d; /* 未命中 9.3 / 8.8 / 8.3 / 7.7 */
+  --warn-wash: rgba(229, 169, 61, 0.1);
+  --warn-strong: rgba(229, 169, 61, 0.24); /* 未命中格 / 按下态 hover 的加深底 */
+  --danger: #e8695c; /* 错误 6.1 / 5.8 / 5.5 / 5.0 */
+  /* 7.3 / 6.9 / 6.6 / 6.0；第二期 B 逐行三态的「原样」用。B 期不做就必须删。 */
+  --keep: #aa9e82;
+  --info: #3fc7bf; /* 9.4 / 8.9 / 8.4 / 7.7；词典就绪徽章的状态点 */
+  --rarity-unique: #c87b3a; /* 传奇名 5.9 / 5.6 / 5.3 / 4.8 */
+
+  /* 标记语法还原色：策略是「保色相、只提明度」（research-cjk-typography.md §4.2）。
+     括号里是 vs --surface-2 的实算对比度，全部 ≥4.5:1。
+     --mk-black 是有意的偏离：暗底上真用黑就是不可见，退成可读的暖灰。 */
+  --mk-red: #e8695c; /* 5.5，官方 #d20000 只有 3.1 */
+  --mk-orange: #e0904a; /* 6.8 */
+  --mk-yellow: #e6d45a; /* 11.5 */
+  --mk-green: #6fcf5e; /* 8.9 */
+  --mk-blue: #8888ff; /* 5.8，官网 .colourAugmented 原值 */
+  --mk-indigo: #a79bff; /* 7.3 */
+  --mk-violet: #d79be8; /* 8.1 */
+  --mk-black: #8c8574; /* 4.7 */
+  --mk-white: #ede6d6; /* 14.0 */
+  --mk-grey: #9a9280; /* 5.6，官方 #7f7f7f 只有 3.4 */
+  --mk-bronze: #c9a46a; /* 7.4 */
+  --mk-silver: #c8c8c8; /* 10.4，官网 .normal 原值 */
+  --mk-gold: #e6e066; /* 12.6，官网 .rareitem #ff7 压明度 */
+  --mk-unique: #c87b3a; /* 5.3，= --rarity-unique */
+  --rarity-gem: #3fc7bf; /* 8.4，宝石名 */
+
+  /* 台服译文列专用的等宽栈：`:lang(zh-TW)`（styles.css:107）会直接命中译文格并把它
+     换成比例字体 --font-zh-tw，繁体列因此丢掉 tabular-nums 对齐，同一界面出现两套
+     字形口径。把台服黑体插进等宽栈，简繁两列就一致了。Task 4 的 .tip 规则消费它。 */
+  --font-pair-tw:
+    ui-monospace, "Cascadia Mono", Consolas, "Microsoft JhengHei", "PingFang TC", monospace;
+
+  /* 主按钮（官方 ember 渐变）：文字 #e7c878 对最亮的一档底 #5a2c08 是 7.2 */
+  --cta-face: linear-gradient(180deg, #1b0e05, #4a2408 61%, #5a2c08 89%, #0a0705 95%, #3c3429 96%);
+  --cta-border: #4a4137;
+  --cta-text: #e7c878;
+
+  /* 字体栈。--font-display 在 Task 2 里由 @font-face 提供，中文一律走系统字体。 */
+  --font-display: "Cinzel Subset", "Trajan Pro", Georgia, "Times New Roman", serif;
+  --font-zh-cn:
+    "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+  --font-zh-tw:
+    "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", "Source Han Sans TC", system-ui, sans-serif;
+  /* 末位必须是 monospace 而不是 sans-serif：Linux / Android 上前五个都可能缺席，
+     退成比例字体会让编号词缀行彻底失去对齐，而对齐正是这个界面存在的理由（第一期 M-4）。 */
+  --font-pair: ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", "PingFang SC", monospace;
+
+  /* 字号阶（基准 15px）。--fs-display 原计划 32px（空态主句是一句话说明），修订记录第 10 条
+     把 .empty__hero 改回「产品名、40px、金渐变裁切」（mockup .estate .hero 的配方）之后忘了
+     同步这张表，实现时把 40px 直接硬编码在规则里，令牌反而零引用（I-4）；这里补上 40px，
+     .empty__hero 与 2b 的覆盖率大数字将来共用同一档。 */
+  --fs-display: 40px;
+  --fs-h1: 22px;
+  --fs-h2: 18px;
+  --fs-h3: 15.5px;
+  --fs-body: 15px;
+  --fs-pair: 14px;
+  --fs-label: 13px;
+  --fs-micro: 11.5px;
+  --fs-eyebrow: 11px;
+
+  /* 间距阶（4px 基数） */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 48px;
+  --sp-9: 64px;
+
+  /* 圆角上限 10px：工具类界面不用大圆角。--r-full 只给状态徽章的胶囊。 */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 10px;
+  --r-full: 999px;
+
+  /* 动效与焦点。焦点环是 outline 简写值：全站没有任何组件规则会去改 outline，
+     box-shadow 则会被 .cta 与幽灵按钮覆盖掉，所以不能用 box-shadow 做焦点指示。 */
+  /* 任务书第三期把 hover / 焦点过渡定在 150–300ms（研究报告 §5.1 写的是 120ms，
+     以任务书为准，是一处有意分歧）；--dur-drop 不动，拖拽反馈越跟手越好。 */
+  --dur-fast: 160ms;
+  --dur-drop: 140ms;
+  --dur-mid: 220ms; /* 进场 / 展开一类「有位移」的动效，比 hover 慢一档 */
+  --ease: ease-out;
+  --focus-ring: 2px solid var(--gold-300);
+}
+
+/* ---------- 浅色主题 ---------- */
+
+/* 三态主题（跟随系统 / 浅色 / 深色）在 JS 里收敛成两态：index.html 的引导脚本在首帧
+   之前把 data-theme 定成 light 或 dark，之后由 theme/useTheme.ts 维护。所以这里只需要
+   一份浅色块。若改走 @media (prefers-color-scheme)，为了让顶栏的显式选择压过系统，
+   同一份令牌要写两遍（媒体块里一份、[data-theme="light"] 里一份），两份必然漂移，
+   而漂移的表现是「某个令牌只在跟随系统时正确」，几乎不可能被发现。
+
+   下面每个值都是重新算过的，**不是深色值的镜像**：
+   · --control-edge 的 alpha 从 .5 提到 .72——照搬 .5 在浅底上只有 2.6:1，破 WCAG 1.4.11；
+   · --warn 从琥珀压成褐橙——照搬 #e5a93d 在近白底上只有 1.9:1；
+   · --mk-white 退成暖灰、--mk-black 反而能用真黑——两套主题各有一处「颜色名与实际颜色
+     对不上」的有意偏离，正好互为镜像，不会同时出现。
+   完整表格与逐项对比度见 docs/superpowers/plans/2026-09-11-build-l10n-ui-phase3b.md。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* 表面：浅色下「抬升 = 更白」，与深色的「抬升 = 更亮」同向；控件反而要更深，
+     否则控件在白卡上整个消失。底不用纯白：纯白 + 金发丝线看起来像一张发票。 */
+  --surface-0: #f4efe3;
+  --surface-1: #faf6ec;
+  --surface-2: #fffdf8;
+  --surface-3: #ebe4d4;
+  --surface-hover: #e2d9c4;
+  --hairline: rgba(107, 82, 20, 0.16);
+  --hairline-strong: rgba(107, 82, 20, 0.3);
+  /* 合成后 3.4 / 3.5 / 3.6 / 3.2，全部 ≥3（WCAG 1.4.11）。边框即唯一识别手段的控件专用。 */
+  --control-edge: rgba(107, 82, 20, 0.72);
+  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --rule-fade: linear-gradient(90deg, transparent, rgba(107, 82, 20, 0.4), transparent);
+  --rule-fade-short: linear-gradient(90deg, rgba(107, 82, 20, 0.4), transparent);
+  /* 斜纹由「白 1.3%」换成「黑 1.4%」，光晕压暖：非文本装饰，最暗处相对底色 <1% */
+  --app-wash:
+    radial-gradient(1100px 520px at 52% -8%, rgba(154, 118, 58, 0.07), transparent 68%),
+    repeating-linear-gradient(58deg, rgba(0, 0, 0, 0.014) 0 1px, transparent 1px 4px);
+  --scrollbar-thumb: #c9bea0;
+
+  /* 文本：括号内为 vs surface-0 / 1 / 2 / 3 / hover 的实算对比度 */
+  --text: #241f17; /* 14.3 / 15.2 / 16.1 / 12.9 / 11.7 */
+  --text-2: #554c3c; /* 7.4 / 7.8 / 8.3 / 6.7 / 6.0 */
+  --text-3: #635a49; /* 5.9 / 6.3 / 6.7 / 5.4 / 4.8 —— 最亮与最暗的表面上都 ≥4.5 */
+
+  /* 品牌金：浅底上「更强 = 更深」，三档的角色方向整体反转，值不可能靠镜像得到 */
+  --gold-100: #5a4310; /* 8.2 / 8.7 / 9.2 / 7.4 / 6.7 */
+  --gold-300: #6b5214; /* 6.4 / 6.9 / 7.3 / 5.8 / 5.3；焦点环复用它 */
+  --gold-500: #755c1c; /* 5.5 / 5.9 / 6.3 / 5.0 / 4.5 */
+  /* 仅非文本：轨的命中格、稀有度左边、折线。这些图形只落在 surface-1 / surface-2 上，
+     3.7 / 3.9 ≥3 达标（已逐处核对，没有任何一处落在 hover 面上）。 */
+  --bronze-600: #9c7a3e;
+  --bronze-text: #705a2e; /* 5.7 / 6.1 / 6.5 / 5.2 / 4.7 */
+
+  /* 语义色：与金色同样彻底分家 */
+  --warn: #845400; /* 5.6 / 6.0 / 6.4 / 5.1 / 4.6 */
+  --warn-wash: rgba(132, 84, 0, 0.1);
+  --warn-strong: rgba(132, 84, 0, 0.2);
+  --danger: #a02b1c; /* 6.4 / 6.8 / 7.2 / 5.8 / 5.2 */
+  --keep: #6e6250; /* 5.2 / 5.5 / 5.9 / 4.7 / 4.2 */
+  --info: #0d6560; /* 6.0 / 6.4 / 6.8 / 5.4 / 4.9 */
+  --rarity-unique: #8f4a12; /* 5.8 / 6.2 / 6.6 / 5.3 / 4.7 */
+
+  /* 标记语法：策略与深色档相反——保色相、压明度。括号里是 vs --surface-2 的实算值。 */
+  --mk-red: #b3261c; /* 6.4 */
+  --mk-orange: #8a4a00; /* 6.8 */
+  --mk-yellow: #6e6a0c; /* 5.5，黄在近白底上保色相就必须压成橄榄，这是浅色档的固有形变 */
+  --mk-green: #2a6b21; /* 6.4 */
+  --mk-blue: #3535c4; /* 8.4 */
+  --mk-indigo: #4b3fb5; /* 7.7 */
+  --mk-violet: #8a3fa0; /* 6.3 */
+  --mk-black: #1a1712; /* 17.6，浅色档反而能用真黑 */
+  --mk-white: #595144; /* 7.7，浅色档轮到「白」必须偏离：白字在近白底上不可见 */
+  --mk-grey: #5f5f5f; /* 6.3 */
+  --mk-bronze: #7a5a2a; /* 6.2 */
+  --mk-silver: #616161; /* 6.1 */
+  --mk-gold: #7a5f00; /* 6.0，与 --mk-yellow 靠色相区分（一偏橙一偏绿），不靠明度 */
+  --mk-unique: #8f4a12; /* 6.6，= --rarity-unique */
+  --rarity-gem: #0d6560; /* 6.8，= --info */
+}

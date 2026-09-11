@@ -1,0 +1,102 @@
+/* 覆盖率轨与图例样本（含侧栏迷你轨的宽度接管）。
+   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
+
+/* 覆盖率轨：底部对齐，命中是 10px 古铜矮实心格，未命中是 18px 琥珀高空心格。
+   高度差 + 实心/空心是形状冗余，颜色只是辅助（WCAG 1.4.1）。
+   元素是 <fieldset>（见 CoverageMeter.tsx 里的取舍注释），先清掉浏览器默认的
+   边框 / 内边距 / margin / min-width，行为上仍是一条纯展示的水平轨。 */
+.meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 3px;
+  min-height: 18px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.meter__cell {
+  flex: 1 1 0;
+  min-width: 6px; /* 真实上限 66 格，900px 卡里每格 ≈10px；下限保证极端情况仍可点 */
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+}
+
+.meter__cell--hit {
+  height: 10px;
+  background: var(--bronze-600); /* 3.5 vs surface-2，非文本达 3:1 */
+  box-shadow: inset 0 1px 0 rgba(242, 228, 184, 0.35);
+}
+
+.meter__cell--miss {
+  height: 18px;
+  background: var(--warn-wash);
+  box-shadow: inset 0 0 0 1px var(--warn);
+}
+
+/* 格宽上限分两档（mockup 的取值）：概览轨在中列要铺满，26px 的旧上限会让 8 格的轨
+   缩在左边一小截、右边空掉一大片；侧栏迷你轨反过来要窄，不能长得像概览轨。 */
+.meter--lg .meter__cell {
+  max-width: 52px;
+}
+
+.meter--sm {
+  min-height: 10px;
+  gap: 2px;
+}
+
+.meter--sm .meter__cell {
+  max-width: 22px;
+}
+
+.meter--sm .meter__cell--hit {
+  height: 6px;
+}
+
+.meter--sm .meter__cell--miss {
+  height: 10px;
+}
+
+/* 只有概览轨（lg）的缺口是按钮，才给「可点」的暗示；侧栏迷你轨整条是装饰
+   （见 CoverageMeter.tsx：≤560 那种 10px 高的格子远够不到 44px 触控目标）。
+   写在 .meter--sm 之后：这两条是 (0,2,0) / (0,3,0)，放前面会触发 noDescendingSpecificity。 */
+.meter--lg .meter__cell--miss {
+  cursor: pointer;
+}
+
+.meter--lg .meter__cell--miss:hover {
+  background: var(--warn-strong);
+}
+
+/* 命中格也给一档 hover：整条轨现在都有 title，鼠标停哪儿都该有反馈。
+   命中格不可点，所以只变色、不变 cursor。 */
+.meter--lg .meter__cell--hit:hover {
+  background: var(--gold-500);
+}
+
+/* 侧栏文件行的迷你轨吃掉次行剩余宽度，下载按钮回到自然宽度。
+   写在这里而不是 .filelist 那一段：它的特异度 (0,2,0) 高于上面的 .meter (0,1,0)，
+   放在 .meter 之前会触发 Biome 的 noDescendingSpecificity。 */
+.filelist__ops .meter {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 图例里的两个小样本，形状与轨里一致 */
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--bronze-600);
+  box-shadow: inset 0 1px 0 rgba(242, 228, 184, 0.35);
+}
+
+.swatch--miss {
+  height: 12px;
+  background: var(--warn-wash);
+  box-shadow: inset 0 0 0 1px var(--warn);
+}

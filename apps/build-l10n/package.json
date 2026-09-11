@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "sync-dict": "node scripts/sync-dict.mjs",
+    "scan-css": "node scripts/scan-css.mjs",
     "dev": "node scripts/sync-dict.mjs && vite",
     "build": "node scripts/sync-dict.mjs && vite build",
     "preview": "vite preview",

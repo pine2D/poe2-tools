@@ -34,6 +34,22 @@ pnpm --filter @poe2-tools/build-l10n build   # 产物在 apps/build-l10n/dist
    - Secrets：`CLOUDFLARE_API_TOKEN`（权限 Cloudflare Pages: Edit）、`CLOUDFLARE_ACCOUNT_ID`
 3. 推送到 `main`（或手动触发 `deploy` workflow）。变量未设置时 workflow 自动跳过。令牌只放 GitHub secrets，不写进仓库任何文件。
 
+### 样式的死代码扫描
+
+```bash
+pnpm --filter @poe2-tools/build-l10n scan-css
+```
+
+扫两类东西：`src/styles/*.css` 里定义了但没有任何 `var()` 引用的设计令牌，以及写了样式但没有任何
+`.tsx` 用到的类选择器。**不接进 `pnpm verify`**——它靠正则匹配，对「字符串拼出来的类名」和
+「只被别的 CSS 规则消费的 modifier」会误报，当成门禁只会让 CI 变吵。改完样式、或删组件之后手动跑
+一次即可；有发现时退出码是 1，输出里逐条列出名字。
+
+已知误报（跑一次会看到，不是死代码）：`.filelist__status--ok` / `--error` / `--pending`
+（`FileList.tsx` 用模板字符串 `` `filelist__status--${kind}` `` 拼出来，脚本只按整串字面量匹配）；
+`.w3` / `.woff2`（分别来自内联 SVG 的 `www.w3.org` 命名空间地址和 `@font-face` 里的
+`Cinzel-subset.woff2` 文件名，不是类选择器，被正则误判）。
+
 ## 目录
 
 ```
