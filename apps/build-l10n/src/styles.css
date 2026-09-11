@@ -1919,6 +1919,21 @@ button.misslist__go:hover:not(:disabled) {
   display: none;
 }
 
+/* 整段原样的字段退化成单列纯文本块（2b 审查 I-2）。不是 grid，所以既有的四列取值、
+   中缝、列头一概不参与；.tip 的内边距与等宽字体照旧继承，视觉上仍是同一块对照区。 */
+.tip--solo {
+  display: block;
+}
+
+.tip--solo::before {
+  display: none;
+}
+
+.tip__t--solo {
+  display: block;
+  padding: 0;
+}
+
 /* 支援宝石 / 天赋的对照表嵌在 <li> 里，左右内边距由 li 提供，表格自己不再加一层。
    写在 `.tip` 之后：它是 (0,2,0)，放在 (0,1,0) 的 `.tip` 之前会触发 noDescendingSpecificity
    （与 `.filelist__ops .meter` 同款处理）。 */

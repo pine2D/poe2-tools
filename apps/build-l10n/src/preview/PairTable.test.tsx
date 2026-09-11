@@ -29,6 +29,7 @@ const common = {
   path: 'inventory_slots[3].additional_text',
   injected: null,
   locale: 'zh-CN' as const,
+  bilingual: false,
 }
 
 describe('PairTable', () => {
@@ -109,13 +110,14 @@ describe('PairTable', () => {
     expect(document.getElementById('line-inventory-slots-3-additional-text-3')).not.toBeNull()
   })
 
-  it('原样：非首行的 kept 标"原样"，不算未命中', () => {
+  it('混合字段里，非首行的 kept 标"原样"，不算未命中', () => {
     render(
       <PairTable
         {...common}
         baseName
         emptyText="这个槽位没有备注"
         rows={[
+          row({ index: 1, marker: '1' }),
           row({
             index: 2,
             kind: 'name',
@@ -128,10 +130,11 @@ describe('PairTable', () => {
     )
     expect(screen.getByText('原样')).toBeDefined()
     expect(screen.queryByLabelText('未命中')).toBeNull()
+    expect(screen.getByText('原文 · EN')).toBeDefined()
   })
 
   it('基底名没命中词典时算未命中，不许伪装成"原样"', () => {
-    render(
+    const { container } = render(
       <PairTable
         {...common}
         baseName
@@ -152,29 +155,65 @@ describe('PairTable', () => {
     expect(screen.getAllByLabelText('基底名未收录')).toHaveLength(2)
     expect(screen.getByText('基底名未收录')).toBeDefined()
     expect(screen.queryByLabelText('未命中')).toBeNull()
+    expect(container.querySelector('.tip--solo')).toBeNull()
   })
 
-  it('同样是首行 kept，非槽位字段（构筑说明）只算原样', () => {
-    render(
+  // 整段 kept 的构筑说明：两条都不是编号行、都没未命中，正是退化分支的靶子
+  const notes: PairRow[] = [
+    row({
+      index: 0,
+      kind: 'name',
+      status: 'kept',
+      base: true,
+      en: spans('Leveling notes'),
+      zh: spans('Leveling notes'),
+    }),
+    row({
+      index: 1,
+      kind: 'name',
+      status: 'kept',
+      en: spans('Use any staff until Act 3.'),
+      zh: spans('Use any staff until Act 3.'),
+    }),
+  ]
+
+  it('整段都是原样时退化成单列：没有列头、没有序号格、没有右列重复（I-2）', () => {
+    const { container } = render(
       <PairTable
         {...common}
         path="description"
         baseName={false}
         emptyText="没有构筑说明"
-        rows={[
-          row({
-            index: 0,
-            kind: 'name',
-            status: 'kept',
-            base: true,
-            en: spans('Leveling notes'),
-            zh: spans('Leveling notes'),
-          }),
-        ]}
+        rows={notes}
       />,
     )
-    expect(screen.queryByLabelText('未命中')).toBeNull()
-    expect(screen.getByText('原样')).toBeDefined()
+    expect(container.querySelector('.tip--solo')).not.toBeNull()
+    // 一行一格，没有序号格、没有列头、没有译文格
+    expect(container.querySelectorAll('.tip__t--solo')).toHaveLength(2)
+    expect(container.querySelectorAll('.tip__n')).toHaveLength(0)
+    expect(container.querySelectorAll('.tip__lab')).toHaveLength(0)
+    expect(container.querySelectorAll('.tip__t--zh')).toHaveLength(0)
+    // 原文只出现一次，不再左右逐字重复
+    expect(screen.getAllByText('Leveling notes')).toHaveLength(1)
+    // 状态仍然可见，且整块只挂一枚标签（挂在最后一行行尾）
+    expect(screen.getAllByText('原样')).toHaveLength(1)
+    // 行 id 照旧，且带 tabIndex={-1}：跳转靠它转移焦点，光有 id 只能滚动
+    expect(document.getElementById('line-description-1')?.getAttribute('tabindex')).toBe('-1')
+  })
+
+  it('双语模式不退化：右列挂着保留的英文原行，不是逐字重复', () => {
+    const { container } = render(
+      <PairTable
+        {...common}
+        bilingual
+        path="description"
+        baseName={false}
+        emptyText="没有构筑说明"
+        rows={notes}
+      />,
+    )
+    expect(container.querySelector('.tip--solo')).toBeNull()
+    expect(screen.getByText('原文 · EN')).toBeDefined()
   })
 
   it('双语保留的英文原行挂在同一行里，行数不多一行', () => {

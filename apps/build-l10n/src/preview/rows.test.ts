@@ -6,8 +6,10 @@ import { miniBundle, miniIndex } from '../../../../packages/build-core/src/testi
 import type { LoadedDict } from '../dict/loadDict'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
 import { translateSource } from '../translate/runTranslation'
+import { buildFieldRows } from './fields'
+import { meterCells } from './locate'
 import { spanText } from './markup'
-import { buildRows } from './rows'
+import { buildRows, isMissedRow, type PairRow } from './rows'
 
 // 原先住在 preview/lines.ts 里，生产代码改用 fields.ts 的 buildFieldRows 之后就只剩测试在用，
 // 整个模块已删；这里留一个本地夹具，别再为它单开一个生产模块。
@@ -180,5 +182,62 @@ describe('buildRows', () => {
         uniqueText: null,
       }),
     ).toEqual({ injected: null, rows: [] })
+  })
+
+  // M-5：一行里先有非编号文本段、再有编号段时，report 数组的头一条是 name，
+  // 按 reports[0] 取 kind 会把整行判成 name——轨上少一格、分母却照算，覆盖率永远差一截，
+  // 那条编号行也永远跳不到。只要行内有任何 mod 报告，这一行就是编号行。
+  it('同一行既有非编号段又有编号段时，kind 取 mod，轨格数与分母一致', () => {
+    const text = JSON.stringify({
+      name: 'Mixed Line',
+      description: 'Note <red>{1. +10 to maximum Life}',
+    })
+    const result = translateSource({ id: 'f9', name: 'mixed.build', text }, dict, {
+      bilingual: false,
+      annotateUniques: true,
+    })
+    if (!result.ok) throw new Error(result.error)
+    const mixed = result.file
+    const { rows } = buildRows({
+      original: typeof mixed.input.description === 'string' ? mixed.input.description : null,
+      translated: typeof mixed.build.description === 'string' ? mixed.build.description : null,
+      field: fieldReport(mixed.report, 'description'),
+      bilingual: false,
+      uniqueText: null,
+    })
+    expect(mixed.report.modCandidates).toBe(1)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.kind).toBe('mod')
+    // 编号行不是基底名行，退化与基底名判据都靠这个标志
+    expect(rows[0]?.base).toBe(false)
+    expect(meterCells(buildFieldRows(mixed, false))).toHaveLength(mixed.report.modCandidates)
+  })
+})
+
+describe('isMissedRow', () => {
+  const row = (over: Partial<PairRow>): PairRow => ({
+    index: 0,
+    marker: null,
+    kind: 'name',
+    status: 'kept',
+    base: false,
+    en: [],
+    zh: null,
+    kept: [],
+    ...over,
+  })
+
+  it('编号行没命中就是未命中，与是不是基底名字段无关', () => {
+    const miss = row({ index: 3, marker: '3', kind: 'mod', status: 'untranslated' })
+    expect(isMissedRow(miss, true)).toBe(true)
+    expect(isMissedRow(miss, false)).toBe(true)
+  })
+
+  it('首行的 kept 只有在「首行按惯例是基底名」的字段里才算未命中', () => {
+    const first = row({ base: true })
+    // 槽位：基底名没收录，如实标未命中（fail-closed）；构筑说明：作者自由文本，本来就不该翻
+    expect(isMissedRow(first, true)).toBe(true)
+    expect(isMissedRow(first, false)).toBe(false)
+    expect(isMissedRow(row({ index: 2 }), true)).toBe(false)
   })
 })

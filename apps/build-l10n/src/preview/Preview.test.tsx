@@ -172,9 +172,9 @@ describe('Preview 卡片', () => {
     const { container } = show()
     expect(screen.getByText('任意魔符')).toBeDefined()
     expect(container.querySelectorAll('.mk-grey').length).toBeGreaterThan(0)
-    // passives[1] 是 `<m>{<red>{Strength +5 is needed here}}`，状态 kept、译文与原文一字不差，
-    // 所以原文格与译文格**各渲染一个** .mk-m.mk-red，一共 2 个
-    expect(container.querySelectorAll('.mk-red')).toHaveLength(2)
+    // passives[1] 是 `<m>{<red>{Strength +5 is needed here}}`，整段 kept，
+    // Task 1 起退化成单列，只渲染原文一份，所以是 1 个而不是 2 个
+    expect(container.querySelectorAll('.mk-red')).toHaveLength(1)
     // 数值高亮跟着标记一起生效
     expect(container.querySelector('.mk-red .num')?.textContent).toBe('+5')
   })
@@ -187,6 +187,15 @@ describe('Preview 卡片', () => {
     expect(screen.getByText('力量')).toBeDefined()
     expect(screen.getAllByText('attributes30_')).toHaveLength(2)
     expect(screen.getAllByText('这个宝石没有备注').length).toBeGreaterThan(0)
+  })
+
+  it('整段原样的字段退化成单列，构筑说明不再左右逐字重复（I-2）', () => {
+    const { container } = show()
+    expect(container.querySelectorAll('.tip--solo').length).toBeGreaterThan(0)
+    // rich.build 的 description 是 `<l>{<gold>{Leveling notes}}` + 一行说明，整段 kept
+    expect(screen.getAllByText('Leveling notes')).toHaveLength(1)
+    // 混合字段（魔符卡：既有 kept 又有命中的编号行）不退化，列头照旧在
+    expect(screen.getAllByText('原文 · EN').length).toBeGreaterThan(0)
   })
 
   it('区块眉标与中文标题成对出现', () => {

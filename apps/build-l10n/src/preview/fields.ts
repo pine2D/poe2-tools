@@ -12,6 +12,10 @@ export interface FieldEntry {
   path: string
   /** 人话定位，如「戒指 2」「烈焰冲击 · 深思施法」 */
   label: string
+  /** 这个字段的首行按惯例是不是基底名——只有 inventory_slots[*].additional_text 是。
+      第二期这条知识散在 Preview 的五处调用里（写死 baseName / baseName={false}），
+      筛选与快捷键也要用它，收进字段枚举结果里只此一份。 */
+  baseName: boolean
   original: string | null
   translated: string | null
   /** 传奇名的中文译名（只有槽位可能非 null） */
@@ -56,6 +60,7 @@ export function listFields(file: TranslatedFile): FieldEntry[] {
     entries.push({
       path: 'description',
       label: '构筑说明',
+      baseName: false,
       original: input.description,
       translated: typeof build.description === 'string' ? build.description : null,
       uniqueText: null,
@@ -65,6 +70,7 @@ export function listFields(file: TranslatedFile): FieldEntry[] {
     entries.push({
       path: `inventory_slots[${slot.rawIndex}].additional_text`,
       label: slotLabel(slot),
+      baseName: true,
       original: additionalTextAt(input.inventory_slots, slot.rawIndex),
       translated: additionalTextAt(build.inventory_slots, slot.rawIndex),
       uniqueText: slot.uniqueText,
@@ -74,6 +80,7 @@ export function listFields(file: TranslatedFile): FieldEntry[] {
     entries.push({
       path: `skills[${i}].additional_text`,
       label: nameOf(skill),
+      baseName: false,
       original: additionalTextAt(input.skills, i),
       translated: additionalTextAt(build.skills, i),
       uniqueText: null,
@@ -82,6 +89,7 @@ export function listFields(file: TranslatedFile): FieldEntry[] {
       entries.push({
         path: `skills[${i}].support_skills[${j}].additional_text`,
         label: `${nameOf(skill)} · ${nameOf(support)}`,
+        baseName: false,
         original: additionalTextAt(supportsAt(input.skills, i), j),
         translated: additionalTextAt(supportsAt(build.skills, i), j),
         uniqueText: null,
@@ -92,6 +100,7 @@ export function listFields(file: TranslatedFile): FieldEntry[] {
     entries.push({
       path: `passives[${i}].additional_text`,
       label: nameOf(passive),
+      baseName: false,
       original: additionalTextAt(input.passives, i),
       translated: additionalTextAt(build.passives, i),
       uniqueText: null,

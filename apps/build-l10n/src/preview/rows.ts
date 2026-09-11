@@ -89,7 +89,12 @@ export function buildRows(input: RowsInput): FieldRows {
     cursor += span
     const { marker, body } = splitMarker(spans)
     const zhLine = slice[0]
-    const kind = reports[0]?.kind ?? null
+    // 一行里 mod 优先：`Note <red>{1. +10 to maximum Life}` 会先产出一条 name 报告、
+    // 再产出编号段的 mod 报告，按 reports[0] 取 kind 会把整行判成 name——覆盖率轨少一格、
+    // 分母却照算，那条编号行也永远跳不到。有任何 mod 报告就是编号行。
+    const kind = reports.some((report) => report.kind === 'mod')
+      ? 'mod'
+      : (reports[0]?.kind ?? null)
     rows.push({
       index,
       marker,
@@ -112,4 +117,13 @@ export function buildRows(input: RowsInput): FieldRows {
         row.kept.length > 0,
     ),
   }
+}
+
+// 一行算不算未命中。两种来源合成一个判据：① 编号行真没命中词典；② 字段首行的基底名
+// 没在词典里命中（kept 的二义性，见「关键领域知识 #2」）。逐行三态渲染、「仅看未命中」
+// 筛选与 N 键跳转全部共用这一个函数，不许各写一份——第二期把它藏在 PairTable 里，
+// 第三期要在三处复用，再不提出来必然分叉。
+export function isMissedRow(row: PairRow, baseName: boolean): boolean {
+  if (row.status === 'untranslated') return true
+  return baseName && row.base && row.status === 'kept'
 }

@@ -212,7 +212,8 @@ function SlotCard(props: {
         rows={entry.rows}
         injected={entry.injected}
         locale={locale}
-        baseName
+        baseName={entry.entry.baseName}
+        bilingual={bilingual}
         emptyText="这个槽位没有备注"
       />
     </article>
@@ -291,7 +292,8 @@ function SkillCard(props: {
           rows={own.rows}
           injected={own.injected}
           locale={locale}
-          baseName={false}
+          baseName={own.entry.baseName}
+          bilingual={bilingual}
           emptyText="这个宝石没有备注"
         />
       )}
@@ -309,7 +311,8 @@ function SkillCard(props: {
                     rows={entry.rows}
                     injected={entry.injected}
                     locale={locale}
-                    baseName={false}
+                    baseName={entry.entry.baseName}
+                    bilingual={bilingual}
                     emptyText="这个支援宝石没有备注"
                   />
                 )}
@@ -342,7 +345,8 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
               rows={description.rows}
               injected={description.injected}
               locale={locale}
-              baseName={false}
+              baseName={description.entry.baseName}
+              bilingual={bilingual}
               emptyText="没有构筑说明"
             />
           </article>
@@ -402,7 +406,8 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
                         rows={entry.rows}
                         injected={entry.injected}
                         locale={locale}
-                        baseName={false}
+                        baseName={entry.entry.baseName}
+                        bilingual={bilingual}
                         emptyText="没有备注"
                       />
                     )}

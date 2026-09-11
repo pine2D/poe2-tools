@@ -6,7 +6,7 @@ import { Icon } from '../components/Icon'
 import { rowDomId } from './locate'
 import { MarkupText } from './MarkupText'
 import type { MarkupSpan } from './markup'
-import type { PairRow } from './rows'
+import { isMissedRow, type PairRow } from './rows'
 
 export interface PairTableProps {
   /** 字段 JSON 路径，用来生成每行的 DOM id */
@@ -16,25 +16,48 @@ export interface PairTableProps {
   locale: Locale
   /** 这个字段的首行按惯例是不是基底名（只有 inventory_slots[*].additional_text 是） */
   baseName: boolean
+  /** 双语模式：右列挂着保留的英文原行，此时不做「整段原样」的单列退化 */
+  bilingual: boolean
   /** 一行都没有时显示的一句话 */
   emptyText: string
 }
 
 const LOCALE_LABEL: Record<Locale, string> = { 'zh-CN': '简体中文', 'zh-TW': '繁体中文' }
 
-// 三态判定：见计划正文的表。第二个分支是 kept 二义性的解法——
-// 「基底名没命中词典」必须显示成未命中，不能和「作者自由文本」一样标成原样，
-// 否则真实漏翻会被藏起来（fail-closed）。
-function isMissed(row: PairRow, baseName: boolean): boolean {
-  if (row.status === 'untranslated') return true
-  return baseName && row.base && row.status === 'kept'
-}
-
-export function PairTable({ path, rows, injected, locale, baseName, emptyText }: PairTableProps) {
+export function PairTable(props: PairTableProps) {
+  const { path, rows, injected, locale, baseName, bilingual, emptyText } = props
   if (rows.length === 0 && injected === null) {
     return (
       <div className="tip tip--empty">
         <p>{emptyText}</p>
+      </div>
+    )
+  }
+  // 整段都是「原样」时退化成单列纯文本块（2b 审查 I-2）。三个边界都要排除：双语模式
+  // （右列挂的是保留的英文原行，不是重复）、有传奇名注入行（那一行只有译文侧有内容）、
+  // 有任何未命中（含基底名未收录，四重冗余不许被退化藏起来）。不画序号格有依据：全 kept
+  // 字段里没有编号行（「关键领域知识 #1」），marker 恒为 null，序号格永远是空的 26px 白边。
+  // 行 id 改挂文本格并**必须**带 tabIndex={-1}：jumpTo 对无 tabIndex 的元素 focus() 是空操作，
+  // 只滚动、不转移焦点；今天退化分支里不会有未命中行，补它是为了将来深链不静默失效。
+  const solo =
+    !bilingual &&
+    injected === null &&
+    rows.every((row) => row.status === 'kept' && !isMissedRow(row, baseName))
+  if (solo) {
+    return (
+      <div className="tip tip--solo">
+        {rows.map((row, i) => (
+          <span
+            key={row.index}
+            className="tip__t tip__t--solo"
+            id={rowDomId(path, row.index)}
+            tabIndex={-1}
+            lang="en"
+          >
+            <MarkupText spans={row.en} />
+            {i === rows.length - 1 && <span className="tip__tag tip__tag--keep">原样</span>}
+          </span>
+        ))}
       </div>
     )
   }
@@ -52,7 +75,7 @@ export function PairTable({ path, rows, injected, locale, baseName, emptyText }:
         </>
       )}
       {rows.map((row) => {
-        const missed = isMissed(row, baseName)
+        const missed = isMissedRow(row, baseName)
         const kept = !missed && row.status === 'kept'
         const base = baseName && row.base
         // 未命中的译文格里其实还是英文，语言标注要跟着内容走
