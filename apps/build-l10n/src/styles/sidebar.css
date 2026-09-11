@@ -60,7 +60,7 @@
   align-items: center;
   gap: 6px;
   padding-bottom: 1px;
-  border-bottom: 1px dashed rgba(194, 158, 108, 0.4);
+  border-bottom: 1px dashed var(--bronze-line);
   color: var(--gold-500);
   font-size: 12.5px;
   list-style: none;

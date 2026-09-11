@@ -57,7 +57,7 @@
   position: absolute;
   width: 12px;
   height: 12px;
-  border: 1px solid rgba(217, 192, 120, 0.55);
+  border: 1px solid var(--gold-edge);
 }
 
 .ov__corner--1 {
@@ -241,7 +241,7 @@
    --on 的基名，也是第三期 B 的接口契约，保留。
    按下态用与未命中同族的琥珀，不用金色（金色只做品牌与标题）。 */
 .ov__filter--on {
-  border-color: rgba(229, 169, 61, 0.5);
+  border-color: var(--warn-edge);
   background: var(--warn-wash);
   color: var(--warn);
 }
@@ -311,7 +311,7 @@
   align-items: center;
   gap: var(--sp-3);
   padding: 9px 12px;
-  border: 1px solid rgba(229, 169, 61, 0.28);
+  border: 1px solid var(--warn-edge);
   border-left: 2px solid var(--warn);
   border-radius: var(--r-md);
   background: var(--surface-0);

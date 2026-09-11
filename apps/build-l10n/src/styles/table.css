@@ -105,8 +105,8 @@
   background: linear-gradient(
     180deg,
     transparent,
-    rgba(217, 192, 120, 0.28) 14%,
-    rgba(217, 192, 120, 0.28) 86%,
+    var(--gold-line) 14%,
+    var(--gold-line) 86%,
     transparent
   );
 }
@@ -248,7 +248,7 @@
 }
 
 .tip__tag--miss {
-  border-color: rgba(229, 169, 61, 0.45);
+  border-color: var(--warn-edge);
   background: var(--warn-wash);
   color: var(--warn);
 }
@@ -258,7 +258,7 @@
 }
 
 .tip__tag--inject {
-  border-color: rgba(200, 123, 58, 0.5);
+  border-color: var(--unique-edge);
   color: var(--rarity-unique);
 }
 

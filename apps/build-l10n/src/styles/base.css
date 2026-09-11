@@ -33,8 +33,8 @@ pre {
 }
 
 ::selection {
-  background: rgba(217, 192, 120, 0.24);
-  color: var(--text);
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
 
 ::placeholder {

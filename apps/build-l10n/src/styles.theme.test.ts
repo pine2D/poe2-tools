@@ -65,6 +65,14 @@ const S3 = () => light.get('--surface-3') ?? ''
 const SH = () => light.get('--surface-hover') ?? ''
 const tok = (name: string) => light.get(name) ?? ''
 
+// rgba(...) 形态的令牌：先按 alpha 合成到底色上再算对比度，拿原色直接算会高估两三倍
+function blendToken(name: string, surface: string): number {
+  const parts = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/.exec(tok(name))
+  if (parts === null) throw new Error(`${name} 不是 rgba() 形态，合成不了`)
+  const hex = `#${[1, 2, 3].map((i) => Number(parts[i]).toString(16).padStart(2, '0')).join('')}`
+  return contrastRatio(blend(hex, Number(parts[4]), surface), surface)
+}
+
 describe('浅色对比度', () => {
   it('正文档的文字色在四档表面上都 ≥4.5:1', () => {
     const texts = ['--text', '--text-2', '--text-3', '--gold-100', '--gold-300', '--gold-500']
@@ -128,6 +136,37 @@ describe('浅色对比度', () => {
     for (const surface of [S0(), S1(), S2(), S3()]) {
       expect(contrastRatio(blend(hex, alpha, surface), surface)).toBeGreaterThanOrEqual(3)
     }
+  })
+
+  // 强调色那一层（3b 审查 I-2）：这些令牌是组件规则里唯一的状态 / 边界信号，
+  // 收进 tokens.css 之前没有任何门禁看得见它们，浅色下集体塌到 1.04–1.42:1。
+  // 纯装饰的 --gold-wash 与 --info-glow 不在名单里（前者只是底纹，后者是模糊光晕，
+  // 信息由 --info 实色的点承担），--cell-hilite 的底不是表面而是命中格自己，另算。
+  it('带 alpha 的强调色描边，浅色合成后在它实际所在的表面上都 ≥3:1', () => {
+    const edges = ['--gold-line', '--gold-edge', '--warn-edge', '--unique-edge', '--bronze-line']
+    for (const name of edges) {
+      for (const surface of [S0(), S1(), S2()]) {
+        expect(`${name}@${surface}=${blendToken(name, surface) >= 3}`).toBe(
+          `${name}@${surface}=true`,
+        )
+      }
+    }
+    // 错误卡与错误徽章只落在 s0 / s1 / s2 上，同样逐个算过
+    for (const surface of [S0(), S1(), S2()]) {
+      expect(blendToken('--danger-edge', surface)).toBeGreaterThanOrEqual(3)
+    }
+    // 轨的命中格顶高光压在格子自己的 --bronze-600 上，不是压在表面上
+    expect(blendToken('--cell-hilite', tok('--bronze-600'))).toBeGreaterThanOrEqual(3)
+  })
+
+  it('选区在浅色下看得出选中了哪一段，且选中的字仍然可读（I-3）', () => {
+    const bg = tok('--selection-bg')
+    for (const surface of [S0(), S1(), S2(), S3(), SH()]) {
+      expect(contrastRatio(bg, surface)).toBeGreaterThanOrEqual(3)
+    }
+    // --selection-fg 写的是 var(--surface-2)，取它指向的那个值来算
+    expect(contrastRatio(S2(), bg)).toBeGreaterThanOrEqual(4.5)
+    expect(tok('--selection-fg')).toBe('var(--surface-2)')
   })
 
   it('焦点环在浅色下仍达图形 3:1（它复用 --gold-300）', () => {

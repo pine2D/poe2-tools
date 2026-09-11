@@ -124,13 +124,17 @@
 }
 
 .chip--unique {
-  border-color: rgba(200, 123, 58, 0.5);
-  background: rgba(200, 123, 58, 0.1);
+  border-color: var(--unique-edge);
+  /* 底是 10% 的暖色，与 --gold-wash 那份 10% 的金在任一主题下都分辨不出（实算差 0.02），
+     合成一个令牌；传奇这一身色相由上面的边框与下面的文字承担 */
+  background: var(--gold-wash);
   color: var(--rarity-unique);
 }
 
 .chip--bi {
-  border-color: rgba(170, 158, 130, 0.4);
+  /* 与「或粘贴内容」的虚下划线共用一条暖中性线：原值是 keep 灰 40%，
+     与 --bronze-line 的铜 40% 合成后差不到 0.2 对比度，不值得为它单开一个令牌 */
+  border-color: var(--bronze-line);
   color: var(--keep);
 }
 

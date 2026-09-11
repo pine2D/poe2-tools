@@ -40,23 +40,31 @@
          的浏览器必然已经认识 ES2015 的箭头函数（module 支持落地时箭头函数早就普及），这条底线
          不会比这段内联脚本本身更宽。可选链 `?.` 是 ES2020 语法，比那条底线晚了好几年，
          X5 一类内核正好卡在中间——支持 module 与箭头函数，但解析 `?.` 直接报语法错误。
-         键名与取值必须与 src/theme/useTheme.ts 逐字一致，改一处就要改两处。 -->
+         键名与取值必须与 src/theme/useTheme.ts 逐字一致，改一处就要改两处。
+         系统探测**必须留在 try 外面**：try 里只放 localStorage 这一件会抛异常的事。
+         早先把 matchMedia 也放在 try 里、catch 直接定 'dark'，于是「Chrome 阻止所有
+         Cookie / 隐私模式 / 部分 WebView」下取值抛异常时，系统是浅色的用户首帧是深色、
+         React 接管后跳浅色——正好闪在这段脚本本来要保护的场景上（三期 3b 审查 I-1）。
+         useTheme.readStoredMode() 在同样的异常下返回 'system'，之后由 systemScheme()
+         决定，两边现在逐分支等价（useTheme.test.ts 直接执行这段脚本守着）。 -->
     <script>
       (() => {
-        var mode = 'dark'
+        var mode = null
         var saved = null
         try {
           saved = localStorage.getItem('poe2-tools.theme')
           if (saved === 'light' || saved === 'dark') {
             mode = saved
-          } else if (
-            typeof window.matchMedia === 'function' &&
-            window.matchMedia('(prefers-color-scheme: light)').matches
-          ) {
-            mode = 'light'
           }
         } catch (_error) {
-          mode = 'dark'
+          mode = null
+        }
+        if (mode === null) {
+          mode =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
         }
         document.documentElement.setAttribute('data-theme', mode)
       })()
