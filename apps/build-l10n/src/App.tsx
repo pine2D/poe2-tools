@@ -193,17 +193,20 @@ export function App({ fetchImpl }: AppProps) {
         : [],
     [dictState, sources, options],
   )
-  // 侧栏迷你装饰轨与概览卡的轨用同一个 meterCells，两处的第 N 格必定是同一行
-  const meters = useMemo(
+  // 行模型每份文件只算一次：侧栏迷你轨与主区对照表共用同一份，两处的第 N 格 / 第 N 行
+  // 必定是同一行（附录 D M-12：此前 App 与 Preview 各算一份，靠两边都传对 bilingual 维持一致）
+  const fieldsById = useMemo(
     () =>
       new Map(
         results.flatMap((result) =>
-          result.ok
-            ? [[result.id, meterCells(buildFieldRows(result.file, options.bilingual))] as const]
-            : [],
+          result.ok ? [[result.id, buildFieldRows(result.file, options.bilingual)] as const] : [],
         ),
       ),
     [results, options.bilingual],
+  )
+  const meters = useMemo(
+    () => new Map([...fieldsById].map(([id, fields]) => [id, meterCells(fields)] as const)),
+    [fieldsById],
   )
   const selected = results.find((result) => result.id === selectedId) ?? null
   const translated = results.flatMap((result) => (result.ok ? [result.file] : []))
@@ -302,6 +305,7 @@ export function App({ fetchImpl }: AppProps) {
       return (
         <Preview
           file={selected.file}
+          fields={fieldsById.get(selected.id) ?? []}
           locale={locale}
           bilingual={options.bilingual}
           onDownload={() => downloadOne(selected.id)}

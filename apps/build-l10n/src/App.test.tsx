@@ -189,4 +189,32 @@ describe('App', () => {
     fireEvent.click(within(group).getByLabelText('跟随系统'))
     expect(document.documentElement.dataset.theme).toBe('light')
   })
+
+  it('主区概览轨与侧栏迷你轨用同一份行模型：换文件后两条轨读数仍然一致', async () => {
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    // 第二份文件的覆盖率与 rich.build（7 / 8）不同：只有一条编号行且命中
+    const clean = JSON.stringify({
+      name: 'All Hit',
+      inventory_slots: [
+        {
+          inventory_id: 'Weapon1',
+          slot_x: 0,
+          slot_y: 0,
+          additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
+        },
+      ],
+    })
+    upload('clean.build', clean)
+    fireEvent.click(await screen.findByRole('button', { name: 'clean.build' }))
+    const overview = document.querySelector('.meter--lg')?.getAttribute('aria-label')
+    const mini = [...document.querySelectorAll('.meter--sm')]
+      .map((meter) => meter.getAttribute('aria-label') ?? '')
+      .find((label) => label.startsWith('clean.build：'))
+    // 概览轨必须读的是 clean.build（而不是还停在 rich.build 的 8 格），且与它自己那条
+    // 迷你轨逐字相同。不写死命中数：条数是结构决定的，命中与否取决于测试词典。
+    expect(overview).toContain('共 1 条编号行')
+    expect(mini).toBe(`clean.build：${overview}`)
+  })
 })

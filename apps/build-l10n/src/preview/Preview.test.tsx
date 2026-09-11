@@ -7,6 +7,7 @@ import { miniBundle, miniIndex } from '../../../../packages/build-core/src/testi
 import type { LoadedDict } from '../dict/loadDict'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
 import { type TranslatedFile, translateSource } from '../translate/runTranslation'
+import { buildFieldRows } from './fields'
 import { Preview } from './Preview'
 
 afterEach(() => {
@@ -29,6 +30,7 @@ const result = translateSource(
 )
 if (!result.ok) throw new Error(result.error)
 const file = result.file
+const fields = buildFieldRows(file, false)
 
 // happy-dom 没有 scrollIntoView。先在 beforeAll 里补一个真实存在的空实现，用例里再用
 // vi.spyOn 观察它 —— 直接 Object.defineProperty 打桩的话 vi.restoreAllMocks() 恢复不了，
@@ -42,7 +44,9 @@ function stubScroll() {
 }
 
 function show() {
-  return render(<Preview file={file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
+  return render(
+    <Preview file={file} fields={fields} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />,
+  )
 }
 
 describe('Preview 概览卡', () => {
@@ -93,7 +97,15 @@ describe('Preview 概览卡', () => {
 
   it('概览卡顶部就是下载入口，并写清楚下载完该干什么', () => {
     const onDownload = vi.fn()
-    render(<Preview file={file} locale="zh-CN" bilingual={false} onDownload={onDownload} />)
+    render(
+      <Preview
+        file={file}
+        fields={fields}
+        locale="zh-CN"
+        bilingual={false}
+        onDownload={onDownload}
+      />,
+    )
     fireEvent.click(screen.getByRole('button', { name: '下载 rich.build' }))
     expect(onDownload).toHaveBeenCalled()
     expect(screen.getByText('放进 Build Planner 目录，同名替换即可')).toBeDefined()
@@ -149,7 +161,13 @@ describe('Preview 卡片', () => {
     )
     if (!missResult.ok) throw new Error(missResult.error)
     const { container } = render(
-      <Preview file={missResult.file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />,
+      <Preview
+        file={missResult.file}
+        fields={buildFieldRows(missResult.file, false)}
+        locale="zh-CN"
+        bilingual={false}
+        onDownload={vi.fn()}
+      />,
     )
     const head = container.querySelector('.card--unique .card__head')
     expect(head?.querySelector('.namepair__en')?.textContent).toBe('Totally Unknown Unique Item')
@@ -248,7 +266,15 @@ if (!cleanResult.ok) throw new Error(cleanResult.error)
 const allHitFile = cleanResult.file
 
 function showAllHit() {
-  return render(<Preview file={allHitFile} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
+  return render(
+    <Preview
+      file={allHitFile}
+      fields={buildFieldRows(allHitFile, false)}
+      locale="zh-CN"
+      bilingual={false}
+      onDownload={vi.fn()}
+    />,
+  )
 }
 
 describe('Preview 仅看未命中', () => {
@@ -301,7 +327,15 @@ describe('Preview 仅看未命中', () => {
       annotateUniques: true,
     })
     if (!descOnly.ok) throw new Error(descOnly.error)
-    render(<Preview file={descOnly.file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
+    render(
+      <Preview
+        file={descOnly.file}
+        fields={buildFieldRows(descOnly.file, false)}
+        locale="zh-CN"
+        bilingual={false}
+        onDownload={vi.fn()}
+      />,
+    )
     fireEvent.click(screen.getByRole('button', { name: '仅看未命中' }))
     expect(screen.getByRole('heading', { level: 3, name: '构筑说明' })).toBeDefined()
     // 槽位 / 宝石 / 天赋三区都空，各说一句「这一区没有未命中」而不是「没有装备槽位」
@@ -366,7 +400,15 @@ describe('Preview 筛选归零', () => {
       useLayoutEffect(() => {
         frames.push(document.body.textContent ?? '')
       })
-      return <Preview file={shown} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />
+      return (
+        <Preview
+          file={shown}
+          fields={buildFieldRows(shown, false)}
+          locale="zh-CN"
+          bilingual={false}
+          onDownload={vi.fn()}
+        />
+      )
     }
     const { rerender } = render(<Probe shown={file} />)
     fireEvent.click(screen.getByRole('button', { name: '仅看未命中' }))

@@ -3,7 +3,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { CoverageMeter } from '../components/CoverageMeter'
 import { Icon } from '../components/Icon'
 import type { TranslatedFile } from '../translate/runTranslation'
-import { buildFieldRows, type FieldWithRows, slotLabel } from './fields'
+import { type FieldWithRows, slotLabel } from './fields'
 import { collectMisses, jumpTo, type MissEntry, meterCells } from './locate'
 // import 顺序按 Biome 的 organizeImports（不区分大小写的路径字典序）：
 // fields < locate < PairTable < rows。写错顺序 `biome check .` 会直接报错。
@@ -14,6 +14,10 @@ import { type MissFilter, useMissFilter } from './useMissFilter'
 
 export interface PreviewProps {
   file: TranslatedFile
+  /** 行模型由 App 算好传下来。App 为了画侧栏迷你轨本来就要算一份，Preview 再算一份的话，
+      两份靠「两处都传了同一个 bilingual」保持一致，改漏一处就会让侧栏轨的第 N 格与
+      主区的第 N 行指向不同的行，而这种错位没有任何测试发现得了。 */
+  fields: readonly FieldWithRows[]
   locale: Locale
   bilingual: boolean
   /** 概览卡顶部「下载此文件」的动作 */
@@ -372,8 +376,7 @@ function SkillCard(props: {
   )
 }
 
-export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
-  const fields = useMemo(() => buildFieldRows(file, bilingual), [file, bilingual])
+export function Preview({ file, fields, locale, bilingual, onDownload }: PreviewProps) {
   const byPath = useMemo(() => new Map(fields.map((item) => [item.entry.path, item])), [fields])
   const misses = useMemo(() => collectMisses(fields), [fields])
   const filter = useMissFilter(misses.length > 0)
