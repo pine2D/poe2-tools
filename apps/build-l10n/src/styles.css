@@ -638,6 +638,13 @@ button.badge__retry:hover:not(:disabled) {
   outline-offset: 2px;
 }
 
+/* 主题三段：比目标语言那组更紧凑（三个选项 + 顶栏状态区已经有徽章与主按钮）。
+   写在 .seg__item 系列之后：(0,2,0) 压得过 (0,1,0)，顺序反了会触发 noDescendingSpecificity。 */
+.seg--theme .seg__item {
+  padding: 0 8px;
+  font-size: 12px;
+}
+
 /* 单个开关：自绘方框 + 金色勾。用 appearance:none 保留原生 input 的键盘与焦点行为 */
 .opt {
   display: inline-flex;
@@ -1672,6 +1679,17 @@ button.filelist__remove:hover:not(:disabled) {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
+}
+
+/* 勾选态的金勾与金边是深色档字面量，令牌够不着：浅色下实算勾 1.46:1、边框 1.27:1，破 1.4.11
+   的 3:1（Task 1 报告 P0）。换成令牌与更深的合成底后复算：边框 --gold-300 vs 顶栏底
+   --surface-1 = 6.85:1；勾（同色描边）vs 勾选后合成底（--gold-300 12% 叠 --surface-1）
+   = 5.73:1，叠 --surface-0 时更低也仍有 5.41:1，两处都远超 3:1 目标。 */
+:root[data-theme="light"] .opt input[type="checkbox"]:checked {
+  border-color: var(--gold-300);
+  background: rgba(107, 82, 20, 0.12)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b5214' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center no-repeat;
 }
 
 .cov__frac {

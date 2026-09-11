@@ -178,4 +178,15 @@ describe('App', () => {
     // 连同它一起消失，不接住的话焦点掉回 <body>，键盘与读屏用户在核心动线正中间丢掉光标
     expect(document.activeElement).toBe(toggle)
   })
+
+  it('顶栏能切主题，选中的那个 aria-checked，选择写进 <html data-theme>', async () => {
+    await renderReady()
+    const group = screen.getByRole('radiogroup', { name: '界面主题' })
+    expect(group).toBeDefined()
+    fireEvent.click(within(group).getByLabelText('深色'))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect((within(group).getByLabelText('深色') as HTMLInputElement).checked).toBe(true)
+    fireEvent.click(within(group).getByLabelText('跟随系统'))
+    expect(document.documentElement.dataset.theme).toBe('light')
+  })
 })

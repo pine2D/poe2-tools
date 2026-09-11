@@ -12,6 +12,7 @@ import { pastedSource, readFiles } from './files/readSources'
 import { buildFieldRows } from './preview/fields'
 import { meterCells } from './preview/locate'
 import { Preview } from './preview/Preview'
+import { type ThemeMode, useTheme } from './theme/useTheme'
 import {
   type SourceFile,
   type TranslateOptions,
@@ -35,6 +36,38 @@ const BASE = import.meta.env.BASE_URL
 function dictVersion(dict: LoadedDict): string {
   const league = dict.info.leagueName === null ? '' : `（${dict.info.leagueName}）`
   return `${dict.locale} ${dict.info.gameVersion ?? '?'}${league}`
+}
+
+const THEMES: readonly { value: ThemeMode; label: string }[] = [
+  { value: 'system', label: '跟随系统' },
+  { value: 'light', label: '浅色' },
+  { value: 'dark', label: '深色' },
+]
+
+// 主题三态：复用目标语言那套分段控件（真 radio + visually-hidden，方向键分组行为由浏览器给）。
+// 组名用 aria-label 而不是可见的 .seg__legend：顶栏状态区已经有徽章与下载按钮，
+// 再加四个字会把这一段挤到换行；三个选项的文字本身已经说清了这是什么。
+function ThemeSeg({ mode, onMode }: { mode: ThemeMode; onMode(mode: ThemeMode): void }) {
+  return (
+    <div className="seg seg--theme" role="radiogroup" aria-label="界面主题">
+      {THEMES.map((item) => (
+        <label
+          key={item.value}
+          className={mode === item.value ? 'seg__item seg__item--on' : 'seg__item'}
+        >
+          <input
+            type="radio"
+            name="theme-mode"
+            value={item.value}
+            className="visually-hidden"
+            checked={mode === item.value}
+            onChange={() => onMode(item.value)}
+          />
+          {item.label}
+        </label>
+      ))}
+    </div>
+  )
 }
 
 // 顶栏右侧的词典状态徽章：三态各有图标与颜色，失败态自带恢复动作（审计 P0-3）
@@ -101,6 +134,7 @@ function ErrorCard(props: {
 
 export function App({ fetchImpl }: AppProps) {
   const [loader] = useState(() => createDictLoader(BASE, fetchImpl))
+  const theme = useTheme()
   const [locale, setLocale] = useState<Locale>('zh-CN')
   const [options, setOptions] = useState<TranslateOptions>({
     bilingual: false,
@@ -286,6 +320,7 @@ export function App({ fetchImpl }: AppProps) {
         </div>
         <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions} />
         <div className="app__status">
+          <ThemeSeg mode={theme.mode} onMode={theme.setMode} />
           <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
           <button
             type="button"
