@@ -198,6 +198,20 @@ describe('Preview 卡片', () => {
     expect(screen.getAllByText('原文 · EN').length).toBeGreaterThan(0)
   })
 
+  it('天赋行是「名字 | 备注」两列：一个 li 里正好两个直接子元素，名字在前（I-3）', () => {
+    const { container } = show()
+    const items = [...container.querySelectorAll('.passives > li')]
+    expect(items).toHaveLength(3)
+    for (const li of items) {
+      const kids = [...li.children]
+      // 两列 grid 依赖「每个 li 恰好两个直接子元素」：多包一层 div 或少给一个备注格，
+      // 名字与备注就会落到同一列里，整个天赋区退回堆叠
+      expect(kids).toHaveLength(2)
+      expect(kids[0]?.classList.contains('namepair')).toBe(true)
+      expect(kids[1]?.classList.contains('tip')).toBe(true)
+    }
+  })
+
   it('区块眉标与中文标题成对出现', () => {
     show()
     expect(screen.getByText('Overview')).toBeDefined()

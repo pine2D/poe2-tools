@@ -1693,7 +1693,14 @@ button.misslist__go:hover:not(:disabled) {
   padding: 0;
 }
 
+/* 天赋行改「名字 | 备注」同行两列（2b 审查 I-3：原来是名字一行 + 下面整张两列表，同内容
+   高约 3 倍，是主区最不像 mockup 的一块）。第一列名字上限 240px（mockup 同款），第二列吃掉
+   余宽，baseline 对齐。依赖「每个 li 恰好两个直接子元素」，由 Preview.test 的契约用例守住。 */
 .passives > li {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-5);
+  align-items: baseline;
   padding: var(--sp-3) var(--sp-5);
   border-bottom: 1px solid var(--hairline);
 }
@@ -1934,13 +1941,16 @@ button.misslist__go:hover:not(:disabled) {
   padding: 0;
 }
 
-/* 支援宝石 / 天赋的对照表嵌在 <li> 里，左右内边距由 li 提供，表格自己不再加一层。
-   写在 `.tip` 之后：它是 (0,2,0)，放在 (0,1,0) 的 `.tip` 之前会触发 noDescendingSpecificity
-   （与 `.filelist__ops .meter` 同款处理）。 */
-.supports .tip,
-.passives .tip {
+/* 支援宝石的对照表嵌在 <li> 里，左右内边距由 li 提供，表格自己不再加一层。
+   写在 `.tip` 之后：它是 (0,2,0)，放在 (0,1,0) 的 `.tip` 之前会触发 noDescendingSpecificity。 */
+.supports .tip {
   padding-left: 0;
   padding-right: 0;
+}
+
+/* 天赋的备注是两列 grid 的第二格，纵向内边距会把它推离名字的基线，一并清零 */
+.passives .tip {
+  padding: 0;
 }
 
 /* 跳转落点不要贴到主区顶边。基底名行的落点是英文那格（.tip__base），也要算上。
@@ -2034,6 +2044,12 @@ button.misslist__go:hover:not(:disabled) {
   .tip__base--zh {
     padding-left: var(--sp-3);
     border-left: 2px solid var(--bronze-600);
+  }
+
+  /* 窄屏两列会把备注挤成一条缝，退回上下堆叠；名字与备注之间留一行的呼吸 */
+  .passives > li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-1);
   }
 
   /* 覆盖率三段（大数字 / 轨 / 跳转）改上下堆叠，跳转那段跟着左对齐 */
