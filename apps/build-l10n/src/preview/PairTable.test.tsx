@@ -199,6 +199,9 @@ describe('PairTable', () => {
     expect(screen.getAllByText('原样')).toHaveLength(1)
     // 行 id 照旧，且带 tabIndex={-1}：跳转靠它转移焦点，光有 id 只能滚动
     expect(document.getElementById('line-description-1')?.getAttribute('tabindex')).toBe('-1')
+    // 整行 lang="en" 是给英文原文用的，"原样"标签是中文，不能被外层语言标注带偏（M-4）
+    expect(document.getElementById('line-description-1')?.getAttribute('lang')).toBe('en')
+    expect(container.querySelector('.tip__tag--keep')?.getAttribute('lang')).toBe('zh-CN')
   })
 
   it('双语模式不退化：右列挂着保留的英文原行，不是逐字重复', () => {

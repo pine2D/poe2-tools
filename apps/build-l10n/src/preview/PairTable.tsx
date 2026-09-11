@@ -55,7 +55,11 @@ export function PairTable(props: PairTableProps) {
             lang="en"
           >
             <MarkupText spans={row.en} />
-            {i === rows.length - 1 && <span className="tip__tag tip__tag--keep">原样</span>}
+            {i === rows.length - 1 && (
+              <span className="tip__tag tip__tag--keep" lang="zh-CN">
+                原样
+              </span>
+            )}
           </span>
         ))}
       </div>

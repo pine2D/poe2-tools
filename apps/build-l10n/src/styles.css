@@ -673,15 +673,16 @@ button.badge__retry:hover:not(:disabled) {
    重叠 4 秒可以接受，但不能截获点击；.toast__close 单独 auto 回来，关闭按钮仍可点。 */
 .toast {
   position: fixed;
-  left: 50%;
+  inset-inline: var(--sp-4);
   bottom: calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
   z-index: 20;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  max-width: min(560px, calc(100vw - 2 * var(--sp-4)));
+  width: fit-content;
+  max-width: min(560px, calc(100% - 2 * var(--sp-4)));
+  margin-inline: auto;
   padding: 10px var(--sp-3) 10px var(--sp-4);
-  transform: translateX(-50%);
   border: 1px solid var(--hairline-strong);
   border-left: 3px solid var(--gold-500);
   border-radius: var(--r-md);
@@ -696,11 +697,11 @@ button.badge__retry:hover:not(:disabled) {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 8px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 
@@ -2235,7 +2236,8 @@ button.misslist__go:hover:not(:disabled) {
    名单只有 a/button/input/select/textarea/.button，序号格不在里面，程序化 focus()
    能不能命中 :focus-visible 又要看浏览器启发式，靠 UA 默认环是碰运气。 */
 .tip__n,
-.tip__base {
+.tip__base,
+.tip__t--solo {
   scroll-margin-top: var(--sp-6);
 }
 
@@ -2554,7 +2556,7 @@ button.misslist__go:hover:not(:disabled) {
   outline-offset: 2px;
 }
 
-/* 全站只有这几处声明了 transition：逐个归零，不用 * + !important 引入优先级黑洞 */
+/* 下面这份名单必须与全站 transition / animation 声明逐条对齐，新增动效时同步补 */
 @media (prefers-reduced-motion: reduce) {
   button,
   .button,
@@ -2564,6 +2566,7 @@ button.misslist__go:hover:not(:disabled) {
   .dropzone,
   .paste__toggle,
   .paste__chev,
+  .app__sidechev,
   .filelist__item {
     transition: none;
   }
