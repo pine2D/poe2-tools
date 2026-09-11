@@ -221,3 +221,63 @@ describe('Preview 卡片', () => {
     expect(screen.getByRole('heading', { level: 2, name: '槽位' })).toBeDefined()
   })
 })
+
+// 一份「一条未命中都没有」的文件：筛选开关禁用，F 键也必须跟着不生效（Task 5 会验后半句）
+function showAllHit() {
+  const text = JSON.stringify({
+    name: 'All Hit',
+    inventory_slots: [
+      {
+        inventory_id: 'Weapon1',
+        slot_x: 0,
+        slot_y: 0,
+        additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
+      },
+    ],
+  })
+  const clean = translateSource({ id: 'f3', name: 'clean.build', text }, dict, {
+    bilingual: false,
+    annotateUniques: true,
+  })
+  if (!clean.ok) throw new Error(clean.error)
+  return render(<Preview file={clean.file} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />)
+}
+
+describe('Preview 仅看未命中', () => {
+  it('默认不筛选；开关有 aria-pressed 与键位声明', () => {
+    show()
+    const toggle = screen.getByRole('button', { name: '仅看未命中' })
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+    expect(toggle.getAttribute('aria-keyshortcuts')).toBe('f')
+    expect(screen.getByText('主手')).toBeDefined()
+    // 再点一次关掉，卡片全部回来
+    fireEvent.click(toggle)
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByText('主手')).toBeDefined()
+  })
+
+  it('开启后只留有未命中的卡，其余整块隐藏，空区给一句话', () => {
+    const { container } = show()
+    const counts = () => [...container.querySelectorAll('.sec__count')].map((n) => n.textContent)
+    const before = counts()
+    fireEvent.click(screen.getByRole('button', { name: '仅看未命中' }))
+    // rich.build 唯一的未命中在「戒指 2」
+    expect(screen.getByText('戒指 2')).toBeDefined()
+    expect(screen.queryByText('主手')).toBeNull()
+    // 宝石与天赋两区一条未命中都没有
+    expect(screen.getAllByText('这一区没有未命中').length).toBeGreaterThan(0)
+    // 概览卡本身不受筛选影响，覆盖率与清单照旧
+    expect(screen.getByText('命中 7 / 8 条编号行')).toBeDefined()
+    expect(screen.getByText('戒指 2 · 第 3 行')).toBeDefined()
+    // 区块计数读作「这份构筑有几个槽位 / 宝石 / 天赋」，不随筛选变化（口径见 Step 8(e)）
+    expect(counts()).toEqual(before)
+  })
+
+  it('一条未命中都没有的文件：开关禁用，点不动', () => {
+    showAllHit()
+    expect((screen.getByRole('button', { name: '仅看未命中' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+  })
+})

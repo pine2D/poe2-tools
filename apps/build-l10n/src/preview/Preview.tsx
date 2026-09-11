@@ -4,11 +4,12 @@ import { CoverageMeter } from '../components/CoverageMeter'
 import { Icon } from '../components/Icon'
 import type { TranslatedFile } from '../translate/runTranslation'
 import { buildFieldRows, type FieldWithRows, slotLabel } from './fields'
-import { collectMisses, jumpTo, meterCells } from './locate'
+import { collectMisses, jumpTo, type MissEntry, meterCells } from './locate'
 // import 顺序按 Biome 的 organizeImports（不区分大小写的路径字典序）：
 // fields < locate < PairTable < rows。写错顺序 `biome check .` 会直接报错。
 import { PairTable } from './PairTable'
 import type { PairRow } from './rows'
+import { type MissFilter, useMissFilter } from './useMissFilter'
 
 export interface PreviewProps {
   file: TranslatedFile
@@ -40,6 +41,20 @@ function CardCount({ rows }: { rows: readonly PairRow[] }) {
   )
 }
 
+// 「这张卡里有没有未命中」——判据与概览的「N 处未命中」、清单、轨上的缺口完全同源：
+// 只算编号行未命中。基底名未收录是另一套口径（2b 审查 I-1 的裁定），不进筛选，
+// 否则屏幕上会同时出现两个不一样的「未命中」数。
+function hasMiss(entry: FieldWithRows | undefined): boolean {
+  // `?? false` 而不是 `entry !== undefined &&`：后者被 Biome 的 useOptionalChain 判为
+  // 可简化（1 warning，仓库要求 0）；可选链本身返回 boolean | undefined，得兜一个 false
+  return entry?.rows.some((row) => row.status === 'untranslated') ?? false
+}
+
+// 区块空态：筛选开着的时候，「没有装备槽位」这句话是错的，得说清是筛掉了
+function SectionEmpty({ filtered, text }: { filtered: boolean; text: string }) {
+  return <p className="muted sec__empty">{filtered ? '这一区没有未命中' : text}</p>
+}
+
 function Section(props: { eyebrow: string; title: string; count?: number; children: ReactNode }) {
   const { eyebrow, title, count, children } = props
   return (
@@ -58,12 +73,13 @@ function Section(props: { eyebrow: string; title: string; count?: number; childr
 function Overview(props: {
   file: TranslatedFile
   fields: readonly FieldWithRows[]
+  misses: readonly MissEntry[]
+  filter: MissFilter
   onDownload(): void
 }) {
-  const { file, fields, onDownload } = props
+  const { file, fields, misses, filter, onDownload } = props
   const { input, report, preview, rate, name } = file
   const ascendancy = preview.ascendancy
-  const misses = collectMisses(fields)
   const cells = meterCells(fields)
   const percent = rate === null ? null : Math.round(rate * 100)
   const first = misses[0]
@@ -122,6 +138,7 @@ function Overview(props: {
                 type="button"
                 className="button"
                 aria-label="跳到第一处未命中"
+                aria-keyshortcuts="n"
                 onClick={() => jumpTo(first.domId)}
               >
                 <Icon name="arrow-down" size={13} />
@@ -129,6 +146,21 @@ function Overview(props: {
               </button>
             </>
           )}
+          {/* 开关在没有未命中时禁用而不是隐藏：位置固定下来，用户不用重新找它。
+              可访问名走 aria-label 而不是按钮文字——Task 5 会往里塞一枚 <kbd>，
+              不定死名字的话可访问名会变成「仅看未命中 F」，读屏与测试都难用。 */}
+          <button
+            type="button"
+            className={filter.only ? 'button ov__filter ov__filter--on' : 'button ov__filter'}
+            aria-label="仅看未命中"
+            aria-pressed={filter.only}
+            aria-keyshortcuts="f"
+            disabled={misses.length === 0}
+            onClick={filter.toggle}
+          >
+            <Icon name="filter" size={13} />
+            仅看未命中
+          </button>
         </div>
       </div>
       <span className="ov__rule" />
@@ -328,13 +360,40 @@ function SkillCard(props: {
 export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
   const fields = useMemo(() => buildFieldRows(file, bilingual), [file, bilingual])
   const byPath = useMemo(() => new Map(fields.map((item) => [item.entry.path, item])), [fields])
+  const misses = useMemo(() => collectMisses(fields), [fields])
+  const filter = useMissFilter(misses.length > 0)
   const { preview } = file
   const description = byPath.get('description')
+  const only = filter.only
+  // 筛选按卡过滤：留下的卡完整显示所有行——判断一条词缀行翻得对不对要看上下文，
+  // 只留孤零零一行反而更难用。
+  const slots = preview.slots.filter(
+    (slot) => !only || hasMiss(byPath.get(`inventory_slots[${slot.rawIndex}].additional_text`)),
+  )
+  const skills = preview.skills
+    .map((skill, i) => ({ skill, i }))
+    .filter(
+      ({ skill, i }) =>
+        !only ||
+        hasMiss(byPath.get(`skills[${i}].additional_text`)) ||
+        skill.supports.some((_, j) =>
+          hasMiss(byPath.get(`skills[${i}].support_skills[${j}].additional_text`)),
+        ),
+    )
+  const passives = preview.passives
+    .map((passive, i) => ({ passive, i }))
+    .filter(({ i }) => !only || hasMiss(byPath.get(`passives[${i}].additional_text`)))
   return (
     <div className="preview">
       <Section eyebrow="Overview" title="概览">
-        <Overview file={file} fields={fields} onDownload={onDownload} />
-        {description !== undefined && (
+        <Overview
+          file={file}
+          fields={fields}
+          misses={misses}
+          filter={filter}
+          onDownload={onDownload}
+        />
+        {description !== undefined && !only && (
           <article className="card">
             <div className="card__head">
               <h3>构筑说明</h3>
@@ -352,11 +411,14 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
           </article>
         )}
       </Section>
+      {/* 区块计数一律传**未过滤**的条数：读作「这份构筑有几个槽位」，与覆盖率、未命中
+          清单一样不随筛选变化。传 slots.length 的话开筛选时卡头变成「槽位 · 1」，而用户
+          刚在上面看到 4 个——屏幕上又多一个对不上的数。 */}
       <Section eyebrow="Gear" title="槽位" count={preview.slots.length}>
-        {preview.slots.length === 0 ? (
-          <p className="muted">没有装备槽位</p>
+        {slots.length === 0 ? (
+          <SectionEmpty filtered={only} text="没有装备槽位" />
         ) : (
-          preview.slots.map((slot) => {
+          slots.map((slot) => {
             const entry = byPath.get(`inventory_slots[${slot.rawIndex}].additional_text`)
             return entry === undefined ? null : (
               <SlotCard
@@ -371,12 +433,11 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
         )}
       </Section>
       <Section eyebrow="Gems" title="宝石" count={preview.skills.length}>
-        {preview.skills.length === 0 ? (
-          <p className="muted">没有宝石</p>
+        {skills.length === 0 ? (
+          <SectionEmpty filtered={only} text="没有宝石" />
         ) : (
-          preview.skills.map((skill, i) => (
+          skills.map(({ skill, i }) => (
             <SkillCard
-              // biome-ignore lint/suspicious/noArrayIndexKey: 同一宝石可重复出现，位置是身份的一部分
               key={`${skill.id}:${i}`}
               skill={skill}
               index={i}
@@ -389,15 +450,14 @@ export function Preview({ file, locale, bilingual, onDownload }: PreviewProps) {
         )}
       </Section>
       <Section eyebrow="Passives" title="天赋" count={preview.passives.length}>
-        {preview.passives.length === 0 ? (
-          <p className="muted">没有天赋</p>
+        {passives.length === 0 ? (
+          <SectionEmpty filtered={only} text="没有天赋" />
         ) : (
           <article className="card card--passive">
             <ul className="passives">
-              {preview.passives.map((passive, i) => {
+              {passives.map(({ passive, i }) => {
                 const entry = byPath.get(`passives[${i}].additional_text`)
                 return (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: 同一天赋 id 可重复，位置是身份的一部分
                   <li key={`${passive.id}:${i}`}>
                     <NamePair name={passive} kind="passive" />
                     {entry !== undefined && (

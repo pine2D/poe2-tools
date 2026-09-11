@@ -74,6 +74,7 @@
   /* 语义色：与金色彻底分家 */
   --warn: #e5a93d; /* 未命中 9.3 / 8.8 / 8.3 / 7.7 */
   --warn-wash: rgba(229, 169, 61, 0.1);
+  --warn-strong: rgba(229, 169, 61, 0.24); /* 未命中格 / 按下态 hover 的加深底 */
   --danger: #e8695c; /* 错误 6.1 / 5.8 / 5.5 / 5.0 */
   /* 7.3 / 6.9 / 6.6 / 6.0；第二期 B 逐行三态的「原样」用。B 期不做就必须删。 */
   --keep: #aa9e82;
@@ -1254,7 +1255,7 @@ button.filelist__remove:hover:not(:disabled) {
 }
 
 .meter--lg .meter__cell--miss:hover {
-  background: rgba(229, 169, 61, 0.24);
+  background: var(--warn-strong);
 }
 
 /* 侧栏文件行的迷你轨吃掉次行剩余宽度，下载按钮回到自然宽度。
@@ -1477,6 +1478,25 @@ button.filelist__remove:hover:not(:disabled) {
 
 .cov__allhit {
   color: var(--gold-300);
+}
+
+/* 「仅看未命中」开关：按下态用与未命中同族的琥珀，不用金色（金色只做品牌与标题）。 */
+.ov__filter--on {
+  border-color: rgba(229, 169, 61, 0.5);
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+
+.ov__filter--on:hover:not(:disabled) {
+  border-color: var(--warn);
+  background: var(--warn-strong);
+  color: var(--warn);
+}
+
+/* 区块被筛空时的一句话，比 .muted 再退一档，别抢卡片的注意力 */
+.sec__empty {
+  margin: 0;
+  font-size: 13.5px;
 }
 
 .ov__rule {
