@@ -14,7 +14,7 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/build-l10n`（0.2.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/build-l10n`（0.3.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
@@ -25,7 +25,7 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 - `packages/dict-builder/`：Node 脚本（tsx 运行）。`cache.ts` 是唯一发网络请求的模块（按日缓存到
   `data/cache/`，`--offline` 复用）；`adapters/` 是"已解析 JSON → 词典类型"的纯函数；`build.ts` 编排并
   写 `data/dict/<locale>/`，`check.ts` 做结构校验、审计与覆盖率回归门禁。
-- `apps/build-l10n/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；测试用 happy-dom。
+- `apps/build-l10n/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。样式在 `src/styles/` 下按区分成 12 个文件，由 `main.tsx` 按级联顺序引入。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；测试用 happy-dom。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
   `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
   `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率

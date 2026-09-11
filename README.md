@@ -6,7 +6,7 @@
 
 | 工具 | 状态 | 说明 |
 |---|---|---|
-| `build-l10n` | 0.2.0：核心库、词典与静态站界面已完成；游戏内加载待真机验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
+| `build-l10n` | 0.3.0：核心库、词典与静态站界面已完成（逐行对照、覆盖率轨、未命中筛选与快捷键、深浅两套主题）；游戏内加载与真机走查待验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
 
 ## 快速开始
 
@@ -60,12 +60,14 @@ data/dict/<locale>/     生成的词典（入库）
 data/fixtures/          测试样本（synthetic 入库，local 不入库）
 docs/build-format.md    .build 格式速查
 docs/data-sources.md    数据源登记表
+docs/manual-qa-checklist.md  真机走查清单
 ```
 
 ## 文档
 
 - [`.build` 格式速查](docs/build-format.md)
 - [数据源登记表](docs/data-sources.md)
+- [真机走查清单](docs/manual-qa-checklist.md)
 - 开发规范见 [`CLAUDE.md`](CLAUDE.md)
 
 ## 字体与许可
