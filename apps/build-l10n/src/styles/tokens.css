@@ -99,7 +99,7 @@
   --mk-unique: #c87b3a; /* 5.3，= --rarity-unique */
   --rarity-gem: #3fc7bf; /* 8.4，宝石名 */
 
-  /* 台服译文列专用的等宽栈：`:lang(zh-TW)`（styles.css:107）会直接命中译文格并把它
+  /* 台服译文列专用的等宽栈：`:lang(zh-TW)`（base.css）会直接命中译文格并把它
      换成比例字体 --font-zh-tw，繁体列因此丢掉 tabular-nums 对齐，同一界面出现两套
      字形口径。把台服黑体插进等宽栈，简繁两列就一致了。Task 4 的 .tip 规则消费它。 */
   --font-pair-tw:
@@ -120,10 +120,16 @@
      退成比例字体会让编号词缀行彻底失去对齐，而对齐正是这个界面存在的理由（第一期 M-4）。 */
   --font-pair: ui-monospace, "Cascadia Mono", Consolas, "Microsoft YaHei", "PingFang SC", monospace;
 
+  /* 小号标签栈：Cinzel 打头承载拉丁，紧跟着中文黑体。不能写成 var(--font-display) 加一段
+     中文——那个栈里的 Georgia / Times / serif 在中间，按字符回落时汉字会先撞上 serif，
+     Windows 上就是宋体，与全站雅黑不同族（附录 D M-2）。 */
+  --font-label:
+    "Cinzel Subset", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+
   /* 字号阶（基准 15px）。--fs-display 原计划 32px（空态主句是一句话说明），修订记录第 10 条
      把 .empty__hero 改回「产品名、40px、金渐变裁切」（mockup .estate .hero 的配方）之后忘了
      同步这张表，实现时把 40px 直接硬编码在规则里，令牌反而零引用（I-4）；这里补上 40px，
-     .empty__hero 与 2b 的覆盖率大数字将来共用同一档。 */
+     .empty__hero 与覆盖率大数字共用这一档。 */
   --fs-display: 40px;
   --fs-h1: 22px;
   --fs-h2: 18px;
@@ -208,8 +214,9 @@
   --gold-100: #5a4310; /* 8.2 / 8.7 / 9.2 / 7.4 / 6.7 */
   --gold-300: #6b5214; /* 6.4 / 6.9 / 7.3 / 5.8 / 5.3；焦点环复用它 */
   --gold-500: #755c1c; /* 5.5 / 5.9 / 6.3 / 5.0 / 4.5 */
-  /* 仅非文本：轨的命中格、稀有度左边、折线。这些图形只落在 surface-1 / surface-2 上，
-     3.7 / 3.9 ≥3 达标（已逐处核对，没有任何一处落在 hover 面上）。 */
+  /* 仅非文本：轨的命中格、稀有度左边、折线。这些图形落在 surface-1 / surface-2 / surface-3
+     （含 .filelist__item 的 hover / active 底）上，3.7 / 3.9 / 3.15 全部 ≥3 达标（已逐处
+     核对，含落在 hover / active 文件行上的那处）。 */
   --bronze-600: #9c7a3e;
   --bronze-text: #705a2e; /* 5.7 / 6.1 / 6.5 / 5.2 / 4.7 */
 

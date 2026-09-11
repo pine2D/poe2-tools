@@ -129,16 +129,16 @@ export function PairTable(props: PairTableProps) {
           )
         }
         const numClass = ['tip__n', missed ? 'tip__n--miss' : ''].filter((c) => c !== '').join(' ')
-        const enClass = ['tip__t', missed ? 'tip__t--miss' : '', kept ? 'tip__t--keep' : '']
-          .filter((c) => c !== '')
-          .join(' ')
-        const zhClass = `${enClass} tip__t--zh`
+        const enClass = ['tip__t', missed ? 'tip__t--miss' : ''].filter((c) => c !== '').join(' ')
+        // 「原样」的样式只有 `.tip__t--keep.tip__t--zh` 一条规则，挂到英文格上是个零样式的类，
+        // 读代码的人会以为英文格也被染过色（附录 D M-3）
+        const zhClass = `${enClass} tip__t--zh${kept ? ' tip__t--keep' : ''}`
         return (
           <Fragment key={row.index}>
             <span
               className={numClass}
               id={rowDomId(path, row.index)}
-              tabIndex={-1}
+              tabIndex={missed ? -1 : undefined}
               aria-hidden={missed ? undefined : 'true'}
               {...note}
             >

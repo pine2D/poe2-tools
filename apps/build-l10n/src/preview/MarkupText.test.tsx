@@ -86,6 +86,12 @@ describe('MarkupText', () => {
     expect(container.querySelectorAll('span[class]')).toHaveLength(0)
   })
 
+  it('版本号里的小数不被当成数值高亮（M-11）', () => {
+    const container = renderLine('Works on v0.5.5 and later')
+    expect(container.textContent).toBe('Works on v0.5.5 and later')
+    expect(container.querySelectorAll('.num')).toHaveLength(0)
+  })
+
   it('rgb 自定义色写成两套自定义属性，由 CSS 选主题', () => {
     const container = renderLine('<rgb(255, 255, 255)>{x}')
     const span = container.querySelector('span')

@@ -153,7 +153,7 @@ export function App({ fetchImpl }: AppProps) {
     setToast(null)
   }, [])
   // ≤560 的侧栏抽屉。默认收起：手机首屏要先给「概览卡 + 下载 CTA」，而不是一屏文件管理。
-  // >560 时这个状态没有任何 CSS 消费它，侧栏照常常驻（见 styles.css 的 ≤560 断点）。
+  // >560 时这个状态没有任何 CSS 消费它，侧栏照常常驻（见 responsive.css 的 ≤560 断点）。
   const [sideOpen, setSideOpen] = useState(false)
   const sideToggle = useRef<HTMLButtonElement>(null)
 
@@ -257,10 +257,13 @@ export function App({ fetchImpl }: AppProps) {
     }
   }
   // 文案固定「全部下载」（既有术语），这次点下去到底发生什么写在 title 里
+  // 禁用按钮在多数浏览器仍然显示 title；不加这一档会说「打包下载 0 个文件（…zip）」（附录 B M-9）
   const downloadTitle =
-    translated.length === 1
-      ? `下载 ${translated[0]?.name ?? ''}`
-      : `打包下载 ${translated.length} 个文件（${zipName(locale)}）`
+    translated.length === 0
+      ? '先导入 .build 文件'
+      : translated.length === 1
+        ? `下载 ${translated[0]?.name ?? ''}`
+        : `打包下载 ${translated.length} 个文件（${zipName(locale)}）`
 
   const empty = sources.length === 0
 
@@ -325,7 +328,9 @@ export function App({ fetchImpl }: AppProps) {
         <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions} />
         <div className="app__status">
           <ThemeSeg mode={theme.mode} onMode={theme.setMode} />
-          <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
+          <div className="app__live" role="status" aria-live="polite">
+            <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
+          </div>
           <button
             type="button"
             className="cta"
@@ -384,7 +389,9 @@ export function App({ fetchImpl }: AppProps) {
         )}
         <main className="app__main">{renderMain()}</main>
       </div>
-      {toast !== null && <Toast message={toast} onClose={closeToast} />}
+      {/* Toast 自带一个始终渲染的空容器承载 role="status"（控制者追加 g），这里不再按
+          toast !== null 整体卸载/挂载——那样每次都是一个新 live region，读屏不保证追踪到。 */}
+      <Toast message={toast} onClose={closeToast} />
     </div>
   )
 }

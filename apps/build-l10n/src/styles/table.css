@@ -49,7 +49,7 @@
 }
 
 /* <rgb(r,g,b)>{…} 的运行时计算色：MarkupText 把深浅两套值写成自定义属性，这里按主题选。
-   两条规则的顺序不能反：浅色那条特异性更高（(0,1,1) vs (0,1,0)），本来也压得过。 */
+   两条规则的顺序不能反：浅色那条特异性更高（(0,3,0) vs (0,1,0)），本来也压得过。 */
 .mk-rgb {
   color: var(--mk-rgb-d);
 }
@@ -111,15 +111,17 @@
   );
 }
 
-/* 列头：全站第二处用 Cinzel 的地方（纯拉丁短标签，安全） */
+/* 列头：拉丁部分走 Cinzel，中文跟着黑体（--font-label，见 tokens.css 的说明）。
+   字距从 .18em 降到 .08em：这条标签是中英混排，CJK 不加字距是硬规则，
+   而把中英拆成两个 span 只为了字距不值得（附录 D M-2）。 */
 .tip__lab {
   grid-column: span 2;
   padding-bottom: var(--sp-2);
   color: var(--bronze-text); /* 5.4 vs surface-2 */
-  font-family: var(--font-display);
+  font-family: var(--font-label);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -260,7 +262,7 @@
   color: var(--rarity-unique);
 }
 
-/* 繁体译文列：压过 styles.css:107 那条 `:lang(zh-TW)`（0,1,0），换成含台服黑体的等宽栈，
+/* 繁体译文列：压过 base.css 那条 `:lang(zh-TW)`（0,1,0），换成含台服黑体的等宽栈，
    繁体与简体两列的字形口径一致，数字仍然按 tabular-nums 对齐。 */
 .tip__t--zh:lang(zh-TW),
 .tip__base--zh:lang(zh-TW) {
@@ -326,7 +328,7 @@
 }
 
 /* 跳转落点不要贴到主区顶边。基底名行的落点是英文那格（.tip__base），也要算上。
-   顺便给所有 tabIndex={-1} 的落点一个显式焦点环：styles.css:145 那份 :focus-visible
+   顺便给所有 tabIndex={-1} 的落点一个显式焦点环：base.css 那份 :focus-visible
    名单只有 a/button/input/select/textarea/.button，序号格不在里面，程序化 focus()
    能不能命中 :focus-visible 又要看浏览器启发式，靠 UA 默认环是碰运气。 */
 .tip__n,

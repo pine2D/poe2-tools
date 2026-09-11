@@ -125,7 +125,7 @@
   margin: 0;
   color: var(--gold-300);
   font-family: var(--font-display);
-  font-size: 46px;
+  font-size: var(--fs-display);
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -194,12 +194,6 @@
   font-size: 11.5px;
 }
 
-.cov__legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 /* 键位提示：快捷键必须可发现（研究报告 §5.4 G9「键位在状态栏常驻」）。≤560 整条隐藏。 */
 .cov__keys {
   display: flex;
@@ -210,6 +204,8 @@
   font-size: 11.5px;
 }
 
+/* 两条规则内容完全一样（同为「小样本 + 文字」一行居中），合并成一个选择器（控制者追加 f） */
+.cov__legend span,
 .cov__keys span {
   display: inline-flex;
   align-items: center;

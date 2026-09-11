@@ -50,6 +50,10 @@ describe('App', () => {
   it('上传文件 → 列表显示覆盖率 → 下载得到译文', async () => {
     await renderReady()
     const blobs = interceptDownloads()
+    // Toast 的常驻容器从一开始就在，下载前是空的（控制者追加 g）
+    const toastLive = document.querySelector('.toast-live')
+    expect(toastLive).not.toBeNull()
+    expect(toastLive?.textContent).toBe('')
     upload('rich.build', rich)
     // 文件名在列表按钮与（Task 5 起）概览里都会出现：按角色找列表按钮
     await screen.findByRole('button', { name: 'rich.build' })
@@ -60,6 +64,9 @@ describe('App', () => {
     // 下载是任务流的最后一步，点完必须说清文件去哪儿（研究报告 G8 / P2-11）
     expect(await screen.findByText(/已下载 rich\.build/)).toBeDefined()
     expect(screen.getByText(/放进 Build Planner 目录后同名替换/)).toBeDefined()
+    // 还是同一个容器节点在播报，不是重新挂载了一个（容器常在）
+    expect(document.querySelector('.toast-live')).toBe(toastLive)
+    expect(toastLive?.textContent).toContain('已下载 rich.build')
   })
 
   it('双语选项改变输出；全部下载在多文件时给 zip', async () => {
@@ -188,6 +195,20 @@ describe('App', () => {
     expect((within(group).getByLabelText('深色') as HTMLInputElement).checked).toBe(true)
     fireEvent.click(within(group).getByLabelText('跟随系统'))
     expect(document.documentElement.dataset.theme).toBe('light')
+  })
+
+  it('词典状态是一条礼貌播报，读屏听得到三态切换（M-1）', async () => {
+    await renderReady()
+    // 页面上不止一个 role="status"（词典徽章、Toast 常驻容器），用文案定位徽章那一个
+    const live = screen.getByText('词典就绪').closest('[role="status"]')
+    expect(live).not.toBeNull()
+    expect(live?.getAttribute('aria-live')).toBe('polite')
+  })
+
+  it('一个文件都没有时，禁用的「全部下载」不给出「打包下载 0 个文件」这种提示（M-9）', async () => {
+    await renderReady()
+    const button = screen.getByRole('button', { name: '全部下载' })
+    expect(button.getAttribute('title')).toBe('先导入 .build 文件')
   })
 
   it('主区概览轨与侧栏迷你轨用同一份行模型：换文件后两条轨读数仍然一致', async () => {

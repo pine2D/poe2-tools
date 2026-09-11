@@ -257,6 +257,33 @@ describe('PairTable', () => {
     expect(screen.getByText('这个槽位没有备注')).toBeDefined()
   })
 
+  it('原样的英文格不挂零样式的 keep 类，命中行的序号格不进焦点（M-3 / M-4）', () => {
+    const { container } = render(
+      <PairTable
+        {...common}
+        baseName
+        emptyText="这个槽位没有备注"
+        rows={[
+          row({ index: 1, marker: '1' }),
+          row({
+            index: 2,
+            kind: 'name',
+            status: 'kept',
+            en: spans('Stat Priority'),
+            zh: spans('Stat Priority'),
+          }),
+        ]}
+      />,
+    )
+    const keeps = [...container.querySelectorAll('.tip__t--keep')]
+    expect(keeps).toHaveLength(1)
+    expect(keeps[0]?.classList.contains('tip__t--zh')).toBe(true)
+    // 命中行的序号格是 aria-hidden 的装饰，不该同时可聚焦
+    for (const cell of container.querySelectorAll('[aria-hidden="true"]')) {
+      expect(cell.getAttribute('tabindex')).toBeNull()
+    }
+  })
+
   it('繁体目标语言时译文列标 lang=zh-TW，列头也跟着变', () => {
     const { container } = render(
       <PairTable

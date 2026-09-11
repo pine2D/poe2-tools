@@ -14,7 +14,8 @@ import { type MarkupSpan, markupClass, resolveRgbTag } from './markup'
 // 两侧的断言挡住词内数字：T17 / L10N / 2H / 30s / 100k 这类词整体是名字或带单位的写法，
 // 不是可高亮的数值。两侧都要连数字一起挡（不能只挡字母）——否则 "T17" 的 "1" 被字母挡住后，
 // 引擎会退到 "7" 上重来；"30s" 的 "30" 被右侧字母挡住后，会退到 "3" 上重来。
-const NUMBER = /(?<![A-Za-z0-9])([-+]?\d+(?:[.,]\d+)*%?)(?![A-Za-z0-9])/
+// 左边界连 `.` 一起挡：不挡的话 v0.5.5 会被切成 v0 与 .5.5，两段小数都被染成数值（附录 D M-11）。
+const NUMBER = /(?<![.A-Za-z0-9])([-+]?\d+(?:[.,]\d+)*%?)(?![A-Za-z0-9])/
 
 function withNumbers(text: string, key: string): ReactNode {
   const parts = text.split(NUMBER)

@@ -1,5 +1,5 @@
 // 三态主题：跟随系统 / 浅色 / 深色。三态在这里收敛成两态写进 <html data-theme>，
-// CSS 里因此只需要一份浅色令牌块（理由见 styles.css 的浅色分区注释）。
+// CSS 里因此只需要一份浅色令牌块（理由见 tokens.css 的浅色分区注释）。
 // 键名与取值必须与 index.html 的首帧引导脚本逐字一致——那段脚本负责首帧之前定妆，
 // 这个 hook 负责之后的维护，两边对不上就会「刷新一下主题变了」。
 import { useCallback, useEffect, useState } from 'react'

@@ -74,6 +74,12 @@
   justify-self: end;
 }
 
+/* 词典徽章的稳定容器：DictBadge 三态各换一个元素，role="status" 必须挂在不换的这一层上，
+   否则读屏只会在整块被替换时报一次「移除」（附录 B M-1）。 */
+.app__live {
+  display: contents;
+}
+
 /* 词典状态徽章：胶囊 + 图标 + 文字，三态靠图标与颜色双编码 */
 .badge {
   display: inline-flex;
@@ -187,6 +193,15 @@ button.badge__retry:hover:not(:disabled) {
   background: rgba(217, 192, 120, 0.09);
   box-shadow: inset 0 0 0 1px rgba(217, 192, 120, 0.2);
   color: var(--gold-300); /* 9.4 vs 叠加后的底色 #201d15 */
+}
+
+/* :has() 要 Chromium 105+，而 radio 本体是 .visually-hidden、全局 input:focus-visible 的
+   outline 落在 1px 的裁切元素上等于没有——老内核（仓库反复点名的微信 X5）上键盘切换
+   目标语言 / 主题没有任何可见焦点（附录 B M-7）。:focus-within 支持面大得多，
+   代价是鼠标点击也会短暂出环，比「完全没有焦点」好。 */
+.seg__item:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 /* radio 本体被 .visually-hidden 藏了，焦点环得转嫁到看得见的段上 */
@@ -307,6 +322,12 @@ button.badge__retry:hover:not(:disabled) {
 .hint {
   margin: 0;
   color: var(--text-3);
+}
+
+/* Toast 的常驻容器：role="status" 挂在这一层，内容按需渲染（控制者追加 g），
+   理由与 .app__live 一致——live region 整块卸载重挂，读屏不保证追踪到后续更新。 */
+.toast-live {
+  display: contents;
 }
 
 /* 落地引导条：固定在视口底部居中。不用 position: sticky —— 主区与侧栏各自滚动，

@@ -84,6 +84,13 @@ describe('resolveRgbTag', () => {
     }
   })
 
+  it('近黑输入两套值都达标：深底要提亮，浅底本来就够（控制者追加 e）', () => {
+    const black = resolveRgbTag('rgb(0,0,0)')
+    expect(black).not.toBeNull()
+    expect(contrastRatio(black?.dark ?? '', '#1d1a14')).toBeGreaterThanOrEqual(4.5)
+    expect(contrastRatio(black?.light ?? '', '#fffdf8')).toBeGreaterThanOrEqual(4.5)
+  })
+
   it('不是 rgb 标签就返回 null', () => {
     expect(resolveRgbTag('red')).toBeNull()
     expect(resolveRgbTag('rgb(1,2)')).toBeNull()

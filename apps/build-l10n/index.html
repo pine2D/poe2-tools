@@ -36,6 +36,10 @@
          matchMedia 的存在性写成 typeof 判断而不是 `window.matchMedia && …`：后者会被 Biome
          的 useOptionalChain 要求改成 `?.`，而可选链在老内核上是解析期语法错误，整段脚本会
          一起失效。var 也全部声明在函数根部（noInnerDeclarations）。
+         箭头函数可接受：主包本就是靠 `<script type="module">` 加载的，能跑得动 type="module"
+         的浏览器必然已经认识 ES2015 的箭头函数（module 支持落地时箭头函数早就普及），这条底线
+         不会比这段内联脚本本身更宽。可选链 `?.` 是 ES2020 语法，比那条底线晚了好几年，
+         X5 一类内核正好卡在中间——支持 module 与箭头函数，但解析 `?.` 直接报语法错误。
          键名与取值必须与 src/theme/useTheme.ts 逐字一致，改一处就要改两处。 -->
     <script>
       (() => {
