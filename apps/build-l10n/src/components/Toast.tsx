@@ -12,13 +12,16 @@ export interface ToastProps {
 }
 
 export function Toast({ message, onClose, duration = 4000 }: ToastProps) {
+  // 连续下载导致文案在条还没消失时换掉，也要重新起一次 4 秒倒计时，不然后一条消息只剩前一条剩下的
+  // 时间就被关掉。onClose 仍要求调用方给稳定身份（见 App.tsx）。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: message 不出现在 effect 体里是故意的，见上两行
   useEffect(() => {
     if (duration <= 0) return
     const timer = setTimeout(onClose, duration)
     return () => {
       clearTimeout(timer)
     }
-  }, [duration, onClose])
+  }, [duration, onClose, message])
   return (
     <div className="toast" role="status" aria-live="polite">
       <Icon name="check" size={15} />

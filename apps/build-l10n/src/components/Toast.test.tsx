@@ -44,4 +44,22 @@ describe('Toast', () => {
     })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('连发时换文案会重新起 4 秒倒计时，不会被前一条的剩余时间打断', () => {
+    vi.useFakeTimers()
+    const onClose = vi.fn()
+    const { rerender } = render(<Toast message="已下载 a.build" onClose={onClose} />)
+    act(() => {
+      vi.advanceTimersByTime(2000)
+    })
+    rerender(<Toast message="已下载 b.build" onClose={onClose} />)
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+    expect(onClose).not.toHaveBeenCalled()
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })

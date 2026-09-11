@@ -649,6 +649,8 @@ button.badge__retry:hover:not(:disabled) {
 
 /* 落地引导条：固定在视口底部居中。不用 position: sticky —— 主区与侧栏各自滚动，
    sticky 会被裁在某一栏里。bottom 算上安全区，免得被 iPhone 的手势条吞掉一半。 */
+/* pointer-events: none —— 390 宽度下条会盖住下方按钮（如「跳到第一处未命中」），视觉
+   重叠 4 秒可以接受，但不能截获点击；.toast__close 单独 auto 回来，关闭按钮仍可点。 */
 .toast {
   position: fixed;
   left: 50%;
@@ -668,6 +670,7 @@ button.badge__retry:hover:not(:disabled) {
     var(--inset-light),
     0 8px 24px -12px rgba(0, 0, 0, 0.6);
   animation: toast-in var(--dur-mid) var(--ease) both;
+  pointer-events: none;
 }
 
 @keyframes toast-in {
@@ -697,6 +700,7 @@ button.toast__close {
   background: none;
   box-shadow: none;
   color: var(--text-3);
+  pointer-events: auto;
 }
 
 button.toast__close:hover:not(:disabled) {
@@ -2304,6 +2308,11 @@ button.misslist__go:hover:not(:disabled) {
   }
 
   button.filelist__remove {
+    width: 44px;
+    min-height: 44px;
+  }
+
+  button.toast__close {
     width: 44px;
     min-height: 44px;
   }
