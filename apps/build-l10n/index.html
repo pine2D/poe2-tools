@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#0e0d0b" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0e0d0b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4efe3" media="(prefers-color-scheme: light)" />
     <meta
       name="description"
       content="把英文攻略的《流放之路 2》Build Planner .build 文件翻成中文：基底名、传奇名与编号词缀行按国服或台服术语替换，输出可直接放回游戏的 .build。文件只在你的浏览器里解析，不会上传到任何服务器。"
@@ -29,6 +30,33 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e0d0b'/%3E%3Cpath d='M16 4.5 25 16l-9 11.5L7 16z' fill='%23d9c078'/%3E%3Cpath d='M16 9.5 21 16l-5 6.5L11 16z' fill='%230e0d0b'/%3E%3C/svg%3E"
     />
     <title>PoE2 构筑汉化 · 流放之路 2 Build Planner 汉化</title>
+    <!-- 首帧之前定妆：读 localStorage 的显式选择，没有就问系统，把结果写进 data-theme。
+         同步内联是硬要求——外部或 type="module" 的脚本是 defer 的，会先闪一帧深色。
+         用 var 与 try/catch 是为了老内核（微信 X5）与隐私模式下 localStorage 抛异常的情况。
+         matchMedia 的存在性写成 typeof 判断而不是 `window.matchMedia && …`：后者会被 Biome
+         的 useOptionalChain 要求改成 `?.`，而可选链在老内核上是解析期语法错误，整段脚本会
+         一起失效。var 也全部声明在函数根部（noInnerDeclarations）。
+         键名与取值必须与 src/theme/useTheme.ts 逐字一致，改一处就要改两处。 -->
+    <script>
+      (() => {
+        var mode = 'dark'
+        var saved = null
+        try {
+          saved = localStorage.getItem('poe2-tools.theme')
+          if (saved === 'light' || saved === 'dark') {
+            mode = saved
+          } else if (
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches
+          ) {
+            mode = 'light'
+          }
+        } catch (_error) {
+          mode = 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', mode)
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

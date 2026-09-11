@@ -165,6 +165,84 @@
   --focus-ring: 2px solid var(--gold-300);
 }
 
+/* ---------- 浅色主题 ---------- */
+
+/* 三态主题（跟随系统 / 浅色 / 深色）在 JS 里收敛成两态：index.html 的引导脚本在首帧
+   之前把 data-theme 定成 light 或 dark，之后由 theme/useTheme.ts 维护。所以这里只需要
+   一份浅色块。若改走 @media (prefers-color-scheme)，为了让顶栏的显式选择压过系统，
+   同一份令牌要写两遍（媒体块里一份、[data-theme="light"] 里一份），两份必然漂移，
+   而漂移的表现是「某个令牌只在跟随系统时正确」，几乎不可能被发现。
+
+   下面每个值都是重新算过的，**不是深色值的镜像**：
+   · --control-edge 的 alpha 从 .5 提到 .72——照搬 .5 在浅底上只有 2.6:1，破 WCAG 1.4.11；
+   · --warn 从琥珀压成褐橙——照搬 #e5a93d 在近白底上只有 1.9:1；
+   · --mk-white 退成暖灰、--mk-black 反而能用真黑——两套主题各有一处「颜色名与实际颜色
+     对不上」的有意偏离，正好互为镜像，不会同时出现。
+   完整表格与逐项对比度见 docs/superpowers/plans/2026-09-11-build-l10n-ui-phase3b.md。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* 表面：浅色下「抬升 = 更白」，与深色的「抬升 = 更亮」同向；控件反而要更深，
+     否则控件在白卡上整个消失。底不用纯白：纯白 + 金发丝线看起来像一张发票。 */
+  --surface-0: #f4efe3;
+  --surface-1: #faf6ec;
+  --surface-2: #fffdf8;
+  --surface-3: #ebe4d4;
+  --surface-hover: #e2d9c4;
+  --hairline: rgba(107, 82, 20, 0.16);
+  --hairline-strong: rgba(107, 82, 20, 0.3);
+  /* 合成后 3.4 / 3.5 / 3.6 / 3.2，全部 ≥3（WCAG 1.4.11）。边框即唯一识别手段的控件专用。 */
+  --control-edge: rgba(107, 82, 20, 0.72);
+  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --rule-fade: linear-gradient(90deg, transparent, rgba(107, 82, 20, 0.4), transparent);
+  --rule-fade-short: linear-gradient(90deg, rgba(107, 82, 20, 0.4), transparent);
+  /* 斜纹由「白 1.3%」换成「黑 1.4%」，光晕压暖：非文本装饰，最暗处相对底色 <1% */
+  --app-wash:
+    radial-gradient(1100px 520px at 52% -8%, rgba(154, 118, 58, 0.07), transparent 68%),
+    repeating-linear-gradient(58deg, rgba(0, 0, 0, 0.014) 0 1px, transparent 1px 4px);
+  --scrollbar-thumb: #c9bea0;
+
+  /* 文本：括号内为 vs surface-0 / 1 / 2 / 3 / hover 的实算对比度 */
+  --text: #241f17; /* 14.3 / 15.2 / 16.1 / 12.9 / 11.7 */
+  --text-2: #554c3c; /* 7.4 / 7.8 / 8.3 / 6.7 / 6.0 */
+  --text-3: #635a49; /* 5.9 / 6.3 / 6.7 / 5.4 / 4.8 —— 最亮与最暗的表面上都 ≥4.5 */
+
+  /* 品牌金：浅底上「更强 = 更深」，三档的角色方向整体反转，值不可能靠镜像得到 */
+  --gold-100: #5a4310; /* 8.2 / 8.7 / 9.2 / 7.4 / 6.7 */
+  --gold-300: #6b5214; /* 6.4 / 6.9 / 7.3 / 5.8 / 5.3；焦点环复用它 */
+  --gold-500: #755c1c; /* 5.5 / 5.9 / 6.3 / 5.0 / 4.5 */
+  /* 仅非文本：轨的命中格、稀有度左边、折线。这些图形只落在 surface-1 / surface-2 上，
+     3.7 / 3.9 ≥3 达标（已逐处核对，没有任何一处落在 hover 面上）。 */
+  --bronze-600: #9c7a3e;
+  --bronze-text: #705a2e; /* 5.7 / 6.1 / 6.5 / 5.2 / 4.7 */
+
+  /* 语义色：与金色同样彻底分家 */
+  --warn: #845400; /* 5.6 / 6.0 / 6.4 / 5.1 / 4.6 */
+  --warn-wash: rgba(132, 84, 0, 0.1);
+  --warn-strong: rgba(132, 84, 0, 0.2);
+  --danger: #a02b1c; /* 6.4 / 6.8 / 7.2 / 5.8 / 5.2 */
+  --keep: #6e6250; /* 5.2 / 5.5 / 5.9 / 4.7 / 4.2 */
+  --info: #0d6560; /* 6.0 / 6.4 / 6.8 / 5.4 / 4.9 */
+  --rarity-unique: #8f4a12; /* 5.8 / 6.2 / 6.6 / 5.3 / 4.7 */
+
+  /* 标记语法：策略与深色档相反——保色相、压明度。括号里是 vs --surface-2 的实算值。 */
+  --mk-red: #b3261c; /* 6.4 */
+  --mk-orange: #8a4a00; /* 6.8 */
+  --mk-yellow: #6e6a0c; /* 5.5，黄在近白底上保色相就必须压成橄榄，这是浅色档的固有形变 */
+  --mk-green: #2a6b21; /* 6.4 */
+  --mk-blue: #3535c4; /* 8.4 */
+  --mk-indigo: #4b3fb5; /* 7.7 */
+  --mk-violet: #8a3fa0; /* 6.3 */
+  --mk-black: #1a1712; /* 17.6，浅色档反而能用真黑 */
+  --mk-white: #595144; /* 7.7，浅色档轮到「白」必须偏离：白字在近白底上不可见 */
+  --mk-grey: #5f5f5f; /* 6.3 */
+  --mk-bronze: #7a5a2a; /* 6.2 */
+  --mk-silver: #616161; /* 6.1 */
+  --mk-gold: #7a5f00; /* 6.0，与 --mk-yellow 靠色相区分（一偏橙一偏绿），不靠明度 */
+  --mk-unique: #8f4a12; /* 6.6，= --rarity-unique */
+  --rarity-gem: #0d6560; /* 6.8，= --info */
+}
+
 /* ==== FILE: base.css ==== */
 
 * {
@@ -1582,6 +1660,20 @@ button.filelist__remove:hover:not(:disabled) {
   filter: drop-shadow(0 1px 1px #000);
 }
 
+/* 金渐变裁切的三处（顶栏字标、空态大标题、100% 覆盖率数字）在浅色下必须整条换向：
+   浅金压在近白底上等于不可见。最浅的一端 #7d5f16 对 --surface-0 实算 5.20、
+   对 --surface-1 是 5.53，≥4.5；黑投影在浅底上会糊成脏边，换成一层白高光。
+   写在这里而不是各组件规则里：三处共用同一份配方，分散三份必然漂移（2a 审查 M-11）。 */
+:root[data-theme="light"] .app__header h1,
+:root[data-theme="light"] .empty__hero,
+:root[data-theme="light"] .cov__num--full {
+  background: linear-gradient(180deg, #7d5f16 0%, #6b5214 38%, #55400e 74%, #3d2e08 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
+}
+
 .cov__frac {
   margin: var(--sp-2) 0 0;
   color: var(--text-2);
@@ -2617,6 +2709,18 @@ button.misslist__go:hover:not(:disabled) {
   }
 
   .cov__num--full {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    filter: none;
+  }
+
+  /* 上面 :root[data-theme="light"] 的金渐变覆盖块特异性是 (0,3,1) / (0,3,0)，本块里那几条
+     裸类选择器压不过它（媒体查询不加特异性）。不补这份同等特异性的兜底，高对比度 + 浅色
+     下这三处就是透明文字。第三期 A 的分区标记把这块划给 a11y.css，拆文件之后 Biome 更看
+     不见这层跨块关系，所以它必须与渐变块同一个任务落地。 */
+  :root[data-theme="light"] .app__header h1,
+  :root[data-theme="light"] .empty__hero,
+  :root[data-theme="light"] .cov__num--full {
     background: none;
     -webkit-text-fill-color: currentColor;
     filter: none;
