@@ -1,6 +1,6 @@
 {
   "locale": "zh-TW",
-  "generatedAt": "2026-09-08T09:57:17.857Z",
+  "generatedAt": "2026-09-11T10:57:19.076Z",
   "note": "含字面数字的词缀：entries 是全部（变体前原文）；skipped 是无法对应（text 缺该数字或同一数字在 en 里重复）而保持原样、运行期永远匹配不上的条目",
   "entries": [
     {
@@ -9,14 +9,14 @@
       "text": "每10點智慧，增加#%攻擊的範圍效果"
     },
     {
-      "key": "explicit.stat_1791136590#0",
-      "en": "#% increased Weapon Damage per 10 Strength",
-      "text": "每10點力量，增加#%武器傷害"
-    },
-    {
       "key": "explicit.stat_889691035#0",
       "en": "#% increased Attack Speed per 10 Dexterity",
       "text": "每10點敏捷，增加#%攻擊速度便"
+    },
+    {
+      "key": "explicit.stat_1791136590#0",
+      "en": "#% increased Weapon Damage per 10 Strength",
+      "text": "每10點力量，增加#%武器傷害"
     },
     {
       "key": "explicit.stat_3371943724#0",
@@ -29,14 +29,14 @@
       "text": "每10精魂增加#%法術傷害"
     },
     {
-      "key": "explicit.stat_2356156926#0",
-      "en": "Drop Ignited Ground while moving, which lasts 8 seconds and Ignites as though dealing Fire Damage equal to #% of your maximum Life",
-      "text": "移動時會掉落持續8秒的點燃地面，並會引發點燃，造成等同於你#%最大生命的火焰傷害"
-    },
-    {
       "key": "explicit.stat_78985352#0",
       "en": "#% chance to Intimidate Enemies for 4 seconds on Hit",
       "text": "擊中時，有#%的機率威嚇敵人，持續4秒"
+    },
+    {
+      "key": "explicit.stat_2356156926#0",
+      "en": "Drop Ignited Ground while moving, which lasts 8 seconds and Ignites as though dealing Fire Damage equal to #% of your maximum Life",
+      "text": "移動時會掉落持續8秒的點燃地面，並會引發點燃，造成等同於你#%最大生命的火焰傷害"
     },
     {
       "key": "explicit.stat_796381300#0",
@@ -59,6 +59,11 @@
       "text": "每20點智慧，攻擊附加#至#閃電傷害"
     },
     {
+      "key": "explicit.stat_1457411584#0",
+      "en": "Every 4 seconds, Recover 1 Life for every # Life Recovery per second from Regeneration",
+      "text": "每4秒，根據每#每秒回復的生命恢復1生命"
+    },
+    {
       "key": "explicit.stat_2323782229#0",
       "en": "Slaying Rare Monsters in Area pauses the Delirium Mirror Timer for 1 second",
       "text": "擊殺區域中稀有怪物會使譫妄之鏡的計時器暫停1秒"
@@ -72,11 +77,6 @@
       "key": "explicit.stat_3764198549#0",
       "en": "Every 3 seconds, Consume a nearby Corpse to Recover #% of maximum Life",
       "text": "每3秒，消耗附近屍體恢復#%生命"
-    },
-    {
-      "key": "explicit.stat_1457411584#0",
-      "en": "Every 4 seconds, Recover 1 Life for every # Life Recovery per second from Regeneration",
-      "text": "每4秒，根據每#每秒回復的生命恢復1生命"
     },
     {
       "key": "explicit.stat_4258409981#0",
@@ -99,24 +99,24 @@
       "text": "使用魔力藥劑時賦予等同於該藥劑恢復量#%的保護，持續4秒"
     },
     {
-      "key": "explicit.stat_65133983#0",
-      "en": "Drop Shocked Ground while moving, lasting 8 seconds",
-      "text": "移動時會掉落持續8秒的感電地面"
-    },
-    {
       "key": "explicit.stat_664606484#0",
       "en": "Abyssal Monsters have #% increased Effectiveness for each closed Pit, up to 100%",
       "text": "每有一個已關閉的坑洞，增加#%深淵怪物效用，最多100%"
     },
     {
-      "key": "explicit.stat_2838161567#0",
-      "en": "Skills reserve 50% less Spirit",
-      "text": "減少50%技能保留的精魂"
-    },
-    {
       "key": "explicit.stat_1207006772#0",
       "en": "# to Deflection Rating per 50 missing Energy Shield",
       "text": "每失去50能量護盾，#偏斜值"
+    },
+    {
+      "key": "explicit.stat_65133983#0",
+      "en": "Drop Shocked Ground while moving, lasting 8 seconds",
+      "text": "移動時會掉落持續8秒的感電地面"
+    },
+    {
+      "key": "explicit.stat_2838161567#0",
+      "en": "Skills reserve 50% less Spirit",
+      "text": "減少50%技能保留的精魂"
     },
     {
       "key": "explicit.stat_2443032293#0",
@@ -149,14 +149,14 @@
       "text": "每消耗20點盛怒，獲得1德魯伊之賦"
     },
     {
-      "key": "explicit.stat_1027889455#0",
-      "en": "Non-Channelling Spells deal #% increased Damage per 100 maximum Life",
-      "text": "每100最大生命，增加#%非引導法術的傷害"
-    },
-    {
       "key": "explicit.stat_170426423#0",
       "en": "Non-Channelling Spells have #% increased Critical Hit Chance per 100 maximum Life",
       "text": "每100最大生命，增加#%非引導法術的暴擊率"
+    },
+    {
+      "key": "explicit.stat_1027889455#0",
+      "en": "Non-Channelling Spells deal #% increased Damage per 100 maximum Life",
+      "text": "每100最大生命，增加#%非引導法術的傷害"
     },
     {
       "key": "explicit.stat_2134207902#0",
@@ -184,9 +184,9 @@
       "text": "你的暴擊傷害加成為250%"
     },
     {
-      "key": "explicit.stat_1910039112#0",
-      "en": "Every 3 seconds during Effect, deal #% of Mana spent in those seconds as Chaos Damage to Enemies within 3 metres",
-      "text": "在效果期間內每3秒，對3公尺內的敵人造成等同於在該秒數內所消耗魔力#%的混沌傷害"
+      "key": "explicit.stat_986616727#0",
+      "en": "Curses you inflict spread to enemies within 3 metres when Cursed enemy dies",
+      "text": "受詛咒的敵人死亡時，你施加的詛咒擴散至3公尺內的敵人"
     },
     {
       "key": "explicit.stat_2482970488#0",
@@ -194,9 +194,9 @@
       "text": "當你存在範圍內有受詛咒的敵人時，每秒獲得1層黑暗低語"
     },
     {
-      "key": "explicit.stat_986616727#0",
-      "en": "Curses you inflict spread to enemies within 3 metres when Cursed enemy dies",
-      "text": "受詛咒的敵人死亡時，你施加的詛咒擴散至3公尺內的敵人"
+      "key": "explicit.stat_1910039112#0",
+      "en": "Every 3 seconds during Effect, deal #% of Mana spent in those seconds as Chaos Damage to Enemies within 3 metres",
+      "text": "在效果期間內每3秒，對3公尺內的敵人造成等同於在該秒數內所消耗魔力#%的混沌傷害"
     },
     {
       "key": "explicit.stat_4117005593#0",
@@ -214,14 +214,9 @@
       "text": "過去20秒內每使用一次閃避翻滾，減少#%移動和技能速度"
     },
     {
-      "key": "explicit.stat_1291132817#0",
-      "en": "+1 to Armour per Strength",
-      "text": "每1力量+1護甲值"
-    },
-    {
-      "key": "explicit.stat_3452816629#0",
-      "en": "1% more Unarmed Damage per # Strength",
-      "text": "每#力量擁有1%更多空手傷害"
+      "key": "explicit.stat_4106787208#0",
+      "en": "Spear Skills inflict a Bloodstone Lance on Hit, up to a maximum of 30 on each target",
+      "text": "長矛技能擊中時產生一支血石之槍，每個目標至多產生30支"
     },
     {
       "key": "explicit.stat_4186798932#0",
@@ -229,24 +224,34 @@
       "text": "每25力量附加#至#攻擊火焰傷害"
     },
     {
+      "key": "explicit.stat_4274637468#0",
+      "en": "Convert #% of maximum Life to twice as much Armour per 1% Chaos Resistance above 0%",
+      "text": "超過0%的混沌抗性每有1%，即將#%最大生命轉換為其兩倍的護甲"
+    },
+    {
+      "key": "explicit.stat_3452816629#0",
+      "en": "1% more Unarmed Damage per # Strength",
+      "text": "每#力量擁有1%更多空手傷害"
+    },
+    {
       "key": "explicit.stat_3605616594#0",
       "en": "Gain Onslaught for 4 seconds when a Minion Dies",
       "text": "召喚物死亡時獲得猛攻，持續4秒"
     },
     {
-      "key": "explicit.stat_4106787208#0",
-      "en": "Spear Skills inflict a Bloodstone Lance on Hit, up to a maximum of 30 on each target",
-      "text": "長矛技能擊中時產生一支血石之槍，每個目標至多產生30支"
-    },
-    {
-      "key": "explicit.stat_4238331303#0",
-      "en": "Immobilise enemies at #% buildup instead of 100%",
-      "text": "累積禁錮達#%時即禁錮敵人，而非100%"
+      "key": "explicit.stat_1291132817#0",
+      "en": "+1 to Armour per Strength",
+      "text": "每1力量+1護甲值"
     },
     {
       "key": "explicit.stat_3775736880#0",
       "en": "Gain 1 Fear Incarnate when you Cull a target",
       "text": "當你撲殺目標時，獲得1層恐懼化型"
+    },
+    {
+      "key": "explicit.stat_4238331303#0",
+      "en": "Immobilise enemies at #% buildup instead of 100%",
+      "text": "累積禁錮達#%時即禁錮敵人，而非100%"
     },
     {
       "key": "explicit.stat_223138829#0",
@@ -259,14 +264,9 @@
       "text": "你每擁有5%冰冷抗性，增加#%冰晶的最大生命值"
     },
     {
-      "key": "explicit.stat_4274637468#0",
-      "en": "Convert #% of maximum Life to twice as much Armour per 1% Chaos Resistance above 0%",
-      "text": "超過0%的混沌抗性每有1%，即將#%最大生命轉換為其兩倍的護甲"
-    },
-    {
-      "key": "explicit.stat_2480962043#0",
-      "en": "Skills which require Glory generate # Glory every 2 seconds",
-      "text": "消耗榮耀的技能每2秒回復#榮耀"
+      "key": "explicit.stat_3044685077#0",
+      "en": "# to Spirit while you have at least 200 Strength",
+      "text": "當你擁有至少200力量時，#精魂"
     },
     {
       "key": "explicit.stat_3843734793#0",
@@ -279,19 +279,19 @@
       "text": "每100最大魔力，增加#%非引導技能的法術暴擊率"
     },
     {
-      "key": "explicit.stat_3044685077#0",
-      "en": "# to Spirit while you have at least 200 Strength",
-      "text": "當你擁有至少200力量時，#精魂"
-    },
-    {
-      "key": "explicit.stat_891466814#0",
-      "en": "Create a Fragment of Divinity in your Presence every 4 seconds",
-      "text": "每4秒在你的存在範圍內產生一個神性碎片"
+      "key": "explicit.stat_2480962043#0",
+      "en": "Skills which require Glory generate # Glory every 2 seconds",
+      "text": "消耗榮耀的技能每2秒回復#榮耀"
     },
     {
       "key": "explicit.stat_3628041050#0",
       "en": "Enemies in your Presence gain 1 Gruelling Madness each second",
       "text": "你存在範圍中的敵人每秒獲得1層殘忍瘋狂"
+    },
+    {
+      "key": "explicit.stat_891466814#0",
+      "en": "Create a Fragment of Divinity in your Presence every 4 seconds",
+      "text": "每4秒在你的存在範圍內產生一個神性碎片"
     },
     {
       "key": "explicit.stat_1282318918#0",
@@ -304,9 +304,9 @@
       "text": "最大閃避機率為50%"
     },
     {
-      "key": "explicit.stat_4245905059#0",
-      "en": "Non-Channelling Spells have #% increased Magnitude of Ailments per 100 maximum Life",
-      "text": "每100最大生命，增加#%非引導法術的異常狀態幅度"
+      "key": "explicit.stat_2694614739#0",
+      "en": "# to Spirit while you have at least 200 Dexterity",
+      "text": "當你擁有至少200敏捷時，#精魂"
     },
     {
       "key": "explicit.stat_34174842#0",
@@ -314,19 +314,19 @@
       "text": "每20精魂增加#%施法速度"
     },
     {
-      "key": "explicit.stat_2694614739#0",
-      "en": "# to Spirit while you have at least 200 Dexterity",
-      "text": "當你擁有至少200敏捷時，#精魂"
-    },
-    {
-      "key": "explicit.stat_324579579#0",
-      "en": "#% increased Attack Speed per 20 Spirit",
-      "text": "每20精魂增加#%攻擊速度"
+      "key": "explicit.stat_4245905059#0",
+      "en": "Non-Channelling Spells have #% increased Magnitude of Ailments per 100 maximum Life",
+      "text": "每100最大生命，增加#%非引導法術的異常狀態幅度"
     },
     {
       "key": "explicit.stat_3881997959#0",
       "en": "Increases Movement Speed by 25%, plus 1% per # Evasion Rating, up to a maximum of 75% Other Modifiers to Movement Speed except for Sprinting do not apply",
       "text": "增加25%移動速度，每#點閃避值額外增加1%，上限為75%。除套用至衝刺以外的其他移動速度詞綴將失效"
+    },
+    {
+      "key": "explicit.stat_324579579#0",
+      "en": "#% increased Attack Speed per 20 Spirit",
+      "text": "每20精魂增加#%攻擊速度"
     },
     {
       "key": "explicit.stat_1850249186#0",
@@ -339,19 +339,14 @@
       "text": "以200%護甲值防禦"
     },
     {
-      "key": "explicit.stat_2469544361#0",
-      "en": "Gain #% of Cold damage as Extra Fire damage per 1% Chill Magnitude on enemy",
-      "text": "敵人身上每有1%冰緩幅度，便獲得等同於#%冰冷傷害的額外火焰傷害"
-    },
-    {
       "key": "explicit.stat_3960211755#0",
       "en": "Maximum Physical Damage Reduction is 50%",
       "text": "最大物理傷害減免為50%"
     },
     {
-      "key": "explicit.stat_343703314#0",
-      "en": "Gain 1 Runefather's Boast per Power of targets affected by Runefather's Challenge you kill",
-      "text": "擊殺受到符文之父的挑戰影響的目標時，獲得等同於其強度的符文之父的自誇"
+      "key": "explicit.stat_2469544361#0",
+      "en": "Gain #% of Cold damage as Extra Fire damage per 1% Chill Magnitude on enemy",
+      "text": "敵人身上每有1%冰緩幅度，便獲得等同於#%冰冷傷害的額外火焰傷害"
     },
     {
       "key": "explicit.stat_774222208#0",
@@ -364,9 +359,9 @@
       "text": "增加#%投射物對距離超過6公尺的敵人暴擊機率"
     },
     {
-      "key": "explicit.stat_4128965096#0",
-      "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill Remove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
-      "text": "每使用擲彈技能#次獲得1層炸裂節奏擁有10層時移除所有炸裂節奏並獲得炸裂狂熱，持續10秒"
+      "key": "explicit.stat_343703314#0",
+      "en": "Gain 1 Runefather's Boast per Power of targets affected by Runefather's Challenge you kill",
+      "text": "擊殺受到符文之父的挑戰影響的目標時，獲得等同於其強度的符文之父的自誇"
     },
     {
       "key": "explicit.stat_3451259830#0",
@@ -374,9 +369,24 @@
       "text": "你擊殺受深淵耗損影響的目標時有#%機率獲得猛攻，持續3秒"
     },
     {
+      "key": "explicit.stat_4128965096#0",
+      "en": "Gain 1 Explosive Rhythm every # time you use a Grenade Skill Remove all Explosive Rhythm on reaching 10 to gain Explosive Fervour for 10 Seconds",
+      "text": "每使用擲彈技能#次獲得1層炸裂節奏擁有10層時移除所有炸裂節奏並獲得炸裂狂熱，持續10秒"
+    },
+    {
       "key": "explicit.stat_2825946427#0",
       "en": "Projectiles deal #% increased Damage with Hits against Enemies further than 6m",
       "text": "增加#%投射物對距離超過6公尺的敵人造成的擊中傷害"
+    },
+    {
+      "key": "explicit.stat_2818518881#0",
+      "en": "#% increased Spell Damage per 10 Intelligence",
+      "text": "每10點智慧，增加#%法術傷害"
+    },
+    {
+      "key": "explicit.stat_3134931479#0",
+      "en": "Abyssal Wasting you inflict also gives targets 10% chance to explode on death, dealing a tenth of their life as Physical Damage",
+      "text": "你施加的深淵耗損同時會使目標有10%機率於死亡時爆炸，造成等同於其十分之一生命的物理傷害"
     },
     {
       "key": "explicit.stat_3161573445#0",
@@ -394,16 +404,6 @@
       "text": "裝備護甲物品每擁有100總物品護甲值，即增加#%格擋機率"
     },
     {
-      "key": "explicit.stat_3134931479#0",
-      "en": "Abyssal Wasting you inflict also gives targets 10% chance to explode on death, dealing a tenth of their life as Physical Damage",
-      "text": "你施加的深淵耗損同時會使目標有10%機率於死亡時爆炸，造成等同於其十分之一生命的物理傷害"
-    },
-    {
-      "key": "explicit.stat_2818518881#0",
-      "en": "#% increased Spell Damage per 10 Intelligence",
-      "text": "每10點智慧，增加#%法術傷害"
-    },
-    {
       "key": "explicit.stat_3491815140#0",
       "en": "#% increased Spell Damage per 100 Maximum Life",
       "text": "每100最大生命增加#%法術傷害"
@@ -414,9 +414,9 @@
       "text": "增加#%投射物對2公尺內敵人的暴擊傷害加成"
     },
     {
-      "key": "explicit.stat_2468595624#0",
-      "en": "Projectiles deal #% increased Damage with Hits against Enemies within 2m",
-      "text": "增加#%投射物對距離2公尺內的敵人造成的擊中傷害"
+      "key": "explicit.stat_2879778895#0",
+      "en": "Every 10 seconds, gain a random non-damaging Shrine buff for 20 seconds",
+      "text": "每10秒，獲得1種隨機非傷害型神殿增益效果，持續20秒"
     },
     {
       "key": "explicit.stat_679087890#0",
@@ -424,9 +424,19 @@
       "text": "目前每保有1%能量護盾，以等同於具有#%更多護甲值來防禦擊中"
     },
     {
-      "key": "explicit.stat_2879778895#0",
-      "en": "Every 10 seconds, gain a random non-damaging Shrine buff for 20 seconds",
-      "text": "每10秒，獲得1種隨機非傷害型神殿增益效果，持續20秒"
+      "key": "explicit.stat_2468595624#0",
+      "en": "Projectiles deal #% increased Damage with Hits against Enemies within 2m",
+      "text": "增加#%投射物對距離2公尺內的敵人造成的擊中傷害"
+    },
+    {
+      "key": "explicit.stat_347220474#0",
+      "en": "#% increased Spell damage for each 200 total Mana you have Spent Recently",
+      "text": "你近期每花費200總魔力，增加#%法術傷害"
+    },
+    {
+      "key": "explicit.stat_2890792988#0",
+      "en": "Your Hits can Penetrate Elemental Resistances down to a minimum of -50%",
+      "text": "你的擊中可以穿透元素抗性，最低降低至-50%"
     },
     {
       "key": "explicit.stat_2650053239#0",
@@ -437,16 +447,6 @@
       "key": "explicit.stat_3138344128#0",
       "en": "Defend with 200% of Armour during effect",
       "text": "在效果期間，以200%護甲值防禦"
-    },
-    {
-      "key": "explicit.stat_2890792988#0",
-      "en": "Your Hits can Penetrate Elemental Resistances down to a minimum of -50%",
-      "text": "你的擊中可以穿透元素抗性，最低降低至-50%"
-    },
-    {
-      "key": "explicit.stat_347220474#0",
-      "en": "#% increased Spell damage for each 200 total Mana you have Spent Recently",
-      "text": "你近期每花費200總魔力，增加#%法術傷害"
     },
     {
       "key": "explicit.stat_3581035970#0",
@@ -474,9 +474,24 @@
       "text": "轉換100%最大能量護盾為最大神性"
     },
     {
+      "key": "explicit.stat_1183698646#0",
+      "en": "Expeditions contain 1 Additional Boss encased in ice in Map",
+      "text": "地圖中的探險含有1個額外封存於冰霜中的頭目"
+    },
+    {
+      "key": "explicit.stat_2852112245#0",
+      "en": "Expeditions contain 1 Vaal Relic in Map",
+      "text": "Expeditions contain 1 Vaal Relic in Map"
+    },
+    {
       "key": "explicit.stat_3076483222|49977#0",
       "en": "Sacrifice up to 10 Chaos Orbs to receive double on Trial completion",
       "text": "獻祭最多10 顆混沌石，以在完成試煉時獲得兩倍獎勵"
+    },
+    {
+      "key": "explicit.stat_3492740640#0",
+      "en": "Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds Lose all Runic Bindings when you Shapeshift to gain that much Unbound Potential",
+      "text": "法術擊中時獲得1層符文束縛，每0.5秒不超過一次當你變形時失去所有符文束縛以獲得同等數量的無縛潛能"
     },
     {
       "key": "explicit.stat_3076483222|54496#0",
@@ -487,11 +502,6 @@
       "key": "explicit.stat_3076483222|20358#0",
       "en": "Sacrifice up to 10 Orbs of Alchemy to receive double on Trial completion",
       "text": "獻祭最多10 顆點金石，以在完成試煉時獲得兩倍獎勵"
-    },
-    {
-      "key": "explicit.stat_3492740640#0",
-      "en": "Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds Lose all Runic Bindings when you Shapeshift to gain that much Unbound Potential",
-      "text": "法術擊中時獲得1層符文束縛，每0.5秒不超過一次當你變形時失去所有符文束縛以獲得同等數量的無縛潛能"
     },
     {
       "key": "explicit.stat_2991045011#0",
@@ -507,6 +517,11 @@
       "key": "explicit.stat_2148576938#0",
       "en": "Gain Overencumbrance for 4 seconds when you Dodge Roll",
       "text": "當你閃避翻滾時獲得超重，持續4秒"
+    },
+    {
+      "key": "explicit.stat_2771095426#0",
+      "en": "Gain #% of damage as Fire damage per 1% Chance to Block",
+      "text": "每擁有1%格擋率，獲得等同於#%傷害的火焰傷害"
     },
     {
       "key": "explicit.stat_3076483222|4897#0",
@@ -529,9 +544,9 @@
       "text": "過去20秒內若你使用了需求榮耀的技能，+#最大盛怒"
     },
     {
-      "key": "explicit.stat_2771095426#0",
-      "en": "Gain #% of damage as Fire damage per 1% Chance to Block",
-      "text": "每擁有1%格擋率，獲得等同於#%傷害的火焰傷害"
+      "key": "explicit.stat_1109460697#0",
+      "en": "Expeditions contain 1 Additional Verisium Sentry in Map",
+      "text": "地圖中的探險含有1個額外維里西姆守望"
     },
     {
       "key": "explicit.stat_3526763442#0",
@@ -569,14 +584,14 @@
       "text": "獻祭最多20 個奧術師刻具，以在完成試煉時獲得兩倍獎勵"
     },
     {
-      "key": "explicit.stat_3076483222|19854#0",
-      "en": "Sacrifice up to 3 Orb of Annulments to receive double on Trial completion",
-      "text": "獻祭最多3 顆無效石，以在完成試煉時獲得兩倍獎勵"
-    },
-    {
       "key": "explicit.stat_3987691524#0",
       "en": "Inherent Rage loss starts 1 second later",
       "text": "盛怒的固有損失延後1秒開始"
+    },
+    {
+      "key": "explicit.stat_3076483222|19854#0",
+      "en": "Sacrifice up to 3 Orb of Annulments to receive double on Trial completion",
+      "text": "獻祭最多3 顆無效石，以在完成試煉時獲得兩倍獎勵"
     },
     {
       "key": "explicit.stat_4224832423#0",
@@ -609,14 +624,14 @@
       "text": "每10秒玩家和其召喚物有3秒無法造成傷害"
     },
     {
-      "key": "explicit.stat_3076483222|61382#0",
-      "en": "Sacrifice up to 2 Divine Orbs to receive double on Trial completion",
-      "text": "獻祭最多2 顆神聖石，以在完成試煉時獲得兩倍獎勵"
-    },
-    {
       "key": "explicit.stat_2150661403#0",
       "en": "Skills have #% chance to not remove Elemental Infusions but still count as consuming them if you've lost an Archon Buff in the past 6 seconds",
       "text": "若你在過去6秒內失去過統治者增益效果，技能有#%機率不移除元素灌注但仍視為消耗了元素灌注"
+    },
+    {
+      "key": "explicit.stat_3076483222|61382#0",
+      "en": "Sacrifice up to 2 Divine Orbs to receive double on Trial completion",
+      "text": "獻祭最多2 顆神聖石，以在完成試煉時獲得兩倍獎勵"
     },
     {
       "key": "explicit.stat_3076483222|30874#0",
@@ -627,11 +642,6 @@
       "key": "explicit.stat_3076483222|8084#0",
       "en": "Sacrifice up to 10 Greater Exalted Orbs to receive double on Trial completion",
       "text": "獻祭最多10 顆高階崇高石，以在完成試煉時獲得兩倍獎勵"
-    },
-    {
-      "key": "explicit.stat_2852112245#0",
-      "en": "Expeditions contain 1 Vaal Relic in Map",
-      "text": "Expeditions contain 1 Vaal Relic in Map"
     },
     {
       "key": "explicit.stat_2408276841#0",
@@ -739,14 +749,14 @@
       "text": "已裝備的頭盔每擁有2物品能量護盾，#最大魔力"
     },
     {
-      "key": "rune.stat_282990844#0",
-      "en": "+# to Deflection Rating per 10 maximum Runic Ward",
-      "text": "每10最大符文保護+#偏斜值"
-    },
-    {
       "key": "rune.stat_2838678452#0",
       "en": "+# to Stun Threshold per 10 maximum Runic Ward",
       "text": "每10最大符文保護+#暈眩門檻"
+    },
+    {
+      "key": "rune.stat_282990844#0",
+      "en": "+# to Deflection Rating per 10 maximum Runic Ward",
+      "text": "每10最大符文保護+#偏斜值"
     },
     {
       "key": "rune.stat_3370077792#0",

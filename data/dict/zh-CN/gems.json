@@ -1,15 +1,15 @@
 {
   "_meta": {
     "source": "repoe-fork/poe2 + poe2db.tw",
-    "gameVersion": "0.5",
-    "fetchedAt": "2026-09-08T09:58:18.148Z",
+    "gameVersion": "0.5.5",
+    "fetchedAt": "2026-09-11T10:58:18.861Z",
     "tier": "gray",
     "count": 1072
   },
   "entries": {
     "SkillGemAbyssalLivingBomb": {
       "en": "Untether",
-      "text": "Untether"
+      "text": "深渊心爆"
     },
     "SkillGemAlchemistsBoon": {
       "en": "Alchemist's Boon",
@@ -2261,7 +2261,7 @@
     },
     "SkillGemAbyssalPact": {
       "en": "Abyssal Pact",
-      "text": "Abyssal Pact"
+      "text": "深渊契约"
     },
     "SkillGemAncestralWarriorTotem": {
       "en": "Ancestral Warrior Totem",

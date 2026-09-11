@@ -1,7 +1,7 @@
 {
   "locale": "zh-CN",
-  "generatedAt": "2026-09-08T09:57:17.857Z",
-  "note": "多占位符词缀清单：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
+  "generatedAt": "2026-09-11T10:57:19.076Z",
+  "note": "多占位符词缀清单（按变体前的英文模板统计；字面数字变体机器推导的 order 不入清单）：逐条核对中英语序，语序不同的把 key 与顺序写进 _overrides/stat-order.json",
   "entries": [
     {
       "key": "explicit.stat_3032590688#0",
@@ -109,6 +109,11 @@
       "text": "该装备附加 # - # 基础混沌伤害"
     },
     {
+      "key": "explicit.stat_1515531208#0",
+      "en": "# to # Cold Thorns damage",
+      "text": "# - # 冰霜荆棘伤害"
+    },
+    {
       "key": "explicit.stat_3835522656#0",
       "en": "Adds # to # Lightning Damage to Unarmed Melee Hits",
       "text": "徒手近战击中时附加 # 到 # 点闪电伤害"
@@ -124,11 +129,6 @@
       "text": "具有 # - # 物理伤害，且每有一层首领破相，# 到 # 伤害"
     },
     {
-      "key": "explicit.stat_1515531208#0",
-      "en": "# to # Cold Thorns damage",
-      "text": "# - # 冰霜荆棘伤害"
-    },
-    {
       "key": "explicit.stat_3893788785#0",
       "en": "Bow Attacks consume #% of your maximum Life Flask Charges if possible to deal added Physical damage equal to #% of Flask's Life Recovery amount",
       "text": "弓类攻击尽量消耗生命上限药剂充能的 #%，附加相当于药剂生命回复量 #% 的物理伤害"
@@ -139,14 +139,14 @@
       "text": "使用该武器击中时，每有 1% 格挡几率，附加 # - # 的物理伤害"
     },
     {
-      "key": "explicit.stat_1695767482#0",
-      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
-      "text": "格挡时施加腐化之血，持续 # 秒，每秒造成相当于你生命上限 #% 的物理伤害"
-    },
-    {
       "key": "explicit.stat_566086661#0",
       "en": "Attacks with this Weapon have Added Cold Damage equal to #% to #% of maximum Mana",
       "text": "使用该武器攻击时附加冰霜伤害，等同于魔力上限的 #% 至 #%"
+    },
+    {
+      "key": "explicit.stat_1695767482#0",
+      "en": "Inflict Corrupted Blood for # second on Block, dealing #% of your maximum Life as Physical damage per second",
+      "text": "格挡时施加腐化之血，持续 # 秒，每秒造成相当于你生命上限 #% 的物理伤害"
     },
     {
       "key": "explicit.stat_262946222#0",

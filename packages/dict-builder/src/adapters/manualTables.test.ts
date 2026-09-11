@@ -61,7 +61,7 @@ describe('versions 与 stat-order', () => {
   it('parseVersions 忽略 _meta 并要求字符串', () => {
     expect(parseVersions(read('versions.json'))).toEqual({
       en: '0.5.5',
-      'zh-CN': '0.5',
+      'zh-CN': '0.5.5',
       'zh-TW': '0.5.5',
     })
     expect(() => parseVersions({ 'zh-CN': 1 })).toThrow('zh-CN')

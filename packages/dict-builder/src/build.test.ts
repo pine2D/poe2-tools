@@ -137,8 +137,8 @@ describe('runBuild', () => {
       expect(meta.coverage.synthetic.rate).toBeCloseTo(2 / 21, 10)
       expect(meta.coverage.local).toBeNull()
       expect(meta.sources.map((s: { name: string }) => s.name)).toContain(`trade2-${locale}-stats`)
-      // 真实 versions.json 的 en 与 zh-CN 目前版本不同，会带一条"跨版本 join"提示；除此之外不应有告警
-      expect(meta.warnings.filter((w: string) => !w.includes('跨版本'))).toEqual([])
+      // 当前三服均为 0.5.5，不应有跨版本 join 或其他告警。
+      expect(meta.warnings).toEqual([])
       expect(meta.audit.gems.joined).toBe(6)
       expect(meta.audit.items.bases.missingInEn).toBe(5)
       expect(meta.sources.map((s: { name: string }) => s.name)).toContain('poe2db-list-us-Gem')
@@ -147,7 +147,7 @@ describe('runBuild', () => {
       )
     }
     const zhCN = JSON.parse(await readFile(join(opts.dictDir, 'zh-CN', 'meta.json'), 'utf8'))
-    expect(zhCN.gameVersion).toBe('0.5')
+    expect(zhCN.gameVersion).toBe('0.5.5')
     expect(zhCN.leagueName).toBe('测试联盟')
     const zhTW = JSON.parse(await readFile(join(opts.dictDir, 'zh-TW', 'meta.json'), 'utf8'))
     expect(zhTW.gameVersion).toBe('0.5.5')
