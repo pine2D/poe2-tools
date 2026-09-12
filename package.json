@@ -15,9 +15,11 @@
     "test": "vitest run --passWithNoTests",
     "build": "pnpm -r --if-present run build",
     "dev": "pnpm --filter @poe2-tools/build-l10n dev",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm dict:check",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm dict:check && pnpm craft:check",
     "dict:build": "pnpm --filter @poe2-tools/dict-builder run build-dict",
-    "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict"
+    "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict",
+    "craft:build": "pnpm --filter @poe2-tools/dict-builder run build-craft",
+    "craft:check": "pnpm --filter @poe2-tools/dict-builder run check-craft"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

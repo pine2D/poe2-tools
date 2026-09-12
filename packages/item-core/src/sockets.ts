@@ -1,0 +1,112 @@
+import type { CatalogAugment, CraftCatalog } from './catalog'
+import type { CraftState } from './rehearsal'
+import { isSupportedArmourRune } from './runeEffects'
+import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
+
+/** 只列已占用孔；augment.lines 是当前效果，bonded 仅保留来源信息。 */
+export interface SocketEffect {
+  socketIndex: number
+  augment: CatalogAugment
+}
+
+const SPECIAL_SOCKET_RULE = /\b(?:sockets?|socketed|augments?|runes?|soul cores?|bonded|chakra)\b/i
+
+function specialState(catalog: CraftCatalog, state: CraftState): boolean {
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (base === undefined) return true
+  const lines = [
+    ...(base.implicit?.split('\n') ?? []),
+    ...(state.implicitLines ?? []),
+    ...state.affixes.flatMap((affix) => [
+      ...affix.lines,
+      ...(catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? []),
+    ]),
+  ]
+  return lines.some((line) => SPECIAL_SOCKET_RULE.test(line))
+}
+
+function supportedSocketBase(catalog: CraftCatalog, state: CraftState) {
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (
+    base === undefined ||
+    base.hidden ||
+    base.runeforged ||
+    base.variantList !== undefined ||
+    specialState(catalog, state)
+  )
+    return undefined
+  return base
+}
+
+function isSupportedOffhand(type: string): boolean {
+  return type === 'Focus' || type === 'Shield' || type === 'Buckler'
+}
+
+/** 普通巧匠石上限，独立于额外掉落孔及来源 socketLimit。 */
+export function artificerSocketLimit(catalog: CraftCatalog, state: CraftState): number {
+  const base = supportedSocketBase(catalog, state)
+  if (base === undefined) return 0
+  const weapon = weaponSocketKind(base)
+  if (weapon) return weapon.limit
+  if (base.type === 'Body Armour') return 2
+  return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type) ? 1 : 0
+}
+
+/** 本阶段可确认的非腐化已有孔范围，含额外掉落孔；不是巧匠石打孔上限。 */
+export function socketCapacity(catalog: CraftCatalog, state: CraftState): number {
+  const base = supportedSocketBase(catalog, state)
+  if (base === undefined) return 0
+  const weapon = weaponSocketKind(base)
+  if (weapon) return weapon.limit + 1
+  if (base.type === 'Body Armour') return 3
+  return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type) ? 2 : 0
+}
+
+function supportedAugment(
+  catalog: CraftCatalog,
+  state: CraftState,
+  augment: CatalogAugment,
+): boolean {
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  const weapon = base && weaponSocketKind(base)
+  return weapon ? isSupportedWeaponRune(augment, weapon.category) : isSupportedArmourRune(augment)
+}
+
+/** 缺省未建模；空数组明确零孔；null 仅表示已知空孔。 */
+export function socketStateError(catalog: CraftCatalog, state: CraftState): string | null {
+  if (state.sockets === undefined) return null
+  if (!Array.isArray(state.sockets)) return '孔位列表无效。'
+  for (const socket of state.sockets) {
+    if (socket !== null && (typeof socket !== 'string' || socket.length === 0))
+      return '孔位必须是明确空孔 null 或已知符文 ID。'
+  }
+  if (state.sockets.length === 0) return null
+  if (specialState(catalog, state))
+    return '当前装备带有特殊孔、绑定或镶嵌效果规则，暂不支持镶嵌演练。'
+  const capacity = socketCapacity(catalog, state)
+  if (capacity === 0) return '该基底暂不支持普通符文镶嵌。'
+  if (state.sockets.length > capacity) return `该基底最多支持 ${capacity} 个已核对的非腐化已有孔。`
+  for (const id of state.sockets) {
+    if (id === null) continue
+    const augment = catalog.augments?.find((entry) => entry.id === id)
+    if (augment === undefined) return `孔内物 ${id} 不在镶嵌目录中。`
+    if (!supportedAugment(catalog, state, augment))
+      return `孔内物 ${augment.name} 暂不支持镶嵌演练。`
+  }
+  return null
+}
+
+export function socketCandidates(catalog: CraftCatalog, state: CraftState): CatalogAugment[] {
+  if (Object.hasOwn(state, 'pendingDesecration')) return []
+  if (socketStateError(catalog, state) !== null || !state.sockets?.length) return []
+  // levelReq 为符文贡献的穿戴需求，不是物品等级门槛。
+  return (catalog.augments ?? []).filter((augment) => supportedAugment(catalog, state, augment))
+}
+
+export function socketEffects(catalog: CraftCatalog, state: CraftState): SocketEffect[] {
+  if (socketStateError(catalog, state) !== null) return []
+  return (state.sockets ?? []).flatMap((id, socketIndex) => {
+    const augment = catalog.augments?.find((entry) => entry.id === id)
+    return augment === undefined ? [] : [{ socketIndex, augment }]
+  })
+}

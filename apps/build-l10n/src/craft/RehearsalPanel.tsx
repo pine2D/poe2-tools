@@ -1,0 +1,1457 @@
+import {
+  type ArtificerCraftOperation,
+  addCraftAffix,
+  applyCraftOperation,
+  applyCraftStep,
+  BONE_RULES,
+  type BoneCraftOperation,
+  type CatalogMod,
+  CRAFT_CURRENCY_LABELS,
+  CRAFT_CURRENCY_RULES,
+  CRAFT_OMEN_RULES,
+  CRAFT_RULES_VERSION,
+  type CraftAdviceStep,
+  type CraftCatalog,
+  type CraftCurrency,
+  type CraftCurrencyTier,
+  type CraftImplicitTargetValues,
+  type CraftOmen,
+  type CraftOperation,
+  type CraftProject,
+  type CraftState,
+  type CraftStep,
+  type CraftTargetAlternative,
+  type CraftTargetValues,
+  craftCandidates,
+  createCraftState,
+  desecrationSourceHash,
+  ESSENCE_OMEN_RULES,
+  type EssenceCraftOperation,
+  type EssenceOmen,
+  type ItemDictionary,
+  inspectNumericLines,
+  prepareCraftOperation,
+  type RemovalCraftCurrency,
+  type RestoredCraftProject,
+  readNumericValues,
+  removableCraftAffixes,
+  resolveCraftImplicitPatterns,
+  resolveGrantedSkill,
+  type SocketCraftOperation,
+} from '@poe2-tools/item-core'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import './rehearsal.css'
+import { BoneCraftPanel } from './BoneCraftPanel'
+import { CraftComparisonPanel } from './CraftComparisonPanel'
+import { CraftItemTextPanel } from './CraftItemTextPanel'
+import { CraftTargets } from './CraftTargets'
+import { DefencePanel } from './DefencePanel'
+import { EssenceResultDetails } from './EssenceAdvicePanel'
+import { EssenceCraftPanel } from './EssenceCraftPanel'
+import { ModStateBadges } from './ModStateBadges'
+import { NumericControls } from './NumericControls'
+import { ProjectControls } from './ProjectControls'
+import { SocketPanel } from './SocketPanel'
+import { WeaponPanel } from './WeaponPanel'
+
+export interface RehearsalPanelProps {
+  catalog: CraftCatalog
+  initialState: CraftState
+  translations: Record<string, string>
+  translateLine?: (line: string) => string | null
+  dictionary?: ItemDictionary
+  initialProject?: RestoredCraftProject
+  importedSockets?: (string | null)[]
+  importedQuality?: number
+}
+
+interface HistoryEntry {
+  id: number
+  state: CraftState
+  operation: CraftStep | null
+}
+
+interface Draft {
+  omen?: CraftOmen
+  currency: CraftCurrency
+  state: CraftState
+  count: number
+  modIds: string[]
+  removeModId?: string
+  rolls?: NonNullable<CraftOperation['rolls']>
+  implicitValues?: number[]
+}
+
+function draftOperation(draft: Draft): CraftOperation {
+  return {
+    currency: draft.currency,
+    ...(draft.omen === undefined ? {} : { omen: draft.omen }),
+    modIds: [...draft.modIds],
+    ...(draft.removeModId === undefined ? {} : { removeModId: draft.removeModId }),
+    ...(draft.rolls === undefined
+      ? {}
+      : { rolls: draft.rolls.map((roll) => ({ modId: roll.modId, values: [...roll.values] })) }),
+    ...(draft.implicitValues === undefined ? {} : { implicitValues: [...draft.implicitValues] }),
+  }
+}
+
+function initialValues(patterns: string[], actual = patterns) {
+  const ranges = inspectNumericLines(patterns)
+  if (!ranges.ok) return ranges
+  const existing = readNumericValues(patterns, actual)
+  if (!existing.ok) return existing
+  return {
+    ok: true as const,
+    value: ranges.value.map((range) => existing.value[range.index] ?? range.min),
+  }
+}
+
+const CURRENCIES = Object.keys(CRAFT_CURRENCY_LABELS) as CraftCurrency[]
+
+function isRemovalCurrency(currency: CraftCurrency): currency is RemovalCraftCurrency {
+  return CRAFT_CURRENCY_RULES[currency].base === 'chaos' || currency === 'annulment'
+}
+
+const RARITIES: Record<CraftState['rarity'], string> = {
+  normal: '普通',
+  magic: '魔法',
+  rare: '稀有',
+}
+const CANDIDATE_LIMIT = 60
+const SLOT_NUMBERS = [1, 2, 3]
+
+function AffixCard({
+  mod,
+  lines,
+  crafted,
+  desecrated,
+  translateLine,
+}: {
+  mod: CatalogMod | undefined
+  lines: string[]
+  crafted?: true | undefined
+  desecrated?: true | undefined
+  translateLine: ((line: string) => string | null) | undefined
+}) {
+  return (
+    <article className="rehearsal-affix">
+      <header>
+        <strong>{mod?.name ?? '已导入词缀'}</strong>
+        <ModStateBadges
+          states={[
+            ...(crafted ? ['crafted' as const] : []),
+            ...(desecrated ? ['desecrated' as const] : []),
+          ]}
+        />
+        {mod ? (
+          <span>
+            {mod.kind === 'prefix' ? '前缀' : '后缀'} · 等级 {mod.level}
+          </span>
+        ) : null}
+      </header>
+      {lines.map((line) => {
+        const translated = translateLine?.(line)
+        return (
+          <div key={line}>
+            {translated ? <span>{translated}</span> : null}
+            <code>{line}</code>
+          </div>
+        )
+      })}
+    </article>
+  )
+}
+
+function CandidateButton({
+  mod,
+  minimumLevel,
+  translateLine,
+  onClick,
+}: {
+  mod: CatalogMod
+  minimumLevel: number
+  translateLine: ((line: string) => string | null) | undefined
+  onClick: () => void
+}) {
+  return (
+    <button type="button" className="rehearsal-candidate" onClick={onClick}>
+      <span className="rehearsal-candidate-text">
+        <strong>{mod.id}</strong> · {mod.name}
+      </span>
+      <span className="rehearsal-candidate-text">
+        {mod.kind === 'prefix' ? '前缀' : '后缀'} · 等级 {mod.level}
+      </span>
+      {mod.level < minimumLevel ? (
+        <span className="rehearsal-candidate-text">该词缀族的最高可用档位例外</span>
+      ) : null}
+      {mod.lines.map((line) => {
+        const translated = translateLine?.(line)
+        return (
+          <span className="rehearsal-candidate-line" key={line}>
+            {translated ? `${translated} · ` : ''}
+            {line}
+          </span>
+        )
+      })}
+    </button>
+  )
+}
+
+function removalLabel(
+  mod: CatalogMod | undefined,
+  lines: readonly string[],
+  translateLine: ((line: string) => string | null) | undefined,
+) {
+  const identity = mod ? `${mod.name}，组 ${mod.group}` : '已导入词缀'
+  const properties = lines
+    .flatMap((line) => {
+      const translated = translateLine?.(line)
+      return translated ? [translated, line] : [line]
+    })
+    .join('；')
+  return `选择移除此组：${identity}；${properties}`
+}
+
+export function RehearsalPanel({
+  catalog,
+  initialState,
+  translations,
+  translateLine,
+  dictionary,
+  initialProject,
+  importedSockets,
+  importedQuality,
+}: RehearsalPanelProps) {
+  const initial = useMemo(
+    () => createCraftState(catalog, initialProject?.project.initialState ?? initialState),
+    [catalog, initialProject, initialState],
+  )
+  const [history, setHistory] = useState<HistoryEntry[]>(() =>
+    initialProject
+      ? initialProject.states.map((state, index) => ({
+          id: index,
+          state,
+          operation: index === 0 ? null : (initialProject.project.operations[index - 1] ?? null),
+        }))
+      : initial.ok
+        ? [{ id: 0, state: initial.value, operation: null }]
+        : [],
+  )
+  const [cursor, setCursor] = useState(initialProject?.project.cursor ?? 0)
+  const [socketDeclaration, setSocketDeclaration] = useState(
+    initialProject ? initialProject.project.importedSockets : importedSockets,
+  )
+  const [qualityDeclaration, setQualityDeclaration] = useState(
+    initialProject ? initialProject.project.importedQuality : importedQuality,
+  )
+  const [targetModIds, setTargetModIds] = useState<string[]>(
+    initialProject?.project.targetModIds ?? [],
+  )
+  const [targetValues, setTargetValues] = useState<CraftTargetValues[]>(
+    initialProject?.project.targetValues ?? [],
+  )
+  const [targetAlternatives, setTargetAlternatives] = useState<CraftTargetAlternative[]>(
+    initialProject?.project.targetAlternatives ?? [],
+  )
+  const [targetImplicitValues, setTargetImplicitValues] = useState<CraftImplicitTargetValues[]>(
+    initialProject?.project.targetImplicitValues ?? [],
+  )
+  const [targetSession, setTargetSession] = useState(0)
+  const [comparisonOpen, setComparisonOpen] = useState(false)
+  const [omen, setOmen] = useState<CraftOmen | undefined>()
+  const [draft, setDraft] = useState<Draft | null>(null)
+  const [socketDraft, setSocketDraft] = useState<
+    SocketCraftOperation | ArtificerCraftOperation | null
+  >(null)
+  const [essenceDraft, setEssenceDraft] = useState<EssenceCraftOperation | null>(null)
+  const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
+  const [boneSession, setBoneSession] = useState(0)
+  const boneDraftRef = useRef<HTMLElement>(null)
+  const bonePanelRef = useRef<HTMLDivElement>(null)
+  const restoreBoneFocusRef = useRef(false)
+  useEffect(() => {
+    if (boneDraft) boneDraftRef.current?.focus()
+    else if (restoreBoneFocusRef.current) {
+      bonePanelRef.current?.focus()
+      restoreBoneFocusRef.current = false
+    }
+  }, [boneDraft])
+
+  const [essenceSession, setEssenceSession] = useState(0)
+  const essenceDraftRef = useRef<HTMLElement>(null)
+  const essenceTriggerRef = useRef<HTMLElement | null>(null)
+  const restoreEssenceFocusRef = useRef(false)
+  useEffect(() => {
+    if (essenceDraft) {
+      essenceDraftRef.current?.focus()
+    } else {
+      if (restoreEssenceFocusRef.current && essenceTriggerRef.current?.isConnected) {
+        essenceTriggerRef.current.focus()
+      }
+      restoreEssenceFocusRef.current = false
+      essenceTriggerRef.current = null
+    }
+  }, [essenceDraft])
+  const preparationTriggerRef = useRef<HTMLElement | null>(null)
+  const restorePreparationFocusRef = useRef(false)
+  const draftRef = useRef<HTMLElement>(null)
+  const activeDraftKey = draft ? `${draft.currency}:${draft.removeModId ?? ''}` : null
+  useEffect(() => {
+    if (activeDraftKey !== null) draftRef.current?.focus()
+    else {
+      if (restorePreparationFocusRef.current && preparationTriggerRef.current?.isConnected) {
+        preparationTriggerRef.current.focus()
+      }
+      restorePreparationFocusRef.current = false
+      preparationTriggerRef.current = null
+    }
+  }, [activeDraftKey])
+  const [removalCurrency, setRemovalCurrency] = useState<RemovalCraftCurrency | null>(null)
+  const [currencyTier, setCurrencyTier] = useState<CraftCurrencyTier>('basic')
+  const [query, setQuery] = useState('')
+  const [message, setMessage] = useState(initial.ok ? '' : initial.error)
+  const current = history[cursor]?.state
+  const base = catalog.bases.find((entry) => entry.id === current?.baseId)
+  const implicit = useMemo(
+    () => (base && current ? resolveCraftImplicitPatterns(base, current) : null),
+    [base, current],
+  )
+  const modById = useMemo(
+    () => new Map(catalog.modifiers.map((mod) => [mod.id, mod])),
+    [catalog.modifiers],
+  )
+  const candidateList = useMemo(() => {
+    if (!draft) return []
+    const needle = query.trim().toLowerCase()
+    return craftCandidates(catalog, draft.state, draft.currency, draft.omen)
+      .filter((mod) => {
+        const translated = mod.lines.map((line) => translateLine?.(line) ?? '').join(' ')
+        return `${mod.id} ${mod.name} ${mod.group} ${mod.lines.join(' ')} ${translated}`
+          .toLowerCase()
+          .includes(needle)
+      })
+      .slice(0, CANDIDATE_LIMIT)
+  }, [catalog, draft, query, translateLine])
+  const preview = useMemo(() => {
+    if (boneDraft && current) return applyCraftStep(catalog, current, boneDraft)
+    if (essenceDraft && current) return applyCraftStep(catalog, current, essenceDraft)
+    if (socketDraft && current) return applyCraftStep(catalog, current, socketDraft)
+    if (!draft || !current || draft.modIds.length !== draft.count) return null
+    return applyCraftOperation(catalog, current, draftOperation(draft))
+  }, [catalog, current, draft, socketDraft, essenceDraft, boneDraft])
+
+  if (!initial.ok || !current || !base) {
+    return <section className="rehearsal-panel rehearsal-error">无法开始演练：{message}</section>
+  }
+
+  const startOperation = (currency: CraftCurrency, operationOmen = omen) => {
+    if (boneDraft || current.pendingDesecration) return
+    setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
+    if (isRemovalCurrency(currency)) {
+      const removable = removableCraftAffixes(catalog, current, currency, operationOmen)
+      if (!removable.ok) {
+        setMessage(removable.error)
+        return
+      }
+      setRemovalCurrency(currency)
+      setMessage('')
+      return
+    }
+    const prepared = prepareCraftOperation(catalog, current, currency, undefined, operationOmen)
+    if (!prepared.ok) {
+      setMessage(prepared.error)
+      return
+    }
+    const next: Draft = {
+      currency,
+      ...(operationOmen === undefined ? {} : { omen: operationOmen }),
+      state: prepared.value.state,
+      count: prepared.value.count,
+      modIds: [],
+    }
+    if (currency === 'divine') {
+      next.rolls = []
+      for (const affix of current.affixes) {
+        const mod = modById.get(affix.modId)
+        if (!mod) return
+        const values = initialValues(mod.lines, affix.lines)
+        if (!values.ok) {
+          setMessage(values.error)
+          return
+        }
+        if (values.value.length > 0) next.rolls.push({ modId: mod.id, values: values.value })
+      }
+      if (!implicit?.ok) {
+        setMessage(implicit && !implicit.ok ? implicit.error : '固有属性无法核对。')
+        return
+      }
+      const patterns = implicit.value.patterns
+      const values = initialValues(patterns, current.implicitLines ?? patterns)
+      if (!values.ok) {
+        setMessage(values.error)
+        return
+      }
+      if (values.value.length > 0) next.implicitValues = values.value
+    }
+    setDraft(next)
+    setQuery('')
+    setMessage('')
+  }
+  const chooseRemoval = (
+    currency: RemovalCraftCurrency,
+    removeModId: string,
+    operationOmen = omen,
+  ) => {
+    setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
+    const prepared = prepareCraftOperation(catalog, current, currency, removeModId, operationOmen)
+    if (!prepared.ok) {
+      setMessage(prepared.error)
+      return
+    }
+    setDraft({
+      currency,
+      ...(operationOmen === undefined ? {} : { omen: operationOmen }),
+      state: prepared.value.state,
+      count: prepared.value.count,
+      modIds: [],
+      removeModId,
+    })
+    setRemovalCurrency(null)
+    setQuery('')
+    setMessage('')
+  }
+  const chooseCandidate = (modId: string) => {
+    if (!draft) return
+    const next = addCraftAffix(catalog, draft.state, modId, draft.currency, draft.omen)
+    if (!next.ok) {
+      setMessage(next.error)
+      return
+    }
+    const mod = modById.get(modId)
+    if (!mod) return
+    const values = initialValues(mod.lines)
+    if (!values.ok) {
+      setMessage(values.error)
+      return
+    }
+    setDraft({
+      ...draft,
+      state: next.value,
+      modIds: [...draft.modIds, modId],
+      ...(values.value.length > 0
+        ? { rolls: [...(draft.rolls ?? []), { modId, values: values.value }] }
+        : {}),
+    })
+    setMessage('')
+  }
+  const startAdvice = (step: CraftAdviceStep) => {
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    setOmen(step.omen)
+    if (isRemovalCurrency(step.currency)) {
+      if (step.removeModId) chooseRemoval(step.currency, step.removeModId, step.omen)
+    } else {
+      startOperation(step.currency, step.omen)
+    }
+  }
+  const startRoute = (operation: CraftStep) => {
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    if ('kind' in operation) {
+      if (operation.kind === 'essence') {
+        setOmen(undefined)
+        startEssence(operation)
+      }
+      return
+    }
+    const applied = applyCraftStep(catalog, current, operation)
+    if (!applied.ok) {
+      setMessage(applied.error)
+      return
+    }
+    const prepared = prepareCraftOperation(
+      catalog,
+      current,
+      operation.currency,
+      operation.removeModId,
+      operation.omen,
+    )
+    if (!prepared.ok) {
+      setMessage(prepared.error)
+      return
+    }
+    preparationTriggerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setDraft({
+      ...structuredClone(operation),
+      state: applied.value,
+      count: prepared.value.count,
+      modIds: [...operation.modIds],
+      ...(operation.rolls
+        ? {
+            rolls: operation.rolls.map((roll) => ({ modId: roll.modId, values: [...roll.values] })),
+          }
+        : {}),
+    })
+    setCurrencyTier(CRAFT_CURRENCY_RULES[operation.currency].tier)
+    setOmen(operation.omen)
+    setQuery('')
+    setMessage('')
+  }
+  const startPreparation = (operation: CraftOperation) => {
+    if (
+      (operation.currency !== 'transmutation' && operation.currency !== 'regal') ||
+      operation.omen !== undefined ||
+      operation.removeModId !== undefined
+    )
+      return
+    startRoute(operation)
+  }
+  const startEssence = (operation: EssenceCraftOperation) => {
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    const checked = applyCraftStep(catalog, current, operation)
+    if (!checked.ok) {
+      setMessage(checked.error)
+      return
+    }
+    essenceTriggerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setEssenceDraft(operation)
+    setOmen(undefined)
+    setMessage('')
+  }
+  const startBone = (operation: BoneCraftOperation) => {
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    const checked = applyCraftStep(catalog, current, operation)
+    if (!checked.ok) {
+      setMessage(checked.error)
+      return
+    }
+    setBoneDraft(structuredClone(operation))
+    setOmen(undefined)
+    setComparisonOpen(true)
+    setMessage('')
+  }
+  const applyStep = (operation: CraftStep) => {
+    const applied = applyCraftStep(catalog, current, operation)
+    if (!applied.ok) {
+      setMessage(applied.error)
+      return
+    }
+    const next = [
+      ...history.slice(0, cursor + 1),
+      {
+        id: Math.max(...history.map((entry) => entry.id)) + 1,
+        state: applied.value,
+        operation,
+      },
+    ]
+    if (
+      'kind' in operation &&
+      ['desecrate', 'desecration-offer', 'desecration-reveal'].includes(operation.kind)
+    )
+      restoreBoneFocusRef.current = true
+    setHistory(next)
+    setCursor(next.length - 1)
+    if (!('kind' in operation)) setOmen(undefined)
+    setDraft(null)
+    setSocketDraft(null)
+    setEssenceDraft(null)
+    setBoneDraft(null)
+    setBoneSession((value) => value + 1)
+    setEssenceSession((value) => value + 1)
+    setRemovalCurrency(null)
+    setMessage('')
+  }
+  const applyDraft = () => {
+    if (draft && draft.modIds.length === draft.count) applyStep(draftOperation(draft))
+  }
+  const undoDraftChoice = () => {
+    if (!draft || draft.modIds.length === 0) return
+    const prepared = prepareCraftOperation(
+      catalog,
+      current,
+      draft.currency,
+      draft.removeModId,
+      draft.omen,
+    )
+    if (!prepared.ok) {
+      setMessage(prepared.error)
+      return
+    }
+    const remaining = draft.modIds.slice(0, -1)
+    let state = prepared.value.state
+    for (const modId of remaining) {
+      const next = addCraftAffix(catalog, state, modId, draft.currency, draft.omen)
+      if (!next.ok) {
+        setMessage(next.error)
+        return
+      }
+      state = next.value
+    }
+    const rolls = draft.rolls?.filter((roll) => remaining.includes(roll.modId))
+    setDraft({ ...draft, state, modIds: remaining, ...(rolls === undefined ? {} : { rolls }) })
+    setMessage('')
+  }
+  const moveTo = (next: number) => {
+    setCursor(next)
+    setOmen(undefined)
+    setDraft(null)
+    setSocketDraft(null)
+    setEssenceDraft(null)
+    setBoneDraft(null)
+    setBoneSession((value) => value + 1)
+    setEssenceSession((value) => value + 1)
+    setRemovalCurrency(null)
+    setMessage('')
+  }
+  const capacities = current.rarity === 'rare' ? 3 : current.rarity === 'magic' ? 1 : 0
+  const prefixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'prefix')
+  const suffixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'suffix')
+  const omenLabel = (id: CraftOmen) =>
+    translations[CRAFT_OMEN_RULES[id].name] ?? CRAFT_OMEN_RULES[id].name
+  const essenceOmenLabel = (id: EssenceOmen) =>
+    translations[ESSENCE_OMEN_RULES[id].name] ?? ESSENCE_OMEN_RULES[id].name
+  const essenceLabel = (id: string) => {
+    const name = catalog.essences?.find((entry) => entry.id === id)?.name ?? id
+    return translations[name] ?? name
+  }
+  const stepLabel = (step: CraftStep) => {
+    if (!('kind' in step))
+      return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
+    if (step.kind === 'essence') {
+      return essenceLabel(step.essenceId) + (step.omen ? ` + ${essenceOmenLabel(step.omen)}` : '')
+    }
+    if (step.kind === 'desecrate')
+      return translations[BONE_RULES[step.boneId].name] ?? BONE_RULES[step.boneId].name
+    if (step.kind === 'desecration-offer') return '固定三项亵渎候选'
+    if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
+    if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
+    const name = catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文镶嵌'
+    return translations[name] ?? name
+  }
+  const costCounts = new Map<string, { label: string; count: number }>()
+  for (const { operation } of history.slice(1, cursor + 1)) {
+    if (
+      !operation ||
+      ('kind' in operation &&
+        (operation.kind === 'desecration-offer' || operation.kind === 'desecration-reveal'))
+    )
+      continue
+    const id =
+      'kind' in operation
+        ? operation.kind === 'artificer'
+          ? 'artificer'
+          : operation.kind === 'essence'
+            ? operation.essenceId
+            : operation.kind === 'desecrate'
+              ? operation.boneId
+              : operation.augmentId
+        : operation.currency
+    const previous = costCounts.get(id)
+    costCounts.set(id, {
+      label:
+        'kind' in operation
+          ? operation.kind === 'essence'
+            ? essenceLabel(operation.essenceId)
+            : stepLabel(operation)
+          : CRAFT_CURRENCY_LABELS[operation.currency],
+      count: (previous?.count ?? 0) + 1,
+    })
+    if (!('kind' in operation) && operation.omen) {
+      const previousOmen = costCounts.get(operation.omen)
+      costCounts.set(operation.omen, {
+        label: omenLabel(operation.omen),
+        count: (previousOmen?.count ?? 0) + 1,
+      })
+    }
+    if ('kind' in operation && operation.kind === 'essence' && operation.omen) {
+      const previousOmen = costCounts.get(operation.omen)
+      costCounts.set(operation.omen, {
+        label: essenceOmenLabel(operation.omen),
+        count: (previousOmen?.count ?? 0) + 1,
+      })
+    }
+  }
+  const costs = [...costCounts.values()].map(({ label, count }) => `${label} × ${count}`)
+  const augmentSourceHash = catalog._meta.sources.find(
+    (source) => source.path === 'src/Data/ModRunes.lua',
+  )?.sha256
+  const essenceSourceHash = catalog._meta.sources.find(
+    (source) => source.path === 'src/Data/Essence.lua',
+  )?.sha256
+  const hasEssenceHistory = history.some(
+    ({ operation }) => operation && 'kind' in operation && operation.kind === 'essence',
+  )
+  const desecratedHash =
+    history[0]?.state.affixes.some((affix) => affix.desecrated) ||
+    history.some(
+      ({ operation }) =>
+        operation &&
+        'kind' in operation &&
+        ['desecrate', 'desecration-offer', 'desecration-reveal'].includes(operation.kind),
+    )
+      ? desecrationSourceHash(catalog)
+      : null
+  const project: CraftProject = {
+    schemaVersion: 1 as const,
+    sourceCommit: catalog._meta.sourceCommit,
+    rulesVersion: CRAFT_RULES_VERSION,
+    initialState: history[0]?.state ?? current,
+    operations: history
+      .slice(1)
+      .flatMap((entry) => (entry.operation === null ? [] : [entry.operation])),
+    cursor,
+    ...(desecratedHash ? { desecrationSourceHash: desecratedHash } : {}),
+    ...(hasEssenceHistory && essenceSourceHash ? { essenceSourceHash } : {}),
+    ...(history[0]?.state.sockets !== undefined && augmentSourceHash ? { augmentSourceHash } : {}),
+    ...(targetModIds.length === 0 ? {} : { targetModIds }),
+    ...(targetValues.length === 0 ? {} : { targetValues }),
+    ...(targetImplicitValues.length === 0 ? {} : { targetImplicitValues }),
+    ...(targetAlternatives.length === 0 ? {} : { targetAlternatives }),
+    ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
+    ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
+  }
+  const restoreProject = (restored: RestoredCraftProject) => {
+    setHistory(
+      restored.states.map((state, index) => ({
+        id: index,
+        state,
+        operation: index === 0 ? null : (restored.project.operations[index - 1] ?? null),
+      })),
+    )
+    setCursor(restored.project.cursor)
+    setOmen(undefined)
+    setTargetModIds(restored.project.targetModIds ?? [])
+    setTargetValues(restored.project.targetValues ?? [])
+    setTargetImplicitValues(restored.project.targetImplicitValues ?? [])
+    setTargetAlternatives(restored.project.targetAlternatives ?? [])
+    setSocketDeclaration(restored.project.importedSockets)
+    setQualityDeclaration(restored.project.importedQuality)
+    setTargetSession((value) => value + 1)
+    setDraft(null)
+    setSocketDraft(null)
+    setEssenceDraft(null)
+    setBoneDraft(null)
+    setBoneSession((value) => value + 1)
+    setEssenceSession((value) => value + 1)
+    setRemovalCurrency(null)
+    setMessage('')
+  }
+  const comparisonBefore =
+    draft || socketDraft || essenceDraft || boneDraft
+      ? preview?.ok
+        ? current
+        : undefined
+      : removalCurrency
+        ? undefined
+        : history[cursor - 1]?.state
+  const comparisonAfter =
+    (draft || socketDraft || essenceDraft || boneDraft) && preview?.ok ? preview.value : current
+
+  const ItemPanel =
+    base.tags.includes('weapon') || ['Wand', 'Staff', 'Sceptre'].includes(base.type)
+      ? WeaponPanel
+      : DefencePanel
+  return (
+    <section className="rehearsal-panel" aria-label="通货演练">
+      <header className="rehearsal-heading">
+        <div>
+          <h2>通货演练 · 指定结果演练</h2>
+          <p>可指定词缀与具体数值；范围试掷采用演练模型，不计算真实概率或市场价格。</p>
+          <p className="rehearsal-scope-note">
+            支持普通攻击武器本地面板与三项防御估算；起点品质保留，技能与角色面板尚未计算。
+          </p>
+        </div>
+        <div>
+          <strong>{translations[base.name] ?? base.name}</strong>
+          <span>{RARITIES[current.rarity]}</span>
+        </div>
+      </header>
+
+      <ProjectControls
+        catalog={catalog}
+        project={project}
+        onRestore={restoreProject}
+        {...(dictionary === undefined ? {} : { dictionary })}
+      />
+      <p className="rehearsal-project-identity">
+        当前演练项目：{translations[base.name] ?? base.name} · 物品等级 {current.itemLevel}
+      </p>
+      <CraftItemTextPanel
+        catalog={catalog}
+        state={current}
+        pending={Boolean(draft || removalCurrency || socketDraft || essenceDraft || boneDraft)}
+      />
+      <ItemPanel
+        catalog={catalog}
+        current={current}
+        preview={Boolean(draft || socketDraft || essenceDraft || boneDraft)}
+        {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
+        {...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration })}
+      />
+      {socketDeclaration !== undefined ? (
+        <p className="rehearsal-scope-note">
+          孔位由用户核对：起点 {socketDeclaration.length}{' '}
+          个孔。此信息独立于复制原文，起点已有符文不计费。
+        </p>
+      ) : null}
+      {current.runeSourceLines !== undefined ? (
+        <p className="rehearsal-scope-note">
+          原文符文效果已核对；当前效果按孔内物计算，后续替换不改写起点来源。
+        </p>
+      ) : null}
+      <CraftTargets
+        key={`${current.baseId}:${targetSession}`}
+        catalog={catalog}
+        state={current}
+        targetImplicitValues={targetImplicitValues}
+        onImplicitValuesChange={setTargetImplicitValues}
+        targetModIds={targetModIds}
+        targetValues={targetValues}
+        targetAlternatives={targetAlternatives}
+        {...(omen === undefined ? {} : { omen })}
+        onAlternativesChange={(alternatives) => {
+          setTargetAlternatives(alternatives)
+          const accepted = new Set([
+            ...targetModIds,
+            ...alternatives.flatMap((entry) => entry.modIds),
+          ])
+          setTargetValues((values) => values.filter((entry) => accepted.has(entry.modId)))
+        }}
+        onValuesChange={setTargetValues}
+        onChange={(ids) => {
+          setTargetModIds(ids)
+          const alternatives = targetAlternatives.filter((entry) => ids.includes(entry.targetModId))
+          setTargetAlternatives(alternatives)
+          const accepted = new Set([...ids, ...alternatives.flatMap((entry) => entry.modIds)])
+          setTargetValues((values) => values.filter((entry) => accepted.has(entry.modId)))
+        }}
+        onStart={startAdvice}
+        onStartPreparation={startPreparation}
+        onPreviewRoute={startRoute}
+        onStartEssence={(step) => startEssence(step.operation)}
+        translations={translations}
+        busy={
+          draft !== null ||
+          removalCurrency !== null ||
+          socketDraft !== null ||
+          essenceDraft !== null ||
+          boneDraft !== null ||
+          current.pendingDesecration !== undefined
+        }
+        {...(translateLine === undefined ? {} : { translateLine })}
+      />
+
+      <div className="rehearsal-omen">
+        <label>
+          本次搭配预兆
+          <select
+            aria-label="本次搭配预兆"
+            value={omen ?? ''}
+            disabled={
+              draft !== null ||
+              removalCurrency !== null ||
+              socketDraft !== null ||
+              essenceDraft !== null ||
+              boneDraft !== null ||
+              current.pendingDesecration !== undefined
+            }
+            onChange={(event) => {
+              setOmen((event.target.value || undefined) as CraftOmen | undefined)
+              setMessage('')
+            }}
+          >
+            <option value="">不使用预兆</option>
+            {(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]).map((id) => (
+              <option key={id} value={id}>
+                {omenLabel(id)}
+              </option>
+            ))}
+          </select>
+        </label>
+        {omen ? (
+          <p>
+            <span lang="en">{CRAFT_OMEN_RULES[omen].name}</span> · 适配基础
+            {CRAFT_CURRENCY_LABELS[CRAFT_OMEN_RULES[omen].currency]}；
+            {CRAFT_OMEN_RULES[omen].effect === 'add' ? '仅新增' : '仅移除'}
+            {CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : '后缀'}。
+            {CRAFT_OMEN_RULES[omen].currency === 'chaos' ? '混沌新增仍可为任一合法侧。' : ''}
+            仅用于本次通货；应用成功计入一枚预兆费用。
+          </p>
+        ) : null}
+      </div>
+      <label className="rehearsal-tier">
+        通货层级
+        <select
+          aria-label="通货层级"
+          value={currencyTier}
+          disabled={
+            draft !== null ||
+            removalCurrency !== null ||
+            socketDraft !== null ||
+            essenceDraft !== null ||
+            boneDraft !== null ||
+            current.pendingDesecration !== undefined
+          }
+          onChange={(event) => setCurrencyTier(event.target.value as CraftCurrencyTier)}
+        >
+          <option value="basic">基础</option>
+          <option value="greater">高级</option>
+          <option value="perfect">完美</option>
+        </select>
+      </label>
+      {currencyTier !== 'basic' ? (
+        <p>
+          最低词缀等级限制新增档位；若某类词缀将被完全排除，仍保留该物等下最高可用档位。装备物等必须达到通货门槛。
+        </p>
+      ) : null}
+      <nav className="rehearsal-currencies" aria-label="选择通货">
+        {CURRENCIES.filter((id) => CRAFT_CURRENCY_RULES[id].tier === currencyTier).map((id) => (
+          <button
+            type="button"
+            key={id}
+            disabled={
+              (id === 'divine' &&
+                implicit?.ok &&
+                implicit.value.charm !== null &&
+                !implicit.value.charm.fixed &&
+                implicit.value.charm.range === null) ||
+              draft !== null ||
+              removalCurrency !== null ||
+              socketDraft !== null ||
+              essenceDraft !== null ||
+              boneDraft !== null ||
+              current.pendingDesecration !== undefined
+            }
+            onClick={() => startOperation(id)}
+          >
+            {CRAFT_CURRENCY_LABELS[id]}
+          </button>
+        ))}
+      </nav>
+      {removalCurrency && (
+        <section className="rehearsal-removal" aria-label="选择要移除的词缀">
+          <h3>{CRAFT_CURRENCY_LABELS[removalCurrency]}：先指定移除结果</h3>
+          <p>请选择一个完整词缀组。该选择是演练指定结果，不代表游戏中的随机概率。</p>
+          {omen ? (
+            <p>
+              游戏实际在{CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : '后缀'}
+              中随机移除，该侧具体词缀没有被保护。
+            </p>
+          ) : null}
+          <div className="rehearsal-removal-list">
+            {(() => {
+              const removable = removableCraftAffixes(catalog, current, removalCurrency, omen)
+              return removable.ok ? removable.value : []
+            })().map((affix) => {
+              const mod = modById.get(affix.modId)
+              return (
+                <div className="rehearsal-removal-choice" key={affix.modId}>
+                  <AffixCard
+                    mod={mod}
+                    crafted={affix.crafted}
+                    desecrated={affix.desecrated}
+                    lines={affix.lines}
+                    translateLine={translateLine}
+                  />
+                  <button
+                    type="button"
+                    aria-label={removalLabel(mod, affix.lines, translateLine)}
+                    onClick={() => chooseRemoval(removalCurrency, affix.modId)}
+                  >
+                    选择移除此组
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          <button type="button" onClick={() => setRemovalCurrency(null)}>
+            取消选择
+          </button>
+        </section>
+      )}
+      {message && (
+        <p className="rehearsal-message" role="status">
+          {message}
+        </p>
+      )}
+
+      <div className="rehearsal-toolbar">
+        <button type="button" disabled={cursor === 0} onClick={() => moveTo(cursor - 1)}>
+          撤销
+        </button>
+        <button
+          type="button"
+          disabled={cursor >= history.length - 1}
+          onClick={() => moveTo(cursor + 1)}
+        >
+          重做
+        </button>
+        <button type="button" disabled={cursor === 0} onClick={() => moveTo(0)}>
+          回到起点
+        </button>
+        <div className="rehearsal-costs">
+          {costs.length > 0 ? (
+            costs.map((cost) => <span key={cost}>{cost}</span>)
+          ) : (
+            <span>尚未消耗通货</span>
+          )}
+        </div>
+      </div>
+
+      <nav className="rehearsal-history" aria-label="演练历史">
+        {history.map((entry, index) => {
+          const currency = entry.operation ? stepLabel(entry.operation) : undefined
+          return (
+            <button
+              type="button"
+              key={entry.id}
+              aria-current={index === cursor ? 'step' : undefined}
+              onClick={() => moveTo(index)}
+            >
+              步骤 {index}：{currency ?? '起点'}
+            </button>
+          )
+        })}
+      </nav>
+
+      {comparisonBefore ? (
+        <div className="rehearsal-comparison">
+          <p>
+            {draft || socketDraft || essenceDraft || boneDraft
+              ? '当前装备与待应用结果'
+              : '上一步与当前历史步骤'}
+          </p>
+          <button
+            type="button"
+            aria-expanded={comparisonOpen}
+            onClick={() => setComparisonOpen(!comparisonOpen)}
+          >
+            {comparisonOpen ? '收起前后变化' : '展开前后变化'}
+          </button>
+          {comparisonOpen ? (
+            <CraftComparisonPanel
+              catalog={catalog}
+              translations={translations}
+              targetImplicitValues={targetImplicitValues}
+              before={comparisonBefore}
+              after={comparisonAfter}
+              {...(translateLine === undefined ? {} : { translateLine })}
+            />
+          ) : null}
+        </div>
+      ) : null}
+      <div ref={bonePanelRef} tabIndex={-1}>
+        <BoneCraftPanel
+          key={`bone:${targetSession}:${cursor}:${history[cursor]?.id}:${boneSession}`}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          targetModIds={targetModIds}
+          targetValues={targetValues}
+          targetAlternatives={targetAlternatives}
+          disabled={Boolean(draft || removalCurrency || socketDraft || essenceDraft || boneDraft)}
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startBone}
+        />
+      </div>
+      {boneDraft ? (
+        <section
+          ref={boneDraftRef}
+          tabIndex={-1}
+          className="rehearsal-draft"
+          aria-label="骨骼待应用结果"
+        >
+          <h3>{stepLabel(boneDraft)}</h3>
+          {preview?.ok ? (
+            <p>
+              {boneDraft.kind === 'desecrate'
+                ? '应用后消耗一份骨骼，产生未知亵渎占位。'
+                : boneDraft.kind === 'desecration-offer'
+                  ? '应用后固定三项候选，不额外计费。'
+                  : '应用后保留所选亵渎属性，恢复常规制作，不额外计费。'}
+            </p>
+          ) : (
+            <p role="alert">{preview?.error}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              restoreBoneFocusRef.current = true
+              setBoneDraft(null)
+              setBoneSession((value) => value + 1)
+            }}
+          >
+            取消骨骼步骤
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={!preview?.ok}
+            onClick={() => applyStep(boneDraft)}
+          >
+            应用骨骼步骤
+          </button>
+        </section>
+      ) : null}
+      <EssenceCraftPanel
+        key={`essence:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+        catalog={catalog}
+        state={current}
+        translations={translations}
+        targetModIds={targetModIds}
+        targetAlternatives={targetAlternatives}
+        targetValues={targetValues}
+        disabled={
+          draft !== null ||
+          removalCurrency !== null ||
+          socketDraft !== null ||
+          essenceDraft !== null ||
+          boneDraft !== null ||
+          current.pendingDesecration !== undefined
+        }
+        {...(translateLine ? { translateLine } : {})}
+        onPreview={startEssence}
+      />
+      {essenceDraft ? (
+        <section
+          ref={essenceDraftRef}
+          tabIndex={-1}
+          className="rehearsal-draft"
+          aria-label="精华待应用结果"
+        >
+          <h3>{stepLabel(essenceDraft)}</h3>
+          <EssenceResultDetails
+            catalog={catalog}
+            state={current}
+            operation={essenceDraft}
+            {...(translateLine ? { translateLine } : {})}
+          />
+          {preview?.ok ? (
+            <p>
+              {essenceDraft.removeModId
+                ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+            </p>
+          ) : (
+            <p role="alert">{preview?.error}</p>
+          )}
+          {essenceDraft.omen ? <p>此方案另消耗一份结晶预兆，确认应用后分别计费。</p> : null}
+          <button
+            type="button"
+            onClick={() => {
+              restoreEssenceFocusRef.current = true
+              setEssenceDraft(null)
+              setBoneDraft(null)
+              setBoneSession((value) => value + 1)
+              setEssenceSession((value) => value + 1)
+            }}
+          >
+            取消精华结果
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={!preview?.ok}
+            onClick={() => applyStep(essenceDraft)}
+          >
+            应用精华结果
+          </button>
+        </section>
+      ) : null}
+      <SocketPanel
+        key={`${targetSession}:${cursor}:${history[cursor]?.id}`}
+        catalog={catalog}
+        state={current}
+        draft={socketDraft}
+        busy={
+          draft !== null ||
+          removalCurrency !== null ||
+          essenceDraft !== null ||
+          boneDraft !== null ||
+          current.pendingDesecration !== undefined
+        }
+        canApply={preview?.ok === true}
+        translations={translations}
+        {...(translateLine ? { translateLine } : {})}
+        onPreview={(step) => {
+          setSocketDraft(step)
+          setMessage('')
+        }}
+        onApply={() => {
+          if (socketDraft) applyStep(socketDraft)
+        }}
+      />
+      {socketDraft && preview && !preview.ok ? <p role="status">{preview.error}</p> : null}
+      {current.affixes.some((affix) => affix.desecrated) ? (
+        <div>
+          <p>亵渎词缀 1/1</p>
+          <p>可继续常规制作；亵渎组也可能被移除。再次施加骨骼前需先移除已有亵渎组。</p>
+        </div>
+      ) : null}
+      <div className="rehearsal-slots">
+        <section>
+          <h3>
+            前缀 {prefixes.length + (current.pendingDesecration?.kind === 'prefix' ? 1 : 0)}/
+            {capacities}
+          </h3>
+          {current.pendingDesecration?.kind === 'prefix' ? (
+            <p className="rehearsal-affix">未揭示亵渎前缀</p>
+          ) : null}
+          {prefixes.map((affix) => (
+            <AffixCard
+              key={affix.modId}
+              mod={modById.get(affix.modId)}
+              crafted={affix.crafted}
+              desecrated={affix.desecrated}
+              lines={affix.lines}
+              translateLine={translateLine}
+            />
+          ))}
+          {SLOT_NUMBERS.slice(
+            0,
+            Math.max(
+              0,
+              capacities -
+                prefixes.length -
+                (current.pendingDesecration?.kind === 'prefix' ? 1 : 0),
+            ),
+          ).map((slot) => (
+            <p className="rehearsal-empty-slot" key={`prefix-${slot}`}>
+              空前缀
+            </p>
+          ))}
+        </section>
+        <section>
+          <h3>
+            后缀 {suffixes.length + (current.pendingDesecration?.kind === 'suffix' ? 1 : 0)}/
+            {capacities}
+          </h3>
+          {current.pendingDesecration?.kind === 'suffix' ? (
+            <p className="rehearsal-affix">未揭示亵渎后缀</p>
+          ) : null}
+          {suffixes.map((affix) => (
+            <AffixCard
+              key={affix.modId}
+              mod={modById.get(affix.modId)}
+              crafted={affix.crafted}
+              desecrated={affix.desecrated}
+              lines={affix.lines}
+              translateLine={translateLine}
+            />
+          ))}
+          {SLOT_NUMBERS.slice(
+            0,
+            Math.max(
+              0,
+              capacities -
+                suffixes.length -
+                (current.pendingDesecration?.kind === 'suffix' ? 1 : 0),
+            ),
+          ).map((slot) => (
+            <p className="rehearsal-empty-slot" key={`suffix-${slot}`}>
+              空后缀
+            </p>
+          ))}
+        </section>
+      </div>
+
+      {(current.implicitLines ?? base.implicit?.split('\n') ?? []).length > 0 ? (
+        <section className="rehearsal-implicit" aria-label="当前固有属性">
+          <h3>固有属性</h3>
+          {implicit?.ok && implicit.value.charm ? (
+            <p>
+              {implicit.value.charm.fixed
+                ? '咒符栏：固定 1 栏，不随物品等级增加。'
+                : implicit.value.charm.range
+                  ? `咒符栏：${implicit.value.charm.value}；可重掷范围：1–${implicit.value.charm.range.max}。`
+                  : `咒符栏：${implicit.value.charm.value}；原文未提供范围，不能使用神圣石；请提供完整高级装备文本。其他制作可继续。`}
+            </p>
+          ) : null}
+          {base.implicit?.includes('Grants Skill:') ? (
+            <p>
+              授予技能有等级时保留起点等级，无等级时保留名称；角色需求及全局技能加成尚未计算。带等级范围的授予技能暂不支持神圣石重掷。
+            </p>
+          ) : null}
+          {(current.implicitLines ?? base.implicit?.split('\n') ?? []).map((line) => {
+            const maximum = resolveGrantedSkill(line, [], 'en').maxLevel
+            const suffix = maximum === null ? '' : ` (Max Level ${maximum})`
+            const body = suffix ? line.slice(0, -suffix.length) : line
+            const translated = translateLine?.(body)
+            return (
+              <div key={line}>
+                {translated ? (
+                  <span>
+                    {translated}
+                    {maximum === null ? '' : `（最高等级 ${maximum}）`}
+                  </span>
+                ) : null}
+                <code>{line}</code>
+              </div>
+            )
+          })}
+        </section>
+      ) : null}
+
+      {draft && (
+        <section className="rehearsal-draft" aria-label="本次指定结果" ref={draftRef} tabIndex={-1}>
+          <header>
+            <div>
+              <h3>{stepLabel(draftOperation(draft))}</h3>
+              {draft.count > 0 ? (
+                <p>
+                  已选择 {draft.modIds.length}/{draft.count}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              {draft.count > 0 ? (
+                <button
+                  type="button"
+                  disabled={draft.modIds.length === 0}
+                  onClick={undoDraftChoice}
+                >
+                  撤销上一个选择
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  restorePreparationFocusRef.current = true
+                  setDraft(null)
+                }}
+              >
+                取消本次结果
+              </button>
+              <button
+                className="primary"
+                type="button"
+                disabled={draft.modIds.length !== draft.count || !preview?.ok}
+                onClick={applyDraft}
+              >
+                应用本次结果
+              </button>
+            </div>
+          </header>
+          {CRAFT_CURRENCY_RULES[draft.currency].minModLevel > 0 ? (
+            <p className="rehearsal-warning">
+              本次最低词缀等级 {CRAFT_CURRENCY_RULES[draft.currency].minModLevel}；当前物等{' '}
+              {current.itemLevel}。词缀族仅剩低档时保留当前最高档，已有属性不受影响。
+            </p>
+          ) : null}
+          {draft.currency === 'alchemy' && (
+            <p className="rehearsal-warning">点金会清除当前旧词缀并换成四条新词缀。</p>
+          )}
+          {draft.currency === 'divine' ? (
+            <p className="rehearsal-warning">
+              神圣会重掷已有词缀及固有属性的数值，不改变档位；数值可能变差。请核对全部范围后确认。
+              {targetImplicitValues.length
+                ? '已达成的显式及固有目标也可能失去；示例指定值不代表游戏随机结果安全。'
+                : ''}
+            </p>
+          ) : draft.modIds.length > 0 ? (
+            <p>新增范围初始填入下限，可调整数值或按范围试掷；应用前请核对。</p>
+          ) : null}
+          {draft.rolls?.map((roll) => {
+            const mod = modById.get(roll.modId)
+            if (!mod) return null
+            return (
+              <NumericControls
+                key={roll.modId}
+                label={mod.name}
+                patterns={mod.lines}
+                values={roll.values}
+                onChange={(values) =>
+                  setDraft({
+                    ...draft,
+                    rolls: (draft.rolls ?? []).map((entry) =>
+                      entry.modId === roll.modId ? { ...entry, values } : entry,
+                    ),
+                  })
+                }
+                {...(translateLine === undefined ? {} : { translateLine })}
+              />
+            )
+          })}
+          {draft.implicitValues !== undefined ? (
+            <NumericControls
+              label="固有属性"
+              patterns={implicit?.ok ? implicit.value.patterns : []}
+              values={draft.implicitValues}
+              onChange={(implicitValues) => setDraft({ ...draft, implicitValues })}
+              {...(translateLine === undefined ? {} : { translateLine })}
+            />
+          ) : null}
+          {preview && !preview.ok ? (
+            <p className="rehearsal-warning" role="alert">
+              {preview.error}
+            </p>
+          ) : null}
+          {draft.removeModId && (
+            <section className="rehearsal-removed" aria-label="将移除的词缀">
+              <h4 className="rehearsal-selected-title">将移除</h4>
+              {(() => {
+                const affix = current.affixes.find((entry) => entry.modId === draft.removeModId)
+                return affix ? (
+                  <AffixCard
+                    mod={modById.get(affix.modId)}
+                    crafted={affix.crafted}
+                    desecrated={affix.desecrated}
+                    lines={affix.lines}
+                    translateLine={translateLine}
+                  />
+                ) : null
+              })()}
+            </section>
+          )}
+          {draft.modIds.length > 0 && (
+            <section className="rehearsal-selected" aria-label="已选词缀">
+              <h4 className="rehearsal-selected-title">应用前核对</h4>
+              {draft.modIds.map((modId) => {
+                const affix = (preview?.ok ? preview.value : draft.state).affixes.find(
+                  (entry) => entry.modId === modId,
+                )
+                return affix ? (
+                  <AffixCard
+                    key={modId}
+                    mod={modById.get(modId)}
+                    crafted={affix.crafted}
+                    desecrated={affix.desecrated}
+                    lines={affix.lines}
+                    translateLine={translateLine}
+                  />
+                ) : null
+              })}
+            </section>
+          )}
+          {draft.modIds.length < draft.count && (
+            <>
+              <label>
+                搜索合法词缀
+                <input
+                  type="search"
+                  aria-label="搜索合法词缀"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+              <p className="rehearsal-candidate-count">
+                显示前 {candidateList.length} 条合法候选。
+              </p>
+              <div className="rehearsal-candidates">
+                {candidateList.map((mod) => (
+                  <CandidateButton
+                    key={mod.id}
+                    mod={mod}
+                    minimumLevel={CRAFT_CURRENCY_RULES[draft.currency].minModLevel}
+                    translateLine={translateLine}
+                    onClick={() => chooseCandidate(mod.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      )}
+    </section>
+  )
+}

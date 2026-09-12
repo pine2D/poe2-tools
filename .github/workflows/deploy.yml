@@ -6,7 +6,9 @@ on:
     paths:
       - 'apps/build-l10n/**'
       - 'packages/build-core/**'
+      - 'packages/item-core/**'
       - 'data/dict/**'
+      - 'data/craft/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'tsconfig.base.json'

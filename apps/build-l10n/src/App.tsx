@@ -362,6 +362,7 @@ export function App({ fetchImpl }: AppProps) {
           <Icon name="brand" size={22} className="app__mark" />
           <h1>PoE2 构筑汉化</h1>
         </div>
+        <a href={`${BASE}craft/`}>装备工坊</a>
         <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions}>
           <h2>界面主题</h2>
           <ThemeSeg mode={theme.mode} onMode={theme.setMode} />

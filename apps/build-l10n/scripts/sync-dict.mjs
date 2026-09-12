@@ -46,3 +46,11 @@ for (const locale of LOCALES) {
   )
 }
 console.log(`词典已同步：${copied} 个文件 + ${LOCALES.length} 份精简 meta → ${target}`)
+
+// 制作目录与许可通知随站发布，运行时不访问第三方数据源。
+const craftSource = resolve(appDir, '..', '..', 'data', 'craft')
+const craftTarget = resolve(appDir, 'public', 'craft-data')
+await mkdir(craftTarget, { recursive: true })
+for (const file of ['catalog.json', 'NOTICE.md']) {
+  await copyFile(join(craftSource, file), join(craftTarget, file))
+}

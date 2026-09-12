@@ -25,6 +25,7 @@ coverage/
 
 # 静态站从 data/dict 同步出来的词典副本（scripts/sync-dict.mjs 每次重建）
 /apps/build-l10n/public/dict/
+/apps/build-l10n/public/craft-data/
 
 # 系统文件
 .DS_Store

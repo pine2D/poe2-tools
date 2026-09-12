@@ -1,0 +1,326 @@
+import { stripModifierStateAnnotations } from './annotations'
+import {
+  canonicalBeltSlot,
+  isBeltCapacityBase,
+  resolveCraftImplicitPatterns,
+} from './beltImplicits'
+import type { CraftCatalog } from './catalog'
+import { matchCatalogMods } from './catalogMatch'
+import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
+import { type ItemInspection, knownExplicitHeader } from './export'
+import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
+import { hasSpecialModifierSource } from './modifierSource'
+import { CHARM_SLOTS_PROPERTY, CHARM_SLOTS_PROPERTY_HEADER, parseItem } from './parse'
+import { readItemQuality } from './quality'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { resolveStat, type StatTemplate } from './resolve'
+import { readRuneSourceLines, runeSocketContributionError } from './runeImport'
+import { socketCapacity } from './sockets'
+import type { ItemDocument } from './types'
+
+/** 只确认原文明确给出的孔数，S 不代表空孔，缺行也不代表零孔。 */
+export function importSocketCount(item: ItemDocument): CraftResult<number | null> {
+  const lines = item.blocks
+    .filter((block) => block.kind === 'sockets')
+    .flatMap((block) => block.lines)
+  if (lines.length === 0) return { ok: true, value: null }
+  if (lines.length !== 1) return { ok: false, error: '原文包含重复插槽行，先核对孔位信息。' }
+  const match = lines[0]?.raw.trim().match(/^(?:插槽|插槽連線|Sockets)\s*[:：]\s*(S(?:\s+S)*)$/)
+  if (!match?.[1]) return { ok: false, error: '原文插槽行包含未知或缺失标记，暂不能核对孔位。' }
+  return { ok: true, value: match[1].split(/\s+/).length }
+}
+
+/** 只有整件输入处于已知范围，才允许进入普通通货演练。 */
+export function importCraftState(
+  catalog: CraftCatalog,
+  baseId: string,
+  item: ItemDocument,
+  inspection: Pick<ItemInspection, 'base' | 'mods' | 'comparisonOnly'> &
+    Partial<Pick<ItemInspection, 'runes' | 'skills'>>,
+  importedSockets?: readonly (string | null)[],
+  importedQuality?: number,
+  skillEntries?: readonly StatTemplate[],
+): CraftResult<CraftState> {
+  const fail = (error: string): CraftResult<CraftState> => ({ ok: false, error })
+  if (inspection.comparisonOnly || item.rarity === 'unique')
+    return fail('咒符和传奇装备仅供对比，不开放制作。')
+  if (hasSpecialModifierSource(item)) {
+    const original = parseItem(item.rawText)
+    if (!original.ok || JSON.stringify(original.item) !== JSON.stringify(item))
+      return fail('特殊词缀状态与来源原文不一致，不能省略或修改状态字段。')
+    if (
+      original.item.fractured ||
+      item.fractured ||
+      original.item.mods.some((mod) =>
+        mod.states?.some((state) => state !== 'crafted' && state !== 'desecrated'),
+      ) ||
+      original.item.mods.filter((mod) => mod.states?.includes('crafted')).length > 1 ||
+      original.item.mods.filter((mod) => mod.states?.includes('desecrated')).length > 1 ||
+      original.item.mods.some(
+        (mod) =>
+          (mod.states?.length ?? 0) > 1 ||
+          (mod.kind === 'implicit' && (mod.states?.length ?? 0) > 0),
+      )
+    )
+      return fail('已识别特殊词缀来源或破裂物品，特殊制作尚未开放，暂时只能对比。')
+    if (
+      inspection.mods.length !== item.mods.length ||
+      inspection.mods.some(
+        ({ mod }, index) => JSON.stringify(mod) !== JSON.stringify(item.mods[index]),
+      )
+    )
+      return fail('词缀检查结果与来源原文不一致。')
+  }
+  if (item.corrupted || item.mirrored || item.unidentified)
+    return fail('本阶段仅支持已鉴定、未腐化、未镜像的装备。')
+  if (item.itemLevel === null || item.diagnostics.length > 0)
+    return fail('原文仍有缺失或结构诊断，先核对完整高级装备文本。')
+  if (item.blocks.some((block) => block.kind === 'unknown'))
+    return fail('原文包含未知区块，暂时只能对比。')
+  if (
+    importedQuality !== undefined &&
+    (!Number.isInteger(importedQuality) || importedQuality < 0 || importedQuality > 30)
+  )
+    return fail('导入品质声明必须是 0–30 的整数。')
+  const sourceQuality = readItemQuality(item)
+  if (!sourceQuality.ok) return sourceQuality
+  if (
+    sourceQuality.value !== undefined &&
+    importedQuality !== undefined &&
+    sourceQuality.value !== importedQuality
+  )
+    return fail('导入品质声明与原文品质不一致。')
+  const quality = sourceQuality.value ?? importedQuality
+  const runeLines = readRuneSourceLines(item, inspection.runes)
+  if (!runeLines.ok) return runeLines
+  if (runeLines.value !== undefined && importedSockets === undefined)
+    return fail('原文含符文效果，必须完整声明孔位及孔内符文。')
+  const socketCount = importSocketCount(item)
+  if (!socketCount.ok) return socketCount
+  if (socketCount.value !== null && importedSockets === undefined)
+    return fail('原文的 S 标记不能确定孔内是否已有镶嵌物，孔位状态尚未核对，暂时只能对比。')
+  if (importedSockets !== undefined) {
+    if (!Array.isArray(importedSockets)) return fail('孔位声明必须是数组。')
+    if (socketCount.value !== null && socketCount.value !== importedSockets.length)
+      return fail('已核对孔数与原文插槽数量不一致。')
+    const sourceHash = catalog._meta.sources.find(
+      (source) => source.path === 'src/Data/ModRunes.lua',
+    )?.sha256
+    if (
+      typeof sourceHash !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(sourceHash) ||
+      !catalog.augments?.length
+    )
+      return fail('孔位核对需要完整的镶嵌物目录及来源指纹。')
+  }
+  const base = catalog.bases.find((entry) => entry.id === baseId)
+  if (!base || inspection.base.english !== base.name) return fail('当前装备与所选基底不一致。')
+  if (isBeltCapacityBase(base)) {
+    const original = parseItem(item.rawText)
+    if (
+      !original.ok ||
+      JSON.stringify(original.item) !== JSON.stringify(item) ||
+      inspection.mods.length !== item.mods.length ||
+      inspection.mods.some(
+        ({ mod, stats }, index) =>
+          JSON.stringify(mod) !== JSON.stringify(item.mods[index]) ||
+          stats.length !== mod.stats.length ||
+          stats.some(
+            ({ source }, statIndex) =>
+              JSON.stringify(source) !== JSON.stringify(mod.stats[statIndex]),
+          ),
+      )
+    )
+      return fail('腰带原文及词缀检查结构不一致。')
+    for (const { mod, stats } of inspection.mods) {
+      if (mod.kind !== 'implicit') continue
+      for (const { source, resolution } of stats) {
+        const english = resolution.english ?? source.raw
+        if (!/Charm Slots?/.test(english) && !/Charm Slots?|咒符栏|護符欄位/.test(source.raw))
+          continue
+        const expected = canonicalBeltSlot(english)
+        if (item.locale === 'en' || /^Has /.test(source.raw)) {
+          if (expected !== canonicalBeltSlot(source.raw))
+            return fail('咒符栏数字或范围与原文不一致。')
+        } else if (
+          !resolveStat(source.raw, skillEntries ?? []).candidates.some(
+            (candidate) => canonicalBeltSlot(candidate.english) === expected,
+          )
+        )
+          return fail('咒符栏翻译缺少词典依据，或数字范围与原文不一致。')
+      }
+    }
+  }
+  if (
+    inspection.mods.some(
+      ({ mod }) =>
+        !['prefix', 'suffix', 'implicit'].includes(mod.kind) ||
+        (mod.kind !== 'implicit' &&
+          (!knownExplicitHeader(
+            mod.header.raw.replace(/^(\s*\{\s*)(?:crafted|desecrated)\s+/i, '$1'),
+          ) ||
+            /fractured|crafted|desecrated|破裂|分裂|工艺|工藝|亵渎|褻瀆/i.test(
+              mod.header.raw
+                .replace(/^(\s*\{\s*)(?:crafted|desecrated)\s+/i, '$1')
+                .replace(/["“][^"”]+["”]/g, ''),
+            ))),
+    )
+  )
+    return fail('存在特殊词缀或尚未支持的词缀标记，暂时只能对比。')
+
+  const ordinaryImplicitLines = inspection.mods
+    .filter(({ mod }) => mod.kind === 'implicit')
+    .flatMap(({ stats }) =>
+      stats.map(({ source, resolution }) => {
+        const line = resolution.english ?? source.raw
+        return isBeltCapacityBase(base) ? canonicalBeltSlot(line) : line
+      }),
+    )
+  const sourceSkills = item.blocks
+    .filter((block) => block.kind === 'skill')
+    .flatMap((block) => block.lines)
+  const skills = inspection.skills ?? []
+  if (
+    skills.length !== sourceSkills.length ||
+    skills.some(
+      ({ source }, index) =>
+        source.line !== sourceSkills[index]?.line || source.raw !== sourceSkills[index]?.raw,
+    )
+  )
+    return fail('授予技能检查结果与来源原文不一致。')
+  // 来源形态与数值必须重新解析；中文静态名称必须有传入词典的映射证据。
+  {
+    const original = parseItem(item.rawText)
+    if (
+      !original.ok ||
+      original.item.locale !== item.locale ||
+      JSON.stringify(
+        original.item.blocks
+          .filter((block) => block.kind === 'skill')
+          .flatMap((block) => block.lines),
+      ) !== JSON.stringify(sourceSkills)
+    )
+      return fail('授予技能区块与来源原文不一致。')
+  }
+  if (
+    skills.some((skill) => {
+      const parsed = resolveGrantedSkill(skill.source.raw, skillEntries ?? [], item.locale)
+      const english = skill.resolution.english
+      if (
+        parsed.unlevelled !== skill.unlevelled ||
+        parsed.displayedLevel !== skill.displayedLevel ||
+        parsed.maxLevel !== skill.maxLevel ||
+        english === null ||
+        !skill.resolution.candidates.some((candidate) => candidate.english === english)
+      )
+        return true
+      const translated = resolveGrantedSkill(english, [], 'en')
+      if (
+        translated.resolution.english !== english ||
+        translated.unlevelled !== parsed.unlevelled ||
+        translated.displayedLevel !== parsed.displayedLevel ||
+        translated.maxLevel !== parsed.maxLevel
+      )
+        return true
+      if (
+        skillEntries !== undefined ||
+        parsed.unlevelled ||
+        item.locale === 'en' ||
+        skill.source.raw.trim().startsWith('Grants Skill:')
+      ) {
+        if (!parsed.resolution.candidates.some((candidate) => candidate.english === english))
+          return true
+        if (
+          skillEntries !== undefined &&
+          JSON.stringify(parsed.resolution.candidates) !==
+            JSON.stringify(skill.resolution.candidates)
+        )
+          return true
+      }
+      return parsed.unlevelled !== true && parsed.displayedLevel === null
+    })
+  )
+    return fail('授予技能未知、歧义或格式无效，暂时只能对比。')
+  const skillLines = skills.map((skill) => skill.resolution.english as string)
+  if (
+    new Set(skillLines.map((line) => line.replace(/ \(Max Level \d+\)$/, ''))).size !==
+    skillLines.length
+  )
+    return fail('原文包含重复授予技能，暂时只能对比。')
+  const implicitLines = [...ordinaryImplicitLines, ...skillLines]
+  const implicit = resolveCraftImplicitPatterns(base, {
+    itemLevel: item.itemLevel,
+    sourceText: item.rawText,
+    implicitLines,
+  })
+  if (!implicit.ok || !matchesGrantedSkillImplicitLines(implicit.value.patterns, implicitLines))
+    return fail('固有属性尚未与所选基底完整对应，暂时只能对比。')
+  if (implicit.value.charm) {
+    const panels = item.blocks
+      .filter((block) => block.kind === 'properties')
+      .flatMap((block) => block.lines)
+      .filter((line) => CHARM_SLOTS_PROPERTY_HEADER.test(line.raw.trim()))
+    if (
+      panels.length > 1 ||
+      (panels.length === 1 &&
+        Number((panels[0]?.raw ?? '').trim().match(CHARM_SLOTS_PROPERTY)?.[1]) !==
+          implicit.value.charm.value)
+    )
+      return fail('咒符栏面板与固有属性不一致，或存在重复面板。')
+  }
+
+  const explicit = inspection.mods.filter(({ mod }) => mod.kind !== 'implicit')
+  const mappedIds = new Set(
+    essenceSourceHash(catalog) === null
+      ? []
+      : inspectEssences(catalog, base)
+          .filter((entry) => supportedEssenceId(entry.essence.id) && entry.mod !== null)
+          .map((entry) => entry.modId),
+  )
+  const matches = explicit.map((source, sourceIndex) => {
+    // 工艺组可以使用精华精确映射；普通组仍走原生成资格。
+    const modifiers = source.mod.states?.includes('crafted')
+      ? catalog.modifiers.map((mod) =>
+          mappedIds.has(mod.id)
+            ? { ...mod, eligibility: [{ tag: base.tags[0] ?? 'default', value: 1 as const }] }
+            : mod,
+        )
+      : catalog.modifiers
+    const match = matchCatalogMods(base, modifiers, [source])[0]
+    if (!match) throw new Error('词缀匹配结果缺失')
+    return { ...match, sourceIndex }
+  })
+  const affixes: CraftState['affixes'] = []
+  for (const match of matches) {
+    const candidate = match.candidates[0]
+    const source = explicit[match.sourceIndex]
+    if (match.status !== 'matched' || !candidate || !source)
+      return fail('仍有词缀未唯一对应目录，暂时只能对比。')
+    affixes.push({
+      modId: candidate.id,
+      lines: source.stats.map(({ source, resolution }) =>
+        stripModifierStateAnnotations(resolution.english ?? source.raw),
+      ),
+      ...(source.mod.states?.includes('crafted') ? { crafted: true as const } : {}),
+      ...(source.mod.states?.includes('desecrated') ? { desecrated: true as const } : {}),
+    })
+  }
+  const state: CraftState = {
+    baseId,
+    itemLevel: item.itemLevel,
+    rarity: item.rarity,
+    affixes,
+    sourceText: item.rawText,
+    ...(runeLines.value === undefined ? {} : { runeSourceLines: runeLines.value }),
+    ...(implicitLines.length === 0 ? {} : { implicitLines }),
+    ...(importedSockets === undefined ? {} : { sockets: [...importedSockets] }),
+    ...(quality === undefined ? {} : { quality }),
+  }
+  // 零孔同样需要已支持类别与普通孔位规则，不能走空列表的宽松校验。
+  if (importedSockets !== undefined && socketCapacity(catalog, state) === 0)
+    return fail('该基底或特殊孔位规则暂不支持孔位核对演练。')
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  const contributionError = runeSocketContributionError(catalog, checked.value)
+  return contributionError === null ? checked : fail(contributionError)
+}

@@ -1,0 +1,145 @@
+import { applyBoneCraft } from './boneCraft'
+import {
+  type BoneCraftOperation,
+  isBoneCraftOperation,
+  isBoneOperationKind,
+  PENDING_DESECRATION_MESSAGE,
+} from './boneRules'
+import type { CraftCatalog } from './catalog'
+import { prepareEssenceCraft } from './essenceCraft'
+import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
+import { renderNumericLines } from './numeric'
+import {
+  applyCraftOperation,
+  type CraftOperation,
+  type CraftResult,
+  type CraftState,
+  createCraftState,
+} from './rehearsal'
+import { artificerSocketLimit, socketCandidates } from './sockets'
+
+export interface ArtificerCraftOperation {
+  kind: 'artificer'
+}
+
+export interface SocketCraftOperation {
+  kind: 'socket'
+  socketIndex: number
+  augmentId: string
+}
+
+export interface EssenceCraftOperation {
+  kind: 'essence'
+  essenceId: string
+  omen?: EssenceOmen
+  removeModId?: string
+  values: number[]
+}
+
+export type CraftStep =
+  | BoneCraftOperation
+  | EssenceCraftOperation
+  | CraftOperation
+  | SocketCraftOperation
+  | ArtificerCraftOperation
+
+function record(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function onlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return Object.keys(value).every((key) => keys.includes(key))
+}
+
+/** 在独立镶嵌层和原通货引擎间严格分发，未来 kind 不能退化为通货操作。 */
+export function applyCraftStep(
+  catalog: CraftCatalog,
+  state: CraftState,
+  step: CraftStep,
+): CraftResult<CraftState> {
+  if (!record(step)) return { ok: false, error: '制作步骤必须是对象。' }
+  if ('kind' in step && isBoneOperationKind(step.kind)) {
+    return isBoneCraftOperation(step)
+      ? applyBoneCraft(catalog, state, step)
+      : { ok: false, error: '骨骼或揭示操作字段无效。' }
+  }
+  if (Object.hasOwn(state, 'pendingDesecration'))
+    return { ok: false, error: PENDING_DESECRATION_MESSAGE }
+  if ('kind' in step) {
+    if (step.kind === 'essence') {
+      if (
+        !onlyKeys(step, ['kind', 'essenceId', 'values', 'removeModId', 'omen']) ||
+        (Object.hasOwn(step, 'omen') && !isEssenceOmen(step.omen)) ||
+        typeof step.essenceId !== 'string' ||
+        !Array.isArray(step.values) ||
+        step.values.length > 32 ||
+        !step.values.every((value) => typeof value === 'number' && Number.isFinite(value))
+      )
+        return { ok: false, error: '精华步骤字段无效。' }
+      const prepared = prepareEssenceCraft(
+        catalog,
+        state,
+        step.essenceId,
+        isEssenceOmen(step.omen) ? step.omen : undefined,
+      )
+      if (!prepared.ok) return prepared
+      if (
+        prepared.value.mode === 'upgrade'
+          ? Object.hasOwn(step, 'removeModId')
+          : typeof step.removeModId !== 'string' ||
+            !prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId)
+      )
+        return { ok: false, error: '升级精华不能指定移除；替换精华必须选择合法的移除词缀。' }
+      const rendered = renderNumericLines(prepared.value.mod.lines, step.values)
+      if (!rendered.ok) return rendered
+      return createCraftState(catalog, {
+        ...state,
+        rarity: 'rare',
+        affixes: [
+          ...state.affixes.filter((affix) => affix.modId !== step.removeModId),
+          { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
+        ],
+      })
+    }
+    if (step.kind === 'artificer') {
+      if (!onlyKeys(step, ['kind'])) return { ok: false, error: '巧匠石步骤字段无效。' }
+      const checked = createCraftState(catalog, state)
+      if (!checked.ok) return checked
+      const sockets = checked.value.sockets
+      if (sockets === undefined) return { ok: false, error: '必须先明确装备当前的孔位。' }
+      const limit = artificerSocketLimit(catalog, checked.value)
+      if (limit === 0) return { ok: false, error: '当前装备暂不支持巧匠石打孔。' }
+      if (sockets.length >= limit)
+        return { ok: false, error: `巧匠石最多为该基底提供 ${limit} 个孔，当前已有孔已达上限。` }
+      sockets.push(null)
+      return createCraftState(catalog, checked.value)
+    }
+    if (
+      step.kind !== 'socket' ||
+      !onlyKeys(step, ['kind', 'socketIndex', 'augmentId']) ||
+      typeof step.socketIndex !== 'number' ||
+      !Number.isInteger(step.socketIndex) ||
+      typeof step.augmentId !== 'string'
+    )
+      return { ok: false, error: '镶嵌步骤字段无效或类型不支持。' }
+    const checked = createCraftState(catalog, state)
+    if (!checked.ok) return checked
+    const sockets = checked.value.sockets
+    if (sockets === undefined || step.socketIndex < 0 || step.socketIndex >= sockets.length)
+      return { ok: false, error: '必须选择一个已明确存在的孔位。' }
+    if (!socketCandidates(catalog, checked.value).some((entry) => entry.id === step.augmentId))
+      return { ok: false, error: '该符文当前不可镶嵌。' }
+    sockets[step.socketIndex] = step.augmentId
+    return createCraftState(catalog, checked.value)
+  }
+  if (
+    !onlyKeys(step, ['currency', 'modIds', 'removeModId', 'rolls', 'implicitValues', 'omen']) ||
+    typeof step.currency !== 'string' ||
+    (step.removeModId !== undefined && typeof step.removeModId !== 'string') ||
+    (step.rolls !== undefined &&
+      (!Array.isArray(step.rolls) ||
+        step.rolls.some((roll) => !record(roll) || !onlyKeys(roll, ['modId', 'values']))))
+  )
+    return { ok: false, error: '通货步骤字段无效。' }
+  return applyCraftOperation(catalog, state, step)
+}

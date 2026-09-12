@@ -9,6 +9,7 @@
     "includes": [
       "**",
       "!data/dict",
+      "!data/craft/catalog.json",
       "!data/fixtures",
       "!packages/dict-builder/fixtures/*.html",
       "!**/dist"

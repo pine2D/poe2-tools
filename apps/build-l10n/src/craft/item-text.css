@@ -1,0 +1,39 @@
+.craft-item-text {
+  margin-block: 1rem;
+  min-width: 0;
+}
+
+.craft-item-text textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin-block: 0.5rem;
+  padding: 0.75rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.craft-item-text p,
+.craft-item-text li {
+  overflow-wrap: anywhere;
+}
+
+.craft-item-text-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.craft-item-text-language {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+
+.craft-item-text-language select {
+  max-width: 100%;
+  font: inherit;
+}

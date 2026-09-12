@@ -6,10 +6,13 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build-dict": "tsx src/cli.ts build",
-    "check-dict": "tsx src/cli.ts check"
+    "check-dict": "tsx src/cli.ts check",
+    "build-craft": "tsx src/craft-catalog.ts",
+    "check-craft": "tsx src/check-craft.ts"
   },
   "dependencies": {
-    "@poe2-tools/build-core": "workspace:*"
+    "@poe2-tools/build-core": "workspace:*",
+    "@poe2-tools/item-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "26.4.1",

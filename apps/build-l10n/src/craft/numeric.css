@@ -1,0 +1,47 @@
+.numeric-controls {
+  min-width: 0;
+  padding: 12px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  overflow-wrap: anywhere;
+}
+.numeric-controls h4 {
+  margin: 0 0 8px;
+}
+.numeric-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+}
+.numeric-context,
+.numeric-note {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.numeric-controls button {
+  margin-top: 12px;
+}
+.numeric-preview {
+  margin-top: 8px;
+}
+.numeric-preview code {
+  display: block;
+  white-space: normal;
+  color: var(--text-muted);
+}
+.numeric-controls [role="alert"] {
+  color: var(--warn);
+}
+.rehearsal-implicit {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+}
+.rehearsal-implicit h3 {
+  margin: 0 0 8px;
+}
+.rehearsal-implicit code {
+  display: block;
+  overflow-wrap: anywhere;
+}

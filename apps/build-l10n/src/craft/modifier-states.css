@@ -1,0 +1,26 @@
+.mod-card > .craft-mod-states,
+.catalog-imported-list .craft-mod-states,
+.rehearsal-affix .craft-mod-states,
+.comparison-group .craft-mod-states {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 100%;
+}
+
+.craft-mod-states .craft-mod-state,
+.craft-fractured-item {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.mod-card > .craft-mod-states {
+  margin-bottom: 0.5rem;
+}

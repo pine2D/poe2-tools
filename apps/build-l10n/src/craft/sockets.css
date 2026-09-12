@@ -1,0 +1,46 @@
+.craft-sockets {
+  margin-block: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+
+.socket-fields,
+.socket-current {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+}
+
+.socket-fields label {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.socket-fields select {
+  width: 100%;
+  min-width: 0;
+}
+
+.craft-sockets code,
+.craft-sockets h4 {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.socket-preview {
+  margin-block-start: 1rem;
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.socket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.socket-note {
+  font-size: 0.875rem;
+}

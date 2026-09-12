@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="PoE2 中文装备文本解析与英文对照工具" />
+    <title>装备工坊 · PoE2 Tools</title>
+    <script>
+      (() => {
+        var mode = null
+        var saved = null
+        try {
+          saved = localStorage.getItem('poe2-tools.theme')
+          if (saved === 'light' || saved === 'dark') mode = saved
+        } catch (_error) {
+          mode = null
+        }
+        if (mode === null) {
+          mode =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', mode)
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/craft/main.tsx"></script>
+  </body>
+</html>
