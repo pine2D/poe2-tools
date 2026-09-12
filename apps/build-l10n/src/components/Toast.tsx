@@ -12,23 +12,25 @@ export interface ToastProps {
   onClose(): void
   /** 自动消失的毫秒数；给 0 表示不自动消失 */
   duration?: number
+  eventId?: number
 }
 
-export function Toast({ message, onClose, duration = 4000 }: ToastProps) {
+export function Toast({ message, onClose, duration = 4000, eventId = 0 }: ToastProps) {
   // 连续下载导致文案在条还没消失时换掉，也要重新起一次 4 秒倒计时，不然后一条消息只剩前一条剩下的
   // 时间就被关掉。onClose 仍要求调用方给稳定身份（见 App.tsx）。message 为 null 时没有可关闭的
   // 条，不起计时器。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 每次下载事件都重新计时，即使文案相同
   useEffect(() => {
     if (message === null || duration <= 0) return
     const timer = setTimeout(onClose, duration)
     return () => {
       clearTimeout(timer)
     }
-  }, [duration, onClose, message])
+  }, [duration, onClose, message, eventId])
   return (
     <div className="toast-live" role="status" aria-live="polite">
       {message !== null && (
-        <div className="toast">
+        <div className="toast" key={eventId}>
           <Icon name="check" size={15} />
           <p className="toast__text">{message}</p>
           <button type="button" className="toast__close" aria-label="关闭提示" onClick={onClose}>

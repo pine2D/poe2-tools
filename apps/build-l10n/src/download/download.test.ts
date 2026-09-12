@@ -8,6 +8,14 @@ afterEach(() => {
 })
 
 describe('uniqueNames', () => {
+  it('生成的后缀不覆盖输入原本已有的名字', async () => {
+    const names = ['a.build', 'a.build', 'a (2).build', 'a (2).build']
+    expect(uniqueNames(names)).toEqual(['a.build', 'a (3).build', 'a (2).build', 'a (2) (2).build'])
+    const blob = zipBlob(names.map((name, i) => ({ name, output: String(i) })))
+    const entries = unzipSync(new Uint8Array(await blob.arrayBuffer()))
+    expect(Object.values(entries).map((bytes) => strFromU8(bytes))).toEqual(['0', '1', '2', '3'])
+  })
+
   it('同名加序号，扩展名保留', () => {
     expect(uniqueNames(['a.build', 'a.build', 'b', 'a.build', 'b'])).toEqual([
       'a.build',

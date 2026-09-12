@@ -1,46 +1,34 @@
-/* 元素基线：盒模型、body、语言字形、标题、选区、占位符、.visually-hidden、全局焦点环。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
 * {
   box-sizing: border-box;
 }
-
 body {
   margin: 0;
-  background: var(--app-wash), var(--surface-0);
-  background-attachment: fixed;
+  background: var(--surface-0);
   color: var(--text);
   font-family: var(--font-zh-cn);
-  font-size: var(--fs-body);
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
-
-/* 译文列在第二期会带 lang="zh-TW"；这条规则先就位，届时自动换台服字形 */
 :lang(zh-TW) {
   font-family: var(--font-zh-tw);
 }
-
 h1,
 h2,
 h3 {
   font-weight: 600;
 }
-
 code,
 pre {
-  font-family: var(--font-pair);
+  font-family: var(--font-code);
 }
-
 ::selection {
   background: var(--selection-bg);
   color: var(--selection-fg);
 }
-
 ::placeholder {
-  color: var(--text-3);
+  color: var(--text-muted);
 }
-
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -52,14 +40,13 @@ pre {
   white-space: nowrap;
   border: 0;
 }
-
-/* 焦点指示只用 outline：组件规则会重写 box-shadow（主 CTA 加投影、幽灵按钮写 none），
-   用 box-shadow 做焦点环会被它们覆盖；outline 无人改动，forced-colors 下还会被系统色接管 */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-.button:focus-visible {
+summary:focus-visible,
+.button:focus-visible,
+[tabindex="-1"]:focus {
   outline: var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }

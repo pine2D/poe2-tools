@@ -27,8 +27,8 @@ describe('OptionsBar', () => {
 
   it('两个开关的可访问名不含说明文字，说明通过 aria-describedby 关联', () => {
     render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />)
-    const bilingual = screen.getByLabelText('双语（保留英文原行）')
-    const uniques = screen.getByLabelText('传奇名注入')
+    const bilingual = screen.getByLabelText('导出时保留英文原行')
+    const uniques = screen.getByLabelText('补充传奇装备中文名')
     const hintId = bilingual.getAttribute('aria-describedby')
     expect(hintId).not.toBeNull()
     expect(document.getElementById(hintId ?? '')?.textContent).toContain(
@@ -39,18 +39,26 @@ describe('OptionsBar', () => {
     ).toContain('补一行中文名')
   })
 
-  it('ⓘ 对明眼用户也有反馈：整个开关带原生 title 提示', () => {
+  it('设置说明直接可见，Escape 关闭并把焦点交还触发器', () => {
     render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />)
-    const opt = screen.getByLabelText('双语（保留英文原行）').closest('.opt')
-    expect(opt?.getAttribute('title')).toContain('译文下面再保留一行英文原文')
+    const trigger = screen.getByText('设置')
+    const details = trigger.closest('details') as HTMLDetailsElement
+    details.open = true
+    const input = screen.getByLabelText('导出时保留英文原行')
+    const hint = document.getElementById(input.getAttribute('aria-describedby') ?? '')
+    expect(hint?.className).not.toContain('visually-hidden')
+    input.focus()
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(details.open).toBe(false)
+    expect(document.activeElement).toBe(trigger)
   })
 
   it('勾选开关把新的选项对象交回去', () => {
     const onOptions = vi.fn()
     render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={onOptions} />)
-    fireEvent.click(screen.getByLabelText('双语（保留英文原行）'))
+    fireEvent.click(screen.getByLabelText('导出时保留英文原行'))
     expect(onOptions).toHaveBeenCalledWith({ bilingual: true, annotateUniques: true })
-    fireEvent.click(screen.getByLabelText('传奇名注入'))
+    fireEvent.click(screen.getByLabelText('补充传奇装备中文名'))
     expect(onOptions).toHaveBeenCalledWith({ bilingual: false, annotateUniques: false })
   })
 

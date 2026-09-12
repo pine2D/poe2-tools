@@ -95,8 +95,8 @@ export function markupClass(tags: readonly string[]): string {
 
 const RGB = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i
 // 对照表所在的卡片底，两套主题各一个（= --surface-2 的深浅两个值）
-const TIP_BG_DARK = [0x1d, 0x1a, 0x14] as const
-const TIP_BG_LIGHT = [0xff, 0xfd, 0xf8] as const
+const TIP_BG_DARK = [0x17, 0x19, 0x1c] as const
+const TIP_BG_LIGHT = [0xff, 0xff, 0xff] as const
 
 function channel(value: number): number {
   const c = value / 255

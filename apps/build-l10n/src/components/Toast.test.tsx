@@ -8,6 +8,23 @@ afterEach(() => {
 })
 
 describe('Toast', () => {
+  it('同一文案再次下载也重新计时且更新播报内容节点', () => {
+    vi.useFakeTimers()
+    const onClose = vi.fn()
+    const { rerender } = render(
+      <Toast message="已开始下载 a.build" eventId={1} onClose={onClose} />,
+    )
+    const live = screen.getByRole('status')
+    const previous = live.firstChild
+    act(() => vi.advanceTimersByTime(3000))
+    rerender(<Toast message="已开始下载 a.build" eventId={2} onClose={onClose} />)
+    expect(live.firstChild).not.toBe(previous)
+    act(() => vi.advanceTimersByTime(3000))
+    expect(onClose).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(1000))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it('是一条读屏也听得到的礼貌播报，写清文件名与下一步', () => {
     render(
       <Toast message="已下载 rich.build，放进 Build Planner 目录后同名替换" onClose={vi.fn()} />,

@@ -12,17 +12,22 @@ export function textBlob(text: string): Blob {
 
 // 同名文件加 (2)、(3) 后缀，避免 zip 内互相覆盖
 export function uniqueNames(names: readonly string[]): string[] {
-  const seen = new Map<string, number>()
+  const reserved = new Set(names)
+  const used = new Set<string>()
   const out: string[] = []
   for (const name of names) {
-    const count = (seen.get(name) ?? 0) + 1
-    seen.set(name, count)
-    if (count === 1) {
-      out.push(name)
-      continue
-    }
+    let candidate = name
+    let count = 2
     const dot = name.lastIndexOf('.')
-    out.push(dot > 0 ? `${name.slice(0, dot)} (${count})${name.slice(dot)}` : `${name} (${count})`)
+    while (used.has(candidate)) {
+      do {
+        candidate =
+          dot > 0 ? `${name.slice(0, dot)} (${count})${name.slice(dot)}` : `${name} (${count})`
+        count += 1
+      } while (reserved.has(candidate))
+    }
+    used.add(candidate)
+    out.push(candidate)
   }
   return out
 }

@@ -1,460 +1,251 @@
-/* 页面骨架：顶栏三段、词典徽章、选项区与分段控件、错误卡、主体两栏、下载提示条。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
-/* ---------- 骨架 ---------- */
-
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  min-height: 400px;
 }
-
-/* iOS Safari 的 100vh 含地址栏，底部内容会被吃掉一截。用 @supports 包住而不是写两条
-   height：老内核解析不了 dvh 时整条声明作废即可，不依赖「后写的覆盖先写的」这种更脆的假设。
-   ≤900 那档的 min-height 不能写在这里——@supports 不改特异度，而响应式分区里同特异度的
-   `min-height: 100vh` 在它之后，会把它压掉；那一条写在 ≤900 块内部（见响应式分区）。 */
-@supports (height: 100dvh) {
-  .app {
-    height: 100dvh;
-  }
-}
-
-/* 顶栏三段式：品牌 | 控制区 | 状态区。中列 minmax(0, 1fr) 让控制区自己换行而不撑破网格；
-   高度取自 mockup-1 的 .topbar { height: 60px }。第一期那条 position: sticky 是死代码
-   （宽屏 .app 满高本就不滚，≤900 断点又把它改回 static），本期一并删掉。 */
 .app__header {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: var(--sp-4) var(--sp-5);
-  min-height: 60px;
-  padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-5);
-  border-bottom: 1px solid var(--hairline);
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--line);
   background: var(--surface-1);
-  box-shadow: var(--inset-light);
 }
-
 .app__brand {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  height: 36px;
-  padding-right: var(--sp-5);
-  border-right: 1px solid var(--hairline);
+  gap: 10px;
+  flex: none;
 }
-
-/* 全站唯一的金渐变裁切。-webkit-background-clip 那行不能省：
-   -webkit-text-fill-color 的支持面比无前缀的 background-clip:text（Chromium 120+ / Safari 14+）大得多，
-   只写无前缀版时，微信 X5 内核与老 iOS Safari 会「文字填充透明 + 背景没被裁切」→ 标题整个看不见。
-   两行都写齐之后，真正不支持裁切的老内核才会退回 color 的实色兜底。 */
 .app__header h1 {
   margin: 0;
-  font-size: var(--fs-h1);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: 0.04em;
+  font-size: 16px;
+  line-height: 1.3;
   white-space: nowrap;
-  color: var(--gold-100);
-  background: linear-gradient(180deg, #fff7e4 0%, #f2e4b8 38%, #d6b473 74%, #9c7a3e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 1px #000);
 }
-
 .app__mark {
-  color: var(--gold-300);
-  opacity: 0.9;
+  color: var(--accent);
 }
-
-.app__status {
+.app__live {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  justify-self: end;
+  min-height: 28px;
+  padding: 2px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1);
 }
-
-/* 词典徽章的稳定容器：DictBadge 三态各换一个元素，role="status" 必须挂在不换的这一层上，
-   否则读屏只会在整块被替换时报一次「移除」（附录 B M-1）。 */
-.app__live {
-  display: contents;
-}
-
-/* 词典状态徽章：胶囊 + 图标 + 文字，三态靠图标与颜色双编码 */
 .badge {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  min-height: 32px;
+  gap: 8px;
   margin: 0;
-  padding: 0 11px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-full);
-  background: var(--surface-0);
-  color: var(--text-2);
-  font-size: 12.5px;
-  white-space: nowrap;
-}
-
-.badge__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--info);
-  box-shadow: 0 0 6px var(--info-glow);
-}
-
-.badge__ver {
-  color: var(--bronze-text); /* 5.7 vs surface-1，小号版本号仍达 AA */
-  font-family: var(--font-pair);
+  color: var(--text-muted);
   font-size: 12px;
+}
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.badge__ver {
   font-variant-numeric: tabular-nums;
 }
-
 .badge__lack {
   color: var(--warn);
 }
-
-.badge--loading {
-  color: var(--text-3);
-}
-
 .badge--error {
-  border-color: var(--danger-edge);
-  color: var(--danger); /* 5.8 vs surface-1 */
+  color: var(--danger);
 }
-
-/* 徽章内的重试是幽灵按钮，不能长成主 CTA */
-button.badge__retry {
-  min-height: 24px;
-  padding: 0 8px;
-  border-color: var(--hairline-strong);
-  background: none;
-  box-shadow: none;
-  color: var(--gold-500);
-  font-size: 12.5px;
+.badge__retry {
+  min-height: 28px;
+  padding: 2px 8px;
+  font-size: 12px;
 }
-
-button.badge__retry:hover:not(:disabled) {
-  border-color: var(--gold-500);
-  background: var(--surface-hover);
-  color: var(--gold-100);
-}
-
 .options {
   display: flex;
   align-items: center;
-  gap: var(--sp-3) var(--sp-4);
-  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
 }
-
-/* 分段控件：容器是 div[role="radiogroup"]，自己画一条金发丝的轨 */
 .seg {
   display: flex;
   align-items: center;
   gap: 2px;
   min-width: 0;
+  padding: 3px;
   margin: 0;
-  padding: 2px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  background: var(--surface-0);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-1);
 }
-
-/* 这是 aria-labelledby 指向的组名，普通 <span>，不需要 float
-   （原本为了压平 <legend> 的边框缺口才浮动，改成 div 之后既没必要、
-   在 flex 容器里对 flex item 也本来就无效） */
-.seg__legend {
-  padding: 0 var(--sp-3) 0 var(--sp-1);
-  color: var(--text-3);
-  font-size: var(--fs-label);
-}
-
 .seg__item {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 28px;
-  padding: 0 10px;
-  border-radius: 6px;
-  color: var(--text-2);
-  font-size: 12.5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
-  transition:
-    background-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease);
 }
-
-.seg__item:hover {
-  color: var(--text);
-}
-
 .seg__item--on {
-  background: var(--gold-wash);
-  box-shadow: inset 0 0 0 1px var(--gold-line);
-  color: var(--gold-300); /* 深色 9.4 vs 叠加后的底色 #201d15；浅色 5.6 vs 叠加后的 #e6dfce */
+  background: var(--accent-bg);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
-
-/* :has() 要 Chromium 105+，而 radio 本体是 .visually-hidden、全局 input:focus-visible 的
-   outline 落在 1px 的裁切元素上等于没有——老内核（仓库反复点名的微信 X5）上键盘切换
-   目标语言 / 主题没有任何可见焦点（附录 B M-7）。:focus-within 支持面大得多，
-   代价是鼠标点击也会短暂出环，比「完全没有焦点」好。 */
 .seg__item:focus-within {
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
-
-/* radio 本体被 .visually-hidden 藏了，焦点环得转嫁到看得见的段上 */
-.seg__item:has(input:focus-visible) {
-  outline: var(--focus-ring);
-  outline-offset: 2px;
+.export-settings {
+  position: relative;
 }
-
-/* 主题三段：比目标语言那组更紧凑（三个选项 + 顶栏状态区已经有徽章与主按钮）。
-   写在 .seg__item 系列之后：(0,2,0) 压得过 (0,1,0)，顺序反了会触发 noDescendingSpecificity。 */
-.seg--theme .seg__item {
-  padding: 0 8px;
-  font-size: 12px;
-}
-
-/* 单个开关：自绘方框 + 金色勾。用 appearance:none 保留原生 input 的键盘与焦点行为 */
-.opt {
-  display: inline-flex;
+.export-settings > summary {
+  display: flex;
   align-items: center;
-  gap: 7px;
-  color: var(--text-2);
-  font-size: 12.5px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 13px;
   white-space: nowrap;
+  list-style: none;
 }
-
+.export-settings > summary::-webkit-details-marker {
+  display: none;
+}
+.export-settings__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 20px;
+  width: 330px;
+  max-width: calc(100vw - 24px);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-3);
+  box-shadow: 0 12px 36px #0003;
+}
+.opt {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 10px;
+  font-size: 13px;
+}
 .opt label {
   cursor: pointer;
 }
-
-/* I-3：方框是复选框未勾选时唯一的状态指示，不适用「带文字标签控件走 --hairline-strong」
-   的豁免——那条豁免成立是因为控件的识别手段是它自己的文字标签，而这里标签只说得清
-   「双语（保留英文原行）」是什么，说不清有没有勾。--hairline-strong 叠在顶栏 --surface-1
-   上实算只有 1.62:1（基本不可见）；换成 --control-edge（边框即唯一信号的控件专用令牌）
-   实算 3.45:1，达 WCAG 1.4.11 的 3:1。 */
-.opt input[type="checkbox"] {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  border: 1px solid var(--control-edge);
-  border-radius: var(--r-sm);
-  background: var(--surface-0);
-  cursor: pointer;
-  transition:
-    background-color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
-}
-
-.opt input[type="checkbox"]:checked {
-  border-color: rgba(217, 192, 120, 0.5);
-  background: rgba(217, 192, 120, 0.14)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23d9c078' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
-    center no-repeat;
-}
-
-.opt:has(input:checked) {
-  color: var(--text);
-}
-
-.opt__info {
-  color: var(--text-3);
-}
-
-/* 侧栏脚注：页脚取消后，词典版本与"未命中保留英文"这两句降级到这里 */
-.app__side-note {
-  margin: auto 0 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hairline);
-  color: var(--text-3);
-  font-size: var(--fs-micro);
-  line-height: 1.6;
-}
-
-/* 阻断性错误卡：词典失败与解析失败共用 */
-.errorcard {
-  max-width: 640px;
-  padding: var(--sp-5);
-  border: 1px solid var(--danger-edge);
-  border-left: 3px solid var(--danger);
-  border-radius: var(--r-lg);
-  background: var(--surface-2);
-  box-shadow: var(--inset-light);
-}
-
-.errorcard__title {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: 0 0 var(--sp-2);
-  color: var(--danger); /* 5.5 vs surface-2 */
-  font-size: var(--fs-h3);
-}
-
-.errorcard p {
-  margin: 0 0 var(--sp-4);
-  color: var(--text-2);
-}
-
-.errorcard__detail {
-  margin-top: var(--sp-4);
-  color: var(--text-3);
-  font-size: var(--fs-label);
-}
-
-.errorcard__detail summary {
-  cursor: pointer;
-}
-
-.errorcard__detail code {
+.opt__hint {
+  grid-column: 2;
   display: block;
-  margin-top: var(--sp-2);
-  color: var(--text-2);
-  font-size: var(--fs-micro);
-  white-space: pre-wrap;
-  word-break: break-word;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
 }
-
-.hint {
-  margin: 0;
-  color: var(--text-3);
-}
-
-/* Toast 的常驻容器：role="status" 挂在这一层，内容按需渲染（控制者追加 g），
-   理由与 .app__live 一致——live region 整块卸载重挂，读屏不保证追踪到后续更新。 */
-.toast-live {
-  display: contents;
-}
-
-/* 落地引导条：固定在视口底部居中。不用 position: sticky —— 主区与侧栏各自滚动，
-   sticky 会被裁在某一栏里。bottom 算上安全区，免得被 iPhone 的手势条吞掉一半。 */
-/* pointer-events: none —— 390 宽度下条会盖住下方按钮（如「跳到第一处未命中」），视觉
-   重叠 4 秒可以接受，但不能截获点击；.toast__close 单独 auto 回来，关闭按钮仍可点。 */
-.toast {
-  position: fixed;
-  inset-inline: var(--sp-4);
-  bottom: calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  width: fit-content;
-  max-width: min(560px, calc(100% - 2 * var(--sp-4)));
-  margin-inline: auto;
-  padding: 10px var(--sp-3) 10px var(--sp-4);
-  border: 1px solid var(--hairline-strong);
-  border-left: 3px solid var(--gold-500);
-  border-radius: var(--r-md);
-  background: var(--surface-3);
-  box-shadow:
-    var(--inset-light),
-    0 8px 24px -12px rgba(0, 0, 0, 0.6);
-  animation: toast-in var(--dur-mid) var(--ease) both;
-  pointer-events: none;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.toast__text {
-  margin: 0;
-  color: var(--text);
-  font-size: 13.5px;
-  line-height: 1.5;
-}
-
-button.toast__close {
-  width: 28px;
-  min-height: 28px;
-  flex: none;
-  padding: 0;
-  border-color: transparent;
-  background: none;
-  box-shadow: none;
-  color: var(--text-3);
-  pointer-events: auto;
-}
-
-button.toast__close:hover:not(:disabled) {
-  border-color: var(--hairline-strong);
-  background: var(--surface-hover);
-  color: var(--text);
-}
-
 .app__body {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: 224px minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
-
 .app__side {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  padding: var(--sp-5);
-  border-right: 1px solid var(--hairline);
-  background: var(--surface-1);
+  gap: 20px;
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
-}
-
-/* ≤560 的侧栏抽屉开关。基态 display:none —— 它必须真的不占 .app__body 的 grid 单元，
-   否则两列会被挤成三份（.app__main:only-child 那条空态规则同理，见 App.tsx 的注释）。 */
-.app__sidetoggle {
-  display: none;
-  width: 100%;
-  justify-content: flex-start;
-  gap: var(--sp-2);
-  border-radius: 0;
-  border-width: 0 0 1px;
-  border-color: var(--hairline);
+  padding: 24px 12px;
+  border-right: 1px solid var(--line);
   background: var(--surface-1);
-  box-shadow: none;
-  font-size: 13px;
 }
-
-.app__sidechev {
-  color: var(--gold-500);
-  transition: transform var(--dur-fast) var(--ease);
-}
-
-.app__sidetoggle[aria-expanded="true"] .app__sidechev {
-  transform: rotate(180deg);
-}
-
-.app__sidecount {
-  margin-left: auto;
-  color: var(--text-3);
-  font-family: var(--font-pair);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
 .app__main {
-  padding: var(--sp-6) var(--sp-8) var(--sp-8);
+  min-width: 0;
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
+  padding: 28px 40px;
+  scrollbar-gutter: stable;
 }
-
-/* 空态与「词典失败 + 无文件」两种情况下 .app__side 整条不渲染，.app__main 就是
-   .app__body 网格里唯一的子元素。网格自动布局不会跳过缺席的第一列，不补一句
-   独占两栏，空态引导区会被压进隐式的 340px 第一栏，右边净空整片。 */
 .app__main:only-child {
   grid-column: 1 / -1;
+}
+.app__sidetoggle {
+  display: none;
+}
+.app__side-note {
+  margin: auto 0 0;
+  padding-top: 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.errorcard {
+  max-width: 640px;
+  padding: 20px;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.errorcard__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--danger);
+  font-size: 16px;
+}
+.errorcard p {
+  color: var(--text-muted);
+}
+.errorcard__detail {
+  font-size: 13px;
+}
+.errorcard__detail code {
+  display: block;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.toast-live {
+  display: contents;
+}
+.toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  inset-inline: 16px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: auto;
+  padding: 12px 16px;
+  border: 1px solid var(--control-edge);
+  border-radius: 10px;
+  background: var(--surface-3);
+  box-shadow: 0 8px 28px #0003;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.toast__close {
+  flex: none;
+  width: 36px;
+  padding: 0;
+  pointer-events: auto;
+}
+
+.export-settings__panel h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.export-settings__panel > p {
+  margin: 0;
+  font-size: 12px;
 }

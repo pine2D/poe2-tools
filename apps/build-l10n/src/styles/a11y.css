@@ -1,144 +1,36 @@
-/* 无障碍兜底：焦点转嫁、prefers-reduced-motion、forced-colors。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
-/* ---------- 无障碍兜底 ---------- */
-
-/* DropZone 的「选择 .build 文件」是 <label class="button" for="file-input"> + 隐藏的
-   <input id="file-input" class="visually-hidden">。拿到焦点的是那个 input，它 1px 高又被
-   clip-path 裁掉，焦点环根本看不见；label 写在 input 前面，兄弟选择器用不了，只能用 :has()
-   把焦点态转嫁到可见的 label 上。不支持 :has() 的老内核退回「无可见焦点」，与改版前持平。 */
+/* 隐藏输入的焦点交给可见控件；跳转目标保留可见轮廓。 */
 .dropzone:has(#file-input:focus-visible) .button {
   outline: var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
-
-/* 下面这份名单必须与全站 transition / animation 声明逐条对齐，新增动效时同步补 */
 @media (prefers-reduced-motion: reduce) {
   button,
-  .button,
-  textarea,
-  .seg__item,
-  .opt input[type="checkbox"],
-  .dropzone,
-  .paste__toggle,
-  .paste__chev,
-  .app__sidechev,
-  .filelist__item {
+  .button {
     transition: none;
   }
-
-  /* 有位移的动画整条关掉，而不是缩短：前庭敏感用户要的是「不动」，不是「动得快」 */
-  .toast {
-    animation: none;
-  }
-
-  .preview .card {
-    animation: none;
-  }
 }
-
 @media (forced-colors: active) {
-  .app__header h1,
-  .empty__hero {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    filter: none;
-  }
-
   .cta {
     background: ButtonFace;
     color: ButtonText;
+    border-color: ButtonText;
   }
-
-  /* 高对比度模式下自定义色全被系统色接管：未命中不能只剩底纹，
-     必须留下形状（左竖条）与文字签这两条非颜色线索 */
-  .tip__n--miss,
-  .tip__t--miss,
-  .tip__base--miss {
-    background: none;
-    color: CanvasText;
+  .seg__item--on,
+  .preview-controls button[aria-pressed="true"],
+  .filelist__item--active {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
   }
-
+  .section-nav button[aria-pressed="true"] {
+    border-bottom-color: Highlight;
+  }
   .tip__n--miss {
-    border-left: 3px solid CanvasText;
+    border-left: 2px solid CanvasText;
   }
-
   .tip__tag {
     border-color: CanvasText;
-    color: CanvasText;
   }
-
-  .tip::before {
-    background: CanvasText;
-  }
-
-  .cov__num--full {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    filter: none;
-  }
-
-  /* 上面 :root[data-theme="light"] 的金渐变覆盖块特异性是 (0,3,1) / (0,3,0)，本块里那几条
-     裸类选择器压不过它（媒体查询不加特异性）。不补这份同等特异性的兜底，高对比度 + 浅色
-     下这三处就是透明文字。第三期 A 的分区标记把这块划给 a11y.css，拆文件之后 Biome 更看
-     不见这层跨块关系，所以它必须与渐变块同一个任务落地。 */
-  :root[data-theme="light"] .app__header h1,
-  :root[data-theme="light"] .empty__hero,
-  :root[data-theme="light"] .cov__num--full {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    filter: none;
-  }
-
-  .meter__cell--hit,
-  .swatch {
-    background: CanvasText;
-  }
-
-  /* 空心格与图例里那枚空心样本原先只靠 inset box-shadow 画框，而 box-shadow 在强制配色下
-     被整条丢弃：轨上的缺口和图例样本会双双变成一块看不见的白，「缺口为未命中」那半句
-     图例就没有对应物了。改用 border 画同一个框——box-sizing 是 border-box，尺寸不变。 */
-  .meter__cell--miss,
-  .swatch--miss {
-    border: 2px solid CanvasText;
-    background: Canvas;
-    box-shadow: none;
-  }
-
-  /* box-shadow 在高对比度下被直接丢弃，而 radio 本体是 .visually-hidden，
-     没有原生指示可回落 —— 不补这条「当前目标语言」完全不可辨。
-     不加 forced-color-adjust: none：退出强制配色后金字在 Windows
-     高对比度亮色主题下对比度只有约 1.9:1，系统色回落反而更好。 */
-  .seg__item--on {
-    outline: 2px solid Highlight;
-    outline-offset: -1px;
-  }
-
-  /* 「仅看未命中」的按下态在强制配色下只剩系统色，琥珀底与琥珀边全部丢失，
-     aria-pressed 就没有任何视觉对应物了。补一条与上面同款的 outline 当形状冗余。 */
-  .ov__filter--on {
-    outline: 2px solid Highlight;
-    outline-offset: -1px;
-  }
-
-  /* C-1：自绘方框在强制配色下会保留站点色而周围换成系统色（Canvas），
-     未勾选反而更像已勾选、已勾选的浅金勾又几乎看不见，两个开关的真实状态因此读反。
-     交回原生渲染，由系统按高对比度配色画方框与勾——一期的原生复选框在这一档本来就是对的。 */
-  .opt input[type="checkbox"] {
-    appearance: auto;
-  }
-
-  .badge--error {
-    border-color: CanvasText;
-  }
-
   .toast {
     border-color: CanvasText;
-    box-shadow: none;
   }
-}
-
-[tabindex="-1"]:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: 2px;
 }

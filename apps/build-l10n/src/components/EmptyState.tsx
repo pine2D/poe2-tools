@@ -1,57 +1,29 @@
 import { DropZone } from './DropZone'
 
 export interface EmptyStateProps {
-  /** 词典就绪时给出「zh-CN 0.5（联盟名）」，未就绪给 null */
   dictVersion: string | null
   onFiles(files: File[]): void
   onPaste(text: string): void
 }
 
-// 三步用罗马数字而不是 1/2/3：Cinzel 是纯大写石刻体，数字与字母难分，
-// I/II/III 恰好是纯字母，既落在 Cinzel 的安全区里，又是这套视觉语言的母题。
-const STEPS: readonly { key: string; title: string; text: string }[] = [
-  { key: 'I', title: '导出', text: '在游戏的 Build Planner 里导出 .build 文件' },
-  { key: 'II', title: '核对', text: '拖进来看逐行中英对照与覆盖率' },
-  { key: 'III', title: '放回', text: '下载中文 .build，回 Build Planner 目录同名替换' },
-]
-
 export function EmptyState({ dictVersion, onFiles, onPaste }: EmptyStateProps) {
   return (
     <div className="empty">
-      <span className="eyebrow empty__eyebrow">Build Planner Localization</span>
-      {/* 空态最大的一块必须是产品名（mockup State B 的 .hero 就是产品名，40px 金渐变裁切）。
-          与顶栏字标用同一个名字：把 GGG / 腾讯的注册译名放进品牌位有合规成本（研究报告
-          §7「品类识别 vs 商标合规」，owner 对 Q1 的拍板是退到「PoE2 构筑汉化」）。 */}
-      <h2 className="empty__hero">PoE2 构筑汉化</h2>
-      <span className="empty__rule" />
-      {/* 显式字符串而非多行 JSX 文本：JSX 会把「文本 + 换行 + 文本」的行间换行折成一个
-          U+0020，之前恰好落在两个中文字之间（I-1）。用 {'…'} 整句写成一个字面量，
-          Biome 不会拆行，也就不会再夹进杂散空格。 */}
+      <p className="empty__eyebrow">PoE2 Build Planner · 构筑备注汉化</p>
+      <h2 className="empty__hero">英文构筑，中文读懂。</h2>
       <p className="empty__lede">
-        {
-          '把英文攻略里的构筑备注翻成中文：基底名、传奇名与编号词缀行按国服或台服术语替换，未命中的行保留英文并标出来。下载回来的文件可以直接放进 Build Planner 目录。'
-        }
+        导入攻略网站或作者提供的 .build 文件，按国服或台服术语翻译装备名与编号词缀，核对后直接下载。
       </p>
-      <ol className="steps">
-        {STEPS.map((step) => (
-          <li key={step.key} className="steps__item">
-            <span className="steps__key" aria-hidden="true">
-              {step.key}
-            </span>
-            <span className="steps__text">
-              <b className="steps__title">{step.title}</b>
-              {step.text}
-            </span>
-          </li>
-        ))}
-      </ol>
       <DropZone variant="hero" onFiles={onFiles} onPaste={onPaste} />
-      {/* 分隔竖线改由 CSS 伪元素生成（M-10）：独立的 <span> 在 390 换行后会悬在行尾，
-          伪元素跟着后一段走，换行时自然不出现。 */}
+      <section className="empty__example" aria-label="词缀翻译示例">
+        <span lang="en">+175 to maximum Life</span>
+        <span aria-hidden="true">→</span>
+        <span>最大生命 +175</span>
+      </section>
       <p className="empty__foot">
+        <span>自由备注与未收录内容保留原文；待核对项会单独标出。</span>
+        <span>下载后放入游戏的 BuildPlanner 目录，即可在构筑规划器中查看。</span>
         {dictVersion !== null && <span>词典 {dictVersion}</span>}
-        <span>简体（国服）与繁体（台服）两套术语，各自独立</span>
-        <span>未命中的行保留英文原文，不做猜测替换</span>
       </p>
     </div>
   )

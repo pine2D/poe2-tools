@@ -1,10 +1,3 @@
-/* 对照区：标记语法着色、四列逐行表、整段原样的单列退化。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
-/* ---------- 预览区 ---------- */
-
-/* 标记语法：颜色标签只管 color，字号标签只管 font-size，字形标签只管 font-weight /
-   font-style / text-decoration，三类互不干扰，可以嵌套叠加 */
 .mk-red {
   color: var(--mk-red);
 }
@@ -81,258 +74,137 @@
   font-style: normal;
 }
 
-/* 对照表：序号 / 原文 / 序号 / 译文 四列，一条源行 = 一个 grid 行，左右天然同高。
-   中缝是一条上下淡出的竖线，把「两块独立文本」变成「一份对照稿」。 */
 .tip {
-  position: relative;
   display: grid;
-  grid-template-columns: 26px minmax(0, calc(50% - 26px)) 46px minmax(0, calc(50% - 46px));
+  grid-template-columns: 26px minmax(0, calc(50% - 26px)) 42px minmax(0, calc(50% - 42px));
   align-items: start;
-  padding: var(--sp-4) var(--sp-5) var(--sp-5);
-  font-family: var(--font-pair);
-  font-size: var(--fs-pair);
+  padding: 16px 20px;
+  background: var(--surface-2);
+  font-size: 14px;
   line-height: 1.65;
   font-variant-numeric: tabular-nums;
 }
-
-.tip::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  bottom: 10px;
-  width: 1px;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    var(--gold-line) 14%,
-    var(--gold-line) 86%,
-    transparent
-  );
-}
-
-/* 列头：拉丁部分走 Cinzel，中文跟着黑体（--font-label，见 tokens.css 的说明）。
-   字距从 .18em 降到 .08em：这条标签是中英混排，CJK 不加字距是硬规则，
-   而把中英拆成两个 span 只为了字距不值得（附录 D M-2）。 */
-.tip__lab {
-  grid-column: span 2;
-  padding-bottom: var(--sp-2);
-  color: var(--bronze-text); /* 5.4 vs surface-2 */
-  font-family: var(--font-label);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.tip__lab--zh {
-  padding-left: 22px;
-}
-
-/* 基底名行：跨两列，稀有度色，下面压一条单端淡出线（= 游戏提示框里名字与词缀之间那条线）。
-   一行 = 两个 span-2 单元（英文 + 译文），没有序号格，正好填满四列。 */
 .tip__base {
   grid-column: span 2;
-  padding-bottom: var(--sp-2);
-  border-bottom: 1px solid transparent;
-  border-image: var(--rule-fade-short) 1;
+  padding: 0 12px 10px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
   color: var(--text);
   font-size: 15px;
   overflow-wrap: anywhere;
 }
-
 .tip__base--zh {
-  padding-left: 22px;
+  padding-left: 20px;
 }
-
-/* 基底名没在词典里命中：与编号行的未命中同款琥珀，别让它看起来像正常的稀有度色 */
 .tip__base--miss {
-  background: var(--warn-wash);
   color: var(--warn);
 }
-
-/* 基底名按稀有度取色：普通装备是正文色（上面的 .tip__base），传奇卡才染橙。
-   `:not(.tip__base--miss)` 保证未命中的琥珀不被压掉——没命中词典的名字不能长得像正常译名。
-   宝石卡不需要对应规则：宝石既不注入传奇名、PairTable 又是 baseName={false}，
-   `.card--gem .tip__base` 在 DOM 里根本不存在，宝石名的青色由 .namepair__zh--gem 承担。 */
 .card--unique .tip__base:not(.tip__base--miss) {
   color: var(--rarity-unique);
 }
-
 .tip__n {
-  padding: 2px 8px 2px 0;
-  color: var(--bronze-text);
-  font-size: 12.5px;
+  padding: 4px 8px 4px 0;
+  color: var(--text-muted);
+  font-size: 12px;
   text-align: right;
   user-select: none;
 }
-
 .tip__n--right {
-  padding-left: 24px;
+  padding-left: 20px;
   padding-right: 6px;
 }
-
 .tip__t {
-  padding: 2px 12px 2px 0;
-  color: var(--text-2);
+  padding: 4px 12px 4px 0;
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
-
 .tip__t--zh {
-  padding-left: 24px;
+  padding-left: 8px;
   color: var(--text);
 }
-
-/* 数值高亮：原文列比正文亮一档，译文列是金 —— mockup 对照区最抢眼的签名
-   （`.tip .t .num` / `.tip .t.zh .num`）。三条都是 (0,2,0)，靠书写顺序决胜负，
-   所以 --zh 写在基础之后、--miss 又写在 --zh 之后（未命中的译文格里还是英文，
-   不能染成"已翻译"的金色）。 */
 .tip__t .num,
 .tip__base .num {
   color: var(--text);
-  font-weight: 500;
+  font-weight: 600;
 }
-
-.tip__t--zh .num,
-.tip__base--zh .num {
-  color: var(--gold-100);
-}
-
-.tip__t--miss .num,
-.tip__base--miss .num {
-  color: var(--warn);
-}
-
-/* 未命中：颜色 + 底纹 + 左竖条 + 序号变 ! + 行尾文字签，五重冗余，
-   去掉任意一项都还能辨认（WCAG 1.4.1 不靠颜色单独承载信息） */
 .tip__n--miss {
   border-left: 2px solid var(--warn);
-  background: var(--warn-wash);
-  color: var(--warn); /* 7.0 vs 叠加底纹后的底色 */
-  font-weight: 600;
+  color: var(--warn);
   text-align: center;
-  padding-left: 4px;
 }
-
 .tip__t--miss {
-  background: var(--warn-wash);
   color: var(--warn);
 }
-
-/* `.tip` 是 align-items: start，未命中的几个格子各按自己的内容高度收缩：译文格多一枚
-   「未命中 · 保留英文」文字签就比原文格高一截，同一行左右两片琥珀底纹上下不齐（Task 4 遗留）。
-   改成拉满整个 grid 行，底纹高度一致；行高仍由最高的那一格决定，没有多出来的空白。 */
 .tip__n--miss,
 .tip__t--miss,
 .tip__base--miss {
   align-self: stretch;
 }
-
-/* 原样：作者的自由文本，不是错误，用中性卡其而不是警示色 */
-.tip__t--keep.tip__t--zh {
-  color: var(--keep); /* 6.6 vs surface-2 */
-}
-
-.tip__tag {
-  display: inline-block;
-  margin-left: var(--sp-2);
-  padding: 3px 6px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--r-sm);
-  color: var(--text-3);
-  font-family: var(--font-zh-cn);
-  font-size: 11px;
-  line-height: 1;
-  vertical-align: 1px;
-  white-space: nowrap;
-}
-
-.tip__tag--miss {
-  border-color: var(--warn-edge);
-  background: var(--warn-wash);
+.tip__t--miss .num,
+.tip__base--miss .num {
   color: var(--warn);
 }
-
-.tip__tag--keep {
-  color: var(--keep);
+.tip__t--keep.tip__t--zh {
+  color: var(--text-muted);
 }
-
+.tip__tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.tip__tag--miss {
+  color: var(--warn);
+  border-color: var(--warn);
+}
 .tip__tag--inject {
-  border-color: var(--unique-edge);
   color: var(--rarity-unique);
 }
-
-/* 繁体译文列：压过 base.css 那条 `:lang(zh-TW)`（0,1,0），换成含台服黑体的等宽栈，
-   繁体与简体两列的字形口径一致，数字仍然按 tabular-nums 对齐。 */
-.tip__t--zh:lang(zh-TW),
-.tip__base--zh:lang(zh-TW) {
-  font-family: var(--font-pair-tw);
-}
-
-/* 双语保留的英文原行：作为同一 grid 行里的第二子行，行数永远等于源行数 */
 .tip__keep {
   display: block;
   padding-top: 2px;
-  color: var(--keep);
+  color: var(--text-muted);
   font-size: 13px;
-  line-height: 1.5;
 }
-
-.tip__keep .icon {
-  display: inline-block;
-  margin-right: var(--sp-1);
-  color: var(--bronze-text);
-  vertical-align: -1px;
-}
-
 .tip--empty {
   display: block;
-  color: var(--text-3);
-  font-family: var(--font-zh-cn);
+  color: var(--text-muted);
   font-size: 13px;
 }
-
 .tip--empty p {
   margin: 0;
 }
-
-.tip--empty::before {
-  display: none;
-}
-
-/* 整段原样的字段退化成单列纯文本块（2b 审查 I-2）。不是 grid，所以既有的四列取值、
-   中缝、列头一概不参与；.tip 的内边距与等宽字体照旧继承，视觉上仍是同一块对照区。 */
 .tip--solo {
   display: block;
 }
-
-.tip--solo::before {
-  display: none;
-}
-
 .tip__t--solo {
   display: block;
   padding: 0;
 }
-
-/* 支援宝石的对照表嵌在 <li> 里，左右内边距由 li 提供，表格自己不再加一层。
-   写在 `.tip` 之后：它是 (0,2,0)，放在 (0,1,0) 的 `.tip` 之前会触发 noDescendingSpecificity。 */
-.supports .tip {
-  padding-left: 0;
-  padding-right: 0;
+.tip--translated {
+  grid-template-columns: 26px minmax(0, 1fr);
 }
-
-/* 天赋的备注是两列 grid 的第二格，纵向内边距会把它推离名字的基线，一并清零 */
+.tip--translated .tip__n--right {
+  padding-left: 0;
+}
+.tip--translated .tip__base--zh,
+.tip--translated .tip__t--zh {
+  padding-left: 0;
+}
+.supports .tip {
+  padding-inline: 0;
+}
 .passives .tip {
   padding: 0;
 }
-
-/* 跳转落点不要贴到主区顶边。基底名行的落点是英文那格（.tip__base），也要算上。
-   顺便给所有 tabIndex={-1} 的落点一个显式焦点环：base.css 那份 :focus-visible
-   名单只有 a/button/input/select/textarea/.button，序号格不在里面，程序化 focus()
-   能不能命中 :focus-visible 又要看浏览器启发式，靠 UA 默认环是碰运气。 */
 .tip__n,
 .tip__base,
-.tip__t--solo {
-  scroll-margin-top: var(--sp-6);
+.tip__t--solo,
+.namepair {
+  scroll-margin-top: 24px;
 }

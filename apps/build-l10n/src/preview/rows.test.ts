@@ -7,7 +7,6 @@ import type { LoadedDict } from '../dict/loadDict'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
 import { translateSource } from '../translate/runTranslation'
 import { buildFieldRows } from './fields'
-import { meterCells } from './locate'
 import { spanText } from './markup'
 import { buildRows, isMissedRow, type PairRow } from './rows'
 
@@ -210,7 +209,11 @@ describe('buildRows', () => {
     expect(rows[0]?.kind).toBe('mod')
     // 编号行不是基底名行，退化与基底名判据都靠这个标志
     expect(rows[0]?.base).toBe(false)
-    expect(meterCells(buildFieldRows(mixed, false))).toHaveLength(mixed.report.modCandidates)
+    expect(
+      buildFieldRows(mixed, false).flatMap((field) =>
+        field.rows.filter((row) => row.kind === 'mod'),
+      ),
+    ).toHaveLength(mixed.report.modCandidates)
   })
 })
 

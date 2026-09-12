@@ -1,9 +1,12 @@
 // 未命中的「人话定位」与跳转。审计 P1-6：现状把 inventory_slots[4].additional_text
 // 这种 JSON 路径直接甩给玩家，既不易读也不可点。
-import type { MeterCell } from '../components/CoverageMeter'
+
+import type { TranslatedFile } from '../translate/runTranslation'
 import type { FieldWithRows } from './fields'
+import { slotLabel } from './fields'
 import { spanText } from './markup'
 import type { PairRow } from './rows'
+import { isMissedRow } from './rows'
 
 // 路径 → 合法 id。inventory_slots[3].additional_text → line-inventory-slots-3-additional-text
 export function domIdFor(path: string): string {
@@ -20,7 +23,14 @@ export function rowLabel(row: PairRow): string {
   return `第 ${row.marker ?? row.index + 1} 行`
 }
 
+export type PreviewSection = 'gear' | 'skills' | 'passives'
+export function sectionFor(path: string): PreviewSection {
+  return path.startsWith('skills[') ? 'skills' : path.startsWith('passives[') ? 'passives' : 'gear'
+}
+
 export interface MissEntry {
+  kind: 'mod' | 'base' | 'unique'
+  section: PreviewSection
   path: string
   index: number
   domId: string
@@ -30,12 +40,17 @@ export interface MissEntry {
   text: string
 }
 
-export function collectMisses(fields: readonly FieldWithRows[]): MissEntry[] {
+export function collectMisses(
+  fields: readonly FieldWithRows[],
+  preview?: TranslatedFile['preview'],
+): MissEntry[] {
   const misses: MissEntry[] = []
   for (const { entry, rows } of fields) {
     for (const row of rows) {
-      if (row.status !== 'untranslated') continue
+      if (!isMissedRow(row, entry.baseName)) continue
       misses.push({
+        kind: row.status === 'untranslated' ? 'mod' : 'base',
+        section: sectionFor(entry.path),
         path: entry.path,
         index: row.index,
         domId: rowDomId(entry.path, row.index),
@@ -44,21 +59,20 @@ export function collectMisses(fields: readonly FieldWithRows[]): MissEntry[] {
       })
     }
   }
+  for (const slot of preview?.slots ?? []) {
+    if (slot.uniqueName === null || slot.uniqueText !== null) continue
+    const path = `inventory_slots[${slot.rawIndex}].unique_name`
+    misses.push({
+      kind: 'unique',
+      section: 'gear',
+      path,
+      index: -1,
+      domId: domIdFor(path),
+      where: `${slotLabel(slot)} · 传奇名`,
+      text: slot.uniqueName,
+    })
+  }
   return misses
-}
-
-// 覆盖率轨的格子：一格 = 一条编号行（kind === 'mod'），顺序就是预览里的显示顺序。
-// 概览卡与侧栏文件行共用这一份构造，两处的第 N 格必定是同一行。
-export function meterCells(fields: readonly FieldWithRows[]): MeterCell[] {
-  return fields.flatMap(({ entry, rows }) =>
-    rows
-      .filter((row) => row.kind === 'mod')
-      .map((row) => ({
-        domId: rowDomId(entry.path, row.index),
-        where: `${entry.label} · ${rowLabel(row)}`,
-        hit: row.status === 'translated',
-      })),
-  )
 }
 
 // 跳转：滚到视口中间并把焦点移过去，键盘用户跳过去之后 Tab 能从那一行继续。

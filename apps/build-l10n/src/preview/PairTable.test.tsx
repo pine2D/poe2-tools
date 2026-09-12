@@ -130,7 +130,7 @@ describe('PairTable', () => {
     )
     expect(screen.getByText('原样')).toBeDefined()
     expect(screen.queryByLabelText('未命中')).toBeNull()
-    expect(screen.getByText('原文 · EN')).toBeDefined()
+    expect(document.querySelector('.tip__t--zh')).not.toBeNull()
   })
 
   it('基底名没命中词典时算未命中，不许伪装成"原样"', () => {
@@ -216,7 +216,7 @@ describe('PairTable', () => {
       />,
     )
     expect(container.querySelector('.tip--solo')).toBeNull()
-    expect(screen.getByText('原文 · EN')).toBeDefined()
+    expect(document.querySelector('.tip__t--zh')).not.toBeNull()
   })
 
   it('双语保留的英文原行挂在同一行里，行数不多一行', () => {
@@ -246,7 +246,7 @@ describe('PairTable', () => {
     )
     expect(screen.getByText('稳步印记')).toBeDefined()
     expect(screen.getByText('传奇名注入')).toBeDefined()
-    expect(screen.getByText('译文 · 简体中文')).toBeDefined()
+    expect(container.querySelector('.tip__base--zh')?.getAttribute('lang')).toBe('zh-CN')
     // 注入行同样是两个 span-2 单元填满四列，不产生序号格
     expect(container.querySelectorAll('.tip__base')).toHaveLength(2)
     expect(container.querySelectorAll('.tip__n, .tip__t')).toHaveLength(0)
@@ -294,7 +294,7 @@ describe('PairTable', () => {
         rows={[row({ index: 1, marker: '1', zh: spans('生命上限') })]}
       />,
     )
-    expect(screen.getByText('译文 · 繁体中文')).toBeDefined()
+    expect(container.querySelector('.tip__lab')).toBeNull()
     expect(container.querySelector('.tip__t--zh')?.getAttribute('lang')).toBe('zh-TW')
   })
 })

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { miniBundle } from '../../../packages/build-core/src/testing/miniDict'
 import { App } from './App'
 import { fakeDictFetch } from './testing/fakeDictFetch'
@@ -12,6 +12,10 @@ const rich = readFileSync(`${fixtures}rich.build`, 'utf8')
 const expected = readFileSync(`${fixtures}rich.expected.zh-CN.build`, 'utf8').trimEnd()
 
 // Testing Library 不自动清理：不 cleanup 的话上一个用例的 DOM 会留到下一个用例
+beforeAll(() => {
+  Element.prototype.scrollIntoView = () => {}
+})
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
@@ -57,16 +61,16 @@ describe('App', () => {
     upload('rich.build', rich)
     // 文件名在列表按钮与（Task 5 起）概览里都会出现：按角色找列表按钮
     await screen.findByRole('button', { name: 'rich.build' })
-    expect(screen.getByText('88%')).toBeDefined()
-    fireEvent.click(inFileList().getByLabelText('下载 rich.build'))
+    expect(screen.getByText('词缀 7/8')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '下载 rich.build' }))
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)
     // 下载是任务流的最后一步，点完必须说清文件去哪儿（研究报告 G8 / P2-11）
-    expect(await screen.findByText(/已下载 rich\.build/)).toBeDefined()
-    expect(screen.getByText(/放进 Build Planner 目录后同名替换/)).toBeDefined()
+    expect(await screen.findByText(/已开始下载 rich\.build/)).toBeDefined()
+    expect(screen.getByText('下载后怎么使用？')).toBeDefined()
     // 还是同一个容器节点在播报，不是重新挂载了一个（容器常在）
     expect(document.querySelector('.toast-live')).toBe(toastLive)
-    expect(toastLive?.textContent).toContain('已下载 rich.build')
+    expect(toastLive?.textContent).toContain('已开始下载 rich.build')
   })
 
   it('双语选项改变输出；全部下载在多文件时给 zip', async () => {
@@ -74,12 +78,12 @@ describe('App', () => {
     const blobs = interceptDownloads()
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
-    fireEvent.click(screen.getByLabelText('双语（保留英文原行）'))
-    fireEvent.click(inFileList().getByLabelText('下载 rich.build'))
+    fireEvent.click(screen.getByLabelText('导出时保留英文原行'))
+    fireEvent.click(screen.getByRole('button', { name: '下载 rich.build' }))
     expect(await blobs[0]?.text()).toContain('149% increased Spell Damage')
     upload('rich2.build', rich)
     await screen.findByRole('button', { name: 'rich2.build' })
-    fireEvent.click(screen.getByRole('button', { name: '全部下载' }))
+    fireEvent.click(screen.getByRole('button', { name: '下载全部 2 份' }))
     expect(blobs[1]?.type).toBe('application/zip')
   })
 
@@ -91,7 +95,7 @@ describe('App', () => {
     fireEvent.click(screen.getByText('添加粘贴内容'))
     await screen.findByRole('button', { name: 'pasted-1.build' })
     // 覆盖率破折号只看列表项（概览里无升华也显示破折号）
-    expect(inFileList().getByText('—')).toBeDefined()
+    expect(inFileList().getByText('词缀 0/0')).toBeDefined()
     fireEvent.change(screen.getByLabelText('粘贴 .build 内容'), { target: { value: 'not json' } })
     fireEvent.click(screen.getByText('添加粘贴内容'))
     await screen.findByRole('button', { name: 'pasted-2.build' })
@@ -145,7 +149,7 @@ describe('App', () => {
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
     expect(screen.getByText('待词典就绪')).toBeDefined()
-    const download = screen.getByLabelText('下载 rich.build') as HTMLButtonElement
+    const download = screen.getByRole('button', { name: '下载全部 0 份' }) as HTMLButtonElement
     expect(download.disabled).toBe(true)
   })
 
@@ -158,7 +162,7 @@ describe('App', () => {
   it('空态只有一块引导区：没有侧栏、没有两句互相矛盾的空文案', async () => {
     await renderReady()
     // level 2 把它与顶栏那个 <h1> 字标分开
-    expect(screen.getByRole('heading', { level: 2, name: 'PoE2 构筑汉化' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 2, name: '英文构筑，中文读懂。' })).toBeDefined()
     expect(screen.queryByText('还没有文件')).toBeNull()
     expect(screen.queryByText(/选择左侧文件/)).toBeNull()
     // 全站只有一个拖放区，所以「选择 .build 文件」不会一名两指
@@ -166,7 +170,7 @@ describe('App', () => {
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
     // 有文件之后引导区让位给预览，侧栏出现
-    expect(screen.queryByRole('heading', { level: 2, name: 'PoE2 构筑汉化' })).toBeNull()
+    expect(screen.queryByRole('heading', { level: 2, name: '英文构筑，中文读懂。' })).toBeNull()
   })
 
   it('侧栏抽屉：开关声明了它控制谁，点一次展开、选中文件后自动收起', async () => {
@@ -188,6 +192,7 @@ describe('App', () => {
 
   it('顶栏能切主题，选中的那个 aria-checked，选择写进 <html data-theme>', async () => {
     await renderReady()
+    ;(screen.getByText('设置').closest('details') as HTMLDetailsElement).open = true
     const group = screen.getByRole('radiogroup', { name: '界面主题' })
     expect(group).toBeDefined()
     fireEvent.click(within(group).getByLabelText('深色'))
@@ -205,37 +210,51 @@ describe('App', () => {
     expect(live?.getAttribute('aria-live')).toBe('polite')
   })
 
-  it('一个文件都没有时，禁用的「全部下载」不给出「打包下载 0 个文件」这种提示（M-9）', async () => {
+  it('导入前隐藏批量操作，导入后位于文件区', async () => {
     await renderReady()
-    const button = screen.getByRole('button', { name: '全部下载' })
-    expect(button.getAttribute('title')).toBe('先导入 .build 文件')
-  })
-
-  it('主区概览轨与侧栏迷你轨用同一份行模型：换文件后两条轨读数仍然一致', async () => {
-    await renderReady()
+    expect(screen.queryByRole('button', { name: /下载全部/ })).toBeNull()
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
-    // 第二份文件的覆盖率与 rich.build（7 / 8）不同：只有一条编号行且命中
-    const clean = JSON.stringify({
-      name: 'All Hit',
-      inventory_slots: [
-        {
-          inventory_id: 'Weapon1',
-          slot_x: 0,
-          slot_y: 0,
-          additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
-        },
-      ],
-    })
-    upload('clean.build', clean)
-    fireEvent.click(await screen.findByRole('button', { name: 'clean.build' }))
-    const overview = document.querySelector('.meter--lg')?.getAttribute('aria-label')
-    const mini = [...document.querySelectorAll('.meter--sm')]
-      .map((meter) => meter.getAttribute('aria-label') ?? '')
-      .find((label) => label.startsWith('clean.build：'))
-    // 概览轨必须读的是 clean.build（而不是还停在 rich.build 的 8 格），且与它自己那条
-    // 迷你轨逐字相同。不写死命中数：条数是结构决定的，命中与否取决于测试词典。
-    expect(overview).toContain('共 1 条编号行')
-    expect(mini).toBe(`clean.build：${overview}`)
+    expect(screen.getByRole('button', { name: '下载全部 1 份' }).closest('aside')).not.toBeNull()
+  })
+
+  it('移除当前文件选中相邻文件，最后一份移除回到导入页', async () => {
+    await renderReady()
+    upload('a.build', rich)
+    await screen.findByRole('button', { name: 'a.build' })
+    upload('b.build', JSON.stringify({ name: 'Next Build' }))
+    await screen.findByRole('button', { name: 'b.build' })
+    fireEvent.click(screen.getByRole('button', { name: '移除 a.build' }))
+    expect(screen.getByRole('heading', { name: 'Next Build' })).toBeDefined()
+    expect(screen.getByRole('button', { name: '下载 b.build' })).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '移除 b.build' }))
+    expect(screen.getByRole('heading', { name: '英文构筑，中文读懂。' })).toBeDefined()
+  })
+
+  it('切换预览不改变下载文件，切换文件复位阅读状态', async () => {
+    await renderReady()
+    const blobs = interceptDownloads()
+    upload('a.build', rich)
+    await screen.findByRole('button', { name: 'a.build' })
+    fireEvent.click(screen.getByRole('radio', { name: '译文' }))
+    fireEvent.click(screen.getByRole('button', { name: '下载 a.build' }))
+    expect(await blobs[0]?.text()).toBe(expected)
+    upload('b.build', rich)
+    fireEvent.click(await screen.findByRole('button', { name: 'b.build' }))
+    expect((screen.getByRole('radio', { name: '中英对照' }) as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByText('词缀命中 7/8')).toBeDefined()
+  })
+
+  it('批量部分成功准确报告成功与失败份数', async () => {
+    await renderReady()
+    const blobs = interceptDownloads()
+    upload('good.build', rich)
+    await screen.findByRole('button', { name: 'good.build' })
+    upload('bad.build', 'not json')
+    await screen.findByRole('button', { name: 'bad.build' })
+    fireEvent.click(screen.getByRole('button', { name: '下载成功的 1 份' }))
+    expect(blobs).toHaveLength(1)
+    expect(await blobs[0]?.text()).toBe(expected)
+    expect(screen.getByText(/另有 1 份失败未导出/)).toBeDefined()
   })
 })

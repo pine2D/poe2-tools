@@ -1,349 +1,175 @@
-/* 预览骨架与概览卡：区块头、覆盖率三段、键位提示、元信息、未命中清单（含浅色金渐变的三选择器覆盖块——它物理上紧跟 .cov__num--full，跟着这一段走，不许顺手挪进 tokens.css：挪了就排到 .app__header h1 的定义之前，noDescendingSpecificity 会红）。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
 .preview {
-  max-width: 1000px;
+  max-width: 1180px;
+  margin: 0 auto;
 }
-
-.preview__section {
-  margin-bottom: var(--sp-7);
-}
-
-/* 区块头：英文眉标 + 中文标题 + 计数，下面压一条两端淡出线 */
-.sec__eyebrow {
-  margin-bottom: 2px;
-}
-
-.sec__head {
+.build-header {
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-3);
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
 }
-
-.preview__section h2 {
+.build-header__identity {
+  min-width: 0;
+}
+.build-header__identity small {
+  color: var(--text-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.build-header h2 {
+  margin: 4px 0 8px;
+  font-size: 27px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.build-header p {
   margin: 0;
-  color: var(--gold-300);
-  font-size: var(--fs-h2);
-  line-height: 1.35;
-  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-size: 13px;
 }
-
-.sec__count {
-  color: var(--text-3);
-  font-family: var(--font-pair);
+.review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 20px 0 12px;
+  color: var(--text-muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
-
-.sec__rule {
-  display: block;
-  height: 1px;
-  margin: var(--sp-3) 0 var(--sp-5);
-  background: var(--rule-fade);
-}
-
-/* ---------- 概览卡：全站唯一带四角刻痕的卡片 ---------- */
-
-.ov {
-  position: relative;
-  padding: var(--sp-6) var(--sp-7);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface-2);
-  box-shadow: var(--inset-light);
-}
-
-.ov__corner {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border: 1px solid var(--gold-edge);
-}
-
-.ov__corner--1 {
-  top: 6px;
-  left: 6px;
-  border-right: 0;
-  border-bottom: 0;
-}
-
-.ov__corner--2 {
-  top: 6px;
-  right: 6px;
-  border-left: 0;
-  border-bottom: 0;
-}
-
-.ov__corner--3 {
-  bottom: 6px;
-  left: 6px;
-  border-right: 0;
-  border-top: 0;
-}
-
-.ov__corner--4 {
-  bottom: 6px;
-  right: 6px;
-  border-left: 0;
-  border-top: 0;
-}
-
-/* 主场景是「导入即下载」：下载入口摆在概览卡最上面，比顶栏更靠近内容 */
-.ov__act {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  flex-wrap: wrap;
-  margin-bottom: var(--sp-5);
-}
-
-.ov__hint {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: 0;
-  color: var(--text-3);
-  font-size: 12.5px;
-}
-
-.cov {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0 var(--sp-7);
-}
-
-.cov__lab {
-  margin: 0 0 var(--sp-1);
-  color: var(--text-3);
-  font-size: 12.5px;
-  letter-spacing: 0.08em;
-}
-
-/* 覆盖率大数字：Cinzel 只承载孤立数字，这里前后没有字母，不会出现 1/I 混淆 */
-.cov__num {
-  margin: 0;
-  color: var(--gold-300);
-  font-family: var(--font-display);
-  font-size: var(--fs-display);
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.cov__num small {
-  margin-left: 2px;
-  color: var(--gold-500);
-  font-size: 20px;
-}
-
-/* 100% 才升级成金渐变裁切 —— 全站金渐变配额的第二处（第一处是顶栏字标），
-   把「全部命中」做成一个可被期待的仪式，99% 的时间屏幕上没有金色块 */
-.cov__num--full {
-  background: linear-gradient(180deg, #fff7e4 0%, #f2e4b8 38%, #d6b473 74%, #9c7a3e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 1px #000);
-}
-
-/* 金渐变裁切的三处（顶栏字标、空态大标题、100% 覆盖率数字）在浅色下必须整条换向：
-   浅金压在近白底上等于不可见。最浅的一端 #7d5f16 对 --surface-0 实算 5.20、
-   对 --surface-1 是 5.53，≥4.5；黑投影在浅底上会糊成脏边，换成一层白高光。
-   写在这里而不是各组件规则里：三处共用同一份配方，分散三份必然漂移（2a 审查 M-11）。 */
-:root[data-theme="light"] .app__header h1,
-:root[data-theme="light"] .empty__hero,
-:root[data-theme="light"] .cov__num--full {
-  background: linear-gradient(180deg, #7d5f16 0%, #6b5214 38%, #55400e 74%, #3d2e08 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
-}
-
-/* 勾选态的金勾与金边是深色档字面量，令牌够不着：浅色下实算勾 1.46:1、边框 1.27:1，破 1.4.11
-   的 3:1（Task 1 报告 P0）。换成令牌与更深的合成底后复算：边框 --gold-300 vs 顶栏底
-   --surface-1 = 6.85:1；勾（同色描边）vs 勾选后合成底（--gold-300 12% 叠 --surface-1）
-   = 5.73:1，叠 --surface-0 时更低也仍有 5.41:1，两处都远超 3:1 目标。 */
-:root[data-theme="light"] .opt input[type="checkbox"]:checked {
-  border-color: var(--gold-300);
-  background: rgba(107, 82, 20, 0.12)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b5214' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
-    center no-repeat;
-}
-
-.cov__frac {
-  margin: var(--sp-2) 0 0;
-  color: var(--text-2);
-  font-size: 13.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-.cov__meterwrap {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.cov__legend {
-  display: flex;
-  gap: var(--sp-4);
-  flex-wrap: wrap;
-  margin: 0;
-  color: var(--text-3);
-  font-size: 11.5px;
-}
-
-/* 键位提示：快捷键必须可发现（研究报告 §5.4 G9「键位在状态栏常驻」）。≤560 整条隐藏。 */
-.cov__keys {
-  display: flex;
-  gap: var(--sp-4);
-  flex-wrap: wrap;
-  margin: 2px 0 0;
-  color: var(--text-3);
-  font-size: 11.5px;
-}
-
-/* 两条规则内容完全一样（同为「小样本 + 文字」一行居中），合并成一个选择器（控制者追加 f） */
-.cov__legend span,
-.cov__keys span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cov__jump {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--sp-2);
-}
-
-.cov__missnum,
-.cov__allhit {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.cov__missnum {
-  color: var(--warn); /* 8.3 vs surface-2 */
-}
-
-.cov__allhit {
-  color: var(--gold-300);
-}
-
-/* 「仅看未命中」开关。裸类 .ov__filter 有意不写任何规则：它的基态就是 .button，补一条
-   display / gap 只会把图标与文字的间距改得和旁边的「跳到第一处」不一样。它在 TSX 里是
-   --on 的基名，也是第三期 B 的接口契约，保留。
-   按下态用与未命中同族的琥珀，不用金色（金色只做品牌与标题）。 */
-.ov__filter--on {
-  border-color: var(--warn-edge);
-  background: var(--warn-wash);
+.review-summary button {
+  min-height: 30px;
   color: var(--warn);
-}
-
-.ov__filter--on:hover:not(:disabled) {
-  border-color: var(--warn);
-  background: var(--warn-strong);
-  color: var(--warn);
-}
-
-/* 区块被筛空时的一句话，比 .muted 再退一档，别抢卡片的注意力 */
-.sec__empty {
-  margin: 0;
-  font-size: 13.5px;
-}
-
-.ov__rule {
-  display: block;
-  height: 1px;
-  margin: var(--sp-5) 0 var(--sp-4);
-  background: var(--rule-fade);
-}
-
-.meta {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: baseline; /* 两列字号不同，不对齐基线会差 1px（第一期 M-11） */
-  gap: var(--sp-3) var(--sp-5);
-  margin: 0;
-}
-
-.meta dt {
-  color: var(--text-3);
-  font-size: 12.5px;
-  letter-spacing: 0.1em;
-}
-
-.meta dd {
-  margin: 0;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.meta__asc {
-  color: var(--rarity-unique); /* 5.3 vs surface-2 */
-}
-
-.meta__mono {
-  color: var(--text-2);
-  font-family: var(--font-pair);
-  font-size: 13px;
-}
-
-/* 未命中清单：人话定位 + 原文 + 定位按钮，整条带琥珀左条 */
-.misslist {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  list-style: none;
-  margin: var(--sp-5) 0 0;
-  padding: 0;
-}
-
-.misslist li {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: 9px 12px;
-  border: 1px solid var(--warn-edge);
-  border-left: 2px solid var(--warn);
-  border-radius: var(--r-md);
-  background: var(--surface-0);
-}
-
-.misslist__where {
-  color: var(--warn); /* 9.3 vs surface-0 */
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.misslist__text {
-  color: var(--text-2);
-  font-family: var(--font-pair);
-  font-size: 12.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-button.misslist__go {
-  min-height: 28px;
-  padding: 0 10px;
+  background: var(--warn-bg);
   border-color: transparent;
-  background: none;
-  box-shadow: none;
-  color: var(--gold-500);
+}
+.build-details {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.build-details summary {
+  width: fit-content;
+  min-height: 32px;
+}
+.build-details p {
+  overflow-wrap: anywhere;
+}
+.build-details a {
+  color: var(--accent);
+}
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  margin: 8px 0 20px;
+}
+.section-nav {
+  display: flex;
+  gap: 20px;
+}
+.section-nav button {
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+}
+.section-nav button[aria-pressed="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+.preview-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+.preview-controls > button {
+  background: transparent;
   font-size: 12px;
 }
+.preview-controls button[aria-pressed="true"] {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.review-list {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.review-list ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+.review-list button {
+  white-space: normal;
+  text-align: left;
+  justify-content: flex-start;
+}
+.preview-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0 20px;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.preview-columns > :last-child {
+  padding-left: 20px;
+}
 
-button.misslist__go:hover:not(:disabled) {
-  border-color: var(--hairline-strong);
-  background: var(--surface-hover);
-  color: var(--gold-100);
+.review-summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.review-keys {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: -4px 0 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.review-keys button {
+  min-height: 32px;
+  padding: 4px 8px;
+  background: transparent;
+  font-size: 12px;
+}
+.misslist > li {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(0, 3fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.misslist__where small {
+  display: block;
+  color: var(--warn);
+  font-size: 12px;
+}
+.misslist__text {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.preview[data-view="translated"] .preview-columns {
+  grid-template-columns: minmax(0, 1fr);
+}
+.preview[data-view="translated"] .preview-columns > :last-child {
+  padding-left: 0;
 }

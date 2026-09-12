@@ -1,227 +1,95 @@
-/* 卡片：稀有度左边、三段式卡头、标签、名字对、支援宝石与天赋列表。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
-/* ---------- 卡片 ---------- */
-
 .card {
-  position: relative;
-  margin-bottom: var(--sp-5);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   background: var(--surface-2);
-  box-shadow: var(--inset-light);
   overflow: hidden;
 }
-
-/* 卡片进入淡入：全站唯一一处「元素出现」的动效（任务书上限 1–2 处）。只给主区卡片，逐张
-   40ms 错开、最多错到第 4 张——再往后错，长列表最后一张要等半秒才出现，反而像卡了。
-   计数用 :nth-of-type 而不是 :nth-child（对 Task 7 简报的更正）：卡片前面还有眉标 <span>、
-   卡头 <div>、分隔线 <span> 三个兄弟，用 :nth-child 的话每个区块的第一张卡就已经是第 4 个
-   子元素，三条规则同时退化成「所有卡片都是 120ms」，实测 animation-delay 全是 0.12s，
-   错开根本没发生。:nth-of-type 只数 <article>，每个区块内从第一张卡开始数。 */
-.preview .card {
-  animation: card-in var(--dur-mid) var(--ease) both;
-}
-
-@keyframes card-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.preview .card:nth-of-type(2) {
-  animation-delay: 40ms;
-}
-
-.preview .card:nth-of-type(3) {
-  animation-delay: 80ms;
-}
-
-.preview .card:nth-of-type(n + 4) {
-  animation-delay: 120ms;
-}
-
-/* 左侧 2px 稀有度边：普通白、传奇橙、宝石青、天赋古铜 */
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--mk-silver);
-  opacity: 0.75;
-}
-
-.card--unique::before {
-  background: var(--rarity-unique);
-}
-
-.card--gem::before {
-  background: var(--rarity-gem);
-}
-
-.card--passive::before {
-  background: var(--bronze-600);
-}
-
-/* 卡头三段式：中文名 + 标签 + 计数 + 右端 inventory_id */
 .card__head {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
   flex-wrap: wrap;
-  padding: var(--sp-3) var(--sp-5);
-  border-bottom: 1px solid var(--hairline);
-  background: var(--surface-1);
+  gap: 8px 12px;
+  padding: 14px 20px;
+  background: var(--surface-3);
 }
-
 .card__head h3 {
   margin: 0;
-  color: var(--text);
-  font-size: var(--fs-h3);
-  font-weight: 600;
+  font-size: 15px;
 }
-
 .card__count {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--text-3);
-  font-family: var(--font-pair);
-  font-size: 12.5px;
+  color: var(--text-muted);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-
-/* 有未命中就变琥珀 + 三角，不点轨也知道该看哪张卡（报告 §5.4 G5） */
 .card__count--short {
   color: var(--warn);
 }
-
-/* inventory_id 是字母数字混排（Weapon1 / Belt1），**绝不能**用 Cinzel：
-   实测 WEAPON1 会渲染成 WEAPONI。走等宽字体。 */
 .card__id {
   margin-left: auto;
-  color: var(--bronze-text); /* 5.7 vs surface-1 */
-  font-family: var(--font-pair);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font: 12px var(--font-code);
+  overflow-wrap: anywhere;
 }
-
 .chip {
-  padding: 4px 7px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--r-sm);
-  color: var(--text-3);
-  font-size: 11px;
-  line-height: 1;
-  white-space: nowrap;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
 }
-
 .chip--unique {
-  border-color: var(--unique-edge);
-  /* 底是 10% 的暖色，与 --gold-wash 那份 10% 的金在任一主题下都分辨不出（实算差 0.02），
-     合成一个令牌；传奇这一身色相由上面的边框与下面的文字承担 */
-  background: var(--gold-wash);
   color: var(--rarity-unique);
 }
-
-.chip--bi {
-  /* 与「或粘贴内容」的虚下划线共用一条暖中性线：原值是 keep 灰 40%，
-     与 --bronze-line 的铜 40% 合成后差不到 0.2 对比度，不值得为它单开一个令牌 */
-  border-color: var(--bronze-line);
-  color: var(--keep);
-}
-
-/* 宝石 / 天赋的名字对：英文小字在前，中文在后 */
 .namepair {
   display: inline-flex;
   align-items: baseline;
-  gap: var(--sp-3);
   flex-wrap: wrap;
+  gap: 4px 12px;
   min-width: 0;
-}
-
-.namepair__en {
-  color: var(--text-3);
-  font-family: var(--font-pair);
-  font-size: 13px;
   overflow-wrap: anywhere;
 }
-
+.namepair__en {
+  color: var(--text-muted);
+  font-size: 13px;
+}
 .namepair__zh {
   color: var(--text);
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 600;
 }
-
 .namepair__zh--gem {
-  color: var(--rarity-gem); /* 8.4 vs surface-2 / 8.9 vs surface-1 */
+  color: var(--rarity-gem);
 }
-
-/* 写在 --gem 之后，未命中的宝石名要压过宝石青 */
 .namepair__zh--miss {
-  color: var(--warn); /* 8.8 vs surface-1 */
+  color: var(--warn);
   font-weight: 400;
 }
-
-.supports {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--hairline);
-}
-
-.supports > li {
-  position: relative;
-  padding: var(--sp-3) var(--sp-5) var(--sp-3) 40px;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.supports > li:last-child {
-  border-bottom: 0;
-}
-
-/* 辅助宝石前面的折线，表示「挂在上面那颗主宝石下」 */
-.supports > li::before {
-  content: "";
-  position: absolute;
-  left: 24px;
-  top: 20px;
-  width: 8px;
-  height: 8px;
-  border-left: 1px solid var(--bronze-600);
-  border-bottom: 1px solid var(--bronze-600);
-}
-
-.supports .namepair__zh {
-  font-size: 14px;
-  font-weight: 400;
-}
-
+.supports,
 .passives {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-
-/* 天赋行改「名字 | 备注」同行两列（2b 审查 I-3：原来是名字一行 + 下面整张两列表，同内容
-   高约 3 倍，是主区最不像 mockup 的一块）。第一列名字上限 240px（mockup 同款），第二列吃掉
-   余宽，baseline 对齐。依赖「每个 li 恰好两个直接子元素」，由 Preview.test 的契约用例守住。 */
+.supports > li {
+  padding: 12px 20px 12px 32px;
+  border-top: 1px solid var(--line);
+}
+.supports .namepair__zh {
+  font-size: 14px;
+  font-weight: 400;
+}
 .passives > li {
   display: grid;
-  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
-  gap: var(--sp-2) var(--sp-5);
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
   align-items: baseline;
-  padding: var(--sp-3) var(--sp-5);
-  border-bottom: 1px solid var(--hairline);
+  gap: 8px 20px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
 }
-
 .passives > li:last-child {
   border-bottom: 0;
 }

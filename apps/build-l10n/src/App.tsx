@@ -10,7 +10,6 @@ import { createDictLoader, type FetchJson, type LoadedDict } from './dict/loadDi
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { pastedSource, readFiles } from './files/readSources'
 import { buildFieldRows } from './preview/fields'
-import { meterCells } from './preview/locate'
 import { Preview } from './preview/Preview'
 import { type ThemeMode, useTheme } from './theme/useTheme'
 import {
@@ -44,9 +43,7 @@ const THEMES: readonly { value: ThemeMode; label: string }[] = [
   { value: 'dark', label: '深色' },
 ]
 
-// 主题三态：复用目标语言那套分段控件（真 radio + visually-hidden，方向键分组行为由浏览器给）。
-// 组名用 aria-label 而不是可见的 .seg__legend：顶栏状态区已经有徽章与下载按钮，
-// 再加四个字会把这一段挤到换行；三个选项的文字本身已经说清了这是什么。
+// 主题跟随系统或用户选择，使用原生 radio 保留键盘分组行为。
 function ThemeSeg({ mode, onMode }: { mode: ThemeMode; onMode(mode: ThemeMode): void }) {
   return (
     <div className="seg seg--theme" role="radiogroup" aria-label="界面主题">
@@ -148,12 +145,16 @@ export function App({ fetchImpl }: AppProps) {
   const [reloadKey, setReloadKey] = useState(0)
   // 下载后的落地引导条。onClose 必须是稳定身份：Toast 用它做自动消失的定时器依赖，
   // 每次渲染换一个新函数会让 4 秒的倒计时被不断重置，条永远不会自己消失。
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; id: number } | null>(null)
+  const toastSequence = useRef(0)
+  const notifyDownload = (message: string) => {
+    toastSequence.current += 1
+    setToast({ message, id: toastSequence.current })
+  }
   const closeToast = useCallback(() => {
     setToast(null)
   }, [])
-  // ≤560 的侧栏抽屉。默认收起：手机首屏要先给「概览卡 + 下载 CTA」，而不是一屏文件管理。
-  // >560 时这个状态没有任何 CSS 消费它，侧栏照常常驻（见 responsive.css 的 ≤560 断点）。
+  // 中小屏文件区按需展开，桌面常驻；切换文件后归还焦点。
   const [sideOpen, setSideOpen] = useState(false)
   const sideToggle = useRef<HTMLButtonElement>(null)
 
@@ -188,13 +189,12 @@ export function App({ fetchImpl }: AppProps) {
 
   const results = useMemo<TranslateResult[]>(
     () =>
-      dictState.status === 'ready'
+      dictState.status === 'ready' && dictState.dict.locale === locale
         ? sources.map((source) => translateSource(source, dictState.dict, options))
         : [],
-    [dictState, sources, options],
+    [dictState, sources, options, locale],
   )
-  // 行模型每份文件只算一次：侧栏迷你轨与主区对照表共用同一份，两处的第 N 格 / 第 N 行
-  // 必定是同一行（附录 D M-12：此前 App 与 Preview 各算一份，靠两边都传对 bilingual 维持一致）
+  // 翻译结果与导出选项共同生成行模型，预览视图不参与翻译。
   const fieldsById = useMemo(
     () =>
       new Map(
@@ -203,10 +203,6 @@ export function App({ fetchImpl }: AppProps) {
         ),
       ),
     [results, options.bilingual],
-  )
-  const meters = useMemo(
-    () => new Map([...fieldsById].map(([id, fields]) => [id, meterCells(fields)] as const)),
-    [fieldsById],
   )
   const selected = results.find((result) => result.id === selectedId) ?? null
   const translated = results.flatMap((result) => (result.ok ? [result.file] : []))
@@ -226,38 +222,55 @@ export function App({ fetchImpl }: AppProps) {
   }
   const selectFile = (id: string) => {
     setSelectedId(id)
-    // 抽屉开着才收起并交还焦点：≤560 收起后 <aside> 会 display:none，刚被点击的
+    // 抽屉开着才收起并交还焦点：中小屏 收起后 <aside> 会 display:none，刚被点击的
     // .filelist__name 随之消失，焦点被重置到 <body>——键盘与 VoiceOver 用户正好在
-    // 「选文件 → 看概览」的中间丢掉光标。>560 时 sideOpen 恒 false，这里什么都不做。
+    // 「选文件 → 看概览」的中间丢掉光标。桌面 时 sideOpen 恒 false，这里什么都不做。
     if (sideOpen) {
       setSideOpen(false)
       sideToggle.current?.focus()
     }
   }
   const remove = (id: string) => {
-    setSources((previous) => previous.filter((source) => source.id !== id))
-    setSelectedId((current) => (current === id ? null : current))
+    const index = sources.findIndex((source) => source.id === id)
+    const remaining = sources.filter((source) => source.id !== id)
+    setSources(remaining)
+    if (selectedId === id) {
+      setSelectedId(remaining[Math.min(index, remaining.length - 1)]?.id ?? null)
+    }
+    // 移除按钮即将消失，提交 DOM 后交给相邻文件；最后一份回到导入入口。
+    requestAnimationFrame(() => {
+      if (remaining.length === 0) {
+        document.getElementById('file-input')?.focus()
+      } else if (sideOpen) {
+        sideToggle.current?.focus()
+      } else {
+        document.querySelector<HTMLButtonElement>('.filelist__name[aria-current="true"]')?.focus()
+      }
+    })
   }
   const downloadOne = (id: string) => {
     const result = results.find((item) => item.id === id)
     if (!result?.ok) return
     saveBlob(textBlob(result.file.output), result.file.name)
-    setToast(`已下载 ${result.file.name}，放进 Build Planner 目录后同名替换`)
+    notifyDownload(`已开始下载 ${result.file.name}`)
   }
   const downloadAll = () => {
     if (translated.length === 1) {
       const only = translated[0]
       if (only === undefined) return
       saveBlob(textBlob(only.output), only.name)
-      setToast(`已下载 ${only.name}，放进 Build Planner 目录后同名替换`)
+      notifyDownload(
+        `已开始下载 ${only.name}，共 1 份${sources.length > 1 ? `；另有 ${sources.length - 1} 份失败未导出` : ''}`,
+      )
     } else if (translated.length > 1) {
       const name = zipName(locale)
       saveBlob(zipBlob(translated), name)
-      setToast(`已下载 ${name}，解压后放进 Build Planner 目录同名替换`)
+      notifyDownload(
+        `已开始下载 ${name}，共 ${translated.length} 份${sources.length > translated.length ? `；另有 ${sources.length - translated.length} 份失败未导出` : ''}`,
+      )
     }
   }
-  // 文案固定「全部下载」（既有术语），这次点下去到底发生什么写在 title 里
-  // 禁用按钮在多数浏览器仍然显示 title；不加这一档会说「打包下载 0 个文件（…zip）」（附录 B M-9）
+  // 批量操作只导出成功结果，界面明确给出实际份数。
   const downloadTitle =
     translated.length === 0
       ? '先导入 .build 文件'
@@ -301,12 +314,14 @@ export function App({ fetchImpl }: AppProps) {
           title="这个文件没法解析"
           hint="它不是合法的 JSON，常见原因是复制内容时被截断了，或者拖错了文件。换一份文件再试。"
           detail={selected.error}
+          action={{ label: `移除 ${selected.name}`, onClick: () => remove(selected.id) }}
         />
       )
     }
     if (selected?.ok) {
       return (
         <Preview
+          key={selected.id}
           file={selected.file}
           fields={fieldsById.get(selected.id) ?? []}
           locale={locale}
@@ -315,7 +330,11 @@ export function App({ fetchImpl }: AppProps) {
         />
       )
     }
-    return <p className="hint">从文件列表里选一个，查看中英对照</p>
+    return (
+      <p className="hint" role="status">
+        正在准备{locale === 'zh-CN' ? '简体' : '繁体'}中文词典，文件已保留…
+      </p>
+    )
   }
 
   return (
@@ -325,28 +344,18 @@ export function App({ fetchImpl }: AppProps) {
           <Icon name="brand" size={22} className="app__mark" />
           <h1>PoE2 构筑汉化</h1>
         </div>
-        <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions} />
-        <div className="app__status">
+        <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions}>
+          <h2>界面主题</h2>
           <ThemeSeg mode={theme.mode} onMode={theme.setMode} />
-          <div className="app__live" role="status" aria-live="polite">
-            <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
-          </div>
-          <button
-            type="button"
-            className="cta"
-            title={downloadTitle}
-            disabled={translated.length === 0}
-            onClick={downloadAll}
-          >
-            <Icon name="download" />
-            全部下载
-          </button>
-        </div>
+        </OptionsBar>
       </header>
+      <div className="app__live" role="status" aria-live="polite">
+        <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
+      </div>
       <div className="app__body">
         {!empty && (
           <>
-            {/* ≤560 才出现的抽屉开关。>560 时 display:none —— 它必须真的不占 grid 单元，
+            {/* 中小屏 才出现的抽屉开关。桌面 时 display:none —— 它必须真的不占 grid 单元，
                 否则 .app__body 的两列会被挤成三份。放在 {!empty} 分支里也是硬要求：
                 空态时 <main> 必须仍是 .app__body 的唯一子元素，:only-child 才成立。 */}
             <button
@@ -364,19 +373,39 @@ export function App({ fetchImpl }: AppProps) {
             <aside id="app-side" className={sideOpen ? 'app__side app__side--open' : 'app__side'}>
               <DropZone onFiles={onFiles} onPaste={onPaste} />
               <div className="rail-h">
-                <span className="eyebrow">Files</span>
-                <span className="rail-h__zh">文件</span>
+                <span className="rail-h__zh">本次文件</span>
                 <span className="rail-h__n">{sources.length}</span>
               </div>
               <FileList
                 sources={sources}
                 results={results}
                 selectedId={selectedId}
-                meters={meters}
                 onSelect={selectFile}
                 onRemove={remove}
-                onDownload={downloadOne}
               />
+              <button
+                type="button"
+                className="button batch-download"
+                title={downloadTitle}
+                disabled={translated.length === 0}
+                onClick={downloadAll}
+              >
+                <Icon name="download" />
+                {translated.length < sources.length && dictState.status === 'ready'
+                  ? `下载成功的 ${translated.length} 份`
+                  : `下载全部 ${translated.length} 份`}
+              </button>
+              {results.some((result) => !result.ok) && (
+                <p className="muted">解析失败的文件不会导出。</p>
+              )}
+              <details className="download-help">
+                <summary>下载后怎么使用？</summary>
+                <p>
+                  将 .build 文件放进文档目录下的 My Games / Path of Exile 2 /
+                  BuildPlanner。同名替换前请保留原文件备份。
+                </p>
+                <p>多文件包先解压。同名文件会加序号区分，按需要选用。</p>
+              </details>
               {dictState.status === 'ready' && (
                 <p className="app__side-note">
                   词典 {dictVersion(dictState.dict)}
@@ -391,7 +420,7 @@ export function App({ fetchImpl }: AppProps) {
       </div>
       {/* Toast 自带一个始终渲染的空容器承载 role="status"（控制者追加 g），这里不再按
           toast !== null 整体卸载/挂载——那样每次都是一个新 live region，读屏不保证追踪到。 */}
-      <Toast message={toast} onClose={closeToast} />
+      <Toast message={toast?.message ?? null} eventId={toast?.id ?? 0} onClose={closeToast} />
     </div>
   )
 }

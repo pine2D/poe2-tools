@@ -6,7 +6,7 @@
 
 | 工具 | 状态 | 说明 |
 |---|---|---|
-| `build-l10n` | 0.3.0：核心库、词典与静态站界面已完成（逐行对照、覆盖率轨、未命中筛选与快捷键、深浅两套主题）；游戏内加载与真机走查待验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
+| `build-l10n` | 已发布 0.3.0；当前工作区已实现原灰阶工作台（内容分区、对照/译文、待核对筛选与定位），尚未发布；游戏内加载与真机走查待验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
 
 ## 快速开始
 
@@ -70,24 +70,17 @@ docs/manual-qa-checklist.md  真机走查清单
 - [真机走查清单](docs/manual-qa-checklist.md)
 - 开发规范见 [`CLAUDE.md`](CLAUDE.md)
 
-## 字体与许可
+## 界面使用
 
-`apps/build-l10n/public/fonts/Cinzel-subset.woff2` 是 [Cinzel](https://github.com/google/fonts/tree/main/ofl/cinzel)
-的拉丁子集，随站自托管，浏览器不向任何第三方域名发字体请求（`fonts.googleapis.com` 与
-`web.poecdn.com` 都是明令禁止的）。只用于英文眉标（`OVERVIEW` / `GEAR` / `GEMS` / `PASSIVES`）、
-空态的三步罗马数字与覆盖率数字；中文一律使用系统字体，不引任何 CJK 网络字体。
+导入攻略网站或作者提供的 `.build` 文件后，在文件区选择构筑，并按装备、技能、天赋分区查看。
+“中英对照 / 译文”只改变阅读方式；下载文件是否保留英文，由右上角“设置”中的
+“导出时保留英文原行”决定。“补充传奇装备中文名”默认开启。
 
-授权为 SIL Open Font License 1.1，全文见同目录的 `OFL.txt`；本仓库的 MIT 许可**不覆盖**这个字体文件。
+待核对包含词缀未命中、基底名与传奇名未收录，自由备注保留原文、不算失败。
+`N` 定位下一项、`F` 切换筛选，输入期间不触发快捷键。
+当前文件下载在构筑标题旁，批量下载在文件区，同名文件打包时自动加序号避免覆盖。
 
-子集配方（重新生成时照此执行，产物应在 16 KB 上下）：
-
-```bash
-fonttools varLib.instancer Cinzel[wght].ttf wght=500:700 -o Cinzel-500-700.ttf
-pyftsubset Cinzel-500-700.ttf \
-  --unicodes="U+0020-007E,U+00A0,U+00B7,U+2013-2014,U+2022,U+2026" \
-  --layout-features='kern,liga' --flavor=woff2 \
-  --output-file=Cinzel-subset.woff2
-```
+界面使用系统无衬线字体，支持深色、浅色和跟随系统，不加载第三方字体。
 
 ## 许可
 

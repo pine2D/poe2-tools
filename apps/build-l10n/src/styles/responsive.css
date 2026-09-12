@@ -1,295 +1,221 @@
-/* 三档断点：1280 / 900 / 560。
-   这 12 个文件由 main.tsx 按固定顺序 import，顺序即级联顺序，剪切时一条规则都没有挪位。 */
-
-/* ---------- 响应式：1280 / 900 / 560 ---------- */
-
-@media (max-width: 1280px) {
-  .app__body {
-    grid-template-columns: 300px minmax(0, 1fr);
-  }
-
-  .app__main {
-    padding: var(--sp-5) var(--sp-6) var(--sp-7);
-  }
-}
-
-/* ≤900：单列 + 整页文档滚动。旧版只改了列数，主区落进自动行把侧栏挤成一条缝 */
-@media (max-width: 900px) {
+@media (max-width: 1099px) {
   .app {
     height: auto;
-    min-height: 100vh;
+    min-height: 100dvh;
   }
-
-  /* dvh 版本必须写在上面那条之后：@supports 不改特异度，放进骨架分区那个 @supports 里
-     会被本块同特异度的 min-height: 100vh 压掉（这一条是对 Task 7 简报的更正）。 */
-  @supports (height: 100dvh) {
-    .app {
-      min-height: 100dvh;
-    }
-  }
-
-  /* 三段各占一行：品牌 150px + 状态 200px+ 再加中间控制区，390 视口一定横向溢出 */
   .app__header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sp-3);
-    padding: var(--sp-3) var(--sp-4);
+    padding-inline: 16px;
   }
-
-  .app__status {
-    justify-self: start;
-    flex-wrap: wrap;
-  }
-
-  .app__brand {
-    padding-right: 0;
-    border-right: none;
-  }
-
   .app__body {
     display: block;
   }
-
-  .app__side {
-    padding: var(--sp-4);
-    border-right: none;
-    border-bottom: 1px solid var(--hairline);
-    overflow: visible;
-  }
-
-  .app__main {
-    padding: var(--sp-5) var(--sp-4) var(--sp-7);
-    overflow: visible;
-  }
-
-  /* 窄屏改上下堆叠：中缝去掉。列头在单列下会变成「原文 · EN」「译文 · 简体中文」两条
-     紧挨着的标签，而下面的内容再逐行 EN / ZH 交替，读者对不上哪条标签管哪一行（Task 7 审阅）。
-     改为整行隐藏列头，转而在每个译文格左侧压一条古铜竖条 + 缩进，EN 在上 ZH 在下成对可读；
-     ≥901 的四列对照仍然靠列头，不受影响。 */
-  .tip {
-    grid-template-columns: 26px minmax(0, 1fr);
-    padding: var(--sp-3) var(--sp-4) var(--sp-4);
-  }
-
-  .tip::before {
-    display: none;
-  }
-
-  .tip__lab {
-    display: none;
-  }
-
-  .tip__n--right {
-    padding-left: 0;
-    padding-right: 8px;
-  }
-
-  .tip__t--zh,
-  .tip__base--zh {
-    padding-left: var(--sp-3);
-    border-left: 2px solid var(--bronze-600);
-  }
-
-  /* 窄屏两列会把备注挤成一条缝，退回上下堆叠；名字与备注之间留一行的呼吸 */
-  .passives > li {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sp-1);
-  }
-
-  /* 覆盖率三段（大数字 / 轨 / 跳转）改上下堆叠，跳转那段跟着左对齐 */
-  .cov {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sp-4);
-  }
-
-  .cov__jump {
-    align-items: flex-start;
-  }
-
-  .ov {
-    padding: var(--sp-5);
-  }
-
-  /* 空态脚注从这一档起开始换行（实测 820 起两行、390 起三行）。伪元素分隔符会落到
-     新行的行首，变成一根行首悬空竖线——与 M-10 原本的「行尾悬空」是同一种坏相，只是换了
-     一头。窄屏整条去掉，改由换行本身分隔；列间距交还给容器的 gap（宽屏一行时才由分隔符
-     自己的 margin 提供），否则同一行上的两段会贴在一起。 */
-  .empty__foot {
-    gap: var(--sp-2) var(--sp-5);
-  }
-
-  .empty__foot span + span::before {
-    content: none;
-  }
-
-  /* 定位文案换到自己一行，原文与「定位」按钮共用第二行，窄屏不挤成三条缝 */
-  .misslist li {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .misslist__where {
-    grid-column: 1 / -1;
-  }
-}
-
-/* ≤560：触控尺寸统一抬到 44px。同一条媒体查询里之前只抬了按钮（40px），
-   分段控件与复选框行默认只有 28 / 32px，三档并存——这屏上仅有的几个可点控件
-   高矮不齐，切换目标语言又是最核心的一次交互，所以一并补齐。
-   button.filelist__name 必须显式列在选择器里：它的基态是 `button.filelist__name`(0,2,1)，
-   压得过通用 `button`(0,0,1)，「选中文件」是侧栏主动作，不能被漏掉。
-   button.badge__retry 同理：基态 `button.badge__retry`(0,1,1) 压得过裸 `button`(0,0,1)，
-   之前只写了裸 button，24px 的基态选择器赢了 44px 的名单（I-2）；它是词典加载失败时
-   顶栏唯一的恢复动作，手机上正是最需要它的场景，必须显式列出来。
-   textarea 不在这份名单里——侧栏里唯一的 textarea 是拖放区的粘贴框，已经 76px 高，不需要再抬。 */
-@media (max-width: 560px) {
-  button,
-  .button,
-  .options label,
-  .seg__item,
-  button.filelist__name,
-  button.badge__retry {
-    min-height: 44px;
-  }
-
-  /* 复选框本体 16px，整行抬到 44px 并把方框放大到 20px，指尖够得着 */
-  .opt {
-    min-height: 44px;
-  }
-
-  .opt input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-  }
-
-  .app__brand {
-    padding-right: 0;
-    border-right: none;
-  }
-
-  .app__status {
+  .app__sidetoggle {
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
     width: 100%;
+    min-height: 44px;
+    padding: 8px 20px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: var(--surface-1);
   }
-
-  .options {
-    gap: var(--sp-3);
-    width: 100%;
-  }
-
-  .app__main {
-    padding: var(--sp-4) var(--sp-3) var(--sp-6);
-  }
-
-  /* 卡片本身不再有内边距（卡头与对照表各自撑边），窄屏收的是卡头那一条 */
-  .card__head {
-    padding: var(--sp-3) var(--sp-4);
-  }
-
-  /* 卡头在窄屏会换行，inventory_id 再靠 margin-left:auto 推到右边就会孤零零占一整行 */
-  .card__id {
+  .app__sidechev {
     margin-left: 0;
   }
-
-  .cov__num {
-    font-size: 36px;
+  .app__sidetoggle[aria-expanded="true"] .app__sidechev {
+    transform: rotate(180deg);
   }
-
-  button.misslist__go {
+  .app__side {
+    display: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 20px;
+  }
+  .app__side--open {
+    display: flex;
+  }
+  .app__main {
+    overflow: visible;
+    padding: 24px;
+  }
+}
+@media (max-width: 600px) {
+  button,
+  .button,
+  .seg__item,
+  .paste__toggle,
+  .export-settings > summary,
+  .download-help summary {
     min-height: 44px;
   }
-
-  .filelist__item {
-    gap: var(--sp-3);
+  .app__header {
+    min-height: 56px;
+    gap: 6px;
+    padding: 2px 10px;
   }
-
+  .app__brand {
+    gap: 5px;
+  }
+  .app__header h1 {
+    font-size: 13px;
+  }
+  .app__mark {
+    width: 18px;
+    height: 18px;
+  }
+  .options {
+    gap: 2px;
+  }
+  .seg {
+    padding: 2px;
+  }
+  .seg__item {
+    padding-inline: 7px;
+    font-size: 12px;
+  }
+  .export-settings > summary {
+    padding-inline: 4px;
+    font-size: 12px;
+  }
+  .export-settings__panel {
+    position: fixed;
+    top: 62px;
+    right: 12px;
+    max-height: calc(100dvh - 80px);
+    overflow: auto;
+  }
+  .app__live {
+    padding: 2px 12px;
+  }
+  .app__main {
+    padding: 20px 14px;
+  }
+  .build-header {
+    display: block;
+  }
+  .build-header h2 {
+    font-size: 23px;
+  }
+  .build-header .cta {
+    width: 100%;
+    margin-top: 16px;
+  }
+  .review-summary {
+    gap: 8px 12px;
+    margin-top: 16px;
+  }
+  .review-summary button,
+  .build-details summary {
+    min-height: 44px;
+  }
+  .preview-toolbar {
+    display: block;
+  }
+  .preview-controls {
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .section-nav {
+    gap: 24px;
+  }
+  .card__head {
+    padding: 12px;
+    gap: 8px;
+  }
+  .card__id {
+    font-size: 11px;
+  }
+  .tip {
+    padding: 12px;
+    grid-template-columns: 18px minmax(0, calc(50% - 18px)) 24px minmax(0, calc(50% - 24px));
+    font-size: 15px;
+  }
+  .tip--translated {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+  .tip__n {
+    font-size: 11px;
+    padding-right: 4px;
+  }
+  .tip__n--right {
+    padding-left: 6px;
+  }
+  .tip__t {
+    padding-right: 6px;
+  }
+  .tip__t--zh {
+    padding-left: 4px;
+  }
+  .tip__base--zh {
+    padding-left: 8px;
+  }
+  .preview-columns {
+    padding-inline: 12px;
+  }
+  .preview-columns > :last-child {
+    padding-left: 8px;
+  }
+  .tip__tag {
+    display: block;
+    width: fit-content;
+    margin: 4px 0;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  .passives > li {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+  .supports > li {
+    padding: 12px;
+  }
+  .empty {
+    padding: 24px 2px;
+  }
+  .empty__hero {
+    font-size: 28px;
+  }
+  .empty__lede {
+    font-size: 14px;
+  }
+  .dropzone--hero {
+    padding: 24px 14px;
+  }
+  .empty__example {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
   button.filelist__remove {
     width: 44px;
     min-height: 44px;
   }
+}
 
-  button.toast__close {
-    width: 44px;
-    min-height: 44px;
-  }
-
-  .empty {
-    padding: var(--sp-7) var(--sp-4) var(--sp-6);
-  }
-
-  /* 28px 是独立字面量，不进 --fs-* 阶梯：最近的两档是 --fs-h1(22px) 与
-     --fs-display(40px)，中间没有台阶落得下；只为这一个窄屏断点开一档不值得（I-4）。 */
-  .empty__hero {
-    font-size: 28px;
-  }
-
-  .empty__lede {
-    font-size: 16px;
-  }
-
-  /* I-5：去掉 max-width 后三个 item 各自换行成独立一行，但容器仍是
-     justify-content: center，于是每行按自己的宽度各自居中，I / II / III 落在三个不同的
-     x 上。改成单列纵向堆叠 + 拉伸到容器全宽，三个圆圈的左边距因此对齐到同一条竖线。 */
-  .steps {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .steps__item {
-    max-width: none;
-    padding: var(--sp-2) 0;
-  }
-
-  .steps__item + .steps__item {
-    border-left: none;
-    border-top: 1px solid var(--hairline);
-  }
-
-  /* 触控目标 ≥44px 对这种细格子不适用，改为放宽最小宽度并保证有缝可点。
-     只管概览轨：侧栏迷你轨已经整条改成装饰，这一档没有触控目标可言。 */
-  .meter--lg .meter__cell {
-    min-width: 10px;
-  }
-
-  /* 手机没有实体键盘，键位提示只是噪音 */
-  .cov__keys {
+@media (max-width: 600px) {
+  .empty__example > [aria-hidden="true"] {
     display: none;
   }
+}
 
-  /* 本期新增的四个可点控件一并进 44px 名单。折叠开关是 <summary> 不是 button，
-     通用名单管不到它，必须显式列出来。 */
-  .paste__toggle,
-  button.ov__filter,
-  button.toast__close,
-  button.app__sidetoggle {
+@media (max-width: 600px) {
+  .review-keys button,
+  .badge__retry {
     min-height: 44px;
   }
-
-  /* iOS Safari 对 font-size < 16px 的输入控件会在聚焦时放大整页，放大后横向就溢出且退不回去 */
-  textarea {
-    font-size: 16px;
+  .misslist > li {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
-
-  /* 抽屉：收起时侧栏整条不渲染，主区首屏直接是概览卡与下载 CTA。
-     --open 必须写在基态之后（同为 (0,1,0)，靠顺序决胜负）。 */
-  .app__sidetoggle {
-    display: inline-flex;
+  .misslist__where {
+    grid-column: 1 / -1;
   }
-
-  .app__side {
-    display: none;
-  }
-
-  .app__side--open {
-    display: flex;
-  }
-
-  /* 安全区：刘海屏横放与手势条。用 max() 保证竖放时不比原来窄。 */
-  .app__header {
-    padding-left: max(var(--sp-4), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--sp-4), env(safe-area-inset-right, 0px));
-  }
-
-  .app__main {
-    padding-left: max(var(--sp-3), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--sp-3), env(safe-area-inset-right, 0px));
-    padding-bottom: calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
-  }
+}
+.app__sidecount {
+  margin-left: auto;
+  flex: none;
 }

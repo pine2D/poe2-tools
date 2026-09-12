@@ -64,6 +64,33 @@ describe('domId', () => {
 })
 
 describe('collectMisses', () => {
+  it('名称未收录进入待核对，自由备注不算问题，词缀统计不变', () => {
+    const result = translateSource(
+      {
+        id: 'names',
+        name: 'names.build',
+        text: JSON.stringify({
+          name: 'Names',
+          description: 'A free note',
+          inventory_slots: [
+            {
+              inventory_id: 'Weapon1',
+              additional_text: 'Unknown Staff\n1. 149% increased Spell Damage',
+            },
+            { inventory_id: 'Belt1', unique_name: 'Unknown Unique' },
+          ],
+        }),
+      },
+      dict,
+      { bilingual: false, annotateUniques: true },
+    )
+    if (!result.ok) throw new Error(result.error)
+    const issues = collectMisses(buildFieldRows(result.file, false), result.file.preview)
+    expect(issues.map((issue) => issue.kind)).toEqual(['base', 'unique'])
+    expect(issues.every((issue) => issue.section === 'gear')).toBe(true)
+    expect(result.file.report.modCandidates).toBe(1)
+  })
+
   it('把未命中行汇成人话清单：定位 + 第几行 + 原文', () => {
     const misses = collectMisses(buildFieldRows(file, false))
     expect(misses).toHaveLength(1)
