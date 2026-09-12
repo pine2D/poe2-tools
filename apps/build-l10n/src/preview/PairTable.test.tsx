@@ -234,7 +234,7 @@ describe('PairTable', () => {
     expect(container.querySelector('.tip__keep')?.textContent).toContain('+10 to maximum Life')
   })
 
-  it('传奇名注入行单独渲染，列头写明目标语言', () => {
+  it('只有传奇名注入时紧凑显示导出备注，无空原文列', () => {
     const { container } = render(
       <PairTable
         {...common}
@@ -246,9 +246,9 @@ describe('PairTable', () => {
     )
     expect(screen.getByText('稳步印记')).toBeDefined()
     expect(screen.getByText('传奇名注入')).toBeDefined()
-    expect(container.querySelector('.tip__base--zh')?.getAttribute('lang')).toBe('zh-CN')
-    // 注入行同样是两个 span-2 单元填满四列，不产生序号格
-    expect(container.querySelectorAll('.tip__base')).toHaveLength(2)
+    expect(container.querySelector('.tip--injected')?.getAttribute('lang')).toBe('zh-CN')
+    expect(screen.getByText('导出备注')).toBeDefined()
+    expect(container.querySelectorAll('.tip__base')).toHaveLength(0)
     expect(container.querySelectorAll('.tip__n, .tip__t')).toHaveLength(0)
   })
 

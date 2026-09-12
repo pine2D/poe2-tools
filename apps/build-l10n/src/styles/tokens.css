@@ -41,6 +41,9 @@
     system-ui, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
   --focus-ring: 2px solid var(--accent);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-enter: 180ms;
+  --dur-exit: 140ms;
   --dur-fast: 140ms;
 }
 

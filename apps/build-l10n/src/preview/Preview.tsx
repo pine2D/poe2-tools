@@ -39,6 +39,10 @@ const SECTIONS: readonly { id: PreviewSection; label: string }[] = [
 ]
 const ISSUE_LABEL = { mod: '词缀未命中', base: '基底名未收录', unique: '传奇名未收录' }
 
+function hasText(entry: FieldWithRows | undefined): entry is FieldWithRows {
+  return entry !== undefined && (entry.rows.length > 0 || entry.injected !== null)
+}
+
 function SlotCard(props: {
   slot: PreviewSlot
   entry: FieldWithRows
@@ -54,7 +58,7 @@ function SlotCard(props: {
         id={domIdFor(`inventory_slots[${slot.rawIndex}].unique_name`)}
         tabIndex={-1}
       >
-        <h3>{slotLabel(slot)}</h3>
+        <h3 title={slot.inventoryId}>{slotLabel(slot)}</h3>
         {slot.uniqueName !== null && (
           <>
             <span className="chip chip--unique">传奇</span>
@@ -79,20 +83,19 @@ function SlotCard(props: {
         )}
         {bilingual && <span className="chip chip--bi">双语</span>}
         <CardCount rows={entry.rows} />
-        <span className="card__id" lang="en">
-          {slot.inventoryId}
-        </span>
       </div>
-      <PairTable
-        path={entry.entry.path}
-        rows={entry.rows}
-        injected={entry.injected}
-        locale={locale}
-        baseName={entry.entry.baseName}
-        bilingual={bilingual}
-        view={view}
-        emptyText="这个槽位没有备注"
-      />
+      {hasText(entry) && (
+        <PairTable
+          path={entry.entry.path}
+          rows={entry.rows}
+          injected={entry.injected}
+          locale={locale}
+          baseName={entry.entry.baseName}
+          bilingual={bilingual}
+          view={view}
+          emptyText="这个槽位没有备注"
+        />
+      )}
     </article>
   )
 }
@@ -105,17 +108,19 @@ function NamePair({ name, kind }: { name: PreviewName; kind: 'gem' | 'passive' }
       <span className="namepair__en" lang="en">
         {name.en ?? name.id}
       </span>
-      <span
-        className={[
-          'namepair__zh',
-          kind === 'gem' ? 'namepair__zh--gem' : '',
-          missed ? 'namepair__zh--miss' : '',
-        ]
-          .filter((c) => c !== '')
-          .join(' ')}
-      >
-        {zh ?? '未命中'}
-      </span>
+      {(kind === 'gem' || name.text !== null) && (
+        <span
+          className={[
+            'namepair__zh',
+            kind === 'gem' ? 'namepair__zh--gem' : '',
+            missed ? 'namepair__zh--miss' : '',
+          ]
+            .filter((c) => c !== '')
+            .join(' ')}
+        >
+          {zh ?? '未命中'}
+        </span>
+      )}
     </span>
   )
 }
@@ -156,7 +161,7 @@ function SkillCard(props: {
           </span>
         )}
       </div>
-      {own !== undefined && (
+      {hasText(own) && (
         <PairTable
           path={own.entry.path}
           rows={own.rows}
@@ -176,7 +181,7 @@ function SkillCard(props: {
               // biome-ignore lint/suspicious/noArrayIndexKey: 同一宝石可重复出现，位置是身份的一部分
               <li key={`${support.id}:${j}`}>
                 <NamePair name={support} kind="gem" />
-                {entry !== undefined && (
+                {hasText(entry) && (
                   <PairTable
                     path={entry.entry.path}
                     rows={entry.rows}
@@ -299,7 +304,9 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
       <div className="review-summary">
         <span>
           <Icon name="check" size={14} />
-          词缀命中 {report.modTranslated}/{report.modCandidates}
+          {report.modCandidates === 0
+            ? '无编号词缀'
+            : `词缀命中 ${report.modTranslated}/${report.modCandidates}`}
         </span>
         {misses.length > 0 ? (
           <button
@@ -381,6 +388,18 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
           ))}
         </nav>
         <div className="preview-controls">
+          {misses.length > 0 && (
+            <button
+              type="button"
+              className="review-next"
+              onClick={next}
+              aria-keyshortcuts="n"
+              aria-label="下一项待核对"
+              title="下一项待核对（N）"
+            >
+              下一项 <kbd>N</kbd>
+            </button>
+          )}
           <button
             type="button"
             className="button"
@@ -391,7 +410,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             onClick={toggleFilter}
           >
             <Icon name="filter" size={14} />
-            待核对
+            待核对 <kbd>F</kbd>
           </button>
           <div className="seg" role="radiogroup" aria-label="预览方式">
             {(
@@ -417,20 +436,12 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
           </div>
         </div>
       </div>
-      {misses.length > 0 && (
-        <div className="review-keys">
-          <button type="button" className="button" onClick={next} aria-keyshortcuts="n">
-            <kbd>N</kbd> 下一项待核对
-          </button>
-          <span>
-            <kbd>F</kbd> 切换待核对筛选
-          </span>
+      {section === 'gear' && (
+        <div className="preview-columns" aria-hidden="true">
+          {view === 'compare' && <span>原文 · EN</span>}
+          <span>译文 · {locale === 'zh-CN' ? '简体中文' : '繁体中文'}</span>
         </div>
       )}
-      <div className="preview-columns" aria-hidden="true">
-        {view === 'compare' && <span>原文 · EN</span>}
-        <span>译文 · {locale === 'zh-CN' ? '简体中文' : '繁体中文'}</span>
-      </div>
       <section
         className="preview__section"
         aria-label={SECTIONS.find((item) => item.id === section)?.label}
@@ -473,15 +484,12 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
               {passives.map(({ passive, i }) => {
                 const entry = byPath.get(`passives[${i}].additional_text`)
                 return (
-                  <li key={`${passive.id}:${i}`}>
+                  <li
+                    key={`${passive.id}:${i}`}
+                    className={hasText(entry) ? undefined : 'passive--name-only'}
+                  >
                     <NamePair name={passive} kind="passive" />
-                    {entry !== undefined ? (
-                      pair(entry, '没有备注')
-                    ) : (
-                      <div className="tip tip--empty">
-                        <p>没有备注</p>
-                      </div>
-                    )}
+                    {hasText(entry) && pair(entry, '没有备注')}
                   </li>
                 )
               })}

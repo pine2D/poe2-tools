@@ -35,6 +35,17 @@ export function PairTable({
       </div>
     )
   }
+  if (rows.length === 0 && injected !== null) {
+    return (
+      <div className="tip tip--injected" lang={locale}>
+        <span className="tip__injected-label">导出备注</span>
+        <span>
+          <MarkupText spans={injected} />
+          <span className="tip__tag tip__tag--inject">传奇名注入</span>
+        </span>
+      </div>
+    )
+  }
   const compare = view === 'compare'
   const solo =
     !bilingual &&

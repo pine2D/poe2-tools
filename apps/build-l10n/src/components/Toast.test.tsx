@@ -8,6 +8,24 @@ afterEach(() => {
 })
 
 describe('Toast', () => {
+  it('关闭后保留视觉节点供过渡使用，但立即移出可访问树；重开复用节点', () => {
+    const onClose = vi.fn()
+    const { container, rerender } = render(<Toast message="已下载 a.build" onClose={onClose} />)
+    const toast = container.querySelector('.toast')
+    rerender(<Toast message={null} onClose={onClose} />)
+    expect(container.querySelector('.toast')).toBe(toast)
+    expect(toast?.textContent).toContain('已下载 a.build')
+    expect(toast?.getAttribute('aria-hidden')).toBe('true')
+    expect(toast?.hasAttribute('inert')).toBe(true)
+    expect(screen.queryByRole('button', { name: '关闭提示' })).toBeNull()
+    expect(screen.getByRole('status').textContent).toBe('')
+    rerender(<Toast message="已下载 b.build" onClose={onClose} />)
+    expect(container.querySelector('.toast')).toBe(toast)
+    expect(toast?.textContent).toContain('已下载 b.build')
+    expect(toast?.hasAttribute('inert')).toBe(false)
+    expect(screen.getByRole('button', { name: '关闭提示' })).toBeDefined()
+  })
+
   it('同一文案再次下载也重新计时且更新播报内容节点', () => {
     vi.useFakeTimers()
     const onClose = vi.fn()

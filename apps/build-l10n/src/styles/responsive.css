@@ -49,7 +49,7 @@
   .button,
   .seg__item,
   .paste__toggle,
-  .export-settings > summary,
+  .export-settings__trigger,
   .download-help summary {
     min-height: 44px;
   }
@@ -78,7 +78,7 @@
     padding-inline: 7px;
     font-size: 12px;
   }
-  .export-settings > summary {
+  .export-settings__trigger {
     padding-inline: 4px;
     font-size: 12px;
   }
@@ -117,11 +117,20 @@
     display: block;
   }
   .preview-controls {
-    justify-content: space-between;
+    justify-content: flex-start;
     margin-top: 8px;
   }
   .section-nav {
     gap: 24px;
+  }
+  .preview-controls .seg {
+    margin-left: auto;
+  }
+  .preview-controls kbd {
+    display: none;
+  }
+  .preview-controls .review-next {
+    min-height: 44px;
   }
   .card__head {
     padding: 12px;
@@ -204,7 +213,6 @@
 }
 
 @media (max-width: 600px) {
-  .review-keys button,
   .badge__retry {
     min-height: 44px;
   }

@@ -3,10 +3,39 @@
   outline: var(--focus-ring);
   outline-offset: 3px;
 }
+/* 支持 :has 的浏览器只给键盘焦点画外环；旧浏览器保留 focus-within 兜底。 */
+@supports selector(:has(*)) {
+  .seg__item:focus-within:not(:has(input:focus-visible)) {
+    outline: none;
+  }
+}
+:root[data-input="keyboard"] button,
+:root[data-input="keyboard"] .toast,
+:root[data-input="keyboard"] .export-settings__trigger .icon {
+  transition: none;
+}
 @media (prefers-reduced-motion: reduce) {
   button,
-  .button {
+  .button,
+  .export-settings__trigger .icon {
     transition: none;
+  }
+  .export-settings__panel,
+  .toast {
+    transform: none;
+    transition:
+      opacity 100ms ease,
+      visibility 0s 100ms;
+  }
+  .export-settings__panel[data-open="true"],
+  .toast[data-open="true"] {
+    transform: none;
+    transition-duration: 100ms, 0s;
+    transition-delay: 0s;
+  }
+  :root:not([data-input="keyboard"]) .cta:active,
+  :root:not([data-input="keyboard"]) .export-settings__trigger:active {
+    transform: none;
   }
 }
 @media (forced-colors: active) {

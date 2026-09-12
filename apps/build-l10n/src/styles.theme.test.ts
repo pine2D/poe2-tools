@@ -22,7 +22,7 @@ function block(selector: string): Map<string, string> {
 
 const dark = block(':root')
 const light = block(':root[data-theme="light"]')
-const invariant = /^--(font-|dur-|focus-ring$)/
+const invariant = /^--(font-|dur-|ease-|focus-ring$)/
 
 describe('灰阶主题令牌', () => {
   it('每个主题相关令牌都提供独立深浅值', () => {

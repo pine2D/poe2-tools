@@ -66,7 +66,7 @@ describe('App', () => {
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)
     // 下载是任务流的最后一步，点完必须说清文件去哪儿（研究报告 G8 / P2-11）
-    expect(await screen.findByText(/已开始下载 rich\.build/)).toBeDefined()
+    expect(await screen.findByText(/已开始下载 rich\.build/, { selector: 'p' })).toBeDefined()
     expect(screen.getByText('下载后怎么使用？')).toBeDefined()
     // 还是同一个容器节点在播报，不是重新挂载了一个（容器常在）
     expect(document.querySelector('.toast-live')).toBe(toastLive)
@@ -192,7 +192,7 @@ describe('App', () => {
 
   it('顶栏能切主题，选中的那个 aria-checked，选择写进 <html data-theme>', async () => {
     await renderReady()
-    ;(screen.getByText('设置').closest('details') as HTMLDetailsElement).open = true
+    fireEvent.click(screen.getByRole('button', { name: '设置' }))
     const group = screen.getByRole('radiogroup', { name: '界面主题' })
     expect(group).toBeDefined()
     fireEvent.click(within(group).getByLabelText('深色'))
@@ -255,6 +255,6 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '下载成功的 1 份' }))
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)
-    expect(screen.getByText(/另有 1 份失败未导出/)).toBeDefined()
+    expect(screen.getByText(/另有 1 份失败未导出/, { selector: 'p' })).toBeDefined()
   })
 })

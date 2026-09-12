@@ -1,5 +1,5 @@
 import type { Locale } from '@poe2-tools/build-core'
-import { type ReactNode, useRef } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import type { TranslateOptions } from '../translate/runTranslation'
 import { Icon } from './Icon'
 
@@ -42,8 +42,42 @@ function Toggle(props: {
 }
 
 export function OptionsBar({ locale, options, onLocale, onOptions, children }: OptionsBarProps) {
-  const details = useRef<HTMLDetailsElement>(null)
-  const trigger = useRef<HTMLElement>(null)
+  const root = useRef<HTMLDivElement>(null)
+  const trigger = useRef<HTMLButtonElement>(null)
+  const panel = useRef<HTMLElement>(null)
+  const [open, setOpen] = useState(false)
+  const [motion, setMotion] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    panel.current?.querySelector<HTMLInputElement>('input')?.focus()
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !root.current?.contains(event.target)) {
+        setMotion(true)
+        setOpen(false)
+      }
+    }
+    const leave = (event: FocusEvent) => {
+      if (event.target instanceof Node && !root.current?.contains(event.target)) {
+        setMotion(false)
+        setOpen(false)
+      }
+    }
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      setMotion(false)
+      setOpen(false)
+      trigger.current?.focus()
+    }
+    document.addEventListener('pointerdown', outside)
+    document.addEventListener('focusin', leave)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('pointerdown', outside)
+      document.removeEventListener('focusin', leave)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [open])
   return (
     <div className="options">
       <div className="seg" role="radiogroup" aria-label="目标语言">
@@ -65,25 +99,32 @@ export function OptionsBar({ locale, options, onLocale, onOptions, children }: O
           </label>
         ))}
       </div>
-      <details
-        className="export-settings"
-        ref={details}
-        onKeyDown={(event) => {
-          if (event.key !== 'Escape' || !details.current?.open) return
-          event.stopPropagation()
-          details.current.open = false
-          trigger.current?.focus()
-        }}
-        onToggle={() => {
-          if (details.current?.open)
-            details.current.querySelector<HTMLInputElement>('input')?.focus()
-        }}
-      >
-        <summary ref={trigger}>
+      <div className="export-settings" ref={root}>
+        <button
+          type="button"
+          className="export-settings__trigger"
+          ref={trigger}
+          id="settings-trigger"
+          aria-expanded={open}
+          aria-controls="settings-panel"
+          onClick={(event) => {
+            setMotion(event.detail > 0)
+            setOpen((value) => !value)
+          }}
+        >
           设置
           <Icon name="chevron-down" size={14} />
-        </summary>
-        <div className="export-settings__panel">
+        </button>
+        <section
+          className="export-settings__panel"
+          id="settings-panel"
+          ref={panel}
+          aria-label="设置"
+          aria-hidden={!open}
+          inert={!open}
+          data-open={open}
+          data-motion={motion}
+        >
           <h2>导出设置</h2>
           <Toggle
             id="opt-bilingual"
@@ -101,8 +142,8 @@ export function OptionsBar({ locale, options, onLocale, onOptions, children }: O
           />
           <p className="muted">预览中的“对照 / 译文”只改变阅读方式。</p>
           {children}
-        </div>
-      </details>
+        </section>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OptionsBar } from './OptionsBar'
 
@@ -12,6 +12,40 @@ const base = {
 }
 
 describe('OptionsBar', () => {
+  it('点击外部或焦点移出设置时关闭，不抢回外部焦点', () => {
+    render(
+      <>
+        <OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />
+        <button type="button">外部</button>
+      </>,
+    )
+    const trigger = screen.getByRole('button', { name: '设置' })
+    fireEvent.click(trigger)
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    const outside = screen.getByRole('button', { name: '外部' })
+    fireEvent.pointerDown(outside)
+    act(() => outside.focus())
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(outside)
+    fireEvent.click(trigger)
+    act(() => outside.focus())
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('关闭面板不进入焦点序列，键盘打开和 Escape 关闭即时响应', () => {
+    render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: '设置' })
+    const panel = document.getElementById(trigger.getAttribute('aria-controls') ?? '')
+    expect(panel?.hasAttribute('inert')).toBe(true)
+    fireEvent.click(trigger, { detail: 0 })
+    expect(panel?.hasAttribute('inert')).toBe(false)
+    expect(panel?.getAttribute('data-motion')).toBe('false')
+    expect(document.activeElement).toBe(screen.getByLabelText('导出时保留英文原行'))
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'Escape' })
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(trigger)
+  })
+
   it('目标语言是一组单选：两个选项都直接可见，选中的那个 aria-checked', () => {
     const onLocale = vi.fn()
     render(<OptionsBar {...base} onLocale={onLocale} onOptions={vi.fn()} />)
@@ -41,15 +75,14 @@ describe('OptionsBar', () => {
 
   it('设置说明直接可见，Escape 关闭并把焦点交还触发器', () => {
     render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />)
-    const trigger = screen.getByText('设置')
-    const details = trigger.closest('details') as HTMLDetailsElement
-    details.open = true
+    const trigger = screen.getByRole('button', { name: '设置' })
+    fireEvent.click(trigger)
     const input = screen.getByLabelText('导出时保留英文原行')
     const hint = document.getElementById(input.getAttribute('aria-describedby') ?? '')
     expect(hint?.className).not.toContain('visually-hidden')
     input.focus()
     fireEvent.keyDown(input, { key: 'Escape' })
-    expect(details.open).toBe(false)
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(document.activeElement).toBe(trigger)
   })
 

@@ -98,7 +98,7 @@
 .seg__item--on {
   background: var(--accent-bg);
   color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 1px var(--control-edge);
 }
 .seg__item:focus-within {
   outline: var(--focus-ring);
@@ -107,8 +107,11 @@
 .export-settings {
   position: relative;
 }
-.export-settings > summary {
+.export-settings__trigger {
   display: flex;
+  gap: 6px;
+  border-color: transparent;
+  background: transparent;
   align-items: center;
   min-height: 36px;
   padding: 6px 8px;
@@ -117,10 +120,17 @@
   white-space: nowrap;
   list-style: none;
 }
-.export-settings > summary::-webkit-details-marker {
-  display: none;
-}
+
 .export-settings__panel {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.97);
+  transform-origin: top right;
+  transition:
+    opacity var(--dur-exit) var(--ease-out),
+    transform var(--dur-exit) var(--ease-out),
+    visibility 0s var(--dur-exit);
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
@@ -135,6 +145,23 @@
   background: var(--surface-3);
   box-shadow: 0 12px 36px #0003;
 }
+.export-settings__panel[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition-duration: var(--dur-enter), var(--dur-enter), 0s;
+  transition-delay: 0s;
+}
+.export-settings__panel[data-motion="false"] {
+  transition: none;
+}
+.export-settings__trigger .icon {
+  transition: transform var(--dur-enter) var(--ease-out);
+}
+.export-settings__trigger[aria-expanded="true"] .icon {
+  transform: rotate(180deg);
+}
 .opt {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
@@ -148,7 +175,7 @@
 .opt__hint {
   grid-column: 2;
   display: block;
-  margin-top: 4px;
+  margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 12px;
 }
@@ -212,10 +239,14 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.toast-live {
-  display: contents;
-}
 .toast {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(25%);
+  transition:
+    opacity var(--dur-exit) var(--ease-out),
+    transform var(--dur-exit) var(--ease-out),
+    visibility 0s var(--dur-exit);
   position: fixed;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   inset-inline: 16px;
@@ -233,6 +264,17 @@
   box-shadow: 0 8px 28px #0003;
   overflow-wrap: anywhere;
   pointer-events: none;
+}
+.toast[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-duration: var(--dur-enter), var(--dur-enter), 0s;
+  transition-delay: 0s;
+}
+.toast__text {
+  margin: 0;
+  font-size: 13px;
 }
 .toast__close {
   flex: none;

@@ -175,6 +175,24 @@ export function App({ fetchImpl }: AppProps) {
     }
   }, [loader, locale, reloadKey])
 
+  // 输入方式只影响反馈动效，不进入翻译或预览状态。
+  useEffect(() => {
+    const root = document.documentElement
+    const pointer = () => {
+      root.dataset.input = 'pointer'
+    }
+    const keyboard = () => {
+      root.dataset.input = 'keyboard'
+    }
+    window.addEventListener('pointerdown', pointer, true)
+    window.addEventListener('keydown', keyboard, true)
+    return () => {
+      window.removeEventListener('pointerdown', pointer, true)
+      window.removeEventListener('keydown', keyboard, true)
+      delete root.dataset.input
+    }
+  }, [])
+
   // 兜底：拖到 DropZone 区域外松手时浏览器会打开/导航到该文件，丢失当前页面状态；
   // DropZone 自身的 onDrop 已 preventDefault，这里在冒泡到 window 时再挡一次
   useEffect(() => {

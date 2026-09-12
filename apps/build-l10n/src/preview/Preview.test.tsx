@@ -77,7 +77,7 @@ describe('Preview 灰阶工作台', () => {
     expect(screen.getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')).toBeDefined()
     changeSection('天赋')
     expect(screen.getByText('力量')).toBeDefined()
-    expect(screen.getAllByText('attributes30_')).toHaveLength(2)
+    expect(screen.getAllByText('attributes30_')).toHaveLength(1)
     expect(container.querySelector('.mk-red .num')?.textContent).toBe('+5')
     expect(container.querySelectorAll('.passives > li')).toHaveLength(3)
   })
