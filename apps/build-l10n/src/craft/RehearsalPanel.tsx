@@ -70,6 +70,7 @@ import { FracturePanel } from './FracturePanel'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
 import { ProjectControls } from './ProjectControls'
+import { ResistancePanel } from './ResistancePanel'
 import { SocketPanel } from './SocketPanel'
 import { WeaponPanel } from './WeaponPanel'
 
@@ -951,6 +952,12 @@ export function RehearsalPanel({
         preview={Boolean(draft || socketDraft || essenceDraft || boneDraft || fractureDraft)}
         {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
         {...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration })}
+      />
+      <ResistancePanel
+        catalog={catalog}
+        current={current}
+        preview={Boolean(draft || socketDraft || essenceDraft || boneDraft || fractureDraft)}
+        {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
       />
       {socketDeclaration !== undefined ? (
         <p className="rehearsal-scope-note">

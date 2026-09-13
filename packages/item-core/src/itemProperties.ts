@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { estimateDefences } from './defences'
 import type { CraftResult, CraftState } from './rehearsal'
+import { estimateResistances, RESISTANCE_LABELS, type ResistanceProperty } from './resistances'
 import { estimateWeaponStats } from './weaponStats'
 
 export const CRAFT_PROPERTY_LABELS = {
@@ -13,6 +14,7 @@ export const CRAFT_PROPERTY_LABELS = {
   Armour: '护甲',
   Evasion: '闪避',
   EnergyShield: '能量护盾',
+  ...RESISTANCE_LABELS,
 } as const
 export type CraftProperty = keyof typeof CRAFT_PROPERTY_LABELS
 
@@ -23,6 +25,8 @@ export function readCraftProperty(
   property: CraftProperty,
 ): CraftResult<number> {
   if (state.pendingDesecration) return { ok: false, error: '请先完成亵渎揭示，再判断装备面板。' }
+  if (Object.hasOwn(RESISTANCE_LABELS, property))
+    return estimateResistances(catalog, state)[property as ResistanceProperty]
   if (property === 'Armour' || property === 'Evasion' || property === 'EnergyShield') {
     const result = estimateDefences(catalog, state)
     if (!result.ok) return result

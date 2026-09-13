@@ -184,6 +184,8 @@ export {
   removableCraftAffixes,
 } from './rehearsal'
 export { importCraftState, importSocketCount } from './rehearsalImport'
+export type { ResistanceProperty } from './resistances'
+export { estimateResistances, RESISTANCE_LABELS } from './resistances'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
 export { createStatResolver, resolveBase, resolveStat } from './resolve'
 export { socketEffectIncrease } from './socketAmplification'

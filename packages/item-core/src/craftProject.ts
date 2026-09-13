@@ -44,6 +44,7 @@ import {
   createCraftState,
 } from './rehearsal'
 import { importCraftState } from './rehearsalImport'
+import { RESISTANCE_LABELS } from './resistances'
 import { isSupportedArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { statScalabilitySourceHash } from './statScalability'
@@ -57,7 +58,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v48'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v49'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -116,7 +117,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 48 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 49 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -484,6 +485,17 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (
+      rulesVersion < 49 &&
+      read.value.rules.some((rule) =>
+        craftStrategyLeaves(rule.conditions).some(
+          (condition) =>
+            condition.kind === 'item-property' &&
+            Object.hasOwn(RESISTANCE_LABELS, condition.property),
+        ),
+      )
+    )
+      return fail('v48 及更早项目不能包含抗性合计条件。')
     if (
       rulesVersion < 48 &&
       read.value.rules.some((rule) =>

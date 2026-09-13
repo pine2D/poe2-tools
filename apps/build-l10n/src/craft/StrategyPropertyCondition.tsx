@@ -107,7 +107,10 @@ export function StrategyPropertyCondition({
         已应用范围：{condition.min}–{condition.max ?? '不限'}，包含上下限。
         {changed ? '编辑值尚未应用。' : ''}
       </p>
-      <p>按已应用装备的本地面板估算判断；DPS 未计技能与装填循环。未知值取反后仍不匹配。</p>
+      <p>
+        按已应用装备估算判断；DPS
+        未计技能与装填循环。抗性为本件无条件贡献，元素合计为火、冰、雷之和。未知值取反后仍不匹配。
+      </p>
     </div>
   )
 }
