@@ -19,6 +19,7 @@ import {
 } from './targets'
 
 export type CraftStrategyCondition =
+  | { kind: 'socket-count' | 'open-sockets'; min: number; max: number }
   | { kind: 'always' }
   | { kind: 'rarity'; value: CraftRarity }
   | { kind: 'targets-met'; value: boolean }
@@ -66,7 +67,15 @@ function integer(value: unknown, min: number, max: number): value is number {
 const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
 
 function readCondition(value: unknown): CraftStrategyCondition | null {
-  if (!keys(value, ['kind', 'value', 'min'])) return null
+  if (!keys(value, ['kind', 'value', 'min', 'max'])) return null
+  if (
+    (value.kind === 'socket-count' || value.kind === 'open-sockets') &&
+    keys(value, ['kind', 'min', 'max']) &&
+    integer(value.min, 0, 3) &&
+    integer(value.max, 0, 3) &&
+    value.min <= value.max
+  )
+    return { kind: value.kind, min: value.min, max: value.max }
   if (value.kind === 'affix-count' && keys(value, ['kind', 'min']) && integer(value.min, 0, 6))
     return { kind: 'affix-count', min: value.min }
   if (
@@ -175,6 +184,14 @@ export function evaluateCraftStrategy(
       craftTargetsSatisfied(advice.value, goals.minimumTargetCount, goals.targetFracturedModId)
   }
   const matches = (condition: CraftStrategyCondition): boolean => {
+    if (condition.kind === 'socket-count' || condition.kind === 'open-sockets') {
+      if (state.sockets === undefined) return false
+      const count =
+        condition.kind === 'socket-count'
+          ? state.sockets.length
+          : state.sockets.filter((id) => id === null).length
+      return count >= condition.min && count <= condition.max
+    }
     if (condition.kind === 'affix-count')
       return state.affixes.length + (state.pendingDesecration ? 1 : 0) >= condition.min
     if (condition.kind === 'desecration-stage')

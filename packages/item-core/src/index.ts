@@ -198,6 +198,8 @@ export {
   splitStatScalars,
   statScalabilitySourceHash,
 } from './statScalability'
+export type { SocketStrategyAction } from './strategySockets'
+export { prepareStrategySocket } from './strategySockets'
 export type {
   CraftTargetRoute,
   CraftTargetRouteOptions,

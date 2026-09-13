@@ -9,7 +9,7 @@ import {
   socketEffectIncrease,
   socketEffects,
 } from '@poe2-tools/item-core'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './sockets.css'
 
 interface SocketPanelProps {
@@ -36,6 +36,11 @@ export function SocketPanel({
   onApply,
 }: SocketPanelProps) {
   const [socketIndex, setSocketIndex] = useState(0)
+  const previewRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (draft) previewRef.current?.focus()
+  }, [draft])
+  const selectedIndex = draft?.kind === 'socket' ? draft.socketIndex : socketIndex
   const candidates = socketCandidates(catalog, state)
   const effects = socketEffects(catalog, state)
   const selected = candidates.find(
@@ -44,7 +49,7 @@ export function SocketPanel({
   const artificerDraft = draft?.kind === 'artificer'
   const limit = artificerSocketLimit(catalog, state)
   const canAddSocket = state.sockets !== undefined && state.sockets.length < limit
-  const previous = catalog.augments?.find((entry) => entry.id === state.sockets?.[socketIndex])
+  const previous = catalog.augments?.find((entry) => entry.id === state.sockets?.[selectedIndex])
   const label = (name: string) => translations[name] ?? name
   if (socketCapacity(catalog, state) === 0 && state.sockets === undefined) return null
   return (
@@ -76,7 +81,7 @@ export function SocketPanel({
         </div>
       ) : null}
       {artificerDraft ? (
-        <section className="socket-preview" aria-label="打孔草稿">
+        <section ref={previewRef} tabIndex={-1} className="socket-preview" aria-label="打孔草稿">
           <h4>巧匠石</h4>
           <p>
             孔数 {state.sockets?.length ?? 0} → {(state.sockets?.length ?? 0) + 1}
@@ -131,7 +136,7 @@ export function SocketPanel({
               目标孔位
               <select
                 aria-label="目标孔位"
-                value={socketIndex}
+                value={selectedIndex}
                 disabled={busy || artificerDraft}
                 onChange={(event) => {
                   setSocketIndex(Number(event.target.value))
@@ -155,7 +160,11 @@ export function SocketPanel({
                 onChange={(event) =>
                   onPreview(
                     event.target.value
-                      ? { kind: 'socket', socketIndex, augmentId: event.target.value }
+                      ? {
+                          kind: 'socket',
+                          socketIndex: selectedIndex,
+                          augmentId: event.target.value,
+                        }
                       : null,
                   )
                 }
@@ -173,7 +182,12 @@ export function SocketPanel({
           </div>
           {candidates.length === 0 ? <p>当前孔位或装备状态没有已核对的可用符文。</p> : null}
           {selected ? (
-            <section className="socket-preview" aria-label="镶嵌草稿">
+            <section
+              ref={previewRef}
+              tabIndex={-1}
+              className="socket-preview"
+              aria-label="镶嵌草稿"
+            >
               <h4>待镶入：{label(selected.name)}</h4>
               {selected.lines.map((line) => (
                 <div key={line}>

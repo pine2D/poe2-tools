@@ -10,7 +10,10 @@ import { useEffect, useRef } from 'react'
 import { BoneCraftPanel } from './BoneCraftPanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
-export type SpecialStrategyAction = Exclude<CraftStrategyWorkAction, { kind: 'currency' }>
+export type SpecialStrategyAction = Exclude<
+  CraftStrategyWorkAction,
+  { kind: 'currency' | 'socket' | 'artificer' }
+>
 interface Props {
   action: SpecialStrategyAction
   catalog: CraftCatalog

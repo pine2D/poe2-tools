@@ -139,7 +139,7 @@ describe('无等级静态技能', () => {
       operations: [],
       cursor: 0,
     }
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v40')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v41')
     expect(parseCraftProject(JSON.stringify(project), catalog, dictionary).ok).toBe(true)
     for (let version = 2; version <= 17; version++) {
       const old = { ...project, rulesVersion: `basic-2026-09-12-v${version}` }

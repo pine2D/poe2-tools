@@ -176,7 +176,7 @@ it('v31 完整循环全游标恢复，旧 v2–30 拒绝撤销位置后的光明
     const restored = parseCraftProject(serializeCraftProject({ ...project, cursor }), catalog)
     expect(restored.ok).toBe(true)
     if (!restored.ok) throw Error(restored.error)
-    expect(restored.value.project.rulesVersion).toBe('basic-2026-09-12-v40')
+    expect(restored.value.project.rulesVersion).toBe('basic-2026-09-12-v41')
     expect(restored.value.states[5]?.affixes).toHaveLength(4)
     expect(restored.value.states[8]?.affixes.at(-1)).toMatchObject({
       modId: 'exclusive1',

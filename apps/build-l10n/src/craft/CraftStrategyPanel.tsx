@@ -21,8 +21,11 @@ const CONDITION_LABELS = {
   'open-suffix': '后缀空位至少',
   'affix-count': '词缀组数至少',
   'desecration-stage': '亵渎阶段',
+  'socket-count': '已有孔数范围',
+  'open-sockets': '空孔数范围',
 } as const
 function defaultCondition(kind: CraftStrategyCondition['kind']): CraftStrategyCondition {
+  if (kind === 'socket-count' || kind === 'open-sockets') return { kind, min: 1, max: 3 }
   if (kind === 'desecration-stage') return { kind, value: 'unrevealed' }
   if (kind === 'always') return { kind }
   if (kind === 'rarity') return { kind, value: 'rare' }
@@ -164,7 +167,7 @@ export function CraftStrategyPanel({
                   开始指引步骤
                 </button>
                 <p>
-                  开始后选择具体结果；应用成功才计入历史和材料。精华及骨骼施加使用规则配置；揭示继续已有状态，回响在结果选择中声明。
+                  开始后核对具体结果；应用成功才计入历史和材料。精华、骨骼与符文使用规则配置；揭示继续已有状态，回响在结果选择中声明。
                 </p>
               </>
             ) : null}
@@ -305,6 +308,51 @@ export function CraftStrategyPanel({
                           </select>
                         </label>
                       ) : null}
+                      {condition.kind === 'socket-count' || condition.kind === 'open-sockets' ? (
+                        <>
+                          <label>
+                            孔数下限
+                            <select
+                              aria-label={`规则 ${number} 条件 ${ci + 1} 孔数下限`}
+                              value={condition.min}
+                              onChange={(event) =>
+                                updateCondition(ci, {
+                                  ...condition,
+                                  min: Number(event.target.value),
+                                  max: Math.max(condition.max, Number(event.target.value)),
+                                })
+                              }
+                            >
+                              {[0, 1, 2, 3].map((n) => (
+                                <option key={n} value={n}>
+                                  {n}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            孔数上限
+                            <select
+                              aria-label={`规则 ${number} 条件 ${ci + 1} 孔数上限`}
+                              value={condition.max}
+                              onChange={(event) =>
+                                updateCondition(ci, {
+                                  ...condition,
+                                  max: Number(event.target.value),
+                                  min: Math.min(condition.min, Number(event.target.value)),
+                                })
+                              }
+                            >
+                              {[0, 1, 2, 3].map((n) => (
+                                <option key={n} value={n}>
+                                  {n}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <p>包含上下限；孔位未知时不匹配，已确认零孔按 0 计算。</p>
+                        </>
+                      ) : null}
                       {condition.kind === 'open-prefix' || condition.kind === 'open-suffix' ? (
                         <label>
                           数量
@@ -354,6 +402,8 @@ export function CraftStrategyPanel({
                           'open-suffix',
                           'affix-count',
                           'desecration-stage',
+                          'socket-count',
+                          'open-sockets',
                           'always',
                         ] as const
                       ).find((kind) => !rule.conditions.some((entry) => entry.kind === kind))

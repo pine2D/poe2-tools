@@ -16,6 +16,7 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceOmen,
   essenceCraftMode,
+  socketCandidates,
 } from '@poe2-tools/item-core'
 
 export function strategyActionLabel(
@@ -29,6 +30,9 @@ export function strategyActionLabel(
   if (action.kind === 'stop') return '停止'
   if (action.kind === 'reveal') return '继续亵渎揭示'
   if (action.kind === 'fracture') return local('Fracturing Orb')
+  if (action.kind === 'artificer') return '巧匠石：添加一个孔'
+  if (action.kind === 'socket')
+    return `${local(catalog.augments?.find((e) => e.id === action.augmentId)?.name ?? action.augmentId)} → ${action.socketIndex === 'first-empty' ? '第一空孔' : `孔位 ${action.socketIndex + 1}（覆盖旧符文）`}`
   if (action.kind === 'essence')
     return (
       local(catalog.essences?.find((e) => e.id === action.essenceId)?.name ?? action.essenceId) +
@@ -67,6 +71,11 @@ export function CraftStrategyActionEditor({
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const essences = (catalog.essences ?? []).filter((e) => essenceCraftMode(e.id) !== null)
+  // 配置允许早于打孔；开始时仍核对真实孔位和材料。
+  const augments = socketCandidates(catalog, {
+    ...state,
+    sockets: state.sockets?.length ? state.sockets : [null],
+  })
   const type = catalog.bases.find((b) => b.id === state.baseId)?.type ?? ''
   const defaultBone: CraftBone = ['Ring', 'Amulet', 'Belt'].includes(type)
     ? 'preserved_collarbone'
@@ -82,9 +91,18 @@ export function CraftStrategyActionEditor({
           value={action.kind === 'currency' ? action.currency : action.kind}
           onChange={(event) => {
             const value = event.target.value
-            if (value === 'stop' || value === 'fracture' || value === 'reveal')
+            if (
+              value === 'stop' ||
+              value === 'fracture' ||
+              value === 'reveal' ||
+              value === 'artificer'
+            )
               onChange({ kind: value })
-            else if (value === 'desecrate') onChange({ kind: 'desecrate', boneId: defaultBone })
+            else if (value === 'socket') {
+              const first = augments[0]
+              if (first)
+                onChange({ kind: 'socket', augmentId: first.id, socketIndex: 'first-empty' })
+            } else if (value === 'desecrate') onChange({ kind: 'desecrate', boneId: defaultBone })
             else if (value === 'essence') {
               const first = essences[0]
               if (first) onChange({ kind: 'essence', essenceId: first.id })
@@ -103,8 +121,63 @@ export function CraftStrategyActionEditor({
           <option value="desecrate">骨骼施加</option>
           <option value="reveal">继续亵渎揭示</option>
           <option value="fracture">破裂制作</option>
+          <option value="artificer">巧匠石打孔</option>
+          <option value="socket" disabled={!augments.length}>
+            符文镶嵌
+          </option>
         </select>
       </label>
+      {action.kind === 'socket' ? (
+        <>
+          <label>
+            符文
+            <select
+              aria-label={`规则 ${number} 符文`}
+              value={action.augmentId}
+              onChange={(event) => onChange({ ...action, augmentId: event.target.value })}
+            >
+              {!augments.some((entry) => entry.id === action.augmentId) ? (
+                <option value={action.augmentId}>
+                  {local(
+                    catalog.augments?.find((entry) => entry.id === action.augmentId)?.name ??
+                      action.augmentId,
+                  )}
+                  （当前不可用）
+                </option>
+              ) : null}
+              {augments.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {local(entry.name)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            镶嵌孔位
+            <select
+              aria-label={`规则 ${number} 镶嵌孔位`}
+              value={action.socketIndex}
+              onChange={(event) =>
+                onChange({
+                  ...action,
+                  socketIndex:
+                    event.target.value === 'first-empty'
+                      ? 'first-empty'
+                      : Number(event.target.value),
+                })
+              }
+            >
+              <option value="first-empty">第一空孔（不覆盖）</option>
+              {[0, 1, 2].map((index) => (
+                <option key={index} value={index}>
+                  孔位 {index + 1}（可覆盖）
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>指定孔位会覆盖旧符文且不返还；第一空孔只填已确认的空孔。请设置停止条件或步骤上限。</p>
+        </>
+      ) : null}
       {action.kind === 'currency' ? (
         <label>
           搭配预兆

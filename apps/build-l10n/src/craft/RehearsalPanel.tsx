@@ -39,6 +39,7 @@ import {
   inspectNumericLines,
   jewelSourceHash,
   prepareCraftOperation,
+  prepareStrategySocket,
   type RemovalCraftCurrency,
   type RestoredCraftProject,
   readNumericValues,
@@ -799,7 +800,13 @@ export function RehearsalPanel({
     ...(desecratedHash ? { desecrationSourceHash: desecratedHash } : {}),
     ...(jewelHash ? { jewelSourceHash: jewelHash } : {}),
     ...(hasEssenceHistory && essenceSourceHash ? { essenceSourceHash } : {}),
-    ...(history[0]?.state.sockets !== undefined && augmentSourceHash ? { augmentSourceHash } : {}),
+    ...((history[0]?.state.sockets !== undefined ||
+      strategy?.rules.some(
+        (rule) => rule.action.kind === 'socket' || rule.action.kind === 'artificer',
+      )) &&
+    augmentSourceHash
+      ? { augmentSourceHash }
+      : {}),
     ...(targetModIds.length === 0 ? {} : { targetModIds }),
     ...(targetValues.length === 0 ? {} : { targetValues }),
     ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
@@ -952,6 +959,15 @@ export function RehearsalPanel({
             setStrategyResultAction(null)
             setOmen(action.omen)
             startOperation(action.currency, action.omen)
+          } else if (action.kind === 'socket' || action.kind === 'artificer') {
+            const step = prepareStrategySocket(catalog, current, action)
+            if (!step.ok) {
+              setMessage(step.error)
+              return
+            }
+            setStrategyResultAction(null)
+            setSocketDraft(step.value)
+            setMessage('')
           } else {
             setStrategyResultAction(action)
           }

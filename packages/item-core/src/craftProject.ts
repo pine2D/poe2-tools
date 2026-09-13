@@ -55,7 +55,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v40'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v41'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -113,7 +113,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 40 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 41 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -480,6 +480,27 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (
+      rulesVersion < 41 &&
+      read.value.rules.some(
+        (rule) =>
+          ['artificer', 'socket'].includes(rule.action.kind) ||
+          rule.conditions.some((condition) =>
+            ['socket-count', 'open-sockets'].includes(condition.kind),
+          ),
+      )
+    )
+      return fail('v39–v40 旧版指引不能包含孔位动作或条件。')
+    if (
+      read.value.rules.some(
+        (rule) =>
+          rule.action.kind === 'socket' &&
+          !catalog.augments?.some(
+            (augment) => rule.action.kind === 'socket' && augment.id === rule.action.augmentId,
+          ),
+      )
+    )
+      return fail('指引符文不在当前镶嵌目录中。')
     if (
       rulesVersion < 40 &&
       read.value.rules.some(
@@ -882,6 +903,9 @@ export function parseCraftProject(
     if (usesIron) return fail('v2–v9 旧版项目不能包含钢铁符文或其镶嵌操作。')
   }
   const usesSockets =
+    strategy?.rules.some(
+      (rule) => rule.action.kind === 'socket' || rule.action.kind === 'artificer',
+    ) ||
     importedSockets !== undefined ||
     initialInput.sockets !== undefined ||
     value.operations.some(

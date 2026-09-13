@@ -17,8 +17,10 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
+import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
 export type CraftStrategyAction =
+  | SocketStrategyAction
   | { kind: 'stop' }
   | { kind: 'currency'; currency: CraftCurrency; omen?: CraftOmen }
   | { kind: 'essence'; essenceId: string; omen?: EssenceOmen }
@@ -36,14 +38,40 @@ function keys(value: unknown, allowed: string[]): value is Record<string, unknow
 }
 export function readCraftStrategyAction(value: unknown): CraftStrategyAction | null {
   if (
-    !keys(value, ['kind', 'currency', 'omen', 'essenceId', 'boneId', 'directionOmen', 'lichOmen'])
+    !keys(value, [
+      'kind',
+      'currency',
+      'omen',
+      'essenceId',
+      'boneId',
+      'directionOmen',
+      'lichOmen',
+      'augmentId',
+      'socketIndex',
+    ])
   )
     return null
   if (
-    (value.kind === 'stop' || value.kind === 'reveal' || value.kind === 'fracture') &&
+    (value.kind === 'stop' ||
+      value.kind === 'reveal' ||
+      value.kind === 'fracture' ||
+      value.kind === 'artificer') &&
     keys(value, ['kind'])
   )
     return { kind: value.kind }
+  if (
+    value.kind === 'socket' &&
+    keys(value, ['kind', 'augmentId', 'socketIndex']) &&
+    typeof value.augmentId === 'string' &&
+    value.augmentId.length > 0 &&
+    value.augmentId.length <= 512 &&
+    (value.socketIndex === 'first-empty' ||
+      (typeof value.socketIndex === 'number' &&
+        Number.isInteger(value.socketIndex) &&
+        value.socketIndex >= 0 &&
+        value.socketIndex <= 2))
+  )
+    return { kind: 'socket', augmentId: value.augmentId, socketIndex: value.socketIndex }
   if (
     value.kind === 'desecrate' &&
     keys(value, ['kind', 'boneId', 'directionOmen', 'lichOmen']) &&
@@ -90,6 +118,10 @@ export function checkCraftStrategyAction(
   action: CraftStrategyWorkAction,
 ): CraftResult<null> {
   const ok: CraftResult<null> = { ok: true, value: null }
+  if (action.kind === 'socket' || action.kind === 'artificer') {
+    const result = prepareStrategySocket(catalog, state, action)
+    return result.ok ? ok : result
+  }
   if (action.kind === 'essence') {
     const result = prepareEssenceCraft(catalog, state, action.essenceId, action.omen)
     return result.ok ? ok : result
