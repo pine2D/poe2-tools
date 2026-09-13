@@ -45,6 +45,7 @@ import {
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
   type SocketCraftOperation,
+  statScalabilitySourceHash,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CraftPricingPanel } from './CraftPricingPanel'
@@ -758,6 +759,9 @@ export function RehearsalPanel({
     ...(pricing ? { pricing } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
+    ...(history[0]?.state.catalyst && statScalabilitySourceHash(catalog)
+      ? { scalabilitySourceHash: statScalabilitySourceHash(catalog) as string }
+      : {}),
     initialState: history[0]?.state ?? current,
     operations: history
       .slice(1)
@@ -827,6 +831,11 @@ export function RehearsalPanel({
         <div>
           <h2>通货演练 · 指定结果演练</h2>
           <p>可指定词缀与具体数值；范围试掷采用演练模型，不计算真实概率或市场价格。</p>
+          {current.catalyst ? (
+            <p className="rehearsal-scope-note">
+              词缀选择、数值目标与制作步骤使用催化前的基础值；品质后的估算值见催化剂效果预览。
+            </p>
+          ) : null}
           <p className="rehearsal-scope-note">
             支持普通攻击武器本地面板与三项防御估算；起点品质保留，技能与角色面板尚未计算。
           </p>
@@ -1324,6 +1333,7 @@ export function RehearsalPanel({
         </section>
       ) : null}
       <CatalystPreviewPanel
+        key={JSON.stringify(current.catalyst ?? null)}
         catalog={catalog}
         state={current}
         translations={translations}

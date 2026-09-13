@@ -6,6 +6,7 @@ import {
 } from './beltImplicits'
 import { type CraftCatalog, hasGenesisModEligibility } from './catalog'
 import { matchCatalogMods } from './catalogMatch'
+import { importCatalystQuality } from './catalystImport'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
@@ -40,6 +41,7 @@ export function importCraftState(
   importedSockets?: readonly (string | null)[],
   importedQuality?: number,
   skillEntries?: readonly StatTemplate[],
+  declaredCatalystId?: string,
 ): CraftResult<CraftState> {
   const fail = (error: string): CraftResult<CraftState> => ({ ok: false, error })
   if (inspection.comparisonOnly || item.rarity === 'unique')
@@ -395,6 +397,16 @@ export function importCraftState(
     ...(importedSockets === undefined ? {} : { sockets: [...importedSockets] }),
     ...(quality === undefined ? {} : { quality }),
   }
+  const catalyst = importCatalystQuality(
+    catalog,
+    item,
+    state,
+    inspection.mods,
+    skillEntries ?? [],
+    declaredCatalystId,
+  )
+  if (!catalyst.ok) return catalyst
+  if (catalyst.value !== undefined) state.catalyst = catalyst.value
   // 零孔同样需要已支持类别与普通孔位规则，不能走空列表的宽松校验。
   if (importedSockets !== undefined && socketCapacity(catalog, state) === 0)
     return fail('该基底或特殊孔位规则暂不支持孔位核对演练。')

@@ -201,3 +201,5 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 报价由使用者在浏览器本地填写，属于 manual 用户输入；不作为入库数据或官方市场价格。只参考 [CoE 路线图](https://beta.craftofexile.com/roadmap) 的自定义价格、起点成本与费用明细需求，自行实现材料计数和小数运算，不复制其价格、代码或数据。所有物品及材料身份沿已有固定目录与手工规则；未新增浏览器第三方请求或市场数据适配器。
 
 高级固定值 `current(base)` 格式参考已登记 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 `src/Classes/Item.lua` 高级复制解析注释与结构（约 1145 行）。以自有解析器分别保留当前值和基础值，不复制其替换实现；中文标题与真机行为仍待样本验收，不从此结构推断催化来源、品质增量或生成权重。
+
+催化品质导入的数值口径另人工核对 [PoB2 #2216](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/issues/2216)、已关闭的 [#2375](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/pull/2375) 与 2026-08-29 实际合并的 [#2453](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/pull/2453)。维护者说明和自述样本用于区分新版高级文本的基础值、独立品质/增效与交易复制的已增效值；属于 MIT 项目的 primary 实现参考，不冒充游戏官方保证。无客户端解包或新网络适配器，不复制完整玩家装备入库。三种品质标题只作结构识别，中文具体类型译法需样本或用户核对，不据此猜测催化剂逐颗品质增量。

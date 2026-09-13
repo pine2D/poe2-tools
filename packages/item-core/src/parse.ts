@@ -1,3 +1,4 @@
+import { CATALYST_QUALITY_HEADER } from './catalystQuality'
 import type {
   ItemBlock,
   ItemDiagnostic,
@@ -88,6 +89,7 @@ const WEAPON_PROPERTIES = [
 ]
 
 function isKnownProperty(text: string, itemClass: string): boolean {
+  if (CATALYST_QUALITY_HEADER.test(text)) return true
   if (
     (itemClass === '' || /^(?:Belt|Belts|腰带|腰帶)$/i.test(itemClass)) &&
     CHARM_SLOTS_PROPERTY.test(text)
@@ -157,7 +159,9 @@ function parseModHeader(line: SourceLine, diagnostics: ItemDiagnostic[]): ItemMo
           /^\s*\((?:阶级|階級|等阶|等階|Tier)\s*[:：]\s*(\d+)\)\s*(?:[—–]\s*[^{}]+)?\s*\}\s*$/i,
         )?.[1]
     : undefined
-  const tagText = line.raw.match(/[—–]\s*([^}]+?)\s*}\s*$/)?.[1]
+  const magnitude = line.raw.match(/[—–]\s*(\d+)%\s+(Increased|Reduced)\s*}\s*$/i)
+  const header = magnitude ? `${line.raw.slice(0, magnitude.index)}}` : line.raw
+  const tagText = header.match(/[—–]\s*([^}]+?)\s*}\s*$/)?.[1]
 
   if (kind === 'unknown') {
     diagnostics.push({ code: 'unknown-mod-header', message: '无法识别词缀属性头', line: line.line })
@@ -165,6 +169,9 @@ function parseModHeader(line: SourceLine, diagnostics: ItemDiagnostic[]): ItemMo
 
   const states = readHeaderStates(line.raw)
   return {
+    ...(magnitude
+      ? { magnitude: Number(magnitude[1]) * (magnitude[2]?.toLowerCase() === 'reduced' ? -1 : 1) }
+      : {}),
     ...(states.length ? { states } : {}),
     kind,
     name,

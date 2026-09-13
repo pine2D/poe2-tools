@@ -1,14 +1,17 @@
 import {
   buildInitialBeltImplicitLines,
   buildInitialSkillLines,
+  CATALYSTS,
   type CatalogBase,
   type CraftCatalog,
   type CraftState,
+  catalystQualityLimit,
   createCraftState,
   type ItemDictionary,
   importCraftState,
   type RestoredCraftProject,
   readBaseGrantedSkills,
+  readCatalystQuality,
   readItemQuality,
   resolveCraftImplicitPatterns,
   socketCapacity,
@@ -47,6 +50,11 @@ export function CraftEntry({
     importedSockets?: (string | null)[]
     importedQuality?: number
   } | null>(null)
+  const [blankCatalyst, setBlankCatalyst] = useState('')
+  const [blankCatalystQuality, setBlankCatalystQuality] = useState('20')
+  const [catalystDeclaration, setCatalystDeclaration] = useState('')
+  const [catalystConfirmed, setCatalystConfirmed] = useState(false)
+  const catalystLimit = catalystQualityLimit(base)
   const [emptySockets, setEmptySockets] = useState(0)
   const [blankQuality, setBlankQuality] = useState(0)
   const [qualityDeclaration, setQualityDeclaration] = useState('')
@@ -76,6 +84,15 @@ export function CraftEntry({
     qualityFromText?.ok && qualityFromText.value === undefined && qualityDeclaration !== ''
       ? Number(qualityDeclaration)
       : undefined
+  const catalystFromText =
+    matchingImport && imported.item ? readCatalystQuality(imported.item) : null
+  const declaredCatalystId =
+    catalystFromText?.ok &&
+    catalystFromText.value?.id === null &&
+    catalystDeclaration &&
+    catalystConfirmed
+      ? catalystDeclaration
+      : undefined
   const fromImport =
     matchingImport && imported.item
       ? importCraftState(
@@ -92,6 +109,7 @@ export function CraftEntry({
           undefined,
           importedQuality,
           dictionary?.stats?.entries,
+          declaredCatalystId,
         )
       : null
   const blankInput: CraftState = {
@@ -100,6 +118,15 @@ export function CraftEntry({
     rarity: 'normal',
     affixes: [],
     sourceText: null,
+    ...(blankCatalyst && !matchingImport
+      ? {
+          catalyst: {
+            id: blankCatalyst,
+            quality: blankCatalystQuality === '' ? Number.NaN : Number(blankCatalystQuality),
+            declared: true as const,
+          },
+        }
+      : {}),
     ...(supportsItemQuality(base) || supportsWeaponQuality(base) ? { quality: blankQuality } : {}),
   }
   const capacity =
@@ -137,6 +164,79 @@ export function CraftEntry({
       <p>
         新建普通基底，或保留当前装备的已知词缀开始演练。改变基底、物等或导入文本会结束当前演练。
       </p>
+      {!matchingImport && !readOnlyImport && catalystLimit !== null ? (
+        <section aria-label="起点已有催化品质">
+          <div className="catalyst-fields">
+            <label>
+              起点催化品质类型
+              <select
+                aria-label="起点催化品质类型"
+                value={blankCatalyst}
+                onChange={(event) => setBlankCatalyst(event.target.value)}
+              >
+                <option value="">无催化品质</option>
+                {CATALYSTS.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {blankCatalyst ? (
+              <label>
+                起点催化品质（%）
+                <input
+                  aria-label="起点催化品质（%）"
+                  type="number"
+                  min={0}
+                  max={catalystLimit}
+                  step={1}
+                  value={blankCatalystQuality}
+                  onChange={(event) => setBlankCatalystQuality(event.target.value)}
+                />
+              </label>
+            ) : null}
+          </div>
+          <small>声明起点已有品质，不计材料费用；修改后需重新开始演练。</small>
+        </section>
+      ) : null}
+      {catalystFromText?.ok &&
+      catalystFromText.value?.id === null &&
+      !readOnlyImport &&
+      catalystLimit !== null ? (
+        <section aria-label="核对导入催化品质">
+          <p>
+            原文：{catalystFromText.value.raw}。此品质类型的国服标题尚未核对，请按游戏显示选择。
+          </p>
+          <label>
+            核对催化品质类型
+            <select
+              aria-label="核对催化品质类型"
+              value={catalystDeclaration}
+              onChange={(event) => {
+                setCatalystDeclaration(event.target.value)
+                setCatalystConfirmed(false)
+              }}
+            >
+              <option value="">尚未核对</option>
+              {CATALYSTS.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={catalystConfirmed}
+              onChange={(event) => setCatalystConfirmed(event.target.checked)}
+            />
+            已核对类型，且原文数值为高级基础值
+          </label>
+          <small>使用 Ctrl+Alt+C 的完整范围文本；交易站已增效数值不能作为基础值再次放大。</small>
+        </section>
+      ) : null}
       {startCharm && !readOnlyImport ? (
         startCharm.fixed ? (
           <p>起点咒符栏：固定 1 栏，不随物品等级增加。</p>

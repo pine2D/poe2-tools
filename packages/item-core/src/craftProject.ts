@@ -7,6 +7,7 @@ import {
   isPendingDesecration,
 } from './boneRules'
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
+import { isCatalystQuality } from './catalystQuality'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
 import { applyCraftStep, type CraftStep } from './craftSteps'
@@ -44,6 +45,7 @@ import {
 import { importCraftState } from './rehearsalImport'
 import { isSupportedArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
+import { statScalabilitySourceHash } from './statScalability'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
@@ -52,7 +54,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v35'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v36'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -67,6 +69,7 @@ export const MAX_CRAFT_PROJECT_BYTES = 2_000_000
 const MAX_OPERATIONS = 1000
 
 export interface CraftProject {
+  scalabilitySourceHash?: string
   pricing?: CraftPricing
   schemaVersion: 1
   sourceCommit: string
@@ -107,7 +110,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 35 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 36 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -123,6 +126,7 @@ function readState(value: unknown): CraftState | null {
       'sockets',
       'runeSourceLines',
       'quality',
+      'catalyst',
       'pendingDesecration',
     ])
   )
@@ -135,6 +139,7 @@ function readState(value: unknown): CraftState | null {
   )
     return null
   if (value.sourceText !== null && typeof value.sourceText !== 'string') return null
+  if (Object.hasOwn(value, 'catalyst') && !isCatalystQuality(value.catalyst)) return null
   if (
     Object.hasOwn(value, 'quality') &&
     (typeof value.quality !== 'number' ||
@@ -193,6 +198,7 @@ function readState(value: unknown): CraftState | null {
     rarity: value.rarity as CraftState['rarity'],
     affixes,
     sourceText: value.sourceText,
+    ...(isCatalystQuality(value.catalyst) ? { catalyst: { ...value.catalyst } } : {}),
     ...(Array.isArray(value.runeSourceLines)
       ? { runeSourceLines: [...value.runeSourceLines] as string[] }
       : {}),
@@ -293,6 +299,8 @@ function validateInitial(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (state.sourceText === null) {
+    if (state.catalyst && state.catalyst.declared !== true)
+      return { ok: false, error: '搜索起点的催化品质需要明确声明。' }
     if (importedSockets !== undefined)
       return { ok: false, error: '孔位核对声明必须关联来源原文，不能用于空白起点。' }
     if (importedQuality !== undefined)
@@ -384,6 +392,7 @@ function validateInitial(
     importedSockets,
     importedQuality,
     dictionary.stats?.entries,
+    state.catalyst?.declared ? state.catalyst.id : undefined,
   )
   if (!restored.ok) return { ok: false, error: `项目来源核对失败：${restored.error}` }
   if (
@@ -403,6 +412,12 @@ function validateInitial(
     return { ok: false, error: '项目初始符文效果与来源装备不一致。' }
   if (!legacy && state.quality !== restored.value.quality)
     return { ok: false, error: '项目初始品质与来源装备或导入声明不一致。' }
+  if (
+    state.catalyst?.id !== restored.value.catalyst?.id ||
+    state.catalyst?.quality !== restored.value.catalyst?.quality ||
+    state.catalyst?.declared !== restored.value.catalyst?.declared
+  )
+    return { ok: false, error: '项目催化品质与来源原文或类型声明不一致。' }
   // 旧版项目没有保存固有行时，以重新核对的原文恢复，不能用目录范围覆盖实值。
   return restored
 }
@@ -443,6 +458,7 @@ export function parseCraftProject(
       'essenceSourceHash',
       'desecrationSourceHash',
       'jewelSourceHash',
+      'scalabilitySourceHash',
       'pricing',
       'importedSockets',
       'importedQuality',
@@ -454,6 +470,12 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (
+    rulesVersion < 36 &&
+    (Object.hasOwn(value, 'scalabilitySourceHash') ||
+      (record(value.initialState) && Object.hasOwn(value.initialState, 'catalyst')))
+  )
+    return fail('v2–v35 旧版项目不能包含催化品质起点或缩放来源。')
   if (
     rulesVersion < 33 &&
     Array.isArray(value.operations) &&
@@ -761,6 +783,12 @@ export function parseCraftProject(
     importedSockets = [...value.importedSockets]
   }
   let importedQuality: number | undefined
+  const scalabilitySourceHash = statScalabilitySourceHash(catalog)
+  if (
+    (initialInput.catalyst !== undefined || Object.hasOwn(value, 'scalabilitySourceHash')) &&
+    (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
+  )
+    return fail('项目属性缩放来源指纹缺失或与当前目录不同。')
   if (Object.hasOwn(value, 'importedQuality')) {
     if (
       typeof value.importedQuality !== 'number' ||
@@ -963,6 +991,11 @@ export function parseCraftProject(
         schemaVersion: 1,
         sourceCommit: catalog._meta.sourceCommit,
         rulesVersion: CRAFT_RULES_VERSION,
+        ...((initialInput.catalyst !== undefined ||
+          Object.hasOwn(value, 'scalabilitySourceHash')) &&
+        scalabilitySourceHash
+          ? { scalabilitySourceHash }
+          : {}),
         initialState: initial.value,
         operations,
         cursor: value.cursor,

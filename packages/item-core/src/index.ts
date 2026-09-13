@@ -53,6 +53,8 @@ export {
   catalystChoices,
   estimateCatalystEffects,
 } from './catalystEffects'
+export type { CatalystQuality } from './catalystQuality'
+export { CATALYSTS, catalystQualityLimit, readCatalystQuality } from './catalystQuality'
 export type {
   CraftAffixChange,
   CraftComparison,

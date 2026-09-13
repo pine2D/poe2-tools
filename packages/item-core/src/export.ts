@@ -1,4 +1,5 @@
 import { RUNE_SUFFIX } from './annotations'
+import { CATALYST_QUALITY_HEADER } from './catalystQuality'
 import { resolveGrantedSkill } from './grantedSkills'
 import { hasSpecialModifierSource } from './modifierSource'
 import { createStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
@@ -120,7 +121,11 @@ function translateHeader(mod: ItemMod): string {
   const name = mod.name === null ? '' : ` "${mod.name}"`
   const tier = mod.tier === null ? '' : ` (Tier: ${mod.tier})`
   const tags = mod.tags.length === 0 ? '' : ` — ${mod.tags.join(', ')}`
-  return `{ ${kind} Modifier${name}${tier}${tags} }`
+  const magnitude =
+    mod.magnitude === undefined
+      ? ''
+      : ` — ${Math.abs(mod.magnitude)}% ${mod.magnitude < 0 ? 'Reduced' : 'Increased'}`
+  return `{ ${kind} Modifier${name}${tier}${tags}${magnitude} }`
 }
 
 export function knownExplicitHeader(raw: string): boolean {
@@ -194,6 +199,15 @@ export function inspectItem(
     })
   if (hasSpecialModifierSource(item))
     bridgeReasons.push('已识别特殊词缀来源或破裂物品，特殊制作尚未开放，CoE 转接尚未验证。')
+  if (
+    item.mods.some((mod) => mod.magnitude !== undefined) ||
+    item.blocks.some(
+      (block) =>
+        block.kind === 'properties' &&
+        block.lines.some((line) => CATALYST_QUALITY_HEADER.test(line.raw.trim())),
+    )
+  )
+    bridgeReasons.push('催化品质或属性增效的 CoE 转接尚未验证。')
   if (runes.length > 0) bridgeReasons.push('符文效果的 CoE 转接尚未验证。')
   if (comparisonReason !== null) bridgeReasons.push(comparisonReason)
   if (base.english === null) bridgeReasons.push('基底未唯一识别，不能完整转接。')

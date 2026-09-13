@@ -1,4 +1,5 @@
 import {
+  CATALYSTS,
   type CraftCatalog,
   type CraftState,
   catalystChoices,
@@ -22,8 +23,8 @@ export function CatalystPreviewPanel({
   translateLine?: (line: string) => string | null
 }) {
   const id = useId()
-  const [catalyst, setCatalyst] = useState('Flesh')
-  const [quality, setQuality] = useState('20')
+  const [catalyst, setCatalyst] = useState(state.catalyst?.id ?? 'Flesh')
+  const [quality, setQuality] = useState(String(state.catalyst?.quality ?? 20))
   const options = useMemo(() => catalystChoices(catalog, state), [catalog, state])
   const result = useMemo(
     () =>
@@ -46,10 +47,21 @@ export function CatalystPreviewPanel({
   const text = (line: string) => translateLine?.(line) ?? line
   return (
     <section className="catalyst-panel" aria-label="催化剂效果预览">
-      <details>
+      {state.catalyst ? (
+        <section aria-label="当前催化品质">
+          <h4>
+            当前催化品质：{CATALYSTS.find((entry) => entry.id === state.catalyst?.id)?.label} ·{' '}
+            {state.catalyst.quality}%
+          </h4>
+          <p>起点已有品质随制作与保存保留，不计催化剂材料费用。</p>
+        </section>
+      ) : null}
+      <details open={state.catalyst ? true : undefined}>
         <summary>比较催化剂效果</summary>
         <p className="rehearsal-scope-note">
-          比较当前基础属性在指定品质下的估算值，未施加到装备，不计材料费用。
+          {state.catalyst
+            ? '默认显示当前催化品质下的估算值；修改下方选项仅作比较，不改变已保存品质。'
+            : '比较当前基础属性在指定品质下的估算值，未施加到装备，不计材料费用。'}
           每颗催化剂的品质增量仍待核实，预览品质不代表材料颗数。
         </p>
         {options.ok ? (

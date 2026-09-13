@@ -1,4 +1,5 @@
 import type { CraftCatalog } from './catalog'
+import { CATALYSTS } from './catalystQuality'
 import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
 import { readUnlevelledSkillName } from './grantedSkills'
@@ -120,7 +121,10 @@ export function exportCraftItemText(
   if (locale !== 'en')
     warnings.push('类别值、词缀名称和标签保留目录英文；缺失、多义或不可逆译文保留原文并逐行说明。')
   const localize = createItemTextLocalization(locale, options.dictionary, warnings)
-  if (current.quality === undefined) warnings.push('品质未知，文本未输出 Quality。')
+  if (current.quality === undefined && current.catalyst === undefined)
+    warnings.push('品质未知，文本未输出 Quality。')
+  if (current.catalyst && locale !== 'en')
+    warnings.push('催化品质标题保留已核对英文；属性输出为高级基础值，不重复写入增效数值。')
   if (current.sockets === undefined) warnings.push('孔位未知，文本未假设为空孔。')
   if (current.sockets?.length === 0)
     warnings.push('当前已知为零孔，文本省略 Sockets 行；再导入须重新核对零孔。')
@@ -147,6 +151,11 @@ export function exportCraftItemText(
     if (values.length) output.push('--------', ...values)
   }
   if (current.quality !== undefined) block([`${labels.quality}: +${current.quality}%`])
+  if (current.catalyst) {
+    const definition = CATALYSTS.find((entry) => entry.id === current.catalyst?.id)
+    if (!definition) return { ok: false, error: '未知催化品质类型。' }
+    block([`Quality (${definition.descriptor} Modifiers): +${current.catalyst.quality}%`])
+  }
   block([`${labels.itemLevel}: ${current.itemLevel}`])
   if (current.sockets?.length)
     block([`${labels.sockets}: ${current.sockets.map(() => 'S').join(' ')}`])

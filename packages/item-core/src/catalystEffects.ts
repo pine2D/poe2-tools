@@ -1,27 +1,11 @@
 import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
+import { CATALYSTS } from './catalystQuality'
 import { isBasicJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { scaleStatLine, statScalabilitySourceHash } from './statScalability'
-
-// 固定 PoB Item.lua 的品质类别与标签；名字仅用于连接既有官方三服译名。
-const CATALYSTS = [
-  { id: 'Flesh', label: '生命', tags: ['life'] },
-  { id: 'Neural', label: '魔力', tags: ['mana'] },
-  { id: 'Carapace', label: '防御', tags: ['defences', 'armour', 'evasion', 'energyshield'] },
-  { id: "Uul-Netol's", label: '物理', tags: ['physical'] },
-  { id: "Xoph's", label: '火焰', tags: ['fire'] },
-  { id: "Tul's", label: '冰霜', tags: ['cold'] },
-  { id: "Esh's", label: '闪电', tags: ['lightning'] },
-  { id: "Chayula's", label: '混沌', tags: ['chaos'] },
-  { id: 'Reaver', label: '攻击', tags: ['attack'] },
-  { id: 'Sibilant', label: '施法', tags: ['caster'] },
-  { id: 'Skittering', label: '速度', tags: ['speed'] },
-  { id: 'Adaptive', label: '属性', tags: ['attribute'] },
-  { id: 'Necrotic', label: '召唤生物', tags: ['minion'] },
-] as const
 
 export interface CatalystChoice {
   id: string
@@ -61,7 +45,7 @@ export function catalystChoices(
   if (
     (state.quality !== undefined && state.quality !== 0) ||
     (base.sourceQuality !== null && base.sourceQuality !== 0) ||
-    /^(?:Quality|品质|品質)\s*[(（]/im.test(state.sourceText ?? '')
+    (!state.catalyst && /^(?:Quality|品质|品質)\s*[(（]/im.test(state.sourceText ?? ''))
   )
     return { ok: false, error: '已有品质的类型与基础数值尚未核对，不能再次叠乘催化效果。' }
   if (state.pendingDesecration)

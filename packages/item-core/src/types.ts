@@ -24,6 +24,8 @@ export interface ItemStat extends SourceLine {
 export type ModKind = 'prefix' | 'suffix' | 'implicit' | 'unique' | 'enchant' | 'unknown'
 
 export interface ItemMod {
+  /** 高级属性头独立声明的增效百分比，不混入词缀标签。 */
+  magnitude?: number
   states?: ModifierState[]
   kind: ModKind
   name: string | null

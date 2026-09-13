@@ -21,6 +21,7 @@ import {
   inspectModPool,
 } from './catalog'
 import { matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
+import { catalystStateError } from './catalystQuality'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
@@ -90,6 +91,7 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  catalyst?: import('./catalystQuality').CatalystQuality
   pendingDesecration?: PendingDesecration
   baseId: string
   itemLevel: number
@@ -184,6 +186,7 @@ function failure<T>(error: string): CraftResult<T> {
 function cloneState(state: CraftState): CraftState {
   return {
     ...state,
+    ...(state.catalyst === undefined ? {} : { catalyst: { ...state.catalyst } }),
     ...(state.pendingDesecration === undefined
       ? {}
       : { pendingDesecration: clonePendingDesecration(state.pendingDesecration) }),
@@ -339,6 +342,8 @@ export function createCraftState(
     resolved.push({ affix, mod })
   }
 
+  const catalystError = catalystStateError(catalog, input)
+  if (catalystError) return failure(catalystError)
   const accepted: CatalogMod[] = []
   let prefixes = input.pendingDesecration?.kind === 'prefix' ? 1 : 0
   let suffixes = input.pendingDesecration?.kind === 'suffix' ? 1 : 0
