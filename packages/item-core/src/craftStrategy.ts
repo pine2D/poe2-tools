@@ -46,7 +46,7 @@ export interface CraftStrategyGoals {
   targetFracturedModId?: string
   minimumTargetCount?: number
 }
-export type CraftStrategyDecision =
+export type CraftStrategyDecision = (
   | {
       kind: 'action'
       ruleIndex: number
@@ -56,6 +56,7 @@ export type CraftStrategyDecision =
   | { kind: 'stop'; reason: 'rule'; ruleIndex: number }
   | { kind: 'blocked'; message: string; ruleIndex?: number }
   | { kind: 'unmatched' }
+) & { route?: { ruleIndex: number; from: string; to: string }[] }
 
 function keys(value: unknown, allowed: string[]): value is Record<string, unknown> {
   return (
@@ -184,6 +185,8 @@ export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
         : Object.hasOwn(input, 'stageId') || Object.hasOwn(input, 'nextStageId')
     )
       return fail(`规则 ${index + 1} 的阶段归属或下一阶段无效。`)
+    if (action.kind === 'jump' && (!flow || typeof input.nextStageId !== 'string'))
+      return fail(`规则 ${index + 1} 的纯跳转必须指定已有阶段。`)
     rules.push({
       conditions: conditions as CraftStrategyCondition[],
       action,
@@ -209,9 +212,10 @@ export function evaluateCraftStrategy(
   if (!integer(appliedSteps, 0, 1000)) return fail('当前历史步数无效。')
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
+  const route: NonNullable<CraftStrategyDecision['route']> = []
   const result = (value: CraftStrategyDecision): CraftResult<CraftStrategyDecision> => ({
     ok: true,
-    value,
+    value: route.length ? { ...value, route: [...route] } : value,
   })
   if (appliedSteps >= strategy.maxSteps) return result({ kind: 'stop', reason: 'step-limit' })
   // 失联引用不等于未达成，反向条件也不能利用被删除目标继续加工。
@@ -295,15 +299,33 @@ export function evaluateCraftStrategy(
     const side = condition.kind === 'open-prefix' ? 'prefix' : 'suffix'
     return capacity - counts[side] >= condition.min
   }
-  const ruleIndex = strategy.rules.findIndex(
-    (rule) => (!strategy.flow || rule.stageId === stageId) && rule.conditions.every(matches),
-  )
-  const rule = strategy.rules[ruleIndex]
-  if (!rule) return result({ kind: 'unmatched' })
-  if (rule.action.kind === 'stop') return result({ kind: 'stop', reason: 'rule', ruleIndex })
-  const action = rule.action
-  const checkedAction = checkCraftStrategyAction(catalog, checked.value, action)
-  return checkedAction.ok
-    ? result({ kind: 'action', ruleIndex, action })
-    : result({ kind: 'blocked', ruleIndex, message: checkedAction.error })
+  let currentStage = stageId
+  const visited = new Set<string>()
+  while (true) {
+    if (currentStage) visited.add(currentStage)
+    const ruleIndex = strategy.rules.findIndex(
+      (rule) => (!strategy.flow || rule.stageId === currentStage) && rule.conditions.every(matches),
+    )
+    const rule = strategy.rules[ruleIndex]
+    if (!rule) return result({ kind: 'unmatched' })
+    if (rule.action.kind === 'stop') return result({ kind: 'stop', reason: 'rule', ruleIndex })
+    if (rule.action.kind === 'jump') {
+      // 配置已校验；同一装备上重复阶段意味着无消费循环，不依赖制作步数预算。
+      if (!currentStage || !rule.nextStageId) return fail('纯跳转缺少阶段。')
+      route.push({ ruleIndex, from: currentStage, to: rule.nextStageId })
+      if (visited.has(rule.nextStageId))
+        return result({
+          kind: 'blocked',
+          ruleIndex,
+          message: '检测到不消耗材料的阶段循环，请修改跳转目的或条件。',
+        })
+      currentStage = rule.nextStageId
+      continue
+    }
+    const action = rule.action
+    const checkedAction = checkCraftStrategyAction(catalog, checked.value, action)
+    return checkedAction.ok
+      ? result({ kind: 'action', ruleIndex, action })
+      : result({ kind: 'blocked', ruleIndex, message: checkedAction.error })
+  }
 }

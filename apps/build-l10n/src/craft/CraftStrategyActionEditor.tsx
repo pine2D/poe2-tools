@@ -28,6 +28,7 @@ export function strategyActionLabel(
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   if (action.kind === 'stop') return '停止'
+  if (action.kind === 'jump') return '仅判断并跳转'
   if (action.kind === 'reveal') return '继续亵渎揭示'
   if (action.kind === 'fracture') return local('Fracturing Orb')
   if (action.kind === 'artificer') return '巧匠石：添加一个孔'
@@ -51,6 +52,7 @@ export function strategyActionLabel(
   )
 }
 interface Props {
+  allowJump?: boolean
   number: number
   action: CraftStrategyAction
   catalog: CraftCatalog
@@ -60,6 +62,7 @@ interface Props {
   onChange: (action: CraftStrategyAction) => void
 }
 export function CraftStrategyActionEditor({
+  allowJump = false,
   number,
   action,
   catalog,
@@ -92,6 +95,7 @@ export function CraftStrategyActionEditor({
           onChange={(event) => {
             const value = event.target.value
             if (
+              value === 'jump' ||
               value === 'stop' ||
               value === 'fracture' ||
               value === 'reveal' ||
@@ -110,6 +114,9 @@ export function CraftStrategyActionEditor({
           }}
         >
           <option value="stop">停止</option>
+          <option value="jump" disabled={!allowJump}>
+            仅判断并跳转
+          </option>
           {(Object.keys(CRAFT_CURRENCY_LABELS) as CraftCurrency[]).map((id) => (
             <option key={id} value={id}>
               {CRAFT_CURRENCY_LABELS[id]}

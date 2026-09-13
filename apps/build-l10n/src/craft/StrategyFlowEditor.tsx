@@ -9,6 +9,7 @@ interface Props {
 }
 export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onRestart }: Props) {
   const flow = strategy.flow
+  const hasJumps = strategy.rules.some((rule) => rule.action.kind === 'jump')
   if (!flow)
     return (
       <button
@@ -60,7 +61,9 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
         </button>
         <button
           type="button"
+          disabled={hasJumps}
           onClick={() => {
+            if (hasJumps) return
             const { flow: _, ...plain } = strategy
             onChange({
               ...plain,
@@ -71,6 +74,7 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
           关闭分阶段流程
         </button>
       </div>
+      {hasJumps ? <p>要关闭分阶段流程，请先删除纯跳转规则或将其改为制作／停止动作。</p> : null}
       <details>
         <summary>阶段与路线（{flow.stages.length} 个阶段）</summary>
         {flow.stages.map((stage) => (
@@ -123,7 +127,7 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
                   rule.stageId !== stage.id
                     ? []
                     : [
-                        `规则 ${index + 1} → ${rule.action.kind === 'stop' ? '停止' : flow.stages.find((entry) => entry.id === (rule.nextStageId ?? stage.id))?.name}`,
+                        `规则 ${index + 1}${rule.action.kind === 'jump' ? '（仅判断）' : ''} → ${rule.action.kind === 'stop' ? '停止' : flow.stages.find((entry) => entry.id === (rule.nextStageId ?? stage.id))?.name}`,
                       ],
                 )
                 .join('；')}
@@ -186,11 +190,12 @@ export function StrategyRuleStages({
       </label>
       {rule.action.kind !== 'stop' ? (
         <label>
-          应用后阶段
+          {rule.action.kind === 'jump' ? '跳转阶段' : '应用后阶段'}
           <select
-            aria-label={`规则 ${number} 应用后阶段`}
+            aria-label={`规则 ${number} ${rule.action.kind === 'jump' ? '跳转阶段' : '应用后阶段'}`}
             value={rule.nextStageId ?? ''}
             onChange={(event) => {
+              if (rule.action.kind === 'jump' && !event.target.value) return
               const { nextStageId: _, ...rest } = rule
               onChange({
                 ...rest,
@@ -198,7 +203,7 @@ export function StrategyRuleStages({
               })
             }}
           >
-            <option value="">留在本阶段</option>
+            {rule.action.kind !== 'jump' ? <option value="">留在本阶段</option> : null}
             {options}
           </select>
         </label>

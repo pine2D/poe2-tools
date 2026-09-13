@@ -56,7 +56,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v43'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v44'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -115,7 +115,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 43 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 44 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -483,6 +483,8 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (rulesVersion < 44 && read.value.rules.some((rule) => rule.action.kind === 'jump'))
+      return fail('v43 及更早项目不能包含纯条件跳转。')
     if (rulesVersion < 43 && read.value.flow) return fail('v42 及更早项目不能包含分阶段流程。')
     const selectedTargets = read.value.rules.flatMap((rule) =>
       rule.conditions.flatMap((condition) =>

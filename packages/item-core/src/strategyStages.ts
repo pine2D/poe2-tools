@@ -83,7 +83,10 @@ export function strategyStageAt(
       result.value.kind === 'action' &&
       operationMatchesStrategyAction(state, result.value.action, operation)
     )
-      stageId = strategy.rules[result.value.ruleIndex]?.nextStageId ?? stageId
+      stageId =
+        strategy.rules[result.value.ruleIndex]?.nextStageId ??
+        strategy.rules[result.value.ruleIndex]?.stageId ??
+        stageId
   }
   return { ok: true, value: stageId }
 }

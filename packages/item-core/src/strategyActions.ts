@@ -22,12 +22,13 @@ import { prepareStrategySocket, type SocketStrategyAction } from './strategySock
 export type CraftStrategyAction =
   | SocketStrategyAction
   | { kind: 'stop' }
+  | { kind: 'jump' }
   | { kind: 'currency'; currency: CraftCurrency; omen?: CraftOmen }
   | { kind: 'essence'; essenceId: string; omen?: EssenceOmen }
   | ({ kind: 'desecrate'; boneId: CraftBone } & BoneOmenConfig)
   | { kind: 'reveal' }
   | { kind: 'fracture' }
-export type CraftStrategyWorkAction = Exclude<CraftStrategyAction, { kind: 'stop' }>
+export type CraftStrategyWorkAction = Exclude<CraftStrategyAction, { kind: 'stop' | 'jump' }>
 function keys(value: unknown, allowed: string[]): value is Record<string, unknown> {
   return (
     value !== null &&
@@ -53,6 +54,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
     return null
   if (
     (value.kind === 'stop' ||
+      value.kind === 'jump' ||
       value.kind === 'reveal' ||
       value.kind === 'fracture' ||
       value.kind === 'artificer') &&

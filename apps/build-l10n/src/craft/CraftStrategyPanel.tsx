@@ -185,6 +185,20 @@ export function CraftStrategyPanel({
             步，包含启用指引前的操作。草稿和已撤销步骤不计入。
           </p>
           {message ? <p role="alert">{message}</p> : null}
+          {decision?.route?.length ? (
+            <section aria-label="本次判断路径">
+              <p>本次判断路径（不消耗材料）</p>
+              <ol>
+                {decision.route.map((hop) => (
+                  <li key={hop.ruleIndex}>
+                    规则 {hop.ruleIndex + 1}：
+                    {strategy.flow?.stages.find((stage) => stage.id === hop.from)?.name ?? hop.from}{' '}
+                    → {strategy.flow?.stages.find((stage) => stage.id === hop.to)?.name ?? hop.to}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : null}
           <div className="strategy-decision" role="status">
             {stageError ?? (evaluated && !evaluated.ok ? evaluated.error : null)}
             {decision?.kind === 'action' ? (
@@ -477,6 +491,7 @@ export function CraftStrategyPanel({
                   />
                   <div className="strategy-toolbar">
                     <CraftStrategyActionEditor
+                      allowJump={Boolean(strategy.flow)}
                       number={number}
                       action={rule.action}
                       catalog={catalog}
@@ -488,7 +503,14 @@ export function CraftStrategyPanel({
                         replaceRule(index, {
                           ...rest,
                           action,
-                          ...(action.kind !== 'stop' && nextStageId ? { nextStageId } : {}),
+                          ...(action.kind === 'jump'
+                            ? {
+                                nextStageId:
+                                  nextStageId ?? rule.stageId ?? strategy.flow?.entryStageId ?? '',
+                              }
+                            : action.kind !== 'stop' && nextStageId
+                              ? { nextStageId }
+                              : {}),
                         })
                       }}
                     />
