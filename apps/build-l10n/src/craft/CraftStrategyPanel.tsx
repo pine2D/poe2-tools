@@ -10,7 +10,7 @@ import {
   evaluateCraftStrategy,
   readCraftStrategy,
 } from '@poe2-tools/item-core'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './strategy.css'
 import { CraftStrategyActionEditor, strategyActionLabel } from './CraftStrategyActionEditor'
 import { defaultCondition } from './StrategyConditionEditor'
@@ -73,6 +73,19 @@ export function CraftStrategyPanel({
   onChange,
   onStart,
 }: Props) {
+  const ruleDetails = useRef<HTMLDetailsElement>(null)
+  const ruleNodes = useRef<(HTMLFieldSetElement | null)[]>([])
+  const [editRequest, setEditRequest] = useState<number | null>(null)
+  useEffect(() => {
+    if (editRequest === null) return
+    const node = ruleNodes.current[editRequest]
+    if (ruleDetails.current && node) {
+      ruleDetails.current.open = true
+      node.scrollIntoView?.({ block: 'start' })
+      node.focus({ preventScroll: true })
+    }
+    setEditRequest(null)
+  }, [editRequest])
   const [limit, setLimit] = useState(String(strategy?.maxSteps ?? 50))
   const [message, setMessage] = useState('')
   useEffect(() => {
@@ -123,6 +136,11 @@ export function CraftStrategyPanel({
               startStep={startStep}
               onChange={onChange}
               onRestart={onRestart}
+              decision={decision}
+              ruleLabels={strategy.rules.map((rule) =>
+                strategyActionLabel(rule.action, catalog, translations, omenLabel),
+              )}
+              onEditRule={setEditRequest}
             />
           ) : null}
           <p>
@@ -213,7 +231,7 @@ export function CraftStrategyPanel({
             ) : null}
             {pending ? <p>有未应用步骤，请先应用、取消，或编辑规则重新判断。</p> : null}
           </div>
-          <details>
+          <details ref={ruleDetails}>
             <summary>编辑条件规则（{strategy.rules.length} 条）</summary>
             <p>每条规则最多 32 个条件节点、4 层嵌套，每组最多 4 项。未知孔位取反后仍不算满足。</p>
             {strategy.rules.map((rule, index) => {
@@ -251,8 +269,14 @@ export function CraftStrategyPanel({
                   conditions: rule.conditions.map((entry, i) => (i === ci ? condition : entry)),
                 })
               return (
-                // biome-ignore lint/suspicious/noArrayIndexKey: 规则按位置展示，字段全部受控且没有独立组件状态。
-                <fieldset key={index}>
+                <fieldset
+                  // biome-ignore lint/suspicious/noArrayIndexKey: 规则按位置展示，字段全部受控且没有独立组件状态。
+                  key={index}
+                  tabIndex={-1}
+                  ref={(node) => {
+                    ruleNodes.current[index] = node
+                  }}
+                >
                   <legend>规则 {number}</legend>
                   {rule.conditions.map((condition, ci) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: 条件按路径定位且完全受控，没有局部状态。

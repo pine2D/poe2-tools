@@ -1,13 +1,27 @@
-import type { CraftStrategy, CraftStrategyRule } from '@poe2-tools/item-core'
+import type { CraftStrategy, CraftStrategyDecision, CraftStrategyRule } from '@poe2-tools/item-core'
+
+import { StrategyFlowCanvas } from './StrategyFlowCanvas'
 
 interface Props {
   strategy: CraftStrategy
+  decision: CraftStrategyDecision | null
+  ruleLabels: readonly string[]
+  onEditRule: (index: number) => void
   stageId: string | undefined
   startStep: number
   onChange: (strategy: CraftStrategy) => void
   onRestart: () => void
 }
-export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onRestart }: Props) {
+export function StrategyFlowEditor({
+  strategy,
+  stageId,
+  startStep,
+  onChange,
+  onRestart,
+  decision,
+  ruleLabels,
+  onEditRule,
+}: Props) {
   const flow = strategy.flow
   const hasJumps = strategy.rules.some((rule) => rule.action.kind === 'jump')
   if (!flow)
@@ -78,6 +92,14 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
         </button>
       </div>
       {hasJumps ? <p>要关闭分阶段流程，请先删除纯跳转规则或将其改为制作／停止动作。</p> : null}
+      <StrategyFlowCanvas
+        strategy={strategy}
+        stageId={stageId}
+        decision={decision}
+        ruleLabels={ruleLabels}
+        onChange={onChange}
+        onEditRule={onEditRule}
+      />
       <details>
         <summary>阶段与路线（{flow.stages.length} 个阶段）</summary>
         {flow.stages.map((stage) => (
