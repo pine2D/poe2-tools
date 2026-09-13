@@ -1,6 +1,7 @@
 import { buildInitialBeltImplicitLines, isBeltCapacityBase } from './beltImplicits'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import { type CatalogMod, type CraftCatalog, inspectModPool } from './catalog'
+import { desecrationSourceHash } from './desecration'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import {
   analyzeCraftImplicitTargets,
@@ -90,7 +91,19 @@ function targetPools(catalog: CraftCatalog, baseId: string) {
           )
           .map((entry) => entry.modId),
   )
-  return { ordinary, essence }
+  const desecrated = new Set(
+    base && desecrationSourceHash(catalog) !== null
+      ? inspectModPool(base, catalog.modifiers, 100, [], [], 'desecrated')
+          .filter(
+            (entry) =>
+              entry.mod.desecratedOnly &&
+              entry.reasons.length === 0 &&
+              inspectNumericLines(entry.mod.lines).ok,
+          )
+          .map((entry) => entry.mod.id)
+      : [],
+  )
+  return { ordinary, essence, desecrated }
 }
 
 /** 目标资格使用既有物等100假想状态；腰带也必须构造合法完整固有行。 */
@@ -103,10 +116,10 @@ function targetImplicitLines(catalog: CraftCatalog, baseId: string): { implicitL
 
 /** 目标资格独立于普通通货生成池，精华只授权当前基底的精确已解析保证属性。 */
 export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): CatalogMod[] {
-  const { ordinary, essence } = targetPools(catalog, baseId)
+  const { ordinary, essence, desecrated } = targetPools(catalog, baseId)
   return catalog.modifiers.filter(
     (mod) =>
-      (ordinary.has(mod.id) || essence.has(mod.id)) &&
+      (ordinary.has(mod.id) || essence.has(mod.id) || desecrated.has(mod.id)) &&
       createCraftState(catalog, {
         baseId,
         itemLevel: 100,
@@ -117,7 +130,11 @@ export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): Ca
           {
             modId: mod.id,
             lines: [...mod.lines],
-            ...(!ordinary.has(mod.id) ? { crafted: true } : {}),
+            ...(desecrated.has(mod.id)
+              ? { desecrated: true }
+              : !ordinary.has(mod.id)
+                ? { crafted: true }
+                : {}),
           },
         ],
       }).ok,
@@ -134,13 +151,20 @@ export function validateCraftTargets(
   if (ids.length > 6) return { ok: false, error: '制作目标最多包含六组词缀。' }
   if (new Set(ids).size !== ids.length) return { ok: false, error: '制作目标不能包含重复词缀 ID。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const { ordinary, essence } = targetPools(catalog, baseId)
+  const { ordinary, essence, desecrated } = targetPools(catalog, baseId)
   const affixes: CraftAffix[] = []
   for (const id of ids) {
     const mod = byId.get(id)
     if (mod === undefined) return { ok: false, error: `目标词缀 ${id} 不在制作目录中。` }
-    const crafted = !ordinary.has(id) && essence.has(id)
-    affixes.push({ modId: mod.id, lines: [...mod.lines], ...(crafted ? { crafted: true } : {}) })
+    if (mod.desecratedOnly && !desecrated.has(id))
+      return { ok: false, error: '专属目标缺少可信亵渎来源或当前基底资格。' }
+    const crafted = !mod.desecratedOnly && !ordinary.has(id) && essence.has(id)
+    affixes.push({
+      modId: mod.id,
+      lines: [...mod.lines],
+      ...(crafted ? { crafted: true } : {}),
+      ...(mod.desecratedOnly ? { desecrated: true } : {}),
+    })
   }
   // 目标按稀有装备容量校验；已有词缀校验不限制生成物等，适用于高物等目标。
   const checked = createCraftState(catalog, {
@@ -303,8 +327,6 @@ export function analyzeCraftTargets(
   omen?: CraftOmen,
   implicitValues: readonly CraftImplicitTargetValues[] = [],
 ): CraftResult<CraftAdvice> {
-  if (Object.hasOwn(state, 'pendingDesecration'))
-    return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   if (omen !== undefined && !isCraftOmen(omen))
     return { ok: false, error: '预兆必须是当前支持的单枚定向预兆。' }
   const checked = createCraftState(catalog, state)
@@ -382,8 +404,18 @@ export function analyzeCraftTargets(
         reasons.push('当前装备已有同组词缀，需要先移除才能选择该精确档位。')
       else if (existing.some((entry) => craftModsConflict(entry, mod)))
         reasons.push('当前装备已有互斥的技能等级词缀，需要先移除冲突词缀。')
+      if (mod.desecratedOnly) {
+        reasons.push('此目标需要骨骼亵渎与揭示，普通通货不能生成。')
+        if (current.rarity !== 'rare') reasons.push('请先将装备提升为稀有。')
+        if (existing.filter((entry) => entry.kind === mod.kind).length >= 3)
+          reasons.push('目标所在前后缀位置已满，需要通过移除腾出亵渎占位。')
+        if (current.affixes.some((affix) => affix.desecrated))
+          reasons.push('唯一亵渎位置已占用，需先移除已有亵渎词缀。')
+      }
+      if (current.pendingDesecration) reasons.push(PENDING_DESECRATION_MESSAGE)
       if (essenceOnly) reasons.push('此目标需要对应精华的保证属性，普通通货不能生成。')
-      else if (!pool.has(modId)) reasons.push('当前词缀产生的动态标签阻止生成此目标。')
+      else if (!mod.desecratedOnly && !pool.has(modId))
+        reasons.push('当前词缀产生的动态标签阻止生成此目标。')
       if (reasons.length === 0 && !candidates.has(modId)) {
         reasons.push(
           current.rarity === 'normal'
@@ -413,6 +445,8 @@ export function analyzeCraftTargets(
       alternatives: members,
     }
   })
+  if (current.pendingDesecration)
+    return { ok: true, value: { targets, steps: [], ...implicitFields } }
   if (
     targets.every((target) => target.matched) &&
     implicitAnalysis.value.every((target) => target.matched)

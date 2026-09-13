@@ -13,6 +13,7 @@ import {
   ESSENCE_OMEN_RULES,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
+import { BoneOperationDetails } from './BoneAdvicePanel'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
@@ -132,7 +133,9 @@ function RouteSearch({
       </p>
       <button
         type="button"
-        disabled={busy || running || ids.length + implicitValues.length === 0}
+        disabled={
+          busy || running || (ids.length + implicitValues.length === 0 && !state.pendingDesecration)
+        }
         onClick={() => {
           stop()
           setResult(null)
@@ -219,12 +222,29 @@ function RouteSearch({
                           {label(step.operation)}
                           {omenLabel(step.operation) ? ` + ${omenLabel(step.operation)}` : ''}
                         </strong>
-                        <p>
-                          已达成{' '}
-                          {step.matchedTargetIds.length +
-                            (step.matchedImplicitLineIndexes?.length ?? 0)}{' '}
-                          / {ids.length + implicitValues.length}
-                        </p>
+                        {'kind' in step.operation &&
+                        (step.operation.kind === 'desecrate' ||
+                          step.operation.kind === 'desecration-offer' ||
+                          step.operation.kind === 'desecration-reveal') ? (
+                          <BoneOperationDetails
+                            catalog={catalog}
+                            operation={step.operation}
+                            {...(translateLine ? { translateLine } : {})}
+                          />
+                        ) : null}
+                        {ids.length + implicitValues.length > 0 ? (
+                          <p>
+                            已达成{' '}
+                            {step.matchedTargetIds.length +
+                              (step.matchedImplicitLineIndexes?.length ?? 0)}{' '}
+                            / {ids.length + implicitValues.length}
+                          </p>
+                        ) : (
+                          <p>未设置制作目标；本路线用于完成揭示。</p>
+                        )}
+                        {step.state.pendingDesecration ? (
+                          <p>此步仍有未揭示亵渎，路线尚未完成。</p>
+                        ) : null}
                         {step.gainedImplicitLineIndexes?.length ? (
                           <p>
                             达成固有目标：

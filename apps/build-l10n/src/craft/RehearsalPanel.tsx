@@ -456,6 +456,14 @@ export function RehearsalPanel({
   const startRoute = (operation: CraftStep) => {
     if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
     if ('kind' in operation) {
+      if (
+        operation.kind === 'desecrate' ||
+        operation.kind === 'desecration-offer' ||
+        operation.kind === 'desecration-reveal'
+      ) {
+        startBone(operation)
+        return
+      }
       if (operation.kind === 'essence') {
         setOmen(undefined)
         startEssence(operation)
@@ -835,8 +843,7 @@ export function RehearsalPanel({
           removalCurrency !== null ||
           socketDraft !== null ||
           essenceDraft !== null ||
-          boneDraft !== null ||
-          current.pendingDesecration !== undefined
+          boneDraft !== null
         }
         {...(translateLine === undefined ? {} : { translateLine })}
       />

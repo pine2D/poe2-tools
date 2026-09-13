@@ -171,7 +171,7 @@ describe('已揭示亵渎来源完整闭环', () => {
       }).ok,
     ).toBe(false)
     expect(craftTargetCandidates(mapped, current.baseId).some((mod) => mod.desecratedOnly)).toBe(
-      false,
+      true,
     )
     for (const exclusive of [false, true]) {
       const original = state(exclusive)
@@ -291,7 +291,7 @@ describe('已揭示亵渎来源完整闭环', () => {
     ).toBe(false)
     expect(craftCandidates(catalog, current).map((mod) => mod.id)).toEqual(['life'])
     const candidates = craftTargetCandidates(catalog, current.baseId)
-    expect(candidates.some((entry) => entry.id === 'exclusive')).toBe(false)
+    expect(candidates.some((entry) => entry.id === 'exclusive')).toBe(true)
   })
   it('神圣与增幅保留来源，移除/混沌/替换精华不会传染新增组，状态变化可比较', () => {
     const current = state()
@@ -393,7 +393,7 @@ describe('已揭示亵渎来源完整闭环', () => {
       value: {
         project: {
           desecrationSourceHash: DESECRATION_SOURCE.sha256,
-          rulesVersion: 'basic-2026-09-12-v23',
+          rulesVersion: 'basic-2026-09-12-v24',
           cursor: 1,
         },
       },
@@ -470,6 +470,6 @@ describe('已揭示亵渎来源完整闭环', () => {
           catalog,
           dictionary,
         ),
-      ).toMatchObject({ ok: true, value: { project: { rulesVersion: 'basic-2026-09-12-v23' } } })
+      ).toMatchObject({ ok: true, value: { project: { rulesVersion: 'basic-2026-09-12-v24' } } })
   })
 })

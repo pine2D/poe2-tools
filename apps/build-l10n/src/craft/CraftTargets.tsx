@@ -1,4 +1,5 @@
 import {
+  analyzeBoneTargets,
   analyzeCraftTargets,
   analyzeEssencePreparation,
   analyzeEssenceTargets,
@@ -23,6 +24,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
 import './targets.css'
+import { BoneAdvicePanel } from './BoneAdvicePanel'
 import { EssenceAdvicePanel } from './EssenceAdvicePanel'
 import { EssencePreparationPanel } from './EssencePreparationPanel'
 import { ImplicitTargetEditor } from './ImplicitTargetEditor'
@@ -119,6 +121,11 @@ export function CraftTargets({
       ),
     [catalog, state, targetModIds, targetValues, targetAlternatives, omen, targetImplicitValues],
   )
+  const boneAdvice = useMemo(
+    () => analyzeBoneTargets(catalog, state, targetModIds, targetValues, targetAlternatives),
+    [catalog, state, targetModIds, targetValues, targetAlternatives],
+  )
+  const boneSteps = boneAdvice.ok ? boneAdvice.value : []
   const essenceAdvice = useMemo(
     () => analyzeEssenceTargets(catalog, state, targetModIds, targetValues, targetAlternatives),
     [catalog, state, targetModIds, targetValues, targetAlternatives],
@@ -159,7 +166,8 @@ export function CraftTargets({
     ? advice.value.targets.filter((t) => t.matched).length +
       (advice.value.implicitTargets?.filter((t) => t.matched).length ?? 0)
     : 0
-  const allMatched = totalTargets > 0 && matchedTargets === totalTargets
+  const allMatched =
+    !state.pendingDesecration && totalTargets > 0 && matchedTargets === totalTargets
   const implicitLabel = (index: number) => {
     const line =
       catalog.bases.find((base) => base.id === state.baseId)?.implicit?.split('\n')[index] ?? ''
@@ -174,6 +182,7 @@ export function CraftTargets({
   const properties = (mod: CatalogMod) => (
     <>
       <strong>{mod.name}</strong>
+      {mod.desecratedOnly ? <span className="target-meta">亵渎专属 · 需要骨骼揭示</span> : null}
       {essenceSources.has(mod.id) ? (
         <span className="target-meta">精华保证来源：{essenceSources.get(mod.id)?.join('、')}</span>
       ) : null}
@@ -380,16 +389,22 @@ export function CraftTargets({
               )
             })}
           </div>
-          {totalTargets > 0 ? (
+          {totalTargets > 0 || state.pendingDesecration ? (
             <details className="target-advice" open>
               <summary>
                 下一步提示 ·{' '}
-                {advice.value.steps.length + essenceSteps.length + preparationRoutes.length}{' '}
+                {advice.value.steps.length +
+                  essenceSteps.length +
+                  preparationRoutes.length +
+                  boneSteps.length}{' '}
                 种指定结果
               </summary>
               <p>
                 列出可推进目标的受支持通货及精华；请同时核对重掷、移除和重置风险。没有比较概率或价格，也不保证完整路线可达。
               </p>
+              {state.pendingDesecration ? (
+                <p>当前仍有未揭示亵渎，请先完成候选与揭示；已有目标达成不代表隐藏状态已结束。</p>
+              ) : null}
               {allMatched ? (
                 <p>
                   {targetImplicitValues.length
@@ -400,11 +415,22 @@ export function CraftTargets({
               {!allMatched &&
               advice.value.steps.length === 0 &&
               essenceSteps.length === 0 &&
-              preparationRoutes.length === 0 ? (
+              preparationRoutes.length === 0 &&
+              boneSteps.length === 0 ? (
                 <p>
-                  当前没有可直接推进目标的受支持通货或精华提示。请检查物等、冲突和目标条件；这不代表所有游戏制作路线都不可行。
+                  当前没有可直接推进目标的受支持通货、精华或骨骼提示。请检查物等、冲突和目标条件；这不代表所有游戏制作路线都不可行。
                 </p>
               ) : null}
+              {!boneAdvice.ok ? <p role="status">{boneAdvice.error}</p> : null}
+              <BoneAdvicePanel
+                catalog={catalog}
+                state={state}
+                steps={boneSteps}
+                translations={translations}
+                busy={busy}
+                onPreview={onPreviewRoute}
+                {...(translateLine ? { translateLine } : {})}
+              />
               <EssencePreparationPanel
                 catalog={catalog}
                 state={state}

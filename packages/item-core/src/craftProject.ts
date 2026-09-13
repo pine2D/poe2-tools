@@ -43,7 +43,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v23'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v24'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -95,7 +95,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 23 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 24 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -713,6 +713,13 @@ export function parseCraftProject(
     if (!accepted.ok) return fail(`替代档位无效：${accepted.error}`)
     targetAlternatives = accepted.value
   }
+  if (
+    rulesVersion < 24 &&
+    [...(targetModIds ?? []), ...(targetAlternatives ?? []).flatMap((entry) => entry.modIds)].some(
+      (id) => catalog.modifiers.find((mod) => mod.id === id)?.desecratedOnly,
+    )
+  )
+    return fail('旧规则项目不能包含亵渎专属目标或替代档位。')
   let targetValues: CraftTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetValues')) {
     const checkedValues = validateCraftTargetValues(

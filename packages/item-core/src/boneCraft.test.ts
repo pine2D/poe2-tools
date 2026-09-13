@@ -336,14 +336,17 @@ describe('骨骼规则与拒绝边界', () => {
       prepareCraftOperation(catalog, state, 'alchemy'),
       removableCraftAffixes(catalog, state, 'annulment'),
       applyCraftStep(catalog, state, { kind: 'socket', socketIndex: 0, augmentId: 'fake' }),
-      analyzeCraftTargets(catalog, state, ['suffix1']),
-      planCraftTargetRoutes(catalog, state, ['suffix1']),
       analyzeEssenceTargets(catalog, state, ['suffix1']),
     ])
       expect(result).toMatchObject({
         ok: false,
         error: expect.stringContaining('请先完成亵渎揭示'),
       })
+    expect(analyzeCraftTargets(catalog, state, ['suffix1'])).toMatchObject({
+      ok: true,
+      value: { steps: [] },
+    })
+    expect(planCraftTargetRoutes(catalog, state, ['suffix1']).ok).toBe(true)
     const offered = {
       ...state,
       pendingDesecration: {

@@ -1,4 +1,5 @@
 import { resolveCraftImplicitPatterns } from './beltImplicits'
+import { analyzeBoneTargets } from './boneAdvice'
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { analyzeEssenceTargets } from './essenceAdvice'
@@ -105,11 +106,12 @@ export function planCraftTargetRoutes(
     candidateApplications: 0,
     truncated: false,
     alreadyMatched:
+      !state.pendingDesecration &&
       (ids.length > 0 || implicitValues.length > 0) &&
       initial.value.targets.every((t) => t.matched) &&
       (initial.value.implicitTargets ?? []).every((target) => target.matched),
   }
-  if ((!ids.length && !implicitValues.length) || result.alreadyMatched)
+  if ((!ids.length && !implicitValues.length && !state.pendingDesecration) || result.alreadyMatched)
     return { ok: true, value: result }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const groups = ids.map((id) => [
@@ -148,6 +150,8 @@ export function planCraftTargetRoutes(
         )
       }),
     )
+  const bonePriority = (current: CraftState) =>
+    current.pendingDesecration ? (current.pendingDesecration.options ? 0.2 : 0.1) : 0
   const protectedIds = options.preserveMatched === false ? [] : matched(state)
   const matchedImplicit = (current: CraftState): number[] => {
     if (!implicitValues.length) return []
@@ -173,7 +177,7 @@ export function planCraftTargetRoutes(
     {
       state,
       steps: [],
-      score: matched(state).length + matchedImplicit(state).length,
+      score: matched(state).length + matchedImplicit(state).length + bonePriority(state),
       risk: 0,
       path: '',
     },
@@ -281,7 +285,11 @@ export function planCraftTargetRoutes(
           : {}),
       }
       const steps = [...node.steps, step]
-      if (afterMatched.length === ids.length && afterImplicit.length === implicitValues.length) {
+      if (
+        !applied.value.pendingDesecration &&
+        afterMatched.length === ids.length &&
+        afterImplicit.length === implicitValues.length
+      ) {
         let current = state
         for (const entry of steps) {
           if (!spend()) return
@@ -299,6 +307,7 @@ export function planCraftTargetRoutes(
           implicitValues,
         )
         if (
+          !current.pendingDesecration &&
           final.ok &&
           final.value.targets.every((t) => t.matched) &&
           (final.value.implicitTargets ?? []).every((target) => target.matched) &&
@@ -309,7 +318,7 @@ export function planCraftTargetRoutes(
         queue.push({
           state: applied.value,
           steps,
-          score: afterMatched.length + afterImplicit.length,
+          score: afterMatched.length + afterImplicit.length + bonePriority(applied.value),
           risk,
           path: JSON.stringify(steps.map((s) => s.operation)),
         })
@@ -321,6 +330,17 @@ export function planCraftTargetRoutes(
       if (entries.length > count) omitted()
       return entries.slice(0, count)
     }
+    const boneAdvice = analyzeBoneTargets(catalog, node.state, ids, values, alternatives, {
+      consumeCandidate: spend,
+    })
+    if (boneAdvice.ok)
+      for (const step of boneAdvice.value) offer(step.operation, step.atRiskTargetIds)
+    if (node.state.pendingDesecration) continue
+    const blockedBone = groups.some(
+      (group, index) =>
+        !beforeMatched.includes(ids[index] ?? '') &&
+        group.some((id) => byId.get(id)?.desecratedOnly),
+    )
     const configs: (CraftOmen | undefined)[] = [
       undefined,
       ...(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]),
@@ -480,7 +500,7 @@ export function planCraftTargetRoutes(
         return feasibleReplacement ? [mod.id] : []
       }),
     )
-    if (blockedEssence || replacementAcceptedIds.size > 0) {
+    if (blockedEssence || blockedBone || replacementAcceptedIds.size > 0) {
       const plain = removableCraftAffixes(catalog, node.state, 'annulment')
       if (plain.ok)
         for (const omen of configs.filter(
@@ -490,7 +510,7 @@ export function planCraftTargetRoutes(
           if (!pool.ok || (omen && pool.value.length >= plain.value.length)) continue
           const risk = present.filter((id) => pool.value.some((affix) => affix.modId === id))
           for (const removed of pool.value.filter(
-            (affix) => blockedEssence || replacementAcceptedIds.has(affix.modId),
+            (affix) => blockedEssence || blockedBone || replacementAcceptedIds.has(affix.modId),
           ))
             offer(
               {
@@ -504,7 +524,7 @@ export function planCraftTargetRoutes(
         }
     }
     // 非目标填充只用于进入精华需要的稀有度，并避免与未达成目标直接冲突。
-    if (node.state.rarity !== 'rare' && blockedEssence) {
+    if (node.state.rarity !== 'rare' && (blockedEssence || blockedBone)) {
       const currency = node.state.rarity === 'normal' ? 'transmutation' : 'regal'
       const prepared = prepareCraftOperation(catalog, node.state, currency)
       if (prepared.ok) {

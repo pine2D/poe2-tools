@@ -1,4 +1,9 @@
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
+export {
+  analyzeBoneTargets,
+  type CraftBoneAdviceOptions,
+  type CraftBoneAdviceStep,
+} from './boneAdvice'
 export { applyBoneCraft, desecrationCandidates, prepareDesecration } from './boneCraft'
 export type {
   BoneCraftOperation,
