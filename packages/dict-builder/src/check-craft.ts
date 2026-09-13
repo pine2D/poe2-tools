@@ -106,7 +106,7 @@ for (const emotion of emotions) {
   }
 }
 console.log(
-  '液态情感声明校验通过：13 普通 / 13 范围材料，50 / 46 映射；30 个普通映射、66 个排除映射、20 个空类别；未开放制作操作',
+  '液态情感声明校验通过：13 普通 / 13 范围材料，50 / 46 映射；30 个普通映射、66 个排除映射、20 个空类别；此项仅校验材料声明，执行范围见制作规则',
 )
 const unresolved = [...new Set(essenceMappings.filter((id) => !modifierIds.has(id)))].sort()
 const expectedUnresolved = [

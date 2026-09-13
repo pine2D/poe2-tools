@@ -117,6 +117,10 @@ function RouteSearch({
   const label = (step: CraftStep) => {
     if ('currency' in step) return CRAFT_CURRENCY_LABELS[step.currency]
     if (step.kind === 'fracture') return localize('Fracturing Orb')
+    if (step.kind === 'liquid-emotion')
+      return localize(
+        catalog.liquidEmotions?.find((e) => e.id === step.emotionId)?.name ?? step.emotionId,
+      )
     if (step.kind === 'essence')
       return localize(
         catalog.essences?.find((e) => e.id === step.essenceId)?.name ?? step.essenceId,

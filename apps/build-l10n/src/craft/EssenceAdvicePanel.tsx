@@ -5,7 +5,9 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceAdviceStep,
   type EssenceCraftOperation,
+  type LiquidEmotionCraftOperation,
   prepareEssenceCraft,
+  prepareLiquidEmotionCraft,
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
@@ -13,7 +15,7 @@ import { useState } from 'react'
 interface EssenceResultDetailsProps {
   catalog: CraftCatalog
   state: CraftState
-  operation: EssenceCraftOperation
+  operation: EssenceCraftOperation | LiquidEmotionCraftOperation
   translateLine?: (line: string) => string | null
 }
 
@@ -23,7 +25,10 @@ export function EssenceResultDetails({
   operation,
   translateLine,
 }: EssenceResultDetailsProps) {
-  const prepared = prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
+  const prepared =
+    operation.kind === 'liquid-emotion'
+      ? prepareLiquidEmotionCraft(catalog, state, operation.emotionId)
+      : prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
   if (!prepared.ok) return <p role="alert">{prepared.error}</p>
   const rendered = renderNumericLines(prepared.value.mod.lines, operation.values)
   const removed = state.affixes.find((affix) => affix.modId === operation.removeModId)

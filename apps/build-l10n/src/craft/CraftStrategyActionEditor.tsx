@@ -17,6 +17,7 @@ import {
   type EssenceOmen,
   essenceCraftMode,
   socketCandidates,
+  supportedBasicLiquidEmotionId,
 } from '@poe2-tools/item-core'
 
 export function strategyActionLabel(
@@ -31,6 +32,10 @@ export function strategyActionLabel(
   if (action.kind === 'jump') return '仅判断并跳转'
   if (action.kind === 'reveal') return '继续亵渎揭示'
   if (action.kind === 'fracture') return local('Fracturing Orb')
+  if (action.kind === 'liquid-emotion')
+    return local(
+      catalog.liquidEmotions?.find((e) => e.id === action.emotionId)?.name ?? action.emotionId,
+    )
   if (action.kind === 'artificer') return '巧匠石：添加一个孔'
   if (action.kind === 'socket')
     return `${local(catalog.augments?.find((e) => e.id === action.augmentId)?.name ?? action.augmentId)} → ${action.socketIndex === 'first-empty' ? '第一空孔' : `孔位 ${action.socketIndex + 1}（覆盖旧符文）`}`
@@ -74,6 +79,7 @@ export function CraftStrategyActionEditor({
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const essences = (catalog.essences ?? []).filter((e) => essenceCraftMode(e.id) !== null)
+  const emotions = (catalog.liquidEmotions ?? []).filter((e) => supportedBasicLiquidEmotionId(e.id))
   // 配置允许早于打孔；开始时仍核对真实孔位和材料。
   const augments = socketCandidates(catalog, {
     ...state,
@@ -110,6 +116,9 @@ export function CraftStrategyActionEditor({
             else if (value === 'essence') {
               const first = essences[0]
               if (first) onChange({ kind: 'essence', essenceId: first.id })
+            } else if (value === 'liquid-emotion') {
+              const first = emotions[0]
+              if (first) onChange({ kind: 'liquid-emotion', emotionId: first.id })
             } else onChange({ kind: 'currency', currency: value as CraftCurrency })
           }}
         >
@@ -126,6 +135,9 @@ export function CraftStrategyActionEditor({
             精华制作
           </option>
           <option value="desecrate">骨骼施加</option>
+          <option value="liquid-emotion" disabled={!emotions.length || type !== 'Jewel'}>
+            液态情感制作
+          </option>
           <option value="reveal">继续亵渎揭示</option>
           <option value="fracture">破裂制作</option>
           <option value="artificer">巧匠石打孔</option>
@@ -207,6 +219,24 @@ export function CraftStrategyActionEditor({
                   {omenLabel(id)}
                 </option>
               ))}
+          </select>
+        </label>
+      ) : null}
+      {action.kind === 'liquid-emotion' ? (
+        <label>
+          液态情感
+          <select
+            aria-label={`规则 ${number} 液态情感`}
+            value={action.emotionId}
+            onChange={(event) =>
+              onChange({ kind: 'liquid-emotion', emotionId: event.target.value })
+            }
+          >
+            {emotions.map((emotion) => (
+              <option key={emotion.id} value={emotion.id}>
+                {local(emotion.name)}
+              </option>
+            ))}
           </select>
         </label>
       ) : null}

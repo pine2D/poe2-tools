@@ -38,6 +38,8 @@ import {
   type ItemDictionary,
   inspectNumericLines,
   jewelSourceHash,
+  type LiquidEmotionCraftOperation,
+  liquidEmotionSourceHash,
   prepareCraftOperation,
   prepareStrategySocket,
   type RemovalCraftCurrency,
@@ -67,6 +69,7 @@ import { DefencePanel } from './DefencePanel'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
+import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
 import { ProjectControls } from './ProjectControls'
@@ -302,7 +305,9 @@ export function RehearsalPanel({
   const [socketDraft, setSocketDraft] = useState<
     SocketCraftOperation | ArtificerCraftOperation | null
   >(null)
-  const [essenceDraft, setEssenceDraft] = useState<EssenceCraftOperation | null>(null)
+  const [guaranteedDraft, setGuaranteedDraft] = useState<
+    EssenceCraftOperation | LiquidEmotionCraftOperation | null
+  >(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
   const [fractureDraft, setFractureDraft] = useState<FractureCraftOperation | null>(null)
   const fractureDraftRef = useRef<HTMLElement>(null)
@@ -328,20 +333,37 @@ export function RehearsalPanel({
   }, [boneDraft])
 
   const [essenceSession, setEssenceSession] = useState(0)
-  const essenceDraftRef = useRef<HTMLElement>(null)
+  const guaranteedDraftRef = useRef<HTMLElement>(null)
   const essenceTriggerRef = useRef<HTMLElement | null>(null)
   const restoreEssenceFocusRef = useRef(false)
+  const emotionEntryRef = useRef<HTMLElement>(null)
+  const essenceEntryRef = useRef<HTMLElement>(null)
+  const strategyTriggerRef = useRef<HTMLElement | null>(null)
+  const guaranteedOriginRef = useRef<{
+    kind: 'essence' | 'liquid-emotion'
+    strategy: boolean
+  } | null>(null)
   useEffect(() => {
-    if (essenceDraft) {
-      essenceDraftRef.current?.focus()
+    if (guaranteedDraft) {
+      guaranteedDraftRef.current?.focus()
     } else {
-      if (restoreEssenceFocusRef.current && essenceTriggerRef.current?.isConnected) {
-        essenceTriggerRef.current.focus()
+      if (restoreEssenceFocusRef.current) {
+        const origin = guaranteedOriginRef.current
+        const fallback = origin?.strategy
+          ? strategyTriggerRef.current
+          : origin?.kind === 'liquid-emotion'
+            ? emotionEntryRef.current
+            : essenceEntryRef.current
+        const trigger = essenceTriggerRef.current?.isConnected
+          ? essenceTriggerRef.current
+          : fallback
+        trigger?.focus()
       }
+      guaranteedOriginRef.current = null
       restoreEssenceFocusRef.current = false
       essenceTriggerRef.current = null
     }
-  }, [essenceDraft])
+  }, [guaranteedDraft])
   const preparationTriggerRef = useRef<HTMLElement | null>(null)
   const restorePreparationFocusRef = useRef(false)
   const draftRef = useRef<HTMLElement>(null)
@@ -385,16 +407,16 @@ export function RehearsalPanel({
   const preview = useMemo(() => {
     if (fractureDraft && current) return applyCraftStep(catalog, current, fractureDraft)
     if (boneDraft && current) return applyCraftStep(catalog, current, boneDraft)
-    if (essenceDraft && current) return applyCraftStep(catalog, current, essenceDraft)
+    if (guaranteedDraft && current) return applyCraftStep(catalog, current, guaranteedDraft)
     if (socketDraft && current) return applyCraftStep(catalog, current, socketDraft)
     if (!draft || !current || draft.modIds.length !== draft.count) return null
     return applyCraftOperation(catalog, current, draftOperation(draft))
-  }, [catalog, current, draft, socketDraft, essenceDraft, boneDraft, fractureDraft])
+  }, [catalog, current, draft, socketDraft, guaranteedDraft, boneDraft, fractureDraft])
 
   useEffect(() => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+    if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       setStrategyResultAction(null)
-  }, [draft, removalCurrency, socketDraft, essenceDraft, boneDraft, fractureDraft])
+  }, [draft, removalCurrency, socketDraft, guaranteedDraft, boneDraft, fractureDraft])
 
   const stageResult = useMemo(
     () =>
@@ -537,7 +559,7 @@ export function RehearsalPanel({
     setMessage('')
   }
   const startAdvice = (step: CraftAdviceStep) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+    if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     setOmen(step.omen)
     if (isRemovalCurrency(step.currency)) {
@@ -547,7 +569,7 @@ export function RehearsalPanel({
     }
   }
   const startRoute = (operation: CraftStep) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+    if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     if ('kind' in operation) {
       if (operation.kind === 'fracture') {
@@ -563,9 +585,9 @@ export function RehearsalPanel({
         startBone(operation)
         return
       }
-      if (operation.kind === 'essence') {
+      if (operation.kind === 'essence' || operation.kind === 'liquid-emotion') {
         setOmen(undefined)
-        startEssence(operation)
+        startGuaranteed(operation)
       }
       return
     }
@@ -612,8 +634,8 @@ export function RehearsalPanel({
       return
     startRoute(operation)
   }
-  const startEssence = (operation: EssenceCraftOperation) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+  const startGuaranteed = (operation: EssenceCraftOperation | LiquidEmotionCraftOperation) => {
+    if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     const checked = applyCraftStep(catalog, current, operation)
     if (!checked.ok) {
@@ -622,12 +644,13 @@ export function RehearsalPanel({
     }
     essenceTriggerRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null
-    setEssenceDraft(operation)
+    guaranteedOriginRef.current = { kind: operation.kind, strategy: strategyResultAction !== null }
+    setGuaranteedDraft(operation)
     setOmen(undefined)
     setMessage('')
   }
   const startBone = (operation: BoneCraftOperation) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+    if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     const checked = applyCraftStep(catalog, current, operation)
     if (!checked.ok) {
@@ -640,7 +663,7 @@ export function RehearsalPanel({
     setMessage('')
   }
   const startFracture = (operation: FractureCraftOperation) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+    if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     const checked = applyCraftStep(catalog, current, operation)
     if (!checked.ok) {
@@ -657,7 +680,7 @@ export function RehearsalPanel({
     setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
-    setEssenceDraft(null)
+    setGuaranteedDraft(null)
     setBoneDraft(null)
     setFractureDraft(null)
     setRemovalCurrency(null)
@@ -694,7 +717,7 @@ export function RehearsalPanel({
     setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
-    setEssenceDraft(null)
+    setGuaranteedDraft(null)
     setBoneDraft(null)
     setFractureDraft(null)
     setBoneSession((value) => value + 1)
@@ -738,7 +761,7 @@ export function RehearsalPanel({
     setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
-    setEssenceDraft(null)
+    setGuaranteedDraft(null)
     setBoneDraft(null)
     setFractureDraft(null)
     setBoneSession((value) => value + 1)
@@ -767,6 +790,11 @@ export function RehearsalPanel({
     if (!('kind' in step))
       return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
     if (step.kind === 'fracture') return fractureLabel
+    if (step.kind === 'liquid-emotion') {
+      const name =
+        catalog.liquidEmotions?.find((entry) => entry.id === step.emotionId)?.name ?? step.emotionId
+      return translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+    }
     if (step.kind === 'essence') {
       return essenceLabel(step.essenceId) + (step.omen ? ` + ${essenceOmenLabel(step.omen)}` : '')
     }
@@ -822,6 +850,14 @@ export function RehearsalPanel({
       ? desecrationSourceHash(catalog)
       : null
   const jewelHash = base.type === 'Jewel' ? jewelSourceHash(catalog) : null
+  const emotionHash =
+    history[0]?.state.affixes.some((affix) => base.type === 'Jewel' && affix.crafted) ||
+    strategy?.rules.some((rule) => rule.action.kind === 'liquid-emotion') ||
+    history.some(
+      ({ operation }) => operation && 'kind' in operation && operation.kind === 'liquid-emotion',
+    )
+      ? liquidEmotionSourceHash(catalog)
+      : null
   const project: CraftProject = {
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
@@ -842,6 +878,7 @@ export function RehearsalPanel({
     cursor,
     ...(desecratedHash ? { desecrationSourceHash: desecratedHash } : {}),
     ...(jewelHash ? { jewelSourceHash: jewelHash } : {}),
+    ...(emotionHash ? { liquidEmotionSourceHash: emotionHash } : {}),
     ...(hasEssenceHistory && essenceSourceHash ? { essenceSourceHash } : {}),
     ...((history[0]?.state.sockets !== undefined ||
       strategy?.rules.some(
@@ -884,7 +921,7 @@ export function RehearsalPanel({
     setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
-    setEssenceDraft(null)
+    setGuaranteedDraft(null)
     setBoneDraft(null)
     setFractureDraft(null)
     setBoneSession((value) => value + 1)
@@ -893,7 +930,7 @@ export function RehearsalPanel({
     setMessage('')
   }
   const comparisonBefore =
-    draft || socketDraft || essenceDraft || boneDraft || fractureDraft
+    draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft
       ? preview?.ok
         ? current
         : undefined
@@ -901,7 +938,7 @@ export function RehearsalPanel({
         ? undefined
         : history[cursor - 1]?.state
   const comparisonAfter =
-    (draft || socketDraft || essenceDraft || boneDraft || fractureDraft) && preview?.ok
+    (draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft) && preview?.ok
       ? preview.value
       : current
 
@@ -943,20 +980,20 @@ export function RehearsalPanel({
         catalog={catalog}
         state={current}
         pending={Boolean(
-          draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+          draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft,
         )}
       />
       <ItemPanel
         catalog={catalog}
         current={current}
-        preview={Boolean(draft || socketDraft || essenceDraft || boneDraft || fractureDraft)}
+        preview={Boolean(draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft)}
         {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
         {...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration })}
       />
       <ResistancePanel
         catalog={catalog}
         current={current}
-        preview={Boolean(draft || socketDraft || essenceDraft || boneDraft || fractureDraft)}
+        preview={Boolean(draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft)}
         {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
       />
       {socketDeclaration !== undefined ? (
@@ -1001,7 +1038,7 @@ export function RehearsalPanel({
         }}
         appliedSteps={cursor}
         pending={Boolean(
-          draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+          draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft,
         )}
         omenLabel={omenLabel}
         onChange={(value) => {
@@ -1010,7 +1047,16 @@ export function RehearsalPanel({
           setStrategyStartStep(value?.flow ? cursor : undefined)
         }}
         onStart={(action) => {
-          if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+          strategyTriggerRef.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null
+          if (
+            draft ||
+            removalCurrency ||
+            socketDraft ||
+            guaranteedDraft ||
+            boneDraft ||
+            fractureDraft
+          )
             return
           if (action.kind === 'currency') {
             setStrategyResultAction(null)
@@ -1103,13 +1149,13 @@ export function RehearsalPanel({
         onPreviewRoute={startRoute}
         {...(pricing ? { pricing } : {})}
         spentSteps={appliedOperations}
-        onStartEssence={(step) => startEssence(step.operation)}
+        onStartEssence={(step) => startGuaranteed(step.operation)}
         translations={translations}
         busy={
           draft !== null ||
           removalCurrency !== null ||
           socketDraft !== null ||
-          essenceDraft !== null ||
+          guaranteedDraft !== null ||
           boneDraft !== null ||
           fractureDraft !== null
         }
@@ -1126,7 +1172,7 @@ export function RehearsalPanel({
               draft !== null ||
               removalCurrency !== null ||
               socketDraft !== null ||
-              essenceDraft !== null ||
+              guaranteedDraft !== null ||
               boneDraft !== null ||
               fractureDraft !== null ||
               current.pendingDesecration !== undefined
@@ -1163,7 +1209,7 @@ export function RehearsalPanel({
             draft !== null ||
             removalCurrency !== null ||
             socketDraft !== null ||
-            essenceDraft !== null ||
+            guaranteedDraft !== null ||
             boneDraft !== null ||
             fractureDraft !== null ||
             current.pendingDesecration !== undefined
@@ -1194,7 +1240,7 @@ export function RehearsalPanel({
               draft !== null ||
               removalCurrency !== null ||
               socketDraft !== null ||
-              essenceDraft !== null ||
+              guaranteedDraft !== null ||
               boneDraft !== null ||
               fractureDraft !== null ||
               current.pendingDesecration !== undefined
@@ -1291,7 +1337,7 @@ export function RehearsalPanel({
       {comparisonBefore ? (
         <div className="rehearsal-comparison">
           <p>
-            {draft || socketDraft || essenceDraft || boneDraft || fractureDraft
+            {draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft
               ? '当前装备与待应用结果'
               : '上一步与当前历史步骤'}
           </p>
@@ -1331,7 +1377,12 @@ export function RehearsalPanel({
             targetAlternatives={targetAlternatives}
             {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
             disabled={Boolean(
-              draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+              draft ||
+                removalCurrency ||
+                socketDraft ||
+                guaranteedDraft ||
+                boneDraft ||
+                fractureDraft,
             )}
             {...(translateLine ? { translateLine } : {})}
             onPreview={startFracture}
@@ -1381,7 +1432,12 @@ export function RehearsalPanel({
             targetValues={targetValues}
             targetAlternatives={targetAlternatives}
             disabled={Boolean(
-              draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+              draft ||
+                removalCurrency ||
+                socketDraft ||
+                guaranteedDraft ||
+                boneDraft ||
+                fractureDraft,
             )}
             {...(translateLine ? { translateLine } : {})}
             onPreview={startBone}
@@ -1440,6 +1496,7 @@ export function RehearsalPanel({
       ) : null}
       {!strategyResultAction ? (
         <EssenceCraftPanel
+          entryRef={essenceEntryRef}
           key={`essence:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
           catalog={catalog}
           state={current}
@@ -1451,59 +1508,88 @@ export function RehearsalPanel({
             draft !== null ||
             removalCurrency !== null ||
             socketDraft !== null ||
-            essenceDraft !== null ||
+            guaranteedDraft !== null ||
             boneDraft !== null ||
             fractureDraft !== null ||
             current.pendingDesecration !== undefined
           }
           {...(translateLine ? { translateLine } : {})}
-          onPreview={startEssence}
+          onPreview={startGuaranteed}
         />
       ) : null}
-      {essenceDraft ? (
+      {!strategyResultAction ? (
+        <LiquidEmotionCraftPanel
+          entryRef={emotionEntryRef}
+          key={`emotion:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          targetModIds={targetModIds}
+          targetAlternatives={targetAlternatives}
+          targetValues={targetValues}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft ||
+              current.pendingDesecration,
+          )}
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
+      {guaranteedDraft ? (
         <section
-          ref={essenceDraftRef}
+          ref={guaranteedDraftRef}
           tabIndex={-1}
           className="rehearsal-draft"
-          aria-label="精华待应用结果"
+          aria-label={
+            guaranteedDraft.kind === 'liquid-emotion' ? '液态情感待应用结果' : '精华待应用结果'
+          }
         >
-          <h3>{stepLabel(essenceDraft)}</h3>
+          <h3>{stepLabel(guaranteedDraft)}</h3>
           <EssenceResultDetails
             catalog={catalog}
             state={current}
-            operation={essenceDraft}
+            operation={guaranteedDraft}
             {...(translateLine ? { translateLine } : {})}
           />
           {preview?.ok ? (
             <p>
-              {essenceDraft.removeModId
-                ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+              {guaranteedDraft.kind === 'liquid-emotion'
+                ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                : guaranteedDraft.removeModId
+                  ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                  : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>
           )}
-          {essenceDraft.omen ? <p>此方案另消耗一份结晶预兆，确认应用后分别计费。</p> : null}
+          {guaranteedDraft.kind === 'essence' && guaranteedDraft.omen ? (
+            <p>此方案另消耗一份结晶预兆，确认应用后分别计费。</p>
+          ) : null}
           <button
             type="button"
             onClick={() => {
               restoreEssenceFocusRef.current = true
-              setEssenceDraft(null)
+              setGuaranteedDraft(null)
               setBoneDraft(null)
               setFractureDraft(null)
               setBoneSession((value) => value + 1)
               setEssenceSession((value) => value + 1)
             }}
           >
-            取消精华结果
+            {guaranteedDraft.kind === 'liquid-emotion' ? '取消液态情感结果' : '取消精华结果'}
           </button>
           <button
             type="button"
             className="primary"
             disabled={!preview?.ok}
-            onClick={() => applyStep(essenceDraft)}
+            onClick={() => applyStep(guaranteedDraft)}
           >
-            应用精华结果
+            {guaranteedDraft.kind === 'liquid-emotion' ? '应用液态情感结果' : '应用精华结果'}
           </button>
         </section>
       ) : null}
@@ -1522,7 +1608,7 @@ export function RehearsalPanel({
         busy={
           draft !== null ||
           removalCurrency !== null ||
-          essenceDraft !== null ||
+          guaranteedDraft !== null ||
           boneDraft !== null ||
           fractureDraft !== null ||
           current.pendingDesecration !== undefined

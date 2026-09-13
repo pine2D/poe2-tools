@@ -41,7 +41,7 @@ describe('骨骼v21完整项目历史', () => {
       )
       expect(restored.ok).toBe(true)
       if (!restored.ok) continue
-      expect(restored.value.project.rulesVersion).toBe('basic-2026-09-12-v49')
+      expect(restored.value.project.rulesVersion).toBe('basic-2026-09-12-v50')
       expect(restored.value.project.cursor).toBe(cursor)
       expect(restored.value.states[3]).toMatchObject({
         pendingDesecration: { options: ['suffix3', 'exclusive1', 'exclusive2'] },

@@ -6,6 +6,8 @@ import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCraftMode } from './essences'
 import { prepareFracture } from './fracture'
+import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
+import { supportedBasicLiquidEmotionId } from './liquidEmotions'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   CRAFT_CURRENCY_LABELS,
@@ -25,6 +27,7 @@ export type CraftStrategyAction =
   | { kind: 'jump' }
   | { kind: 'currency'; currency: CraftCurrency; omen?: CraftOmen }
   | { kind: 'essence'; essenceId: string; omen?: EssenceOmen }
+  | { kind: 'liquid-emotion'; emotionId: string }
   | ({ kind: 'desecrate'; boneId: CraftBone } & BoneOmenConfig)
   | { kind: 'reveal' }
   | { kind: 'fracture' }
@@ -44,6 +47,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
       'currency',
       'omen',
       'essenceId',
+      'emotionId',
       'boneId',
       'directionOmen',
       'lichOmen',
@@ -83,6 +87,13 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
     if (!isBoneOmenConfig(config)) return null
     return boneOmenError(config, boneId) === null ? { kind: 'desecrate', boneId, ...config } : null
   }
+  if (
+    value.kind === 'liquid-emotion' &&
+    keys(value, ['kind', 'emotionId']) &&
+    typeof value.emotionId === 'string' &&
+    supportedBasicLiquidEmotionId(value.emotionId)
+  )
+    return { kind: 'liquid-emotion', emotionId: value.emotionId }
   if (
     value.kind === 'essence' &&
     keys(value, ['kind', 'essenceId', 'omen']) &&
@@ -126,6 +137,10 @@ export function checkCraftStrategyAction(
   }
   if (action.kind === 'essence') {
     const result = prepareEssenceCraft(catalog, state, action.essenceId, action.omen)
+    return result.ok ? ok : result
+  }
+  if (action.kind === 'liquid-emotion') {
+    const result = prepareLiquidEmotionCraft(catalog, state, action.emotionId)
     return result.ok ? ok : result
   }
   if (action.kind === 'desecrate') {

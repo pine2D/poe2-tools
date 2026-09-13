@@ -27,6 +27,7 @@ import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { craftAffixLimit, isBasicJewel, jewelSourceHash } from './jewels'
+import { isLiquidEmotionMappedMod } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
@@ -271,8 +272,14 @@ export function createCraftState(
   const runeSourceError = runeSourceStateError(input)
   if (runeSourceError !== null) return failure(runeSourceError)
   if (!Array.isArray(input.affixes)) return failure('词缀列表无效。')
-  if (isBasicJewel(base) && input.affixes.some((affix) => affix?.crafted || affix?.desecrated))
-    return failure('珠宝工艺与亵渎来源的特殊制作尚未支持。')
+  if (
+    isBasicJewel(base) &&
+    input.rarity !== 'rare' &&
+    input.affixes.some((affix) => affix?.crafted)
+  )
+    return failure('液态情感工艺词缀只支持稀有普通珠宝。')
+  if (isBasicJewel(base) && input.affixes.some((affix) => affix?.desecrated))
+    return failure('珠宝亵渎来源的特殊制作尚未支持。')
   const implicit = resolveCraftImplicitPatterns(base, input)
   if (!implicit.ok) return implicit
   if (
@@ -356,11 +363,12 @@ export function createCraftState(
           : `词缀组 ${mod.group} 与已有技能等级冲突。`,
       )
     // eligibility 描述生成当时的资格；已有词缀不受后来 addsTags 的负向标签追溯影响。
-    if (
-      !(affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) &&
-      !(affix.crafted === true && isEssenceMappedMod(catalog, base, mod.id))
-    )
-      return failure(`词缀 ${affix.modId} 对该基底无效。`)
+    const validSource =
+      isBasicJewel(base) && affix.crafted
+        ? isLiquidEmotionMappedMod(catalog, base, mod.id)
+        : (affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) ||
+          (affix.crafted === true && isEssenceMappedMod(catalog, base, mod.id))
+    if (!validSource) return failure(`词缀 ${affix.modId} 对该基底无效。`)
     accepted.push(mod)
     if (mod.kind === 'prefix') prefixes += 1
     else suffixes += 1

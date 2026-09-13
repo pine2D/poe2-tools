@@ -13,11 +13,12 @@ import {
   projectCraftTargetValues,
   renderNumericLines,
 } from '@poe2-tools/item-core'
-import { useMemo, useState } from 'react'
+import { type Ref, useMemo, useState } from 'react'
 import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
 
 interface EssenceCraftPanelProps {
+  entryRef?: Ref<HTMLElement>
   configuration?: { essenceId: string; omen?: EssenceOmen }
   catalog: CraftCatalog
   state: CraftState
@@ -31,6 +32,7 @@ interface EssenceCraftPanelProps {
 }
 
 export function EssenceCraftPanel({
+  entryRef,
   catalog,
   configuration,
   state,
@@ -106,7 +108,12 @@ export function EssenceCraftPanel({
     !replacement || removableAffixes.some((affix) => affix.modId === selection?.removeModId)
 
   return (
-    <section className="essence-catalog essence-craft" aria-label="精华制作">
+    <section
+      ref={entryRef}
+      tabIndex={-1}
+      className="essence-catalog essence-craft"
+      aria-label="精华制作"
+    >
       <h3>精华制作</h3>
       <p>工艺词缀 {state.affixes.filter((affix) => affix.crafted).length}/1</p>
       <p>

@@ -8,6 +8,8 @@
 
 规则人工参考另核对 [Ire](https://poe2db.tw/us/Diluted_Liquid_Ire)、[Isolation](https://poe2db.tw/us/Concentrated_Liquid_Isolation)、[Contempt](https://poe2db.tw/us/Potent_Liquid_Contempt)、[Ferocity](https://poe2db.tw/us/Potent_Liquid_Ferocity) 的公开物品说明，按 gray 处理，仅人工核查，不复制数据文件或建立适配器。GGG 0.5.0 的一组工艺上限作为 primary 规则依据。钻石空映射、移除额外词缀位后的超额状态与词缀增效交互仍需单独核实；玩家帖子 [3948475](https://www.pathofexile.com/forum/view-thread/3948475)、[3958506](https://www.pathofexile.com/forum/view-thread/3958506) 只作第一手问题线索，不据此推定现行算法或概率。数据接入不代表这些操作已经可用。
 
+基础制作补充参考作者实操攻略 [3964088](https://www.pathofexile.com/forum/view-thread/3964088) 的蓝玉／Liquid Despair 替换示例，支持满后缀时移除候选受容量约束；作者估计的概率未转成权重，旧回盾词缀建议未被当作当前目录。该来源按 gray 人工规则参考，不下载攻略装备。当前执行范围只采用固定 MIT 目录中 10 种基础材料的 30 个三色普通珠宝映射，具体门禁和未支持交互见 crafting-rules.md。
+
 ### 催化剂效果预览依据（2026-09-13）
 
 缩放元数据补充来源：[同一固定 MIT 提交的 ModScalability.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModScalability.lua)。记录英文属性模板各数字的 `isScalable` 与 `formats`，用于区分可缩放数值、固定条件和内部精度。采用既有 cache.ts 构建期缓存、受限 Lua 声明解析，保留来源 SHA-256；仅选取能与当前制作目录属性对应的条目，不把其中其他游戏或历史条目扩展为 PoE2 制作资格。游戏文字版权归 GGG，MIT 只覆盖来源仓库自有部分，沿用 THIRD-PARTY-NOTICES 的 PoB 声明；用户浏览器不访问第三方。

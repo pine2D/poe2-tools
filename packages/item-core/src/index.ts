@@ -89,6 +89,7 @@ export type {
   ArtificerCraftOperation,
   CraftStep,
   EssenceCraftOperation,
+  LiquidEmotionCraftOperation,
   SocketCraftOperation,
 } from './craftSteps'
 export { applyCraftStep } from './craftSteps'
@@ -153,9 +154,15 @@ export {
 export type { CraftProperty } from './itemProperties'
 export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
 export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'
+export type { PreparedLiquidEmotionCraft } from './liquidEmotionCraft'
+export { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 export {
+  inspectLiquidEmotions,
+  isLiquidEmotionMappedMod,
   LIQUID_EMOTION_SOURCE,
+  type LiquidEmotionInspection,
   liquidEmotionSourceHash,
+  supportedBasicLiquidEmotionId,
 } from './liquidEmotions'
 export type { NumericRange } from './numeric'
 export {

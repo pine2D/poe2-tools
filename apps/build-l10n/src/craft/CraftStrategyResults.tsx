@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react'
 import { BoneCraftPanel } from './BoneCraftPanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
+import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 export type SpecialStrategyAction = Exclude<
   CraftStrategyWorkAction,
   { kind: 'currency' | 'socket' | 'artificer' }
@@ -38,12 +39,15 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
   return (
     <section ref={ref} tabIndex={-1} aria-label="指引结果选择" className="craft-strategy-results">
       <h3>指引结果选择</h3>
-      <p>取消不计入材料；预览后还需应用。本次精华或骨骼材料配置由规则指定。</p>
+      <p>取消不计入材料；预览后还需应用。本次材料配置由规则指定。</p>
       <button type="button" onClick={onCancel}>
         取消指引结果选择
       </button>
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'liquid-emotion' ? (
+        <LiquidEmotionCraftPanel {...props} disabled={false} configuration={action} />
       ) : null}
       {action.kind === 'desecrate' ? (
         <BoneCraftPanel {...props} disabled={false} configuration={action} />

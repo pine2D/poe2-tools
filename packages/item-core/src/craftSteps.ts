@@ -9,6 +9,7 @@ import type { CraftCatalog } from './catalog'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
+import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { renderNumericLines } from './numeric'
 import {
   applyCraftOperation,
@@ -37,10 +38,18 @@ export interface EssenceCraftOperation {
   values: number[]
 }
 
+export interface LiquidEmotionCraftOperation {
+  kind: 'liquid-emotion'
+  emotionId: string
+  removeModId: string
+  values: number[]
+}
+
 export type CraftStep =
   | FractureCraftOperation
   | BoneCraftOperation
   | EssenceCraftOperation
+  | LiquidEmotionCraftOperation
   | CraftOperation
   | SocketCraftOperation
   | ArtificerCraftOperation
@@ -72,6 +81,30 @@ export function applyCraftStep(
   if (Object.hasOwn(state, 'pendingDesecration'))
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   if ('kind' in step) {
+    if (step.kind === 'liquid-emotion') {
+      if (
+        !onlyKeys(step, ['kind', 'emotionId', 'removeModId', 'values']) ||
+        typeof step.emotionId !== 'string' ||
+        typeof step.removeModId !== 'string' ||
+        !Array.isArray(step.values) ||
+        step.values.length > 32 ||
+        !step.values.every((value) => typeof value === 'number' && Number.isFinite(value))
+      )
+        return { ok: false, error: '液态情感步骤字段无效。' }
+      const prepared = prepareLiquidEmotionCraft(catalog, state, step.emotionId)
+      if (!prepared.ok) return prepared
+      if (!prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId))
+        return { ok: false, error: '必须选择合法的可移除词缀。' }
+      const rendered = renderNumericLines(prepared.value.mod.lines, step.values)
+      if (!rendered.ok) return rendered
+      return createCraftState(catalog, {
+        ...state,
+        affixes: [
+          ...state.affixes.filter((affix) => affix.modId !== step.removeModId),
+          { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
+        ],
+      })
+    }
     if (step.kind === 'essence') {
       if (
         !onlyKeys(step, ['kind', 'essenceId', 'values', 'removeModId', 'omen']) ||

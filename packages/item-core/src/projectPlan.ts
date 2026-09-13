@@ -68,6 +68,7 @@ export function reuseCraftPlan(
   // 新方案可能首次引入精华、骨骼、符文或有效值目标；只能携带已验证过的同快照指纹。
   for (const key of [
     'essenceSourceHash',
+    'liquidEmotionSourceHash',
     'desecrationSourceHash',
     'augmentSourceHash',
     'scalabilitySourceHash',

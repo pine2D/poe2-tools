@@ -33,6 +33,7 @@ import {
   validateCraftImplicitTargets,
 } from './implicitTargets'
 import { jewelSourceHash as readJewelSourceHash } from './jewels'
+import { liquidEmotionSourceHash as readLiquidEmotionSourceHash } from './liquidEmotions'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
 import {
@@ -58,7 +59,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v49'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v50'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -92,6 +93,7 @@ export interface CraftProject {
   desecrationSourceHash?: string
   jewelSourceHash?: string
   essenceSourceHash?: string
+  liquidEmotionSourceHash?: string
   augmentSourceHash?: string
   importedSockets?: (string | null)[]
   importedQuality?: number
@@ -117,7 +119,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 49 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 50 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -231,6 +233,18 @@ function readOperation(value: unknown): CraftStep | null {
   if (record(value) && isBoneOperationKind(value.kind))
     return isBoneCraftOperation(value) ? value : null
   if (record(value) && Object.hasOwn(value, 'kind')) {
+    if (value.kind === 'liquid-emotion')
+      return exactKeys(value, ['kind', 'emotionId', 'removeModId', 'values']) &&
+        nonempty(value.emotionId) &&
+        nonempty(value.removeModId) &&
+        numericValues(value.values)
+        ? {
+            kind: 'liquid-emotion',
+            emotionId: value.emotionId,
+            removeModId: value.removeModId,
+            values: [...value.values],
+          }
+        : null
     if (value.kind === 'essence')
       return exactKeys(value, ['kind', 'essenceId', 'values', 'removeModId', 'omen']) &&
         (!Object.hasOwn(value, 'omen') || isEssenceOmen(value.omen)) &&
@@ -466,6 +480,7 @@ export function parseCraftProject(
       'targetAlternatives',
       'augmentSourceHash',
       'essenceSourceHash',
+      'liquidEmotionSourceHash',
       'desecrationSourceHash',
       'jewelSourceHash',
       'scalabilitySourceHash',
@@ -575,6 +590,17 @@ export function parseCraftProject(
       )
     )
       return fail('指引精华不在当前制作目录中。')
+    if (
+      read.value.rules.some(
+        (rule) =>
+          rule.action.kind === 'liquid-emotion' &&
+          !catalog.liquidEmotions?.some(
+            (emotion) =>
+              rule.action.kind === 'liquid-emotion' && emotion.id === rule.action.emotionId,
+          ),
+      )
+    )
+      return fail('指引液态情感不在当前制作目录中。')
     strategy = read.value
   }
   let minimumTargetCount: number | undefined
@@ -633,6 +659,22 @@ export function parseCraftProject(
   if (pricing && !pricing.ok) return fail(pricing.error)
   const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
   const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
+  const usesLiquidEmotions =
+    strategy?.rules.some((rule) => rule.action.kind === 'liquid-emotion') ||
+    (Array.isArray(value.operations) &&
+      value.operations.some((step) => record(step) && step.kind === 'liquid-emotion')) ||
+    (usesJewel &&
+      record(value.initialState) &&
+      Array.isArray(value.initialState.affixes) &&
+      value.initialState.affixes.some((affix) => record(affix) && Object.hasOwn(affix, 'crafted')))
+  if (rulesVersion < 50 && (usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')))
+    return fail('v2–v49 旧版项目不能包含液态情感步骤、指引、来源或珠宝工艺起点。')
+  const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
+  if (
+    (usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')) &&
+    (liquidEmotionSourceHash === null || value.liquidEmotionSourceHash !== liquidEmotionSourceHash)
+  )
+    return fail('项目液态情感来源指纹缺失或与当前目录不同，不能恢复。')
   if (rulesVersion < 32 && (usesJewel || Object.hasOwn(value, 'jewelSourceHash')))
     return fail('v2–v31 旧版项目不能包含珠宝制作起点或来源。')
   const jewelSourceHash = readJewelSourceHash(catalog)
@@ -1192,6 +1234,10 @@ export function parseCraftProject(
         ...(strategy === undefined ? {} : { strategy }),
         ...(strategy?.flow ? { strategyStartStep: value.strategyStartStep as number } : {}),
         ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
+        ...((usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')) &&
+        liquidEmotionSourceHash !== null
+          ? { liquidEmotionSourceHash }
+          : {}),
         ...(pricing?.ok ? { pricing: pricing.value } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
         ...(targetValues === undefined ? {} : { targetValues }),
