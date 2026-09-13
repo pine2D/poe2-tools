@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import type { CraftImplicitTargetValues } from './implicitTargets'
+import { type CraftProperty, readCraftProperty } from './itemProperties'
 import { craftAffixLimit } from './jewels'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
@@ -223,7 +224,18 @@ export function evaluateCraftStrategy(
       (goals.targetModIds?.length ?? 0) + (goals.targetImplicitValues?.length ?? 0) > 0 &&
       craftTargetsSatisfied(advice.value, goals.minimumTargetCount, goals.targetFracturedModId)
   }
+  const propertyValues = new Map<CraftProperty, number | null>()
   const matches = (condition: CraftStrategyCondition): boolean | null => {
+    if (condition.kind === 'item-property') {
+      if (!propertyValues.has(condition.property)) {
+        const result = readCraftProperty(catalog, checked.value, condition.property)
+        propertyValues.set(condition.property, result.ok ? result.value : null)
+      }
+      const value = propertyValues.get(condition.property)
+      return value === null || value === undefined
+        ? null
+        : value >= condition.min && (condition.max === undefined || value <= condition.max)
+    }
     if (condition.kind === 'not') {
       const matched = matches(condition.condition)
       return matched === null ? null : !matched

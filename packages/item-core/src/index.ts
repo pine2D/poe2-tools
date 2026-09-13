@@ -148,6 +148,8 @@ export {
   projectImplicitTargetValues,
   validateCraftImplicitTargets,
 } from './implicitTargets'
+export type { CraftProperty } from './itemProperties'
+export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
 export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'
 export type { NumericRange } from './numeric'
 export {

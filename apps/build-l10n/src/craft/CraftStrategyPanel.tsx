@@ -254,6 +254,7 @@ export function CraftStrategyPanel({
                   'desecration-stage',
                   'socket-count',
                   'open-sockets',
+                  'item-property',
                   'always',
                 ] as const
               ).find(
@@ -286,6 +287,7 @@ export function CraftStrategyPanel({
                         prefix={`规则 ${number} 条件 ${ci + 1}`}
                         valuePrefix={`规则 ${number}`}
                         catalog={catalog}
+                        state={state}
                         targetModIds={goals.targetModIds ?? []}
                         {...(translateLine ? { translateLine } : {})}
                         canChange={(candidate) =>

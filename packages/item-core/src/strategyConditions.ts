@@ -1,6 +1,8 @@
+import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
 
 export type CraftStrategyLeafCondition =
+  | { kind: 'item-property'; property: CraftProperty; min: number; max?: number }
   | { kind: 'selected-targets'; modIds: string[]; min: number; value: boolean }
   | { kind: 'socket-count' | 'open-sockets'; min: number; max: number }
   | { kind: 'always' }
@@ -27,7 +29,25 @@ function integer(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 }
 function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
-  if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds'])) return null
+  if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property'])) return null
+  if (value.kind === 'item-property') {
+    const number = (n: unknown): n is number =>
+      typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER
+    if (
+      !keys(value, ['kind', 'property', 'min', 'max']) ||
+      typeof value.property !== 'string' ||
+      !Object.hasOwn(CRAFT_PROPERTY_LABELS, value.property) ||
+      !number(value.min) ||
+      (Object.hasOwn(value, 'max') && (!number(value.max) || value.max < value.min))
+    )
+      return null
+    return {
+      kind: 'item-property',
+      property: value.property as CraftProperty,
+      min: value.min,
+      ...(typeof value.max === 'number' ? { max: value.max } : {}),
+    }
+  }
   if (
     value.kind === 'selected-targets' &&
     keys(value, ['kind', 'modIds', 'min', 'value']) &&
@@ -91,7 +111,7 @@ export function readStrategyConditions(value: unknown): CraftStrategyCondition[]
     if (
       depth > 4 ||
       ++nodes > 32 ||
-      !keys(input, ['kind', 'conditions', 'condition', 'value', 'min', 'max', 'modIds'])
+      !keys(input, ['kind', 'conditions', 'condition', 'value', 'min', 'max', 'modIds', 'property'])
     )
       return null
     if (input.kind === 'all' || input.kind === 'any') {
@@ -117,7 +137,14 @@ export function readStrategyConditions(value: unknown): CraftStrategyCondition[]
   const conditions = Array.from(value, (input) => read(input, 0))
   if (!conditions.every((condition) => condition !== null)) return null
   const roots = conditions.filter((condition) => !['all', 'any', 'not'].includes(condition.kind))
-  if (new Set(roots.map((condition) => condition.kind)).size !== roots.length) return null
+  if (
+    new Set(
+      roots.map((condition) =>
+        condition.kind === 'item-property' ? `item-property:${condition.property}` : condition.kind,
+      ),
+    ).size !== roots.length
+  )
+    return null
   return conditions
 }
 

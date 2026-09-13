@@ -974,6 +974,7 @@ export function RehearsalPanel({
       />
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftStrategyPanel
+        key={`strategy:${targetSession}`}
         {...(stageResult?.ok && stageResult.value ? { stageId: stageResult.value } : {})}
         {...(stageResult && !stageResult.ok ? { stageError: stageResult.error } : {})}
         startStep={strategyStartStep ?? 0}

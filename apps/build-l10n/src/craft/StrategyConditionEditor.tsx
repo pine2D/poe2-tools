@@ -1,7 +1,10 @@
 import type { CraftCatalog, CraftState, CraftStrategyLeafCondition } from '@poe2-tools/item-core'
+import { CRAFT_PROPERTY_LABELS, type CraftProperty } from '@poe2-tools/item-core'
+import { StrategyPropertyCondition } from './StrategyPropertyCondition'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 export const CONDITION_LABELS = {
+  'item-property': '装备面板范围',
   always: '任何状态',
   rarity: '稀有度',
   'targets-met': '制作目标',
@@ -17,6 +20,7 @@ export function defaultCondition(
   kind: CraftStrategyLeafCondition['kind'],
   targetIds: readonly string[] = [],
 ): CraftStrategyLeafCondition | null {
+  if (kind === 'item-property') return { kind, property: 'physicalDps', min: 0 }
   if (kind === 'selected-targets')
     return targetIds[0] ? { kind, modIds: [targetIds[0]], min: 1, value: true } : null
   if (kind === 'socket-count' || kind === 'open-sockets') return { kind, min: 1, max: 3 }
@@ -33,6 +37,7 @@ interface Props {
   valuePrefix: string
   targetModIds: readonly string[]
   catalog: CraftCatalog
+  state: CraftState
   translateLine?: (line: string) => string | null
   canChange: (condition: CraftStrategyLeafCondition | null) => boolean
   onChange: (condition: CraftStrategyLeafCondition) => void
@@ -43,10 +48,20 @@ export function StrategyConditionEditor({
   valuePrefix,
   targetModIds,
   catalog,
+  state,
   translateLine,
   canChange,
   onChange,
 }: Props) {
+  const nextCondition = (kind: CraftStrategyLeafCondition['kind']) => {
+    if (kind !== 'item-property') return defaultCondition(kind, targetModIds)
+    if (condition.kind === 'item-property') return condition
+    return (
+      (Object.keys(CRAFT_PROPERTY_LABELS) as CraftProperty[])
+        .map((property) => ({ kind: 'item-property' as const, property, min: 0 }))
+        .find(canChange) ?? null
+    )
+  }
   return (
     <div className="strategy-condition">
       <label>
@@ -55,24 +70,28 @@ export function StrategyConditionEditor({
           aria-label={prefix}
           value={condition.kind}
           onChange={(event) => {
-            const value = defaultCondition(
-              event.target.value as CraftStrategyLeafCondition['kind'],
-              targetModIds,
-            )
+            const value = nextCondition(event.target.value as CraftStrategyLeafCondition['kind'])
             if (value) onChange(value)
           }}
         >
           {(Object.keys(CONDITION_LABELS) as CraftStrategyLeafCondition['kind'][]).map((kind) => (
-            <option
-              key={kind}
-              value={kind}
-              disabled={!canChange(defaultCondition(kind, targetModIds))}
-            >
+            <option key={kind} value={kind} disabled={!canChange(nextCondition(kind))}>
               {CONDITION_LABELS[kind]}
             </option>
           ))}
         </select>
       </label>
+      {condition.kind === 'item-property' ? (
+        <StrategyPropertyCondition
+          key={JSON.stringify(condition)}
+          condition={condition}
+          prefix={prefix}
+          catalog={catalog}
+          state={state}
+          canChange={canChange}
+          onChange={onChange}
+        />
+      ) : null}
       {condition.kind === 'selected-targets' ? (
         <StrategyTargetCondition
           prefix={prefix}

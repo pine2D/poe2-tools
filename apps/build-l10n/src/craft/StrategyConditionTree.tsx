@@ -1,4 +1,4 @@
-import type { CraftCatalog, CraftStrategyCondition } from '@poe2-tools/item-core'
+import type { CraftCatalog, CraftState, CraftStrategyCondition } from '@poe2-tools/item-core'
 import { StrategyConditionEditor } from './StrategyConditionEditor'
 
 interface Props {
@@ -6,6 +6,7 @@ interface Props {
   prefix: string
   valuePrefix: string
   catalog: CraftCatalog
+  state: CraftState
   targetModIds: readonly string[]
   translateLine?: (line: string) => string | null
   canChange: (condition: CraftStrategyCondition | null) => boolean
@@ -112,6 +113,7 @@ export function StrategyConditionTree(props: Props) {
         </fieldset>
       ) : (
         <StrategyConditionEditor
+          state={props.state}
           condition={condition}
           prefix={prefix}
           valuePrefix={valuePrefix}
