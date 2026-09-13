@@ -179,3 +179,7 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 接入既有 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [ModJewel.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModJewel.lua)，按 primary 登记，游戏物品文本版权仍归 GGG。SHA-256 为 `44285abc35fa4c32b2b0ba169570c99b01fd97136d1a801462b9b1398db82e80`，377 条源记录中 160 条具有普通珠宝正向资格，217 条范围珠宝或无正向资格记录保留排除原因。仅经既有构建期 cache.ts 抓取与受限 Lua 解析器处理；0/1 仍只表示生成资格，不能当概率。源末项 jewel=0 后追加 default=0 补全统一格式，顺序不变；独立 jewelOnly 标记隔离装备域。CoE 公开路线图只作类别与流程覆盖参考，不采用其规则或数据文件。
 
 [ZiggyD 制作指南](https://maxroll.gg/poe2/resources/how-to-craft-in-path-of-exile-2)的珠宝章节说明两前两后、蜕变至崇高的连续制作及普通珠宝无多档词缀；[PoE2 Wiki Jewel](https://www.poe2wiki.net/wiki/Jewel)区分四种基本珠宝与范围珠宝，并说明宝钻可由重铸获得。两者按 gray 人工规则依据，不采纳未核实的特殊品质、增容和腐化交互。[国服红玉](https://poe2db.tw/cn/Ruby)、[台服红宝石](https://poe2db.tw/tw/Ruby)及英文游戏说明仅用于逐字识别固定使用说明，不抓取它们的词缀表或权重；中文名称沿既有独立词典。用户未提供珠宝真机样本，客户端剪贴板格式及各机制游戏操作仍待验收。
+
+### 双词缀崇高预兆规则依据
+
+[强效崇高公开条目](https://poe2db.tw/us/Omen_of_Greater_Exaltation)说明下一次崇高增加两条随机词缀；[Game8 作者预兆指南](https://game8.co/games/Path-of-Exile-2/archives/491748)明确强效与左旋崇高组合增加两条前缀，对称右旋按其后缀限制处理。[ItFightsBack 自述制作过程](https://www.youtube.com/watch?v=TC5kILGv23A)明确用强效预兆搭配完美崇高。均仅作 gray 人工机制依据，不抓取词缀或权重；三档崇高继续沿已登记通货基础类别和等级规则，不能把强效预兆与高级崇高视为同一材料。少于两个合法空位时的消费行为未核实，不推定只加一条或退还预兆。CoE 路线图仅供覆盖比较；其列出的旧点金、富豪与强效剥离预兆已有停掉落证据，不据此推荐当前可获得性。

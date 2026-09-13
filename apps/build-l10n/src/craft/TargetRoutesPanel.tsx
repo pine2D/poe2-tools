@@ -1,7 +1,6 @@
 import {
   BONE_RULES,
   CRAFT_CURRENCY_LABELS,
-  CRAFT_OMEN_RULES,
   type CraftCatalog,
   type CraftImplicitTargetValues,
   type CraftResult,
@@ -11,6 +10,7 @@ import {
   type CraftTargetRoutes,
   type CraftTargetValues,
   craftOmenDescription,
+  craftOmenMaterials,
   ESSENCE_OMEN_RULES,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
@@ -104,14 +104,13 @@ function RouteSearch({
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
     return step.kind === 'socket' ? '符文' : '巧匠石'
   }
-  const omenLabel = (step: CraftStep) =>
+  const omenNames = (step: CraftStep): string[] =>
     'omen' in step && step.omen
-      ? localize(
-          'currency' in step
-            ? CRAFT_OMEN_RULES[step.omen].name
-            : ESSENCE_OMEN_RULES[step.omen].name,
-        )
-      : null
+      ? 'currency' in step
+        ? craftOmenMaterials(step.omen).map(localize)
+        : [localize(ESSENCE_OMEN_RULES[step.omen].name)]
+      : []
+  const omenLabel = (step: CraftStep) => omenNames(step).join(' + ')
   const boneOmens = (step: CraftStep) =>
     'kind' in step && step.kind === 'desecrate'
       ? boneOmenLabels(step, catalog, translations).map((entry) => entry.label)
@@ -229,7 +228,7 @@ function RouteSearch({
                 continue
               for (const name of [
                 label(step.operation),
-                omenLabel(step.operation),
+                ...omenNames(step.operation),
                 ...boneOmens(step.operation),
               ])
                 if (name) costs.set(name, (costs.get(name) ?? 0) + 1)

@@ -411,7 +411,8 @@ export function craftCandidates(
     .filter(({ mod, reasons }) => {
       if (reasons.length > 0 || existing.some((entry) => craftModsConflict(entry, mod)))
         return false
-      if (omenRule?.effect === 'add' && mod.kind !== omenRule.kind) return false
+      if (omenRule?.effect === 'add' && omenRule.kind !== null && mod.kind !== omenRule.kind)
+        return false
       return mod.kind === 'prefix' ? prefixes < capacity.prefix : suffixes < capacity.suffix
     })
     .map(({ mod }) => mod)
@@ -579,7 +580,24 @@ export function prepareCraftOperation(
     if (current.rarity !== 'rare')
       return failure(`${CRAFT_CURRENCY_LABELS[currency]}只能用于稀有装备。`)
     draft = current
-    count = 1
+    count = omen === undefined ? 1 : (CRAFT_OMEN_RULES[omen].addCount ?? 1)
+    if (count === 2) {
+      const capacity = limits(findBase(catalog, current.baseId) as CatalogBase, 'rare')
+      const side = omen === undefined ? null : CRAFT_OMEN_RULES[omen].kind
+      const free = (['prefix', 'suffix'] as const)
+        .filter((kind) => side === null || side === kind)
+        .reduce(
+          (sum, kind) =>
+            sum +
+            capacity[kind] -
+            current.affixes.filter(
+              (affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind === kind,
+            ).length,
+          0,
+        )
+      if (free < 2)
+        return failure('强效崇高配置需要至少两个对应侧合法空位；不足时的预兆消费行为尚未核实。')
+    }
   } else {
     return failure('不支持的通货。')
   }
@@ -662,7 +680,11 @@ export function applyCraftOperation(
     if (!added.ok) return added
     next = added.value
   }
-  if (operation.rolls !== undefined || operation.currency === 'divine') {
+  if (
+    operation.rolls !== undefined ||
+    operation.currency === 'divine' ||
+    (operation.omen !== undefined && CRAFT_OMEN_RULES[operation.omen].addCount === 2)
+  ) {
     const ids =
       operation.currency === 'divine'
         ? next.affixes.filter((affix) => !affix.fractured).map((affix) => affix.modId)

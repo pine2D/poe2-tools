@@ -125,7 +125,7 @@ export {
   sampleNumericValues,
 } from './numeric'
 export type { CraftOmen } from './omens'
-export { CRAFT_OMEN_RULES, craftOmenDescription } from './omens'
+export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'
 export { readItemQuality, supportsItemQuality } from './quality'
 export type {

@@ -25,6 +25,7 @@ import {
   craftAffixLimit,
   craftCandidates,
   craftOmenDescription,
+  craftOmenMaterials,
   createCraftState,
   desecrationSourceHash,
   ESSENCE_OMEN_RULES,
@@ -679,7 +680,9 @@ export function RehearsalPanel({
   const prefixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'prefix')
   const suffixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'suffix')
   const omenLabel = (id: CraftOmen) =>
-    translations[CRAFT_OMEN_RULES[id].name] ?? CRAFT_OMEN_RULES[id].name
+    craftOmenMaterials(id)
+      .map((name) => translations[name] ?? name)
+      .join(' + ')
   const essenceOmenLabel = (id: EssenceOmen) =>
     translations[ESSENCE_OMEN_RULES[id].name] ?? ESSENCE_OMEN_RULES[id].name
   const essenceLabel = (id: string) => {
@@ -766,11 +769,12 @@ export function RehearsalPanel({
           count: (costCounts.get(entry.id)?.count ?? 0) + 1,
         })
     if (!('kind' in operation) && operation.omen) {
-      const previousOmen = costCounts.get(operation.omen)
-      costCounts.set(operation.omen, {
-        label: omenLabel(operation.omen),
-        count: (previousOmen?.count ?? 0) + 1,
-      })
+      for (const name of craftOmenMaterials(operation.omen)) {
+        costCounts.set(name, {
+          label: translations[name] ?? name,
+          count: (costCounts.get(name)?.count ?? 0) + 1,
+        })
+      }
     }
     if ('kind' in operation && operation.kind === 'essence' && operation.omen) {
       const previousOmen = costCounts.get(operation.omen)
@@ -1006,10 +1010,11 @@ export function RehearsalPanel({
         </label>
         {omen ? (
           <p>
-            <span lang="en">{CRAFT_OMEN_RULES[omen].name}</span> · 适配基础
+            <span lang="en">{CRAFT_OMEN_RULES[omen].name}</span> · 适配
+            {CRAFT_OMEN_RULES[omen].addCount === 2 ? '三档' : '基础'}
             {CRAFT_CURRENCY_LABELS[CRAFT_OMEN_RULES[omen].currency]}；{craftOmenDescription(omen)}
             {CRAFT_OMEN_RULES[omen].currency === 'chaos' ? '混沌新增仍可为任一合法侧。' : ''}
-            仅用于本次通货；应用成功计入一枚预兆费用。
+            仅用于本次通货；应用成功分别计入 {craftOmenMaterials(omen).length} 枚预兆费用。
           </p>
         ) : null}
       </div>

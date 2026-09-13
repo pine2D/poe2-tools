@@ -402,8 +402,34 @@ export function planCraftTargetRoutes(
     )
     const configs: (CraftOmen | undefined)[] = [
       undefined,
-      ...(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]),
+      ...(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]).filter((omen) => {
+        const rule = CRAFT_OMEN_RULES[omen]
+        if (rule.addCount !== 2) return true
+        // 单个目标不推荐付出额外预兆并占用无关空位；手动演练仍允许指定填充组。
+        return (
+          groups.filter(
+            (group) =>
+              !node.state.affixes.some((affix) => group.includes(affix.modId)) &&
+              group.some((id) => rule.kind === null || byId.get(id)?.kind === rule.kind),
+          ).length >= 2
+        )
+      }),
     ]
+    // 两个未达成目标可由同一次崇高推进时，先探索双组配置，避免有限搜索被单组路径占满。
+    const doublePriority = (omen: CraftOmen | undefined): number => {
+      if (omen === undefined || CRAFT_OMEN_RULES[omen].addCount !== 2) return 2
+      const side = CRAFT_OMEN_RULES[omen].kind
+      return groups.filter(
+        (group, index) =>
+          !beforeMatched.includes(ids[index] ?? '') &&
+          group.some((id) => side === null || byId.get(id)?.kind === side),
+      ).length >= 2
+        ? side === null
+          ? 1
+          : 0
+        : 3
+    }
+    configs.sort((a, b) => doublePriority(a) - doublePriority(b))
     for (const omen of configs) {
       const advice =
         omen === undefined && node.steps.length === 0

@@ -18,7 +18,7 @@ import {
 } from './implicitTargets'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, readNumericValues } from './numeric'
-import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
+import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
@@ -633,11 +633,7 @@ export function analyzeCraftTargets(
   }
   for (const currency of Object.keys(CRAFT_CURRENCY_LABELS) as CraftCurrency[]) {
     // 神圣已单独分析；其余步骤只推进尚无已接受档位的目标组。
-    if (
-      currency === 'divine' ||
-      (omen !== undefined && CRAFT_OMEN_RULES[omen].currency !== currency)
-    )
-      continue
+    if (currency === 'divine' || craftOmenError(omen, currency) !== null) continue
     const randomRemovalRisk =
       CRAFT_CURRENCY_RULES[currency].base === 'chaos' || currency === 'annulment'
     const removable = randomRemovalRisk
