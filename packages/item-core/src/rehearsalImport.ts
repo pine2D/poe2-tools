@@ -4,7 +4,7 @@ import {
   isBeltCapacityBase,
   resolveCraftImplicitPatterns,
 } from './beltImplicits'
-import type { CraftCatalog } from './catalog'
+import { type CraftCatalog, hasGenesisModEligibility } from './catalog'
 import { matchCatalogMods } from './catalogMatch'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
@@ -290,6 +290,39 @@ export function importCraftState(
     if (!match) throw new Error('词缀匹配结果缺失')
     return { ...match, sourceIndex }
   })
+  // 新增已有 Genesis 身份不能仅凭可变的检查结果；重新绑定原文与词典候选。
+  if (
+    matches.some((match) => match.candidates.some((mod) => hasGenesisModEligibility(base, mod)))
+  ) {
+    const original = parseItem(item.rawText)
+    if (
+      !original.ok ||
+      JSON.stringify(original.item) !== JSON.stringify(item) ||
+      inspection.mods.length !== item.mods.length ||
+      inspection.mods.some(
+        ({ mod, stats }, index) =>
+          JSON.stringify(mod) !== JSON.stringify(item.mods[index]) ||
+          stats.length !== mod.stats.length ||
+          stats.some(
+            ({ source }, statIndex) =>
+              JSON.stringify(source) !== JSON.stringify(mod.stats[statIndex]),
+          ),
+      )
+    )
+      return fail('Genesis 词缀检查结果与来源原文不一致。')
+    for (const { stats } of explicit) {
+      for (const { source, resolution } of stats) {
+        const english = resolution.english ?? source.raw
+        if (english === source.raw) continue
+        if (
+          !resolveStat(source.raw, skillEntries ?? []).candidates.some(
+            (candidate) => candidate.english === english,
+          )
+        )
+          return fail('Genesis 词缀翻译缺少词典依据，或数字范围与原文不一致。')
+      }
+    }
+  }
   const affixes: CraftState['affixes'] = []
   for (const match of matches) {
     const candidate = match.candidates[0]

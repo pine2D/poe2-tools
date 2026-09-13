@@ -142,6 +142,20 @@ export function hasCraftModEligibility(
   return mod.eligibility.find((rule) => tags.has(rule.tag))?.value === 1
 }
 
+/** 已有 Genesis 身份只认首饰基底自身的源标签，不接受动态生成标签注入。 */
+export function hasGenesisModEligibility(base: CatalogBase, mod: CatalogMod): boolean {
+  if (mod.desecratedOnly || !['Ring', 'Belt'].includes(base.type)) return false
+  const rule = mod.eligibility.find((entry) => base.tags.includes(entry.tag))
+  return (
+    rule?.value === 1 && (rule.tag === 'genesis_tree_caster' || rule.tag === 'genesis_tree_minion')
+  )
+}
+
+/** 已有身份不等同于普通操作可以重新生成。亵渎来源仍须单独使用生成资格。 */
+export function hasExistingModEligibility(base: CatalogBase, mod: CatalogMod): boolean {
+  return hasCraftModEligibility(base, mod) || hasGenesisModEligibility(base, mod)
+}
+
 export function inspectModPool(
   base: CatalogBase,
   modifiers: readonly CatalogMod[],

@@ -18,6 +18,8 @@ import {
   type CraftTargetValues,
   craftTargetCandidates,
   type EssenceAdviceStep,
+  hasCraftModEligibility,
+  hasGenesisModEligibility,
   inspectEssences,
   validateCraftTargetAlternatives,
   validateCraftTargets,
@@ -80,6 +82,18 @@ export function CraftTargets({
     [catalog.modifiers],
   )
   const pool = useMemo(() => craftTargetCandidates(catalog, state.baseId), [catalog, state.baseId])
+  const genesisOnly = useMemo(() => {
+    const base = catalog.bases.find((entry) => entry.id === state.baseId)
+    return new Set(
+      base
+        ? catalog.modifiers
+            .filter(
+              (mod) => hasGenesisModEligibility(base, mod) && !hasCraftModEligibility(base, mod),
+            )
+            .map((mod) => mod.id)
+        : [],
+    )
+  }, [catalog, state.baseId])
   const essenceSources = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)
     const sources = new Map<string, string[]>()
@@ -182,6 +196,9 @@ export function CraftTargets({
   const properties = (mod: CatalogMod) => (
     <>
       <strong>{mod.name}</strong>
+      {genesisOnly.has(mod.id) ? (
+        <span className="target-meta">Genesis Tree 专属 · 支持已有属性</span>
+      ) : null}
       {mod.desecratedOnly ? <span className="target-meta">亵渎专属 · 需要骨骼揭示</span> : null}
       {essenceSources.has(mod.id) ? (
         <span className="target-meta">精华保证来源：{essenceSources.get(mod.id)?.join('、')}</span>

@@ -17,6 +17,7 @@ import {
   type CatalogMod,
   type CraftCatalog,
   hasCraftModEligibility,
+  hasExistingModEligibility,
   inspectModPool,
 } from './catalog'
 import { matchesCatalogLines } from './catalogMatch'
@@ -329,7 +330,7 @@ export function createCraftState(
       )
     // eligibility 描述生成当时的资格；已有词缀不受后来 addsTags 的负向标签追溯影响。
     if (
-      !eligible(base, mod, []) &&
+      !(affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) &&
       !(affix.crafted === true && isEssenceMappedMod(catalog, base, mod.id))
     )
       return failure(`词缀 ${affix.modId} 对该基底无效。`)

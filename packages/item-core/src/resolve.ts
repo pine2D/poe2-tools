@@ -37,6 +37,14 @@ const TOKEN = `(${NUMBER}(?:${RANGE})?|[+-]?${RANGE})`
 
 // 模板字面数字不替换；每个捕获组是一个 roll，括号范围始终跟着实际数值。
 export function createStatResolver(entries: readonly StatTemplate[]) {
+  // 国服实物文本使用“咒符位”；仅为已核对的固有属性模板派生别名，精确词典仍优先。
+  const aliases = entries.flatMap((entry) =>
+    entry.id === 'implicit.stat_1416292992' &&
+    entry.en === 'Has # Charm Slot' &&
+    entry.text === '具有 # 个咒符栏'
+      ? [{ ...entry, text: '具有 # 个咒符位' }]
+      : [],
+  )
   // 与 Build 翻译已有的提高/降低规则对称；仅唯一配对时生成回退，不推断 more/less。
   const fallbacks = entries.flatMap((entry) => {
     if (entry.en.split('increased').length !== 2 || entry.en.includes('reduced')) return []
@@ -60,7 +68,7 @@ export function createStatResolver(entries: readonly StatTemplate[]) {
       ]
     })
   })
-  const patterns = [...entries, ...fallbacks].flatMap((entry, entryIndex) => {
+  const patterns = [...entries, ...aliases, ...fallbacks].flatMap((entry, entryIndex) => {
     const count = entry.text.split('#').length - 1
     const order = entry.order ?? Array.from({ length: count }, (_, i) => i)
     if (

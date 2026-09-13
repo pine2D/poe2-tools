@@ -1,6 +1,11 @@
 import { buildInitialBeltImplicitLines, isBeltCapacityBase } from './beltImplicits'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
-import { type CatalogMod, type CraftCatalog, inspectModPool } from './catalog'
+import {
+  type CatalogMod,
+  type CraftCatalog,
+  hasGenesisModEligibility,
+  inspectModPool,
+} from './catalog'
 import { desecrationSourceHash } from './desecration'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import {
@@ -103,7 +108,12 @@ function targetPools(catalog: CraftCatalog, baseId: string) {
           .map((entry) => entry.mod.id)
       : [],
   )
-  return { ordinary, essence, desecrated }
+  const genesis = new Set(
+    base
+      ? catalog.modifiers.filter((mod) => hasGenesisModEligibility(base, mod)).map((mod) => mod.id)
+      : [],
+  )
+  return { ordinary, essence, desecrated, genesis }
 }
 
 /** 目标资格使用既有物等100假想状态；腰带也必须构造合法完整固有行。 */
@@ -116,10 +126,13 @@ function targetImplicitLines(catalog: CraftCatalog, baseId: string): { implicitL
 
 /** 目标资格独立于普通通货生成池，精华只授权当前基底的精确已解析保证属性。 */
 export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): CatalogMod[] {
-  const { ordinary, essence, desecrated } = targetPools(catalog, baseId)
+  const { ordinary, essence, desecrated, genesis } = targetPools(catalog, baseId)
   return catalog.modifiers.filter(
     (mod) =>
-      (ordinary.has(mod.id) || essence.has(mod.id) || desecrated.has(mod.id)) &&
+      (ordinary.has(mod.id) ||
+        essence.has(mod.id) ||
+        desecrated.has(mod.id) ||
+        genesis.has(mod.id)) &&
       createCraftState(catalog, {
         baseId,
         itemLevel: 100,
@@ -132,7 +145,7 @@ export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): Ca
             lines: [...mod.lines],
             ...(desecrated.has(mod.id)
               ? { desecrated: true }
-              : !ordinary.has(mod.id)
+              : !ordinary.has(mod.id) && !genesis.has(mod.id)
                 ? { crafted: true }
                 : {}),
           },
@@ -151,14 +164,14 @@ export function validateCraftTargets(
   if (ids.length > 6) return { ok: false, error: '制作目标最多包含六组词缀。' }
   if (new Set(ids).size !== ids.length) return { ok: false, error: '制作目标不能包含重复词缀 ID。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const { ordinary, essence, desecrated } = targetPools(catalog, baseId)
+  const { ordinary, essence, desecrated, genesis } = targetPools(catalog, baseId)
   const affixes: CraftAffix[] = []
   for (const id of ids) {
     const mod = byId.get(id)
     if (mod === undefined) return { ok: false, error: `目标词缀 ${id} 不在制作目录中。` }
     if (mod.desecratedOnly && !desecrated.has(id))
       return { ok: false, error: '专属目标缺少可信亵渎来源或当前基底资格。' }
-    const crafted = !mod.desecratedOnly && !ordinary.has(id) && essence.has(id)
+    const crafted = !mod.desecratedOnly && !ordinary.has(id) && !genesis.has(id) && essence.has(id)
     affixes.push({
       modId: mod.id,
       lines: [...mod.lines],
@@ -393,6 +406,18 @@ export function analyzeCraftTargets(
       return { ...bound, actual: value, matched }
     })
     if (!present && mod !== undefined) {
+      if (
+        staticPools.genesis.has(modId) &&
+        !staticPools.ordinary.has(modId) &&
+        !staticPools.essence.has(modId)
+      )
+        return {
+          modId,
+          present: false,
+          matched: false,
+          numeric,
+          reasons: ['此 Genesis Tree 专属目标尚不支持新增；可导入已有属性后保留或调整数值。'],
+        }
       const essenceOnly = !staticPools.ordinary.has(modId) && staticPools.essence.has(modId)
       if (mod.level > current.itemLevel)
         reasons.push(

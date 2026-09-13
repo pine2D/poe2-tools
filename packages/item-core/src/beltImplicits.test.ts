@@ -163,7 +163,7 @@ it('完整匹配其他固有并按实际行序返回索引；旧cap不能超过�
   expect(resolveCraftImplicitPatterns(base, { ...state, itemLevel: 29 }).ok).toBe(false)
 })
 
-it('Genesis上下文不能成为普通或亵渎资格，也不能由动态标签注入', () => {
+it('已有Genesis身份不开放普通或亵渎生成，也不能由动态标签注入', () => {
   const catalog = boneCatalog('Ring')
   const base = required(catalog.bases[0])
   base.tags.push('genesis_tree_caster', 'genesis_tree_minion')
@@ -193,7 +193,7 @@ it('Genesis上下文不能成为普通或亵渎资格，也不能由动态标签
     sourceText: null,
     affixes: [{ modId: only.id, lines: ['prefix1 5'] }],
   }
-  expect(createCraftState(catalog, initial).ok).toBe(false)
+  expect(createCraftState(catalog, initial).ok).toBe(true)
   expect(
     parseCraftProject(
       JSON.stringify({

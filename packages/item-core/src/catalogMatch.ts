@@ -1,5 +1,10 @@
 import { readStatAnnotations, UNSCALABLE_SUFFIX } from './annotations'
-import { type CatalogBase, type CatalogMod, inspectModPool } from './catalog'
+import {
+  type CatalogBase,
+  type CatalogMod,
+  hasGenesisModEligibility,
+  inspectModPool,
+} from './catalog'
 import type { InspectedMod } from './export'
 
 export interface CatalogModMatch {
@@ -118,7 +123,14 @@ export function matchCatalogMods(
   function candidatesFor(source: 'ordinary' | 'desecrated') {
     let candidates = pools.get(source)
     if (!candidates) {
-      candidates = inspectModPool(base, modifiers, 100, [], addedTags, source).map(({ mod }) => ({
+      const pool = inspectModPool(base, modifiers, 100, [], addedTags, source).map(({ mod }) => mod)
+      if (source === 'ordinary') {
+        for (const mod of modifiers) {
+          if (hasGenesisModEligibility(base, mod) && !pool.some((entry) => entry.id === mod.id))
+            pool.push(mod)
+        }
+      }
+      candidates = pool.map((mod) => ({
         mod,
         patterns: mod.lines.map(compileLine),
       }))

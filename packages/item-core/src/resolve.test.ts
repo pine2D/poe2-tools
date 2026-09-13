@@ -2,6 +2,46 @@ import { describe, expect, it } from 'vitest'
 import { resolveBase, resolveStat } from './resolve'
 
 describe('中文装备术语反向识别', () => {
+  const charmSlot = {
+    id: 'implicit.stat_1416292992',
+    en: 'Has # Charm Slot',
+    text: '具有 # 个咒符栏',
+  }
+
+  it.each(['栏', '位'])('指定国服咒符%s模板保留身份和原始范围', (name) => {
+    expect(resolveStat(`具有 2(1-3) 个咒符${name}`, [charmSlot])).toEqual({
+      english: 'Has 2(1-3) Charm Slot',
+      candidates: [{ id: charmSlot.id, english: 'Has 2(1-3) Charm Slot' }],
+    })
+  })
+
+  it.each([
+    { ...charmSlot, id: 'explicit.stat_1416292992' },
+    { ...charmSlot, en: 'Has # Other Slot' },
+    { ...charmSlot, text: '获得 # 个咒符栏' },
+    { ...charmSlot, text: '有#個護符欄位' },
+  ])('不为其它身份或模板派生咒符位别名：$text / $id / $en', (entry) => {
+    expect(resolveStat('具有 2(1-3) 个咒符位', [entry])).toEqual({
+      english: null,
+      candidates: [],
+    })
+  })
+
+  it('咒符位精确词典条目优先于派生别名，台服模板保持原样', () => {
+    expect(
+      resolveStat('具有 2(1-3) 个咒符位', [
+        charmSlot,
+        { id: 'exact', en: 'Exact # Slot', text: '具有 # 个咒符位' },
+      ]),
+    ).toEqual({
+      english: 'Exact 2(1-3) Slot',
+      candidates: [{ id: 'exact', english: 'Exact 2(1-3) Slot' }],
+    })
+    expect(
+      resolveStat('有2(1-3)個護符欄位', [{ ...charmSlot, text: '有#個護符欄位' }]).english,
+    ).toBe('Has 2(1-3) Charm Slot')
+  })
+
   it.each([' (unscalable)', '（不可缩放）', ' — Unscalable Value'])(
     '数值尾注 %s 与结构解析保持一致',
     (suffix) => {

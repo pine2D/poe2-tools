@@ -6,12 +6,16 @@ import {
   isBoneOperationKind,
   isPendingDesecration,
 } from './boneRules'
-import type { CraftCatalog } from './catalog'
+import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
 import { createCraftItemDictionary } from './craftDictionary'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
 import { isEssenceOmen } from './essenceOmens'
-import { essenceCraftMode, essenceSourceHash as readEssenceSourceHash } from './essences'
+import {
+  essenceCraftMode,
+  isEssenceMappedMod,
+  essenceSourceHash as readEssenceSourceHash,
+} from './essences'
 import { type ItemDictionary, inspectItem } from './export'
 import {
   matchesGrantedSkillImplicitLines,
@@ -43,7 +47,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v26'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v27'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -95,7 +99,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 26 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 27 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -604,6 +608,50 @@ export function parseCraftProject(
     }
   }
   const initialBase = catalog.bases.find((base) => base.id === initialInput.baseId)
+  if (rulesVersion < 27 && initialBase) {
+    const newlyAccepted = (id: string) => {
+      const mod = catalog.modifiers.find((entry) => entry.id === id)
+      return (
+        mod !== undefined &&
+        hasGenesisModEligibility(initialBase, mod) &&
+        !hasCraftModEligibility(initialBase, mod)
+      )
+    }
+    if (
+      initialInput.affixes.some(
+        (affix) =>
+          newlyAccepted(affix.modId) &&
+          !(affix.crafted && isEssenceMappedMod(catalog, initialBase, affix.modId)),
+      )
+    )
+      return fail('v2–v26 旧版项目不能包含已有 Genesis 词缀身份。')
+    const targetIds = [
+      ...(Array.isArray(value.targetModIds) ? value.targetModIds.filter(nonempty) : []),
+      ...(Array.isArray(value.targetValues)
+        ? value.targetValues.flatMap((entry) =>
+            record(entry) && nonempty(entry.modId) ? [entry.modId] : [],
+          )
+        : []),
+      ...(Array.isArray(value.targetAlternatives)
+        ? value.targetAlternatives.flatMap((entry) =>
+            record(entry)
+              ? [
+                  ...(nonempty(entry.targetModId) ? [entry.targetModId] : []),
+                  ...(Array.isArray(entry.modIds) ? entry.modIds.filter(nonempty) : []),
+                ]
+              : [],
+          )
+        : []),
+    ]
+    if (
+      targetIds.some(
+        (id) =>
+          newlyAccepted(id) &&
+          !(rulesVersion >= 16 && isEssenceMappedMod(catalog, initialBase, id)),
+      )
+    )
+      return fail('v2–v26 旧版项目不能包含 Genesis 目标或替代档位。')
+  }
   if (rulesVersion < 22 && initialBase && isBeltCapacityBase(initialBase))
     return fail('v2–v21 旧版项目不能包含带特殊咒符容量的腰带起点。')
   if (
@@ -720,7 +768,20 @@ export function parseCraftProject(
     rulesVersion < 9,
   )
   if (!initial.ok) return initial
-  const targetCatalog = rulesVersion < 16 ? { ...catalog, essences: [] } : catalog
+  // 旧目标沿用当时的普通/精华身份，不因新版 Genesis 保留目标释放工艺槽。
+  const targetCatalog =
+    rulesVersion < 27
+      ? {
+          ...catalog,
+          ...(rulesVersion < 16 ? { essences: [] } : {}),
+          bases: catalog.bases.map((base) => ({
+            ...base,
+            tags: base.tags.filter(
+              (tag) => tag !== 'genesis_tree_caster' && tag !== 'genesis_tree_minion',
+            ),
+          })),
+        }
+      : catalog
   let targetModIds: string[] | undefined
   if (Object.hasOwn(value, 'targetModIds')) {
     if (!Array.isArray(value.targetModIds) || !value.targetModIds.every(nonempty))

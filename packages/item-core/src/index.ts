@@ -33,7 +33,12 @@ export type {
   CraftCatalog,
   PoolEntry,
 } from './catalog'
-export { inspectModPool, searchBases } from './catalog'
+export {
+  hasCraftModEligibility,
+  hasGenesisModEligibility,
+  inspectModPool,
+  searchBases,
+} from './catalog'
 export { resolveCatalogBase } from './catalogBase'
 export { parseCraftCatalog } from './catalogFormat'
 export type { CatalogModMatch } from './catalogMatch'
