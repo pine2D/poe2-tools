@@ -35,6 +35,27 @@ afterEach(() => {
   localStorage.clear()
 })
 
+it('真实目录的缩放依据可见，内部数值不唯一时显示范围而非猜值', () => {
+  render(
+    <CatalystPreviewPanel
+      catalog={catalog}
+      state={{
+        ...initialState,
+        affixes: [
+          { modId: 'LifeLeech2', lines: ['Leech 6.65% of Physical Attack Damage as Life'] },
+          { modId: 'LifeRegeneration1', lines: ['1.4 Life Regeneration per second'] },
+        ],
+      }}
+      translations={translations}
+    />,
+  )
+  fireEvent.click(screen.getByText('比较催化剂效果'))
+  expect(screen.getByText('Leech 7.98% of Physical Attack Damage as Life')).toBeDefined()
+  expect(screen.getByText('依据：词缀缩放资料')).toBeDefined()
+  expect(screen.getByText(/1.6–1.7/)).toBeDefined()
+  expect(screen.queryByText('1.6 Life Regeneration per second')).toBeNull()
+})
+
 it('类型和品质即时比较，空值不转零，装备切换时重新核对上限', () => {
   const { rerender } = render(
     <CatalystPreviewPanel catalog={catalog} state={initialState} translations={translations} />,

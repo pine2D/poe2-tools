@@ -6,12 +6,20 @@ import {
   JEWEL_SOURCE,
   jewelSourceHash,
   parseCraftCatalog,
+  STAT_SCALABILITY_SOURCE,
+  statScalabilitySourceHash,
 } from '@poe2-tools/item-core'
 import { REPO_ROOT } from './config'
 
 const catalog = parseCraftCatalog(
   JSON.parse(await readFile(resolve(REPO_ROOT, 'data/craft/catalog.json'), 'utf8')),
 )
+if (
+  statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
+  Object.keys(catalog.scalability ?? {}).length !== 2843
+)
+  throw new Error('缩放目录缺少固定来源或 2843 条当前属性文本对应')
+console.log('属性缩放目录校验通过：2843 条文本；103 条未对应保留缺失，不推断内部精度')
 if (
   catalog.bases.length === 0 ||
   catalog.modifiers.length === 0 ||

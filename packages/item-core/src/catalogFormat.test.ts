@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { parseCraftCatalog } from './catalogFormat'
+import { STAT_SCALABILITY_SOURCE } from './statScalability'
 
 const augment: CatalogAugment = {
   id: 'pob2:augment:["Test Rune","armour"]',
@@ -27,6 +28,51 @@ const catalog: CraftCatalog = {
   bases: [],
   modifiers: [],
 }
+
+it('缩放表核对固定来源、完整数字声明及当前目录归属', () => {
+  const line = '+(10-19) Life'
+  const valid = {
+    ...catalog,
+    _meta: {
+      ...catalog._meta,
+      sourceCommit: STAT_SCALABILITY_SOURCE.commit,
+      sources: [STAT_SCALABILITY_SOURCE],
+    },
+    modifiers: [
+      {
+        id: 'Test',
+        kind: 'prefix',
+        name: 'Test',
+        group: 'Test',
+        level: 1,
+        lines: [line],
+        statOrder: [1],
+        tags: ['life'],
+        addsTags: [],
+        eligibility: [{ tag: 'default', value: 1 }],
+        tradeHashes: {},
+      },
+    ],
+    scalability: { [line]: [{ scalable: true, formats: [] }] },
+  }
+  expect(parseCraftCatalog(valid)).toBe(valid)
+  for (const scalability of [
+    null,
+    { [line]: [] },
+    { [line]: [{ scalable: 1, formats: [] }] },
+    { [line]: [{ scalable: true, formats: [1] }] },
+    { [line]: [{ scalable: true, formats: [], extra: true }] },
+    { 'Not in catalog': [] },
+  ])
+    expect(() => parseCraftCatalog({ ...valid, scalability })).toThrow()
+  expect(() => parseCraftCatalog({ ...valid, _meta: { ...valid._meta, sources: [] } })).toThrow()
+  expect(() =>
+    parseCraftCatalog({
+      ...valid,
+      _meta: { ...valid._meta, sources: [{ ...STAT_SCALABILITY_SOURCE, sha256: '0'.repeat(64) }] },
+    }),
+  ).toThrow()
+})
 
 describe('亵渎专属目录边界', () => {
   const commit = 'ce566eac45ea8a86477f513c7ee65a1ebe60014e'

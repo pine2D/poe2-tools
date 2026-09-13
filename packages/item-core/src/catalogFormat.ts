@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { DESECRATION_FAMILIES, DESECRATION_SOURCE } from './desecration'
 import { JEWEL_SOURCE } from './jewels'
+import { splitStatScalars, statScalabilitySourceHash } from './statScalability'
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -399,6 +400,36 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     for (const entry of value.augments) {
       if (!augment(entry) || ids.has(entry.id)) return invalid()
       ids.add(entry.id)
+    }
+  }
+  if (value.scalability !== undefined) {
+    if (
+      !record(value.scalability) ||
+      Object.keys(value.scalability).length > 20000 ||
+      statScalabilitySourceHash(value as unknown as CraftCatalog) === null
+    )
+      return invalid()
+    const catalog = value as unknown as CraftCatalog
+    const patterns = new Set([
+      ...catalog.modifiers.flatMap((mod) => mod.lines),
+      ...catalog.bases.flatMap((base) => base.implicit?.split('\n') ?? []),
+    ])
+    for (const [line, scalars] of Object.entries(value.scalability)) {
+      if (
+        !patterns.has(line) ||
+        !Array.isArray(scalars) ||
+        scalars.length !== splitStatScalars(line).tokens.length ||
+        scalars.some(
+          (scalar) =>
+            !record(scalar) ||
+            Object.keys(scalar).some((key) => !['scalable', 'formats'].includes(key)) ||
+            typeof scalar.scalable !== 'boolean' ||
+            !strings(scalar.formats) ||
+            scalar.formats.length > 8 ||
+            scalar.formats.some((format) => format.length === 0 || format.length > 100),
+        )
+      )
+        return invalid()
     }
   }
   return value as unknown as CraftCatalog

@@ -4,6 +4,7 @@ import { readCatalogLineValues } from './catalogMatch'
 import { isBasicJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { scaleStatLine, statScalabilitySourceHash } from './statScalability'
 
 // 固定 PoB Item.lua 的品质类别与标签；名字仅用于连接既有官方三服译名。
 const CATALYSTS = [
@@ -33,6 +34,7 @@ export interface CatalystEffectLine {
   after: string | null
   status: 'estimated' | 'unaffected' | 'unscalable' | 'unknown'
   reason: string
+  basis?: 'metadata' | 'display'
 }
 export interface CatalystEffectGroup {
   id: string
@@ -87,6 +89,7 @@ const NUMBER = '[+-]?\\d+(?:\\.\\d+)?'
 const RANGE = new RegExp(`([+-]?)\\((${NUMBER})[-–—](${NUMBER})\\)`, 'g')
 
 function estimateLine(
+  catalog: CraftCatalog,
   patterns: readonly string[],
   before: string,
   matched: boolean,
@@ -107,6 +110,20 @@ function estimateLine(
   )
   const pattern = candidates[0]
   if (candidates.length !== 1 || pattern === undefined) return pending('无法唯一对应目录属性行。')
+  const metadata = catalog.scalability?.[pattern]
+  if (metadata !== undefined) {
+    if (statScalabilitySourceHash(catalog) === null) return pending('缩放资料缺少可信来源指纹。')
+    const scaled = scaleStatLine(pattern, before, metadata, quality)
+    return scaled.ok
+      ? {
+          before,
+          after: scaled.value,
+          status: 'estimated',
+          reason: '采用来源缩放能力与内部精度；游戏版本和真机显示待验收。',
+          basis: 'metadata',
+        }
+      : pending(scaled.error)
+  }
   if (/\d/.test(pattern.replace(RANGE, ''))) return pending('含固定数字，其缩放范围尚未核对。')
   const ranges = inspectNumericLines([pattern])
   const values = readNumericValues([pattern], [before])
@@ -137,6 +154,7 @@ function estimateLine(
     after,
     status: 'estimated',
     reason: '按目录显示精度估算，内部精度与游戏取整待验收。',
+    basis: 'display',
   }
 }
 
@@ -169,7 +187,7 @@ export function estimateCatalystEffects(
       lines: [
         position === undefined
           ? { before: line, after: null, status: 'unknown', reason: '固有属性标签无法唯一对应。' }
-          : estimateLine(patterns, line, matched, quality),
+          : estimateLine(catalog, patterns, line, matched, quality),
       ],
     }
   })
@@ -181,7 +199,7 @@ export function estimateCatalystEffects(
       id: mod.id,
       kind: mod.kind,
       matched,
-      lines: affix.lines.map((line) => estimateLine(mod.lines, line, matched, quality)),
+      lines: affix.lines.map((line) => estimateLine(catalog, mod.lines, line, matched, quality)),
     })
   }
   return {

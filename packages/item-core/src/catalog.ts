@@ -98,6 +98,13 @@ export interface CraftCatalog {
   augments?: CatalogAugment[]
   essences?: CatalogEssence[]
   localizedNames?: { 'zh-CN': Record<string, string>; 'zh-TW': Record<string, string> }
+  /** 按完整目录行保存，每项对应一个数字（含固定条件）；缺行不推断可缩放。 */
+  scalability?: Record<string, CatalogStatScalar[]>
+}
+
+export interface CatalogStatScalar {
+  scalable: boolean
+  formats: string[]
 }
 
 export function searchBases(

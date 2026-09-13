@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import { catalystChoices, estimateCatalystEffects } from './catalystEffects'
 import type { CraftState } from './rehearsal'
+import { STAT_SCALABILITY_SOURCE, statScalabilitySourceHash } from './statScalability'
 
 const catalog: CraftCatalog = JSON.parse(
   readFileSync(new URL('../../../data/craft/catalog.json', import.meta.url), 'utf8'),
@@ -33,6 +34,55 @@ function custom(patterns: string[], actual: string[], tags = ['life']) {
 }
 
 describe('催化剂效果估算，不应用品质或消耗', () => {
+  it('实际目录识别精细生命偷取与生命再生的不唯一内部值', () => {
+    expect(statScalabilitySourceHash(catalog)).toBe(STAT_SCALABILITY_SOURCE.sha256)
+    const input: CraftState = {
+      ...state,
+      affixes: [
+        { modId: 'LifeLeech2', lines: ['Leech 6.65% of Physical Attack Damage as Life'] },
+        { modId: 'LifeRegeneration1', lines: ['1.4 Life Regeneration per second'] },
+      ],
+    }
+    expect(estimate(input).groups.slice(1)).toMatchObject([
+      { lines: [{ after: 'Leech 7.98% of Physical Attack Damage as Life', basis: 'metadata' }] },
+      { lines: [{ after: null, status: 'unknown', reason: expect.stringContaining('1.6–1.7') }] },
+    ])
+  })
+  it('优先使用可信缩放元数据，精度歧义不会退回显示网格猜测', () => {
+    const patterns = [
+      'Leech (0.5-0.7)% as Life',
+      '(1-2) Life per second',
+      'Gain 5 Life for 4 seconds',
+    ]
+    const { input, data } = custom(patterns, [
+      'Leech 0.65% as Life',
+      '1.4 Life per second',
+      'Gain 5 Life for 4 seconds',
+    ])
+    const trusted: CraftCatalog = {
+      ...data,
+      _meta: {
+        ...data._meta,
+        sources: [
+          ...data._meta.sources.filter((x) => x.path !== STAT_SCALABILITY_SOURCE.path),
+          STAT_SCALABILITY_SOURCE,
+        ],
+      },
+      scalability: {
+        [patterns[0] as string]: [{ scalable: true, formats: ['divide_by_one_hundred'] }],
+        [patterns[1] as string]: [{ scalable: true, formats: ['per_minute_to_per_second'] }],
+        [patterns[2] as string]: [
+          { scalable: true, formats: [] },
+          { scalable: false, formats: [] },
+        ],
+      },
+    }
+    expect(estimate(input, 'Flesh', 20, trusted).groups[1]?.lines).toMatchObject([
+      { after: 'Leech 0.78% as Life', basis: 'metadata' },
+      { after: null, status: 'unknown', reason: expect.stringContaining('1.6–1.7') },
+      { after: 'Gain 6 Life for 4 seconds', basis: 'metadata' },
+    ])
+  })
   it('按标签命中一组，保留未命中固有与显式属性，不修改来源', () => {
     const snapshot = JSON.stringify({ state, catalog })
     const result = estimate()

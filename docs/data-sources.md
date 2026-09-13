@@ -2,7 +2,9 @@
 
 ### 催化剂效果预览依据（2026-09-13）
 
-催化剂名称沿用已登记三服官方 `/static` 的 26 项独立译名，不新增抓取或数据包。[固定 MIT 提交的 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L14)提供 13 类品质与词缀标签的对应关系、命中任一标签乘以 `1 + 品质 / 100` 及不可缩放标记例外；[ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua#L45)区分内部精度与显示精度。当前自有预览只按目录范围端点的显示网格截断绝对值，明确是估算，未掌握内部步长，不据此生成游戏文本、目标达成或材料费用。
+缩放元数据补充来源：[同一固定 MIT 提交的 ModScalability.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModScalability.lua)。记录英文属性模板各数字的 `isScalable` 与 `formats`，用于区分可缩放数值、固定条件和内部精度。采用既有 cache.ts 构建期缓存、受限 Lua 声明解析，保留来源 SHA-256；仅选取能与当前制作目录属性对应的条目，不把其中其他游戏或历史条目扩展为 PoE2 制作资格。游戏文字版权归 GGG，MIT 只覆盖来源仓库自有部分，沿用 THIRD-PARTY-NOTICES 的 PoB 声明；用户浏览器不访问第三方。
+
+催化剂名称沿用已登记三服官方 `/static` 的 26 项独立译名，不新增名称抓取。[固定 MIT 提交的 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L14)提供 13 类品质与词缀标签的对应关系、命中任一标签乘以 `1 + 品质 / 100` 及不可缩放标记例外；[ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua#L45)区分内部精度与显示精度。当前预览优先使用缩放声明与内部网格；显示值能对应多个内部值时枚举其催化后结果，结果不唯一则提示范围，不猜中点。有资料却无法计算时不会退回粗网格；缺资料的行才沿用明确标注的目录显示精度估算。两种结果均不用于游戏文本、目标达成或材料费用，实际版本与真机显示待验收。
 
 [GGG 0.2.0](https://www.pathofexile.com/forum/view-thread/3740562)确认裂隙戒指品质上限由 50% 改为 40%；当前目录的 `+20% to Maximum Quality` 只对精确对应基底识别为普通 20% 上限的增加。[GGG 0.5.0](https://www.pathofexile.com/forum/view-thread/3932540/filter-account-type/staff)确认催化剂获取改为 Genesis Tree，并增加珠宝催化剂。[Flesh Catalyst](https://poe2db.tw/us/Flesh_Catalyst)、[Refined Flesh Catalyst](https://poe2db.tw/us/Refined_Flesh_Catalyst) 与[催化剂列表](https://poe2db.tw/us/Catalysts)仅作人工机制参照，核对戒指／项链与珠宝的材料类别，不复制数据库或整页文章；网站无明确数据授权，属于 gray 参考，非新增运行时适配器。每颗增加品质、替换种类的完整消费规则、国服高级文本及特殊品质交互继续核实；不采用 PoE1 的物等公式或旧稀有度公式。
 

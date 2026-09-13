@@ -5,6 +5,7 @@ import {
   DESECRATION_SOURCE,
   JEWEL_SOURCE,
   parseCraftCatalog,
+  STAT_SCALABILITY_SOURCE,
 } from '@poe2-tools/item-core'
 import { type BaseDeclaration, normalizeBaseDeclarations } from './adapters/baseVariants'
 import { normalizeAugments } from './adapters/craftAugments'
@@ -13,6 +14,7 @@ import { normalizeDesecratedMods } from './adapters/craftDesecrated'
 import { normalizeEssences } from './adapters/craftEssences'
 import { normalizeJewelMods } from './adapters/craftJewels'
 import { buildCraftNames } from './adapters/craftNames'
+import { normalizeCraftScalability } from './adapters/craftScalability'
 import { excludeDeclaration } from './adapters/craftSourceExclusions'
 import { parsePobBaseEntries, parsePobModFile } from './adapters/restrictedLua'
 import { fetchCached } from './cache'
@@ -160,6 +162,16 @@ for (const locale of ['en', 'zh-CN', 'zh-TW'] as const) {
   fetchedTimes.push(fetched.meta.fetchedAt)
 }
 const { localizedNames, audit: nameAudit } = buildCraftNames(staticTables)
+const scalability = normalizeCraftScalability(
+  parsePobModFile(await source('ModScalability', STAT_SCALABILITY_SOURCE.sha256)),
+  [
+    ...modifiers.flatMap((mod) => mod.lines),
+    ...bases.flatMap((base) => base.implicit?.split('\n') ?? []),
+  ],
+)
+console.log(
+  `属性缩放资料：${Object.keys(scalability.lines).length} 条目录文本已对应，${scalability.missing.length} 条缺少对应：${scalability.missing.join('；')}`,
+)
 for (const locale of ['zh-CN', 'zh-TW'] as const)
   console.log(`${locale} 官方名称：${JSON.stringify(nameAudit[locale])}`)
 const catalog: CraftCatalog = {
@@ -181,6 +193,7 @@ const catalog: CraftCatalog = {
   augments,
   essences,
   localizedNames,
+  scalability: scalability.lines,
 }
 parseCraftCatalog(catalog)
 const output = resolve(REPO_ROOT, 'data/craft')

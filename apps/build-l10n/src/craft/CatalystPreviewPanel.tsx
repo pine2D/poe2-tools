@@ -92,7 +92,9 @@ export function CatalystPreviewPanel({
           <p role="alert">{result.error}</p>
         ) : (
           <>
-            <p>按词缀标签匹配；数值按目录显示精度估算，游戏内部精度与取整待验收。</p>
+            <p>
+              按词缀标签匹配，优先采用来源缩放能力与内部精度；缺资料时仅按显示精度估算。游戏版本和真机显示仍待验收。
+            </p>
             {groups.length === 0 ? <p>当前没有命中这类标签的属性。</p> : null}
             {groups.map((group) => (
               <article key={group.id} className="catalyst-group">
@@ -106,10 +108,17 @@ export function CatalystPreviewPanel({
                       <span className="catalyst-label">基础</span> <span>{text(line.before)}</span>
                     </p>
                     {line.after !== null ? (
-                      <p>
-                        <span className="catalyst-label">{quality}% 估算</span>{' '}
-                        <strong>{text(line.after)}</strong>
-                      </p>
+                      <div>
+                        <p>
+                          <span className="catalyst-label">{quality}% 估算</span>{' '}
+                          <strong>{text(line.after)}</strong>
+                        </p>
+                        <small className="catalyst-label">
+                          {line.basis === 'metadata'
+                            ? '依据：词缀缩放资料'
+                            : '依据：目录显示精度，缩放资料缺失'}
+                        </small>
+                      </div>
                     ) : (
                       <p className="rehearsal-scope-note">{line.reason}</p>
                     )}

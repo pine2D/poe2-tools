@@ -30,6 +30,7 @@ export type {
   CatalogBase,
   CatalogEssence,
   CatalogMod,
+  CatalogStatScalar,
   CraftCatalog,
   PoolEntry,
 } from './catalog'
@@ -177,6 +178,12 @@ export {
   socketEffects,
   socketStateError,
 } from './sockets'
+export {
+  STAT_SCALABILITY_SOURCE,
+  scaleStatLine,
+  splitStatScalars,
+  statScalabilitySourceHash,
+} from './statScalability'
 export type {
   CraftTargetRoute,
   CraftTargetRouteOptions,
