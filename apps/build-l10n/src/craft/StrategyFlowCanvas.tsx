@@ -3,7 +3,7 @@ import {
   type CraftStrategyDecision,
   readCraftStrategy,
 } from '@poe2-tools/item-core'
-import { useId, useRef, useState } from 'react'
+import { type Ref, useEffect, useId, useImperativeHandle, useRef, useState } from 'react'
 import {
   GRAPH_NODE_HEIGHT,
   GRAPH_NODE_WIDTH,
@@ -15,7 +15,9 @@ import {
 } from './strategyGraph'
 import './flow-canvas.css'
 
-interface Props {
+export interface StrategyFlowCanvasProps {
+  active?: boolean
+  connectionControl?: Ref<{ cancelConnection: () => boolean }>
   strategy: CraftStrategy
   stageId: string | undefined
   decision: CraftStrategyDecision | null
@@ -24,13 +26,15 @@ interface Props {
   onEditRule: (index: number) => void
 }
 export function StrategyFlowCanvas({
+  active = true,
+  connectionControl,
   strategy,
   stageId,
   decision,
   ruleLabels,
   onChange,
   onEditRule,
-}: Props) {
+}: StrategyFlowCanvasProps) {
   const [selectedId, setSelectedId] = useState(stageId)
   const [zoom, setZoom] = useState(100)
   const [connection, setConnection] = useState<{
@@ -38,8 +42,22 @@ export function StrategyFlowCanvas({
     ruleIndex: number
     field: 'nextStageId' | 'onBlockedStageId'
   } | null>(null)
+  useEffect(() => {
+    if (!active) setConnection(null)
+  }, [active])
   const marker = useId()
   const viewport = useRef<HTMLElement>(null)
+  useImperativeHandle(
+    connectionControl,
+    () => ({
+      cancelConnection: () => {
+        if (!connection || connection.strategy !== strategy) return false
+        setConnection(null)
+        return true
+      },
+    }),
+    [connection, strategy],
+  )
   const flow = strategy.flow
   if (!flow) return null
   const selected =
@@ -89,7 +107,8 @@ export function StrategyFlowCanvas({
       className="flow-canvas"
       aria-label="流程画布"
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' && pending) {
+          event.preventDefault()
           setConnection(null)
           event.stopPropagation()
         }

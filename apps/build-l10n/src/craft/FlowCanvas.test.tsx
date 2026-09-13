@@ -8,10 +8,25 @@ afterEach(() => {
   cleanup()
   localStorage.clear()
 })
-const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }))
+const openCanvas = () => {
+  if (!screen.queryByRole('dialog'))
+    fireEvent.click(screen.getByRole('button', { name: '打开流程画布' }))
+}
+const closeCanvas = () => {
+  if (screen.queryByRole('dialog'))
+    fireEvent.click(screen.getByRole('button', { name: '返回制作演练' }))
+}
+const click = (name: string) => {
+  if (['开始指引步骤', '保存演练到本机', '恢复本机演练', '撤销', '下移规则 1'].includes(name))
+    closeCanvas()
+  fireEvent.click(screen.getByRole('button', { name }))
+}
 const change = (name: string, value: string) =>
   fireEvent.change(screen.getByLabelText(name), { target: { value } })
-const selectStage = (n: number) => click(`画布阶段 stage-${n}：阶段 ${n}`)
+const selectStage = (n: number) => {
+  openCanvas()
+  click(`画布阶段 stage-${n}：阶段 ${n}`)
+}
 function setup() {
   render(<RehearsalPanel catalog={catalog()} initialState={state('normal')} translations={{}} />)
   click('启用条件指引示例')
@@ -52,6 +67,7 @@ it('在画布连接备用与回连后可实际制作，撤销恢复共用阶段�
   expect(screen.getByText('命中规则 1：富豪石')).toBeDefined()
   apply('s1')
   expect(screen.getByText('命中规则 3：停止。')).toBeDefined()
+  openCanvas()
   expect(screen.getByRole('button', { name: '画布阶段 stage-3：阶段 3' }).textContent).toContain(
     '历史位置',
   )

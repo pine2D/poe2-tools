@@ -1,0 +1,76 @@
+.flow-dialog {
+  box-sizing: border-box;
+  width: min(1440px, calc(100vw - 2rem));
+  height: calc(100dvh - 2rem);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-0);
+  color: var(--text);
+}
+.flow-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.flow-dialog::backdrop {
+  background: rgb(0 0 0 / 60%);
+}
+.flow-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.flow-dialog-header h3 {
+  margin: 0;
+}
+.flow-dialog-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+}
+.flow-dialog .flow-canvas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 0.75rem;
+}
+.flow-dialog .flow-canvas > * {
+  grid-column: 1 / -1;
+}
+.flow-dialog .flow-canvas > h4 {
+  display: none;
+}
+.flow-dialog .flow-canvas-viewport {
+  grid-column: 1;
+  max-height: 60dvh;
+}
+.flow-dialog .flow-canvas-inspector {
+  grid-column: 2;
+  max-height: 60dvh;
+  overflow: auto;
+}
+@media (max-width: 760px) {
+  .flow-dialog {
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+  .flow-dialog-header {
+    padding: 0.75rem;
+  }
+  .flow-dialog-body {
+    padding: 0.75rem;
+  }
+  .flow-dialog .flow-canvas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .flow-dialog .flow-canvas-inspector {
+    grid-column: 1;
+    max-height: none;
+  }
+}

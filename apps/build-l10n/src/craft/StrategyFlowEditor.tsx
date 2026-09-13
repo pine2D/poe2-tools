@@ -1,6 +1,7 @@
 import type { CraftStrategy, CraftStrategyDecision, CraftStrategyRule } from '@poe2-tools/item-core'
 
-import { StrategyFlowCanvas } from './StrategyFlowCanvas'
+import { StrategyFlowDialog } from './StrategyFlowDialog'
+import { StrategyStageList } from './StrategyStageList'
 
 interface Props {
   strategy: CraftStrategy
@@ -39,6 +40,17 @@ export function StrategyFlowEditor({
         启用分阶段流程
       </button>
     )
+  const addStage = () => {
+    let number = 1
+    while (flow.stages.some((stage) => stage.id === `stage-${number}`)) number++
+    onChange({
+      ...strategy,
+      flow: {
+        ...flow,
+        stages: [...flow.stages, { id: `stage-${number}`, name: `阶段 ${number}` }],
+      },
+    })
+  }
   return (
     <section className="strategy-flow" aria-label="分阶段流程">
       <p>
@@ -46,14 +58,17 @@ export function StrategyFlowEditor({
           当前阶段：{flow.stages.find((stage) => stage.id === stageId)?.name ?? '无法判定'}
         </strong>
       </p>
-      <p>
-        从历史第 {startStep}{' '}
-        步之后开始。当前阶段按规则顺序分流，实际应用的材料、档位、预兆和孔位一致才进入下一阶段。相同手动操作也会推进；草稿和揭示中间步骤不推进。
-      </p>
-      <p>
-        修改流程或目标后，从当前装备的入口阶段重新开始；撤销和恢复按实际操作重算。揭示会经过“未揭示”和“已有候选”，请让本阶段规则覆盖这两种状态。
-      </p>
-      <p>无法执行转向只处理动作开始前的校验，不代表材料已经消耗或随机结果失败。</p>
+      <details>
+        <summary>阶段推进说明</summary>
+        <p>
+          从历史第 {startStep}{' '}
+          步之后开始。当前阶段按规则顺序分流，实际应用的材料、档位、预兆和孔位一致才进入下一阶段。相同手动操作也会推进；草稿和揭示中间步骤不推进。
+        </p>
+        <p>
+          修改流程或目标后，从当前装备的入口阶段重新开始；撤销和恢复按实际操作重算。揭示会经过“未揭示”和“已有候选”，请让本阶段规则覆盖这两种状态。
+        </p>
+        <p>无法执行转向只处理动作开始前的校验，不代表材料已经消耗或随机结果失败。</p>
+      </details>
       <div className="strategy-toolbar">
         <label>
           入口阶段
@@ -92,7 +107,8 @@ export function StrategyFlowEditor({
         </button>
       </div>
       {hasJumps ? <p>要关闭分阶段流程，请先删除纯跳转规则或将其改为制作／停止动作。</p> : null}
-      <StrategyFlowCanvas
+      <StrategyFlowDialog
+        onAddStage={addStage}
         strategy={strategy}
         stageId={stageId}
         decision={decision}
@@ -102,86 +118,9 @@ export function StrategyFlowEditor({
       />
       <details>
         <summary>阶段与路线（{flow.stages.length} 个阶段）</summary>
-        {flow.stages.map((stage) => (
-          <div key={stage.id} className="strategy-flow-stage">
-            <label>
-              阶段名称
-              <input
-                aria-label={`阶段名称 ${stage.id}`}
-                maxLength={80}
-                defaultValue={stage.name}
-                key={stage.name}
-                onBlur={(event) => {
-                  const name = event.target.value.trim()
-                  if (name && name !== stage.name)
-                    onChange({
-                      ...strategy,
-                      flow: {
-                        ...flow,
-                        stages: flow.stages.map((entry) =>
-                          entry.id === stage.id ? { ...entry, name } : entry,
-                        ),
-                      },
-                    })
-                  else event.target.value = stage.name
-                }}
-              />
-            </label>
-            <button
-              type="button"
-              aria-label={`删除阶段 ${stage.id}`}
-              disabled={
-                flow.stages.length === 1 ||
-                flow.entryStageId === stage.id ||
-                strategy.rules.some(
-                  (rule) =>
-                    rule.stageId === stage.id ||
-                    rule.nextStageId === stage.id ||
-                    rule.onBlockedStageId === stage.id,
-                )
-              }
-              onClick={() =>
-                onChange({
-                  ...strategy,
-                  flow: { ...flow, stages: flow.stages.filter((entry) => entry.id !== stage.id) },
-                })
-              }
-            >
-              删除阶段
-            </button>
-            <p>
-              {strategy.rules
-                .flatMap((rule, index) =>
-                  rule.stageId !== stage.id
-                    ? []
-                    : [
-                        `规则 ${index + 1}${rule.action.kind === 'jump' ? '（仅判断）' : ''} → ${rule.action.kind === 'stop' ? '停止' : flow.stages.find((entry) => entry.id === (rule.nextStageId ?? stage.id))?.name}${rule.onBlockedStageId ? `；无法执行 → ${flow.stages.find((entry) => entry.id === rule.onBlockedStageId)?.name}` : ''}`,
-                      ],
-                )
-                .join('；')}
-            </p>
-            {!strategy.rules.some((rule) => rule.stageId === stage.id) ? (
-              <p>尚无规则，请在下方指定规则所属阶段。</p>
-            ) : null}
-          </div>
-        ))}
-        <p>入口及被规则引用的阶段不能删除，请先调整入口、所属阶段、下一阶段或无法执行时的去向。</p>
+        <StrategyStageList strategy={strategy} onChange={onChange} />
       </details>
-      <button
-        type="button"
-        disabled={flow.stages.length >= 12}
-        onClick={() => {
-          let number = 1
-          while (flow.stages.some((stage) => stage.id === `stage-${number}`)) number++
-          onChange({
-            ...strategy,
-            flow: {
-              ...flow,
-              stages: [...flow.stages, { id: `stage-${number}`, name: `阶段 ${number}` }],
-            },
-          })
-        }}
-      >
+      <button type="button" disabled={flow.stages.length >= 12} onClick={addStage}>
         添加阶段
       </button>
     </section>
