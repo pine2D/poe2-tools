@@ -689,7 +689,8 @@ export function analyzeCraftTargets(
         lostTargetIds: presentIds.filter((id) => !retained.has(id)),
         randomRemovalRisk:
           randomRemovalRisk &&
-          (omen !== 'whittling' || (removable?.ok === true && removable.value.length > 1)),
+          ((omen !== 'whittling' && omen !== 'light') ||
+            (removable?.ok === true && removable.value.length > 1)),
         clearsAll: currency === 'alchemy',
         remainingChoices: prepared.value.count,
       })

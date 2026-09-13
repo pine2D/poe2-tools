@@ -169,3 +169,7 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 [GGG 0.2.0g](https://www.pathofexile.com/forum/view-thread/3774660/filter-account-type/staff)明确修复破裂装备搭配Whittling/Erasure时的错误高亮，primary，说明早期[破裂争议](https://www.pathofexile.com/forum/view-thread/3751070)不能直接作为现行不兼容结论。当前演练在既有未锁定合法池中求最低等级，未知实值仍可按已确认身份比较；逐组合真机仍待验收。
 
 本次仅接入单枚消减配基础混沌。高级混沌旧[报告](https://www.pathofexile.com/forum/view-thread/3839647)未充分区分最低等级例外；方向配对的全局最低与侧内最低交互也缺少独立实例，继续保留未支持门禁，不推断游戏禁止。CoE公开路线图仅用于预兆、移除风险及历史衔接的体验参考，不读取或复制其他模拟器代码、规则文件或权重。
+
+### 光明预兆（Light）机制依据（v31）
+
+[公开物品文本转录](https://poe2db.tw/us/Omen_of_Light)限定下一枚剥离石只移除亵渎词缀；[Lolcohol 亵渎指南](https://mobalytics.gg/poe-2/guides/abyss-crafting)说明移除不满意的已揭示词缀后重新亵渎。两页仅作 gray 人工规则依据，不复制代码、词缀表或权重；指南的其他交互及旧版本内容不据此开放。名称复用既有官方三服 static（国服光明预兆、台服光明之兆），来源身份沿固定 MIT 目录和原文标记。当前只支持单枚配基础剥离及已揭示的一组亵渎，未揭示、多预兆和腐化多亵渎继续未支持，游戏操作待真机验收。无新适配器、生成物或浏览器第三方请求。

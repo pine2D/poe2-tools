@@ -441,7 +441,10 @@ export function planCraftTargetRoutes(
             )
             if (original.ok && pool.value.length >= original.value.length) continue
           }
-          risk = present.filter((id) => pool.value.some((a) => a.modId === id))
+          risk =
+            omen === 'light' && pool.value.length === 1
+              ? []
+              : present.filter((id) => pool.value.some((a) => a.modId === id))
         }
         const operation: CraftOperation = {
           currency,
@@ -570,7 +573,10 @@ export function planCraftTargetRoutes(
         )) {
           const pool = removableCraftAffixes(catalog, node.state, 'annulment', omen)
           if (!pool.ok || (omen && pool.value.length >= plain.value.length)) continue
-          const risk = present.filter((id) => pool.value.some((affix) => affix.modId === id))
+          const risk =
+            omen === 'light' && pool.value.length === 1
+              ? []
+              : present.filter((id) => pool.value.some((affix) => affix.modId === id))
           for (const removed of pool.value.filter(
             (affix) => blockedEssence || blockedBone || replacementAcceptedIds.has(affix.modId),
           ))

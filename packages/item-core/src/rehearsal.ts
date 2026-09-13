@@ -465,11 +465,14 @@ export function removableCraftAffixes(
   let removable = checked.value.affixes.filter(
     (affix) =>
       !affix.fractured &&
+      (omen !== 'light' || affix.desecrated === true) &&
       (omen === undefined ||
         CRAFT_OMEN_RULES[omen].kind === null ||
         catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind ===
           CRAFT_OMEN_RULES[omen].kind),
   )
+  if (omen === 'light' && removable.length === 0)
+    return failure('当前装备没有可移除的已揭示亵渎词缀。')
   if (removable.length === 0) return failure('当前装备或预兆指定侧没有未锁定的可移除词缀。')
   if (omen === 'whittling') {
     const levels = new Map(catalog.modifiers.map((mod) => [mod.id, mod.level]))

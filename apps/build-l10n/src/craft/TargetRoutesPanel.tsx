@@ -270,8 +270,9 @@ function RouteSearch({
                             ? ` + ${boneOmens(step.operation).join(' + ')}`
                             : ''}
                         </strong>
-                        {'currency' in step.operation && step.operation.omen === 'whittling' ? (
-                          <p>{craftOmenDescription('whittling')}</p>
+                        {'currency' in step.operation &&
+                        (step.operation.omen === 'whittling' || step.operation.omen === 'light') ? (
+                          <p>{craftOmenDescription(step.operation.omen)}</p>
                         ) : null}
                         {'kind' in step.operation && step.operation.kind === 'fracture' ? (
                           <p className="target-warning">

@@ -1,6 +1,7 @@
 import type { CraftCurrency } from './rehearsal'
 
 export type CraftOmen =
+  | 'light'
   | 'whittling'
   | 'sinistral_exaltation'
   | 'dextral_exaltation'
@@ -18,6 +19,12 @@ export const CRAFT_OMEN_RULES: Record<
     effect: 'add' | 'remove'
   }
 > = {
+  light: {
+    name: 'Omen of Light',
+    currency: 'annulment',
+    kind: null,
+    effect: 'remove',
+  },
   whittling: {
     name: 'Omen of Whittling',
     currency: 'chaos',
@@ -75,6 +82,8 @@ export function craftOmenError(omen: unknown, currency: CraftCurrency | undefine
 
 /** 用同一规则说明预兆候选约束，避免无方向预兆被误说成后缀限定。 */
 export function craftOmenDescription(omen: CraftOmen): string {
+  if (omen === 'light')
+    return '仅移除已揭示且标记为亵渎的完整词缀组，其他组保留。移除后可重新施加骨骼；若该组是已有目标，也会失去该目标。'
   if (omen === 'whittling')
     return '仅移除未破裂词缀中目录等级最低的一组；并列时全部保留为候选，已有目标仍可能被移除。比较出现等级，不按阶级或数值大小选择。'
   const rule = CRAFT_OMEN_RULES[omen]
