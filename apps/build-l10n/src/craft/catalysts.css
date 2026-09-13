@@ -1,0 +1,45 @@
+.catalyst-panel {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--control-edge);
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.catalyst-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.catalyst-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.catalyst-fields label {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.catalyst-fields select,
+.catalyst-fields input {
+  width: 100%;
+  min-width: 0;
+}
+
+.catalyst-group {
+  border-top: 1px solid var(--control-edge);
+  padding-top: 0.5rem;
+}
+
+.catalyst-line p {
+  margin-block: 0.4rem;
+}
+
+.catalyst-label {
+  color: var(--text-muted);
+}

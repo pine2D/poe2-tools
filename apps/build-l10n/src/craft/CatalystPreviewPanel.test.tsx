@@ -1,0 +1,129 @@
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import {
+  type CraftCatalog,
+  type CraftState,
+  createCraftItemDictionary,
+  exportCraftItemText,
+  importCraftState,
+  inspectItem,
+  parseItem,
+} from '@poe2-tools/item-core'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, expect, it } from 'vitest'
+import { fsPathFromMetaUrl } from '../testing/fsPath'
+import { CatalystPreviewPanel } from './CatalystPreviewPanel'
+import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
+import { RehearsalPanel } from './RehearsalPanel'
+
+const catalog: CraftCatalog = JSON.parse(
+  readFileSync(
+    resolve(dirname(fsPathFromMetaUrl(import.meta.url)), '../../../../data/craft/catalog.json'),
+    'utf8',
+  ),
+)
+const initialState: CraftState = {
+  baseId: 'Gold Ring',
+  itemLevel: 86,
+  rarity: 'rare',
+  sourceText: null,
+  affixes: [{ modId: 'IncreasedLife1', lines: ['+19 to maximum Life'] }],
+}
+const translations = catalog.localizedNames?.['zh-CN'] ?? {}
+afterEach(() => {
+  cleanup()
+  localStorage.clear()
+})
+
+it('类型和品质即时比较，空值不转零，装备切换时重新核对上限', () => {
+  const { rerender } = render(
+    <CatalystPreviewPanel catalog={catalog} state={initialState} translations={translations} />,
+  )
+  fireEvent.click(screen.getByText('比较催化剂效果'))
+  const panel = within(screen.getByLabelText('催化剂效果预览'))
+  expect(panel.getByRole('option', { name: '血肉催化剂 · 生命' })).toBeDefined()
+  expect(panel.getByText('+22 to maximum Life')).toBeDefined()
+  fireEvent.change(panel.getByLabelText('预览品质（%）'), { target: { value: '' } })
+  expect(panel.getByRole('alert').textContent).toContain('0–20')
+  expect(panel.queryByText('+22 to maximum Life')).toBeNull()
+  fireEvent.change(panel.getByLabelText('预览品质（%）'), { target: { value: '10' } })
+  expect(panel.getByText('+20 to maximum Life')).toBeDefined()
+  fireEvent.change(panel.getByLabelText('催化剂类型'), { target: { value: 'Neural' } })
+  expect(panel.getByText('当前没有命中这类标签的属性。')).toBeDefined()
+  rerender(
+    <CatalystPreviewPanel
+      catalog={catalog}
+      state={{ ...initialState, baseId: 'Breach Ring' }}
+      translations={translations}
+    />,
+  )
+  fireEvent.change(panel.getByLabelText('催化剂类型'), { target: { value: 'Flesh' } })
+  fireEvent.change(panel.getByLabelText('预览品质（%）'), { target: { value: '40' } })
+  expect(panel.getByText('+26 to maximum Life')).toBeDefined()
+  rerender(
+    <CatalystPreviewPanel catalog={catalog} state={initialState} translations={translations} />,
+  )
+  expect(panel.getByRole('alert').textContent).toContain('0–20')
+})
+
+it('跟随真实神圣步骤与撤销恢复，预览不新增历史或催化剂费用', () => {
+  const exported = exportCraftItemText(catalog, {
+    ...initialState,
+    implicitLines: ['10% increased Rarity of Items found'],
+  })
+  if (!exported.ok) throw new Error(exported.error)
+  const parsed = parseItem(exported.value.text)
+  if (!parsed.ok) throw new Error(parsed.error)
+  const imported = importCraftState(
+    catalog,
+    initialState.baseId,
+    parsed.item,
+    inspectItem(parsed.item, createCraftItemDictionary(catalog, {})),
+  )
+  if (!imported.ok) throw new Error(imported.error)
+  render(
+    <RehearsalPanel catalog={catalog} initialState={imported.value} translations={translations} />,
+  )
+  fireEvent.click(screen.getByText('比较催化剂效果'))
+  const panel = () => within(screen.getByLabelText('催化剂效果预览'))
+  expect(panel().getByText('+22 to maximum Life')).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '神圣石' }))
+  fireEvent.change(screen.getByLabelText('Hale · 数值 1'), { target: { value: '10' } })
+  fireEvent.click(screen.getByRole('button', { name: '应用本次结果' }))
+  expect(panel().getByText('+12 to maximum Life')).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
+  expect(screen.getByLabelText('演练项目').textContent).toContain('已保存')
+  const project = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(project.operations).toHaveLength(1)
+  expect(project.operations[0].currency).toBe('divine')
+  expect(JSON.stringify(project)).not.toContain('catalyst')
+  fireEvent.click(screen.getByRole('button', { name: '撤销' }))
+  expect(panel().getByText('+22 to maximum Life')).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
+  expect(panel().getByText('+12 to maximum Life')).toBeDefined()
+  expect(screen.getAllByText('神圣石 × 1').length).toBeGreaterThan(0)
+  expect(panel().getByText(/不计材料费用/)).toBeDefined()
+})
+
+it('四类普通珠宝显示精炼名称，防具不出现催化面板', () => {
+  const jewel: CraftState = {
+    baseId: 'Ruby',
+    itemLevel: 86,
+    rarity: 'normal',
+    sourceText: null,
+    affixes: [],
+  }
+  const { rerender } = render(
+    <CatalystPreviewPanel catalog={catalog} state={jewel} translations={translations} />,
+  )
+  fireEvent.click(screen.getByText('比较催化剂效果'))
+  expect(screen.getByRole('option', { name: '精炼血肉催化剂 · 生命' })).toBeDefined()
+  rerender(
+    <CatalystPreviewPanel
+      catalog={catalog}
+      state={{ ...jewel, baseId: 'Adherent Cuffs' }}
+      translations={translations}
+    />,
+  )
+  expect(screen.queryByLabelText('催化剂效果预览')).toBeNull()
+})

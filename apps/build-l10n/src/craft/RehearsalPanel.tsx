@@ -53,6 +53,7 @@ import './rehearsal.css'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
+import { CatalystPreviewPanel } from './CatalystPreviewPanel'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
 import { CraftTargets } from './CraftTargets'
@@ -1322,6 +1323,12 @@ export function RehearsalPanel({
           </button>
         </section>
       ) : null}
+      <CatalystPreviewPanel
+        catalog={catalog}
+        state={current}
+        translations={translations}
+        {...(translateLine ? { translateLine } : {})}
+      />
       <SocketPanel
         key={`${targetSession}:${cursor}:${history[cursor]?.id}`}
         catalog={catalog}

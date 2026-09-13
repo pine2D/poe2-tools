@@ -1,0 +1,126 @@
+import {
+  type CraftCatalog,
+  type CraftState,
+  catalystChoices,
+  estimateCatalystEffects,
+  isBasicJewel,
+} from '@poe2-tools/item-core'
+import { useId, useMemo, useState } from 'react'
+import './catalysts.css'
+
+const KINDS = { implicit: '固有属性', prefix: '前缀', suffix: '后缀' }
+
+export function CatalystPreviewPanel({
+  catalog,
+  state,
+  translations,
+  translateLine,
+}: {
+  catalog: CraftCatalog
+  state: CraftState
+  translations: Record<string, string>
+  translateLine?: (line: string) => string | null
+}) {
+  const id = useId()
+  const [catalyst, setCatalyst] = useState('Flesh')
+  const [quality, setQuality] = useState('20')
+  const options = useMemo(() => catalystChoices(catalog, state), [catalog, state])
+  const result = useMemo(
+    () =>
+      estimateCatalystEffects(
+        catalog,
+        state,
+        catalyst,
+        quality === '' ? Number.NaN : Number(quality),
+      ),
+    [catalog, state, catalyst, quality],
+  )
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (!base || (!['Ring', 'Amulet'].includes(base.type) && !isBasicJewel(base))) return null
+  const groups = result.ok
+    ? result.value.groups.filter(
+        (group) => group.matched || group.lines.some((line) => line.status === 'unknown'),
+      )
+    : []
+  const unchanged = result.ok ? result.value.groups.length - groups.length : 0
+  const text = (line: string) => translateLine?.(line) ?? line
+  return (
+    <section className="catalyst-panel" aria-label="催化剂效果预览">
+      <details>
+        <summary>比较催化剂效果</summary>
+        <p className="rehearsal-scope-note">
+          比较当前基础属性在指定品质下的估算值，未施加到装备，不计材料费用。
+          每颗催化剂的品质增量仍待核实，预览品质不代表材料颗数。
+        </p>
+        {options.ok ? (
+          <>
+            <div className="catalyst-fields">
+              <label htmlFor={`${id}-type`}>
+                催化剂类型
+                <select
+                  id={`${id}-type`}
+                  value={catalyst}
+                  onChange={(event) => setCatalyst(event.target.value)}
+                >
+                  {options.value.choices.map((choice) => (
+                    <option key={choice.id} value={choice.id}>
+                      {translations[choice.name] ?? choice.name} · {choice.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label htmlFor={`${id}-quality`}>
+                预览品质（%）
+                <input
+                  id={`${id}-quality`}
+                  type="number"
+                  min={0}
+                  max={options.value.maxQuality}
+                  step={1}
+                  value={quality}
+                  onChange={(event) => setQuality(event.target.value)}
+                />
+              </label>
+            </div>
+            <p>
+              此基底的预览上限：{options.value.maxQuality}
+              %。切换类型会重新比较，不叠加不同催化效果。
+            </p>
+          </>
+        ) : null}
+        {!result.ok ? (
+          <p role="alert">{result.error}</p>
+        ) : (
+          <>
+            <p>按词缀标签匹配；数值按目录显示精度估算，游戏内部精度与取整待验收。</p>
+            {groups.length === 0 ? <p>当前没有命中这类标签的属性。</p> : null}
+            {groups.map((group) => (
+              <article key={group.id} className="catalyst-group">
+                <h4>
+                  {KINDS[group.kind]}
+                  {group.matched ? ' · 标签命中' : ' · 对应关系待核对'}
+                </h4>
+                {group.lines.map((line) => (
+                  <div key={line.before} className="catalyst-line">
+                    <p>
+                      <span className="catalyst-label">基础</span> <span>{text(line.before)}</span>
+                    </p>
+                    {line.after !== null ? (
+                      <p>
+                        <span className="catalyst-label">{quality}% 估算</span>{' '}
+                        <strong>{text(line.after)}</strong>
+                      </p>
+                    ) : (
+                      <p className="rehearsal-scope-note">{line.reason}</p>
+                    )}
+                  </div>
+                ))}
+              </article>
+            ))}
+            {unchanged > 0 ? <p>另有 {unchanged} 组属性未命中此类标签，保持当前数值。</p> : null}
+          </>
+        )}
+      </details>
+    </section>
+  )
+}

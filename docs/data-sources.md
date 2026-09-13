@@ -1,5 +1,11 @@
 # 数据源登记表
 
+### 催化剂效果预览依据（2026-09-13）
+
+催化剂名称沿用已登记三服官方 `/static` 的 26 项独立译名，不新增抓取或数据包。[固定 MIT 提交的 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L14)提供 13 类品质与词缀标签的对应关系、命中任一标签乘以 `1 + 品质 / 100` 及不可缩放标记例外；[ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua#L45)区分内部精度与显示精度。当前自有预览只按目录范围端点的显示网格截断绝对值，明确是估算，未掌握内部步长，不据此生成游戏文本、目标达成或材料费用。
+
+[GGG 0.2.0](https://www.pathofexile.com/forum/view-thread/3740562)确认裂隙戒指品质上限由 50% 改为 40%；当前目录的 `+20% to Maximum Quality` 只对精确对应基底识别为普通 20% 上限的增加。[GGG 0.5.0](https://www.pathofexile.com/forum/view-thread/3932540/filter-account-type/staff)确认催化剂获取改为 Genesis Tree，并增加珠宝催化剂。[Flesh Catalyst](https://poe2db.tw/us/Flesh_Catalyst)、[Refined Flesh Catalyst](https://poe2db.tw/us/Refined_Flesh_Catalyst) 与[催化剂列表](https://poe2db.tw/us/Catalysts)仅作人工机制参照，核对戒指／项链与珠宝的材料类别，不复制数据库或整页文章；网站无明确数据授权，属于 gray 参考，非新增运行时适配器。每颗增加品质、替换种类的完整消费规则、国服高级文本及特殊品质交互继续核实；不采用 PoE1 的物等公式或旧稀有度公式。
+
 ### 恐惧精华镶嵌增效计算依据（2026-09-13）
 
 [GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff)确认恐惧精华在手套／鞋上提供 60% 镶嵌物增效，旧 100% 属于遗产数值。属性身份与精华部位映射继续使用已登记的固定 PoB MIT 目录，不新增数据包。[同一固定提交的 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L1523)在游戏文本还原时逐枚缩放后分组；[ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua#L14)对本次支持的正整数效果向下取整。自有代码据此估算普通四族防具符文，不复制实现，不推广到绑定、其他增效或角色总面板。取整与国服实际导出仍待真机验收。

@@ -44,6 +44,14 @@ export { parseCraftCatalog } from './catalogFormat'
 export type { CatalogModMatch } from './catalogMatch'
 export { matchCatalogMods } from './catalogMatch'
 export { createCatalogTranslator } from './catalogTranslation'
+export {
+  type CatalystChoice,
+  type CatalystEffectGroup,
+  type CatalystEffectLine,
+  type CatalystEstimate,
+  catalystChoices,
+  estimateCatalystEffects,
+} from './catalystEffects'
 export type {
   CraftAffixChange,
   CraftComparison,
