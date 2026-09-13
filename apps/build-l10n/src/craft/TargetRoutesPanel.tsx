@@ -401,7 +401,10 @@ function RouteSearch({
                         ) : null}
                         {'currency' in step.operation && step.operation.currency === 'divine' ? (
                           <p className="target-warning">
-                            神圣会随机重掷未破裂显式与固有数值，已达成条件也可能变差；破裂数值保持不变。涉及目标：
+                            {step.operation.omen === 'blessed'
+                              ? craftOmenDescription('blessed')
+                              : '神圣会随机重掷未破裂显式与固有数值，已达成条件也可能变差；破裂数值保持不变。'}
+                            涉及目标：
                             {[
                               ...step.rerolledTargetIds.map(modLabel),
                               ...(step.rerolledImplicitLineIndexes?.map(implicitLabel) ?? []),

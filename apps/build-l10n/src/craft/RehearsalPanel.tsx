@@ -462,7 +462,7 @@ export function RehearsalPanel({
     if (currency === 'divine') {
       next.rolls = []
       for (const affix of current.affixes) {
-        if (affix.fractured) continue
+        if (operationOmen === 'blessed' || affix.fractured) continue
         const mod = modById.get(affix.modId)
         if (!mod) return
         const values = initialValues(mod.lines, affix.lines)
@@ -1695,9 +1695,13 @@ export function RehearsalPanel({
           )}
           {draft.currency === 'divine' ? (
             <p className="rehearsal-warning">
-              神圣会重掷未破裂词缀及固有属性的数值，不改变档位；数值可能变差。破裂数值保持不变，请核对可调整的范围后确认。
+              {draft.omen === 'blessed'
+                ? craftOmenDescription('blessed')
+                : '神圣会重掷未破裂词缀及固有属性的数值，不改变档位；数值可能变差。破裂数值保持不变，请核对可调整的范围后确认。'}
               {targetImplicitValues.length
-                ? '已达成的未破裂显式目标及固有目标也可能失去；示例指定值不代表游戏随机结果安全。'
+                ? draft.omen === 'blessed'
+                  ? '其他已达成的固有目标也可能失去。'
+                  : '已达成的未破裂显式目标及固有目标也可能失去；示例指定值不代表游戏随机结果安全。'
                 : ''}
             </p>
           ) : draft.modIds.length > 0 ? (

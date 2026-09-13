@@ -23,6 +23,7 @@ import {
   implicitTargetRolls,
 } from './implicitTargets'
 import { craftModsConflict } from './modConflicts'
+import { inspectNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen } from './omens'
 import {
   addCraftAffix,
@@ -76,6 +77,25 @@ export interface CraftTargetRoutes {
   candidateApplications: number
   truncated: boolean
   alreadyMatched: boolean
+}
+/** 搜索、完成路线排序与同终点取舍使用同一份受影响目标计数。 */
+function stepRisk(
+  step: Pick<
+    CraftTargetRouteStep,
+    | 'lostTargetIds'
+    | 'atRiskTargetIds'
+    | 'rerolledTargetIds'
+    | 'lostImplicitLineIndexes'
+    | 'rerolledImplicitLineIndexes'
+  >,
+): number {
+  return (
+    step.lostTargetIds.length +
+    step.atRiskTargetIds.length +
+    step.rerolledTargetIds.length +
+    (step.lostImplicitLineIndexes?.length ?? 0) +
+    (step.rerolledImplicitLineIndexes?.length ?? 0)
+  )
 }
 const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
@@ -133,15 +153,7 @@ export function planCraftTargetRoutes(
     return total
   }
   const routeRisk = (route: CraftTargetRoute) =>
-    route.steps.reduce(
-      (n, s) =>
-        n +
-        s.lostTargetIds.length +
-        s.atRiskTargetIds.length +
-        (s.lostImplicitLineIndexes?.length ?? 0) +
-        (s.rerolledImplicitLineIndexes?.length ?? 0),
-      0,
-    )
+    route.steps.reduce((sum, step) => sum + stepRisk(step), 0)
   const routeCompare = (a: CraftTargetRoute, b: CraftTargetRoute) =>
     (pricing ? priceCompare(routeCost(a), routeCost(b)) : 0) ||
     routeRisk(a) - routeRisk(b) ||
@@ -371,12 +383,21 @@ export function planCraftTargetRoutes(
         : []
       const retained = new Set(applied.value.affixes.map((a) => a.modId))
       const lostTargetIds = present.filter((id) => !retained.has(id))
+      const rerolledTargetIds =
+        'currency' in operation && operation.currency === 'divine' && operation.omen !== 'blessed'
+          ? present.filter(
+              (id) => !node.state.affixes.find((affix) => affix.modId === id)?.fractured,
+            )
+          : []
       const risk =
         node.risk +
-        atRiskTargetIds.length +
-        lostTargetIds.length +
-        lostImplicit.length +
-        rerolledImplicit.filter((index) => beforeImplicit.includes(index)).length
+        stepRisk({
+          lostTargetIds,
+          atRiskTargetIds,
+          rerolledTargetIds,
+          lostImplicitLineIndexes: lostImplicit,
+          rerolledImplicitLineIndexes: rerolledImplicit,
+        })
       const stateKey = key(applied.value)
       const previous = seen.get(stateKey)
       const depth = node.steps.length + 1
@@ -405,12 +426,7 @@ export function planCraftTargetRoutes(
         gainedTargetIds: afterMatched.filter((id) => !beforeMatched.includes(id)),
         lostTargetIds,
         atRiskTargetIds,
-        rerolledTargetIds:
-          'currency' in operation && operation.currency === 'divine'
-            ? present.filter(
-                (id) => !node.state.affixes.find((affix) => affix.modId === id)?.fractured,
-              )
-            : [],
+        rerolledTargetIds,
         ...(implicitValues.length
           ? {
               matchedImplicitLineIndexes: afterImplicit,
@@ -528,6 +544,16 @@ export function planCraftTargetRoutes(
       undefined,
       ...(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]).filter((omen) => {
         const rule = CRAFT_OMEN_RULES[omen]
+        if (omen === 'blessed')
+          return (
+            implicitValues.length > 0 &&
+            node.state.affixes.some((affix) => {
+              if (affix.fractured) return false
+              const mod = byId.get(affix.modId)
+              const numeric = mod ? inspectNumericLines(mod.lines) : null
+              return numeric?.ok === true && numeric.value.some((range) => range.min < range.max)
+            })
+          )
         if (rule.addCount !== 2) return true
         // 单个目标不推荐付出额外预兆并占用无关空位；手动演练仍允许指定填充组。
         return (
@@ -607,7 +633,7 @@ export function planCraftTargetRoutes(
           const rolls: NonNullable<CraftOperation['rolls']> = []
           let valid = true
           for (const affix of node.state.affixes) {
-            if (affix.fractured) continue
+            if (omen === 'blessed' || affix.fractured) continue
             const mod = byId.get(affix.modId)
             let numbers = mod
               ? minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id), affix.lines)

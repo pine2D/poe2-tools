@@ -554,7 +554,7 @@ export function prepareCraftOperation(
     const patterns = [
       ...implicit.value.patterns,
       ...current.affixes
-        .filter((affix) => !affix.fractured)
+        .filter((affix) => omen !== 'blessed' && !affix.fractured)
         .flatMap((affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? []),
     ]
     const ranges = inspectNumericLines(patterns)
@@ -693,7 +693,9 @@ export function applyCraftOperation(
   ) {
     const ids =
       operation.currency === 'divine'
-        ? next.affixes.filter((affix) => !affix.fractured).map((affix) => affix.modId)
+        ? next.affixes
+            .filter((affix) => operation.omen !== 'blessed' && !affix.fractured)
+            .map((affix) => affix.modId)
         : operation.modIds
     const required = new Set<string>()
     for (const id of ids) {

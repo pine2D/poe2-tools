@@ -691,7 +691,9 @@ export function CraftTargets({
                     </ul>
                     {step.currency === 'divine' ? (
                       <p className="target-warning">
-                        神圣同时重掷显式与固有范围，其他已达成数值条件也可能变差；不保证达到目标。
+                        {step.omen === 'blessed'
+                          ? craftOmenDescription('blessed')
+                          : '神圣同时重掷显式与固有范围，其他已达成数值条件也可能变差；不保证达到目标。'}
                         {step.rerolledImplicitLineIndexes?.length
                           ? `涉及固有目标：${step.rerolledImplicitLineIndexes.map(implicitLabel).join('；')}`
                           : ''}

@@ -85,7 +85,7 @@ it('已达成显式与固有条件仍受保护，示例保住数值也报告神�
   }
 })
 
-it('非目标固有及显式原值不在显示网格时选合法神圣值，不丢失联合路线', () => {
+it('祝福保留显式网格外原值，固有仍选择合法网格值完成联合路线', () => {
   const { catalog, state, base } = implicitTargetFixture()
   base.implicit = '(1.5-2.5)% increased Flask Charges gained\nHas (1-3) Charm Slot'
   required(catalog.modifiers[0]).lines = ['prefix1 (1.5-2.5)']
@@ -102,7 +102,8 @@ it('非目标固有及显式原值不在显示网格时选合法神圣值，不�
   const step = required(required(result.value.routes[0]).steps[0])
   expect(step.operation).toMatchObject({
     currency: 'divine',
-    rolls: [{ modId: 'prefix1', values: [1.5] }],
+    omen: 'blessed',
+    rolls: [],
     implicitValues: [1.5, 2],
   })
   expect(applyCraftStep(catalog, start, step.operation).ok).toBe(true)

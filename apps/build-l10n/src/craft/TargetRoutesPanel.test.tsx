@@ -145,6 +145,18 @@ const props = {
   onPreview: vi.fn(),
 }
 afterEach(cleanup)
+it('祝福路线说明保留显式数值，不显示普通神圣的显式重掷风险', () => {
+  const blessed = structuredClone(result)
+  if (!blessed.ok) throw new Error('缺少路线')
+  const step = blessed.value.routes[0]?.steps[0]
+  if (!step) throw new Error('缺少步骤')
+  step.operation = { currency: 'divine', omen: 'blessed', modIds: [], implicitValues: [15] }
+  render(<TargetRoutesPanel {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  act(() => pending.calls[0]?.callback(blessed))
+  expect(screen.getByText(/显式词缀及其数值保持不变/)).toBeDefined()
+  expect(screen.queryByText(/神圣会随机重掷未破裂显式与固有数值/)).toBeNull()
+})
 beforeEach(() => {
   pending.calls.length = 0
   props.onPreview.mockClear()

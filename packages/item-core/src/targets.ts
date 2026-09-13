@@ -441,7 +441,7 @@ export function analyzeCraftTargets(
   minimumTargetCount?: number,
 ): CraftResult<CraftAdvice> {
   if (omen !== undefined && !isCraftOmen(omen))
-    return { ok: false, error: '预兆必须是当前支持的单枚定向预兆。' }
+    return { ok: false, error: '预兆必须是当前支持的制作配置。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   const validated = validateCraftTargets(
@@ -712,7 +712,8 @@ export function analyzeCraftTargets(
   const canPreserveImplicit =
     implicitRolls === null ||
     implicitRolls.ok ||
-    (unmetNumericIds.length > 0 &&
+    (omen !== 'blessed' &&
+      unmetNumericIds.length > 0 &&
       implicitTargetRolls(
         catalog,
         current,
@@ -742,16 +743,17 @@ export function analyzeCraftTargets(
     )
   })
   if (
-    omen === undefined &&
-    (unmetNumericIds.length > 0 || unmetImplicit.length > 0) &&
+    (omen === undefined || omen === 'blessed') &&
+    ((omen !== 'blessed' && unmetNumericIds.length > 0) || unmetImplicit.length > 0) &&
     canPreserveImplicit &&
-    explicitRollsPossible &&
-    prepareCraftOperation(catalog, current, 'divine').ok
+    (omen === 'blessed' || explicitRollsPossible) &&
+    prepareCraftOperation(catalog, current, 'divine', undefined, omen).ok
   ) {
     steps.push({
       currency: 'divine',
-      targetModIds: unmetNumericIds,
-      rerolledTargetIds: numericTargets.map((target) => target.modId),
+      ...(omen ? { omen } : {}),
+      targetModIds: omen === 'blessed' ? [] : unmetNumericIds,
+      rerolledTargetIds: omen === 'blessed' ? [] : numericTargets.map((target) => target.modId),
       lostTargetIds: [],
       randomRemovalRisk: false,
       clearsAll: false,

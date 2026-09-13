@@ -2,6 +2,7 @@ import type { CraftCurrency } from './rehearsal'
 
 /** 制作配置 ID；双枚配置的实际材料由 craftOmenMaterials 展开。 */
 export type CraftOmen =
+  | 'blessed'
   | 'greater_exaltation'
   | 'greater_sinistral_exaltation'
   | 'greater_dextral_exaltation'
@@ -18,13 +19,14 @@ export const CRAFT_OMEN_RULES: Record<
   CraftOmen,
   {
     name: string
-    currency: 'exalted' | 'annulment' | 'chaos'
+    currency: 'exalted' | 'annulment' | 'chaos' | 'divine'
     kind: 'prefix' | 'suffix' | null
-    effect: 'add' | 'remove'
+    effect: 'add' | 'remove' | 'reroll'
     addCount?: 2
     materials?: readonly string[]
   }
 > = {
+  blessed: { name: 'Omen of the Blessed', currency: 'divine', kind: null, effect: 'reroll' },
   greater_exaltation: {
     name: 'Omen of Greater Exaltation',
     currency: 'exalted',
@@ -121,6 +123,8 @@ export function craftOmenMaterials(omen: CraftOmen): readonly string[] {
 
 /** 用同一规则说明预兆候选约束，避免无方向预兆被误说成后缀限定。 */
 export function craftOmenDescription(omen: CraftOmen): string {
+  if (omen === 'blessed')
+    return '只重掷固有属性的数值；显式词缀及其数值保持不变，固有数值仍可能变差。'
   if (omen === 'light')
     return '仅移除已揭示且标记为亵渎的完整词缀组，其他组保留。移除后可重新施加骨骼；若该组是已有目标，也会失去该目标。'
   if (omen === 'whittling')

@@ -57,7 +57,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v46'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v47'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -116,7 +116,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 46 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 47 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -485,6 +485,13 @@ export function parseCraftProject(
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
     if (
+      rulesVersion < 47 &&
+      read.value.rules.some(
+        (rule) => rule.action.kind === 'currency' && rule.action.omen === 'blessed',
+      )
+    )
+      return fail('v46 及更早项目不能包含祝福预兆指引。')
+    if (
       rulesVersion < 46 &&
       read.value.rules.some((rule) =>
         rule.conditions.some((condition) => ['all', 'any', 'not'].includes(condition.kind)),
@@ -563,6 +570,12 @@ export function parseCraftProject(
     minimumTargetCount = value.minimumTargetCount
   }
 
+  if (
+    rulesVersion < 47 &&
+    Array.isArray(value.operations) &&
+    value.operations.some((step) => record(step) && step.omen === 'blessed')
+  )
+    return fail('v46 及更早项目不能包含祝福预兆，包括撤销位置之后的步骤。')
   const numericGroups = [value.targetValues, value.targetImplicitValues]
   const usesEffectiveTargets = numericGroups.some(
     (groups) =>
