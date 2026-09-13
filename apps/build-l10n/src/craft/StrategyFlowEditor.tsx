@@ -39,6 +39,7 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
       <p>
         修改流程或目标后，从当前装备的入口阶段重新开始；撤销和恢复按实际操作重算。揭示会经过“未揭示”和“已有候选”，请让本阶段规则覆盖这两种状态。
       </p>
+      <p>无法执行转向只处理动作开始前的校验，不代表材料已经消耗或随机结果失败。</p>
       <div className="strategy-toolbar">
         <label>
           入口阶段
@@ -67,7 +68,9 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
             const { flow: _, ...plain } = strategy
             onChange({
               ...plain,
-              rules: strategy.rules.map(({ stageId: _s, nextStageId: _n, ...rule }) => rule),
+              rules: strategy.rules.map(
+                ({ stageId: _s, nextStageId: _n, onBlockedStageId: _b, ...rule }) => rule,
+              ),
             })
           }}
         >
@@ -109,7 +112,10 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
                 flow.stages.length === 1 ||
                 flow.entryStageId === stage.id ||
                 strategy.rules.some(
-                  (rule) => rule.stageId === stage.id || rule.nextStageId === stage.id,
+                  (rule) =>
+                    rule.stageId === stage.id ||
+                    rule.nextStageId === stage.id ||
+                    rule.onBlockedStageId === stage.id,
                 )
               }
               onClick={() =>
@@ -127,7 +133,7 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
                   rule.stageId !== stage.id
                     ? []
                     : [
-                        `规则 ${index + 1}${rule.action.kind === 'jump' ? '（仅判断）' : ''} → ${rule.action.kind === 'stop' ? '停止' : flow.stages.find((entry) => entry.id === (rule.nextStageId ?? stage.id))?.name}`,
+                        `规则 ${index + 1}${rule.action.kind === 'jump' ? '（仅判断）' : ''} → ${rule.action.kind === 'stop' ? '停止' : flow.stages.find((entry) => entry.id === (rule.nextStageId ?? stage.id))?.name}${rule.onBlockedStageId ? `；无法执行 → ${flow.stages.find((entry) => entry.id === rule.onBlockedStageId)?.name}` : ''}`,
                       ],
                 )
                 .join('；')}
@@ -137,7 +143,7 @@ export function StrategyFlowEditor({ strategy, stageId, startStep, onChange, onR
             ) : null}
           </div>
         ))}
-        <p>入口及被规则引用的阶段不能删除，请先调整入口、所属阶段或下一阶段。</p>
+        <p>入口及被规则引用的阶段不能删除，请先调整入口、所属阶段、下一阶段或无法执行时的去向。</p>
       </details>
       <button
         type="button"
@@ -204,6 +210,25 @@ export function StrategyRuleStages({
             }}
           >
             {rule.action.kind !== 'jump' ? <option value="">留在本阶段</option> : null}
+            {options}
+          </select>
+        </label>
+      ) : null}
+      {rule.action.kind !== 'stop' && rule.action.kind !== 'jump' ? (
+        <label>
+          无法执行时
+          <select
+            aria-label={`规则 ${number} 无法执行时`}
+            value={rule.onBlockedStageId ?? ''}
+            onChange={(event) => {
+              const { onBlockedStageId: _, ...rest } = rule
+              onChange({
+                ...rest,
+                ...(event.target.value ? { onBlockedStageId: event.target.value } : {}),
+              })
+            }}
+          >
+            <option value="">停止并显示原因</option>
             {options}
           </select>
         </label>

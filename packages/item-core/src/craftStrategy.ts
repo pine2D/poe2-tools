@@ -30,6 +30,7 @@ export type CraftStrategyCondition =
 export interface CraftStrategyRule {
   stageId?: string
   nextStageId?: string
+  onBlockedStageId?: string
   conditions: CraftStrategyCondition[]
   action: CraftStrategyAction
 }
@@ -56,7 +57,7 @@ export type CraftStrategyDecision = (
   | { kind: 'stop'; reason: 'rule'; ruleIndex: number }
   | { kind: 'blocked'; message: string; ruleIndex?: number }
   | { kind: 'unmatched' }
-) & { route?: { ruleIndex: number; from: string; to: string }[] }
+) & { route?: { ruleIndex: number; from: string; to: string; blockedReason?: string }[] }
 
 function keys(value: unknown, allowed: string[]): value is Record<string, unknown> {
   return (
@@ -162,7 +163,7 @@ export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
   }
   for (const [index, input] of value.rules.entries()) {
     if (
-      !keys(input, ['conditions', 'action', 'stageId', 'nextStageId']) ||
+      !keys(input, ['conditions', 'action', 'stageId', 'nextStageId', 'onBlockedStageId']) ||
       !Array.isArray(input.conditions) ||
       input.conditions.length < 1 ||
       input.conditions.length > 4
@@ -187,11 +188,22 @@ export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
       return fail(`规则 ${index + 1} 的阶段归属或下一阶段无效。`)
     if (action.kind === 'jump' && (!flow || typeof input.nextStageId !== 'string'))
       return fail(`规则 ${index + 1} 的纯跳转必须指定已有阶段。`)
+    if (
+      Object.hasOwn(input, 'onBlockedStageId') &&
+      (!flow ||
+        action.kind === 'stop' ||
+        action.kind === 'jump' ||
+        !flow.stages.some((stage) => stage.id === input.onBlockedStageId))
+    )
+      return fail(`规则 ${index + 1} 的无法执行转向必须属于工作动作并引用已有阶段。`)
     rules.push({
       conditions: conditions as CraftStrategyCondition[],
       action,
       ...(flow ? { stageId: input.stageId as string } : {}),
       ...(typeof input.nextStageId === 'string' ? { nextStageId: input.nextStageId } : {}),
+      ...(typeof input.onBlockedStageId === 'string'
+        ? { onBlockedStageId: input.onBlockedStageId }
+        : {}),
     })
   }
   return { ok: true, value: { maxSteps: value.maxSteps, rules, ...(flow ? { flow } : {}) } }
@@ -309,23 +321,31 @@ export function evaluateCraftStrategy(
     const rule = strategy.rules[ruleIndex]
     if (!rule) return result({ kind: 'unmatched' })
     if (rule.action.kind === 'stop') return result({ kind: 'stop', reason: 'rule', ruleIndex })
-    if (rule.action.kind === 'jump') {
-      // 配置已校验；同一装备上重复阶段意味着无消费循环，不依赖制作步数预算。
-      if (!currentStage || !rule.nextStageId) return fail('纯跳转缺少阶段。')
-      route.push({ ruleIndex, from: currentStage, to: rule.nextStageId })
-      if (visited.has(rule.nextStageId))
-        return result({
-          kind: 'blocked',
-          ruleIndex,
-          message: '检测到不消耗材料的阶段循环，请修改跳转目的或条件。',
-        })
-      currentStage = rule.nextStageId
-      continue
+    let destination = rule.nextStageId
+    let blockedReason: string | undefined
+    if (rule.action.kind !== 'jump') {
+      const action = rule.action
+      const checkedAction = checkCraftStrategyAction(catalog, checked.value, action)
+      if (checkedAction.ok) return result({ kind: 'action', ruleIndex, action })
+      if (!rule.onBlockedStageId)
+        return result({ kind: 'blocked', ruleIndex, message: checkedAction.error })
+      destination = rule.onBlockedStageId
+      blockedReason = checkedAction.error
     }
-    const action = rule.action
-    const checkedAction = checkCraftStrategyAction(catalog, checked.value, action)
-    return checkedAction.ok
-      ? result({ kind: 'action', ruleIndex, action })
-      : result({ kind: 'blocked', ruleIndex, message: checkedAction.error })
+    // 跳转与预检不通过的转向都未消费材料，共用重复阶段检测。
+    if (!currentStage || !destination) return fail('转向缺少阶段。')
+    route.push({
+      ruleIndex,
+      from: currentStage,
+      to: destination,
+      ...(blockedReason ? { blockedReason } : {}),
+    })
+    if (visited.has(destination))
+      return result({
+        kind: 'blocked',
+        ruleIndex,
+        message: '检测到不消耗材料的阶段循环，请修改跳转目的或条件。',
+      })
+    currentStage = destination
   }
 }

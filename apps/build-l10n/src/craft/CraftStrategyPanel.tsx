@@ -194,6 +194,7 @@ export function CraftStrategyPanel({
                     规则 {hop.ruleIndex + 1}：
                     {strategy.flow?.stages.find((stage) => stage.id === hop.from)?.name ?? hop.from}{' '}
                     → {strategy.flow?.stages.find((stage) => stage.id === hop.to)?.name ?? hop.to}
+                    {hop.blockedReason ? <p>无法执行：{hop.blockedReason}</p> : null}
                   </li>
                 ))}
               </ol>
@@ -499,10 +500,13 @@ export function CraftStrategyPanel({
                       translations={translations}
                       omenLabel={omenLabel}
                       onChange={(action) => {
-                        const { nextStageId, ...rest } = rule
+                        const { nextStageId, onBlockedStageId, ...rest } = rule
                         replaceRule(index, {
                           ...rest,
                           action,
+                          ...(action.kind !== 'stop' && action.kind !== 'jump' && onBlockedStageId
+                            ? { onBlockedStageId }
+                            : {}),
                           ...(action.kind === 'jump'
                             ? {
                                 nextStageId:
