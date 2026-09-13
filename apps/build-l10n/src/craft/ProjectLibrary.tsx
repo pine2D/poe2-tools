@@ -12,9 +12,10 @@ interface Props {
   canSave: boolean
   getText: () => { ok: true; value: string } | { ok: false; error: string }
   onRestoreText: (text: string) => void
+  onReuseText?: (text: string, name: string) => void
   onMessage: (message: string) => void
 }
-export function ProjectLibrary({ canSave, getText, onRestoreText, onMessage }: Props) {
+export function ProjectLibrary({ canSave, getText, onRestoreText, onReuseText, onMessage }: Props) {
   const [entries, setEntries] = useState<LibraryEntry[]>([])
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
@@ -56,7 +57,7 @@ export function ProjectLibrary({ canSave, getText, onRestoreText, onMessage }: P
       setSaving(false)
     }
   }
-  const restore = (key: string) => {
+  const restore = (key: string, reuse = false) => {
     try {
       const entry = readLibrary(localStorage).find((item) => item.key === key)
       if (!entry || entry.text === null) {
@@ -64,7 +65,8 @@ export function ProjectLibrary({ canSave, getText, onRestoreText, onMessage }: P
         refresh()
         return
       }
-      onRestoreText(entry.text)
+      if (reuse && onReuseText) onReuseText(entry.text, entry.name)
+      else onRestoreText(entry.text)
     } catch {
       onMessage('浏览器无法读取这份演练收藏。')
     }
@@ -93,6 +95,7 @@ export function ProjectLibrary({ canSave, getText, onRestoreText, onMessage }: P
       <summary ref={summary}>演练收藏</summary>
       <p>
         保存在当前浏览器，最多 20 份；清理站点数据会丢失，请定期导出项目备份。恢复会切换当前演练。
+        沿用方案可将收藏的目标和指引用于当前装备，先预览再应用。
       </p>
       {canSave && (
         <div className="project-library-save">
@@ -136,6 +139,16 @@ export function ProjectLibrary({ canSave, getText, onRestoreText, onMessage }: P
               >
                 恢复
               </button>
+              {onReuseText ? (
+                <button
+                  type="button"
+                  aria-label={`沿用收藏方案 ${entry.name}`}
+                  disabled={entry.text === null}
+                  onClick={() => restore(entry.key, true)}
+                >
+                  沿用方案
+                </button>
+              ) : null}
               <button
                 type="button"
                 aria-label={`移除收藏 ${entry.name}`}

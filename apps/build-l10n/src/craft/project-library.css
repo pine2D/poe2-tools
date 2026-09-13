@@ -48,3 +48,18 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.project-plan-preview {
+  flex-basis: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1rem;
+}
+.project-plan-preview > * + * {
+  margin-top: 0.75rem;
+}
+.project-plan-preview p + p {
+  margin-top: 0.75rem;
+}

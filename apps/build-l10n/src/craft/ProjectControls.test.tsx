@@ -195,3 +195,79 @@ it('收藏恢复会使先前异步文件读取失效，且没有当前项目时�
   await Promise.resolve()
   expect(onRestore).toHaveBeenCalledTimes(1)
 })
+
+it('沿用方案先预览再应用，保留当前起点和报价；取消或当前上下文变化清除预览', async () => {
+  const plan: CraftProject = {
+    ...project,
+    initialState: { ...initialState, itemLevel: 90 },
+    strategy: {
+      maxSteps: 20,
+      rules: [{ conditions: [{ kind: 'always' }], action: { kind: 'stop' } }],
+    },
+    pricing: { unit: 'divine', baseCost: 99, prices: {} },
+  }
+  await addLibraryEntry(localStorage, '收手方案', JSON.stringify(plan))
+  const onRestore = vi.fn()
+  const receiving = { ...project, pricing: { unit: 'divine' as const, baseCost: 2, prices: {} } }
+  const { rerender } = render(
+    <ProjectControls catalog={catalog} project={receiving} onRestore={onRestore} />,
+  )
+  fireEvent.click(screen.getByText('演练收藏'))
+  fireEvent.click(screen.getByRole('button', { name: '沿用收藏方案 收手方案' }))
+  expect(screen.getByRole('region', { name: '沿用方案预览' })).toBeDefined()
+  expect(onRestore).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '取消沿用' }))
+  expect(screen.queryByRole('region', { name: '沿用方案预览' })).toBeNull()
+  expect(onRestore).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '沿用收藏方案 收手方案' }))
+  fireEvent.click(screen.getByRole('button', { name: '应用收藏方案' }))
+  expect(onRestore).toHaveBeenCalledTimes(1)
+  expect(onRestore.mock.calls[0]?.[0].project.initialState.itemLevel).toBe(80)
+  expect(onRestore.mock.calls[0]?.[0].project.pricing.baseCost).toBe(2)
+  expect(onRestore.mock.calls[0]?.[0].project.strategy).toEqual(plan.strategy)
+  fireEvent.click(screen.getByRole('button', { name: '沿用收藏方案 收手方案' }))
+  rerender(
+    <ProjectControls
+      catalog={catalog}
+      project={{ ...receiving, cursor: 0 }}
+      onRestore={onRestore}
+    />,
+  )
+  expect(screen.queryByRole('region', { name: '沿用方案预览' })).toBeNull()
+})
+
+it('方案预览使迟到文件失效，无目标收藏不能沿用，没有当前装备时不展示沿用入口', async () => {
+  const plan: CraftProject = {
+    ...project,
+    strategy: {
+      maxSteps: 20,
+      rules: [{ conditions: [{ kind: 'always' }], action: { kind: 'stop' } }],
+    },
+  }
+  await addLibraryEntry(localStorage, '可用', JSON.stringify(plan))
+  await addLibraryEntry(localStorage, '空白', JSON.stringify(project))
+  const onRestore = vi.fn()
+  const { rerender } = render(
+    <ProjectControls catalog={catalog} project={project} onRestore={onRestore} />,
+  )
+  let resolveFile: ((text: string) => void) | undefined
+  const delayed = new Promise<string>((resolve) => {
+    resolveFile = resolve
+  })
+  const file = new File([''], 'old.craft.json')
+  Object.defineProperty(file, 'text', { value: () => delayed })
+  fireEvent.change(screen.getByLabelText('选择演练项目文件'), { target: { files: [file] } })
+  fireEvent.click(screen.getByText('演练收藏'))
+  fireEvent.click(screen.getByRole('button', { name: '沿用收藏方案 可用' }))
+  resolveFile?.(JSON.stringify(project))
+  await act(async () => {
+    await delayed
+  })
+  expect(onRestore).not.toHaveBeenCalled()
+  expect(screen.getByRole('region', { name: '沿用方案预览' })).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '沿用收藏方案 空白' }))
+  expect(screen.queryByRole('region', { name: '沿用方案预览' })).toBeNull()
+  expect(screen.getByRole('status').textContent).toContain('没有制作目标或条件指引')
+  rerender(<ProjectControls catalog={catalog} onRestore={onRestore} />)
+  expect(screen.queryByRole('button', { name: '沿用收藏方案 可用' })).toBeNull()
+})

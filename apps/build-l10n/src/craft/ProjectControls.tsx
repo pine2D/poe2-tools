@@ -5,6 +5,7 @@ import {
   MAX_CRAFT_PROJECT_BYTES,
   parseCraftProject,
   type RestoredCraftProject,
+  reuseCraftPlan,
   serializeCraftProject,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
@@ -23,12 +24,23 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const [message, setMessage] = useState('')
   const requestRef = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const previewRef = useRef<HTMLElement>(null)
+  const planTrigger = useRef<HTMLElement | null>(null)
+  const [planPreview, setPlanPreview] = useState<{
+    text: string
+    name: string
+    restored: RestoredCraftProject
+  } | null>(null)
+  useEffect(() => {
+    if (planPreview) previewRef.current?.focus()
+  }, [planPreview])
 
   useEffect(() => {
     // 恢复所依赖的上下文变化后，先前文件读取结果已经过期。
     void catalog
     void dictionary
     void project
+    setPlanPreview(null)
     requestRef.current += 1
     return () => {
       requestRef.current += 1
@@ -52,6 +64,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const restoreText = (text: string, request: number) => {
     const restored = parseCraftProject(text, catalog, dictionary)
     if (request !== requestRef.current) return
+    setPlanPreview(null)
     if (!restored.ok) {
       setMessage(restored.error)
       return
@@ -122,6 +135,46 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
     }
   }
 
+  const preparePlan = (text: string, name: string) => {
+    planTrigger.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    ++requestRef.current
+    setPlanPreview(null)
+    const current = validatedText()
+    if (!current.ok) {
+      setMessage(current.error)
+      return
+    }
+    const reused = reuseCraftPlan(current.value, text, catalog, dictionary)
+    if (!reused.ok) {
+      setMessage(reused.error)
+      return
+    }
+    setMessage('方案已核对，请预览将要沿用的目标与指引。')
+    setPlanPreview({ text, name, restored: reused.value })
+  }
+  const applyPlan = () => {
+    if (!planPreview) return
+    ++requestRef.current
+    const current = validatedText()
+    if (!current.ok) {
+      setMessage(current.error)
+      setPlanPreview(null)
+      return
+    }
+    const reused = reuseCraftPlan(current.value, planPreview.text, catalog, dictionary)
+    setPlanPreview(null)
+    if (!reused.ok) {
+      setMessage(reused.error)
+      return
+    }
+    onRestore(reused.value)
+    if (planTrigger.current?.isConnected) planTrigger.current.focus()
+    setMessage(
+      '已沿用收藏的目标与指引；装备、历史和报价保留，未应用草稿已清除，分阶段流程从当前步骤重新开始。',
+    )
+  }
+
   return (
     <section className="project-controls" aria-label="演练项目">
       {project && (
@@ -155,8 +208,55 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
         canSave={Boolean(project)}
         getText={validatedText}
         onRestoreText={(text) => restoreText(text, ++requestRef.current)}
+        {...(project ? { onReuseText: preparePlan } : {})}
         onMessage={setMessage}
       />
+      {planPreview ? (
+        <section
+          ref={previewRef}
+          tabIndex={-1}
+          className="project-plan-preview"
+          aria-label="沿用方案预览"
+        >
+          <h3>沿用方案：{planPreview.name}</h3>
+          <p>
+            将替换当前制作目标和条件指引。当前装备、已应用 {planPreview.restored.project.cursor}{' '}
+            步、可重做{' '}
+            {planPreview.restored.project.operations.length - planPreview.restored.project.cursor}{' '}
+            步及报价保留；未应用草稿会清除。
+          </p>
+          <p>
+            显式目标 {planPreview.restored.project.targetModIds?.length ?? 0} 组，固有目标{' '}
+            {planPreview.restored.project.targetImplicitValues?.length ?? 0} 行。
+          </p>
+          {planPreview.restored.project.strategy ? (
+            <p>
+              条件规则 {planPreview.restored.project.strategy.rules.length} 条，
+              {planPreview.restored.project.strategy.flow?.stages.length ?? 0} 个阶段。步骤上限仍为{' '}
+              {planPreview.restored.project.strategy.maxSteps}
+              ，包含当前已有历史；分阶段流程从入口重新判断。
+            </p>
+          ) : (
+            <p>此方案未启用条件指引。</p>
+          )}
+          <p>
+            动作仍按当前装备核对，孔位或数值未知的条件保持未知。应用方案本身不消耗材料，也不修改收藏。
+          </p>
+          <button type="button" onClick={applyPlan}>
+            应用收藏方案
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPlanPreview(null)
+              setMessage('已取消沿用，当前演练保持不变。')
+              if (planTrigger.current?.isConnected) planTrigger.current.focus()
+            }}
+          >
+            取消沿用
+          </button>
+        </section>
+      ) : null}
       {message && <p role="status">{message}</p>}
     </section>
   )

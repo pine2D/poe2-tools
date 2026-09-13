@@ -161,6 +161,7 @@ export {
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'
+export { reuseCraftPlan } from './projectPlan'
 export { readItemQuality, supportsItemQuality } from './quality'
 export type {
   BasicCraftCurrency,
