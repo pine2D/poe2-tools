@@ -198,11 +198,13 @@ export function CraftComparisonPanel({
               <article className="comparison-group" key={change.modId}>
                 <header>
                   <span className="comparison-kind">
-                    {change.crafted || change.desecrated
-                      ? change.numeric.length
-                        ? '来源与数值变化'
-                        : '来源变化'
-                      : CHANGE_LABELS[change.kind]}
+                    {change.fractured
+                      ? '破裂状态变化'
+                      : change.crafted || change.desecrated
+                        ? change.numeric.length
+                          ? '来源与数值变化'
+                          : '来源变化'
+                        : CHANGE_LABELS[change.kind]}
                   </span>
                   <h4>{label}</h4>
                   {mod ? (
@@ -211,6 +213,12 @@ export function CraftComparisonPanel({
                     </span>
                   ) : null}
                 </header>
+                {change.fractured ? (
+                  <p>
+                    破裂状态：{change.fractured.before ? '已锁定' : '未锁定'} →{' '}
+                    {change.fractured.after ? '已锁定' : '未锁定'}
+                  </p>
+                ) : null}
                 {change.desecrated ? (
                   <p>
                     亵渎来源：{change.desecrated.before ? '亵渎' : '普通'} →{' '}

@@ -951,7 +951,7 @@ it.each([
   ['desecrated', '亵渎'],
   ['fractured', '破裂'],
   ['', '破裂物品'],
-])('当前装备显示 %s 来源并拒绝进入制作', async (state, label) => {
+])('当前装备显示 %s 来源，缺少固有属性或定位时仍拒绝制作', async (state, label) => {
   const raw = state ? `+25(20-30) 能量护盾上限 (${state})` : '+25(20-30) 能量护盾上限'
   const parsed = parseItem(
     `物品类别: 法器\n稀有度: 稀有\n试验 星火\n符文法器\n--------\n物品等级: 40\n--------\n{ 前缀属性 "试验的" (等阶：6) }\n${raw}${state ? '' : '\n--------\nFractured Item'}`,
@@ -982,11 +982,7 @@ it.each([
   const start = screen.queryByRole('button', { name: '从当前装备开始' }) as HTMLButtonElement | null
   expect(start === null || start.disabled).toBe(true)
   expect(
-    screen.getByText(
-      state === 'desecrated'
-        ? /固有属性尚未与所选基底完整对应/
-        : /已识别.*特殊制作|特殊.*尚未开放|尚未开放.*特殊/,
-    ),
+    screen.getByText(state ? /固有属性尚未与所选基底完整对应/ : /破裂必须定位一组显式属性/),
   ).toBeDefined()
 })
 

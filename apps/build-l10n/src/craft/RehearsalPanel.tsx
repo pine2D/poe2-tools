@@ -28,6 +28,7 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceCraftOperation,
   type EssenceOmen,
+  type FractureCraftOperation,
   type ItemDictionary,
   inspectNumericLines,
   prepareCraftOperation,
@@ -50,6 +51,7 @@ import { CraftTargets } from './CraftTargets'
 import { DefencePanel } from './DefencePanel'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
+import { FracturePanel } from './FracturePanel'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
 import { ProjectControls } from './ProjectControls'
@@ -127,12 +129,14 @@ function AffixCard({
   lines,
   crafted,
   desecrated,
+  fractured,
   translateLine,
 }: {
   mod: CatalogMod | undefined
   lines: string[]
   crafted?: true | undefined
   desecrated?: true | undefined
+  fractured?: true | undefined
   translateLine: ((line: string) => string | null) | undefined
 }) {
   return (
@@ -143,6 +147,7 @@ function AffixCard({
           states={[
             ...(crafted ? ['crafted' as const] : []),
             ...(desecrated ? ['desecrated' as const] : []),
+            ...(fractured ? ['fractured' as const] : []),
           ]}
         />
         {mod ? (
@@ -267,6 +272,17 @@ export function RehearsalPanel({
   >(null)
   const [essenceDraft, setEssenceDraft] = useState<EssenceCraftOperation | null>(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
+  const [fractureDraft, setFractureDraft] = useState<FractureCraftOperation | null>(null)
+  const fractureDraftRef = useRef<HTMLElement>(null)
+  const fracturePanelRef = useRef<HTMLDivElement>(null)
+  const restoreFractureFocusRef = useRef(false)
+  useEffect(() => {
+    if (fractureDraft) fractureDraftRef.current?.focus()
+    else if (restoreFractureFocusRef.current) {
+      fracturePanelRef.current?.focus()
+      restoreFractureFocusRef.current = false
+    }
+  }, [fractureDraft])
   const [boneSession, setBoneSession] = useState(0)
   const boneDraftRef = useRef<HTMLElement>(null)
   const bonePanelRef = useRef<HTMLDivElement>(null)
@@ -335,19 +351,20 @@ export function RehearsalPanel({
       .slice(0, CANDIDATE_LIMIT)
   }, [catalog, draft, query, translateLine])
   const preview = useMemo(() => {
+    if (fractureDraft && current) return applyCraftStep(catalog, current, fractureDraft)
     if (boneDraft && current) return applyCraftStep(catalog, current, boneDraft)
     if (essenceDraft && current) return applyCraftStep(catalog, current, essenceDraft)
     if (socketDraft && current) return applyCraftStep(catalog, current, socketDraft)
     if (!draft || !current || draft.modIds.length !== draft.count) return null
     return applyCraftOperation(catalog, current, draftOperation(draft))
-  }, [catalog, current, draft, socketDraft, essenceDraft, boneDraft])
+  }, [catalog, current, draft, socketDraft, essenceDraft, boneDraft, fractureDraft])
 
   if (!initial.ok || !current || !base) {
     return <section className="rehearsal-panel rehearsal-error">无法开始演练：{message}</section>
   }
 
   const startOperation = (currency: CraftCurrency, operationOmen = omen) => {
-    if (boneDraft || current.pendingDesecration) return
+    if (fractureDraft || boneDraft || current.pendingDesecration) return
     setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
     if (isRemovalCurrency(currency)) {
       const removable = removableCraftAffixes(catalog, current, currency, operationOmen)
@@ -374,6 +391,7 @@ export function RehearsalPanel({
     if (currency === 'divine') {
       next.rolls = []
       for (const affix of current.affixes) {
+        if (affix.fractured) continue
         const mod = modById.get(affix.modId)
         if (!mod) return
         const values = initialValues(mod.lines, affix.lines)
@@ -447,7 +465,8 @@ export function RehearsalPanel({
     setMessage('')
   }
   const startAdvice = (step: CraftAdviceStep) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+      return
     setOmen(step.omen)
     if (isRemovalCurrency(step.currency)) {
       if (step.removeModId) chooseRemoval(step.currency, step.removeModId, step.omen)
@@ -456,8 +475,13 @@ export function RehearsalPanel({
     }
   }
   const startRoute = (operation: CraftStep) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+      return
     if ('kind' in operation) {
+      if (operation.kind === 'fracture') {
+        startFracture(operation)
+        return
+      }
       if (
         operation.kind === 'desecrate' ||
         operation.kind === 'desecration-offer' ||
@@ -517,7 +541,8 @@ export function RehearsalPanel({
     startRoute(operation)
   }
   const startEssence = (operation: EssenceCraftOperation) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+      return
     const checked = applyCraftStep(catalog, current, operation)
     if (!checked.ok) {
       setMessage(checked.error)
@@ -530,13 +555,27 @@ export function RehearsalPanel({
     setMessage('')
   }
   const startBone = (operation: BoneCraftOperation) => {
-    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft) return
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+      return
     const checked = applyCraftStep(catalog, current, operation)
     if (!checked.ok) {
       setMessage(checked.error)
       return
     }
     setBoneDraft(structuredClone(operation))
+    setOmen(undefined)
+    setComparisonOpen(true)
+    setMessage('')
+  }
+  const startFracture = (operation: FractureCraftOperation) => {
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+      return
+    const checked = applyCraftStep(catalog, current, operation)
+    if (!checked.ok) {
+      setMessage(checked.error)
+      return
+    }
+    setFractureDraft({ ...operation })
     setOmen(undefined)
     setComparisonOpen(true)
     setMessage('')
@@ -562,6 +601,7 @@ export function RehearsalPanel({
       )
     )
       restoreBoneFocusRef.current = true
+    if ('kind' in operation && operation.kind === 'fracture') restoreFractureFocusRef.current = true
     setHistory(next)
     setCursor(next.length - 1)
     if (!('kind' in operation)) setOmen(undefined)
@@ -569,6 +609,7 @@ export function RehearsalPanel({
     setSocketDraft(null)
     setEssenceDraft(null)
     setBoneDraft(null)
+    setFractureDraft(null)
     setBoneSession((value) => value + 1)
     setEssenceSession((value) => value + 1)
     setRemovalCurrency(null)
@@ -611,6 +652,7 @@ export function RehearsalPanel({
     setSocketDraft(null)
     setEssenceDraft(null)
     setBoneDraft(null)
+    setFractureDraft(null)
     setBoneSession((value) => value + 1)
     setEssenceSession((value) => value + 1)
     setRemovalCurrency(null)
@@ -627,9 +669,14 @@ export function RehearsalPanel({
     const name = catalog.essences?.find((entry) => entry.id === id)?.name ?? id
     return translations[name] ?? name
   }
+  const fractureLabel =
+    translations['Fracturing Orb'] ??
+    catalog.localizedNames?.['zh-CN']?.['Fracturing Orb'] ??
+    'Fracturing Orb'
   const stepLabel = (step: CraftStep) => {
     if (!('kind' in step))
       return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
+    if (step.kind === 'fracture') return fractureLabel
     if (step.kind === 'essence') {
       return essenceLabel(step.essenceId) + (step.omen ? ` + ${essenceOmenLabel(step.omen)}` : '')
     }
@@ -671,13 +718,15 @@ export function RehearsalPanel({
       continue
     const id =
       'kind' in operation
-        ? operation.kind === 'artificer'
-          ? 'artificer'
-          : operation.kind === 'essence'
-            ? operation.essenceId
-            : operation.kind === 'desecrate'
-              ? operation.boneId
-              : operation.augmentId
+        ? operation.kind === 'fracture'
+          ? 'fracture'
+          : operation.kind === 'artificer'
+            ? 'artificer'
+            : operation.kind === 'essence'
+              ? operation.essenceId
+              : operation.kind === 'desecrate'
+                ? operation.boneId
+                : operation.augmentId
         : operation.currency
     const previous = costCounts.get(id)
     costCounts.set(id, {
@@ -776,13 +825,14 @@ export function RehearsalPanel({
     setSocketDraft(null)
     setEssenceDraft(null)
     setBoneDraft(null)
+    setFractureDraft(null)
     setBoneSession((value) => value + 1)
     setEssenceSession((value) => value + 1)
     setRemovalCurrency(null)
     setMessage('')
   }
   const comparisonBefore =
-    draft || socketDraft || essenceDraft || boneDraft
+    draft || socketDraft || essenceDraft || boneDraft || fractureDraft
       ? preview?.ok
         ? current
         : undefined
@@ -790,7 +840,9 @@ export function RehearsalPanel({
         ? undefined
         : history[cursor - 1]?.state
   const comparisonAfter =
-    (draft || socketDraft || essenceDraft || boneDraft) && preview?.ok ? preview.value : current
+    (draft || socketDraft || essenceDraft || boneDraft || fractureDraft) && preview?.ok
+      ? preview.value
+      : current
 
   const ItemPanel =
     base.tags.includes('weapon') || ['Wand', 'Staff', 'Sceptre'].includes(base.type)
@@ -824,12 +876,14 @@ export function RehearsalPanel({
       <CraftItemTextPanel
         catalog={catalog}
         state={current}
-        pending={Boolean(draft || removalCurrency || socketDraft || essenceDraft || boneDraft)}
+        pending={Boolean(
+          draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+        )}
       />
       <ItemPanel
         catalog={catalog}
         current={current}
-        preview={Boolean(draft || socketDraft || essenceDraft || boneDraft)}
+        preview={Boolean(draft || socketDraft || essenceDraft || boneDraft || fractureDraft)}
         {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
         {...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration })}
       />
@@ -849,12 +903,16 @@ export function RehearsalPanel({
         catalog={catalog}
         state={current}
         targetImplicitValues={targetImplicitValues}
-        onImplicitValuesChange={setTargetImplicitValues}
+        onImplicitValuesChange={(values) => {
+          setFractureDraft(null)
+          setTargetImplicitValues(values)
+        }}
         targetModIds={targetModIds}
         targetValues={targetValues}
         targetAlternatives={targetAlternatives}
         {...(omen === undefined ? {} : { omen })}
         onAlternativesChange={(alternatives) => {
+          setFractureDraft(null)
           setTargetAlternatives(alternatives)
           const accepted = new Set([
             ...targetModIds,
@@ -862,8 +920,12 @@ export function RehearsalPanel({
           ])
           setTargetValues((values) => values.filter((entry) => accepted.has(entry.modId)))
         }}
-        onValuesChange={setTargetValues}
+        onValuesChange={(values) => {
+          setFractureDraft(null)
+          setTargetValues(values)
+        }}
         onChange={(ids) => {
+          setFractureDraft(null)
           setTargetModIds(ids)
           const alternatives = targetAlternatives.filter((entry) => ids.includes(entry.targetModId))
           setTargetAlternatives(alternatives)
@@ -880,7 +942,8 @@ export function RehearsalPanel({
           removalCurrency !== null ||
           socketDraft !== null ||
           essenceDraft !== null ||
-          boneDraft !== null
+          boneDraft !== null ||
+          fractureDraft !== null
         }
         {...(translateLine === undefined ? {} : { translateLine })}
       />
@@ -897,6 +960,7 @@ export function RehearsalPanel({
               socketDraft !== null ||
               essenceDraft !== null ||
               boneDraft !== null ||
+              fractureDraft !== null ||
               current.pendingDesecration !== undefined
             }
             onChange={(event) => {
@@ -934,6 +998,7 @@ export function RehearsalPanel({
             socketDraft !== null ||
             essenceDraft !== null ||
             boneDraft !== null ||
+            fractureDraft !== null ||
             current.pendingDesecration !== undefined
           }
           onChange={(event) => setCurrencyTier(event.target.value as CraftCurrencyTier)}
@@ -964,6 +1029,7 @@ export function RehearsalPanel({
               socketDraft !== null ||
               essenceDraft !== null ||
               boneDraft !== null ||
+              fractureDraft !== null ||
               current.pendingDesecration !== undefined
             }
             onClick={() => startOperation(id)}
@@ -994,6 +1060,7 @@ export function RehearsalPanel({
                     mod={mod}
                     crafted={affix.crafted}
                     desecrated={affix.desecrated}
+                    fractured={affix.fractured}
                     lines={affix.lines}
                     translateLine={translateLine}
                   />
@@ -1061,7 +1128,7 @@ export function RehearsalPanel({
       {comparisonBefore ? (
         <div className="rehearsal-comparison">
           <p>
-            {draft || socketDraft || essenceDraft || boneDraft
+            {draft || socketDraft || essenceDraft || boneDraft || fractureDraft
               ? '当前装备与待应用结果'
               : '上一步与当前历史步骤'}
           </p>
@@ -1084,6 +1151,53 @@ export function RehearsalPanel({
           ) : null}
         </div>
       ) : null}
+      <div ref={fracturePanelRef} tabIndex={-1}>
+        <FracturePanel
+          catalog={catalog}
+          state={current}
+          label={fractureLabel}
+          targetModIds={targetModIds}
+          targetValues={targetValues}
+          targetAlternatives={targetAlternatives}
+          disabled={Boolean(
+            draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+          )}
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startFracture}
+        />
+      </div>
+      {fractureDraft ? (
+        <section
+          ref={fractureDraftRef}
+          tabIndex={-1}
+          className="rehearsal-draft"
+          aria-label="破裂待应用结果"
+        >
+          <h3>{fractureLabel} · 待应用</h3>
+          <p>
+            将锁定 {modById.get(fractureDraft.modId)?.name ?? fractureDraft.modId}
+            ，保留当前数值与原有来源。应用后计一份材料。
+          </p>
+          {preview && !preview.ok ? <p role="alert">{preview.error}</p> : null}
+          <button
+            type="button"
+            onClick={() => {
+              restoreFractureFocusRef.current = true
+              setFractureDraft(null)
+            }}
+          >
+            取消破裂步骤
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={!preview?.ok}
+            onClick={() => applyStep(fractureDraft)}
+          >
+            应用破裂步骤
+          </button>
+        </section>
+      ) : null}
       <div ref={bonePanelRef} tabIndex={-1}>
         <BoneCraftPanel
           key={`bone:${targetSession}:${cursor}:${history[cursor]?.id}:${boneSession}`}
@@ -1093,7 +1207,9 @@ export function RehearsalPanel({
           targetModIds={targetModIds}
           targetValues={targetValues}
           targetAlternatives={targetAlternatives}
-          disabled={Boolean(draft || removalCurrency || socketDraft || essenceDraft || boneDraft)}
+          disabled={Boolean(
+            draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+          )}
           {...(translateLine ? { translateLine } : {})}
           onPreview={startBone}
         />
@@ -1132,6 +1248,7 @@ export function RehearsalPanel({
             onClick={() => {
               restoreBoneFocusRef.current = true
               setBoneDraft(null)
+              setFractureDraft(null)
               setBoneSession((value) => value + 1)
             }}
           >
@@ -1161,6 +1278,7 @@ export function RehearsalPanel({
           socketDraft !== null ||
           essenceDraft !== null ||
           boneDraft !== null ||
+          fractureDraft !== null ||
           current.pendingDesecration !== undefined
         }
         {...(translateLine ? { translateLine } : {})}
@@ -1196,6 +1314,7 @@ export function RehearsalPanel({
               restoreEssenceFocusRef.current = true
               setEssenceDraft(null)
               setBoneDraft(null)
+              setFractureDraft(null)
               setBoneSession((value) => value + 1)
               setEssenceSession((value) => value + 1)
             }}
@@ -1222,6 +1341,7 @@ export function RehearsalPanel({
           removalCurrency !== null ||
           essenceDraft !== null ||
           boneDraft !== null ||
+          fractureDraft !== null ||
           current.pendingDesecration !== undefined
         }
         canApply={preview?.ok === true}
@@ -1257,6 +1377,7 @@ export function RehearsalPanel({
               mod={modById.get(affix.modId)}
               crafted={affix.crafted}
               desecrated={affix.desecrated}
+              fractured={affix.fractured}
               lines={affix.lines}
               translateLine={translateLine}
             />
@@ -1289,6 +1410,7 @@ export function RehearsalPanel({
               mod={modById.get(affix.modId)}
               crafted={affix.crafted}
               desecrated={affix.desecrated}
+              fractured={affix.fractured}
               lines={affix.lines}
               translateLine={translateLine}
             />
@@ -1397,9 +1519,9 @@ export function RehearsalPanel({
           )}
           {draft.currency === 'divine' ? (
             <p className="rehearsal-warning">
-              神圣会重掷已有词缀及固有属性的数值，不改变档位；数值可能变差。请核对全部范围后确认。
+              神圣会重掷未破裂词缀及固有属性的数值，不改变档位；数值可能变差。破裂数值保持不变，请核对可调整的范围后确认。
               {targetImplicitValues.length
-                ? '已达成的显式及固有目标也可能失去；示例指定值不代表游戏随机结果安全。'
+                ? '已达成的未破裂显式目标及固有目标也可能失去；示例指定值不代表游戏随机结果安全。'
                 : ''}
             </p>
           ) : draft.modIds.length > 0 ? (
@@ -1450,6 +1572,7 @@ export function RehearsalPanel({
                     mod={modById.get(affix.modId)}
                     crafted={affix.crafted}
                     desecrated={affix.desecrated}
+                    fractured={affix.fractured}
                     lines={affix.lines}
                     translateLine={translateLine}
                   />
@@ -1470,6 +1593,7 @@ export function RehearsalPanel({
                     mod={modById.get(modId)}
                     crafted={affix.crafted}
                     desecrated={affix.desecrated}
+                    fractured={affix.fractured}
                     lines={affix.lines}
                     translateLine={translateLine}
                   />

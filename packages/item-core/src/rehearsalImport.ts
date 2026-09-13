@@ -1,4 +1,4 @@
-import { stripModifierStateAnnotations } from './annotations'
+import { readHeaderStates, stripModifierStateAnnotations } from './annotations'
 import {
   canonicalBeltSlot,
   isBeltCapacityBase,
@@ -49,20 +49,26 @@ export function importCraftState(
     if (!original.ok || JSON.stringify(original.item) !== JSON.stringify(item))
       return fail('特殊词缀状态与来源原文不一致，不能省略或修改状态字段。')
     if (
-      original.item.fractured ||
-      item.fractured ||
       original.item.mods.some((mod) =>
-        mod.states?.some((state) => state !== 'crafted' && state !== 'desecrated'),
+        mod.states?.some((state) => !['crafted', 'desecrated', 'fractured'].includes(state)),
       ) ||
       original.item.mods.filter((mod) => mod.states?.includes('crafted')).length > 1 ||
       original.item.mods.filter((mod) => mod.states?.includes('desecrated')).length > 1 ||
+      original.item.mods.filter((mod) => mod.states?.includes('fractured')).length > 1 ||
+      (original.item.fractured &&
+        !original.item.mods.some((mod) => mod.states?.includes('fractured'))) ||
       original.item.mods.some(
         (mod) =>
-          (mod.states?.length ?? 0) > 1 ||
+          ((mod.states?.length ?? 0) > 1 &&
+            !(
+              mod.states?.length === 2 &&
+              mod.states.includes('crafted') &&
+              mod.states.includes('fractured')
+            )) ||
           (mod.kind === 'implicit' && (mod.states?.length ?? 0) > 0),
       )
     )
-      return fail('已识别特殊词缀来源或破裂物品，特殊制作尚未开放，暂时只能对比。')
+      return fail('特殊词缀来源无效；破裂必须定位一组显式属性，且不能与亵渎同组。')
     if (
       inspection.mods.length !== item.mods.length ||
       inspection.mods.some(
@@ -157,11 +163,11 @@ export function importCraftState(
         !['prefix', 'suffix', 'implicit'].includes(mod.kind) ||
         (mod.kind !== 'implicit' &&
           (!knownExplicitHeader(
-            mod.header.raw.replace(/^(\s*\{\s*)(?:crafted|desecrated)\s+/i, '$1'),
+            mod.header.raw.replace(/^(\s*\{\s*)(?:crafted|desecrated|fractured)\s+/i, '$1'),
           ) ||
             /fractured|crafted|desecrated|破裂|分裂|工艺|工藝|亵渎|褻瀆/i.test(
               mod.header.raw
-                .replace(/^(\s*\{\s*)(?:crafted|desecrated)\s+/i, '$1')
+                .replace(/^(\s*\{\s*)(?:crafted|desecrated|fractured)\s+/i, '$1')
                 .replace(/["“][^"”]+["”]/g, ''),
             ))),
     )
@@ -323,6 +329,37 @@ export function importCraftState(
       }
     }
   }
+  if (item.mods.some((mod) => mod.states?.includes('fractured'))) {
+    if (item.rarity !== 'rare') return fail('目前只支持稀有装备的破裂来源；魔法破裂装备仅供对比。')
+    for (const { mod, stats } of inspection.mods) {
+      if (
+        stats.length !== mod.stats.length ||
+        stats.some(
+          ({ source }, index) => JSON.stringify(source) !== JSON.stringify(mod.stats[index]),
+        )
+      )
+        return fail('破裂属性行检查结果与原文不一致。')
+      const headerFractured = readHeaderStates(mod.header.raw).includes('fractured')
+      if (
+        mod.states?.includes('fractured') &&
+        !headerFractured &&
+        mod.stats.some((stat) => !stat.states?.includes('fractured'))
+      )
+        return fail('破裂组必须完整标记所有属性行。')
+      for (const { source, resolution } of stats) {
+        if ((source.raw.match(/\(fractured\)/gi)?.length ?? 0) > 1)
+          return fail('同一属性行包含重复破裂来源。')
+        const english = stripModifierStateAnnotations(resolution.english ?? source.raw)
+        if (english === stripModifierStateAnnotations(source.raw)) continue
+        if (
+          !resolveStat(source.raw, skillEntries ?? []).candidates.some(
+            (candidate) => stripModifierStateAnnotations(candidate.english) === english,
+          )
+        )
+          return fail('破裂词缀翻译或实际数值缺少原文词典依据。')
+      }
+    }
+  }
   const affixes: CraftState['affixes'] = []
   for (const match of matches) {
     const candidate = match.candidates[0]
@@ -336,6 +373,7 @@ export function importCraftState(
       ),
       ...(source.mod.states?.includes('crafted') ? { crafted: true as const } : {}),
       ...(source.mod.states?.includes('desecrated') ? { desecrated: true as const } : {}),
+      ...(source.mod.states?.includes('fractured') ? { fractured: true as const } : {}),
     })
   }
   const state: CraftState = {

@@ -167,10 +167,11 @@ export function exportCraftItemText(
       `{ ${mod.kind === 'prefix' ? labels.prefix : labels.suffix} "${mod.name}"${tags} }`,
       ...affix.lines.map(
         (line) =>
-          `${localize.line(line, Object.keys(mod.tradeHashes))}${affix.crafted ? ' (crafted)' : ''}${affix.desecrated ? ' (desecrated)' : ''}`,
+          `${localize.line(line, Object.keys(mod.tradeHashes))}${affix.crafted ? ' (crafted)' : ''}${affix.fractured ? ' (fractured)' : ''}${affix.desecrated ? ' (desecrated)' : ''}`,
       ),
     ])
   }
+  if (current.affixes.some((affix) => affix.fractured)) block(['Fractured Item'])
   block([labels.note])
   return { ok: true, value: { text: output.join('\n'), warnings: [...new Set(warnings)] } }
 }

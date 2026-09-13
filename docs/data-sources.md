@@ -1,5 +1,11 @@
 # 数据源登记表
 
+### 破裂制作人工机制依据（2026-09-13）
+
+[GGG 0.2.0](https://www.pathofexile.com/forum/view-thread/3740562)支持稀有、至少四词缀及随机锁定；[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)直接确认神圣不应改变破裂词缀。已有登记的 [PoE2DB Fracturing Orb](https://poe2db.tw/us/Fracturing_Orb)物品说明经 Exa 全文读取确认不能再次用于破裂物品，按 gray 人工转录参考；没有抓取适配器或复制数据文件。
+
+[RubyRose亵渎指南](https://vulkk.com/2025/09/05/path-of-exile-2-desecration-crafting-guide/)支持未揭示占位计数但排除候选及后续移除流程，[Mobalytics SSF指南](https://mobalytics.gg/poe-2/guides/ssf-crafting)的亵渎不可破裂说明作为作者级证据，不采纳整页旧精华链条。[玩家帖子3966812](https://www.pathofexile.com/forum/view-thread/3966812)与[3967316](https://www.pathofexile.com/forum/view-thread/3967316)支持工艺与破裂独立保留，但属于珠宝报告，不冒充普通装备全部工艺真机验证。三者仅人工规则参考，不复制整件装备；具体可执行范围及未验证交互见 crafting-rules.md。
+
 国服高级装备文本的人工兼容样本（2026-09-13）：用户本机提供的非传奇腰带文本确认 `implicit.stat_1416292992` 的游戏写法为“具有 # 个咒符位”，现有国服交易模板为“具有 # 个咒符栏”。仅在既有 ID、英文模板及国服原模板同时吻合时派生输入别名，属于 manual 格式依据；保留官方模板，不改生成词典，不外传或入库整件样本。繁体模板独立，未由此推导台服别名。两条已有召唤属性身份继续使用下述固定 MIT 目录；样本证明它们存在于装备上，不证明具体制作过程或普通生成资格。
 
 新增任何数据源前先在此登记。等级定义：
@@ -93,7 +99,7 @@ GGG 官方 0.3.1 公告（`forum/view-thread/3860076`、`3862213`）作为点金
 
 精华操作 v15 补充人工依据：[PoE2DB Crafted Modifiers](https://poe2db.tw/Crafted_Modifiers) 的公开游戏关键词说明，明确最多一条工艺词缀且其他行为与普通词缀相同，按 gray 对待，仅人工查阅，不下载数据文件或新增适配器。结合上述 GGG 0.3.0 / 0.5.0，实现前三档精华与后续普通通货交互；真机及低物等例外交互仍待验收，不从 tierLevel 推断门槛。
 
-`crafted`、`desecrated`、`fractured` 的逐行状态解析是自有实现；参考同一 MIT PoB 固定提交 `src/Classes/Item.lua` 的结构与独立标志定义，不复制实现。PoB 的物品级 `self.crafted` 属编辑模式，不能映射为游戏工艺槽。公开 [GGG 玩家高级文本示例](https://www.pathofexile.com/forum/view-thread/3843434)只用于核对 `(fractured)`、`(desecrated)` 及 `Fractured Item` 的输入结构，不复制整件装备进测试，不把玩家帖子当成官方机制定义。[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)提供破裂数值不应被神圣改变的直接证据；本阶段只保留并展示来源，不因此开放特殊制作。中文实际尾注/标题写法未验证，不从译名或词缀名推断状态。
+`crafted`、`desecrated`、`fractured` 的逐行状态解析是自有实现；参考同一 MIT PoB 固定提交 `src/Classes/Item.lua` 的结构与独立标志定义，不复制实现。PoB 的物品级 `self.crafted` 属编辑模式，不能映射为游戏工艺槽。公开 [GGG 玩家高级文本示例](https://www.pathofexile.com/forum/view-thread/3843434)只用于核对 `(fractured)`、`(desecrated)` 及 `Fractured Item` 的输入结构，不复制整件装备进测试，不把玩家帖子当成官方机制定义。[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)提供破裂数值不应被神圣改变的直接证据；该解析阶段只保留并展示来源；破裂后续制作已由本文顶部 v28 人工机制依据单独登记。中文实际尾注/标题写法未验证，不从译名或词缀名推断状态。
 
 ### 结晶预兆人工规则依据
 

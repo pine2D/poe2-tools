@@ -8,6 +8,7 @@ import {
 import type { CraftCatalog } from './catalog'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
+import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
 import { renderNumericLines } from './numeric'
 import {
   applyCraftOperation,
@@ -37,6 +38,7 @@ export interface EssenceCraftOperation {
 }
 
 export type CraftStep =
+  | FractureCraftOperation
   | BoneCraftOperation
   | EssenceCraftOperation
   | CraftOperation
@@ -63,6 +65,10 @@ export function applyCraftStep(
       ? applyBoneCraft(catalog, state, step)
       : { ok: false, error: '骨骼或揭示操作字段无效。' }
   }
+  if ('kind' in step && step.kind === 'fracture')
+    return isFractureCraftOperation(step)
+      ? applyFracture(catalog, state, step)
+      : { ok: false, error: '破裂操作字段无效。' }
   if (Object.hasOwn(state, 'pendingDesecration'))
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   if ('kind' in step) {

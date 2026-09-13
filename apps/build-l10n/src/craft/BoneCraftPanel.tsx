@@ -486,7 +486,7 @@ export function BoneCraftPanel({
         </>
       ) : (
         <>
-          <p>请先完成亵渎揭示；本工具尚未实现未揭示期间的交错制作。</p>
+          <p>待揭示期间可在破裂区演练锁定；其他制作请先完成揭示。</p>
           <p>
             已固化骨骼预兆：
             {selectedOmenLabels.length

@@ -20,7 +20,7 @@ import {
   hasExistingModEligibility,
   inspectModPool,
 } from './catalog'
-import { matchesCatalogLines } from './catalogMatch'
+import { matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
@@ -81,6 +81,7 @@ export const CRAFT_CURRENCY_RULES: Readonly<
 }
 
 export interface CraftAffix {
+  fractured?: true
   crafted?: true
   desecrated?: true
   modId: string
@@ -285,6 +286,9 @@ export function createCraftState(
   const resolved: { affix: CraftAffix; mod: CatalogMod }[] = []
   if (input.affixes.filter((affix) => affix?.crafted === true).length > 1)
     return failure('装备最多允许一组工艺词缀。')
+  const fracturedCount = input.affixes.filter((affix) => affix?.fractured === true).length
+  if (fracturedCount > 1 || (fracturedCount > 0 && input.rarity !== 'rare'))
+    return failure('目前只支持稀有装备的一组破裂词缀；破裂魔法装备仅供对比。')
   const desecratedCount = input.affixes.filter((affix) => affix?.desecrated === true).length
   if (desecratedCount > 1) return failure('装备最多允许一组亵渎词缀。')
   if (desecratedCount && (input.rarity !== 'rare' || desecrationSourceHash(catalog) === null))
@@ -295,10 +299,12 @@ export function createCraftState(
       typeof affix !== 'object' ||
       Array.isArray(affix) ||
       !Object.keys(affix).every((key) =>
-        ['modId', 'lines', 'crafted', 'desecrated'].includes(key),
+        ['modId', 'lines', 'crafted', 'desecrated', 'fractured'].includes(key),
       ) ||
       (Object.hasOwn(affix, 'crafted') && affix.crafted !== true) ||
       (Object.hasOwn(affix, 'desecrated') && affix.desecrated !== true) ||
+      (Object.hasOwn(affix, 'fractured') && affix.fractured !== true) ||
+      (affix.fractured === true && affix.desecrated === true) ||
       (affix.crafted === true && affix.desecrated === true)
     )
       return failure('词缀字段或工艺/亵渎状态无效。')
@@ -315,6 +321,13 @@ export function createCraftState(
       return failure(`词缀 ${affix.modId} 包含未支持的容量或跨类别规则。`)
     if (!sameExactLines(mod.lines, affix.lines) && !matchesCatalogLines(mod.lines, affix.lines))
       return failure(`词缀 ${affix.modId} 的属性行与制作目录不一致。`)
+    if (
+      affix.fractured &&
+      readCatalogLineValues(mod.lines, affix.lines)
+        ?.flat()
+        .some((value) => value === null)
+    )
+      return failure('破裂词缀必须保留已知实际数值，不能锁定未知范围。')
     resolved.push({ affix, mod })
   }
 
@@ -451,10 +464,12 @@ export function removableCraftAffixes(
   if (checked.value.affixes.length === 0) return failure('当前装备没有可移除的词缀。')
   const removable = checked.value.affixes.filter(
     (affix) =>
-      omen === undefined ||
-      catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind === CRAFT_OMEN_RULES[omen].kind,
+      !affix.fractured &&
+      (omen === undefined ||
+        catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind ===
+          CRAFT_OMEN_RULES[omen].kind),
   )
-  if (removable.length === 0) return failure('预兆指定侧没有可移除的词缀。')
+  if (removable.length === 0) return failure('当前装备或预兆指定侧没有未锁定的可移除词缀。')
   return { ok: true, value: removable.map((affix) => ({ ...affix, lines: [...affix.lines] })) }
 }
 
@@ -514,9 +529,9 @@ export function prepareCraftOperation(
       return failure(UNKNOWN_CHARM_RANGE)
     const patterns = [
       ...implicit.value.patterns,
-      ...current.affixes.flatMap(
-        (affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? [],
-      ),
+      ...current.affixes
+        .filter((affix) => !affix.fractured)
+        .flatMap((affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? []),
     ]
     const ranges = inspectNumericLines(patterns)
     if (!ranges.ok) return ranges
@@ -632,7 +647,9 @@ export function applyCraftOperation(
   }
   if (operation.rolls !== undefined || operation.currency === 'divine') {
     const ids =
-      operation.currency === 'divine' ? next.affixes.map((affix) => affix.modId) : operation.modIds
+      operation.currency === 'divine'
+        ? next.affixes.filter((affix) => !affix.fractured).map((affix) => affix.modId)
+        : operation.modIds
     const required = new Set<string>()
     for (const id of ids) {
       const mod = catalog.modifiers.find((entry) => entry.id === id)

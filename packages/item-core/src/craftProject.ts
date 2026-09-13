@@ -17,6 +17,7 @@ import {
   essenceSourceHash as readEssenceSourceHash,
 } from './essences'
 import { type ItemDictionary, inspectItem } from './export'
+import { isFractureCraftOperation } from './fracture'
 import {
   matchesGrantedSkillImplicitLines,
   readBaseGrantedSkills,
@@ -47,7 +48,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v27'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v28'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -99,7 +100,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 27 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 28 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -159,9 +160,10 @@ function readState(value: unknown): CraftState | null {
   for (const affix of value.affixes) {
     if (
       !record(affix) ||
-      !exactKeys(affix, ['modId', 'lines', 'crafted', 'desecrated']) ||
+      !exactKeys(affix, ['modId', 'lines', 'crafted', 'desecrated', 'fractured']) ||
       (Object.hasOwn(affix, 'crafted') && affix.crafted !== true) ||
       (Object.hasOwn(affix, 'desecrated') && affix.desecrated !== true) ||
+      (Object.hasOwn(affix, 'fractured') && affix.fractured !== true) ||
       !nonempty(affix.modId) ||
       !Array.isArray(affix.lines) ||
       !affix.lines.every(nonempty)
@@ -172,6 +174,7 @@ function readState(value: unknown): CraftState | null {
       lines: [...affix.lines],
       ...(affix.crafted === true ? { crafted: true } : {}),
       ...(affix.desecrated === true ? { desecrated: true } : {}),
+      ...(affix.fractured === true ? { fractured: true } : {}),
     })
   }
   return {
@@ -203,6 +206,8 @@ function numericValues(value: unknown): value is number[] {
 }
 
 function readOperation(value: unknown): CraftStep | null {
+  if (record(value) && value.kind === 'fracture')
+    return isFractureCraftOperation(value) ? value : null
   if (record(value) && isBoneOperationKind(value.kind))
     return isBoneCraftOperation(value) ? value : null
   if (record(value) && Object.hasOwn(value, 'kind')) {
@@ -439,6 +444,22 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (rulesVersion < 28) {
+    const initial = record(value.initialState) ? value.initialState : null
+    const source =
+      initial && typeof initial.sourceText === 'string' ? parseItem(initial.sourceText) : null
+    if (
+      (initial &&
+        Array.isArray(initial.affixes) &&
+        initial.affixes.some((affix) => record(affix) && Object.hasOwn(affix, 'fractured'))) ||
+      (source?.ok &&
+        (source.item.fractured ||
+          source.item.mods.some((mod) => mod.states?.includes('fractured')))) ||
+      (Array.isArray(value.operations) &&
+        value.operations.some((operation) => record(operation) && operation.kind === 'fracture'))
+    )
+      return fail('v2–v27 旧版项目不能包含破裂状态、来源或未来破裂操作。')
+  }
   if (rulesVersion < 23 && Object.hasOwn(value, 'targetImplicitValues'))
     return fail('v2–v22旧版项目不能包含固有属性目标字段。')
   if (rulesVersion < 7 && Object.hasOwn(value, 'importedSockets'))
@@ -909,11 +930,17 @@ export function serializeCraftProject(project: CraftProject): string {
   )
     throw new Error('待揭示亵渎字段无效，不能序列化项目。')
   for (const step of project.operations) {
+    if ('kind' in step && step.kind === 'fracture' && !isFractureCraftOperation(step))
+      throw new Error('破裂操作字段无效，不能序列化项目。')
+  }
+  for (const step of project.operations) {
     if ('kind' in step && isBoneOperationKind(step.kind) && !isBoneCraftOperation(step))
       throw new Error('骨骼或揭示操作字段无效，不能序列化项目。')
   }
   // JSON 会丢弃 undefined；先拒绝显式非法来源，防止字段门禁被序列化绕过。
   for (const affix of project.initialState.affixes) {
+    if (Object.hasOwn(affix, 'fractured') && affix.fractured !== true)
+      throw new Error('破裂标记必须为 true，不能序列化项目。')
     if (Object.hasOwn(affix, 'desecrated') && affix.desecrated !== true)
       throw new Error('亵渎来源字段无效，不能序列化项目。')
   }

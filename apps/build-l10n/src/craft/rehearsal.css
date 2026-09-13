@@ -5,6 +5,17 @@
   border: 1px solid var(--line);
   background: var(--surface-2);
 }
+.rehearsal-fracture {
+  margin-top: 20px;
+}
+.rehearsal-fracture-candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+}
+.rehearsal-fracture-candidates button {
+  margin-top: 8px;
+}
 .rehearsal-heading,
 .rehearsal-draft > header,
 .rehearsal-toolbar {

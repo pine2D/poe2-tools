@@ -275,7 +275,11 @@ export function planCraftTargetRoutes(
         lostTargetIds,
         atRiskTargetIds,
         rerolledTargetIds:
-          'currency' in operation && operation.currency === 'divine' ? present : [],
+          'currency' in operation && operation.currency === 'divine'
+            ? present.filter(
+                (id) => !node.state.affixes.find((affix) => affix.modId === id)?.fractured,
+              )
+            : [],
         ...(implicitValues.length
           ? {
               matchedImplicitLineIndexes: afterImplicit,
@@ -401,6 +405,7 @@ export function planCraftTargetRoutes(
           const rolls: NonNullable<CraftOperation['rolls']> = []
           let valid = true
           for (const affix of node.state.affixes) {
+            if (affix.fractured) continue
             const mod = byId.get(affix.modId)
             const numbers = mod ? actualRolls(mod.lines, affix.lines, mod.id) : null
             if (numbers === null) {
@@ -494,6 +499,7 @@ export function planCraftTargetRoutes(
       groups.flatMap((group, index) => {
         if (beforeMatched.includes(ids[index] ?? '')) return []
         const existing = node.state.affixes.find((affix) => group.includes(affix.modId))
+        if (existing?.fractured) return []
         const mod = existing ? byId.get(existing.modId) : undefined
         if (!mod || (divineAvailable && minimumTargetRolls(mod.lines, bounds(mod.id)) !== null))
           return []

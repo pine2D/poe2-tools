@@ -405,6 +405,8 @@ export function analyzeCraftTargets(
       }
       return { ...bound, actual: value, matched }
     })
+    if (affix?.fractured && numeric.some((entry) => !entry.matched))
+      reasons.push('破裂属性已锁定，不能通过神圣重掷或移除重造达到数值条件。')
     if (!present && mod !== undefined) {
       if (
         staticPools.genesis.has(modId) &&
@@ -425,10 +427,22 @@ export function analyzeCraftTargets(
             ? '该精华目标在当前低物等装备上的交互尚未验证，暂不支持演练。'
             : `需要物品等级 ${mod.level}，当前为 ${current.itemLevel}。`,
         )
+      const lockedConflict = current.affixes.some((affix) => {
+        const entry = byId.get(affix.modId)
+        return affix.fractured && entry !== undefined && craftModsConflict(entry, mod)
+      })
       if (groups.includes(mod.group))
-        reasons.push('当前装备已有同组词缀，需要先移除才能选择该精确档位。')
+        reasons.push(
+          lockedConflict
+            ? '当前装备已有同组破裂词缀，无法通过移除腾出目标位置。'
+            : '当前装备已有同组词缀，需要先移除才能选择该精确档位。',
+        )
       else if (existing.some((entry) => craftModsConflict(entry, mod)))
-        reasons.push('当前装备已有互斥的技能等级词缀，需要先移除冲突词缀。')
+        reasons.push(
+          lockedConflict
+            ? '当前装备已有互斥的破裂词缀，无法通过移除腾出目标位置。'
+            : '当前装备已有互斥的技能等级词缀，需要先移除冲突词缀。',
+        )
       if (mod.desecratedOnly) {
         reasons.push('此目标需要骨骼亵渎与揭示，普通通货不能生成。')
         if (current.rarity !== 'rare') reasons.push('请先将装备提升为稀有。')
@@ -497,7 +511,11 @@ export function analyzeCraftTargets(
     .filter((target) => target.present)
   const presentIds = presentTargets.map((target) => target.modId)
   const steps: CraftAdviceStep[] = []
-  const numericTargets = presentTargets.filter((target) => target.numeric.length > 0)
+  const numericTargets = presentTargets.filter(
+    (target) =>
+      target.numeric.length > 0 &&
+      !current.affixes.find((affix) => affix.modId === target.modId)?.fractured,
+  )
   const unmetNumericIds = numericTargets
     .filter((target) => !target.matched)
     .map((target) => target.modId)
@@ -526,6 +544,7 @@ export function analyzeCraftTargets(
   const explicitRollsPossible =
     !implicitValues.length ||
     current.affixes.every((affix) => {
+      if (affix.fractured) return true
       const mod = byId.get(affix.modId)
       return (
         mod !== undefined &&

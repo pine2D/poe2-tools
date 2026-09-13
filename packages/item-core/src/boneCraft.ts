@@ -57,7 +57,9 @@ export function prepareDesecration(
   let kinds: ('prefix' | 'suffix')[] = (
     requiresRemoval ? (['prefix', 'suffix'] as const) : openKinds(catalog, state)
   ).filter((kind) => direction === null || direction === kind)
-  let removableAffixes = requiresRemoval ? checked.value.affixes : []
+  let removableAffixes = requiresRemoval
+    ? checked.value.affixes.filter((affix) => !affix.fractured)
+    : []
   if (config.directionOmen || config.lichOmen) {
     const viable = new Set<string>()
     const removals = requiresRemoval ? removableAffixes : [undefined]

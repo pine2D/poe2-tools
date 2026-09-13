@@ -659,7 +659,7 @@ describe('RehearsalPanel', () => {
     apply()
 
     expect(screen.queryByText('+17 to Armour')).toBeNull()
-    expect(screen.getByText('+21(21-30) to Armour')).toBeDefined()
+    expect(screen.getAllByText('+21(21-30) to Armour').length).toBeGreaterThan(0)
     expect(screen.getByText('点金石 × 1')).toBeDefined()
     expect(screen.getByText(/可指定词缀与具体数值/)).toBeDefined()
   })

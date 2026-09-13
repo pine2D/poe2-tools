@@ -24,6 +24,7 @@ export interface CraftAffixChange {
   afterLines: string[] | null
   numeric: CraftNumericChange[]
   crafted?: { before: boolean; after: boolean }
+  fractured?: { before: boolean; after: boolean }
   desecrated?: { before: boolean; after: boolean }
 }
 
@@ -135,7 +136,16 @@ export function compareCraftStates(
       affix.desecrated !== current.desecrated
         ? { before: affix.desecrated === true, after: current.desecrated === true }
         : undefined
-    if (change !== null || crafted !== undefined || desecrated !== undefined)
+    const fractured =
+      affix.fractured !== current.fractured
+        ? { before: affix.fractured === true, after: current.fractured === true }
+        : undefined
+    if (
+      change !== null ||
+      crafted !== undefined ||
+      desecrated !== undefined ||
+      fractured !== undefined
+    )
       affixes.push({
         modId: affix.modId,
         kind: 'changed',
@@ -143,6 +153,7 @@ export function compareCraftStates(
         afterLines: [...current.lines],
         numeric: change?.numeric ?? [],
         ...(crafted === undefined ? {} : { crafted }),
+        ...(fractured === undefined ? {} : { fractured }),
         ...(desecrated === undefined ? {} : { desecrated }),
       })
   }

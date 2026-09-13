@@ -199,7 +199,13 @@ describe('导入孔位的独立核对声明', () => {
     })
     expect(run(text.replace('maximum Life', 'unknown stat'), [runeId], source).ok).toBe(false)
     expect(
-      run(text.replace('Prefix Modifier', 'Fractured Prefix Modifier'), [runeId], source).ok,
-    ).toBe(false)
+      run(text.replace('Prefix Modifier', 'Fractured Prefix Modifier'), [runeId], source),
+    ).toMatchObject({
+      ok: true,
+      value: {
+        affixes: [{ modId: 'life', lines: ['+14(10-20) to maximum Life'], fractured: true }],
+        sockets: [runeId],
+      },
+    })
   })
 })

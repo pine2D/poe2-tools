@@ -70,6 +70,7 @@ export function prepareEssenceCraft(
   }
   const removableAffixes = checked.value.affixes.filter(
     (removed) =>
+      !removed.fractured &&
       withGuaranteed(checked.value.affixes.filter((affix) => affix.modId !== removed.modId)).ok,
   )
   if (removableAffixes.length === 0)

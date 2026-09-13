@@ -286,13 +286,13 @@ describe('精华边界与项目来路回归', () => {
       ).ok,
     ).toBe(false)
   })
-  it('已明确标题工艺可导入；多组、混合、未知尾注继续拒绝', () => {
+  it('已明确标题工艺与破裂双状态可导入；多组、亵渎与未知尾注拒绝', () => {
     expect(
       imported(raw.replace('Prefix Modifier', 'Crafted Prefix Modifier').replace(' (crafted)', ''))
         .ok,
     ).toBe(true)
+    expect(imported(raw.replace('(crafted)', '(crafted) (fractured)')).ok).toBe(true)
     for (const text of [
-      raw.replace('(crafted)', '(crafted) (fractured)'),
       raw.replace('(crafted)', '(desecrated)'),
       raw.replace('(crafted)', '(unknown) (crafted)'),
       `${raw}\n{ Suffix Modifier "Mana" (Tier: 1) — mana }\n+15 to maximum Mana (crafted)`,
