@@ -28,6 +28,7 @@ import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
 
 interface BoneCraftPanelProps {
+  configuration?: { boneId: CraftBone } & BoneOmenConfig
   catalog: CraftCatalog
   state: CraftState
   translations: Record<string, string>
@@ -40,6 +41,7 @@ interface BoneCraftPanelProps {
 }
 export function BoneCraftPanel({
   catalog,
+  configuration,
   state,
   translations,
   translateLine,
@@ -50,9 +52,11 @@ export function BoneCraftPanel({
   targetValues = [],
 }: BoneCraftPanelProps) {
   const id = useId()
-  const [boneId, setBoneId] = useState<CraftBone | null>(null)
-  const [directionOmen, setDirectionOmen] = useState<BoneDirectionOmen | null>(null)
-  const [lichOmen, setLichOmen] = useState<BoneLichOmen | null>(null)
+  const [boneId, setBoneId] = useState<CraftBone | null>(configuration?.boneId ?? null)
+  const [directionOmen, setDirectionOmen] = useState<BoneDirectionOmen | null>(
+    configuration?.directionOmen ?? null,
+  )
+  const [lichOmen, setLichOmen] = useState<BoneLichOmen | null>(configuration?.lichOmen ?? null)
   const config: BoneOmenConfig = {
     ...(directionOmen ? { directionOmen } : {}),
     ...(lichOmen ? { lichOmen } : {}),
@@ -299,7 +303,7 @@ export function BoneCraftPanel({
             骨骼材料
             <select
               aria-label="骨骼材料"
-              disabled={disabled}
+              disabled={disabled || configuration !== undefined}
               value={boneId ?? ''}
               onChange={(event) => {
                 const value = event.target.value
@@ -329,7 +333,7 @@ export function BoneCraftPanel({
             骨骼方向预兆
             <select
               aria-label="骨骼方向预兆"
-              disabled={disabled}
+              disabled={disabled || configuration !== undefined}
               value={directionOmen ?? ''}
               onChange={(event) => {
                 setDirectionOmen(
@@ -352,7 +356,7 @@ export function BoneCraftPanel({
             骨骼巫妖预兆
             <select
               aria-label="骨骼巫妖预兆"
-              disabled={disabled}
+              disabled={disabled || configuration !== undefined}
               value={lichOmen ?? ''}
               onChange={(event) => {
                 setLichOmen(

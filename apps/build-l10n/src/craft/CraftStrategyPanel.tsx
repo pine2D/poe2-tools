@@ -1,20 +1,17 @@
 import {
-  CRAFT_CURRENCY_LABELS,
-  CRAFT_OMEN_RULES,
   type CraftCatalog,
-  type CraftCurrency,
   type CraftOmen,
   type CraftState,
   type CraftStrategy,
-  type CraftStrategyAction,
   type CraftStrategyCondition,
   type CraftStrategyGoals,
   type CraftStrategyRule,
-  craftOmenError,
+  type CraftStrategyWorkAction,
   evaluateCraftStrategy,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useState } from 'react'
 import './strategy.css'
+import { CraftStrategyActionEditor, strategyActionLabel } from './CraftStrategyActionEditor'
 
 const CONDITION_LABELS = {
   always: '任何状态',
@@ -22,8 +19,11 @@ const CONDITION_LABELS = {
   'targets-met': '制作目标',
   'open-prefix': '前缀空位至少',
   'open-suffix': '后缀空位至少',
+  'affix-count': '词缀组数至少',
+  'desecration-stage': '亵渎阶段',
 } as const
 function defaultCondition(kind: CraftStrategyCondition['kind']): CraftStrategyCondition {
+  if (kind === 'desecration-stage') return { kind, value: 'unrevealed' }
   if (kind === 'always') return { kind }
   if (kind === 'rarity') return { kind, value: 'rare' }
   if (kind === 'targets-met') return { kind, value: false }
@@ -52,6 +52,7 @@ function example(): CraftStrategy {
 
 interface Props {
   catalog: CraftCatalog
+  translations?: Record<string, string>
   state: CraftState
   strategy: CraftStrategy | undefined
   goals: CraftStrategyGoals
@@ -59,11 +60,12 @@ interface Props {
   pending: boolean
   omenLabel: (id: CraftOmen) => string
   onChange: (strategy: CraftStrategy | undefined) => void
-  onStart: (action: Extract<CraftStrategyAction, { kind: 'currency' }>) => void
+  onStart: (action: CraftStrategyWorkAction) => void
 }
 
 export function CraftStrategyPanel({
   catalog,
+  translations = {},
   state,
   strategy,
   goals,
@@ -156,13 +158,14 @@ export function CraftStrategyPanel({
               <>
                 <p>
                   命中规则 {decision.ruleIndex + 1}：
-                  {CRAFT_CURRENCY_LABELS[decision.action.currency]}
-                  {decision.action.omen ? ` + ${omenLabel(decision.action.omen)}` : ''}
+                  {strategyActionLabel(decision.action, catalog, translations, omenLabel)}
                 </p>
                 <button type="button" disabled={pending} onClick={() => onStart(decision.action)}>
                   开始指引步骤
                 </button>
-                <p>开始后选择具体结果；应用成功才计入历史和材料。规则使用自己的预兆配置。</p>
+                <p>
+                  开始后选择具体结果；应用成功才计入历史和材料。精华及骨骼施加使用规则配置；揭示继续已有状态，回响在结果选择中声明。
+                </p>
               </>
             ) : null}
             {decision?.kind === 'stop' ? (
@@ -262,6 +265,46 @@ export function CraftStrategyPanel({
                           </select>
                         </label>
                       ) : null}
+                      {condition.kind === 'desecration-stage' ? (
+                        <label>
+                          亵渎阶段
+                          <select
+                            aria-label={`规则 ${number} 亵渎阶段`}
+                            value={condition.value}
+                            onChange={(event) =>
+                              updateCondition(ci, {
+                                kind: 'desecration-stage',
+                                value: event.target.value as 'none' | 'unrevealed' | 'offered',
+                              })
+                            }
+                          >
+                            <option value="none">无待揭示</option>
+                            <option value="unrevealed">尚未固定三项</option>
+                            <option value="offered">已固定候选（含回响第二组）</option>
+                          </select>
+                        </label>
+                      ) : null}
+                      {condition.kind === 'affix-count' ? (
+                        <label>
+                          组数
+                          <select
+                            aria-label={`规则 ${number} 最少词缀组数`}
+                            value={condition.min}
+                            onChange={(event) =>
+                              updateCondition(ci, {
+                                kind: 'affix-count',
+                                min: Number(event.target.value),
+                              })
+                            }
+                          >
+                            {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                       {condition.kind === 'open-prefix' || condition.kind === 'open-suffix' ? (
                         <label>
                           数量
@@ -304,7 +347,15 @@ export function CraftStrategyPanel({
                     disabled={rule.conditions.length >= 4}
                     onClick={() => {
                       const next = (
-                        ['rarity', 'targets-met', 'open-prefix', 'open-suffix', 'always'] as const
+                        [
+                          'rarity',
+                          'targets-met',
+                          'open-prefix',
+                          'open-suffix',
+                          'affix-count',
+                          'desecration-stage',
+                          'always',
+                        ] as const
                       ).find((kind) => !rule.conditions.some((entry) => entry.kind === kind))
                       if (next)
                         replaceRule(index, {
@@ -316,67 +367,15 @@ export function CraftStrategyPanel({
                     添加同时满足的条件
                   </button>
                   <div className="strategy-toolbar">
-                    <label>
-                      动作
-                      <select
-                        aria-label={`规则 ${number} 动作`}
-                        value={rule.action.kind === 'stop' ? 'stop' : rule.action.currency}
-                        onChange={(event) =>
-                          replaceRule(index, {
-                            ...rule,
-                            action:
-                              event.target.value === 'stop'
-                                ? { kind: 'stop' }
-                                : {
-                                    kind: 'currency',
-                                    currency: event.target.value as CraftCurrency,
-                                  },
-                          })
-                        }
-                      >
-                        <option value="stop">停止</option>
-                        {(Object.keys(CRAFT_CURRENCY_LABELS) as CraftCurrency[]).map((id) => (
-                          <option key={id} value={id}>
-                            {CRAFT_CURRENCY_LABELS[id]}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {rule.action.kind === 'currency' ? (
-                      <label>
-                        搭配预兆
-                        <select
-                          aria-label={`规则 ${number} 预兆`}
-                          value={rule.action.omen ?? ''}
-                          onChange={(event) => {
-                            if (rule.action.kind === 'currency')
-                              replaceRule(index, {
-                                ...rule,
-                                action: {
-                                  kind: 'currency',
-                                  currency: rule.action.currency,
-                                  ...(event.target.value
-                                    ? { omen: event.target.value as CraftOmen }
-                                    : {}),
-                                },
-                              })
-                          }}
-                        >
-                          <option value="">不使用预兆</option>
-                          {(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[])
-                            .filter(
-                              (id) =>
-                                rule.action.kind === 'currency' &&
-                                craftOmenError(id, rule.action.currency) === null,
-                            )
-                            .map((id) => (
-                              <option key={id} value={id}>
-                                {omenLabel(id)}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                    ) : null}
+                    <CraftStrategyActionEditor
+                      number={number}
+                      action={rule.action}
+                      catalog={catalog}
+                      state={state}
+                      translations={translations}
+                      omenLabel={omenLabel}
+                      onChange={(action) => replaceRule(index, { ...rule, action })}
+                    />
                     <button
                       type="button"
                       aria-label={`上移规则 ${number}`}

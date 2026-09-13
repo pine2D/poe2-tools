@@ -59,6 +59,7 @@ import { CatalystPreviewPanel } from './CatalystPreviewPanel'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
 import { CraftStrategyPanel } from './CraftStrategyPanel'
+import { CraftStrategyResults, type SpecialStrategyAction } from './CraftStrategyResults'
 import { CraftTargets } from './CraftTargets'
 import { DefencePanel } from './DefencePanel'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
@@ -256,6 +257,9 @@ export function RehearsalPanel({
         ? [{ id: 0, state: initial.value, operation: null }]
         : [],
   )
+  const [strategyResultAction, setStrategyResultAction] = useState<SpecialStrategyAction | null>(
+    null,
+  )
   const [strategy, setStrategy] = useState<CraftStrategy | undefined>(
     initialProject?.project.strategy,
   )
@@ -380,6 +384,11 @@ export function RehearsalPanel({
     if (!draft || !current || draft.modIds.length !== draft.count) return null
     return applyCraftOperation(catalog, current, draftOperation(draft))
   }, [catalog, current, draft, socketDraft, essenceDraft, boneDraft, fractureDraft])
+
+  useEffect(() => {
+    if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+      setStrategyResultAction(null)
+  }, [draft, removalCurrency, socketDraft, essenceDraft, boneDraft, fractureDraft])
 
   if (!initial.ok || !current || !base) {
     return <section className="rehearsal-panel rehearsal-error">无法开始演练：{message}</section>
@@ -603,6 +612,7 @@ export function RehearsalPanel({
     setMessage('')
   }
   const clearTargetDrafts = () => {
+    setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
     setEssenceDraft(null)
@@ -638,6 +648,7 @@ export function RehearsalPanel({
     setHistory(next)
     setCursor(next.length - 1)
     if (!('kind' in operation)) setOmen(undefined)
+    setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
     setEssenceDraft(null)
@@ -681,6 +692,7 @@ export function RehearsalPanel({
   const moveTo = (next: number) => {
     setCursor(next)
     setOmen(undefined)
+    setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
     setEssenceDraft(null)
@@ -746,10 +758,15 @@ export function RehearsalPanel({
   const essenceSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/Essence.lua',
   )?.sha256
-  const hasEssenceHistory = history.some(
-    ({ operation }) => operation && 'kind' in operation && operation.kind === 'essence',
-  )
+  const hasEssenceHistory =
+    strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
+    history.some(
+      ({ operation }) => operation && 'kind' in operation && operation.kind === 'essence',
+    )
   const desecratedHash =
+    strategy?.rules.some(
+      (rule) => rule.action.kind === 'desecrate' || rule.action.kind === 'reveal',
+    ) ||
     history[0]?.state.affixes.some((affix) => affix.desecrated) ||
     history.some(
       ({ operation }) =>
@@ -813,6 +830,7 @@ export function RehearsalPanel({
     setSocketDeclaration(restored.project.importedSockets)
     setQualityDeclaration(restored.project.importedQuality)
     setTargetSession((value) => value + 1)
+    setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
     setEssenceDraft(null)
@@ -907,6 +925,7 @@ export function RehearsalPanel({
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftStrategyPanel
         catalog={catalog}
+        translations={translations}
         state={current}
         strategy={strategy}
         goals={{
@@ -929,10 +948,35 @@ export function RehearsalPanel({
         onStart={(action) => {
           if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
             return
-          setOmen(action.omen)
-          startOperation(action.currency, action.omen)
+          if (action.kind === 'currency') {
+            setStrategyResultAction(null)
+            setOmen(action.omen)
+            startOperation(action.currency, action.omen)
+          } else {
+            setStrategyResultAction(action)
+          }
         }}
       />
+      {strategyResultAction ? (
+        <CraftStrategyResults
+          action={strategyResultAction}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          targetModIds={targetModIds}
+          targetValues={targetValues}
+          targetAlternatives={targetAlternatives}
+          {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
+          {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
+          {...(translateLine ? { translateLine } : {})}
+          fractureLabel={fractureLabel}
+          onPreview={(operation) => {
+            setStrategyResultAction(null)
+            startRoute(operation)
+          }}
+          onCancel={() => setStrategyResultAction(null)}
+        />
+      ) : null}
       <CraftTargets
         {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
         onMinimumTargetCountChange={(value) => {
@@ -1203,21 +1247,23 @@ export function RehearsalPanel({
         </div>
       ) : null}
       <div ref={fracturePanelRef} tabIndex={-1}>
-        <FracturePanel
-          {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
-          catalog={catalog}
-          state={current}
-          label={fractureLabel}
-          targetModIds={targetModIds}
-          targetValues={targetValues}
-          targetAlternatives={targetAlternatives}
-          {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
-          disabled={Boolean(
-            draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
-          )}
-          {...(translateLine ? { translateLine } : {})}
-          onPreview={startFracture}
-        />
+        {!strategyResultAction ? (
+          <FracturePanel
+            {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
+            catalog={catalog}
+            state={current}
+            label={fractureLabel}
+            targetModIds={targetModIds}
+            targetValues={targetValues}
+            targetAlternatives={targetAlternatives}
+            {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
+            disabled={Boolean(
+              draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+            )}
+            {...(translateLine ? { translateLine } : {})}
+            onPreview={startFracture}
+          />
+        ) : null}
       </div>
       {fractureDraft ? (
         <section
@@ -1252,20 +1298,22 @@ export function RehearsalPanel({
         </section>
       ) : null}
       <div ref={bonePanelRef} tabIndex={-1}>
-        <BoneCraftPanel
-          key={`bone:${targetSession}:${cursor}:${history[cursor]?.id}:${boneSession}`}
-          catalog={catalog}
-          state={current}
-          translations={translations}
-          targetModIds={targetModIds}
-          targetValues={targetValues}
-          targetAlternatives={targetAlternatives}
-          disabled={Boolean(
-            draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
-          )}
-          {...(translateLine ? { translateLine } : {})}
-          onPreview={startBone}
-        />
+        {!strategyResultAction ? (
+          <BoneCraftPanel
+            key={`bone:${targetSession}:${cursor}:${history[cursor]?.id}:${boneSession}`}
+            catalog={catalog}
+            state={current}
+            translations={translations}
+            targetModIds={targetModIds}
+            targetValues={targetValues}
+            targetAlternatives={targetAlternatives}
+            disabled={Boolean(
+              draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+            )}
+            {...(translateLine ? { translateLine } : {})}
+            onPreview={startBone}
+          />
+        ) : null}
       </div>
       {boneDraft ? (
         <section
@@ -1317,26 +1365,28 @@ export function RehearsalPanel({
           </button>
         </section>
       ) : null}
-      <EssenceCraftPanel
-        key={`essence:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
-        catalog={catalog}
-        state={current}
-        translations={translations}
-        targetModIds={targetModIds}
-        targetAlternatives={targetAlternatives}
-        targetValues={targetValues}
-        disabled={
-          draft !== null ||
-          removalCurrency !== null ||
-          socketDraft !== null ||
-          essenceDraft !== null ||
-          boneDraft !== null ||
-          fractureDraft !== null ||
-          current.pendingDesecration !== undefined
-        }
-        {...(translateLine ? { translateLine } : {})}
-        onPreview={startEssence}
-      />
+      {!strategyResultAction ? (
+        <EssenceCraftPanel
+          key={`essence:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          targetModIds={targetModIds}
+          targetAlternatives={targetAlternatives}
+          targetValues={targetValues}
+          disabled={
+            draft !== null ||
+            removalCurrency !== null ||
+            socketDraft !== null ||
+            essenceDraft !== null ||
+            boneDraft !== null ||
+            fractureDraft !== null ||
+            current.pendingDesecration !== undefined
+          }
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startEssence}
+        />
+      ) : null}
       {essenceDraft ? (
         <section
           ref={essenceDraftRef}
@@ -1553,6 +1603,7 @@ export function RehearsalPanel({
                 type="button"
                 onClick={() => {
                   restorePreparationFocusRef.current = true
+                  setStrategyResultAction(null)
                   setDraft(null)
                 }}
               >

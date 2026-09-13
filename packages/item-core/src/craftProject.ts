@@ -55,7 +55,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v39'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v40'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -113,7 +113,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 39 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 40 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -480,6 +480,27 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (
+      rulesVersion < 40 &&
+      read.value.rules.some(
+        (rule) =>
+          !['stop', 'currency'].includes(rule.action.kind) ||
+          rule.conditions.some((condition) =>
+            ['affix-count', 'desecration-stage'].includes(condition.kind),
+          ),
+      )
+    )
+      return fail('v39 旧版指引不能包含特殊动作或阶段条件。')
+    if (
+      read.value.rules.some(
+        (rule) =>
+          rule.action.kind === 'essence' &&
+          !catalog.essences?.some(
+            (essence) => rule.action.kind === 'essence' && essence.id === rule.action.essenceId,
+          ),
+      )
+    )
+      return fail('指引精华不在当前制作目录中。')
     strategy = read.value
   }
   let minimumTargetCount: number | undefined
@@ -877,13 +898,18 @@ export function parseCraftProject(
     )
       return fail('项目镶嵌物来源指纹缺失或与当前目录不同，不能恢复。')
   }
-  const usesEssences = value.operations.some((step) => record(step) && step.kind === 'essence')
+  const usesEssences =
+    strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
+    value.operations.some((step) => record(step) && step.kind === 'essence')
   const essenceSourceHash = readEssenceSourceHash(catalog)
   if (usesEssences || Object.hasOwn(value, 'essenceSourceHash')) {
     if (essenceSourceHash === null || value.essenceSourceHash !== essenceSourceHash)
       return fail('项目精华来源指纹缺失或与当前目录不同，不能恢复。')
   }
   const usesDesecration =
+    strategy?.rules.some(
+      (rule) => rule.action.kind === 'desecrate' || rule.action.kind === 'reveal',
+    ) ||
     initialInput.affixes.some((affix) => affix.desecrated) ||
     value.operations.some((step) => record(step) && isBoneOperationKind(step.kind))
   const desecrationSourceHash = readDesecrationSourceHash(catalog)

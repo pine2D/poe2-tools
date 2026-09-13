@@ -18,6 +18,7 @@ import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
 
 interface EssenceCraftPanelProps {
+  configuration?: { essenceId: string; omen?: EssenceOmen }
   catalog: CraftCatalog
   state: CraftState
   translations: Record<string, string>
@@ -31,6 +32,7 @@ interface EssenceCraftPanelProps {
 
 export function EssenceCraftPanel({
   catalog,
+  configuration,
   state,
   translations,
   translateLine,
@@ -41,7 +43,7 @@ export function EssenceCraftPanel({
   targetValues = [],
 }: EssenceCraftPanelProps) {
   const [query, setQuery] = useState('')
-  const [omen, setOmen] = useState<EssenceOmen | undefined>()
+  const [omen, setOmen] = useState<EssenceOmen | undefined>(configuration?.omen)
   const [selection, setSelection] = useState<EssenceCraftOperation | null>(null)
   const entries = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)
@@ -53,15 +55,17 @@ export function EssenceCraftPanel({
       : []
   }, [catalog, state, omen])
   const needle = query.trim().toLowerCase()
-  const matches = entries.filter(({ essence, mod, modId }) =>
-    [
-      essence.id,
-      essence.name,
-      translations[essence.name],
-      modId,
-      ...(mod?.lines.flatMap((line) => [line, translateLine?.(line)]) ?? []),
-    ].some((text) => text?.toLowerCase().includes(needle)),
-  )
+  const matches = entries
+    .filter(({ essence }) => !configuration || essence.id === configuration.essenceId)
+    .filter(({ essence, mod, modId }) =>
+      [
+        essence.id,
+        essence.name,
+        translations[essence.name],
+        modId,
+        ...(mod?.lines.flatMap((line) => [line, translateLine?.(line)]) ?? []),
+      ].some((text) => text?.toLowerCase().includes(needle)),
+    )
   const selected = selection
     ? entries.find(({ essence }) => essence.id === selection.essenceId)
     : undefined
@@ -113,7 +117,7 @@ export function EssenceCraftPanel({
         <select
           aria-label="精华预兆"
           value={omen ?? ''}
-          disabled={disabled}
+          disabled={disabled || configuration !== undefined}
           onChange={(event) => {
             setOmen((event.target.value || undefined) as EssenceOmen | undefined)
             setSelection(null)

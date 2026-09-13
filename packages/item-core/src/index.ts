@@ -97,6 +97,7 @@ export type {
   CraftStrategyDecision,
   CraftStrategyGoals,
   CraftStrategyRule,
+  CraftStrategyWorkAction,
 } from './craftStrategy'
 export { evaluateCraftStrategy, readCraftStrategy } from './craftStrategy'
 export type { DefenceEstimate } from './defences'
