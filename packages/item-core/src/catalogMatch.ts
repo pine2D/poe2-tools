@@ -23,10 +23,30 @@ function escapeRegex(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+function fixedNumberPattern(text: string): string {
+  const [integer, fraction = ''] = text.replace(/^[+-]/, '').split('.')
+  const whole = integer?.replace(/^0+(?=\d)/, '') ?? '0'
+  const tail = fraction.replace(/0+$/, '')
+  const sign = whole === '0' && tail === '' ? '[+-]?' : text.startsWith('-') ? '-' : '\\+?'
+  return `${sign}0*${whole}${tail ? `\\.${tail}0*` : '(?:\\.0+)?'}`
+}
+
 /** 只替换目录的范围，固定数字仍是字面量；不从一次roll猜tier。 */
 function compileLine(line: string): (text: string) => (number | null)[] | null {
   const source = compact(line)
   const ranges: [number, number][] = []
+  // 固定数字仍须相等；仅额外接受明确相同的 current(base)，不忽略增效后的差异。
+  function literalPattern(literal: string): string {
+    let expression = ''
+    let offset = 0
+    for (const match of literal.matchAll(new RegExp(NUMBER, 'g'))) {
+      expression += escapeRegex(literal.slice(offset, match.index))
+      const fixed = fixedNumberPattern(match[0])
+      expression += `${fixed}(?:\\(${fixed}\\))?`
+      offset = match.index + match[0].length
+    }
+    return expression + escapeRegex(literal.slice(offset))
+  }
   let expression = '^'
   let offset = 0
   for (const match of source.matchAll(RANGE)) {
@@ -34,28 +54,29 @@ function compileLine(line: string): (text: string) => (number | null)[] | null {
     const sign = literal.endsWith('-') ? -1 : 1
     const prefix = /[+-]$/.test(literal) ? literal.slice(-1) : ''
     if (/[+-]$/.test(literal)) literal = literal.slice(0, -1)
-    expression += `${escapeRegex(literal)}(?:${ROLL}|(${escapeRegex(prefix + match[0])}))`
+    expression += `${literalPattern(literal)}(?:${ROLL}|(${escapeRegex(prefix + match[0])}))`
     ranges.push([sign * Number(match[1]), sign * Number(match[2])])
     offset = match.index + match[0].length
   }
-  const regex = new RegExp(`${expression}${escapeRegex(source.slice(offset))}$`)
+  const regex = new RegExp(`${expression}${literalPattern(source.slice(offset))}$`)
   return (text) => {
     if (text.length > 2000) return null
     const matched = regex.exec(compact(text))
     if (!matched) return null
     const values: (number | null)[] = []
-    for (const [index, [a, b]] of ranges.entries()) {
+    for (const [position, [a, b]] of ranges.entries()) {
+      const index = position * 4 + 1
       // 未掷的目录范围也参与整组对应，但不假造一个实际值。
-      if (matched[index * 4 + 4] !== undefined) {
+      if (matched[index + 3] !== undefined) {
         values.push(null)
         continue
       }
-      const value = Number(matched[index * 4 + 1])
+      const value = Number(matched[index])
       const low = Math.min(a, b)
       const high = Math.max(a, b)
       if (!Number.isFinite(value) || value < low || value > high) return null
-      const first = matched[index * 4 + 2]
-      const last = matched[index * 4 + 3]
+      const first = matched[index + 1]
+      const last = matched[index + 2]
       if (
         first !== undefined &&
         (Math.min(Number(first), Number(last)) !== low ||

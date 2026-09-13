@@ -33,7 +33,7 @@ function result(candidates: TranslationCandidate[]): Resolution {
 
 const NUMBER = '[+-]?\\d+(?:\\.\\d+)?'
 const RANGE = `\\(${NUMBER}[-–—]${NUMBER}\\)`
-const TOKEN = `(${NUMBER}(?:${RANGE})?|[+-]?${RANGE})`
+const TOKEN = `(${NUMBER}(?:${RANGE}|\\(${NUMBER}\\))?|[+-]?${RANGE})`
 
 // 模板字面数字不替换；每个捕获组是一个 roll，括号范围始终跟着实际数值。
 export function createStatResolver(entries: readonly StatTemplate[]) {

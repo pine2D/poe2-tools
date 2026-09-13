@@ -84,6 +84,14 @@ export function importCraftState(
   if (item.blocks.some((block) => block.kind === 'unknown'))
     return fail('原文包含未知区块，暂时只能对比。')
   if (
+    item.mods.some((mod) =>
+      mod.stats.some((stat) =>
+        stat.rolls.some((roll) => roll.baseValue !== undefined && roll.baseValue !== roll.value),
+      ),
+    )
+  )
+    return fail('当前值与固定基础值不同，增效来源及基础数值尚未还原；原文保留用于对比。')
+  if (
     importedQuality !== undefined &&
     (!Number.isInteger(importedQuality) || importedQuality < 0 || importedQuality > 30)
   )

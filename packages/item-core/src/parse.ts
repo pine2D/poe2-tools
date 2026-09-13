@@ -187,7 +187,7 @@ function parseStat(line: SourceLine, diagnostics: ItemDiagnostic[]): ItemStat {
 
   const rolls: ItemStat['rolls'] = []
   const rollPattern =
-    /([+-]?\d+(?:\.\d+)?)(?:\s*\(\s*([+-]?\d+(?:\.\d+)?)\s*-\s*([+-]?\d+(?:\.\d+)?)\s*\))?/g
+    /([+-]?\d+(?:\.\d+)?)(?:\s*\(\s*([+-]?\d+(?:\.\d+)?)(?:\s*[-–—]\s*([+-]?\d+(?:\.\d+)?))?\s*\))?/g
   text = text.replace(
     rollPattern,
     (_match, value: string, minimum: string | undefined, maximum: string | undefined) => {
@@ -197,6 +197,7 @@ function parseStat(line: SourceLine, diagnostics: ItemDiagnostic[]): ItemStat {
           minimum === undefined || maximum === undefined
             ? null
             : [Number(minimum), Number(maximum)],
+        ...(minimum !== undefined && maximum === undefined ? { baseValue: Number(minimum) } : {}),
       })
       return value
     },

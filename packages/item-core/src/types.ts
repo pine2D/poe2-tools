@@ -8,6 +8,8 @@ export interface SourceLine {
 export interface Roll {
   value: number
   range: [number, number] | null
+  /** 高级复制 current(base) 中的固定基础值，与可变范围分开保留。 */
+  baseValue?: number
 }
 
 export type ModifierState = 'crafted' | 'desecrated' | 'fractured'
