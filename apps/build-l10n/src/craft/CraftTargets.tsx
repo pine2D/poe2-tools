@@ -11,6 +11,7 @@ import {
   type CraftImplicitTargetValues,
   type CraftOmen,
   type CraftOperation,
+  type CraftPricing,
   type CraftState,
   type CraftStep,
   type CraftTargetAlternative,
@@ -35,6 +36,8 @@ import { TargetRoutesPanel } from './TargetRoutesPanel'
 import { TargetValueEditor } from './TargetValueEditor'
 
 interface CraftTargetsProps {
+  pricing?: CraftPricing
+  spentSteps?: CraftStep[]
   catalog: CraftCatalog
   state: CraftState
   targetImplicitValues?: CraftImplicitTargetValues[]
@@ -58,6 +61,8 @@ interface CraftTargetsProps {
 }
 
 export function CraftTargets({
+  pricing,
+  spentSteps,
   catalog,
   state,
   targetModIds,
@@ -253,6 +258,8 @@ export function CraftTargets({
         />
       ) : null}
       <TargetRoutesPanel
+        {...(pricing ? { pricing } : {})}
+        {...(spentSteps ? { spentSteps } : {})}
         catalog={catalog}
         state={state}
         ids={targetModIds}

@@ -286,7 +286,7 @@ it('前后比较能明确展示新增固化的两类预兆', () => {
   expect(screen.getByText('预兆：右旋死灵预兆、领主预兆')).toBeDefined()
 })
 
-it('路线按中文材料名合并计数，已有双预兆pending的后两步无需新增材料', () => {
+it('路线按材料身份区分同译名，已有双预兆pending的后两步无需新增材料', () => {
   const catalog = boneCatalog('Ring')
   const tail: CraftStep[] = [
     { kind: 'desecration-offer', modIds: ['exclusive1', 'exclusive2', 'exclusive3'] },
@@ -314,7 +314,9 @@ it('路线按中文材料名合并计数，已有双预兆pending的后两步无
   )
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
   expect(
-    screen.getByText('预计材料：保存完好的锁骨 × 1、合成同名预兆 × 2。预览不计入实际历史。'),
+    screen.getByText(
+      '预计材料：保存完好的锁骨 × 1、合成同名预兆（Omen of Dextral Necromancy） × 1、合成同名预兆（Omen of the Liege） × 1。预览不计入实际历史。',
+    ),
   ).toBeDefined()
   first.unmount()
   forced.operations = tail

@@ -17,11 +17,13 @@ import {
   type CraftImplicitTargetValues,
   type CraftOmen,
   type CraftOperation,
+  type CraftPricing,
   type CraftProject,
   type CraftState,
   type CraftStep,
   type CraftTargetAlternative,
   type CraftTargetValues,
+  collectCraftCosts,
   craftAffixLimit,
   craftCandidates,
   craftOmenDescription,
@@ -45,6 +47,8 @@ import {
   type SocketCraftOperation,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { CraftPricingPanel } from './CraftPricingPanel'
+import { craftMaterialLabels } from './craftMaterialLabels'
 import './rehearsal.css'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
@@ -248,6 +252,7 @@ export function RehearsalPanel({
         ? [{ id: 0, state: initial.value, operation: null }]
         : [],
   )
+  const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
   const [cursor, setCursor] = useState(initialProject?.project.cursor ?? 0)
   const [socketDeclaration, setSocketDeclaration] = useState(
     initialProject ? initialProject.project.importedSockets : importedSockets,
@@ -718,73 +723,13 @@ export function RehearsalPanel({
     const name = catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文镶嵌'
     return translations[name] ?? name
   }
-  const costCounts = new Map<string, { label: string; count: number }>()
-  for (const { operation } of history.slice(1, cursor + 1)) {
-    if (!operation) continue
-    if ('kind' in operation && operation.kind === 'desecration-offer') {
-      if (operation.revealOmen) {
-        const id = operation.revealOmen
-        costCounts.set(id, {
-          label: boneRevealOmenLabel(id, catalog, translations),
-          count: (costCounts.get(id)?.count ?? 0) + 1,
-        })
-      }
-      continue
-    }
-    if (
-      'kind' in operation &&
-      (operation.kind === 'desecration-reroll' || operation.kind === 'desecration-reveal')
-    )
-      continue
-    const id =
-      'kind' in operation
-        ? operation.kind === 'fracture'
-          ? 'fracture'
-          : operation.kind === 'artificer'
-            ? 'artificer'
-            : operation.kind === 'essence'
-              ? operation.essenceId
-              : operation.kind === 'desecrate'
-                ? operation.boneId
-                : operation.augmentId
-        : operation.currency
-    const previous = costCounts.get(id)
-    costCounts.set(id, {
-      label:
-        'kind' in operation
-          ? operation.kind === 'essence'
-            ? essenceLabel(operation.essenceId)
-            : operation.kind === 'desecrate'
-              ? (translations[BONE_RULES[operation.boneId].name] ??
-                catalog.localizedNames?.['zh-CN']?.[BONE_RULES[operation.boneId].name] ??
-                BONE_RULES[operation.boneId].name)
-              : stepLabel(operation)
-          : CRAFT_CURRENCY_LABELS[operation.currency],
-      count: (previous?.count ?? 0) + 1,
-    })
-    if ('kind' in operation && operation.kind === 'desecrate')
-      for (const entry of boneOmenLabels(operation, catalog, translations))
-        costCounts.set(entry.id, {
-          label: entry.label,
-          count: (costCounts.get(entry.id)?.count ?? 0) + 1,
-        })
-    if (!('kind' in operation) && operation.omen) {
-      for (const name of craftOmenMaterials(operation.omen)) {
-        costCounts.set(name, {
-          label: translations[name] ?? name,
-          count: (costCounts.get(name)?.count ?? 0) + 1,
-        })
-      }
-    }
-    if ('kind' in operation && operation.kind === 'essence' && operation.omen) {
-      const previousOmen = costCounts.get(operation.omen)
-      costCounts.set(operation.omen, {
-        label: essenceOmenLabel(operation.omen),
-        count: (previousOmen?.count ?? 0) + 1,
-      })
-    }
-  }
-  const costs = [...costCounts.values()].map(({ label, count }) => `${label} × ${count}`)
+  const appliedOperations = history
+    .slice(1, cursor + 1)
+    .flatMap(({ operation }) => (operation ? [operation] : []))
+  const costResult = collectCraftCosts(catalog, appliedOperations)
+  const costMaterials = costResult.ok ? costResult.value : []
+  const costName = craftMaterialLabels(catalog, translations)
+  const costs = costMaterials.map((m) => `${costName(m)} × ${m.count}`)
   const augmentSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/ModRunes.lua',
   )?.sha256
@@ -809,6 +754,7 @@ export function RehearsalPanel({
   const jewelHash = base.type === 'Jewel' ? jewelSourceHash(catalog) : null
   const project: CraftProject = {
     schemaVersion: 1 as const,
+    ...(pricing ? { pricing } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
     initialState: history[0]?.state ?? current,
@@ -829,6 +775,7 @@ export function RehearsalPanel({
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
   const restoreProject = (restored: RestoredCraftProject) => {
+    setPricing(restored.project.pricing)
     setHistory(
       restored.states.map((state, index) => ({
         id: index,
@@ -923,6 +870,16 @@ export function RehearsalPanel({
           原文符文效果已核对；当前效果按孔内物计算，后续替换不改写起点来源。
         </p>
       ) : null}
+      <CraftPricingPanel
+        key={targetSession}
+        catalog={catalog}
+        pricing={pricing}
+        costs={costResult}
+        materialIds={costMaterials.map((m) => m.id)}
+        onChange={setPricing}
+        translations={translations}
+      />
+      {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftTargets
         key={`${current.baseId}:${targetSession}`}
         catalog={catalog}
@@ -967,6 +924,8 @@ export function RehearsalPanel({
         onStart={startAdvice}
         onStartPreparation={startPreparation}
         onPreviewRoute={startRoute}
+        {...(pricing ? { pricing } : {})}
+        spentSteps={appliedOperations}
         onStartEssence={(step) => startEssence(step.operation)}
         translations={translations}
         busy={
@@ -1131,7 +1090,7 @@ export function RehearsalPanel({
           {costs.length > 0 ? (
             costs.map((cost) => <span key={cost}>{cost}</span>)
           ) : (
-            <span>尚未消耗通货</span>
+            <span>{costResult.ok ? '尚未消耗通货' : '材料计费失败'}</span>
           )}
         </div>
       </div>

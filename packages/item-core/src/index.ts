@@ -51,6 +51,14 @@ export type {
   CraftNumericChange,
 } from './comparison'
 export { compareCraftStates } from './comparison'
+export type { CraftCostQuote, CraftMaterial, CraftMaterialCost, CraftPricing } from './craftCosts'
+export {
+  CRAFT_PRICE_UNITS,
+  collectCraftCosts,
+  craftMaterials,
+  parseCraftPricing,
+  quoteCraftCosts,
+} from './craftCosts'
 export { createCraftItemDictionary } from './craftDictionary'
 export {
   type CraftItemTextExport,

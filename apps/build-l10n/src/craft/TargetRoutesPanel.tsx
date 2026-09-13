@@ -3,12 +3,14 @@ import {
   CRAFT_CURRENCY_LABELS,
   type CraftCatalog,
   type CraftImplicitTargetValues,
+  type CraftPricing,
   type CraftResult,
   type CraftState,
   type CraftStep,
   type CraftTargetAlternative,
   type CraftTargetRoutes,
   type CraftTargetValues,
+  collectCraftCosts,
   craftOmenDescription,
   craftOmenMaterials,
   ESSENCE_OMEN_RULES,
@@ -16,9 +18,13 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
+import { CraftCostSummary } from './CraftPricingPanel'
+import { craftMaterialLabels } from './craftMaterialLabels'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
+  pricing?: CraftPricing
+  spentSteps?: CraftStep[]
   catalog: CraftCatalog
   state: CraftState
   ids: string[]
@@ -54,6 +60,8 @@ export function TargetRoutesPanel(props: Props) {
   )
 }
 function RouteSearch({
+  pricing,
+  spentSteps = [],
   catalog,
   state,
   ids,
@@ -85,6 +93,7 @@ function RouteSearch({
     cancelRef.current = null
     setRunning(false)
   }
+  const materialLabel = craftMaterialLabels(catalog, translations)
   const localize = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const label = (step: CraftStep) => {
@@ -211,28 +220,11 @@ function RouteSearch({
               : ''}
           </p>
           {result.value.routes.map((route, index) => {
-            const costs = new Map<string, number>()
-            for (const step of route.steps) {
-              if ('kind' in step.operation && step.operation.kind === 'desecration-offer') {
-                if (step.operation.revealOmen) {
-                  const name = boneRevealOmenLabel(step.operation.revealOmen, catalog, translations)
-                  costs.set(name, (costs.get(name) ?? 0) + 1)
-                }
-                continue
-              }
-              if (
-                'kind' in step.operation &&
-                (step.operation.kind === 'desecration-reroll' ||
-                  step.operation.kind === 'desecration-reveal')
-              )
-                continue
-              for (const name of [
-                label(step.operation),
-                ...omenNames(step.operation),
-                ...boneOmens(step.operation),
-              ])
-                if (name) costs.set(name, (costs.get(name) ?? 0) + 1)
-            }
+            const routeOperations = route.steps.map((step) => step.operation)
+            const materialCosts = collectCraftCosts(catalog, routeOperations)
+            const costs = materialCosts.ok
+              ? materialCosts.value.map((m) => `${materialLabel(m)} × ${m.count}`)
+              : []
             return (
               <article key={JSON.stringify(route.steps.map((s) => s.operation))}>
                 <h4>
@@ -240,11 +232,27 @@ function RouteSearch({
                 </h4>
                 <p>
                   预计材料：
-                  {costs.size
-                    ? [...costs].map(([name, count]) => `${name} × ${count}`).join('、')
-                    : '无需新增材料'}
+                  {costs.length
+                    ? costs.join('、')
+                    : materialCosts.ok
+                      ? '无需新增材料'
+                      : '材料识别失败'}
                   。预览不计入实际历史。
                 </p>
+                {!materialCosts.ok ? <p role="alert">{materialCosts.error}</p> : null}
+                <CraftCostSummary
+                  costs={materialCosts}
+                  pricing={pricing}
+                  title="路线新增成本"
+                  materialLabel={materialLabel}
+                />
+                <CraftCostSummary
+                  costs={collectCraftCosts(catalog, [...spentSteps, ...routeOperations])}
+                  pricing={pricing}
+                  title="完成路线后总成本"
+                  includeBase
+                  materialLabel={materialLabel}
+                />
                 <ol>
                   {route.steps.map((step, stepIndex) => {
                     const previous =

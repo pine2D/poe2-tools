@@ -7,6 +7,7 @@ import {
   isPendingDesecration,
 } from './boneRules'
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
+import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
@@ -50,7 +51,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v33'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v34'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -65,6 +66,7 @@ export const MAX_CRAFT_PROJECT_BYTES = 2_000_000
 const MAX_OPERATIONS = 1000
 
 export interface CraftProject {
+  pricing?: CraftPricing
   schemaVersion: 1
   sourceCommit: string
   rulesVersion: typeof CRAFT_RULES_VERSION
@@ -104,7 +106,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 33 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 34 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -440,6 +442,7 @@ export function parseCraftProject(
       'essenceSourceHash',
       'desecrationSourceHash',
       'jewelSourceHash',
+      'pricing',
       'importedSockets',
       'importedQuality',
     ])
@@ -459,6 +462,10 @@ export function parseCraftProject(
     )
   )
     return fail('v2–v32 旧版项目不能包含强效崇高配置，包括撤销位置之后的步骤。')
+  if (rulesVersion < 34 && Object.hasOwn(value, 'pricing'))
+    return fail('v2–v33 旧版项目不能包含新版报价字段。')
+  const pricing = Object.hasOwn(value, 'pricing') ? parseCraftPricing(value.pricing, catalog) : null
+  if (pricing && !pricing.ok) return fail(pricing.error)
   const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
   const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
   if (rulesVersion < 32 && (usesJewel || Object.hasOwn(value, 'jewelSourceHash')))
@@ -960,6 +967,7 @@ export function parseCraftProject(
           : {}),
         ...(targetModIds === undefined ? {} : { targetModIds }),
         ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
+        ...(pricing?.ok ? { pricing: pricing.value } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
         ...(targetValues === undefined ? {} : { targetValues }),
         ...(targetImplicitValues === undefined ? {} : { targetImplicitValues }),
@@ -1014,5 +1022,7 @@ export function serializeCraftProject(project: CraftProject): string {
     )
       throw new Error('精华预兆字段无效，不能序列化项目。')
   }
+  if (Object.hasOwn(project, 'pricing') && !parseCraftPricing(project.pricing).ok)
+    throw new Error('报价字段无效，不能序列化项目。')
   return JSON.stringify(project, null, 2)
 }
