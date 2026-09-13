@@ -48,6 +48,7 @@ import {
   resolveGrantedSkill,
   type SocketCraftOperation,
   statScalabilitySourceHash,
+  strategyStageAt,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CraftPricingPanel } from './CraftPricingPanel'
@@ -264,6 +265,9 @@ export function RehearsalPanel({
   const [strategy, setStrategy] = useState<CraftStrategy | undefined>(
     initialProject?.project.strategy,
   )
+  const [strategyStartStep, setStrategyStartStep] = useState(
+    initialProject?.project.strategyStartStep,
+  )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
   const [cursor, setCursor] = useState(initialProject?.project.cursor ?? 0)
   const [socketDeclaration, setSocketDeclaration] = useState(
@@ -390,6 +394,41 @@ export function RehearsalPanel({
     if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
       setStrategyResultAction(null)
   }, [draft, removalCurrency, socketDraft, essenceDraft, boneDraft, fractureDraft])
+
+  const stageResult = useMemo(
+    () =>
+      strategy?.flow
+        ? strategyStageAt(
+            catalog,
+            history.map((entry) => entry.state),
+            history.slice(1).flatMap((entry) => (entry.operation ? [entry.operation] : [])),
+            strategy,
+            strategyStartStep ?? 0,
+            cursor,
+            {
+              targetModIds,
+              targetValues,
+              targetAlternatives,
+              targetImplicitValues,
+              ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+              ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
+            },
+          )
+        : null,
+    [
+      catalog,
+      history,
+      strategy,
+      strategyStartStep,
+      cursor,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      targetImplicitValues,
+      minimumTargetCount,
+      targetFracturedModId,
+    ],
+  )
 
   if (!initial.ok || !current || !base) {
     return <section className="rehearsal-panel rehearsal-error">无法开始演练：{message}</section>
@@ -613,6 +652,7 @@ export function RehearsalPanel({
     setMessage('')
   }
   const clearTargetDrafts = () => {
+    if (strategy?.flow) setStrategyStartStep(cursor)
     setStrategyResultAction(null)
     setDraft(null)
     setSocketDraft(null)
@@ -647,6 +687,7 @@ export function RehearsalPanel({
       restoreBoneFocusRef.current = true
     if ('kind' in operation && operation.kind === 'fracture') restoreFractureFocusRef.current = true
     setHistory(next)
+    if (strategy?.flow) setStrategyStartStep(Math.min(strategyStartStep ?? 0, cursor))
     setCursor(next.length - 1)
     if (!('kind' in operation)) setOmen(undefined)
     setStrategyResultAction(null)
@@ -784,6 +825,7 @@ export function RehearsalPanel({
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
     ...(strategy ? { strategy } : {}),
+    ...(strategy?.flow ? { strategyStartStep: strategyStartStep ?? 0 } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
     ...((history[0]?.state.catalyst ||
@@ -819,6 +861,7 @@ export function RehearsalPanel({
   const restoreProject = (restored: RestoredCraftProject) => {
     setPricing(restored.project.pricing)
     setStrategy(restored.project.strategy)
+    setStrategyStartStep(restored.project.strategyStartStep)
     setHistory(
       restored.states.map((state, index) => ({
         id: index,
@@ -931,6 +974,10 @@ export function RehearsalPanel({
       />
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftStrategyPanel
+        {...(stageResult?.ok && stageResult.value ? { stageId: stageResult.value } : {})}
+        {...(stageResult && !stageResult.ok ? { stageError: stageResult.error } : {})}
+        startStep={strategyStartStep ?? 0}
+        onRestart={clearTargetDrafts}
         catalog={catalog}
         translations={translations}
         {...(translateLine ? { translateLine } : {})}
@@ -952,6 +999,7 @@ export function RehearsalPanel({
         onChange={(value) => {
           clearTargetDrafts()
           setStrategy(value)
+          setStrategyStartStep(value?.flow ? cursor : undefined)
         }}
         onStart={(action) => {
           if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)

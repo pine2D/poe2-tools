@@ -197,7 +197,7 @@ describe('钢铁符文核心', () => {
   })
 
   it('v13往返，v5-v8从合法旧基线拒绝游标后的Iron操作', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v42')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v43')
     const source = catalog([iron(), fire])
     const current = {
       schemaVersion: 1,

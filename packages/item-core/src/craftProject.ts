@@ -47,6 +47,7 @@ import { importCraftState } from './rehearsalImport'
 import { isSupportedArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { statScalabilitySourceHash } from './statScalability'
+import { validStrategyStartStep } from './strategyStages'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
@@ -55,7 +56,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v42'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v43'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -70,6 +71,7 @@ export const MAX_CRAFT_PROJECT_BYTES = 2_000_000
 const MAX_OPERATIONS = 1000
 
 export interface CraftProject {
+  strategyStartStep?: number
   strategy?: CraftStrategy
   minimumTargetCount?: number
   scalabilitySourceHash?: string
@@ -113,7 +115,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 42 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 43 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -455,6 +457,7 @@ export function parseCraftProject(
       'targetModIds',
       'minimumTargetCount',
       'strategy',
+      'strategyStartStep',
       'targetFracturedModId',
       'targetValues',
       'targetImplicitValues',
@@ -480,6 +483,7 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (rulesVersion < 43 && read.value.flow) return fail('v42 及更早项目不能包含分阶段流程。')
     const selectedTargets = read.value.rules.flatMap((rule) =>
       rule.conditions.flatMap((condition) =>
         condition.kind === 'selected-targets' ? condition.modIds : [],
@@ -748,6 +752,11 @@ export function parseCraftProject(
     return fail('旧版项目不能包含镶嵌状态或来源。')
   if (!Array.isArray(value.operations) || value.operations.length > MAX_OPERATIONS)
     return fail('演练操作列表无效或超过 1000 步。')
+  if (
+    !validStrategyStartStep(strategy, value.strategyStartStep, value.operations.length) ||
+    (Object.hasOwn(value, 'strategyStartStep') && (rulesVersion < 43 || !strategy?.flow))
+  )
+    return fail('分阶段流程的起点无效，或与项目版本不符。')
   if (
     typeof value.cursor !== 'number' ||
     !Number.isInteger(value.cursor) ||
@@ -1135,6 +1144,7 @@ export function parseCraftProject(
         ...(targetModIds === undefined ? {} : { targetModIds }),
         ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
         ...(strategy === undefined ? {} : { strategy }),
+        ...(strategy?.flow ? { strategyStartStep: value.strategyStartStep as number } : {}),
         ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
         ...(pricing?.ok ? { pricing: pricing.value } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
@@ -1148,6 +1158,16 @@ export function parseCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (
+    !validStrategyStartStep(
+      project.strategy,
+      project.strategyStartStep,
+      project.operations.length,
+    ) ||
+    (Object.hasOwn(project, 'strategyStartStep') &&
+      (project.rulesVersion !== CRAFT_RULES_VERSION || !project.strategy?.flow))
+  )
+    throw new Error('阶段流程起点无效，不能序列化。')
   if (
     Object.hasOwn(project, 'strategy') &&
     (project.rulesVersion !== CRAFT_RULES_VERSION || !readCraftStrategy(project.strategy).ok)

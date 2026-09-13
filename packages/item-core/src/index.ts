@@ -200,6 +200,11 @@ export {
 } from './statScalability'
 export type { SocketStrategyAction } from './strategySockets'
 export { prepareStrategySocket } from './strategySockets'
+export {
+  operationMatchesStrategyAction,
+  strategyStageAt,
+  validStrategyStartStep,
+} from './strategyStages'
 export type {
   CraftTargetRoute,
   CraftTargetRouteOptions,

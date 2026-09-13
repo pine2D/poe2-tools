@@ -62,3 +62,15 @@
   padding: 0;
   margin: 0;
 }
+
+.strategy-flow {
+  margin-block: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+}
+.strategy-flow-stage {
+  margin-block: 0.75rem;
+}
+.strategy-flow-stage input {
+  max-width: 100%;
+}

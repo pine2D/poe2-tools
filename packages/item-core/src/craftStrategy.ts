@@ -28,10 +28,13 @@ export type CraftStrategyCondition =
   | { kind: 'affix-count'; min: number }
   | { kind: 'desecration-stage'; value: 'none' | 'unrevealed' | 'offered' }
 export interface CraftStrategyRule {
+  stageId?: string
+  nextStageId?: string
   conditions: CraftStrategyCondition[]
   action: CraftStrategyAction
 }
 export interface CraftStrategy {
+  flow?: { stages: { id: string; name: string }[]; entryStageId: string }
   maxSteps: number
   rules: CraftStrategyRule[]
 }
@@ -125,14 +128,40 @@ function readCondition(value: unknown): CraftStrategyCondition | null {
 }
 /** 只保存条件与动作，派生决策由当前装备和历史重新计算。 */
 export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
-  if (!keys(value, ['maxSteps', 'rules']) || !integer(value.maxSteps, 1, 1000))
+  if (!keys(value, ['maxSteps', 'rules', 'flow']) || !integer(value.maxSteps, 1, 1000))
     return fail('条件指引的步骤上限必须是 1–1000 的整数，且不能包含未知字段。')
   if (!Array.isArray(value.rules) || value.rules.length < 1 || value.rules.length > 12)
     return fail('条件指引需要 1–12 条规则。')
   const rules: CraftStrategyRule[] = []
+  let flow: CraftStrategy['flow']
+  if (Object.hasOwn(value, 'flow')) {
+    const input = value.flow
+    if (
+      !keys(input, ['stages', 'entryStageId']) ||
+      !Array.isArray(input.stages) ||
+      input.stages.length < 1 ||
+      input.stages.length > 12 ||
+      !input.stages.every(
+        (stage) =>
+          keys(stage, ['id', 'name']) &&
+          typeof stage.id === 'string' &&
+          /^[a-zA-Z0-9_-]{1,64}$/.test(stage.id) &&
+          typeof stage.name === 'string' &&
+          stage.name.trim().length > 0 &&
+          stage.name.length <= 80,
+      ) ||
+      new Set(input.stages.map((stage) => stage.id)).size !== input.stages.length ||
+      !input.stages.some((stage) => stage.id === input.entryStageId)
+    )
+      return fail('阶段需要 1–12 个唯一 ID、有效名称及存在的入口阶段。')
+    flow = {
+      stages: input.stages.map((stage) => ({ id: stage.id, name: stage.name })),
+      entryStageId: input.entryStageId as string,
+    }
+  }
   for (const [index, input] of value.rules.entries()) {
     if (
-      !keys(input, ['conditions', 'action']) ||
+      !keys(input, ['conditions', 'action', 'stageId', 'nextStageId']) ||
       !Array.isArray(input.conditions) ||
       input.conditions.length < 1 ||
       input.conditions.length > 4
@@ -146,9 +175,23 @@ export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
       return fail(`规则 ${index + 1} 的条件无效或类型重复。`)
     const action = readCraftStrategyAction(input.action)
     if (!action) return fail(`规则 ${index + 1} 的动作或预兆组合无效。`)
-    rules.push({ conditions: conditions as CraftStrategyCondition[], action })
+    if (
+      flow
+        ? !flow.stages.some((stage) => stage.id === input.stageId) ||
+          (Object.hasOwn(input, 'nextStageId') &&
+            (action.kind === 'stop' ||
+              !flow.stages.some((stage) => stage.id === input.nextStageId)))
+        : Object.hasOwn(input, 'stageId') || Object.hasOwn(input, 'nextStageId')
+    )
+      return fail(`规则 ${index + 1} 的阶段归属或下一阶段无效。`)
+    rules.push({
+      conditions: conditions as CraftStrategyCondition[],
+      action,
+      ...(flow ? { stageId: input.stageId as string } : {}),
+      ...(typeof input.nextStageId === 'string' ? { nextStageId: input.nextStageId } : {}),
+    })
   }
-  return { ok: true, value: { maxSteps: value.maxSteps, rules } }
+  return { ok: true, value: { maxSteps: value.maxSteps, rules, ...(flow ? { flow } : {}) } }
 }
 
 export function evaluateCraftStrategy(
@@ -157,9 +200,12 @@ export function evaluateCraftStrategy(
   strategy: CraftStrategy,
   appliedSteps: number,
   goals: CraftStrategyGoals = {},
+  stageId = strategy.flow?.entryStageId,
 ): CraftResult<CraftStrategyDecision> {
   const configuration = readCraftStrategy(strategy)
   if (!configuration.ok) return configuration
+  if (strategy.flow && !strategy.flow.stages.some((stage) => stage.id === stageId))
+    return fail('当前阶段不在流程中。')
   if (!integer(appliedSteps, 0, 1000)) return fail('当前历史步数无效。')
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
@@ -249,7 +295,9 @@ export function evaluateCraftStrategy(
     const side = condition.kind === 'open-prefix' ? 'prefix' : 'suffix'
     return capacity - counts[side] >= condition.min
   }
-  const ruleIndex = strategy.rules.findIndex((rule) => rule.conditions.every(matches))
+  const ruleIndex = strategy.rules.findIndex(
+    (rule) => (!strategy.flow || rule.stageId === stageId) && rule.conditions.every(matches),
+  )
   const rule = strategy.rules[ruleIndex]
   if (!rule) return result({ kind: 'unmatched' })
   if (rule.action.kind === 'stop') return result({ kind: 'stop', reason: 'rule', ruleIndex })

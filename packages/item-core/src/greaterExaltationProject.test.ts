@@ -40,7 +40,7 @@ it('v33 三种双组配置完整回放，全部旧版包括未来步骤拒绝注
     for (const cursor of [0, 1]) {
       const r = parseCraftProject(serializeCraftProject({ ...project, cursor }), catalog)
       expect(r.ok, r.ok ? '' : r.error).toBe(true)
-      expect(r.ok && r.value.project.rulesVersion).toBe('basic-2026-09-12-v42')
+      expect(r.ok && r.value.project.rulesVersion).toBe('basic-2026-09-12-v43')
     }
     for (let v = 2; v <= 32; v++)
       expect(

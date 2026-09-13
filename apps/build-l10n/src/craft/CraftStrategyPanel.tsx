@@ -12,6 +12,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import './strategy.css'
 import { CraftStrategyActionEditor, strategyActionLabel } from './CraftStrategyActionEditor'
+import { StrategyFlowEditor, StrategyRuleStages } from './StrategyFlowEditor'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 const CONDITION_LABELS = {
@@ -61,6 +62,10 @@ function example(): CraftStrategy {
 }
 
 interface Props {
+  stageId?: string
+  startStep?: number
+  stageError?: string
+  onRestart?: () => void
   catalog: CraftCatalog
   translations?: Record<string, string>
   translateLine?: (line: string) => string | null
@@ -75,6 +80,10 @@ interface Props {
 }
 
 export function CraftStrategyPanel({
+  stageId,
+  startStep = 0,
+  stageError,
+  onRestart,
   catalog,
   translations = {},
   translateLine,
@@ -94,10 +103,13 @@ export function CraftStrategyPanel({
     setMessage('')
   }, [strategy?.maxSteps])
   const evaluated = useMemo(
-    () => (strategy ? evaluateCraftStrategy(catalog, state, strategy, appliedSteps, goals) : null),
-    [catalog, state, strategy, appliedSteps, goals],
+    () =>
+      strategy
+        ? evaluateCraftStrategy(catalog, state, strategy, appliedSteps, goals, stageId)
+        : null,
+    [catalog, state, strategy, appliedSteps, goals, stageId],
   )
-  const decision = evaluated?.ok ? evaluated.value : null
+  const decision = !stageError && evaluated?.ok ? evaluated.value : null
   const replaceRule = (index: number, rule: CraftStrategyRule) => {
     if (strategy)
       onChange({
@@ -125,6 +137,15 @@ export function CraftStrategyPanel({
         </button>
       ) : (
         <>
+          {onRestart ? (
+            <StrategyFlowEditor
+              strategy={strategy}
+              stageId={stageId}
+              startStep={startStep}
+              onChange={onChange}
+              onRestart={onRestart}
+            />
+          ) : null}
           <p>
             示例：目标达成时停止，普通用蜕变、魔法用富豪、稀有用混沌。可编辑；示例不代表最优策略。步骤结果仍由你指定。
           </p>
@@ -165,7 +186,7 @@ export function CraftStrategyPanel({
           </p>
           {message ? <p role="alert">{message}</p> : null}
           <div className="strategy-decision" role="status">
-            {evaluated && !evaluated.ok ? evaluated.error : null}
+            {stageError ?? (evaluated && !evaluated.ok ? evaluated.error : null)}
             {decision?.kind === 'action' ? (
               <>
                 <p>
@@ -448,6 +469,12 @@ export function CraftStrategyPanel({
                   >
                     添加同时满足的条件
                   </button>
+                  <StrategyRuleStages
+                    strategy={strategy}
+                    rule={rule}
+                    number={number}
+                    onChange={(value) => replaceRule(index, value)}
+                  />
                   <div className="strategy-toolbar">
                     <CraftStrategyActionEditor
                       number={number}
@@ -456,7 +483,14 @@ export function CraftStrategyPanel({
                       state={state}
                       translations={translations}
                       omenLabel={omenLabel}
-                      onChange={(action) => replaceRule(index, { ...rule, action })}
+                      onChange={(action) => {
+                        const { nextStageId, ...rest } = rule
+                        replaceRule(index, {
+                          ...rest,
+                          action,
+                          ...(action.kind !== 'stop' && nextStageId ? { nextStageId } : {}),
+                        })
+                      }}
                     />
                     <button
                       type="button"
@@ -499,7 +533,11 @@ export function CraftStrategyPanel({
                   ...strategy,
                   rules: [
                     ...strategy.rules,
-                    { conditions: [{ kind: 'always' }], action: { kind: 'stop' } },
+                    {
+                      ...(strategy.flow ? { stageId: strategy.flow.entryStageId } : {}),
+                      conditions: [{ kind: 'always' }],
+                      action: { kind: 'stop' },
+                    },
                   ],
                 })
               }
