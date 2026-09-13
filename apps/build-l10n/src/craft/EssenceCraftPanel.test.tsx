@@ -551,7 +551,11 @@ it('精华预兆草稿锁定、取消无费、分项计费与历史保存恢复'
       translations={omenTranslations}
     />,
   )
-  expect(within(screen.getByLabelText('本次搭配预兆')).getAllByRole('option')).toHaveLength(7)
+  expect(
+    within(screen.getByLabelText('本次搭配预兆')).getByRole('option', {
+      name: 'Omen of Whittling',
+    }),
+  ).toBeDefined()
   expect(
     within(screen.getByLabelText('本次搭配预兆')).queryByRole('option', {
       name: '右旋结晶预兆',

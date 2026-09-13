@@ -6,7 +6,6 @@ import {
   type CatalogMod,
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
-  CRAFT_OMEN_RULES,
   type CraftAdviceStep,
   type CraftCatalog,
   type CraftImplicitTargetValues,
@@ -16,6 +15,7 @@ import {
   type CraftStep,
   type CraftTargetAlternative,
   type CraftTargetValues,
+  craftOmenDescription,
   craftTargetCandidates,
   type EssenceAdviceStep,
   hasCraftModEligibility,
@@ -560,7 +560,7 @@ export function CraftTargets({
                     {step.randomRemovalRisk ? (
                       <p className="target-warning">
                         {step.omen
-                          ? `游戏实际在${CRAFT_OMEN_RULES[step.omen].kind === 'prefix' ? '前缀' : '后缀'}中随机移除；该侧已有目标没有被保护。`
+                          ? craftOmenDescription(step.omen)
                           : '游戏实际随机移除；已有目标没有被保护。'}
                         这里指定移除结果仅用于演练。
                       </p>

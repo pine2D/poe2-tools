@@ -10,6 +10,7 @@ import {
   type CraftTargetAlternative,
   type CraftTargetRoutes,
   type CraftTargetValues,
+  craftOmenDescription,
   ESSENCE_OMEN_RULES,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
@@ -269,6 +270,9 @@ function RouteSearch({
                             ? ` + ${boneOmens(step.operation).join(' + ')}`
                             : ''}
                         </strong>
+                        {'currency' in step.operation && step.operation.omen === 'whittling' ? (
+                          <p>{craftOmenDescription('whittling')}</p>
+                        ) : null}
                         {'kind' in step.operation && step.operation.kind === 'fracture' ? (
                           <p className="target-warning">
                             演练锁定：{modLabel(step.operation.modId)}。游戏随机锁定当前{' '}
@@ -335,7 +339,9 @@ function RouteSearch({
                           <p className="target-warning">
                             {'kind' in step.operation && step.operation.kind === 'desecrate'
                               ? '本工具可演练移除池内的目标风险：'
-                              : '整个合法随机移除池内的目标风险：'}
+                              : 'currency' in step.operation && step.operation.omen === 'whittling'
+                                ? '最低等级候选内的目标风险：'
+                                : '整个合法随机移除池内的目标风险：'}
                             {step.atRiskTargetIds.map(modLabel).join('；')}
                             。所选安全结果不代表随机安全。
                           </p>

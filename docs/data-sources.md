@@ -160,3 +160,12 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 ### 深渊回响（v26）
 
 [GGG0.3.0b](https://www.pathofexile.com/forum/view-thread/3840893)确认修复已显示候选后补用深渊回响的错误，primary时机证据。[作者Lolcohol指南](https://mobalytics.gg/poe-2/profile/lolcohol/guides/abyss-and-desecration-crafting-poe-2-0-3)更新2026-07-07说明重选后可选回第一组三项；[首次反馈](https://www.pathofexile.com/forum/view-thread/3858859)及[未重选仍消费报告](https://www.pathofexile.com/forum/view-thread/3868988)支持首次得到机会即消费，按gray人工规则参考，不视为官方完整算法。名称复用既有三服static，公开Omen页措辞仅人工核查。[旧低档争议](https://www.pathofexile.com/forum/view-thread/3860899)混合Preserved/Essence/Putrefaction，不能判断当前普通Ancient或巫妖限定在第二组是否保留；证据不足，工具明确未验证该组合。没有新数据适配器、权重或解包数据，网页不向第三方请求装备。
+
+
+### 消减预兆（Whittling）机制依据（v30）
+
+沿用已登记官方三服 static 名称（国服“消减预兆”、台服“削切之兆”）与固定 MIT PoB2 词缀 level 字段，不新增数据抓取或生成物。[公开物品文本转录](https://poe2db.tw/us/Omen_of_Whittling)仅人工核对下一枚混沌移除最低等级属性的措辞，按 gray 规则参考。[作者制作指南](https://mobalytics.gg/poe-2/guides/omen-crafting)以法杖不同等级的实物说明，比较的是出现所需等级而非阶级；[玩家原始并列讨论](https://www.pathofexile.com/forum/view-thread/3687553/page/2)用于核对同等级多个候选，不采用其中未经统计的50/50数字。
+
+[GGG 0.2.0g](https://www.pathofexile.com/forum/view-thread/3774660/filter-account-type/staff)明确修复破裂装备搭配Whittling/Erasure时的错误高亮，primary，说明早期[破裂争议](https://www.pathofexile.com/forum/view-thread/3751070)不能直接作为现行不兼容结论。当前演练在既有未锁定合法池中求最低等级，未知实值仍可按已确认身份比较；逐组合真机仍待验收。
+
+本次仅接入单枚消减配基础混沌。高级混沌旧[报告](https://www.pathofexile.com/forum/view-thread/3839647)未充分区分最低等级例外；方向配对的全局最低与侧内最低交互也缺少独立实例，继续保留未支持门禁，不推断游戏禁止。CoE公开路线图仅用于预兆、移除风险及历史衔接的体验参考，不读取或复制其他模拟器代码、规则文件或权重。

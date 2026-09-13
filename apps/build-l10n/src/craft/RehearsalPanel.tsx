@@ -23,6 +23,7 @@ import {
   type CraftTargetAlternative,
   type CraftTargetValues,
   craftCandidates,
+  craftOmenDescription,
   createCraftState,
   desecrationSourceHash,
   ESSENCE_OMEN_RULES,
@@ -1002,9 +1003,7 @@ export function RehearsalPanel({
         {omen ? (
           <p>
             <span lang="en">{CRAFT_OMEN_RULES[omen].name}</span> · 适配基础
-            {CRAFT_CURRENCY_LABELS[CRAFT_OMEN_RULES[omen].currency]}；
-            {CRAFT_OMEN_RULES[omen].effect === 'add' ? '仅新增' : '仅移除'}
-            {CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : '后缀'}。
+            {CRAFT_CURRENCY_LABELS[CRAFT_OMEN_RULES[omen].currency]}；{craftOmenDescription(omen)}
             {CRAFT_OMEN_RULES[omen].currency === 'chaos' ? '混沌新增仍可为任一合法侧。' : ''}
             仅用于本次通货；应用成功计入一枚预兆费用。
           </p>
@@ -1065,12 +1064,7 @@ export function RehearsalPanel({
         <section className="rehearsal-removal" aria-label="选择要移除的词缀">
           <h3>{CRAFT_CURRENCY_LABELS[removalCurrency]}：先指定移除结果</h3>
           <p>请选择一个完整词缀组。该选择是演练指定结果，不代表游戏中的随机概率。</p>
-          {omen ? (
-            <p>
-              游戏实际在{CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : '后缀'}
-              中随机移除，该侧具体词缀没有被保护。
-            </p>
-          ) : null}
+          {omen ? <p>{craftOmenDescription(omen)}</p> : null}
           <div className="rehearsal-removal-list">
             {(() => {
               const removable = removableCraftAffixes(catalog, current, removalCurrency, omen)
@@ -1079,6 +1073,7 @@ export function RehearsalPanel({
               const mod = modById.get(affix.modId)
               return (
                 <div className="rehearsal-removal-choice" key={affix.modId}>
+                  {omen === 'whittling' && mod ? <p>目录词缀等级 {mod.level}</p> : null}
                   <AffixCard
                     mod={mod}
                     crafted={affix.crafted}

@@ -49,7 +49,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v29'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v30'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -102,7 +102,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 29 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 30 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -447,6 +447,12 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (
+    rulesVersion < 30 &&
+    Array.isArray(value.operations) &&
+    value.operations.some((step) => record(step) && step.omen === 'whittling')
+  )
+    return fail('v2–v29 旧版项目不能包含消减预兆操作，包括撤销位置之后的步骤。')
   if (rulesVersion < 29 && Object.hasOwn(value, 'targetFracturedModId'))
     return fail('v2–v28 旧版项目不能包含破裂目标要求。')
   if (rulesVersion < 28) {

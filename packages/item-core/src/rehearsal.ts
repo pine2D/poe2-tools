@@ -462,14 +462,20 @@ export function removableCraftAffixes(
   if (!['magic', 'rare'].includes(checked.value.rarity))
     return failure('剥离石只能用于魔法或稀有装备。')
   if (checked.value.affixes.length === 0) return failure('当前装备没有可移除的词缀。')
-  const removable = checked.value.affixes.filter(
+  let removable = checked.value.affixes.filter(
     (affix) =>
       !affix.fractured &&
       (omen === undefined ||
+        CRAFT_OMEN_RULES[omen].kind === null ||
         catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind ===
           CRAFT_OMEN_RULES[omen].kind),
   )
   if (removable.length === 0) return failure('当前装备或预兆指定侧没有未锁定的可移除词缀。')
+  if (omen === 'whittling') {
+    const levels = new Map(catalog.modifiers.map((mod) => [mod.id, mod.level]))
+    const minimum = Math.min(...removable.map((affix) => levels.get(affix.modId) ?? Infinity))
+    removable = removable.filter((affix) => levels.get(affix.modId) === minimum)
+  }
   return { ok: true, value: removable.map((affix) => ({ ...affix, lines: [...affix.lines] })) }
 }
 

@@ -97,8 +97,8 @@ function project(): CraftProject {
 }
 
 describe('结晶预兆核心', () => {
-  it('独立规则仅接收两枚，普通六枚维持隔离', () => {
-    expect(Object.keys(CRAFT_OMEN_RULES)).toHaveLength(6)
+  it('独立规则仅接收两枚，与普通制作预兆维持隔离', () => {
+    expect(CRAFT_OMEN_RULES).toHaveProperty('whittling')
     expect(ESSENCE_OMEN_RULES).toEqual({
       [left]: { name: 'Omen of Sinistral Crystallisation', kind: 'prefix' },
       [right]: { name: 'Omen of Dextral Crystallisation', kind: 'suffix' },
@@ -259,7 +259,7 @@ describe('结晶预兆核心', () => {
     expect(input).toEqual(before)
   })
   it('v17保存与完整未来历史；v2–16拒绝新字段；v16无字段升级', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v29')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v30')
     expect(parseCraftProject(serializeCraftProject(project()), catalog)).toMatchObject({
       ok: true,
       value: { project: { operations: project().operations, essenceSourceHash: hash } },
