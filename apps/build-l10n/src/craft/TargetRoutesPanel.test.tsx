@@ -4,8 +4,10 @@ import type {
   CraftState,
   CraftTargetRoutes,
 } from '@poe2-tools/item-core'
+import { BONE_RULES, planCraftTargetRoutes } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { boneCatalog, boneState } from '../../../../packages/item-core/src/boneTestFixture'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 
 const pending = vi.hoisted(() => ({
@@ -183,4 +185,35 @@ it('仅固有请求位于第7参数，条件改变取消任务并丢弃迟到结
   expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
   expect(pending.calls[1]?.args[6]).toEqual([{ lineIndex: 0, bounds: [{ index: 0, min: 3 }] }])
+})
+
+it.each([0, 1, 2])('骨骼路线预计材料仅计真实消耗，起始阶段%s', (startIndex) => {
+  const catalog = boneCatalog()
+  const initial = boneState()
+  const planned = planCraftTargetRoutes(catalog, initial, ['exclusive1'])
+  if (!planned.ok) throw new Error(planned.error)
+  const route = planned.value.routes[0]
+  if (!route) throw new Error('缺少合成路线')
+  expect(route.steps).toHaveLength(3)
+  const first = route.steps[0]?.operation
+  if (!first || !('kind' in first) || first.kind !== 'desecrate') throw new Error('缺少骨骼操作')
+  render(
+    <TargetRoutesPanel
+      {...props}
+      catalog={catalog}
+      state={startIndex === 0 ? initial : (route.steps[startIndex - 1]?.state ?? initial)}
+      ids={['exclusive1']}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  act(() =>
+    pending.calls[0]?.callback({
+      ok: true,
+      value: { ...planned.value, routes: [{ ...route, steps: route.steps.slice(startIndex) }] },
+    }),
+  )
+  const expected = startIndex === 0 ? `${BONE_RULES[first.boneId].name} × 1` : '无需新增材料'
+  expect(screen.getByText(`预计材料：${expected}。预览不计入实际历史。`)).toBeDefined()
+  expect(screen.queryByText(/固定三项亵渎候选 × 1/)).toBeNull()
+  expect(screen.queryByText(/完成亵渎揭示 × 1/)).toBeNull()
 })

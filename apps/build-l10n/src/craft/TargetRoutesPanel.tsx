@@ -189,16 +189,26 @@ function RouteSearch({
           </p>
           {result.value.routes.map((route, index) => {
             const costs = new Map<string, number>()
-            for (const step of route.steps)
+            for (const step of route.steps) {
+              if (
+                'kind' in step.operation &&
+                (step.operation.kind === 'desecration-offer' ||
+                  step.operation.kind === 'desecration-reveal')
+              )
+                continue
               for (const name of [label(step.operation), omenLabel(step.operation)])
                 if (name) costs.set(name, (costs.get(name) ?? 0) + 1)
+            }
             return (
               <article key={JSON.stringify(route.steps.map((s) => s.operation))}>
                 <h4>
                   示例路线 {index + 1} · {route.steps.length} 步
                 </h4>
                 <p>
-                  预计材料：{[...costs].map(([name, count]) => `${name} × ${count}`).join('、')}
+                  预计材料：
+                  {costs.size
+                    ? [...costs].map(([name, count]) => `${name} × ${count}`).join('、')
+                    : '无需新增材料'}
                   。预览不计入实际历史。
                 </p>
                 <ol>
