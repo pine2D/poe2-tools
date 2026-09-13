@@ -2,13 +2,15 @@
 
 ### 当前制作机制补充核查（2026-09-14）
 
+新增人工交互参考：[b0b5 的普通五词缀珠宝实操](https://www.youtube.com/watch?v=xDDbg6FYMgI)、[Vodnarg 的范围珠宝实操](https://www.youtube.com/watch?v=3tFs16SXkD8)。仅用于核对增容移除后仍可保留第三同侧词缀，以及后续混沌操作受空位限制；没有采集视频数据入目录，没有将作者口述概率当作真实权重。搜索索引日期不一致，未据其推定当前补丁。对应增容/增效执行规则仍需独立验证。
+
 [GGG 0.4.0 官方补丁](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff)确认同质崇高与同质加冕预兆停止掉落，已有物品仍可使用；[GGG 0.5.0 官方补丁](https://www.pathofexile.com/forum/view-thread/3932540/filter-account-type/staff)确认这两种预兆及腐化预兆只在标准服通货交易所显示，同时关闭重组器并删除已有重组预兆。旧网页条目不能据此作为当前赛季可获取证据。0.5.0 新增合金与液态情感制作珠宝，本轮核查对应可授权数据，不从旧制作指南推导新规则。
 
-新增 primary 声明来源：[固定 MIT 快照的 LiquidEmotions.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/LiquidEmotions.lua)，SHA-256 `2f8783e2f3d26fabc2a58c9533ffe96461ae0343ab6b3a2037249c68d00da7a8`。沿用 PoB2 许可与游戏文字版权声明，经既有 cache.ts 与受限 Lua 解析接入材料声明，保留 26 种材料（13 种普通、13 种范围珠宝）及 96 个前后缀映射。每个引用用同一固定 ModJewel 原始声明核对存在性、前后缀与范围节点语义。空类别原样保留，tierLevel 不作为装备物等门槛；此次声明不改变普通珠宝 160 个可生成词缀与 217 个排除记录。名称复用已登记三服 static，简繁独立精确对应，不另行抓取。浏览器不访问第三方。
+新增 primary 声明来源：[固定 MIT 快照的 LiquidEmotions.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/LiquidEmotions.lua)，SHA-256 `2f8783e2f3d26fabc2a58c9533ffe96461ae0343ab6b3a2037249c68d00da7a8`。沿用 PoB2 许可与游戏文字版权声明，经既有 cache.ts 与受限 Lua 解析接入材料声明，保留 26 种材料（13 种普通、13 种范围珠宝）及 96 个前后缀映射。每个引用用同一固定 ModJewel 原始声明核对存在性、前后缀与范围节点语义。空类别原样保留，tierLevel 不作为装备物等门槛；普通珠宝可生成词缀保持 160 个，工艺子域另接入 8 个专属声明，剩余 209 个排除记录。名称复用已登记三服 static，简繁独立精确对应，不另行抓取。浏览器不访问第三方。
 
 规则人工参考另核对 [Ire](https://poe2db.tw/us/Diluted_Liquid_Ire)、[Isolation](https://poe2db.tw/us/Concentrated_Liquid_Isolation)、[Contempt](https://poe2db.tw/us/Potent_Liquid_Contempt)、[Ferocity](https://poe2db.tw/us/Potent_Liquid_Ferocity) 的公开物品说明，按 gray 处理，仅人工核查，不复制数据文件或建立适配器。GGG 0.5.0 的一组工艺上限作为 primary 规则依据。钻石空映射、移除额外词缀位后的超额状态与词缀增效交互仍需单独核实；玩家帖子 [3948475](https://www.pathofexile.com/forum/view-thread/3948475)、[3958506](https://www.pathofexile.com/forum/view-thread/3958506) 只作第一手问题线索，不据此推定现行算法或概率。数据接入不代表这些操作已经可用。
 
-基础制作补充参考作者实操攻略 [3964088](https://www.pathofexile.com/forum/view-thread/3964088) 的蓝玉／Liquid Despair 替换示例，支持满后缀时移除候选受容量约束；作者估计的概率未转成权重，旧回盾词缀建议未被当作当前目录。该来源按 gray 人工规则参考，不下载攻略装备。当前执行范围只采用固定 MIT 目录中 10 种基础材料的 30 个三色普通珠宝映射，具体门禁和未支持交互见 crafting-rules.md。
+基础制作补充参考作者实操攻略 [3964088](https://www.pathofexile.com/forum/view-thread/3964088) 的蓝玉／Liquid Despair 替换示例，支持满后缀时移除候选受容量约束；作者估计的概率未转成权重，旧回盾词缀建议未被当作当前目录。该来源按 gray 人工规则参考，不下载攻略装备。当前执行范围采用固定 MIT 目录中 11 种材料的 34 个精确映射，包括三色基础与悲哀材料，以及钻石的孤独材料，具体门禁和未支持交互见 crafting-rules.md。
 
 ### 催化剂效果预览依据（2026-09-13）
 
@@ -197,6 +199,8 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 [公开物品文本转录](https://poe2db.tw/us/Omen_of_Light)限定下一枚剥离石只移除亵渎词缀；[Lolcohol 亵渎指南](https://mobalytics.gg/poe-2/guides/abyss-crafting)说明移除不满意的已揭示词缀后重新亵渎。两页仅作 gray 人工规则依据，不复制代码、词缀表或权重；指南的其他交互及旧版本内容不据此开放。名称复用既有官方三服 static（国服光明预兆、台服光明之兆），来源身份沿固定 MIT 目录和原文标记。当前只支持单枚配基础剥离及已揭示的一组亵渎，未揭示、多预兆和腐化多亵渎继续未支持，游戏操作待真机验收。无新适配器、生成物或浏览器第三方请求。
 
 ### 珠宝词缀来源登记
+
+2026-09-14 工艺子域扩展沿用下述固定 ModJewel 与已登记 LiquidEmotions 双 SHA，不新增抓取来源。仅将非范围材料精确引用、无 nodeType、前后缀一致且全部生成资格为零的 8 条声明标记为 jewelOnly + craftedOnly；普通可生成词缀仍为 160 条，排除审计为 209 条。声明涵盖三个条件效果、钻石最大混沌抗性、两种增容与两种侧别增效；数据存在不代表执行已开放，具体范围见 crafting-rules.md。构建复用既有 cache.ts 与受限 Lua 解析，运行时校验双来源和映射，工艺声明不得进入普通生成池。无新增第三方数据、依赖或浏览器请求。
 
 接入既有 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [ModJewel.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModJewel.lua)，按 primary 登记，游戏物品文本版权仍归 GGG。SHA-256 为 `44285abc35fa4c32b2b0ba169570c99b01fd97136d1a801462b9b1398db82e80`，377 条源记录中 160 条具有普通珠宝正向资格，217 条范围珠宝或无正向资格记录保留排除原因。仅经既有构建期 cache.ts 抓取与受限 Lua 解析器处理；0/1 仍只表示生成资格，不能当概率。源末项 jewel=0 后追加 default=0 补全统一格式，顺序不变；独立 jewelOnly 标记隔离装备域。CoE 公开路线图只作类别与流程覆盖参考，不采用其规则或数据文件。
 

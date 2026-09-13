@@ -350,11 +350,14 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
           'eligibility',
           'desecratedOnly',
           'jewelOnly',
+          'craftedOnly',
         ].includes(key),
       ) ||
       !nonempty(mod.id) ||
       (Object.hasOwn(mod, 'desecratedOnly') && mod.desecratedOnly !== true) ||
       (Object.hasOwn(mod, 'jewelOnly') && mod.jewelOnly !== true) ||
+      (Object.hasOwn(mod, 'craftedOnly') && mod.craftedOnly !== true) ||
+      (mod.craftedOnly === true && mod.jewelOnly !== true) ||
       (mod.jewelOnly === true && mod.desecratedOnly === true) ||
       ids.has(mod.id) ||
       !['prefix', 'suffix'].includes(String(mod.kind)) ||
@@ -387,6 +390,22 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     )
       return invalid()
     ids.add(mod.id)
+  }
+  const catalog = value as unknown as CraftCatalog
+  for (const mod of catalog.modifiers.filter((entry) => entry.craftedOnly)) {
+    const references = (catalog.liquidEmotions ?? [])
+      .filter((emotion) => !emotion.radiusJewel)
+      .flatMap((emotion) =>
+        Object.values(emotion.mods).flatMap((effects) => Object.entries(effects)),
+      )
+      .filter(([, id]) => id === mod.id)
+    if (
+      liquidEmotionSourceHash(catalog) === null ||
+      mod.eligibility.some((rule) => rule.value !== 0) ||
+      references.length === 0 ||
+      references.some(([kind]) => kind !== mod.kind)
+    )
+      return invalid()
   }
   const desecratedSources = meta.sources.filter((source) => source.path === DESECRATION_SOURCE.path)
   const jewelSources = meta.sources.filter((source) => source.path === JEWEL_SOURCE.path)

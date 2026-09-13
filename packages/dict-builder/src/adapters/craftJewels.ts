@@ -1,9 +1,13 @@
-import type { CatalogMod } from '@poe2-tools/item-core'
+import type { CatalogLiquidEmotion, CatalogMod } from '@poe2-tools/item-core'
 import { normalizeMod } from './craftCatalog'
+import { auditLiquidEmotionMappings } from './craftLiquidEmotionAudit'
 import type { LuaTable } from './restrictedLua'
 
 /** 所有记录先验结构；范围珠宝及无资格记录保留排除原因。 */
-export function normalizeJewelMods(raw: unknown): {
+export function normalizeJewelMods(
+  raw: unknown,
+  liquidEmotions: readonly CatalogLiquidEmotion[] = [],
+): {
   modifiers: CatalogMod[]
   excluded: { id: string; reason: string }[]
 } {
@@ -11,6 +15,14 @@ export function normalizeJewelMods(raw: unknown): {
     throw new Error(`珠宝目录字段异常：${id}`)
   }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail('root')
+  auditLiquidEmotionMappings(liquidEmotions, raw as LuaTable)
+  const craftedIds = new Set(
+    liquidEmotions
+      .filter((emotion) => !emotion.radiusJewel)
+      .flatMap((emotion) =>
+        Object.values(emotion.mods).flatMap((effects) => Object.values(effects)),
+      ),
+  )
   const modifiers: CatalogMod[] = []
   const excluded: { id: string; reason: string }[] = []
   for (const [id, value] of Object.entries(raw)) {
@@ -39,6 +51,9 @@ export function normalizeJewelMods(raw: unknown): {
     if (ordinary) {
       if (nodeType !== undefined) fail(id)
       modifiers.push({ ...mod, jewelOnly: true })
+    } else if (craftedIds.has(id)) {
+      if (nodeType !== undefined || mod.eligibility.some((rule) => rule.value !== 0)) fail(id)
+      modifiers.push({ ...mod, jewelOnly: true, craftedOnly: true })
     } else excluded.push({ id, reason: '不属于普通珠宝的可生成词缀' })
   }
   return { modifiers, excluded }

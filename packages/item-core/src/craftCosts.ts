@@ -7,7 +7,7 @@ import { BONE_RULES } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import type { CraftStep } from './craftSteps'
 import { ESSENCE_OMEN_RULES } from './essenceOmens'
-import { supportedBasicLiquidEmotionId } from './liquidEmotions'
+import { supportedLiquidEmotionId } from './liquidEmotions'
 import { CRAFT_OMEN_RULES, craftOmenMaterials } from './omens'
 import { CRAFT_CURRENCY_LABELS, type CraftResult } from './rehearsal'
 
@@ -56,7 +56,7 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     ...Object.entries(BONE_RULES).map(([id, rule]) => ({ id: `bone:${id}`, name: rule.name })),
     ...(catalog.essences ?? []).map((e) => ({ id: `essence:${e.id}`, name: e.name })),
     ...(catalog.liquidEmotions ?? [])
-      .filter((e) => supportedBasicLiquidEmotionId(e.id))
+      .filter((e) => supportedLiquidEmotionId(e.id))
       .map((e) => ({ id: `emotion:${e.id}`, name: e.name })),
     ...(catalog.augments ?? []).map((e) => ({ id: `augment:${e.name}`, name: e.name })),
     ...Object.keys(CRAFT_OMEN_RULES)
@@ -95,7 +95,7 @@ export function collectCraftCosts(
       if (!augment) return fail('无法识别镶嵌材料，不能完整计费。')
       add(`augment:${augment.name}`)
     } else if (step.kind === 'liquid-emotion') {
-      if (!supportedBasicLiquidEmotionId(step.emotionId))
+      if (!supportedLiquidEmotionId(step.emotionId))
         return fail('该液态情感材料尚未支持，不能计费。')
       add(`emotion:${step.emotionId}`)
     } else if (step.kind === 'essence') {

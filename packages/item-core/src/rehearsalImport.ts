@@ -10,6 +10,7 @@ import { importCatalystQuality } from './catalystImport'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
+import { inspectLiquidEmotions } from './liquidEmotions'
 import { hasSpecialModifierSource } from './modifierSource'
 import { CHARM_SLOTS_PROPERTY, CHARM_SLOTS_PROPERTY_HEADER, parseItem } from './parse'
 import { readItemQuality } from './quality'
@@ -172,8 +173,14 @@ export function importCraftState(
       ({ mod }) =>
         !['prefix', 'suffix', 'implicit'].includes(mod.kind) ||
         (mod.kind !== 'implicit' &&
-          (!knownExplicitHeader(
-            mod.header.raw.replace(/^(\s*\{\s*)(?:crafted|desecrated|fractured)\s+/i, '$1'),
+          (!(
+            knownExplicitHeader(
+              mod.header.raw.replace(/^(\s*\{\s*)(?:crafted|desecrated|fractured)\s+/i, '$1'),
+            ) ||
+            (mod.states?.includes('crafted') &&
+              /^\s*\{\s*(?:前缀(?:属性|词缀)|后缀(?:属性|词缀)|前綴(?:屬性|詞綴)|後綴(?:屬性|詞綴)|(?:Prefix|Suffix) Modifier)\s*(?:[—–]\s*[^{}\r\n]+)?\s*\}\s*$/i.test(
+                mod.header.raw,
+              ))
           ) ||
             /fractured|crafted|desecrated|破裂|分裂|工艺|工藝|亵渎|褻瀆/i.test(
               mod.header.raw
@@ -293,12 +300,20 @@ export function importCraftState(
           .filter((entry) => supportedEssenceId(entry.essence.id) && entry.mod !== null)
           .map((entry) => entry.modId),
   )
+  for (const entry of inspectLiquidEmotions(catalog, base))
+    if (entry.reason === null && entry.mod) mappedIds.add(entry.mod.id)
   const matches = explicit.map((source, sourceIndex) => {
-    // 工艺组可以使用精华精确映射；普通组仍走原生成资格。
+    // 工艺组只使用精华/液态的精确映射；临时匹配视图不改变原目录生成资格。
     const modifiers = source.mod.states?.includes('crafted')
       ? catalog.modifiers.map((mod) =>
           mappedIds.has(mod.id)
-            ? { ...mod, eligibility: [{ tag: base.tags[0] ?? 'default', value: 1 as const }] }
+            ? (() => {
+                const { craftedOnly: _craftedOnly, ...matchable } = mod
+                return {
+                  ...matchable,
+                  eligibility: [{ tag: base.tags[0] ?? 'default', value: 1 as const }],
+                }
+              })()
             : mod,
         )
       : catalog.modifiers
@@ -376,6 +391,11 @@ export function importCraftState(
     const source = explicit[match.sourceIndex]
     if (match.status !== 'matched' || !candidate || !source)
       return fail('仍有词缀未唯一对应目录，暂时只能对比。')
+    if (
+      source.mod.name === null &&
+      !catalog.modifiers.some((mod) => mod.id === candidate.id && mod.craftedOnly)
+    )
+      return fail('无词缀名称的显式头仅支持已核实的工艺专属属性。')
     affixes.push({
       modId: candidate.id,
       lines: source.stats.map(({ source, resolution }) =>

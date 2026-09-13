@@ -21,6 +21,7 @@ import {
   craftImplicitTargetCandidates,
   implicitTargetRolls,
 } from './implicitTargets'
+import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
@@ -146,7 +147,19 @@ function targetPools(catalog: CraftCatalog, baseId: string) {
       ? catalog.modifiers.filter((mod) => hasGenesisModEligibility(base, mod)).map((mod) => mod.id)
       : [],
   )
-  return { ordinary, essence, desecrated, genesis }
+  const liquid = new Set(
+    base
+      ? inspectLiquidEmotions(catalog, base)
+          .filter(
+            (entry) =>
+              entry.reason === null &&
+              entry.mod !== null &&
+              inspectNumericLines(entry.mod.lines).ok,
+          )
+          .map((entry) => entry.modId)
+      : [],
+  )
+  return { ordinary, essence, liquid, desecrated, genesis }
 }
 
 /** 目标资格使用既有物等100假想状态；腰带也必须构造合法完整固有行。 */
@@ -159,11 +172,12 @@ function targetImplicitLines(catalog: CraftCatalog, baseId: string): { implicitL
 
 /** 目标资格独立于普通通货生成池，精华只授权当前基底的精确已解析保证属性。 */
 export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): CatalogMod[] {
-  const { ordinary, essence, desecrated, genesis } = targetPools(catalog, baseId)
+  const { ordinary, essence, liquid, desecrated, genesis } = targetPools(catalog, baseId)
   return catalog.modifiers.filter(
     (mod) =>
       (ordinary.has(mod.id) ||
         essence.has(mod.id) ||
+        liquid.has(mod.id) ||
         desecrated.has(mod.id) ||
         genesis.has(mod.id)) &&
       createCraftState(catalog, {
@@ -208,14 +222,18 @@ export function validateCraftTargets(
   if (requiredTargetId !== undefined && !ids.includes(requiredTargetId))
     return { ok: false, error: '必选破裂组必须是已选显式目标。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const { ordinary, essence, desecrated, genesis } = targetPools(catalog, baseId)
+  const { ordinary, essence, liquid, desecrated, genesis } = targetPools(catalog, baseId)
   const affixes: CraftAffix[] = []
   for (const id of ids) {
     const mod = byId.get(id)
     if (mod === undefined) return { ok: false, error: `目标词缀 ${id} 不在制作目录中。` }
     if (mod.desecratedOnly && !desecrated.has(id))
       return { ok: false, error: '专属目标缺少可信亵渎来源或当前基底资格。' }
-    const crafted = !mod.desecratedOnly && !ordinary.has(id) && !genesis.has(id) && essence.has(id)
+    const crafted =
+      !mod.desecratedOnly &&
+      !ordinary.has(id) &&
+      !genesis.has(id) &&
+      (essence.has(id) || liquid.has(id))
     affixes.push({
       modId: mod.id,
       lines: [...mod.lines],
@@ -556,7 +574,8 @@ export function analyzeCraftTargets(
       if (
         staticPools.genesis.has(modId) &&
         !staticPools.ordinary.has(modId) &&
-        !staticPools.essence.has(modId)
+        !staticPools.essence.has(modId) &&
+        !staticPools.liquid.has(modId)
       )
         return {
           modId,
@@ -570,11 +589,12 @@ export function analyzeCraftTargets(
             '此 Genesis Tree 专属目标尚不支持新增；可导入已有属性后保留或调整数值。',
           ],
         }
+      const liquidOnly = !staticPools.ordinary.has(modId) && staticPools.liquid.has(modId)
       const essenceOnly = !staticPools.ordinary.has(modId) && staticPools.essence.has(modId)
       if (mod.level > current.itemLevel)
         reasons.push(
-          essenceOnly
-            ? '该精华目标在当前低物等装备上的交互尚未验证，暂不支持演练。'
+          essenceOnly || liquidOnly
+            ? `该${liquidOnly ? '液态情感' : '精华'}目标在当前低物等装备上的交互尚未验证，暂不支持演练。`
             : `需要物品等级 ${mod.level}，当前为 ${current.itemLevel}。`,
         )
       const lockedConflict = current.affixes.some((affix) => {
@@ -602,7 +622,8 @@ export function analyzeCraftTargets(
           reasons.push('唯一亵渎位置已占用，需先移除已有亵渎词缀。')
       }
       if (current.pendingDesecration) reasons.push(PENDING_DESECRATION_MESSAGE)
-      if (essenceOnly) reasons.push('此目标需要对应精华的保证属性，普通通货不能生成。')
+      if (liquidOnly) reasons.push('此目标需要对应液态情感的保证属性，普通通货不能生成。')
+      else if (essenceOnly) reasons.push('此目标需要对应精华的保证属性，普通通货不能生成。')
       else if (!mod.desecratedOnly && !pool.has(modId))
         reasons.push('当前词缀产生的动态标签阻止生成此目标。')
       if (reasons.length === 0 && !candidates.has(modId)) {

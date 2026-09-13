@@ -7,7 +7,7 @@ import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCraftMode } from './essences'
 import { prepareFracture } from './fracture'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
-import { supportedBasicLiquidEmotionId } from './liquidEmotions'
+import { supportedLiquidEmotionId } from './liquidEmotions'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   CRAFT_CURRENCY_LABELS,
@@ -91,7 +91,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
     value.kind === 'liquid-emotion' &&
     keys(value, ['kind', 'emotionId']) &&
     typeof value.emotionId === 'string' &&
-    supportedBasicLiquidEmotionId(value.emotionId)
+    supportedLiquidEmotionId(value.emotionId)
   )
     return { kind: 'liquid-emotion', emotionId: value.emotionId }
   if (

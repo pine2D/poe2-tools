@@ -101,7 +101,11 @@ export function exportCraftItemText(
   const names = [
     base.name,
     base.type,
-    ...modifiers.flatMap(({ mod }) => (mod ? [mod.name, ...mod.tags] : [])),
+    ...modifiers.flatMap(({ affix, mod }) =>
+      mod
+        ? [...(mod.name === '' && mod.craftedOnly && affix.crafted ? [] : [mod.name]), ...mod.tags]
+        : [],
+    ),
   ]
   const lines = [...implicit, ...current.affixes.flatMap((affix) => affix.lines), ...runeLines]
   // 不删除字符修补目录：结构字符会改变高级分组，必须明确拒绝。
@@ -171,8 +175,9 @@ export function exportCraftItemText(
   for (const { affix, mod } of modifiers) {
     if (!mod) return { ok: false, error: '当前词缀不在制作目录中。' }
     const tags = mod.tags.length ? ` — ${mod.tags.join(', ')}` : ''
+    const name = mod.name === '' && mod.craftedOnly && affix.crafted ? '' : ` "${mod.name}"`
     block([
-      `{ ${mod.kind === 'prefix' ? labels.prefix : labels.suffix} "${mod.name}"${tags} }`,
+      `{ ${mod.kind === 'prefix' ? labels.prefix : labels.suffix}${name}${tags} }`,
       ...affix.lines.map(
         (line) =>
           `${localize.line(line, Object.keys(mod.tradeHashes))}${affix.crafted ? ' (crafted)' : ''}${affix.fractured ? ' (fractured)' : ''}${affix.desecrated ? ' (desecrated)' : ''}`,

@@ -163,6 +163,7 @@ export {
   type LiquidEmotionInspection,
   liquidEmotionSourceHash,
   supportedBasicLiquidEmotionId,
+  supportedLiquidEmotionId,
 } from './liquidEmotions'
 export type { NumericRange } from './numeric'
 export {

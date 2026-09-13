@@ -40,13 +40,17 @@ export function supportedBasicLiquidEmotionId(id: string): boolean {
   return /^Metadata\/Items\/Currency\/DistilledEmotion(?:[1-9]|10)$/.test(id)
 }
 
-function jewelCategory(base: CatalogBase): CatalogLiquidEmotionJewel | null {
-  return isBasicJewel(base) && ['Ruby', 'Sapphire', 'Emerald'].includes(base.id)
-    ? (base.id as CatalogLiquidEmotionJewel)
-    : null
+export function supportedLiquidEmotionId(id: string): boolean {
+  return (
+    supportedBasicLiquidEmotionId(id) || id === 'Metadata/Items/Currency/EndgameDistilledEmotion1'
+  )
 }
 
-/** 保留全部材料声明，但只连接已验证的三色基础珠宝单侧工艺映射。 */
+function jewelCategory(base: CatalogBase): CatalogLiquidEmotionJewel | null {
+  return isBasicJewel(base) ? (base.id as CatalogLiquidEmotionJewel) : null
+}
+
+/** 保留全部材料声明，但只连接已验证的普通珠宝单侧工艺映射。 */
 export function inspectLiquidEmotions(
   catalog: CraftCatalog,
   base: CatalogBase,
@@ -69,9 +73,9 @@ export function inspectLiquidEmotions(
         category,
         modId: null,
         mod: null,
-        reason: '该材料仅支持红玉、蓝玉或翠绿普通珠宝。',
+        reason: '该材料仅支持普通珠宝；范围与特殊珠宝尚未支持。',
       }
-    if (!supportedBasicLiquidEmotionId(emotion.id) || emotion.radiusJewel)
+    if (!supportedLiquidEmotionId(emotion.id) || emotion.radiusJewel)
       return { emotion, category, modId: null, mod: null, reason: '该液态情感类型尚未支持。' }
     const mapping = emotion.mods[category]
     const entries = Object.entries(mapping)

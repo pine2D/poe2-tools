@@ -6,6 +6,7 @@ import {
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { jewelFixture } from '../../../../packages/item-core/src/jewelTestFixture'
+import { CraftStrategyActionEditor } from './CraftStrategyActionEditor'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 import { RehearsalPanel } from './RehearsalPanel'
 
@@ -15,13 +16,22 @@ afterEach(() => {
   localStorage.clear()
 })
 const emotionId = 'Metadata/Items/Currency/DistilledEmotion1'
-function fixture() {
+function fixture(fixed = false) {
   const { catalog, state } = jewelFixture()
   catalog._meta.sources.push(LIQUID_EMOTION_SOURCE)
+  if (fixed) {
+    const mod = catalog.modifiers.find((entry) => entry.id === 'prefix2')
+    if (!mod) throw Error('缺少固定效果测试属性')
+    mod.lines = [
+      'Inflict Elemental Exposure on Hit while you have a Ruby and an Emerald socketed in your tree',
+    ]
+    mod.craftedOnly = true
+    mod.eligibility = [{ tag: 'jewel', value: 0 }]
+  }
   catalog.liquidEmotions = [
     {
-      id: emotionId,
-      name: 'Diluted Liquid Ire',
+      id: fixed ? 'Metadata/Items/Currency/EndgameDistilledEmotion1' : emotionId,
+      name: fixed ? 'Potent Liquid Melancholy' : 'Diluted Liquid Ire',
       radiusJewel: false,
       tierLevel: 77,
       mods: { Ruby: {}, Sapphire: { prefix: 'prefix2' }, Emerald: {}, Diamond: {} },
@@ -155,4 +165,69 @@ it('条件指引固定材料，应用后达到目标并停止，编辑规则清�
   click('开始指引步骤')
   fireEvent.change(screen.getByLabelText('规则 4 动作'), { target: { value: 'exalted' } })
   expect(screen.queryByLabelText('指引结果选择')).toBeNull()
+})
+
+it('固定条件效果无需数值，目标独立保存来源并沿指引达标停止', () => {
+  const { catalog, state, restored } = fixture(true)
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={state}
+      initialProject={restored}
+      translations={{ 'Potent Liquid Melancholy': '强效的液化悲哀' }}
+    />,
+  )
+  fireEvent.change(screen.getByLabelText('搜索目标词缀'), { target: { value: 'prefix2' } })
+  click('加入目标 prefix2')
+  click('保存演练到本机')
+  const targetOnly = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
+  expect(targetOnly.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
+  expect(parseCraftProject(JSON.stringify(targetOnly), catalog).ok).toBe(true)
+  click('启用条件指引示例')
+  fireEvent.change(screen.getByLabelText('规则 4 动作'), { target: { value: 'liquid-emotion' } })
+  click('开始指引步骤')
+  click('选择液态情感 强效的液化悲哀')
+  expect(screen.queryByLabelText('液态情感保证属性 · 数值 1')).toBeNull()
+  fireEvent.change(screen.getByLabelText('液态情感移除结果'), { target: { value: 'prefix1' } })
+  click('预览液态情感结果')
+  click('应用液态情感结果')
+  expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
+  expect(screen.getByText('强效的液化悲哀 × 1')).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
+  expect(saved.operations.at(-1).values).toEqual([])
+  expect(parseCraftProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  click('撤销')
+  expect(screen.queryByText('强效的液化悲哀 × 1')).toBeNull()
+  click('重做')
+  expect(screen.getByText('强效的液化悲哀 × 1')).toBeDefined()
+})
+
+it.each(['normal', 'rare'] as const)('钻石 %s 起点的液态指引默认选唯一已核实映射', (rarity) => {
+  const { catalog, state } = fixture()
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (!base) throw Error('缺少测试基底')
+  catalog.bases.push({ ...base, id: 'Diamond', name: 'Diamond' })
+  const isolation = 'Metadata/Items/Currency/DistilledEmotion10'
+  catalog.liquidEmotions?.push({
+    id: isolation,
+    name: 'Concentrated Liquid Isolation',
+    radiusJewel: false,
+    tierLevel: 77,
+    mods: { Ruby: {}, Sapphire: {}, Emerald: {}, Diamond: { prefix: 'prefix2' } },
+  })
+  const change = vi.fn()
+  render(
+    <CraftStrategyActionEditor
+      number={1}
+      action={{ kind: 'stop' }}
+      catalog={catalog}
+      state={{ ...state, baseId: 'Diamond', rarity }}
+      translations={{}}
+      omenLabel={(id) => id}
+      onChange={change}
+    />,
+  )
+  fireEvent.change(screen.getByLabelText('规则 1 动作'), { target: { value: 'liquid-emotion' } })
+  expect(change).toHaveBeenCalledWith({ kind: 'liquid-emotion', emotionId: isolation })
 })

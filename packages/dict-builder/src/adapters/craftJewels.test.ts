@@ -1,3 +1,4 @@
+import type { CatalogLiquidEmotion } from '@poe2-tools/item-core'
 import { expect, it } from 'vitest'
 import { normalizeJewelMods } from './craftJewels'
 import { parsePobModFile } from './restrictedLua'
@@ -37,4 +38,38 @@ it('拒绝异常兜底、未知字段及普通珠宝携带范围节点语义', (
     source('', '"default"', '1'),
   ])
     expect(() => normalizeJewelMods(raw)).toThrow()
+})
+
+const emotion = (radiusJewel = false): CatalogLiquidEmotion => ({
+  id: 'Metadata/Items/Currency/DistilledEmotion11',
+  name: '合成材料',
+  radiusJewel,
+  tierLevel: 3,
+  mods: { Ruby: { prefix: 'sample' }, Sapphire: {}, Emerald: {}, Diamond: {} },
+})
+
+it('仅精确非范围材料引用的无节点全零资格声明进入工艺子域', () => {
+  const raw = source('', '"jewel"', '0')
+  const before = structuredClone(raw)
+  expect(normalizeJewelMods(raw, [emotion()])).toMatchObject({
+    modifiers: [{ id: 'sample', jewelOnly: true, craftedOnly: true }],
+    excluded: [],
+  })
+  expect(raw).toEqual(before)
+  // 范围材料可复用同一无节点工艺声明，不因此取得执行资格。
+  expect(normalizeJewelMods(raw, [emotion(), emotion(true)]).modifiers).toHaveLength(1)
+  expect(normalizeJewelMods(raw, [emotion(true)]).excluded).toHaveLength(1)
+  expect(normalizeJewelMods(source(), [emotion()]).modifiers[0]).not.toHaveProperty('craftedOnly')
+})
+
+it('工艺映射侧别、来源节点及非普通正向资格不一致时拒绝', () => {
+  const wrongSide = emotion()
+  wrongSide.mods.Ruby = { suffix: 'sample' }
+  for (const [raw, emotions] of [
+    [source('', '"jewel"', '0'), [wrongSide]],
+    [source('nodeType=1,', '"jewel"', '0'), [emotion()]],
+    [source('', '"special", "jewel"', '1, 0'), [emotion()]],
+    [{}, [emotion()]],
+  ] as const)
+    expect(() => normalizeJewelMods(raw, emotions)).toThrow()
 })

@@ -27,6 +27,7 @@ export interface CatalogBase {
 
 export interface CatalogMod {
   jewelOnly?: true
+  craftedOnly?: true
   desecratedOnly?: true
   id: string
   kind: 'prefix' | 'suffix'
@@ -162,6 +163,7 @@ export function hasCraftModEligibility(
   mod: CatalogMod,
   addedTags: readonly string[] = [],
 ): boolean {
+  if (mod.craftedOnly) return false
   // 珠宝与装备采用不同来源域，动态标签不能跨域注入候选。
   if ((base.type === 'Jewel') !== (mod.jewelOnly === true)) return false
   const tags = new Set(
@@ -174,7 +176,7 @@ export function hasCraftModEligibility(
 
 /** 已有 Genesis 身份只认首饰基底自身的源标签，不接受动态生成标签注入。 */
 export function hasGenesisModEligibility(base: CatalogBase, mod: CatalogMod): boolean {
-  if (mod.desecratedOnly || !['Ring', 'Belt'].includes(base.type)) return false
+  if (mod.craftedOnly || mod.desecratedOnly || !['Ring', 'Belt'].includes(base.type)) return false
   const rule = mod.eligibility.find((entry) => base.tags.includes(entry.tag))
   return (
     rule?.value === 1 && (rule.tag === 'genesis_tree_caster' || rule.tag === 'genesis_tree_minion')
@@ -183,6 +185,7 @@ export function hasGenesisModEligibility(base: CatalogBase, mod: CatalogMod): bo
 
 /** 已有身份不等同于普通操作可以重新生成。亵渎来源仍须单独使用生成资格。 */
 export function hasExistingModEligibility(base: CatalogBase, mod: CatalogMod): boolean {
+  if (mod.craftedOnly) return false
   return hasCraftModEligibility(base, mod) || hasGenesisModEligibility(base, mod)
 }
 

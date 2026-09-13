@@ -16,8 +16,8 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceOmen,
   essenceCraftMode,
+  inspectLiquidEmotions,
   socketCandidates,
-  supportedBasicLiquidEmotionId,
 } from '@poe2-tools/item-core'
 
 export function strategyActionLabel(
@@ -79,13 +79,19 @@ export function CraftStrategyActionEditor({
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const essences = (catalog.essences ?? []).filter((e) => essenceCraftMode(e.id) !== null)
-  const emotions = (catalog.liquidEmotions ?? []).filter((e) => supportedBasicLiquidEmotionId(e.id))
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  // 指引可提前配置；只按基底映射筛选，不受当前稀有度、已有工艺或待揭示状态限制。
+  const emotions = base
+    ? inspectLiquidEmotions(catalog, base)
+        .filter((entry) => entry.reason === null)
+        .map((entry) => entry.emotion)
+    : []
   // 配置允许早于打孔；开始时仍核对真实孔位和材料。
   const augments = socketCandidates(catalog, {
     ...state,
     sockets: state.sockets?.length ? state.sockets : [null],
   })
-  const type = catalog.bases.find((b) => b.id === state.baseId)?.type ?? ''
+  const type = base?.type ?? ''
   const defaultBone: CraftBone = ['Ring', 'Amulet', 'Belt'].includes(type)
     ? 'preserved_collarbone'
     : ['Helmet', 'Gloves', 'Boots', 'Body Armour', 'Focus', 'Shield', 'Buckler'].includes(type)
@@ -232,6 +238,15 @@ export function CraftStrategyActionEditor({
               onChange({ kind: 'liquid-emotion', emotionId: event.target.value })
             }
           >
+            {!emotions.some((emotion) => emotion.id === action.emotionId) ? (
+              <option value={action.emotionId} disabled>
+                {local(
+                  catalog.liquidEmotions?.find((emotion) => emotion.id === action.emotionId)
+                    ?.name ?? action.emotionId,
+                )}
+                （当前基底映射不可用）
+              </option>
+            ) : null}
             {emotions.map((emotion) => (
               <option key={emotion.id} value={emotion.id}>
                 {local(emotion.name)}

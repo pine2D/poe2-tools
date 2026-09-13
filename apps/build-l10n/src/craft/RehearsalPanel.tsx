@@ -850,7 +850,15 @@ export function RehearsalPanel({
       ? desecrationSourceHash(catalog)
       : null
   const jewelHash = base.type === 'Jewel' ? jewelSourceHash(catalog) : null
+  const craftedJewelTarget = [
+    ...targetModIds,
+    ...targetAlternatives.flatMap((entry) => entry.modIds),
+  ].some((id) => {
+    const mod = modById.get(id)
+    return mod?.jewelOnly && mod.craftedOnly
+  })
   const emotionHash =
+    craftedJewelTarget ||
     history[0]?.state.affixes.some((affix) => base.type === 'Jewel' && affix.crafted) ||
     strategy?.rules.some((rule) => rule.action.kind === 'liquid-emotion') ||
     history.some(

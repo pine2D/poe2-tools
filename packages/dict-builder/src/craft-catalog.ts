@@ -90,11 +90,11 @@ const modifiers = Object.entries(rawMods).map(([id, raw]) => {
   return normalizeMod(id, raw)
 })
 const rawJewelMods = parsePobModFile(await source('ModJewel', JEWEL_SOURCE.sha256))
-const jewels = normalizeJewelMods(rawJewelMods)
-modifiers.push(...jewels.modifiers)
 const liquidEmotions = normalizeLiquidEmotions(
   parsePobModFile(await source('LiquidEmotions', LIQUID_EMOTION_SOURCE.sha256)),
 )
+const jewels = normalizeJewelMods(rawJewelMods, liquidEmotions)
+modifiers.push(...jewels.modifiers)
 const emotionAudit = auditLiquidEmotionMappings(liquidEmotions, rawJewelMods)
 console.log(`液态情感声明审计：${JSON.stringify(emotionAudit)}；材料映射不等于可执行制作规则`)
 const augments = normalizeAugments(

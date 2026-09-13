@@ -33,7 +33,10 @@ import {
   validateCraftImplicitTargets,
 } from './implicitTargets'
 import { jewelSourceHash as readJewelSourceHash } from './jewels'
-import { liquidEmotionSourceHash as readLiquidEmotionSourceHash } from './liquidEmotions'
+import {
+  liquidEmotionSourceHash as readLiquidEmotionSourceHash,
+  supportedBasicLiquidEmotionId,
+} from './liquidEmotions'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
 import {
@@ -59,7 +62,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v50'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v51'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -119,7 +122,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 50 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 51 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -659,7 +662,23 @@ export function parseCraftProject(
   if (pricing && !pricing.ok) return fail(pricing.error)
   const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
   const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
+  const craftedJewelIds = new Set(
+    catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly).map((mod) => mod.id),
+  )
+  const targetUsesCraftedJewel =
+    (Array.isArray(value.targetModIds) &&
+      value.targetModIds.some((id) => craftedJewelIds.has(String(id)))) ||
+    (Array.isArray(value.targetAlternatives) &&
+      value.targetAlternatives.some(
+        (entry) =>
+          record(entry) &&
+          Array.isArray(entry.modIds) &&
+          entry.modIds.some((id) => craftedJewelIds.has(String(id))),
+      ))
+  if (rulesVersion < 51 && targetUsesCraftedJewel)
+    return fail('v2–v50 旧版项目不能包含新增珠宝工艺专属目标。')
   const usesLiquidEmotions =
+    targetUsesCraftedJewel ||
     strategy?.rules.some((rule) => rule.action.kind === 'liquid-emotion') ||
     (Array.isArray(value.operations) &&
       value.operations.some((step) => record(step) && step.kind === 'liquid-emotion')) ||
@@ -669,6 +688,19 @@ export function parseCraftProject(
       value.initialState.affixes.some((affix) => record(affix) && Object.hasOwn(affix, 'crafted')))
   if (rulesVersion < 50 && (usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')))
     return fail('v2–v49 旧版项目不能包含液态情感步骤、指引、来源或珠宝工艺起点。')
+  if (rulesVersion < 51) {
+    const extendedAction = (step: unknown) =>
+      record(step) &&
+      step.kind === 'liquid-emotion' &&
+      (initialBaseId === 'Diamond' ||
+        typeof step.emotionId !== 'string' ||
+        !supportedBasicLiquidEmotionId(step.emotionId))
+    if (
+      strategy?.rules.some((rule) => extendedAction(rule.action)) ||
+      (Array.isArray(value.operations) && value.operations.some(extendedAction))
+    )
+      return fail('v2–v50 旧版项目不能包含新增工艺液态材料或钻石液态步骤。')
+  }
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
   if (
     (usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')) &&
@@ -1063,6 +1095,13 @@ export function parseCraftProject(
     rulesVersion < 9,
   )
   if (!initial.ok) return initial
+  if (
+    rulesVersion < 51 &&
+    initial.value.affixes.some((affix) =>
+      catalog.modifiers.some((mod) => mod.id === affix.modId && mod.craftedOnly),
+    )
+  )
+    return fail('v2–v50 旧版项目不能包含新增珠宝工艺专属起点。')
   const unsupportedLegacyAmplification = (state: CraftState) =>
     rulesVersion < 35 &&
     (state.sockets?.length ?? 0) > 0 &&
