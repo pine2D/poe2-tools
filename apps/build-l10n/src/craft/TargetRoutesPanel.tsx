@@ -40,6 +40,11 @@ interface Props {
 
 export function TargetRoutesPanel(props: Props) {
   const [preserveMatched, setPreserveMatched] = useState(true)
+  const [preferCosts, setPreferCosts] = useState(false)
+  const costSearch = preferCosts && props.pricing !== undefined
+  useEffect(() => {
+    if (!props.pricing) setPreferCosts(false)
+  }, [props.pricing])
   // 输入一变即销毁缓存与运行任务；撤销回旧状态也必须主动重新计算。
   return (
     <RouteSearch
@@ -52,8 +57,11 @@ export function TargetRoutesPanel(props: Props) {
         props.implicitValues,
         props.targetFracturedModId,
         preserveMatched,
+        costSearch ? props.pricing : null,
       ])}
       {...props}
+      costSearch={costSearch}
+      onCostSearchChange={setPreferCosts}
       preserveMatched={preserveMatched}
       onPreserveChange={setPreserveMatched}
     />
@@ -75,7 +83,14 @@ function RouteSearch({
   translateLine,
   preserveMatched,
   onPreserveChange,
-}: Props & { preserveMatched: boolean; onPreserveChange: (value: boolean) => void }) {
+  costSearch,
+  onCostSearchChange,
+}: Props & {
+  preserveMatched: boolean
+  onPreserveChange: (value: boolean) => void
+  costSearch: boolean
+  onCostSearchChange: (value: boolean) => void
+}) {
   const [result, setResult] = useState<CraftResult<CraftTargetRoutes> | null>(null)
   const [running, setRunning] = useState(false)
   const cancelRef = useRef<(() => void) | null>(null)
@@ -154,6 +169,25 @@ function RouteSearch({
       <p>
         保留会约束示例每一步维持起点已满足的目标身份和数值，包括尚未破裂的指定目标；不保护非目标词缀，也不保证游戏随机结果安全。
       </p>
+      <label>
+        <input
+          type="checkbox"
+          checked={costSearch}
+          disabled={!pricing}
+          onChange={(event) => {
+            stop()
+            setResult(null)
+            onCostSearchChange(event.target.checked)
+          }}
+        />
+        按自填报价优先搜索
+      </label>
+      <p>
+        {pricing
+          ? '完整已知的新增费用优先，缺价路线仍标为未知；不把起点或已用材料重复计入搜索。有限预算可能遗漏更便宜路线，不代表全局最优或随机制作的期望成本。'
+          : '先在制作报价中应用单价，即可启用费用优先搜索。'}
+        {costSearch ? '修改报价会清除旧结果，请重新生成路线。' : ''}
+      </p>
       <button
         type="button"
         disabled={
@@ -172,7 +206,7 @@ function RouteSearch({
                 ids,
                 values,
                 alternatives,
-                { preserveMatched },
+                { preserveMatched, ...(costSearch && pricing ? { pricing } : {}) },
                 implicitValues,
                 targetFracturedModId,
               ],

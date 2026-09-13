@@ -241,3 +241,40 @@ it.each([0, 1, 2])('骨骼路线预计材料仅计真实消耗，起始阶段%s'
   expect(screen.queryByText(/固定三项亵渎候选 × 1/)).toBeNull()
   expect(screen.queryByText(/完成亵渎揭示 × 1/)).toBeNull()
 })
+
+it('费用优先需要报价，改价终止旧搜索并拒绝迟到结果，清价恢复默认搜索', () => {
+  const props = {
+    catalog,
+    state: state(),
+    ids: ['Life'],
+    values: [],
+    alternatives: [],
+    busy: false,
+    translations: {},
+    onPreview: vi.fn(),
+  }
+  const view = render(<TargetRoutesPanel {...props} />)
+  expect(
+    (screen.getByRole('checkbox', { name: '按自填报价优先搜索' }) as HTMLInputElement).disabled,
+  ).toBe(true)
+  const pricing = { unit: 'divine' as const, prices: { 'currency:transmutation': 0.1 } }
+  view.rerender(<TargetRoutesPanel {...props} pricing={pricing} />)
+  fireEvent.click(screen.getByRole('checkbox', { name: '按自填报价优先搜索' }))
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  const first = pending.calls.at(-1)
+  if (!first) throw Error('没有任务')
+  expect(first.args[5]).toMatchObject({ pricing })
+  const repriced = { ...pricing, prices: { 'currency:transmutation': 0.2 } }
+  view.rerender(<TargetRoutesPanel {...props} pricing={repriced} />)
+  expect(first.cancel).toHaveBeenCalledTimes(1)
+  act(() => first.callback(result))
+  expect(screen.queryByText(/找到 .*条全部目标达成/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  expect(pending.calls.at(-1)?.args[5]).toMatchObject({ pricing: repriced })
+  view.rerender(<TargetRoutesPanel {...props} />)
+  expect(
+    (screen.getByRole('checkbox', { name: '按自填报价优先搜索' }) as HTMLInputElement).checked,
+  ).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  expect(pending.calls.at(-1)?.args[5]).not.toHaveProperty('pricing')
+})

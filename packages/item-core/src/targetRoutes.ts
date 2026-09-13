@@ -1,6 +1,12 @@
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import { analyzeBoneTargets } from './boneAdvice'
 import type { CraftCatalog } from './catalog'
+import {
+  type CraftPricing,
+  collectCraftCosts,
+  parseCraftPricing,
+  quoteCraftCosts,
+} from './craftCosts'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { analyzeEssenceTargets } from './essenceAdvice'
 import { essenceCategory } from './essences'
@@ -29,6 +35,8 @@ import { minimumTargetRolls, targetRollsPreservingValues } from './targetRolls'
 import { analyzeCraftTargets, type CraftTargetAlternative, type CraftTargetValues } from './targets'
 
 export interface CraftTargetRouteOptions {
+  /** 传入报价后先按目标推进取得完整示例，再按新增费用改进；不含起点或历史消费。 */
+  pricing?: CraftPricing
   preserveMatched?: boolean
   maxStates?: number
   maxDepth?: number
@@ -77,11 +85,58 @@ export function planCraftTargetRoutes(
     typeof options !== 'object' ||
     Array.isArray(options) ||
     Object.keys(options).some(
-      (key) => !['preserveMatched', 'maxStates', 'maxDepth'].includes(key),
+      (key) => !['preserveMatched', 'maxStates', 'maxDepth', 'pricing'].includes(key),
     ) ||
     (options.preserveMatched !== undefined && typeof options.preserveMatched !== 'boolean')
   )
     return { ok: false, error: '路线配置无效。' }
+  const parsedPricing = Object.hasOwn(options, 'pricing')
+    ? parseCraftPricing(options.pricing, catalog)
+    : null
+  if (parsedPricing && !parsedPricing.ok) return parsedPricing
+  const pricing = parsedPricing?.ok ? parsedPricing.value : undefined
+  const operationCosts = new Map<string, number | null>()
+  const operationCost = (operation: CraftStep): number | null => {
+    if (!pricing) return 0
+    const id = JSON.stringify(operation)
+    if (operationCosts.has(id)) return operationCosts.get(id) ?? null
+    const costs = collectCraftCosts(catalog, [operation])
+    const quote = costs.ok ? quoteCraftCosts(costs.value, pricing) : null
+    // 只比较完整报价。缺价小计不能当作便宜路径，也不参与金额相减。
+    const amount =
+      quote?.ok && quote.value.total !== null ? Math.round(quote.value.total * 1000000) : null
+    operationCosts.set(id, amount)
+    return amount
+  }
+  const priceCompare = (a: number | null, b: number | null) =>
+    a === null ? (b === null ? 0 : 1) : b === null ? -1 : a - b
+  const routeCost = (route: CraftTargetRoute): number | null => {
+    let total = 0
+    for (const step of route.steps) {
+      const cost = operationCost(step.operation)
+      if (cost === null) return null
+      total += cost
+    }
+    return total
+  }
+  const routeRisk = (route: CraftTargetRoute) =>
+    route.steps.reduce(
+      (n, s) =>
+        n +
+        s.lostTargetIds.length +
+        s.atRiskTargetIds.length +
+        (s.lostImplicitLineIndexes?.length ?? 0) +
+        (s.rerolledImplicitLineIndexes?.length ?? 0),
+      0,
+    )
+  const routeCompare = (a: CraftTargetRoute, b: CraftTargetRoute) =>
+    (pricing ? priceCompare(routeCost(a), routeCost(b)) : 0) ||
+    routeRisk(a) - routeRisk(b) ||
+    a.steps.length - b.steps.length ||
+    compare(
+      JSON.stringify(a.steps.map((s) => s.operation)),
+      JSON.stringify(b.steps.map((s) => s.operation)),
+    )
   const maxStates = options.maxStates === undefined ? 128 : options.maxStates
   const maxDepth = options.maxDepth === undefined ? 12 : options.maxDepth
   if (
@@ -193,6 +248,7 @@ export function planCraftTargetRoutes(
     score: number
     risk: number
     boneOmens: number
+    cost: number | null
     path: string
   }
   const queue: Node[] = [
@@ -206,12 +262,19 @@ export function planCraftTargetRoutes(
         fracturePriority(state),
       risk: 0,
       boneOmens: 0,
+      cost: 0,
       path: '',
     },
   ]
   const seen = new Map<string, { depth: number; risk: number }>([
     [key(state), { depth: 0, risk: 0 }],
   ])
+  type Frontier = { depth: number; risk: number; cost: number | null }
+  const frontiers = new Map<string, Frontier[]>([[key(state), [{ depth: 0, risk: 0, cost: 0 }]]])
+  const dominates = (a: Frontier, b: Frontier) =>
+    a.depth <= b.depth &&
+    a.risk <= b.risk &&
+    (a.cost === null || b.cost === null ? a.cost === b.cost : a.cost <= b.cost)
   const spend = () => {
     if (result.candidateApplications >= 4096) {
       result.truncated = true
@@ -224,13 +287,15 @@ export function planCraftTargetRoutes(
     targetRollsPreservingValues(patterns, actual, id === undefined ? undefined : bounds(id))
   while (
     queue.length &&
-    result.routes.length === 0 &&
+    (pricing !== undefined || result.routes.length === 0) &&
     result.examinedStates < maxStates &&
     result.candidateApplications < 4096
   ) {
     queue.sort(
       (a, b) =>
+        (pricing && result.routes.length ? priceCompare(a.cost, b.cost) : 0) ||
         b.score - a.score ||
+        (pricing ? priceCompare(a.cost, b.cost) : 0) ||
         a.risk - b.risk ||
         a.boneOmens - b.boneOmens ||
         a.steps.length - b.steps.length ||
@@ -238,7 +303,27 @@ export function planCraftTargetRoutes(
     )
     const node = queue.shift()
     if (!node) break
-    const best = seen.get(key(node.state))
+    // 首先取得完整路线，再按费用改进。三条完整已知报价形成上界；金额非负，
+    // 后续前缀不可能降低已消费费用。同价仍可改进风险和步数，不能提前排除。
+    const third = pricing && result.routes.length >= 3 ? result.routes[2] : undefined
+    const upperCost = third ? routeCost(third) : null
+    if (upperCost !== null && (node.cost === null || node.cost > upperCost)) {
+      result.truncated = true
+      break
+    }
+    if (
+      pricing &&
+      !frontiers
+        .get(key(node.state))
+        ?.some(
+          (entry) =>
+            entry.depth === node.steps.length &&
+            entry.risk === node.risk &&
+            entry.cost === node.cost,
+        )
+    )
+      continue
+    const best = pricing ? undefined : seen.get(key(node.state))
     if (
       best &&
       (best.depth < node.steps.length ||
@@ -291,11 +376,22 @@ export function planCraftTargetRoutes(
       const previous = seen.get(stateKey)
       const depth = node.steps.length + 1
       if (
+        !pricing &&
         previous &&
         (previous.depth < depth || (previous.depth === depth && previous.risk <= risk))
       )
         return
-      seen.set(stateKey, { depth, risk })
+      const addedCost = operationCost(operation)
+      const cost = node.cost === null || addedCost === null ? null : node.cost + addedCost
+      if (pricing) {
+        const nextFrontier = { depth, risk, cost }
+        const entries = frontiers.get(stateKey) ?? []
+        if (entries.some((entry) => dominates(entry, nextFrontier))) return
+        frontiers.set(stateKey, [
+          ...entries.filter((entry) => !dominates(nextFrontier, entry)),
+          nextFrontier,
+        ])
+      } else seen.set(stateKey, { depth, risk })
       const step: CraftTargetRouteStep = {
         ...(fractureCandidateModIds ? { fractureCandidateModIds } : {}),
         operation: structuredClone(operation),
@@ -349,9 +445,26 @@ export function planCraftTargetRoutes(
           final.ok &&
           final.value.targets.every((t) => t.matched) &&
           (final.value.implicitTargets ?? []).every((target) => target.matched) &&
-          result.routes.length < 3
-        )
-          result.routes.push({ steps, finalState: current })
+          (pricing !== undefined || result.routes.length < 3)
+        ) {
+          const route = { steps, finalState: current }
+          if (pricing) {
+            const existing = result.routes.findIndex(
+              (entry) => key(entry.finalState) === key(current),
+            )
+            if (existing >= 0) {
+              const prior = result.routes[existing]
+              if (prior && routeCompare(prior, route) <= 0) return
+              result.routes.splice(existing, 1)
+            }
+            result.routes.push(route)
+            result.routes.sort(routeCompare)
+            if (result.routes.length > 3) {
+              result.routes.splice(3)
+              result.truncated = true
+            }
+          } else result.routes.push(route)
+        }
       } else
         queue.push({
           state: applied.value,
@@ -362,6 +475,7 @@ export function planCraftTargetRoutes(
             bonePriority(applied.value) +
             fracturePriority(applied.value),
           risk,
+          cost,
           boneOmens:
             node.boneOmens +
             ('kind' in operation && operation.kind === 'desecrate'
@@ -446,7 +560,7 @@ export function planCraftTargetRoutes(
             )
       if (!advice.ok) continue
       for (const suggestion of advice.value.steps) {
-        if (result.routes.length >= 3 || result.candidateApplications >= 4096) break
+        if ((!pricing && result.routes.length >= 3) || result.candidateApplications >= 4096) break
         const { currency, removeModId } = suggestion
         const prepared = prepareCraftOperation(catalog, node.state, currency, removeModId, omen)
         if (!prepared.ok) continue
@@ -663,31 +777,6 @@ export function planCraftTargetRoutes(
   }
   if (queue.length || result.candidateApplications >= 4096 || result.routes.length >= 3)
     result.truncated = true
-  result.routes.sort(
-    (a, b) =>
-      a.steps.reduce(
-        (n, s) =>
-          n +
-          s.lostTargetIds.length +
-          s.atRiskTargetIds.length +
-          (s.lostImplicitLineIndexes?.length ?? 0) +
-          (s.rerolledImplicitLineIndexes?.length ?? 0),
-        0,
-      ) -
-        b.steps.reduce(
-          (n, s) =>
-            n +
-            s.lostTargetIds.length +
-            s.atRiskTargetIds.length +
-            (s.lostImplicitLineIndexes?.length ?? 0) +
-            (s.rerolledImplicitLineIndexes?.length ?? 0),
-          0,
-        ) ||
-      a.steps.length - b.steps.length ||
-      compare(
-        JSON.stringify(a.steps.map((s) => s.operation)),
-        JSON.stringify(b.steps.map((s) => s.operation)),
-      ),
-  )
+  result.routes.sort(routeCompare)
   return { ok: true, value: result }
 }
