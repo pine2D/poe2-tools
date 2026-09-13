@@ -8,14 +8,17 @@ import {
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
+import { boneOmenLabels } from './boneOmenLabels'
 
 interface Labels {
   catalog: CraftCatalog
+  translations?: Record<string, string>
   translateLine?: (line: string) => string | null
 }
 export function BoneOperationDetails({
   catalog,
   operation,
+  translations = {},
   translateLine,
 }: Labels & { operation: BoneCraftOperation }) {
   const modDetails = (id: string, values?: number[]) => {
@@ -40,10 +43,29 @@ export function BoneOperationDetails({
   }
   if (operation.kind === 'desecrate')
     return (
-      <p>
-        指定{operation.affixKind === 'prefix' ? '前缀' : '后缀'}亵渎占位。
-        {operation.removeModId ? `满六组，本次指定移除：${operation.removeModId}。` : ''}
-      </p>
+      <div>
+        <p>
+          指定{operation.affixKind === 'prefix' ? '前缀' : '后缀'}亵渎占位。
+          {operation.removeModId ? `满六组，本次指定移除：${operation.removeModId}。` : ''}
+        </p>
+        {boneOmenLabels(operation, catalog, translations).length ? (
+          <p>
+            施加预兆：
+            {boneOmenLabels(operation, catalog, translations)
+              .map((entry) => entry.label)
+              .join('、')}
+            ；各消耗一份。
+          </p>
+        ) : null}
+        {operation.removeModId && (operation.directionOmen || operation.lichOmen) ? (
+          <p>
+            这里只列出本工具可完成三候选的移除结果，不代表其他游戏结果不可能，也不保证目标受到保护。
+          </p>
+        ) : null}
+        {operation.lichOmen ? (
+          <p>候选限定为同一指定巫妖的三项；不足三项的情形本工具暂不支持。</p>
+        ) : null}
+      </div>
     )
   if (operation.kind === 'desecration-offer')
     return (
@@ -85,7 +107,10 @@ export function BoneAdvicePanel({
     if (operation.kind === 'desecration-offer') return '固定三项亵渎候选'
     if (operation.kind === 'desecration-reveal') return '完成亵渎揭示'
     const name = BONE_RULES[operation.boneId].name
-    return translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+    return [
+      translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name,
+      ...boneOmenLabels(operation, catalog, translations).map((entry) => entry.label),
+    ].join(' + ')
   }
   return (
     <section aria-label="骨骼目标建议">
@@ -104,11 +129,12 @@ export function BoneAdvicePanel({
           <BoneOperationDetails
             catalog={catalog}
             operation={step.operation}
+            translations={translations}
             {...(translateLine ? { translateLine } : {})}
           />
           {step.randomRemovalRisk ? (
             <p className="target-warning">
-              游戏实际从全部已有词缀随机移除；指定安全结果不代表随机安全。整个移除池内的目标风险：
+              满六组包含随机移除；指定安全结果不代表随机安全。本工具可演练移除池内的目标风险：
               {step.atRiskTargetIds.length
                 ? step.atRiskTargetIds.map(label).join('；')
                 : '无现有目标档位'}

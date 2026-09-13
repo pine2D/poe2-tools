@@ -223,7 +223,7 @@ it('中文导入腰带联合固有与专属目标，完成后保存真实来源'
   ).toHaveLength(1)
 })
 
-it('满六建议展示完整随机池目标风险，指定安全结果不冒称保底', () => {
+it('满六建议展示本工具可演练移除池目标风险，指定安全结果不冒称保底', () => {
   render(
     <RehearsalPanel
       catalog={boneCatalog()}
@@ -233,7 +233,7 @@ it('满六建议展示完整随机池目标风险，指定安全结果不冒称�
   )
   addTarget('prefix1')
   addTarget('exclusive1')
-  expect(screen.getAllByText(/整个移除池内的目标风险：prefix1/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/本工具可演练移除池内的目标风险：prefix1/).length).toBeGreaterThan(0)
   expect(screen.getAllByText(/指定安全结果不代表随机安全/).length).toBeGreaterThan(0)
   expect(screen.getAllByText(/满六组，本次指定移除/).length).toBeGreaterThan(0)
 })

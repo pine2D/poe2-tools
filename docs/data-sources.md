@@ -144,3 +144,7 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 [GGG0.5](https://www.pathofexile.com/forum/view-thread/3932540/filter-account-type/staff)提供Genesis新基底背景，跨部位镶嵌仍需独立建模。CoE工作台仅参考分类、物等、制作方法及需求区域关系，不复制权重、数据或实现。
 
 同阶段核对固定MIT src/Classes/Item.lua的Charm Slots面板与base+modifier栏数派生，仅参考结构不复制实现。Genesis资格隔离为基于GGG0.5及已登记有序资格的自有规则，不移除或改写源tags/记录；仅当前普通/揭示流程不启用genesis_tree_caster和genesis_tree_minion上下文。
+
+### 骨骼施加预兆（v25）
+
+人工核对 [GGG员工说明](https://www.pathofexile.com/forum/view-thread/3834266/filter-account-type/staff)及[正式0.3.0c](https://www.pathofexile.com/forum/view-thread/3851277/filter-account-type/staff)：三枚指定巫妖预兆仅支持武器和首饰，属primary部位证据。两枚定向死灵及Liege/Sovereign/Blackblooded的触发、方向和保证属性措辞沿[已登记Omen页](https://poe2db.tw/us/Omen)公开游戏文本转录人工核对，gray，仅说明参考，不下载其词缀表、概率、代码或规则数据文件；名称复用原三服官方static，巫妖标签复用固定MIT ModVeiled。同巫妖候选另核对[作者Lolcohol实作](https://mobalytics.gg/poe-2/guides/blood-mage-amulet-craft)及其游戏揭示截图，截图仅临时查看、不入库，按gray人工规则参考；正文一处把Sovereign误写Liege，名称映射以物品原文为准。当前仅实现至少三项合法同家族时的三候选演练；0/1/2候选的补齐、减项或消费没有充分证据，明确工具未支持，不推断游戏禁止；全部交互仍待真机。GGG论坛3849983玩家复现仅用于识别冲突/无候选反例，不当staff规则声明。没有新增网络适配器或浏览器第三方请求。

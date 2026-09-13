@@ -10,6 +10,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useMemo } from 'react'
 import './comparison.css'
+import { boneOmenLabels } from './boneOmenLabels'
 import { ModStateBadges } from './ModStateBadges'
 
 interface CraftComparisonPanelProps {
@@ -92,6 +93,13 @@ export function CraftComparisonPanel({
       ? [
           `待揭示亵渎${pending.kind === 'prefix' ? '前缀' : '后缀'}`,
           translations[BONE_RULES[pending.boneId].name] ?? BONE_RULES[pending.boneId].name,
+          ...(boneOmenLabels(pending, catalog, translations).length
+            ? [
+                `预兆：${boneOmenLabels(pending, catalog, translations)
+                  .map((entry) => entry.label)
+                  .join('、')}`,
+              ]
+            : []),
           ...(pending.options
             ? [
                 '已固定三项候选',

@@ -4,6 +4,7 @@ import {
   resolveCraftImplicitPatterns,
   UNKNOWN_CHARM_RANGE,
 } from './beltImplicits'
+import { pendingBoneOmenError } from './boneCandidates'
 import {
   boneBaseError,
   clonePendingDesecration,
@@ -345,6 +346,12 @@ export function createCraftState(
   }
   const socketError = socketStateError(catalog, input)
   if (socketError !== null) return failure(socketError)
+  const pendingError = pendingBoneOmenError(
+    catalog,
+    input,
+    (next) => createCraftState(catalog, next).ok,
+  )
+  if (pendingError) return failure(pendingError)
   return { ok: true, value: cloneState(input) }
 }
 

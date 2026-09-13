@@ -41,7 +41,9 @@ import {
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './rehearsal.css'
+import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
+import { boneOmenLabels } from './boneOmenLabels'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
 import { CraftTargets } from './CraftTargets'
@@ -629,7 +631,12 @@ export function RehearsalPanel({
       return essenceLabel(step.essenceId) + (step.omen ? ` + ${essenceOmenLabel(step.omen)}` : '')
     }
     if (step.kind === 'desecrate')
-      return translations[BONE_RULES[step.boneId].name] ?? BONE_RULES[step.boneId].name
+      return [
+        translations[BONE_RULES[step.boneId].name] ??
+          catalog.localizedNames?.['zh-CN']?.[BONE_RULES[step.boneId].name] ??
+          BONE_RULES[step.boneId].name,
+        ...boneOmenLabels(step, catalog, translations).map((entry) => entry.label),
+      ].join(' + ')
     if (step.kind === 'desecration-offer') return '固定三项亵渎候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
     if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
@@ -660,10 +667,20 @@ export function RehearsalPanel({
         'kind' in operation
           ? operation.kind === 'essence'
             ? essenceLabel(operation.essenceId)
-            : stepLabel(operation)
+            : operation.kind === 'desecrate'
+              ? (translations[BONE_RULES[operation.boneId].name] ??
+                catalog.localizedNames?.['zh-CN']?.[BONE_RULES[operation.boneId].name] ??
+                BONE_RULES[operation.boneId].name)
+              : stepLabel(operation)
           : CRAFT_CURRENCY_LABELS[operation.currency],
       count: (previous?.count ?? 0) + 1,
     })
+    if ('kind' in operation && operation.kind === 'desecrate')
+      for (const entry of boneOmenLabels(operation, catalog, translations))
+        costCounts.set(entry.id, {
+          label: entry.label,
+          count: (costCounts.get(entry.id)?.count ?? 0) + 1,
+        })
     if (!('kind' in operation) && operation.omen) {
       const previousOmen = costCounts.get(operation.omen)
       costCounts.set(operation.omen, {
@@ -1069,10 +1086,16 @@ export function RehearsalPanel({
           aria-label="骨骼待应用结果"
         >
           <h3>{stepLabel(boneDraft)}</h3>
+          <BoneOperationDetails
+            catalog={catalog}
+            operation={boneDraft}
+            translations={translations}
+            {...(translateLine ? { translateLine } : {})}
+          />
           {preview?.ok ? (
             <p>
               {boneDraft.kind === 'desecrate'
-                ? '应用后消耗一份骨骼，产生未知亵渎占位。'
+                ? '应用后消耗一份骨骼及各一份所选预兆，产生未知亵渎占位。'
                 : boneDraft.kind === 'desecration-offer'
                   ? '应用后固定三项候选，不额外计费。'
                   : '应用后保留所选亵渎属性，恢复常规制作，不额外计费。'}

@@ -1,3 +1,4 @@
+import { type BoneOmenConfig, hasValidBoneOmenFields } from './boneOmens'
 import type { CatalogBase } from './catalog'
 
 export const BONE_RULES = {
@@ -38,12 +39,12 @@ export const BONE_RULES = {
 } as const
 
 export type CraftBone = keyof typeof BONE_RULES
-export interface PendingDesecration {
+export interface PendingDesecration extends BoneOmenConfig {
   boneId: CraftBone
   kind: 'prefix' | 'suffix'
   options?: string[]
 }
-export interface DesecrateCraftOperation {
+export interface DesecrateCraftOperation extends BoneOmenConfig {
   kind: 'desecrate'
   boneId: CraftBone
   affixKind: 'prefix' | 'suffix'
@@ -104,7 +105,8 @@ export function isCraftBone(value: unknown): value is CraftBone {
 export function isPendingDesecration(value: unknown): value is PendingDesecration {
   return (
     record(value) &&
-    keys(value, ['boneId', 'kind', 'options']) &&
+    keys(value, ['boneId', 'kind', 'options', 'directionOmen', 'lichOmen']) &&
+    hasValidBoneOmenFields(value) &&
     isCraftBone(value.boneId) &&
     (value.kind === 'prefix' || value.kind === 'suffix') &&
     (!Object.hasOwn(value, 'options') || three(value.options))
@@ -114,7 +116,8 @@ export function isBoneCraftOperation(value: unknown): value is BoneCraftOperatio
   if (!record(value)) return false
   if (value.kind === 'desecrate')
     return (
-      keys(value, ['kind', 'boneId', 'affixKind', 'removeModId']) &&
+      keys(value, ['kind', 'boneId', 'affixKind', 'removeModId', 'directionOmen', 'lichOmen']) &&
+      hasValidBoneOmenFields(value) &&
       isCraftBone(value.boneId) &&
       (value.affixKind === 'prefix' || value.affixKind === 'suffix') &&
       (!Object.hasOwn(value, 'removeModId') || id(value.removeModId))

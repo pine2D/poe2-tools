@@ -1,6 +1,11 @@
 import {
+  BONE_DIRECTION_OMEN_RULES,
+  BONE_LICH_OMEN_RULES,
   BONE_RULES,
   type BoneCraftOperation,
+  type BoneDirectionOmen,
+  type BoneLichOmen,
+  type BoneOmenConfig,
   type CatalogMod,
   type CraftBone,
   type CraftCatalog,
@@ -14,6 +19,7 @@ import {
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
+import { boneOmenLabels } from './boneOmenLabels'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
@@ -42,6 +48,12 @@ export function BoneCraftPanel({
 }: BoneCraftPanelProps) {
   const id = useId()
   const [boneId, setBoneId] = useState<CraftBone | null>(null)
+  const [directionOmen, setDirectionOmen] = useState<BoneDirectionOmen | null>(null)
+  const [lichOmen, setLichOmen] = useState<BoneLichOmen | null>(null)
+  const config: BoneOmenConfig = {
+    ...(directionOmen ? { directionOmen } : {}),
+    ...(lichOmen ? { lichOmen } : {}),
+  }
   const [kind, setKind] = useState<'prefix' | 'suffix' | null>(null)
   const [removeModId, setRemoveModId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -65,7 +77,23 @@ export function BoneCraftPanel({
     () => new Map(catalog.modifiers.map((mod) => [mod.id, mod])),
     [catalog.modifiers],
   )
-  const prepared = materials.find((entry) => entry.id === boneId)?.result
+  const prepared = useMemo(
+    () =>
+      boneId
+        ? prepareDesecration(catalog, state, boneId, {
+            ...(directionOmen ? { directionOmen } : {}),
+            ...(lichOmen ? { lichOmen } : {}),
+          })
+        : undefined,
+    [catalog, state, boneId, directionOmen, lichOmen],
+  )
+  const selectedOmenLabels = boneOmenLabels(pending ?? config, catalog, translations)
+  const resetResult = () => {
+    setKind(null)
+    setRemoveModId(null)
+  }
+  const localize = (name: string) =>
+    translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const removal = removeModId ? byId.get(removeModId) : undefined
   const requiresRemoval = prepared?.ok && prepared.value.requiresRemoval
   const kinds = prepared?.ok
@@ -129,7 +157,9 @@ export function BoneCraftPanel({
   return (
     <section className="essence-catalog essence-craft" aria-label="骨骼与揭示">
       <h3>骨骼与揭示</h3>
-      <p>指定结果演练，不代表真实概率。骨骼应用消耗一份材料；固定三项与完成揭示不重复计费。</p>
+      <p>
+        指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份所选预兆；固定三项与完成揭示不重复计费。
+      </p>
       {disabled ? <p>请先应用或取消当前草稿。</p> : null}
       {!pending ? (
         <>
@@ -142,8 +172,9 @@ export function BoneCraftPanel({
               onChange={(event) => {
                 const value = event.target.value
                 setBoneId(isCraftBone(value) ? value : null)
-                setKind(null)
-                setRemoveModId(null)
+                resetResult()
+                setDirectionOmen(null)
+                setLichOmen(null)
               }}
             >
               <option value="">选择骨骼材料</option>
@@ -162,6 +193,62 @@ export function BoneCraftPanel({
               ))}
             </select>
           </label>
+          <label>
+            骨骼方向预兆
+            <select
+              aria-label="骨骼方向预兆"
+              disabled={disabled}
+              value={directionOmen ?? ''}
+              onChange={(event) => {
+                setDirectionOmen(
+                  (Object.keys(BONE_DIRECTION_OMEN_RULES) as BoneDirectionOmen[]).find(
+                    (key) => key === event.target.value,
+                  ) ?? null,
+                )
+                resetResult()
+              }}
+            >
+              <option value="">不使用方向预兆</option>
+              {Object.entries(BONE_DIRECTION_OMEN_RULES).map(([key, rule]) => (
+                <option key={key} value={key}>
+                  {localize(rule.name)} · 仅{rule.kind === 'prefix' ? '前缀' : '后缀'}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            骨骼巫妖预兆
+            <select
+              aria-label="骨骼巫妖预兆"
+              disabled={disabled}
+              value={lichOmen ?? ''}
+              onChange={(event) => {
+                setLichOmen(
+                  (Object.keys(BONE_LICH_OMEN_RULES) as BoneLichOmen[]).find(
+                    (key) => key === event.target.value,
+                  ) ?? null,
+                )
+                resetResult()
+              }}
+            >
+              <option value="">不使用巫妖预兆</option>
+              {Object.entries(BONE_LICH_OMEN_RULES).map(([key, rule]) => (
+                <option key={key} value={key}>
+                  {localize(rule.name)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {lichOmen ? (
+            <p>
+              巫妖预兆仅用于武器与首饰。本工具只支持同一指定巫妖的三候选演练；不足三项的情形暂不支持，不会用普通或其他巫妖填充。
+            </p>
+          ) : null}
+          {boneId && prepared ? (
+            <p role="status">
+              {prepared.ok ? '当前骨骼与预兆配置可用于本工具演练。' : prepared.error}
+            </p>
+          ) : null}
           {materials.every((entry) => !entry.result.ok) ? (
             <p>{materials.flatMap(({ result }) => (result.ok ? [] : [result.error]))[0]}</p>
           ) : null}
@@ -175,6 +262,11 @@ export function BoneCraftPanel({
           {requiresRemoval && prepared?.ok ? (
             <>
               <p>满六组时游戏会随机移除一组词缀；这里指定结果用于演练，不能控制游戏中的移除。</p>
+              {directionOmen || lichOmen ? (
+                <p>
+                  这里只列出本工具能够完成三候选演练的移除结果，不代表其他游戏结果不可能，也不保证目标受到保护。
+                </p>
+              ) : null}
               {riskTargets.length ? (
                 <p>随机移除风险中的对应目标词缀：{riskTargets.join('、')}。</p>
               ) : null}
@@ -231,7 +323,7 @@ export function BoneCraftPanel({
                     onChange={() => setKind(side)}
                   />
                   {side === 'prefix' ? '占用前缀' : '占用后缀'}
-                  {!kinds.includes(side) ? '（当前无空位或须先选择移除）' : ''}
+                  {!kinds.includes(side) ? '（当前配置不可用或须先选择移除）' : ''}
                 </label>
               ))}
             </fieldset>
@@ -250,6 +342,7 @@ export function BoneCraftPanel({
               if (boneId && kind)
                 onPreview({
                   kind: 'desecrate',
+                  ...config,
                   boneId,
                   affixKind: kind,
                   ...(removeModId ? { removeModId } : {}),
@@ -262,6 +355,16 @@ export function BoneCraftPanel({
       ) : (
         <>
           <p>请先完成亵渎揭示；本工具尚未实现未揭示期间的交错制作。</p>
+          <p>
+            已固化骨骼预兆：
+            {selectedOmenLabels.length
+              ? selectedOmenLabels.map((entry) => entry.label).join('、')
+              : '未使用'}
+            ；此时不能更换。
+          </p>
+          {pending.lichOmen ? (
+            <p>三项候选均须属于指定巫妖；不足三项的情形本工具暂不支持。</p>
+          ) : null}
           {!pending.options ? (
             <>
               <p>从合法候选中指定恰好三项；只固定选项，不会立即获得其中属性。</p>

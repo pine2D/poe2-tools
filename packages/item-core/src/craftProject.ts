@@ -43,7 +43,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v24'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v25'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -95,7 +95,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 24 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 25 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -462,6 +462,17 @@ export function parseCraftProject(
         value.operations.some((step) => record(step) && isBoneOperationKind(step.kind))))
   )
     return fail('v2–v20 旧版项目不能包含待揭示亵渎或骨骼揭示操作。')
+  if (
+    rulesVersion < 25 &&
+    Array.isArray(value.operations) &&
+    value.operations.some(
+      (step) =>
+        record(step) &&
+        step.kind === 'desecrate' &&
+        (Object.hasOwn(step, 'directionOmen') || Object.hasOwn(step, 'lichOmen')),
+    )
+  )
+    return fail('旧规则项目不能包含骨骼施加预兆字段。')
   if (rulesVersion < 20) {
     const initial = record(value.initialState) ? value.initialState : undefined
     const parsedSource =

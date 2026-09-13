@@ -171,6 +171,7 @@ export function planCraftTargetRoutes(
     steps: CraftTargetRouteStep[]
     score: number
     risk: number
+    boneOmens: number
     path: string
   }
   const queue: Node[] = [
@@ -179,6 +180,7 @@ export function planCraftTargetRoutes(
       steps: [],
       score: matched(state).length + matchedImplicit(state).length + bonePriority(state),
       risk: 0,
+      boneOmens: 0,
       path: '',
     },
   ]
@@ -205,6 +207,7 @@ export function planCraftTargetRoutes(
       (a, b) =>
         b.score - a.score ||
         a.risk - b.risk ||
+        a.boneOmens - b.boneOmens ||
         a.steps.length - b.steps.length ||
         compare(a.path, b.path),
     )
@@ -320,6 +323,11 @@ export function planCraftTargetRoutes(
           steps,
           score: afterMatched.length + afterImplicit.length + bonePriority(applied.value),
           risk,
+          boneOmens:
+            node.boneOmens +
+            ('kind' in operation && operation.kind === 'desecrate'
+              ? Number(Boolean(operation.directionOmen)) + Number(Boolean(operation.lichOmen))
+              : 0),
           path: JSON.stringify(steps.map((s) => s.operation)),
         })
     }

@@ -5,6 +5,13 @@ export {
   type CraftBoneAdviceStep,
 } from './boneAdvice'
 export { applyBoneCraft, desecrationCandidates, prepareDesecration } from './boneCraft'
+export {
+  BONE_DIRECTION_OMEN_RULES,
+  BONE_LICH_OMEN_RULES,
+  type BoneDirectionOmen,
+  type BoneLichOmen,
+  type BoneOmenConfig,
+} from './boneOmens'
 export type {
   BoneCraftOperation,
   CraftBone,

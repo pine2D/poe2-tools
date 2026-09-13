@@ -1,4 +1,12 @@
 import { applyBoneCraft, desecrationCandidates, prepareDesecration } from './boneCraft'
+import {
+  BONE_DIRECTION_OMEN_RULES,
+  BONE_LICH_OMEN_RULES,
+  type BoneDirectionOmen,
+  type BoneLichOmen,
+  type BoneOmenConfig,
+  matchesBoneLich,
+} from './boneOmens'
 import { BONE_RULES, type BoneCraftOperation, type CraftBone } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import type { CraftResult, CraftState } from './rehearsal'
@@ -124,36 +132,72 @@ export function analyzeBoneTargets(
     }
     return { ok: true, value: result }
   }
-  if (!missing.size) return { ok: true, value: [] }
-  for (const boneId of Object.keys(BONE_RULES) as CraftBone[]) {
-    const prepared = prepareDesecration(catalog, state, boneId)
-    if (!prepared.ok) continue
-    const removals = prepared.value.requiresRemoval
-      ? prepared.value.removableAffixes.map((affix) => affix.modId)
-      : [undefined]
-    const risk = prepared.value.removableAffixes
-      .filter((affix) => accepted.has(affix.modId))
-      .map((affix) => affix.modId)
-    for (const removeModId of removals) {
-      for (const affixKind of prepared.value.kinds) {
-        const operation: BoneCraftOperation = {
-          kind: 'desecrate',
+  if (!missing.size || state.rarity !== 'rare') return { ok: true, value: [] }
+  const targetMods = catalog.modifiers.filter((mod) => missing.has(mod.id))
+  const directions = (Object.keys(BONE_DIRECTION_OMEN_RULES) as BoneDirectionOmen[]).filter(
+    (omen) => targetMods.some((mod) => mod.kind === BONE_DIRECTION_OMEN_RULES[omen].kind),
+  )
+  const liches = (Object.keys(BONE_LICH_OMEN_RULES) as BoneLichOmen[]).filter((omen) =>
+    targetMods.some((mod) => matchesBoneLich(mod, omen)),
+  )
+  const configs: BoneOmenConfig[] = [
+    {},
+    ...directions.map((directionOmen) => ({ directionOmen })),
+    ...liches.map((lichOmen) => ({ lichOmen })),
+    ...directions.flatMap((directionOmen) =>
+      liches.map((lichOmen) => ({ directionOmen, lichOmen })),
+    ),
+  ]
+  for (const config of configs) {
+    for (const boneId of Object.keys(BONE_RULES) as CraftBone[]) {
+      const prepared = prepareDesecration(catalog, state, boneId, config)
+      if (!prepared.ok) continue
+      if (config.directionOmen) {
+        const withoutDirection = prepareDesecration(
+          catalog,
+          state,
           boneId,
-          affixKind,
-          ...(removeModId === undefined ? {} : { removeModId }),
-        }
-        const next = apply(state, operation)
-        if (!next) continue
-        for (const proposal of offers(next, true)) {
-          if (!proposal.target) continue
-          const offered = apply(next, proposal.operation)
-          const completed = offered ? reveal(offered, proposal.target, true) : null
-          if (completed) {
-            push(operation, next, [proposal.target], risk)
-            break
+          config.lichOmen ? { lichOmen: config.lichOmen } : {},
+        )
+        if (
+          withoutDirection.ok &&
+          JSON.stringify([...withoutDirection.value.kinds].sort()) ===
+            JSON.stringify([...prepared.value.kinds].sort()) &&
+          JSON.stringify(
+            withoutDirection.value.removableAffixes.map((affix) => affix.modId).sort(),
+          ) === JSON.stringify(prepared.value.removableAffixes.map((affix) => affix.modId).sort())
+        )
+          continue
+      }
+      const removals = prepared.value.requiresRemoval
+        ? prepared.value.removableAffixes.map((affix) => affix.modId)
+        : [undefined]
+      const risk = prepared.value.removableAffixes
+        .filter((affix) => accepted.has(affix.modId))
+        .map((affix) => affix.modId)
+      for (const removeModId of removals) {
+        for (const affixKind of prepared.value.kinds) {
+          const operation: BoneCraftOperation = {
+            kind: 'desecrate',
+            ...config,
+            boneId,
+            affixKind,
+            ...(removeModId === undefined ? {} : { removeModId }),
           }
-          if (exhausted) break
+          const next = apply(state, operation)
+          if (!next) continue
+          for (const proposal of offers(next, true)) {
+            if (!proposal.target) continue
+            const offered = apply(next, proposal.operation)
+            const completed = offered ? reveal(offered, proposal.target, true) : null
+            if (completed) {
+              push(operation, next, [proposal.target], risk)
+              break
+            }
+            if (exhausted) break
+          }
         }
+        if (exhausted) break
       }
       if (exhausted) break
     }

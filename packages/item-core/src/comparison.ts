@@ -47,7 +47,14 @@ function samePendingDesecration(
   after: PendingDesecration | undefined,
 ): boolean {
   if (before === after) return true
-  if (!before || !after || before.boneId !== after.boneId || before.kind !== after.kind)
+  if (
+    !before ||
+    !after ||
+    before.boneId !== after.boneId ||
+    before.kind !== after.kind ||
+    before.directionOmen !== after.directionOmen ||
+    before.lichOmen !== after.lichOmen
+  )
     return false
   const previous = before.options
   const next = after.options

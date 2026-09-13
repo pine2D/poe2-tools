@@ -1,15 +1,20 @@
+import { collectDesecrationCandidates, pendingBoneOmenError } from './boneCandidates'
 import {
-  BONE_RULES,
+  BONE_DIRECTION_OMEN_RULES,
+  type BoneOmenConfig,
+  boneOmenError,
+  isBoneOmenConfig,
+} from './boneOmens'
+import {
   type BoneCraftOperation,
   boneBaseError,
   type CraftBone,
   isBoneCraftOperation,
   isCraftBone,
 } from './boneRules'
-import { type CatalogMod, type CraftCatalog, inspectModPool } from './catalog'
+import type { CatalogMod, CraftCatalog } from './catalog'
 import { desecrationSourceHash } from './desecration'
-import { craftModsConflict } from './modConflicts'
-import { inspectNumericLines, renderNumericLines } from './numeric'
+import { renderNumericLines } from './numeric'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 
 function openKinds(catalog: CraftCatalog, state: CraftState): ('prefix' | 'suffix')[] {
@@ -24,11 +29,13 @@ export function prepareDesecration(
   catalog: CraftCatalog,
   state: CraftState,
   boneId: CraftBone,
+  config: BoneOmenConfig = {},
 ): CraftResult<{
   kinds: ('prefix' | 'suffix')[]
   removableAffixes: CraftAffix[]
   requiresRemoval: boolean
 }> {
+  if (!isBoneOmenConfig(config)) return { ok: false, error: '骨骼预兆配置无效。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (!isCraftBone(boneId)) return { ok: false, error: '未知骨骼材料。' }
@@ -41,58 +48,70 @@ export function prepareDesecration(
   if (!base) return { ok: false, error: '基底不在目录中。' }
   const error = boneBaseError(base, state.itemLevel, boneId)
   if (error) return { ok: false, error }
+  const omenError = boneOmenError(config, boneId)
+  if (omenError) return { ok: false, error: omenError }
   const requiresRemoval = state.affixes.length === 6
+  const direction = config.directionOmen
+    ? BONE_DIRECTION_OMEN_RULES[config.directionOmen].kind
+    : null
+  let kinds: ('prefix' | 'suffix')[] = (
+    requiresRemoval ? (['prefix', 'suffix'] as const) : openKinds(catalog, state)
+  ).filter((kind) => direction === null || direction === kind)
+  let removableAffixes = requiresRemoval ? checked.value.affixes : []
+  if (config.directionOmen || config.lichOmen) {
+    const viable = new Set<string>()
+    const removals = requiresRemoval ? removableAffixes : [undefined]
+    kinds = kinds.filter((kind) => {
+      let allowed = false
+      for (const removed of removals) {
+        const next = {
+          ...checked.value,
+          affixes: checked.value.affixes.filter((affix) => affix.modId !== removed?.modId),
+        }
+        if (!openKinds(catalog, next).includes(kind)) continue
+        const proposed = { ...next, pendingDesecration: { boneId, kind, ...config } }
+        if (
+          pendingBoneOmenError(
+            catalog,
+            proposed,
+            (candidate) => createCraftState(catalog, candidate).ok,
+          ) === null
+        ) {
+          allowed = true
+          if (removed) viable.add(removed.modId)
+        }
+      }
+      return allowed
+    })
+    removableAffixes = removableAffixes.filter((affix) => viable.has(affix.modId))
+    if (!kinds.length)
+      return {
+        ok: false,
+        error: config.lichOmen
+          ? '本工具暂不支持不足三项的巫妖候选情形，或指定亵渎位置不可用。'
+          : '本工具无法构成至少三项合法候选与亵渎位置。',
+      }
+  }
   return {
     ok: true,
     value: {
-      kinds: requiresRemoval ? ['prefix', 'suffix'] : openKinds(catalog, state),
-      removableAffixes: requiresRemoval ? checked.value.affixes : [],
+      kinds,
+      removableAffixes,
       requiresRemoval,
     },
   }
 }
 
-/** 三项均独立对原装备核对，最终只选择一项，不把候选彼此当作已占用组。 */
+/** 三项均独立对原装备核对，最终只选择一项。 */
 export function desecrationCandidates(catalog: CraftCatalog, state: CraftState): CatalogMod[] {
   const checked = createCraftState(catalog, state)
-  if (!checked.ok || !state.pendingDesecration) return []
-  const pending = state.pendingDesecration
-  const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  if (!base) return []
-  const { pendingDesecration: _, ...ordinary } = checked.value
-  const existing = catalog.modifiers.filter((mod) =>
-    state.affixes.some((affix) => affix.modId === mod.id),
-  )
-  const candidates = inspectModPool(
-    base,
-    catalog.modifiers,
-    state.itemLevel,
-    existing.map((mod) => mod.group),
-    existing.flatMap((mod) => mod.addsTags),
-    'desecrated',
-  )
-    .filter(
-      ({ mod, reasons }) =>
-        reasons.length === 0 &&
-        mod.kind === pending.kind &&
-        !existing.some((other) => craftModsConflict(other, mod)) &&
-        inspectNumericLines(mod.lines).ok &&
-        createCraftState(catalog, {
-          ...ordinary,
-          affixes: [
-            ...ordinary.affixes,
-            { modId: mod.id, lines: [...mod.lines], desecrated: true },
-          ],
-        }).ok,
-    )
-    .map(({ mod }) => mod)
-  const minimum = BONE_RULES[pending.boneId].minModLevel
-  // 与普通高级通货相同：当前合法候选中每个 kind/group 族保留最高档回退。
-  const family = (mod: CatalogMod) => JSON.stringify([mod.kind, mod.group])
-  const highest = new Map<string, number>()
-  for (const mod of candidates)
-    highest.set(family(mod), Math.max(highest.get(family(mod)) ?? 0, mod.level))
-  return candidates.filter((mod) => mod.level >= minimum || mod.level === highest.get(family(mod)))
+  return checked.ok
+    ? collectDesecrationCandidates(
+        catalog,
+        checked.value,
+        (next) => createCraftState(catalog, next).ok,
+      )
+    : []
 }
 export function applyBoneCraft(
   catalog: CraftCatalog,
@@ -104,7 +123,11 @@ export function applyBoneCraft(
   if (!checked.ok) return checked
   const current = checked.value
   if (step.kind === 'desecrate') {
-    const prepared = prepareDesecration(catalog, current, step.boneId)
+    const config: BoneOmenConfig = {
+      ...(step.directionOmen ? { directionOmen: step.directionOmen } : {}),
+      ...(step.lichOmen ? { lichOmen: step.lichOmen } : {}),
+    }
+    const prepared = prepareDesecration(catalog, current, step.boneId, config)
     if (!prepared.ok) return prepared
     if (
       prepared.value.requiresRemoval
@@ -116,11 +139,14 @@ export function applyBoneCraft(
       ...current,
       affixes: current.affixes.filter((affix) => affix.modId !== step.removeModId),
     }
-    if (!openKinds(catalog, next).includes(step.affixKind))
+    if (
+      !prepared.value.kinds.includes(step.affixKind) ||
+      !openKinds(catalog, next).includes(step.affixKind)
+    )
       return { ok: false, error: '选定前后缀没有空位；满六组时须使用被移除侧。' }
     return createCraftState(catalog, {
       ...next,
-      pendingDesecration: { boneId: step.boneId, kind: step.affixKind },
+      pendingDesecration: { boneId: step.boneId, kind: step.affixKind, ...config },
     })
   }
   const pending = current.pendingDesecration

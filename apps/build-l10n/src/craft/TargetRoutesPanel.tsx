@@ -14,6 +14,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 import { BoneOperationDetails } from './BoneAdvicePanel'
+import { boneOmenLabels } from './boneOmenLabels'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
@@ -101,6 +102,10 @@ function RouteSearch({
             : ESSENCE_OMEN_RULES[step.omen].name,
         )
       : null
+  const boneOmens = (step: CraftStep) =>
+    'kind' in step && step.kind === 'desecrate'
+      ? boneOmenLabels(step, catalog, translations).map((entry) => entry.label)
+      : []
   const modLabel = (id: string) => {
     const mod = catalog.modifiers.find((m) => m.id === id)
     return mod ? `${mod.name} · ${translateLine?.(mod.lines[0] ?? '') ?? mod.lines[0] ?? id}` : id
@@ -196,7 +201,11 @@ function RouteSearch({
                   step.operation.kind === 'desecration-reveal')
               )
                 continue
-              for (const name of [label(step.operation), omenLabel(step.operation)])
+              for (const name of [
+                label(step.operation),
+                omenLabel(step.operation),
+                ...boneOmens(step.operation),
+              ])
                 if (name) costs.set(name, (costs.get(name) ?? 0) + 1)
             }
             return (
@@ -231,6 +240,9 @@ function RouteSearch({
                         <strong>
                           {label(step.operation)}
                           {omenLabel(step.operation) ? ` + ${omenLabel(step.operation)}` : ''}
+                          {boneOmens(step.operation).length
+                            ? ` + ${boneOmens(step.operation).join(' + ')}`
+                            : ''}
                         </strong>
                         {'kind' in step.operation &&
                         (step.operation.kind === 'desecrate' ||
@@ -239,6 +251,7 @@ function RouteSearch({
                           <BoneOperationDetails
                             catalog={catalog}
                             operation={step.operation}
+                            translations={translations}
                             {...(translateLine ? { translateLine } : {})}
                           />
                         ) : null}
@@ -287,7 +300,9 @@ function RouteSearch({
                         ) : null}
                         {step.atRiskTargetIds.length ? (
                           <p className="target-warning">
-                            整个合法随机移除池内的目标风险：
+                            {'kind' in step.operation && step.operation.kind === 'desecrate'
+                              ? '本工具可演练移除池内的目标风险：'
+                              : '整个合法随机移除池内的目标风险：'}
                             {step.atRiskTargetIds.map(modLabel).join('；')}
                             。所选安全结果不代表随机安全。
                           </p>

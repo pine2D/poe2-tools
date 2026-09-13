@@ -48,13 +48,17 @@ it.each(['normal', 'magic'] as const)('%s起点默认预算准备到rare并揭�
     expect(result.value.routes[0]?.finalState.pendingDesecration).toBeUndefined()
   }
 })
-it('满六保留已达成普通目标，随机池风险不能因指定安全移除消失', () => {
+it('满六保留已达成普通目标，方向预兆真实缩小随机移除风险', () => {
   const start = boneState(['prefix1', 'prefix2', 'prefix3', 'suffix1', 'suffix2', 'suffix3'])
   const result = planCraftTargetRoutes(boneCatalog(), start, ['prefix1', 'exclusive1'])
   expect(result.ok && result.value.routes.length > 0).toBe(true)
   if (result.ok) {
     const route = result.value.routes[0]
-    expect(route?.steps[0]?.atRiskTargetIds).toContain('prefix1')
+    expect(route?.steps[0]?.operation).toMatchObject({
+      kind: 'desecrate',
+      directionOmen: 'dextral_necromancy',
+    })
+    expect(route?.steps[0]?.atRiskTargetIds).toEqual([])
     for (const step of route?.steps ?? [])
       expect(step.state.affixes.some((affix) => affix.modId === 'prefix1')).toBe(true)
   }
