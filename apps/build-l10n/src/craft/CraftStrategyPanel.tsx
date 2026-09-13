@@ -12,11 +12,13 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import './strategy.css'
 import { CraftStrategyActionEditor, strategyActionLabel } from './CraftStrategyActionEditor'
+import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 const CONDITION_LABELS = {
   always: '任何状态',
   rarity: '稀有度',
   'targets-met': '制作目标',
+  'selected-targets': '指定目标组',
   'open-prefix': '前缀空位至少',
   'open-suffix': '后缀空位至少',
   'affix-count': '词缀组数至少',
@@ -24,7 +26,12 @@ const CONDITION_LABELS = {
   'socket-count': '已有孔数范围',
   'open-sockets': '空孔数范围',
 } as const
-function defaultCondition(kind: CraftStrategyCondition['kind']): CraftStrategyCondition {
+function defaultCondition(
+  kind: CraftStrategyCondition['kind'],
+  targetIds: readonly string[] = [],
+): CraftStrategyCondition | null {
+  if (kind === 'selected-targets')
+    return targetIds[0] ? { kind, modIds: [targetIds[0]], min: 1, value: true } : null
   if (kind === 'socket-count' || kind === 'open-sockets') return { kind, min: 1, max: 3 }
   if (kind === 'desecration-stage') return { kind, value: 'unrevealed' }
   if (kind === 'always') return { kind }
@@ -56,6 +63,7 @@ function example(): CraftStrategy {
 interface Props {
   catalog: CraftCatalog
   translations?: Record<string, string>
+  translateLine?: (line: string) => string | null
   state: CraftState
   strategy: CraftStrategy | undefined
   goals: CraftStrategyGoals
@@ -69,6 +77,7 @@ interface Props {
 export function CraftStrategyPanel({
   catalog,
   translations = {},
+  translateLine,
   state,
   strategy,
   goals,
@@ -209,14 +218,13 @@ export function CraftStrategyPanel({
                         <select
                           aria-label={`规则 ${number} 条件 ${ci + 1}`}
                           value={condition.kind}
-                          onChange={(event) =>
-                            updateCondition(
-                              ci,
-                              defaultCondition(
-                                event.target.value as CraftStrategyCondition['kind'],
-                              ),
+                          onChange={(event) => {
+                            const value = defaultCondition(
+                              event.target.value as CraftStrategyCondition['kind'],
+                              goals.targetModIds,
                             )
-                          }
+                            if (value) updateCondition(ci, value)
+                          }}
                         >
                           {(Object.keys(CONDITION_LABELS) as CraftStrategyCondition['kind'][])
                             .filter(
@@ -225,12 +233,30 @@ export function CraftStrategyPanel({
                                 !rule.conditions.some((entry) => entry.kind === kind),
                             )
                             .map((kind) => (
-                              <option key={kind} value={kind}>
+                              <option
+                                key={kind}
+                                value={kind}
+                                disabled={
+                                  kind === 'selected-targets' &&
+                                  !goals.targetModIds?.length &&
+                                  condition.kind !== kind
+                                }
+                              >
                                 {CONDITION_LABELS[kind]}
                               </option>
                             ))}
                         </select>
                       </label>
+                      {condition.kind === 'selected-targets' ? (
+                        <StrategyTargetCondition
+                          prefix={`规则 ${number} 条件 ${ci + 1}`}
+                          condition={condition}
+                          targetModIds={goals.targetModIds ?? []}
+                          catalog={catalog}
+                          {...(translateLine ? { translateLine } : {})}
+                          onChange={(value) => updateCondition(ci, value)}
+                        />
+                      ) : null}
                       {condition.kind === 'rarity' ? (
                         <label>
                           稀有度
@@ -398,6 +424,7 @@ export function CraftStrategyPanel({
                         [
                           'rarity',
                           'targets-met',
+                          'selected-targets',
                           'open-prefix',
                           'open-suffix',
                           'affix-count',
@@ -406,11 +433,16 @@ export function CraftStrategyPanel({
                           'open-sockets',
                           'always',
                         ] as const
-                      ).find((kind) => !rule.conditions.some((entry) => entry.kind === kind))
-                      if (next)
+                      ).find(
+                        (kind) =>
+                          !rule.conditions.some((entry) => entry.kind === kind) &&
+                          (kind !== 'selected-targets' || Boolean(goals.targetModIds?.length)),
+                      )
+                      const nextCondition = next ? defaultCondition(next, goals.targetModIds) : null
+                      if (nextCondition)
                         replaceRule(index, {
                           ...rule,
-                          conditions: [...rule.conditions, defaultCondition(next)],
+                          conditions: [...rule.conditions, nextCondition],
                         })
                     }}
                   >

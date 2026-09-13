@@ -55,7 +55,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v41'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v42'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -113,7 +113,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 41 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 42 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -480,6 +480,15 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    const selectedTargets = read.value.rules.flatMap((rule) =>
+      rule.conditions.flatMap((condition) =>
+        condition.kind === 'selected-targets' ? condition.modIds : [],
+      ),
+    )
+    if (rulesVersion < 42 && selectedTargets.length)
+      return fail('v39–v41 旧版指引不能包含指定目标组条件。')
+    if (selectedTargets.some((id) => !catalog.modifiers.some((mod) => mod.id === id)))
+      return fail('规则引用的目标词缀不在当前制作目录中。')
     if (
       rulesVersion < 41 &&
       read.value.rules.some(

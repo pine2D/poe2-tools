@@ -19,6 +19,7 @@ import {
 } from './targets'
 
 export type CraftStrategyCondition =
+  | { kind: 'selected-targets'; modIds: string[]; min: number; value: boolean }
   | { kind: 'socket-count' | 'open-sockets'; min: number; max: number }
   | { kind: 'always' }
   | { kind: 'rarity'; value: CraftRarity }
@@ -67,7 +68,24 @@ function integer(value: unknown, min: number, max: number): value is number {
 const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
 
 function readCondition(value: unknown): CraftStrategyCondition | null {
-  if (!keys(value, ['kind', 'value', 'min', 'max'])) return null
+  if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds'])) return null
+  if (
+    value.kind === 'selected-targets' &&
+    keys(value, ['kind', 'modIds', 'min', 'value']) &&
+    Array.isArray(value.modIds) &&
+    value.modIds.length >= 1 &&
+    value.modIds.length <= 6 &&
+    value.modIds.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 512) &&
+    new Set(value.modIds).size === value.modIds.length &&
+    integer(value.min, 1, value.modIds.length) &&
+    typeof value.value === 'boolean'
+  )
+    return {
+      kind: 'selected-targets',
+      modIds: [...value.modIds],
+      min: value.min,
+      value: value.value,
+    }
   if (
     (value.kind === 'socket-count' || value.kind === 'open-sockets') &&
     keys(value, ['kind', 'min', 'max']) &&
@@ -150,6 +168,20 @@ export function evaluateCraftStrategy(
     value,
   })
   if (appliedSteps >= strategy.maxSteps) return result({ kind: 'stop', reason: 'step-limit' })
+  // 失联引用不等于未达成，反向条件也不能利用被删除目标继续加工。
+  for (const [ruleIndex, rule] of strategy.rules.entries()) {
+    const missing = rule.conditions.flatMap((condition) =>
+      condition.kind === 'selected-targets'
+        ? condition.modIds.filter((id) => !goals.targetModIds?.includes(id))
+        : [],
+    )
+    if (missing.length)
+      return result({
+        kind: 'blocked',
+        ruleIndex,
+        message: `规则引用的目标已移除：${missing.join('、')}。请重新加入目标，或编辑该条件。`,
+      })
+  }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail('当前基底不在制作目录中。')
   const capacity = craftAffixLimit(base, state.rarity)
@@ -161,9 +193,12 @@ export function evaluateCraftStrategy(
   }
   if (state.pendingDesecration) counts[state.pendingDesecration.kind]++
   let targetsMet = false
+  const matchedTargets = new Set<string>()
   if (
     strategy.rules.some((rule) =>
-      rule.conditions.some((condition) => condition.kind === 'targets-met'),
+      rule.conditions.some(
+        (condition) => condition.kind === 'targets-met' || condition.kind === 'selected-targets',
+      ),
     )
   ) {
     const advice = analyzeCraftTargets(
@@ -178,12 +213,18 @@ export function evaluateCraftStrategy(
       goals.minimumTargetCount,
     )
     if (!advice.ok) return advice
+    for (const target of advice.value.targets) if (target.matched) matchedTargets.add(target.modId)
     targetsMet =
       !state.pendingDesecration &&
       (goals.targetModIds?.length ?? 0) + (goals.targetImplicitValues?.length ?? 0) > 0 &&
       craftTargetsSatisfied(advice.value, goals.minimumTargetCount, goals.targetFracturedModId)
   }
   const matches = (condition: CraftStrategyCondition): boolean => {
+    if (condition.kind === 'selected-targets')
+      return (
+        condition.modIds.filter((id) => matchedTargets.has(id)).length >= condition.min ===
+        condition.value
+      )
     if (condition.kind === 'socket-count' || condition.kind === 'open-sockets') {
       if (state.sockets === undefined) return false
       const count =

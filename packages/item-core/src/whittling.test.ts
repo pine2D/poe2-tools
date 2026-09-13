@@ -140,7 +140,7 @@ it('v30 全游标恢复预兆历史，旧 v2–29 禁止未来步骤注入', () 
         ok: true,
         value: {
           project: {
-            rulesVersion: 'basic-2026-09-12-v41',
+            rulesVersion: 'basic-2026-09-12-v42',
             cursor,
             operations: [{}, { omen: 'whittling' }],
           },

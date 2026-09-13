@@ -933,6 +933,7 @@ export function RehearsalPanel({
       <CraftStrategyPanel
         catalog={catalog}
         translations={translations}
+        {...(translateLine ? { translateLine } : {})}
         state={current}
         strategy={strategy}
         goals={{
