@@ -173,3 +173,9 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 ### 光明预兆（Light）机制依据（v31）
 
 [公开物品文本转录](https://poe2db.tw/us/Omen_of_Light)限定下一枚剥离石只移除亵渎词缀；[Lolcohol 亵渎指南](https://mobalytics.gg/poe-2/guides/abyss-crafting)说明移除不满意的已揭示词缀后重新亵渎。两页仅作 gray 人工规则依据，不复制代码、词缀表或权重；指南的其他交互及旧版本内容不据此开放。名称复用既有官方三服 static（国服光明预兆、台服光明之兆），来源身份沿固定 MIT 目录和原文标记。当前只支持单枚配基础剥离及已揭示的一组亵渎，未揭示、多预兆和腐化多亵渎继续未支持，游戏操作待真机验收。无新适配器、生成物或浏览器第三方请求。
+
+### 珠宝词缀来源登记
+
+接入既有 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [ModJewel.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModJewel.lua)，按 primary 登记，游戏物品文本版权仍归 GGG。SHA-256 为 `44285abc35fa4c32b2b0ba169570c99b01fd97136d1a801462b9b1398db82e80`，377 条源记录中 160 条具有普通珠宝正向资格，217 条范围珠宝或无正向资格记录保留排除原因。仅经既有构建期 cache.ts 抓取与受限 Lua 解析器处理；0/1 仍只表示生成资格，不能当概率。源末项 jewel=0 后追加 default=0 补全统一格式，顺序不变；独立 jewelOnly 标记隔离装备域。CoE 公开路线图只作类别与流程覆盖参考，不采用其规则或数据文件。
+
+[ZiggyD 制作指南](https://maxroll.gg/poe2/resources/how-to-craft-in-path-of-exile-2)的珠宝章节说明两前两后、蜕变至崇高的连续制作及普通珠宝无多档词缀；[PoE2 Wiki Jewel](https://www.poe2wiki.net/wiki/Jewel)区分四种基本珠宝与范围珠宝，并说明宝钻可由重铸获得。两者按 gray 人工规则依据，不采纳未核实的特殊品质、增容和腐化交互。[国服红玉](https://poe2db.tw/cn/Ruby)、[台服红宝石](https://poe2db.tw/tw/Ruby)及英文游戏说明仅用于逐字识别固定使用说明，不抓取它们的词缀表或权重；中文名称沿既有独立词典。用户未提供珠宝真机样本，客户端剪贴板格式及各机制游戏操作仍待验收。

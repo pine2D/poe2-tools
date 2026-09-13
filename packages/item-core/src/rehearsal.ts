@@ -24,6 +24,7 @@ import { matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
+import { craftAffixLimit, isBasicJewel, jewelSourceHash } from './jewels'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
@@ -198,6 +199,7 @@ function findBase(catalog: CraftCatalog, id: string): CatalogBase | null {
 }
 
 function baseError(base: CatalogBase): string | null {
+  if (base.type === 'Jewel' && !isBasicJewel(base)) return '范围或特殊珠宝暂不支持制作演练。'
   if (base.hidden) return '隐藏基底暂不支持制作演练。'
   if (base.variantList !== undefined) return '带内部变体的基底暂不支持制作演练。'
   if (base.runeforged) return '符文锻造基底暂不支持制作演练。'
@@ -215,14 +217,13 @@ function baseError(base: CatalogBase): string | null {
     /(?:[+-]\d+\s+(?:Prefix|Suffix) Modifier allowed|Can roll .+ Modifiers)/i.test(base.implicit)
   )
     return '该基底的固有属性会改变词缀容量或类别规则，暂不支持制作演练。'
-  if (!SUPPORTED_TYPES.has(base.type)) return '该基底类别暂不支持制作演练。'
+  if (!SUPPORTED_TYPES.has(base.type) && !isBasicJewel(base)) return '该基底类别暂不支持制作演练。'
   return null
 }
 
-function limits(rarity: CraftRarity): { prefix: number; suffix: number } {
-  if (rarity === 'normal') return { prefix: 0, suffix: 0 }
-  if (rarity === 'magic') return { prefix: 1, suffix: 1 }
-  return { prefix: 3, suffix: 3 }
+function limits(base: CatalogBase, rarity: CraftRarity): { prefix: number; suffix: number } {
+  const limit = craftAffixLimit(base, rarity)
+  return { prefix: limit, suffix: limit }
 }
 
 function eligible(base: CatalogBase, mod: CatalogMod, addedTags: readonly string[]): boolean {
@@ -248,6 +249,11 @@ export function createCraftState(
   if (base === null) return failure(`基底 ${input.baseId} 不在制作目录中。`)
   const unsupported = baseError(base)
   if (unsupported !== null) return failure(unsupported)
+  if (isBasicJewel(base)) {
+    if (jewelSourceHash(catalog) === null) return failure('缺少可信的珠宝词缀来源指纹。')
+    if (input.quality !== undefined)
+      return failure('珠宝催化剂品质及效果尚未支持，不能作为普通品质处理。')
+  }
   if (!Number.isInteger(input.itemLevel) || input.itemLevel < 1 || input.itemLevel > 100)
     return failure('物品等级必须是 1–100 的整数。')
   if (!['normal', 'magic', 'rare'].includes(input.rarity)) return failure('装备稀有度无效。')
@@ -261,6 +267,8 @@ export function createCraftState(
   const runeSourceError = runeSourceStateError(input)
   if (runeSourceError !== null) return failure(runeSourceError)
   if (!Array.isArray(input.affixes)) return failure('词缀列表无效。')
+  if (isBasicJewel(base) && input.affixes.some((affix) => affix?.crafted || affix?.desecrated))
+    return failure('珠宝工艺与亵渎来源的特殊制作尚未支持。')
   const implicit = resolveCraftImplicitPatterns(base, input)
   if (!implicit.ok) return implicit
   if (
@@ -352,11 +360,11 @@ export function createCraftState(
     else suffixes += 1
   }
 
-  const capacity = limits(input.rarity)
+  const capacity = limits(base, input.rarity)
   if (prefixes > capacity.prefix || suffixes > capacity.suffix) {
     if (input.rarity === 'normal') return failure('普通装备不能带有显式词缀。')
     if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')
-    return failure('稀有装备最多有 3 条前缀和 3 条后缀。')
+    return failure(`稀有装备最多有 ${capacity.prefix} 条前缀和 ${capacity.suffix} 条后缀。`)
   }
   const socketError = socketStateError(catalog, input)
   if (socketError !== null) return failure(socketError)
@@ -390,7 +398,7 @@ export function craftCandidates(
   })
   const occupiedGroups = existing.map((mod) => mod.group)
   const addedTags = existing.flatMap((mod) => mod.addsTags)
-  const capacity = limits(state.rarity)
+  const capacity = limits(base, state.rarity)
   const prefixes = existing.filter((mod) => mod.kind === 'prefix').length
   const suffixes = existing.filter((mod) => mod.kind === 'suffix').length
   const candidates = inspectModPool(
@@ -577,7 +585,7 @@ export function prepareCraftOperation(
   }
 
   if (count > 0 && craftCandidates(catalog, draft, currency, omen).length === 0) {
-    const capacity = limits(draft.rarity)
+    const capacity = limits(findBase(catalog, draft.baseId) as CatalogBase, draft.rarity)
     const mods = draft.affixes.flatMap((affix) => {
       const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
       return mod === undefined ? [] : [mod]

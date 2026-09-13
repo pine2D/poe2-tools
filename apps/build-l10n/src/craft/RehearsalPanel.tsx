@@ -22,6 +22,7 @@ import {
   type CraftStep,
   type CraftTargetAlternative,
   type CraftTargetValues,
+  craftAffixLimit,
   craftCandidates,
   craftOmenDescription,
   createCraftState,
@@ -32,6 +33,7 @@ import {
   type FractureCraftOperation,
   type ItemDictionary,
   inspectNumericLines,
+  jewelSourceHash,
   prepareCraftOperation,
   type RemovalCraftCurrency,
   type RestoredCraftProject,
@@ -673,7 +675,7 @@ export function RehearsalPanel({
     setRemovalCurrency(null)
     setMessage('')
   }
-  const capacities = current.rarity === 'rare' ? 3 : current.rarity === 'magic' ? 1 : 0
+  const capacities = craftAffixLimit(base, current.rarity)
   const prefixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'prefix')
   const suffixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'suffix')
   const omenLabel = (id: CraftOmen) =>
@@ -800,6 +802,7 @@ export function RehearsalPanel({
     )
       ? desecrationSourceHash(catalog)
       : null
+  const jewelHash = base.type === 'Jewel' ? jewelSourceHash(catalog) : null
   const project: CraftProject = {
     schemaVersion: 1 as const,
     sourceCommit: catalog._meta.sourceCommit,
@@ -810,6 +813,7 @@ export function RehearsalPanel({
       .flatMap((entry) => (entry.operation === null ? [] : [entry.operation])),
     cursor,
     ...(desecratedHash ? { desecrationSourceHash: desecratedHash } : {}),
+    ...(jewelHash ? { jewelSourceHash: jewelHash } : {}),
     ...(hasEssenceHistory && essenceSourceHash ? { essenceSourceHash } : {}),
     ...(history[0]?.state.sockets !== undefined && augmentSourceHash ? { augmentSourceHash } : {}),
     ...(targetModIds.length === 0 ? {} : { targetModIds }),

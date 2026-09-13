@@ -1,11 +1,17 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { type CraftCatalog, DESECRATION_SOURCE, parseCraftCatalog } from '@poe2-tools/item-core'
+import {
+  type CraftCatalog,
+  DESECRATION_SOURCE,
+  JEWEL_SOURCE,
+  parseCraftCatalog,
+} from '@poe2-tools/item-core'
 import { type BaseDeclaration, normalizeBaseDeclarations } from './adapters/baseVariants'
 import { normalizeAugments } from './adapters/craftAugments'
 import { normalizeMod } from './adapters/craftCatalog'
 import { normalizeDesecratedMods } from './adapters/craftDesecrated'
 import { normalizeEssences } from './adapters/craftEssences'
+import { normalizeJewelMods } from './adapters/craftJewels'
 import { buildCraftNames } from './adapters/craftNames'
 import { excludeDeclaration } from './adapters/craftSourceExclusions'
 import { parsePobBaseEntries, parsePobModFile } from './adapters/restrictedLua'
@@ -78,6 +84,8 @@ const modifiers = Object.entries(rawMods).map(([id, raw]) => {
   if (raw === null || typeof raw !== 'object') throw new Error(`词缀 ${id} 不是表`)
   return normalizeMod(id, raw)
 })
+const jewels = normalizeJewelMods(parsePobModFile(await source('ModJewel', JEWEL_SOURCE.sha256)))
+modifiers.push(...jewels.modifiers)
 const augments = normalizeAugments(
   parsePobModFile(
     await source('ModRunes', 'd3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a'),
@@ -166,6 +174,7 @@ const catalog: CraftCatalog = {
     nameSources,
     excludedBases,
     excludedDesecratedMods: desecrated.excluded,
+    excludedJewelMods: jewels.excluded,
   },
   bases,
   modifiers,

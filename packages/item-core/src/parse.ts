@@ -13,6 +13,12 @@ import type {
 const MAX_INPUT_LENGTH = 200_000
 const SEPARATOR = /^-{4,}$/
 const MOD_HEADER = /^\s*\{.*\}\s*$/
+// 公开三服物品说明的精确文本；仅在珠宝的独立区块内分类，未知尾行继续保留诊断。
+const JEWEL_USAGE_LINES = new Set([
+  'Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.',
+  '放置到一个天赋树的珠宝插槽中以产生效果。右键点击以移出插槽。',
+  '放置到一個天賦樹的珠寶插槽中以產生效果。右鍵點擊以移出插槽。',
+])
 // 中文标题是工具支持语法，实际客户端标题仍待真机验收；这里只分类，不推导范围。
 export const CHARM_SLOTS_PROPERTY_HEADER = /^(?:Charm Slots|咒符栏|護符欄位)\s*[:：]/i
 export const CHARM_SLOTS_PROPERTY =
@@ -284,6 +290,7 @@ export function parseItem(text: string): ParseItemResult {
     if (!raw.trim()) continue
     const line = sourceLine(raw, index)
     if (preserveFlag(line)) continue
+
     appendBlock(blocks, 'unknown', line)
     diagnostics.push({ code: 'unknown-line', message: '无法分类的原文已保留', line: line.line })
   }
@@ -377,6 +384,16 @@ export function parseItem(text: string): ParseItemResult {
     }
 
     if (preserveFlag(line)) continue
+
+    if (
+      currentMod === null &&
+      currentSection === null &&
+      ['Jewel', 'Jewels', '珠宝', '珠寶'].includes(classMatch[1]) &&
+      JEWEL_USAGE_LINES.has(trimmed)
+    ) {
+      appendBlock(blocks, 'description', line)
+      continue
+    }
 
     if (currentMod === null && currentSection === null && RUNE_SUFFIX.test(trimmed)) {
       appendBlock(blocks, 'runes', line)

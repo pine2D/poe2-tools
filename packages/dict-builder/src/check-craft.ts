@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { DESECRATION_SOURCE, inspectModPool, parseCraftCatalog } from '@poe2-tools/item-core'
+import {
+  DESECRATION_SOURCE,
+  inspectModPool,
+  JEWEL_SOURCE,
+  jewelSourceHash,
+  parseCraftCatalog,
+} from '@poe2-tools/item-core'
 import { REPO_ROOT } from './config'
 
 const catalog = parseCraftCatalog(
@@ -23,13 +29,19 @@ const desecratedSource = catalog._meta.sources.filter(
   (source) => source.path === DESECRATION_SOURCE.path,
 )
 if (
-  catalog.modifiers.filter((mod) => !mod.desecratedOnly).length !== 2550 ||
+  catalog.modifiers.filter((mod) => !mod.desecratedOnly && !mod.jewelOnly).length !== 2550 ||
   catalog.modifiers.filter((mod) => mod.desecratedOnly).length !== 199 ||
   catalog._meta.excludedDesecratedMods?.length !== 189 ||
   desecratedSource.length !== 1 ||
   desecratedSource[0]?.sha256 !== DESECRATION_SOURCE.sha256
 )
   throw new Error('亵渎目录固定来源或 2550 普通 / 199 专属 / 189 排除计数不匹配')
+if (
+  jewelSourceHash(catalog) !== JEWEL_SOURCE.sha256 ||
+  catalog.modifiers.filter((mod) => mod.jewelOnly).length !== 160 ||
+  catalog._meta.excludedJewelMods?.length !== 217
+)
+  throw new Error('珠宝目录固定来源或 160 普通 / 217 排除计数不匹配')
 for (const base of catalog.bases) {
   if (inspectModPool(base, catalog.modifiers, 100).some(({ mod }) => mod.desecratedOnly))
     throw new Error('亵渎专属词缀泄漏到普通生成池')

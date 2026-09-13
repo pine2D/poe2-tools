@@ -29,6 +29,7 @@ import {
   readCraftImplicitTargets,
   validateCraftImplicitTargets,
 } from './implicitTargets'
+import { jewelSourceHash as readJewelSourceHash } from './jewels'
 import { type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
 import {
@@ -49,7 +50,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v31'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v32'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -76,6 +77,7 @@ export interface CraftProject {
   targetImplicitValues?: CraftImplicitTargetValues[]
   targetAlternatives?: CraftTargetAlternative[]
   desecrationSourceHash?: string
+  jewelSourceHash?: string
   essenceSourceHash?: string
   augmentSourceHash?: string
   importedSockets?: (string | null)[]
@@ -102,7 +104,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 31 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 32 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -437,6 +439,7 @@ export function parseCraftProject(
       'augmentSourceHash',
       'essenceSourceHash',
       'desecrationSourceHash',
+      'jewelSourceHash',
       'importedSockets',
       'importedQuality',
     ])
@@ -447,6 +450,16 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
+  const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
+  if (rulesVersion < 32 && (usesJewel || Object.hasOwn(value, 'jewelSourceHash')))
+    return fail('v2–v31 旧版项目不能包含珠宝制作起点或来源。')
+  const jewelSourceHash = readJewelSourceHash(catalog)
+  if (
+    (usesJewel || Object.hasOwn(value, 'jewelSourceHash')) &&
+    (!usesJewel || jewelSourceHash === null || value.jewelSourceHash !== jewelSourceHash)
+  )
+    return fail('项目珠宝来源指纹缺失或与当前目录不同，不能恢复。')
   if (
     rulesVersion < 31 &&
     Array.isArray(value.operations) &&
@@ -937,6 +950,7 @@ export function parseCraftProject(
           ? { desecrationSourceHash }
           : {}),
         ...(targetModIds === undefined ? {} : { targetModIds }),
+        ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
         ...(targetValues === undefined ? {} : { targetValues }),
         ...(targetImplicitValues === undefined ? {} : { targetImplicitValues }),

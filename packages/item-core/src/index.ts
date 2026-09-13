@@ -116,6 +116,7 @@ export {
   craftImplicitTargetCandidates,
   validateCraftImplicitTargets,
 } from './implicitTargets'
+export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'
 export type { NumericRange } from './numeric'
 export {
   inspectNumericLines,

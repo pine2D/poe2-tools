@@ -26,6 +26,7 @@ export interface CatalogBase {
 }
 
 export interface CatalogMod {
+  jewelOnly?: true
   desecratedOnly?: true
   id: string
   kind: 'prefix' | 'suffix'
@@ -89,6 +90,7 @@ export interface CraftCatalog {
       gameVersion: null
     }[]
     excludedDesecratedMods?: { id: string; reason: string }[]
+    excludedJewelMods?: { id: string; reason: string }[]
     excludedBases: { id: string; reason: string }[]
   }
   bases: CatalogBase[]
@@ -134,6 +136,8 @@ export function hasCraftModEligibility(
   mod: CatalogMod,
   addedTags: readonly string[] = [],
 ): boolean {
+  // 珠宝与装备采用不同来源域，动态标签不能跨域注入候选。
+  if ((base.type === 'Jewel') !== (mod.jewelOnly === true)) return false
   const tags = new Set(
     [...base.tags, ...addedTags].filter(
       (tag) => tag !== 'genesis_tree_caster' && tag !== 'genesis_tree_minion',

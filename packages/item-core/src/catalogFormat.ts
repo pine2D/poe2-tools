@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { DESECRATION_FAMILIES, DESECRATION_SOURCE } from './desecration'
+import { JEWEL_SOURCE } from './jewels'
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -299,10 +300,13 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
           'tradeHashes',
           'eligibility',
           'desecratedOnly',
+          'jewelOnly',
         ].includes(key),
       ) ||
       !nonempty(mod.id) ||
       (Object.hasOwn(mod, 'desecratedOnly') && mod.desecratedOnly !== true) ||
+      (Object.hasOwn(mod, 'jewelOnly') && mod.jewelOnly !== true) ||
+      (mod.jewelOnly === true && mod.desecratedOnly === true) ||
       ids.has(mod.id) ||
       !['prefix', 'suffix'].includes(String(mod.kind)) ||
       typeof mod.name !== 'string' ||
@@ -336,6 +340,33 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     ids.add(mod.id)
   }
   const desecratedSources = meta.sources.filter((source) => source.path === DESECRATION_SOURCE.path)
+  const jewelSources = meta.sources.filter((source) => source.path === JEWEL_SOURCE.path)
+  if (
+    jewelSources.length ||
+    Object.hasOwn(meta, 'excludedJewelMods') ||
+    value.modifiers.some((mod) => mod.jewelOnly)
+  ) {
+    const source = jewelSources[0]
+    if (
+      jewelSources.length !== 1 ||
+      source.url !== JEWEL_SOURCE.url ||
+      source.sha256 !== JEWEL_SOURCE.sha256 ||
+      meta.sourceCommit !== JEWEL_SOURCE.commit ||
+      !Array.isArray(meta.excludedJewelMods)
+    )
+      return invalid()
+    for (const excluded of meta.excludedJewelMods) {
+      if (
+        !record(excluded) ||
+        !Object.keys(excluded).every((key) => key === 'id' || key === 'reason') ||
+        !nonempty(excluded.id) ||
+        !nonempty(excluded.reason) ||
+        ids.has(excluded.id)
+      )
+        return invalid()
+      ids.add(excluded.id)
+    }
+  }
   if (
     desecratedSources.length ||
     Object.hasOwn(meta, 'excludedDesecratedMods') ||

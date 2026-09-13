@@ -109,7 +109,7 @@ describe('副手普通孔位', () => {
   })
 
   it('v13 保存现有能力，严格拒绝畸形、旧版副手孔位能力和未来操作', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v31')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v32')
     expect(
       parseCraftProject(JSON.stringify(project(11, [], [{ kind: 'artificer' }])), catalog()).ok,
     ).toBe(true)
@@ -124,7 +124,7 @@ describe('副手普通孔位', () => {
       ])
         expect(parseCraftProject(JSON.stringify(input), catalog()).ok).toBe(false)
     }
-    for (const version of ['v02', 'v32', 'v999']) {
+    for (const version of ['v02', 'v33', 'v999']) {
       expect(
         parseCraftProject(
           JSON.stringify({ ...project(11), rulesVersion: `basic-2026-09-12-${version}` }),
