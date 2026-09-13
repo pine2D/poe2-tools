@@ -265,6 +265,9 @@ export function RehearsalPanel({
   const [targetModIds, setTargetModIds] = useState<string[]>(
     initialProject?.project.targetModIds ?? [],
   )
+  const [minimumTargetCount, setMinimumTargetCount] = useState<number | undefined>(
+    initialProject?.project.minimumTargetCount,
+  )
   const [targetValues, setTargetValues] = useState<CraftTargetValues[]>(
     initialProject?.project.targetValues ?? [],
   )
@@ -776,6 +779,7 @@ export function RehearsalPanel({
     ...(history[0]?.state.sockets !== undefined && augmentSourceHash ? { augmentSourceHash } : {}),
     ...(targetModIds.length === 0 ? {} : { targetModIds }),
     ...(targetValues.length === 0 ? {} : { targetValues }),
+    ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
     ...(targetImplicitValues.length === 0 ? {} : { targetImplicitValues }),
     ...(targetAlternatives.length === 0 ? {} : { targetAlternatives }),
     ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
@@ -795,6 +799,7 @@ export function RehearsalPanel({
     setOmen(undefined)
     setTargetModIds(restored.project.targetModIds ?? [])
     setTargetValues(restored.project.targetValues ?? [])
+    setMinimumTargetCount(restored.project.minimumTargetCount)
     setTargetImplicitValues(restored.project.targetImplicitValues ?? [])
     setTargetAlternatives(restored.project.targetAlternatives ?? [])
     setTargetFracturedModId(restored.project.targetFracturedModId)
@@ -894,6 +899,11 @@ export function RehearsalPanel({
       />
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftTargets
+        {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
+        onMinimumTargetCountChange={(value) => {
+          clearTargetDrafts()
+          setMinimumTargetCount(value)
+        }}
         key={`${current.baseId}:${targetSession}`}
         catalog={catalog}
         state={current}
@@ -929,6 +939,8 @@ export function RehearsalPanel({
           if (targetFracturedModId && !ids.includes(targetFracturedModId))
             setTargetFracturedModId(undefined)
           setTargetModIds(ids)
+          if (minimumTargetCount !== undefined && minimumTargetCount > ids.length)
+            setMinimumTargetCount(undefined)
           const alternatives = targetAlternatives.filter((entry) => ids.includes(entry.targetModId))
           setTargetAlternatives(alternatives)
           const accepted = new Set([...ids, ...alternatives.flatMap((entry) => entry.modIds)])
@@ -1140,6 +1152,7 @@ export function RehearsalPanel({
           </button>
           {comparisonOpen ? (
             <CraftComparisonPanel
+              {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
               catalog={catalog}
               translations={translations}
               targetImplicitValues={targetImplicitValues}
@@ -1156,6 +1169,7 @@ export function RehearsalPanel({
       ) : null}
       <div ref={fracturePanelRef} tabIndex={-1}>
         <FracturePanel
+          {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
           catalog={catalog}
           state={current}
           label={fractureLabel}

@@ -54,7 +54,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v37'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v38'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -69,6 +69,7 @@ export const MAX_CRAFT_PROJECT_BYTES = 2_000_000
 const MAX_OPERATIONS = 1000
 
 export interface CraftProject {
+  minimumTargetCount?: number
   scalabilitySourceHash?: string
   pricing?: CraftPricing
   schemaVersion: 1
@@ -110,7 +111,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 37 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 38 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -450,6 +451,7 @@ export function parseCraftProject(
       'operations',
       'cursor',
       'targetModIds',
+      'minimumTargetCount',
       'targetFracturedModId',
       'targetValues',
       'targetImplicitValues',
@@ -470,6 +472,20 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  let minimumTargetCount: number | undefined
+  if (Object.hasOwn(value, 'minimumTargetCount')) {
+    if (rulesVersion < 38) return fail('v2–v37 旧版项目不能包含部分目标数量条件。')
+    if (
+      typeof value.minimumTargetCount !== 'number' ||
+      !Number.isInteger(value.minimumTargetCount) ||
+      value.minimumTargetCount < 1 ||
+      !Array.isArray(value.targetModIds) ||
+      value.minimumTargetCount > value.targetModIds.length
+    )
+      return fail('部分目标数量必须是 1 至已选显式目标组数的整数。')
+    minimumTargetCount = value.minimumTargetCount
+  }
+
   const numericGroups = [value.targetValues, value.targetImplicitValues]
   const usesEffectiveTargets = numericGroups.some(
     (groups) =>
@@ -911,7 +927,12 @@ export function parseCraftProject(
   if (Object.hasOwn(value, 'targetModIds')) {
     if (!Array.isArray(value.targetModIds) || !value.targetModIds.every(nonempty))
       return fail('制作目标列表无效。')
-    const targets = validateCraftTargets(targetCatalog, initial.value.baseId, value.targetModIds)
+    const targets = validateCraftTargets(
+      targetCatalog,
+      initial.value.baseId,
+      value.targetModIds,
+      minimumTargetCount,
+    )
     if (!targets.ok) return fail(`制作目标无效：${targets.error}`)
     targetModIds = targets.value
   }
@@ -922,6 +943,7 @@ export function parseCraftProject(
       initial.value.baseId,
       targetModIds ?? [],
       value.targetAlternatives,
+      minimumTargetCount,
     )
     if (!accepted.ok) return fail(`替代档位无效：${accepted.error}`)
     targetAlternatives = accepted.value
@@ -943,6 +965,14 @@ export function parseCraftProject(
     )
     if (!fracture.ok) return fail(fracture.error)
     targetFracturedModId = fracture.value
+    const combined = validateCraftTargets(
+      targetCatalog,
+      initial.value.baseId,
+      targetModIds ?? [],
+      minimumTargetCount,
+      targetFracturedModId,
+    )
+    if (!combined.ok) return fail(combined.error)
   }
   let targetValues: CraftTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetValues')) {
@@ -953,6 +983,7 @@ export function parseCraftProject(
       value.targetValues,
       targetAlternatives,
       initial.value,
+      minimumTargetCount,
     )
     if (!checkedValues.ok) return fail(`数值目标无效：${checkedValues.error}`)
     targetValues = checkedValues.value
@@ -1033,6 +1064,7 @@ export function parseCraftProject(
           ? { desecrationSourceHash }
           : {}),
         ...(targetModIds === undefined ? {} : { targetModIds }),
+        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
         ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
         ...(pricing?.ok ? { pricing: pricing.value } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
@@ -1046,6 +1078,17 @@ export function parseCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (
+    Object.hasOwn(project, 'minimumTargetCount') &&
+    (project.rulesVersion !== CRAFT_RULES_VERSION ||
+      typeof project.minimumTargetCount !== 'number' ||
+      !Number.isInteger(project.minimumTargetCount) ||
+      project.minimumTargetCount < 1 ||
+      !Array.isArray(project.targetModIds) ||
+      project.minimumTargetCount > project.targetModIds.length)
+  )
+    throw new Error('部分目标数量或项目版本无效，不能序列化。')
+
   if (
     Object.hasOwn(project, 'targetFracturedModId') &&
     (project.rulesVersion !== CRAFT_RULES_VERSION ||

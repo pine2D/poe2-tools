@@ -91,6 +91,27 @@ export interface CraftAdvice {
   steps: CraftAdviceStep[]
 }
 
+/** 固有条件及指定破裂组是必选项，显式替代档位已由每个主组归并。 */
+export function craftTargetsSatisfied(
+  advice: CraftAdvice,
+  minimumTargetCount?: number,
+  fracturedTargetId?: string,
+): boolean {
+  const required = minimumTargetCount ?? advice.targets.length
+  return (
+    Number.isInteger(required) &&
+    required >= 0 &&
+    required <= advice.targets.length &&
+    advice.targets.filter((target) => target.matched).length >= required &&
+    (advice.implicitTargets ?? []).every((target) => target.matched) &&
+    (fracturedTargetId === undefined ||
+      advice.targets.some(
+        (target) =>
+          target.modId === fracturedTargetId && target.matched && target.fracture?.matched,
+      ))
+  )
+}
+
 function targetPools(catalog: CraftCatalog, baseId: string) {
   const base = catalog.bases.find((entry) => entry.id === baseId)
   const ordinary = new Set(
@@ -170,11 +191,22 @@ export function validateCraftTargets(
   catalog: CraftCatalog,
   baseId: string,
   ids: readonly string[],
+  minimumTargetCount?: number,
+  requiredTargetId?: string,
 ): CraftResult<string[]> {
   if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string'))
     return { ok: false, error: '制作目标必须是词缀 ID 字符串数组。' }
   if (ids.length > 6) return { ok: false, error: '制作目标最多包含六组词缀。' }
   if (new Set(ids).size !== ids.length) return { ok: false, error: '制作目标不能包含重复词缀 ID。' }
+  if (
+    minimumTargetCount !== undefined &&
+    (!Number.isInteger(minimumTargetCount) ||
+      minimumTargetCount < 1 ||
+      minimumTargetCount > ids.length)
+  )
+    return { ok: false, error: '至少达成数量必须是 1 至已选显式目标组数的整数。' }
+  if (requiredTargetId !== undefined && !ids.includes(requiredTargetId))
+    return { ok: false, error: '必选破裂组必须是已选显式目标。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const { ordinary, essence, desecrated, genesis } = targetPools(catalog, baseId)
   const affixes: CraftAffix[] = []
@@ -192,14 +224,42 @@ export function validateCraftTargets(
     })
   }
   // 目标按稀有装备容量校验；已有词缀校验不限制生成物等，适用于高物等目标。
-  const checked = createCraftState(catalog, {
-    baseId,
-    itemLevel: 100,
-    rarity: 'rare',
-    affixes,
-    sourceText: null,
-    ...targetImplicitLines(catalog, baseId),
-  })
+  const check = (selected: CraftAffix[]) =>
+    createCraftState(catalog, {
+      baseId,
+      itemLevel: 100,
+      rarity: 'rare',
+      affixes: selected,
+      sourceText: null,
+      ...targetImplicitLines(catalog, baseId),
+    })
+  if (minimumTargetCount !== undefined && minimumTargetCount < ids.length) {
+    const groups = affixes.map((affix) => byId.get(affix.modId)?.group)
+    if (new Set(groups).size !== groups.length)
+      return { ok: false, error: '同一词缀冲突组只能作为一个目标，请使用替代档位。' }
+    for (const affix of affixes) {
+      const single = check([affix])
+      if (!single.ok) return single
+    }
+    for (let mask = 1; mask < 2 ** affixes.length; mask++) {
+      const selected = affixes.filter((_, index) => (mask & (1 << index)) !== 0)
+      if (
+        selected.length === minimumTargetCount &&
+        (requiredTargetId === undefined ||
+          selected.some((affix) => affix.modId === requiredTargetId)) &&
+        check(selected).ok
+      )
+        return { ok: true, value: [...ids] }
+    }
+    return {
+      ok: false,
+      error:
+        requiredTargetId === undefined
+          ? '当前基底的容量或冲突规则无法同时容纳要求数量的目标组。'
+          : '不存在包含必选破裂组、且满足要求数量的合法目标组合。',
+    }
+  }
+  const checked = check(affixes)
   return checked.ok ? { ok: true, value: [...ids] } : checked
 }
 
@@ -217,8 +277,9 @@ export function validateCraftTargetAlternatives(
   baseId: string,
   ids: readonly string[],
   alternatives: unknown,
+  minimumTargetCount?: number,
 ): CraftResult<CraftTargetAlternative[]> {
-  const targets = validateCraftTargets(catalog, baseId, ids)
+  const targets = validateCraftTargets(catalog, baseId, ids, minimumTargetCount)
   if (!targets.ok) return targets
   if (!Array.isArray(alternatives) || alternatives.length > 6)
     return { ok: false, error: '替代档位必须是最多六组的数组。' }
@@ -251,6 +312,7 @@ export function validateCraftTargetAlternatives(
         catalog,
         baseId,
         ids.map((target) => (target === entry.targetModId ? id : target)),
+        minimumTargetCount,
       )
       if (!checked.ok) return checked
     }
@@ -267,10 +329,17 @@ export function validateCraftTargetValues(
   values: unknown,
   alternatives: readonly CraftTargetAlternative[] = [],
   state?: CraftState,
+  minimumTargetCount?: number,
 ): CraftResult<CraftTargetValues[]> {
-  const targets = validateCraftTargets(catalog, baseId, ids)
+  const targets = validateCraftTargets(catalog, baseId, ids, minimumTargetCount)
   if (!targets.ok) return targets
-  const accepted = validateCraftTargetAlternatives(catalog, baseId, ids, alternatives)
+  const accepted = validateCraftTargetAlternatives(
+    catalog,
+    baseId,
+    ids,
+    alternatives,
+    minimumTargetCount,
+  )
   if (!accepted.ok) return accepted
   const acceptedIds = new Set([
     ...targets.value,
@@ -369,12 +438,19 @@ export function analyzeCraftTargets(
   omen?: CraftOmen,
   implicitValues: readonly CraftImplicitTargetValues[] = [],
   fracturedTargetId?: string,
+  minimumTargetCount?: number,
 ): CraftResult<CraftAdvice> {
   if (omen !== undefined && !isCraftOmen(omen))
     return { ok: false, error: '预兆必须是当前支持的单枚定向预兆。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  const validated = validateCraftTargets(catalog, state.baseId, ids)
+  const validated = validateCraftTargets(
+    catalog,
+    state.baseId,
+    ids,
+    minimumTargetCount,
+    fracturedTargetId,
+  )
   if (!validated.ok) return validated
   const values = validateCraftTargetValues(
     catalog,
@@ -383,6 +459,7 @@ export function analyzeCraftTargets(
     targetValues,
     alternatives,
     state,
+    minimumTargetCount,
   )
   if (!values.ok) return values
   if (fracturedTargetId !== undefined) {
@@ -574,8 +651,11 @@ export function analyzeCraftTargets(
   if (current.pendingDesecration)
     return { ok: true, value: { targets, steps: [], ...implicitFields } }
   if (
-    targets.every((target) => target.matched) &&
-    implicitAnalysis.value.every((target) => target.matched)
+    craftTargetsSatisfied(
+      { targets, steps: [], ...implicitFields },
+      minimumTargetCount,
+      fracturedTargetId,
+    )
   )
     return { ok: true, value: { targets, steps: [], ...implicitFields } }
   const missing = targets
@@ -605,6 +685,20 @@ export function analyzeCraftTargets(
   )
   const unmetNumericIds = numericTargets
     .filter((target) => target.numeric.some((bound) => !bound.matched))
+    .filter((target) => {
+      if (minimumTargetCount === undefined || minimumTargetCount === ids.length) return true
+      const mod = byId.get(target.modId)
+      return (
+        mod !== undefined &&
+        minimumCraftTargetRolls(
+          catalog,
+          current,
+          mod,
+          values.value.find((value) => value.modId === target.modId),
+          current.affixes.find((affix) => affix.modId === target.modId)?.lines,
+        ) !== null
+      )
+    })
     .map((target) => target.modId)
   const unmetImplicit = implicitAnalysis.value
     .filter((target) => !target.matched)
@@ -632,14 +726,19 @@ export function analyzeCraftTargets(
     if (affix.fractured) return true
     const mod = byId.get(affix.modId)
     return (
-      mod !== undefined &&
-      minimumCraftTargetRolls(
-        catalog,
-        current,
-        mod,
-        values.value.find((value) => value.modId === affix.modId),
-        affix.lines,
-      ) !== null
+      (mod !== undefined &&
+        minimumCraftTargetRolls(
+          catalog,
+          current,
+          mod,
+          values.value.find((value) => value.modId === affix.modId),
+          affix.lines,
+        ) !== null) ||
+      (mod !== undefined &&
+        minimumTargetCount !== undefined &&
+        minimumTargetCount < ids.length &&
+        !fractureMemberIds.has(mod.id) &&
+        minimumCraftTargetRolls(catalog, current, mod, undefined, affix.lines) !== null)
     )
   })
   if (

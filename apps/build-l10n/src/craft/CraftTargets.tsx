@@ -18,6 +18,7 @@ import {
   type CraftTargetValues,
   craftOmenDescription,
   craftTargetCandidates,
+  craftTargetsSatisfied,
   type EssenceAdviceStep,
   hasCraftModEligibility,
   hasGenesisModEligibility,
@@ -36,6 +37,8 @@ import { TargetRoutesPanel } from './TargetRoutesPanel'
 import { TargetValueEditor } from './TargetValueEditor'
 
 interface CraftTargetsProps {
+  minimumTargetCount?: number
+  onMinimumTargetCountChange?: (value: number | undefined) => void
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
@@ -61,6 +64,8 @@ interface CraftTargetsProps {
 }
 
 export function CraftTargets({
+  minimumTargetCount,
+  onMinimumTargetCountChange,
   pricing,
   spentSteps,
   catalog,
@@ -143,6 +148,7 @@ export function CraftTargets({
         omen,
         targetImplicitValues,
         targetFracturedModId,
+        minimumTargetCount,
       ),
     [
       catalog,
@@ -153,20 +159,57 @@ export function CraftTargets({
       omen,
       targetImplicitValues,
       targetFracturedModId,
+      minimumTargetCount,
     ],
   )
   const boneAdvice = useMemo(
-    () => analyzeBoneTargets(catalog, state, targetModIds, targetValues, targetAlternatives),
-    [catalog, state, targetModIds, targetValues, targetAlternatives],
+    () =>
+      analyzeBoneTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
+        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
+      }),
+    [
+      catalog,
+      state,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      minimumTargetCount,
+      targetFracturedModId,
+    ],
   )
   const boneSteps = boneAdvice.ok ? boneAdvice.value : []
   const essenceAdvice = useMemo(
-    () => analyzeEssenceTargets(catalog, state, targetModIds, targetValues, targetAlternatives),
-    [catalog, state, targetModIds, targetValues, targetAlternatives],
+    () =>
+      analyzeEssenceTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
+        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
+      }),
+    [
+      catalog,
+      state,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      minimumTargetCount,
+      targetFracturedModId,
+    ],
   )
   const preparationAdvice = useMemo(
-    () => analyzeEssencePreparation(catalog, state, targetModIds, targetValues, targetAlternatives),
-    [catalog, state, targetModIds, targetValues, targetAlternatives],
+    () =>
+      analyzeEssencePreparation(catalog, state, targetModIds, targetValues, targetAlternatives, {
+        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
+      }),
+    [
+      catalog,
+      state,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      minimumTargetCount,
+      targetFracturedModId,
+    ],
   )
   const preparationRoutes = preparationAdvice.ok ? preparationAdvice.value.routes : []
   const essenceSteps = essenceAdvice.ok ? essenceAdvice.value : []
@@ -176,7 +219,13 @@ export function CraftTargets({
       setMessage('同组已有目标；请在已有目标中勾选可接受的同组档位。')
       return
     }
-    const checked = validateCraftTargets(catalog, state.baseId, [...targetModIds, id])
+    const checked = validateCraftTargets(
+      catalog,
+      state.baseId,
+      [...targetModIds, id],
+      minimumTargetCount,
+      targetFracturedModId,
+    )
     if (!checked.ok) {
       setMessage(checked.error)
       return
@@ -201,7 +250,10 @@ export function CraftTargets({
       (advice.value.implicitTargets?.filter((t) => t.matched).length ?? 0)
     : 0
   const allMatched =
-    !state.pendingDesecration && totalTargets > 0 && matchedTargets === totalTargets
+    !state.pendingDesecration &&
+    totalTargets > 0 &&
+    advice.ok &&
+    craftTargetsSatisfied(advice.value, minimumTargetCount, targetFracturedModId)
   const implicitLabel = (index: number) => {
     const line =
       catalog.bases.find((base) => base.id === state.baseId)?.implicit?.split('\n')[index] ?? ''
@@ -245,8 +297,46 @@ export function CraftTargets({
           </strong>
         ) : null}
       </header>
+      {targetModIds.length > 0 && onMinimumTargetCountChange ? (
+        <label>
+          显式目标达成条件
+          <select
+            aria-label="显式目标达成条件"
+            value={minimumTargetCount ?? 'all'}
+            onChange={(event) => {
+              const required = event.target.value === 'all' ? undefined : Number(event.target.value)
+              const checked = validateCraftTargets(
+                catalog,
+                state.baseId,
+                targetModIds,
+                required,
+                targetFracturedModId,
+              )
+              if (!checked.ok) {
+                setMessage(checked.error)
+                return
+              }
+              onMinimumTargetCountChange(required)
+              setMessage('')
+            }}
+          >
+            <option value="all">全部显式目标组</option>
+            {Array.from({ length: targetModIds.length }, (_, index) => index + 1).map((count) => (
+              <option key={count} value={count}>
+                至少 {count} 组显式目标
+              </option>
+            ))}
+          </select>
+          <span className="target-meta">同组替代档位只计一组；固有条件与指定破裂组始终必选。</span>
+        </label>
+      ) : null}
+
       <p>
-        同组内任一已选档位及其数值条件满足即达成；勾选破裂要求时还需锁定该组。不同目标组需全部达成，更高档位不自动接受。
+        同组内任一已选档位及其数值条件满足即达成；勾选破裂要求时还需锁定该组。
+        {minimumTargetCount === undefined
+          ? '不同目标组需全部达成'
+          : `不同目标组至少达成 ${minimumTargetCount} 组`}
+        ，更高档位不自动接受。
       </p>
       {onImplicitValuesChange ? (
         <ImplicitTargetEditor
@@ -258,6 +348,7 @@ export function CraftTargets({
         />
       ) : null}
       <TargetRoutesPanel
+        {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
         {...(pricing ? { pricing } : {})}
         {...(spentSteps ? { spentSteps } : {})}
         catalog={catalog}
@@ -337,9 +428,22 @@ export function CraftTargets({
                         type="checkbox"
                         aria-label={`要求破裂 ${target.modId}`}
                         checked={targetFracturedModId === target.modId}
-                        onChange={(event) =>
-                          onFracturedTargetChange(event.target.checked ? target.modId : undefined)
-                        }
+                        onChange={(event) => {
+                          const required = event.target.checked ? target.modId : undefined
+                          const combined = validateCraftTargets(
+                            catalog,
+                            state.baseId,
+                            targetModIds,
+                            minimumTargetCount,
+                            required,
+                          )
+                          if (!combined.ok) {
+                            setMessage(combined.error)
+                            return
+                          }
+                          onFracturedTargetChange(required)
+                          setMessage('')
+                        }}
                       />
                       要求此组破裂（同组任一已接受档位；每件最多一组）
                     </label>
@@ -373,6 +477,7 @@ export function CraftTargets({
                         ))}
                         {memberMod ? (
                           <TargetValueEditor
+                            {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
                             key={`${member.modId}:${JSON.stringify(targetValues.find((entry) => entry.modId === member.modId) ?? null)}`}
                             catalog={catalog}
                             baseId={state.baseId}
@@ -429,6 +534,7 @@ export function CraftTargets({
                                     state.baseId,
                                     targetModIds,
                                     next,
+                                    minimumTargetCount,
                                   )
                                   if (!checked.ok) {
                                     setMessage(checked.error)
@@ -460,8 +566,28 @@ export function CraftTargets({
                     type="button"
                     aria-label={`移除目标 ${target.modId}`}
                     onClick={() => {
-                      onChange(targetModIds.filter((id) => id !== target.modId))
-                      setMessage('')
+                      const next = targetModIds.filter((id) => id !== target.modId)
+                      const required =
+                        minimumTargetCount !== undefined && minimumTargetCount > next.length
+                          ? undefined
+                          : minimumTargetCount
+                      const checked = validateCraftTargets(
+                        catalog,
+                        state.baseId,
+                        next,
+                        required,
+                        next.includes(targetFracturedModId ?? '')
+                          ? targetFracturedModId
+                          : undefined,
+                      )
+                      if (!checked.ok) {
+                        setMessage('移除后无法按全部模式满足条件，请先调整达成数量。')
+                        return
+                      }
+                      onChange(next)
+                      setMessage(
+                        required !== minimumTargetCount ? '目标减少，达成条件已恢复为全部。' : '',
+                      )
                     }}
                   >
                     移除目标
@@ -488,9 +614,11 @@ export function CraftTargets({
               ) : null}
               {allMatched ? (
                 <p>
-                  {targetImplicitValues.length
-                    ? '所有目标组及固有条件均已达成，可停止当前路线。'
-                    : '所有目标组均已达成，可停止当前路线。'}
+                  {minimumTargetCount !== undefined
+                    ? '数量条件及必选目标均已达成，可停止当前路线。'
+                    : targetImplicitValues.length
+                      ? '所有目标组及固有条件均已达成，可停止当前路线。'
+                      : '所有目标组均已达成，可停止当前路线。'}
                 </p>
               ) : null}
               {!allMatched &&

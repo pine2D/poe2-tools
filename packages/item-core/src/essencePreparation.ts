@@ -11,7 +11,12 @@ import {
   craftCandidates,
   prepareCraftOperation,
 } from './rehearsal'
-import type { CraftTargetAlternative, CraftTargetValues } from './targets'
+import {
+  analyzeCraftTargets,
+  type CraftTargetAlternative,
+  type CraftTargetValues,
+  craftTargetsSatisfied,
+} from './targets'
 
 export interface EssencePreparationRoute {
   preparations: CraftOperation[]
@@ -33,10 +38,29 @@ export function analyzeEssencePreparation(
   ids: readonly string[],
   values: readonly CraftTargetValues[] = [],
   alternatives: readonly CraftTargetAlternative[] = [],
+  options: { minimumTargetCount?: number; fracturedTargetId?: string } = {},
 ): CraftResult<EssencePreparationAdvice> {
-  const direct = analyzeEssenceTargets(catalog, state, ids, values, alternatives)
+  const direct = analyzeEssenceTargets(catalog, state, ids, values, alternatives, options)
   if (!direct.ok) return direct
   const result: EssencePreparationAdvice = { routes: [], examinedStates: 0, truncated: false }
+  if (options.minimumTargetCount !== undefined) {
+    const progress = analyzeCraftTargets(
+      catalog,
+      state,
+      ids,
+      values,
+      alternatives,
+      undefined,
+      [],
+      options.fracturedTargetId,
+      options.minimumTargetCount,
+    )
+    if (!progress.ok) return progress
+    if (
+      craftTargetsSatisfied(progress.value, options.minimumTargetCount, options.fracturedTargetId)
+    )
+      return { ok: true, value: result }
+  }
   if (
     state.rarity === 'rare' ||
     state.affixes.some((affix) => affix.crafted) ||
@@ -101,7 +125,7 @@ export function analyzeEssencePreparation(
         preparations.length > 0 &&
         (current.rarity === 'rare' ? modes.has('replace') : modes.has('upgrade'))
       ) {
-        const final = analyzeEssenceTargets(catalog, current, ids, values, alternatives)
+        const final = analyzeEssenceTargets(catalog, current, ids, values, alternatives, options)
         if (final.ok) {
           const selected = final.value.find((step) => step.targetModId === targetId)
           if (selected !== undefined)

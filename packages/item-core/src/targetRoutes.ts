@@ -36,9 +36,15 @@ import {
   removableCraftAffixes,
 } from './rehearsal'
 import { targetRollsPreservingValues } from './targetRolls'
-import { analyzeCraftTargets, type CraftTargetAlternative, type CraftTargetValues } from './targets'
+import {
+  analyzeCraftTargets,
+  type CraftTargetAlternative,
+  type CraftTargetValues,
+  craftTargetsSatisfied,
+} from './targets'
 
 export interface CraftTargetRouteOptions {
+  minimumTargetCount?: number
   /** 传入报价后先按目标推进取得完整示例，再按新增费用改进；不含起点或历史消费。 */
   pricing?: CraftPricing
   preserveMatched?: boolean
@@ -89,7 +95,10 @@ export function planCraftTargetRoutes(
     typeof options !== 'object' ||
     Array.isArray(options) ||
     Object.keys(options).some(
-      (key) => !['preserveMatched', 'maxStates', 'maxDepth', 'pricing'].includes(key),
+      (key) =>
+        !['preserveMatched', 'maxStates', 'maxDepth', 'pricing', 'minimumTargetCount'].includes(
+          key,
+        ),
     ) ||
     (options.preserveMatched !== undefined && typeof options.preserveMatched !== 'boolean')
   )
@@ -161,6 +170,7 @@ export function planCraftTargetRoutes(
     undefined,
     implicitValues,
     fracturedTargetId,
+    options.minimumTargetCount,
   )
   if (!initial.ok) return initial
   const result: CraftTargetRoutes = {
@@ -171,8 +181,7 @@ export function planCraftTargetRoutes(
     alreadyMatched:
       !state.pendingDesecration &&
       (ids.length > 0 || implicitValues.length > 0) &&
-      initial.value.targets.every((t) => t.matched) &&
-      (initial.value.implicitTargets ?? []).every((target) => target.matched),
+      craftTargetsSatisfied(initial.value, options.minimumTargetCount, fracturedTargetId),
   }
   if ((!ids.length && !implicitValues.length && !state.pendingDesecration) || result.alreadyMatched)
     return { ok: true, value: result }
@@ -416,8 +425,9 @@ export function planCraftTargetRoutes(
       const steps = [...node.steps, step]
       if (
         !applied.value.pendingDesecration &&
-        afterMatched.length === ids.length &&
-        afterImplicit.length === implicitValues.length
+        afterMatched.length >= (options.minimumTargetCount ?? ids.length) &&
+        afterImplicit.length === implicitValues.length &&
+        (fracturedTargetId === undefined || afterMatched.includes(fracturedTargetId))
       ) {
         let current = state
         for (const entry of steps) {
@@ -435,12 +445,12 @@ export function planCraftTargetRoutes(
           undefined,
           implicitValues,
           fracturedTargetId,
+          options.minimumTargetCount,
         )
         if (
           !current.pendingDesecration &&
           final.ok &&
-          final.value.targets.every((t) => t.matched) &&
-          (final.value.implicitTargets ?? []).every((target) => target.matched) &&
+          craftTargetsSatisfied(final.value, options.minimumTargetCount, fracturedTargetId) &&
           (pricing !== undefined || result.routes.length < 3)
         ) {
           const route = { steps, finalState: current }
@@ -501,6 +511,10 @@ export function planCraftTargetRoutes(
     }
     const boneAdvice = analyzeBoneTargets(catalog, node.state, ids, values, alternatives, {
       consumeCandidate: spend,
+      ...(options.minimumTargetCount === undefined
+        ? {}
+        : { minimumTargetCount: options.minimumTargetCount }),
+      ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
     })
     if (boneAdvice.ok)
       for (const step of boneAdvice.value) offer(step.operation, step.atRiskTargetIds)
@@ -553,6 +567,7 @@ export function planCraftTargetRoutes(
               omen,
               implicitValues,
               fracturedTargetId,
+              options.minimumTargetCount,
             )
       if (!advice.ok) continue
       for (const suggestion of advice.value.steps) {
@@ -594,9 +609,18 @@ export function planCraftTargetRoutes(
           for (const affix of node.state.affixes) {
             if (affix.fractured) continue
             const mod = byId.get(affix.modId)
-            const numbers = mod
+            let numbers = mod
               ? minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id), affix.lines)
               : null
+            if (
+              numbers === null &&
+              mod &&
+              options.minimumTargetCount !== undefined &&
+              options.minimumTargetCount < ids.length &&
+              !groups[ids.indexOf(fracturedTargetId ?? '')]?.includes(mod.id)
+            ) {
+              numbers = minimumCraftTargetRolls(catalog, node.state, mod, undefined, affix.lines)
+            }
             if (numbers === null) {
               valid = false
               break
@@ -673,6 +697,10 @@ export function planCraftTargetRoutes(
     // 精华分析内部的 apply 与本搜索的 apply 均计入同一个独立预算。
     const essenceAdvice = analyzeEssenceTargets(catalog, node.state, ids, values, alternatives, {
       consumeCandidate: spend,
+      ...(options.minimumTargetCount === undefined
+        ? {}
+        : { minimumTargetCount: options.minimumTargetCount }),
+      ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
     })
     if (essenceAdvice.ok)
       for (const step of essenceAdvice.value) offer(step.operation, step.atRiskTargetIds)

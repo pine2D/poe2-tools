@@ -11,6 +11,7 @@ import {
 import { useRef, useState } from 'react'
 
 interface Props {
+  minimumTargetCount?: number
   catalog: CraftCatalog
   baseId: string
   state: CraftState
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function TargetValueEditor({
+  minimumTargetCount,
   catalog,
   baseId,
   state,
@@ -94,7 +96,15 @@ export function TargetValueEditor({
         bounds,
         ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
       })
-    const checked = validateCraftTargetValues(catalog, baseId, ids, next, alternatives, state)
+    const checked = validateCraftTargetValues(
+      catalog,
+      baseId,
+      ids,
+      next,
+      alternatives,
+      state,
+      minimumTargetCount,
+    )
     if (!checked.ok) {
       setMessage(checked.error)
       return

@@ -205,6 +205,7 @@ export type {
 export {
   analyzeCraftTargets,
   craftTargetCandidates,
+  craftTargetsSatisfied,
   validateCraftTargetAlternatives,
   validateCraftTargets,
   validateCraftTargetValues,

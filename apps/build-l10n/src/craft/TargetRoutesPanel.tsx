@@ -23,6 +23,7 @@ import { craftMaterialLabels } from './craftMaterialLabels'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
+  minimumTargetCount?: number
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
@@ -56,6 +57,7 @@ export function TargetRoutesPanel(props: Props) {
         props.alternatives,
         props.implicitValues,
         props.targetFracturedModId,
+        props.minimumTargetCount,
         preserveMatched,
         costSearch ? props.pricing : null,
       ])}
@@ -68,6 +70,7 @@ export function TargetRoutesPanel(props: Props) {
   )
 }
 function RouteSearch({
+  minimumTargetCount,
   pricing,
   spentSteps = [],
   catalog,
@@ -206,7 +209,11 @@ function RouteSearch({
                 ids,
                 values,
                 alternatives,
-                { preserveMatched, ...(costSearch && pricing ? { pricing } : {}) },
+                {
+                  preserveMatched,
+                  ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+                  ...(costSearch && pricing ? { pricing } : {}),
+                },
                 implicitValues,
                 targetFracturedModId,
               ],
@@ -241,9 +248,13 @@ function RouteSearch({
         <>
           <p role="status">
             {result.value.alreadyMatched
-              ? '全部目标已达成，无需新增路线。'
+              ? minimumTargetCount === undefined
+                ? '全部目标已达成，无需新增路线。'
+                : '数量条件及必选目标已达成，无需新增路线。'
               : result.value.routes.length
-                ? `找到 ${result.value.routes.length} 条全部目标达成的示例路线。`
+                ? minimumTargetCount === undefined
+                  ? `找到 ${result.value.routes.length} 条全部目标达成的示例路线。`
+                  : `找到 ${result.value.routes.length} 条满足数量及必选条件的示例路线。`
                 : '本次有限搜索未找到完整路线，不能证明目标不可达。'}
           </p>
           <p>

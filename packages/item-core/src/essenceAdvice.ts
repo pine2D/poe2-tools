@@ -7,8 +7,10 @@ import { ESSENCE_OMEN_RULES, type EssenceOmen } from './essenceOmens'
 import { essenceCategory } from './essences'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
+  analyzeCraftTargets,
   type CraftTargetAlternative,
   type CraftTargetValues,
+  craftTargetsSatisfied,
   validateCraftTargetValues,
 } from './targets'
 
@@ -25,7 +27,11 @@ export function analyzeEssenceTargets(
   ids: readonly string[],
   values: readonly CraftTargetValues[] = [],
   alternatives: readonly CraftTargetAlternative[] = [],
-  options: { consumeCandidate?: () => boolean } = {},
+  options: {
+    consumeCandidate?: () => boolean
+    minimumTargetCount?: number
+    fracturedTargetId?: string
+  } = {},
 ): CraftResult<EssenceAdviceStep[]> {
   if (Object.hasOwn(state, 'pendingDesecration'))
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
@@ -38,8 +44,27 @@ export function analyzeEssenceTargets(
     values,
     alternatives,
     state,
+    options.minimumTargetCount,
   )
   if (!validated.ok) return validated
+  if (options.minimumTargetCount !== undefined) {
+    const progress = analyzeCraftTargets(
+      catalog,
+      state,
+      ids,
+      values,
+      alternatives,
+      undefined,
+      [],
+      options.fracturedTargetId,
+      options.minimumTargetCount,
+    )
+    if (!progress.ok) return progress
+    if (
+      craftTargetsSatisfied(progress.value, options.minimumTargetCount, options.fracturedTargetId)
+    )
+      return { ok: true, value: [] }
+  }
   const groups = ids.map((id) => [
     id,
     ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? []),

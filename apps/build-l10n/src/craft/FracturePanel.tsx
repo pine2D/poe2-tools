@@ -11,6 +11,7 @@ import { useMemo } from 'react'
 import { ModStateBadges } from './ModStateBadges'
 
 interface FracturePanelProps {
+  minimumTargetCount?: number
   catalog: CraftCatalog
   state: CraftState
   label: string
@@ -25,6 +26,7 @@ interface FracturePanelProps {
 
 /** 仅展示当前合法候选，选择结果交给父组件的共同草稿与历史。 */
 export function FracturePanel({
+  minimumTargetCount,
   catalog,
   state,
   label,
@@ -38,8 +40,19 @@ export function FracturePanel({
 }: FracturePanelProps) {
   const prepared = useMemo(() => prepareFracture(catalog, state), [catalog, state])
   const analysis = useMemo(
-    () => analyzeCraftTargets(catalog, state, targetModIds, targetValues, targetAlternatives),
-    [catalog, state, targetModIds, targetValues, targetAlternatives],
+    () =>
+      analyzeCraftTargets(
+        catalog,
+        state,
+        targetModIds,
+        targetValues,
+        targetAlternatives,
+        undefined,
+        [],
+        undefined,
+        minimumTargetCount,
+      ),
+    [catalog, state, targetModIds, targetValues, targetAlternatives, minimumTargetCount],
   )
   const targets = analysis.ok
     ? analysis.value.targets.flatMap((target) => target.alternatives ?? [target])

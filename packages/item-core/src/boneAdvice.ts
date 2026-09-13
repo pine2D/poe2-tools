@@ -11,7 +11,12 @@ import { BONE_RULES, type BoneCraftOperation, type CraftBone } from './boneRules
 import type { CraftCatalog } from './catalog'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
-import { analyzeCraftTargets, type CraftTargetAlternative, type CraftTargetValues } from './targets'
+import {
+  analyzeCraftTargets,
+  type CraftTargetAlternative,
+  type CraftTargetValues,
+  craftTargetsSatisfied,
+} from './targets'
 
 export interface CraftBoneAdviceStep {
   operation: BoneCraftOperation
@@ -21,6 +26,8 @@ export interface CraftBoneAdviceStep {
   randomRemovalRisk: boolean
 }
 export interface CraftBoneAdviceOptions {
+  minimumTargetCount?: number
+  fracturedTargetId?: string
   consumeCandidate?: () => boolean
 }
 /** 每项是独立的真实原子操作；内部证明也消费调用方共享预算。 */
@@ -36,12 +43,29 @@ export function analyzeBoneTargets(
     !options ||
     typeof options !== 'object' ||
     Array.isArray(options) ||
-    Object.keys(options).some((key) => key !== 'consumeCandidate') ||
+    Object.keys(options).some(
+      (key) => !['consumeCandidate', 'minimumTargetCount', 'fracturedTargetId'].includes(key),
+    ) ||
     (options.consumeCandidate !== undefined && typeof options.consumeCandidate !== 'function')
   )
     return { ok: false, error: '骨骼建议配置无效。' }
-  const analysis = analyzeCraftTargets(catalog, state, ids, values, alternatives)
+  const analysis = analyzeCraftTargets(
+    catalog,
+    state,
+    ids,
+    values,
+    alternatives,
+    undefined,
+    [],
+    options.fracturedTargetId,
+    options.minimumTargetCount,
+  )
   if (!analysis.ok) return analysis
+  if (
+    !state.pendingDesecration &&
+    craftTargetsSatisfied(analysis.value, options.minimumTargetCount, options.fracturedTargetId)
+  )
+    return { ok: true, value: [] }
   const accepted = new Set([...ids, ...alternatives.flatMap((entry) => entry.modIds)])
   const missing = new Set(
     analysis.value.targets

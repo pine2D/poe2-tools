@@ -17,6 +17,7 @@ import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { ModStateBadges } from './ModStateBadges'
 
 interface CraftComparisonPanelProps {
+  minimumTargetCount?: number
   targetImplicitValues?: CraftImplicitTargetValues[]
   targetModIds?: string[]
   targetValues?: CraftTargetValues[]
@@ -33,6 +34,7 @@ const RARITY_LABELS = { normal: '普通', magic: '魔法', rare: '稀有' } as c
 const CHANGE_LABELS = { added: '新增', removed: '移除', changed: '数值变化' } as const
 
 export function CraftComparisonPanel({
+  minimumTargetCount,
   catalog,
   before,
   after,
@@ -55,6 +57,7 @@ export function CraftComparisonPanel({
       undefined,
       targetImplicitValues,
       targetFracturedModId,
+      minimumTargetCount,
     )
     return analyzed.ok
       ? (analyzed.value.targets.find((target) => target.modId === targetFracturedModId)?.matched ??

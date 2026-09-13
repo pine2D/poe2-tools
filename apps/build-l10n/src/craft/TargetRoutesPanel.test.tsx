@@ -278,3 +278,17 @@ it('费用优先需要报价，改价终止旧搜索并拒绝迟到结果，清�
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
   expect(pending.calls.at(-1)?.args[5]).not.toHaveProperty('pricing')
 })
+
+it('仅修改数量条件终止旧 Worker，迟到的全部模式结果不能覆盖新条件', () => {
+  const view = render(<TargetRoutesPanel {...props} minimumTargetCount={1} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  const first = pending.calls.at(-1)
+  if (!first) throw new Error('没有旧搜索')
+  expect(first.args[5]).toMatchObject({ minimumTargetCount: 1 })
+  view.rerender(<TargetRoutesPanel {...props} />)
+  expect(first.cancel).toHaveBeenCalledTimes(1)
+  act(() => first.callback(result))
+  expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  expect(pending.calls.at(-1)?.args[5]).not.toHaveProperty('minimumTargetCount')
+})
