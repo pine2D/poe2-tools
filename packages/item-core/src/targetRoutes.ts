@@ -8,6 +8,11 @@ import {
   quoteCraftCosts,
 } from './craftCosts'
 import { applyCraftStep, type CraftStep } from './craftSteps'
+import {
+  matchesTargetInterval,
+  minimumCraftTargetRolls,
+  projectCraftTargetValues,
+} from './effectiveTargetValues'
 import { analyzeEssenceTargets } from './essenceAdvice'
 import { essenceCategory } from './essences'
 import { prepareFracture } from './fracture'
@@ -18,7 +23,6 @@ import {
   implicitTargetRolls,
 } from './implicitTargets'
 import { craftModsConflict } from './modConflicts'
-import { readNumericValues } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen } from './omens'
 import {
   addCraftAffix,
@@ -31,7 +35,7 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
-import { minimumTargetRolls, targetRollsPreservingValues } from './targetRolls'
+import { targetRollsPreservingValues } from './targetRolls'
 import { analyzeCraftTargets, type CraftTargetAlternative, type CraftTargetValues } from './targets'
 
 export interface CraftTargetRouteOptions {
@@ -186,26 +190,20 @@ export function planCraftTargetRoutes(
       return id && accepted.has(id) ? [id] : []
     }),
   )
-  const bounds = (id: string) => values.find((v) => v.modId === id)?.bounds
+  const goal = (id: string) => values.find((v) => v.modId === id)
   const numericMatched = (current: CraftState) =>
     ids.filter((_, index) =>
       groups[index]?.some((id) => {
         const affix = current.affixes.find((a) => a.modId === id)
         const mod = byId.get(id)
         if (!affix || !mod) return false
-        const conditions = bounds(id) ?? []
+        const conditions = goal(id)?.bounds ?? []
         if (!conditions.length) return true
-        const actual = readNumericValues(mod.lines, affix.lines)
+        const projection = projectCraftTargetValues(catalog, current, mod, goal(id), affix.lines)
+        const actual = projection.ok ? projection.value.read(affix.lines) : null
         return (
-          actual.ok &&
-          conditions.every((b) => {
-            const n = actual.value[b.index]
-            return (
-              n != null &&
-              (b.min === undefined || n >= b.min) &&
-              (b.max === undefined || n <= b.max)
-            )
-          })
+          actual?.ok === true &&
+          conditions.every((bound) => matchesTargetInterval(actual.value[bound.index], bound))
         )
       }),
     )
@@ -283,8 +281,6 @@ export function planCraftTargetRoutes(
     result.candidateApplications++
     return true
   }
-  const actualRolls = (patterns: string[], actual: string[], id?: string) =>
-    targetRollsPreservingValues(patterns, actual, id === undefined ? undefined : bounds(id))
   while (
     queue.length &&
     (pricing !== undefined || result.routes.length === 0) &&
@@ -598,7 +594,9 @@ export function planCraftTargetRoutes(
           for (const affix of node.state.affixes) {
             if (affix.fractured) continue
             const mod = byId.get(affix.modId)
-            const numbers = mod ? actualRolls(mod.lines, affix.lines, mod.id) : null
+            const numbers = mod
+              ? minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id), affix.lines)
+              : null
             if (numbers === null) {
               valid = false
               break
@@ -615,7 +613,7 @@ export function planCraftTargetRoutes(
             : null
           const rolledImplicit =
             targeted === null
-              ? actualRolls(patterns, node.state.implicitLines ?? patterns)
+              ? targetRollsPreservingValues(patterns, node.state.implicitLines ?? patterns)
               : targeted.ok
                 ? targeted.value
                 : null
@@ -649,7 +647,7 @@ export function planCraftTargetRoutes(
                 Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compare(a.id, b.id),
             )
           for (const mod of limit(candidates, selected.modIds.length === 0 ? 12 : 6)) {
-            const numbers = minimumTargetRolls(mod.lines, bounds(mod.id))
+            const numbers = minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))
             if (numbers === null) continue
             if (!spend()) return
             const added = addCraftAffix(catalog, current, mod.id, currency, omen)
@@ -692,14 +690,18 @@ export function planCraftTargetRoutes(
         const existing = node.state.affixes.find((affix) => group.includes(affix.modId))
         if (existing?.fractured) return []
         const mod = existing ? byId.get(existing.modId) : undefined
-        if (!mod || (divineAvailable && minimumTargetRolls(mod.lines, bounds(mod.id)) !== null))
+        if (
+          !mod ||
+          (divineAvailable &&
+            minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id)) !== null)
+        )
           return []
         const feasibleReplacement = group.some((id) => {
           const alternative = byId.get(id)
           return (
             alternative !== undefined &&
             alternative.level <= node.state.itemLevel &&
-            minimumTargetRolls(alternative.lines, bounds(id)) !== null
+            minimumCraftTargetRolls(catalog, node.state, alternative, goal(id)) !== null
           )
         })
         return feasibleReplacement ? [mod.id] : []
@@ -764,7 +766,7 @@ export function planCraftTargetRoutes(
               Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compare(a.id, b.id),
           )
         for (const mod of limit(candidates, 8)) {
-          const numbers = minimumTargetRolls(mod.lines, bounds(mod.id))
+          const numbers = minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))
           if (numbers !== null)
             offer({
               currency,

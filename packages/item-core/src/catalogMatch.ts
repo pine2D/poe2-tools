@@ -6,6 +6,7 @@ import {
   inspectModPool,
 } from './catalog'
 import type { InspectedMod } from './export'
+import { uniqueMapping } from './lineMapping'
 
 export interface CatalogModMatch {
   sourceIndex: number
@@ -186,4 +187,21 @@ export function matchCatalogMods(
       candidates: matches,
     }
   })
+}
+
+/** 唯一目录→实际行映射；数值与来源尾注必须沿同一身份读取。 */
+export function matchCatalogLineOrder(
+  patterns: readonly string[],
+  lines: readonly string[],
+  uniqueRows?: ReadonlySet<number>,
+): number[] | null {
+  if (patterns.length !== lines.length) return null
+  const cleaned = lines.map((line) => readStatAnnotations(line).text)
+  const compiled = patterns.map(compileLine)
+  return uniqueMapping(
+    compiled.map((parse) =>
+      cleaned.flatMap((line, index) => (parse(line) === null ? [] : [index])),
+    ),
+    uniqueRows,
+  )
 }

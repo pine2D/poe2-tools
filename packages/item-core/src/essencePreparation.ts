@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep } from './craftSteps'
+import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import { analyzeEssenceTargets, type EssenceAdviceStep } from './essenceAdvice'
 import { essenceCategory, essenceCraftMode, essenceSourceHash } from './essences'
 import { craftModsConflict } from './modConflicts'
@@ -10,7 +11,6 @@ import {
   craftCandidates,
   prepareCraftOperation,
 } from './rehearsal'
-import { minimumTargetRolls } from './targetRolls'
 import type { CraftTargetAlternative, CraftTargetValues } from './targets'
 
 export interface EssencePreparationRoute {
@@ -66,8 +66,12 @@ export function analyzeEssencePreparation(
           const existing = byId.get(affix.modId)
           return existing !== undefined && craftModsConflict(existing, mod)
         }) &&
-        minimumTargetRolls(mod.lines, values.find((entry) => entry.modId === id)?.bounds) !==
-          null &&
+        minimumCraftTargetRolls(
+          catalog,
+          state,
+          mod,
+          values.find((entry) => entry.modId === id),
+        ) !== null &&
         (catalog.essences ?? []).some(
           (essence) =>
             Object.hasOwn(essence.mods, category) &&
@@ -116,9 +120,11 @@ export function analyzeEssencePreparation(
             Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compareId(a.id, b.id),
         )
       for (const mod of candidates) {
-        const rolls = minimumTargetRolls(
-          mod.lines,
-          values.find((entry) => entry.modId === mod.id)?.bounds,
+        const rolls = minimumCraftTargetRolls(
+          catalog,
+          current,
+          mod,
+          values.find((entry) => entry.modId === mod.id),
         )
         if (rolls === null) continue
         const operation: CraftOperation = {

@@ -1,3 +1,4 @@
+import { readStatAnnotations, UNSCALABLE_SUFFIX } from './annotations'
 import {
   beltBaseError,
   isBeltCapacityBase,
@@ -20,7 +21,7 @@ import {
   hasExistingModEligibility,
   inspectModPool,
 } from './catalog'
-import { matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
+import { matchCatalogLineOrder, matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
 import { catalystStateError } from './catalystQuality'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
@@ -755,11 +756,19 @@ function renderPreservingConstants(
   const ranges = inspectNumericLines(patterns)
   if (!ranges.ok) return ranges
   const variableLines = new Set(ranges.value.map((range) => range.lineIndex))
+  const hasUnscalable = actual.some((line) => readStatAnnotations(line).unscalable)
+  const order = hasUnscalable ? matchCatalogLineOrder(patterns, actual, variableLines) : null
+  if (hasUnscalable && order === null) return failure('不可缩放属性行存在歧义，不能安全重掷。')
   const remaining = [...actual]
   return {
     ok: true,
     value: rendered.value.map((line, index) => {
-      if (variableLines.has(index)) return line
+      if (variableLines.has(index)) {
+        const source = actual[order?.[index] ?? -1] ?? ''
+        return readStatAnnotations(source).unscalable
+          ? line + (source.match(UNSCALABLE_SUFFIX)?.[0] ?? ' (unscalable)')
+          : line
+      }
       const sourceIndex = remaining.findIndex((candidate) =>
         matchesCatalogLines([line], [candidate]),
       )

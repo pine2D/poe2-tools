@@ -1,6 +1,12 @@
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import type { CatalogBase, CraftCatalog } from './catalog'
+import {
+  matchesTargetInterval,
+  projectedTargetRolls,
+  projectTargetValues,
+} from './effectiveTargetValues'
 import { matchesGrantedSkillImplicitLines } from './grantedSkills'
+import { uniqueMapping } from './lineMapping'
 import { inspectNumericLines, type NumericRange, readNumericValues } from './numeric'
 import {
   type CraftResult,
@@ -12,6 +18,7 @@ import { minimumTargetRolls, targetRollsPreservingValues } from './targetRolls'
 import type { CraftTargetBound } from './targets'
 
 export interface CraftImplicitTargetValues {
+  basis?: 'effective'
   lineIndex: number
   bounds: CraftTargetBound[]
 }
@@ -26,7 +33,11 @@ export interface CraftImplicitTargetCandidate {
 export interface CraftImplicitTargetStatus {
   lineIndex: number
   matched: boolean
-  numeric: (CraftTargetBound & { actual: number | null; matched: boolean })[]
+  numeric: (CraftTargetBound & {
+    actual: number | null
+    actualRange?: { min: number; max: number }
+    matched: boolean
+  })[]
   reasons: string[]
 }
 const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
@@ -53,10 +64,21 @@ export function validateCraftImplicitTargets(
   catalog: CraftCatalog,
   baseId: string,
   values: unknown,
+  state?: CraftState,
 ): CraftResult<CraftImplicitTargetValues[]> {
   const base = catalog.bases.find((entry) => entry.id === baseId)
   if (!base) return fail('固有目标基底不在目录中。')
-  return readCraftImplicitTargets(values, descriptors(base))
+  const checked = readCraftImplicitTargets(values, descriptors(base))
+  if (!checked.ok) return checked
+  for (const goal of checked.value) {
+    if (goal.basis !== 'effective') continue
+    if (!state || state.baseId !== baseId) return fail('有效固有目标需要当前装备状态。')
+    const projection = projectImplicitTargetValues(catalog, state, goal.lineIndex)
+    if (!projection.ok) return projection
+    if (!goal.bounds.every((bound) => projection.value.ranges[bound.index] !== undefined))
+      return fail('此固有属性不支持有效数值目标。')
+  }
+  return checked
 }
 
 /** 序列化共用结构校验，防止 JSON 丢弃 undefined 或将非有限数值改成 null。 */
@@ -71,7 +93,8 @@ export function readCraftImplicitTargets(
   let count = 0
   for (const value of values) {
     if (
-      !keys(value, ['lineIndex', 'bounds']) ||
+      !keys(value, ['lineIndex', 'bounds', 'basis']) ||
+      (Object.hasOwn(value, 'basis') && value.basis !== 'effective') ||
       !Number.isSafeInteger(value.lineIndex) ||
       typeof value.lineIndex !== 'number' ||
       value.lineIndex < 0 ||
@@ -105,7 +128,7 @@ export function readCraftImplicitTargets(
         if (
           typeof n !== 'number' ||
           !Number.isFinite(n) ||
-          (range && (n < range.min || n > range.max))
+          (value.basis !== 'effective' && range && (n < range.min || n > range.max))
         )
           return fail('固有条件必须是目录范围内的有限数值。')
         copy[name] = n
@@ -118,34 +141,13 @@ export function readCraftImplicitTargets(
     count += bounds.length
     if (count > 32) return fail('固有目标整体最多32个范围条件。')
     seen.add(value.lineIndex)
-    result.push({ lineIndex: value.lineIndex, bounds })
+    result.push({
+      lineIndex: value.lineIndex,
+      bounds,
+      ...(value.basis === 'effective' ? { basis: 'effective' as const } : {}),
+    })
   }
   return { ok: true, value: result }
-}
-
-/** 完整二分匹配；移除每条已选边再求匹配，检测歧义而不依赖原文顺序。 */
-function uniqueMapping(edges: number[][]): number[] | null {
-  const match = (forbiddenRow = -1, forbiddenColumn = -1): number[] | null => {
-    const columns = new Map<number, number>()
-    const visit = (row: number, seen: Set<number>): boolean => {
-      for (const column of edges[row] ?? []) {
-        if ((row === forbiddenRow && column === forbiddenColumn) || seen.has(column)) continue
-        seen.add(column)
-        const previous = columns.get(column)
-        if (previous === undefined || visit(previous, seen)) {
-          columns.set(column, row)
-          return true
-        }
-      }
-      return false
-    }
-    for (let row = 0; row < edges.length; row++) if (!visit(row, new Set())) return null
-    const result: number[] = []
-    for (const [column, row] of columns) result[row] = column
-    return result
-  }
-  const first = match()
-  return first?.every((column, row) => match(row, column) === null) ? first : null
 }
 
 function mapped(catalog: CraftCatalog, state: CraftState) {
@@ -176,11 +178,24 @@ function mapped(catalog: CraftCatalog, state: CraftState) {
   }
 }
 
-function within(value: number | null | undefined, bound: CraftTargetBound): boolean {
-  return (
-    value != null &&
-    (bound.min === undefined || value >= bound.min) &&
-    (bound.max === undefined || value <= bound.max)
+export function projectImplicitTargetValues(
+  catalog: CraftCatalog,
+  state: CraftState,
+  lineIndex: number,
+) {
+  const resolved = mapped(catalog, state)
+  if (!resolved.ok) return resolved
+  const { base, mapping, patternPositions, patterns, actual } = resolved.value
+  const pattern = patterns[patternPositions[lineIndex] ?? -1]
+  const tags = base.implicitTags[lineIndex]
+  if (pattern === undefined || tags === undefined)
+    return fail('固有属性标签或目录身份未知，不能判断有效条件。')
+  return projectTargetValues(
+    catalog,
+    state.catalyst,
+    [pattern],
+    [tags],
+    [actual[mapping[lineIndex] ?? -1] ?? pattern],
   )
 }
 
@@ -226,7 +241,7 @@ export function analyzeCraftImplicitTargets(
   state: CraftState,
   values: readonly CraftImplicitTargetValues[],
 ): CraftResult<CraftImplicitTargetStatus[]> {
-  const validated = validateCraftImplicitTargets(catalog, state.baseId, values)
+  const validated = validateCraftImplicitTargets(catalog, state.baseId, values, state)
   if (!validated.ok) return validated
   if (validated.value.length === 0) return { ok: true, value: [] }
   const candidates = craftImplicitTargetCandidates(catalog, state)
@@ -237,16 +252,43 @@ export function analyzeCraftImplicitTargets(
     ok: true,
     value: validated.value.map((goal) => {
       const candidate = candidates.value.find((entry) => entry.lineIndex === goal.lineIndex)
-      const numeric = goal.bounds.map((bound) => ({
-        ...bound,
-        actual: candidate?.actual[bound.index] ?? null,
-        matched: within(candidate?.actual[bound.index], bound),
-      }))
+      const projection =
+        goal.basis === 'effective'
+          ? projectImplicitTargetValues(catalog, state, goal.lineIndex)
+          : null
+      const effective = projection?.ok
+        ? projection.value.read([
+            resolved.value.actual[resolved.value.mapping[goal.lineIndex] ?? -1] ?? '',
+          ])
+        : null
+      const numeric = goal.bounds.map((bound) => {
+        const baseValue = candidate?.actual[bound.index]
+        const interval =
+          goal.basis === 'effective'
+            ? effective?.ok
+              ? effective.value[bound.index]
+              : null
+            : baseValue == null
+              ? null
+              : { min: baseValue, max: baseValue }
+        return {
+          ...bound,
+          actual: interval && interval.min === interval.max ? interval.min : null,
+          matched: matchesTargetInterval(interval, bound),
+          ...(interval && interval.min !== interval.max ? { actualRange: interval } : {}),
+        }
+      })
       const matched = numeric.every((entry) => entry.matched)
       const reasons = [...(candidate?.reasons ?? [])]
       if (!matched) {
         const position = resolved.value.patternPositions[goal.lineIndex] ?? -1
-        if (minimumTargetRolls([resolved.value.patterns[position] ?? ''], goal.bounds) === null)
+        const baseBounds = projection?.ok ? projection.value.baseBounds(goal.bounds) : null
+        const bounds =
+          goal.basis === 'effective' ? (baseBounds?.ok ? baseBounds.value : null) : goal.bounds
+        if (
+          bounds === null ||
+          minimumTargetRolls([resolved.value.patterns[position] ?? ''], bounds) === null
+        )
           reasons.push('当前可重掷范围或显示网格不能达到该固有条件。')
         for (const entry of numeric)
           if (!entry.matched)
@@ -263,7 +305,7 @@ export function implicitTargetRolls(
   state: CraftState,
   values: readonly CraftImplicitTargetValues[],
 ): CraftResult<number[]> {
-  const checked = validateCraftImplicitTargets(catalog, state.baseId, values)
+  const checked = validateCraftImplicitTargets(catalog, state.baseId, values, state)
   if (!checked.ok) return checked
   const prepared = prepareCraftOperation(catalog, state, 'divine')
   if (!prepared.ok) return prepared
@@ -275,11 +317,19 @@ export function implicitTargetRolls(
     const directoryIndex = patternPositions.indexOf(position)
     const goal = checked.value.find((entry) => entry.lineIndex === directoryIndex)
     if (charm?.fixed && charm.lineIndex === position) continue
-    const selected = targetRollsPreservingValues(
-      [pattern],
-      [actual[mapping[directoryIndex] ?? -1] ?? pattern],
-      goal?.bounds,
-    )
+    let selected: number[] | null
+    if (goal?.basis === 'effective') {
+      const projection = projectImplicitTargetValues(catalog, state, directoryIndex)
+      if (!projection.ok) return projection
+      selected = projectedTargetRolls(projection.value, [pattern], goal.bounds, [
+        actual[mapping[directoryIndex] ?? -1] ?? pattern,
+      ])
+    } else
+      selected = targetRollsPreservingValues(
+        [pattern],
+        [actual[mapping[directoryIndex] ?? -1] ?? pattern],
+        goal?.bounds,
+      )
     if (selected === null) return fail('当前范围或显示网格无法达到固有目标。')
     result.push(...selected)
   }

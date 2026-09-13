@@ -54,7 +54,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v36'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v37'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -110,7 +110,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 36 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 37 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -470,6 +470,21 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  const numericGroups = [value.targetValues, value.targetImplicitValues]
+  const usesEffectiveTargets = numericGroups.some(
+    (groups) =>
+      Array.isArray(groups) && groups.some((group) => record(group) && group.basis === 'effective'),
+  )
+  if (
+    rulesVersion < 37 &&
+    numericGroups.some(
+      (groups) =>
+        Array.isArray(groups) &&
+        groups.some((group) => record(group) && Object.hasOwn(group, 'basis')),
+    )
+  )
+    return fail('v2–v36 旧版项目不能包含有效值目标口径。')
+
   if (
     rulesVersion < 36 &&
     (Object.hasOwn(value, 'scalabilitySourceHash') ||
@@ -785,7 +800,9 @@ export function parseCraftProject(
   let importedQuality: number | undefined
   const scalabilitySourceHash = statScalabilitySourceHash(catalog)
   if (
-    (initialInput.catalyst !== undefined || Object.hasOwn(value, 'scalabilitySourceHash')) &&
+    (initialInput.catalyst !== undefined ||
+      usesEffectiveTargets ||
+      Object.hasOwn(value, 'scalabilitySourceHash')) &&
     (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
   )
     return fail('项目属性缩放来源指纹缺失或与当前目录不同。')
@@ -935,6 +952,7 @@ export function parseCraftProject(
       targetModIds ?? [],
       value.targetValues,
       targetAlternatives,
+      initial.value,
     )
     if (!checkedValues.ok) return fail(`数值目标无效：${checkedValues.error}`)
     targetValues = checkedValues.value
@@ -946,6 +964,7 @@ export function parseCraftProject(
       catalog,
       initial.value.baseId,
       value.targetImplicitValues,
+      initial.value,
     )
     if (!implicit.ok) return fail(`固有目标无效：${implicit.error}`)
     targetImplicitValues = implicit.value

@@ -7,6 +7,11 @@ import {
   inspectModPool,
 } from './catalog'
 import { desecrationSourceHash } from './desecration'
+import {
+  matchesTargetInterval,
+  minimumCraftTargetRolls,
+  projectCraftTargetValues,
+} from './effectiveTargetValues'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { validateCraftFractureTarget } from './fractureTargets'
 import {
@@ -17,7 +22,7 @@ import {
   implicitTargetRolls,
 } from './implicitTargets'
 import { craftModsConflict } from './modConflicts'
-import { inspectNumericLines, readNumericValues } from './numeric'
+import { inspectNumericLines } from './numeric'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   CRAFT_CURRENCY_LABELS,
@@ -32,7 +37,6 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
-import { minimumTargetRolls } from './targetRolls'
 
 export interface CraftTargetBound {
   index: number
@@ -46,6 +50,8 @@ export interface CraftTargetAlternative {
 }
 
 export interface CraftTargetValues {
+  /** 未声明时沿用基础值；有效值阈值随品质变化重新判断。 */
+  basis?: 'effective'
   modId: string
   bounds: CraftTargetBound[]
 }
@@ -71,7 +77,11 @@ interface CraftTargetStatus {
   modId: string
   present: boolean
   matched: boolean
-  numeric: (CraftTargetBound & { actual: number | null; matched: boolean })[]
+  numeric: (CraftTargetBound & {
+    actual: number | null
+    actualRange?: { min: number; max: number }
+    matched: boolean
+  })[]
   reasons: string[]
 }
 
@@ -256,6 +266,7 @@ export function validateCraftTargetValues(
   ids: readonly string[],
   values: unknown,
   alternatives: readonly CraftTargetAlternative[] = [],
+  state?: CraftState,
 ): CraftResult<CraftTargetValues[]> {
   const targets = validateCraftTargets(catalog, baseId, ids)
   if (!targets.ok) return targets
@@ -272,7 +283,8 @@ export function validateCraftTargetValues(
   const result: CraftTargetValues[] = []
   for (const value of values) {
     if (
-      !hasOnlyKeys(value, ['modId', 'bounds']) ||
+      !hasOnlyKeys(value, ['modId', 'bounds', 'basis']) ||
+      (Object.hasOwn(value, 'basis') && value.basis !== 'effective') ||
       typeof value.modId !== 'string' ||
       !acceptedIds.has(value.modId) ||
       seen.has(value.modId) ||
@@ -285,6 +297,18 @@ export function validateCraftTargetValues(
     if (mod === undefined) return { ok: false, error: '数值目标词缀不在制作目录中。' }
     const ranges = inspectNumericLines(mod.lines)
     if (!ranges.ok) return ranges
+    if (value.basis === 'effective') {
+      if (!state || state.baseId !== baseId)
+        return { ok: false, error: '有效值目标需要当前装备状态。' }
+      const projection = projectCraftTargetValues(
+        catalog,
+        state,
+        mod,
+        { modId: mod.id, basis: 'effective', bounds: [] },
+        state.affixes.find((affix) => affix.modId === mod.id)?.lines,
+      )
+      if (!projection.ok) return projection
+    }
     const indices = new Set<number>()
     const bounds: CraftTargetBound[] = []
     for (const bound of value.bounds) {
@@ -308,8 +332,7 @@ export function validateCraftTargetValues(
         if (
           typeof threshold !== 'number' ||
           !Number.isFinite(threshold) ||
-          threshold < range.min ||
-          threshold > range.max
+          (value.basis !== 'effective' && (threshold < range.min || threshold > range.max))
         )
           return { ok: false, error: `数值条件必须是 ${range.min}–${range.max} 内的有限数值。` }
         // 条件是比较阈值，不受演练生成值的显示网格约束。
@@ -321,7 +344,11 @@ export function validateCraftTargetValues(
       bounds.push(copy)
     }
     seen.add(value.modId)
-    result.push({ modId: value.modId, bounds })
+    result.push({
+      modId: value.modId,
+      bounds,
+      ...(value.basis === 'effective' ? { basis: 'effective' as const } : {}),
+    })
   }
   return { ok: true, value: result }
 }
@@ -355,6 +382,7 @@ export function analyzeCraftTargets(
     validated.value,
     targetValues,
     alternatives,
+    state,
   )
   if (!values.ok) return values
   if (fracturedTargetId !== undefined) {
@@ -410,28 +438,41 @@ export function analyzeCraftTargets(
         fractureReasons.push('此普通目标当前带亵渎标记，当前状态不能破裂。')
       else fractureReasons.push('此目标要求破裂，当前尚未锁定。')
     }
-    const bounds = values.value.find((entry) => entry.modId === modId)?.bounds ?? []
-    const actual =
-      bounds.length > 0 && mod !== undefined && affix !== undefined
-        ? readNumericValues(mod.lines, affix.lines)
+    const goal = values.value.find((entry) => entry.modId === modId)
+    const bounds = goal?.bounds ?? []
+    const projected =
+      mod && bounds.length > 0
+        ? projectCraftTargetValues(catalog, current, mod, goal, affix?.lines)
         : null
+    const actual = affix && projected?.ok ? projected.value.read(affix.lines) : null
     const numeric = bounds.map((bound) => {
-      const value = actual?.ok ? (actual.value[bound.index] ?? null) : null
-      const matched =
-        present &&
-        value !== null &&
-        (bound.min === undefined || value >= bound.min) &&
-        (bound.max === undefined || value <= bound.max)
-      if (present) {
-        if (value === null)
-          reasons.push(`第 ${bound.index + 1} 个实际数值未知，无法判断条件是否达成。`)
-        else if (bound.min !== undefined && value < bound.min)
-          reasons.push(`第 ${bound.index + 1} 个实际数值 ${value} 低于下限 ${bound.min}。`)
-        else if (bound.max !== undefined && value > bound.max)
-          reasons.push(`第 ${bound.index + 1} 个实际数值 ${value} 高于上限 ${bound.max}。`)
+      const interval = actual?.ok ? actual.value[bound.index] : null
+      const value = interval && interval.min === interval.max ? interval.min : null
+      const matched = present && matchesTargetInterval(interval, bound)
+      if (present && !matched) {
+        if (!interval) reasons.push(`第 ${bound.index + 1} 个实际数值未知，无法判断条件是否达成。`)
+        else {
+          const displayed =
+            interval.min === interval.max ? String(interval.min) : `${interval.min}–${interval.max}`
+          if (bound.min !== undefined && interval.min < bound.min)
+            reasons.push(`第 ${bound.index + 1} 个实际数值 ${displayed} 低于下限 ${bound.min}。`)
+          if (bound.max !== undefined && interval.max > bound.max)
+            reasons.push(`第 ${bound.index + 1} 个实际数值 ${displayed} 高于上限 ${bound.max}。`)
+        }
       }
-      return { ...bound, actual: value, matched }
+      return {
+        ...bound,
+        actual: value,
+        matched,
+        ...(interval && interval.min !== interval.max ? { actualRange: interval } : {}),
+      }
     })
+    if (
+      mod &&
+      numeric.some((entry) => !entry.matched) &&
+      minimumCraftTargetRolls(catalog, current, mod, goal, affix?.lines) === null
+    )
+      reasons.push('当前品质与基础范围或显示网格无法达到该数值条件。')
     if (affix?.fractured && numeric.some((entry) => !entry.matched))
       reasons.push('破裂属性已锁定，不能通过神圣重掷或移除重造达到数值条件。')
     if (!present && mod !== undefined) {
@@ -587,19 +628,20 @@ export function analyzeCraftTargets(
           ),
         ),
       ).ok)
-  const explicitRollsPossible =
-    !implicitValues.length ||
-    current.affixes.every((affix) => {
-      if (affix.fractured) return true
-      const mod = byId.get(affix.modId)
-      return (
-        mod !== undefined &&
-        minimumTargetRolls(
-          mod.lines,
-          values.value.find((value) => value.modId === affix.modId)?.bounds,
-        ) !== null
-      )
-    })
+  const explicitRollsPossible = current.affixes.every((affix) => {
+    if (affix.fractured) return true
+    const mod = byId.get(affix.modId)
+    return (
+      mod !== undefined &&
+      minimumCraftTargetRolls(
+        catalog,
+        current,
+        mod,
+        values.value.find((value) => value.modId === affix.modId),
+        affix.lines,
+      ) !== null
+    )
+  })
   if (
     omen === undefined &&
     (unmetNumericIds.length > 0 || unmetImplicit.length > 0) &&
@@ -672,9 +714,20 @@ export function analyzeCraftTargets(
         ).map((mod) => mod.id),
       )
       // 剥离只提示真正解除阻碍的目标，避免为本来能直接添加的目标先删词缀。
-      const targetModIds = missing.filter(
-        (id) => available.has(id) && (currency !== 'annulment' || !directlyAvailable.has(id)),
-      )
+      const targetModIds = missing.filter((id) => {
+        if (!available.has(id) || (currency === 'annulment' && directlyAvailable.has(id)))
+          return false
+        const mod = byId.get(id)
+        return (
+          mod !== undefined &&
+          minimumCraftTargetRolls(
+            catalog,
+            next,
+            mod,
+            values.value.find((goal) => goal.modId === id),
+          ) !== null
+        )
+      })
       if (targetModIds.length === 0) continue
       const retained = new Set(prepared.value.state.affixes.map((affix) => affix.modId))
       steps.push({

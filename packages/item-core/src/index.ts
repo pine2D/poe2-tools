@@ -93,6 +93,7 @@ export { applyCraftStep } from './craftSteps'
 export type { DefenceEstimate } from './defences'
 export { estimateDefences } from './defences'
 export { DESECRATION_FAMILIES, DESECRATION_SOURCE, desecrationSourceHash } from './desecration'
+export { matchesTargetInterval, projectCraftTargetValues } from './effectiveTargetValues'
 export type { EssenceAdviceStep } from './essenceAdvice'
 export { analyzeEssenceTargets } from './essenceAdvice'
 export type { PreparedEssenceCraft } from './essenceCraft'
@@ -133,6 +134,7 @@ export type {
 export {
   analyzeCraftImplicitTargets,
   craftImplicitTargetCandidates,
+  projectImplicitTargetValues,
   validateCraftImplicitTargets,
 } from './implicitTargets'
 export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'

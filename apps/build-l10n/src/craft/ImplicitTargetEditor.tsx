@@ -5,6 +5,7 @@ import {
   type CraftImplicitTargetValues,
   type CraftState,
   craftImplicitTargetCandidates,
+  projectImplicitTargetValues,
   validateCraftImplicitTargets,
 } from '@poe2-tools/item-core'
 import { useMemo, useRef, useState } from 'react'
@@ -39,7 +40,7 @@ export function ImplicitTargetEditor(props: Props) {
           ) : null}
           <code>{candidate.line}</code>
           <p>
-            当前数值：{candidate.actual.map((value) => value ?? '未知').join('、')}；
+            当前基础数值：{candidate.actual.map((value) => value ?? '未知').join('、')}；
             {candidate.rerollable ? '当前可重掷' : '当前不可重掷'}
           </p>
           {candidate.reasons.map((reason) => (
@@ -53,7 +54,15 @@ export function ImplicitTargetEditor(props: Props) {
                   <p>{target.matched ? '固有目标已达成' : '固有目标未达成'}</p>
                   {target.numeric.map((bound) => (
                     <p key={bound.index}>
-                      数值 {bound.index + 1}：{bound.min === undefined ? '' : `至少 ${bound.min}`}{' '}
+                      {props.values.find((entry) => entry.lineIndex === target.lineIndex)?.basis ===
+                      'effective'
+                        ? '品质后'
+                        : '基础'}
+                      数值 {bound.index + 1}： 当前{' '}
+                      {bound.actualRange
+                        ? `${bound.actualRange.min}–${bound.actualRange.max}`
+                        : (bound.actual ?? '未知')}
+                      ；{bound.min === undefined ? '' : `至少 ${bound.min}`}{' '}
                       {bound.max === undefined ? '' : `至多 ${bound.max}`} ·{' '}
                       {bound.matched ? '达成' : '未达成'}
                     </p>
@@ -88,6 +97,10 @@ function RowEditor({
   candidate,
 }: Props & { candidate: CraftImplicitTargetCandidate }) {
   const saved = values.find((value) => value.lineIndex === candidate.lineIndex)
+  const [basis, setBasis] = useState(saved?.basis ?? 'base')
+  const projection =
+    basis === 'effective' ? projectImplicitTargetValues(catalog, state, candidate.lineIndex) : null
+  const ranges = projection?.ok ? projection.value.ranges : candidate.ranges
   const [inputs, setInputs] = useState<Record<number, { min: string; max: string }>>(() =>
     Object.fromEntries(
       saved?.bounds.map((bound) => [
@@ -108,7 +121,7 @@ function RowEditor({
       setMessage('请先输入完整数字；未完成的数字不会清除原有条件。')
       return
     }
-    const bounds = candidate.ranges.flatMap((range) => {
+    const bounds = ranges.flatMap((range) => {
       const input = inputs[range.index]
       if (!input || (input.min === '' && input.max === '')) return []
       return [
@@ -120,8 +133,13 @@ function RowEditor({
       ]
     })
     const next = values.filter((value) => value.lineIndex !== candidate.lineIndex)
-    if (bounds.length) next.push({ lineIndex: candidate.lineIndex, bounds })
-    const checked = validateCraftImplicitTargets(catalog, state.baseId, next)
+    if (bounds.length)
+      next.push({
+        lineIndex: candidate.lineIndex,
+        bounds,
+        ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
+      })
+    const checked = validateCraftImplicitTargets(catalog, state.baseId, next, state)
     if (!checked.ok) {
       setMessage(checked.error)
       return
@@ -131,7 +149,26 @@ function RowEditor({
   }
   return (
     <div className="target-value-editor" ref={root}>
-      {candidate.ranges.map((range) => (
+      <label>
+        条件口径
+        <select
+          aria-label={`固有属性 ${candidate.lineIndex + 1} · 条件口径`}
+          value={basis}
+          onChange={(event) => {
+            setBasis(event.target.value)
+            setInputs({})
+            setMessage('')
+          }}
+        >
+          <option value="base">基础值</option>
+          <option value="effective">品质后有效值</option>
+        </select>
+      </label>
+      {basis === 'effective' ? (
+        <p>按当前品质判断所有可能结果；切换口径后重新输入，品质变化保留原阈值。</p>
+      ) : null}
+      {projection && !projection.ok ? <p role="alert">{projection.error}</p> : null}
+      {ranges.map((range) => (
         <fieldset key={range.index}>
           <legend>
             数值 {range.index + 1} · 目录条件范围：{range.min} 至 {range.max}
@@ -143,8 +180,8 @@ function RowEditor({
                 <input
                   type="number"
                   step="any"
-                  min={range.min}
-                  max={range.max}
+                  min={basis === 'effective' ? undefined : range.min}
+                  max={basis === 'effective' ? undefined : range.max}
                   aria-label={`固有属性 ${candidate.lineIndex + 1} · 数值 ${range.index + 1} ${side === 'min' ? '下限' : '上限'}`}
                   value={inputs[range.index]?.[side] ?? ''}
                   onChange={(event) => {

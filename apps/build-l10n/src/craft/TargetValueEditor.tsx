@@ -1,9 +1,11 @@
 import {
   type CatalogMod,
   type CraftCatalog,
+  type CraftState,
   type CraftTargetAlternative,
   type CraftTargetValues,
   inspectNumericLines,
+  projectCraftTargetValues,
   validateCraftTargetValues,
 } from '@poe2-tools/item-core'
 import { useRef, useState } from 'react'
@@ -11,6 +13,7 @@ import { useRef, useState } from 'react'
 interface Props {
   catalog: CraftCatalog
   baseId: string
+  state: CraftState
   ids: string[]
   alternatives?: CraftTargetAlternative[]
   values: CraftTargetValues[]
@@ -22,6 +25,7 @@ interface Props {
 export function TargetValueEditor({
   catalog,
   baseId,
+  state,
   ids,
   alternatives = [],
   values,
@@ -29,8 +33,24 @@ export function TargetValueEditor({
   onChange,
   translateLine,
 }: Props) {
-  const ranges = inspectNumericLines(mod.lines)
   const saved = values.find((entry) => entry.modId === mod.id)
+  const [basis, setBasis] = useState(saved?.basis ?? 'base')
+  const projection = projectCraftTargetValues(
+    catalog,
+    state,
+    mod,
+    {
+      modId: mod.id,
+      bounds: [],
+      ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
+    },
+    state.affixes.find((entry) => entry.modId === mod.id)?.lines,
+  )
+  const baseRanges = inspectNumericLines(mod.lines)
+  const ranges =
+    basis === 'effective' && projection.ok
+      ? { ok: true as const, value: projection.value.ranges }
+      : baseRanges
   const [open, setOpen] = useState(false)
   const [inputs, setInputs] = useState<Record<number, { min: string; max: string }>>(() =>
     Object.fromEntries(
@@ -68,8 +88,13 @@ export function TargetValueEditor({
       ]
     })
     const next = values.filter((entry) => entry.modId !== mod.id)
-    if (bounds.length > 0) next.push({ modId: mod.id, bounds })
-    const checked = validateCraftTargetValues(catalog, baseId, ids, next, alternatives)
+    if (bounds.length > 0)
+      next.push({
+        modId: mod.id,
+        bounds,
+        ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
+      })
+    const checked = validateCraftTargetValues(catalog, baseId, ids, next, alternatives, state)
     if (!checked.ok) {
       setMessage(checked.error)
       return
@@ -100,6 +125,28 @@ export function TargetValueEditor({
       {open ? (
         <section aria-label={`${mod.id} 数值条件`}>
           <p>空白表示不限；上下限包含边界。条件只比较所选档位，不自动判断数值越大越好。</p>
+          <label>
+            条件口径
+            <select
+              aria-label={`${mod.id} · 条件口径`}
+              value={basis}
+              onChange={(event) => {
+                setBasis(event.target.value)
+                setInputs({})
+                setMessage('')
+              }}
+            >
+              <option value="base">基础值</option>
+              <option value="effective">品质后有效值</option>
+            </select>
+          </label>
+          {basis === 'effective' ? (
+            <p>
+              按当前品质重新判断；范围不唯一时需全部可能结果满足条件。切换口径后重新输入，阈值不随品质自动降低。
+            </p>
+          ) : null}
+          {basis === 'effective' && !projection.ok ? <p role="alert">{projection.error}</p> : null}
+
           {ranges.value.map((range) => (
             <fieldset key={range.index}>
               <legend>
@@ -115,8 +162,8 @@ export function TargetValueEditor({
                     <input
                       type="number"
                       step="any"
-                      min={range.min}
-                      max={range.max}
+                      min={basis === 'effective' ? undefined : range.min}
+                      max={basis === 'effective' ? undefined : range.max}
                       aria-label={`${mod.id} · 数值 ${range.index + 1} ${side === 'min' ? '最小值' : '最大值'}`}
                       value={inputs[range.index]?.[side] ?? ''}
                       onChange={(event) => {

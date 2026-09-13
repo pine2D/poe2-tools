@@ -38,7 +38,9 @@ export function splitStatScalars(line: string) {
   return { literals, tokens }
 }
 
-function precision(formats: readonly string[]): { denominator: number; decimals: number } | null {
+export function statValuePrecision(
+  formats: readonly string[],
+): { denominator: number; decimals: number } | null {
   let result = { denominator: 1, decimals: 0 }
   let hasPrecision = false
   for (const format of formats) {
@@ -77,8 +79,22 @@ function displayed(point: bigint, denominator: number, scale: number): number {
   return sign * Number(rounded)
 }
 
-function scaleValue(value: number, formats: string[], quality: number): CraftResult<number> {
-  const rule = precision(formats)
+export interface StatValueBounds {
+  min: number
+  max: number
+}
+
+export const NO_STAT_GRID_PREIMAGE = '当前显示值不能对应来源内部网格。'
+
+/** 完整显示逆像的缩放边界，供预览与有效值目标共用。 */
+export function scaleStatValueBounds(
+  value: number,
+  formats: readonly string[],
+  quality: number,
+): CraftResult<StatValueBounds> {
+  if (!Number.isInteger(quality) || quality < 0 || quality > 40)
+    return { ok: false, error: '品质必须是 0–40 的整数。' }
+  const rule = statValuePrecision(formats)
   if (!rule) return { ok: false, error: '缩放来源含尚未实现的数值格式。' }
   const scale = 10 ** rule.decimals
   const point = Math.round(value * scale)
@@ -100,13 +116,19 @@ function scaleValue(value: number, formats: string[], quality: number): CraftRes
     if (!Number.isSafeInteger(output)) return { ok: false, error: '缩放结果超出安全范围。' }
     results.add(output / scale)
   }
-  if (results.size === 0) return { ok: false, error: '当前显示值不能对应来源内部网格。' }
-  if (results.size > 1)
+  if (results.size === 0) return { ok: false, error: NO_STAT_GRID_PREIMAGE }
+  return { ok: true, value: { min: Math.min(...results), max: Math.max(...results) } }
+}
+
+function scaleValue(value: number, formats: string[], quality: number): CraftResult<number> {
+  const scaled = scaleStatValueBounds(value, formats, quality)
+  if (!scaled.ok) return scaled
+  if (scaled.value.min !== scaled.value.max)
     return {
       ok: false,
-      error: `显示值对应多个内部值，催化后的可见结果不唯一：${Math.min(...results)}–${Math.max(...results)}。`,
+      error: `显示值对应多个内部值，催化后的可见结果不唯一：${scaled.value.min}–${scaled.value.max}。`,
     }
-  return { ok: true, value: [...results][0] as number }
+  return { ok: true, value: scaled.value.min }
 }
 
 export function scaleStatLine(

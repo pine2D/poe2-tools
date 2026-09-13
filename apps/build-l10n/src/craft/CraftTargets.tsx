@@ -357,8 +357,15 @@ export function CraftTargets({
                         {memberMod ? properties(memberMod) : <code>{member.modId}</code>}
                         {member.numeric.map((value) => (
                           <p key={value.index}>
-                            数值 {value.index + 1}：当前 {value.actual ?? '未知'}；
-                            {value.min === undefined ? '' : `至少 ${value.min}`}
+                            {targetValues.find((entry) => entry.modId === member.modId)?.basis ===
+                            'effective'
+                              ? '品质后'
+                              : '基础'}
+                            数值 {value.index + 1}：当前{' '}
+                            {value.actualRange
+                              ? `${value.actualRange.min}–${value.actualRange.max}`
+                              : (value.actual ?? '未知')}
+                            ；{value.min === undefined ? '' : `至少 ${value.min}`}
                             {value.min !== undefined && value.max !== undefined ? '，' : ''}
                             {value.max === undefined ? '' : `至多 ${value.max}`} ·{' '}
                             {value.matched ? '达成' : '未达成'}
@@ -369,6 +376,7 @@ export function CraftTargets({
                             key={`${member.modId}:${JSON.stringify(targetValues.find((entry) => entry.modId === member.modId) ?? null)}`}
                             catalog={catalog}
                             baseId={state.baseId}
+                            state={state}
                             ids={targetModIds}
                             alternatives={targetAlternatives}
                             values={targetValues}

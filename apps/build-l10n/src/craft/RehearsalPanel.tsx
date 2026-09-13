@@ -759,7 +759,10 @@ export function RehearsalPanel({
     ...(pricing ? { pricing } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
-    ...(history[0]?.state.catalyst && statScalabilitySourceHash(catalog)
+    ...((history[0]?.state.catalyst ||
+      targetValues.some((entry) => entry.basis === 'effective') ||
+      targetImplicitValues.some((entry) => entry.basis === 'effective')) &&
+    statScalabilitySourceHash(catalog)
       ? { scalabilitySourceHash: statScalabilitySourceHash(catalog) as string }
       : {}),
     initialState: history[0]?.state ?? current,
@@ -833,7 +836,7 @@ export function RehearsalPanel({
           <p>可指定词缀与具体数值；范围试掷采用演练模型，不计算真实概率或市场价格。</p>
           {current.catalyst ? (
             <p className="rehearsal-scope-note">
-              词缀选择、数值目标与制作步骤使用催化前的基础值；品质后的估算值见催化剂效果预览。
+              制作步骤使用催化前基础值；数值目标可选择基础值或品质后的有效值口径，品质效果见下方预览。
             </p>
           ) : null}
           <p className="rehearsal-scope-note">

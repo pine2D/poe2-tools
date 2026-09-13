@@ -8,7 +8,9 @@ import {
   type EssenceOmen,
   inspectEssences,
   inspectNumericLines,
+  matchesTargetInterval,
   prepareEssenceCraft,
+  projectCraftTargetValues,
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
@@ -71,18 +73,16 @@ export function EssenceCraftPanel({
       targetAlternatives.some(
         (entry) => targetModIds.includes(entry.targetModId) && entry.modIds.includes(mod.id),
       ))
-  const bounds = targetValues.find((entry) => entry.modId === mod?.id)?.bounds
+  const goal = targetValues.find((entry) => entry.modId === mod?.id)
+  const bounds = goal?.bounds
+  const projected = mod ? projectCraftTargetValues(catalog, state, mod, goal) : null
+  const targetText = mod && selection ? renderNumericLines(mod.lines, selection.values) : null
+  const actualTargetValues =
+    projected?.ok && targetText?.ok ? projected.value.read(targetText.value) : null
   const meetsBounds =
-    selection &&
-    bounds?.every((bound) => {
-      const value = selection.values[bound.index]
-      return (
-        value !== undefined &&
-        Number.isFinite(value) &&
-        (bound.min === undefined || value >= bound.min) &&
-        (bound.max === undefined || value <= bound.max)
-      )
-    })
+    actualTargetValues?.ok &&
+    bounds?.every((bound) => matchesTargetInterval(actualTargetValues.value[bound.index], bound))
+
   const validValues = mod && selection ? renderNumericLines(mod.lines, selection.values).ok : false
   const replacement = prepared?.ok && prepared.value.mode === 'replace'
   const removableAffixes = prepared?.ok ? prepared.value.removableAffixes : []

@@ -1,11 +1,11 @@
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep, type EssenceCraftOperation } from './craftSteps'
+import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import { prepareEssenceCraft } from './essenceCraft'
 import { ESSENCE_OMEN_RULES, type EssenceOmen } from './essenceOmens'
 import { essenceCategory } from './essences'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
-import { minimumTargetRolls } from './targetRolls'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
@@ -31,7 +31,14 @@ export function analyzeEssenceTargets(
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  const validated = validateCraftTargetValues(catalog, state.baseId, ids, values, alternatives)
+  const validated = validateCraftTargetValues(
+    catalog,
+    state.baseId,
+    ids,
+    values,
+    alternatives,
+    state,
+  )
   if (!validated.ok) return validated
   const groups = ids.map((id) => [
     id,
@@ -50,9 +57,11 @@ export function analyzeEssenceTargets(
     if (modId === undefined || !missing.has(modId)) continue
     const original = prepareEssenceCraft(catalog, state, essence.id)
     if (!original.ok) continue
-    const numericValues = minimumTargetRolls(
-      original.value.mod.lines,
-      values.find((entry) => entry.modId === modId)?.bounds,
+    const numericValues = minimumCraftTargetRolls(
+      catalog,
+      state,
+      original.value.mod,
+      values.find((entry) => entry.modId === modId),
     )
     if (numericValues === null) continue
     const omens: (EssenceOmen | undefined)[] =

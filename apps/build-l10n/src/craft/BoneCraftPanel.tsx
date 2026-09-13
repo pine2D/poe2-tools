@@ -16,7 +16,9 @@ import {
   desecrationCandidates,
   inspectNumericLines,
   isCraftBone,
+  matchesTargetInterval,
   prepareDesecration,
+  projectCraftTargetValues,
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
@@ -136,18 +138,16 @@ export function BoneCraftPanel({
       ...mod.lines.map((line) => translateLine?.(line)),
     ].some((text) => text?.toLowerCase().includes(needle)),
   )
-  const bounds = targetValues.find((entry) => entry.modId === reveal?.modId)?.bounds
+  const goal = targetValues.find((entry) => entry.modId === reveal?.modId)
+  const bounds = goal?.bounds
+  const projected = selected ? projectCraftTargetValues(catalog, state, selected, goal) : null
+  const targetText = selected && reveal ? renderNumericLines(selected.lines, reveal.values) : null
+  const actualTargetValues =
+    projected?.ok && targetText?.ok ? projected.value.read(targetText.value) : null
   const meetsBounds =
-    reveal &&
-    bounds?.every((bound) => {
-      const value = reveal.values[bound.index]
-      return (
-        value !== undefined &&
-        Number.isFinite(value) &&
-        (bound.min === undefined || value >= bound.min) &&
-        (bound.max === undefined || value <= bound.max)
-      )
-    })
+    actualTargetValues?.ok &&
+    bounds?.every((bound) => matchesTargetInterval(actualTargetValues.value[bound.index], bound))
+
   const lines = (mod: CatalogMod) =>
     mod.lines.map((line, index) => (
       // biome-ignore lint/suspicious/noArrayIndexKey: 目录可包含重复静态行。

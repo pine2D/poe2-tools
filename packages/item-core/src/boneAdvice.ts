@@ -9,8 +9,8 @@ import {
 } from './boneOmens'
 import { BONE_RULES, type BoneCraftOperation, type CraftBone } from './boneRules'
 import type { CraftCatalog } from './catalog'
+import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
-import { minimumTargetRolls } from './targetRolls'
 import { analyzeCraftTargets, type CraftTargetAlternative, type CraftTargetValues } from './targets'
 
 export interface CraftBoneAdviceStep {
@@ -51,7 +51,7 @@ export function analyzeBoneTargets(
   const present = state.affixes
     .filter((affix) => accepted.has(affix.modId))
     .map((affix) => affix.modId)
-  const bounds = (id: string) => values.find((value) => value.modId === id)?.bounds
+  const goal = (id: string) => values.find((value) => value.modId === id)
   let exhausted = false
   const apply = (current: CraftState, operation: BoneCraftOperation): CraftState | null => {
     if (exhausted || (options.consumeCandidate && !options.consumeCandidate())) {
@@ -77,7 +77,9 @@ export function analyzeBoneTargets(
     })
   const reveal = (current: CraftState, id: string, useTarget: boolean) => {
     const mod = catalog.modifiers.find((mod) => mod.id === id)
-    const numbers = mod ? minimumTargetRolls(mod.lines, useTarget ? bounds(id) : undefined) : null
+    const numbers = mod
+      ? minimumCraftTargetRolls(catalog, current, mod, useTarget ? goal(id) : undefined)
+      : null
     if (numbers === null) return null
     const operation: BoneCraftOperation = { kind: 'desecration-reveal', modId: id, values: numbers }
     const next = apply(current, operation)
@@ -93,7 +95,9 @@ export function analyzeBoneTargets(
     const candidates = desecrationCandidates(catalog, current)
     if (candidates.length < 3) return []
     const targets = candidates.filter(
-      (mod) => eligible.has(mod.id) && minimumTargetRolls(mod.lines, bounds(mod.id)) !== null,
+      (mod) =>
+        eligible.has(mod.id) &&
+        minimumCraftTargetRolls(catalog, current, mod, goal(mod.id)) !== null,
     )
     if (requireTarget && !targets.length) return []
     const seeds = targets.length ? targets : candidates.slice(0, 1)
@@ -128,7 +132,7 @@ export function analyzeBoneTargets(
               return (
                 pending.options?.includes(member.modId) &&
                 mod &&
-                minimumTargetRolls(mod.lines, bounds(member.modId)) !== null
+                minimumCraftTargetRolls(catalog, state, mod, goal(member.modId)) !== null
               )
             })
           })
