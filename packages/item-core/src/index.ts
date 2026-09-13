@@ -29,6 +29,8 @@ export type {
   CatalogAugment,
   CatalogBase,
   CatalogEssence,
+  CatalogLiquidEmotion,
+  CatalogLiquidEmotionJewel,
   CatalogMod,
   CatalogStatScalar,
   CraftCatalog,
@@ -151,6 +153,10 @@ export {
 export type { CraftProperty } from './itemProperties'
 export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
 export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'
+export {
+  LIQUID_EMOTION_SOURCE,
+  liquidEmotionSourceHash,
+} from './liquidEmotions'
 export type { NumericRange } from './numeric'
 export {
   inspectNumericLines,

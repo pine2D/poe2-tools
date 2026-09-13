@@ -5,6 +5,8 @@ import {
   inspectModPool,
   JEWEL_SOURCE,
   jewelSourceHash,
+  LIQUID_EMOTION_SOURCE,
+  liquidEmotionSourceHash,
   parseCraftCatalog,
   STAT_SCALABILITY_SOURCE,
   statScalabilitySourceHash,
@@ -69,6 +71,43 @@ const essenceSources = catalog._meta.sources.filter(
 )
 const essenceMappings = (catalog.essences ?? []).flatMap((entry) => Object.values(entry.mods))
 const modifierIds = new Set(catalog.modifiers.map((entry) => entry.id))
+const emotions = catalog.liquidEmotions ?? []
+const emotionMappings = (radius: boolean) =>
+  emotions
+    .filter((entry) => entry.radiusJewel === radius)
+    .flatMap((entry) => Object.values(entry.mods).flatMap((effect) => Object.values(effect)))
+const basicEmotionMappings = emotionMappings(false)
+const radiusEmotionMappings = emotionMappings(true)
+const allEmotionMappings = [...basicEmotionMappings, ...radiusEmotionMappings]
+const excludedJewelIds = new Set(catalog._meta.excludedJewelMods?.map((entry) => entry.id))
+if (
+  liquidEmotionSourceHash(catalog) !== LIQUID_EMOTION_SOURCE.sha256 ||
+  emotions.length !== 26 ||
+  emotions.filter((entry) => !entry.radiusJewel).length !== 13 ||
+  emotions.filter((entry) => entry.radiusJewel).length !== 13 ||
+  basicEmotionMappings.length !== 50 ||
+  radiusEmotionMappings.length !== 46 ||
+  new Set(allEmotionMappings).size !== 73 ||
+  allEmotionMappings.filter((id) => modifierIds.has(id)).length !== 30 ||
+  allEmotionMappings.filter((id) => excludedJewelIds.has(id)).length !== 66 ||
+  allEmotionMappings.some((id) => !modifierIds.has(id) && !excludedJewelIds.has(id)) ||
+  emotions
+    .flatMap((entry) => Object.values(entry.mods))
+    .filter((effect) => Object.keys(effect).length === 0).length !== 20
+)
+  throw new Error('液态情感固定来源、26 材料、96 映射、73 种词缀身份或 20 个空类别不匹配')
+for (const emotion of emotions) {
+  for (const effects of Object.values(emotion.mods)) {
+    for (const [kind, id] of Object.entries(effects)) {
+      const mod = catalog.modifiers.find((entry) => entry.id === id)
+      if (mod && (!mod.jewelOnly || mod.kind !== kind))
+        throw new Error(`液态情感引用已解析词缀的来源或前后缀不匹配：${id}`)
+    }
+  }
+}
+console.log(
+  '液态情感声明校验通过：13 普通 / 13 范围材料，50 / 46 映射；30 个普通映射、66 个排除映射、20 个空类别；未开放制作操作',
+)
 const unresolved = [...new Set(essenceMappings.filter((id) => !modifierIds.has(id)))].sort()
 const expectedUnresolved = [
   'EssenceDisplayAttributes1',
@@ -109,6 +148,8 @@ for (const locale of ['zh-CN', 'zh-TW'] as const) {
     throw new Error(`${locale} 缺少巧匠石或三系四档符文名称`)
   if (catalog.essences.some((entry) => !names[entry.name]?.trim()))
     throw new Error(`${locale} 精华材料中文名称未全覆盖`)
+  if (emotions.some((entry) => !names[entry.name]?.trim()))
+    throw new Error(`${locale} 液态情感材料中文名称未全覆盖`)
   console.log(
     `${locale} 官方制作名称：${Object.keys(names).length} 条；三服静态来源及 SHA-256 格式已校验`,
   )

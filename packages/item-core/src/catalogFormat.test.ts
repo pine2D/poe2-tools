@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { parseCraftCatalog } from './catalogFormat'
+import { LIQUID_EMOTION_SOURCE } from './liquidEmotions'
 import { STAT_SCALABILITY_SOURCE } from './statScalability'
 
 const augment: CatalogAugment = {
@@ -28,6 +29,80 @@ const catalog: CraftCatalog = {
   bases: [],
   modifiers: [],
 }
+
+describe('液态情感目录边界', () => {
+  const emotion = {
+    id: 'Metadata/Items/Currency/DistilledEmotion1',
+    name: 'Diluted Liquid Ire',
+    radiusJewel: false,
+    tierLevel: 1,
+    mods: {
+      Ruby: { prefix: 'JewelArmour' },
+      Sapphire: { suffix: 'JewelEnergyShield' },
+      Emerald: { prefix: 'A', suffix: 'B' },
+      Diamond: {},
+    },
+  }
+  const valid = {
+    ...catalog,
+    _meta: {
+      ...catalog._meta,
+      sourceCommit: LIQUID_EMOTION_SOURCE.commit,
+      sources: [LIQUID_EMOTION_SOURCE],
+    },
+    liquidEmotions: [emotion],
+  }
+
+  it('兼容旧目录并保留四类别、空映射与双侧效果', () => {
+    expect(parseCraftCatalog(catalog)).toBe(catalog)
+    expect(parseCraftCatalog(valid)).toBe(valid)
+  })
+
+  it('字段和固定来源必须成对出现且指纹精确匹配', () => {
+    expect(() => parseCraftCatalog({ ...catalog, liquidEmotions: [emotion] })).toThrow()
+    expect(() =>
+      parseCraftCatalog({
+        ...catalog,
+        _meta: {
+          ...catalog._meta,
+          sourceCommit: LIQUID_EMOTION_SOURCE.commit,
+          sources: [LIQUID_EMOTION_SOURCE],
+        },
+      }),
+    ).toThrow()
+    for (const source of [
+      { ...LIQUID_EMOTION_SOURCE, sha256: '0'.repeat(64) },
+      { ...LIQUID_EMOTION_SOURCE, url: 'https://example.test/LiquidEmotions.lua' },
+    ])
+      expect(() =>
+        parseCraftCatalog({ ...valid, _meta: { ...valid._meta, sources: [source] } }),
+      ).toThrow()
+    expect(() =>
+      parseCraftCatalog({
+        ...valid,
+        _meta: { ...valid._meta, sources: [LIQUID_EMOTION_SOURCE, LIQUID_EMOTION_SOURCE] },
+      }),
+    ).toThrow()
+  })
+
+  it('拒绝重复身份、未知字段、非法类别、侧和值', () => {
+    for (const liquidEmotions of [
+      [],
+      [emotion, emotion],
+      [{ ...emotion, futureRule: true }],
+      [{ ...emotion, id: '' }],
+      [{ ...emotion, name: '' }],
+      [{ ...emotion, radiusJewel: 'false' }],
+      [{ ...emotion, tierLevel: -1 }],
+      [{ ...emotion, tierLevel: 1.5 }],
+      [{ ...emotion, mods: { Ruby: {}, Sapphire: {}, Emerald: {} } }],
+      [{ ...emotion, mods: { ...emotion.mods, Topaz: {} } }],
+      [{ ...emotion, mods: { ...emotion.mods, Ruby: { implicit: 'A' } } }],
+      [{ ...emotion, mods: { ...emotion.mods, Ruby: { prefix: '' } } }],
+    ])
+      expect(() => parseCraftCatalog({ ...valid, liquidEmotions })).toThrow()
+  })
+})
 
 it('缩放表核对固定来源、完整数字声明及当前目录归属', () => {
   const line = '+(10-19) Life'

@@ -1,5 +1,13 @@
 # 数据源登记表
 
+### 当前制作机制补充核查（2026-09-14）
+
+[GGG 0.4.0 官方补丁](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff)确认同质崇高与同质加冕预兆停止掉落，已有物品仍可使用；[GGG 0.5.0 官方补丁](https://www.pathofexile.com/forum/view-thread/3932540/filter-account-type/staff)确认这两种预兆及腐化预兆只在标准服通货交易所显示，同时关闭重组器并删除已有重组预兆。旧网页条目不能据此作为当前赛季可获取证据。0.5.0 新增合金与液态情感制作珠宝，本轮核查对应可授权数据，不从旧制作指南推导新规则。
+
+新增 primary 声明来源：[固定 MIT 快照的 LiquidEmotions.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/LiquidEmotions.lua)，SHA-256 `2f8783e2f3d26fabc2a58c9533ffe96461ae0343ab6b3a2037249c68d00da7a8`。沿用 PoB2 许可与游戏文字版权声明，经既有 cache.ts 与受限 Lua 解析接入材料声明，保留 26 种材料（13 种普通、13 种范围珠宝）及 96 个前后缀映射。每个引用用同一固定 ModJewel 原始声明核对存在性、前后缀与范围节点语义。空类别原样保留，tierLevel 不作为装备物等门槛；此次声明不改变普通珠宝 160 个可生成词缀与 217 个排除记录。名称复用已登记三服 static，简繁独立精确对应，不另行抓取。浏览器不访问第三方。
+
+规则人工参考另核对 [Ire](https://poe2db.tw/us/Diluted_Liquid_Ire)、[Isolation](https://poe2db.tw/us/Concentrated_Liquid_Isolation)、[Contempt](https://poe2db.tw/us/Potent_Liquid_Contempt)、[Ferocity](https://poe2db.tw/us/Potent_Liquid_Ferocity) 的公开物品说明，按 gray 处理，仅人工核查，不复制数据文件或建立适配器。GGG 0.5.0 的一组工艺上限作为 primary 规则依据。钻石空映射、移除额外词缀位后的超额状态与词缀增效交互仍需单独核实；玩家帖子 [3948475](https://www.pathofexile.com/forum/view-thread/3948475)、[3958506](https://www.pathofexile.com/forum/view-thread/3958506) 只作第一手问题线索，不据此推定现行算法或概率。数据接入不代表这些操作已经可用。
+
 ### 催化剂效果预览依据（2026-09-13）
 
 缩放元数据补充来源：[同一固定 MIT 提交的 ModScalability.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModScalability.lua)。记录英文属性模板各数字的 `isScalable` 与 `formats`，用于区分可缩放数值、固定条件和内部精度。采用既有 cache.ts 构建期缓存、受限 Lua 声明解析，保留来源 SHA-256；仅选取能与当前制作目录属性对应的条目，不把其中其他游戏或历史条目扩展为 PoE2 制作资格。游戏文字版权归 GGG，MIT 只覆盖来源仓库自有部分，沿用 THIRD-PARTY-NOTICES 的 PoB 声明；用户浏览器不访问第三方。

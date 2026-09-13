@@ -4,6 +4,7 @@ import {
   type CraftCatalog,
   DESECRATION_SOURCE,
   JEWEL_SOURCE,
+  LIQUID_EMOTION_SOURCE,
   parseCraftCatalog,
   STAT_SCALABILITY_SOURCE,
 } from '@poe2-tools/item-core'
@@ -13,6 +14,8 @@ import { normalizeMod } from './adapters/craftCatalog'
 import { normalizeDesecratedMods } from './adapters/craftDesecrated'
 import { normalizeEssences } from './adapters/craftEssences'
 import { normalizeJewelMods } from './adapters/craftJewels'
+import { auditLiquidEmotionMappings } from './adapters/craftLiquidEmotionAudit'
+import { normalizeLiquidEmotions } from './adapters/craftLiquidEmotions'
 import { buildCraftNames } from './adapters/craftNames'
 import { normalizeCraftScalability } from './adapters/craftScalability'
 import { excludeDeclaration } from './adapters/craftSourceExclusions'
@@ -86,8 +89,14 @@ const modifiers = Object.entries(rawMods).map(([id, raw]) => {
   if (raw === null || typeof raw !== 'object') throw new Error(`词缀 ${id} 不是表`)
   return normalizeMod(id, raw)
 })
-const jewels = normalizeJewelMods(parsePobModFile(await source('ModJewel', JEWEL_SOURCE.sha256)))
+const rawJewelMods = parsePobModFile(await source('ModJewel', JEWEL_SOURCE.sha256))
+const jewels = normalizeJewelMods(rawJewelMods)
 modifiers.push(...jewels.modifiers)
+const liquidEmotions = normalizeLiquidEmotions(
+  parsePobModFile(await source('LiquidEmotions', LIQUID_EMOTION_SOURCE.sha256)),
+)
+const emotionAudit = auditLiquidEmotionMappings(liquidEmotions, rawJewelMods)
+console.log(`液态情感声明审计：${JSON.stringify(emotionAudit)}；材料映射不等于可执行制作规则`)
 const augments = normalizeAugments(
   parsePobModFile(
     await source('ModRunes', 'd3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a'),
@@ -192,6 +201,7 @@ const catalog: CraftCatalog = {
   modifiers,
   augments,
   essences,
+  liquidEmotions,
   localizedNames,
   scalability: scalability.lines,
 }

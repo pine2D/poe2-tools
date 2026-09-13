@@ -50,6 +50,24 @@ export interface CatalogEssence {
   mods: Record<string, string>
 }
 
+export type CatalogLiquidEmotionJewel = 'Ruby' | 'Sapphire' | 'Emerald' | 'Diamond'
+
+/** 材料映射只保存来源声明，不代表对应珠宝制作当前可执行。 */
+export interface CatalogLiquidEmotion {
+  id: string
+  name: string
+  radiusJewel: boolean
+  /** 来源分层，不是装备物等门槛。 */
+  tierLevel: number
+  mods: Record<
+    CatalogLiquidEmotionJewel,
+    {
+      prefix?: string
+      suffix?: string
+    }
+  >
+}
+
 /** 来源名称和类别组成项目身份；所有限制仅保留声明，不推断缺省含义。 */
 export interface CatalogAugment {
   id: string
@@ -97,6 +115,7 @@ export interface CraftCatalog {
   modifiers: CatalogMod[]
   augments?: CatalogAugment[]
   essences?: CatalogEssence[]
+  liquidEmotions?: CatalogLiquidEmotion[]
   localizedNames?: { 'zh-CN': Record<string, string>; 'zh-TW': Record<string, string> }
   /** 按完整目录行保存，每项对应一个数字（含固定条件）；缺行不推断可缩放。 */
   scalability?: Record<string, CatalogStatScalar[]>

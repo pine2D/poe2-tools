@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { DESECRATION_FAMILIES, DESECRATION_SOURCE } from './desecration'
 import { JEWEL_SOURCE } from './jewels'
+import { LIQUID_EMOTION_SOURCE, liquidEmotionSourceHash } from './liquidEmotions'
 import { splitStatScalars, statScalabilitySourceHash } from './statScalability'
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -18,6 +19,10 @@ function numbers(value: unknown): boolean {
 
 function nonempty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function hasOwn(value: unknown, key: PropertyKey): boolean {
+  return record(value) && Object.hasOwn(value, key)
 }
 
 function validEssences(value: unknown, meta: Record<string, unknown>): boolean {
@@ -58,6 +63,48 @@ function validEssences(value: unknown, meta: Record<string, unknown>): boolean {
     typeof source.sha256 === 'string' &&
     /^[a-f0-9]{64}$/.test(source.sha256)
   )
+}
+
+const liquidEmotionCategories = ['Ruby', 'Sapphire', 'Emerald', 'Diamond'] as const
+
+function validLiquidEmotions(value: unknown, meta: Record<string, unknown>): boolean {
+  const sources = Array.isArray(meta.sources)
+    ? meta.sources.filter((source) => record(source) && source.path === LIQUID_EMOTION_SOURCE.path)
+    : []
+  if (value === undefined) return sources.length === 0
+  if (!Array.isArray(value) || value.length === 0 || value.length > 1000) return false
+  const ids = new Set<string>()
+  for (const emotion of value) {
+    if (
+      !record(emotion) ||
+      !Object.keys(emotion).every((key) =>
+        ['id', 'name', 'radiusJewel', 'tierLevel', 'mods'].includes(key),
+      ) ||
+      !nonempty(emotion.id) ||
+      !/^Metadata\/Items\/Currency\/[A-Za-z0-9_]+$/.test(emotion.id) ||
+      ids.has(emotion.id) ||
+      !nonempty(emotion.name) ||
+      typeof emotion.radiusJewel !== 'boolean' ||
+      !finite(emotion.tierLevel) ||
+      !Number.isSafeInteger(emotion.tierLevel) ||
+      emotion.tierLevel < 0 ||
+      !record(emotion.mods) ||
+      Object.keys(emotion.mods).length !== liquidEmotionCategories.length ||
+      liquidEmotionCategories.some((category) => !hasOwn(emotion.mods, category)) ||
+      Object.keys(emotion.mods).some(
+        (category) => !(liquidEmotionCategories as readonly string[]).includes(category),
+      ) ||
+      !Object.values(emotion.mods).every(
+        (effect) =>
+          record(effect) &&
+          Object.keys(effect).every((key) => key === 'prefix' || key === 'suffix') &&
+          Object.values(effect).every(nonempty),
+      )
+    )
+      return false
+    ids.add(emotion.id)
+  }
+  return liquidEmotionSourceHash({ _meta: meta } as unknown as CraftCatalog) !== null
 }
 
 const nameSourceHosts = {
@@ -183,6 +230,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
   if (!record(value) || !record(value._meta)) return invalid()
   const meta = value._meta
   if (!validEssences(value.essences, meta)) return invalid()
+  if (!validLiquidEmotions(value.liquidEmotions, meta)) return invalid()
   if (!validNames(value.localizedNames, meta.nameSources)) return invalid()
   if (
     meta.schemaVersion !== 2 ||
