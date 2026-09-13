@@ -1,7 +1,8 @@
 import { CRAFT_RULES_VERSION, type CraftCatalog, type CraftProject } from '@poe2-tools/item-core'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProjectControls, REHEARSAL_PROJECT_KEY } from './ProjectControls'
+import { addLibraryEntry, LIBRARY_PREFIX } from './projectLibrary'
 
 const catalog: CraftCatalog = {
   _meta: {
@@ -48,9 +49,18 @@ const project: CraftProject = {
   cursor: 0,
 }
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  Object.defineProperty(navigator, 'locks', {
+    configurable: true,
+    value: {
+      request: async (_name: string, callback: () => unknown) => callback(),
+    },
+  })
+})
 afterEach(() => {
   cleanup()
+  Reflect.deleteProperty(navigator, 'locks')
   vi.restoreAllMocks()
 })
 
@@ -118,4 +128,70 @@ describe('ProjectControls', () => {
     await Promise.resolve()
     expect(onRestore).toHaveBeenCalledTimes(1)
   })
+})
+
+it('收藏多份完整项目并独立恢复，坏项目仍须经过校验', async () => {
+  const onRestore = vi.fn()
+  const { rerender } = render(
+    <ProjectControls catalog={catalog} project={project} onRestore={onRestore} />,
+  )
+  fireEvent.click(screen.getByText('演练收藏'))
+  fireEvent.change(screen.getByLabelText('收藏名称'), { target: { value: '甲' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '收藏当前演练' }))
+  })
+  rerender(
+    <ProjectControls
+      catalog={catalog}
+      project={{ ...project, initialState: { ...initialState, itemLevel: 90 } }}
+      onRestore={onRestore}
+    />,
+  )
+  fireEvent.change(screen.getByLabelText('收藏名称'), { target: { value: '乙' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '收藏当前演练' }))
+  })
+  expect(localStorage.getItem(REHEARSAL_PROJECT_KEY)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '恢复收藏 甲' }))
+  expect(onRestore.mock.calls[0]?.[0].states[0].itemLevel).toBe(80)
+  fireEvent.click(screen.getByRole('button', { name: '恢复收藏 乙' }))
+  expect(onRestore.mock.calls[1]?.[0].states[0].itemLevel).toBe(90)
+  localStorage.setItem(
+    `${LIBRARY_PREFIX}bad`,
+    JSON.stringify({
+      version: 1,
+      name: '坏项目',
+      savedAt: new Date().toISOString(),
+      text: '{broken',
+    }),
+  )
+  fireEvent(window, new StorageEvent('storage', { key: `${LIBRARY_PREFIX}bad` }))
+  fireEvent.click(screen.getByRole('button', { name: '恢复收藏 坏项目' }))
+  expect(onRestore).toHaveBeenCalledTimes(2)
+  expect(screen.getByRole('status').textContent).toMatch(/JSON|损坏/)
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '移除收藏 甲' }))
+  })
+  expect(screen.queryByRole('button', { name: '恢复收藏 甲' })).toBeNull()
+  expect(screen.getByRole('button', { name: '恢复收藏 乙' })).toBeDefined()
+})
+
+it('收藏恢复会使先前异步文件读取失效，且没有当前项目时仍能恢复', async () => {
+  let resolveFile: ((text: string) => void) | undefined
+  const delayed = new Promise<string>((resolve) => {
+    resolveFile = resolve
+  })
+  const file = new File([''], 'old.craft.json')
+  Object.defineProperty(file, 'text', { value: () => delayed })
+  await addLibraryEntry(localStorage, '已确认', JSON.stringify(project))
+  const onRestore = vi.fn()
+  render(<ProjectControls catalog={catalog} onRestore={onRestore} />)
+  fireEvent.change(screen.getByLabelText('选择演练项目文件'), { target: { files: [file] } })
+  fireEvent.click(screen.getByText('演练收藏'))
+  fireEvent.click(screen.getByRole('button', { name: '恢复收藏 已确认' }))
+  expect(onRestore).toHaveBeenCalledTimes(1)
+  resolveFile?.(JSON.stringify(project))
+  await delayed
+  await Promise.resolve()
+  expect(onRestore).toHaveBeenCalledTimes(1)
 })

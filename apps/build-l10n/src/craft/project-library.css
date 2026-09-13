@@ -1,0 +1,50 @@
+.project-library {
+  flex-basis: 100%;
+  min-width: 0;
+}
+.project-library > * + * {
+  margin-top: 0.75rem;
+}
+.project-library-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+.project-library-save label {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.project-library input {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+.project-library ul {
+  list-style: none;
+  padding: 0;
+}
+.project-library li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--line);
+  padding: 0.75rem 0;
+}
+.project-library li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.project-library time {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.project-library-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

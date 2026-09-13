@@ -9,6 +9,8 @@ import {
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 
+import { ProjectLibrary } from './ProjectLibrary'
+
 export const REHEARSAL_PROJECT_KEY = 'poe2-tools:craft-rehearsal:v1'
 export interface ProjectControlsProps {
   catalog: CraftCatalog
@@ -148,6 +150,12 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
           void importFile(event.target.files?.[0])
           event.target.value = ''
         }}
+      />
+      <ProjectLibrary
+        canSave={Boolean(project)}
+        getText={validatedText}
+        onRestoreText={(text) => restoreText(text, ++requestRef.current)}
+        onMessage={setMessage}
       />
       {message && <p role="status">{message}</p>}
     </section>
