@@ -6,6 +6,7 @@ import {
   type BoneDirectionOmen,
   type BoneLichOmen,
   type BoneOmenConfig,
+  boneRevealOmenError,
   type CatalogMod,
   type CraftBone,
   type CraftCatalog,
@@ -19,7 +20,7 @@ import {
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
-import { boneOmenLabels } from './boneOmenLabels'
+import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
@@ -58,8 +59,16 @@ export function BoneCraftPanel({
   const [removeModId, setRemoveModId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [options, setOptions] = useState<string[]>([])
-  const [reveal, setReveal] = useState<{ modId: string; values: number[] } | null>(null)
+  const [echoes, setEchoes] = useState(false)
+  const [selectingReroll, setSelectingReroll] = useState(false)
+  const [reveal, setReveal] = useState<{
+    modId: string
+    values: number[]
+    group: 'first' | 'second'
+  } | null>(null)
   const pending = state.pendingDesecration
+  const echoesError = pending ? boneRevealOmenError(pending, 'abyssal_echoes') : null
+  const echoesLabel = boneRevealOmenLabel('abyssal_echoes', catalog, translations)
   const materials = useMemo(
     () =>
       Object.entries(BONE_RULES).flatMap(([key, rule]) =>
@@ -154,11 +163,134 @@ export function BoneCraftPanel({
       <p>未对应当前普通目标。</p>
     )
 
+  const candidatePicker = (second: boolean) => {
+    const label = second ? '第二组合法候选' : '合法揭示候选'
+    return (
+      <>
+        <p>
+          {second
+            ? '指定第二组三项；首组仍保留，重选不额外计费。'
+            : '从合法候选中指定恰好三项；只固定选项，不会立即获得其中属性。'}
+        </p>
+        <label>
+          搜索揭示候选
+          <input
+            type="search"
+            aria-label="搜索揭示候选"
+            placeholder="中文、英文或词缀ID"
+            value={query}
+            disabled={disabled}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <p>
+          已选择 {options.length}/3；当前有 {candidates.length} 个合法候选。
+        </p>
+        {options.length ? <p>本次选择：{options.join('、')}</p> : null}
+        {candidates.length < 3 ? (
+          <p>合法候选不足三项，当前不能固定揭示选项；可撤销骨骼步骤。</p>
+        ) : null}
+        {/* biome-ignore lint/a11y/noNoninteractiveTabindex: 候选滚动区支持键盘滚动。 */}
+        <section className="essence-catalog-list" aria-label={label} tabIndex={0}>
+          {matches.slice(0, 60).map((mod) => (
+            <article key={mod.id}>
+              <label>
+                <input
+                  type="checkbox"
+                  aria-label={`${second ? '第二组候选' : '候选'} ${mod.id}`}
+                  checked={options.includes(mod.id)}
+                  disabled={disabled || (!options.includes(mod.id) && options.length === 3)}
+                  onChange={() =>
+                    setOptions((current) =>
+                      current.includes(mod.id)
+                        ? current.filter((entry) => entry !== mod.id)
+                        : [...current, mod.id],
+                    )
+                  }
+                />
+                {mod.id} · {translations[mod.name] ?? mod.name}
+              </label>
+              <p>
+                {mod.kind === 'prefix' ? '前缀' : '后缀'} · 等级 {mod.level} ·{' '}
+                {mod.desecratedOnly ? '亵渎专属候选' : '普通候选'}
+              </p>
+              {lines(mod)}
+              {targetNotice(mod.id)}
+            </article>
+          ))}
+        </section>
+        {matches.length > 60 ? <p>显示前60项，请搜索缩小范围；已选候选不会因筛选丢失。</p> : null}
+        {!matches.length ? <p>没有匹配的候选。</p> : null}
+        <button
+          type="button"
+          disabled={disabled || options.length !== 3 || (!second && echoes && Boolean(echoesError))}
+          onClick={() =>
+            onPreview(
+              second
+                ? { kind: 'desecration-reroll', modIds: [...options] }
+                : {
+                    kind: 'desecration-offer',
+                    modIds: [...options],
+                    ...(echoes ? { revealOmen: 'abyssal_echoes' as const } : {}),
+                  },
+            )
+          }
+        >
+          {second ? '预览第二组三项' : '预览三项候选'}
+        </button>
+      </>
+    )
+  }
+  const fixedGroup = (ids: string[], second: boolean) => (
+    <section
+      aria-label={
+        second ? '第二组揭示选项' : pending?.rerollOptions ? '首组揭示选项' : '固定揭示选项'
+      }
+      className="essence-catalog-list"
+    >
+      {ids.map((modId) => {
+        const mod = byId.get(modId)
+        if (!mod) return <p key={modId}>候选已不在目录中：{modId}</p>
+        return (
+          <article key={mod.id}>
+            <h4>
+              {mod.id} · {translations[mod.name] ?? mod.name}
+            </h4>
+            <p>
+              等级 {mod.level} · {mod.desecratedOnly ? '亵渎专属候选' : '普通候选'}
+            </p>
+            {lines(mod)}
+            {targetNotice(mod.id)}
+            <button
+              type="button"
+              aria-pressed={
+                reveal?.modId === mod.id && reveal.group === (second ? 'second' : 'first')
+              }
+              disabled={disabled}
+              onClick={() => {
+                setSelectingReroll(false)
+                setOptions([])
+                const numeric = inspectNumericLines(mod.lines)
+                if (numeric.ok)
+                  setReveal({
+                    group: second ? 'second' : 'first',
+                    modId: mod.id,
+                    values: numeric.value.map((range) => range.min),
+                  })
+              }}
+            >
+              {second ? '第二组：' : pending?.rerollOptions ? '首组：' : ''}选择揭示 {mod.id}
+            </button>
+          </article>
+        )
+      })}
+    </section>
+  )
   return (
     <section className="essence-catalog essence-craft" aria-label="骨骼与揭示">
       <h3>骨骼与揭示</h3>
       <p>
-        指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份所选预兆；固定三项与完成揭示不重复计费。
+        指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份施加预兆；回响在固定首组时另计一份，重选与最终揭示不重复计费。
       </p>
       {disabled ? <p>请先应用或取消当前草稿。</p> : null}
       {!pending ? (
@@ -367,103 +499,72 @@ export function BoneCraftPanel({
           ) : null}
           {!pending.options ? (
             <>
-              <p>从合法候选中指定恰好三项；只固定选项，不会立即获得其中属性。</p>
               <label>
-                搜索揭示候选
                 <input
-                  type="search"
-                  aria-label="搜索揭示候选"
-                  placeholder="中文、英文或词缀ID"
-                  value={query}
-                  disabled={disabled}
-                  onChange={(event) => setQuery(event.target.value)}
+                  type="checkbox"
+                  aria-label="首次揭示使用深渊回响"
+                  checked={echoes}
+                  disabled={disabled || Boolean(echoesError)}
+                  onChange={(event) => setEchoes(event.target.checked)}
                 />
+                首次揭示使用{echoesLabel}
               </label>
               <p>
-                已选择 {options.length}/3；当前有 {candidates.length} 个合法候选。
+                必须在看到首组选项前声明；成功固定首组即消耗一份，之后不重选也不退还。预览或取消不计费。
               </p>
-              {options.length ? <p>本次选择：{options.join('、')}</p> : null}
-              {candidates.length < 3 ? (
-                <p>合法候选不足三项，当前不能固定揭示选项；可撤销骨骼步骤。</p>
-              ) : null}
-              {/* biome-ignore lint/a11y/noNoninteractiveTabindex: 候选滚动区支持键盘滚动。 */}
-              <section className="essence-catalog-list" aria-label="合法揭示候选" tabIndex={0}>
-                {matches.slice(0, 60).map((mod) => (
-                  <article key={mod.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        aria-label={`候选 ${mod.id}`}
-                        checked={options.includes(mod.id)}
-                        disabled={disabled || (!options.includes(mod.id) && options.length === 3)}
-                        onChange={() =>
-                          setOptions((current) =>
-                            current.includes(mod.id)
-                              ? current.filter((entry) => entry !== mod.id)
-                              : [...current, mod.id],
-                          )
-                        }
-                      />
-                      {mod.id} · {translations[mod.name] ?? mod.name}
-                    </label>
-                    <p>
-                      {mod.kind === 'prefix' ? '前缀' : '后缀'} · 等级 {mod.level} ·{' '}
-                      {mod.desecratedOnly ? '亵渎专属候选' : '普通候选'}
-                    </p>
-                    {lines(mod)}
-                    {targetNotice(mod.id)}
-                  </article>
-                ))}
-              </section>
-              {matches.length > 60 ? (
-                <p>显示前60项，请搜索缩小范围；已选候选不会因筛选丢失。</p>
-              ) : null}
-              {!matches.length ? <p>没有匹配的候选。</p> : null}
-              <button
-                type="button"
-                disabled={disabled || options.length !== 3}
-                onClick={() => onPreview({ kind: 'desecration-offer', modIds: [...options] })}
-              >
-                预览三项候选
-              </button>
+              {echoesError ? <p role="status">{echoesError}</p> : null}
+              {candidatePicker(false)}
             </>
           ) : (
             <>
-              <h4>已固定三项候选</h4>
-              <p>这些选项随项目保存；更换三项需要撤销固定候选这一步。</p>
-              <section aria-label="固定揭示选项" className="essence-catalog-list">
-                {pending.options.map((modId) => {
-                  const mod = byId.get(modId)
-                  if (!mod) return <p key={modId}>候选已不在目录中：{modId}</p>
-                  return (
-                    <article key={mod.id}>
-                      <h4>
-                        {mod.id} · {translations[mod.name] ?? mod.name}
-                      </h4>
-                      <p>
-                        等级 {mod.level} · {mod.desecratedOnly ? '亵渎专属候选' : '普通候选'}
-                      </p>
-                      {lines(mod)}
-                      {targetNotice(mod.id)}
+              <h4>{pending.rerollOptions ? '首组三项候选' : '已固定三项候选'}</h4>
+              <p>首组选项随项目保存；不能在看到首组后补用深渊回响。</p>
+              {pending.revealOmen ? (
+                <p>{echoesLabel}已在首组固定时消耗；重选和最终揭示不额外计费。</p>
+              ) : null}
+              {fixedGroup(pending.options, false)}
+              {pending.rerollOptions ? (
+                <>
+                  <h4>第二组三项候选</h4>
+                  <p>两组均可选择；跨组同一词缀只会获得一条实际属性。每组独立，不代表概率分布。</p>
+                  {fixedGroup(pending.rerollOptions, true)}
+                </>
+              ) : null}
+              {pending.revealOmen && !pending.rerollOptions ? (
+                <>
+                  <p>已购买一次重选机会；可以直接揭示首组，或指定第二组三项，首组仍保留。</p>
+                  {!selectingReroll ? (
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        setSelectingReroll(true)
+                        setOptions([])
+                        setQuery('')
+                        setReveal(null)
+                      }}
+                    >
+                      指定第二组三项
+                    </button>
+                  ) : (
+                    <>
+                      <h4>指定第二组三项</h4>
+                      {candidatePicker(true)}
                       <button
                         type="button"
-                        aria-pressed={reveal?.modId === mod.id}
                         disabled={disabled}
                         onClick={() => {
-                          const numeric = inspectNumericLines(mod.lines)
-                          if (numeric.ok)
-                            setReveal({
-                              modId: mod.id,
-                              values: numeric.value.map((range) => range.min),
-                            })
+                          setSelectingReroll(false)
+                          setOptions([])
                         }}
                       >
-                        选择揭示 {mod.id}
+                        取消第二组选项
                       </button>
-                    </article>
-                  )
-                })}
-              </section>
+                    </>
+                  )}
+                </>
+              ) : null}
+
               {selected && reveal ? (
                 <>
                   {affected(selected.id).length && bounds?.length ? (

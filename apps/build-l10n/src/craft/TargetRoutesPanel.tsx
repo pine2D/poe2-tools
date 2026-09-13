@@ -14,7 +14,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 import { BoneOperationDetails } from './BoneAdvicePanel'
-import { boneOmenLabels } from './boneOmenLabels'
+import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
@@ -90,7 +90,12 @@ function RouteSearch({
         catalog.essences?.find((e) => e.id === step.essenceId)?.name ?? step.essenceId,
       )
     if (step.kind === 'desecrate') return localize(BONE_RULES[step.boneId].name)
-    if (step.kind === 'desecration-offer') return '固定三项亵渎候选'
+    if (step.kind === 'desecration-offer')
+      return (
+        '固定三项亵渎候选' +
+        (step.revealOmen ? ` + ${boneRevealOmenLabel(step.revealOmen, catalog, translations)}` : '')
+      )
+    if (step.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
     return step.kind === 'socket' ? '符文' : '巧匠石'
   }
@@ -195,9 +200,16 @@ function RouteSearch({
           {result.value.routes.map((route, index) => {
             const costs = new Map<string, number>()
             for (const step of route.steps) {
+              if ('kind' in step.operation && step.operation.kind === 'desecration-offer') {
+                if (step.operation.revealOmen) {
+                  const name = boneRevealOmenLabel(step.operation.revealOmen, catalog, translations)
+                  costs.set(name, (costs.get(name) ?? 0) + 1)
+                }
+                continue
+              }
               if (
                 'kind' in step.operation &&
-                (step.operation.kind === 'desecration-offer' ||
+                (step.operation.kind === 'desecration-reroll' ||
                   step.operation.kind === 'desecration-reveal')
               )
                 continue
@@ -247,6 +259,7 @@ function RouteSearch({
                         {'kind' in step.operation &&
                         (step.operation.kind === 'desecrate' ||
                           step.operation.kind === 'desecration-offer' ||
+                          step.operation.kind === 'desecration-reroll' ||
                           step.operation.kind === 'desecration-reveal') ? (
                           <BoneOperationDetails
                             catalog={catalog}

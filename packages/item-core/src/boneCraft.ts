@@ -152,8 +152,14 @@ export function applyBoneCraft(
   const pending = current.pendingDesecration
   if (!pending) return { ok: false, error: '当前没有待揭示亵渎占位。' }
   const candidates = desecrationCandidates(catalog, current)
-  if (step.kind === 'desecration-offer') {
-    if (pending.options) return { ok: false, error: '候选已经固定；重新指定须先撤销历史。' }
+  if (step.kind === 'desecration-offer' || step.kind === 'desecration-reroll') {
+    if (
+      step.kind === 'desecration-reroll' &&
+      (!pending.revealOmen || !pending.options || pending.rerollOptions)
+    )
+      return { ok: false, error: '只能在首次候选已声明深渊回响且尚未重选时固定第二组。' }
+    if (step.kind === 'desecration-offer' && pending.options)
+      return { ok: false, error: '候选已经固定；重新指定须先撤销历史。' }
     if (
       candidates.length < 3 ||
       !step.modIds.every((id) => candidates.some((mod) => mod.id === id))
@@ -161,12 +167,22 @@ export function applyBoneCraft(
       return { ok: false, error: '必须指定恰好三项当前合法候选；不会填充未知选项。' }
     return createCraftState(catalog, {
       ...current,
-      pendingDesecration: { ...pending, options: [...step.modIds] },
+      pendingDesecration: {
+        ...pending,
+        ...(step.kind === 'desecration-reroll'
+          ? { rerollOptions: [...step.modIds] }
+          : {
+              options: [...step.modIds],
+              ...(step.revealOmen ? { revealOmen: step.revealOmen } : {}),
+            }),
+      },
     })
   }
+  const offeredIds = [...(pending.options ?? []), ...(pending.rerollOptions ?? [])]
   if (
-    !pending.options?.every((id) => candidates.some((mod) => mod.id === id)) ||
-    !pending.options.includes(step.modId)
+    !pending.options ||
+    !offeredIds.every((id) => candidates.some((mod) => mod.id === id)) ||
+    !offeredIds.includes(step.modId)
   )
     return { ok: false, error: '必须从已固定且仍合法的三项候选中揭示。' }
   const mod = candidates.find((entry) => entry.id === step.modId)

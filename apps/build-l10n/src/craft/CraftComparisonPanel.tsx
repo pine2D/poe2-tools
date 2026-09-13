@@ -10,7 +10,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useMemo } from 'react'
 import './comparison.css'
-import { boneOmenLabels } from './boneOmenLabels'
+import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { ModStateBadges } from './ModStateBadges'
 
 interface CraftComparisonPanelProps {
@@ -100,12 +100,23 @@ export function CraftComparisonPanel({
                   .join('、')}`,
               ]
             : []),
+          ...(pending.revealOmen
+            ? [
+                `揭示预兆：${boneRevealOmenLabel(pending.revealOmen, catalog, translations)}（已购买一次重选机会）`,
+              ]
+            : []),
           ...(pending.options
             ? [
-                '已固定三项候选',
+                pending.rerollOptions ? '首组三项候选' : '已固定三项候选',
                 ...pending.options.flatMap((id) => [id, ...(modById.get(id)?.lines ?? [])]),
               ]
             : ['候选尚未固定']),
+          ...(pending.rerollOptions
+            ? [
+                '第二组三项候选',
+                ...pending.rerollOptions.flatMap((id) => [id, ...(modById.get(id)?.lines ?? [])]),
+              ]
+            : []),
         ]
       : null
   return (

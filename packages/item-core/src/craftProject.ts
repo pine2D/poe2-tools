@@ -43,7 +43,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v25'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v26'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -95,7 +95,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 25 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 26 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -473,6 +473,22 @@ export function parseCraftProject(
     )
   )
     return fail('旧规则项目不能包含骨骼施加预兆字段。')
+  if (
+    rulesVersion < 26 &&
+    ((record(value.initialState) &&
+      record(value.initialState.pendingDesecration) &&
+      (Object.hasOwn(value.initialState.pendingDesecration, 'revealOmen') ||
+        Object.hasOwn(value.initialState.pendingDesecration, 'rerollOptions'))) ||
+      (Array.isArray(value.operations) &&
+        value.operations.some(
+          (step) =>
+            record(step) &&
+            (step.kind === 'desecration-reroll' ||
+              Object.hasOwn(step, 'revealOmen') ||
+              Object.hasOwn(step, 'rerollOptions')),
+        )))
+  )
+    return fail('v2–v25旧版项目不能包含深渊回响或第二组揭示字段。')
   if (rulesVersion < 20) {
     const initial = record(value.initialState) ? value.initialState : undefined
     const parsedSource =

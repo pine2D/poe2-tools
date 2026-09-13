@@ -1,7 +1,9 @@
 import {
   BONE_DIRECTION_OMEN_RULES,
   BONE_LICH_OMEN_RULES,
+  BONE_REVEAL_OMEN_RULES,
   type BoneOmenConfig,
+  type BoneRevealOmen,
   type CraftCatalog,
 } from '@poe2-tools/item-core'
 
@@ -22,4 +24,13 @@ export function boneOmenLabels(
     id,
     label: translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name,
   }))
+}
+
+export function boneRevealOmenLabel(
+  omen: BoneRevealOmen,
+  catalog: CraftCatalog,
+  translations: Record<string, string>,
+): string {
+  const name = BONE_REVEAL_OMEN_RULES[omen].name
+  return translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
 }

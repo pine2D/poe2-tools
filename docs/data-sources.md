@@ -148,3 +148,7 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 ### 骨骼施加预兆（v25）
 
 人工核对 [GGG员工说明](https://www.pathofexile.com/forum/view-thread/3834266/filter-account-type/staff)及[正式0.3.0c](https://www.pathofexile.com/forum/view-thread/3851277/filter-account-type/staff)：三枚指定巫妖预兆仅支持武器和首饰，属primary部位证据。两枚定向死灵及Liege/Sovereign/Blackblooded的触发、方向和保证属性措辞沿[已登记Omen页](https://poe2db.tw/us/Omen)公开游戏文本转录人工核对，gray，仅说明参考，不下载其词缀表、概率、代码或规则数据文件；名称复用原三服官方static，巫妖标签复用固定MIT ModVeiled。同巫妖候选另核对[作者Lolcohol实作](https://mobalytics.gg/poe-2/guides/blood-mage-amulet-craft)及其游戏揭示截图，截图仅临时查看、不入库，按gray人工规则参考；正文一处把Sovereign误写Liege，名称映射以物品原文为准。当前仅实现至少三项合法同家族时的三候选演练；0/1/2候选的补齐、减项或消费没有充分证据，明确工具未支持，不推断游戏禁止；全部交互仍待真机。GGG论坛3849983玩家复现仅用于识别冲突/无候选反例，不当staff规则声明。没有新增网络适配器或浏览器第三方请求。
+
+### 深渊回响（v26）
+
+[GGG0.3.0b](https://www.pathofexile.com/forum/view-thread/3840893)确认修复已显示候选后补用深渊回响的错误，primary时机证据。[作者Lolcohol指南](https://mobalytics.gg/poe-2/profile/lolcohol/guides/abyss-and-desecration-crafting-poe-2-0-3)更新2026-07-07说明重选后可选回第一组三项；[首次反馈](https://www.pathofexile.com/forum/view-thread/3858859)及[未重选仍消费报告](https://www.pathofexile.com/forum/view-thread/3868988)支持首次得到机会即消费，按gray人工规则参考，不视为官方完整算法。名称复用既有三服static，公开Omen页措辞仅人工核查。[旧低档争议](https://www.pathofexile.com/forum/view-thread/3860899)混合Preserved/Essence/Putrefaction，不能判断当前普通Ancient或巫妖限定在第二组是否保留；证据不足，工具明确未验证该组合。没有新数据适配器、权重或解包数据，网页不向第三方请求装备。

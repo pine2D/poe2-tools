@@ -8,7 +8,7 @@ import {
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
-import { boneOmenLabels } from './boneOmenLabels'
+import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 
 interface Labels {
   catalog: CraftCatalog
@@ -67,16 +67,30 @@ export function BoneOperationDetails({
         ) : null}
       </div>
     )
-  if (operation.kind === 'desecration-offer')
+  if (operation.kind === 'desecration-offer' || operation.kind === 'desecration-reroll')
     return (
-      <section aria-label="建议固定三项候选">
-        <p>演练指定以下三项候选，最终只选择一项；不保证游戏出现这些选项。</p>
+      <section
+        aria-label={
+          operation.kind === 'desecration-reroll' ? '建议固定第二组三项' : '建议固定三项候选'
+        }
+      >
+        <p>
+          {operation.kind === 'desecration-reroll'
+            ? '固定第二组三项，首组仍保留，两组任选一项；不额外计费。'
+            : '演练指定首组三项候选，最终只选择一项；不保证游戏出现这些选项。'}
+        </p>
+        {operation.kind === 'desecration-offer' && operation.revealOmen ? (
+          <p>
+            {boneRevealOmenLabel(operation.revealOmen, catalog, translations)}
+            ：成功固定首组即消耗一份，不重选也不退还。
+          </p>
+        ) : null}
         {operation.modIds.map((id) => modDetails(id))}
       </section>
     )
   return (
     <section aria-label="建议揭示结果">
-      <p>从已固定三项中选择，以下数值为指定结果示例，不保证游戏随机数值。</p>
+      <p>从已固定的候选组中选择，以下数值为指定结果示例，不保证游戏随机数值。</p>
       {modDetails(operation.modId, operation.values)}
     </section>
   )
@@ -104,7 +118,14 @@ export function BoneAdvicePanel({
     return `${id} · ${mod?.lines.map((line) => translateLine?.(line) ?? line).join('；') ?? id}`
   }
   const title = (operation: BoneCraftOperation) => {
-    if (operation.kind === 'desecration-offer') return '固定三项亵渎候选'
+    if (operation.kind === 'desecration-offer')
+      return (
+        '固定三项亵渎候选' +
+        (operation.revealOmen
+          ? ` + ${boneRevealOmenLabel(operation.revealOmen, catalog, translations)}`
+          : '')
+      )
+    if (operation.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (operation.kind === 'desecration-reveal') return '完成亵渎揭示'
     const name = BONE_RULES[operation.boneId].name
     return [
@@ -116,7 +137,7 @@ export function BoneAdvicePanel({
     <section aria-label="骨骼目标建议">
       <h4>骨骼与揭示 · {steps.length} 种指定结果</h4>
       <p>
-        施加骨骼、固定候选、选择揭示分别作为一步演练；只在施加骨骼时消耗材料。未揭示期间的交错制作尚未在本工具实现。
+        施加骨骼、固定候选、重选和揭示分别演练；骨骼及施加预兆在施加时计费，回响在固定首组时另计一份，重选与最终揭示免费。未揭示期间的交错制作尚未在本工具实现。
       </p>
       {(showAll ? steps : steps.slice(0, 3)).map((step) => (
         <article key={JSON.stringify(step.operation)}>

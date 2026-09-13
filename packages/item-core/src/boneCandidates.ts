@@ -1,4 +1,4 @@
-import { boneOmenError, matchesBoneLich } from './boneOmens'
+import { boneOmenError, boneRevealOmenError, matchesBoneLich } from './boneOmens'
 import { BONE_RULES } from './boneRules'
 import { type CatalogMod, type CraftCatalog, inspectModPool } from './catalog'
 import { craftModsConflict } from './modConflicts'
@@ -57,14 +57,22 @@ export function pendingBoneOmenError(
   validate: (next: CraftState) => boolean,
 ): string | null {
   const pending = state.pendingDesecration
-  if (!pending || (!pending.directionOmen && !pending.lichOmen)) return null
+  if (!pending || (!pending.directionOmen && !pending.lichOmen && !pending.revealOmen)) return null
+  if (pending.revealOmen) {
+    const revealError = boneRevealOmenError(pending, pending.revealOmen)
+    if (revealError) return revealError
+  }
   const error = boneOmenError(pending, pending.boneId, pending.kind)
   if (error) return error
   const lich = pending.lichOmen
   const pool = collectDesecrationCandidates(catalog, state, validate)
   if (pool.length < 3)
     return lich ? '本工具暂不支持不足三项的巫妖候选情形。' : '本工具无法构成至少三项合法候选。'
-  if (pending.options && !pending.options.every((id) => pool.some((mod) => mod.id === id)))
+  if (
+    [...(pending.options ?? []), ...(pending.rerollOptions ?? [])].some(
+      (id) => !pool.some((mod) => mod.id === id),
+    )
+  )
     return '固定三项不满足预兆限定或当前候选资格。'
   return null
 }

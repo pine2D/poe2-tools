@@ -84,23 +84,16 @@ export function analyzeBoneTargets(
     return next ? { operation, next } : null
   }
   const pending = state.pendingDesecration
-  if (pending?.options) {
-    for (const id of [...pending.options].sort(
-      (a, b) => Number(missing.has(b)) - Number(missing.has(a)),
-    )) {
-      const targeted = reveal(state, id, true)
-      const completed = targeted ?? (!exhausted ? reveal(state, id, false) : null)
-      if (completed)
-        push(completed.operation, completed.next, missing.has(id) && targeted ? [id] : [])
-      if (exhausted) break
-    }
-    return { ok: true, value: result }
-  }
-  const offers = (current: CraftState, requireTarget: boolean) => {
+  const offers = (
+    current: CraftState,
+    requireTarget: boolean,
+    eligible = missing,
+    kind: 'desecration-offer' | 'desecration-reroll' = 'desecration-offer',
+  ) => {
     const candidates = desecrationCandidates(catalog, current)
     if (candidates.length < 3) return []
     const targets = candidates.filter(
-      (mod) => missing.has(mod.id) && minimumTargetRolls(mod.lines, bounds(mod.id)) !== null,
+      (mod) => eligible.has(mod.id) && minimumTargetRolls(mod.lines, bounds(mod.id)) !== null,
     )
     if (requireTarget && !targets.length) return []
     const seeds = targets.length ? targets : candidates.slice(0, 1)
@@ -118,11 +111,45 @@ export function analyzeBoneTargets(
       seen.add(key)
       return [
         {
-          operation: { kind: 'desecration-offer' as const, modIds },
+          operation: { kind, modIds },
           target: targets.some((target) => target.id === mod.id) ? mod.id : null,
         },
       ]
     })
+  }
+  if (pending?.options) {
+    if (pending.revealOmen && !pending.rerollOptions) {
+      const needsReroll = new Set(
+        analysis.value.targets
+          .filter((target) => {
+            if (target.matched) return false
+            return !(target.alternatives ?? [target]).some((member) => {
+              const mod = catalog.modifiers.find((mod) => mod.id === member.modId)
+              return (
+                pending.options?.includes(member.modId) &&
+                mod &&
+                minimumTargetRolls(mod.lines, bounds(member.modId)) !== null
+              )
+            })
+          })
+          .flatMap((target) => (target.alternatives ?? [target]).map((member) => member.modId)),
+      )
+      for (const proposal of offers(state, true, needsReroll, 'desecration-reroll')) {
+        const next = apply(state, proposal.operation)
+        if (next) push(proposal.operation, next, proposal.target ? [proposal.target] : [])
+        if (exhausted) break
+      }
+    }
+    for (const id of [...new Set([...pending.options, ...(pending.rerollOptions ?? [])])].sort(
+      (a, b) => Number(missing.has(b)) - Number(missing.has(a)),
+    )) {
+      const targeted = reveal(state, id, true)
+      const completed = targeted ?? (!exhausted ? reveal(state, id, false) : null)
+      if (completed)
+        push(completed.operation, completed.next, missing.has(id) && targeted ? [id] : [])
+      if (exhausted) break
+    }
+    return { ok: true, value: result }
   }
   if (pending) {
     for (const proposal of offers(state, false)) {

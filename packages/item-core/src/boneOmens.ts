@@ -47,3 +47,20 @@ export function boneOmenError(
 export function matchesBoneLich(mod: CatalogMod, lich: BoneLichOmen): boolean {
   return mod.desecratedOnly === true && mod.tags.includes(BONE_LICH_OMEN_RULES[lich].tag)
 }
+
+export const BONE_REVEAL_OMEN_RULES = {
+  abyssal_echoes: { name: 'Omen of Abyssal Echoes' },
+} as const
+export type BoneRevealOmen = keyof typeof BONE_REVEAL_OMEN_RULES
+export function isBoneRevealOmen(value: unknown): value is BoneRevealOmen {
+  return typeof value === 'string' && Object.hasOwn(BONE_REVEAL_OMEN_RULES, value)
+}
+export function boneRevealOmenError(
+  pending: { boneId: CraftBone; lichOmen?: BoneLichOmen },
+  omen: BoneRevealOmen,
+): string | null {
+  if (!isBoneRevealOmen(omen)) return '未知揭示预兆。'
+  if (pending.boneId.startsWith('ancient_') || pending.lichOmen)
+    return '本工具尚未验证深渊回响与远古骨骼或巫妖预兆的交互，暂不支持此组合。'
+  return null
+}

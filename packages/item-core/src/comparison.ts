@@ -53,17 +53,19 @@ function samePendingDesecration(
     before.boneId !== after.boneId ||
     before.kind !== after.kind ||
     before.directionOmen !== after.directionOmen ||
-    before.lichOmen !== after.lichOmen
+    before.lichOmen !== after.lichOmen ||
+    before.revealOmen !== after.revealOmen
   )
     return false
-  const previous = before.options
-  const next = after.options
-  return (
+  const sameOptions = (previous: string[] | undefined, next: string[] | undefined) =>
     previous === next ||
     (previous !== undefined &&
       next !== undefined &&
       previous.length === next.length &&
       previous.every((id, index) => id === next[index]))
+  return (
+    sameOptions(before.options, after.options) &&
+    sameOptions(before.rerollOptions, after.rerollOptions)
   )
 }
 

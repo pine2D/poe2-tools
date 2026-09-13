@@ -43,7 +43,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import './rehearsal.css'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
-import { boneOmenLabels } from './boneOmenLabels'
+import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
 import { CraftTargets } from './CraftTargets'
@@ -461,6 +461,7 @@ export function RehearsalPanel({
       if (
         operation.kind === 'desecrate' ||
         operation.kind === 'desecration-offer' ||
+        operation.kind === 'desecration-reroll' ||
         operation.kind === 'desecration-reveal'
       ) {
         startBone(operation)
@@ -556,7 +557,9 @@ export function RehearsalPanel({
     ]
     if (
       'kind' in operation &&
-      ['desecrate', 'desecration-offer', 'desecration-reveal'].includes(operation.kind)
+      ['desecrate', 'desecration-offer', 'desecration-reroll', 'desecration-reveal'].includes(
+        operation.kind,
+      )
     )
       restoreBoneFocusRef.current = true
     setHistory(next)
@@ -637,7 +640,12 @@ export function RehearsalPanel({
           BONE_RULES[step.boneId].name,
         ...boneOmenLabels(step, catalog, translations).map((entry) => entry.label),
       ].join(' + ')
-    if (step.kind === 'desecration-offer') return '固定三项亵渎候选'
+    if (step.kind === 'desecration-offer')
+      return (
+        '固定三项亵渎候选' +
+        (step.revealOmen ? ` + ${boneRevealOmenLabel(step.revealOmen, catalog, translations)}` : '')
+      )
+    if (step.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
     if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
     const name = catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文镶嵌'
@@ -645,10 +653,20 @@ export function RehearsalPanel({
   }
   const costCounts = new Map<string, { label: string; count: number }>()
   for (const { operation } of history.slice(1, cursor + 1)) {
+    if (!operation) continue
+    if ('kind' in operation && operation.kind === 'desecration-offer') {
+      if (operation.revealOmen) {
+        const id = operation.revealOmen
+        costCounts.set(id, {
+          label: boneRevealOmenLabel(id, catalog, translations),
+          count: (costCounts.get(id)?.count ?? 0) + 1,
+        })
+      }
+      continue
+    }
     if (
-      !operation ||
-      ('kind' in operation &&
-        (operation.kind === 'desecration-offer' || operation.kind === 'desecration-reveal'))
+      'kind' in operation &&
+      (operation.kind === 'desecration-reroll' || operation.kind === 'desecration-reveal')
     )
       continue
     const id =
@@ -712,7 +730,9 @@ export function RehearsalPanel({
       ({ operation }) =>
         operation &&
         'kind' in operation &&
-        ['desecrate', 'desecration-offer', 'desecration-reveal'].includes(operation.kind),
+        ['desecrate', 'desecration-offer', 'desecration-reroll', 'desecration-reveal'].includes(
+          operation.kind,
+        ),
     )
       ? desecrationSourceHash(catalog)
       : null
@@ -1097,8 +1117,12 @@ export function RehearsalPanel({
               {boneDraft.kind === 'desecrate'
                 ? '应用后消耗一份骨骼及各一份所选预兆，产生未知亵渎占位。'
                 : boneDraft.kind === 'desecration-offer'
-                  ? '应用后固定三项候选，不额外计费。'
-                  : '应用后保留所选亵渎属性，恢复常规制作，不额外计费。'}
+                  ? boneDraft.revealOmen
+                    ? '应用后固定首组三项并消耗一份深渊回响；即使不重选也不退还。'
+                    : '应用后固定三项候选，不额外计费。'
+                  : boneDraft.kind === 'desecration-reroll'
+                    ? '应用后固定第二组三项，保留首组，不额外计费。'
+                    : '应用后保留所选亵渎属性，恢复常规制作，不额外计费。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>

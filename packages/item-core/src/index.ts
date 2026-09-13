@@ -5,12 +5,15 @@ export {
   type CraftBoneAdviceStep,
 } from './boneAdvice'
 export { applyBoneCraft, desecrationCandidates, prepareDesecration } from './boneCraft'
+export type { BoneRevealOmen } from './boneOmens'
 export {
   BONE_DIRECTION_OMEN_RULES,
   BONE_LICH_OMEN_RULES,
+  BONE_REVEAL_OMEN_RULES,
   type BoneDirectionOmen,
   type BoneLichOmen,
   type BoneOmenConfig,
+  boneRevealOmenError,
 } from './boneOmens'
 export type {
   BoneCraftOperation,
@@ -18,6 +21,7 @@ export type {
   DesecrateCraftOperation,
   OfferDesecrationOperation,
   PendingDesecration,
+  RerollDesecrationOperation,
   RevealDesecrationOperation,
 } from './boneRules'
 export { BONE_RULES, isCraftBone } from './boneRules'
