@@ -1,7 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import type { CraftImplicitTargetValues } from './implicitTargets'
 import { craftAffixLimit } from './jewels'
-import { type CraftRarity, type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
   type CraftStrategyAction,
   type CraftStrategyWorkAction,
@@ -18,15 +18,14 @@ import {
   craftTargetsSatisfied,
 } from './targets'
 
-export type CraftStrategyCondition =
-  | { kind: 'selected-targets'; modIds: string[]; min: number; value: boolean }
-  | { kind: 'socket-count' | 'open-sockets'; min: number; max: number }
-  | { kind: 'always' }
-  | { kind: 'rarity'; value: CraftRarity }
-  | { kind: 'targets-met'; value: boolean }
-  | { kind: 'open-prefix' | 'open-suffix'; min: number }
-  | { kind: 'affix-count'; min: number }
-  | { kind: 'desecration-stage'; value: 'none' | 'unrevealed' | 'offered' }
+export type { CraftStrategyCondition, CraftStrategyLeafCondition } from './strategyConditions'
+
+import {
+  type CraftStrategyCondition,
+  craftStrategyLeaves,
+  readStrategyConditions,
+} from './strategyConditions'
+
 export interface CraftStrategyRule {
   stageId?: string
   nextStageId?: string
@@ -72,62 +71,6 @@ function integer(value: unknown, min: number, max: number): value is number {
 }
 const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
 
-function readCondition(value: unknown): CraftStrategyCondition | null {
-  if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds'])) return null
-  if (
-    value.kind === 'selected-targets' &&
-    keys(value, ['kind', 'modIds', 'min', 'value']) &&
-    Array.isArray(value.modIds) &&
-    value.modIds.length >= 1 &&
-    value.modIds.length <= 6 &&
-    value.modIds.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 512) &&
-    new Set(value.modIds).size === value.modIds.length &&
-    integer(value.min, 1, value.modIds.length) &&
-    typeof value.value === 'boolean'
-  )
-    return {
-      kind: 'selected-targets',
-      modIds: [...value.modIds],
-      min: value.min,
-      value: value.value,
-    }
-  if (
-    (value.kind === 'socket-count' || value.kind === 'open-sockets') &&
-    keys(value, ['kind', 'min', 'max']) &&
-    integer(value.min, 0, 3) &&
-    integer(value.max, 0, 3) &&
-    value.min <= value.max
-  )
-    return { kind: value.kind, min: value.min, max: value.max }
-  if (value.kind === 'affix-count' && keys(value, ['kind', 'min']) && integer(value.min, 0, 6))
-    return { kind: 'affix-count', min: value.min }
-  if (
-    value.kind === 'desecration-stage' &&
-    keys(value, ['kind', 'value']) &&
-    (value.value === 'none' || value.value === 'unrevealed' || value.value === 'offered')
-  )
-    return { kind: 'desecration-stage', value: value.value }
-  if (value.kind === 'always' && keys(value, ['kind'])) return { kind: 'always' }
-  if (
-    value.kind === 'rarity' &&
-    keys(value, ['kind', 'value']) &&
-    (value.value === 'normal' || value.value === 'magic' || value.value === 'rare')
-  )
-    return { kind: 'rarity', value: value.value }
-  if (
-    value.kind === 'targets-met' &&
-    keys(value, ['kind', 'value']) &&
-    typeof value.value === 'boolean'
-  )
-    return { kind: 'targets-met', value: value.value }
-  if (
-    (value.kind === 'open-prefix' || value.kind === 'open-suffix') &&
-    keys(value, ['kind', 'min']) &&
-    integer(value.min, 1, 3)
-  )
-    return { kind: value.kind, min: value.min }
-  return null
-}
 /** 只保存条件与动作，派生决策由当前装备和历史重新计算。 */
 export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
   if (!keys(value, ['maxSteps', 'rules', 'flow']) || !integer(value.maxSteps, 1, 1000))
@@ -169,12 +112,11 @@ export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
       input.conditions.length > 4
     )
       return fail(`规则 ${index + 1} 需要 1–4 个条件，且不能包含未知字段。`)
-    const conditions = input.conditions.map(readCondition)
-    if (
-      conditions.some((condition) => condition === null) ||
-      new Set(conditions.map((condition) => condition?.kind)).size !== conditions.length
-    )
-      return fail(`规则 ${index + 1} 的条件无效或类型重复。`)
+    const conditions = readStrategyConditions(input.conditions)
+    if (!conditions)
+      return fail(
+        `规则 ${index + 1} 的条件无效：最多 32 个节点、4 层嵌套，每组 1–4 项；顶层叶子类型不能重复。`,
+      )
     const action = readCraftStrategyAction(input.action)
     if (!action) return fail(`规则 ${index + 1} 的动作或预兆组合无效。`)
     if (
@@ -197,7 +139,7 @@ export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
     )
       return fail(`规则 ${index + 1} 的无法执行转向必须属于工作动作并引用已有阶段。`)
     rules.push({
-      conditions: conditions as CraftStrategyCondition[],
+      conditions,
       action,
       ...(flow ? { stageId: input.stageId as string } : {}),
       ...(typeof input.nextStageId === 'string' ? { nextStageId: input.nextStageId } : {}),
@@ -232,7 +174,7 @@ export function evaluateCraftStrategy(
   if (appliedSteps >= strategy.maxSteps) return result({ kind: 'stop', reason: 'step-limit' })
   // 失联引用不等于未达成，反向条件也不能利用被删除目标继续加工。
   for (const [ruleIndex, rule] of strategy.rules.entries()) {
-    const missing = rule.conditions.flatMap((condition) =>
+    const missing = craftStrategyLeaves(rule.conditions).flatMap((condition) =>
       condition.kind === 'selected-targets'
         ? condition.modIds.filter((id) => !goals.targetModIds?.includes(id))
         : [],
@@ -258,7 +200,7 @@ export function evaluateCraftStrategy(
   const matchedTargets = new Set<string>()
   if (
     strategy.rules.some((rule) =>
-      rule.conditions.some(
+      craftStrategyLeaves(rule.conditions).some(
         (condition) => condition.kind === 'targets-met' || condition.kind === 'selected-targets',
       ),
     )
@@ -281,14 +223,24 @@ export function evaluateCraftStrategy(
       (goals.targetModIds?.length ?? 0) + (goals.targetImplicitValues?.length ?? 0) > 0 &&
       craftTargetsSatisfied(advice.value, goals.minimumTargetCount, goals.targetFracturedModId)
   }
-  const matches = (condition: CraftStrategyCondition): boolean => {
+  const matches = (condition: CraftStrategyCondition): boolean | null => {
+    if (condition.kind === 'not') {
+      const matched = matches(condition.condition)
+      return matched === null ? null : !matched
+    }
+    if (condition.kind === 'all' || condition.kind === 'any') {
+      const values = condition.conditions.map(matches)
+      if (condition.kind === 'all')
+        return values.includes(false) ? false : values.includes(null) ? null : true
+      return values.includes(true) ? true : values.includes(null) ? null : false
+    }
     if (condition.kind === 'selected-targets')
       return (
         condition.modIds.filter((id) => matchedTargets.has(id)).length >= condition.min ===
         condition.value
       )
     if (condition.kind === 'socket-count' || condition.kind === 'open-sockets') {
-      if (state.sockets === undefined) return false
+      if (state.sockets === undefined) return null
       const count =
         condition.kind === 'socket-count'
           ? state.sockets.length
@@ -316,7 +268,9 @@ export function evaluateCraftStrategy(
   while (true) {
     if (currentStage) visited.add(currentStage)
     const ruleIndex = strategy.rules.findIndex(
-      (rule) => (!strategy.flow || rule.stageId === currentStage) && rule.conditions.every(matches),
+      (rule) =>
+        (!strategy.flow || rule.stageId === currentStage) &&
+        rule.conditions.every((condition) => matches(condition) === true),
     )
     const rule = strategy.rules[ruleIndex]
     if (!rule) return result({ kind: 'unmatched' })

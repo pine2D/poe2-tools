@@ -74,3 +74,28 @@
 .strategy-flow-stage input {
   max-width: 100%;
 }
+
+.strategy-condition-tree {
+  min-width: 0;
+  width: 100%;
+}
+.craft-strategy .strategy-condition-group {
+  margin-inline: 0;
+  padding: 0.5rem;
+}
+.strategy-condition-group legend {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .craft-strategy .strategy-condition-group {
+    padding-inline: 0.25rem;
+  }
+  .craft-strategy .strategy-condition-group .strategy-condition-group {
+    border: 0;
+    border-left: 2px solid var(--line);
+    border-radius: 0;
+    padding-inline: 0.25rem 0;
+  }
+}

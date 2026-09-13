@@ -47,6 +47,7 @@ import { importCraftState } from './rehearsalImport'
 import { isSupportedArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { statScalabilitySourceHash } from './statScalability'
+import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
 import {
   type CraftTargetAlternative,
@@ -56,7 +57,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v45'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v46'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -115,7 +116,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 45 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 46 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -483,13 +484,20 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (
+      rulesVersion < 46 &&
+      read.value.rules.some((rule) =>
+        rule.conditions.some((condition) => ['all', 'any', 'not'].includes(condition.kind)),
+      )
+    )
+      return fail('v45 及更早项目不能包含嵌套条件。')
     if (rulesVersion < 45 && read.value.rules.some((rule) => rule.onBlockedStageId !== undefined))
       return fail('v44 及更早项目不能包含无法执行时的阶段转向。')
     if (rulesVersion < 44 && read.value.rules.some((rule) => rule.action.kind === 'jump'))
       return fail('v43 及更早项目不能包含纯条件跳转。')
     if (rulesVersion < 43 && read.value.flow) return fail('v42 及更早项目不能包含分阶段流程。')
     const selectedTargets = read.value.rules.flatMap((rule) =>
-      rule.conditions.flatMap((condition) =>
+      craftStrategyLeaves(rule.conditions).flatMap((condition) =>
         condition.kind === 'selected-targets' ? condition.modIds : [],
       ),
     )
@@ -502,7 +510,7 @@ export function parseCraftProject(
       read.value.rules.some(
         (rule) =>
           ['artificer', 'socket'].includes(rule.action.kind) ||
-          rule.conditions.some((condition) =>
+          craftStrategyLeaves(rule.conditions).some((condition) =>
             ['socket-count', 'open-sockets'].includes(condition.kind),
           ),
       )
@@ -523,7 +531,7 @@ export function parseCraftProject(
       read.value.rules.some(
         (rule) =>
           !['stop', 'currency'].includes(rule.action.kind) ||
-          rule.conditions.some((condition) =>
+          craftStrategyLeaves(rule.conditions).some((condition) =>
             ['affix-count', 'desecration-stage'].includes(condition.kind),
           ),
       )

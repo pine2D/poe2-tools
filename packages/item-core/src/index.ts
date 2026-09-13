@@ -96,6 +96,7 @@ export type {
   CraftStrategyCondition,
   CraftStrategyDecision,
   CraftStrategyGoals,
+  CraftStrategyLeafCondition,
   CraftStrategyRule,
   CraftStrategyWorkAction,
 } from './craftStrategy'

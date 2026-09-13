@@ -8,38 +8,15 @@ import {
   type CraftStrategyRule,
   type CraftStrategyWorkAction,
   evaluateCraftStrategy,
+  readCraftStrategy,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useState } from 'react'
 import './strategy.css'
 import { CraftStrategyActionEditor, strategyActionLabel } from './CraftStrategyActionEditor'
+import { defaultCondition } from './StrategyConditionEditor'
+import { StrategyConditionTree } from './StrategyConditionTree'
 import { StrategyFlowEditor, StrategyRuleStages } from './StrategyFlowEditor'
-import { StrategyTargetCondition } from './StrategyTargetCondition'
 
-const CONDITION_LABELS = {
-  always: '任何状态',
-  rarity: '稀有度',
-  'targets-met': '制作目标',
-  'selected-targets': '指定目标组',
-  'open-prefix': '前缀空位至少',
-  'open-suffix': '后缀空位至少',
-  'affix-count': '词缀组数至少',
-  'desecration-stage': '亵渎阶段',
-  'socket-count': '已有孔数范围',
-  'open-sockets': '空孔数范围',
-} as const
-function defaultCondition(
-  kind: CraftStrategyCondition['kind'],
-  targetIds: readonly string[] = [],
-): CraftStrategyCondition | null {
-  if (kind === 'selected-targets')
-    return targetIds[0] ? { kind, modIds: [targetIds[0]], min: 1, value: true } : null
-  if (kind === 'socket-count' || kind === 'open-sockets') return { kind, min: 1, max: 3 }
-  if (kind === 'desecration-stage') return { kind, value: 'unrevealed' }
-  if (kind === 'always') return { kind }
-  if (kind === 'rarity') return { kind, value: 'rare' }
-  if (kind === 'targets-met') return { kind, value: false }
-  return { kind, min: 1 }
-}
 function example(): CraftStrategy {
   return {
     maxSteps: 50,
@@ -130,7 +107,9 @@ export function CraftStrategyPanel({
   return (
     <section className="craft-strategy" aria-label="条件制作指引">
       <h3>条件制作指引</h3>
-      <p>从上到下匹配第一条规则，同条条件需全部满足。每次应用、撤销或恢复后重新判断。</p>
+      <p>
+        从上到下匹配第一条规则，同条顶层条件需全部满足，可在条件内嵌套全部、任一或取反。每次应用、撤销或恢复后重新判断。
+      </p>
       {!strategy ? (
         <button type="button" onClick={() => onChange(example())}>
           启用条件指引示例
@@ -236,8 +215,36 @@ export function CraftStrategyPanel({
           </div>
           <details>
             <summary>编辑条件规则（{strategy.rules.length} 条）</summary>
+            <p>每条规则最多 32 个条件节点、4 层嵌套，每组最多 4 项。未知孔位取反后仍不算满足。</p>
             {strategy.rules.map((rule, index) => {
               const number = index + 1
+              const validConditions = (conditions: CraftStrategyCondition[]) =>
+                readCraftStrategy({
+                  ...strategy,
+                  rules: strategy.rules.map((entry, ri) =>
+                    ri === index ? { ...rule, conditions } : entry,
+                  ),
+                }).ok
+              const next = (
+                [
+                  'rarity',
+                  'targets-met',
+                  'selected-targets',
+                  'open-prefix',
+                  'open-suffix',
+                  'affix-count',
+                  'desecration-stage',
+                  'socket-count',
+                  'open-sockets',
+                  'always',
+                ] as const
+              ).find(
+                (kind) =>
+                  !rule.conditions.some((entry) => entry.kind === kind) &&
+                  (kind !== 'selected-targets' || Boolean(goals.targetModIds?.length)),
+              )
+              const nextCondition = next ? defaultCondition(next, goals.targetModIds) : null
+
               const updateCondition = (ci: number, condition: CraftStrategyCondition) =>
                 replaceRule(index, {
                   ...rule,
@@ -248,194 +255,21 @@ export function CraftStrategyPanel({
                 <fieldset key={index}>
                   <legend>规则 {number}</legend>
                   {rule.conditions.map((condition, ci) => (
-                    <div className="strategy-condition" key={condition.kind}>
-                      <label>
-                        条件 {ci + 1}
-                        <select
-                          aria-label={`规则 ${number} 条件 ${ci + 1}`}
-                          value={condition.kind}
-                          onChange={(event) => {
-                            const value = defaultCondition(
-                              event.target.value as CraftStrategyCondition['kind'],
-                              goals.targetModIds,
-                            )
-                            if (value) updateCondition(ci, value)
-                          }}
-                        >
-                          {(Object.keys(CONDITION_LABELS) as CraftStrategyCondition['kind'][])
-                            .filter(
-                              (kind) =>
-                                kind === condition.kind ||
-                                !rule.conditions.some((entry) => entry.kind === kind),
-                            )
-                            .map((kind) => (
-                              <option
-                                key={kind}
-                                value={kind}
-                                disabled={
-                                  kind === 'selected-targets' &&
-                                  !goals.targetModIds?.length &&
-                                  condition.kind !== kind
-                                }
-                              >
-                                {CONDITION_LABELS[kind]}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                      {condition.kind === 'selected-targets' ? (
-                        <StrategyTargetCondition
-                          prefix={`规则 ${number} 条件 ${ci + 1}`}
-                          condition={condition}
-                          targetModIds={goals.targetModIds ?? []}
-                          catalog={catalog}
-                          {...(translateLine ? { translateLine } : {})}
-                          onChange={(value) => updateCondition(ci, value)}
-                        />
-                      ) : null}
-                      {condition.kind === 'rarity' ? (
-                        <label>
-                          稀有度
-                          <select
-                            aria-label={`规则 ${number} 稀有度`}
-                            value={condition.value}
-                            onChange={(event) =>
-                              updateCondition(ci, {
-                                kind: 'rarity',
-                                value: event.target.value as CraftState['rarity'],
-                              })
-                            }
-                          >
-                            <option value="normal">普通</option>
-                            <option value="magic">魔法</option>
-                            <option value="rare">稀有</option>
-                          </select>
-                        </label>
-                      ) : null}
-                      {condition.kind === 'targets-met' ? (
-                        <label>
-                          目标状态
-                          <select
-                            aria-label={`规则 ${number} 目标状态`}
-                            value={String(condition.value)}
-                            onChange={(event) =>
-                              updateCondition(ci, {
-                                kind: 'targets-met',
-                                value: event.target.value === 'true',
-                              })
-                            }
-                          >
-                            <option value="true">已达成全部设定条件</option>
-                            <option value="false">尚未达成（含未设置目标）</option>
-                          </select>
-                        </label>
-                      ) : null}
-                      {condition.kind === 'desecration-stage' ? (
-                        <label>
-                          亵渎阶段
-                          <select
-                            aria-label={`规则 ${number} 亵渎阶段`}
-                            value={condition.value}
-                            onChange={(event) =>
-                              updateCondition(ci, {
-                                kind: 'desecration-stage',
-                                value: event.target.value as 'none' | 'unrevealed' | 'offered',
-                              })
-                            }
-                          >
-                            <option value="none">无待揭示</option>
-                            <option value="unrevealed">尚未固定三项</option>
-                            <option value="offered">已固定候选（含回响第二组）</option>
-                          </select>
-                        </label>
-                      ) : null}
-                      {condition.kind === 'affix-count' ? (
-                        <label>
-                          组数
-                          <select
-                            aria-label={`规则 ${number} 最少词缀组数`}
-                            value={condition.min}
-                            onChange={(event) =>
-                              updateCondition(ci, {
-                                kind: 'affix-count',
-                                min: Number(event.target.value),
-                              })
-                            }
-                          >
-                            {[0, 1, 2, 3, 4, 5, 6].map((n) => (
-                              <option key={n} value={n}>
-                                {n}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : null}
-                      {condition.kind === 'socket-count' || condition.kind === 'open-sockets' ? (
-                        <>
-                          <label>
-                            孔数下限
-                            <select
-                              aria-label={`规则 ${number} 条件 ${ci + 1} 孔数下限`}
-                              value={condition.min}
-                              onChange={(event) =>
-                                updateCondition(ci, {
-                                  ...condition,
-                                  min: Number(event.target.value),
-                                  max: Math.max(condition.max, Number(event.target.value)),
-                                })
-                              }
-                            >
-                              {[0, 1, 2, 3].map((n) => (
-                                <option key={n} value={n}>
-                                  {n}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label>
-                            孔数上限
-                            <select
-                              aria-label={`规则 ${number} 条件 ${ci + 1} 孔数上限`}
-                              value={condition.max}
-                              onChange={(event) =>
-                                updateCondition(ci, {
-                                  ...condition,
-                                  max: Number(event.target.value),
-                                  min: Math.min(condition.min, Number(event.target.value)),
-                                })
-                              }
-                            >
-                              {[0, 1, 2, 3].map((n) => (
-                                <option key={n} value={n}>
-                                  {n}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <p>包含上下限；孔位未知时不匹配，已确认零孔按 0 计算。</p>
-                        </>
-                      ) : null}
-                      {condition.kind === 'open-prefix' || condition.kind === 'open-suffix' ? (
-                        <label>
-                          数量
-                          <select
-                            aria-label={`规则 ${number} 条件 ${ci + 1} 空位数量`}
-                            value={condition.min}
-                            onChange={(event) =>
-                              updateCondition(ci, {
-                                kind: condition.kind,
-                                min: Number(event.target.value),
-                              })
-                            }
-                          >
-                            {[1, 2, 3].map((n) => (
-                              <option key={n} value={n}>
-                                {n}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : null}
+                    // biome-ignore lint/suspicious/noArrayIndexKey: 条件按路径定位且完全受控，没有局部状态。
+                    <div key={ci}>
+                      <StrategyConditionTree
+                        condition={condition}
+                        prefix={`规则 ${number} 条件 ${ci + 1}`}
+                        valuePrefix={`规则 ${number}`}
+                        catalog={catalog}
+                        targetModIds={goals.targetModIds ?? []}
+                        {...(translateLine ? { translateLine } : {})}
+                        canChange={(candidate) =>
+                          candidate !== null &&
+                          validConditions(rule.conditions.map((c, i) => (i === ci ? candidate : c)))
+                        }
+                        onChange={(candidate) => updateCondition(ci, candidate)}
+                      />
                       <button
                         type="button"
                         aria-label={`删除规则 ${number} 条件 ${ci + 1}`}
@@ -454,28 +288,11 @@ export function CraftStrategyPanel({
                   <button
                     type="button"
                     aria-label={`添加条件到规则 ${number}`}
-                    disabled={rule.conditions.length >= 4}
+                    disabled={
+                      !nextCondition || !validConditions([...rule.conditions, nextCondition])
+                    }
                     onClick={() => {
-                      const next = (
-                        [
-                          'rarity',
-                          'targets-met',
-                          'selected-targets',
-                          'open-prefix',
-                          'open-suffix',
-                          'affix-count',
-                          'desecration-stage',
-                          'socket-count',
-                          'open-sockets',
-                          'always',
-                        ] as const
-                      ).find(
-                        (kind) =>
-                          !rule.conditions.some((entry) => entry.kind === kind) &&
-                          (kind !== 'selected-targets' || Boolean(goals.targetModIds?.length)),
-                      )
-                      const nextCondition = next ? defaultCondition(next, goals.targetModIds) : null
-                      if (nextCondition)
+                      if (nextCondition && validConditions([...rule.conditions, nextCondition]))
                         replaceRule(index, {
                           ...rule,
                           conditions: [...rule.conditions, nextCondition],

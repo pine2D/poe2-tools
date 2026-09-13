@@ -393,7 +393,7 @@ describe('已揭示亵渎来源完整闭环', () => {
       value: {
         project: {
           desecrationSourceHash: DESECRATION_SOURCE.sha256,
-          rulesVersion: 'basic-2026-09-12-v45',
+          rulesVersion: 'basic-2026-09-12-v46',
           cursor: 1,
         },
       },
@@ -470,6 +470,6 @@ describe('已揭示亵渎来源完整闭环', () => {
           catalog,
           dictionary,
         ),
-      ).toMatchObject({ ok: true, value: { project: { rulesVersion: 'basic-2026-09-12-v45' } } })
+      ).toMatchObject({ ok: true, value: { project: { rulesVersion: 'basic-2026-09-12-v46' } } })
   })
 })
