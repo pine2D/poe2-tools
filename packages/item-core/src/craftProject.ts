@@ -11,6 +11,7 @@ import { isCatalystQuality } from './catalystQuality'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
 import { applyCraftStep, type CraftStep } from './craftSteps'
+import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
 import { isEssenceOmen } from './essenceOmens'
 import {
@@ -54,7 +55,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v38'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v39'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -69,6 +70,7 @@ export const MAX_CRAFT_PROJECT_BYTES = 2_000_000
 const MAX_OPERATIONS = 1000
 
 export interface CraftProject {
+  strategy?: CraftStrategy
   minimumTargetCount?: number
   scalabilitySourceHash?: string
   pricing?: CraftPricing
@@ -111,7 +113,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 38 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 39 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -452,6 +454,7 @@ export function parseCraftProject(
       'cursor',
       'targetModIds',
       'minimumTargetCount',
+      'strategy',
       'targetFracturedModId',
       'targetValues',
       'targetImplicitValues',
@@ -472,6 +475,13 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  let strategy: CraftStrategy | undefined
+  if (Object.hasOwn(value, 'strategy')) {
+    if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
+    const read = readCraftStrategy(value.strategy)
+    if (!read.ok) return fail(read.error)
+    strategy = read.value
+  }
   let minimumTargetCount: number | undefined
   if (Object.hasOwn(value, 'minimumTargetCount')) {
     if (rulesVersion < 38) return fail('v2–v37 旧版项目不能包含部分目标数量条件。')
@@ -1065,6 +1075,7 @@ export function parseCraftProject(
           : {}),
         ...(targetModIds === undefined ? {} : { targetModIds }),
         ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+        ...(strategy === undefined ? {} : { strategy }),
         ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
         ...(pricing?.ok ? { pricing: pricing.value } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
@@ -1078,6 +1089,11 @@ export function parseCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (
+    Object.hasOwn(project, 'strategy') &&
+    (project.rulesVersion !== CRAFT_RULES_VERSION || !readCraftStrategy(project.strategy).ok)
+  )
+    throw new Error('条件制作指引或项目版本无效，不能序列化。')
   if (
     Object.hasOwn(project, 'minimumTargetCount') &&
     (project.rulesVersion !== CRAFT_RULES_VERSION ||

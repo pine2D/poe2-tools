@@ -1,0 +1,44 @@
+.craft-strategy {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-block: 1rem;
+  overflow-wrap: anywhere;
+}
+.craft-strategy fieldset {
+  min-width: 0;
+  margin-block: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.strategy-toolbar,
+.strategy-condition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+.craft-strategy label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.craft-strategy select,
+.craft-strategy input {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.craft-strategy input {
+  width: 7rem;
+}
+.craft-strategy button {
+  white-space: normal;
+}
+.strategy-decision {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.75rem;
+}

@@ -1,0 +1,231 @@
+import { PENDING_DESECRATION_MESSAGE } from './boneRules'
+import type { CraftCatalog } from './catalog'
+import type { CraftImplicitTargetValues } from './implicitTargets'
+import { craftAffixLimit } from './jewels'
+import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
+import {
+  CRAFT_CURRENCY_LABELS,
+  CRAFT_CURRENCY_RULES,
+  type CraftCurrency,
+  type CraftRarity,
+  type CraftResult,
+  type CraftState,
+  createCraftState,
+  prepareCraftOperation,
+  type RemovalCraftCurrency,
+  removableCraftAffixes,
+} from './rehearsal'
+import {
+  analyzeCraftTargets,
+  type CraftTargetAlternative,
+  type CraftTargetValues,
+  craftTargetsSatisfied,
+} from './targets'
+
+export type CraftStrategyCondition =
+  | { kind: 'always' }
+  | { kind: 'rarity'; value: CraftRarity }
+  | { kind: 'targets-met'; value: boolean }
+  | { kind: 'open-prefix' | 'open-suffix'; min: number }
+export type CraftStrategyAction =
+  | { kind: 'stop' }
+  | { kind: 'currency'; currency: CraftCurrency; omen?: CraftOmen }
+export interface CraftStrategyRule {
+  conditions: CraftStrategyCondition[]
+  action: CraftStrategyAction
+}
+export interface CraftStrategy {
+  maxSteps: number
+  rules: CraftStrategyRule[]
+}
+export interface CraftStrategyGoals {
+  targetModIds?: readonly string[]
+  targetValues?: readonly CraftTargetValues[]
+  targetAlternatives?: readonly CraftTargetAlternative[]
+  targetImplicitValues?: readonly CraftImplicitTargetValues[]
+  targetFracturedModId?: string
+  minimumTargetCount?: number
+}
+export type CraftStrategyDecision =
+  | {
+      kind: 'action'
+      ruleIndex: number
+      action: Extract<CraftStrategyAction, { kind: 'currency' }>
+    }
+  | { kind: 'stop'; reason: 'step-limit' }
+  | { kind: 'stop'; reason: 'rule'; ruleIndex: number }
+  | { kind: 'blocked'; message: string; ruleIndex?: number }
+  | { kind: 'unmatched' }
+
+function keys(value: unknown, allowed: string[]): value is Record<string, unknown> {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).every((key) => allowed.includes(key))
+  )
+}
+function integer(value: unknown, min: number, max: number): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
+}
+const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
+
+function readCondition(value: unknown): CraftStrategyCondition | null {
+  if (!keys(value, ['kind', 'value', 'min'])) return null
+  if (value.kind === 'always' && keys(value, ['kind'])) return { kind: 'always' }
+  if (
+    value.kind === 'rarity' &&
+    keys(value, ['kind', 'value']) &&
+    (value.value === 'normal' || value.value === 'magic' || value.value === 'rare')
+  )
+    return { kind: 'rarity', value: value.value }
+  if (
+    value.kind === 'targets-met' &&
+    keys(value, ['kind', 'value']) &&
+    typeof value.value === 'boolean'
+  )
+    return { kind: 'targets-met', value: value.value }
+  if (
+    (value.kind === 'open-prefix' || value.kind === 'open-suffix') &&
+    keys(value, ['kind', 'min']) &&
+    integer(value.min, 1, 3)
+  )
+    return { kind: value.kind, min: value.min }
+  return null
+}
+function readAction(value: unknown): CraftStrategyAction | null {
+  if (!keys(value, ['kind', 'currency', 'omen'])) return null
+  if (value.kind === 'stop' && keys(value, ['kind'])) return { kind: 'stop' }
+  if (
+    value.kind !== 'currency' ||
+    typeof value.currency !== 'string' ||
+    !Object.hasOwn(CRAFT_CURRENCY_LABELS, value.currency)
+  )
+    return null
+  const currency = value.currency as CraftCurrency
+  if (Object.hasOwn(value, 'omen') && !isCraftOmen(value.omen)) return null
+  if (craftOmenError(value.omen, currency) !== null) return null
+  return { kind: 'currency', currency, ...(isCraftOmen(value.omen) ? { omen: value.omen } : {}) }
+}
+
+/** 只保存条件与动作，派生决策由当前装备和历史重新计算。 */
+export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
+  if (!keys(value, ['maxSteps', 'rules']) || !integer(value.maxSteps, 1, 1000))
+    return fail('条件指引的步骤上限必须是 1–1000 的整数，且不能包含未知字段。')
+  if (!Array.isArray(value.rules) || value.rules.length < 1 || value.rules.length > 12)
+    return fail('条件指引需要 1–12 条规则。')
+  const rules: CraftStrategyRule[] = []
+  for (const [index, input] of value.rules.entries()) {
+    if (
+      !keys(input, ['conditions', 'action']) ||
+      !Array.isArray(input.conditions) ||
+      input.conditions.length < 1 ||
+      input.conditions.length > 4
+    )
+      return fail(`规则 ${index + 1} 需要 1–4 个条件，且不能包含未知字段。`)
+    const conditions = input.conditions.map(readCondition)
+    if (
+      conditions.some((condition) => condition === null) ||
+      new Set(conditions.map((condition) => condition?.kind)).size !== conditions.length
+    )
+      return fail(`规则 ${index + 1} 的条件无效或类型重复。`)
+    const action = readAction(input.action)
+    if (!action) return fail(`规则 ${index + 1} 的动作或预兆组合无效。`)
+    rules.push({ conditions: conditions as CraftStrategyCondition[], action })
+  }
+  return { ok: true, value: { maxSteps: value.maxSteps, rules } }
+}
+
+export function evaluateCraftStrategy(
+  catalog: CraftCatalog,
+  state: CraftState,
+  strategy: CraftStrategy,
+  appliedSteps: number,
+  goals: CraftStrategyGoals = {},
+): CraftResult<CraftStrategyDecision> {
+  const configuration = readCraftStrategy(strategy)
+  if (!configuration.ok) return configuration
+  if (!integer(appliedSteps, 0, 1000)) return fail('当前历史步数无效。')
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  const result = (value: CraftStrategyDecision): CraftResult<CraftStrategyDecision> => ({
+    ok: true,
+    value,
+  })
+  if (checked.value.pendingDesecration)
+    return result({ kind: 'blocked', message: PENDING_DESECRATION_MESSAGE })
+  if (appliedSteps >= strategy.maxSteps) return result({ kind: 'stop', reason: 'step-limit' })
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (!base) return fail('当前基底不在制作目录中。')
+  const capacity = craftAffixLimit(base, state.rarity)
+  const counts = { prefix: 0, suffix: 0 }
+  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
+  for (const affix of state.affixes) {
+    const kind = mods.get(affix.modId)?.kind
+    if (kind) counts[kind]++
+  }
+  let targetsMet = false
+  if (
+    strategy.rules.some((rule) =>
+      rule.conditions.some((condition) => condition.kind === 'targets-met'),
+    )
+  ) {
+    const advice = analyzeCraftTargets(
+      catalog,
+      checked.value,
+      goals.targetModIds ?? [],
+      goals.targetValues,
+      goals.targetAlternatives,
+      undefined,
+      goals.targetImplicitValues,
+      goals.targetFracturedModId,
+      goals.minimumTargetCount,
+    )
+    if (!advice.ok) return advice
+    targetsMet =
+      (goals.targetModIds?.length ?? 0) + (goals.targetImplicitValues?.length ?? 0) > 0 &&
+      craftTargetsSatisfied(advice.value, goals.minimumTargetCount, goals.targetFracturedModId)
+  }
+  const matches = (condition: CraftStrategyCondition): boolean => {
+    if (condition.kind === 'always') return true
+    if (condition.kind === 'rarity') return state.rarity === condition.value
+    if (condition.kind === 'targets-met') return targetsMet === condition.value
+    const side = condition.kind === 'open-prefix' ? 'prefix' : 'suffix'
+    return capacity - counts[side] >= condition.min
+  }
+  const ruleIndex = strategy.rules.findIndex((rule) => rule.conditions.every(matches))
+  const rule = strategy.rules[ruleIndex]
+  if (!rule) return result({ kind: 'unmatched' })
+  if (rule.action.kind === 'stop') return result({ kind: 'stop', reason: 'rule', ruleIndex })
+  const action = rule.action
+  const currencyBase = CRAFT_CURRENCY_RULES[action.currency].base
+  if (currencyBase === 'chaos' || currencyBase === 'annulment') {
+    const removable = removableCraftAffixes(
+      catalog,
+      checked.value,
+      action.currency as RemovalCraftCurrency,
+      action.omen,
+    )
+    if (!removable.ok) return result({ kind: 'blocked', ruleIndex, message: removable.error })
+    const options = removable.value.map((affix) =>
+      prepareCraftOperation(catalog, checked.value, action.currency, affix.modId, action.omen),
+    )
+    if (options.some((option) => option.ok)) return result({ kind: 'action', ruleIndex, action })
+    const failed = options.find((option) => !option.ok)
+    return result({
+      kind: 'blocked',
+      ruleIndex,
+      message: failed && !failed.ok ? failed.error : '当前没有可完成的移除操作。',
+    })
+  }
+  const prepared = prepareCraftOperation(
+    catalog,
+    checked.value,
+    action.currency,
+    undefined,
+    action.omen,
+  )
+  return prepared.ok
+    ? result({ kind: 'action', ruleIndex, action })
+    : result({ kind: 'blocked', ruleIndex, message: prepared.error })
+}

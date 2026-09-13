@@ -90,6 +90,15 @@ export type {
   SocketCraftOperation,
 } from './craftSteps'
 export { applyCraftStep } from './craftSteps'
+export type {
+  CraftStrategy,
+  CraftStrategyAction,
+  CraftStrategyCondition,
+  CraftStrategyDecision,
+  CraftStrategyGoals,
+  CraftStrategyRule,
+} from './craftStrategy'
+export { evaluateCraftStrategy, readCraftStrategy } from './craftStrategy'
 export type { DefenceEstimate } from './defences'
 export { estimateDefences } from './defences'
 export { DESECRATION_FAMILIES, DESECRATION_SOURCE, desecrationSourceHash } from './desecration'
@@ -146,7 +155,7 @@ export {
   sampleNumericValues,
 } from './numeric'
 export type { CraftOmen } from './omens'
-export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenMaterials } from './omens'
+export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'
 export { readItemQuality, supportsItemQuality } from './quality'
 export type {

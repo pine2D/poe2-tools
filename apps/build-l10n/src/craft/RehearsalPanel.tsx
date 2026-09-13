@@ -21,6 +21,7 @@ import {
   type CraftProject,
   type CraftState,
   type CraftStep,
+  type CraftStrategy,
   type CraftTargetAlternative,
   type CraftTargetValues,
   collectCraftCosts,
@@ -57,6 +58,7 @@ import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { CatalystPreviewPanel } from './CatalystPreviewPanel'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
+import { CraftStrategyPanel } from './CraftStrategyPanel'
 import { CraftTargets } from './CraftTargets'
 import { DefencePanel } from './DefencePanel'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
@@ -254,6 +256,9 @@ export function RehearsalPanel({
         ? [{ id: 0, state: initial.value, operation: null }]
         : [],
   )
+  const [strategy, setStrategy] = useState<CraftStrategy | undefined>(
+    initialProject?.project.strategy,
+  )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
   const [cursor, setCursor] = useState(initialProject?.project.cursor ?? 0)
   const [socketDeclaration, setSocketDeclaration] = useState(
@@ -380,7 +385,7 @@ export function RehearsalPanel({
     return <section className="rehearsal-panel rehearsal-error">无法开始演练：{message}</section>
   }
 
-  const startOperation = (currency: CraftCurrency, operationOmen = omen) => {
+  const startOperation = (currency: CraftCurrency, operationOmen: CraftOmen | undefined) => {
     if (fractureDraft || boneDraft || current.pendingDesecration) return
     setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
     if (isRemovalCurrency(currency)) {
@@ -437,7 +442,7 @@ export function RehearsalPanel({
   const chooseRemoval = (
     currency: RemovalCraftCurrency,
     removeModId: string,
-    operationOmen = omen,
+    operationOmen: CraftOmen | undefined,
   ) => {
     setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
     const prepared = prepareCraftOperation(catalog, current, currency, removeModId, operationOmen)
@@ -760,6 +765,7 @@ export function RehearsalPanel({
   const project: CraftProject = {
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
+    ...(strategy ? { strategy } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
     ...((history[0]?.state.catalyst ||
@@ -788,6 +794,7 @@ export function RehearsalPanel({
   }
   const restoreProject = (restored: RestoredCraftProject) => {
     setPricing(restored.project.pricing)
+    setStrategy(restored.project.strategy)
     setHistory(
       restored.states.map((state, index) => ({
         id: index,
@@ -898,6 +905,34 @@ export function RehearsalPanel({
         translations={translations}
       />
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
+      <CraftStrategyPanel
+        catalog={catalog}
+        state={current}
+        strategy={strategy}
+        goals={{
+          targetModIds,
+          targetValues,
+          targetAlternatives,
+          targetImplicitValues,
+          ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+          ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
+        }}
+        appliedSteps={cursor}
+        pending={Boolean(
+          draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
+        )}
+        omenLabel={omenLabel}
+        onChange={(value) => {
+          clearTargetDrafts()
+          setStrategy(value)
+        }}
+        onStart={(action) => {
+          if (draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft)
+            return
+          setOmen(action.omen)
+          startOperation(action.currency, action.omen)
+        }}
+      />
       <CraftTargets
         {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
         onMinimumTargetCountChange={(value) => {
@@ -1047,7 +1082,7 @@ export function RehearsalPanel({
               fractureDraft !== null ||
               current.pendingDesecration !== undefined
             }
-            onClick={() => startOperation(id)}
+            onClick={() => startOperation(id, omen)}
           >
             {CRAFT_CURRENCY_LABELS[id]}
           </button>
@@ -1078,7 +1113,7 @@ export function RehearsalPanel({
                   <button
                     type="button"
                     aria-label={removalLabel(mod, affix.lines, translateLine)}
-                    onClick={() => chooseRemoval(removalCurrency, affix.modId)}
+                    onClick={() => chooseRemoval(removalCurrency, affix.modId, omen)}
                   >
                     选择移除此组
                   </button>

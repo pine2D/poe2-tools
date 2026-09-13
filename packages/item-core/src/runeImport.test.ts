@@ -324,7 +324,7 @@ describe('v8 项目重验符文来源', () => {
   it('往返恢复并回放撤销游标后的符文替换', () => {
     const p = project()
     const result = parseCraftProject(JSON.stringify(p), catalog, dictionary)
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v38')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v39')
     expect(result).toMatchObject({
       ok: true,
       value: {
