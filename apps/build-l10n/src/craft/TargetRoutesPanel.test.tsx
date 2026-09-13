@@ -17,6 +17,30 @@ const pending = vi.hoisted(() => ({
     cancel: ReturnType<typeof vi.fn>
   }[],
 }))
+
+it('改变破裂目标终止旧搜索，传递第八参并丢弃迟到路线', () => {
+  const props = {
+    catalog: boneCatalog('Ring'),
+    state: boneState(['prefix1', 'prefix2', 'suffix1', 'suffix2']),
+    ids: ['prefix1', 'suffix1'],
+    values: [],
+    alternatives: [],
+    busy: false,
+    translations: {},
+    onPreview: vi.fn(),
+  }
+  const view = render(<TargetRoutesPanel {...props} targetFracturedModId="prefix1" />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  const first = pending.calls.at(-1)
+  if (!first) throw new Error('未创建搜索')
+  expect(first.args[7]).toBe('prefix1')
+  view.rerender(<TargetRoutesPanel {...props} targetFracturedModId="suffix1" />)
+  expect(first.cancel).toHaveBeenCalledTimes(1)
+  act(() => first.callback(result))
+  expect(screen.queryByText(/找到 .*条全部目标达成/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  expect(pending.calls.at(-1)?.args[7]).toBe('suffix1')
+})
 vi.mock('./targetRoutesWorkerClient', () => ({
   requestTargetRoutes: (
     args: unknown[],

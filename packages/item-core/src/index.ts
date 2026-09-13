@@ -94,6 +94,7 @@ export type {
 export { createCoeUrl, inspectItem } from './export'
 export type { FractureCraftOperation, PreparedFracture } from './fracture'
 export { applyFracture, prepareFracture } from './fracture'
+export { validateCraftFractureTarget } from './fractureTargets'
 export type {
   BaseGrantedSkill,
   InitialSkillDeclaration,

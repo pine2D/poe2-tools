@@ -8,6 +8,7 @@ import {
 } from './catalog'
 import { desecrationSourceHash } from './desecration'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
+import { validateCraftFractureTarget } from './fractureTargets'
 import {
   analyzeCraftImplicitTargets,
   type CraftImplicitTargetStatus,
@@ -66,6 +67,7 @@ export interface CraftAdviceStep {
 }
 
 interface CraftTargetStatus {
+  fracture?: { required: true; matched: boolean }
   modId: string
   present: boolean
   matched: boolean
@@ -339,6 +341,7 @@ export function analyzeCraftTargets(
   alternatives: readonly CraftTargetAlternative[] = [],
   omen?: CraftOmen,
   implicitValues: readonly CraftImplicitTargetValues[] = [],
+  fracturedTargetId?: string,
 ): CraftResult<CraftAdvice> {
   if (omen !== undefined && !isCraftOmen(omen))
     return { ok: false, error: '预兆必须是当前支持的单枚定向预兆。' }
@@ -354,6 +357,15 @@ export function analyzeCraftTargets(
     alternatives,
   )
   if (!values.ok) return values
+  if (fracturedTargetId !== undefined) {
+    const fracture = validateCraftFractureTarget(
+      catalog,
+      validated.value,
+      alternatives,
+      fracturedTargetId,
+    )
+    if (!fracture.ok) return fracture
+  }
   const current = checked.value
   const implicitAnalysis = analyzeCraftImplicitTargets(catalog, current, implicitValues)
   if (!implicitAnalysis.ok) return implicitAnalysis
@@ -378,11 +390,26 @@ export function analyzeCraftTargets(
   )
   const candidates = new Set(craftCandidates(catalog, current).map((mod) => mod.id))
   const staticPools = targetPools(catalog, state.baseId)
-  const inspectTarget = (modId: string): CraftTargetStatus => {
+  const fractureMemberIds = new Set([
+    fracturedTargetId,
+    ...(alternatives.find((entry) => entry.targetModId === fracturedTargetId)?.modIds ?? []),
+  ])
+  const inspectTarget = (modId: string, fractureRequired = false): CraftTargetStatus => {
     const present = existingIds.has(modId)
     const reasons: string[] = []
     const mod = byId.get(modId)
     const affix = current.affixes.find((entry) => entry.modId === modId)
+    const fractureReasons: string[] = []
+    const fracture = fractureRequired
+      ? { fracture: { required: true as const, matched: affix?.fractured === true } }
+      : {}
+    if (fractureRequired && !affix?.fractured) {
+      if (current.affixes.some((entry) => entry.fractured && !fractureMemberIds.has(entry.modId)))
+        fractureReasons.push('当前装备已破裂其他组；一件装备只能有一组破裂属性。')
+      else if (affix?.desecrated)
+        fractureReasons.push('此普通目标当前带亵渎标记，当前状态不能破裂。')
+      else fractureReasons.push('此目标要求破裂，当前尚未锁定。')
+    }
     const bounds = values.value.find((entry) => entry.modId === modId)?.bounds ?? []
     const actual =
       bounds.length > 0 && mod !== undefined && affix !== undefined
@@ -418,7 +445,12 @@ export function analyzeCraftTargets(
           present: false,
           matched: false,
           numeric,
-          reasons: ['此 Genesis Tree 专属目标尚不支持新增；可导入已有属性后保留或调整数值。'],
+          ...fracture,
+          reasons: [
+            ...reasons,
+            ...fractureReasons,
+            '此 Genesis Tree 专属目标尚不支持新增；可导入已有属性后保留或调整数值。',
+          ],
         }
       const essenceOnly = !staticPools.ordinary.has(modId) && staticPools.essence.has(modId)
       if (mod.level > current.itemLevel)
@@ -467,20 +499,34 @@ export function analyzeCraftTargets(
     return {
       modId,
       present,
-      matched: present && numeric.every((entry) => entry.matched),
+      matched:
+        present &&
+        numeric.every((entry) => entry.matched) &&
+        (!fractureRequired || affix?.fractured === true),
+      ...fracture,
       numeric,
-      reasons,
+      reasons: [...reasons, ...fractureReasons],
     }
   }
   const targets: CraftAdvice['targets'] = validated.value.map((modId) => {
-    const primary = inspectTarget(modId)
+    const fractureRequired = modId === fracturedTargetId
+    const primary = inspectTarget(modId, fractureRequired)
     const accepted = alternatives.find((entry) => entry.targetModId === modId)
     if (accepted === undefined) return primary
-    const members = [primary, ...accepted.modIds.map(inspectTarget)]
+    const members = [primary, ...accepted.modIds.map((id) => inspectTarget(id, fractureRequired))]
     return {
       ...primary,
       present: members.some((member) => member.present),
       matched: members.some((member) => member.matched),
+      ...(fractureRequired
+        ? {
+            reasons: members.find((member) => member.present)?.reasons ?? primary.reasons,
+            fracture: {
+              required: true as const,
+              matched: members.some((member) => member.fracture?.matched),
+            },
+          }
+        : {}),
       alternatives: members,
     }
   })
@@ -517,7 +563,7 @@ export function analyzeCraftTargets(
       !current.affixes.find((affix) => affix.modId === target.modId)?.fractured,
   )
   const unmetNumericIds = numericTargets
-    .filter((target) => !target.matched)
+    .filter((target) => target.numeric.some((bound) => !bound.matched))
     .map((target) => target.modId)
   const unmetImplicit = implicitAnalysis.value
     .filter((target) => !target.matched)

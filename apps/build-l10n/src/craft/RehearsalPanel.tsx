@@ -260,6 +260,9 @@ export function RehearsalPanel({
   const [targetAlternatives, setTargetAlternatives] = useState<CraftTargetAlternative[]>(
     initialProject?.project.targetAlternatives ?? [],
   )
+  const [targetFracturedModId, setTargetFracturedModId] = useState<string | undefined>(
+    initialProject?.project.targetFracturedModId,
+  )
   const [targetImplicitValues, setTargetImplicitValues] = useState<CraftImplicitTargetValues[]>(
     initialProject?.project.targetImplicitValues ?? [],
   )
@@ -580,6 +583,17 @@ export function RehearsalPanel({
     setComparisonOpen(true)
     setMessage('')
   }
+  const clearTargetDrafts = () => {
+    setDraft(null)
+    setSocketDraft(null)
+    setEssenceDraft(null)
+    setBoneDraft(null)
+    setFractureDraft(null)
+    setRemovalCurrency(null)
+    setBoneSession((value) => value + 1)
+    setEssenceSession((value) => value + 1)
+    setMessage('')
+  }
   const applyStep = (operation: CraftStep) => {
     const applied = applyCraftStep(catalog, current, operation)
     if (!applied.ok) {
@@ -801,6 +815,7 @@ export function RehearsalPanel({
     ...(targetValues.length === 0 ? {} : { targetValues }),
     ...(targetImplicitValues.length === 0 ? {} : { targetImplicitValues }),
     ...(targetAlternatives.length === 0 ? {} : { targetAlternatives }),
+    ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
@@ -818,6 +833,7 @@ export function RehearsalPanel({
     setTargetValues(restored.project.targetValues ?? [])
     setTargetImplicitValues(restored.project.targetImplicitValues ?? [])
     setTargetAlternatives(restored.project.targetAlternatives ?? [])
+    setTargetFracturedModId(restored.project.targetFracturedModId)
     setSocketDeclaration(restored.project.importedSockets)
     setQualityDeclaration(restored.project.importedQuality)
     setTargetSession((value) => value + 1)
@@ -904,15 +920,20 @@ export function RehearsalPanel({
         state={current}
         targetImplicitValues={targetImplicitValues}
         onImplicitValuesChange={(values) => {
-          setFractureDraft(null)
+          clearTargetDrafts()
           setTargetImplicitValues(values)
         }}
         targetModIds={targetModIds}
         targetValues={targetValues}
         targetAlternatives={targetAlternatives}
+        {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
+        onFracturedTargetChange={(id) => {
+          clearTargetDrafts()
+          setTargetFracturedModId(id)
+        }}
         {...(omen === undefined ? {} : { omen })}
         onAlternativesChange={(alternatives) => {
-          setFractureDraft(null)
+          clearTargetDrafts()
           setTargetAlternatives(alternatives)
           const accepted = new Set([
             ...targetModIds,
@@ -921,11 +942,13 @@ export function RehearsalPanel({
           setTargetValues((values) => values.filter((entry) => accepted.has(entry.modId)))
         }}
         onValuesChange={(values) => {
-          setFractureDraft(null)
+          clearTargetDrafts()
           setTargetValues(values)
         }}
         onChange={(ids) => {
-          setFractureDraft(null)
+          clearTargetDrafts()
+          if (targetFracturedModId && !ids.includes(targetFracturedModId))
+            setTargetFracturedModId(undefined)
           setTargetModIds(ids)
           const alternatives = targetAlternatives.filter((entry) => ids.includes(entry.targetModId))
           setTargetAlternatives(alternatives)
@@ -1144,6 +1167,10 @@ export function RehearsalPanel({
               catalog={catalog}
               translations={translations}
               targetImplicitValues={targetImplicitValues}
+              targetModIds={targetModIds}
+              targetValues={targetValues}
+              targetAlternatives={targetAlternatives}
+              {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
               before={comparisonBefore}
               after={comparisonAfter}
               {...(translateLine === undefined ? {} : { translateLine })}
@@ -1159,6 +1186,7 @@ export function RehearsalPanel({
           targetModIds={targetModIds}
           targetValues={targetValues}
           targetAlternatives={targetAlternatives}
+          {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
           disabled={Boolean(
             draft || removalCurrency || socketDraft || essenceDraft || boneDraft || fractureDraft,
           )}

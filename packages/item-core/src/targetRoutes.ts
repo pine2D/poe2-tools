@@ -4,6 +4,7 @@ import type { CraftCatalog } from './catalog'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { analyzeEssenceTargets } from './essenceAdvice'
 import { essenceCategory } from './essences'
+import { prepareFracture } from './fracture'
 import {
   analyzeCraftImplicitTargets,
   type CraftImplicitTargetValues,
@@ -33,6 +34,7 @@ export interface CraftTargetRouteOptions {
   maxDepth?: number
 }
 export interface CraftTargetRouteStep {
+  fractureCandidateModIds?: string[]
   matchedImplicitLineIndexes?: number[]
   gainedImplicitLineIndexes?: number[]
   lostImplicitLineIndexes?: number[]
@@ -68,6 +70,7 @@ export function planCraftTargetRoutes(
   alternatives: readonly CraftTargetAlternative[] = [],
   options: CraftTargetRouteOptions = {},
   implicitValues: readonly CraftImplicitTargetValues[] = [],
+  fracturedTargetId?: string,
 ): CraftResult<CraftTargetRoutes> {
   if (
     !options ||
@@ -98,6 +101,7 @@ export function planCraftTargetRoutes(
     alternatives,
     undefined,
     implicitValues,
+    fracturedTargetId,
   )
   if (!initial.ok) return initial
   const result: CraftTargetRoutes = {
@@ -128,7 +132,7 @@ export function planCraftTargetRoutes(
     }),
   )
   const bounds = (id: string) => values.find((v) => v.modId === id)?.bounds
-  const matched = (current: CraftState) =>
+  const numericMatched = (current: CraftState) =>
     ids.filter((_, index) =>
       groups[index]?.some((id) => {
         const affix = current.affixes.find((a) => a.modId === id)
@@ -150,9 +154,26 @@ export function planCraftTargetRoutes(
         )
       }),
     )
+  // 起点保护只看身份与数值；完整目标推进还需锁定对应的已接受组。
+  const matched = (current: CraftState) =>
+    numericMatched(current).filter(
+      (id) =>
+        id !== fracturedTargetId ||
+        current.affixes.some(
+          (affix) => affix.fractured && groups[ids.indexOf(id)]?.includes(affix.modId),
+        ),
+    )
+  const fracturePriority = (current: CraftState) => {
+    if (!fracturedTargetId || current.affixes.some((affix) => affix.fractured)) return 0
+    return (
+      (numericMatched(current).includes(fracturedTargetId) ? 0.4 : 0) +
+      (current.rarity === 'rare' ? 0.02 : current.rarity === 'magic' ? 0.01 : 0) +
+      Math.min(4, current.affixes.length + Number(Boolean(current.pendingDesecration))) * 0.001
+    )
+  }
   const bonePriority = (current: CraftState) =>
     current.pendingDesecration ? (current.pendingDesecration.options ? 0.2 : 0.1) : 0
-  const protectedIds = options.preserveMatched === false ? [] : matched(state)
+  const protectedIds = options.preserveMatched === false ? [] : numericMatched(state)
   const matchedImplicit = (current: CraftState): number[] => {
     if (!implicitValues.length) return []
     const analyzed = analyzeCraftImplicitTargets(catalog, current, implicitValues)
@@ -178,7 +199,11 @@ export function planCraftTargetRoutes(
     {
       state,
       steps: [],
-      score: matched(state).length + matchedImplicit(state).length + bonePriority(state),
+      score:
+        matched(state).length +
+        matchedImplicit(state).length +
+        bonePriority(state) +
+        fracturePriority(state),
       risk: 0,
       boneOmens: 0,
       path: '',
@@ -228,12 +253,16 @@ export function planCraftTargetRoutes(
     const beforeMatched = matched(node.state)
     const beforeImplicit = matchedImplicit(node.state)
     const present = node.state.affixes.filter((a) => accepted.has(a.modId)).map((a) => a.modId)
-    const offer = (operation: CraftStep, atRiskTargetIds: string[] = []) => {
+    const offer = (
+      operation: CraftStep,
+      atRiskTargetIds: string[] = [],
+      fractureCandidateModIds?: string[],
+    ) => {
       if (!spend()) return
       const applied = applyCraftStep(catalog, node.state, operation)
       if (!applied.ok) return
       const afterMatched = matched(applied.value)
-      if (protectedIds.some((id) => !afterMatched.includes(id))) return
+      if (protectedIds.some((id) => !numericMatched(applied.value).includes(id))) return
       const afterImplicit = matchedImplicit(applied.value)
       if (protectedImplicit.some((index) => !afterImplicit.includes(index))) return
       const lostImplicit = beforeImplicit.filter((index) => !afterImplicit.includes(index))
@@ -268,6 +297,7 @@ export function planCraftTargetRoutes(
         return
       seen.set(stateKey, { depth, risk })
       const step: CraftTargetRouteStep = {
+        ...(fractureCandidateModIds ? { fractureCandidateModIds } : {}),
         operation: structuredClone(operation),
         state: applied.value,
         matchedTargetIds: afterMatched,
@@ -312,6 +342,7 @@ export function planCraftTargetRoutes(
           alternatives,
           undefined,
           implicitValues,
+          fracturedTargetId,
         )
         if (
           !current.pendingDesecration &&
@@ -325,7 +356,11 @@ export function planCraftTargetRoutes(
         queue.push({
           state: applied.value,
           steps,
-          score: afterMatched.length + afterImplicit.length + bonePriority(applied.value),
+          score:
+            afterMatched.length +
+            afterImplicit.length +
+            bonePriority(applied.value) +
+            fracturePriority(applied.value),
           risk,
           boneOmens:
             node.boneOmens +
@@ -341,6 +376,18 @@ export function planCraftTargetRoutes(
     const limit = <T>(entries: T[], count: number): T[] => {
       if (entries.length > count) omitted()
       return entries.slice(0, count)
+    }
+    if (fracturedTargetId && numericMatched(node.state).includes(fracturedTargetId)) {
+      const prepared = prepareFracture(catalog, node.state)
+      const group = groups[ids.indexOf(fracturedTargetId)] ?? []
+      if (prepared.ok)
+        for (const affix of prepared.value.candidates)
+          if (group.includes(affix.modId) && !prepared.value.unresolvedModIds.includes(affix.modId))
+            offer(
+              { kind: 'fracture', modId: affix.modId },
+              [],
+              prepared.value.candidates.map((candidate) => candidate.modId),
+            )
     }
     const boneAdvice = analyzeBoneTargets(catalog, node.state, ids, values, alternatives, {
       consumeCandidate: spend,
@@ -369,6 +416,7 @@ export function planCraftTargetRoutes(
               alternatives,
               omen,
               implicitValues,
+              fracturedTargetId,
             )
       if (!advice.ok) continue
       for (const suggestion of advice.value.steps) {
@@ -537,24 +585,40 @@ export function planCraftTargetRoutes(
             )
         }
     }
-    // 非目标填充只用于进入精华需要的稀有度，并避免与未达成目标直接冲突。
-    if (node.state.rarity !== 'rare' && (blockedEssence || blockedBone)) {
-      const currency = node.state.rarity === 'normal' ? 'transmutation' : 'regal'
+    // 破裂准备需要稀有且至少四组；其他目标继续沿既有精华/骨骼准备。
+    const needsFracturePreparation =
+      Boolean(fracturedTargetId) &&
+      !node.state.affixes.some((affix) => affix.fractured) &&
+      (node.state.rarity !== 'rare' || node.state.affixes.length < 4)
+    if (
+      needsFracturePreparation ||
+      (node.state.rarity !== 'rare' && (blockedEssence || blockedBone))
+    ) {
+      const currency =
+        node.state.rarity === 'normal'
+          ? 'transmutation'
+          : node.state.rarity === 'magic'
+            ? 'regal'
+            : 'exalted'
       const prepared = prepareCraftOperation(catalog, node.state, currency)
       if (prepared.ok) {
         const missing = groups
-          .filter((_, i) => !beforeMatched.includes(ids[i] ?? ''))
+          .filter((_, i) => !numericMatched(node.state).includes(ids[i] ?? ''))
           .flat()
           .map((id) => byId.get(id))
           .filter((m) => m !== undefined)
         const candidates = craftCandidates(catalog, prepared.value.state, currency)
           .filter(
             (mod) =>
-              !accepted.has(mod.id) && !missing.some((target) => craftModsConflict(mod, target)),
+              (needsFracturePreparation || !accepted.has(mod.id)) &&
+              !missing.some((target) => craftModsConflict(mod, target) && target.id !== mod.id),
           )
-          .sort((a, b) => compare(a.id, b.id))
+          .sort(
+            (a, b) =>
+              Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compare(a.id, b.id),
+          )
         for (const mod of limit(candidates, 8)) {
-          const numbers = minimumTargetRolls(mod.lines)
+          const numbers = minimumTargetRolls(mod.lines, bounds(mod.id))
           if (numbers !== null)
             offer({
               currency,

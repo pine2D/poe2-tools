@@ -21,6 +21,7 @@ import {
   hasCraftModEligibility,
   hasGenesisModEligibility,
   inspectEssences,
+  validateCraftFractureTarget,
   validateCraftTargetAlternatives,
   validateCraftTargets,
 } from '@poe2-tools/item-core'
@@ -41,6 +42,8 @@ interface CraftTargetsProps {
   targetModIds: string[]
   targetValues: CraftTargetValues[]
   targetAlternatives?: CraftTargetAlternative[]
+  targetFracturedModId?: string
+  onFracturedTargetChange?: (id: string | undefined) => void
   onAlternativesChange?: (alternatives: CraftTargetAlternative[]) => void
   onValuesChange: (values: CraftTargetValues[]) => void
   onChange: (ids: string[]) => void
@@ -62,6 +65,8 @@ export function CraftTargets({
   onImplicitValuesChange,
   targetValues,
   targetAlternatives = [],
+  targetFracturedModId,
+  onFracturedTargetChange,
   onAlternativesChange,
   onValuesChange,
   onChange,
@@ -132,8 +137,18 @@ export function CraftTargets({
         targetAlternatives,
         omen,
         targetImplicitValues,
+        targetFracturedModId,
       ),
-    [catalog, state, targetModIds, targetValues, targetAlternatives, omen, targetImplicitValues],
+    [
+      catalog,
+      state,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      omen,
+      targetImplicitValues,
+      targetFracturedModId,
+    ],
   )
   const boneAdvice = useMemo(
     () => analyzeBoneTargets(catalog, state, targetModIds, targetValues, targetAlternatives),
@@ -225,7 +240,9 @@ export function CraftTargets({
           </strong>
         ) : null}
       </header>
-      <p>同组内任一已选档位及其数值条件满足即达成；不同目标组需全部达成。更高档位不自动接受。</p>
+      <p>
+        同组内任一已选档位及其数值条件满足即达成；勾选破裂要求时还需锁定该组。不同目标组需全部达成，更高档位不自动接受。
+      </p>
       {onImplicitValuesChange ? (
         <ImplicitTargetEditor
           catalog={catalog}
@@ -242,6 +259,7 @@ export function CraftTargets({
         values={targetValues}
         alternatives={targetAlternatives}
         implicitValues={targetImplicitValues}
+        {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
         busy={busy}
         translations={translations}
         onPreview={onPreviewRoute}
@@ -300,6 +318,25 @@ export function CraftTargets({
                   <span className={target.matched ? 'target-met' : 'target-meta'}>
                     {target.matched ? '已达成' : '未达成'}
                   </span>
+                  {onFracturedTargetChange &&
+                  validateCraftFractureTarget(
+                    catalog,
+                    targetModIds,
+                    targetAlternatives,
+                    target.modId,
+                  ).ok ? (
+                    <label className="target-alternative">
+                      <input
+                        type="checkbox"
+                        aria-label={`要求破裂 ${target.modId}`}
+                        checked={targetFracturedModId === target.modId}
+                        onChange={(event) =>
+                          onFracturedTargetChange(event.target.checked ? target.modId : undefined)
+                        }
+                      />
+                      要求此组破裂（同组任一已接受档位；每件最多一组）
+                    </label>
+                  ) : null}
                   {(target.alternatives ?? [target]).map((member) => {
                     const memberMod = modById.get(member.modId)
                     return (
@@ -381,6 +418,18 @@ export function CraftTargets({
                                   if (!checked.ok) {
                                     setMessage(checked.error)
                                     return
+                                  }
+                                  if (targetFracturedModId) {
+                                    const fracture = validateCraftFractureTarget(
+                                      catalog,
+                                      targetModIds,
+                                      checked.value,
+                                      targetFracturedModId,
+                                    )
+                                    if (!fracture.ok) {
+                                      setMessage(fracture.error)
+                                      return
+                                    }
                                   }
                                   onAlternativesChange(checked.value)
                                   setMessage('')

@@ -18,6 +18,7 @@ interface FracturePanelProps {
   targetModIds: string[]
   targetValues: CraftTargetValues[]
   targetAlternatives: CraftTargetAlternative[]
+  targetFracturedModId?: string
   translateLine?: (line: string) => string | null
   onPreview: (operation: FractureCraftOperation) => void
 }
@@ -31,6 +32,7 @@ export function FracturePanel({
   targetModIds,
   targetValues,
   targetAlternatives,
+  targetFracturedModId,
   translateLine,
   onPreview,
 }: FracturePanelProps) {
@@ -69,6 +71,13 @@ export function FracturePanel({
                     <span>{mod?.kind === 'prefix' ? '前缀' : '后缀'}</span>
                   </header>
                   <ModStateBadges states={affix.crafted ? ['crafted'] : []} />
+                  {targetFracturedModId &&
+                  (targetFracturedModId === affix.modId ||
+                    targetAlternatives
+                      .find((entry) => entry.targetModId === targetFracturedModId)
+                      ?.modIds.includes(affix.modId)) ? (
+                    <p>此组属于当前要求破裂的目标。</p>
+                  ) : null}
                   {affix.lines.map((line) => (
                     <div key={line}>
                       {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
@@ -78,7 +87,7 @@ export function FracturePanel({
                   {target ? (
                     <p>
                       {target.matched
-                        ? '此组已达成目标，可演练锁定。'
+                        ? '此组身份与数值条件已满足，可演练锁定。'
                         : '此组目标数值尚未达成，破裂后不能再用神圣调整。'}
                     </p>
                   ) : null}

@@ -18,6 +18,7 @@ import {
 } from './essences'
 import { type ItemDictionary, inspectItem } from './export'
 import { isFractureCraftOperation } from './fracture'
+import { validateCraftFractureTarget } from './fractureTargets'
 import {
   matchesGrantedSkillImplicitLines,
   readBaseGrantedSkills,
@@ -48,7 +49,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v28'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v29'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -70,6 +71,7 @@ export interface CraftProject {
   operations: CraftStep[]
   cursor: number
   targetModIds?: string[]
+  targetFracturedModId?: string
   targetValues?: CraftTargetValues[]
   targetImplicitValues?: CraftImplicitTargetValues[]
   targetAlternatives?: CraftTargetAlternative[]
@@ -100,7 +102,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 28 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 29 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -428,6 +430,7 @@ export function parseCraftProject(
       'operations',
       'cursor',
       'targetModIds',
+      'targetFracturedModId',
       'targetValues',
       'targetImplicitValues',
       'targetAlternatives',
@@ -444,6 +447,8 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (rulesVersion < 29 && Object.hasOwn(value, 'targetFracturedModId'))
+    return fail('v2–v28 旧版项目不能包含破裂目标要求。')
   if (rulesVersion < 28) {
     const initial = record(value.initialState) ? value.initialState : null
     const source =
@@ -829,6 +834,17 @@ export function parseCraftProject(
     )
   )
     return fail('旧规则项目不能包含亵渎专属目标或替代档位。')
+  let targetFracturedModId: string | undefined
+  if (Object.hasOwn(value, 'targetFracturedModId')) {
+    const fracture = validateCraftFractureTarget(
+      catalog,
+      targetModIds ?? [],
+      targetAlternatives ?? [],
+      value.targetFracturedModId,
+    )
+    if (!fracture.ok) return fail(fracture.error)
+    targetFracturedModId = fracture.value
+  }
   let targetValues: CraftTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetValues')) {
     const checkedValues = validateCraftTargetValues(
@@ -909,6 +925,7 @@ export function parseCraftProject(
           ? { desecrationSourceHash }
           : {}),
         ...(targetModIds === undefined ? {} : { targetModIds }),
+        ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
         ...(targetValues === undefined ? {} : { targetValues }),
         ...(targetImplicitValues === undefined ? {} : { targetImplicitValues }),
         ...(targetAlternatives === undefined ? {} : { targetAlternatives }),
@@ -919,6 +936,14 @@ export function parseCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (
+    Object.hasOwn(project, 'targetFracturedModId') &&
+    (project.rulesVersion !== CRAFT_RULES_VERSION ||
+      !nonempty(project.targetFracturedModId) ||
+      !Array.isArray(project.targetModIds) ||
+      !project.targetModIds.includes(project.targetFracturedModId))
+  )
+    throw new Error('破裂目标字段或项目版本无效，不能序列化。')
   if (Object.hasOwn(project, 'targetImplicitValues')) {
     const targets = readCraftImplicitTargets(project.targetImplicitValues)
     if (!targets.ok || project.rulesVersion !== CRAFT_RULES_VERSION)

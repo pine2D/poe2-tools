@@ -1,10 +1,13 @@
 import {
   analyzeCraftImplicitTargets,
+  analyzeCraftTargets,
   BONE_RULES,
   type CraftCatalog,
   type CraftImplicitTargetValues,
   type CraftNumericChange,
   type CraftState,
+  type CraftTargetAlternative,
+  type CraftTargetValues,
   compareCraftStates,
   type PendingDesecration,
 } from '@poe2-tools/item-core'
@@ -15,6 +18,10 @@ import { ModStateBadges } from './ModStateBadges'
 
 interface CraftComparisonPanelProps {
   targetImplicitValues?: CraftImplicitTargetValues[]
+  targetModIds?: string[]
+  targetValues?: CraftTargetValues[]
+  targetAlternatives?: CraftTargetAlternative[]
+  targetFracturedModId?: string
   catalog: CraftCatalog
   before: CraftState
   after: CraftState
@@ -32,7 +39,30 @@ export function CraftComparisonPanel({
   translateLine,
   translations = {},
   targetImplicitValues = [],
+  targetModIds = [],
+  targetValues = [],
+  targetAlternatives = [],
+  targetFracturedModId,
 }: CraftComparisonPanelProps) {
+  const fractureGoalState = (state: CraftState) => {
+    if (!targetFracturedModId) return null
+    const analyzed = analyzeCraftTargets(
+      catalog,
+      state,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      undefined,
+      targetImplicitValues,
+      targetFracturedModId,
+    )
+    return analyzed.ok
+      ? (analyzed.value.targets.find((target) => target.modId === targetFracturedModId)?.matched ??
+          null)
+      : null
+  }
+  const fractureBefore = fractureGoalState(before)
+  const fractureAfter = fractureGoalState(after)
   const result = useMemo(() => compareCraftStates(catalog, before, after), [catalog, before, after])
   const implicitBefore = useMemo(
     () => analyzeCraftImplicitTargets(catalog, before, targetImplicitValues),
@@ -122,6 +152,12 @@ export function CraftComparisonPanel({
   return (
     <section className="craft-comparison" aria-label="操作前后变化">
       <h3>操作前后变化</h3>
+      {targetFracturedModId ? (
+        <p>
+          破裂目标：{fractureBefore === null ? '无法判断' : fractureBefore ? '已达成' : '未达成'} →{' '}
+          {fractureAfter === null ? '无法判断' : fractureAfter ? '已达成' : '未达成'}
+        </p>
+      ) : null}
       {targetImplicitValues.length ? (
         <section aria-label="固有目标前后变化">
           {!implicitBefore.ok || !implicitAfter.ok ? (

@@ -24,6 +24,7 @@ interface Props {
   values: CraftTargetValues[]
   alternatives: CraftTargetAlternative[]
   implicitValues?: CraftImplicitTargetValues[]
+  targetFracturedModId?: string
   busy: boolean
   translations: Record<string, string>
   onPreview: (operation: CraftStep) => void
@@ -42,6 +43,7 @@ export function TargetRoutesPanel(props: Props) {
         props.values,
         props.alternatives,
         props.implicitValues,
+        props.targetFracturedModId,
         preserveMatched,
       ])}
       {...props}
@@ -57,6 +59,7 @@ function RouteSearch({
   values,
   alternatives,
   implicitValues = [],
+  targetFracturedModId,
   busy,
   translations,
   onPreview,
@@ -85,6 +88,7 @@ function RouteSearch({
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const label = (step: CraftStep) => {
     if ('currency' in step) return CRAFT_CURRENCY_LABELS[step.currency]
+    if (step.kind === 'fracture') return localize('Fracturing Orb')
     if (step.kind === 'essence')
       return localize(
         catalog.essences?.find((e) => e.id === step.essenceId)?.name ?? step.essenceId,
@@ -139,7 +143,7 @@ function RouteSearch({
         保留当前已达成目标
       </label>
       <p>
-        保留只约束示例每一步仍满足起点已达成的目标组，不保护非目标词缀，也不保证游戏随机结果安全。
+        保留会约束示例每一步维持起点已满足的目标身份和数值，包括尚未破裂的指定目标；不保护非目标词缀，也不保证游戏随机结果安全。
       </p>
       <button
         type="button"
@@ -153,7 +157,16 @@ function RouteSearch({
           const id = ++requestId.current
           try {
             cancelRef.current = requestTargetRoutes(
-              [catalog, state, ids, values, alternatives, { preserveMatched }, implicitValues],
+              [
+                catalog,
+                state,
+                ids,
+                values,
+                alternatives,
+                { preserveMatched },
+                implicitValues,
+                targetFracturedModId,
+              ],
               (next) => {
                 if (requestId.current !== id) return
                 setResult(next)
@@ -256,6 +269,13 @@ function RouteSearch({
                             ? ` + ${boneOmens(step.operation).join(' + ')}`
                             : ''}
                         </strong>
+                        {'kind' in step.operation && step.operation.kind === 'fracture' ? (
+                          <p className="target-warning">
+                            演练锁定：{modLabel(step.operation.modId)}。游戏随机锁定当前{' '}
+                            {step.fractureCandidateModIds?.length ?? 0}{' '}
+                            组候选中的一组，可能锁到其他词缀；此路线只指定结果，不代表成功率。
+                          </p>
+                        ) : null}
                         {'kind' in step.operation &&
                         (step.operation.kind === 'desecrate' ||
                           step.operation.kind === 'desecration-offer' ||
@@ -322,7 +342,7 @@ function RouteSearch({
                         ) : null}
                         {'currency' in step.operation && step.operation.currency === 'divine' ? (
                           <p className="target-warning">
-                            神圣会随机重掷全部显式与固有数值，包括已达成条件也可能变差。涉及目标：
+                            神圣会随机重掷未破裂显式与固有数值，已达成条件也可能变差；破裂数值保持不变。涉及目标：
                             {[
                               ...step.rerolledTargetIds.map(modLabel),
                               ...(step.rerolledImplicitLineIndexes?.map(implicitLabel) ?? []),

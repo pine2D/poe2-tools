@@ -92,7 +92,7 @@ it('目标改动清除待应用破裂，普通草稿期间不能开启破裂', (
   fireEvent.change(screen.getByLabelText('搜索目标词缀'), { target: { value: 'prefix1' } })
   fireEvent.click(screen.getByRole('button', { name: '加入目标 prefix1' }))
   expect(screen.queryByLabelText('破裂待应用结果')).toBeNull()
-  expect(screen.getByText('此组已达成目标，可演练锁定。')).toBeDefined()
+  expect(screen.getByText('此组身份与数值条件已满足，可演练锁定。')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '神圣石' }))
   expect(
     (screen.getByRole('button', { name: '预览破裂 prefix1' }) as HTMLButtonElement).disabled,
