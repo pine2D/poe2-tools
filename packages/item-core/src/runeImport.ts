@@ -4,6 +4,7 @@ import type { InspectedRune } from './export'
 import { parseItem } from './parse'
 import type { CraftResult, CraftState } from './rehearsal'
 import { parseRuneEffectTotals, type RuneEffectTotals, sumRuneEffects } from './runeEffects'
+import { effectiveSocketAugment } from './socketAmplification'
 import type { ItemDocument } from './types'
 import {
   parseWeaponRuneEffectTotals,
@@ -64,7 +65,9 @@ export function runeSocketContributionError(
     if (id === null) continue
     const augment = catalog.augments?.find((entry) => entry.id === id)
     if (!augment?.lines.length) return '孔内符文缺少可核对的目录效果。'
-    augments.push(augment)
+    const effective = effectiveSocketAugment(catalog, state, augment)
+    if (effective === null) return '孔内符文增效暂不支持，不能核对。'
+    augments.push(effective)
   }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)

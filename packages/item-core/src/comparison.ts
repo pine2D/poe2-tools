@@ -4,6 +4,7 @@ import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { readNumericValues } from './numeric'
 import { type CraftRarity, type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { socketEffects } from './sockets'
 
 export interface CraftNumericChange {
   index: number
@@ -180,20 +181,27 @@ export function compareCraftStates(
     before.sockets.length !== after.sockets.length
       ? { before: before.sockets.length, after: after.sockets.length }
       : undefined
-  const augments = new Map(catalog.augments?.map((augment) => [augment.id, augment]))
+  const previousEffects = new Map(
+    socketEffects(catalog, before).map(({ socketIndex, augment }) => [socketIndex, augment.lines]),
+  )
+  const nextEffects = new Map(
+    socketEffects(catalog, after).map(({ socketIndex, augment }) => [socketIndex, augment.lines]),
+  )
   const sockets = (before.sockets ?? []).flatMap((beforeId, socketIndex) => {
     // 仅比较两侧真实存在的共同孔；新增或移除孔由 socketCount 表示。
     const afterId = after.sockets?.[socketIndex]
     if (afterId === undefined) return []
-    return beforeId === afterId
+    const beforeLines = previousEffects.get(socketIndex) ?? null
+    const afterLines = nextEffects.get(socketIndex) ?? null
+    return beforeId === afterId && JSON.stringify(beforeLines) === JSON.stringify(afterLines)
       ? []
       : [
           {
             socketIndex,
             beforeId,
             afterId,
-            beforeLines: beforeId === null ? null : [...(augments.get(beforeId)?.lines ?? [])],
-            afterLines: afterId === null ? null : [...(augments.get(afterId)?.lines ?? [])],
+            beforeLines,
+            afterLines,
           },
         ]
   })

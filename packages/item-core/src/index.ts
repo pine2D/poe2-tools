@@ -160,6 +160,7 @@ export {
 export { importCraftState, importSocketCount } from './rehearsalImport'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
 export { createStatResolver, resolveBase, resolveStat } from './resolve'
+export { socketEffectIncrease } from './socketAmplification'
 export type { SocketEffect } from './sockets'
 export {
   artificerSocketLimit,

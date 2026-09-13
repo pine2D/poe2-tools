@@ -1,5 +1,9 @@
 # 数据源登记表
 
+### 恐惧精华镶嵌增效计算依据（2026-09-13）
+
+[GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff)确认恐惧精华在手套／鞋上提供 60% 镶嵌物增效，旧 100% 属于遗产数值。属性身份与精华部位映射继续使用已登记的固定 PoB MIT 目录，不新增数据包。[同一固定提交的 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L1523)在游戏文本还原时逐枚缩放后分组；[ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua#L14)对本次支持的正整数效果向下取整。自有代码据此估算普通四族防具符文，不复制实现，不推广到绑定、其他增效或角色总面板。取整与国服实际导出仍待真机验收。
+
 ### 破裂制作人工机制依据（2026-09-13）
 
 [GGG 0.2.0](https://www.pathofexile.com/forum/view-thread/3740562)支持稀有、至少四词缀及随机锁定；[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)直接确认神圣不应改变破裂词缀。已有登记的 [PoE2DB Fracturing Orb](https://poe2db.tw/us/Fracturing_Orb)物品说明经 Exa 全文读取确认不能再次用于破裂物品，按 gray 人工转录参考；没有抓取适配器或复制数据文件。

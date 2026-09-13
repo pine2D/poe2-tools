@@ -3,6 +3,8 @@ import { readNumericValues } from './numeric'
 import { supportsItemQuality } from './quality'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { sumRuneEffects } from './runeEffects'
+import { isHorrorSocketAffix } from './socketAmplification'
+import { socketEffects } from './sockets'
 
 export type DefenceStat = 'Armour' | 'Evasion' | 'EnergyShield'
 export interface DefenceEstimate {
@@ -113,11 +115,7 @@ export function estimateDefences(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return fail(`当前制作状态无法估算：${checked.error}`)
   state = checked.value
-  const runeAugments = (state.sockets ?? []).flatMap((id) => {
-    if (id === null) return []
-    const augment = catalog.augments?.find((entry) => entry.id === id)
-    return augment === undefined ? [] : [augment]
-  })
+  const runeAugments = socketEffects(catalog, state).map(({ augment }) => augment)
   const runeTotals = sumRuneEffects(runeAugments)
   if (runeTotals === null) return fail('孔内包含尚未支持的符文效果，不能估算防御。')
   const runeIncreased = runeTotals.Defences
@@ -133,6 +131,7 @@ export function estimateDefences(
   for (const affix of state.affixes) {
     const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
+    if (isHorrorSocketAffix(catalog, state, affix)) continue
     if (
       SPECIAL_MODEL_TEXT.test(mod.group) ||
       mod.lines.some((line) => SPECIAL_MODEL_TEXT.test(line))

@@ -1,6 +1,7 @@
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
+import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 /** 只列已占用孔；augment.lines 是当前效果，bonded 仅保留来源信息。 */
@@ -17,10 +18,12 @@ function specialState(catalog: CraftCatalog, state: CraftState): boolean {
   const lines = [
     ...(base.implicit?.split('\n') ?? []),
     ...(state.implicitLines ?? []),
-    ...state.affixes.flatMap((affix) => [
-      ...affix.lines,
-      ...(catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? []),
-    ]),
+    ...state.affixes
+      .filter((affix) => !isHorrorSocketAffix(catalog, state, affix))
+      .flatMap((affix) => [
+        ...affix.lines,
+        ...(catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? []),
+      ]),
   ]
   return lines.some((line) => SPECIAL_SOCKET_RULE.test(line))
 }
@@ -90,7 +93,10 @@ export function socketStateError(catalog: CraftCatalog, state: CraftState): stri
     if (id === null) continue
     const augment = catalog.augments?.find((entry) => entry.id === id)
     if (augment === undefined) return `孔内物 ${id} 不在镶嵌目录中。`
-    if (!supportedAugment(catalog, state, augment))
+    if (
+      !supportedAugment(catalog, state, augment) ||
+      effectiveSocketAugment(catalog, state, augment) === null
+    )
       return `孔内物 ${augment.name} 暂不支持镶嵌演练。`
   }
   return null
@@ -100,13 +106,18 @@ export function socketCandidates(catalog: CraftCatalog, state: CraftState): Cata
   if (Object.hasOwn(state, 'pendingDesecration')) return []
   if (socketStateError(catalog, state) !== null || !state.sockets?.length) return []
   // levelReq 为符文贡献的穿戴需求，不是物品等级门槛。
-  return (catalog.augments ?? []).filter((augment) => supportedAugment(catalog, state, augment))
+  return (catalog.augments ?? []).flatMap((augment) => {
+    if (!supportedAugment(catalog, state, augment)) return []
+    const effective = effectiveSocketAugment(catalog, state, augment)
+    return effective === null ? [] : [effective]
+  })
 }
 
 export function socketEffects(catalog: CraftCatalog, state: CraftState): SocketEffect[] {
   if (socketStateError(catalog, state) !== null) return []
   return (state.sockets ?? []).flatMap((id, socketIndex) => {
     const augment = catalog.augments?.find((entry) => entry.id === id)
-    return augment === undefined ? [] : [{ socketIndex, augment }]
+    const effective = augment && effectiveSocketAugment(catalog, state, augment)
+    return effective ? [{ socketIndex, augment: effective }] : []
   })
 }

@@ -4,6 +4,7 @@ import type { ItemDictionary } from './export'
 import { readUnlevelledSkillName } from './grantedSkills'
 import { isItemStructureLine } from './parse'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { socketEffects } from './sockets'
 import type { ItemLocale } from './types'
 
 export interface CraftItemTextExport {
@@ -94,10 +95,7 @@ export function exportCraftItemText(
     affix,
     mod: catalog.modifiers.find((entry) => entry.id === affix.modId),
   }))
-  const runes = (current.sockets ?? []).flatMap((id) => {
-    const rune = id === null ? undefined : catalog.augments?.find((entry) => entry.id === id)
-    return rune ? [rune] : []
-  })
+  const runes = socketEffects(catalog, current).map(({ augment }) => augment)
   const runeLines = runes.flatMap((rune) => rune.lines)
   const names = [
     base.name,

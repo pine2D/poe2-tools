@@ -31,7 +31,7 @@ it('v34 报价随项目保存，撤销游标只影响消费，旧项目不能注
     const r = parseCraftProject(serializeCraftProject({ ...project, cursor }), catalog)
     if (!r.ok) throw Error(r.error)
     expect(r.value.project.pricing).toEqual(project.pricing)
-    expect(r.value.project.rulesVersion).toBe('basic-2026-09-12-v34')
+    expect(r.value.project.rulesVersion).toBe('basic-2026-09-12-v35')
     const costs = collectCraftCosts(catalog, r.value.project.operations.slice(0, cursor))
     if (!costs.ok || !r.value.project.pricing) throw Error('恢复失败')
     expect(quoteCraftCosts(costs.value, r.value.project.pricing, true)).toMatchObject({

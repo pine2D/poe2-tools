@@ -43,6 +43,7 @@ import {
 } from './rehearsal'
 import { importCraftState } from './rehearsalImport'
 import { isSupportedArmourRune, parseRuneEffectTotals } from './runeEffects'
+import { isHorrorSocketAffix } from './socketAmplification'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
@@ -51,7 +52,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v34'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v35'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -106,7 +107,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 34 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 35 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -835,6 +836,18 @@ export function parseCraftProject(
     rulesVersion < 9,
   )
   if (!initial.ok) return initial
+  const unsupportedLegacyAmplification = (state: CraftState) =>
+    rulesVersion < 35 &&
+    (state.sockets?.length ?? 0) > 0 &&
+    state.affixes.some((affix) => isHorrorSocketAffix(catalog, state, affix))
+  // 旧版导入会对零孔也检查 socketCapacity；历史中零孔再加恐惧工艺则原本合法。
+  if (
+    unsupportedLegacyAmplification(initial.value) ||
+    (rulesVersion < 35 &&
+      initial.value.sockets !== undefined &&
+      initial.value.affixes.some((affix) => isHorrorSocketAffix(catalog, initial.value, affix)))
+  )
+    return fail('v2–v34 旧版项目不能包含恐惧精华镶嵌增效状态。')
   // 旧目标沿用当时的普通/精华身份，不因新版 Genesis 保留目标释放工艺槽。
   const targetCatalog =
     rulesVersion < 27
@@ -937,6 +950,8 @@ export function parseCraftProject(
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     const next = applyCraftStep(catalog, current, operation)
     if (!next.ok) return fail(`第 ${index + 1} 步无法回放：${next.error}`)
+    if (unsupportedLegacyAmplification(next.value))
+      return fail(`第 ${index + 1} 步包含旧版不支持的恐惧精华镶嵌增效。`)
     operations.push(operation)
     current = next.value
     states.push(current)

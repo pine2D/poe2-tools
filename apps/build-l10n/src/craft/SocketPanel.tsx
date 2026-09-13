@@ -6,6 +6,7 @@ import {
   type SocketCraftOperation,
   socketCandidates,
   socketCapacity,
+  socketEffectIncrease,
   socketEffects,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
@@ -52,6 +53,12 @@ export function SocketPanel({
       <p>
         支持沙漠、冰川、风暴和钢铁四族普通符文，按当前装备部位提供适用效果。覆盖旧符文不返还材料，镶嵌效果不占前后缀位置。
       </p>
+      {socketEffectIncrease(catalog, state) > 0 ? (
+        <p>
+          已计入{label('Essence of Horror')}的 60% 镶嵌物增效；按固定 PoB
+          快照逐枚向下取整后合计，游戏真机待验收。移除该词缀会同步降低符文效果。
+        </p>
+      ) : null}
       {state.sockets !== undefined && limit > 0 ? (
         <div className="socket-artificer">
           <p>
@@ -202,7 +209,7 @@ export function SocketPanel({
             </section>
           ) : null}
           <p className="socket-note">
-            列出符文本身的普通效果；支持的武器与防具可在面板查看本地估算。未激活绑定加成（Bonded），未合计最终穿戴需求或角色
+            列出当前装备上的普通符文效果；支持的武器与防具可在面板查看本地估算。未激活绑定加成（Bonded），未合计最终穿戴需求或角色
             DPS／抗性。
           </p>
         </>

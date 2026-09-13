@@ -150,7 +150,9 @@ export function ImportSocketSetup({
                 ))}
             </label>
           ))}
-          <p>仅列出当前部位已支持的普通符文；若实际孔内物不在列表，保留原文对照。</p>
+          <p>
+            列表显示符文基础效果；装备增效会在全部孔位选定后计入总贡献核对。仅列出当前部位已支持的普通符文；若实际孔内物不在列表，保留原文对照。
+          </p>
           {checked && !checked.ok ? <p role="status">{checked.error}</p> : null}
           {checked?.ok && checked.value.runeSourceLines !== undefined ? (
             <p role="status">符文总贡献与原文一致。</p>
