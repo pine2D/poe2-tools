@@ -5,7 +5,7 @@ import {
   catalystChoices,
   estimateCatalystEffects,
   isBasicJewel,
-  usesJewelEffect,
+  usesExplicitModEffect,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
 import './catalysts.css'
@@ -38,7 +38,7 @@ export function CatalystPreviewPanel({
     [catalog, state, catalyst, quality],
   )
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  const hasEffect = usesJewelEffect(catalog, state)
+  const hasEffect = usesExplicitModEffect(catalog, state)
   if (!base || (!['Ring', 'Amulet'].includes(base.type) && !isBasicJewel(base))) return null
   const groups = result.ok
     ? result.value.groups.filter(
@@ -67,7 +67,7 @@ export function CatalystPreviewPanel({
             ? '默认显示当前催化品质下的估算值；修改下方选项仅作比较，不改变已保存品质。'
             : '比较当前基础属性在指定品质下的估算值，未施加到装备，不计材料费用。'}
           每颗催化剂的品质增量仍待核实，预览品质不代表材料颗数。
-          {hasEffect ? '比较包含已有珠宝反侧增效，命中催化标签时相加后一次计算。' : ''}
+          {hasEffect ? '比较包含已有工艺增效，命中催化标签时相加后一次计算。' : ''}
         </p>
         {options.ok ? (
           <>
@@ -120,7 +120,7 @@ export function CatalystPreviewPanel({
                   {group.matched
                     ? ' · 标签命中'
                     : group.lines.some((line) => line.status === 'estimated')
-                      ? ' · 珠宝增效'
+                      ? ' · 工艺增效'
                       : ' · 对应关系待核对'}
                 </h4>
                 {group.lines.map((line) => (

@@ -60,6 +60,7 @@ import {
   type SocketCraftOperation,
   statScalabilitySourceHash,
   strategyStageAt,
+  usesExplicitModEffect,
   usesJewelCapacity,
   usesJewelEffect,
   type VaalCraftOperation,
@@ -1120,9 +1121,9 @@ export function RehearsalPanel({
         <div>
           <h2>通货演练 · 指定结果演练</h2>
           <p>可指定词缀与具体数值；范围试掷采用演练模型，不计算真实概率或市场价格。</p>
-          {usesJewelEffect(catalog, current) ? (
+          {usesExplicitModEffect(catalog, current) ? (
             <p className="rehearsal-scope-note">
-              制作步骤使用增效前基础值；数值目标可选择增效后的有效值，反侧增效与催化品质的合计效果见下方预览。
+              制作步骤使用增效前基础值；数值目标可选择有效值，适用的工艺增效与催化品质的合计效果见下方预览。
             </p>
           ) : current.catalyst ? (
             <p className="rehearsal-scope-note">

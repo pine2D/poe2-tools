@@ -26,7 +26,6 @@ import {
   hasGenesisModEligibility,
   inspectCraftAlloys,
   inspectEssences,
-  usesJewelEffect,
   validateCraftFractureTarget,
   validateCraftTargetAlternatives,
   validateCraftTargets,
@@ -518,9 +517,7 @@ export function CraftTargets({
                           <p key={value.index}>
                             {targetValues.find((entry) => entry.modId === member.modId)?.basis ===
                             'effective'
-                              ? usesJewelEffect(catalog, state)
-                                ? '增效后'
-                                : '品质后'
+                              ? '有效'
                               : '基础'}
                             数值 {value.index + 1}：当前{' '}
                             {value.actualRange

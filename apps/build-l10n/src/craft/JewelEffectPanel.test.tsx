@@ -105,7 +105,7 @@ it('有效目标明确口径并使用合计增效范围', () => {
     />,
   )
   fireEvent.click(screen.getByLabelText(`设置数值条件 ${mod.id}`))
-  expect(screen.getByRole('option', { name: '增效后有效值' })).toBeDefined()
+  expect(screen.getByRole('option', { name: '有效值（含品质与工艺增效）' })).toBeDefined()
   fireEvent.change(screen.getByLabelText(`${mod.id} · 条件口径`), {
     target: { value: 'effective' },
   })

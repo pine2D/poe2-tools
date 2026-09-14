@@ -15,7 +15,7 @@ import {
   craftOmenDescription,
   craftOmenMaterials,
   ESSENCE_OMEN_RULES,
-  usesJewelEffect,
+  usesExplicitModEffect,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 import { BoneOperationDetails } from './BoneAdvicePanel'
@@ -438,8 +438,9 @@ function RouteSearch({
                             {step.operation.omen === 'blessed'
                               ? craftOmenDescription('blessed')
                               : '神圣会随机重掷未破裂显式与固有数值，已达成条件也可能变差；破裂基础数值保持不变。'}
-                            {step.operation.omen !== 'blessed' && usesJewelEffect(catalog, previous)
-                              ? '珠宝增效会同时重掷，破裂词缀的基础值不变，但有效值也会随增效变化。'
+                            {step.operation.omen !== 'blessed' &&
+                            usesExplicitModEffect(catalog, previous)
+                              ? '神圣也会重掷工艺增效；受该增效影响的破裂词缀，其基础值不变，有效值仍可能变化。'
                               : ''}
                             涉及目标：
                             {[
