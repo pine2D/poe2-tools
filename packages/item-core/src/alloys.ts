@@ -94,7 +94,9 @@ export function parseAlloyCatalog(value: unknown, catalog: CraftCatalog): AlloyC
     return invalid()
   const ids = new Set<string>()
   const names = new Set<string>()
-  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
+  // 关系只允许 Alloy ID；无需为普通装备和珠宝词缀分配索引。
+  const mods = new Map<string, CatalogMod>()
+  for (const mod of catalog.modifiers) if (mod.id.startsWith('Alloy')) mods.set(mod.id, mod)
   for (const alloy of value.alloys) {
     if (
       !record(alloy) ||
@@ -143,17 +145,25 @@ export interface AlloyInspection {
   reason: string | null
 }
 
+function findMappedMod(catalog: CraftCatalog, modId: string): CatalogMod | null {
+  // 单类别只有少量映射；反向查找保留原 Map 的重复 ID 后项优先行为。
+  for (let index = catalog.modifiers.length - 1; index >= 0; index--) {
+    const mod = catalog.modifiers[index]
+    if (mod?.id === modId) return mod
+  }
+  return null
+}
+
 export function inspectAlloys(
   table: AlloyCatalog,
   catalog: CraftCatalog,
   base: CatalogBase,
 ): AlloyInspection[] {
   const category = essenceCategory(base)
-  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   return table.alloys.flatMap((alloy) => {
     const mapping = alloy.mappings.find((entry) => entry.category === category)
     if (!mapping) return []
-    const mod = mapping.modId === null ? null : (mods.get(mapping.modId) ?? null)
+    const mod = mapping.modId === null ? null : findMappedMod(catalog, mapping.modId)
     return [
       {
         alloy,
@@ -189,9 +199,13 @@ export function alloyCatalogSignature(catalog: CraftCatalog): string | null {
 }
 
 export function inspectCraftAlloys(catalog: CraftCatalog, base: CatalogBase): AlloyInspection[] {
-  return catalog.alloys && alloyCatalogSignature(catalog) !== null
-    ? inspectAlloys(catalog.alloys, catalog, base)
-    : []
+  if (!catalog.alloys) return []
+  try {
+    // 查询只需验证关系；项目签名的排序和序列化留给实际保存／核对入口。
+    return inspectAlloys(parseAlloyCatalog(catalog.alloys, catalog), catalog, base)
+  } catch {
+    return []
+  }
 }
 
 export function isAlloyMappedMod(catalog: CraftCatalog, base: CatalogBase, modId: string): boolean {

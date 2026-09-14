@@ -95,8 +95,32 @@ it('液态制作按保证属性检索，尚未准备稀有装备也能查看结�
   expect(within(list).queryByRole('button', { name: /选择液态情感/ })).toBeNull()
 })
 
+it.each(['Time-Lost Ruby', 'Time-Lost Emerald', 'Time-Lost Sapphire', 'Time-Lost Diamond'])(
+  '%s 查询保留范围语义，不能混入普通珠宝或借此开始制作',
+  async (id) => {
+    render(
+      <CatalogPanel
+        translations={{}}
+        initialBaseId={id}
+        initialItemLevel={86}
+        fetchImpl={vi.fn<typeof fetch>(async () => new Response(JSON.stringify(catalog)))}
+      />,
+    )
+    const pool = await screen.findByRole('region', { name: '词缀池' })
+    fireEvent.change(within(pool).getByRole('searchbox'), {
+      target: { value: 'JewelRadiusNotableEffectNew' },
+    })
+    expect(
+      within(pool).getByText('(15-25)% increased Effect of Notable Passive Skills in Radius'),
+    ).toBeDefined()
+    fireEvent.change(within(pool).getByRole('searchbox'), { target: { value: 'JewelLifeonKill' } })
+    expect(within(pool).getByText('匹配 0 条，当前展示 0 条。')).toBeDefined()
+    expect(screen.queryByRole('button', { name: '从空白基底开始' })).toBeNull()
+  },
+)
+
 it.each([
-  ['Time-Lost Ruby', '范围与特殊珠宝的制作词缀池尚未开放。'],
+  ['Timeless Jewel', '特殊珠宝的制作词缀池尚未开放。'],
   ['Ruby Charm', '药剂与咒符的专属词缀池尚未收录，因此不展示词缀结果。'],
 ])('%s 不会因开放普通珠宝而展示错误的常规池', async (id, reason) => {
   render(

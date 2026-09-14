@@ -1,4 +1,5 @@
 import type { AlloyCatalog } from './alloys'
+import { isBasicJewel, isRadiusJewel } from './jewels'
 
 /** 制作目录仅提供生成资格；概率数据必须单独建立来源。 */
 export interface CatalogBase {
@@ -42,6 +43,7 @@ export interface CatalogModifierData {
 
 export interface CatalogMod extends CatalogModifierData {
   jewelOnly?: true
+  radiusJewelOnly?: true
   craftedOnly?: true
   desecratedOnly?: true
   kind: 'prefix' | 'suffix'
@@ -179,12 +181,17 @@ export function hasCraftModEligibility(
   if (mod.craftedOnly) return false
   // 珠宝与装备采用不同来源域，动态标签不能跨域注入候选。
   if ((base.type === 'Jewel') !== (mod.jewelOnly === true)) return false
-  const tags = new Set(
-    [...base.tags, ...addedTags].filter(
-      (tag) => tag !== 'genesis_tree_caster' && tag !== 'genesis_tree_minion',
-    ),
+  if (base.type === 'Jewel' && !(mod.radiusJewelOnly ? isRadiusJewel(base) : isBasicJewel(base)))
+    return false
+  // 每次只判断一条词缀；直接查询短标签数组，避免遍历目录时重复分配 Set。
+  return (
+    mod.eligibility.find(
+      (rule) =>
+        rule.tag !== 'genesis_tree_caster' &&
+        rule.tag !== 'genesis_tree_minion' &&
+        (base.tags.includes(rule.tag) || addedTags.includes(rule.tag)),
+    )?.value === 1
   )
-  return mod.eligibility.find((rule) => tags.has(rule.tag))?.value === 1
 }
 
 /** 已有 Genesis 身份只认首饰基底自身的源标签，不接受动态生成标签注入。 */

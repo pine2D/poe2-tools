@@ -3,7 +3,7 @@ import { normalizeMod } from './craftCatalog'
 import { auditLiquidEmotionMappings } from './craftLiquidEmotionAudit'
 import type { LuaTable } from './restrictedLua'
 
-/** 所有记录先验结构；范围珠宝及无资格记录保留排除原因。 */
+/** 所有记录先验结构；范围节点补成可核验全文，无资格记录保留排除原因。 */
 export function normalizeJewelMods(
   raw: unknown,
   liquidEmotions: readonly CatalogLiquidEmotion[] = [],
@@ -48,9 +48,27 @@ export function normalizeJewelMods(
     const ordinary = mod.eligibility.some(
       (rule) => ['strjewel', 'dexjewel', 'intjewel'].includes(rule.tag) && rule.value === 1,
     )
+    const radius = mod.eligibility.some(
+      (rule) =>
+        ['radius_jewel', 'str_radius_jewel', 'dex_radius_jewel', 'int_radius_jewel'].includes(
+          rule.tag,
+        ) && rule.value === 1,
+    )
+    if (ordinary && radius) fail(id)
     if (ordinary) {
       if (nodeType !== undefined) fail(id)
       modifiers.push({ ...mod, jewelOnly: true })
+    } else if (radius) {
+      const scope =
+        nodeType === 1
+          ? 'Small Passive Skills in Radius also grant '
+          : nodeType === 2
+            ? 'Notable Passive Skills in Radius also grant '
+            : ''
+      const lines = mod.lines.map((line) => scope + line)
+      const declared = Object.values(mod.tradeHashes).flat()
+      if (lines.some((line) => !declared.includes(line))) fail(id)
+      modifiers.push({ ...mod, lines, jewelOnly: true, radiusJewelOnly: true })
     } else if (craftedIds.has(id)) {
       if (nodeType !== undefined || mod.eligibility.some((rule) => rule.value !== 0)) fail(id)
       modifiers.push({ ...mod, jewelOnly: true, craftedOnly: true })

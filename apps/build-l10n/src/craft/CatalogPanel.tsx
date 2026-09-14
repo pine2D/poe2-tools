@@ -9,6 +9,7 @@ import {
   type ItemDocument,
   inspectModPool,
   isBasicJewel,
+  isRadiusJewel,
   jewelSourceHash,
   matchCatalogMods,
   type PoolEntry,
@@ -374,10 +375,10 @@ export function CatalogPanel({
     : SPECIAL_TYPES.has(selectedBase.type.trim().toLowerCase())
       ? '药剂与咒符的专属词缀池尚未收录，因此不展示词缀结果。'
       : selectedBase.type === 'Jewel'
-        ? !isBasicJewel(selectedBase)
-          ? '范围与特殊珠宝的制作词缀池尚未开放。'
+        ? !isBasicJewel(selectedBase) && !isRadiusJewel(selectedBase)
+          ? '特殊珠宝的制作词缀池尚未开放。'
           : !catalog || jewelSourceHash(catalog) === null
-            ? '当前目录缺少已核验的普通珠宝词缀来源。'
+            ? '当前目录缺少已核验的珠宝词缀来源。'
             : null
         : null
   const importedMatches = useMemo(
@@ -683,6 +684,11 @@ export function CatalogPanel({
                 <p className="catalog-empty">{unavailablePoolReason}</p>
               ) : (
                 <section className="catalog-pool" aria-label="词缀池">
+                  {isRadiusJewel(selectedBase) ? (
+                    <p>
+                      范围珠宝词缀按完整天赋范围显示，不是直接加到角色身上的属性。当前可查询；制作与树上覆盖计算尚未接入，没有真实权重。
+                    </p>
+                  ) : null}
                   {isBasicJewel(selectedBase) ? (
                     <p>
                       普通常规词缀池；液态保证属性请查看上方材料目录。目录等级用于核对生成资格，不代表游戏词缀阶级；当前没有真实权重。

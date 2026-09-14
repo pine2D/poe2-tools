@@ -383,13 +383,21 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     if (
       !record(mod) ||
       !Object.keys(mod).every((key) =>
-        [...MODIFIER_FIELDS, 'desecratedOnly', 'jewelOnly', 'craftedOnly'].includes(key),
+        [
+          ...MODIFIER_FIELDS,
+          'desecratedOnly',
+          'jewelOnly',
+          'radiusJewelOnly',
+          'craftedOnly',
+        ].includes(key),
       ) ||
       !validModifierData(mod) ||
       ids.has(mod.id) ||
       !['prefix', 'suffix'].includes(String(mod.kind)) ||
       (Object.hasOwn(mod, 'desecratedOnly') && mod.desecratedOnly !== true) ||
       (Object.hasOwn(mod, 'jewelOnly') && mod.jewelOnly !== true) ||
+      (Object.hasOwn(mod, 'radiusJewelOnly') && mod.radiusJewelOnly !== true) ||
+      (mod.radiusJewelOnly === true && (mod.jewelOnly !== true || mod.craftedOnly === true)) ||
       (Object.hasOwn(mod, 'craftedOnly') && mod.craftedOnly !== true) ||
       (mod.craftedOnly === true && mod.jewelOnly !== true) ||
       (mod.jewelOnly === true && mod.desecratedOnly === true) ||

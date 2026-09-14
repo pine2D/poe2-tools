@@ -9,6 +9,59 @@ import { JEWEL_SOURCE } from './jewels'
 import { jewelFixture } from './jewelTestFixture'
 import { LIQUID_EMOTION_SOURCE } from './liquidEmotions'
 
+it('范围词缀按基底身份隔离，动态标签不能跨普通珠宝或装备域', () => {
+  const { catalog, base } = jewelFixture()
+  const ordinary = catalog.modifiers[0]
+  if (!ordinary) throw new Error('缺少合成珠宝词缀')
+  const radius = {
+    ...ordinary,
+    radiusJewelOnly: true as const,
+    eligibility: [
+      { tag: 'int_radius_jewel', value: 1 as const },
+      { tag: 'default', value: 0 as const },
+    ],
+  }
+  const timeLost = {
+    ...base,
+    id: 'Time-Lost Sapphire',
+    name: 'Time-Lost Sapphire',
+    subType: 'Radius',
+    tags: ['default', 'jewel', 'radius_jewel', 'int_radius_jewel'],
+  }
+  expect(hasCraftModEligibility(timeLost, radius)).toBe(true)
+  expect(hasExistingModEligibility(timeLost, radius)).toBe(true)
+  expect(hasCraftModEligibility(base, radius, ['int_radius_jewel'])).toBe(false)
+  expect(hasCraftModEligibility(timeLost, ordinary, base.tags)).toBe(false)
+  expect(hasCraftModEligibility({ ...timeLost, type: 'Helmet' }, radius)).toBe(false)
+  expect(hasCraftModEligibility({ ...timeLost, id: 'Timeless Jewel' }, radius)).toBe(false)
+})
+
+it('范围身份需要 jewelOnly 且不得混入工艺或亵渎声明', () => {
+  const { catalog } = jewelFixture()
+  catalog._meta.excludedJewelMods = []
+  catalog._meta.sources = [JEWEL_SOURCE]
+  const original = catalog.modifiers[0]
+  if (!original) throw new Error('缺少合成珠宝词缀')
+  const mod = {
+    ...original,
+    radiusJewelOnly: true,
+    eligibility: [
+      { tag: 'radius_jewel', value: 1 },
+      { tag: 'jewel', value: 0 },
+      { tag: 'default', value: 0 },
+    ],
+  }
+  const valid = { ...catalog, modifiers: [mod] }
+  expect(parseCraftCatalog(valid)).toEqual(valid)
+  for (const extra of [
+    { radiusJewelOnly: false },
+    { jewelOnly: undefined },
+    { craftedOnly: true },
+    { desecratedOnly: true },
+  ])
+    expect(() => parseCraftCatalog({ ...valid, modifiers: [{ ...mod, ...extra }] })).toThrow()
+})
+
 it('珠宝标记要求唯一固定来源及无重叠排除审计', () => {
   const { catalog } = jewelFixture()
   catalog._meta.sources = [JEWEL_SOURCE]

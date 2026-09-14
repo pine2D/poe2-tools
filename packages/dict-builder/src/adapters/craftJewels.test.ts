@@ -23,12 +23,52 @@ it('普通珠宝保留资格顺序和来源标记，补零兜底不开放其他�
     excluded: [],
   })
 })
-it('范围珠宝与无生成资格记录保留明确排除审计', () => {
-  expect(normalizeJewelMods(source('nodeType=2,', '"int_radius_jewel", "jewel"'))).toMatchObject({
-    modifiers: [],
-    excluded: [{ id: 'sample', reason: expect.any(String) }],
-  })
+it('没有完整交易模板的范围声明拒绝生成，无资格记录保留排除审计', () => {
+  expect(() => normalizeJewelMods(source('nodeType=2,', '"int_radius_jewel", "jewel"'))).toThrow()
   expect(normalizeJewelMods(source('', '"jewel"', '0')).excluded).toHaveLength(1)
+})
+
+it.each([
+  [1, 'Small Passive Skills in Radius also grant Value (1-10)'],
+  [2, 'Notable Passive Skills in Radius also grant Value (1-10)'],
+] as const)('范围节点类型 %s 保留完整来源语义和资格顺序', (nodeType, line) => {
+  const raw = source(`nodeType=${nodeType},`, '"int_radius_jewel", "jewel"')
+  const sample = raw.sample as Record<string, unknown>
+  sample.tradeHashes = { '123': { 1: line } }
+  const before = structuredClone(raw)
+  expect(normalizeJewelMods(raw)).toMatchObject({
+    modifiers: [
+      {
+        id: 'sample',
+        jewelOnly: true,
+        radiusJewelOnly: true,
+        lines: [line],
+        eligibility: [
+          { tag: 'int_radius_jewel', value: 1 },
+          { tag: 'jewel', value: 0 },
+          { tag: 'default', value: 0 },
+        ],
+      },
+    ],
+    excluded: [],
+  })
+  expect(raw).toEqual(before)
+  sample.tradeHashes = { '123': { 1: 'Value (1-10)' } }
+  expect(() => normalizeJewelMods(raw)).toThrow()
+})
+
+it('半径升级原文不添加节点语义，普通与范围正向资格混合时拒绝', () => {
+  const raw = source('', '"radius_jewel", "jewel"')
+  const sample = raw.sample as Record<string, unknown>
+  sample['1'] = 'Upgrades Radius to Large'
+  sample.tradeHashes = { '123': { 1: 'Upgrades Radius to Large' } }
+  expect(normalizeJewelMods(raw).modifiers[0]).toMatchObject({
+    radiusJewelOnly: true,
+    lines: ['Upgrades Radius to Large'],
+  })
+  expect(() =>
+    normalizeJewelMods(source('', '"intjewel", "int_radius_jewel", "jewel"', '1, 1, 0')),
+  ).toThrow()
 })
 it('拒绝异常兜底、未知字段及普通珠宝携带范围节点语义', () => {
   for (const raw of [

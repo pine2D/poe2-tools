@@ -192,7 +192,13 @@ export {
   usesExplicitModEffect,
   usesJewelEffect,
 } from './jewelEffects'
-export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'
+export {
+  craftAffixLimit,
+  isBasicJewel,
+  isRadiusJewel,
+  JEWEL_SOURCE,
+  jewelSourceHash,
+} from './jewels'
 export type { PreparedLiquidEmotionCraft } from './liquidEmotionCraft'
 export { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 export {

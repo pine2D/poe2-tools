@@ -49,10 +49,10 @@ if (alloyText !== undefined) {
 } else console.log('合金关系目录未提供；继续校验 primary 制作目录')
 if (
   statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
-  Object.keys(catalog.scalability ?? {}).length !== 2942
+  Object.keys(catalog.scalability ?? {}).length !== 2952
 )
-  throw new Error('缩放目录缺少固定来源或 2942 条当前属性文本对应')
-console.log('属性缩放目录校验通过：2942 条文本；103 条未对应保留缺失，不推断内部精度')
+  throw new Error('缩放目录缺少固定来源或 2952 条当前属性文本对应')
+console.log('属性缩放目录校验通过：2952 条文本；253 条未对应保留缺失，不推断内部精度')
 if (
   corruptionSourceHash(catalog) !== CORRUPTION_SOURCE.sha256 ||
   catalog.corruptions?.length !== 127 ||
@@ -87,12 +87,14 @@ if (
   throw new Error('亵渎目录固定来源或 2550 普通 / 199 专属 / 189 排除计数不匹配')
 if (
   jewelSourceHash(catalog) !== JEWEL_SOURCE.sha256 ||
-  catalog.modifiers.filter((mod) => mod.jewelOnly && !mod.craftedOnly).length !== 160 ||
+  catalog.modifiers.filter((mod) => mod.jewelOnly && !mod.craftedOnly && !mod.radiusJewelOnly)
+    .length !== 160 ||
+  catalog.modifiers.filter((mod) => mod.radiusJewelOnly).length !== 160 ||
   catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly).length !== 8 ||
-  catalog._meta.excludedJewelMods?.length !== 209
+  catalog._meta.excludedJewelMods?.length !== 49
 )
-  throw new Error('珠宝目录固定来源或 160 普通 / 8 工艺专属 / 209 排除计数不匹配')
-console.log('珠宝目录校验通过：160 普通 / 8 工艺专属 / 209 排除')
+  throw new Error('珠宝目录固定来源或 160 普通 / 160 范围 / 8 工艺专属 / 49 排除计数不匹配')
+console.log('珠宝目录校验通过：160 普通 / 160 范围 / 8 工艺专属 / 49 排除')
 for (const base of catalog.bases) {
   if (
     inspectModPool(base, catalog.modifiers, 100).some(
@@ -134,11 +136,12 @@ if (
   radiusEmotionMappings.length !== 46 ||
   new Set(allEmotionMappings).size !== 73 ||
   basicEmotionMappings.filter((id) => modifierIds.has(id)).length !== 50 ||
-  radiusEmotionMappings.filter((id) => modifierIds.has(id)).length !== 8 ||
-  radiusEmotionMappings.filter((id) => excludedJewelIds.has(id)).length !== 38 ||
+  radiusEmotionMappings.filter((id) => modifierIds.has(id)).length !== 35 ||
+  radiusEmotionMappings.filter((id) => excludedJewelIds.has(id)).length !== 11 ||
   radiusEmotionMappings.some(
     (id) =>
       modifierIds.has(id) &&
+      !catalog.modifiers.some((mod) => mod.id === id && mod.radiusJewelOnly) &&
       !['CraftedJewelAdditionalPrefixAllowed', 'CraftedJewelAdditionalSuffixAllowed'].includes(id),
   ) ||
   allEmotionMappings.some((id) => !modifierIds.has(id) && !excludedJewelIds.has(id)) ||
@@ -151,13 +154,18 @@ for (const emotion of emotions) {
   for (const effects of Object.values(emotion.mods)) {
     for (const [kind, id] of Object.entries(effects)) {
       const mod = catalog.modifiers.find((entry) => entry.id === id)
-      if (mod && (!mod.jewelOnly || mod.kind !== kind || (emotion.radiusJewel && !mod.craftedOnly)))
+      if (
+        mod &&
+        (!mod.jewelOnly ||
+          mod.kind !== kind ||
+          (emotion.radiusJewel ? !mod.craftedOnly && !mod.radiusJewelOnly : mod.radiusJewelOnly))
+      )
         throw new Error(`液态情感引用已解析词缀的来源或前后缀不匹配：${id}`)
     }
   }
 }
 console.log(
-  '液态情感声明校验通过：13 普通 / 13 范围材料；普通 50 个映射全部已解析，范围 8 个共享工艺声明 / 38 个排除映射（46 个范围映射均未开放执行），20 个空类别；执行范围见制作规则',
+  '液态情感声明校验通过：13 普通 / 13 范围材料；普通 50 个映射全部已解析，范围 27 个可生成属性 / 8 个共享工艺声明 / 11 个排除映射（46 个范围映射均未开放执行），20 个空类别；执行范围见制作规则',
 )
 const unresolved = [...new Set(essenceMappings.filter((id) => !modifierIds.has(id)))].sort()
 const expectedUnresolved = [

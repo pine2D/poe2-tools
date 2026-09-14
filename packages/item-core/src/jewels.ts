@@ -27,6 +27,17 @@ export function isBasicJewel(base: CatalogBase): boolean {
   )
 }
 
+export function isRadiusJewel(base: CatalogBase): boolean {
+  return (
+    base.type === 'Jewel' &&
+    base.subType === 'Radius' &&
+    ['Time-Lost Ruby', 'Time-Lost Emerald', 'Time-Lost Sapphire', 'Time-Lost Diamond'].includes(
+      base.id,
+    ) &&
+    base.tags.includes('radius_jewel')
+  )
+}
+
 /** 只描述已支持基底的固有容量；当前可新增容量由 craftAffixCapacities 统一计算。 */
 export function craftAffixLimit(base: CatalogBase, rarity: 'normal' | 'magic' | 'rare'): number {
   return rarity === 'normal' ? 0 : rarity === 'magic' ? 1 : isBasicJewel(base) ? 2 : 3
