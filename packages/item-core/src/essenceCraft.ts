@@ -1,5 +1,6 @@
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
+import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { ESSENCE_OMEN_RULES, type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCategory, essenceCraftMode, essenceSourceHash } from './essences'
 import { craftModsConflict } from './modConflicts'
@@ -26,6 +27,7 @@ export function prepareEssenceCraft(
   if (Object.hasOwn(state, 'pendingDesecration')) return fail(PENDING_DESECRATION_MESSAGE)
   if (omen !== undefined && !isEssenceOmen(omen))
     return fail('精华预兆必须是当前支持的单枚结晶预兆。')
+  if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (essenceSourceHash(catalog) === null) return fail('精华目录来源指纹缺失或无效。')

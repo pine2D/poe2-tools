@@ -13,7 +13,7 @@ export interface SocketEffect {
 
 const SPECIAL_SOCKET_RULE = /\b(?:sockets?|socketed|augments?|runes?|soul cores?|bonded|chakra)\b/i
 
-function specialState(catalog: CraftCatalog, state: CraftState): boolean {
+export function hasSpecialSocketRules(catalog: CraftCatalog, state: CraftState): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (base === undefined) return true
   const lines = [
@@ -36,7 +36,7 @@ function supportedSocketBase(catalog: CraftCatalog, state: CraftState) {
     base.hidden ||
     base.runeforged ||
     base.variantList !== undefined ||
-    specialState(catalog, state)
+    hasSpecialSocketRules(catalog, state)
   )
     return undefined
   return base
@@ -48,6 +48,7 @@ function isSupportedOffhand(type: string): boolean {
 
 /** 普通巧匠石上限，独立于额外掉落孔及来源 socketLimit。 */
 export function artificerSocketLimit(catalog: CraftCatalog, state: CraftState): number {
+  if (state.corrupted) return 0
   const base = supportedSocketBase(catalog, state)
   if (base === undefined) return 0
   const weapon = weaponSocketKind(base)
@@ -56,14 +57,17 @@ export function artificerSocketLimit(catalog: CraftCatalog, state: CraftState): 
   return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type) ? 1 : 0
 }
 
-/** 本阶段可确认的非腐化已有孔范围，含额外掉落孔；不是巧匠石打孔上限。 */
+/** 已有孔范围包含额外掉落孔及一次腐化额外孔；不是巧匠石打孔上限。 */
 export function socketCapacity(catalog: CraftCatalog, state: CraftState): number {
   const base = supportedSocketBase(catalog, state)
   if (base === undefined) return 0
   const weapon = weaponSocketKind(base)
-  if (weapon) return weapon.limit + 1
-  if (base.type === 'Body Armour') return 3
-  return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type) ? 2 : 0
+  const extra = state.corrupted ? 1 : 0
+  if (weapon) return weapon.limit + 1 + extra
+  if (base.type === 'Body Armour') return 3 + extra
+  return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type)
+    ? 2 + extra
+    : 0
 }
 
 function supportedAugment(
@@ -89,11 +93,12 @@ export function socketStateError(catalog: CraftCatalog, state: CraftState): stri
       return '孔位必须是明确空孔 null 或已知符文 ID。'
   }
   if (state.sockets.length === 0) return null
-  if (specialState(catalog, state))
+  if (hasSpecialSocketRules(catalog, state))
     return '当前装备带有特殊孔、绑定或镶嵌效果规则，暂不支持镶嵌演练。'
   const capacity = socketCapacity(catalog, state)
   if (capacity === 0) return '该基底暂不支持普通符文镶嵌。'
-  if (state.sockets.length > capacity) return `该基底最多支持 ${capacity} 个已核对的非腐化已有孔。`
+  if (state.sockets.length > capacity)
+    return `该基底最多支持 ${capacity} 个已核对的${state.corrupted ? '腐化' : '非腐化'}已有孔。`
   for (const id of state.sockets) {
     if (id === null) continue
     const augment = catalog.augments?.find((entry) => entry.id === id)

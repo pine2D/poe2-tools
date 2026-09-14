@@ -24,6 +24,7 @@ import {
 } from './catalog'
 import { matchCatalogLineOrder, matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
 import { catalystStateError } from './catalystQuality'
+import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
@@ -38,7 +39,7 @@ import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
 import { runeSourceStateError } from './runeImport'
-import { socketStateError } from './sockets'
+import { hasSpecialSocketRules, socketStateError } from './sockets'
 
 export type CraftRarity = 'normal' | 'magic' | 'rare'
 export type BasicCraftCurrency =
@@ -99,6 +100,7 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  corrupted?: true
   catalyst?: import('./catalystQuality').CatalystQuality
   pendingDesecration?: PendingDesecration
   baseId: string
@@ -257,6 +259,10 @@ export function createCraftState(
   input: CraftState,
 ): CraftResult<CraftState> {
   const base = findBase(catalog, input.baseId)
+  if (Object.hasOwn(input, 'corrupted') && input.corrupted !== true)
+    return failure('腐化状态只能是明确的 true 或缺省。')
+  if (input.corrupted && (base?.type === 'Jewel' || Object.hasOwn(input, 'pendingDesecration')))
+    return failure('腐化珠宝及腐化待揭示亵渎状态尚未支持。')
   if (base === null) return failure(`基底 ${input.baseId} 不在制作目录中。`)
   const unsupported = baseError(base)
   if (unsupported !== null) return failure(unsupported)
@@ -407,6 +413,8 @@ export function createCraftState(
     if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')
     return failure(`稀有装备最多有 ${capacity.prefix} 条前缀和 ${capacity.suffix} 条后缀。`)
   }
+  if (input.corrupted && hasSpecialSocketRules(catalog, input))
+    return failure('带特殊孔位规则的腐化装备尚未支持。')
   const socketError = socketStateError(catalog, input)
   if (socketError !== null) return failure(socketError)
   const pendingError = pendingBoneOmenError(
@@ -424,6 +432,7 @@ export function craftCandidates(
   currency?: CraftCurrency,
   omen?: CraftOmen,
 ): CatalogMod[] {
+  if (state.corrupted) return []
   if (Object.hasOwn(state, 'pendingDesecration')) return []
   if (craftOmenError(omen, currency) !== null) return []
   const omenRule = omen === undefined ? undefined : CRAFT_OMEN_RULES[omen]
@@ -474,6 +483,7 @@ export function addCraftAffix(
   currency?: CraftCurrency,
   omen?: CraftOmen,
 ): CraftResult<CraftState> {
+  if (state.corrupted) return failure(CORRUPTED_CRAFT_MESSAGE)
   if (Object.hasOwn(state, 'pendingDesecration')) return failure(PENDING_DESECRATION_MESSAGE)
   const omenError = craftOmenError(omen, currency)
   if (omenError !== null) return failure(omenError)
@@ -495,6 +505,7 @@ export function removableCraftAffixes(
   currency: RemovalCraftCurrency,
   omen?: CraftOmen,
 ): CraftResult<CraftAffix[]> {
+  if (state.corrupted) return failure(CORRUPTED_CRAFT_MESSAGE)
   if (Object.hasOwn(state, 'pendingDesecration')) return failure(PENDING_DESECRATION_MESSAGE)
   const omenError = craftOmenError(omen, currency)
   if (omenError !== null) return failure(omenError)
@@ -537,6 +548,7 @@ export function prepareCraftOperation(
   removeModId?: string,
   omen?: CraftOmen,
 ): CraftResult<{ state: CraftState; count: number }> {
+  if (state.corrupted) return failure(CORRUPTED_CRAFT_MESSAGE)
   if (Object.hasOwn(state, 'pendingDesecration')) return failure(PENDING_DESECRATION_MESSAGE)
   const omenError = craftOmenError(omen, currency)
   if (omenError !== null) return failure(omenError)

@@ -65,6 +65,11 @@ export type {
   CraftNumericChange,
 } from './comparison'
 export { compareCraftStates } from './comparison'
+export {
+  CORRUPTED_CRAFT_MESSAGE,
+  isVaalCraftOperation,
+  type VaalCraftOperation,
+} from './corruptionRules'
 export type { CraftCostQuote, CraftMaterial, CraftMaterialCost, CraftPricing } from './craftCosts'
 export {
   CRAFT_PRICE_UNITS,

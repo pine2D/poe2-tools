@@ -76,6 +76,18 @@ function setup(extra = '', rarity = 'Normal') {
   )
 }
 
+it('腐化导入允许额外第三孔，搜索起点仍只允许两个未腐化已有孔', () => {
+  setup('\n--------\nSockets: S S S\n--------\nCorrupted')
+  expect((screen.getByLabelText('起点已有空孔数') as HTMLSelectElement).options).toHaveLength(3)
+  expect(screen.queryByText('孔数超过当前支持范围，暂时只能对照。')).toBeNull()
+  for (let index = 1; index <= 3; index++) {
+    fireEvent.change(screen.getByLabelText(`核对孔位 ${index}`), { target: { value: 'empty' } })
+  }
+  fireEvent.click(screen.getByRole('button', { name: '按已核对孔位开始' }))
+  expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
+  expect((screen.getByRole('button', { name: '蜕变石' }) as HTMLButtonElement).disabled).toBe(true)
+})
+
 it('原文符文总和必须匹配，保存原始效果且初始两枚符文不重复计费', () => {
   setup('\n--------\nSockets: S S\n--------\n+20% to Fire Resistance (rune)')
   fireEvent.change(screen.getByLabelText('核对孔位 1'), { target: { value: rune.id } })

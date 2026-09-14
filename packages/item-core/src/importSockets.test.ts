@@ -143,8 +143,13 @@ describe('导入孔位的独立核对声明', () => {
     delete missingAugments.augments
     expect(run(raw, [], missingAugments).ok).toBe(false)
   })
+  it('腐化来源保留状态并允许核对已有普通孔', () => {
+    expect(run(`${raw}\n--------\nCorrupted`, [runeId])).toMatchObject({
+      ok: true,
+      value: { corrupted: true, sockets: [runeId] },
+    })
+  })
   it.each([
-    `${raw}\n--------\nCorrupted`,
     `${raw}\n--------\nMirrored`,
     `${raw}\n--------\nUnidentified`,
     raw.replace('Rarity: Normal', 'Rarity: Unique'),

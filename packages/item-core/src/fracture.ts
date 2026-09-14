@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
+import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 
 export interface FractureCraftOperation {
@@ -27,6 +28,7 @@ export function prepareFracture(
   catalog: CraftCatalog,
   state: CraftState,
 ): CraftResult<PreparedFracture> {
+  if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   const current = checked.value

@@ -30,6 +30,7 @@ export interface CraftAffixChange {
 }
 
 export interface CraftComparison {
+  corrupted?: { before: boolean; after: boolean }
   pendingDesecration?: { before: PendingDesecration | null; after: PendingDesecration | null }
   rarity: { before: CraftRarity; after: CraftRarity } | null
   affixes: CraftAffixChange[]
@@ -208,6 +209,9 @@ export function compareCraftStates(
   return {
     ok: true,
     value: {
+      ...(before.corrupted === after.corrupted
+        ? {}
+        : { corrupted: { before: before.corrupted === true, after: after.corrupted === true } }),
       rarity:
         before.rarity === after.rarity ? null : { before: before.rarity, after: after.rarity },
       affixes,

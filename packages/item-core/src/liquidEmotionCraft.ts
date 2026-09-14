@@ -1,5 +1,6 @@
 import { craftAffixSpace } from './affixCapacity'
 import type { CatalogLiquidEmotion, CatalogMod, CraftCatalog } from './catalog'
+import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
@@ -18,6 +19,7 @@ export function prepareLiquidEmotionCraft(
   resultKind?: 'prefix' | 'suffix',
 ): CraftResult<PreparedLiquidEmotionCraft> {
   const fail = (error: string): CraftResult<PreparedLiquidEmotionCraft> => ({ ok: false, error })
+  if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (checked.value.rarity !== 'rare') return fail('液态情感只能用于稀有普通珠宝。')

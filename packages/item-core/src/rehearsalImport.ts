@@ -82,8 +82,45 @@ export function importCraftState(
     )
       return fail('词缀检查结果与来源原文不一致。')
   }
-  if (item.corrupted || item.mirrored || item.unidentified)
-    return fail('本阶段仅支持已鉴定、未腐化、未镜像的装备。')
+  const originalFlags = parseItem(item.rawText)
+  if (
+    !originalFlags.ok ||
+    originalFlags.item.corrupted !== item.corrupted ||
+    originalFlags.item.mirrored !== item.mirrored ||
+    originalFlags.item.unidentified !== item.unidentified
+  )
+    return fail('装备状态与来源原文不一致。')
+  if (originalFlags.item.corrupted && JSON.stringify(originalFlags.item) !== JSON.stringify(item))
+    return fail('腐化装备字段与来源原文不一致，不能省略强化属性或其他状态。')
+  if (item.corrupted) {
+    if (
+      inspection.mods.length !== item.mods.length ||
+      inspection.mods.some(
+        ({ mod, stats }, index) =>
+          JSON.stringify(mod) !== JSON.stringify(item.mods[index]) ||
+          stats.length !== mod.stats.length ||
+          stats.some(
+            ({ source }, line) => JSON.stringify(source) !== JSON.stringify(mod.stats[line]),
+          ),
+      )
+    )
+      return fail('腐化词缀检查结果与来源原文不一致。')
+    for (const { stats } of inspection.mods) {
+      for (const { source, resolution } of stats) {
+        const english = resolution.english ?? source.raw
+        if (
+          english !== source.raw &&
+          !resolveStat(source.raw, skillEntries ?? []).candidates.some(
+            (candidate) => candidate.english === english,
+          )
+        )
+          return fail('腐化词缀翻译缺少词典依据，或数字范围与原文不一致。')
+      }
+    }
+  }
+  if (item.mirrored || item.unidentified) return fail('本阶段仅支持已鉴定、未镜像的装备。')
+  if (item.corrupted && item.mods.some((mod) => mod.kind === 'enchant'))
+    return fail('带腐化强化属性的装备尚未接入制作状态，仍可解析与对比。')
   if (item.itemLevel === null || item.diagnostics.length > 0)
     return fail('原文仍有缺失或结构诊断，先核对完整高级装备文本。')
   if (item.blocks.some((block) => block.kind === 'unknown'))
@@ -422,6 +459,7 @@ export function importCraftState(
     })
   }
   const state: CraftState = {
+    ...(item.corrupted ? { corrupted: true } : {}),
     baseId,
     itemLevel: item.itemLevel,
     rarity: item.rarity,

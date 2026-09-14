@@ -136,6 +136,12 @@ export function CraftEntry({
     )
       ? socketCapacity(catalog, blankInput)
       : 0
+  // 搜索起点始终未腐化；导入孔位容量独立使用原文状态。
+  const importSocketState: CraftState = {
+    ...blankInput,
+    ...(matchingImport && imported.item?.corrupted ? { corrupted: true } : {}),
+  }
+  const importCapacity = capacity > 0 ? socketCapacity(catalog, importSocketState) : 0
   const implicitStart = beltStart ?? skillStart
   const blank = implicitStart.ok
     ? createCraftState(catalog, {
@@ -378,13 +384,13 @@ export function CraftEntry({
       )}
       {matchingImport &&
       imported.item &&
-      capacity > 0 &&
+      importCapacity > 0 &&
       !readOnlyImport &&
       imported.item.itemLevel === itemLevel ? (
         <ImportSocketSetup
           skillEntries={dictionary?.stats?.entries}
           catalog={catalog}
-          state={blankInput}
+          state={importSocketState}
           item={imported.item}
           inspection={{
             base: { english: imported.baseId, candidates: [] },
@@ -393,7 +399,7 @@ export function CraftEntry({
             skills: imported.skills ?? [],
             comparisonOnly: imported.comparisonOnly ?? false,
           }}
-          capacity={capacity}
+          capacity={importCapacity}
           translations={translations}
           translateLine={translateLine}
           onBegin={begin}

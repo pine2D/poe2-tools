@@ -57,8 +57,10 @@ import {
   strategyStageAt,
   usesJewelCapacity,
   usesJewelEffect,
+  type VaalCraftOperation,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { CorruptionPanel } from './CorruptionPanel'
 import { CraftPricingPanel } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
 import './rehearsal.css'
@@ -310,7 +312,7 @@ export function RehearsalPanel({
   const [omen, setOmen] = useState<CraftOmen | undefined>()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [socketDraft, setSocketDraft] = useState<
-    SocketCraftOperation | ArtificerCraftOperation | null
+    SocketCraftOperation | ArtificerCraftOperation | VaalCraftOperation | null
   >(null)
   const [guaranteedDraft, setGuaranteedDraft] = useState<
     EssenceCraftOperation | LiquidEmotionCraftOperation | null
@@ -820,6 +822,8 @@ export function RehearsalPanel({
       )
     if (step.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
+    if (step.kind === 'vaal')
+      return `瓦尔石：${step.outcome === 'socket' ? '腐化增加一孔' : '腐化但属性不变'}`
     if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
     const name = catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文镶嵌'
     return translations[name] ?? name
@@ -1233,7 +1237,8 @@ export function RehearsalPanel({
               guaranteedDraft !== null ||
               boneDraft !== null ||
               fractureDraft !== null ||
-              current.pendingDesecration !== undefined
+              current.pendingDesecration !== undefined ||
+              current.corrupted === true
             }
             onChange={(event) => {
               setOmen((event.target.value || undefined) as CraftOmen | undefined)
@@ -1272,7 +1277,8 @@ export function RehearsalPanel({
             guaranteedDraft !== null ||
             boneDraft !== null ||
             fractureDraft !== null ||
-            current.pendingDesecration !== undefined
+            current.pendingDesecration !== undefined ||
+            current.corrupted === true
           }
           onChange={(event) => setCurrencyTier(event.target.value as CraftCurrencyTier)}
         >
@@ -1303,7 +1309,8 @@ export function RehearsalPanel({
               guaranteedDraft !== null ||
               boneDraft !== null ||
               fractureDraft !== null ||
-              current.pendingDesecration !== undefined
+              current.pendingDesecration !== undefined ||
+              current.corrupted === true
             }
             onClick={() => startOperation(id, omen)}
           >
@@ -1571,7 +1578,8 @@ export function RehearsalPanel({
             guaranteedDraft !== null ||
             boneDraft !== null ||
             fractureDraft !== null ||
-            current.pendingDesecration !== undefined
+            current.pendingDesecration !== undefined ||
+            current.corrupted === true
           }
           {...(translateLine ? { translateLine } : {})}
           onPreview={startGuaranteed}
@@ -1666,18 +1674,40 @@ export function RehearsalPanel({
         translations={translations}
         {...(translateLine ? { translateLine } : {})}
       />
+      <CorruptionPanel
+        catalog={catalog}
+        state={current}
+        draft={socketDraft?.kind === 'vaal' ? socketDraft : null}
+        busy={Boolean(
+          draft ||
+            removalCurrency ||
+            guaranteedDraft ||
+            boneDraft ||
+            fractureDraft ||
+            (socketDraft && socketDraft.kind !== 'vaal'),
+        )}
+        canApply={preview?.ok === true}
+        onPreview={(step) => {
+          setSocketDraft(step)
+          setMessage('')
+        }}
+        onApply={() => {
+          if (socketDraft?.kind === 'vaal') applyStep(socketDraft)
+        }}
+      />
       <SocketPanel
         key={`${targetSession}:${cursor}:${history[cursor]?.id}`}
         catalog={catalog}
         state={current}
-        draft={socketDraft}
+        draft={socketDraft?.kind === 'vaal' ? null : socketDraft}
         busy={
           draft !== null ||
           removalCurrency !== null ||
           guaranteedDraft !== null ||
           boneDraft !== null ||
           fractureDraft !== null ||
-          current.pendingDesecration !== undefined
+          current.pendingDesecration !== undefined ||
+          socketDraft?.kind === 'vaal'
         }
         canApply={preview?.ok === true}
         translations={translations}
@@ -1694,7 +1724,11 @@ export function RehearsalPanel({
       {current.affixes.some((affix) => affix.desecrated) ? (
         <div>
           <p>亵渎词缀 1/1</p>
-          <p>可继续常规制作；亵渎组也可能被移除。再次施加骨骼前需先移除已有亵渎组。</p>
+          <p>
+            {current.corrupted
+              ? '已腐化，不能继续普通制作或移除亵渎组。'
+              : '可继续常规制作；亵渎组也可能被移除。再次施加骨骼前需先移除已有亵渎组。'}
+          </p>
         </div>
       ) : null}
       {isBasicJewel(base) &&

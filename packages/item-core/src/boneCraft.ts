@@ -13,6 +13,7 @@ import {
   isCraftBone,
 } from './boneRules'
 import type { CatalogMod, CraftCatalog } from './catalog'
+import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { desecrationSourceHash } from './desecration'
 import { renderNumericLines } from './numeric'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
@@ -36,6 +37,7 @@ export function prepareDesecration(
   requiresRemoval: boolean
 }> {
   if (!isBoneOmenConfig(config)) return { ok: false, error: '骨骼预兆配置无效。' }
+  if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (!isCraftBone(boneId)) return { ok: false, error: '未知骨骼材料。' }

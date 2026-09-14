@@ -35,7 +35,7 @@ it('v32 珠宝全历史保留来源，实际文本可重新导入并保留破裂
   for (let cursor = 0; cursor <= 2; cursor++) {
     const r = parseCraftProject(serializeCraftProject({ ...project, cursor }), catalog)
     if (!r.ok) throw Error(r.error)
-    expect(r.value.project.rulesVersion).toBe('basic-2026-09-12-v58')
+    expect(r.value.project.rulesVersion).toBe('basic-2026-09-12-v59')
     expect(r.value.project.jewelSourceHash).toBe(JEWEL_SOURCE.sha256)
     const state = r.value.states[cursor]
     if (!state) throw Error('fixture')

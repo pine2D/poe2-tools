@@ -6,6 +6,11 @@ import {
   PENDING_DESECRATION_MESSAGE,
 } from './boneRules'
 import type { CraftCatalog } from './catalog'
+import {
+  CORRUPTED_CRAFT_MESSAGE,
+  isVaalCraftOperation,
+  type VaalCraftOperation,
+} from './corruptionRules'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
@@ -18,7 +23,7 @@ import {
   type CraftState,
   createCraftState,
 } from './rehearsal'
-import { artificerSocketLimit, socketCandidates } from './sockets'
+import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
 
 export interface ArtificerCraftOperation {
   kind: 'artificer'
@@ -47,6 +52,7 @@ export interface LiquidEmotionCraftOperation {
 }
 
 export type CraftStep =
+  | VaalCraftOperation
   | FractureCraftOperation
   | BoneCraftOperation
   | EssenceCraftOperation
@@ -70,6 +76,30 @@ export function applyCraftStep(
   step: CraftStep,
 ): CraftResult<CraftState> {
   if (!record(step)) return { ok: false, error: '制作步骤必须是对象。' }
+  if (state.corrupted && (!('kind' in step) || step.kind !== 'socket'))
+    return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
+  if ('kind' in step && step.kind === 'vaal') {
+    if (!isVaalCraftOperation(step)) return { ok: false, error: '瓦尔结果步骤字段无效。' }
+    const checked = createCraftState(catalog, state)
+    if (!checked.ok) return checked
+    if (
+      catalog.bases.find((base) => base.id === state.baseId)?.type === 'Jewel' ||
+      state.pendingDesecration
+    )
+      return { ok: false, error: '珠宝及待揭示亵渎的腐化结果尚未支持。' }
+    const next: CraftState = { ...checked.value, corrupted: true }
+    if (step.outcome === 'socket') {
+      if (next.sockets === undefined)
+        return { ok: false, error: '腐化加孔前必须明确当前已有孔位。' }
+      if (
+        socketCapacity(catalog, next) === 0 ||
+        next.sockets.length >= socketCapacity(catalog, next)
+      )
+        return { ok: false, error: '当前基底或特殊孔位不支持腐化增加一孔。' }
+      next.sockets.push(null)
+    }
+    return createCraftState(catalog, next)
+  }
   if ('kind' in step && isBoneOperationKind(step.kind)) {
     return isBoneCraftOperation(step)
       ? applyBoneCraft(catalog, state, step)

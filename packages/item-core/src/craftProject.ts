@@ -9,6 +9,7 @@ import {
 } from './boneRules'
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
 import { isCatalystQuality } from './catalystQuality'
+import { isVaalCraftOperation } from './corruptionRules'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
 import { applyCraftStep, type CraftStep } from './craftSteps'
@@ -67,7 +68,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v58'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v59'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -128,7 +129,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 58 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 59 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -145,6 +146,7 @@ function readState(value: unknown): CraftState | null {
       'runeSourceLines',
       'quality',
       'catalyst',
+      'corrupted',
       'pendingDesecration',
     ])
   )
@@ -156,6 +158,7 @@ function readState(value: unknown): CraftState | null {
     !['normal', 'magic', 'rare'].includes(value.rarity)
   )
     return null
+  if (Object.hasOwn(value, 'corrupted') && value.corrupted !== true) return null
   if (value.sourceText !== null && typeof value.sourceText !== 'string') return null
   if (Object.hasOwn(value, 'catalyst') && !isCatalystQuality(value.catalyst)) return null
   if (
@@ -216,6 +219,7 @@ function readState(value: unknown): CraftState | null {
     rarity: value.rarity as CraftState['rarity'],
     affixes,
     sourceText: value.sourceText,
+    ...(value.corrupted === true ? { corrupted: true } : {}),
     ...(isCatalystQuality(value.catalyst) ? { catalyst: { ...value.catalyst } } : {}),
     ...(Array.isArray(value.runeSourceLines)
       ? { runeSourceLines: [...value.runeSourceLines] as string[] }
@@ -274,6 +278,7 @@ function readOperation(value: unknown): CraftStep | null {
             ...(typeof value.removeModId === 'string' ? { removeModId: value.removeModId } : {}),
           }
         : null
+    if (value.kind === 'vaal') return isVaalCraftOperation(value) ? { ...value } : null
     if (value.kind === 'artificer') return exactKeys(value, ['kind']) ? { kind: 'artificer' } : null
     if (
       !exactKeys(value, ['kind', 'socketIndex', 'augmentId']) ||
@@ -335,6 +340,8 @@ function validateInitial(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (state.sourceText === null) {
+    if (state.corrupted)
+      return { ok: false, error: '搜索起点不能预装腐化；请通过瓦尔结果步骤保留操作历史。' }
     if (state.catalyst && state.catalyst.declared !== true)
       return { ok: false, error: '搜索起点的催化品质需要明确声明。' }
     if (importedSockets !== undefined)
@@ -432,6 +439,7 @@ function validateInitial(
   )
   if (!restored.ok) return { ok: false, error: `项目来源核对失败：${restored.error}` }
   if (
+    restored.value.corrupted !== state.corrupted ||
     restored.value.rarity !== state.rarity ||
     restored.value.itemLevel !== state.itemLevel ||
     JSON.stringify(restored.value.affixes) !== JSON.stringify(state.affixes)
@@ -510,6 +518,14 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (
+    rulesVersion < 59 &&
+    ((record(value.initialState) && Object.hasOwn(value.initialState, 'corrupted')) ||
+      (Array.isArray(value.operations) &&
+        value.operations.some((step) => record(step) && step.kind === 'vaal')))
+  )
+    return fail('v2–v58 旧版项目不能包含腐化状态或瓦尔结果步骤。')
+
   let strategy: CraftStrategy | undefined
   if (Object.hasOwn(value, 'strategy')) {
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')

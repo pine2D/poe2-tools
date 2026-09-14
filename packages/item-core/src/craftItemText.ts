@@ -240,6 +240,8 @@ export function exportCraftItemText(
     ])
   }
   if (current.affixes.some((affix) => affix.fractured)) block(['Fractured Item'])
+  if (current.corrupted)
+    block([locale === 'zh-CN' ? '被腐化' : locale === 'zh-TW' ? '已腐化' : 'Corrupted'])
   block([labels.note])
   return { ok: true, value: { text: output.join('\n'), warnings: [...new Set(warnings)] } }
 }

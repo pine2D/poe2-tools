@@ -107,7 +107,11 @@ export function SocketPanel({
       {state.sockets === undefined ? (
         <p>这个起点尚未记录孔位。可搜索基底，设定已有空孔后新建演练。</p>
       ) : state.sockets.length === 0 ? (
-        <p>当前装备没有已设定的孔。可使用巧匠石添加空孔，再选择符文镶嵌。</p>
+        <p>
+          {state.corrupted
+            ? '当前装备没有已设定的孔；腐化后不能使用巧匠石添加空孔。'
+            : '当前装备没有已设定的孔。可使用巧匠石添加空孔，再选择符文镶嵌。'}
+        </p>
       ) : (
         <>
           <section aria-label="当前镶嵌效果" className="socket-current">

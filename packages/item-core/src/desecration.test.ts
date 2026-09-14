@@ -245,9 +245,12 @@ describe('已揭示亵渎来源完整闭环', () => {
       `${text()} (crafted)`,
       text().replace('Desecrated Suffix', 'Implicit'),
       text(true).replace('Desecrated ', ''),
-      `${text()}\n--------\nCorrupted`,
     ])
       expect(imported(raw).result.ok).toBe(false)
+    expect(imported(`${text()}\n--------\nCorrupted`).result).toMatchObject({
+      ok: true,
+      value: { corrupted: true },
+    })
     const bad = structuredClone(catalog)
     required(bad.bases[0]).tags = ['helmet', 'default']
     expect(imported(text(true), bad).result.ok).toBe(false)
@@ -393,7 +396,7 @@ describe('已揭示亵渎来源完整闭环', () => {
       value: {
         project: {
           desecrationSourceHash: DESECRATION_SOURCE.sha256,
-          rulesVersion: 'basic-2026-09-12-v58',
+          rulesVersion: 'basic-2026-09-12-v59',
           cursor: 1,
         },
       },
@@ -470,6 +473,6 @@ describe('已揭示亵渎来源完整闭环', () => {
           catalog,
           dictionary,
         ),
-      ).toMatchObject({ ok: true, value: { project: { rulesVersion: 'basic-2026-09-12-v58' } } })
+      ).toMatchObject({ ok: true, value: { project: { rulesVersion: 'basic-2026-09-12-v59' } } })
   })
 })

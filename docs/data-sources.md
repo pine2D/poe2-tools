@@ -1,5 +1,7 @@
 # 数据源登记表
 
+腐化首条路径（2026-09-14）：使用 [GGG 0.2.0g](https://www.pathofexile.com/forum/view-thread/3774660) 与已登记的 0.3.0 掉落孔规则作为 primary 规则证据；[Maxroll 制作概览](https://maxroll.gg/poe2/resources/path-of-exile-2-crafting-overview)、[腐化说明](https://maxroll.gg/poe2/resources/corruption-outcomes)及[PoE2DB 腐化关键词](https://poe2db.tw/us/Corrupted_Items)仅作人工阅读的 gray 规则参考。未新增抓取适配器或转载结果表；本期仅接属性不变／加一孔手选结果，不采纳各 25% 的旧推测，不接入 ModCorrupted 文件。逐类孔上限推导和未验证交互见 crafting-rules.md。
+
 ### 基础魂核镶嵌（2026-09-14）
 
 沿已登记固定 MIT `ModRunes.lua` 的完整类别、单行效果及 localMod，接入 Tacati、Citaqualotl、Azcapa、Quipolatl、Atmohua、Cholotl、Zantipi 七种基础魂核的十四条分支；固定目录无 limit、limitId 或 Socket-bound，不把此事实扩展到其他魂核。[GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495)明确增设大量具名镶嵌限制并使不合法装备失效，故限制型及古代共享组需单独建模。覆盖沿已登记 GGG 0.1.1；恐惧增效及攻速/弩装填沿固定 PoB `Item.lua` 模型。
