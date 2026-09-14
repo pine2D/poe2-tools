@@ -96,7 +96,7 @@ it('液态制作按保证属性检索，尚未准备稀有装备也能查看结�
 })
 
 it.each(['Time-Lost Ruby', 'Time-Lost Emerald', 'Time-Lost Sapphire', 'Time-Lost Diamond'])(
-  '%s 查询保留范围语义，不能混入普通珠宝或借此开始制作',
+  '%s 查询保留范围语义和普通池隔离，并可从空白基底开始制作',
   async (id) => {
     render(
       <CatalogPanel
@@ -115,7 +115,7 @@ it.each(['Time-Lost Ruby', 'Time-Lost Emerald', 'Time-Lost Sapphire', 'Time-Lost
     ).toBeDefined()
     fireEvent.change(within(pool).getByRole('searchbox'), { target: { value: 'JewelLifeonKill' } })
     expect(within(pool).getByText('匹配 0 条，当前展示 0 条。')).toBeDefined()
-    expect(screen.queryByRole('button', { name: '从空白基底开始' })).toBeNull()
+    expect(screen.getByRole('button', { name: '从空白基底开始' })).toBeDefined()
   },
 )
 

@@ -79,9 +79,9 @@ const strategy = {
   ],
 }
 
-it('v66 升级恢复版本并拒绝未来 v67', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v66')
-  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v67' }).ok).toBe(false)
+it('v67 升级恢复版本并拒绝未来 v68', () => {
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v67')
+  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v68' }).ok).toBe(false)
 })
 
 it('Ferocity 双侧全历史重放、撤销和消耗一致，移除后仍保存三个来源', () => {

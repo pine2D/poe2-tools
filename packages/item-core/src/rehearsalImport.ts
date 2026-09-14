@@ -14,6 +14,8 @@ import { type ItemInspection, knownExplicitHeader } from './export'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
 import { normalizeJewelFixedImportLine } from './jewelEffectImport'
 import { usesJewelEffect } from './jewelEffects'
+import { importedJewelRadiusError, JEWEL_RADIUS_HEADER } from './jewelRadius'
+import { isRadiusJewel } from './jewels'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { hasSpecialModifierSource } from './modifierSource'
 import { CHARM_SLOTS_PROPERTY, CHARM_SLOTS_PROPERTY_HEADER, parseItem } from './parse'
@@ -375,10 +377,12 @@ export function importCraftState(
     if (!match) throw new Error('词缀匹配结果缺失')
     return { ...match, sourceIndex }
   })
-  // 新增已有 Genesis 身份不能仅凭可变的检查结果；重新绑定原文与词典候选。
+  // 特殊生成身份与范围语义不能仅凭可变的检查结果；重新绑定原文与词典候选。
   if (
+    isRadiusJewel(base) ||
     matches.some((match) => match.candidates.some((mod) => hasGenesisModEligibility(base, mod)))
   ) {
+    const scope = isRadiusJewel(base) ? '范围珠宝' : 'Genesis 词缀'
     const original = parseItem(item.rawText)
     if (
       !original.ok ||
@@ -394,7 +398,7 @@ export function importCraftState(
           ),
       )
     )
-      return fail('Genesis 词缀检查结果与来源原文不一致。')
+      return fail(`${scope}检查结果与来源原文不一致。`)
     for (const { stats } of explicit) {
       for (const { source, resolution } of stats) {
         const english = resolution.english ?? source.raw
@@ -404,7 +408,7 @@ export function importCraftState(
             (candidate) => candidate.english === english,
           )
         )
-          return fail('Genesis 词缀翻译缺少词典依据，或数字范围与原文不一致。')
+          return fail(`${scope}翻译缺少词典依据，或数字范围与原文不一致。`)
       }
     }
   }
@@ -501,6 +505,16 @@ export function importCraftState(
     return fail('该基底或特殊孔位规则暂不支持孔位核对演练。')
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
+  const radiusBase = catalog.bases.find((base) => base.id === baseId)
+  if (
+    (radiusBase && isRadiusJewel(radiusBase)) ||
+    item.rawText.split(/\r?\n/).some((line) => JEWEL_RADIUS_HEADER.test(line.trim()))
+  ) {
+    if (JSON.stringify(originalFlags.item) !== JSON.stringify(item))
+      return fail('范围珠宝字段与来源原文不一致。')
+    const radiusError = importedJewelRadiusError(catalog, checked.value, originalFlags.item)
+    if (radiusError) return fail(radiusError)
+  }
   const contributionError = runeSocketContributionError(catalog, checked.value)
   return contributionError === null ? checked : fail(contributionError)
 }

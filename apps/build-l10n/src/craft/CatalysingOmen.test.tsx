@@ -79,7 +79,7 @@ it.each(['catalysing_exaltation', 'catalysing_greater_dextral_exaltation'])(
     ).toBeDefined()
     click('保存演练到本机')
     const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-    expect(saved.rulesVersion).toBe('basic-2026-09-12-v66')
+    expect(saved.rulesVersion).toBe('basic-2026-09-12-v67')
     expect(saved.operations).toHaveLength(1)
     expect(saved.operations[0].omen).toBe(omen)
     if (omen === 'catalysing_greater_dextral_exaltation') {

@@ -54,7 +54,7 @@ it('抗性面板预览、条件达标停止、撤销与恢复使用同一数值'
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v66')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v67')
   expect(saved.strategy.rules[0].conditions[0].property).toBe('elementalResistance')
   click('撤销')
   expect(panel().getAllByText('0%')).toHaveLength(5)

@@ -6,6 +6,7 @@ import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
 import { readUnlevelledSkillName } from './grantedSkills'
 import { explicitModEffect, usesExplicitModEffect } from './jewelEffects'
+import { estimateJewelRadius } from './jewelRadius'
 import { inspectNumericLines } from './numeric'
 import { isItemStructureLine } from './parse'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
@@ -124,6 +125,8 @@ export function exportCraftItemText(
   const locale = options.locale ?? 'en'
   const labels = LABELS[locale]
   const current = checked.value
+  const radius = estimateJewelRadius(catalog, current)
+  if (!radius.ok) return radius
   const hasExplicitEffect = usesExplicitModEffect(catalog, current)
   const base = catalog.bases.find((entry) => entry.id === current.baseId)
   if (!base) return { ok: false, error: '当前基底不在制作目录中。' }
@@ -178,6 +181,8 @@ export function exportCraftItemText(
   if (locale !== 'en')
     warnings.push('类别值、词缀名称和标签保留目录英文；缺失、多义或不可逆译文保留原文并逐行说明。')
   const localize = createItemTextLocalization(locale, options.dictionary, warnings)
+  if (radius.value !== null && locale !== 'en')
+    warnings.push('半径标题保留英文 Radius；国服原生标题仍待样本验收。')
   if (current.quality === undefined && current.catalyst === undefined)
     warnings.push('品质未知，文本未输出 Quality。')
   if (current.catalyst && locale !== 'en')
@@ -212,6 +217,7 @@ export function exportCraftItemText(
     if (values.length) output.push('--------', ...values)
   }
   if (current.quality !== undefined) block([`${labels.quality}: +${current.quality}%`])
+  if (radius.value !== null) block([`Radius: ${radius.value}`])
   if (current.catalyst) {
     const definition = CATALYSTS.find((entry) => entry.id === current.catalyst?.id)
     if (!definition) return { ok: false, error: '未知催化品质类型。' }

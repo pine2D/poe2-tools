@@ -86,6 +86,7 @@ import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
 import { JewelEffectPanel } from './JewelEffectPanel'
+import { JewelRadiusPanel } from './JewelRadiusPanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
@@ -1166,6 +1167,12 @@ export function RehearsalPanel({
         {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
       />
       <SkillLevelPanel
+        catalog={catalog}
+        current={current}
+        preview={Boolean(draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft)}
+        {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
+      />
+      <JewelRadiusPanel
         catalog={catalog}
         current={current}
         preview={Boolean(draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft)}

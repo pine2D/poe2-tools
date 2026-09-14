@@ -192,6 +192,7 @@ export {
   usesExplicitModEffect,
   usesJewelEffect,
 } from './jewelEffects'
+export { estimateJewelRadius, JEWEL_RADIUS_LABELS, type JewelRadius } from './jewelRadius'
 export {
   craftAffixLimit,
   isBasicJewel,

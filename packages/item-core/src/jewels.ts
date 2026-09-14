@@ -40,5 +40,11 @@ export function isRadiusJewel(base: CatalogBase): boolean {
 
 /** 只描述已支持基底的固有容量；当前可新增容量由 craftAffixCapacities 统一计算。 */
 export function craftAffixLimit(base: CatalogBase, rarity: 'normal' | 'magic' | 'rare'): number {
-  return rarity === 'normal' ? 0 : rarity === 'magic' ? 1 : isBasicJewel(base) ? 2 : 3
+  return rarity === 'normal'
+    ? 0
+    : rarity === 'magic'
+      ? 1
+      : isBasicJewel(base) || isRadiusJewel(base)
+        ? 2
+        : 3
 }

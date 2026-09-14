@@ -254,6 +254,8 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 
 ### 珠宝词缀来源登记
 
+2026-09-15 失落珠宝常规制作规则人工核对：沿用固定 MIT 快照的 Item.lua（珠宝魔法容量 1/1、稀有固有容量 2/2）、[Modules/Data.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/Data.lua)（Small 半径 1000）与 [Modules/ModParser.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ModParser.lua)（范围升级语义）；只阅读，不执行或复制实现。默认小半径以已登记 PoE2DB 基底列表及 [Time-Lost Ruby 公开说明](https://poe2db.tw/us/Time-Lost_Ruby) 的基底半径 1000 交叉核对，属 gray 人工机制依据，不采集新增数据表或权重。半径从当前词缀派生，不另存可失配的状态；导入核对来源半径，出口明确为演练文本。中文范围标题是工具接受语法，国服实际高级复制格式仍待样本验收。
+
 2026-09-15 范围子域沿用同一固定 ModJewel：160 条具有正向范围珠宝资格的声明，其中 nodeType 1/2 对应的“小型／核心天赋”语义在构建期补成完整属性行，并要求与该条 tradeHashes 原文一致；没有对应时拒绝生成。独立 `radiusJewelOnly` 标记隔离普通珠宝、装备及动态标签，不借数据入库直接开放制作。无正向资格的范围专属工艺仍等待精确映射授权。沿用原 MIT 许可、来源指纹、缓存和离线流程，无新抓取或运行时网络请求。
 
 本次入库后为 160 普通、160 范围、8 工艺专属、49 排除；新增 10 条完整缩放模板，原有模板全部保持，范围全文另有 150 条缺少对应。下文较早接入记录中的排除数为当时快照计数。

@@ -33,7 +33,7 @@ import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { jewelEffectModKind } from './jewelEffectRules'
-import { craftAffixLimit, isBasicJewel, jewelSourceHash } from './jewels'
+import { craftAffixLimit, isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
 import {
   isLiquidEmotionMappedMod,
   jewelCapacityModKind,
@@ -229,7 +229,8 @@ function findBase(catalog: CraftCatalog, id: string): CatalogBase | null {
 }
 
 function baseError(base: CatalogBase): string | null {
-  if (base.type === 'Jewel' && !isBasicJewel(base)) return '范围或特殊珠宝暂不支持制作演练。'
+  if (base.type === 'Jewel' && !isBasicJewel(base) && !isRadiusJewel(base))
+    return '特殊珠宝暂不支持制作演练。'
   if (base.hidden) return '隐藏基底暂不支持制作演练。'
   if (base.variantList !== undefined) return '带内部变体的基底暂不支持制作演练。'
   if (base.runeforged) return '符文锻造基底暂不支持制作演练。'
@@ -247,7 +248,8 @@ function baseError(base: CatalogBase): string | null {
     /(?:[+-]\d+\s+(?:Prefix|Suffix) Modifier allowed|Can roll .+ Modifiers)/i.test(base.implicit)
   )
     return '该基底的固有属性会改变词缀容量或类别规则，暂不支持制作演练。'
-  if (!SUPPORTED_TYPES.has(base.type) && !isBasicJewel(base)) return '该基底类别暂不支持制作演练。'
+  if (!SUPPORTED_TYPES.has(base.type) && !isBasicJewel(base) && !isRadiusJewel(base))
+    return '该基底类别暂不支持制作演练。'
   return null
 }
 
@@ -284,7 +286,7 @@ export function createCraftState(
   if (base === null) return failure(`基底 ${input.baseId} 不在制作目录中。`)
   const unsupported = baseError(base)
   if (unsupported !== null) return failure(unsupported)
-  if (isBasicJewel(base)) {
+  if (isBasicJewel(base) || isRadiusJewel(base)) {
     if (jewelSourceHash(catalog) === null) return failure('缺少可信的珠宝词缀来源指纹。')
     if (input.quality !== undefined)
       return failure('珠宝催化剂品质及效果尚未支持，不能作为普通品质处理。')
@@ -302,6 +304,8 @@ export function createCraftState(
   const runeSourceError = runeSourceStateError(input)
   if (runeSourceError !== null) return failure(runeSourceError)
   if (!Array.isArray(input.affixes)) return failure('词缀列表无效。')
+  if (isRadiusJewel(base) && input.affixes.some((affix) => affix?.crafted || affix?.desecrated))
+    return failure('范围珠宝工艺与亵渎制作尚未接入。')
   if (
     isBasicJewel(base) &&
     input.rarity !== 'rare' &&

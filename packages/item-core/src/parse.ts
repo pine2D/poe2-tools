@@ -1,4 +1,5 @@
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
+import { JEWEL_RADIUS_HEADER } from './jewelRadius'
 import type {
   ItemBlock,
   ItemDiagnostic,
@@ -90,6 +91,7 @@ const WEAPON_PROPERTIES = [
 ]
 
 function isKnownProperty(text: string, itemClass: string): boolean {
+  if (JEWEL_RADIUS_HEADER.test(text)) return true
   if (CATALYST_QUALITY_HEADER.test(text)) return true
   if (
     (itemClass === '' || /^(?:Belt|Belts|腰带|腰帶)$/i.test(itemClass)) &&
