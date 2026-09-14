@@ -10,6 +10,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NumericControls } from './NumericControls'
+import { VaalRerollChoice } from './VaalRerollChoice'
 
 interface Props {
   catalog: CraftCatalog
@@ -105,11 +106,9 @@ export function CorruptionPanel({
     <section className="craft-sockets" aria-label="瓦尔结果预演">
       <h3>瓦尔石：指定结果预演</h3>
       <p>
-        手选“属性不变”“增加一孔”或“新增强化属性”查看后续路线，每次记录一颗瓦尔石。这不是随机抽取，也不代表成功率。
+        手选“属性不变”“增加一孔”“新增强化属性”或“重选词缀”查看后续路线，每次记录一颗瓦尔石。这不是随机抽取，也不代表成功率。
       </p>
-      <p>
-        重选词缀的结果、预兆、特殊魂核和腐化珠宝尚未接入。腐化强化独立于固有属性及前后缀，不占显式词缀名额。
-      </p>
+      <p>预兆、特殊魂核和腐化珠宝尚未接入。腐化强化独立于固有属性及前后缀，不占显式词缀名额。</p>
       <div className="socket-actions">
         <button
           type="button"
@@ -152,6 +151,13 @@ export function CorruptionPanel({
           translateLine={translateLine}
         />
       ) : null}
+      <VaalRerollChoice
+        catalog={catalog}
+        state={state}
+        disabled={busy || draft !== null || !unchanged.ok}
+        onPreview={onPreview}
+        translateLine={translateLine}
+      />
       {draft ? (
         <section ref={preview} tabIndex={-1} className="socket-preview" aria-label="腐化结果草稿">
           <h4>
@@ -159,7 +165,9 @@ export function CorruptionPanel({
               ? '腐化增加一孔'
               : draft.outcome === 'enchant'
                 ? '新增腐化强化'
-                : '腐化但属性不变'}
+                : draft.outcome === 'reroll'
+                  ? `重选词缀（${draft.replacements.length} 次替换）`
+                  : '腐化但属性不变'}
           </h4>
           {draft.outcome === 'enchant' ? (
             <p>强化属性及面板变化见上方预览，应用后保留全部显式词缀与固有属性。</p>
@@ -169,6 +177,9 @@ export function CorruptionPanel({
               孔数 {state.sockets?.length ?? 0} → {(state.sockets?.length ?? 0) + 1}
               ，保留已有镶嵌物。
             </p>
+          ) : null}
+          {draft.outcome === 'reroll' ? (
+            <p>按已指定顺序完成替换，整次只计一颗瓦尔石；保留稀有度、固有属性、品质与镶嵌物。</p>
           ) : null}
           <p>应用后标记腐化，停止普通制作。建议先完成品质、词缀和普通打孔。</p>
           <div className="socket-actions">

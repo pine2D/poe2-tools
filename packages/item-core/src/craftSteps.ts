@@ -7,6 +7,7 @@ import {
 } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { corruptionCandidates } from './corruptionEnchantments'
+import { replayVaalReplacements } from './corruptionReroll'
 import {
   CORRUPTED_CRAFT_MESSAGE,
   isVaalCraftOperation,
@@ -88,6 +89,12 @@ export function applyCraftStep(
       state.pendingDesecration
     )
       return { ok: false, error: '珠宝及待揭示亵渎的腐化结果尚未支持。' }
+    if (step.outcome === 'reroll') {
+      const rerolled = replayVaalReplacements(catalog, checked.value, step.replacements)
+      return rerolled.ok
+        ? createCraftState(catalog, { ...rerolled.value, corrupted: true })
+        : rerolled
+    }
     const next: CraftState = { ...checked.value, corrupted: true }
     if (step.outcome === 'enchant') {
       const mod = corruptionCandidates(catalog, state).find((entry) => entry.id === step.modId)

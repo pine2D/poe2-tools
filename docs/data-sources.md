@@ -1,5 +1,7 @@
 # 数据源登记表
 
+瓦尔顺序重选（2026-09-14）：新增人工 gray 规则参考 [Mobalytics / sirgog 原创攻略](https://mobalytics.gg/poe-2/guides/vaal-corrupting)（页面标注 2025-01-16），与已登记 Maxroll 腐化说明交叉核对。使用一至三次类似混沌替换、可作用于魔法装备的文字描述；顺序重新生成候选、可再次命中新组是该描述的模型推导，未获服务端或真机验证。没有转载结果表、抓取适配器或同行实现，未采用旧 25% 概率／法系品质结论；特殊来源交互暂不开放。CoE 自造法器选择 Vaal Orb 后显示该方法没有处理器，仅登记为界面观察，不能证明游戏行为。
+
 腐化属性目录（2026-09-14）：新增已登记 MIT 仓库固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [src/Data/ModCorrupted.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModCorrupted.lua)，SHA-256 `50549cb0cbe722e28b337b30e4918e14ddf14bd4aa5da5d064984b1ba8f99351`。primary，保留 MIT 及 GGG 游戏内容版权说明；构建期仅经 cache.ts 抓取固定 raw 文件并解析声明。127 条放入独立腐化表，保留 Corrupted / SpecialCorrupted、组、数值范围、标签与有序资格，不将 0/1 当概率，不把空资格推断为全部可用。[同提交 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua)及 [ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua)仅用于人工核对腐化属性层、催化增幅和取整规则，不执行 Lua 或复制制作器实现。
 
 腐化首条路径（2026-09-14）：使用 [GGG 0.2.0g](https://www.pathofexile.com/forum/view-thread/3774660) 与已登记的 0.3.0 掉落孔规则作为 primary 规则证据；[Maxroll 制作概览](https://maxroll.gg/poe2/resources/path-of-exile-2-crafting-overview)、[腐化说明](https://maxroll.gg/poe2/resources/corruption-outcomes)及[PoE2DB 腐化关键词](https://poe2db.tw/us/Corrupted_Items)仅作人工阅读的 gray 规则参考。未新增抓取适配器或转载结果表；本期仅接属性不变／加一孔手选结果，不采纳各 25% 的旧推测，不接入 ModCorrupted 文件。逐类孔上限推导和未验证交互见 crafting-rules.md。

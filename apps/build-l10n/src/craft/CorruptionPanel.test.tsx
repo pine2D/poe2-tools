@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { CORRUPTION_SOURCE, type CraftCatalog } from '@poe2-tools/item-core'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 import { fsPathFromMetaUrl } from '../testing/fsPath'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
@@ -17,6 +17,63 @@ const click = (name: string) => fireEvent.click(screen.getByRole('button', { nam
 afterEach(() => {
   cleanup()
   localStorage.clear()
+})
+
+it('按中间状态连续重选，取消不写历史，应用后仅一条瓦尔步骤并可恢复', () => {
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{ 'Vaal Orb': '瓦尔石' }}
+      initialState={{
+        baseId: 'Gold Ring',
+        itemLevel: 86,
+        rarity: 'normal',
+        sourceText: null,
+        affixes: [],
+      }}
+    />,
+  )
+  click('蜕变石')
+  // 使用现有直接候选操作建立可完整恢复的搜索起点历史。
+  fireEvent.change(screen.getByLabelText('搜索合法词缀'), { target: { value: 'IncreasedLife1' } })
+  fireEvent.click(
+    within(screen.getByLabelText('本次指定结果')).getByRole('button', { name: /IncreasedLife1\b/ }),
+  )
+  click('应用本次结果')
+  const select = (label: string, value: string) =>
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  const replace = (remove: string, add: string, value: string) => {
+    select('腐化重选：移除词缀', remove)
+    select('腐化重选：加入词缀', add)
+    select('腐化重选 · 数值 1', value)
+    click('确认本次替换')
+  }
+  replace('IncreasedLife1', 'IncreasedLife2', '25')
+  replace('IncreasedLife2', 'IncreasedLife3', '35')
+  expect(screen.getByRole('list', { name: '腐化替换顺序' }).children).toHaveLength(2)
+  click('预演腐化：重选词缀')
+  click('取消腐化结果')
+  click('保存演练到本机')
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').operations).toHaveLength(1)
+  click('预演腐化：重选词缀')
+  click('应用腐化结果')
+  expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
+  expect(screen.getByText('瓦尔石 × 1')).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(saved.operations[1]).toEqual({
+    kind: 'vaal',
+    outcome: 'reroll',
+    replacements: [
+      { removeModId: 'IncreasedLife1', modId: 'IncreasedLife2', values: [25] },
+      { removeModId: 'IncreasedLife2', modId: 'IncreasedLife3', values: [35] },
+    ],
+  })
+  click('撤销')
+  expect(screen.queryByRole('region', { name: '腐化状态' })).toBeNull()
+  click('恢复本机演练')
+  expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
+  expect(screen.getByLabelText('演练历史').textContent).toContain('重选词缀（2 次替换）')
 })
 
 it('瓦尔加孔预览、取消、镶嵌、保存及撤销恢复腐化限制', () => {
@@ -60,7 +117,7 @@ it('瓦尔加孔预览、取消、镶嵌、保存及撤销恢复腐化限制', (
       augmentId: 'pob2:augment:["Soul Core of Quipolatl","weapon"]',
     },
   ])
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v60')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v61')
   click('撤销')
   expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
   click('撤销')

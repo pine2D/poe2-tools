@@ -12,11 +12,44 @@ interface VaalEnchantOperation {
   modId: string
   values: number[]
 }
-export type VaalCraftOperation = VaalSimpleOperation | VaalEnchantOperation
+export interface VaalReplacement {
+  removeModId: string
+  modId: string
+  values: number[]
+}
+interface VaalRerollOperation {
+  kind: 'vaal'
+  outcome: 'reroll'
+  replacements: VaalReplacement[]
+}
+export type VaalCraftOperation = VaalSimpleOperation | VaalEnchantOperation | VaalRerollOperation
+
+export function isVaalReplacement(value: unknown): value is VaalReplacement {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
+  const entry = value as Record<string, unknown>
+  return (
+    Object.keys(entry).every((key) => ['removeModId', 'modId', 'values'].includes(key)) &&
+    typeof entry.removeModId === 'string' &&
+    entry.removeModId.length > 0 &&
+    typeof entry.modId === 'string' &&
+    entry.modId.length > 0 &&
+    Array.isArray(entry.values) &&
+    entry.values.length <= 32 &&
+    entry.values.every((v) => typeof v === 'number' && Number.isFinite(v))
+  )
+}
 
 export function isVaalCraftOperation(value: unknown): value is VaalCraftOperation {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
   const step = value as Record<string, unknown>
+  if (step.kind === 'vaal' && step.outcome === 'reroll')
+    return (
+      Object.keys(step).every((key) => ['kind', 'outcome', 'replacements'].includes(key)) &&
+      Array.isArray(step.replacements) &&
+      step.replacements.length >= 1 &&
+      step.replacements.length <= 3 &&
+      step.replacements.every(isVaalReplacement)
+    )
   if (step.kind === 'vaal' && step.outcome === 'enchant')
     return (
       Object.keys(step).every((key) => ['kind', 'outcome', 'modId', 'values'].includes(key)) &&

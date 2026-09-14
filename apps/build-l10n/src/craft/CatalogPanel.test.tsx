@@ -338,7 +338,9 @@ describe('CatalogPanel', () => {
     )
     fireEvent.click(await screen.findByRole('button', { name: '从当前装备开始' }))
     expect(
-      within(screen.getByLabelText('通货演练')).getByText('+25(20-30) to maximum Energy Shield'),
+      within(screen.getByLabelText('通货演练')).getByText('+25(20-30) to maximum Energy Shield', {
+        selector: '.rehearsal-affix code',
+      }),
     ).toBeDefined()
     view.rerender(<CatalogPanel {...common} />)
     expect(screen.queryByLabelText('通货演练')).toBeNull()

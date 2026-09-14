@@ -44,3 +44,29 @@
 .socket-note {
   font-size: 0.875rem;
 }
+
+.vaal-reroll,
+.vaal-reroll fieldset {
+  min-inline-size: 0;
+  margin-block: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.vaal-reroll label {
+  display: grid;
+  gap: 0.4rem;
+  margin-block: 0.75rem;
+  min-width: 0;
+}
+
+.vaal-reroll select,
+.vaal-reroll input {
+  width: 100%;
+  min-width: 0;
+}
+
+.vaal-reroll p {
+  overflow-wrap: anywhere;
+}

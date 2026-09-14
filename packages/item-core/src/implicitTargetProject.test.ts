@@ -21,7 +21,7 @@ it('v23保存固有目标身份，全游标恢复；旧版本字段存在即拒�
     cursor: 0,
     operations: [{ currency: 'divine', modIds: [], rolls: [], implicitValues: [15, 2] }],
   }
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v60')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v61')
   for (const cursor of [0, 1]) {
     const restored = parseCraftProject(serializeCraftProject({ ...project, cursor }), catalog)
     expect(restored).toMatchObject({

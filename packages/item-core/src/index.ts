@@ -68,6 +68,8 @@ export type {
 } from './comparison'
 export { compareCraftStates } from './comparison'
 export { type CraftCorruption, corruptionCandidates } from './corruptionEnchantments'
+export { prepareVaalReplacement, replayVaalReplacements } from './corruptionReroll'
+export type { VaalReplacement } from './corruptionRules'
 export {
   CORRUPTED_CRAFT_MESSAGE,
   isVaalCraftOperation,

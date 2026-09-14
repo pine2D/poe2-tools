@@ -743,7 +743,9 @@ describe('RehearsalPanel', () => {
     apply()
     expect(screen.queryByText('+12% to Fire Resistance')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '撤销' }))
-    expect(screen.getByText('+12% to Fire Resistance')).toBeDefined()
+    expect(
+      screen.getByText('+12% to Fire Resistance', { selector: '.rehearsal-affix code' }),
+    ).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '重做' }))
     expect(screen.queryByText('+12% to Fire Resistance')).toBeNull()
     expect(screen.getByText('剥离石 × 1')).toBeDefined()

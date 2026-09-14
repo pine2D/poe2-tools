@@ -66,7 +66,7 @@ it('编辑面板范围先应用，制作后停止，撤销和项目恢复重新�
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v60')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v61')
   expect(saved.strategy.rules[0].conditions[0]).toEqual({
     kind: 'item-property',
     property: 'physicalDps',
