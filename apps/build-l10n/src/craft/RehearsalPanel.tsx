@@ -1008,7 +1008,7 @@ export function RehearsalPanel({
             </p>
           ) : null}
           <p className="rehearsal-scope-note">
-            支持普通攻击武器本地面板与三项防御估算；起点品质保留，技能与角色面板尚未计算。
+            支持普通攻击武器本地面板与三项防御估算；普通品质保留，催化品质按步骤更新，技能与角色面板尚未计算。
           </p>
         </div>
         <div>
@@ -1243,7 +1243,9 @@ export function RehearsalPanel({
         {omen ? (
           <p>
             <span lang="en">{CRAFT_OMEN_RULES[omen].name}</span> · 适配
-            {CRAFT_OMEN_RULES[omen].addCount === 2 ? '三档' : '基础'}
+            {CRAFT_OMEN_RULES[omen].addCount === 2 || omen === 'catalysing_exaltation'
+              ? '三档'
+              : '基础'}
             {CRAFT_CURRENCY_LABELS[CRAFT_OMEN_RULES[omen].currency]}；{craftOmenDescription(omen)}
             {CRAFT_OMEN_RULES[omen].currency === 'chaos' ? '混沌新增仍可为任一合法侧。' : ''}
             仅用于本次通货；应用成功分别计入 {craftOmenMaterials(omen).length} 枚预兆费用。

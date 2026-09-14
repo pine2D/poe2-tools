@@ -723,6 +723,12 @@ export function CraftTargets({
                         该指定结果会失去已有目标：{step.lostTargetIds.map(modLabel).join('；')}
                       </p>
                     ) : null}
+                    {step.lostImplicitLineIndexes?.length ? (
+                      <p className="target-warning">
+                        该指定结果会失去已有固有目标：
+                        {step.lostImplicitLineIndexes.map(implicitLabel).join('；')}
+                      </p>
+                    ) : null}
                     <button
                       type="button"
                       disabled={busy}

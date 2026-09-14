@@ -2,6 +2,7 @@ import type { CraftCurrency } from './rehearsal'
 
 /** 制作配置 ID；双枚配置的实际材料由 craftOmenMaterials 展开。 */
 export type CraftOmen =
+  | 'catalysing_exaltation'
   | 'blessed'
   | 'greater_exaltation'
   | 'greater_sinistral_exaltation'
@@ -26,6 +27,12 @@ export const CRAFT_OMEN_RULES: Record<
     materials?: readonly string[]
   }
 > = {
+  catalysing_exaltation: {
+    name: 'Omen of Catalysing Exaltation',
+    currency: 'exalted',
+    kind: null,
+    effect: 'add',
+  },
   blessed: { name: 'Omen of the Blessed', currency: 'divine', kind: null, effect: 'reroll' },
   greater_exaltation: {
     name: 'Omen of Greater Exaltation',
@@ -108,7 +115,7 @@ export function craftOmenError(omen: unknown, currency: CraftCurrency | undefine
   if (omen === undefined) return null
   if (!isCraftOmen(omen)) return '预兆必须是当前支持的制作配置。'
   if (
-    CRAFT_OMEN_RULES[omen].addCount === 2 &&
+    (CRAFT_OMEN_RULES[omen].addCount === 2 || omen === 'catalysing_exaltation') &&
     ['exalted', 'greater_exalted', 'perfect_exalted'].includes(currency ?? '')
   )
     return null
@@ -123,6 +130,8 @@ export function craftOmenMaterials(omen: CraftOmen): readonly string[] {
 
 /** 用同一规则说明预兆候选约束，避免无方向预兆被误说成后缀限定。 */
 export function craftOmenDescription(omen: CraftOmen): string {
+  if (omen === 'catalysing_exaltation')
+    return '消耗全部催化品质，提高对应标签词缀的出现机会，但不保证命中。仍可出现任一合法标签，概率与权重未知；已有词缀基础值保留，有效值会随品质消耗下降。仅支持戒指／项链、单枚预兆与三档崇高。'
   if (omen === 'blessed')
     return '只重掷固有属性的数值；显式词缀及其数值保持不变，固有数值仍可能变差。'
   if (omen === 'light')

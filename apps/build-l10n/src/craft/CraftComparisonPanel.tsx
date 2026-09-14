@@ -2,6 +2,7 @@ import {
   analyzeCraftImplicitTargets,
   analyzeCraftTargets,
   BONE_RULES,
+  CATALYSTS,
   type CraftCatalog,
   type CraftImplicitTargetValues,
   type CraftNumericChange,
@@ -155,6 +156,16 @@ export function CraftComparisonPanel({
   return (
     <section className="craft-comparison" aria-label="操作前后变化">
       <h3>操作前后变化</h3>
+      {before.catalyst?.quality !== after.catalyst?.quality ? (
+        <section aria-label="催化品质前后变化">
+          <p>
+            催化品质 ·{' '}
+            {CATALYSTS.find((entry) => entry.id === before.catalyst?.id)?.label ?? '未知类型'}：
+            {before.catalyst?.quality ?? 0}% → {after.catalyst?.quality ?? 0}%
+          </p>
+          <p>品质消耗会改变匹配属性的有效值，已有词缀基础数值与破裂锁定保持不变。</p>
+        </section>
+      ) : null}
       {targetFracturedModId ? (
         <p>
           破裂目标：{fractureBefore === null ? '无法判断' : fractureBefore ? '已达成' : '未达成'} →{' '}

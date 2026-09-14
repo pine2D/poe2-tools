@@ -58,6 +58,7 @@ export interface CraftTargetValues {
 }
 
 export interface CraftAdviceStep {
+  lostImplicitLineIndexes?: number[]
   targetImplicitLineIndexes?: number[]
   rerolledImplicitLineIndexes?: number[]
   omen?: CraftOmen
@@ -849,12 +850,47 @@ export function analyzeCraftTargets(
       })
       if (targetModIds.length === 0) continue
       const retained = new Set(prepared.value.state.affixes.map((affix) => affix.modId))
+      const lostTargetIds = presentIds.filter((id) => !retained.has(id))
+      const qualityChanged = current.catalyst?.quality !== prepared.value.state.catalyst?.quality
+      if (qualityChanged) {
+        for (const target of presentTargets) {
+          if (!target.matched || !retained.has(target.modId)) continue
+          const goal = values.value.find((entry) => entry.modId === target.modId)
+          const mod = byId.get(target.modId)
+          const affix = next.affixes.find((entry) => entry.modId === target.modId)
+          if (!mod || !affix || goal?.basis !== 'effective') continue
+          const projection = projectCraftTargetValues(catalog, next, mod, goal, affix.lines)
+          const actual = projection.ok ? projection.value.read(affix.lines) : null
+          if (
+            !actual?.ok ||
+            goal.bounds.some((bound) => !matchesTargetInterval(actual.value[bound.index], bound))
+          )
+            lostTargetIds.push(target.modId)
+        }
+      }
+      const afterImplicit = qualityChanged
+        ? analyzeCraftImplicitTargets(catalog, next, implicitValues)
+        : null
+      const lostImplicitLineIndexes =
+        qualityChanged && implicitAnalysis.ok
+          ? implicitAnalysis.value
+              .filter(
+                (target) =>
+                  target.matched &&
+                  (!afterImplicit?.ok ||
+                    !afterImplicit.value.some(
+                      (entry) => entry.lineIndex === target.lineIndex && entry.matched,
+                    )),
+              )
+              .map((target) => target.lineIndex)
+          : []
       steps.push({
         currency,
         ...(omen === undefined ? {} : { omen }),
         ...(removeModId === undefined ? {} : { removeModId }),
         targetModIds,
-        lostTargetIds: presentIds.filter((id) => !retained.has(id)),
+        lostTargetIds,
+        ...(lostImplicitLineIndexes.length > 0 ? { lostImplicitLineIndexes } : {}),
         randomRemovalRisk:
           randomRemovalRisk &&
           ((omen !== 'whittling' && omen !== 'light') ||

@@ -65,7 +65,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v53'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v54'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -126,7 +126,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 53 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 54 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -514,6 +514,13 @@ export function parseCraftProject(
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
     if (
+      rulesVersion < 54 &&
+      read.value.rules.some(
+        (rule) => rule.action.kind === 'currency' && rule.action.omen === 'catalysing_exaltation',
+      )
+    )
+      return fail('v2–v53 旧版项目不能包含催化崇高预兆指引。')
+    if (
       rulesVersion < 49 &&
       read.value.rules.some((rule) =>
         craftStrategyLeaves(rule.conditions).some(
@@ -630,6 +637,12 @@ export function parseCraftProject(
     minimumTargetCount = value.minimumTargetCount
   }
 
+  if (
+    rulesVersion < 54 &&
+    Array.isArray(value.operations) &&
+    value.operations.some((step) => record(step) && step.omen === 'catalysing_exaltation')
+  )
+    return fail('v2–v53 旧版项目不能包含催化崇高预兆，包括撤销位置之后的步骤。')
   if (
     rulesVersion < 47 &&
     Array.isArray(value.operations) &&

@@ -736,7 +736,7 @@ export function planCraftTargetRoutes(
           for (const mod of limit(candidates, selected.modIds.length === 0 ? 12 : 6)) {
             const numbers = liquid.enabled
               ? liquid.rolls(node.state, mod)
-              : minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))
+              : minimumCraftTargetRolls(catalog, current, mod, goal(mod.id))
             if (numbers === null) continue
             if (!spend()) return
             const added = addCraftAffix(catalog, current, mod.id, currency, omen)

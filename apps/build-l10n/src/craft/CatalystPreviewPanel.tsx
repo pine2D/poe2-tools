@@ -57,7 +57,7 @@ export function CatalystPreviewPanel({
             当前催化品质：{CATALYSTS.find((entry) => entry.id === state.catalyst?.id)?.label} ·{' '}
             {state.catalyst.quality}%
           </h4>
-          <p>起点已有品质随制作与保存保留，不计催化剂材料费用。</p>
+          <p>起点已有品质不计材料费用；当前品质按实际演练步骤更新并保存。</p>
         </section>
       ) : null}
       <details open={state.catalyst ? true : undefined}>
