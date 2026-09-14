@@ -83,7 +83,8 @@ export function WeaponPanel({
             ))}
             <p>
               基础攻击每秒 {result.value.attackSpeed.base}，词缀提高{' '}
-              {result.value.attackSpeed.increased}%。
+              {result.value.attackSpeed.increased - result.value.attackSpeed.runeIncreased}
+              %，镶嵌物提高 {result.value.attackSpeed.runeIncreased}%。
             </p>
             <p>
               基础暴击率 {result.value.criticalChance.base}%，词缀增加{' '}

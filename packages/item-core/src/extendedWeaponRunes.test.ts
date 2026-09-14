@@ -24,7 +24,7 @@ it('固定目录135条武器分支可镶入，精确类别、本地标志与空�
     ['Ashen Staff', 'staff', 40],
   ] as const) {
     const initial = state(baseId)
-    const choices = socketCandidates(catalog, initial)
+    const choices = socketCandidates(catalog, initial).filter((a) => a.type === 'Rune')
     expect(choices).toHaveLength(count)
     for (const augment of choices) {
       const result = applyCraftStep(catalog, initial, {

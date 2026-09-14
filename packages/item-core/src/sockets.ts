@@ -2,6 +2,7 @@ import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
+import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 /** 只列已占用孔；augment.lines 是当前效果，bonded 仅保留来源信息。 */
@@ -72,6 +73,10 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
+  if (isSupportedSoulCore(augment))
+    return weapon
+      ? weapon.category === 'weapon' && augment.category === 'weapon'
+      : !!base && armourSoulCoreFitsBase(augment, base)
   return weapon ? isSupportedWeaponRune(augment, weapon.category) : isSupportedArmourRune(augment)
 }
 

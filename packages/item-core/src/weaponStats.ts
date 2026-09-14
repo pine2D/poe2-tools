@@ -24,7 +24,7 @@ export interface WeaponEstimate {
   chaosDps: number
   totalDps: number
   quality: number
-  attackSpeed: { base: number; increased: number; value: number }
+  attackSpeed: { base: number; increased: number; runeIncreased: number; value: number }
   criticalChance: { base: number; addedPoints: number; value: number }
   reload?: { base: number; increased: number; value: number }
 }
@@ -185,9 +185,9 @@ export function estimateWeaponStats(
     }
     endpoints[type] = { min: decimal(a ?? 0), max: decimal(b ?? 0) }
   }
-  let attackInc = 0
+  let attackInc = runes.AttackSpeed
   let addedPoints = 0
-  let exactAttackInc = decimal(0)
+  let exactAttackInc = decimal(runes.AttackSpeed)
   let exactAddedPoints = decimal(0)
   let exactPhysicalInc = decimal(runes.Physical)
   for (const affix of state.affixes) {
@@ -302,7 +302,12 @@ export function estimateWeaponStats(
       chaosDps,
       totalDps,
       quality: state.quality,
-      attackSpeed: { base: apsBase, increased: attackInc, value: attackValue },
+      attackSpeed: {
+        base: apsBase,
+        increased: attackInc,
+        runeIncreased: runes.AttackSpeed,
+        value: attackValue,
+      },
       criticalChance: { base: critBase, addedPoints, value: criticalValue },
       ...(reload ? { reload } : {}),
     },

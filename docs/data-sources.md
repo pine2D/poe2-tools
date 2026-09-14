@@ -1,5 +1,11 @@
 # 数据源登记表
 
+### 基础魂核镶嵌（2026-09-14）
+
+沿已登记固定 MIT `ModRunes.lua` 的完整类别、单行效果及 localMod，接入 Tacati、Citaqualotl、Azcapa、Quipolatl、Atmohua、Cholotl、Zantipi 七种基础魂核的十四条分支；固定目录无 limit、limitId 或 Socket-bound，不把此事实扩展到其他魂核。[GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495)明确增设大量具名镶嵌限制并使不合法装备失效，故限制型及古代共享组需单独建模。覆盖沿已登记 GGG 0.1.1；恐惧增效及攻速/弩装填沿固定 PoB `Item.lua` 模型。
+
+精确数值仍来自同一固定快照：抗性及本地攻速进入已有装备估算，毒素幅度、攻击元素提高、精魂、金币、减速削弱及需求转换只展示本件效果，不伪造角色结果或最终穿戴需求。参考 CoE 公开更新日志的装备面板和模拟条件联动，不获取其代码或数据。无新增数据抓取器；游戏取整、重复镶嵌和国服复制格式仍待真机验收。
+
 ### 普通武器符文扩展（2026-09-14）
 
 沿用固定 MIT `ModRunes.lua` 完整类别、效果、本地标志、限制与需求，开放攻击武器 Body、Mind、Rebirth、Inspiration、Stone、Vision、Robust、Adept、Resolve 四档及 Tempered 三档，法杖／施法长杖开放 Body、Mind、Rebirth、Inspiration、Stone、Vision 四档。固定目录合计 weapon 55、wand 40、staff 40 条受支持分支，没有补造缺失的 Perfect Tempered 或三属性施法效果。[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)的 Crafting Changes 明示十族符文在 Wands／Staves 使用独立效果及新增三属性符文；实际数值仍采用已登记快照，不当作当前所有服区真机验证。

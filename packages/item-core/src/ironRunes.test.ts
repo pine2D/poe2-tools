@@ -65,7 +65,7 @@ describe('钢铁符文核心', () => {
         '16% increased Armour, Evasion and Energy Shield',
       ]),
     ).toMatchObject({ Fire: 10, Cold: 0, Lightning: 0, Defences: 30 })
-    expect(Object.values(parseRuneEffectTotals([]) ?? {})).toEqual(Array(12).fill(0))
+    expect(new Set(Object.values(parseRuneEffectTotals([]) ?? {}))).toEqual(new Set([0]))
     for (const lines of [
       ['0% increased Armour, Evasion and Energy Shield'],
       ['14.5% increased Armour, Evasion and Energy Shield'],
@@ -197,7 +197,7 @@ describe('钢铁符文核心', () => {
   })
 
   it('v13往返，v5-v8从合法旧基线拒绝游标后的Iron操作', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v57')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v58')
     const source = catalog([iron(), fire])
     const current = {
       schemaVersion: 1,

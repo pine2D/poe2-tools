@@ -22,7 +22,7 @@ const state = (baseId = 'Rusted Greathelm'): CraftState => ({
 
 it('八族四档防具符文可镶入与覆盖，物等不冒充穿戴需求', () => {
   const initial = state()
-  const choices = socketCandidates(catalog, initial)
+  const choices = socketCandidates(catalog, initial).filter((a) => a.type === 'Rune')
   expect(choices).toHaveLength(48)
   for (const family of families)
     for (const tier of tiers) {

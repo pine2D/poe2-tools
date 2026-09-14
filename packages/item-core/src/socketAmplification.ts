@@ -2,6 +2,7 @@ import type { CatalogAugment, CraftCatalog } from './catalog'
 import { essenceSourceHash } from './essences'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
+import { armourSoulCoreFitsBase } from './soulCoreEffects'
 
 const HORROR_MOD = 'EssenceLocalRuneAndSoulCoreEffect1'
 const HORROR_ESSENCE = 'Metadata/Items/Currency/CurrencyCorruptedEssenceHorror'
@@ -40,7 +41,9 @@ export function effectiveSocketAugment(
   augment: CatalogAugment,
 ): CatalogAugment | null {
   if (socketEffectIncrease(catalog, state) === 0) return augment
-  if (!isSupportedArmourRune(augment)) return null
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (!isSupportedArmourRune(augment) && !(base && armourSoulCoreFitsBase(augment, base)))
+    return null
   let valid = true
   // 已完整核对为正整数效果，逐枚逐值增效后向下取整，再由调用方合计。
   const lines = augment.lines.map((line) =>

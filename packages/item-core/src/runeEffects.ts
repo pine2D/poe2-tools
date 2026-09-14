@@ -1,6 +1,8 @@
 import type { CatalogAugment } from './catalog'
+import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
 
 export type RuneEffectKey =
+  | keyof typeof ARMOUR_SOUL_TOTALS
   | 'Fire'
   | 'Cold'
   | 'Lightning'
@@ -30,6 +32,12 @@ const FLAT_KEYS = {
   Intelligence: 'Intelligence',
 } as const
 export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
+  Chaos: '混沌抗性',
+  GoldQuantity: '金币数量提高',
+  SlowReduction: '减速强度降低',
+  ConvertStrength: '需求转换为力量',
+  ConvertDexterity: '需求转换为敏捷',
+  ConvertIntelligence: '需求转换为智慧',
   Fire: '火焰',
   Cold: '冰霜',
   Lightning: '闪电',
@@ -44,6 +52,7 @@ export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
   Intelligence: '智慧',
 }
 const emptyTotals = (): RuneEffectTotals => ({
+  ...ARMOUR_SOUL_TOTALS,
   Fire: 0,
   Cold: 0,
   Lightning: 0,
@@ -77,6 +86,16 @@ const FAMILIES = {
 export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotals | null {
   const totals = emptyTotals()
   for (const line of lines) {
+    const soul = readSoulCoreLine(line, 'armour')
+    if (soul) {
+      const keys: RuneEffectKey[] =
+        soul.key === 'AllElemental' ? ['Fire', 'Cold', 'Lightning'] : [soul.key as RuneEffectKey]
+      for (const key of keys) {
+        if (!Number.isSafeInteger(totals[key] + soul.value)) return null
+        totals[key] += soul.value
+      }
+      continue
+    }
     const resistance = RESISTANCE.exec(line)
     const defences = DEFENCES.exec(line)
     const flat = FLAT.exec(line)
@@ -126,7 +145,11 @@ export function isSupportedArmourRune(augment: CatalogAugment): boolean {
 export function sumRuneEffects(augments: readonly CatalogAugment[]): RuneEffectTotals | null {
   const totals = emptyTotals()
   for (const augment of augments) {
-    if (!isSupportedArmourRune(augment)) return null
+    if (
+      !isSupportedArmourRune(augment) &&
+      !(isSupportedSoulCore(augment) && augment.category !== 'weapon')
+    )
+      return null
     const contribution = parseRuneEffectTotals(augment.lines)
     if (contribution === null) return null
     for (const key of Object.keys(totals) as RuneEffectKey[]) {

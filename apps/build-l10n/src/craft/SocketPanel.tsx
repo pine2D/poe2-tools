@@ -1,6 +1,7 @@
 import {
   type ArtificerCraftOperation,
   artificerSocketLimit,
+  type CatalogAugment,
   type CraftCatalog,
   type CraftState,
   type SocketCraftOperation,
@@ -23,6 +24,9 @@ interface SocketPanelProps {
   onPreview: (operation: SocketCraftOperation | ArtificerCraftOperation | null) => void
   onApply: () => void
 }
+
+const isDefenceRune = (augment: CatalogAugment | undefined) =>
+  augment?.type === 'Rune' && augment.category === 'armour' && augment.localMod
 
 export function SocketPanel({
   catalog,
@@ -54,8 +58,8 @@ export function SocketPanel({
   if (socketCapacity(catalog, state) === 0 && state.sockets === undefined) return null
   return (
     <section className="craft-sockets" aria-label="符文镶嵌">
-      <h3>符文镶嵌与替换</h3>
-      <p>按当前部位列出符文及其实际效果。覆盖旧符文不返还材料，镶嵌效果不占前后缀位置。</p>
+      <h3>符文与魂核镶嵌</h3>
+      <p>按当前部位列出符文与基础魂核及其实际效果。覆盖不返还旧材料，镶嵌效果不占前后缀位置。</p>
       {socketEffectIncrease(catalog, state) > 0 ? (
         <p>
           已计入{label('Essence of Horror')}的 60% 镶嵌物增效；按固定 PoB
@@ -124,7 +128,7 @@ export function SocketPanel({
                       <code>{line}</code>
                     </div>
                   ))}
-                  {effect ? <p>该符文穿戴需求：等级 {effect.levelReq}</p> : null}
+                  {effect ? <p>该镶嵌物穿戴需求：等级 {effect.levelReq}</p> : null}
                 </article>
               )
             })}
@@ -167,7 +171,7 @@ export function SocketPanel({
                   )
                 }
               >
-                <option value="">选择符文查看结果</option>
+                <option value="">选择符文或魂核查看结果</option>
                 {candidates.map((entry) => (
                   <option key={entry.id} value={entry.id}>
                     {label(entry.name)} ·{' '}
@@ -195,14 +199,14 @@ export function SocketPanel({
                   <code>{line}</code>
                 </div>
               ))}
-              <p>该符文穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
-              {selected.category === 'armour' && selected.localMod ? (
+              <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
+              {isDefenceRune(selected) ? (
                 <p>钢铁符文与普通本地防御提高相加，品质单独提供倍率；可在防御面板查看预计变化。</p>
-              ) : previous?.category === 'armour' && previous.localMod ? (
+              ) : isDefenceRune(previous) ? (
                 <p>替换后将失去这个孔的钢铁符文防御提高，请核对防御面板的下降值。</p>
               ) : null}
               {selected.category === 'weapon' ? (
-                <p>当前普通武器符文的本地伤害贡献可在武器面板查看预计变化。</p>
+                <p>本地伤害和攻速贡献可在武器面板查看预计变化，全局效果不计入该面板。</p>
               ) : null}
               {previous ? <p>旧符文会被覆盖：{label(previous.name)}，不会返还。</p> : null}
               <div className="socket-actions">

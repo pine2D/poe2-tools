@@ -54,6 +54,7 @@ import { importCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
 import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
+import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
@@ -66,7 +67,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v57'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v58'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -127,7 +128,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 57 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 58 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -1140,6 +1141,14 @@ export function parseCraftProject(
       rule.action.kind === 'socket' ? [rule.action.augmentId] : [],
     ) ?? []),
   ]
+  if (
+    rulesVersion < 58 &&
+    socketIds.some((id) => {
+      const augment = catalog.augments?.find((entry) => entry.id === id)
+      return augment !== undefined && isSupportedSoulCore(augment)
+    })
+  )
+    return fail('v57 及更早项目不能包含基础魂核，包括起点、导入声明、未执行操作和指引。')
   if (
     rulesVersion < 57 &&
     socketIds.some((id) => {

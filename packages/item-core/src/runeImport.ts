@@ -50,7 +50,7 @@ export function readRuneSourceLines(
     if (resolved === null || !supportedSource([resolved]))
       return {
         ok: false,
-        error: '符文效果仍有歧义或不受支持，目前仅核对已支持的正整数普通符文效果。',
+        error: '镶嵌效果仍有歧义或不受支持，目前仅核对已支持的正整数符文与基础魂核效果。',
       }
     if (supportedSource([raw]) && raw !== resolved)
       return { ok: false, error: '符文英文原文与确认译法矛盾。' }
@@ -94,7 +94,7 @@ export function runeSocketContributionError(
       .filter((key) => totals[key] > 0)
       .map(
         (key) =>
-          `${RUNE_EFFECT_LABELS[key]} ${totals[key]}${['Fire', 'Cold', 'Lightning', 'Defences', 'ManaRegeneration', 'FlaskRecovery'].includes(key) ? '%' : ''}`,
+          `${RUNE_EFFECT_LABELS[key]} ${totals[key]}${['Life', 'Mana', 'StunThreshold', 'Strength', 'Dexterity', 'Intelligence'].includes(key) ? '' : '%'}`,
       )
       .join('、') || '无'
   return `符文效果与孔位声明不一致：原文 ${describe(expected)}；所选符文 ${describe(actual)}。`

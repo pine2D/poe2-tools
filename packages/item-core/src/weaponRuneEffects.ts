@@ -1,4 +1,5 @@
 import type { CatalogAugment, CatalogBase } from './catalog'
+import { isSupportedSoulCore, readSoulCoreLine, WEAPON_SOUL_TOTALS } from './soulCoreEffects'
 
 export type WeaponRuneCategory = 'weapon' | 'wand' | 'staff'
 
@@ -29,6 +30,7 @@ export function weaponSocketKind(
 }
 
 const emptyTotals = () => ({
+  ...WEAPON_SOUL_TOTALS,
   PhysicalMin: 0,
   PhysicalMax: 0,
   LifeLeech: 0,
@@ -92,10 +94,13 @@ export function parseWeaponRuneEffectTotals(
   const totals = emptyTotals()
   let branch: Branch | undefined
   for (const line of lines) {
+    const soul = readSoulCoreLine(line, 'weapon')
     const added = /^Adds ([1-9]\d*) to ([1-9]\d*) (Physical|Fire|Cold|Lightning) Damage$/.exec(line)
     const extra = /^Gain ([1-9]\d*)% of Damage as Extra (Fire|Cold|Lightning) Damage$/.exec(line)
     const increased = /^([1-9]\d*)% increased (Physical|Spell) Damage$/.exec(line)
-    let metric: { key: Key; value: number; branch: Branch } | undefined
+    let metric: { key: Key; value: number; branch: Branch } | undefined = soul
+      ? { key: soul.key as Key, value: soul.value, branch: 'weapon' }
+      : undefined
     for (const [pattern, key, kind] of METRIC_PATTERNS) {
       const match = pattern.exec(line)
       if (match) {
@@ -207,7 +212,14 @@ export function sumWeaponRuneEffects(
   augments: readonly CatalogAugment[],
   category: WeaponRuneCategory,
 ): WeaponRuneEffectTotals | null {
-  if (!augments.every((augment) => isSupportedWeaponRune(augment, category))) return null
+  if (
+    !augments.every(
+      (augment) =>
+        isSupportedWeaponRune(augment, category) ||
+        (category === 'weapon' && augment.category === 'weapon' && isSupportedSoulCore(augment)),
+    )
+  )
+    return null
   return parseWeaponRuneEffectTotals(
     augments.flatMap((augment) => augment.lines),
     category,
