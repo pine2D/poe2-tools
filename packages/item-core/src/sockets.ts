@@ -113,6 +113,7 @@ export function socketStateError(catalog: CraftCatalog, state: CraftState): stri
 }
 
 export function socketCandidates(catalog: CraftCatalog, state: CraftState): CatalogAugment[] {
+  if (Object.hasOwn(state, 'destroyed')) return []
   if (Object.hasOwn(state, 'pendingDesecration')) return []
   if (socketStateError(catalog, state) !== null || !state.sockets?.length) return []
   // levelReq 为符文贡献的穿戴需求，不是物品等级门槛。
@@ -124,6 +125,7 @@ export function socketCandidates(catalog: CraftCatalog, state: CraftState): Cata
 }
 
 export function socketEffects(catalog: CraftCatalog, state: CraftState): SocketEffect[] {
+  if (Object.hasOwn(state, 'destroyed')) return []
   if (socketStateError(catalog, state) !== null) return []
   return (state.sockets ?? []).flatMap((id, socketIndex) => {
     const augment = catalog.augments?.find((entry) => entry.id === id)

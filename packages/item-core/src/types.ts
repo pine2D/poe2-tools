@@ -69,6 +69,8 @@ export interface ItemDocument {
   mods: ItemMod[]
   fractured?: true
   corrupted: boolean
+  /** 已核对英文标记；中文客户端原生标记待验收。 */
+  twiceCorrupted?: true
   mirrored: boolean
   unidentified: boolean
   diagnostics: ItemDiagnostic[]

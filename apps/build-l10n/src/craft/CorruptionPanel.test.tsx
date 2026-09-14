@@ -19,6 +19,57 @@ afterEach(() => {
   localStorage.clear()
 })
 
+it('建筑师摧毁预览可取消，应用后保留费用和项目恢复而停止装备操作', () => {
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{ 'Vaal Orb': '瓦尔石', "Architect's Orb": '建筑师宝珠' }}
+      initialState={{
+        baseId: 'Gold Ring',
+        itemLevel: 86,
+        rarity: 'normal',
+        sourceText: null,
+        affixes: [],
+      }}
+    />,
+  )
+  click('预演腐化：属性不变')
+  click('应用腐化结果')
+  click('预演建筑师：摧毁物品')
+  expect(screen.getByRole('region', { name: '建筑师结果草稿' }).textContent).toContain('尚未消耗')
+  click('取消建筑师结果')
+  click('保存演练到本机')
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').operations).toHaveLength(1)
+  click('预演建筑师：摧毁物品')
+  click('应用建筑师摧毁结果')
+  expect(document.activeElement).toBe(screen.getByRole('heading', { name: '装备已摧毁' }))
+  expect(screen.getByRole('region', { name: '已摧毁装备' })).toBeDefined()
+  expect(screen.getByText('建筑师宝珠 × 1')).toBeDefined()
+  expect(screen.queryByRole('button', { name: '蜕变石' })).toBeNull()
+  expect(screen.queryByRole('button', { name: '下载装备文本' })).toBeNull()
+  expect(screen.queryByRole('region', { name: '腐化状态' })).toBeNull()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(saved.operations).toEqual([
+    { kind: 'vaal', outcome: 'unchanged' },
+    { kind: 'architect', outcome: 'destroy' },
+  ])
+  expect(saved.cursor).toBe(2)
+  click('撤销')
+  expect(screen.queryByRole('region', { name: '已摧毁装备' })).toBeNull()
+  expect(screen.queryByText('建筑师宝珠 × 1')).toBeNull()
+  click('恢复本机演练')
+  expect(screen.getByRole('region', { name: '已摧毁装备' })).toBeDefined()
+  click('撤销')
+  click('保存演练到本机')
+  click('重做')
+  click('恢复本机演练')
+  expect(screen.queryByRole('region', { name: '已摧毁装备' })).toBeNull()
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').cursor).toBe(1)
+  click('重做')
+  expect(screen.getByRole('region', { name: '已摧毁装备' })).toBeDefined()
+})
+
 it('按中间状态连续重选，取消不写历史，应用后仅一条瓦尔步骤并可恢复', () => {
   render(
     <RehearsalPanel
@@ -117,7 +168,7 @@ it('瓦尔加孔预览、取消、镶嵌、保存及撤销恢复腐化限制', (
       augmentId: 'pob2:augment:["Soul Core of Quipolatl","weapon"]',
     },
   ])
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v61')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v62')
   click('撤销')
   expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
   click('撤销')

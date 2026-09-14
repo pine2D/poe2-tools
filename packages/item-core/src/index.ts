@@ -1,4 +1,5 @@
 export { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+export type { ArchitectCraftOperation } from './architect'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
 export {
   analyzeBoneTargets,

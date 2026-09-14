@@ -53,6 +53,7 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     ...Object.entries(CRAFT_CURRENCY_LABELS).map(([id, name]) => ({ id: `currency:${id}`, name })),
     { id: 'currency:artificer', name: '巧匠石' },
     { id: 'currency:vaal', name: 'Vaal Orb' },
+    { id: 'currency:architect', name: "Architect's Orb" },
     { id: 'currency:fracture', name: 'Fracturing Orb' },
     ...Object.entries(BONE_RULES).map(([id, rule]) => ({ id: `bone:${id}`, name: rule.name })),
     ...(catalog.essences ?? []).map((e) => ({ id: `essence:${e.id}`, name: e.name })),
@@ -90,7 +91,12 @@ export function collectCraftCosts(
       if (step.omen) for (const name of craftOmenMaterials(step.omen)) add(`omen:${name}`)
       continue
     }
-    if (step.kind === 'fracture' || step.kind === 'artificer' || step.kind === 'vaal')
+    if (
+      step.kind === 'fracture' ||
+      step.kind === 'artificer' ||
+      step.kind === 'vaal' ||
+      step.kind === 'architect'
+    )
       add(`currency:${step.kind}`)
     else if (step.kind === 'socket') {
       const augment = catalog.augments?.find((a) => a.id === step.augmentId)

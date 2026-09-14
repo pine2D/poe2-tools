@@ -84,6 +84,8 @@ export function importCraftState(
       return fail('词缀检查结果与来源原文不一致。')
   }
   const originalFlags = parseItem(item.rawText)
+  if (item.twiceCorrupted || (originalFlags.ok && originalFlags.item.twiceCorrupted))
+    return fail('已识别二重腐化；双强化和后续操作尚未支持，当前保留原文对比。')
   if (
     !originalFlags.ok ||
     originalFlags.item.corrupted !== item.corrupted ||

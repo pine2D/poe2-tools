@@ -80,6 +80,16 @@ export function CraftComparisonPanel({
     () => new Map(catalog.modifiers.map((mod) => [mod.id, mod])),
     [catalog.modifiers],
   )
+  if (result.ok && result.value.destroyed)
+    return (
+      <section aria-label="装备前后变化">
+        <p>
+          装备状态：{result.value.destroyed.before ? '已摧毁' : '存活'} →{' '}
+          {result.value.destroyed.after ? '已摧毁' : '存活'}
+        </p>
+        <p>摧毁后没有可用装备，不再比较属性数值或目标达成；费用保留在演练记录中。</p>
+      </section>
+    )
   const side = (label: string, direction: '操作前' | '操作后', lines: string[] | null) => (
     <section className="comparison-side" aria-label={`${label} · ${direction}`}>
       <h5>{direction}</h5>

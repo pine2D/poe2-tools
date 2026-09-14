@@ -1,3 +1,9 @@
+import {
+  type ArchitectCraftOperation,
+  DESTROYED_ITEM_MESSAGE,
+  destroyWithArchitect,
+  isArchitectCraftOperation,
+} from './architect'
 import { applyBoneCraft } from './boneCraft'
 import {
   type BoneCraftOperation,
@@ -54,6 +60,7 @@ export interface LiquidEmotionCraftOperation {
 }
 
 export type CraftStep =
+  | ArchitectCraftOperation
   | VaalCraftOperation
   | FractureCraftOperation
   | BoneCraftOperation
@@ -78,6 +85,11 @@ export function applyCraftStep(
   step: CraftStep,
 ): CraftResult<CraftState> {
   if (!record(step)) return { ok: false, error: '制作步骤必须是对象。' }
+  if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
+  if ('kind' in step && step.kind === 'architect')
+    return isArchitectCraftOperation(step)
+      ? destroyWithArchitect(catalog, state)
+      : { ok: false, error: '建筑师结果步骤字段无效；当前只支持指定摧毁结果。' }
   if (state.corrupted && (!('kind' in step) || step.kind !== 'socket'))
     return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   if ('kind' in step && step.kind === 'vaal') {

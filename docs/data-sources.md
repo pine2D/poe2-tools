@@ -1,5 +1,8 @@
 # 数据源登记表
 
+建筑师摧毁（2026-09-14）：新增人工 gray 规则参考 [Lolcohol / Mobalytics《Vaal Currency Items》](https://mobalytics.gg/poe-2/guides/vaal-currency)（页面更新 2026-07-21），结合已登记 PoE2DB 的 [Architect's Orb 说明](https://poe2db.tw/us/Architects_Orb)。仅支持手选摧毁分支，未采用作者给出的概率，成功追加强化及组间资格仍待确认。已登记固定 MIT PoB2 的 Item.lua 用于核对英文 Twice Corrupted 标记，不猜国服或台服译文。无新增抓取适配器、转载表格或同行实现。 本轮 CoE 黑盒观察：自造英文 Antler Focus 在 language=cn 页面提示基底未找到，英文页面可导入；Temple → Architect's Orb 显示该方法没有处理器。仅记录当前页面行为，不据此推断游戏规则或其他入口能力。
+
+
 瓦尔顺序重选（2026-09-14）：新增人工 gray 规则参考 [Mobalytics / sirgog 原创攻略](https://mobalytics.gg/poe-2/guides/vaal-corrupting)（页面标注 2025-01-16），与已登记 Maxroll 腐化说明交叉核对。使用一至三次类似混沌替换、可作用于魔法装备的文字描述；顺序重新生成候选、可再次命中新组是该描述的模型推导，未获服务端或真机验证。没有转载结果表、抓取适配器或同行实现，未采用旧 25% 概率／法系品质结论；特殊来源交互暂不开放。CoE 自造法器选择 Vaal Orb 后显示该方法没有处理器，仅登记为界面观察，不能证明游戏行为。
 
 腐化属性目录（2026-09-14）：新增已登记 MIT 仓库固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [src/Data/ModCorrupted.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModCorrupted.lua)，SHA-256 `50549cb0cbe722e28b337b30e4918e14ddf14bd4aa5da5d064984b1ba8f99351`。primary，保留 MIT 及 GGG 游戏内容版权说明；构建期仅经 cache.ts 抓取固定 raw 文件并解析声明。127 条放入独立腐化表，保留 Corrupted / SpecialCorrupted、组、数值范围、标签与有序资格，不将 0/1 当概率，不把空资格推断为全部可用。[同提交 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua)及 [ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua)仅用于人工核对腐化属性层、催化增幅和取整规则，不执行 Lua 或复制制作器实现。

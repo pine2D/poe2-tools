@@ -1,4 +1,5 @@
 import {
+  type ArchitectCraftOperation,
   type ArtificerCraftOperation,
   addCraftAffix,
   applyCraftOperation,
@@ -61,6 +62,7 @@ import {
   type VaalCraftOperation,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArchitectPanel } from './ArchitectPanel'
 import { CorruptionPanel } from './CorruptionPanel'
 import { CraftPricingPanel } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
@@ -313,7 +315,11 @@ export function RehearsalPanel({
   const [omen, setOmen] = useState<CraftOmen | undefined>()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [socketDraft, setSocketDraft] = useState<
-    SocketCraftOperation | ArtificerCraftOperation | VaalCraftOperation | null
+    | SocketCraftOperation
+    | ArtificerCraftOperation
+    | VaalCraftOperation
+    | ArchitectCraftOperation
+    | null
   >(null)
   const [guaranteedDraft, setGuaranteedDraft] = useState<
     EssenceCraftOperation | LiquidEmotionCraftOperation | null
@@ -393,6 +399,10 @@ export function RehearsalPanel({
   const [query, setQuery] = useState('')
   const [message, setMessage] = useState(initial.ok ? '' : initial.error)
   const current = history[cursor]?.state
+  const destroyedHeading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (current?.destroyed) destroyedHeading.current?.focus()
+  }, [current])
   const base = catalog.bases.find((entry) => entry.id === current?.baseId)
   const implicit = useMemo(
     () => (base && current ? resolveCraftImplicitPatterns(base, current) : null),
@@ -823,6 +833,7 @@ export function RehearsalPanel({
       )
     if (step.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
+    if (step.kind === 'architect') return '建筑师宝珠：摧毁物品'
     if (step.kind === 'vaal')
       return `瓦尔石：${step.outcome === 'socket' ? '腐化增加一孔' : step.outcome === 'enchant' ? '新增腐化强化' : step.outcome === 'reroll' ? `重选词缀（${step.replacements.length} 次替换）` : '腐化但属性不变'}`
     if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
@@ -996,6 +1007,86 @@ export function RehearsalPanel({
       ? preview.value
       : current
 
+  const historyControls = (
+    <>
+      <div className="rehearsal-toolbar">
+        <button type="button" disabled={cursor === 0} onClick={() => moveTo(cursor - 1)}>
+          撤销
+        </button>
+        <button
+          type="button"
+          disabled={cursor >= history.length - 1}
+          onClick={() => moveTo(cursor + 1)}
+        >
+          重做
+        </button>
+        <button type="button" disabled={cursor === 0} onClick={() => moveTo(0)}>
+          回到起点
+        </button>
+        <div className="rehearsal-costs">
+          {costs.length > 0 ? (
+            costs.map((cost) => <span key={cost}>{cost}</span>)
+          ) : (
+            <span>{costResult.ok ? '尚未消耗通货' : '材料计费失败'}</span>
+          )}
+        </div>
+      </div>
+
+      <nav className="rehearsal-history" aria-label="演练历史">
+        {history.map((entry, index) => {
+          const currency = entry.operation ? stepLabel(entry.operation) : undefined
+          return (
+            <button
+              type="button"
+              key={entry.id}
+              aria-current={index === cursor ? 'step' : undefined}
+              onClick={() => moveTo(index)}
+            >
+              步骤 {index}：{currency ?? '起点'}
+            </button>
+          )
+        })}
+      </nav>
+    </>
+  )
+  const projectControls = (
+    <ProjectControls
+      catalog={catalog}
+      project={project}
+      onRestore={restoreProject}
+      {...(dictionary === undefined ? {} : { dictionary })}
+    />
+  )
+  const pricingControls = (
+    <CraftPricingPanel
+      key={targetSession}
+      catalog={catalog}
+      pricing={pricing}
+      costs={costResult}
+      materialIds={costMaterials.map((m) => m.id)}
+      onChange={setPricing}
+      translations={translations}
+    />
+  )
+  if (current.destroyed)
+    return (
+      <section className="rehearsal-panel" aria-label="通货演练">
+        <section aria-label="已摧毁装备">
+          <h3 ref={destroyedHeading} tabIndex={-1}>
+            装备已摧毁
+          </h3>
+          <p role="status">
+            {translations[base.name] ?? base.name} 已在演练中摧毁，装备与镶嵌物均不可继续使用。
+          </p>
+          <p>
+            已消耗材料与起点成本保留。可撤销、回到起点或恢复项目继续比较路线；游戏中无法撤销摧毁。
+          </p>
+        </section>
+        {projectControls}
+        {pricingControls}
+        {historyControls}
+      </section>
+    )
   const ItemPanel =
     base.tags.includes('weapon') || ['Wand', 'Staff', 'Sceptre'].includes(base.type)
       ? WeaponPanel
@@ -1025,12 +1116,7 @@ export function RehearsalPanel({
         </div>
       </header>
 
-      <ProjectControls
-        catalog={catalog}
-        project={project}
-        onRestore={restoreProject}
-        {...(dictionary === undefined ? {} : { dictionary })}
-      />
+      {projectControls}
       <p className="rehearsal-project-identity">
         当前演练项目：{translations[base.name] ?? base.name} · 物品等级 {current.itemLevel}
       </p>
@@ -1065,15 +1151,7 @@ export function RehearsalPanel({
           原文符文效果已核对；当前效果按孔内物计算，后续替换不改写起点来源。
         </p>
       ) : null}
-      <CraftPricingPanel
-        key={targetSession}
-        catalog={catalog}
-        pricing={pricing}
-        costs={costResult}
-        materialIds={costMaterials.map((m) => m.id)}
-        onChange={setPricing}
-        translations={translations}
-      />
+      {pricingControls}
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftStrategyPanel
         key={`strategy:${targetSession}`}
@@ -1366,44 +1444,7 @@ export function RehearsalPanel({
         </p>
       )}
 
-      <div className="rehearsal-toolbar">
-        <button type="button" disabled={cursor === 0} onClick={() => moveTo(cursor - 1)}>
-          撤销
-        </button>
-        <button
-          type="button"
-          disabled={cursor >= history.length - 1}
-          onClick={() => moveTo(cursor + 1)}
-        >
-          重做
-        </button>
-        <button type="button" disabled={cursor === 0} onClick={() => moveTo(0)}>
-          回到起点
-        </button>
-        <div className="rehearsal-costs">
-          {costs.length > 0 ? (
-            costs.map((cost) => <span key={cost}>{cost}</span>)
-          ) : (
-            <span>{costResult.ok ? '尚未消耗通货' : '材料计费失败'}</span>
-          )}
-        </div>
-      </div>
-
-      <nav className="rehearsal-history" aria-label="演练历史">
-        {history.map((entry, index) => {
-          const currency = entry.operation ? stepLabel(entry.operation) : undefined
-          return (
-            <button
-              type="button"
-              key={entry.id}
-              aria-current={index === cursor ? 'step' : undefined}
-              onClick={() => moveTo(index)}
-            >
-              步骤 {index}：{currency ?? '起点'}
-            </button>
-          )
-        })}
-      </nav>
+      {historyControls}
 
       {comparisonBefore ? (
         <div className="rehearsal-comparison">
@@ -1678,6 +1719,28 @@ export function RehearsalPanel({
         translations={translations}
         {...(translateLine ? { translateLine } : {})}
       />
+      <ArchitectPanel
+        key={`architect:${targetSession}:${cursor}:${history[cursor]?.id}`}
+        catalog={catalog}
+        state={current}
+        draft={socketDraft?.kind === 'architect' ? socketDraft : null}
+        busy={Boolean(
+          draft ||
+            removalCurrency ||
+            guaranteedDraft ||
+            boneDraft ||
+            fractureDraft ||
+            (socketDraft && socketDraft.kind !== 'architect'),
+        )}
+        canApply={preview?.ok === true}
+        onPreview={(step) => {
+          setSocketDraft(step)
+          setMessage('')
+        }}
+        onApply={() => {
+          if (socketDraft?.kind === 'architect') applyStep(socketDraft)
+        }}
+      />
       <CorruptionPanel
         key={`corruption:${targetSession}:${cursor}:${history[cursor]?.id}`}
         catalog={catalog}
@@ -1705,7 +1768,9 @@ export function RehearsalPanel({
         key={`${targetSession}:${cursor}:${history[cursor]?.id}`}
         catalog={catalog}
         state={current}
-        draft={socketDraft?.kind === 'vaal' ? null : socketDraft}
+        draft={
+          socketDraft?.kind === 'vaal' || socketDraft?.kind === 'architect' ? null : socketDraft
+        }
         busy={
           draft !== null ||
           removalCurrency !== null ||
@@ -1713,7 +1778,8 @@ export function RehearsalPanel({
           boneDraft !== null ||
           fractureDraft !== null ||
           current.pendingDesecration !== undefined ||
-          socketDraft?.kind === 'vaal'
+          socketDraft?.kind === 'vaal' ||
+          socketDraft?.kind === 'architect'
         }
         canApply={preview?.ok === true}
         translations={translations}

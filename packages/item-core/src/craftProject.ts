@@ -1,5 +1,6 @@
 import { usesJewelCapacity } from './affixCapacity'
 import { readStatAnnotations } from './annotations'
+import { isArchitectCraftOperation } from './architect'
 import { isBeltCapacityBase, resolveCraftImplicitPatterns } from './beltImplicits'
 import {
   clonePendingDesecration,
@@ -68,7 +69,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v61'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v62'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -130,7 +131,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 61 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 62 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -295,6 +296,7 @@ function readOperation(value: unknown): CraftStep | null {
             ...(typeof value.removeModId === 'string' ? { removeModId: value.removeModId } : {}),
           }
         : null
+    if (value.kind === 'architect') return isArchitectCraftOperation(value) ? { ...value } : null
     if (value.kind === 'vaal')
       return isVaalCraftOperation(value)
         ? value.outcome === 'enchant'
@@ -550,6 +552,12 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (
+    rulesVersion < 62 &&
+    Array.isArray(value.operations) &&
+    value.operations.some((step) => record(step) && step.kind === 'architect')
+  )
+    return fail('v2–v61 旧版项目不能包含建筑师摧毁步骤。')
   if (
     rulesVersion < 61 &&
     Array.isArray(value.operations) &&

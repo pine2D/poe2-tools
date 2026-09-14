@@ -1,5 +1,6 @@
 import { craftAffixSpace, usesJewelCapacity } from './affixCapacity'
 import { readStatAnnotations, UNSCALABLE_SUFFIX } from './annotations'
+import { DESTROYED_ITEM_MESSAGE } from './architect'
 import {
   beltBaseError,
   isBeltCapacityBase,
@@ -101,6 +102,8 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  /** 仅由摧毁操作产生的终止快照；不能作为存活装备使用。 */
+  destroyed?: true
   corruption?: import('./corruptionEnchantments').CraftCorruption
   corrupted?: true
   catalyst?: import('./catalystQuality').CatalystQuality
@@ -263,6 +266,7 @@ export function createCraftState(
   catalog: CraftCatalog,
   input: CraftState,
 ): CraftResult<CraftState> {
+  if (Object.hasOwn(input, 'destroyed')) return failure(DESTROYED_ITEM_MESSAGE)
   const base = findBase(catalog, input.baseId)
   if (Object.hasOwn(input, 'corrupted') && input.corrupted !== true)
     return failure('腐化状态只能是明确的 true 或缺省。')

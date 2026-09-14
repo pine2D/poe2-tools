@@ -31,6 +31,7 @@ export interface CraftAffixChange {
 }
 
 export interface CraftComparison {
+  destroyed?: { before: boolean; after: boolean }
   corruption?: { before: CraftCorruption | null; after: CraftCorruption | null }
   corrupted?: { before: boolean; after: boolean }
   pendingDesecration?: { before: PendingDesecration | null; after: PendingDesecration | null }
@@ -103,6 +104,27 @@ export function compareCraftStates(
   before: CraftState,
   after: CraftState,
 ): CraftResult<CraftComparison> {
+  if (Object.hasOwn(before, 'destroyed') || Object.hasOwn(after, 'destroyed')) {
+    const { destroyed: beforeDestroyed, ...beforeItem } = before
+    const { destroyed: afterDestroyed, ...afterItem } = after
+    if (
+      (Object.hasOwn(before, 'destroyed') && beforeDestroyed !== true) ||
+      (Object.hasOwn(after, 'destroyed') && afterDestroyed !== true)
+    )
+      return { ok: false, error: '摧毁状态无效。' }
+    const checked = compareCraftStates(catalog, beforeItem, afterItem)
+    return checked.ok
+      ? {
+          ok: true,
+          value: {
+            destroyed: { before: beforeDestroyed === true, after: afterDestroyed === true },
+            rarity: null,
+            affixes: [],
+            implicit: null,
+          },
+        }
+      : checked
+  }
   if (
     before.baseId !== after.baseId ||
     before.itemLevel !== after.itemLevel ||

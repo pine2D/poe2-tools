@@ -38,6 +38,7 @@ const LABELS = {
 }
 
 const FLAG_PATTERNS = {
+  twiceCorrupted: /^Twice Corrupted$/i,
   fractured: FRACTURED_ITEM,
   corrupted: /^(?:已腐化|被腐化|腐化|Corrupted)$/i,
   mirrored: /^(?:镜像|鏡像|Mirrored)$/i,
@@ -258,6 +259,7 @@ export function parseItem(text: string): ParseItemResult {
   let itemLevel: number | null = null
   let fractured = false
   let corrupted = false
+  let twiceCorrupted = false
   let mirrored = false
   let unidentified = false
   let currentSection: ItemBlock['kind'] | null = null
@@ -279,6 +281,10 @@ export function parseItem(text: string): ParseItemResult {
     if (flag === null) return false
     if (flag === 'fractured') fractured = true
     if (flag === 'corrupted') corrupted = true
+    if (flag === 'twiceCorrupted') {
+      corrupted = true
+      twiceCorrupted = true
+    }
     if (flag === 'mirrored') mirrored = true
     if (flag === 'unidentified') unidentified = true
     closeCurrentMod()
@@ -458,6 +464,7 @@ export function parseItem(text: string): ParseItemResult {
       mods,
       ...(fractured ? { fractured: true as const } : {}),
       corrupted,
+      ...(twiceCorrupted ? { twiceCorrupted: true as const } : {}),
       mirrored,
       unidentified,
       diagnostics,
