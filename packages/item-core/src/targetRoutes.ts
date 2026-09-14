@@ -1,4 +1,5 @@
 import { analyzeAlloyTargets } from './alloyAdvice'
+import { usesSovereignResistance } from './alloyEffects'
 import { inspectCraftAlloys } from './alloys'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import { analyzeBoneTargets } from './boneAdvice'
@@ -10,11 +11,7 @@ import {
   quoteCraftCosts,
 } from './craftCosts'
 import { applyCraftStep, type CraftStep } from './craftSteps'
-import {
-  matchesTargetInterval,
-  minimumCraftTargetRolls,
-  projectCraftTargetValues,
-} from './effectiveTargetValues'
+import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import { analyzeEssenceTargets } from './essenceAdvice'
 import { essenceCategory } from './essences'
 import { prepareFracture } from './fracture'
@@ -24,7 +21,7 @@ import {
   craftImplicitTargetCandidates,
   implicitTargetRolls,
 } from './implicitTargets'
-import { jointJewelDivineOperations, liquidRouteContext } from './liquidRouteCandidates'
+import { jointEffectDivineOperations, liquidRouteContext } from './liquidRouteCandidates'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenMaterials } from './omens'
@@ -39,6 +36,8 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
+import { sovereignRouteContext } from './sovereignRouteCandidates'
+import { matchedCraftTargetIds } from './targetProgress'
 import { targetRollsPreservingValues } from './targetRolls'
 import {
   analyzeCraftTargets,
@@ -210,6 +209,17 @@ export function planCraftTargetRoutes(
   const liquid = liquidRouteContext(catalog, state, groups, values, () => {
     result.truncated = true
   })
+  const sovereign = sovereignRouteContext(
+    catalog,
+    state,
+    groups,
+    values,
+    () => {
+      result.truncated = true
+    },
+    options.minimumTargetCount,
+    fracturedTargetId,
+  )
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const category = base ? essenceCategory(base) : ''
   const essenceIds = new Set(
@@ -223,21 +233,7 @@ export function planCraftTargetRoutes(
       if (entry.mod && accepted.has(entry.mod.id)) essenceIds.add(entry.mod.id)
   const goal = (id: string) => values.find((v) => v.modId === id)
   const numericMatched = (current: CraftState) =>
-    ids.filter((_, index) =>
-      groups[index]?.some((id) => {
-        const affix = current.affixes.find((a) => a.modId === id)
-        const mod = byId.get(id)
-        if (!affix || !mod) return false
-        const conditions = goal(id)?.bounds ?? []
-        if (!conditions.length) return true
-        const projection = projectCraftTargetValues(catalog, current, mod, goal(id), affix.lines)
-        const actual = projection.ok ? projection.value.read(affix.lines) : null
-        return (
-          actual?.ok === true &&
-          conditions.every((bound) => matchesTargetInterval(actual.value[bound.index], bound))
-        )
-      }),
-    )
+    matchedCraftTargetIds(catalog, current, ids, groups, values)
   // 起点保护只看身份与数值；完整目标推进还需锁定对应的已接受组。
   const matched = (current: CraftState, numeric = numericMatched(current)) =>
     numeric.filter(
@@ -313,7 +309,8 @@ export function planCraftTargetRoutes(
         matchedImplicit(state).length +
         bonePriority(state) +
         fracturePriority(state) +
-        liquid.priority(state),
+        liquid.priority(state) +
+        sovereign.priority(state),
       risk: 0,
       boneOmens: 0,
       cost: 0,
@@ -391,7 +388,9 @@ export function planCraftTargetRoutes(
     const beforeMatched = matched(node.state, beforeNumeric)
     // 页面应用第一步后会把新达成目标视为起点保护；液态完整示例也须保持同一语义。
     const stepProtectedIds =
-      liquid.enabled && options.preserveMatched !== false ? beforeNumeric : protectedIds
+      (liquid.enabled || sovereign.enabled) && options.preserveMatched !== false
+        ? beforeNumeric
+        : protectedIds
     const beforeImplicit = matchedImplicit(node.state)
     const present = node.state.affixes.filter((a) => accepted.has(a.modId)).map((a) => a.modId)
     const offer = (
@@ -555,7 +554,8 @@ export function planCraftTargetRoutes(
             afterImplicit.length +
             bonePriority(applied.value) +
             fracturePriority(applied.value) +
-            liquid.priority(applied.value),
+            liquid.priority(applied.value) +
+            sovereign.priority(applied.value),
           risk,
           cost,
           boneOmens:
@@ -600,7 +600,15 @@ export function planCraftTargetRoutes(
         if (result.candidateApplications >= 4096) break
         offer(candidate.operation, candidate.atRiskTargetIds)
       }
-      for (const operation of jointJewelDivineOperations(
+    }
+    if (sovereign.enabled) {
+      for (const candidate of sovereign.candidates(node.state)) {
+        if (result.candidateApplications >= 4096) break
+        offer(candidate.operation, candidate.atRiskTargetIds)
+      }
+    }
+    if (liquid.enabled || usesSovereignResistance(node.state)) {
+      for (const operation of jointEffectDivineOperations(
         catalog,
         node.state,
         values,
@@ -804,7 +812,9 @@ export function planCraftTargetRoutes(
           for (const mod of limit(candidates, selected.modIds.length === 0 ? 12 : 6)) {
             const numbers = liquid.enabled
               ? liquid.rolls(node.state, mod)
-              : minimumCraftTargetRolls(catalog, current, mod, goal(mod.id))
+              : sovereign.enabled
+                ? sovereign.rolls(current, mod)
+                : minimumCraftTargetRolls(catalog, current, mod, goal(mod.id))
             if (numbers === null) continue
             if (!spend()) return
             const added = addCraftAffix(catalog, current, mod.id, currency, omen)
@@ -839,6 +849,7 @@ export function planCraftTargetRoutes(
       for (const step of essenceAdvice.value) offer(step.operation, step.atRiskTargetIds)
     const alloyAdvice = analyzeAlloyTargets(catalog, node.state, ids, values, alternatives, {
       consumeCandidate: spend,
+      includePreparatory: true,
       ...(options.minimumTargetCount === undefined
         ? {}
         : { minimumTargetCount: options.minimumTargetCount }),

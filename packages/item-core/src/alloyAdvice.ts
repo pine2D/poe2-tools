@@ -4,6 +4,8 @@ import type { CraftCatalog } from './catalog'
 import { type AlloyCraftOperation, applyCraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
+import { sovereignTargetSupport } from './sovereignTargetSupport'
+import { matchedCraftTargetIds } from './targetProgress'
 import {
   analyzeCraftTargets,
   type CraftTargetAlternative,
@@ -16,6 +18,8 @@ export interface AlloyAdviceStep {
   targetModId: string
   lostTargetIds: string[]
   atRiskTargetIds: string[]
+  gainedTargetIds: string[]
+  matchedTargetIds: string[]
 }
 
 /** 只给已完整回放的指定结果；风险覆盖可移除池，不声称随机成功率。 */
@@ -29,6 +33,7 @@ export function analyzeAlloyTargets(
     consumeCandidate?: () => boolean
     minimumTargetCount?: number
     fracturedTargetId?: string
+    includePreparatory?: boolean
   } = {},
 ): CraftResult<AlloyAdviceStep[]> {
   if (
@@ -63,8 +68,18 @@ export function analyzeAlloyTargets(
   const missing = new Set(groups.filter((group) => !group.some((id) => existing.has(id))).flat())
   const present = groups.flat().filter((id) => existing.has(id))
   const steps: AlloyAdviceStep[] = []
+  const support = sovereignTargetSupport(
+    catalog,
+    state,
+    values,
+    options.minimumTargetCount !== undefined && options.minimumTargetCount < ids.length,
+  )
+  const beforeMatched = progress.value.targets
+    .filter((target) => target.matched)
+    .map((target) => target.modId)
   for (const entry of inspectCraftAlloys(catalog, base)) {
-    if (!entry.mod || !missing.has(entry.mod.id)) continue
+    const supporting = support?.mod.id === entry.mod?.id
+    if (!entry.mod || (!missing.has(entry.mod.id) && !supporting)) continue
     const prepared = prepareAlloyCraft(catalog, state, entry.alloy.id)
     if (!prepared.ok) continue
     const numbers = minimumCraftTargetRolls(
@@ -73,33 +88,70 @@ export function analyzeAlloyTargets(
       entry.mod,
       values.find((value) => value.modId === entry.mod?.id),
     )
-    if (numbers === null) continue
+    const outcomes =
+      supporting && support
+        ? support.contexts.map((context) => [context.value])
+        : numbers === null
+          ? []
+          : [numbers]
     const removableIds = prepared.value.removableAffixes.map((affix) => affix.modId)
     const atRiskTargetIds = present.filter((id) => removableIds.includes(id))
     for (const removeModId of removableIds) {
-      if (options.consumeCandidate && !options.consumeCandidate()) return { ok: true, value: steps }
-      const operation: AlloyCraftOperation = {
-        kind: 'alloy',
-        alloyId: entry.alloy.id,
-        removeModId,
-        values: [...numbers],
+      for (const numbers of outcomes) {
+        if (options.consumeCandidate && !options.consumeCandidate())
+          return { ok: true, value: steps }
+        const operation: AlloyCraftOperation = {
+          kind: 'alloy',
+          alloyId: entry.alloy.id,
+          removeModId,
+          values: [...numbers],
+        }
+        const applied = applyCraftStep(catalog, state, operation)
+        if (!applied.ok) continue
+        const matchedTargetIds = matchedCraftTargetIds(
+          catalog,
+          applied.value,
+          ids,
+          groups,
+          values,
+          options.fracturedTargetId,
+        )
+        const gainedTargetIds = matchedTargetIds.filter((id) => !beforeMatched.includes(id))
+        if (
+          supporting &&
+          !missing.has(entry.mod.id) &&
+          !options.includePreparatory &&
+          !gainedTargetIds.length
+        )
+          continue
+        steps.push({
+          operation,
+          targetModId: entry.mod.id,
+          lostTargetIds: present.filter(
+            (id) =>
+              id === removeModId ||
+              groups.some(
+                (group, index) =>
+                  group.includes(id) &&
+                  beforeMatched.includes(ids[index] ?? '') &&
+                  !matchedTargetIds.includes(ids[index] ?? ''),
+              ),
+          ),
+          atRiskTargetIds: [...atRiskTargetIds],
+          gainedTargetIds,
+          matchedTargetIds,
+        })
       }
-      const applied = applyCraftStep(catalog, state, operation)
-      if (!applied.ok) continue
-      steps.push({
-        operation,
-        targetModId: entry.mod.id,
-        lostTargetIds: present.filter((id) => id === removeModId),
-        atRiskTargetIds: [...atRiskTargetIds],
-      })
     }
   }
   steps.sort(
     (a, b) =>
       a.lostTargetIds.length - b.lostTargetIds.length ||
       a.atRiskTargetIds.length - b.atRiskTargetIds.length ||
+      b.matchedTargetIds.length - a.matchedTargetIds.length ||
       a.operation.alloyId.localeCompare(b.operation.alloyId, 'en') ||
-      a.operation.removeModId.localeCompare(b.operation.removeModId, 'en'),
+      a.operation.removeModId.localeCompare(b.operation.removeModId, 'en') ||
+      (a.operation.values[0] ?? 0) - (b.operation.values[0] ?? 0),
   )
   return { ok: true, value: steps }
 }

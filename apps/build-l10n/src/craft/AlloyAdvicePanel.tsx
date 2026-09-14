@@ -33,16 +33,22 @@ export function AlloyAdvicePanel({
     <section aria-label="合金目标建议">
       <h4>合金方案 · {steps.length} 种指定结果</h4>
       <p>
-        合金保证属性身份；以下数值是满足目标的演练示例。移除对象与数值仍随机，未比较成功率或价格。
+        合金保证属性身份；以下为推进目标的指定结果，包含君王抗性增效。移除对象与数值仍随机，未比较成功率或价格。
       </p>
       {(showAll ? steps : steps.slice(0, 3)).map((step) => (
-        <article key={`${step.operation.alloyId}:${step.operation.removeModId}`}>
+        <article
+          key={`${step.operation.alloyId}:${step.operation.removeModId}:${step.operation.values.join(',')}`}
+        >
           <h4>
             {local(
               catalog.alloys?.alloys.find((entry) => entry.id === step.operation.alloyId)?.name ??
                 step.operation.alloyId,
             )}
           </h4>
+          <p>
+            应用后达成 {step.matchedTargetIds.length} 组目标；新增达成 {step.gainedTargetIds.length}{' '}
+            组。
+          </p>
           <EssenceResultDetails
             catalog={catalog}
             state={state}
@@ -56,7 +62,7 @@ export function AlloyAdvicePanel({
             </p>
           ) : null}
           {step.lostTargetIds.length ? (
-            <p>此结果将移除已有目标：{step.lostTargetIds.join('、')}</p>
+            <p>此结果将移除或使已有目标失配：{step.lostTargetIds.join('、')}</p>
           ) : null}
           <button
             type="button"

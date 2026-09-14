@@ -1,3 +1,4 @@
+import { isSovereignAffix } from './alloyEffects'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import type { CraftStep } from './craftSteps'
@@ -368,7 +369,7 @@ export function liquidRouteContext(
 }
 
 /** 固定增效值后再反解所有基础值；破裂组只由调用方的最终目标判定检查，绝不重掷。 */
-export function* jointJewelDivineOperations(
+export function* jointEffectDivineOperations(
   catalog: CraftCatalog,
   state: CraftState,
   values: readonly CraftTargetValues[],
@@ -380,7 +381,10 @@ export function* jointJewelDivineOperations(
   const effectAffix = state.affixes.find(
     (affix) =>
       affix.crafted &&
-      catalog.modifiers.some((mod) => mod.id === affix.modId && jewelEffectModKind(mod) !== null),
+      (catalog.modifiers.some(
+        (mod) => mod.id === affix.modId && jewelEffectModKind(mod) !== null,
+      ) ||
+        isSovereignAffix(catalog, state, affix, 'resistance')),
   )
   const effect = effectAffix && catalog.modifiers.find((mod) => mod.id === effectAffix.modId)
   if (!effect || !prepareCraftOperation(catalog, state, 'divine').ok) return

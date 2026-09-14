@@ -10,7 +10,7 @@ import {
   parseCraftProject,
   parseItem,
 } from '@poe2-tools/item-core'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { alloyTestFixture } from '../../../../packages/item-core/src/alloyTestFixture'
 import { AlloyCraftPanel } from './AlloyCraftPanel'
@@ -105,4 +105,41 @@ it('目标风险与物等限制可读，材料切换不会沿用非法移除对�
   expect(screen.getAllByText(/低物等交互尚未验证/).length).toBeGreaterThan(0)
   expect(screen.queryByRole('button', { name: '预览合金结果' })).toBeNull()
   expect(preview).not.toHaveBeenCalled()
+})
+
+it('只填火抗有效值即可预览君王建议，应用与保存恢复保留原目标口径', () => {
+  render(<RehearsalPanel catalog={catalog} initialState={imported()} translations={{}} />)
+  fireEvent.change(screen.getByLabelText('搜索目标词缀'), { target: { value: 'FireResist1' } })
+  click('加入目标 FireResist1')
+  click('设置数值条件 FireResist1')
+  fireEvent.change(screen.getByLabelText('FireResist1 · 条件口径'), {
+    target: { value: 'effective' },
+  })
+  fireEvent.change(screen.getByLabelText('FireResist1 · 数值 1 最小值'), {
+    target: { value: '11' },
+  })
+  click('保存数值条件 FireResist1')
+  const advice = screen.getByRole('region', { name: '合金目标建议' })
+  expect(within(advice).getAllByText('君王合金').length).toBeGreaterThan(0)
+  expect(
+    within(advice).getAllByText('应用后达成 1 组目标；新增达成 1 组。').length,
+  ).toBeGreaterThan(0)
+  fireEvent.click(
+    within(advice).getAllByRole('button', { name: '演练此合金结果' })[0] as HTMLButtonElement,
+  )
+  expect(screen.getByRole('region', { name: '合金待应用结果' })).toBeDefined()
+  expect(screen.queryByText('君王合金 × 1')).toBeNull()
+  click('应用合金结果')
+  expect(screen.getByText('已达成 1 / 1')).toBeDefined()
+  expect(screen.getByText('君王合金 × 1')).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
+  expect(saved.targetModIds).toEqual(['FireResist1'])
+  expect(saved.targetValues[0].basis).toBe('effective')
+  expect(saved.alloyCatalogSignature).toBe(alloyCatalogSignature(catalog))
+  expect(saved.scalabilitySourceHash).toBeTruthy()
+  click('撤销')
+  expect(screen.getByText('已达成 0 / 1')).toBeDefined()
+  click('恢复本机演练')
+  expect(screen.getByText('已达成 1 / 1')).toBeDefined()
 })
