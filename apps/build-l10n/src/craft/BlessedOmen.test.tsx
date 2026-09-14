@@ -33,7 +33,7 @@ it('祝福草稿只展示固有范围，实际应用计费并可撤销恢复', (
   expect(screen.getByText('祝福预兆 × 1')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v54')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v55')
   expect(saved.operations).toEqual([
     { currency: 'divine', omen: 'blessed', modIds: [], rolls: [], implicitValues: [9] },
   ])

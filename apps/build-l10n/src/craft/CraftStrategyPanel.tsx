@@ -255,6 +255,7 @@ export function CraftStrategyPanel({
                   'socket-count',
                   'open-sockets',
                   'item-property',
+                  'quality',
                   'always',
                 ] as const
               ).find(

@@ -65,7 +65,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v54'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v55'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -126,7 +126,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 54 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 55 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -513,6 +513,13 @@ export function parseCraftProject(
     if (rulesVersion < 39) return fail('v2–v38 旧版项目不能包含条件制作指引。')
     const read = readCraftStrategy(value.strategy)
     if (!read.ok) return fail(read.error)
+    if (
+      rulesVersion < 55 &&
+      read.value.rules.some((rule) =>
+        craftStrategyLeaves(rule.conditions).some((condition) => condition.kind === 'quality'),
+      )
+    )
+      return fail('v54 及更早项目不能包含品质条件，包括未执行规则和嵌套条件。')
     if (
       rulesVersion < 54 &&
       read.value.rules.some(

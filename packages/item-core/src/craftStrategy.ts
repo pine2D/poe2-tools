@@ -219,6 +219,14 @@ export function evaluateCraftStrategy(
   }
   const propertyValues = new Map<CraftProperty, number | null>()
   const matches = (condition: CraftStrategyCondition): boolean | null => {
+    if (condition.kind === 'quality') {
+      const value =
+        condition.source === 'ordinary' ? checked.value.quality : checked.value.catalyst?.quality
+      if (value === undefined) return null
+      if (condition.catalystId !== undefined && checked.value.catalyst?.id !== condition.catalystId)
+        return false
+      return value >= condition.min && (condition.max === undefined || value <= condition.max)
+    }
     if (condition.kind === 'item-property') {
       if (!propertyValues.has(condition.property)) {
         const result = readCraftProperty(catalog, checked.value, condition.property)

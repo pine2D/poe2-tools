@@ -1,7 +1,15 @@
+import { CATALYSTS } from './catalystQuality'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
 
 export type CraftStrategyLeafCondition =
+  | {
+      kind: 'quality'
+      source: 'ordinary' | 'catalyst'
+      catalystId?: string
+      min: number
+      max?: number
+    }
   | { kind: 'item-property'; property: CraftProperty; min: number; max?: number }
   | { kind: 'selected-targets'; modIds: string[]; min: number; value: boolean }
   | { kind: 'socket-count' | 'open-sockets'; min: number; max: number }
@@ -29,7 +37,26 @@ function integer(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 }
 function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
-  if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property'])) return null
+  if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property', 'source', 'catalystId']))
+    return null
+  if (value.kind === 'quality') {
+    if (
+      !keys(value, ['kind', 'source', 'catalystId', 'min', 'max']) ||
+      (value.source !== 'ordinary' && value.source !== 'catalyst') ||
+      !integer(value.min, 0, 100) ||
+      (Object.hasOwn(value, 'max') && (!integer(value.max, 0, 100) || value.max < value.min)) ||
+      (Object.hasOwn(value, 'catalystId') &&
+        (value.source !== 'catalyst' || !CATALYSTS.some((entry) => entry.id === value.catalystId)))
+    )
+      return null
+    return {
+      kind: 'quality',
+      source: value.source,
+      min: value.min,
+      ...(typeof value.max === 'number' ? { max: value.max } : {}),
+      ...(typeof value.catalystId === 'string' ? { catalystId: value.catalystId } : {}),
+    }
+  }
   if (value.kind === 'item-property') {
     const number = (n: unknown): n is number =>
       typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER
@@ -111,7 +138,18 @@ export function readStrategyConditions(value: unknown): CraftStrategyCondition[]
     if (
       depth > 4 ||
       ++nodes > 32 ||
-      !keys(input, ['kind', 'conditions', 'condition', 'value', 'min', 'max', 'modIds', 'property'])
+      !keys(input, [
+        'kind',
+        'conditions',
+        'condition',
+        'value',
+        'min',
+        'max',
+        'modIds',
+        'property',
+        'source',
+        'catalystId',
+      ])
     )
       return null
     if (input.kind === 'all' || input.kind === 'any') {

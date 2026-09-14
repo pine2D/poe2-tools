@@ -1,9 +1,11 @@
 import type { CraftCatalog, CraftState, CraftStrategyLeafCondition } from '@poe2-tools/item-core'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from '@poe2-tools/item-core'
 import { StrategyPropertyCondition } from './StrategyPropertyCondition'
+import { StrategyQualityCondition } from './StrategyQualityCondition'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 export const CONDITION_LABELS = {
+  quality: '品质类型与范围',
   'item-property': '装备面板范围',
   always: '任何状态',
   rarity: '稀有度',
@@ -20,6 +22,7 @@ export function defaultCondition(
   kind: CraftStrategyLeafCondition['kind'],
   targetIds: readonly string[] = [],
 ): CraftStrategyLeafCondition | null {
+  if (kind === 'quality') return { kind, source: 'ordinary', min: 0 }
   if (kind === 'item-property') return { kind, property: 'physicalDps', min: 0 }
   if (kind === 'selected-targets')
     return targetIds[0] ? { kind, modIds: [targetIds[0]], min: 1, value: true } : null
@@ -87,6 +90,16 @@ export function StrategyConditionEditor({
           condition={condition}
           prefix={prefix}
           catalog={catalog}
+          state={state}
+          canChange={canChange}
+          onChange={onChange}
+        />
+      ) : null}
+      {condition.kind === 'quality' ? (
+        <StrategyQualityCondition
+          key={JSON.stringify(condition)}
+          condition={condition}
+          prefix={prefix}
           state={state}
           canChange={canChange}
           onChange={onChange}
