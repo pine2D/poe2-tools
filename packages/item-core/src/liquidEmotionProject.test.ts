@@ -80,7 +80,7 @@ it('液态材料项目重放、撤销位置和材料报价保持一致', () => {
   ).toBe(true)
   expect(
     collectCraftCosts(catalog, [
-      { ...step, emotionId: 'Metadata/Items/Currency/EndgameDistilledEmotion2' },
+      { ...step, emotionId: 'Metadata/Items/Currency/EndgameDistilledEmotion4' },
     ] as unknown as CraftStep[]).ok,
   ).toBe(false)
 })

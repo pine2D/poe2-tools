@@ -6,6 +6,7 @@ import {
   type CraftTargetValues,
   inspectNumericLines,
   projectCraftTargetValues,
+  usesJewelEffect,
   validateCraftTargetValues,
 } from '@poe2-tools/item-core'
 import { useRef, useState } from 'react'
@@ -36,6 +37,7 @@ export function TargetValueEditor({
   translateLine,
 }: Props) {
   const saved = values.find((entry) => entry.modId === mod.id)
+  const hasEffect = usesJewelEffect(catalog, state)
   const [basis, setBasis] = useState(saved?.basis ?? 'base')
   const projection = projectCraftTargetValues(
     catalog,
@@ -147,12 +149,14 @@ export function TargetValueEditor({
               }}
             >
               <option value="base">基础值</option>
-              <option value="effective">品质后有效值</option>
+              <option value="effective">{hasEffect ? '增效后有效值' : '品质后有效值'}</option>
             </select>
           </label>
           {basis === 'effective' ? (
             <p>
-              按当前品质重新判断；范围不唯一时需全部可能结果满足条件。切换口径后重新输入，阈值不随品质自动降低。
+              {hasEffect ? '按当前珠宝增效与催化品质合计重新判断' : '按当前品质重新判断'}
+              ；范围不唯一时需全部可能结果满足条件。切换口径后重新输入，阈值不随
+              {hasEffect ? '增效变化' : '品质'}自动降低。
             </p>
           ) : null}
           {basis === 'effective' && !projection.ok ? <p role="alert">{projection.error}</p> : null}

@@ -1,11 +1,15 @@
 import type { CraftCatalog } from './catalog'
+import { matchesCatalogLines } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
 import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
 import { readUnlevelledSkillName } from './grantedSkills'
+import { jewelEffectForKind, usesJewelEffect } from './jewelEffects'
+import { inspectNumericLines } from './numeric'
 import { isItemStructureLine } from './parse'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { socketEffects } from './sockets'
+import { splitStatScalars } from './statScalability'
 import type { ItemLocale } from './types'
 
 export interface CraftItemTextExport {
@@ -27,6 +31,33 @@ const CLASSES: Readonly<Record<string, string>> = {
 const RARITIES = { normal: 'Normal', magic: 'Magic', rare: 'Rare' }
 const NOTE =
   'Note: Simulated item from PoE2 Tools. Use the .craft.json project to restore the full crafting state.'
+
+/** 增效出口补齐已核对的基础范围；不改变实际值、固定括号或来源尾注。 */
+function completeBaseRanges(patterns: readonly string[], line: string): CraftResult<string> {
+  const candidates = patterns.filter((pattern) => matchesCatalogLines([pattern], [line]))
+  const pattern = candidates[0]
+  if (candidates.length !== 1 || pattern === undefined)
+    return { ok: false, error: '增效出口无法唯一对应基础属性范围。' }
+  const ranges = inspectNumericLines([pattern])
+  if (!ranges.ok) return ranges
+  const scalars = splitStatScalars(pattern).tokens
+  const number = '[+-]?\\d+(?:\\.\\d+)?'
+  const token = new RegExp(
+    `[+-]?\\(${number}[-–—]${number}\\)|${number}(?:\\(${number}(?:[-–—]${number})?\\))?`,
+    'g',
+  )
+  let scalarIndex = 0
+  let rangeIndex = 0
+  return {
+    ok: true,
+    value: line.replace(token, (actual) => {
+      const scalar = scalars[scalarIndex++]
+      if (!scalar?.text.includes('(')) return actual
+      const range = ranges.value[rangeIndex++]
+      return range && !actual.includes('(') ? `${actual}(${range.min}-${range.max})` : actual
+    }),
+  }
+}
 const LABELS = {
   en: {
     itemClass: 'Item Class',
@@ -89,6 +120,7 @@ export function exportCraftItemText(
   const locale = options.locale ?? 'en'
   const labels = LABELS[locale]
   const current = checked.value
+  const hasJewelEffect = usesJewelEffect(catalog, current)
   const base = catalog.bases.find((entry) => entry.id === current.baseId)
   if (!base) return { ok: false, error: '当前基底不在制作目录中。' }
   const implicit = current.implicitLines ?? base.implicit?.split('\n') ?? []
@@ -129,6 +161,10 @@ export function exportCraftItemText(
     warnings.push('品质未知，文本未输出 Quality。')
   if (current.catalyst && locale !== 'en')
     warnings.push('催化品质标题保留已核对英文；属性输出为高级基础值，不重复写入增效数值。')
+  if (hasJewelEffect)
+    warnings.push(
+      '珠宝增效属性输出为演练高级基础值；英文百分比标题包含侧别增效与命中催化品质，国服原生标题仍待样本验收。',
+    )
   if (current.sockets === undefined) warnings.push('孔位未知，文本未假设为空孔。')
   if (current.sockets?.length === 0)
     warnings.push('当前已知为零孔，文本省略 Sockets 行；再导入须重新核对零孔。')
@@ -176,9 +212,28 @@ export function exportCraftItemText(
     if (!mod) return { ok: false, error: '当前词缀不在制作目录中。' }
     const tags = mod.tags.length ? ` — ${mod.tags.join(', ')}` : ''
     const name = mod.name === '' && mod.craftedOnly && affix.crafted ? '' : ` "${mod.name}"`
+    let magnitude = ''
+    const outputLines: string[] = []
+    for (const line of affix.lines) {
+      const complete = hasJewelEffect
+        ? completeBaseRanges(mod.lines, line)
+        : { ok: true as const, value: line }
+      if (!complete.ok) return complete
+      outputLines.push(complete.value)
+    }
+    if (hasJewelEffect) {
+      const effect = jewelEffectForKind(catalog, current, mod.kind)
+      if (!effect.ok) return effect
+      const definition = CATALYSTS.find((entry) => entry.id === current.catalyst?.id)
+      const quality =
+        definition && mod.tags.some((tag) => (definition.tags as readonly string[]).includes(tag))
+          ? (current.catalyst?.quality ?? 0)
+          : 0
+      if (effect.value + quality > 0) magnitude = ` — ${effect.value + quality}% Increased`
+    }
     block([
-      `{ ${mod.kind === 'prefix' ? labels.prefix : labels.suffix}${name}${tags} }`,
-      ...affix.lines.map(
+      `{ ${mod.kind === 'prefix' ? labels.prefix : labels.suffix}${name}${tags}${magnitude} }`,
+      ...outputLines.map(
         (line) =>
           `${localize.line(line, Object.keys(mod.tradeHashes))}${affix.crafted ? ' (crafted)' : ''}${affix.fractured ? ' (fractured)' : ''}${affix.desecrated ? ' (desecrated)' : ''}`,
       ),

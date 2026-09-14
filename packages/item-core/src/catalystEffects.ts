@@ -2,10 +2,11 @@ import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { jewelEffectForKind } from './jewelEffects'
 import { isBasicJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
-import { scaleStatLine, statScalabilitySourceHash } from './statScalability'
+import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 
 export interface CatalystChoice {
   id: string
@@ -78,6 +79,7 @@ function estimateLine(
   before: string,
   matched: boolean,
   quality: number,
+  sideEffect = 0,
 ): CatalystEffectLine {
   const pending = (reason: string): CatalystEffectLine => ({
     before,
@@ -85,9 +87,11 @@ function estimateLine(
     status: 'unknown',
     reason,
   })
-  if (!matched) return { before, after: null, status: 'unaffected', reason: '未命中此类催化标签。' }
+  if (!matched && sideEffect === 0)
+    return { before, after: null, status: 'unaffected', reason: '未命中此类催化标签。' }
   if (readStatAnnotations(before).unscalable)
     return { before, after: null, status: 'unscalable', reason: '原文标记不可缩放，保持原值。' }
+  const totalEffect = sideEffect + (matched ? quality : 0)
   // 一行若能对应多个模板，不猜测它对应的精度和位置。
   const candidates = patterns.filter(
     (pattern) => readCatalogLineValues([pattern], [before]) !== null,
@@ -97,7 +101,7 @@ function estimateLine(
   const metadata = catalog.scalability?.[pattern]
   if (metadata !== undefined) {
     if (statScalabilitySourceHash(catalog) === null) return pending('缩放资料缺少可信来源指纹。')
-    const scaled = scaleStatLine(pattern, before, metadata, quality)
+    const scaled = scaleStatLineByEffect(pattern, before, metadata, totalEffect)
     return scaled.ok
       ? {
           before,
@@ -108,6 +112,7 @@ function estimateLine(
         }
       : pending(scaled.error)
   }
+  if (sideEffect > 0) return pending('珠宝增效缺少可核验的属性缩放资料。')
   if (/\d/.test(pattern.replace(RANGE, ''))) return pending('含固定数字，其缩放范围尚未核对。')
   const ranges = inspectNumericLines([pattern])
   const values = readNumericValues([pattern], [before])
@@ -179,11 +184,16 @@ export function estimateCatalystEffects(
     const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
     if (!mod) return { ok: false, error: '词缀不在制作目录中。' }
     const matched = matches(mod.tags)
+    const effect = jewelEffectForKind(catalog, state, mod.kind)
     groups.push({
       id: mod.id,
       kind: mod.kind,
       matched,
-      lines: affix.lines.map((line) => estimateLine(catalog, mod.lines, line, matched, quality)),
+      lines: affix.lines.map((line) =>
+        effect.ok
+          ? estimateLine(catalog, mod.lines, line, matched, quality, effect.value)
+          : { before: line, after: null, status: 'unknown', reason: effect.error },
+      ),
     })
   }
   return {

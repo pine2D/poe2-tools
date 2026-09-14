@@ -1,5 +1,7 @@
 import type { CatalogBase, CraftCatalog } from './catalog'
+import { jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel } from './jewels'
+import { isLiquidEmotionMappedMod } from './liquidEmotions'
 import type { CraftResult, CraftState } from './rehearsal'
 import { statScalabilitySourceHash } from './statScalability'
 import type { ItemDocument } from './types'
@@ -107,10 +109,21 @@ export function catalystStateError(catalog: CraftCatalog, state: CraftState): st
   if (state.catalyst.quality > limit) return `此基底的催化品质上限为 ${limit}%。`
   if (statScalabilitySourceHash(catalog) === null) return '催化品质需要可信的属性缩放来源指纹。'
   if (
-    state.affixes.some((affix) =>
-      affix.lines.some((line) =>
-        /quality|modifier magnitudes|effect of (?:prefix|suffix)/i.test(line),
-      ),
+    state.affixes.some(
+      (affix) =>
+        !(
+          affix.crafted &&
+          base &&
+          catalog.modifiers.some(
+            (mod) =>
+              mod.id === affix.modId &&
+              jewelEffectModKind(mod) !== null &&
+              isLiquidEmotionMappedMod(catalog, base, mod.id),
+          )
+        ) &&
+        affix.lines.some((line) =>
+          /quality|modifier magnitudes|effect of (?:prefix|suffix)/i.test(line),
+        ),
     )
   )
     return '此装备另有尚未核对的品质或词缀增效规则。'

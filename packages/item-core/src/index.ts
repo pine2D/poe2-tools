@@ -154,6 +154,13 @@ export {
 } from './implicitTargets'
 export type { CraftProperty } from './itemProperties'
 export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
+export { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
+export {
+  type CraftAffixEffectGroup,
+  estimateCraftAffixEffects,
+  jewelEffectForKind,
+  usesJewelEffect,
+} from './jewelEffects'
 export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'
 export type { PreparedLiquidEmotionCraft } from './liquidEmotionCraft'
 export { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
@@ -216,9 +223,12 @@ export {
 export {
   STAT_SCALABILITY_SOURCE,
   scaleStatLine,
+  scaleStatLineByEffect,
+  scaleStatValueBoundsByEffect,
   splitStatScalars,
   statScalabilitySourceHash,
 } from './statScalability'
+export { craftStrategyLeaves } from './strategyConditions'
 export type { SocketStrategyAction } from './strategySockets'
 export { prepareStrategySocket } from './strategySockets'
 export {

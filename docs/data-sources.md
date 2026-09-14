@@ -1,5 +1,12 @@
 # 数据源登记表
 
+### 普通珠宝侧别增效依据（2026-09-14）
+
+沿用已登记的 [固定 MIT Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L1648)，本轮重新下载核对 SHA-256 `0ca39961256eefc960da7b30b4e5cb6eb45d08037aa72bc751201cc0630af2a4`：1255 行识别前后缀增效，1648–1717 行按对应侧加入已有品质标量；不可缩放及授予技能跳过。与同提交 ModJewel、LiquidEmotions、ModScalability 三项声明交叉核对，以自有 TypeScript 实现相加与一次缩放，不复制实现或新增数据包。Ferocity 提示沿下方已登记 gray 页面人工核查。v53 仅开放四普通珠宝八映射。
+
+高级文本基础值与百分比头沿固定实现模型，固定 `current(base)` 以严格目录和唯一有效值校验，不将任意显示值反推基础值。英文百分比头在中文出口中保留，不宣称是国服原生格式。用户没有催化剂样本，实际游戏版本与真机显示仍待核验；范围珠宝、角色条件与真实生成概率未据此推定。对 [Craft of Exile](https://beta.craftofexile.com/?game=poe2) 继续只作公开交互参考，不复制代码或数据；其当前菜单显示“简体中文”，不以早期语言列表概括当前支持程度。
+
+
 ### 当前制作机制补充核查（2026-09-14）
 
 新增人工交互参考：[b0b5 的普通五词缀珠宝实操](https://www.youtube.com/watch?v=xDDbg6FYMgI)、[Vodnarg 的范围珠宝实操](https://www.youtube.com/watch?v=3tFs16SXkD8)。仅用于核对增容移除后仍可保留第三同侧词缀，以及后续混沌操作受空位限制；没有采集视频数据入目录，没有将作者口述概率当作真实权重。搜索索引日期不一致，未据其推定当前补丁。v52 依此将已有状态与生成容量分开，仅开放普通珠宝增容；增效、范围珠宝与当前国服实机仍待验证。
@@ -10,7 +17,7 @@
 
 规则人工参考另核对 [Ire](https://poe2db.tw/us/Diluted_Liquid_Ire)、[Isolation](https://poe2db.tw/us/Concentrated_Liquid_Isolation)、[Contempt](https://poe2db.tw/us/Potent_Liquid_Contempt)、[Ferocity](https://poe2db.tw/us/Potent_Liquid_Ferocity) 的公开物品说明，按 gray 处理，仅人工核查，不复制数据文件或建立适配器。GGG 0.5.0 的一组工艺上限作为 primary 规则依据。钻石空映射、移除额外词缀位后的超额状态与词缀增效交互仍需单独核实；玩家帖子 [3948475](https://www.pathofexile.com/forum/view-thread/3948475)、[3958506](https://www.pathofexile.com/forum/view-thread/3958506) 只作第一手问题线索，不据此推定现行算法或概率。数据接入不代表这些操作已经可用。
 
-基础制作补充参考作者实操攻略 [3964088](https://www.pathofexile.com/forum/view-thread/3964088) 的蓝玉／Liquid Despair 替换示例，支持满后缀时移除候选受容量约束；作者估计的概率未转成权重，旧回盾词缀建议未被当作当前目录。该来源按 gray 人工规则参考，不下载攻略装备。当前执行范围采用固定 MIT 目录中 12 种材料的 42 个精确映射，包括三色基础与悲哀材料、钻石的孤独材料、四类普通珠宝的轻蔑双侧映射，具体门禁和未支持交互见 crafting-rules.md。
+基础制作补充参考作者实操攻略 [3964088](https://www.pathofexile.com/forum/view-thread/3964088) 的蓝玉／Liquid Despair 替换示例，支持满后缀时移除候选受容量约束；作者估计的概率未转成权重，旧回盾词缀建议未被当作当前目录。该来源按 gray 人工规则参考，不下载攻略装备。当前执行范围采用固定 MIT 目录中 13 种材料的 50 个精确映射，包括三色基础与悲哀材料、钻石的孤独材料、四类普通珠宝的轻蔑与凶残双侧映射，具体门禁和未支持交互见 crafting-rules.md。
 
 ### 催化剂效果预览依据（2026-09-13）
 

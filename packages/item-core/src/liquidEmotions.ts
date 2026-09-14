@@ -5,7 +5,9 @@ import type {
   CatalogMod,
   CraftCatalog,
 } from './catalog'
+import { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel, jewelSourceHash } from './jewels'
+import { statScalabilitySourceHash } from './statScalability'
 
 /** 固定来源仅描述材料映射快照，不代表允许执行液态情感制作。 */
 export const LIQUID_EMOTION_SOURCE = {
@@ -44,6 +46,7 @@ export function supportedBasicLiquidEmotionId(id: string): boolean {
 export function supportedLiquidEmotionId(id: string): boolean {
   return (
     supportedBasicLiquidEmotionId(id) ||
+    id === JEWEL_EFFECT_EMOTION_ID ||
     id === 'Metadata/Items/Currency/EndgameDistilledEmotion1' ||
     id === 'Metadata/Items/Currency/EndgameDistilledEmotion3'
   )
@@ -93,7 +96,11 @@ export function inspectLiquidEmotions(
       return unavailable('该液态情感类型尚未支持。')
     const mapping = emotion.mods[category]
     const entries = Object.entries(mapping)
-    const dual = emotion.id === 'Metadata/Items/Currency/EndgameDistilledEmotion3'
+    const effect = emotion.id === JEWEL_EFFECT_EMOTION_ID
+    const capacity = emotion.id === 'Metadata/Items/Currency/EndgameDistilledEmotion3'
+    const dual = effect || capacity
+    if (effect && statScalabilitySourceHash(catalog) === null)
+      return unavailable('珠宝增效需要可信的属性缩放来源指纹。')
     if (entries.length !== (dual ? 2 : 1))
       return unavailable('该材料没有当前珠宝的完整保证属性映射。')
     const outcomes: CatalogMod[] = []
@@ -105,8 +112,10 @@ export function inspectLiquidEmotions(
         mod.kind !== kind ||
         mod.jewelOnly !== true ||
         mod.desecratedOnly === true ||
-        (dual && jewelCapacityModKind(mod) !== kind) ||
-        (!dual && jewelCapacityModKind(mod) !== null)
+        (capacity && jewelCapacityModKind(mod) !== kind) ||
+        (!capacity && jewelCapacityModKind(mod) !== null) ||
+        (effect && jewelEffectModKind(mod) !== kind) ||
+        (!effect && jewelEffectModKind(mod) !== null)
       )
         return unavailable('保证属性声明未通过普通珠宝身份与侧别校验。')
       outcomes.push(mod)

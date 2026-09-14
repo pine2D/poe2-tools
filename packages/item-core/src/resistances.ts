@@ -2,11 +2,13 @@ import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { jewelEffectModKind } from './jewelEffectRules'
+import { jewelEffectForKind } from './jewelEffects'
 import { readNumericValues } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { socketEffects } from './sockets'
-import { scaleStatLine, statScalabilitySourceHash } from './statScalability'
+import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 import { weaponSocketKind } from './weaponRuneEffects'
 
 export const RESISTANCE_LABELS = {
@@ -66,7 +68,13 @@ export function estimateResistances(
   const ordinaryLines = [
     ...(base.implicit?.split('\n') ?? []),
     ...state.affixes
-      .filter((affix) => !isHorrorSocketAffix(catalog, state, affix))
+      .filter(
+        (affix) =>
+          !isHorrorSocketAffix(catalog, state, affix) &&
+          !catalog.modifiers.some(
+            (mod) => mod.id === affix.modId && jewelEffectModKind(mod) !== null,
+          ),
+      )
       .flatMap((affix) => affix.lines),
   ]
   if (
@@ -84,6 +92,7 @@ export function estimateResistances(
     patterns: readonly string[],
     tags: readonly (readonly string[])[],
     applyQuality: boolean,
+    effect: CraftResult<number> = { ok: true, value: 0 },
   ) => {
     const annotation = readStatAnnotations(raw)
     const text = annotation.text
@@ -126,6 +135,17 @@ export function estimateResistances(
       return
     }
     let actual = text
+    if (!effect.ok && !annotation.unscalable) {
+      invalidate(elements, effect.error)
+      return
+    }
+    const sideEffect = effect.ok ? effect.value : 0
+    const totalEffect =
+      sideEffect +
+      (applyQuality &&
+      tags[index]?.some((tag) => catalyst?.tags.some((candidate) => candidate === tag))
+        ? (state.catalyst?.quality ?? 0)
+        : 0)
     if (
       applyQuality &&
       state.catalyst &&
@@ -136,17 +156,11 @@ export function estimateResistances(
       invalidate(elements, '抗性属性缺少标签资料，无法判断品质效果。')
       return
     }
-    if (
-      applyQuality &&
-      state.catalyst &&
-      state.catalyst.quality > 0 &&
-      !annotation.unscalable &&
-      tags[index]?.some((tag) => catalyst?.tags.some((candidate) => candidate === tag))
-    ) {
+    if (totalEffect > 0 && !annotation.unscalable) {
       const metadata = catalog.scalability?.[pattern]
       const scaled =
         metadata && statScalabilitySourceHash(catalog) !== null
-          ? scaleStatLine(pattern, raw, metadata, state.catalyst.quality)
+          ? scaleStatLineByEffect(pattern, raw, metadata, totalEffect)
           : null
       if (!scaled?.ok) {
         invalidate(
@@ -185,6 +199,7 @@ export function estimateResistances(
           mod.lines,
           mod.lines.map(() => mod.tags),
           true,
+          jewelEffectForKind(catalog, state, mod.kind),
         )
   }
   for (const { augment } of socketEffects(catalog, state))

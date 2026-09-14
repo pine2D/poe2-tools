@@ -134,7 +134,7 @@ describe('强效轻蔑双侧结果', () => {
       ).toBe(true)
     },
   )
-  it('任一侧映射损坏时整体拒绝；Ferocity 仍未开放', () => {
+  it('任一侧映射损坏时整体拒绝；Ferocity 由独立完整映射开放', () => {
     const { catalog, base } = fixture()
     const mod = catalog.modifiers.find((m) => m.id === extra.suffix)
     if (!mod) throw Error('缺少测试词缀')
@@ -146,7 +146,7 @@ describe('强效轻蔑双侧结果', () => {
       inspectLiquidEmotions(realCatalog, base).find((e) =>
         e.emotion.id.endsWith('/EndgameDistilledEmotion2'),
       )?.reason,
-    ).toBeTruthy()
+    ).toBeNull()
   })
   it('新增工艺按移除后容量检查，不能借已有三组边界追加第三同侧', () => {
     const { catalog, state } = fixture(['prefix1', 'prefix2', 'suffix1', 'suffix2', 'suffix3'])

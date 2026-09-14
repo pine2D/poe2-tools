@@ -33,6 +33,8 @@ import {
   readCraftImplicitTargets,
   validateCraftImplicitTargets,
 } from './implicitTargets'
+import { JEWEL_EFFECT_EMOTION_ID } from './jewelEffectRules'
+import { usesJewelEffect } from './jewelEffects'
 import { jewelSourceHash as readJewelSourceHash } from './jewels'
 import {
   liquidEmotionSourceHash as readLiquidEmotionSourceHash,
@@ -63,7 +65,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v52'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v53'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -124,7 +126,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 52 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 53 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -670,6 +672,40 @@ export function parseCraftProject(
   if (pricing && !pricing.ok) return fail(pricing.error)
   const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
   const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
+  const effectAction = (step: unknown) =>
+    record(step) && step.kind === 'liquid-emotion' && step.emotionId === JEWEL_EFFECT_EMOTION_ID
+  const targetIds = [
+    ...(Array.isArray(value.targetModIds) ? value.targetModIds.filter(nonempty) : []),
+    ...(Array.isArray(value.targetValues)
+      ? value.targetValues.flatMap((entry) =>
+          record(entry) && nonempty(entry.modId) ? [entry.modId] : [],
+        )
+      : []),
+    ...(Array.isArray(value.targetAlternatives)
+      ? value.targetAlternatives.flatMap((entry) =>
+          record(entry)
+            ? [
+                ...(nonempty(entry.targetModId) ? [entry.targetModId] : []),
+                ...(Array.isArray(entry.modIds) ? entry.modIds.filter(nonempty) : []),
+              ]
+            : [],
+        )
+      : []),
+    ...(strategy?.rules.flatMap((rule) =>
+      craftStrategyLeaves(rule.conditions).flatMap((condition) =>
+        condition.kind === 'selected-targets' ? condition.modIds : [],
+      ),
+    ) ?? []),
+  ]
+  const targetUsesJewelEffect = usesJewelEffect(catalog, {
+    affixes: targetIds.map((modId) => ({ modId, lines: [] })),
+  })
+  let usesJewelEffects =
+    targetUsesJewelEffect ||
+    strategy?.rules.some((rule) => effectAction(rule.action)) === true ||
+    (Array.isArray(value.operations) && value.operations.some(effectAction))
+  if (rulesVersion < 53 && usesJewelEffects)
+    return fail('v2–v52 旧版项目不能包含珠宝增效目标、指引或步骤，包括撤销位置之后的步骤。')
   const craftedJewelIds = new Set(
     catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly).map((mod) => mod.id),
   )
@@ -686,6 +722,7 @@ export function parseCraftProject(
   if (rulesVersion < 51 && targetUsesCraftedJewel)
     return fail('v2–v50 旧版项目不能包含新增珠宝工艺专属目标。')
   const usesLiquidEmotions =
+    usesJewelEffects ||
     targetUsesCraftedJewel ||
     strategy?.rules.some((rule) => rule.action.kind === 'liquid-emotion') ||
     (Array.isArray(value.operations) &&
@@ -721,6 +758,20 @@ export function parseCraftProject(
       return fail('v2–v51 旧版项目不能包含珠宝增容材料或结果侧别，包括撤销位置之后的步骤。')
   }
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
+  const scalabilitySourceHash = statScalabilitySourceHash(catalog)
+  const validateEffectState = (state: CraftState): string | null => {
+    if (!usesJewelEffect(catalog, state)) return null
+    usesJewelEffects = true
+    if (rulesVersion < 53) return 'v2–v52 旧版项目不能包含珠宝增效状态。'
+    if (
+      liquidEmotionSourceHash === null ||
+      value.liquidEmotionSourceHash !== liquidEmotionSourceHash
+    )
+      return '项目珠宝增效状态的液态情感来源指纹缺失或与当前目录不同。'
+    if (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
+      return '项目珠宝增效状态的属性缩放来源指纹缺失或与当前目录不同。'
+    return null
+  }
   // 输入、来源原文恢复结果和每个历史位置都核对，不能只依赖 crafted 标记或当前游标。
   const validateCapacityState = (state: CraftState): string | null => {
     if (!usesJewelCapacity(catalog, state)) return null
@@ -741,7 +792,7 @@ export function parseCraftProject(
     return fail('v2–v31 旧版项目不能包含珠宝制作起点或来源。')
   const jewelSourceHash = readJewelSourceHash(catalog)
   if (
-    (usesJewel || Object.hasOwn(value, 'jewelSourceHash')) &&
+    (usesJewel || usesJewelEffects || Object.hasOwn(value, 'jewelSourceHash')) &&
     (!usesJewel || jewelSourceHash === null || value.jewelSourceHash !== jewelSourceHash)
   )
     return fail('项目珠宝来源指纹缺失或与当前目录不同，不能恢复。')
@@ -916,6 +967,8 @@ export function parseCraftProject(
     return fail('演练历史游标无效。')
   const initialInput = readState(value.initialState)
   if (!initialInput) return fail('演练起点结构无效。')
+  const initialEffectError = validateEffectState(initialInput)
+  if (initialEffectError) return fail(initialEffectError)
   const initialCapacityError = validateCapacityState(initialInput)
   if (initialCapacityError) return fail(initialCapacityError)
   if (rulesVersion < 18 && initialInput.sourceText !== null) {
@@ -1036,9 +1089,9 @@ export function parseCraftProject(
     importedSockets = [...value.importedSockets]
   }
   let importedQuality: number | undefined
-  const scalabilitySourceHash = statScalabilitySourceHash(catalog)
   if (
     (initialInput.catalyst !== undefined ||
+      usesJewelEffects ||
       usesEffectiveTargets ||
       Object.hasOwn(value, 'scalabilitySourceHash')) &&
     (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
@@ -1127,6 +1180,8 @@ export function parseCraftProject(
     rulesVersion < 9,
   )
   if (!initial.ok) return initial
+  const restoredEffectError = validateEffectState(initial.value)
+  if (restoredEffectError) return fail(restoredEffectError)
   const restoredCapacityError = validateCapacityState(initial.value)
   if (restoredCapacityError) return fail(restoredCapacityError)
   if (
@@ -1162,13 +1217,15 @@ export function parseCraftProject(
           })),
         }
       : catalog
-  // 旧目标保留已开放的普通液态身份，仅移除 v52 新增双侧材料。
+  // 旧目标保留已开放液态身份，按版本移除新增材料。
   const targetCatalog =
-    rulesVersion < 52
+    rulesVersion < 53
       ? {
           ...legacyTargetCatalog,
           liquidEmotions: (legacyTargetCatalog.liquidEmotions ?? []).filter(
-            (emotion) => emotion.id !== JEWEL_CAPACITY_EMOTION_ID,
+            (emotion) =>
+              emotion.id !== JEWEL_EFFECT_EMOTION_ID &&
+              (rulesVersion >= 52 || emotion.id !== JEWEL_CAPACITY_EMOTION_ID),
           ),
         }
       : legacyTargetCatalog
@@ -1312,6 +1369,8 @@ export function parseCraftProject(
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     const next = applyCraftStep(catalog, current, operation)
     if (!next.ok) return fail(`第 ${index + 1} 步无法回放：${next.error}`)
+    const effectError = validateEffectState(next.value)
+    if (effectError) return fail(`第 ${index + 1} 步无法回放：${effectError}`)
     const capacityError = validateCapacityState(next.value)
     if (capacityError) return fail(`第 ${index + 1} 步无法回放：${capacityError}`)
     if (unsupportedLegacyAmplification(next.value))
@@ -1328,6 +1387,8 @@ export function parseCraftProject(
         sourceCommit: catalog._meta.sourceCommit,
         rulesVersion: CRAFT_RULES_VERSION,
         ...((initialInput.catalyst !== undefined ||
+          usesJewelEffects ||
+          usesEffectiveTargets ||
           Object.hasOwn(value, 'scalabilitySourceHash')) &&
         scalabilitySourceHash
           ? { scalabilitySourceHash }
@@ -1354,7 +1415,9 @@ export function parseCraftProject(
         ...(strategy === undefined ? {} : { strategy }),
         ...(strategy?.flow ? { strategyStartStep: value.strategyStartStep as number } : {}),
         ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
-        ...((usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')) &&
+        ...((usesLiquidEmotions ||
+          usesJewelEffects ||
+          Object.hasOwn(value, 'liquidEmotionSourceHash')) &&
         liquidEmotionSourceHash !== null
           ? { liquidEmotionSourceHash }
           : {}),

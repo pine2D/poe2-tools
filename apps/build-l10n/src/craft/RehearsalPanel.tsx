@@ -30,6 +30,7 @@ import {
   craftCandidates,
   craftOmenDescription,
   craftOmenMaterials,
+  craftStrategyLeaves,
   createCraftState,
   desecrationSourceHash,
   ESSENCE_OMEN_RULES,
@@ -39,6 +40,7 @@ import {
   type ItemDictionary,
   inspectNumericLines,
   isBasicJewel,
+  JEWEL_EFFECT_EMOTION_ID,
   jewelSourceHash,
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
@@ -54,6 +56,7 @@ import {
   statScalabilitySourceHash,
   strategyStageAt,
   usesJewelCapacity,
+  usesJewelEffect,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CraftPricingPanel } from './CraftPricingPanel'
@@ -72,6 +75,7 @@ import { DefencePanel } from './DefencePanel'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
+import { JewelEffectPanel } from './JewelEffectPanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
@@ -854,14 +858,38 @@ export function RehearsalPanel({
       ? desecrationSourceHash(catalog)
       : null
   const jewelHash = base.type === 'Jewel' ? jewelSourceHash(catalog) : null
-  const craftedJewelTarget = [
+  const referencedTargetIds = [
     ...targetModIds,
     ...targetAlternatives.flatMap((entry) => entry.modIds),
-  ].some((id) => {
+    ...targetValues.map((entry) => entry.modId),
+    ...(strategy?.rules.flatMap((rule) =>
+      craftStrategyLeaves(rule.conditions).flatMap((condition) =>
+        condition.kind === 'selected-targets' ? condition.modIds : [],
+      ),
+    ) ?? []),
+  ]
+  const effectSourcesNeeded =
+    usesJewelEffect(catalog, {
+      affixes: referencedTargetIds.map((modId) => ({ modId, lines: [] })),
+    }) ||
+    history.some(({ state }) => usesJewelEffect(catalog, state)) ||
+    strategy?.rules.some(
+      (rule) =>
+        rule.action.kind === 'liquid-emotion' && rule.action.emotionId === JEWEL_EFFECT_EMOTION_ID,
+    ) ||
+    history.some(
+      ({ operation }) =>
+        operation &&
+        'kind' in operation &&
+        operation.kind === 'liquid-emotion' &&
+        operation.emotionId === JEWEL_EFFECT_EMOTION_ID,
+    )
+  const craftedJewelTarget = [...referencedTargetIds].some((id) => {
     const mod = modById.get(id)
     return mod?.jewelOnly && mod.craftedOnly
   })
   const emotionHash =
+    effectSourcesNeeded ||
     craftedJewelTarget ||
     (isBasicJewel(base) &&
       (['prefix', 'suffix'] as const).some(
@@ -882,7 +910,8 @@ export function RehearsalPanel({
     ...(strategy?.flow ? { strategyStartStep: strategyStartStep ?? 0 } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
-    ...((history[0]?.state.catalyst ||
+    ...((effectSourcesNeeded ||
+      history[0]?.state.catalyst ||
       targetValues.some((entry) => entry.basis === 'effective') ||
       targetImplicitValues.some((entry) => entry.basis === 'effective')) &&
     statScalabilitySourceHash(catalog)
@@ -969,7 +998,11 @@ export function RehearsalPanel({
         <div>
           <h2>通货演练 · 指定结果演练</h2>
           <p>可指定词缀与具体数值；范围试掷采用演练模型，不计算真实概率或市场价格。</p>
-          {current.catalyst ? (
+          {usesJewelEffect(catalog, current) ? (
+            <p className="rehearsal-scope-note">
+              制作步骤使用增效前基础值；数值目标可选择增效后的有效值，反侧增效与催化品质的合计效果见下方预览。
+            </p>
+          ) : current.catalyst ? (
             <p className="rehearsal-scope-note">
               制作步骤使用催化前基础值；数值目标可选择基础值或品质后的有效值口径，品质效果见下方预览。
             </p>
@@ -1610,6 +1643,12 @@ export function RehearsalPanel({
           </button>
         </section>
       ) : null}
+      <JewelEffectPanel
+        catalog={catalog}
+        state={comparisonAfter}
+        preview={comparisonAfter !== current}
+        {...(translateLine ? { translateLine } : {})}
+      />
       <CatalystPreviewPanel
         key={JSON.stringify(current.catalyst ?? null)}
         catalog={catalog}
@@ -1819,7 +1858,7 @@ export function RehearsalPanel({
             return (
               <NumericControls
                 key={roll.modId}
-                label={mod.name}
+                label={mod.name || mod.id}
                 patterns={mod.lines}
                 values={roll.values}
                 onChange={(values) =>

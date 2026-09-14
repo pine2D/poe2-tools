@@ -10,6 +10,8 @@ import { importCatalystQuality } from './catalystImport'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
+import { normalizeJewelFixedImportLine } from './jewelEffectImport'
+import { usesJewelEffect } from './jewelEffects'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { hasSpecialModifierSource } from './modifierSource'
 import { CHARM_SLOTS_PROPERTY, CHARM_SLOTS_PROPERTY_HEADER, parseItem } from './parse'
@@ -86,14 +88,11 @@ export function importCraftState(
     return fail('原文仍有缺失或结构诊断，先核对完整高级装备文本。')
   if (item.blocks.some((block) => block.kind === 'unknown'))
     return fail('原文包含未知区块，暂时只能对比。')
-  if (
-    item.mods.some((mod) =>
-      mod.stats.some((stat) =>
-        stat.rolls.some((roll) => roll.baseValue !== undefined && roll.baseValue !== roll.value),
-      ),
-    )
+  const differentFixedValue = item.mods.some((mod) =>
+    mod.stats.some((stat) =>
+      stat.rolls.some((roll) => roll.baseValue !== undefined && roll.baseValue !== roll.value),
+    ),
   )
-    return fail('当前值与固定基础值不同，增效来源及基础数值尚未还原；原文保留用于对比。')
   if (
     importedQuality !== undefined &&
     (!Number.isInteger(importedQuality) || importedQuality < 0 || importedQuality > 30)
@@ -317,7 +316,19 @@ export function importCraftState(
             : mod,
         )
       : catalog.modifiers
-    const match = matchCatalogMods(base, modifiers, [source])[0]
+    const matchingSource = differentFixedValue
+      ? {
+          ...source,
+          stats: source.stats.map((stat) => ({
+            ...stat,
+            resolution: {
+              ...stat.resolution,
+              english: normalizeJewelFixedImportLine(stat.resolution.english ?? stat.source.raw),
+            },
+          })),
+        }
+      : source
+    const match = matchCatalogMods(base, modifiers, [matchingSource])[0]
     if (!match) throw new Error('词缀匹配结果缺失')
     return { ...match, sourceIndex }
   })
@@ -399,7 +410,11 @@ export function importCraftState(
     affixes.push({
       modId: candidate.id,
       lines: source.stats.map(({ source, resolution }) =>
-        stripModifierStateAnnotations(resolution.english ?? source.raw),
+        stripModifierStateAnnotations(
+          differentFixedValue
+            ? normalizeJewelFixedImportLine(resolution.english ?? source.raw)
+            : (resolution.english ?? source.raw),
+        ),
       ),
       ...(source.mod.states?.includes('crafted') ? { crafted: true as const } : {}),
       ...(source.mod.states?.includes('desecrated') ? { desecrated: true as const } : {}),
@@ -417,6 +432,8 @@ export function importCraftState(
     ...(importedSockets === undefined ? {} : { sockets: [...importedSockets] }),
     ...(quality === undefined ? {} : { quality }),
   }
+  if (differentFixedValue && !usesJewelEffect(catalog, state))
+    return fail('当前值与固定基础值不同，增效来源及基础数值尚未还原；原文保留用于对比。')
   const catalyst = importCatalystQuality(
     catalog,
     item,

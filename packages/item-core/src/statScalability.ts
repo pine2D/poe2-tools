@@ -94,6 +94,16 @@ export function scaleStatValueBounds(
 ): CraftResult<StatValueBounds> {
   if (!Number.isInteger(quality) || quality < 0 || quality > 40)
     return { ok: false, error: '品质必须是 0–40 的整数。' }
+  return scaleStatValueBoundsByEffect(value, formats, quality)
+}
+
+export function scaleStatValueBoundsByEffect(
+  value: number,
+  formats: readonly string[],
+  quality: number,
+): CraftResult<StatValueBounds> {
+  if (!Number.isInteger(quality) || quality < 0 || quality > 100)
+    return { ok: false, error: '增效必须是 0–100 的整数。' }
   const rule = statValuePrecision(formats)
   if (!rule) return { ok: false, error: '缩放来源含尚未实现的数值格式。' }
   const scale = 10 ** rule.decimals
@@ -121,12 +131,12 @@ export function scaleStatValueBounds(
 }
 
 function scaleValue(value: number, formats: string[], quality: number): CraftResult<number> {
-  const scaled = scaleStatValueBounds(value, formats, quality)
+  const scaled = scaleStatValueBoundsByEffect(value, formats, quality)
   if (!scaled.ok) return scaled
   if (scaled.value.min !== scaled.value.max)
     return {
       ok: false,
-      error: `显示值对应多个内部值，催化后的可见结果不唯一：${scaled.value.min}–${scaled.value.max}。`,
+      error: `显示值对应多个内部值，增效后的可见结果不唯一：${scaled.value.min}–${scaled.value.max}。`,
     }
   return { ok: true, value: scaled.value.min }
 }
@@ -139,6 +149,17 @@ export function scaleStatLine(
 ): CraftResult<string> {
   if (!Number.isInteger(quality) || quality < 0 || quality > 40)
     return { ok: false, error: '品质必须是 0–40 的整数。' }
+  return scaleStatLineByEffect(pattern, actual, metadata, quality)
+}
+
+export function scaleStatLineByEffect(
+  pattern: string,
+  actual: string,
+  metadata: readonly CatalogStatScalar[],
+  quality: number,
+): CraftResult<string> {
+  if (!Number.isInteger(quality) || quality < 0 || quality > 100)
+    return { ok: false, error: '增效必须是 0–100 的整数。' }
   const split = splitStatScalars(pattern)
   if (metadata.length !== split.tokens.length)
     return { ok: false, error: '缩放资料与属性数字数量不一致。' }

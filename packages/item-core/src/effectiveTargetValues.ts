@@ -2,6 +2,7 @@ import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { matchCatalogLineOrder } from './catalogMatch'
 import { CATALYSTS, type CatalystQuality, isCatalystQuality } from './catalystQuality'
+import { jewelEffectForKind } from './jewelEffects'
 import {
   inspectNumericLines,
   type NumericRange,
@@ -12,7 +13,7 @@ import type { CraftResult } from './rehearsal'
 import {
   NO_STAT_GRID_PREIMAGE,
   type StatValueBounds,
-  scaleStatValueBounds,
+  scaleStatValueBoundsByEffect,
   splitStatScalars,
   statScalabilitySourceHash,
   statValuePrecision,
@@ -37,7 +38,10 @@ export function projectTargetValues(
   lines: readonly string[],
   tags: readonly (readonly string[])[],
   actual?: readonly string[],
+  effectPercent = 0,
 ): CraftResult<TargetValueProjection> {
+  if (!Number.isInteger(effectPercent) || effectPercent < 0 || effectPercent > 60)
+    return { ok: false, error: '侧别增效必须是 0–60 的整数。' }
   const ranges = inspectNumericLines(lines)
   if (!ranges.ok) return ranges
   if (tags.length !== lines.length || (actual !== undefined && actual.length !== lines.length))
@@ -58,13 +62,14 @@ export function projectTargetValues(
       catalyst.quality > 0 &&
       definition &&
       tags[lineIndex]?.some((tag) => (definition.tags as readonly string[]).includes(tag))
+    const totalEffect = effectPercent + (matched ? catalyst.quality : 0)
     const unscalable = readStatAnnotations(
       actual?.[actualOrder?.[lineIndex] ?? lineIndex] ?? '',
     ).unscalable
     const tokens = splitStatScalars(line).tokens
     const metadata = catalog.scalability?.[line]
     if (
-      matched &&
+      totalEffect > 0 &&
       !unscalable &&
       (statScalabilitySourceHash(catalog) === null ||
         !metadata ||
@@ -74,15 +79,17 @@ export function projectTargetValues(
     for (const [position, token] of tokens.entries()) {
       if (!token.text.includes('(')) continue
       const scalar = metadata?.[position]
-      if (matched && !unscalable && !scalar)
+      if (totalEffect > 0 && !unscalable && !scalar)
         return { ok: false, error: '有效值目标的属性数字与缩放资料不一致。' }
       transforms.push(
-        matched && !unscalable && scalar?.scalable
-          ? (value) => scaleStatValueBounds(value, scalar.formats, catalyst.quality)
+        totalEffect > 0 && !unscalable && scalar?.scalable
+          ? (value) => scaleStatValueBoundsByEffect(value, scalar.formats, totalEffect)
           : identity,
       )
       precisions.push(
-        matched && !unscalable && scalar?.scalable ? statValuePrecision(scalar.formats) : null,
+        totalEffect > 0 && !unscalable && scalar?.scalable
+          ? statValuePrecision(scalar.formats)
+          : null,
       )
     }
   }
@@ -211,12 +218,18 @@ export function projectCraftTargetValues(
   goal?: import('./targets').CraftTargetValues,
   actual?: readonly string[],
 ): CraftResult<TargetValueProjection> {
+  const effect =
+    goal?.basis === 'effective'
+      ? jewelEffectForKind(catalog, state, mod.kind)
+      : { ok: true as const, value: 0 }
+  if (!effect.ok) return effect
   return projectTargetValues(
     catalog,
     goal?.basis === 'effective' ? state.catalyst : undefined,
     mod.lines,
     mod.lines.map(() => mod.tags),
     actual,
+    effect.value,
   )
 }
 

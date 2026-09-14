@@ -27,6 +27,7 @@ import { catalystStateError } from './catalystQuality'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
+import { jewelEffectModKind } from './jewelEffectRules'
 import { craftAffixLimit, isBasicJewel, jewelSourceHash } from './jewels'
 import {
   isLiquidEmotionMappedMod,
@@ -349,6 +350,16 @@ export function createCraftState(
       )
     )
       return failure(`词缀 ${affix.modId} 包含未支持的容量或跨类别规则。`)
+    if (
+      mod.lines.some((line) => /modifier magnitudes|effect of (?:prefix|suffix)/i.test(line)) &&
+      !(
+        isBasicJewel(base) &&
+        affix.crafted &&
+        jewelEffectModKind(mod) !== null &&
+        isLiquidEmotionMappedMod(catalog, base, mod.id)
+      )
+    )
+      return failure('此装备另有尚未核对的词缀增效规则。')
     if (!sameExactLines(mod.lines, affix.lines) && !matchesCatalogLines(mod.lines, affix.lines))
       return failure(`词缀 ${affix.modId} 的属性行与制作目录不一致。`)
     if (
