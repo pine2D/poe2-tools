@@ -91,6 +91,7 @@ import { ModStateBadges } from './ModStateBadges'
 import { NumericControls } from './NumericControls'
 import { ProjectControls } from './ProjectControls'
 import { ResistancePanel } from './ResistancePanel'
+import { SkillLevelPanel } from './SkillLevelPanel'
 import { SocketPanel } from './SocketPanel'
 import { WeaponPanel } from './WeaponPanel'
 
@@ -1159,6 +1160,12 @@ export function RehearsalPanel({
         {...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration })}
       />
       <ResistancePanel
+        catalog={catalog}
+        current={current}
+        preview={Boolean(draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft)}
+        {...(comparisonBefore ? { before: comparisonBefore, after: comparisonAfter } : {})}
+      />
+      <SkillLevelPanel
         catalog={catalog}
         current={current}
         preview={Boolean(draft || socketDraft || guaranteedDraft || boneDraft || fractureDraft)}

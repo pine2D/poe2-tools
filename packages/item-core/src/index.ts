@@ -242,6 +242,10 @@ export type { ResistanceProperty } from './resistances'
 export { estimateResistances, RESISTANCE_LABELS } from './resistances'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
 export { createStatResolver, resolveBase, resolveStat } from './resolve'
+export {
+  estimateSkillLevelContributions,
+  type SkillLevelContribution,
+} from './skillLevelContributions'
 export { socketEffectIncrease } from './socketAmplification'
 export type { SocketEffect } from './sockets'
 export {
