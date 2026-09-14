@@ -1,6 +1,7 @@
 import {
   BONE_RULES,
   CRAFT_CURRENCY_LABELS,
+  CRAFT_OMEN_RULES,
   type CraftCatalog,
   type CraftImplicitTargetValues,
   type CraftPricing,
@@ -333,7 +334,9 @@ function RouteSearch({
                             : ''}
                         </strong>
                         {'currency' in step.operation &&
-                        (step.operation.omen === 'whittling' || step.operation.omen === 'light') ? (
+                        step.operation.omen &&
+                        (CRAFT_OMEN_RULES[step.operation.omen].lowestLevel ||
+                          step.operation.omen === 'light') ? (
                           <p>{craftOmenDescription(step.operation.omen)}</p>
                         ) : null}
                         {'kind' in step.operation && step.operation.kind === 'fracture' ? (
@@ -414,7 +417,8 @@ function RouteSearch({
                               : 'kind' in step.operation && step.operation.kind === 'desecrate'
                                 ? '本工具可演练移除池内的目标风险：'
                                 : 'currency' in step.operation &&
-                                    step.operation.omen === 'whittling'
+                                    step.operation.omen &&
+                                    CRAFT_OMEN_RULES[step.operation.omen].lowestLevel
                                   ? '最低等级候选内的目标风险：'
                                   : '整个合法随机移除池内的目标风险：'}
                             {step.atRiskTargetIds.map(modLabel).join('；')}

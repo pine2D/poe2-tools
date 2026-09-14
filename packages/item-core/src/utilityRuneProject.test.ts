@@ -33,9 +33,9 @@ const project = (): CraftProject => ({
 })
 const restore = (value: unknown) => parseCraftProject(JSON.stringify(value), catalog, dictionary)
 
-it('v63 保存打孔及新增符文覆盖，逐游标回放且费用不返还', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v63')
-  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v64' }).ok).toBe(false)
+it('v64 保存打孔及新增符文覆盖，逐游标回放且费用不返还', () => {
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v64')
+  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v65' }).ok).toBe(false)
   for (const cursor of [0, 1, 2, 3]) {
     const result = restore({ ...project(), cursor })
     if (!result.ok) throw Error(result.error)

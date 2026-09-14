@@ -551,7 +551,7 @@ export function removableCraftAffixes(
   if (omen === 'light' && removable.length === 0)
     return failure('当前装备没有可移除的已揭示亵渎词缀。')
   if (removable.length === 0) return failure('当前装备或预兆指定侧没有未锁定的可移除词缀。')
-  if (omen === 'whittling') {
+  if (omen && CRAFT_OMEN_RULES[omen].lowestLevel) {
     const levels = new Map(catalog.modifiers.map((mod) => [mod.id, mod.level]))
     const minimum = Math.min(...removable.map((affix) => levels.get(affix.modId) ?? Infinity))
     removable = removable.filter((affix) => levels.get(affix.modId) === minimum)

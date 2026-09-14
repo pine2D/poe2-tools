@@ -259,7 +259,7 @@ describe('结晶预兆核心', () => {
     expect(input).toEqual(before)
   })
   it('v17保存与完整未来历史；v2–16拒绝新字段；v16无字段升级', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v63')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v64')
     expect(parseCraftProject(serializeCraftProject(project()), catalog)).toMatchObject({
       ok: true,
       value: { project: { operations: project().operations, essenceSourceHash: hash } },

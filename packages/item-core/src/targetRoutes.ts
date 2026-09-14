@@ -581,6 +581,23 @@ export function planCraftTargetRoutes(
       undefined,
       ...(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]).filter((omen) => {
         const rule = CRAFT_OMEN_RULES[omen]
+        if (rule.lowestLevel && rule.kind !== null) {
+          const combined = removableCraftAffixes(catalog, node.state, 'chaos', omen)
+          if (!combined.ok) return false
+          // 定向可能绕过另一侧更低等级的组；只有结果池不同于两种单枚时才推荐双枚。
+          return (
+            ['whittling', rule.kind === 'prefix' ? 'sinistral_erasure' : 'dextral_erasure'] as const
+          ).every((single) => {
+            const pool = removableCraftAffixes(catalog, node.state, 'chaos', single)
+            return (
+              pool.ok &&
+              (combined.value.length !== pool.value.length ||
+                combined.value.some(
+                  (affix) => !pool.value.some((entry) => entry.modId === affix.modId),
+                ))
+            )
+          })
+        }
         if (omen === 'blessed')
           return (
             implicitValues.length > 0 &&

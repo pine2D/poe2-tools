@@ -1414,7 +1414,9 @@ export function RehearsalPanel({
               const mod = modById.get(affix.modId)
               return (
                 <div className="rehearsal-removal-choice" key={affix.modId}>
-                  {omen === 'whittling' && mod ? <p>目录词缀等级 {mod.level}</p> : null}
+                  {omen && CRAFT_OMEN_RULES[omen].lowestLevel && mod ? (
+                    <p>目录词缀等级 {mod.level}</p>
+                  ) : null}
                   <AffixCard
                     mod={mod}
                     crafted={affix.crafted}

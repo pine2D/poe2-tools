@@ -58,28 +58,36 @@ it('消减显示出现等级与并列风险，手动移除只提供最低组', (
   expect(screen.queryByText('消减预兆 × 1')).toBeNull()
 })
 
-it('联合路线显示消减材料、等级规则并预览带预兆的实际步骤', async () => {
-  const catalog = boneCatalog()
-  for (const m of catalog.modifiers) m.level = m.id === 'prefix3' ? 5 : 30
-  const state = boneState(['prefix1', 'prefix2', 'prefix3', 'suffix1', 'suffix2', 'suffix3'])
-  const preview = vi.fn()
-  render(
-    <TargetRoutesPanel
-      catalog={catalog}
-      state={state}
-      ids={['prefix1', 'prefix2', 'prefix4', 'suffix1', 'suffix2', 'suffix3']}
-      values={[]}
-      alternatives={[]}
-      busy={false}
-      translations={{ 'Omen of Whittling': '消减预兆' }}
-      onPreview={preview}
-    />,
-  )
-  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(await screen.findByText(/消减预兆 × 1/)).toBeDefined()
-  expect(screen.getAllByText(/比较出现等级，不按阶级或数值大小选择/).length).toBeGreaterThan(0)
-  fireEvent.click(screen.getAllByRole('button', { name: '预览路线第一步' })[0] as HTMLElement)
-  expect(preview).toHaveBeenCalledWith(
-    expect.objectContaining({ currency: 'chaos', omen: 'whittling', removeModId: 'prefix3' }),
-  )
-})
+it.each(['whittling', 'whittling_sinistral_erasure'] as const)(
+  '%s 联合路线显示材料、等级规则并预览实际步骤',
+  async (omen) => {
+    const catalog = boneCatalog()
+    for (const m of catalog.modifiers)
+      m.level = m.id === 'prefix3' ? 5 : omen !== 'whittling' && m.id === 'suffix1' ? 1 : 30
+    const state = boneState(['prefix1', 'prefix2', 'prefix3', 'suffix1', 'suffix2', 'suffix3'])
+    const preview = vi.fn()
+    render(
+      <TargetRoutesPanel
+        catalog={catalog}
+        state={state}
+        ids={['prefix1', 'prefix2', 'prefix4', 'suffix1', 'suffix2', 'suffix3']}
+        values={[]}
+        alternatives={[]}
+        busy={false}
+        translations={{ 'Omen of Whittling': '消减预兆' }}
+        onPreview={preview}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+    expect(await screen.findByText(/消减预兆 × 1/)).toBeDefined()
+    expect(
+      screen.getAllByText(
+        omen === 'whittling' ? /比较出现等级，不按阶级或数值大小选择/ : /先限定未破裂前缀/,
+      ).length,
+    ).toBeGreaterThan(0)
+    fireEvent.click(screen.getAllByRole('button', { name: '预览路线第一步' })[0] as HTMLElement)
+    expect(preview).toHaveBeenCalledWith(
+      expect.objectContaining({ currency: 'chaos', omen, removeModId: 'prefix3' }),
+    )
+  },
+)

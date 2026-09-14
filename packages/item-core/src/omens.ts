@@ -9,6 +9,8 @@ export type CraftOmen =
   | 'greater_dextral_exaltation'
   | 'light'
   | 'whittling'
+  | 'whittling_sinistral_erasure'
+  | 'whittling_dextral_erasure'
   | 'sinistral_exaltation'
   | 'dextral_exaltation'
   | 'sinistral_annulment'
@@ -24,6 +26,7 @@ export const CRAFT_OMEN_RULES: Record<
     kind: 'prefix' | 'suffix' | null
     effect: 'add' | 'remove' | 'reroll'
     addCount?: 2
+    lowestLevel?: true
     materials?: readonly string[]
   }
 > = {
@@ -68,6 +71,23 @@ export const CRAFT_OMEN_RULES: Record<
     currency: 'chaos',
     kind: null,
     effect: 'remove',
+    lowestLevel: true,
+  },
+  whittling_sinistral_erasure: {
+    name: 'Omen of Whittling + Omen of Sinistral Erasure',
+    currency: 'chaos',
+    kind: 'prefix',
+    effect: 'remove',
+    lowestLevel: true,
+    materials: ['Omen of Whittling', 'Omen of Sinistral Erasure'],
+  },
+  whittling_dextral_erasure: {
+    name: 'Omen of Whittling + Omen of Dextral Erasure',
+    currency: 'chaos',
+    kind: 'suffix',
+    effect: 'remove',
+    lowestLevel: true,
+    materials: ['Omen of Whittling', 'Omen of Dextral Erasure'],
   },
   sinistral_exaltation: {
     name: 'Omen of Sinistral Exaltation',
@@ -130,6 +150,8 @@ export function craftOmenMaterials(omen: CraftOmen): readonly string[] {
 
 /** 用同一规则说明预兆候选约束，避免无方向预兆被误说成后缀限定。 */
 export function craftOmenDescription(omen: CraftOmen): string {
+  if (CRAFT_OMEN_RULES[omen].lowestLevel && CRAFT_OMEN_RULES[omen].kind !== null)
+    return `先限定未破裂${CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : '后缀'}，再从中移除目录等级最低的一组；并列时全部可能被移除。另一侧的低等级词缀不参与比较。消耗两枚预兆与一颗基础混沌石；新增仍可为任一合法侧，组合交互待真机核对。`
   if (omen === 'catalysing_exaltation')
     return '消耗全部催化品质，提高对应标签词缀的出现机会，但不保证命中。仍可出现任一合法标签，概率与权重未知；已有词缀基础值保留，有效值会随品质消耗下降。仅支持戒指／项链、单枚预兆与三档崇高。'
   if (omen === 'blessed')

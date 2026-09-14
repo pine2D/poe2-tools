@@ -80,7 +80,14 @@ export function inspectLiquidEmotions(
 ): LiquidEmotionInspection[] {
   const category = jewelCategory(base)
   const trusted = liquidEmotionSourceHash(catalog) !== null && jewelSourceHash(catalog) !== null
-  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
+  // 只索引当前珠宝材料引用的 ID，避免每次状态校验为整个目录分配键值对。
+  const mappedIds = new Set(
+    category === null || !trusted
+      ? []
+      : (catalog.liquidEmotions ?? []).flatMap((emotion) => Object.values(emotion.mods[category])),
+  )
+  const mods = new Map<string, CatalogMod>()
+  for (const mod of catalog.modifiers) if (mappedIds.has(mod.id)) mods.set(mod.id, mod)
   return (catalog.liquidEmotions ?? []).map((emotion) => {
     const unavailable = (reason: string): LiquidEmotionInspection => ({
       emotion,

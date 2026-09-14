@@ -24,7 +24,7 @@ import {
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
-import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
+import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
@@ -893,7 +893,8 @@ export function analyzeCraftTargets(
         ...(lostImplicitLineIndexes.length > 0 ? { lostImplicitLineIndexes } : {}),
         randomRemovalRisk:
           randomRemovalRisk &&
-          ((omen !== 'whittling' && omen !== 'light') ||
+          (!omen ||
+            (!CRAFT_OMEN_RULES[omen].lowestLevel && omen !== 'light') ||
             (removable?.ok === true && removable.value.length > 1)),
         clearsAll: currency === 'alchemy',
         remainingChoices: prepared.value.count,
