@@ -36,6 +36,71 @@ afterEach(() => {
   localStorage.clear()
 })
 
+it('失落珠宝已有品质可比较和保存，显示估算保留范围条件且不改变起点', () => {
+  const state: CraftState = {
+    baseId: 'Time-Lost Sapphire',
+    itemLevel: 86,
+    rarity: 'rare',
+    sourceText: null,
+    catalyst: { id: 'Necrotic', quality: 20, declared: true },
+    affixes: [
+      {
+        modId: 'JewelRadiusMinionCriticalMultiplier',
+        lines: [
+          'Notable Passive Skills in Radius also grant Minions have 12(6-12)% increased Critical Damage Bonus',
+        ],
+      },
+    ],
+  }
+  const dictionary = createCraftItemDictionary(catalog)
+  const text = exportCraftItemText(catalog, state, { locale: 'en', dictionary })
+  if (!text.ok) throw Error(text.error)
+  const item = parseItem(text.value.text)
+  if (!item.ok) throw Error(item.error)
+  const initial = importCraftState(
+    catalog,
+    state.baseId,
+    item.item,
+    inspectItem(item.item, dictionary),
+    undefined,
+    undefined,
+    dictionary.stats?.entries,
+  )
+  if (!initial.ok) throw Error(initial.error)
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={initial.value}
+      dictionary={dictionary}
+      translations={translations}
+    />,
+  )
+  const panel = within(screen.getByLabelText('催化剂效果预览'))
+  expect(panel.getByText('当前催化品质：召唤生物 · 20%')).toBeDefined()
+  expect(
+    panel.getByRole('option', { name: `${translations['Refined Necrotic Catalyst']} · 召唤生物` }),
+  ).toBeDefined()
+  expect(
+    panel.getByText(
+      'Notable Passive Skills in Radius also grant Minions have 14% increased Critical Damage Bonus',
+    ),
+  ).toBeDefined()
+  expect(panel.getByText(/未计算覆盖的天赋数量/)).toBeDefined()
+  expect(panel.getByText('依据：目录显示精度，缩放资料缺失')).toBeDefined()
+  fireEvent.change(panel.getByLabelText('预览品质（%）'), { target: { value: '10' } })
+  expect(
+    panel.getByText(
+      'Notable Passive Skills in Radius also grant Minions have 13% increased Critical Damage Bonus',
+    ),
+  ).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
+  const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(saved.initialState.catalyst).toEqual({ id: 'Necrotic', quality: 20 })
+  expect(saved.operations).toEqual([])
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v69')
+  expect(saved.scalabilitySourceHash).toBeTruthy()
+})
+
 it('裂隙精华后预览上限跟随装备，移除后提示原有预览值超限', () => {
   const before: CraftState = {
     ...initialState,

@@ -5,6 +5,7 @@ import {
   catalystChoices,
   estimateCatalystEffects,
   isBasicJewel,
+  isRadiusJewel,
   usesExplicitModEffect,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
@@ -39,7 +40,11 @@ export function CatalystPreviewPanel({
   )
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const hasEffect = usesExplicitModEffect(catalog, state)
-  if (!base || (!['Ring', 'Amulet'].includes(base.type) && !isBasicJewel(base))) return null
+  if (
+    !base ||
+    (!['Ring', 'Amulet'].includes(base.type) && !isBasicJewel(base) && !isRadiusJewel(base))
+  )
+    return null
   const groups = result.ok
     ? result.value.groups.filter(
         (group) =>
@@ -62,6 +67,12 @@ export function CatalystPreviewPanel({
       ) : null}
       <details open={state.catalyst ? true : undefined}>
         <summary>比较催化剂效果</summary>
+        {isRadiusJewel(base) ? (
+          <p className="rehearsal-scope-note">
+            范围属性作用于指定天赋，以下比较保留完整范围条件；未计算覆盖的天赋数量和角色总收益。
+            缺少缩放资料时的显示精度估算不用于判定有效数值目标达成。
+          </p>
+        ) : null}
         <p className="rehearsal-scope-note">
           {state.catalyst
             ? '默认显示当前催化品质下的估算值；修改下方选项仅作比较，不改变已保存品质。'

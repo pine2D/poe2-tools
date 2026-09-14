@@ -196,14 +196,13 @@ it('增容后的三个前缀可作为已有状态保留；普通珠宝词缀不�
   ).toBe(false)
 })
 
-it('范围状态不能借已开放普通珠宝规则混入工艺、亵渎、品质或腐化', () => {
+it('范围状态接收催化品质，仍拒绝无依据工艺、亵渎、普通品质或腐化', () => {
   const state = steps.reduce(apply, initial)
-  for (const added of [
-    { quality: 0 },
-    { catalyst: { id: "Xoph's", quality: 0 } },
-    { corrupted: true as const },
-  ])
+  for (const added of [{ quality: 0 }, { corrupted: true as const }])
     expect(createCraftState(catalog, { ...state, ...added }).ok).toBe(false)
+  expect(createCraftState(catalog, { ...state, catalyst: { id: "Xoph's", quality: 0 } }).ok).toBe(
+    true,
+  )
   for (const flag of ['crafted', 'desecrated'] as const)
     expect(
       createCraftState(catalog, {

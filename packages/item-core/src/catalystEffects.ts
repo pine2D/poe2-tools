@@ -5,7 +5,7 @@ import { CATALYSTS } from './catalystQuality'
 import { corruptionEntries } from './corruptionEnchantments'
 import { essenceSourceHash } from './essences'
 import { explicitModEffect } from './jewelEffects'
-import { isBasicJewel } from './jewels'
+import { isBasicJewel, isRadiusJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
@@ -43,8 +43,11 @@ export function catalystChoices(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  if (!base || (!['Ring', 'Amulet'].includes(base.type) && !isBasicJewel(base)))
-    return { ok: false, error: '催化剂预览只支持可制作的戒指、项链和四类普通珠宝。' }
+  if (
+    !base ||
+    (!['Ring', 'Amulet'].includes(base.type) && !isBasicJewel(base) && !isRadiusJewel(base))
+  )
+    return { ok: false, error: '催化剂预览只支持可制作的戒指、项链、四类普通珠宝和四类失落珠宝。' }
   if (
     (state.quality !== undefined && state.quality !== 0) ||
     (base.sourceQuality !== null && base.sourceQuality !== 0) ||
@@ -90,7 +93,7 @@ export function catalystChoices(
       maxQuality: (breach ? 40 : 20) + (breachEssence ? 20 : 0),
       choices: CATALYSTS.map((entry) => ({
         ...entry,
-        name: `${isBasicJewel(base) ? 'Refined ' : ''}${entry.id} Catalyst`,
+        name: `${isBasicJewel(base) || isRadiusJewel(base) ? 'Refined ' : ''}${entry.id} Catalyst`,
       })),
     },
   }

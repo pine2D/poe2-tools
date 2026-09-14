@@ -73,7 +73,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v68'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v69'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -136,7 +136,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 68 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 69 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -975,6 +975,12 @@ export function parseCraftProject(
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
   const scalabilitySourceHash = statScalabilitySourceHash(catalog)
   const validateEffectState = (state: CraftState): string | null => {
+    if (
+      rulesVersion < 69 &&
+      state.catalyst !== undefined &&
+      catalog.bases.some((base) => base.id === state.baseId && isRadiusJewel(base))
+    )
+      return 'v2–v68 旧版项目不能包含失落珠宝催化品质。'
     if (usesSovereignResistance(state)) {
       usesSovereignEffects = true
       if (

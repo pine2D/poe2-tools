@@ -68,6 +68,8 @@
 
 ### 催化剂效果预览依据（2026-09-13）
 
+失落珠宝品质补充核对（2026-09-15）：[GGG 0.5.4b 官方补丁](https://www.pathofexile.com/forum/view-thread/3980516/filter-account-type/staff)明确修复品质未作用于部分珠宝词缀的问题；不能将六月的玩家故障报告当作当前禁止使用催化剂的依据。现有精炼材料类别与固定 Item.lua 标签规则用于四种精确 Time-Lost 基底的已有品质。ModScalability 中多数完整范围属性没有独立声明，不能去掉范围前缀后挪用普通属性的缩放能力；保留既有“显示估算／可信有效值”区别，不计算天赋覆盖或角色收益。没有新增数据抓取或浏览器外部请求。国服品质原生文本及每颗材料的增量仍待验收／核实。
+
 缩放元数据补充来源：[同一固定 MIT 提交的 ModScalability.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModScalability.lua)。记录英文属性模板各数字的 `isScalable` 与 `formats`，用于区分可缩放数值、固定条件和内部精度。采用既有 cache.ts 构建期缓存、受限 Lua 声明解析，保留来源 SHA-256；仅选取能与当前制作目录属性对应的条目，不把其中其他游戏或历史条目扩展为 PoE2 制作资格。游戏文字版权归 GGG，MIT 只覆盖来源仓库自有部分，沿用 THIRD-PARTY-NOTICES 的 PoB 声明；用户浏览器不访问第三方。
 
 催化剂名称沿用已登记三服官方 `/static` 的 26 项独立译名，不新增名称抓取。[固定 MIT 提交的 Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L14)提供 13 类品质与词缀标签的对应关系、命中任一标签乘以 `1 + 品质 / 100` 及不可缩放标记例外；[ItemTools.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ItemTools.lua#L45)区分内部精度与显示精度。当前预览优先使用缩放声明与内部网格；显示值能对应多个内部值时枚举其催化后结果，结果不唯一则提示范围，不猜中点。有资料却无法计算时不会退回粗网格；缺资料的行才沿用明确标注的目录显示精度估算。两种结果均不用于游戏文本、目标达成或材料费用，实际版本与真机显示待验收。

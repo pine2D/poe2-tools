@@ -1,7 +1,7 @@
 import { isSovereignAffix } from './alloyEffects'
 import type { CatalogBase, CraftCatalog } from './catalog'
 import { jewelEffectModKind } from './jewelEffectRules'
-import { isBasicJewel } from './jewels'
+import { isBasicJewel, isRadiusJewel } from './jewels'
 import { isLiquidEmotionMappedMod } from './liquidEmotions'
 import type { CraftResult, CraftState } from './rehearsal'
 import { statScalabilitySourceHash } from './statScalability'
@@ -85,7 +85,7 @@ export function isCatalystQuality(value: unknown): value is CatalystQuality {
 }
 
 export function catalystQualityLimit(base: CatalogBase): number | null {
-  const jewel = isBasicJewel(base)
+  const jewel = isBasicJewel(base) || isRadiusJewel(base)
   if (!['Ring', 'Amulet'].includes(base.type) && !jewel) return null
   if (
     base.hidden ||
