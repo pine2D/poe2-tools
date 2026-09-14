@@ -17,6 +17,11 @@ export function normalizeJewelMods(
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail('root')
   auditLiquidEmotionMappings(liquidEmotions, raw as LuaTable)
   const craftedIds = new Set(
+    liquidEmotions.flatMap((emotion) =>
+      Object.values(emotion.mods).flatMap((effects) => Object.values(effects)),
+    ),
+  )
+  const basicCraftedIds = new Set(
     liquidEmotions
       .filter((emotion) => !emotion.radiusJewel)
       .flatMap((emotion) =>
@@ -58,7 +63,8 @@ export function normalizeJewelMods(
     if (ordinary) {
       if (nodeType !== undefined) fail(id)
       modifiers.push({ ...mod, jewelOnly: true })
-    } else if (radius) {
+    } else if (radius || (craftedIds.has(id) && !basicCraftedIds.has(id))) {
+      if (!radius && mod.eligibility.some((rule) => rule.value !== 0)) fail(id)
       const scope =
         nodeType === 1
           ? 'Small Passive Skills in Radius also grant '
@@ -68,7 +74,13 @@ export function normalizeJewelMods(
       const lines = mod.lines.map((line) => scope + line)
       const declared = Object.values(mod.tradeHashes).flat()
       if (lines.some((line) => !declared.includes(line))) fail(id)
-      modifiers.push({ ...mod, lines, jewelOnly: true, radiusJewelOnly: true })
+      modifiers.push({
+        ...mod,
+        lines,
+        jewelOnly: true,
+        radiusJewelOnly: true,
+        ...(!radius ? { craftedOnly: true as const } : {}),
+      })
     } else if (craftedIds.has(id)) {
       if (nodeType !== undefined || mod.eligibility.some((rule) => rule.value !== 0)) fail(id)
       modifiers.push({ ...mod, jewelOnly: true, craftedOnly: true })

@@ -304,15 +304,16 @@ export function createCraftState(
   const runeSourceError = runeSourceStateError(input)
   if (runeSourceError !== null) return failure(runeSourceError)
   if (!Array.isArray(input.affixes)) return failure('词缀列表无效。')
-  if (isRadiusJewel(base) && input.affixes.some((affix) => affix?.crafted || affix?.desecrated))
-    return failure('范围珠宝工艺与亵渎制作尚未接入。')
   if (
-    isBasicJewel(base) &&
+    (isBasicJewel(base) || isRadiusJewel(base)) &&
     input.rarity !== 'rare' &&
     input.affixes.some((affix) => affix?.crafted)
   )
-    return failure('液态情感工艺词缀只支持稀有普通珠宝。')
-  if (isBasicJewel(base) && input.affixes.some((affix) => affix?.desecrated))
+    return failure('液态情感工艺词缀只支持稀有珠宝。')
+  if (
+    (isBasicJewel(base) || isRadiusJewel(base)) &&
+    input.affixes.some((affix) => affix?.desecrated)
+  )
     return failure('珠宝亵渎来源的特殊制作尚未支持。')
   const implicit = resolveCraftImplicitPatterns(base, input)
   if (!implicit.ok) return implicit
@@ -368,7 +369,7 @@ export function createCraftState(
       return failure(`词缀 ${affix.modId} 的属性行与制作目录不一致。`)
     if (
       !(
-        isBasicJewel(base) &&
+        (isBasicJewel(base) || isRadiusJewel(base)) &&
         affix.crafted &&
         jewelCapacityModKind(mod) !== null &&
         isLiquidEmotionMappedMod(catalog, base, mod.id)
@@ -415,7 +416,7 @@ export function createCraftState(
       )
     // eligibility 描述生成当时的资格；已有词缀不受后来 addsTags 的负向标签追溯影响。
     const validSource =
-      isBasicJewel(base) && affix.crafted
+      (isBasicJewel(base) || isRadiusJewel(base)) && affix.crafted
         ? isLiquidEmotionMappedMod(catalog, base, mod.id)
         : (affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) ||
           (affix.crafted === true &&
@@ -426,12 +427,12 @@ export function createCraftState(
     else suffixes += 1
   }
 
-  const historicalJewel = isBasicJewel(base) && input.rarity === 'rare'
+  const historicalJewel = (isBasicJewel(base) || isRadiusJewel(base)) && input.rarity === 'rare'
   if (usesJewelCapacity(catalog, input) && liquidEmotionSourceHash(catalog) === null)
     return failure('超过固有 2/2 容量或含增容工艺的珠宝需要可信液态情感来源指纹。')
   const capacity = historicalJewel ? { prefix: 3, suffix: 3 } : limits(base, input.rarity)
   if (historicalJewel && prefixes + suffixes > 5)
-    return failure('普通稀有珠宝已有词缀最多每侧 3 组、总计 5 组。')
+    return failure('稀有珠宝已有词缀最多每侧 3 组、总计 5 组。')
   if (prefixes > capacity.prefix || suffixes > capacity.suffix) {
     if (input.rarity === 'normal') return failure('普通装备不能带有显式词缀。')
     if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')

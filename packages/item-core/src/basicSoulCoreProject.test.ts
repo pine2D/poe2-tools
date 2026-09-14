@@ -33,7 +33,7 @@ const must = <T>(r: { ok: true; value: T } | { ok: false; error: string }): T =>
 }
 
 it('v66 保存打孔和魂核替换，所有游标回放且旧规则不注入新操作或指引', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v67')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v68')
   const p = {
     ...metadata(),
     initialState: initial(),
@@ -81,7 +81,7 @@ it('v66 保存打孔和魂核替换，所有游标回放且旧规则不注入新
       if (v === 57 && !result.ok) expect(result.error).toContain('v57 及更早')
     }
   }
-  expect(restore({ ...p, rulesVersion: 'basic-2026-09-12-v68' }).ok).toBe(false)
+  expect(restore({ ...p, rulesVersion: 'basic-2026-09-12-v69' }).ok).toBe(false)
   expect(restore({ ...p, augmentSourceHash: '0'.repeat(64) }).ok).toBe(false)
   expect(
     restore({

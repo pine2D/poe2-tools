@@ -397,7 +397,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
       (Object.hasOwn(mod, 'desecratedOnly') && mod.desecratedOnly !== true) ||
       (Object.hasOwn(mod, 'jewelOnly') && mod.jewelOnly !== true) ||
       (Object.hasOwn(mod, 'radiusJewelOnly') && mod.radiusJewelOnly !== true) ||
-      (mod.radiusJewelOnly === true && (mod.jewelOnly !== true || mod.craftedOnly === true)) ||
+      (mod.radiusJewelOnly === true && mod.jewelOnly !== true) ||
       (Object.hasOwn(mod, 'craftedOnly') && mod.craftedOnly !== true) ||
       (mod.craftedOnly === true && mod.jewelOnly !== true) ||
       (mod.jewelOnly === true && mod.desecratedOnly === true) ||
@@ -432,7 +432,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
   if (catalog.corruptions !== undefined && corruptionSourceHash(catalog) === null) return invalid()
   for (const mod of catalog.modifiers.filter((entry) => entry.craftedOnly)) {
     const references = (catalog.liquidEmotions ?? [])
-      .filter((emotion) => !emotion.radiusJewel)
+      .filter((emotion) => (mod.radiusJewelOnly ? emotion.radiusJewel : !emotion.radiusJewel))
       .flatMap((emotion) =>
         Object.values(emotion.mods).flatMap((effects) => Object.entries(effects)),
       )

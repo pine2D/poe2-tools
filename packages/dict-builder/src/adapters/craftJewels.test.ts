@@ -88,8 +88,9 @@ const emotion = (radiusJewel = false): CatalogLiquidEmotion => ({
   mods: { Ruby: { prefix: 'sample' }, Sapphire: {}, Emerald: {}, Diamond: {} },
 })
 
-it('仅精确非范围材料引用的无节点全零资格声明进入工艺子域', () => {
+it('精确材料引用的无节点全零资格声明进入工艺子域并保留范围身份', () => {
   const raw = source('', '"jewel"', '0')
+  ;(raw.sample as Record<string, unknown>).tradeHashes = { '123': { 1: 'Value (1-10)' } }
   const before = structuredClone(raw)
   expect(normalizeJewelMods(raw, [emotion()])).toMatchObject({
     modifiers: [{ id: 'sample', jewelOnly: true, craftedOnly: true }],
@@ -98,8 +99,27 @@ it('仅精确非范围材料引用的无节点全零资格声明进入工艺子�
   expect(raw).toEqual(before)
   // 范围材料可复用同一无节点工艺声明，不因此取得执行资格。
   expect(normalizeJewelMods(raw, [emotion(), emotion(true)]).modifiers).toHaveLength(1)
-  expect(normalizeJewelMods(raw, [emotion(true)]).excluded).toHaveLength(1)
+  expect(normalizeJewelMods(raw, [emotion(true)])).toMatchObject({
+    modifiers: [{ id: 'sample', jewelOnly: true, craftedOnly: true, radiusJewelOnly: true }],
+    excluded: [],
+  })
   expect(normalizeJewelMods(source(), [emotion()]).modifiers[0]).not.toHaveProperty('craftedOnly')
+})
+
+it('范围专属工艺保留核心天赋语义，缺失对应或出现无关正向资格时拒绝', () => {
+  const raw = source('nodeType=2,', '"jewel"', '0')
+  const sample = raw.sample as Record<string, unknown>
+  sample.tradeHashes = { '123': { 1: 'Notable Passive Skills in Radius also grant Value (1-10)' } }
+  expect(normalizeJewelMods(raw, [emotion(true)]).modifiers[0]).toMatchObject({
+    craftedOnly: true,
+    radiusJewelOnly: true,
+    lines: ['Notable Passive Skills in Radius also grant Value (1-10)'],
+  })
+  sample.tradeHashes = {}
+  expect(() => normalizeJewelMods(raw, [emotion(true)])).toThrow()
+  expect(() =>
+    normalizeJewelMods(source('', '"special", "jewel"', '1, 0'), [emotion(true)]),
+  ).toThrow()
 })
 
 it('工艺映射侧别、来源节点及非普通正向资格不一致时拒绝', () => {

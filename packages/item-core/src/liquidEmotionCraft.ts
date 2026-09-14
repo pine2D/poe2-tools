@@ -20,7 +20,7 @@ export function prepareLiquidEmotionCraft(
   if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  if (checked.value.rarity !== 'rare') return fail('液态情感只能用于稀有普通珠宝。')
+  if (checked.value.rarity !== 'rare') return fail('液态情感只能用于稀有珠宝。')
   if (checked.value.affixes.some((affix) => affix.crafted))
     return fail('装备已有工艺词缀，最多允许一组。')
   const base = catalog.bases.find((entry) => entry.id === checked.value.baseId)

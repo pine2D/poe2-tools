@@ -132,10 +132,12 @@ describe('目录数值显示模型', () => {
     expect(
       catalog.modifiers.filter((mod) => mod.jewelOnly && !mod.craftedOnly && !mod.radiusJewelOnly),
     ).toHaveLength(160)
-    expect(catalog.modifiers.filter((mod) => mod.radiusJewelOnly)).toHaveLength(160)
-    expect(catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly)).toHaveLength(8)
+    expect(catalog.modifiers.filter((mod) => mod.radiusJewelOnly && !mod.craftedOnly)).toHaveLength(
+      160,
+    )
+    expect(catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly)).toHaveLength(16)
     expect(catalog.modifiers.filter((mod) => mod.desecratedOnly)).toHaveLength(199)
-    expect(catalog.modifiers).toHaveLength(3077)
+    expect(catalog.modifiers).toHaveLength(3085)
     expect(catalog.bases).toHaveLength(1827)
     expect(unsupported).toBe(52)
   })

@@ -44,6 +44,7 @@ import { isRadiusJewel, jewelSourceHash as readJewelSourceHash } from './jewels'
 import {
   liquidEmotionSourceHash as readLiquidEmotionSourceHash,
   supportedBasicLiquidEmotionId,
+  supportedRadiusLiquidEmotionId,
 } from './liquidEmotions'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
@@ -72,7 +73,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v67'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v68'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -135,7 +136,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 67 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 68 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -931,6 +932,20 @@ export function parseCraftProject(
       record(value.initialState) &&
       Array.isArray(value.initialState.affixes) &&
       value.initialState.affixes.some((affix) => record(affix) && Object.hasOwn(affix, 'crafted')))
+  if (rulesVersion < 68) {
+    const ancientAction = (step: unknown) =>
+      record(step) &&
+      step.kind === 'liquid-emotion' &&
+      typeof step.emotionId === 'string' &&
+      supportedRadiusLiquidEmotionId(step.emotionId)
+    if (
+      (usesLiquidEmotions &&
+        catalog.bases.some((base) => base.id === initialBaseId && isRadiusJewel(base))) ||
+      strategy?.rules.some((rule) => ancientAction(rule.action)) ||
+      (Array.isArray(value.operations) && value.operations.some(ancientAction))
+    )
+      return fail('v2–v67 旧版项目不能包含远古液态情感、范围工艺起点或工艺目标。')
+  }
   if (rulesVersion < 50 && (usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')))
     return fail('v2–v49 旧版项目不能包含液态情感步骤、指引、来源或珠宝工艺起点。')
   if (rulesVersion < 51) {
@@ -985,6 +1000,12 @@ export function parseCraftProject(
   }
   // 输入、来源原文恢复结果和每个历史位置都核对，不能只依赖 crafted 标记或当前游标。
   const validateCapacityState = (state: CraftState): string | null => {
+    if (
+      rulesVersion < 68 &&
+      catalog.bases.some((base) => base.id === state.baseId && isRadiusJewel(base)) &&
+      (usesJewelCapacity(catalog, state) || state.affixes.some((affix) => affix.crafted))
+    )
+      return 'v2–v67 旧版项目不能包含范围工艺或超固有容量状态。'
     if (!usesJewelCapacity(catalog, state)) return null
     if (rulesVersion < 52) return 'v2–v51 旧版项目不能包含珠宝增容或超固有容量状态。'
     if (
@@ -1460,12 +1481,13 @@ export function parseCraftProject(
       : catalog
   // 旧目标保留已开放液态身份，按版本移除新增材料。
   const targetCatalog =
-    rulesVersion < 53
+    rulesVersion < 68
       ? {
           ...legacyTargetCatalog,
           liquidEmotions: (legacyTargetCatalog.liquidEmotions ?? []).filter(
             (emotion) =>
-              emotion.id !== JEWEL_EFFECT_EMOTION_ID &&
+              !emotion.radiusJewel &&
+              (rulesVersion >= 53 || emotion.id !== JEWEL_EFFECT_EMOTION_ID) &&
               (rulesVersion >= 52 || emotion.id !== JEWEL_CAPACITY_EMOTION_ID),
           ),
         }
@@ -1563,6 +1585,11 @@ export function parseCraftProject(
     }
     if (!inherentCombination) {
       if (rulesVersion < 52) return fail('v2–v51 旧版项目不能包含超固有容量的珠宝目标组合。')
+      if (
+        rulesVersion < 68 &&
+        catalog.bases.some((base) => base.id === initial.value.baseId && isRadiusJewel(base))
+      )
+        return fail('v2–v67 旧版项目不能包含超固有容量的范围珠宝目标组合。')
       if (
         liquidEmotionSourceHash === null ||
         value.liquidEmotionSourceHash !== liquidEmotionSourceHash

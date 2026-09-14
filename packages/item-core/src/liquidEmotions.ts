@@ -6,7 +6,7 @@ import type {
   CraftCatalog,
 } from './catalog'
 import { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
-import { isBasicJewel, jewelSourceHash } from './jewels'
+import { isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
 import { statScalabilitySourceHash } from './statScalability'
 
 /** 固定来源仅描述材料映射快照，不代表允许执行液态情感制作。 */
@@ -46,14 +46,25 @@ export function supportedBasicLiquidEmotionId(id: string): boolean {
 export function supportedLiquidEmotionId(id: string): boolean {
   return (
     supportedBasicLiquidEmotionId(id) ||
+    supportedRadiusLiquidEmotionId(id) ||
     id === JEWEL_EFFECT_EMOTION_ID ||
     id === 'Metadata/Items/Currency/EndgameDistilledEmotion1' ||
     id === 'Metadata/Items/Currency/EndgameDistilledEmotion3'
   )
 }
 
+export function supportedRadiusLiquidEmotionId(id: string): boolean {
+  return /^Metadata\/Items\/Currency\/(?:DistilledEmotionTimeLost(?:[1-9]|10)|EndgameDistilledEmotionTimeLost[1-3])$/.test(
+    id,
+  )
+}
+
 function jewelCategory(base: CatalogBase): CatalogLiquidEmotionJewel | null {
-  return isBasicJewel(base) ? (base.id as CatalogLiquidEmotionJewel) : null
+  return isBasicJewel(base)
+    ? (base.id as CatalogLiquidEmotionJewel)
+    : isRadiusJewel(base)
+      ? (base.id.slice('Time-Lost '.length) as CatalogLiquidEmotionJewel)
+      : null
 }
 
 /** 固定快照中的增容身份；不能从任意相似文本推断容量。 */
@@ -98,13 +109,22 @@ export function inspectLiquidEmotions(
       reason,
     })
     if (!trusted) return unavailable('液态情感或珠宝目录来源指纹缺失或无效。')
-    if (category === null) return unavailable('该材料仅支持普通珠宝；范围与特殊珠宝尚未支持。')
-    if (!supportedLiquidEmotionId(emotion.id) || emotion.radiusJewel)
+    if (category === null) return unavailable('该材料仅支持普通珠宝或失落珠宝，特殊珠宝尚未支持。')
+    const radius = isRadiusJewel(base)
+    if (
+      !supportedLiquidEmotionId(emotion.id) ||
+      emotion.radiusJewel !== radius ||
+      supportedRadiusLiquidEmotionId(emotion.id) !== radius
+    )
       return unavailable('该液态情感类型尚未支持。')
     const mapping = emotion.mods[category]
     const entries = Object.entries(mapping)
     const effect = emotion.id === JEWEL_EFFECT_EMOTION_ID
-    const capacity = emotion.id === 'Metadata/Items/Currency/EndgameDistilledEmotion3'
+    const capacity =
+      emotion.id ===
+      (radius
+        ? 'Metadata/Items/Currency/EndgameDistilledEmotionTimeLost3'
+        : 'Metadata/Items/Currency/EndgameDistilledEmotion3')
     const dual = effect || capacity
     if (effect && statScalabilitySourceHash(catalog) === null)
       return unavailable('珠宝增效需要可信的属性缩放来源指纹。')
@@ -118,6 +138,8 @@ export function inspectLiquidEmotions(
         !['prefix', 'suffix'].includes(kind) ||
         mod.kind !== kind ||
         mod.jewelOnly !== true ||
+        (!capacity && Boolean(mod.radiusJewelOnly) !== radius) ||
+        (capacity && mod.radiusJewelOnly === true) ||
         mod.desecratedOnly === true ||
         (capacity && jewelCapacityModKind(mod) !== kind) ||
         (!capacity && jewelCapacityModKind(mod) !== null) ||

@@ -9,7 +9,7 @@ import {
 } from './effectiveTargetValues'
 import { type CraftImplicitTargetValues, implicitTargetRolls } from './implicitTargets'
 import { jewelEffectModKind } from './jewelEffectRules'
-import { isBasicJewel } from './jewels'
+import { isBasicJewel, isRadiusJewel } from './jewels'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { inspectLiquidEmotions, jewelCapacityModKind } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
@@ -34,7 +34,7 @@ export function liquidRouteContext(
   onOmitted: () => void = () => {},
 ) {
   const base = catalog.bases.find((entry) => entry.id === initial.baseId)
-  if (!base || !isBasicJewel(base))
+  if (!base || (!isBasicJewel(base) && !isRadiusJewel(base)))
     return {
       enabled: false,
       candidates: function* (): Generator<{ operation: CraftStep; atRiskTargetIds: string[] }> {},

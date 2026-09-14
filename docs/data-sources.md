@@ -254,11 +254,13 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 
 ### 珠宝词缀来源登记
 
+2026-09-15 远古液态情感扩展沿用固定 ModJewel / LiquidEmotions 双来源：将范围材料精确引用的全零资格声明纳入工艺子域，节点语义继续与本条 tradeHashes 全文核对；共享增容声明通过材料和基底映射分别授权，不混入普通生成池。人工流程依据 [GGG 0.5.0 Delirium](https://www.pathofexile.com/forum/view-thread/3932540/filter-account-type/staff) 的替换已有属性及 10+3 远古材料；[PoE2DB Liquid Emotions](https://poe2db.tw/us/Liquid_Emotions) 仅核对材料说明和工艺含义，按 gray 参考，不采集其词缀表或权重。Very Large 由已登记固定 ModParser.lua 的明确标签核对；范围内天赋的属性转换与抗性不作为装备自身或角色最终贡献。CoE changelog 2026-08-03/04 仅参考模拟、目标与错误提示覆盖，不复制实现。范围品质及未核实交互仍单独标注，来源更新不意味着真实概率已知。
+
 2026-09-15 失落珠宝常规制作规则人工核对：沿用固定 MIT 快照的 Item.lua（珠宝魔法容量 1/1、稀有固有容量 2/2）、[Modules/Data.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/Data.lua)（Small 半径 1000）与 [Modules/ModParser.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ModParser.lua)（范围升级语义）；只阅读，不执行或复制实现。默认小半径以已登记 PoE2DB 基底列表及 [Time-Lost Ruby 公开说明](https://poe2db.tw/us/Time-Lost_Ruby) 的基底半径 1000 交叉核对，属 gray 人工机制依据，不采集新增数据表或权重。半径从当前词缀派生，不另存可失配的状态；导入核对来源半径，出口明确为演练文本。中文范围标题是工具接受语法，国服实际高级复制格式仍待样本验收。
 
 2026-09-15 范围子域沿用同一固定 ModJewel：160 条具有正向范围珠宝资格的声明，其中 nodeType 1/2 对应的“小型／核心天赋”语义在构建期补成完整属性行，并要求与该条 tradeHashes 原文一致；没有对应时拒绝生成。独立 `radiusJewelOnly` 标记隔离普通珠宝、装备及动态标签，不借数据入库直接开放制作。无正向资格的范围专属工艺仍等待精确映射授权。沿用原 MIT 许可、来源指纹、缓存和离线流程，无新抓取或运行时网络请求。
 
-本次入库后为 160 普通、160 范围、8 工艺专属、49 排除；新增 10 条完整缩放模板，原有模板全部保持，范围全文另有 150 条缺少对应。下文较早接入记录中的排除数为当时快照计数。
+本次扩展后为 160 普通、160 可生成范围、16 工艺专属、41 排除；8 条新增专属工艺均来自范围材料的精确映射，所有旧条目保持不变。完整缩放模板由 2952 增至 2953，缺少对应由 253 增至 261，未修改旧模板或猜测范围属性的缩放。下文较早接入记录中的排除数为当时快照计数。
 
 2026-09-14 工艺子域扩展沿用下述固定 ModJewel 与已登记 LiquidEmotions 双 SHA，不新增抓取来源。仅将非范围材料精确引用、无 nodeType、前后缀一致且全部生成资格为零的 8 条声明标记为 jewelOnly + craftedOnly；普通可生成词缀仍为 160 条，排除审计为 209 条。声明涵盖三个条件效果、钻石最大混沌抗性、两种增容与两种侧别增效；数据存在不代表执行已开放，具体范围见 crafting-rules.md。构建复用既有 cache.ts 与受限 Lua 解析，运行时校验双来源和映射，工艺声明不得进入普通生成池。无新增第三方数据、依赖或浏览器请求。
 

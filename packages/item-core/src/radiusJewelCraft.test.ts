@@ -174,7 +174,7 @@ it.each(['en', 'zh-CN', 'zh-TW'] as const)(
   },
 )
 
-it('三个不同前缀仍超出范围珠宝容量；普通珠宝词缀不能由保留规则放行', () => {
+it('增容后的三个前缀可作为已有状态保留；普通珠宝词缀不能由保留规则放行', () => {
   const state = steps.reduce(apply, initial)
   const extra = required(catalog.modifiers.find((mod) => mod.id === 'JewelRadiusColdDamage'))
   expect(
@@ -186,7 +186,7 @@ it('三个不同前缀仍超出范围珠宝容量；普通珠宝词缀不能由�
         { modId: extra.id, lines: extra.lines },
       ],
     }).ok,
-  ).toBe(false)
+  ).toBe(true)
   const ordinary = required(catalog.modifiers.find((mod) => mod.id === 'JewelLifeonKill'))
   expect(
     createCraftState(catalog, {

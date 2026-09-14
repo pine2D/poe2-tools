@@ -686,7 +686,7 @@ export function CatalogPanel({
                 <section className="catalog-pool" aria-label="词缀池">
                   {isRadiusJewel(selectedBase) ? (
                     <p>
-                      范围珠宝词缀按完整天赋范围显示，作用于指定天赋。现可进行常规通货演练并比较半径变化；远古液态情感与树上覆盖计算尚未接入，没有真实权重。
+                      范围珠宝词缀按完整天赋范围显示，作用于指定天赋。支持常规通货和远古液态情感演练，可比较半径与词缀变化；树上覆盖计算及真实权重尚未接入。
                     </p>
                   ) : null}
                   {isBasicJewel(selectedBase) ? (

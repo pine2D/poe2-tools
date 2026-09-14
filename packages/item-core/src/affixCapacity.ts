@@ -1,12 +1,13 @@
 import type { CraftCatalog } from './catalog'
-import { craftAffixLimit, isBasicJewel } from './jewels'
+import { craftAffixLimit, isBasicJewel, isRadiusJewel } from './jewels'
 import { isLiquidEmotionMappedMod, jewelCapacityModKind } from './liquidEmotions'
 import type { CraftState } from './rehearsal'
 
 /** 已有增容状态用于来源与版本门禁；来源损坏也不能绕开门禁。 */
 export function usesJewelCapacity(catalog: CraftCatalog, state: CraftState): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  if (!base || !isBasicJewel(base) || state.rarity !== 'rare') return false
+  if (!base || (!isBasicJewel(base) && !isRadiusJewel(base)) || state.rarity !== 'rare')
+    return false
   const counts = { prefix: 0, suffix: 0 }
   for (const affix of state.affixes) {
     if (
@@ -30,7 +31,7 @@ export function craftAffixCapacities(
   if (!base) return { prefix: 0, suffix: 0 }
   const limit = craftAffixLimit(base, state.rarity)
   const capacity = { prefix: limit, suffix: limit }
-  if (!isBasicJewel(base) || state.rarity !== 'rare') return capacity
+  if ((!isBasicJewel(base) && !isRadiusJewel(base)) || state.rarity !== 'rare') return capacity
   for (const affix of state.affixes) {
     if (!affix.crafted) continue
     const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
@@ -56,7 +57,9 @@ export function craftAffixSpace(
   }
   if (state.pendingDesecration) counts[state.pendingDesecration.kind]++
   const totalLimit =
-    isBasicJewel(base) && state.rarity === 'rare' ? 5 : capacity.prefix + capacity.suffix
+    (isBasicJewel(base) || isRadiusJewel(base)) && state.rarity === 'rare'
+      ? 5
+      : capacity.prefix + capacity.suffix
   const remaining = Math.max(0, totalLimit - counts.prefix - counts.suffix)
   const prefix = Math.min(remaining, Math.max(0, capacity.prefix - counts.prefix))
   const suffix = Math.min(remaining, Math.max(0, capacity.suffix - counts.suffix))

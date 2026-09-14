@@ -3,17 +3,19 @@ import { isRadiusJewel } from './jewels'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import type { ItemDocument } from './types'
 
-export type JewelRadius = 'Small' | 'Medium' | 'Large'
+export type JewelRadius = 'Small' | 'Medium' | 'Large' | 'Very Large'
 export const JEWEL_RADIUS_LABELS: Record<JewelRadius, string> = {
   Small: '小',
   Medium: '中',
   Large: '大',
+  'Very Large': '超大',
 }
 // 中文标题为工具接受语法；实际国服高级复制格式仍待样本验收。
 export const JEWEL_RADIUS_HEADER = /^(?:Radius|范围|範圍|半径|半徑)\s*[:：]/i
 const UPGRADES = [
   { id: 'JewelRadiusMediumSize', size: 'Medium' },
   { id: 'JewelRadiusLargeSize', size: 'Large' },
+  { id: 'CraftedJewelRadiusExtraLargeSize', size: 'Very Large' },
 ] as const
 
 /** 半径仅从当前装备派生，不使用来源原文的旧面板，也不计算树上覆盖。 */
@@ -37,6 +39,7 @@ export function estimateJewelRadius(
       mod.kind !== 'prefix' ||
       mod.group !== 'JewelRadiusLargerRadius' ||
       !mod.radiusJewelOnly ||
+      (upgrade.size === 'Very Large' && (!mod.craftedOnly || !affix.crafted)) ||
       mod.lines.length !== 1 ||
       mod.lines[0] !== `Upgrades Radius to ${upgrade.size}`
     )
