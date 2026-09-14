@@ -67,6 +67,200 @@ const click = (name: string) => {
   fireEvent.click(button)
 }
 const translations = { 'Diluted Liquid Ire': '稀释的液化愤怒' }
+
+const contemptId = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
+function capacityFixture() {
+  const result = fixture()
+  const template = result.catalog.modifiers.find((mod) => mod.id === 'prefix2')
+  if (!template) throw Error('缺少测试属性')
+  result.catalog.modifiers.push(
+    {
+      ...template,
+      id: 'CraftedJewelAdditionalSuffixAllowed',
+      name: '',
+      kind: 'prefix',
+      group: 'PrefixSuffixAllowed',
+      craftedOnly: true,
+      lines: ['+1 Suffix Modifier allowed'],
+      eligibility: [{ tag: 'jewel', value: 0 }],
+    },
+    {
+      ...template,
+      id: 'CraftedJewelAdditionalPrefixAllowed',
+      name: '',
+      kind: 'suffix',
+      group: 'PrefixSuffixAllowed',
+      craftedOnly: true,
+      lines: ['+1 Prefix Modifier allowed'],
+      eligibility: [{ tag: 'jewel', value: 0 }],
+    },
+  )
+  result.catalog.liquidEmotions?.push({
+    id: contemptId,
+    name: 'Potent Liquid Contempt',
+    radiusJewel: false,
+    tierLevel: 77,
+    mods: {
+      Ruby: {},
+      Sapphire: {
+        prefix: 'CraftedJewelAdditionalSuffixAllowed',
+        suffix: 'CraftedJewelAdditionalPrefixAllowed',
+      },
+      Emerald: {},
+      Diamond: {},
+    },
+  })
+  return result
+}
+
+it('双侧液态材料先明确可能结果，切换侧别会清除移除选择', () => {
+  const { catalog, state } = capacityFixture()
+  const preview = vi.fn()
+  render(
+    <LiquidEmotionCraftPanel
+      catalog={catalog}
+      state={state}
+      translations={{ 'Potent Liquid Contempt': '强效的液化轻蔑' }}
+      disabled={false}
+      onPreview={preview}
+    />,
+  )
+  click('选择液态情感 强效的液化轻蔑')
+  expect((screen.getByLabelText('液态情感保证结果') as HTMLSelectElement).value).toBe('')
+  expect(screen.queryByLabelText('液态情感移除结果')).toBeNull()
+  fireEvent.change(screen.getByLabelText('液态情感保证结果'), { target: { value: 'prefix' } })
+  fireEvent.change(screen.getByLabelText('液态情感移除结果'), { target: { value: 'prefix1' } })
+  click('预览液态情感结果')
+  expect(preview).toHaveBeenLastCalledWith({
+    kind: 'liquid-emotion',
+    emotionId: contemptId,
+    resultKind: 'prefix',
+    removeModId: 'prefix1',
+    values: [],
+  })
+  fireEvent.change(screen.getByLabelText('液态情感保证结果'), { target: { value: 'suffix' } })
+  expect((screen.getByLabelText('液态情感移除结果') as HTMLSelectElement).value).toBe('')
+  expect(
+    (screen.getByRole('button', { name: '预览液态情感结果' }) as HTMLButtonElement).disabled,
+  ).toBe(true)
+  fireEvent.change(screen.getByLabelText('液态情感移除结果'), { target: { value: 'suffix1' } })
+  click('预览液态情感结果')
+  expect(preview).toHaveBeenLastCalledWith({
+    kind: 'liquid-emotion',
+    emotionId: contemptId,
+    resultKind: 'suffix',
+    removeModId: 'suffix1',
+    values: [],
+  })
+})
+
+it('增容沿条件指引预览应用并更新空位，项目保存与撤销恢复保留结果侧别', () => {
+  const { catalog, state, restored } = capacityFixture()
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={state}
+      initialProject={restored}
+      translations={{ 'Potent Liquid Contempt': '强效的液化轻蔑' }}
+    />,
+  )
+  fireEvent.change(screen.getByLabelText('搜索目标词缀'), {
+    target: { value: 'CraftedJewelAdditionalSuffixAllowed' },
+  })
+  click('加入目标 CraftedJewelAdditionalSuffixAllowed')
+  click('启用条件指引示例')
+  fireEvent.change(screen.getByLabelText('规则 4 动作'), { target: { value: 'liquid-emotion' } })
+  fireEvent.change(screen.getByLabelText('规则 4 液态情感'), { target: { value: contemptId } })
+  click('开始指引步骤')
+  click('选择液态情感 强效的液化轻蔑')
+  fireEvent.change(screen.getByLabelText('液态情感保证结果'), { target: { value: 'prefix' } })
+  fireEvent.change(screen.getByLabelText('液态情感移除结果'), { target: { value: 'prefix1' } })
+  click('预览液态情感结果')
+  click('应用液态情感结果')
+  expect(screen.getByRole('heading', { name: '后缀 2/3' })).toBeDefined()
+  expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
+  expect(screen.getByText('强效的液化轻蔑 × 1')).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
+  expect(saved.operations.at(-1).resultKind).toBe('prefix')
+  expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
+  expect(parseCraftProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  click('撤销')
+  expect(screen.getByRole('heading', { name: '后缀 2/2' })).toBeDefined()
+  click('重做')
+  expect(screen.getByRole('heading', { name: '后缀 2/3' })).toBeDefined()
+  click('恢复本机演练')
+  expect(screen.getByText('演练项目已恢复。')).toBeDefined()
+})
+
+it('移除增容后显示已有三后缀保留，满五组拒绝新增且项目可恢复', () => {
+  const { catalog, restored } = capacityFixture()
+  const checked = parseCraftProject(
+    JSON.stringify({
+      ...restored.project,
+      liquidEmotionSourceHash: LIQUID_EMOTION_SOURCE.sha256,
+      operations: [
+        ...restored.project.operations,
+        {
+          kind: 'liquid-emotion',
+          emotionId: contemptId,
+          resultKind: 'prefix',
+          removeModId: 'prefix1',
+          values: [],
+        },
+        { currency: 'exalted', modIds: ['suffix3'], rolls: [{ modId: 'suffix3', values: [5] }] },
+        { currency: 'annulment', modIds: [], removeModId: 'CraftedJewelAdditionalSuffixAllowed' },
+        { currency: 'exalted', modIds: ['prefix2'], rolls: [{ modId: 'prefix2', values: [5] }] },
+      ],
+      cursor: 5,
+    }),
+    catalog,
+  )
+  if (!checked.ok) throw Error(checked.error)
+  const state = checked.value.states[5]
+  if (!state) throw Error('缺少五词缀状态')
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={state}
+      initialProject={checked.value}
+      translations={{}}
+    />,
+  )
+  expect(screen.getByRole('heading', { name: '后缀 3/2' })).toBeDefined()
+  expect(screen.getByText('已有后缀保留；当前已超过新增上限，不能再新增后缀。')).toBeDefined()
+  expect(screen.queryByText('空后缀')).toBeNull()
+  click('崇高石')
+  expect(screen.getByText('稀有装备词缀已满。')).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
+  expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
+  expect(parseCraftProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  click('恢复本机演练')
+  expect(screen.getByRole('heading', { name: '后缀 3/2' })).toBeDefined()
+})
+
+it('已接受的五组历史状态即使侧别容量有余量，也不显示可新增空槽', () => {
+  const { catalog, state } = capacityFixture()
+  const initialState = {
+    ...state,
+    affixes: [
+      ...state.affixes,
+      {
+        modId: 'CraftedJewelAdditionalSuffixAllowed',
+        lines: ['+1 Suffix Modifier allowed'],
+        crafted: true as const,
+      },
+    ],
+  }
+  render(<RehearsalPanel catalog={catalog} initialState={initialState} translations={{}} />)
+  expect(screen.getByRole('heading', { name: '前缀 3/2' })).toBeDefined()
+  expect(screen.getByRole('heading', { name: '后缀 2/3' })).toBeDefined()
+  expect(screen.queryByText('空后缀')).toBeNull()
+  expect(screen.getByText('已有词缀已达五组上限，当前不能新增词缀。')).toBeDefined()
+  click('崇高石')
+  expect(screen.getByText('稀有装备词缀已满。')).toBeDefined()
+})
 it('液态制作选择合法移除对象和数值后才能预览，显示移除目标风险', () => {
   const { catalog, state } = fixture()
   const preview = vi.fn()

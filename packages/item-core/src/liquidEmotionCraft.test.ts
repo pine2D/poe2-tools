@@ -410,3 +410,21 @@ describe('基础液态情感制作', () => {
     expect(removed.ok && removed.value.affixes.some((affix) => affix.crafted)).toBe(false)
   })
 })
+
+it('单侧基础材料仍可执行，但 API 与严格步骤均拒绝多余 resultKind', () => {
+  const { catalog, state } = fixture()
+  const emotionId = 'Metadata/Items/Currency/DistilledEmotion1'
+  expect(prepareLiquidEmotionCraft(catalog, state, emotionId).ok).toBe(true)
+  for (const resultKind of ['prefix', 'suffix'] as const) {
+    expect(prepareLiquidEmotionCraft(catalog, state, emotionId, resultKind).ok).toBe(false)
+    expect(
+      applyCraftStep(catalog, state, {
+        kind: 'liquid-emotion',
+        emotionId,
+        resultKind,
+        removeModId: 'prefix-1',
+        values: [2, 5, 7],
+      }).ok,
+    ).toBe(false)
+  }
+})

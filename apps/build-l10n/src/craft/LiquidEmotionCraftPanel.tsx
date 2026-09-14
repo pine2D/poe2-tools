@@ -3,6 +3,7 @@ import {
   type CraftState,
   type CraftTargetAlternative,
   type CraftTargetValues,
+  inspectLiquidEmotions,
   inspectNumericLines,
   type LiquidEmotionCraftOperation,
   matchesTargetInterval,
@@ -43,18 +44,27 @@ export function LiquidEmotionCraftPanel({
 }: Props) {
   const [query, setQuery] = useState('')
   const [selection, setSelection] = useState<LiquidEmotionCraftOperation | null>(null)
-  const entries = useMemo(
-    () =>
-      (catalog.liquidEmotions ?? []).map((emotion) => ({
-        emotion,
-        prepared: prepareLiquidEmotionCraft(catalog, state, emotion.id),
-      })),
-    [catalog, state],
-  )
+  const entries = useMemo(() => {
+    const base = catalog.bases.find((entry) => entry.id === state.baseId)
+    if (!base) return []
+    return inspectLiquidEmotions(catalog, base).map((inspection) => ({
+      ...inspection,
+      options: inspection.outcomes.map((mod) => {
+        const resultKind = inspection.outcomes.length > 1 ? mod.kind : undefined
+        return {
+          mod,
+          resultKind,
+          prepared: prepareLiquidEmotionCraft(catalog, state, inspection.emotion.id, resultKind),
+        }
+      }),
+    }))
+  }, [catalog, state])
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const selected = entries.find((entry) => entry.emotion.id === selection?.emotionId)
-  const prepared = selected?.prepared
+  const prepared = selected?.options.find(
+    (option) => option.resultKind === selection?.resultKind,
+  )?.prepared
   const mod = prepared?.ok ? prepared.value.mod : undefined
   const removable = prepared?.ok ? prepared.value.removableAffixes : []
   const targetsFor = (id: string) =>
@@ -78,7 +88,7 @@ export function LiquidEmotionCraftPanel({
     <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
       <summary ref={entryRef}>液态情感制作</summary>
       <p>
-        游戏随机移除一组词缀，加入材料保证的工艺属性。这里选择一种可能结果进行演练；已有工艺最多一组。
+        游戏随机移除一组词缀，加入材料对应的工艺属性。这里选择一种可能结果进行演练；已有工艺最多一组。双侧材料的结果选择仅用于演练。
       </p>
       <label>
         搜索液态情感
@@ -99,20 +109,27 @@ export function LiquidEmotionCraftPanel({
                 text.toLowerCase().includes(query.trim().toLowerCase()),
               ),
           )
-          .map(({ emotion, prepared: result }) => (
+          .map(({ emotion, options, reason }) => (
             <article key={emotion.id}>
               <h4>{local(emotion.name)}</h4>
-              {result.ok ? (
+              {options.some((option) => option.prepared.ok) ? (
                 <>
-                  <p>
-                    {result.value.mod.lines.map((line) => translateLine?.(line) ?? line).join('；')}
-                  </p>
+                  {options.map(({ mod: outcome }) => (
+                    <p key={outcome.id}>
+                      {options.length > 1
+                        ? `${outcome.kind === 'prefix' ? '前缀' : '后缀'}工艺：`
+                        : ''}
+                      {outcome.lines.map((line) => translateLine?.(line) ?? line).join('；')}
+                    </p>
+                  ))}
                   <button
                     type="button"
                     aria-label={`选择液态情感 ${local(emotion.name)}`}
                     disabled={disabled}
                     onClick={() => {
-                      const ranges = inspectNumericLines(result.value.mod.lines)
+                      const ranges = inspectNumericLines(
+                        options.length === 1 ? (options[0]?.mod.lines ?? []) : [],
+                      )
                       if (ranges.ok)
                         setSelection({
                           kind: 'liquid-emotion',
@@ -126,59 +143,109 @@ export function LiquidEmotionCraftPanel({
                   </button>
                 </>
               ) : (
-                <p>{result.error}</p>
+                <p>
+                  {reason ??
+                    options
+                      .map((option) => (option.prepared.ok ? '' : option.prepared.error))
+                      .filter(Boolean)[0]}
+                </p>
               )}
             </article>
           ))}
       </section>
-      {selection && mod ? (
+      {selection ? (
         <fieldset disabled={disabled}>
           <legend>{selected ? local(selected.emotion.name) : '液态情感结果'}</legend>
-          {targetsFor(mod.id).length ? (
-            <p>保证属性对应目标：{targetsFor(mod.id).join('、')}</p>
+          {selected && selected.options.length > 1 ? (
+            <label>
+              选择要演练的工艺结果
+              <select
+                aria-label="液态情感保证结果"
+                value={selection.resultKind ?? ''}
+                onChange={(event) => {
+                  const option = selected.options.find(
+                    (entry) => entry.resultKind === event.target.value,
+                  )
+                  const ranges = inspectNumericLines(option?.mod.lines ?? [])
+                  if (ranges.ok)
+                    setSelection({
+                      kind: 'liquid-emotion',
+                      emotionId: selection.emotionId,
+                      ...(option?.resultKind ? { resultKind: option.resultKind } : {}),
+                      removeModId: '',
+                      values: ranges.value.map((range) => range.min),
+                    })
+                }}
+              >
+                <option value="">选择一种可能结果</option>
+                {selected.options.map((option) => (
+                  <option
+                    key={option.mod.id}
+                    value={option.resultKind}
+                    disabled={!option.prepared.ok}
+                  >
+                    {option.mod.kind === 'prefix' ? '前缀' : '后缀'}工艺 ·{' '}
+                    {option.mod.lines.map((line) => translateLine?.(line) ?? line).join('；')}
+                    {option.prepared.ok ? '' : `（${option.prepared.error}）`}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : null}
-          {atRisk.length ? <p>可能移除已有目标：{atRisk.join('、')}</p> : null}
-          <label>
-            指定移除整组
-            <select
-              aria-label="液态情感移除结果"
-              value={selection.removeModId}
-              onChange={(event) => setSelection({ ...selection, removeModId: event.target.value })}
-            >
-              <option value="">选择要演练的移除结果</option>
-              {removable.map((affix) => (
-                <option key={affix.modId} value={affix.modId}>
-                  {affix.modId} ·{' '}
-                  {affix.lines.map((line) => translateLine?.(line) ?? line).join('；')}
-                </option>
-              ))}
-            </select>
-          </label>
-          {removedTargets.length ? <p>本次将移除已有目标：{removedTargets.join('、')}</p> : null}
-          <NumericControls
-            label="液态情感保证属性"
-            patterns={mod.lines}
-            values={selection.values}
-            onChange={(values) => setSelection({ ...selection, values })}
-            {...(translateLine ? { translateLine } : {})}
-          />
-          {goal ? (
-            <p>
-              {goal.bounds.every((bound) => {
-                const value = selection.values[bound.index]
-                return (
-                  value !== undefined &&
-                  Number.isFinite(value) &&
-                  matchesTargetInterval({ min: value, max: value }, bound)
-                )
-              })
-                ? '演练数值满足该目标区间。'
-                : '演练数值尚未满足该目标区间。'}
-            </p>
+          {prepared && !prepared.ok ? <p role="status">{prepared.error}</p> : null}
+          {mod ? (
+            <>
+              {targetsFor(mod.id).length ? (
+                <p>保证属性对应目标：{targetsFor(mod.id).join('、')}</p>
+              ) : null}
+              {atRisk.length ? <p>可能移除已有目标：{atRisk.join('、')}</p> : null}
+              <label>
+                指定移除整组
+                <select
+                  aria-label="液态情感移除结果"
+                  value={selection.removeModId}
+                  onChange={(event) =>
+                    setSelection({ ...selection, removeModId: event.target.value })
+                  }
+                >
+                  <option value="">选择要演练的移除结果</option>
+                  {removable.map((affix) => (
+                    <option key={affix.modId} value={affix.modId}>
+                      {affix.modId} ·{' '}
+                      {affix.lines.map((line) => translateLine?.(line) ?? line).join('；')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {removedTargets.length ? (
+                <p>本次将移除已有目标：{removedTargets.join('、')}</p>
+              ) : null}
+              <NumericControls
+                label="液态情感保证属性"
+                patterns={mod.lines}
+                values={selection.values}
+                onChange={(values) => setSelection({ ...selection, values })}
+                {...(translateLine ? { translateLine } : {})}
+              />
+              {goal ? (
+                <p>
+                  {goal.bounds.every((bound) => {
+                    const value = selection.values[bound.index]
+                    return (
+                      value !== undefined &&
+                      Number.isFinite(value) &&
+                      matchesTargetInterval({ min: value, max: value }, bound)
+                    )
+                  })
+                    ? '演练数值满足该目标区间。'
+                    : '演练数值尚未满足该目标区间。'}
+                </p>
+              ) : null}
+              <button type="button" disabled={!valid} onClick={() => onPreview(selection)}>
+                预览液态情感结果
+              </button>
+            </>
           ) : null}
-          <button type="button" disabled={!valid} onClick={() => onPreview(selection)}>
-            预览液态情感结果
-          </button>
         </fieldset>
       ) : null}
     </details>

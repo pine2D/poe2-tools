@@ -150,13 +150,10 @@ function targetPools(catalog: CraftCatalog, baseId: string) {
   const liquid = new Set(
     base
       ? inspectLiquidEmotions(catalog, base)
-          .filter(
-            (entry) =>
-              entry.reason === null &&
-              entry.mod !== null &&
-              inspectNumericLines(entry.mod.lines).ok,
-          )
-          .map((entry) => entry.modId)
+          .filter((entry) => entry.reason === null)
+          .flatMap((entry) => entry.outcomes)
+          .filter((mod) => inspectNumericLines(mod.lines).ok)
+          .map((mod) => mod.id)
       : [],
   )
   return { ordinary, essence, liquid, desecrated, genesis }

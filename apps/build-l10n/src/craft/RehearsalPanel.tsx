@@ -25,7 +25,8 @@ import {
   type CraftTargetAlternative,
   type CraftTargetValues,
   collectCraftCosts,
-  craftAffixLimit,
+  craftAffixCapacities,
+  craftAffixSpace,
   craftCandidates,
   craftOmenDescription,
   craftOmenMaterials,
@@ -37,6 +38,7 @@ import {
   type FractureCraftOperation,
   type ItemDictionary,
   inspectNumericLines,
+  isBasicJewel,
   jewelSourceHash,
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
@@ -51,6 +53,7 @@ import {
   type SocketCraftOperation,
   statScalabilitySourceHash,
   strategyStageAt,
+  usesJewelCapacity,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CraftPricingPanel } from './CraftPricingPanel'
@@ -769,7 +772,8 @@ export function RehearsalPanel({
     setRemovalCurrency(null)
     setMessage('')
   }
-  const capacities = craftAffixLimit(base, current.rarity)
+  const capacities = craftAffixCapacities(catalog, current)
+  const space = craftAffixSpace(catalog, current)
   const prefixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'prefix')
   const suffixes = current.affixes.filter((affix) => modById.get(affix.modId)?.kind === 'suffix')
   const omenLabel = (id: CraftOmen) =>
@@ -859,6 +863,11 @@ export function RehearsalPanel({
   })
   const emotionHash =
     craftedJewelTarget ||
+    (isBasicJewel(base) &&
+      (['prefix', 'suffix'] as const).some(
+        (kind) => targetModIds.filter((id) => modById.get(id)?.kind === kind).length > 2,
+      )) ||
+    history.some(({ state }) => usesJewelCapacity(catalog, state)) ||
     history[0]?.state.affixes.some((affix) => base.type === 'Jewel' && affix.crafted) ||
     strategy?.rules.some((rule) => rule.action.kind === 'liquid-emotion') ||
     history.some(
@@ -1639,12 +1648,20 @@ export function RehearsalPanel({
           <p>可继续常规制作；亵渎组也可能被移除。再次施加骨骼前需先移除已有亵渎组。</p>
         </div>
       ) : null}
+      {isBasicJewel(base) &&
+      current.affixes.length === 5 &&
+      (prefixes.length < capacities.prefix || suffixes.length < capacities.suffix) ? (
+        <p>已有词缀已达五组上限，当前不能新增词缀。</p>
+      ) : null}
       <div className="rehearsal-slots">
         <section>
           <h3>
             前缀 {prefixes.length + (current.pendingDesecration?.kind === 'prefix' ? 1 : 0)}/
-            {capacities}
+            {capacities.prefix}
           </h3>
+          {prefixes.length > capacities.prefix ? (
+            <p>已有前缀保留；当前已超过新增上限，不能再新增前缀。</p>
+          ) : null}
           {current.pendingDesecration?.kind === 'prefix' ? (
             <p className="rehearsal-affix">未揭示亵渎前缀</p>
           ) : null}
@@ -1659,15 +1676,7 @@ export function RehearsalPanel({
               translateLine={translateLine}
             />
           ))}
-          {SLOT_NUMBERS.slice(
-            0,
-            Math.max(
-              0,
-              capacities -
-                prefixes.length -
-                (current.pendingDesecration?.kind === 'prefix' ? 1 : 0),
-            ),
-          ).map((slot) => (
+          {SLOT_NUMBERS.slice(0, space.prefix).map((slot) => (
             <p className="rehearsal-empty-slot" key={`prefix-${slot}`}>
               空前缀
             </p>
@@ -1676,8 +1685,11 @@ export function RehearsalPanel({
         <section>
           <h3>
             后缀 {suffixes.length + (current.pendingDesecration?.kind === 'suffix' ? 1 : 0)}/
-            {capacities}
+            {capacities.suffix}
           </h3>
+          {suffixes.length > capacities.suffix ? (
+            <p>已有后缀保留；当前已超过新增上限，不能再新增后缀。</p>
+          ) : null}
           {current.pendingDesecration?.kind === 'suffix' ? (
             <p className="rehearsal-affix">未揭示亵渎后缀</p>
           ) : null}
@@ -1692,15 +1704,7 @@ export function RehearsalPanel({
               translateLine={translateLine}
             />
           ))}
-          {SLOT_NUMBERS.slice(
-            0,
-            Math.max(
-              0,
-              capacities -
-                suffixes.length -
-                (current.pendingDesecration?.kind === 'suffix' ? 1 : 0),
-            ),
-          ).map((slot) => (
+          {SLOT_NUMBERS.slice(0, space.suffix).map((slot) => (
             <p className="rehearsal-empty-slot" key={`suffix-${slot}`}>
               空后缀
             </p>

@@ -79,13 +79,10 @@ function imported(state: CraftState, locale: 'en' | 'zh-CN' | 'zh-TW' = 'en'): C
   return result.value
 }
 describe('珠宝工艺专属固定效果', () => {
-  it('支持列表新增 Melancholy，增容增效尚不因数据声明而开放', () => {
+  it('支持 Melancholy 与已验证的 Contempt，Ferocity 仍未开放', () => {
     expect(supportedLiquidEmotionId(melancholy)).toBe(true)
-    for (const id of [
-      'Metadata/Items/Currency/EndgameDistilledEmotion2',
-      'Metadata/Items/Currency/EndgameDistilledEmotion3',
-      `${melancholy}0`,
-    ])
+    expect(supportedLiquidEmotionId('Metadata/Items/Currency/EndgameDistilledEmotion3')).toBe(true)
+    for (const id of ['Metadata/Items/Currency/EndgameDistilledEmotion2', `${melancholy}0`])
       expect(supportedLiquidEmotionId(id)).toBe(false)
   })
   it.each(cases)(

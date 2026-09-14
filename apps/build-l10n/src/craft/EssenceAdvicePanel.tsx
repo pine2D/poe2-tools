@@ -27,7 +27,7 @@ export function EssenceResultDetails({
 }: EssenceResultDetailsProps) {
   const prepared =
     operation.kind === 'liquid-emotion'
-      ? prepareLiquidEmotionCraft(catalog, state, operation.emotionId)
+      ? prepareLiquidEmotionCraft(catalog, state, operation.emotionId, operation.resultKind)
       : prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
   if (!prepared.ok) return <p role="alert">{prepared.error}</p>
   const rendered = renderNumericLines(prepared.value.mod.lines, operation.values)

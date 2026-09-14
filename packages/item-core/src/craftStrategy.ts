@@ -1,7 +1,7 @@
+import { craftAffixSpace } from './affixCapacity'
 import type { CraftCatalog } from './catalog'
 import type { CraftImplicitTargetValues } from './implicitTargets'
 import { type CraftProperty, readCraftProperty } from './itemProperties'
-import { craftAffixLimit } from './jewels'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
   type CraftStrategyAction,
@@ -189,14 +189,7 @@ export function evaluateCraftStrategy(
   }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail('当前基底不在制作目录中。')
-  const capacity = craftAffixLimit(base, state.rarity)
-  const counts = { prefix: 0, suffix: 0 }
-  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  for (const affix of state.affixes) {
-    const kind = mods.get(affix.modId)?.kind
-    if (kind) counts[kind]++
-  }
-  if (state.pendingDesecration) counts[state.pendingDesecration.kind]++
+  const space = craftAffixSpace(catalog, state)
   let targetsMet = false
   const matchedTargets = new Set<string>()
   if (
@@ -273,7 +266,7 @@ export function evaluateCraftStrategy(
     if (condition.kind === 'rarity') return state.rarity === condition.value
     if (condition.kind === 'targets-met') return targetsMet === condition.value
     const side = condition.kind === 'open-prefix' ? 'prefix' : 'suffix'
-    return capacity - counts[side] >= condition.min
+    return space[side] >= condition.min
   }
   let currentStage = stageId
   const visited = new Set<string>()

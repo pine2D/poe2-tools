@@ -1,3 +1,4 @@
+import { craftAffixSpace, usesJewelCapacity } from './affixCapacity'
 import { readStatAnnotations, UNSCALABLE_SUFFIX } from './annotations'
 import {
   beltBaseError,
@@ -27,7 +28,11 @@ import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { craftAffixLimit, isBasicJewel, jewelSourceHash } from './jewels'
-import { isLiquidEmotionMappedMod } from './liquidEmotions'
+import {
+  isLiquidEmotionMappedMod,
+  jewelCapacityModKind,
+  liquidEmotionSourceHash,
+} from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
@@ -333,6 +338,12 @@ export function createCraftState(
     if (!Array.isArray(affix.lines) || !affix.lines.every((line) => typeof line === 'string'))
       return failure(`词缀 ${affix.modId} 的属性行与制作目录不一致。`)
     if (
+      !(
+        isBasicJewel(base) &&
+        affix.crafted &&
+        jewelCapacityModKind(mod) !== null &&
+        isLiquidEmotionMappedMod(catalog, base, mod.id)
+      ) &&
       mod.lines.some((line) =>
         /(?:[+-]\d+\s+(?:Prefix|Suffix) Modifier allowed|Can roll .+ Modifiers)/i.test(line),
       )
@@ -374,7 +385,12 @@ export function createCraftState(
     else suffixes += 1
   }
 
-  const capacity = limits(base, input.rarity)
+  const historicalJewel = isBasicJewel(base) && input.rarity === 'rare'
+  if (usesJewelCapacity(catalog, input) && liquidEmotionSourceHash(catalog) === null)
+    return failure('超过固有 2/2 容量或含增容工艺的珠宝需要可信液态情感来源指纹。')
+  const capacity = historicalJewel ? { prefix: 3, suffix: 3 } : limits(base, input.rarity)
+  if (historicalJewel && prefixes + suffixes > 5)
+    return failure('普通稀有珠宝已有词缀最多每侧 3 组、总计 5 组。')
   if (prefixes > capacity.prefix || suffixes > capacity.suffix) {
     if (input.rarity === 'normal') return failure('普通装备不能带有显式词缀。')
     if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')
@@ -412,9 +428,7 @@ export function craftCandidates(
   })
   const occupiedGroups = existing.map((mod) => mod.group)
   const addedTags = existing.flatMap((mod) => mod.addsTags)
-  const capacity = limits(base, state.rarity)
-  const prefixes = existing.filter((mod) => mod.kind === 'prefix').length
-  const suffixes = existing.filter((mod) => mod.kind === 'suffix').length
+  const space = craftAffixSpace(catalog, state)
   const candidates = inspectModPool(
     base,
     catalog.modifiers,
@@ -427,7 +441,7 @@ export function craftCandidates(
         return false
       if (omenRule?.effect === 'add' && omenRule.kind !== null && mod.kind !== omenRule.kind)
         return false
-      return mod.kind === 'prefix' ? prefixes < capacity.prefix : suffixes < capacity.suffix
+      return space[mod.kind] > 0
     })
     .map(({ mod }) => mod)
   const minimum = currency === undefined ? 0 : (currencyRule(currency)?.minModLevel ?? 0)
@@ -596,19 +610,9 @@ export function prepareCraftOperation(
     draft = current
     count = omen === undefined ? 1 : (CRAFT_OMEN_RULES[omen].addCount ?? 1)
     if (count === 2) {
-      const capacity = limits(findBase(catalog, current.baseId) as CatalogBase, 'rare')
+      const space = craftAffixSpace(catalog, current)
       const side = omen === undefined ? null : CRAFT_OMEN_RULES[omen].kind
-      const free = (['prefix', 'suffix'] as const)
-        .filter((kind) => side === null || side === kind)
-        .reduce(
-          (sum, kind) =>
-            sum +
-            capacity[kind] -
-            current.affixes.filter(
-              (affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind === kind,
-            ).length,
-          0,
-        )
+      const free = side === null ? space.total : space[side]
       if (free < 2)
         return failure('强效崇高配置需要至少两个对应侧合法空位；不足时的预兆消费行为尚未核实。')
     }
@@ -617,14 +621,7 @@ export function prepareCraftOperation(
   }
 
   if (count > 0 && craftCandidates(catalog, draft, currency, omen).length === 0) {
-    const capacity = limits(findBase(catalog, draft.baseId) as CatalogBase, draft.rarity)
-    const mods = draft.affixes.flatMap((affix) => {
-      const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
-      return mod === undefined ? [] : [mod]
-    })
-    const full =
-      mods.filter((mod) => mod.kind === 'prefix').length >= capacity.prefix &&
-      mods.filter((mod) => mod.kind === 'suffix').length >= capacity.suffix
+    const full = craftAffixSpace(catalog, draft).total === 0
     if (full && draft.rarity === 'rare') return failure('稀有装备词缀已满。')
     if (full && draft.rarity === 'magic') return failure('魔法装备词缀已满。')
     if (rule.minModLevel > 0)

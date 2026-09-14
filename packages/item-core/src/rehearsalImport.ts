@@ -301,7 +301,7 @@ export function importCraftState(
           .map((entry) => entry.modId),
   )
   for (const entry of inspectLiquidEmotions(catalog, base))
-    if (entry.reason === null && entry.mod) mappedIds.add(entry.mod.id)
+    if (entry.reason === null) for (const mod of entry.outcomes) mappedIds.add(mod.id)
   const matches = explicit.map((source, sourceIndex) => {
     // 工艺组只使用精华/液态的精确映射；临时匹配视图不改变原目录生成资格。
     const modifiers = source.mod.states?.includes('crafted')

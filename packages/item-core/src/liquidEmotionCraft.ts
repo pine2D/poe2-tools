@@ -1,3 +1,4 @@
+import { craftAffixSpace } from './affixCapacity'
 import type { CatalogLiquidEmotion, CatalogMod, CraftCatalog } from './catalog'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
@@ -14,6 +15,7 @@ export function prepareLiquidEmotionCraft(
   catalog: CraftCatalog,
   state: CraftState,
   emotionId: string,
+  resultKind?: 'prefix' | 'suffix',
 ): CraftResult<PreparedLiquidEmotionCraft> {
   const fail = (error: string): CraftResult<PreparedLiquidEmotionCraft> => ({ ok: false, error })
   const checked = createCraftState(catalog, state)
@@ -27,9 +29,16 @@ export function prepareLiquidEmotionCraft(
     (entry) => entry.emotion.id === emotionId,
   )
   if (!inspection) return fail('液态情感不在当前目录中。')
-  if (inspection.reason !== null || inspection.mod === null)
+  if (inspection.reason !== null || inspection.outcomes.length === 0)
     return fail(inspection.reason ?? '该液态情感映射尚未支持。')
-  const { emotion, mod } = inspection
+  const { emotion, outcomes } = inspection
+  if (outcomes.length === 1 && resultKind !== undefined)
+    return fail('单侧液态情感不能指定保证结果侧别。')
+  if (outcomes.length > 1 && resultKind !== 'prefix' && resultKind !== 'suffix')
+    return fail('必须显式选择液态情感保证结果。')
+  const mod =
+    outcomes.length === 1 ? outcomes[0] : outcomes.find((entry) => entry.kind === resultKind)
+  if (!mod) return fail('液态情感保证结果无效。')
   if (checked.value.itemLevel < mod.level) return fail('低物等交互尚未验证，暂不支持。')
   if (
     checked.value.affixes.some((affix) => {
@@ -43,13 +52,13 @@ export function prepareLiquidEmotionCraft(
   const guaranteed: CraftAffix = { modId: mod.id, lines: [...mod.lines], crafted: true }
   const removableAffixes = checked.value.affixes.filter((removed) => {
     if (removed.fractured) return false
-    return createCraftState(catalog, {
+    const remaining = {
       ...checked.value,
-      affixes: [
-        ...checked.value.affixes.filter((affix) => affix.modId !== removed.modId),
-        guaranteed,
-      ],
-    }).ok
+      affixes: checked.value.affixes.filter((affix) => affix.modId !== removed.modId),
+    }
+    if (craftAffixSpace(catalog, remaining)[mod.kind] === 0) return false
+    return createCraftState(catalog, { ...remaining, affixes: [...remaining.affixes, guaranteed] })
+      .ok
   })
   if (removableAffixes.length === 0)
     return fail('没有满足容量与装备状态约束的可移除词缀，暂不支持。')

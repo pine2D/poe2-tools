@@ -1,3 +1,4 @@
+import { usesJewelCapacity } from './affixCapacity'
 import { readStatAnnotations } from './annotations'
 import { isBeltCapacityBase, resolveCraftImplicitPatterns } from './beltImplicits'
 import {
@@ -62,7 +63,8 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v51'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v52'
+const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
   'augmentation',
@@ -122,7 +124,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 51 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 52 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -237,7 +239,10 @@ function readOperation(value: unknown): CraftStep | null {
     return isBoneCraftOperation(value) ? value : null
   if (record(value) && Object.hasOwn(value, 'kind')) {
     if (value.kind === 'liquid-emotion')
-      return exactKeys(value, ['kind', 'emotionId', 'removeModId', 'values']) &&
+      return exactKeys(value, ['kind', 'emotionId', 'removeModId', 'values', 'resultKind']) &&
+        (!Object.hasOwn(value, 'resultKind') ||
+          value.resultKind === 'prefix' ||
+          value.resultKind === 'suffix') &&
         nonempty(value.emotionId) &&
         nonempty(value.removeModId) &&
         numericValues(value.values)
@@ -246,6 +251,9 @@ function readOperation(value: unknown): CraftStep | null {
             emotionId: value.emotionId,
             removeModId: value.removeModId,
             values: [...value.values],
+            ...(value.resultKind === 'prefix' || value.resultKind === 'suffix'
+              ? { resultKind: value.resultKind }
+              : {}),
           }
         : null
     if (value.kind === 'essence')
@@ -701,7 +709,29 @@ export function parseCraftProject(
     )
       return fail('v2–v50 旧版项目不能包含新增工艺液态材料或钻石液态步骤。')
   }
+  if (rulesVersion < 52) {
+    const capacityAction = (step: unknown) =>
+      record(step) &&
+      (Object.hasOwn(step, 'resultKind') ||
+        (step.kind === 'liquid-emotion' && step.emotionId === JEWEL_CAPACITY_EMOTION_ID))
+    if (
+      strategy?.rules.some((rule) => capacityAction(rule.action)) ||
+      (Array.isArray(value.operations) && value.operations.some(capacityAction))
+    )
+      return fail('v2–v51 旧版项目不能包含珠宝增容材料或结果侧别，包括撤销位置之后的步骤。')
+  }
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
+  // 输入、来源原文恢复结果和每个历史位置都核对，不能只依赖 crafted 标记或当前游标。
+  const validateCapacityState = (state: CraftState): string | null => {
+    if (!usesJewelCapacity(catalog, state)) return null
+    if (rulesVersion < 52) return 'v2–v51 旧版项目不能包含珠宝增容或超固有容量状态。'
+    if (
+      liquidEmotionSourceHash === null ||
+      value.liquidEmotionSourceHash !== liquidEmotionSourceHash
+    )
+      return '项目珠宝增容状态的液态情感来源指纹缺失或与当前目录不同。'
+    return null
+  }
   if (
     (usesLiquidEmotions || Object.hasOwn(value, 'liquidEmotionSourceHash')) &&
     (liquidEmotionSourceHash === null || value.liquidEmotionSourceHash !== liquidEmotionSourceHash)
@@ -886,6 +916,8 @@ export function parseCraftProject(
     return fail('演练历史游标无效。')
   const initialInput = readState(value.initialState)
   if (!initialInput) return fail('演练起点结构无效。')
+  const initialCapacityError = validateCapacityState(initialInput)
+  if (initialCapacityError) return fail(initialCapacityError)
   if (rulesVersion < 18 && initialInput.sourceText !== null) {
     const source = parseItem(initialInput.sourceText)
     if (
@@ -1095,6 +1127,8 @@ export function parseCraftProject(
     rulesVersion < 9,
   )
   if (!initial.ok) return initial
+  const restoredCapacityError = validateCapacityState(initial.value)
+  if (restoredCapacityError) return fail(restoredCapacityError)
   if (
     rulesVersion < 51 &&
     initial.value.affixes.some((affix) =>
@@ -1115,7 +1149,7 @@ export function parseCraftProject(
   )
     return fail('v2–v34 旧版项目不能包含恐惧精华镶嵌增效状态。')
   // 旧目标沿用当时的普通/精华身份，不因新版 Genesis 保留目标释放工艺槽。
-  const targetCatalog =
+  const legacyTargetCatalog =
     rulesVersion < 27
       ? {
           ...catalog,
@@ -1128,6 +1162,16 @@ export function parseCraftProject(
           })),
         }
       : catalog
+  // 旧目标保留已开放的普通液态身份，仅移除 v52 新增双侧材料。
+  const targetCatalog =
+    rulesVersion < 52
+      ? {
+          ...legacyTargetCatalog,
+          liquidEmotions: (legacyTargetCatalog.liquidEmotions ?? []).filter(
+            (emotion) => emotion.id !== JEWEL_CAPACITY_EMOTION_ID,
+          ),
+        }
+      : legacyTargetCatalog
   let targetModIds: string[] | undefined
   if (Object.hasOwn(value, 'targetModIds')) {
     if (!Array.isArray(value.targetModIds) || !value.targetModIds.every(nonempty))
@@ -1193,6 +1237,41 @@ export function parseCraftProject(
     if (!checkedValues.ok) return fail(`数值目标无效：${checkedValues.error}`)
     targetValues = checkedValues.value
   }
+  if (usesJewel && (targetModIds?.length ?? 0) > 0) {
+    const ids = targetModIds ?? []
+    const required = minimumTargetCount ?? ids.length
+    // 替代档位与主组同侧同冲突组，只枚举主组，不能把多个备选误算成已有属性。
+    let inherentCombination = false
+    for (let mask = 1; mask < 2 ** ids.length; mask++) {
+      const selected = ids.filter((_, index) => (mask & (1 << index)) !== 0)
+      if (
+        selected.length !== required ||
+        (targetFracturedModId !== undefined && !selected.includes(targetFracturedModId))
+      )
+        continue
+      const counts = { prefix: 0, suffix: 0 }
+      for (const id of selected) {
+        const mod = catalog.modifiers.find((entry) => entry.id === id)
+        if (mod) counts[mod.kind]++
+      }
+      if (
+        counts.prefix <= 2 &&
+        counts.suffix <= 2 &&
+        validateCraftTargets(targetCatalog, initial.value.baseId, selected).ok
+      ) {
+        inherentCombination = true
+        break
+      }
+    }
+    if (!inherentCombination) {
+      if (rulesVersion < 52) return fail('v2–v51 旧版项目不能包含超固有容量的珠宝目标组合。')
+      if (
+        liquidEmotionSourceHash === null ||
+        value.liquidEmotionSourceHash !== liquidEmotionSourceHash
+      )
+        return fail('项目珠宝增容目标的液态情感来源指纹缺失或与当前目录不同。')
+    }
+  }
   const operations: CraftStep[] = []
   let targetImplicitValues: CraftImplicitTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetImplicitValues')) {
@@ -1233,6 +1312,8 @@ export function parseCraftProject(
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     const next = applyCraftStep(catalog, current, operation)
     if (!next.ok) return fail(`第 ${index + 1} 步无法回放：${next.error}`)
+    const capacityError = validateCapacityState(next.value)
+    if (capacityError) return fail(`第 ${index + 1} 步无法回放：${capacityError}`)
     if (unsupportedLegacyAmplification(next.value))
       return fail(`第 ${index + 1} 步包含旧版不支持的恐惧精华镶嵌增效。`)
     operations.push(operation)
@@ -1340,6 +1421,8 @@ export function serializeCraftProject(project: CraftProject): string {
   for (const step of project.operations) {
     if ('kind' in step && isBoneOperationKind(step.kind) && !isBoneCraftOperation(step))
       throw new Error('骨骼或揭示操作字段无效，不能序列化项目。')
+    if ('kind' in step && step.kind === 'liquid-emotion' && !readOperation(step))
+      throw new Error('液态情感操作字段无效，不能序列化项目。')
   }
   // JSON 会丢弃 undefined；先拒绝显式非法来源，防止字段门禁被序列化绕过。
   for (const affix of project.initialState.affixes) {

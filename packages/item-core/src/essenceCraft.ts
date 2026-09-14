@@ -41,6 +41,7 @@ export function prepareEssenceCraft(
     )
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail('基底不在当前目录中。')
+  if (base.type === 'Jewel') return fail('珠宝精华制作尚未支持。')
   const category = essenceCategory(base)
   const modId = Object.hasOwn(essence.mods, category) ? essence.mods[category] : undefined
   if (modId === undefined) return fail('该精华没有当前基底类别的保证属性。')

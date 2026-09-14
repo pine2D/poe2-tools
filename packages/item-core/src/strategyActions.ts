@@ -141,7 +141,10 @@ export function checkCraftStrategyAction(
   }
   if (action.kind === 'liquid-emotion') {
     const result = prepareLiquidEmotionCraft(catalog, state, action.emotionId)
-    return result.ok ? ok : result
+    if (result.ok) return ok
+    for (const kind of ['prefix', 'suffix'] as const)
+      if (prepareLiquidEmotionCraft(catalog, state, action.emotionId, kind).ok) return ok
+    return result
   }
   if (action.kind === 'desecrate') {
     const { kind: _, boneId, ...config } = action

@@ -41,6 +41,7 @@ export interface EssenceCraftOperation {
 export interface LiquidEmotionCraftOperation {
   kind: 'liquid-emotion'
   emotionId: string
+  resultKind?: 'prefix' | 'suffix'
   removeModId: string
   values: number[]
 }
@@ -83,7 +84,10 @@ export function applyCraftStep(
   if ('kind' in step) {
     if (step.kind === 'liquid-emotion') {
       if (
-        !onlyKeys(step, ['kind', 'emotionId', 'removeModId', 'values']) ||
+        !onlyKeys(step, ['kind', 'emotionId', 'removeModId', 'values', 'resultKind']) ||
+        (Object.hasOwn(step, 'resultKind') &&
+          step.resultKind !== 'prefix' &&
+          step.resultKind !== 'suffix') ||
         typeof step.emotionId !== 'string' ||
         typeof step.removeModId !== 'string' ||
         !Array.isArray(step.values) ||
@@ -91,7 +95,12 @@ export function applyCraftStep(
         !step.values.every((value) => typeof value === 'number' && Number.isFinite(value))
       )
         return { ok: false, error: '液态情感步骤字段无效。' }
-      const prepared = prepareLiquidEmotionCraft(catalog, state, step.emotionId)
+      const prepared = prepareLiquidEmotionCraft(
+        catalog,
+        state,
+        step.emotionId,
+        step.resultKind === 'prefix' || step.resultKind === 'suffix' ? step.resultKind : undefined,
+      )
       if (!prepared.ok) return prepared
       if (!prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId))
         return { ok: false, error: '必须选择合法的可移除词缀。' }

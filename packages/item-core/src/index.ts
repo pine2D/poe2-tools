@@ -1,3 +1,4 @@
+export { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
 export {
   analyzeBoneTargets,
