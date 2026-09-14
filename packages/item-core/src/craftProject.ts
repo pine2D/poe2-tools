@@ -64,8 +64,9 @@ import {
   validateCraftTargets,
   validateCraftTargetValues,
 } from './targets'
+import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v56'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v57'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -126,7 +127,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 56 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 57 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -1139,6 +1140,14 @@ export function parseCraftProject(
       rule.action.kind === 'socket' ? [rule.action.augmentId] : [],
     ) ?? []),
   ]
+  if (
+    rulesVersion < 57 &&
+    socketIds.some((id) => {
+      const augment = catalog.augments?.find((entry) => entry.id === id)
+      return augment !== undefined && isExtendedWeaponRune(augment)
+    })
+  )
+    return fail('v56 及更早项目不能包含新增武器符文效果，包括起点、导入声明、未执行操作和指引。')
   if (
     rulesVersion < 56 &&
     socketIds.some((id) => {

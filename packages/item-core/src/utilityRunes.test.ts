@@ -96,9 +96,11 @@ it('身份、完整效果及限制必须一致，不能因名字放行绑定或�
   ])
     expect(isSupportedArmourRune({ ...augment, ...patch })).toBe(false)
   const weapon = socketCandidates(catalog, { ...state('Crude Bow'), sockets: [null] })
-  expect(
-    weapon.some((entry) => families.some((family) => entry.name.includes(`${family} Rune`))),
-  ).toBe(false)
+  expect(weapon.length).toBeGreaterThan(0)
+  expect(weapon.every((entry) => entry.category === 'weapon')).toBe(true)
+  expect(weapon.some((entry) => families.some((family) => entry.id === id(`${family} Rune`)))).toBe(
+    false,
+  )
 })
 
 it('导入总贡献按全部新属性核对，不允许只对上旧三抗', () => {

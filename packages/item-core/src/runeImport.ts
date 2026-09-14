@@ -83,7 +83,7 @@ export function runeSocketContributionError(
     if (!expected || !actual) return '原文或目录包含尚未支持的符文效果，不能核对。'
     return JSON.stringify(expected) === JSON.stringify(actual)
       ? null
-      : '符文效果与孔位声明不一致：请分别核对附加伤害两端及各项百分数。'
+      : `符文效果与孔位声明不一致：请核对伤害两端、百分数与基础属性；原文 ${state.runeSourceLines.join('；')}；所选 ${augments.flatMap((augment) => augment.lines).join('；') || '无'}。`
   }
   const expected = parseRuneEffectTotals(state.runeSourceLines)
   const actual = sumRuneEffects(augments)

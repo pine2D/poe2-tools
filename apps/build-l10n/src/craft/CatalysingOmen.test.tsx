@@ -69,7 +69,7 @@ it('单枚催化崇高沿草稿、取消、应用、消费、撤销与恢复更�
   ).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v56')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v57')
   expect(saved.operations).toHaveLength(1)
   expect(saved.operations[0].omen).toBe('catalysing_exaltation')
   expect(saved.initialState.catalyst.quality).toBe(20)

@@ -1,5 +1,11 @@
 # 数据源登记表
 
+### 普通武器符文扩展（2026-09-14）
+
+沿用固定 MIT `ModRunes.lua` 完整类别、效果、本地标志、限制与需求，开放攻击武器 Body、Mind、Rebirth、Inspiration、Stone、Vision、Robust、Adept、Resolve 四档及 Tempered 三档，法杖／施法长杖开放 Body、Mind、Rebirth、Inspiration、Stone、Vision 四档。固定目录合计 weapon 55、wand 40、staff 40 条受支持分支，没有补造缺失的 Perfect Tempered 或三属性施法效果。[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)的 Crafting Changes 明示十族符文在 Wands／Staves 使用独立效果及新增三属性符文；实际数值仍采用已登记快照，不当作当前所有服区真机验证。
+
+物理附加伤害沿既有固定 MIT Item.lua 的本地武器计算，先与基底及本地平值相加，再乘物理提高和品质。吸取、击杀回复、命中、属性及施法附加效果各自记录，不冒充本地 DPS 或角色最终面板。无新增抓取适配器、数据包或同行代码；普通整数来源核对继续拒绝负数、小数、未知混合及特殊限制。
+
 ### 普通防具符文扩展（2026-09-14）
 
 沿用已登记固定 MIT `ModRunes.lua` 的完整类别、限制字段、效果与等级需求，新增 Body、Mind、Inspiration、Stone、Vision、Robust、Adept、Resolve 八族四档的防具效果。数值采用固定目录快照，不把它推定为已完成所有服区的游戏验收。[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)用于核对属性三族的新增及武器有独立效果的事实；[0.1.1](https://www.pathofexile.com/forum/view-thread/3696353)沿用既有覆盖规则。没有新数据下载适配器、没有复制同行制作器数据。

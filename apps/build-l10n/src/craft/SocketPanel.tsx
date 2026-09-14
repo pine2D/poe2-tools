@@ -55,9 +55,7 @@ export function SocketPanel({
   return (
     <section className="craft-sockets" aria-label="符文镶嵌">
       <h3>符文镶嵌与替换</h3>
-      <p>
-        按当前装备部位列出已支持的普通符文；防具另支持生命、魔力、属性、晕眩门槛、魔力再生和药剂回复效果。覆盖旧符文不返还材料，镶嵌效果不占前后缀位置。
-      </p>
+      <p>按当前部位列出符文及其实际效果。覆盖旧符文不返还材料，镶嵌效果不占前后缀位置。</p>
       {socketEffectIncrease(catalog, state) > 0 ? (
         <p>
           已计入{label('Essence of Horror')}的 60% 镶嵌物增效；按固定 PoB

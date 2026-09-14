@@ -40,7 +40,7 @@ it('v26保存首次机会与重选，全游标回放且旧v25未来新操作拒�
       { kind: 'desecration-reveal', modId: 'suffix3', values: [8] },
     ],
   }
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v56')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v57')
   for (let cursor = 0; cursor <= 5; cursor++) {
     const result = parseCraftProject(serializeCraftProject({ ...project, cursor }), catalog)
     expect(result.ok).toBe(true)
