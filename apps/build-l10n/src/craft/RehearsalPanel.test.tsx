@@ -667,7 +667,9 @@ describe('RehearsalPanel', () => {
   it('取消不计数，撤销重做可回退，撤销后的新操作丢弃未来分支', () => {
     renderPanel()
     expect(screen.getByRole('heading', { name: /通货演练 · 指定结果演练/ })).toBeDefined()
-    expect(screen.getByText(/支持普通攻击武器本地面板与三项防御估算；起点品质保留/)).toBeDefined()
+    expect(
+      screen.getByText(/支持普通攻击武器本地面板与三项防御估算；普通品质保留，催化品质按步骤更新/),
+    ).toBeDefined()
     prepare('蜕变石')
     choose('ArmourA')
     fireEvent.click(screen.getByRole('button', { name: '取消本次结果' }))
