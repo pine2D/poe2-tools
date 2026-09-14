@@ -1,4 +1,7 @@
 import { usesJewelCapacity } from './affixCapacity'
+import { usesSovereignResistance } from './alloyEffects'
+import { alloyProjectUsage } from './alloyProjectUsage'
+import { alloyCatalogSignature as readAlloyCatalogSignature } from './alloys'
 import { readStatAnnotations } from './annotations'
 import { isArchitectCraftOperation } from './architect'
 import { isBeltCapacityBase, resolveCraftImplicitPatterns } from './beltImplicits'
@@ -13,7 +16,7 @@ import { isCatalystQuality } from './catalystQuality'
 import { isVaalCraftOperation } from './corruptionRules'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
-import { applyCraftStep, type CraftStep } from './craftSteps'
+import { applyCraftStep, type CraftStep, isAlloyCraftOperation } from './craftSteps'
 import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
 import { isEssenceOmen } from './essenceOmens'
@@ -69,7 +72,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v65'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v66'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -105,6 +108,7 @@ export interface CraftProject {
   jewelSourceHash?: string
   essenceSourceHash?: string
   liquidEmotionSourceHash?: string
+  alloyCatalogSignature?: string
   augmentSourceHash?: string
   corruptionSourceHash?: string
   importedSockets?: (string | null)[]
@@ -131,7 +135,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 65 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 66 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -269,6 +273,8 @@ function readOperation(value: unknown): CraftStep | null {
   if (record(value) && isBoneOperationKind(value.kind))
     return isBoneCraftOperation(value) ? value : null
   if (record(value) && Object.hasOwn(value, 'kind')) {
+    if (value.kind === 'alloy')
+      return isAlloyCraftOperation(value) ? { ...value, values: [...value.values] } : null
     if (value.kind === 'liquid-emotion')
       return exactKeys(value, ['kind', 'emotionId', 'removeModId', 'values', 'resultKind']) &&
         (!Object.hasOwn(value, 'resultKind') ||
@@ -550,6 +556,7 @@ export function parseCraftProject(
       'corruptionSourceHash',
       'essenceSourceHash',
       'liquidEmotionSourceHash',
+      'alloyCatalogSignature',
       'desecrationSourceHash',
       'jewelSourceHash',
       'scalabilitySourceHash',
@@ -564,6 +571,17 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  const alloyUsage = alloyProjectUsage(value)
+  const needsAlloyCatalog = alloyUsage.used || Object.hasOwn(value, 'alloyCatalogSignature')
+  const alloyCatalogSignature = readAlloyCatalogSignature(catalog)
+  if (rulesVersion < 66 && needsAlloyCatalog)
+    return fail('v2–v65 旧版项目不能包含合金操作、起点、目标、指引或来源，包括撤销位置之后的步骤。')
+  if (
+    needsAlloyCatalog &&
+    (alloyCatalogSignature === null || value.alloyCatalogSignature !== alloyCatalogSignature)
+  )
+    return fail('项目合金关系签名缺失或与当前目录不同，请先加载相同合金关系目录。')
+  let usesSovereignEffects = alloyUsage.resistanceEffect
   const isNewCatalysingCombination = (omen: unknown) =>
     isCraftOmen(omen) && omen !== 'catalysing_exaltation' && CRAFT_OMEN_RULES[omen].consumesCatalyst
   if (
@@ -775,6 +793,16 @@ export function parseCraftProject(
       )
     )
       return fail('指引液态情感不在当前制作目录中。')
+    if (
+      read.value.rules.some(
+        (rule) =>
+          rule.action.kind === 'alloy' &&
+          !catalog.alloys?.alloys.some(
+            (alloy) => rule.action.kind === 'alloy' && alloy.id === rule.action.alloyId,
+          ),
+      )
+    )
+      return fail('指引合金不在当前制作目录中。')
     strategy = read.value
   }
   let minimumTargetCount: number | undefined
@@ -927,6 +955,17 @@ export function parseCraftProject(
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
   const scalabilitySourceHash = statScalabilitySourceHash(catalog)
   const validateEffectState = (state: CraftState): string | null => {
+    if (usesSovereignResistance(state)) {
+      usesSovereignEffects = true
+      if (
+        rulesVersion < 66 ||
+        alloyCatalogSignature === null ||
+        value.alloyCatalogSignature !== alloyCatalogSignature
+      )
+        return '项目君王合金增效的规则版本或关系签名无效。'
+      if (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
+        return '项目君王合金增效的属性缩放来源指纹缺失或与当前目录不同。'
+    }
     if (!usesJewelEffect(catalog, state)) return null
     usesJewelEffects = true
     if (rulesVersion < 53) return 'v2–v52 旧版项目不能包含珠宝增效状态。'
@@ -1259,6 +1298,7 @@ export function parseCraftProject(
   if (
     (initialInput.catalyst !== undefined ||
       usesJewelEffects ||
+      usesSovereignEffects ||
       usesEffectiveTargets ||
       Object.hasOwn(value, 'scalabilitySourceHash')) &&
     (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
@@ -1585,6 +1625,7 @@ export function parseCraftProject(
         ...(usesCorruption && corruptionSourceHash ? { corruptionSourceHash } : {}),
         ...((initialInput.catalyst !== undefined ||
           usesJewelEffects ||
+          usesSovereignEffects ||
           usesEffectiveTargets ||
           Object.hasOwn(value, 'scalabilitySourceHash')) &&
         scalabilitySourceHash
@@ -1618,6 +1659,7 @@ export function parseCraftProject(
         liquidEmotionSourceHash !== null
           ? { liquidEmotionSourceHash }
           : {}),
+        ...(needsAlloyCatalog && alloyCatalogSignature !== null ? { alloyCatalogSignature } : {}),
         ...(pricing?.ok ? { pricing: pricing.value } : {}),
         ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
         ...(targetValues === undefined ? {} : { targetValues }),
@@ -1681,6 +1723,8 @@ export function serializeCraftProject(project: CraftProject): string {
   for (const step of project.operations) {
     if ('kind' in step && isBoneOperationKind(step.kind) && !isBoneCraftOperation(step))
       throw new Error('骨骼或揭示操作字段无效，不能序列化项目。')
+    if ('kind' in step && step.kind === 'alloy' && !isAlloyCraftOperation(step))
+      throw new Error('合金操作字段无效，不能序列化项目。')
     if ('kind' in step && step.kind === 'liquid-emotion' && !readOperation(step))
       throw new Error('液态情感操作字段无效，不能序列化项目。')
   }

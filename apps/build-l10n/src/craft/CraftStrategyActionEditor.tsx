@@ -16,6 +16,7 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceOmen,
   essenceCraftMode,
+  inspectCraftAlloys,
   inspectLiquidEmotions,
   socketCandidates,
 } from '@poe2-tools/item-core'
@@ -32,6 +33,10 @@ export function strategyActionLabel(
   if (action.kind === 'jump') return '仅判断并跳转'
   if (action.kind === 'reveal') return '继续亵渎揭示'
   if (action.kind === 'fracture') return local('Fracturing Orb')
+  if (action.kind === 'alloy')
+    return local(
+      catalog.alloys?.alloys.find((entry) => entry.id === action.alloyId)?.name ?? action.alloyId,
+    )
   if (action.kind === 'liquid-emotion')
     return local(
       catalog.liquidEmotions?.find((e) => e.id === action.emotionId)?.name ?? action.emotionId,
@@ -80,6 +85,11 @@ export function CraftStrategyActionEditor({
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const essences = (catalog.essences ?? []).filter((e) => essenceCraftMode(e.id) !== null)
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  const alloys = base
+    ? inspectCraftAlloys(catalog, base)
+        .filter((entry) => entry.mod !== null)
+        .map((entry) => entry.alloy)
+    : []
   // 指引可提前配置；只按基底映射筛选，不受当前稀有度、已有工艺或待揭示状态限制。
   const emotions = base
     ? inspectLiquidEmotions(catalog, base)
@@ -122,6 +132,9 @@ export function CraftStrategyActionEditor({
             else if (value === 'essence') {
               const first = essences[0]
               if (first) onChange({ kind: 'essence', essenceId: first.id })
+            } else if (value === 'alloy') {
+              const first = alloys[0]
+              if (first) onChange({ kind: 'alloy', alloyId: first.id })
             } else if (value === 'liquid-emotion') {
               const first = emotions[0]
               if (first) onChange({ kind: 'liquid-emotion', emotionId: first.id })
@@ -139,6 +152,9 @@ export function CraftStrategyActionEditor({
           ))}
           <option value="essence" disabled={!essences.length}>
             精华制作
+          </option>
+          <option value="alloy" disabled={!alloys.length}>
+            合金制作
           </option>
           <option value="desecrate">骨骼施加</option>
           <option value="liquid-emotion" disabled={!emotions.length || type !== 'Jewel'}>
@@ -225,6 +241,27 @@ export function CraftStrategyActionEditor({
                   {omenLabel(id)}
                 </option>
               ))}
+          </select>
+        </label>
+      ) : null}
+      {action.kind === 'alloy' ? (
+        <label>
+          合金
+          <select
+            aria-label={`规则 ${number} 合金`}
+            value={action.alloyId}
+            onChange={(event) => onChange({ kind: 'alloy', alloyId: event.target.value })}
+          >
+            {!alloys.some((entry) => entry.id === action.alloyId) ? (
+              <option value={action.alloyId} disabled>
+                {action.alloyId}（当前基底映射不可用）
+              </option>
+            ) : null}
+            {alloys.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {local(entry.name)}
+              </option>
+            ))}
           </select>
         </label>
       ) : null}

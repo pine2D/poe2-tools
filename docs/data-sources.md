@@ -279,6 +279,6 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 
 人工阅读 PoE2DB 的 13 个公开材料说明：[Runic](https://poe2db.tw/us/Runic_Alloy)、[Adaptive](https://poe2db.tw/us/Adaptive_Alloy)、[Protective](https://poe2db.tw/us/Protective_Alloy)、[Expansive](https://poe2db.tw/us/Expansive_Alloy)、[Swift](https://poe2db.tw/us/Swift_Alloy)、[Cyclonic](https://poe2db.tw/us/Cyclonic_Alloy)、[Prismatic](https://poe2db.tw/us/Prismatic_Alloy)、[Mystic](https://poe2db.tw/us/Mystic_Alloy)、[Sovereign](https://poe2db.tw/us/Sovereign_Alloy)、[Celestial](https://poe2db.tw/us/Celestial_Alloy)、[Transcendent](https://poe2db.tw/us/Transcendent_Alloy)、[Runebinder](https://poe2db.tw/us/The_Runebinders_Alloy)、[Runefather](https://poe2db.tw/us/The_Runefathers_Alloy)。手工建立材料与装备类别到既有 MIT PoB2 词缀 ID 的关系，单独保存于 `data/craft/alloys.json`，标记 gray；没有下载同行数据文件、复制实现、权重、价格、配方或词缀数值。网页数据库未明确授权，不能将页面底部仅适用于 Wiki 内容的许可当作整站数据库许可。
 
-此表可整体移除；`DICT_ENABLE_POE2DB=0` 时不发布，浏览器只从本站按需读取。没有新增网络抓取适配器。词缀文本、数值、侧别与等级继续来自已登记固定 MIT `ModItem.lua`；材料中文名来自既有官方静态名称。适性合金的权杖效果未在当前授权快照中对应，保留缺失，不以名称猜测 ID。`Required Level` 是穿戴需求，不能当作制作最低物等；固定 MIT `Item.lua:2283` 的 `floor(mod.level * 0.8)` 与已查页面展示一致。
+此表可整体移除；`DICT_ENABLE_POE2DB=0` 时不发布，浏览器在制作主目录就绪后只从本站读取一次，供查询、项目恢复和制作共用；失败可重试。没有新增网络抓取适配器。词缀文本、数值、侧别与等级继续来自已登记固定 MIT `ModItem.lua`；材料中文名来自既有官方静态名称。适性合金的权杖效果未在当前授权快照中对应，保留缺失，不以名称猜测 ID。`Required Level` 是穿戴需求，不能当作制作最低物等；固定 MIT `Item.lua:2283` 的 `floor(mod.level * 0.8)` 与已查页面展示一致。
 
 GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程证据；本次目录查询不授权制作操作，低物等、已有工艺、破裂、增效等交互需分别落实。当前表绑定 PoB2 提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 及其 `ModItem.lua` 哈希；来源变更必须重新核对。

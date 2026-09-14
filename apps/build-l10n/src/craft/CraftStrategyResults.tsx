@@ -7,6 +7,7 @@ import type {
   CraftTargetValues,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef } from 'react'
+import { AlloyCraftPanel } from './AlloyCraftPanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
@@ -45,6 +46,9 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       </button>
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'alloy' ? (
+        <AlloyCraftPanel {...props} disabled={false} configuration={action} />
       ) : null}
       {action.kind === 'liquid-emotion' ? (
         <LiquidEmotionCraftPanel {...props} disabled={false} configuration={action} />

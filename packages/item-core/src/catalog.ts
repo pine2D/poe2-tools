@@ -1,3 +1,5 @@
+import type { AlloyCatalog } from './alloys'
+
 /** 制作目录仅提供生成资格；概率数据必须单独建立来源。 */
 export interface CatalogBase {
   id: string
@@ -100,6 +102,8 @@ export interface CatalogAugment {
 }
 
 export interface CraftCatalog {
+  /** 运行时独立接入的 gray 关系，不属于 primary 生成文件。 */
+  alloys?: AlloyCatalog
   _meta: {
     schemaVersion: 2
     tier: 'primary'

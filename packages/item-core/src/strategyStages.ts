@@ -19,6 +19,7 @@ export function operationMatchesStrategyAction(
     return !('kind' in step) && action.currency === step.currency && action.omen === step.omen
   if (!('kind' in step)) return false
   if (action.kind === 'reveal') return step.kind === 'desecration-reveal'
+  if (action.kind === 'alloy') return step.kind === 'alloy' && action.alloyId === step.alloyId
   if (action.kind === 'liquid-emotion')
     return step.kind === 'liquid-emotion' && action.emotionId === step.emotionId
   if (action.kind === 'essence')

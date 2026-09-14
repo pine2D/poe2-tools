@@ -1,7 +1,10 @@
 import {
+  type AlloyCraftOperation,
   type ArchitectCraftOperation,
   type ArtificerCraftOperation,
   addCraftAffix,
+  alloyCatalogSignature,
+  alloyProjectUsage,
   applyCraftOperation,
   applyCraftStep,
   BONE_RULES,
@@ -62,6 +65,7 @@ import {
   type VaalCraftOperation,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlloyCraftPanel } from './AlloyCraftPanel'
 import { ArchitectPanel } from './ArchitectPanel'
 import { CorruptionPanel } from './CorruptionPanel'
 import { CraftPricingPanel } from './CraftPricingPanel'
@@ -322,7 +326,7 @@ export function RehearsalPanel({
     | null
   >(null)
   const [guaranteedDraft, setGuaranteedDraft] = useState<
-    EssenceCraftOperation | LiquidEmotionCraftOperation | null
+    EssenceCraftOperation | LiquidEmotionCraftOperation | AlloyCraftOperation | null
   >(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
   const [fractureDraft, setFractureDraft] = useState<FractureCraftOperation | null>(null)
@@ -352,11 +356,12 @@ export function RehearsalPanel({
   const guaranteedDraftRef = useRef<HTMLElement>(null)
   const essenceTriggerRef = useRef<HTMLElement | null>(null)
   const restoreEssenceFocusRef = useRef(false)
+  const alloyEntryRef = useRef<HTMLElement>(null)
   const emotionEntryRef = useRef<HTMLElement>(null)
   const essenceEntryRef = useRef<HTMLElement>(null)
   const strategyTriggerRef = useRef<HTMLElement | null>(null)
   const guaranteedOriginRef = useRef<{
-    kind: 'essence' | 'liquid-emotion'
+    kind: 'essence' | 'liquid-emotion' | 'alloy'
     strategy: boolean
   } | null>(null)
   useEffect(() => {
@@ -367,9 +372,11 @@ export function RehearsalPanel({
         const origin = guaranteedOriginRef.current
         const fallback = origin?.strategy
           ? strategyTriggerRef.current
-          : origin?.kind === 'liquid-emotion'
-            ? emotionEntryRef.current
-            : essenceEntryRef.current
+          : origin?.kind === 'alloy'
+            ? alloyEntryRef.current
+            : origin?.kind === 'liquid-emotion'
+              ? emotionEntryRef.current
+              : essenceEntryRef.current
         const trigger = essenceTriggerRef.current?.isConnected
           ? essenceTriggerRef.current
           : fallback
@@ -605,7 +612,11 @@ export function RehearsalPanel({
         startBone(operation)
         return
       }
-      if (operation.kind === 'essence' || operation.kind === 'liquid-emotion') {
+      if (
+        operation.kind === 'essence' ||
+        operation.kind === 'liquid-emotion' ||
+        operation.kind === 'alloy'
+      ) {
         setOmen(undefined)
         startGuaranteed(operation)
       }
@@ -654,7 +665,9 @@ export function RehearsalPanel({
       return
     startRoute(operation)
   }
-  const startGuaranteed = (operation: EssenceCraftOperation | LiquidEmotionCraftOperation) => {
+  const startGuaranteed = (
+    operation: EssenceCraftOperation | LiquidEmotionCraftOperation | AlloyCraftOperation,
+  ) => {
     if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     const checked = applyCraftStep(catalog, current, operation)
@@ -811,6 +824,11 @@ export function RehearsalPanel({
     if (!('kind' in step))
       return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
     if (step.kind === 'fracture') return fractureLabel
+    if (step.kind === 'alloy') {
+      const name =
+        catalog.alloys?.alloys.find((entry) => entry.id === step.alloyId)?.name ?? step.alloyId
+      return translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+    }
     if (step.kind === 'liquid-emotion') {
       const name =
         catalog.liquidEmotions?.find((entry) => entry.id === step.emotionId)?.name ?? step.emotionId
@@ -920,6 +938,8 @@ export function RehearsalPanel({
     )
       ? liquidEmotionSourceHash(catalog)
       : null
+  const alloyUsage = alloyProjectUsage({ history, referencedTargetIds, strategy, pricing })
+  const alloySignature = alloyUsage.used ? alloyCatalogSignature(catalog) : null
   const project: CraftProject = {
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
@@ -927,7 +947,9 @@ export function RehearsalPanel({
     ...(strategy?.flow ? { strategyStartStep: strategyStartStep ?? 0 } : {}),
     sourceCommit: catalog._meta.sourceCommit,
     rulesVersion: CRAFT_RULES_VERSION,
+    ...(alloySignature ? { alloyCatalogSignature: alloySignature } : {}),
     ...((effectSourcesNeeded ||
+      alloyUsage.resistanceEffect ||
       history[0]?.state.catalyst ||
       targetValues.some((entry) => entry.basis === 'effective') ||
       targetImplicitValues.some((entry) => entry.basis === 'effective')) &&
@@ -1656,14 +1678,36 @@ export function RehearsalPanel({
           onPreview={startGuaranteed}
         />
       ) : null}
+      {!strategyResultAction ? (
+        <AlloyCraftPanel
+          entryRef={alloyEntryRef}
+          key={`alloy:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          targetModIds={targetModIds}
+          targetAlternatives={targetAlternatives}
+          targetValues={targetValues}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft ||
+              current.pendingDesecration ||
+              current.corrupted,
+          )}
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
       {guaranteedDraft ? (
         <section
           ref={guaranteedDraftRef}
           tabIndex={-1}
           className="rehearsal-draft"
-          aria-label={
-            guaranteedDraft.kind === 'liquid-emotion' ? '液态情感待应用结果' : '精华待应用结果'
-          }
+          aria-label={`${guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}待应用结果`}
         >
           <h3>{stepLabel(guaranteedDraft)}</h3>
           <EssenceResultDetails
@@ -1674,11 +1718,13 @@ export function RehearsalPanel({
           />
           {preview?.ok ? (
             <p>
-              {guaranteedDraft.kind === 'liquid-emotion'
-                ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
-                : guaranteedDraft.removeModId
-                  ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                  : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+              {guaranteedDraft.kind === 'alloy'
+                ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
+                : guaranteedDraft.kind === 'liquid-emotion'
+                  ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                  : guaranteedDraft.removeModId
+                    ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                    : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>
@@ -1697,7 +1743,7 @@ export function RehearsalPanel({
               setEssenceSession((value) => value + 1)
             }}
           >
-            {guaranteedDraft.kind === 'liquid-emotion' ? '取消液态情感结果' : '取消精华结果'}
+            {`取消${guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
           </button>
           <button
             type="button"
@@ -1705,7 +1751,7 @@ export function RehearsalPanel({
             disabled={!preview?.ok}
             onClick={() => applyStep(guaranteedDraft)}
           >
-            {guaranteedDraft.kind === 'liquid-emotion' ? '应用液态情感结果' : '应用精华结果'}
+            {`应用${guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
           </button>
         </section>
       ) : null}

@@ -4,7 +4,7 @@ import { CATALYSTS, type CatalystQuality, readCatalystQuality } from './catalyst
 import { corruptionEntries } from './corruptionEnchantments'
 import type { InspectedMod } from './export'
 import { normalizeJewelFixedImportLine, validateJewelFixedImportLine } from './jewelEffectImport'
-import { jewelEffectForKind, usesJewelEffect } from './jewelEffects'
+import { explicitModEffect, usesExplicitModEffect } from './jewelEffects'
 import { parseItem } from './parse'
 import type { CraftResult, CraftState } from './rehearsal'
 import { resolveStat, type StatTemplate } from './resolve'
@@ -24,15 +24,15 @@ export function importCatalystQuality(
   const fail = (error: string): CraftResult<CatalystQuality | undefined> => ({ ok: false, error })
   const source = readCatalystQuality(item)
   if (!source.ok) return source
-  const hasJewelEffect = usesJewelEffect(catalog, state)
+  const hasExplicitEffect = usesExplicitModEffect(catalog, state)
   if (source.value === undefined) {
     if (declaredId !== undefined) return fail('没有催化品质原文，不能附加导入类型声明。')
     if (
-      !hasJewelEffect &&
+      !hasExplicitEffect &&
       item.mods.some((mod) => /%/.test(mod.header.raw.replace(/["“][^"”]*["”]/g, '')))
     )
       return fail('原文含尚未核对的属性头增效，暂时只能对比。')
-    if (!hasJewelEffect) return { ok: true, value: undefined }
+    if (!hasExplicitEffect) return { ok: true, value: undefined }
   }
   const original = parseItem(item.rawText)
   if (
@@ -89,12 +89,16 @@ export function importCatalystQuality(
     const effect =
       mod.kind === 'implicit' || mod.kind === 'enchant'
         ? { ok: true as const, value: 0 }
-        : jewelEffectForKind(catalog, state, mod.kind as 'prefix' | 'suffix')
+        : catalogMod && affix
+          ? explicitModEffect(catalog, state, catalogMod as import('./catalog').CatalogMod)
+          : { ok: false as const, error: '显式词缀目录缺失。' }
     if (!effect.ok) return effect
     const patterns =
       mod.kind === 'implicit' ? (base.implicit?.split('\n') ?? []) : catalogMod?.lines
     const originalLines = stats.map(({ source, resolution }) => resolution.english ?? source.raw)
-    const lines = hasJewelEffect ? originalLines.map(normalizeJewelFixedImportLine) : originalLines
+    const lines = hasExplicitEffect
+      ? originalLines.map(normalizeJewelFixedImportLine)
+      : originalLines
     const matchedPatterns =
       mod.kind === 'implicit'
         ? lines.flatMap((line) =>
@@ -120,7 +124,7 @@ export function importCatalystQuality(
     const matched =
       definition && tags.some((tag) => (definition.tags as readonly string[]).includes(tag))
     const total = effect.value + (matched ? (source.value?.quality ?? 0) : 0)
-    if (hasJewelEffect) {
+    if (hasExplicitEffect) {
       for (const line of originalLines) {
         const checked = validateJewelFixedImportLine(catalog, matchedPatterns, line, total)
         if (!checked.ok) return checked

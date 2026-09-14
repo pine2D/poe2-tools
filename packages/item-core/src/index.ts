@@ -1,5 +1,16 @@
 export { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
-export { type AlloyCatalog, type AlloyInspection, inspectAlloys, parseAlloyCatalog } from './alloys'
+export { type AlloyAdviceStep, analyzeAlloyTargets } from './alloyAdvice'
+export { type PreparedAlloyCraft, prepareAlloyCraft } from './alloyCraft'
+export { alloyProjectUsage } from './alloyProjectUsage'
+export {
+  type AlloyCatalog,
+  type AlloyInspection,
+  alloyCatalogSignature,
+  inspectAlloys,
+  inspectCraftAlloys,
+  isAlloyMappedMod,
+  parseAlloyCatalog,
+} from './alloys'
 export type { ArchitectCraftOperation } from './architect'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
 export {
@@ -111,7 +122,7 @@ export type {
   LiquidEmotionCraftOperation,
   SocketCraftOperation,
 } from './craftSteps'
-export { applyCraftStep } from './craftSteps'
+export { type AlloyCraftOperation, applyCraftStep, isAlloyCraftOperation } from './craftSteps'
 export type {
   CraftStrategy,
   CraftStrategyAction,
@@ -176,7 +187,9 @@ export { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
 export {
   type CraftAffixEffectGroup,
   estimateCraftAffixEffects,
+  explicitModEffect,
   jewelEffectForKind,
+  usesExplicitModEffect,
   usesJewelEffect,
 } from './jewelEffects'
 export { craftAffixLimit, isBasicJewel, JEWEL_SOURCE, jewelSourceHash } from './jewels'

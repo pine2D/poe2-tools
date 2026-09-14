@@ -5,7 +5,7 @@ import { corruptionEntries } from './corruptionEnchantments'
 import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
 import { readUnlevelledSkillName } from './grantedSkills'
-import { jewelEffectForKind, usesJewelEffect } from './jewelEffects'
+import { explicitModEffect, usesExplicitModEffect } from './jewelEffects'
 import { inspectNumericLines } from './numeric'
 import { isItemStructureLine } from './parse'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
@@ -124,7 +124,7 @@ export function exportCraftItemText(
   const locale = options.locale ?? 'en'
   const labels = LABELS[locale]
   const current = checked.value
-  const hasJewelEffect = usesJewelEffect(catalog, current)
+  const hasExplicitEffect = usesExplicitModEffect(catalog, current)
   const base = catalog.bases.find((entry) => entry.id === current.baseId)
   if (!base) return { ok: false, error: '当前基底不在制作目录中。' }
   const implicit = current.implicitLines ?? base.implicit?.split('\n') ?? []
@@ -182,9 +182,9 @@ export function exportCraftItemText(
     warnings.push('品质未知，文本未输出 Quality。')
   if (current.catalyst && locale !== 'en')
     warnings.push('催化品质标题保留已核对英文；属性输出为高级基础值，不重复写入增效数值。')
-  if (hasJewelEffect)
+  if (hasExplicitEffect)
     warnings.push(
-      '珠宝增效属性输出为演练高级基础值；英文百分比标题包含侧别增效与命中催化品质，国服原生标题仍待样本验收。',
+      '增效属性输出为演练高级基础值；英文百分比标题包含词缀增效与命中催化品质，国服原生标题仍待样本验收。',
     )
   if (current.sockets === undefined) warnings.push('孔位未知，文本未假设为空孔。')
   if (current.sockets?.length === 0)
@@ -251,14 +251,14 @@ export function exportCraftItemText(
     let magnitude = ''
     const outputLines: string[] = []
     for (const line of affix.lines) {
-      const complete = hasJewelEffect
+      const complete = hasExplicitEffect
         ? completeBaseRanges(mod.lines, line)
         : { ok: true as const, value: line }
       if (!complete.ok) return complete
       outputLines.push(complete.value)
     }
-    if (hasJewelEffect) {
-      const effect = jewelEffectForKind(catalog, current, mod.kind)
+    if (hasExplicitEffect) {
+      const effect = explicitModEffect(catalog, current, mod)
       if (!effect.ok) return effect
       const definition = CATALYSTS.find((entry) => entry.id === current.catalyst?.id)
       const quality =

@@ -2,6 +2,7 @@ import {
   type CraftCatalog,
   type CraftState,
   estimateCraftAffixEffects,
+  usesExplicitModEffect,
   usesJewelEffect,
 } from '@poe2-tools/item-core'
 import { useMemo } from 'react'
@@ -18,7 +19,8 @@ export function JewelEffectPanel({
   preview: boolean
   translateLine?: (line: string) => string | null
 }) {
-  const enabled = usesJewelEffect(catalog, state)
+  const enabled = usesExplicitModEffect(catalog, state)
+  const title = usesJewelEffect(catalog, state) ? '珠宝词缀增效' : '君王抗性增效'
   const result = useMemo(
     () => (enabled ? estimateCraftAffixEffects(catalog, state) : null),
     [catalog, state, enabled],
@@ -26,12 +28,12 @@ export function JewelEffectPanel({
   if (!result) return null
   const text = (line: string) => translateLine?.(line) ?? line
   return (
-    <section className="catalyst-panel" aria-label="珠宝词缀增效">
+    <section className="catalyst-panel" aria-label={title}>
       <details open>
-        <summary>珠宝词缀增效</summary>
+        <summary>{title}</summary>
         <p>{preview ? '显示待应用结果，应用后才写入演练记录。' : '显示当前装备的有效值。'}</p>
         <p className="rehearsal-scope-note">
-          词缀卡与制作数值保留基础值；反侧增效与命中标签的催化品质相加，再按来源内部精度计算一次。
+          词缀卡与制作数值保留基础值；适用的工艺增效与命中标签的催化品质相加，再按来源内部精度计算一次。
           神圣石重掷、移除工艺或撤销后会重新计算。国服真机显示仍待验收。
         </p>
         {!result.ok ? (

@@ -21,7 +21,7 @@ function project(): CraftProject {
   }
 }
 it('v22搜索槽数起点与全游标历史回读，future越界不能隐藏', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v65')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v66')
   for (const cursor of [0, 1]) {
     const result = parseCraftProject(serializeCraftProject({ ...project(), cursor }), beltCatalog())
     expect(result.ok).toBe(true)

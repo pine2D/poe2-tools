@@ -1,3 +1,5 @@
+import { analyzeAlloyTargets } from './alloyAdvice'
+import { inspectCraftAlloys } from './alloys'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import { analyzeBoneTargets } from './boneAdvice'
 import type { CraftCatalog } from './catalog'
@@ -216,6 +218,9 @@ export function planCraftTargetRoutes(
       return id && accepted.has(id) ? [id] : []
     }),
   )
+  if (base)
+    for (const entry of inspectCraftAlloys(catalog, base))
+      if (entry.mod && accepted.has(entry.mod.id)) essenceIds.add(entry.mod.id)
   const goal = (id: string) => values.find((v) => v.modId === id)
   const numericMatched = (current: CraftState) =>
     ids.filter((_, index) =>
@@ -832,7 +837,16 @@ export function planCraftTargetRoutes(
     })
     if (essenceAdvice.ok)
       for (const step of essenceAdvice.value) offer(step.operation, step.atRiskTargetIds)
-    // 精华专属目标不在普通新增池；普通单步建议无法提示其阻挡，另列合法剥离准备。
+    const alloyAdvice = analyzeAlloyTargets(catalog, node.state, ids, values, alternatives, {
+      consumeCandidate: spend,
+      ...(options.minimumTargetCount === undefined
+        ? {}
+        : { minimumTargetCount: options.minimumTargetCount }),
+      ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
+    })
+    if (alloyAdvice.ok)
+      for (const step of alloyAdvice.value) offer(step.operation, step.atRiskTargetIds)
+    // 精华与合金专属目标不在普通新增池；普通单步建议无法提示其阻挡，另列合法剥离准备。
     const blockedEssence = groups.some(
       (group) =>
         group.some((id) => essenceIds.has(id)) &&

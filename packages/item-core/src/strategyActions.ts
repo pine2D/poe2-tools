@@ -1,3 +1,4 @@
+import { prepareAlloyCraft } from './alloyCraft'
 import { desecrationCandidates, prepareDesecration } from './boneCraft'
 import { type BoneOmenConfig, boneOmenError, isBoneOmenConfig } from './boneOmens'
 import { type CraftBone, isCraftBone } from './boneRules'
@@ -28,6 +29,7 @@ export type CraftStrategyAction =
   | { kind: 'currency'; currency: CraftCurrency; omen?: CraftOmen }
   | { kind: 'essence'; essenceId: string; omen?: EssenceOmen }
   | { kind: 'liquid-emotion'; emotionId: string }
+  | { kind: 'alloy'; alloyId: string }
   | ({ kind: 'desecrate'; boneId: CraftBone } & BoneOmenConfig)
   | { kind: 'reveal' }
   | { kind: 'fracture' }
@@ -48,6 +50,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
       'omen',
       'essenceId',
       'emotionId',
+      'alloyId',
       'boneId',
       'directionOmen',
       'lichOmen',
@@ -87,6 +90,13 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
     if (!isBoneOmenConfig(config)) return null
     return boneOmenError(config, boneId) === null ? { kind: 'desecrate', boneId, ...config } : null
   }
+  if (
+    value.kind === 'alloy' &&
+    keys(value, ['kind', 'alloyId']) &&
+    typeof value.alloyId === 'string' &&
+    /^Metadata\/Items\/Currency\/CurrencyVerisiumAlloy(?:[1-9]|1[0-3])$/.test(value.alloyId)
+  )
+    return { kind: 'alloy', alloyId: value.alloyId }
   if (
     value.kind === 'liquid-emotion' &&
     keys(value, ['kind', 'emotionId']) &&
@@ -137,6 +147,10 @@ export function checkCraftStrategyAction(
   }
   if (action.kind === 'essence') {
     const result = prepareEssenceCraft(catalog, state, action.essenceId, action.omen)
+    return result.ok ? ok : result
+  }
+  if (action.kind === 'alloy') {
+    const result = prepareAlloyCraft(catalog, state, action.alloyId)
     return result.ok ? ok : result
   }
   if (action.kind === 'liquid-emotion') {

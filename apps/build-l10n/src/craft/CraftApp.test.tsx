@@ -143,7 +143,10 @@ describe('CraftApp', () => {
       fireEvent(details, new Event('toggle'))
       const start = await screen.findByRole('button', { name: '从当前装备开始' })
       expect(within(baseSection).getByText('Known English Name')).toBeDefined()
-      expect(catalogFetch).toHaveBeenCalledTimes(1)
+      expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
+        '/craft-data/catalog.json',
+        '/craft-data/alloys.json',
+      ])
       fireEvent.click(start)
       fireEvent.click(screen.getByRole('button', { name: '蜕变石' }))
       fireEvent.click(
@@ -153,7 +156,10 @@ describe('CraftApp', () => {
       const history = screen.getByLabelText('演练历史').textContent
       fireEvent.click(screen.getByRole('button', { name: '保存到本机' }))
       expect(screen.getByLabelText('演练历史').textContent).toBe(history)
-      expect(catalogFetch).toHaveBeenCalledTimes(1)
+      expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
+        '/craft-data/catalog.json',
+        '/craft-data/alloys.json',
+      ])
       fireEvent.change(screen.getByLabelText('粘贴装备文本'), {
         target: { value: text.replace('70', '71') },
       })
@@ -162,7 +168,10 @@ describe('CraftApp', () => {
       parse(text.replace('Known English Name', 'Unknown English Name'))
       expect(within(baseSection).getByText('未识别')).toBeDefined()
       expect(screen.queryByRole('button', { name: '从当前装备开始' })).toBeNull()
-      expect(catalogFetch).toHaveBeenCalledTimes(1)
+      expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
+        '/craft-data/catalog.json',
+        '/craft-data/alloys.json',
+      ])
     },
   )
   it('技能原文与最高等级有独立对照，歧义只允许选择已有词典候选', async () => {

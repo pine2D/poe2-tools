@@ -1,3 +1,4 @@
+import { prepareAlloyCraft } from './alloyCraft'
 import {
   type ArchitectCraftOperation,
   applyArchitect,
@@ -59,7 +60,30 @@ export interface LiquidEmotionCraftOperation {
   values: number[]
 }
 
+export interface AlloyCraftOperation {
+  kind: 'alloy'
+  alloyId: string
+  removeModId: string
+  values: number[]
+}
+
+export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperation {
+  return (
+    record(value) &&
+    value.kind === 'alloy' &&
+    onlyKeys(value, ['kind', 'alloyId', 'removeModId', 'values']) &&
+    typeof value.alloyId === 'string' &&
+    value.alloyId.length > 0 &&
+    typeof value.removeModId === 'string' &&
+    value.removeModId.length > 0 &&
+    Array.isArray(value.values) &&
+    value.values.length <= 32 &&
+    value.values.every((number) => typeof number === 'number' && Number.isFinite(number))
+  )
+}
+
 export type CraftStep =
+  | AlloyCraftOperation
   | ArchitectCraftOperation
   | VaalCraftOperation
   | FractureCraftOperation
@@ -139,6 +163,22 @@ export function applyCraftStep(
   if (Object.hasOwn(state, 'pendingDesecration'))
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   if ('kind' in step) {
+    if (step.kind === 'alloy') {
+      if (!isAlloyCraftOperation(step)) return { ok: false, error: '合金步骤字段无效。' }
+      const prepared = prepareAlloyCraft(catalog, state, step.alloyId)
+      if (!prepared.ok) return prepared
+      if (!prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId))
+        return { ok: false, error: '必须选择合法的可移除词缀。' }
+      const rendered = renderNumericLines(prepared.value.mod.lines, step.values)
+      if (!rendered.ok) return rendered
+      return createCraftState(catalog, {
+        ...state,
+        affixes: [
+          ...state.affixes.filter((affix) => affix.modId !== step.removeModId),
+          { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
+        ],
+      })
+    }
     if (step.kind === 'liquid-emotion') {
       if (
         !onlyKeys(step, ['kind', 'emotionId', 'removeModId', 'values', 'resultKind']) ||

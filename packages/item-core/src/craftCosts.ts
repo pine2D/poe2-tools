@@ -1,3 +1,4 @@
+import { alloyCatalogSignature } from './alloys'
 import {
   BONE_DIRECTION_OMEN_RULES,
   BONE_LICH_OMEN_RULES,
@@ -57,6 +58,9 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     { id: 'currency:fracture', name: 'Fracturing Orb' },
     ...Object.entries(BONE_RULES).map(([id, rule]) => ({ id: `bone:${id}`, name: rule.name })),
     ...(catalog.essences ?? []).map((e) => ({ id: `essence:${e.id}`, name: e.name })),
+    ...(alloyCatalogSignature(catalog) !== null ? (catalog.alloys?.alloys ?? []) : []).map(
+      (entry) => ({ id: `alloy:${entry.id}`, name: entry.name }),
+    ),
     ...(catalog.liquidEmotions ?? [])
       .filter((e) => supportedLiquidEmotionId(e.id))
       .map((e) => ({ id: `emotion:${e.id}`, name: e.name })),
@@ -102,6 +106,8 @@ export function collectCraftCosts(
       const augment = catalog.augments?.find((a) => a.id === step.augmentId)
       if (!augment) return fail('无法识别镶嵌材料，不能完整计费。')
       add(`augment:${augment.name}`)
+    } else if (step.kind === 'alloy') {
+      add(`alloy:${step.alloyId}`)
     } else if (step.kind === 'liquid-emotion') {
       if (!supportedLiquidEmotionId(step.emotionId))
         return fail('该液态情感材料尚未支持，不能计费。')
@@ -147,7 +153,7 @@ export function parseCraftPricing(
       ([id, price]) =>
         !validPrice(price) ||
         id.length > 512 ||
-        !/^(currency|bone|essence|emotion|augment|omen):.+$/.test(id) ||
+        !/^(currency|bone|essence|emotion|alloy|augment|omen):.+$/.test(id) ||
         (allowed !== null && !allowed.has(id)),
     )
   )

@@ -28,7 +28,11 @@ export function alloyTestFixture(): AlloyCatalog {
         Shield: 'AlloyTotemPlacementSpeed1',
         Buckler: 'AlloyTotemPlacementSpeed1',
       }),
-      material(9, 'Sovereign Alloy', { Ring: 'AlloyEffectOfResistanceMods1' }),
+      material(9, 'Sovereign Alloy', {
+        Ring: 'AlloyEffectOfResistanceMods1',
+        Wand: 'AlloyEffectOfSocketedAugments1',
+        'One Hand Mace': 'AlloyEffectOfSocketedAugments1',
+      }),
       material(11, 'Transcendent Alloy', {
         Staff: 'AlloyCastSpeedDamageAsExtraColdHybrid1',
         Wand: 'AlloyCastSpeedDamageAsExtraColdHybridOneHand1',

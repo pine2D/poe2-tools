@@ -1,7 +1,9 @@
+import { isSovereignAffix } from './alloyEffects'
 import type { CatalogBase, CraftCatalog } from './catalog'
 import { modifierLayers } from './modifierLayers'
 import { readNumericValues } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { socketEffects } from './sockets'
 import { sumWeaponRuneEffects, weaponSocketKind } from './weaponRuneEffects'
 
 export type WeaponDamageType = 'Physical' | 'Fire' | 'Cold' | 'Lightning' | 'Chaos'
@@ -147,9 +149,7 @@ export function estimateWeaponStats(
   if (state.quality === undefined) return fail('当前品质未知；请核对起点品质后重新开始。')
   if (state.sockets === undefined) return fail('当前孔位状态未知；请先明确孔位状态。')
   const runes = sumWeaponRuneEffects(
-    state.sockets.flatMap((id) =>
-      id === null ? [] : (catalog.augments?.filter((entry) => entry.id === id) ?? []),
-    ),
+    socketEffects(catalog, state).map(({ augment }) => augment),
     'weapon',
   )
   if (!runes) return fail('孔内符文效果尚未支持。')
@@ -197,6 +197,7 @@ export function estimateWeaponStats(
   let exactPhysicalInc = decimal(runes.Physical)
   for (const { attribute: affix, mod, layer } of modifierLayers(catalog, state)) {
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
+    if (layer === 'explicit' && isSovereignAffix(catalog, state, affix, 'socket')) continue
     if (!GROUPS.has(mod.group)) {
       if (
         (mod.group.startsWith('Local') &&

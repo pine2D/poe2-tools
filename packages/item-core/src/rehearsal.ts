@@ -1,4 +1,6 @@
 import { craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+import { isSovereignAffix } from './alloyEffects'
+import { isAlloyMappedMod } from './alloys'
 import { readStatAnnotations, UNSCALABLE_SUFFIX } from './annotations'
 import { DESTROYED_ITEM_MESSAGE } from './architect'
 import {
@@ -374,6 +376,7 @@ export function createCraftState(
       return failure(`词缀 ${affix.modId} 包含未支持的容量或跨类别规则。`)
     if (
       mod.lines.some((line) => /modifier magnitudes|effect of (?:prefix|suffix)/i.test(line)) &&
+      !isSovereignAffix(catalog, input, affix, 'resistance') &&
       !(
         isBasicJewel(base) &&
         affix.crafted &&
@@ -411,7 +414,8 @@ export function createCraftState(
       isBasicJewel(base) && affix.crafted
         ? isLiquidEmotionMappedMod(catalog, base, mod.id)
         : (affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) ||
-          (affix.crafted === true && isEssenceMappedMod(catalog, base, mod.id))
+          (affix.crafted === true &&
+            (isEssenceMappedMod(catalog, base, mod.id) || isAlloyMappedMod(catalog, base, mod.id)))
     if (!validSource) return failure(`词缀 ${affix.modId} 对该基底无效。`)
     accepted.push(mod)
     if (mod.kind === 'prefix') prefixes += 1

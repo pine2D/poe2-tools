@@ -39,7 +39,7 @@ it('首次展开只请求本站一次，搜索中文名与属性，切基底不�
   expect(screen.queryByText('Runic Alloy')).toBeNull()
   expect(screen.getByText('Transcendent Alloy')).toBeDefined()
   expect(fetchImpl).toHaveBeenCalledTimes(1)
-  expect(screen.getByText(/合金替换模拟尚未接入/)).toBeDefined()
+  expect(screen.getByText(/下方合金制作可选择/)).toBeDefined()
 })
 
 it('台服名称独立显示，译文可搜索，缺失保留提示', async () => {

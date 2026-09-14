@@ -1,3 +1,4 @@
+import { inspectCraftAlloys } from './alloys'
 import { buildInitialBeltImplicitLines, isBeltCapacityBase } from './beltImplicits'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import {
@@ -157,7 +158,14 @@ function targetPools(catalog: CraftCatalog, baseId: string) {
           .map((mod) => mod.id)
       : [],
   )
-  return { ordinary, essence, liquid, desecrated, genesis }
+  const alloy = new Set(
+    base
+      ? inspectCraftAlloys(catalog, base).flatMap((entry) =>
+          entry.mod && inspectNumericLines(entry.mod.lines).ok ? [entry.mod.id] : [],
+        )
+      : [],
+  )
+  return { ordinary, essence, liquid, alloy, desecrated, genesis }
 }
 
 /** 目标资格使用既有物等100假想状态；腰带也必须构造合法完整固有行。 */
@@ -170,12 +178,13 @@ function targetImplicitLines(catalog: CraftCatalog, baseId: string): { implicitL
 
 /** 目标资格独立于普通通货生成池，精华只授权当前基底的精确已解析保证属性。 */
 export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): CatalogMod[] {
-  const { ordinary, essence, liquid, desecrated, genesis } = targetPools(catalog, baseId)
+  const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(catalog, baseId)
   return catalog.modifiers.filter(
     (mod) =>
       (ordinary.has(mod.id) ||
         essence.has(mod.id) ||
         liquid.has(mod.id) ||
+        alloy.has(mod.id) ||
         desecrated.has(mod.id) ||
         genesis.has(mod.id)) &&
       createCraftState(catalog, {
@@ -220,7 +229,7 @@ export function validateCraftTargets(
   if (requiredTargetId !== undefined && !ids.includes(requiredTargetId))
     return { ok: false, error: '必选破裂组必须是已选显式目标。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const { ordinary, essence, liquid, desecrated, genesis } = targetPools(catalog, baseId)
+  const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(catalog, baseId)
   const affixes: CraftAffix[] = []
   for (const id of ids) {
     const mod = byId.get(id)
@@ -231,7 +240,7 @@ export function validateCraftTargets(
       !mod.desecratedOnly &&
       !ordinary.has(id) &&
       !genesis.has(id) &&
-      (essence.has(id) || liquid.has(id))
+      (essence.has(id) || liquid.has(id) || alloy.has(id))
     affixes.push({
       modId: mod.id,
       lines: [...mod.lines],

@@ -1,4 +1,5 @@
 import {
+  type AlloyCraftOperation,
   applyCraftStep,
   type CraftCatalog,
   type CraftState,
@@ -6,6 +7,7 @@ import {
   type EssenceAdviceStep,
   type EssenceCraftOperation,
   type LiquidEmotionCraftOperation,
+  prepareAlloyCraft,
   prepareEssenceCraft,
   prepareLiquidEmotionCraft,
   renderNumericLines,
@@ -15,7 +17,7 @@ import { useState } from 'react'
 interface EssenceResultDetailsProps {
   catalog: CraftCatalog
   state: CraftState
-  operation: EssenceCraftOperation | LiquidEmotionCraftOperation
+  operation: EssenceCraftOperation | LiquidEmotionCraftOperation | AlloyCraftOperation
   translateLine?: (line: string) => string | null
 }
 
@@ -26,9 +28,11 @@ export function EssenceResultDetails({
   translateLine,
 }: EssenceResultDetailsProps) {
   const prepared =
-    operation.kind === 'liquid-emotion'
-      ? prepareLiquidEmotionCraft(catalog, state, operation.emotionId, operation.resultKind)
-      : prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
+    operation.kind === 'alloy'
+      ? prepareAlloyCraft(catalog, state, operation.alloyId)
+      : operation.kind === 'liquid-emotion'
+        ? prepareLiquidEmotionCraft(catalog, state, operation.emotionId, operation.resultKind)
+        : prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
   if (!prepared.ok) return <p role="alert">{prepared.error}</p>
   const rendered = renderNumericLines(prepared.value.mod.lines, operation.values)
   const removed = state.affixes.find((affix) => affix.modId === operation.removeModId)

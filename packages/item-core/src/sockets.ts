@@ -1,3 +1,4 @@
+import { isSovereignAffix } from './alloyEffects'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
@@ -20,7 +21,11 @@ export function hasSpecialSocketRules(catalog: CraftCatalog, state: CraftState):
     ...(base.implicit?.split('\n') ?? []),
     ...(state.implicitLines ?? []),
     ...state.affixes
-      .filter((affix) => !isHorrorSocketAffix(catalog, state, affix))
+      .filter(
+        (affix) =>
+          !isHorrorSocketAffix(catalog, state, affix) &&
+          !isSovereignAffix(catalog, state, affix, 'socket'),
+      )
       .flatMap((affix) => [
         ...affix.lines,
         ...(catalog.modifiers.find((mod) => mod.id === affix.modId)?.lines ?? []),

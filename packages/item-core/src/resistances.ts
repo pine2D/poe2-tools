@@ -1,10 +1,11 @@
+import { isSovereignAffix } from './alloyEffects'
 import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
 import { corruptionEntries } from './corruptionEnchantments'
 import { jewelEffectModKind } from './jewelEffectRules'
-import { jewelEffectForKind } from './jewelEffects'
+import { explicitModEffect } from './jewelEffects'
 import { readNumericValues } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { isHorrorSocketAffix } from './socketAmplification'
@@ -73,6 +74,8 @@ export function estimateResistances(
       .filter(
         (affix) =>
           !isHorrorSocketAffix(catalog, state, affix) &&
+          !isSovereignAffix(catalog, state, affix, 'socket') &&
+          !isSovereignAffix(catalog, state, affix, 'resistance') &&
           !catalog.modifiers.some(
             (mod) => mod.id === affix.modId && jewelEffectModKind(mod) !== null,
           ),
@@ -194,14 +197,14 @@ export function estimateResistances(
     addLine(line, patterns, base.implicitTags, true)
   for (const affix of state.affixes) {
     const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
-    if (mod)
+    if (mod && !isSovereignAffix(catalog, state, affix, 'resistance'))
       for (const line of affix.lines)
         addLine(
           line,
           mod.lines,
           mod.lines.map(() => mod.tags),
           true,
-          jewelEffectForKind(catalog, state, mod.kind),
+          explicitModEffect(catalog, state, mod),
         )
   }
   for (const entry of corruptionEntries(state)) {

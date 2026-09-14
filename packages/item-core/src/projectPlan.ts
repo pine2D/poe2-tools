@@ -69,6 +69,7 @@ export function reuseCraftPlan(
   for (const key of [
     'essenceSourceHash',
     'liquidEmotionSourceHash',
+    'alloyCatalogSignature',
     'desecrationSourceHash',
     'augmentSourceHash',
     'scalabilitySourceHash',

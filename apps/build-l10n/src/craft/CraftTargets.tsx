@@ -1,4 +1,5 @@
 import {
+  analyzeAlloyTargets,
   analyzeBoneTargets,
   analyzeCraftTargets,
   analyzeEssencePreparation,
@@ -23,6 +24,7 @@ import {
   type ExtractedCraftTargets,
   hasCraftModEligibility,
   hasGenesisModEligibility,
+  inspectCraftAlloys,
   inspectEssences,
   usesJewelEffect,
   validateCraftFractureTarget,
@@ -30,6 +32,7 @@ import {
   validateCraftTargets,
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
+import { AlloyAdvicePanel } from './AlloyAdvicePanel'
 import './targets.css'
 import { BoneAdvicePanel } from './BoneAdvicePanel'
 import { EssenceAdvicePanel } from './EssenceAdvicePanel'
@@ -126,6 +129,25 @@ export function CraftTargets({
       }
     return sources
   }, [catalog, state.baseId])
+  const alloySources = useMemo(() => {
+    const base = catalog.bases.find((entry) => entry.id === state.baseId)
+    return new Map(
+      base
+        ? inspectCraftAlloys(catalog, base).flatMap((entry) =>
+            entry.mod
+              ? [
+                  [
+                    entry.mod.id,
+                    translations[entry.alloy.name] ??
+                      catalog.localizedNames?.['zh-CN']?.[entry.alloy.name] ??
+                      entry.alloy.name,
+                  ],
+                ]
+              : [],
+          )
+        : [],
+    )
+  }, [catalog, state.baseId, translations])
   const results = useMemo(() => {
     const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
     if (words.length === 0) return []
@@ -187,6 +209,22 @@ export function CraftTargets({
   const essenceAdvice = useMemo(
     () =>
       analyzeEssenceTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
+        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
+        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
+      }),
+    [
+      catalog,
+      state,
+      targetModIds,
+      targetValues,
+      targetAlternatives,
+      minimumTargetCount,
+      targetFracturedModId,
+    ],
+  )
+  const alloyAdvice = useMemo(
+    () =>
+      analyzeAlloyTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
         ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
         ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
       }),
@@ -277,6 +315,9 @@ export function CraftTargets({
         <span className="target-meta">Genesis Tree 专属 · 支持已有属性</span>
       ) : null}
       {mod.desecratedOnly ? <span className="target-meta">亵渎专属 · 需要骨骼揭示</span> : null}
+      {alloySources.has(mod.id) ? (
+        <span className="target-meta">合金保证来源：{alloySources.get(mod.id)}</span>
+      ) : null}
       {essenceSources.has(mod.id) ? (
         <span className="target-meta">精华保证来源：{essenceSources.get(mod.id)?.join('、')}</span>
       ) : null}
@@ -664,6 +705,15 @@ export function CraftTargets({
                 translations={translations}
                 busy={busy}
                 onStartPreparation={onStartPreparation}
+                {...(translateLine ? { translateLine } : {})}
+              />
+              <AlloyAdvicePanel
+                catalog={catalog}
+                state={state}
+                steps={alloyAdvice.ok ? alloyAdvice.value : []}
+                translations={translations}
+                busy={busy}
+                onPreview={onPreviewRoute}
                 {...(translateLine ? { translateLine } : {})}
               />
               <EssenceAdvicePanel

@@ -172,7 +172,10 @@ describe('CatalogPanel', () => {
         onCatalogReady={onCatalogReady}
       />,
     )
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      '/craft-data/catalog.json',
+      '/craft-data/alloys.json',
+    ])
     expect(onCatalogReady).toHaveBeenCalledTimes(1)
   })
   it.each(['zh-CN', 'zh-TW'] as const)(

@@ -71,7 +71,7 @@ it('精华草稿比较同孔增效，应用/撤销/恢复一致，替换候选�
   ).toBeGreaterThan(0)
   click('应用精华结果')
   expect(defences().getAllByText('词缀提高 0% + 符文提高 47%')).toHaveLength(2)
-  expect(screen.getByText(/已计入恐惧精华的 60%/)).toBeDefined()
+  expect(screen.getByText(/已计入工艺词缀的 60%/)).toBeDefined()
   expect(
     screen.getByRole('option', {
       name: 'Iron Rune · 25% increased Armour, Evasion and Energy Shield',
@@ -88,7 +88,7 @@ it('精华草稿比较同孔增效，应用/撤销/恢复一致，替换候选�
   expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').operations).toHaveLength(1)
   click('撤销')
   expect(defences().getAllByText('词缀提高 0% + 符文提高 30%')).toHaveLength(2)
-  expect(screen.queryByText(/已计入恐惧精华的 60%/)).toBeNull()
+  expect(screen.queryByText(/已计入工艺词缀的 60%/)).toBeNull()
   click('恢复本机演练')
   expect(defences().getAllByText('词缀提高 0% + 符文提高 47%')).toHaveLength(2)
   expect(screen.getByText('恐惧精华 × 1')).toBeDefined()

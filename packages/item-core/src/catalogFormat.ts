@@ -276,6 +276,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
   if (!record(value) || !record(value._meta)) return invalid()
   const meta = value._meta
   if (!validEssences(value.essences, meta)) return invalid()
+  if (Object.hasOwn(value, 'alloys')) return invalid()
   if (!validLiquidEmotions(value.liquidEmotions, meta)) return invalid()
   if (!validNames(value.localizedNames, meta.nameSources)) return invalid()
   if (

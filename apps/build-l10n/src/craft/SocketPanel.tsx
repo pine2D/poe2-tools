@@ -51,6 +51,7 @@ export function SocketPanel({
     (entry) => entry.id === (draft?.kind === 'socket' ? draft.augmentId : undefined),
   )
   const artificerDraft = draft?.kind === 'artificer'
+  const amplification = socketEffectIncrease(catalog, state)
   const limit = artificerSocketLimit(catalog, state)
   const canAddSocket = state.sockets !== undefined && state.sockets.length < limit
   const previous = catalog.augments?.find((entry) => entry.id === state.sockets?.[selectedIndex])
@@ -60,9 +61,9 @@ export function SocketPanel({
     <section className="craft-sockets" aria-label="符文镶嵌">
       <h3>符文与魂核镶嵌</h3>
       <p>按当前部位列出符文与基础魂核及其实际效果。覆盖不返还旧材料，镶嵌效果不占前后缀位置。</p>
-      {socketEffectIncrease(catalog, state) > 0 ? (
+      {amplification !== null && amplification > 0 ? (
         <p>
-          已计入{label('Essence of Horror')}的 60% 镶嵌物增效；按固定 PoB
+          已计入工艺词缀的 {amplification}% 镶嵌物增效；按固定 PoB
           快照逐枚向下取整后合计，游戏真机待验收。移除该词缀会同步降低符文效果。
         </p>
       ) : null}

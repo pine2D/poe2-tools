@@ -120,6 +120,10 @@ function RouteSearch({
   const label = (step: CraftStep) => {
     if ('currency' in step) return CRAFT_CURRENCY_LABELS[step.currency]
     if (step.kind === 'fracture') return localize('Fracturing Orb')
+    if (step.kind === 'alloy')
+      return localize(
+        catalog.alloys?.alloys.find((entry) => entry.id === step.alloyId)?.name ?? step.alloyId,
+      )
     if (step.kind === 'liquid-emotion')
       return localize(
         catalog.liquidEmotions?.find((e) => e.id === step.emotionId)?.name ?? step.emotionId,
@@ -346,7 +350,9 @@ function RouteSearch({
                             组候选中的一组，可能锁到其他词缀；此路线只指定结果，不代表成功率。
                           </p>
                         ) : null}
-                        {'kind' in step.operation && step.operation.kind === 'liquid-emotion' ? (
+                        {'kind' in step.operation &&
+                        (step.operation.kind === 'liquid-emotion' ||
+                          step.operation.kind === 'alloy') ? (
                           <EssenceResultDetails
                             catalog={catalog}
                             state={previous}
@@ -412,7 +418,9 @@ function RouteSearch({
                         ) : null}
                         {step.atRiskTargetIds.length ? (
                           <p className="target-warning">
-                            {'kind' in step.operation && step.operation.kind === 'liquid-emotion'
+                            {'kind' in step.operation &&
+                            (step.operation.kind === 'liquid-emotion' ||
+                              step.operation.kind === 'alloy')
                               ? '材料各可演练结果的移除池内目标风险：'
                               : 'kind' in step.operation && step.operation.kind === 'desecrate'
                                 ? '本工具可演练移除池内的目标风险：'

@@ -1,11 +1,6 @@
-import {
-  type AlloyCatalog as AlloyTable,
-  type CatalogBase,
-  type CraftCatalog,
-  inspectAlloys,
-  parseAlloyCatalog,
-} from '@poe2-tools/item-core'
-import { useEffect, useMemo, useState } from 'react'
+import { type CatalogBase, type CraftCatalog, inspectAlloys } from '@poe2-tools/item-core'
+import { useMemo, useState } from 'react'
+import { type AlloyCatalogResource, useAlloyCatalog } from './useAlloyCatalog'
 import './essence-catalog.css'
 
 interface Props {
@@ -14,56 +9,22 @@ interface Props {
   locale?: 'zh-CN' | 'zh-TW'
   translateLine?: ((line: string) => string | null) | undefined
   fetchImpl?: typeof fetch
+  resource?: AlloyCatalogResource
 }
 
-/** 可选 gray 表按需加载；失败隔离在查询面板内，不改变主目录及制作资格。 */
+/** 可选 gray 表按需加载；同一解析结果用于查询与合金制作，失败不阻断主目录。 */
 export function AlloyCatalog({
   catalog,
   base,
   locale = 'zh-CN',
   translateLine,
   fetchImpl = fetch,
+  resource,
 }: Props) {
   const [requested, setRequested] = useState(false)
-  const [attempt, setAttempt] = useState(0)
   const [query, setQuery] = useState('')
-  const [loaded, setLoaded] = useState<{
-    catalog: CraftCatalog
-    table?: AlloyTable
-    error?: string
-  } | null>(null)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt 是显式重试触发器。
-  useEffect(() => {
-    if (!requested) return
-    const controller = new AbortController()
-    let active = true
-    setLoaded(null)
-    void fetchImpl(`${import.meta.env.BASE_URL}craft-data/alloys.json`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (response.status === 404) {
-          if (active)
-            setLoaded({ catalog, error: '当前站点未提供合金关系表，可继续使用其他制作功能。' })
-          return
-        }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const table = parseAlloyCatalog(await response.json(), catalog)
-        if (active) setLoaded({ catalog, table })
-      })
-      .catch(() => {
-        if (active && !controller.signal.aborted)
-          setLoaded({
-            catalog,
-            error: '合金目录加载失败或属性快照不匹配，可重试；其他制作功能不受影响。',
-          })
-      })
-    return () => {
-      active = false
-      controller.abort()
-    }
-  }, [attempt, catalog, fetchImpl, requested])
-  const current = loaded?.catalog === catalog ? loaded : null
+  const ownResource = useAlloyCatalog(catalog, fetchImpl, !resource && requested)
+  const current = resource ?? ownResource
   const entries = useMemo(
     () =>
       current?.table
@@ -103,12 +64,12 @@ export function AlloyCatalog({
     >
       <summary>合金与保证属性</summary>
       <section aria-label="合金保证属性目录">
-        <p>查看当前基底适用的合金与保证属性。合金替换模拟尚未接入，此处查询不会修改装备。</p>
-        {requested && !current ? <p role="status">正在加载合金目录…</p> : null}
+        <p>查看当前基底适用的合金与保证属性。下方合金制作可选择移除结果和数值，再预览应用。</p>
+        {current.loading ? <p role="status">正在加载合金目录…</p> : null}
         {current?.error ? (
           <>
             <p role="status">{current.error}</p>
-            <button type="button" onClick={() => setAttempt((value) => value + 1)}>
+            <button type="button" onClick={current.retry}>
               重试合金目录
             </button>
           </>

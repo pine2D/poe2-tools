@@ -1,7 +1,7 @@
 import type { CatalogBase, CatalogMod, CraftCatalog } from './catalog'
 import { essenceCategory } from './essences'
 
-/** gray 关系表与 primary 属性目录分开，不能据此授权普通生成或制作操作。 */
+/** gray 关系表与 primary 属性目录分开，不能据此授权普通生成。 */
 export interface AlloyCatalog {
   _meta: {
     schemaVersion: 1
@@ -163,4 +163,38 @@ export function inspectAlloys(
       },
     ]
   })
+}
+
+/** 项目记录规范化关系签名；空白、日期变化不影响身份，关系和名字变化会失配。 */
+export function alloyCatalogSignature(catalog: CraftCatalog): string | null {
+  if (!catalog.alloys) return null
+  try {
+    const table = parseAlloyCatalog(catalog.alloys, catalog)
+    return JSON.stringify([
+      COMMIT,
+      MOD_HASH,
+      table.alloys
+        .map((entry) => [
+          entry.id,
+          entry.name,
+          entry.mappings
+            .map((mapping) => [mapping.category, mapping.modId])
+            .sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'en')),
+        ])
+        .sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'en')),
+    ])
+  } catch {
+    return null
+  }
+}
+
+export function inspectCraftAlloys(catalog: CraftCatalog, base: CatalogBase): AlloyInspection[] {
+  return catalog.alloys && alloyCatalogSignature(catalog) !== null
+    ? inspectAlloys(catalog.alloys, catalog, base)
+    : []
+}
+
+export function isAlloyMappedMod(catalog: CraftCatalog, base: CatalogBase, modId: string): boolean {
+  if (!modId.startsWith('Alloy')) return false
+  return inspectCraftAlloys(catalog, base).some((entry) => entry.mod?.id === modId)
 }

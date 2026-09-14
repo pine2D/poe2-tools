@@ -1,3 +1,4 @@
+import { isSovereignAffix } from './alloyEffects'
 import type { CatalogBase, CraftCatalog } from './catalog'
 import { jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel } from './jewels'
@@ -111,6 +112,7 @@ export function catalystStateError(catalog: CraftCatalog, state: CraftState): st
   if (
     state.affixes.some(
       (affix) =>
+        !isSovereignAffix(catalog, state, affix, 'resistance') &&
         !(
           affix.crafted &&
           base &&

@@ -2,7 +2,7 @@ import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { matchCatalogLineOrder } from './catalogMatch'
 import { CATALYSTS, type CatalystQuality, isCatalystQuality } from './catalystQuality'
-import { jewelEffectForKind } from './jewelEffects'
+import { explicitModEffect } from './jewelEffects'
 import {
   inspectNumericLines,
   type NumericRange,
@@ -220,7 +220,7 @@ export function projectCraftTargetValues(
 ): CraftResult<TargetValueProjection> {
   const effect =
     goal?.basis === 'effective'
-      ? jewelEffectForKind(catalog, state, mod.kind)
+      ? explicitModEffect(catalog, state, mod)
       : { ok: true as const, value: 0 }
   if (!effect.ok) return effect
   return projectTargetValues(

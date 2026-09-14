@@ -1,5 +1,6 @@
+import { sovereignResistanceEffect, usesSovereignResistance } from './alloyEffects'
 import { readStatAnnotations } from './annotations'
-import type { CraftCatalog } from './catalog'
+import type { CatalogMod, CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
 import { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
@@ -55,6 +56,25 @@ export function jewelEffectForKind(
   return { ok: true, value }
 }
 
+/** 显式词缀共享投影：珠宝侧别与君王抗性互斥于唯一工艺。 */
+export function explicitModEffect(
+  catalog: CraftCatalog,
+  state: CraftState,
+  mod: CatalogMod,
+): CraftResult<number> {
+  const jewel = jewelEffectForKind(catalog, state, mod.kind)
+  if (!jewel.ok) return jewel
+  const sovereign = sovereignResistanceEffect(catalog, state, mod)
+  return sovereign.ok ? { ok: true, value: jewel.value + sovereign.value } : sovereign
+}
+
+export function usesExplicitModEffect(
+  catalog: CraftCatalog,
+  state: Pick<CraftState, 'affixes'>,
+): boolean {
+  return usesJewelEffect(catalog, state) || usesSovereignResistance(state)
+}
+
 export interface CraftAffixEffectGroup {
   id: string
   kind: 'prefix' | 'suffix'
@@ -74,7 +94,7 @@ export function estimateCraftAffixEffects(
   for (const affix of state.affixes) {
     const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
     if (!mod) return { ok: false, error: '词缀不在制作目录中。' }
-    const effect = jewelEffectForKind(catalog, state, mod.kind)
+    const effect = explicitModEffect(catalog, state, mod)
     const quality = mod.tags.some((tag) => catalyst?.tags.some((candidate) => candidate === tag))
       ? (state.catalyst?.quality ?? 0)
       : 0
@@ -85,7 +105,7 @@ export function estimateCraftAffixEffects(
         return { before, after: before, reason: '原文标记不可缩放，保持基础值。' }
       if (!effect.ok) return unknown(effect.error)
       if (percent === 0)
-        return { before, after: before, reason: '此组未受侧别增效或催化品质影响。' }
+        return { before, after: before, reason: '此组未受词缀增效或催化品质影响。' }
       const patterns = mod.lines.filter(
         (pattern) => readCatalogLineValues([pattern], [before]) !== null,
       )
@@ -99,7 +119,7 @@ export function estimateCraftAffixEffects(
         ? {
             before,
             after: scaled.value,
-            reason: `反侧增效 ${effect.value}% + 命中催化品质 ${quality}%，按来源内部精度一次缩放；真机显示待验收。`,
+            reason: `词缀增效 ${effect.value}% + 命中催化品质 ${quality}%，按来源内部精度一次缩放；真机显示待验收。`,
           }
         : unknown(scaled.error)
     })

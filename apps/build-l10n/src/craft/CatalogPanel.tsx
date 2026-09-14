@@ -25,6 +25,7 @@ import { LiquidEmotionCatalog } from './LiquidEmotionCatalog'
 import { ModStateBadges } from './ModStateBadges'
 import { ProjectControls } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
+import { useAlloyCatalog } from './useAlloyCatalog'
 import './catalog.css'
 
 export interface CatalogPanelProps {
@@ -326,7 +327,14 @@ export function CatalogPanel({
     }
   }, [attempt, fetchImpl])
 
-  const catalog = loadState.status === 'ready' ? loadState.catalog : undefined
+  const primaryCatalog = loadState.status === 'ready' ? loadState.catalog : undefined
+  const alloyResource = useAlloyCatalog(primaryCatalog, fetchImpl, true)
+  const alloyTable = alloyResource.table
+  const catalog = useMemo(
+    () =>
+      primaryCatalog && alloyTable ? { ...primaryCatalog, alloys: alloyTable } : primaryCatalog,
+    [primaryCatalog, alloyTable],
+  )
   useEffect(() => {
     if (catalog) onCatalogReady?.(catalog)
   }, [catalog, onCatalogReady])
@@ -430,10 +438,21 @@ export function CatalogPanel({
       </section>
     )
 
-  const readyCatalog = loadState.catalog
+  const readyCatalog = catalog ?? loadState.catalog
 
   return (
     <section className="catalog-panel">
+      {alloyResource.loading ? (
+        <p role="status">正在加载可选合金关系，普通制作可继续使用。</p>
+      ) : null}
+      {alloyResource.error ? (
+        <p role="status">
+          {alloyResource.error}{' '}
+          <button type="button" onClick={alloyResource.retry}>
+            重载合金关系
+          </button>
+        </p>
+      ) : null}
       <header className="catalog-heading">
         <div>
           <h2>基底目录</h2>
@@ -611,7 +630,8 @@ export function CatalogPanel({
                 />
               )}
               <AlloyCatalog
-                catalog={readyCatalog}
+                catalog={loadState.catalog}
+                resource={alloyResource}
                 base={selectedBase}
                 locale={locale}
                 translateLine={translateLine}

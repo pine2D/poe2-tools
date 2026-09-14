@@ -1,9 +1,7 @@
-import { craftAffixSpace } from './affixCapacity'
 import type { CatalogLiquidEmotion, CatalogMod, CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
+import { guaranteedReplacementCandidates } from './guaranteedReplacement'
 import { inspectLiquidEmotions } from './liquidEmotions'
-import { craftModsConflict } from './modConflicts'
-import { inspectNumericLines } from './numeric'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 
 export interface PreparedLiquidEmotionCraft {
@@ -41,28 +39,8 @@ export function prepareLiquidEmotionCraft(
   const mod =
     outcomes.length === 1 ? outcomes[0] : outcomes.find((entry) => entry.kind === resultKind)
   if (!mod) return fail('液态情感保证结果无效。')
-  if (checked.value.itemLevel < mod.level) return fail('低物等交互尚未验证，暂不支持。')
-  if (
-    checked.value.affixes.some((affix) => {
-      const existing = catalog.modifiers.find((entry) => entry.id === affix.modId)
-      return existing !== undefined && craftModsConflict(existing, mod)
-    })
-  )
-    return fail('已有同组属性时的替换交互尚未验证，暂不支持。')
-  const numeric = inspectNumericLines(mod.lines)
-  if (!numeric.ok) return numeric
-  const guaranteed: CraftAffix = { modId: mod.id, lines: [...mod.lines], crafted: true }
-  const removableAffixes = checked.value.affixes.filter((removed) => {
-    if (removed.fractured) return false
-    const remaining = {
-      ...checked.value,
-      affixes: checked.value.affixes.filter((affix) => affix.modId !== removed.modId),
-    }
-    if (craftAffixSpace(catalog, remaining)[mod.kind] === 0) return false
-    return createCraftState(catalog, { ...remaining, affixes: [...remaining.affixes, guaranteed] })
-      .ok
-  })
-  if (removableAffixes.length === 0)
-    return fail('没有满足容量与装备状态约束的可移除词缀，暂不支持。')
-  return { ok: true, value: { emotion, mod, removableAffixes } }
+  const removable = guaranteedReplacementCandidates(catalog, checked.value, mod)
+  return removable.ok
+    ? { ok: true, value: { emotion, mod, removableAffixes: removable.value } }
+    : removable
 }

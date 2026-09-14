@@ -4,7 +4,7 @@ import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
 import { corruptionEntries } from './corruptionEnchantments'
 import { essenceSourceHash } from './essences'
-import { jewelEffectForKind } from './jewelEffects'
+import { explicitModEffect } from './jewelEffects'
 import { isBasicJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
@@ -210,7 +210,7 @@ export function estimateCatalystEffects(
     const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
     if (!mod) return { ok: false, error: '词缀不在制作目录中。' }
     const matched = matches(mod.tags)
-    const effect = jewelEffectForKind(catalog, state, mod.kind)
+    const effect = explicitModEffect(catalog, state, mod)
     groups.push({
       id: mod.id,
       kind: mod.kind,
