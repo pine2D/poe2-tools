@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import {
+  applyCraftStep,
   type CraftCatalog,
   type CraftState,
   createCraftItemDictionary,
@@ -33,6 +34,43 @@ const translations = catalog.localizedNames?.['zh-CN'] ?? {}
 afterEach(() => {
   cleanup()
   localStorage.clear()
+})
+
+it('裂隙精华后预览上限跟随装备，移除后提示原有预览值超限', () => {
+  const before: CraftState = {
+    ...initialState,
+    affixes: [...initialState.affixes, { modId: 'FireResist1', lines: ['+9% to Fire Resistance'] }],
+  }
+  const crafted = applyCraftStep(catalog, before, {
+    kind: 'essence',
+    essenceId: 'Metadata/Items/Currency/CurrencyCorruptedEssenceBreach',
+    removeModId: 'FireResist1',
+    values: [],
+  })
+  if (!crafted.ok) throw new Error(crafted.error)
+  const { rerender } = render(
+    <CatalystPreviewPanel catalog={catalog} state={before} translations={translations} />,
+  )
+  fireEvent.click(screen.getByText('比较催化剂效果'))
+  expect(screen.getByText(/当前装备的预览上限：20%/)).toBeDefined()
+  rerender(
+    <CatalystPreviewPanel catalog={catalog} state={crafted.value} translations={translations} />,
+  )
+  expect(screen.getByText(/当前装备的预览上限：40%/)).toBeDefined()
+  fireEvent.change(screen.getByLabelText('预览品质（%）'), { target: { value: '40' } })
+  expect(screen.getByText('+26 to maximum Life')).toBeDefined()
+  expect(screen.getByText(/未施加到装备/)).toBeDefined()
+  const removed = applyCraftStep(catalog, crafted.value, {
+    currency: 'annulment',
+    modIds: [],
+    removeModId: 'EssenceBreach',
+  })
+  if (!removed.ok) throw new Error(removed.error)
+  rerender(
+    <CatalystPreviewPanel catalog={catalog} state={removed.value} translations={translations} />,
+  )
+  expect(screen.getByRole('alert').textContent).toContain('0–20')
+  expect(screen.queryByText('+26 to maximum Life')).toBeNull()
 })
 
 it('真实目录的缩放依据可见，内部数值不唯一时显示范围而非猜值', () => {

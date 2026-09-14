@@ -2,6 +2,7 @@ import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { essenceSourceHash } from './essences'
 import { jewelEffectForKind } from './jewelEffects'
 import { isBasicJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
@@ -53,15 +54,39 @@ export function catalystChoices(
     return { ok: false, error: '请先揭示亵渎词缀，再比较完整装备的催化效果。' }
   const breach =
     base.id === 'Breach Ring' && base.type === 'Ring' && base.implicit === '+20% to Maximum Quality'
+  // 只读上限只接收精确的裂隙精华声明，不把任意品质文字当成可叠加效果。
+  const qualityAffixes = state.affixes.filter((affix) =>
+    affix.lines.some((line) => /quality/i.test(line)),
+  )
+  const qualityAffix = qualityAffixes[0]
+  const qualityMod = catalog.modifiers.find((mod) => mod.id === 'EssenceBreach')
+  const breachEssence =
+    qualityAffixes.length === 1 &&
+    qualityAffix?.crafted === true &&
+    qualityAffix.modId === 'EssenceBreach' &&
+    qualityAffix.lines.length === 1 &&
+    qualityAffix.lines[0] === '+20% to Maximum Quality' &&
+    qualityMod?.kind === 'prefix' &&
+    qualityMod.group === 'LocalMaximumQuality' &&
+    qualityMod.lines.length === 1 &&
+    qualityMod.lines[0] === '+20% to Maximum Quality' &&
+    ['Ring', 'Amulet'].includes(base.type) &&
+    essenceSourceHash(catalog) !== null &&
+    catalog.essences?.some(
+      (essence) =>
+        essence.id === 'Metadata/Items/Currency/CurrencyCorruptedEssenceBreach' &&
+        Object.hasOwn(essence.mods, base.type) &&
+        essence.mods[base.type] === 'EssenceBreach',
+    )
   if (
     (!breach && /quality/i.test(base.implicit ?? '')) ||
-    state.affixes.some((affix) => affix.lines.some((line) => /quality/i.test(line)))
+    (qualityAffixes.length > 0 && !breachEssence)
   )
     return { ok: false, error: '此装备具有尚未核对的特殊品质规则，暂不提供催化估算。' }
   return {
     ok: true,
     value: {
-      maxQuality: breach ? 40 : 20,
+      maxQuality: (breach ? 40 : 20) + (breachEssence ? 20 : 0),
       choices: CATALYSTS.map((entry) => ({
         ...entry,
         name: `${isBasicJewel(base) ? 'Refined ' : ''}${entry.id} Catalyst`,

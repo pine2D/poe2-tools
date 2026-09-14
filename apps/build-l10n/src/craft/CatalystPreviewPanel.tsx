@@ -100,7 +100,7 @@ export function CatalystPreviewPanel({
               </label>
             </div>
             <p>
-              此基底的预览上限：{options.value.maxQuality}
+              当前装备的预览上限：{options.value.maxQuality}
               %。切换类型会重新比较，不叠加不同催化效果。
             </p>
           </>
