@@ -1,5 +1,11 @@
 # 数据源登记表
 
+### 普通防具符文扩展（2026-09-14）
+
+沿用已登记固定 MIT `ModRunes.lua` 的完整类别、限制字段、效果与等级需求，新增 Body、Mind、Inspiration、Stone、Vision、Robust、Adept、Resolve 八族四档的防具效果。数值采用固定目录快照，不把它推定为已完成所有服区的游戏验收。[GGG 0.2.0e](https://www.pathofexile.com/forum/view-thread/3754474)用于核对属性三族的新增及武器有独立效果的事实；[0.1.1](https://www.pathofexile.com/forum/view-thread/3696353)沿用既有覆盖规则。没有新数据下载适配器、没有复制同行制作器数据。
+
+新增效果均为单行正整数；只核对完整声明，不按名称或首行泛化。沿已有恐惧工艺的逐枚增效与整数向下取整模型；不激活 Bonded、不把生命／属性等贡献视为角色最终面板。小数回复、荆棘、结界及特殊符文未据此放行。来源名称仍通过既有三服 static ID 独立本地化。
+
 ### 催化崇高预兆的品质消耗（2026-09-14）
 
 [PoE2DB 当前公开物品说明](https://poe2db.tw/us/Omen_of_Catalysing_Exaltation)经 Exa 全文核对，按 gray 人工机制参考：下一次崇高消耗全部催化品质，提高对应类型属性的机会；预兆触发时消费。[官方论坛作者实操](https://www.pathofexile.com/forum/view-thread/3849100)报告单枚搭配高级崇高，以及混用预兆的不确定结果；[作者品质消费报告](https://www.pathofexile.com/forum/view-thread/3842222)证实品质被清空但未保证标签，也包含未消费预兆的旧缺陷报告。论坛位置不使玩家报告成为 GGG 官方结论。

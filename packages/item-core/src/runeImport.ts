@@ -3,7 +3,13 @@ import type { CraftCatalog } from './catalog'
 import type { InspectedRune } from './export'
 import { parseItem } from './parse'
 import type { CraftResult, CraftState } from './rehearsal'
-import { parseRuneEffectTotals, type RuneEffectTotals, sumRuneEffects } from './runeEffects'
+import {
+  parseRuneEffectTotals,
+  RUNE_EFFECT_LABELS,
+  type RuneEffectKey,
+  type RuneEffectTotals,
+  sumRuneEffects,
+} from './runeEffects'
 import { effectiveSocketAugment } from './socketAmplification'
 import type { ItemDocument } from './types'
 import {
@@ -84,7 +90,13 @@ export function runeSocketContributionError(
   if (expected === null || actual === null) return '原文或目录包含尚未支持的符文效果，不能核对。'
   if (JSON.stringify(expected) === JSON.stringify(actual)) return null
   const describe = (totals: RuneEffectTotals) =>
-    `火焰 ${totals.Fire}%、冰霜 ${totals.Cold}%、闪电 ${totals.Lightning}%、防御提高 ${totals.Defences}%`
+    (Object.keys(totals) as RuneEffectKey[])
+      .filter((key) => totals[key] > 0)
+      .map(
+        (key) =>
+          `${RUNE_EFFECT_LABELS[key]} ${totals[key]}${['Fire', 'Cold', 'Lightning', 'Defences', 'ManaRegeneration', 'FlaskRecovery'].includes(key) ? '%' : ''}`,
+      )
+      .join('、') || '无'
   return `符文效果与孔位声明不一致：原文 ${describe(expected)}；所选符文 ${describe(actual)}。`
 }
 

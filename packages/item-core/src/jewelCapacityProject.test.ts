@@ -81,7 +81,7 @@ const operation = (resultKind: 'prefix' | 'suffix') => ({
 })
 
 it('v52 显式双侧结果完整重放并保留撤销位置', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v55')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v56')
   for (const [kind, modId] of [
     ['prefix', extraSuffix],
     ['suffix', extraPrefix],
@@ -297,6 +297,6 @@ it('v50 和 v51 普通液态历史仍可恢复升级', () => {
     }
     const result = restore(p)
     expect(result.ok).toBe(true)
-    if (result.ok) expect(result.value.project.rulesVersion).toBe('basic-2026-09-12-v55')
+    if (result.ok) expect(result.value.project.rulesVersion).toBe('basic-2026-09-12-v56')
   }
 })

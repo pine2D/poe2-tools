@@ -57,19 +57,19 @@ const catalog = (augments: CatalogAugment[] = []): CraftCatalog => ({
 })
 
 describe('钢铁符文核心', () => {
-  it('共享解析器只接受正整数三抗和三防并精确求和', () => {
+  it('共享解析器保留正整数三抗和三防的精确求和', () => {
     expect(
       parseRuneEffectTotals([
         '+10% to Fire Resistance',
         '14% increased Armour, Evasion and Energy Shield',
         '16% increased Armour, Evasion and Energy Shield',
       ]),
-    ).toEqual({ Fire: 10, Cold: 0, Lightning: 0, Defences: 30 })
-    expect(parseRuneEffectTotals([])).toEqual({ Fire: 0, Cold: 0, Lightning: 0, Defences: 0 })
+    ).toMatchObject({ Fire: 10, Cold: 0, Lightning: 0, Defences: 30 })
+    expect(Object.values(parseRuneEffectTotals([]) ?? {})).toEqual(Array(12).fill(0))
     for (const lines of [
       ['0% increased Armour, Evasion and Energy Shield'],
       ['14.5% increased Armour, Evasion and Energy Shield'],
-      ['14% increased Armour, Evasion and Energy Shield', '+1 to maximum Life'],
+      ['14% increased Armour, Evasion and Energy Shield', '+1.5 to maximum Life'],
     ])
       expect(parseRuneEffectTotals(lines)).toBeNull()
   })
@@ -197,7 +197,7 @@ describe('钢铁符文核心', () => {
   })
 
   it('v13往返，v5-v8从合法旧基线拒绝游标后的Iron操作', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v55')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v56')
     const source = catalog([iron(), fire])
     const current = {
       schemaVersion: 1,

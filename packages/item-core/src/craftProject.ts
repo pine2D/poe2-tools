@@ -52,7 +52,7 @@ import {
 } from './rehearsal'
 import { importCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
-import { isSupportedArmourRune, parseRuneEffectTotals } from './runeEffects'
+import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
@@ -65,7 +65,7 @@ import {
   validateCraftTargetValues,
 } from './targets'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v55'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v56'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -126,7 +126,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 55 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 56 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -1127,17 +1127,30 @@ export function parseCraftProject(
       return fail('导入品质声明无效。')
     importedQuality = value.importedQuality
   }
+  const socketIds = [
+    ...(initialInput.sockets ?? []),
+    ...(importedSockets ?? []),
+    ...value.operations.flatMap((operation) =>
+      record(operation) && operation.kind === 'socket' && nonempty(operation.augmentId)
+        ? [operation.augmentId]
+        : [],
+    ),
+    ...(strategy?.rules.flatMap((rule) =>
+      rule.action.kind === 'socket' ? [rule.action.augmentId] : [],
+    ) ?? []),
+  ]
+  if (
+    rulesVersion < 56 &&
+    socketIds.some((id) => {
+      const augment = catalog.augments?.find((entry) => entry.id === id)
+      return augment !== undefined && isUtilityArmourRune(augment)
+    })
+  )
+    return fail(
+      'v55 及更早项目不能包含新增生命、魔力、属性等防具符文，包括起点、未执行操作和指引。',
+    )
   if (rulesVersion < 10) {
-    const ids = [
-      ...(initialInput.sockets ?? []),
-      ...(importedSockets ?? []),
-      ...value.operations.flatMap((operation) =>
-        record(operation) && operation.kind === 'socket' && nonempty(operation.augmentId)
-          ? [operation.augmentId]
-          : [],
-      ),
-    ]
-    const usesIron = ids.some((id) => {
+    const usesIron = socketIds.some((id) => {
       if (id === null) return false
       const augment = catalog.augments?.find((entry) => entry.id === id)
       if (!augment || !isSupportedArmourRune(augment)) return false
