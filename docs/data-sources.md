@@ -1,5 +1,7 @@
 # 数据源登记表
 
+珠宝腐化扩展（2026-09-15）：沿已登记 [sirgog 原创腐化说明](https://mobalytics.gg/poe-2/guides/vaal-corrupting)的珠宝专节，人工核对属性不变、一次至三次类似混沌替换、独立强化三类结果；不采用作者给出的概率，随机增减词缀与工艺增容交互仍需另行核对。沿已登记固定 MIT `ModCorrupted.lua` 的 11 条 jewel 资格强化，与 ModJewel 的精确普通／范围基底和已有容量规则接通；不引入新数据或同行代码。建筑师沿既有材料说明中 Equipment or Jewel 的适用范围和当前指定成功／摧毁模型；没有推定新的权重。CoE 公开更新日志的 2026-09-12 条目显示从当前制作结果继续模拟的交互，作为保留当前状态、费用与历史的流程参考；该日志不作为游戏规则证据。当前国服文本与逐组合游戏行为仍待真机验收。
+
 定向消减组合（2026-09-14）：沿用已登记 PoE2DB 预兆说明和 Lolcohol / Mobalytics 预兆攻略，以“指定移除侧”与“最低目录等级”组合建立模型。新增人工 gray 第一手交互参考 [GGG 论坛玩家实测帖](https://www.pathofexile.com/forum/view-thread/3762077)（2025-04-17/19）：破裂装备的悬停提示可能错误，玩家报告实际移除符合预兆；这是玩家报告，不是 GGG 官方机制确认。先排除破裂、限定侧，再求最低等级；当前国服组合交互待真机核对。不新增抓取适配器或数据文件，不采用外站权重。
 
 建筑师摧毁（2026-09-14）：新增人工 gray 规则参考 [Lolcohol / Mobalytics《Vaal Currency Items》](https://mobalytics.gg/poe-2/guides/vaal-currency)（页面更新 2026-07-21），结合已登记 PoE2DB 的 [Architect's Orb 说明](https://poe2db.tw/us/Architects_Orb)。v62 支持手选摧毁，v63 增加手选追加强化，未采用作者给出的概率。成功组合沿用已登记固定 MIT PoB2 ModCorrupted.lua 的组、附加标签及资格数据建立模型；组间交互、无原强化结果和二重后不可重复仍待真机确认，不宣称服务端规则已证实。已登记固定 MIT PoB2 的 Item.lua 用于核对英文 Twice Corrupted 标记，不猜国服或台服译文。无新增抓取适配器、转载表格或同行实现。 本轮 CoE 黑盒观察：自造英文 Antler Focus 在 language=cn 页面提示基底未找到，英文页面可导入；Temple → Architect's Orb 显示该方法没有处理器。仅记录当前页面行为，不据此推断游戏规则或其他入口能力。

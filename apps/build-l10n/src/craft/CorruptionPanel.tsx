@@ -83,7 +83,7 @@ export function CorruptionPanel({
   useEffect(() => {
     if (draft) preview.current?.focus()
   }, [draft])
-  if (catalog.bases.find((base) => base.id === state.baseId)?.type === 'Jewel') return null
+  const jewel = catalog.bases.find((base) => base.id === state.baseId)?.type === 'Jewel'
   if (state.corrupted)
     return (
       <section className="craft-sockets" aria-label="腐化状态">
@@ -107,7 +107,10 @@ export function CorruptionPanel({
         {state.twiceCorrupted ? (
           <p>已完成二重腐化，不能再次使用建筑师宝珠；两组强化分别计入已支持的面板。</p>
         ) : null}
-        <p>普通通货、精华、骨骼、破裂和巧匠石已停用。已有孔仍可镶嵌或覆盖已支持的符文与魂核。</p>
+        <p>
+          普通通货、精华、液态情感、骨骼、破裂和巧匠石已停用。
+          {!jewel ? '已有孔仍可镶嵌或覆盖已支持的符文与魂核。' : ''}
+        </p>
         <p>演练中可撤销以比较路线；游戏中的腐化不能撤销。</p>
       </section>
     )
@@ -117,9 +120,15 @@ export function CorruptionPanel({
     <section className="craft-sockets" aria-label="瓦尔结果预演">
       <h3>瓦尔石：指定结果预演</h3>
       <p>
-        手选“属性不变”“增加一孔”“新增强化属性”或“重选词缀”查看后续路线，每次记录一颗瓦尔石。这不是随机抽取，也不代表成功率。
+        手选“属性不变”{!jewel ? '“增加一孔”' : ''}
+        “新增强化属性”或“重选词缀”查看后续路线，每次记录一颗瓦尔石。这不是随机抽取，也不代表成功率。
       </p>
-      <p>预兆、特殊魂核和腐化珠宝尚未接入。腐化强化独立于固有属性及前后缀，不占显式词缀名额。</p>
+      <p>
+        {jewel
+          ? '珠宝随机增加或移除词缀尚未接入，包括突破容量的结果。'
+          : '预兆和特殊魂核尚未接入。'}
+        腐化强化独立于固有属性及前后缀，不占显式词缀名额。
+      </p>
       <div className="socket-actions">
         <button
           type="button"
@@ -128,15 +137,21 @@ export function CorruptionPanel({
         >
           预演腐化：属性不变
         </button>
-        <button
-          type="button"
-          disabled={busy || draft !== null || !socket.ok}
-          onClick={() => onPreview({ kind: 'vaal', outcome: 'socket' })}
-        >
-          预演腐化：增加一孔
-        </button>
+        {!jewel ? (
+          <button
+            type="button"
+            disabled={busy || draft !== null || !socket.ok}
+            onClick={() => onPreview({ kind: 'vaal', outcome: 'socket' })}
+          >
+            预演腐化：增加一孔
+          </button>
+        ) : null}
       </div>
-      {!unchanged.ok ? <p>{unchanged.error}</p> : !socket.ok ? <p>{socket.error}</p> : null}
+      {!unchanged.ok ? (
+        <p>{unchanged.error}</p>
+      ) : !jewel && !socket.ok ? (
+        <p>{socket.error}</p>
+      ) : null}
       <label>
         新增腐化强化
         <select
@@ -192,7 +207,10 @@ export function CorruptionPanel({
           {draft.outcome === 'reroll' ? (
             <p>按已指定顺序完成替换，整次只计一颗瓦尔石；保留稀有度、固有属性、品质与镶嵌物。</p>
           ) : null}
-          <p>应用后标记腐化，停止普通制作。建议先完成品质、词缀和普通打孔。</p>
+          <p>
+            应用后标记腐化，停止普通制作。建议先完成品质、词缀{!jewel ? '和普通打孔' : '及液态工艺'}
+            。
+          </p>
           <div className="socket-actions">
             <button type="button" onClick={() => onPreview(null)}>
               取消腐化结果

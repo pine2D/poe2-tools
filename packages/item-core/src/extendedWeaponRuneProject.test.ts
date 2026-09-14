@@ -50,8 +50,8 @@ function project() {
 }
 const restore = (p: unknown) => parseCraftProject(JSON.stringify(p), catalog, dictionary)
 it('v58 回放新增武器符文覆盖、所有游标与费用；未知未来规则拒绝', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v69')
-  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v70' }).ok).toBe(false)
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v70')
+  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v71' }).ok).toBe(false)
   for (const cursor of [0, 1, 2]) {
     const result = restore({ ...project(), cursor })
     if (!result.ok) throw Error(result.error)

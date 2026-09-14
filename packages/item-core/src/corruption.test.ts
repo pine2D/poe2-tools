@@ -100,7 +100,7 @@ describe('瓦尔指定结果与腐化后镶嵌', () => {
     })
   })
 
-  it('无变化只标记腐化，不猜孔数；严格拒绝伪造字段、已腐化和珠宝入口', () => {
+  it('无变化只标记腐化，不猜孔数；拒绝伪造字段与已腐化，珠宝沿v70支持无变化', () => {
     const { sockets: _, ...unknownSockets } = start
     const result = applyCraftStep(catalog, unknownSockets, {
       kind: 'vaal',
@@ -124,6 +124,6 @@ describe('瓦尔指定结果与腐化后镶嵌', () => {
         { ...unknownSockets, baseId: 'Ruby', quality: undefined } as unknown as CraftState,
         { kind: 'vaal', outcome: 'unchanged' } as unknown as CraftStep,
       ).ok,
-    ).toBe(false)
+    ).toBe(true)
   })
 })

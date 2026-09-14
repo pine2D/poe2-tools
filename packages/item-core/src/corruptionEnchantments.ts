@@ -23,8 +23,7 @@ function eligible(
   addedTags: readonly string[] = [],
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  if (!base || base.type === 'Jewel' || mod.kind !== 'corrupted' || mod.level > state.itemLevel)
-    return false
+  if (!base || mod.kind !== 'corrupted' || mod.level > state.itemLevel) return false
   const tags = new Set([
     ...base.tags,
     ...addedTags,

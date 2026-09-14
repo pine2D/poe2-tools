@@ -13,11 +13,7 @@ function supportedState(catalog: CraftCatalog, state: CraftState): CraftResult<C
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
-  if (
-    catalog.bases.find((base) => base.id === state.baseId)?.type === 'Jewel' ||
-    state.pendingDesecration
-  )
-    return { ok: false, error: '珠宝及待揭示亵渎的腐化重选尚未支持。' }
+  if (state.pendingDesecration) return { ok: false, error: '待揭示亵渎的腐化重选尚未支持。' }
   if (!['magic', 'rare'].includes(state.rarity) || state.affixes.length === 0)
     return { ok: false, error: '腐化重选需要至少一组显式词缀的魔法或稀有装备。' }
   if (state.affixes.some((affix) => affix.fractured || affix.crafted || affix.desecrated))

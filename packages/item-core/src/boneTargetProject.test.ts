@@ -34,7 +34,7 @@ function project(): CraftProject {
   }
 }
 it('v24全游标恢复专属目标，v23拒绝目标注入但保留合法骨骼历史', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v69')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v70')
   const input = project()
   for (let cursor = 0; cursor <= input.operations.length; cursor++)
     expect(parseCraftProject(serializeCraftProject({ ...input, cursor }), catalog)).toMatchObject({

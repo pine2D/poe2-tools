@@ -220,7 +220,7 @@ it('瓦尔加孔预览、取消、镶嵌、保存及撤销恢复腐化限制', (
       augmentId: 'pob2:augment:["Soul Core of Quipolatl","weapon"]',
     },
   ])
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v69')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v70')
   click('撤销')
   expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
   click('撤销')

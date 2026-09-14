@@ -73,7 +73,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v69'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v70'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -136,7 +136,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 69 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 70 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -868,6 +868,16 @@ export function parseCraftProject(
   if (pricing && !pricing.ok) return fail(pricing.error)
   const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
   const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
+  if (
+    rulesVersion < 70 &&
+    usesJewel &&
+    ((record(value.initialState) && Object.hasOwn(value.initialState, 'corrupted')) ||
+      (Array.isArray(value.operations) &&
+        value.operations.some(
+          (step) => record(step) && (step.kind === 'vaal' || step.kind === 'architect'),
+        )))
+  )
+    return fail('v2–v69 旧版项目不能包含腐化珠宝或其制作步骤，包括撤销位置之后的步骤。')
   if (
     rulesVersion < 67 &&
     catalog.bases.some((base) => base.id === initialBaseId && isRadiusJewel(base))

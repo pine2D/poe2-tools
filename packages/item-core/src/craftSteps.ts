@@ -120,11 +120,7 @@ export function applyCraftStep(
     if (!isVaalCraftOperation(step)) return { ok: false, error: '瓦尔结果步骤字段无效。' }
     const checked = createCraftState(catalog, state)
     if (!checked.ok) return checked
-    if (
-      catalog.bases.find((base) => base.id === state.baseId)?.type === 'Jewel' ||
-      state.pendingDesecration
-    )
-      return { ok: false, error: '珠宝及待揭示亵渎的腐化结果尚未支持。' }
+    if (state.pendingDesecration) return { ok: false, error: '待揭示亵渎的腐化结果尚未支持。' }
     if (step.outcome === 'reroll') {
       const rerolled = replayVaalReplacements(catalog, checked.value, step.replacements)
       return rerolled.ok
