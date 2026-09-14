@@ -1,5 +1,9 @@
 # 数据源登记表
 
+### 液态制作路线交互参考（2026-09-14）
+
+再次人工核对 [Craft of Exile 当前公开界面](https://beta.craftofexile.com/?game=poe2) 的手动演练、条件流程与自填报价入口，以及已登记 [b0b5 五词缀珠宝第一手实操](https://www.youtube.com/watch?v=xDDbg6FYMgI) 的临时增容、填满与最终增效顺序。仅帮助组织操作和风险说明，算法为本项目自有的有界目标搜索；没有复制其代码、物品数据、价格或概率。搜索命中的商业聚合攻略含“剥离不能移除三同侧词缀”等未成立概括，排除。每一步资格、数值、容量和来源继续使用已登记的固定 MIT 目录及本工具现有规则；范围、亵渎珠宝和国服未验证交互不随路线接入而扩大。
+
 ### 普通珠宝侧别增效依据（2026-09-14）
 
 沿用已登记的 [固定 MIT Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L1648)，本轮重新下载核对 SHA-256 `0ca39961256eefc960da7b30b4e5cb6eb45d08037aa72bc751201cc0630af2a4`：1255 行识别前后缀增效，1648–1717 行按对应侧加入已有品质标量；不可缩放及授予技能跳过。与同提交 ModJewel、LiquidEmotions、ModScalability 三项声明交叉核对，以自有 TypeScript 实现相加与一次缩放，不复制实现或新增数据包。Ferocity 提示沿下方已登记 gray 页面人工核查。v53 仅开放四普通珠宝八映射。

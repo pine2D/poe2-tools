@@ -34,6 +34,12 @@ export function EssenceResultDetails({
   const removed = state.affixes.find((affix) => affix.modId === operation.removeModId)
   return (
     <>
+      {operation.kind === 'liquid-emotion' ? (
+        <p>
+          液态保证结果：{prepared.value.mod.kind === 'prefix' ? '前缀' : '后缀'}
+          。方向与移除对象仅为指定演练结果。
+        </p>
+      ) : null}
       <p>保证词缀：{prepared.value.mod.id} · 演练填入的数值：</p>
       {rendered.ok ? (
         rendered.value.map((line, index) => (

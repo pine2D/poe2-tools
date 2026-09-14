@@ -22,6 +22,7 @@ import {
   craftImplicitTargetCandidates,
   implicitTargetRolls,
 } from './implicitTargets'
+import { jointJewelDivineOperations, liquidRouteContext } from './liquidRouteCandidates'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen } from './omens'
@@ -60,7 +61,7 @@ export interface CraftTargetRouteStep {
   rerolledImplicitLineIndexes?: number[]
   operation: CraftStep
   state: CraftState
-  /** matched/gained 使用主目标组 ID；风险与损失使用当前真实存在的已接受档位 ID。 */
+  /** matched/gained 使用主目标组 ID；风险与损失使用当前真实存在的已接受档位 ID，损失含数值失配。 */
   matchedTargetIds: string[]
   gainedTargetIds: string[]
   lostTargetIds: string[]
@@ -203,6 +204,9 @@ export function planCraftTargetRoutes(
     ...(alternatives.find((a) => a.targetModId === id)?.modIds ?? []),
   ])
   const accepted = new Set(groups.flat())
+  const liquid = liquidRouteContext(catalog, state, groups, values, () => {
+    result.truncated = true
+  })
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const category = base ? essenceCategory(base) : ''
   const essenceIds = new Set(
@@ -229,8 +233,8 @@ export function planCraftTargetRoutes(
       }),
     )
   // 起点保护只看身份与数值；完整目标推进还需锁定对应的已接受组。
-  const matched = (current: CraftState) =>
-    numericMatched(current).filter(
+  const matched = (current: CraftState, numeric = numericMatched(current)) =>
+    numeric.filter(
       (id) =>
         id !== fracturedTargetId ||
         current.affixes.some(
@@ -278,7 +282,8 @@ export function planCraftTargetRoutes(
         matched(state).length +
         matchedImplicit(state).length +
         bonePriority(state) +
-        fracturePriority(state),
+        fracturePriority(state) +
+        liquid.priority(state),
       risk: 0,
       boneOmens: 0,
       cost: 0,
@@ -352,7 +357,11 @@ export function planCraftTargetRoutes(
       continue
     }
     result.examinedStates++
-    const beforeMatched = matched(node.state)
+    const beforeNumeric = numericMatched(node.state)
+    const beforeMatched = matched(node.state, beforeNumeric)
+    // 页面应用第一步后会把新达成目标视为起点保护；液态完整示例也须保持同一语义。
+    const stepProtectedIds =
+      liquid.enabled && options.preserveMatched !== false ? beforeNumeric : protectedIds
     const beforeImplicit = matchedImplicit(node.state)
     const present = node.state.affixes.filter((a) => accepted.has(a.modId)).map((a) => a.modId)
     const offer = (
@@ -363,8 +372,9 @@ export function planCraftTargetRoutes(
       if (!spend()) return
       const applied = applyCraftStep(catalog, node.state, operation)
       if (!applied.ok) return
-      const afterMatched = matched(applied.value)
-      if (protectedIds.some((id) => !numericMatched(applied.value).includes(id))) return
+      const afterNumeric = numericMatched(applied.value)
+      const afterMatched = matched(applied.value, afterNumeric)
+      if (stepProtectedIds.some((id) => !afterNumeric.includes(id))) return
       const afterImplicit = matchedImplicit(applied.value)
       if (protectedImplicit.some((index) => !afterImplicit.includes(index))) return
       const lostImplicit = beforeImplicit.filter((index) => !afterImplicit.includes(index))
@@ -382,7 +392,16 @@ export function planCraftTargetRoutes(
             .map((candidate) => candidate.lineIndex)
         : []
       const retained = new Set(applied.value.affixes.map((a) => a.modId))
-      const lostTargetIds = present.filter((id) => !retained.has(id))
+      const lostTargetIds = present.filter(
+        (id) =>
+          !retained.has(id) ||
+          groups.some(
+            (group, index) =>
+              group.includes(id) &&
+              beforeNumeric.includes(ids[index] ?? '') &&
+              !afterNumeric.includes(ids[index] ?? ''),
+          ),
+      )
       const rerolledTargetIds =
         'currency' in operation && operation.currency === 'divine' && operation.omen !== 'blessed'
           ? present.filter(
@@ -495,7 +514,8 @@ export function planCraftTargetRoutes(
             afterMatched.length +
             afterImplicit.length +
             bonePriority(applied.value) +
-            fracturePriority(applied.value),
+            fracturePriority(applied.value) +
+            liquid.priority(applied.value),
           risk,
           cost,
           boneOmens:
@@ -535,6 +555,23 @@ export function planCraftTargetRoutes(
     if (boneAdvice.ok)
       for (const step of boneAdvice.value) offer(step.operation, step.atRiskTargetIds)
     if (node.state.pendingDesecration) continue
+    if (liquid.enabled) {
+      for (const candidate of liquid.candidates(node.state)) {
+        if (result.candidateApplications >= 4096) break
+        offer(candidate.operation, candidate.atRiskTargetIds)
+      }
+      for (const operation of jointJewelDivineOperations(
+        catalog,
+        node.state,
+        values,
+        implicitValues,
+        options.minimumTargetCount !== undefined && options.minimumTargetCount < ids.length,
+        groups[ids.indexOf(fracturedTargetId ?? '')] ?? [],
+      )) {
+        if (result.candidateApplications >= 4096) break
+        offer(operation)
+      }
+    }
     const blockedBone = groups.some(
       (group, index) =>
         !beforeMatched.includes(ids[index] ?? '') &&
@@ -697,7 +734,9 @@ export function planCraftTargetRoutes(
                 Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compare(a.id, b.id),
             )
           for (const mod of limit(candidates, selected.modIds.length === 0 ? 12 : 6)) {
-            const numbers = minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))
+            const numbers = liquid.enabled
+              ? liquid.rolls(node.state, mod)
+              : minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))
             if (numbers === null) continue
             if (!spend()) return
             const added = addCraftAffix(catalog, current, mod.id, currency, omen)

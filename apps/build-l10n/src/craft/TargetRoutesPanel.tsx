@@ -14,12 +14,14 @@ import {
   craftOmenDescription,
   craftOmenMaterials,
   ESSENCE_OMEN_RULES,
+  usesJewelEffect,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { CraftCostSummary } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
+import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
@@ -148,7 +150,9 @@ function RouteSearch({
       : []
   const modLabel = (id: string) => {
     const mod = catalog.modifiers.find((m) => m.id === id)
-    return mod ? `${mod.name} · ${translateLine?.(mod.lines[0] ?? '') ?? mod.lines[0] ?? id}` : id
+    return mod
+      ? `${mod.name || mod.id} · ${translateLine?.(mod.lines[0] ?? '') ?? mod.lines[0] ?? id}`
+      : id
   }
   const implicitLabel = (index: number) => {
     const line =
@@ -160,6 +164,7 @@ function RouteSearch({
       <h3>多步示例路线</h3>
       <p>
         只搜索已支持操作的目标推进与准备选择，未涵盖所有游戏路径；示例不代表最优、成功率或实际游戏结果。咒符与传奇仅用于对比。
+        普通珠宝包含液态保证词缀、临时增容和词缀增效的准备步骤。
       </p>
       <label>
         <input
@@ -175,6 +180,7 @@ function RouteSearch({
       </label>
       <p>
         保留会约束示例每一步维持起点已满足的目标身份和数值，包括尚未破裂的指定目标；不保护非目标词缀，也不保证游戏随机结果安全。
+        液态路线中途新达成的条件也会继续保留，便于应用后逐步重新规划。
       </p>
       <label>
         <input
@@ -337,6 +343,14 @@ function RouteSearch({
                             组候选中的一组，可能锁到其他词缀；此路线只指定结果，不代表成功率。
                           </p>
                         ) : null}
+                        {'kind' in step.operation && step.operation.kind === 'liquid-emotion' ? (
+                          <EssenceResultDetails
+                            catalog={catalog}
+                            state={previous}
+                            operation={step.operation}
+                            {...(translateLine ? { translateLine } : {})}
+                          />
+                        ) : null}
                         {'kind' in step.operation &&
                         (step.operation.kind === 'desecrate' ||
                           step.operation.kind === 'desecration-offer' ||
@@ -378,27 +392,31 @@ function RouteSearch({
                           <p key={a.modId}>
                             得到 / 更新：
                             {a.lines.map((line) => translateLine?.(line) ?? line).join('；')}（
-                            {catalog.modifiers.find((m) => m.id === a.modId)?.name ?? a.modId}）
+                            {catalog.modifiers.find((m) => m.id === a.modId)?.name || a.modId}）
                           </p>
                         ))}
                         {removed.map((a) => (
                           <p key={a.modId}>
                             移除：{a.lines.map((line) => translateLine?.(line) ?? line).join('；')}
-                            （{catalog.modifiers.find((m) => m.id === a.modId)?.name ?? a.modId}）
+                            （{catalog.modifiers.find((m) => m.id === a.modId)?.name || a.modId}）
                           </p>
                         ))}
                         {step.lostTargetIds.length ? (
                           <p className="target-warning">
-                            指定结果丢失目标：{step.lostTargetIds.map(modLabel).join('；')}
+                            指定结果丢失目标身份或数值条件：
+                            {step.lostTargetIds.map(modLabel).join('；')}
                           </p>
                         ) : null}
                         {step.atRiskTargetIds.length ? (
                           <p className="target-warning">
-                            {'kind' in step.operation && step.operation.kind === 'desecrate'
-                              ? '本工具可演练移除池内的目标风险：'
-                              : 'currency' in step.operation && step.operation.omen === 'whittling'
-                                ? '最低等级候选内的目标风险：'
-                                : '整个合法随机移除池内的目标风险：'}
+                            {'kind' in step.operation && step.operation.kind === 'liquid-emotion'
+                              ? '材料各可演练结果的移除池内目标风险：'
+                              : 'kind' in step.operation && step.operation.kind === 'desecrate'
+                                ? '本工具可演练移除池内的目标风险：'
+                                : 'currency' in step.operation &&
+                                    step.operation.omen === 'whittling'
+                                  ? '最低等级候选内的目标风险：'
+                                  : '整个合法随机移除池内的目标风险：'}
                             {step.atRiskTargetIds.map(modLabel).join('；')}
                             。所选安全结果不代表随机安全。
                           </p>
@@ -407,7 +425,10 @@ function RouteSearch({
                           <p className="target-warning">
                             {step.operation.omen === 'blessed'
                               ? craftOmenDescription('blessed')
-                              : '神圣会随机重掷未破裂显式与固有数值，已达成条件也可能变差；破裂数值保持不变。'}
+                              : '神圣会随机重掷未破裂显式与固有数值，已达成条件也可能变差；破裂基础数值保持不变。'}
+                            {step.operation.omen !== 'blessed' && usesJewelEffect(catalog, previous)
+                              ? '珠宝增效会同时重掷，破裂词缀的基础值不变，但有效值也会随增效变化。'
+                              : ''}
                             涉及目标：
                             {[
                               ...step.rerolledTargetIds.map(modLabel),
