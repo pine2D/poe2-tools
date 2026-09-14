@@ -1,5 +1,7 @@
 # 制作目录数据来源
 
+`alloys.json` 是独立 **gray** 手工关系表：13 种材料、132 个类别对应，只引用现有 primary 词缀 ID，保留适性合金权杖一项未对应。材料说明来源逐项记在 `source`，登记见 `docs/data-sources.md`。不含外站词缀数值、权重、价格或代码；不以本项目 MIT 许可声明第三方数据库的再分发权利。可删除此表或用 `DICT_ENABLE_POE2DB=0` 禁止发布，既有 primary 目录不依赖它。
+
 `catalog.json` 为自动生成数据，运行 `pnpm craft:build` 可重建；`--offline` 使用已有缓存。每个来源文件的固定提交、URL 和 SHA-256 写入 `_meta.sources`。
 
 来源：[Path of Building Community — PoE2](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2)，固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e`。源数据标注 **Item data (c) Grinding Gear Games**；游戏文本和内容版权仍归 GGG。MIT 许可不能处分游戏内容的权利。目录不含真实出现概率，`eligibility` 中的 0/1 只代表源数据的生成适用性。

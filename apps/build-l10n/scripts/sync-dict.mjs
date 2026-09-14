@@ -54,3 +54,13 @@ await mkdir(craftTarget, { recursive: true })
 for (const file of ['catalog.json', 'NOTICE.md']) {
   await copyFile(join(craftSource, file), join(craftTarget, file))
 }
+// 合金关系为独立灰区表；关闭或源文件删除后不能遗留旧发布产物。
+const alloyTarget = join(craftTarget, 'alloys.json')
+await rm(alloyTarget, { force: true })
+if (!skipGray) {
+  try {
+    await copyFile(join(craftSource, 'alloys.json'), alloyTarget)
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+}

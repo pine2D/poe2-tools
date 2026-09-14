@@ -1,0 +1,634 @@
+{
+  "_meta": {
+    "schemaVersion": 1,
+    "tier": "gray",
+    "reviewedAt": "2026-09-14",
+    "sourceCommit": "ce566eac45ea8a86477f513c7ee65a1ebe60014e",
+    "modifierSource": {
+      "path": "src/Data/ModItem.lua",
+      "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModItem.lua",
+      "sha256": "774257f577f8cee8ac59d7848df4bc7a109d266a615eb97c2a2c08ecb6b47cf4"
+    }
+  },
+  "alloys": [
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy1",
+      "name": "Runic Alloy",
+      "source": "https://poe2db.tw/us/Runic_Alloy",
+      "mappings": [
+        {
+          "category": "Ring",
+          "modId": "AlloyMaximumRunicWard1"
+        },
+        {
+          "category": "Amulet",
+          "modId": "AlloyMaximumRunicWardPercent1"
+        },
+        {
+          "category": "Belt",
+          "modId": "AlloyRunicWardRechargeRate1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy2",
+      "name": "Adaptive Alloy",
+      "source": "https://poe2db.tw/us/Adaptive_Alloy",
+      "mappings": [
+        {
+          "category": "Staff",
+          "modId": "AlloyDamageAsExtraFireTwoHandWhileMissingRunicWard1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyDamageAsExtraFireWhileMissingRunicWard1"
+        },
+        {
+          "category": "Sceptre",
+          "modId": null
+        },
+        {
+          "category": "Gloves",
+          "modId": "AlloyAttackSpeedIfMissingWardRecently1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy3",
+      "name": "Protective Alloy",
+      "source": "https://poe2db.tw/us/Protective_Alloy",
+      "mappings": [
+        {
+          "category": "Belt",
+          "modId": "AlloyRecoverRunicWardOnCharmUse1"
+        },
+        {
+          "category": "One Hand Sword",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "One Hand Axe",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "One Hand Mace",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Two Hand Sword",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Two Hand Axe",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Two Hand Mace",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Spear",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Bow",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Warstaff",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Dagger",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Crossbow",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Flail",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Talisman",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Sceptre",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Staff",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyMaximumRunicWardWeapon1"
+        },
+        {
+          "category": "Shield",
+          "modId": "AlloyRunicWardOnBlock1"
+        },
+        {
+          "category": "Buckler",
+          "modId": "AlloyRunicWardOnBlock1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy4",
+      "name": "Expansive Alloy",
+      "source": "https://poe2db.tw/us/Expansive_Alloy",
+      "mappings": [
+        {
+          "category": "Gloves",
+          "modId": "AlloyRemnantPickupRange1"
+        },
+        {
+          "category": "Body Armour",
+          "modId": "AlloyPresenceAreaOfEffect1"
+        },
+        {
+          "category": "Helmet",
+          "modId": "AlloyManaCostEfficiency1"
+        },
+        {
+          "category": "Boots",
+          "modId": "AlloyTemporaryMinionSkillLimit1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy5",
+      "name": "Swift Alloy",
+      "source": "https://poe2db.tw/us/Swift_Alloy",
+      "mappings": [
+        {
+          "category": "Gloves",
+          "modId": "AlloyCastSpeedGloves1"
+        },
+        {
+          "category": "Ring",
+          "modId": "AlloyAttackSpeedRing1"
+        },
+        {
+          "category": "Belt",
+          "modId": "AlloyFlaskChargesPerSecond1"
+        },
+        {
+          "category": "Shield",
+          "modId": "AlloyTotemPlacementSpeed1"
+        },
+        {
+          "category": "Buckler",
+          "modId": "AlloyTotemPlacementSpeed1"
+        },
+        {
+          "category": "Focus",
+          "modId": "AlloyTotemPlacementSpeed1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy6",
+      "name": "Cyclonic Alloy",
+      "source": "https://poe2db.tw/us/Cyclonic_Alloy",
+      "mappings": [
+        {
+          "category": "Body Armour",
+          "modId": "AlloyReducedSlowPotency1"
+        },
+        {
+          "category": "Boots",
+          "modId": "AlloySkillEffectDuration1"
+        },
+        {
+          "category": "Gloves",
+          "modId": "AlloyDamagingAilmentDuration1"
+        },
+        {
+          "category": "Helmet",
+          "modId": "AlloyArchonDuration1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy7",
+      "name": "Prismatic Alloy",
+      "source": "https://poe2db.tw/us/Prismatic_Alloy",
+      "mappings": [
+        {
+          "category": "Gloves",
+          "modId": "AlloyElementalPenetration1"
+        },
+        {
+          "category": "One Hand Sword",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "One Hand Axe",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "One Hand Mace",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Two Hand Sword",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Two Hand Axe",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Two Hand Mace",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Spear",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Bow",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Warstaff",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Dagger",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Crossbow",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Flail",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Talisman",
+          "modId": "AlloyAilmentMagnitude1"
+        },
+        {
+          "category": "Staff",
+          "modId": "AlloyExposureEffect1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyExposureEffect1"
+        },
+        {
+          "category": "Focus",
+          "modId": "AlloyExposureEffect1"
+        },
+        {
+          "category": "Sceptre",
+          "modId": "AlloyMinionDamagingAilmentMagnitude1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy8",
+      "name": "Mystic Alloy",
+      "source": "https://poe2db.tw/us/Mystic_Alloy",
+      "mappings": [
+        {
+          "category": "Helmet",
+          "modId": "AlloySpellAreaOfEffect1"
+        },
+        {
+          "category": "Gloves",
+          "modId": "AlloyAttackAreaOfEffect1"
+        },
+        {
+          "category": "Boots",
+          "modId": "AlloySpiritOnBoots1"
+        },
+        {
+          "category": "Quiver",
+          "modId": "AlloyChanceToChain1"
+        },
+        {
+          "category": "Staff",
+          "modId": "AlloyMaximumElementalInfusions1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyMaximumElementalInfusions1"
+        },
+        {
+          "category": "Sceptre",
+          "modId": "AlloyMaximumElementalInfusions1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy9",
+      "name": "Sovereign Alloy",
+      "source": "https://poe2db.tw/us/Sovereign_Alloy",
+      "mappings": [
+        {
+          "category": "One Hand Sword",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "One Hand Axe",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "One Hand Mace",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Two Hand Sword",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Two Hand Axe",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Two Hand Mace",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Spear",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Bow",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Warstaff",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Dagger",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Crossbow",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Flail",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Talisman",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Sceptre",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Staff",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyEffectOfSocketedAugments1"
+        },
+        {
+          "category": "Helmet",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Body Armour",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Gloves",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Boots",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Shield",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Buckler",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Focus",
+          "modId": "AlloyLocalWardIncreasePercent1"
+        },
+        {
+          "category": "Ring",
+          "modId": "AlloyEffectOfResistanceMods1"
+        },
+        {
+          "category": "Amulet",
+          "modId": "AlloyEffectOfResistanceMods1"
+        },
+        {
+          "category": "Belt",
+          "modId": "AlloyEffectOfResistanceMods1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy10",
+      "name": "Celestial Alloy",
+      "source": "https://poe2db.tw/us/Celestial_Alloy",
+      "mappings": [
+        {
+          "category": "Staff",
+          "modId": "AlloySpellLevelManaHybrid1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloySpellLevelManaHybrid1"
+        },
+        {
+          "category": "One Hand Sword",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "One Hand Axe",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "One Hand Mace",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Two Hand Sword",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Two Hand Axe",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Two Hand Mace",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Spear",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Bow",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Warstaff",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Dagger",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Crossbow",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Flail",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        },
+        {
+          "category": "Talisman",
+          "modId": "AlloyAccuracyAttackSpeedHybrid1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy11",
+      "name": "Transcendent Alloy",
+      "source": "https://poe2db.tw/us/Transcendent_Alloy",
+      "mappings": [
+        {
+          "category": "Staff",
+          "modId": "AlloyCastSpeedDamageAsExtraColdHybrid1"
+        },
+        {
+          "category": "Focus",
+          "modId": "AlloyCastSpeedDamageAsExtraColdHybridOneHand1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyCastSpeedDamageAsExtraColdHybridOneHand1"
+        },
+        {
+          "category": "One Hand Sword",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "One Hand Axe",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "One Hand Mace",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Two Hand Sword",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Two Hand Axe",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Two Hand Mace",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Spear",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Bow",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Warstaff",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Dagger",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Crossbow",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Flail",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        },
+        {
+          "category": "Talisman",
+          "modId": "AlloyAttributeIncreasedLocalPhysicalDamageHybrid1"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy12",
+      "name": "The Runebinder's Alloy",
+      "source": "https://poe2db.tw/us/The_Runebinders_Alloy",
+      "mappings": [
+        {
+          "category": "Staff",
+          "modId": "AlloyNaturesArchon1"
+        },
+        {
+          "category": "Wand",
+          "modId": "AlloyElementalSkillLimit1"
+        },
+        {
+          "category": "Sceptre",
+          "modId": "AlloyPuppeteerStacks1"
+        },
+        {
+          "category": "Crossbow",
+          "modId": "AlloyBallistaLimit1"
+        },
+        {
+          "category": "Bow",
+          "modId": "AlloyMarkEffect"
+        }
+      ]
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyVerisiumAlloy13",
+      "name": "The Runefather's Alloy",
+      "source": "https://poe2db.tw/us/The_Runefathers_Alloy",
+      "mappings": [
+        {
+          "category": "One Hand Mace",
+          "modId": "AlloyRetainGlory1"
+        },
+        {
+          "category": "Two Hand Mace",
+          "modId": "AlloyRetainGlory1"
+        },
+        {
+          "category": "Warstaff",
+          "modId": "AlloyBellLimit1"
+        },
+        {
+          "category": "Spear",
+          "modId": "AlloyMeleeStrikeRange1"
+        },
+        {
+          "category": "Talisman",
+          "modId": "AlloyLightningDamageIgnites1"
+        }
+      ]
+    }
+  ]
+}

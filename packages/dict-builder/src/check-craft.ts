@@ -9,6 +9,7 @@ import {
   jewelSourceHash,
   LIQUID_EMOTION_SOURCE,
   liquidEmotionSourceHash,
+  parseAlloyCatalog,
   parseCraftCatalog,
   STAT_SCALABILITY_SOURCE,
   statScalabilitySourceHash,
@@ -18,6 +19,34 @@ import { REPO_ROOT } from './config'
 const catalog = parseCraftCatalog(
   JSON.parse(await readFile(resolve(REPO_ROOT, 'data/craft/catalog.json'), 'utf8')),
 )
+// 可整体移除的关系表不属于 primary 目录；存在时必须完整通过审计。
+let alloyText: string | undefined
+try {
+  alloyText = await readFile(resolve(REPO_ROOT, 'data/craft/alloys.json'), 'utf8')
+} catch (error) {
+  if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error
+}
+if (alloyText !== undefined) {
+  const table = parseAlloyCatalog(JSON.parse(alloyText), catalog)
+  const mappings = table.alloys.flatMap((entry) => entry.mappings)
+  const unresolved = table.alloys.flatMap((entry) =>
+    entry.mappings
+      .filter((mapping) => mapping.modId === null)
+      .map((mapping) => [entry.name, mapping.category]),
+  )
+  if (
+    table.alloys.length !== 13 ||
+    mappings.length !== 132 ||
+    JSON.stringify(unresolved) !== JSON.stringify([['Adaptive Alloy', 'Sceptre']])
+  )
+    throw new Error('合金关系审计不匹配：应有 13 材料、132 对应及适性权杖一项缺失')
+  for (const locale of ['zh-CN', 'zh-TW'] as const)
+    if (table.alloys.some((entry) => !catalog.localizedNames?.[locale]?.[entry.name]))
+      throw new Error(`${locale} 合金名称缺失`)
+  console.log(
+    '合金关系目录校验通过：gray 独立表；13 材料、132 对应、131 已解析、1 项缺失；不授权制作',
+  )
+} else console.log('合金关系目录未提供；继续校验 primary 制作目录')
 if (
   statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
   Object.keys(catalog.scalability ?? {}).length !== 2942

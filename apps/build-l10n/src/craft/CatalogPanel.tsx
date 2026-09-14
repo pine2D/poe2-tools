@@ -18,6 +18,7 @@ import {
   searchBases,
 } from '@poe2-tools/item-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AlloyCatalog } from './AlloyCatalog'
 import { CraftEntry } from './CraftEntry'
 import { EssenceCatalog } from './EssenceCatalog'
 import { LiquidEmotionCatalog } from './LiquidEmotionCatalog'
@@ -609,6 +610,13 @@ export function CatalogPanel({
                   translateLine={translateLine}
                 />
               )}
+              <AlloyCatalog
+                catalog={readyCatalog}
+                base={selectedBase}
+                locale={locale}
+                translateLine={translateLine}
+                fetchImpl={fetchImpl}
+              />
               {restored ? (
                 <RehearsalPanel
                   key={restored.id}
