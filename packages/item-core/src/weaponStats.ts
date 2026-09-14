@@ -1,10 +1,14 @@
 import type { CatalogBase, CraftCatalog } from './catalog'
+import { modifierLayers } from './modifierLayers'
 import { readNumericValues } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { sumWeaponRuneEffects, weaponSocketKind } from './weaponRuneEffects'
 
 export type WeaponDamageType = 'Physical' | 'Fire' | 'Cold' | 'Lightning' | 'Chaos'
 export interface WeaponDamageEstimate {
+  corruptionMin?: number
+  corruptionMax?: number
+  corruptionIncreased?: number
   baseMin: number
   baseMax: number
   affixMin: number
@@ -47,6 +51,7 @@ const GROUPS = new Set([
   'LocalFireDamage',
   'LocalColdDamage',
   'LocalLightningDamage',
+  'LocalChaosDamage',
   'LocalPhysicalDamagePercent',
   'LocalIncreasedPhysicalDamagePercentAndAccuracyRating',
   'LocalIncreasedAttackSpeed',
@@ -190,8 +195,7 @@ export function estimateWeaponStats(
   let exactAttackInc = decimal(runes.AttackSpeed)
   let exactAddedPoints = decimal(0)
   let exactPhysicalInc = decimal(runes.Physical)
-  for (const affix of state.affixes) {
-    const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
+  for (const { attribute: affix, mod, layer } of modifierLayers(catalog, state)) {
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
     if (!GROUPS.has(mod.group)) {
       if (
@@ -221,17 +225,22 @@ export function estimateWeaponStats(
     if (unresolved) return fail(`词缀 ${mod.id} 的范围尚未掷定。`)
     const line = lines[0] ?? ''
     const num = '(\\d+(?:\\.\\d+)?)'
-    const flat = new RegExp(`^Adds ${num} to ${num} (Physical|Fire|Cold|Lightning) Damage$`).exec(
-      line,
-    )
+    const flat = new RegExp(
+      `^Adds ${num} to ${num} (Physical|Fire|Cold|Lightning|Chaos) [Dd]amage$`,
+    ).exec(line)
     const phys = new RegExp(`^${num}% increased Physical Damage$`).exec(line)
     const speed = new RegExp(`^${num}% increased Attack Speed$`).exec(line)
     const crit = new RegExp(`^\\+${num}% to Critical Hit Chance$`).exec(line)
     if (flat && mod.group === `Local${flat[3]}Damage` && lines.length === 1) {
       if (Number(flat[1]) > Number(flat[2])) return fail(`词缀 ${mod.id} 的伤害端点倒置。`)
       const entry = damage[flat[3] as WeaponDamageType]
-      entry.affixMin += Number(flat[1])
-      entry.affixMax += Number(flat[2])
+      if (layer === 'corruption') {
+        entry.corruptionMin = Number(flat[1])
+        entry.corruptionMax = Number(flat[2])
+      } else {
+        entry.affixMin += Number(flat[1])
+        entry.affixMax += Number(flat[2])
+      }
       const endpoint = endpoints[flat[3] as WeaponDamageType]
       endpoint.min = add(endpoint.min, decimal(Number(flat[1])))
       endpoint.max = add(endpoint.max, decimal(Number(flat[2])))
@@ -242,7 +251,8 @@ export function estimateWeaponStats(
           lines.length === 2 &&
           /^\+\d+(?:\.\d+)? to Accuracy Rating$/.test(lines[1] ?? '')))
     ) {
-      damage.Physical.affixIncreased += Number(phys[1])
+      if (layer === 'corruption') damage.Physical.corruptionIncreased = Number(phys[1])
+      else damage.Physical.affixIncreased += Number(phys[1])
       exactPhysicalInc = add(exactPhysicalInc, decimal(Number(phys[1])))
     } else if (speed && mod.group === 'LocalIncreasedAttackSpeed' && lines.length === 1) {
       attackInc += Number(speed[1])

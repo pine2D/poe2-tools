@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
+  CORRUPTION_SOURCE,
   type CraftCatalog,
   DESECRATION_SOURCE,
   JEWEL_SOURCE,
@@ -11,6 +12,7 @@ import {
 import { type BaseDeclaration, normalizeBaseDeclarations } from './adapters/baseVariants'
 import { normalizeAugments } from './adapters/craftAugments'
 import { normalizeMod } from './adapters/craftCatalog'
+import { normalizeCorruptions } from './adapters/craftCorruptions'
 import { normalizeDesecratedMods } from './adapters/craftDesecrated'
 import { normalizeEssences } from './adapters/craftEssences'
 import { normalizeJewelMods } from './adapters/craftJewels'
@@ -107,6 +109,9 @@ const essences = normalizeEssences(
     await source('Essence', '950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74'),
   ),
 )
+const corruptions = normalizeCorruptions(
+  parsePobModFile(await source('ModCorrupted', CORRUPTION_SOURCE.sha256)),
+)
 const desecrated = normalizeDesecratedMods(
   parsePobModFile(await source('ModVeiled', DESECRATION_SOURCE.sha256)),
 )
@@ -175,6 +180,7 @@ const scalability = normalizeCraftScalability(
   parsePobModFile(await source('ModScalability', STAT_SCALABILITY_SOURCE.sha256)),
   [
     ...modifiers.flatMap((mod) => mod.lines),
+    ...corruptions.flatMap((mod) => mod.lines),
     ...bases.flatMap((base) => base.implicit?.split('\n') ?? []),
   ],
 )
@@ -199,6 +205,7 @@ const catalog: CraftCatalog = {
   },
   bases,
   modifiers,
+  corruptions,
   augments,
   essences,
   liquidEmotions,

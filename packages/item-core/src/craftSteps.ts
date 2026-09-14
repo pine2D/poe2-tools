@@ -6,6 +6,7 @@ import {
   PENDING_DESECRATION_MESSAGE,
 } from './boneRules'
 import type { CraftCatalog } from './catalog'
+import { corruptionCandidates } from './corruptionEnchantments'
 import {
   CORRUPTED_CRAFT_MESSAGE,
   isVaalCraftOperation,
@@ -88,6 +89,13 @@ export function applyCraftStep(
     )
       return { ok: false, error: '珠宝及待揭示亵渎的腐化结果尚未支持。' }
     const next: CraftState = { ...checked.value, corrupted: true }
+    if (step.outcome === 'enchant') {
+      const mod = corruptionCandidates(catalog, state).find((entry) => entry.id === step.modId)
+      if (!mod) return { ok: false, error: '请选择当前可用的普通腐化属性。' }
+      const rendered = renderNumericLines(mod.lines, step.values)
+      if (!rendered.ok) return rendered
+      next.corruption = { modId: mod.id, lines: rendered.value }
+    }
     if (step.outcome === 'socket') {
       if (next.sockets === undefined)
         return { ok: false, error: '腐化加孔前必须明确当前已有孔位。' }

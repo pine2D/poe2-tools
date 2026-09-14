@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
+  CORRUPTION_SOURCE,
+  corruptionSourceHash,
   DESECRATION_SOURCE,
   inspectModPool,
   JEWEL_SOURCE,
@@ -18,10 +20,18 @@ const catalog = parseCraftCatalog(
 )
 if (
   statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
-  Object.keys(catalog.scalability ?? {}).length !== 2848
+  Object.keys(catalog.scalability ?? {}).length !== 2942
 )
-  throw new Error('缩放目录缺少固定来源或 2848 条当前属性文本对应')
-console.log('属性缩放目录校验通过：2848 条文本；103 条未对应保留缺失，不推断内部精度')
+  throw new Error('缩放目录缺少固定来源或 2942 条当前属性文本对应')
+console.log('属性缩放目录校验通过：2942 条文本；103 条未对应保留缺失，不推断内部精度')
+if (
+  corruptionSourceHash(catalog) !== CORRUPTION_SOURCE.sha256 ||
+  catalog.corruptions?.length !== 127 ||
+  catalog.corruptions.filter((mod) => mod.kind === 'corrupted').length !== 119 ||
+  catalog.corruptions.filter((mod) => mod.kind === 'special-corrupted').length !== 8
+)
+  throw new Error('腐化目录缺少固定来源或 119 普通／8 特殊属性声明')
+console.log('腐化目录校验通过：119 普通／8 特殊；资格不等于真实权重')
 if (
   catalog.bases.length === 0 ||
   catalog.modifiers.length === 0 ||

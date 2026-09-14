@@ -24,7 +24,7 @@ export interface CatalystEffectLine {
 }
 export interface CatalystEffectGroup {
   id: string
-  kind: 'implicit' | 'prefix' | 'suffix'
+  kind: 'implicit' | 'prefix' | 'suffix' | 'corruption'
   matched: boolean
   lines: CatalystEffectLine[]
 }
@@ -218,6 +218,18 @@ export function estimateCatalystEffects(
         effect.ok
           ? estimateLine(catalog, mod.lines, line, matched, quality, effect.value)
           : { before: line, after: null, status: 'unknown', reason: effect.error },
+      ),
+    })
+  }
+  const corruption = catalog.corruptions?.find((mod) => mod.id === state.corruption?.modId)
+  if (corruption && state.corruption) {
+    const matched = matches(corruption.tags)
+    groups.push({
+      id: corruption.id,
+      kind: 'corruption',
+      matched,
+      lines: state.corruption.lines.map((line) =>
+        estimateLine(catalog, corruption.lines, line, matched, quality),
       ),
     })
   }

@@ -2,6 +2,7 @@ import { resolveCraftImplicitPatterns } from './beltImplicits'
 import { clonePendingDesecration, type PendingDesecration } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
+import type { CraftCorruption } from './corruptionEnchantments'
 import { readNumericValues } from './numeric'
 import { type CraftRarity, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { socketEffects } from './sockets'
@@ -30,6 +31,7 @@ export interface CraftAffixChange {
 }
 
 export interface CraftComparison {
+  corruption?: { before: CraftCorruption | null; after: CraftCorruption | null }
   corrupted?: { before: boolean; after: boolean }
   pendingDesecration?: { before: PendingDesecration | null; after: PendingDesecration | null }
   rarity: { before: CraftRarity; after: CraftRarity } | null
@@ -209,6 +211,18 @@ export function compareCraftStates(
   return {
     ok: true,
     value: {
+      ...(JSON.stringify(before.corruption) === JSON.stringify(after.corruption)
+        ? {}
+        : {
+            corruption: {
+              before: before.corruption
+                ? { ...before.corruption, lines: [...before.corruption.lines] }
+                : null,
+              after: after.corruption
+                ? { ...after.corruption, lines: [...after.corruption.lines] }
+                : null,
+            },
+          }),
       ...(before.corrupted === after.corrupted
         ? {}
         : { corrupted: { before: before.corrupted === true, after: after.corrupted === true } }),

@@ -138,7 +138,7 @@ function modKind(header: string): ModKind {
   if (/(?:后缀(?:词缀|属性)|後綴(?:詞綴|屬性)|Suffix Modifier)/i.test(header)) return 'suffix'
   if (/(?:基底(?:词缀|属性)|基底(?:詞綴|屬性)|Implicit Modifier)/i.test(header)) return 'implicit'
   if (
-    /(?:腐化强化(?:词缀)?|腐化強化(?:詞綴)?|附魔(?:词缀|属性)|附魔(?:詞綴|屬性)|Enchant Modifier)/i.test(
+    /(?:腐化强化(?:词缀)?|腐化強化(?:詞綴)?|Corrupted Enhancement|附魔(?:词缀|属性)|附魔(?:詞綴|屬性)|Enchant Modifier)/i.test(
       header,
     )
   )

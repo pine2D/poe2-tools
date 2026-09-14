@@ -25,12 +25,8 @@ export interface CatalogBase {
   }
 }
 
-export interface CatalogMod {
-  jewelOnly?: true
-  craftedOnly?: true
-  desecratedOnly?: true
+export interface CatalogModifierData {
   id: string
-  kind: 'prefix' | 'suffix'
   name: string
   group: string
   level: number
@@ -40,6 +36,18 @@ export interface CatalogMod {
   addsTags: string[]
   eligibility: { tag: string; value: 0 | 1 }[]
   tradeHashes: Record<string, string[]>
+}
+
+export interface CatalogMod extends CatalogModifierData {
+  jewelOnly?: true
+  craftedOnly?: true
+  desecratedOnly?: true
+  kind: 'prefix' | 'suffix'
+}
+
+/** 独立腐化层；特殊腐化的空资格不等于普通瓦尔可选。 */
+export interface CatalogCorruption extends CatalogModifierData {
+  kind: 'corrupted' | 'special-corrupted'
 }
 
 /** 来源类别映射不等于可执行规则；tierLevel 尚不用于任何等级门槛。 */
@@ -114,6 +122,7 @@ export interface CraftCatalog {
   }
   bases: CatalogBase[]
   modifiers: CatalogMod[]
+  corruptions?: CatalogCorruption[]
   augments?: CatalogAugment[]
   essences?: CatalogEssence[]
   liquidEmotions?: CatalogLiquidEmotion[]

@@ -67,6 +67,7 @@ export function estimateResistances(
   }
   const ordinaryLines = [
     ...(base.implicit?.split('\n') ?? []),
+    ...(state.corruption?.lines ?? []),
     ...state.affixes
       .filter(
         (affix) =>
@@ -202,6 +203,15 @@ export function estimateResistances(
           jewelEffectForKind(catalog, state, mod.kind),
         )
   }
+  const corruption = catalog.corruptions?.find((mod) => mod.id === state.corruption?.modId)
+  if (corruption && state.corruption)
+    for (const line of state.corruption.lines)
+      addLine(
+        line,
+        corruption.lines,
+        corruption.lines.map(() => corruption.tags),
+        true,
+      )
   for (const { augment } of socketEffects(catalog, state))
     for (const line of augment.lines)
       addLine(

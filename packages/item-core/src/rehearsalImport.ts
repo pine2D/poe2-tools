@@ -7,6 +7,7 @@ import {
 import { type CraftCatalog, hasGenesisModEligibility } from './catalog'
 import { matchCatalogMods } from './catalogMatch'
 import { importCatalystQuality } from './catalystImport'
+import { importCorruption, knownCorruptionHeader } from './corruptionEnchantments'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
@@ -119,8 +120,6 @@ export function importCraftState(
     }
   }
   if (item.mirrored || item.unidentified) return fail('本阶段仅支持已鉴定、未镜像的装备。')
-  if (item.corrupted && item.mods.some((mod) => mod.kind === 'enchant'))
-    return fail('带腐化强化属性的装备尚未接入制作状态，仍可解析与对比。')
   if (item.itemLevel === null || item.diagnostics.length > 0)
     return fail('原文仍有缺失或结构诊断，先核对完整高级装备文本。')
   if (item.blocks.some((block) => block.kind === 'unknown'))
@@ -207,8 +206,10 @@ export function importCraftState(
   if (
     inspection.mods.some(
       ({ mod }) =>
-        !['prefix', 'suffix', 'implicit'].includes(mod.kind) ||
+        !['prefix', 'suffix', 'implicit', 'enchant'].includes(mod.kind) ||
+        (mod.kind === 'enchant' && !knownCorruptionHeader(mod.header.raw)) ||
         (mod.kind !== 'implicit' &&
+          mod.kind !== 'enchant' &&
           (!(
             knownExplicitHeader(
               mod.header.raw.replace(/^(\s*\{\s*)(?:crafted|desecrated|fractured)\s+/i, '$1'),
@@ -328,7 +329,9 @@ export function importCraftState(
       return fail('咒符栏面板与固有属性不一致，或存在重复面板。')
   }
 
-  const explicit = inspection.mods.filter(({ mod }) => mod.kind !== 'implicit')
+  const explicit = inspection.mods.filter(
+    ({ mod }) => mod.kind === 'prefix' || mod.kind === 'suffix',
+  )
   const mappedIds = new Set(
     essenceSourceHash(catalog) === null
       ? []
@@ -472,6 +475,13 @@ export function importCraftState(
   }
   if (differentFixedValue && !usesJewelEffect(catalog, state))
     return fail('当前值与固定基础值不同，增效来源及基础数值尚未还原；原文保留用于对比。')
+  const corruption = importCorruption(
+    catalog,
+    state,
+    inspection.mods.filter(({ mod }) => mod.kind === 'enchant'),
+  )
+  if (!corruption.ok) return corruption
+  if (corruption.value) state.corruption = corruption.value
   const catalyst = importCatalystQuality(
     catalog,
     item,

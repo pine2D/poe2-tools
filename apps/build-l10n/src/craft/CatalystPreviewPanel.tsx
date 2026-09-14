@@ -10,7 +10,7 @@ import {
 import { useId, useMemo, useState } from 'react'
 import './catalysts.css'
 
-const KINDS = { implicit: '固有属性', prefix: '前缀', suffix: '后缀' }
+const KINDS = { implicit: '固有属性', prefix: '前缀', suffix: '后缀', corruption: '腐化强化' }
 
 export function CatalystPreviewPanel({
   catalog,

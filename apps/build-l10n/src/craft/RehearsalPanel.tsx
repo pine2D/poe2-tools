@@ -25,6 +25,7 @@ import {
   type CraftTargetAlternative,
   type CraftTargetValues,
   collectCraftCosts,
+  corruptionSourceHash,
   craftAffixCapacities,
   craftAffixSpace,
   craftCandidates,
@@ -823,7 +824,7 @@ export function RehearsalPanel({
     if (step.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
     if (step.kind === 'vaal')
-      return `瓦尔石：${step.outcome === 'socket' ? '腐化增加一孔' : '腐化但属性不变'}`
+      return `瓦尔石：${step.outcome === 'socket' ? '腐化增加一孔' : step.outcome === 'enchant' ? '新增腐化强化' : '腐化但属性不变'}`
     if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
     const name = catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文镶嵌'
     return translations[name] ?? name
@@ -927,6 +928,9 @@ export function RehearsalPanel({
       .flatMap((entry) => (entry.operation === null ? [] : [entry.operation])),
     cursor,
     ...(desecratedHash ? { desecrationSourceHash: desecratedHash } : {}),
+    ...(history.some((entry) => entry.state.corruption) && corruptionSourceHash(catalog)
+      ? { corruptionSourceHash: corruptionSourceHash(catalog) as string }
+      : {}),
     ...(jewelHash ? { jewelSourceHash: jewelHash } : {}),
     ...(emotionHash ? { liquidEmotionSourceHash: emotionHash } : {}),
     ...(hasEssenceHistory && essenceSourceHash ? { essenceSourceHash } : {}),
@@ -1675,8 +1679,10 @@ export function RehearsalPanel({
         {...(translateLine ? { translateLine } : {})}
       />
       <CorruptionPanel
+        key={`corruption:${targetSession}:${cursor}:${history[cursor]?.id}`}
         catalog={catalog}
         state={current}
+        {...(translateLine ? { translateLine } : {})}
         draft={socketDraft?.kind === 'vaal' ? socketDraft : null}
         busy={Boolean(
           draft ||

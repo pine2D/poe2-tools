@@ -63,7 +63,7 @@ it('腐化操作所有游标回放，旧规则、未来非法操作、伪造来�
       }).ok,
     ).toBe(false)
   }
-  expect(restore({ ...p, rulesVersion: 'basic-2026-09-12-v60' }).ok).toBe(false)
+  expect(restore({ ...p, rulesVersion: 'basic-2026-09-12-v61' }).ok).toBe(false)
   expect(restore({ ...p, operations: [], cursor: 0, initialState: corrupted }).ok).toBe(false)
   for (const invalid of [
     { kind: 'vaal', outcome: 'unchanged' },

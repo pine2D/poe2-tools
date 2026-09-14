@@ -213,6 +213,7 @@ export function CraftComparisonPanel({
           <p className="comparison-muted">按属性组对比；数值增减不代表优劣，未计算角色面板收益。</p>
           {result.value.rarity === null &&
           result.value.corrupted === undefined &&
+          result.value.corruption === undefined &&
           result.value.affixes.length === 0 &&
           result.value.implicit === null &&
           result.value.socketCount === undefined &&
@@ -231,6 +232,17 @@ export function CraftComparisonPanel({
               腐化状态：{result.value.corrupted.before ? '已腐化' : '未腐化'} →{' '}
               {result.value.corrupted.after ? '已腐化' : '未腐化'}
             </p>
+          ) : null}
+          {result.value.corruption ? (
+            <article className="comparison-group">
+              <h4>腐化强化变化</h4>
+              {group(
+                '腐化强化',
+                result.value.corruption.before?.lines ?? null,
+                result.value.corruption.after?.lines ?? null,
+                [],
+              )}
+            </article>
           ) : null}
           {result.value.socketCount ? (
             <p>

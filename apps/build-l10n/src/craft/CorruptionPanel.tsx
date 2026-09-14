@@ -1,10 +1,15 @@
 import {
   applyCraftStep,
+  type CatalogCorruption,
   type CraftCatalog,
   type CraftState,
+  corruptionCandidates,
+  inspectNumericLines,
+  renderNumericLines,
   type VaalCraftOperation,
 } from '@poe2-tools/item-core'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { NumericControls } from './NumericControls'
 
 interface Props {
   catalog: CraftCatalog
@@ -14,6 +19,44 @@ interface Props {
   canApply: boolean
   onPreview: (step: VaalCraftOperation | null) => void
   onApply: () => void
+  translateLine?: (line: string) => string | null
+}
+
+function EnchantChoice({
+  mod,
+  disabled,
+  onPreview,
+  translateLine,
+}: {
+  mod: CatalogCorruption
+  disabled: boolean
+  onPreview: Props['onPreview']
+  translateLine: Props['translateLine']
+}) {
+  const [values, setValues] = useState(() => {
+    const ranges = inspectNumericLines(mod.lines)
+    return ranges.ok ? ranges.value.map((range) => range.min) : []
+  })
+  const result = renderNumericLines(mod.lines, values)
+  return (
+    <fieldset disabled={disabled}>
+      <legend>指定腐化强化的基础数值</legend>
+      <NumericControls
+        label="腐化强化"
+        patterns={mod.lines}
+        values={values}
+        onChange={setValues}
+        {...(translateLine ? { translateLine } : {})}
+      />
+      <button
+        type="button"
+        disabled={!result.ok}
+        onClick={() => onPreview({ kind: 'vaal', outcome: 'enchant', modId: mod.id, values })}
+      >
+        预演腐化：新增强化属性
+      </button>
+    </fieldset>
+  )
 }
 
 export function CorruptionPanel({
@@ -24,8 +67,12 @@ export function CorruptionPanel({
   canApply,
   onPreview,
   onApply,
+  translateLine,
 }: Props) {
   const preview = useRef<HTMLElement>(null)
+  const [selectedId, setSelectedId] = useState('')
+  const candidates = useMemo(() => corruptionCandidates(catalog, state), [catalog, state])
+  const selected = candidates.find((mod) => mod.id === selectedId)
   useEffect(() => {
     if (draft) preview.current?.focus()
   }, [draft])
@@ -34,6 +81,20 @@ export function CorruptionPanel({
     return (
       <section className="craft-sockets" aria-label="腐化状态">
         <h3>已腐化</h3>
+        {state.corruption ? (
+          <article aria-label="当前腐化强化">
+            <h4>腐化强化 · 独立属性</h4>
+            {state.corruption.lines.map((line) => (
+              <p key={line}>
+                {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
+                <code>{line}</code>
+              </p>
+            ))}
+            {state.catalyst ? (
+              <p>这里保留高级基础值；命中催化标签的实际贡献已计入支持的估算面板。</p>
+            ) : null}
+          </article>
+        ) : null}
         <p>普通通货、精华、骨骼、破裂和巧匠石已停用。已有孔仍可镶嵌或覆盖已支持的符文与魂核。</p>
         <p>演练中可撤销以比较路线；游戏中的腐化不能撤销。</p>
       </section>
@@ -44,10 +105,10 @@ export function CorruptionPanel({
     <section className="craft-sockets" aria-label="瓦尔结果预演">
       <h3>瓦尔石：指定结果预演</h3>
       <p>
-        手选“属性不变”或“增加一孔”查看后续路线，每次记录一颗瓦尔石。这不是随机抽取，也不代表成功率。
+        手选“属性不变”“增加一孔”或“新增强化属性”查看后续路线，每次记录一颗瓦尔石。这不是随机抽取，也不代表成功率。
       </p>
       <p>
-        瓦尔石还可能新增腐化属性或重选词缀，这两类结果尚未支持。预兆、特殊魂核和腐化珠宝另行接入。
+        重选词缀的结果、预兆、特殊魂核和腐化珠宝尚未接入。腐化强化独立于固有属性及前后缀，不占显式词缀名额。
       </p>
       <div className="socket-actions">
         <button
@@ -66,9 +127,43 @@ export function CorruptionPanel({
         </button>
       </div>
       {!unchanged.ok ? <p>{unchanged.error}</p> : !socket.ok ? <p>{socket.error}</p> : null}
+      <label>
+        新增腐化强化
+        <select
+          aria-label="选择腐化强化"
+          disabled={busy || draft !== null || !unchanged.ok}
+          value={selected?.id ?? ''}
+          onChange={(event) => setSelectedId(event.target.value)}
+        >
+          <option value="">选择强化属性（{candidates.length} 组可用）</option>
+          {candidates.map((mod) => (
+            <option key={mod.id} value={mod.id}>
+              {mod.lines.map((line) => translateLine?.(line) ?? line).join('；')}
+            </option>
+          ))}
+        </select>
+      </label>
+      {selected ? (
+        <EnchantChoice
+          key={selected.id}
+          mod={selected}
+          disabled={busy || draft !== null}
+          onPreview={onPreview}
+          translateLine={translateLine}
+        />
+      ) : null}
       {draft ? (
         <section ref={preview} tabIndex={-1} className="socket-preview" aria-label="腐化结果草稿">
-          <h4>{draft.outcome === 'socket' ? '腐化增加一孔' : '腐化但属性不变'}</h4>
+          <h4>
+            {draft.outcome === 'socket'
+              ? '腐化增加一孔'
+              : draft.outcome === 'enchant'
+                ? '新增腐化强化'
+                : '腐化但属性不变'}
+          </h4>
+          {draft.outcome === 'enchant' ? (
+            <p>强化属性及面板变化见上方预览，应用后保留全部显式词缀与固有属性。</p>
+          ) : null}
           {draft.outcome === 'socket' ? (
             <p>
               孔数 {state.sockets?.length ?? 0} → {(state.sockets?.length ?? 0) + 1}

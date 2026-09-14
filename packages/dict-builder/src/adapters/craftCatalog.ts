@@ -1,4 +1,4 @@
-import type { CatalogBase, CatalogMod } from '@poe2-tools/item-core'
+import type { CatalogBase, CatalogMod, CatalogModifierData } from '@poe2-tools/item-core'
 import type { LuaTable, LuaValue } from './restrictedLua'
 
 function fail(context: string): never {
@@ -47,6 +47,17 @@ function knownKeys(raw: LuaTable, allowed: string[], context: string, allowLines
 }
 
 export function normalizeMod(id: string, raw: LuaTable): CatalogMod {
+  if (raw.type !== 'Prefix' && raw.type !== 'Suffix') fail(`${id}.type`)
+  const { id: modId, ...data } = normalizeModifierData(id, raw)
+  return { id: modId, kind: raw.type === 'Prefix' ? 'prefix' : 'suffix', ...data }
+}
+
+/** 共用声明字段，调用方负责验证各来源的属性层类型。 */
+export function normalizeModifierData(
+  id: string,
+  raw: LuaTable,
+  requireDefault = true,
+): CatalogModifierData {
   knownKeys(
     raw,
     [
@@ -64,11 +75,10 @@ export function normalizeMod(id: string, raw: LuaTable): CatalogMod {
     id,
     true,
   )
-  if (raw.type !== 'Prefix' && raw.type !== 'Suffix') fail(`${id}.type`)
   const keys = strings(raw.weightKey, `${id}.weightKey`)
   const values = array(raw.weightVal, `${id}.weightVal`)
   if (keys.length !== values.length || new Set(keys).size !== keys.length) fail(`${id}.eligibility`)
-  if (!keys.includes('default')) fail(`${id}.default`)
+  if (requireDefault && !keys.includes('default')) fail(`${id}.default`)
   const lines = strings(
     Object.fromEntries(Object.entries(raw).filter(([key]) => /^[1-9]\d*$/.test(key))),
     `${id}.lines`,
@@ -83,7 +93,6 @@ export function normalizeMod(id: string, raw: LuaTable): CatalogMod {
   if (Object.keys(hashes).some((key) => !/^\d+$/.test(key))) fail(`${id}.tradeHashes`)
   return {
     id,
-    kind: raw.type === 'Prefix' ? 'prefix' : 'suffix',
     name: string(raw.affix, `${id}.affix`),
     group: string(raw.group, `${id}.group`),
     level,

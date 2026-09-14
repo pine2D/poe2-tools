@@ -24,6 +24,7 @@ import {
 } from './catalog'
 import { matchCatalogLineOrder, matchesCatalogLines, readCatalogLineValues } from './catalogMatch'
 import { catalystStateError } from './catalystQuality'
+import { corruptionStateError } from './corruptionEnchantments'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
@@ -100,6 +101,7 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  corruption?: import('./corruptionEnchantments').CraftCorruption
   corrupted?: true
   catalyst?: import('./catalystQuality').CatalystQuality
   pendingDesecration?: PendingDesecration
@@ -196,6 +198,9 @@ function failure<T>(error: string): CraftResult<T> {
 function cloneState(state: CraftState): CraftState {
   return {
     ...state,
+    ...(state.corruption === undefined
+      ? {}
+      : { corruption: { ...state.corruption, lines: [...state.corruption.lines] } }),
     ...(state.catalyst === undefined ? {} : { catalyst: { ...state.catalyst } }),
     ...(state.pendingDesecration === undefined
       ? {}
@@ -413,6 +418,8 @@ export function createCraftState(
     if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')
     return failure(`稀有装备最多有 ${capacity.prefix} 条前缀和 ${capacity.suffix} 条后缀。`)
   }
+  const corruptionError = corruptionStateError(catalog, input)
+  if (corruptionError) return failure(corruptionError)
   if (input.corrupted && hasSpecialSocketRules(catalog, input))
     return failure('带特殊孔位规则的腐化装备尚未支持。')
   const socketError = socketStateError(catalog, input)

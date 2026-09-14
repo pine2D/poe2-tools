@@ -66,6 +66,7 @@ const LABELS = {
     quality: 'Quality',
     sockets: 'Sockets',
     implicit: 'Implicit Modifier',
+    corruption: 'Corrupted Enhancement',
     prefix: 'Prefix Modifier',
     suffix: 'Suffix Modifier',
     simulation: 'Crafting Simulation',
@@ -79,6 +80,7 @@ const LABELS = {
     quality: '品质',
     sockets: '插槽',
     implicit: '基底属性',
+    corruption: '腐化强化',
     prefix: '前缀属性',
     suffix: '后缀属性',
     simulation: '制作演练',
@@ -92,6 +94,7 @@ const LABELS = {
     quality: '品質',
     sockets: '插槽',
     implicit: '基底屬性',
+    corruption: '腐化強化',
     prefix: '前綴屬性',
     suffix: '後綴屬性',
     simulation: '製作演練',
@@ -128,25 +131,36 @@ export function exportCraftItemText(
     affix,
     mod: catalog.modifiers.find((entry) => entry.id === affix.modId),
   }))
+  const corruptionMod = catalog.corruptions?.find((mod) => mod.id === current.corruption?.modId)
   const runes = socketEffects(catalog, current).map(({ augment }) => augment)
   const runeLines = runes.flatMap((rune) => rune.lines)
   const names = [
     base.name,
     base.type,
+    ...(corruptionMod?.tags ?? []),
     ...modifiers.flatMap(({ affix, mod }) =>
       mod
         ? [...(mod.name === '' && mod.craftedOnly && affix.crafted ? [] : [mod.name]), ...mod.tags]
         : [],
     ),
   ]
-  const lines = [...implicit, ...current.affixes.flatMap((affix) => affix.lines), ...runeLines]
+  const lines = [
+    ...implicit,
+    ...current.affixes.flatMap((affix) => affix.lines),
+    ...(current.corruption?.lines ?? []),
+    ...runeLines,
+  ]
   // 不删除字符修补目录：结构字符会改变高级分组，必须明确拒绝。
   if (
     names.some(
       (name) => !name.trim() || /[\r\n\u2028\u2029{}"“”]/u.test(name) || isItemStructureLine(name),
     ) ||
     lines.some((line) => !line.trim() || /[\r\n\u2028\u2029{}]/u.test(line)) ||
-    [...current.affixes.flatMap((affix) => affix.lines), ...runeLines].some(isItemStructureLine) ||
+    [
+      ...current.affixes.flatMap((affix) => affix.lines),
+      ...(current.corruption?.lines ?? []),
+      ...runeLines,
+    ].some(isItemStructureLine) ||
     implicit.some((line) => isItemStructureLine(line) && !/^Grants Skill\s*:/i.test(line))
   )
     return { ok: false, error: '名称、标签或属性行包含不支持的装备文本结构字符。' }
@@ -199,6 +213,20 @@ export function exportCraftItemText(
   block([`${labels.itemLevel}: ${current.itemLevel}`])
   if (current.sockets?.length)
     block([`${labels.sockets}: ${current.sockets.map(() => 'S').join(' ')}`])
+  if (current.corruption && corruptionMod) {
+    const outputLines: string[] = []
+    for (const line of current.corruption.lines) {
+      const complete = current.catalyst
+        ? completeBaseRanges(corruptionMod.lines, line)
+        : { ok: true as const, value: line }
+      if (!complete.ok) return complete
+      outputLines.push(localize.line(complete.value, Object.keys(corruptionMod.tradeHashes)))
+    }
+    block([
+      `{ ${labels.corruption}${corruptionMod.tags.length ? ` — ${corruptionMod.tags.join(', ')}` : ''} }`,
+      ...outputLines,
+    ])
+  }
   const ordinary = implicit.filter((line) => !/^Grants Skill\s*:/i.test(line))
   if (ordinary.length)
     block([`{ ${labels.implicit} }`, ...ordinary.map((line) => localize.line(line))])

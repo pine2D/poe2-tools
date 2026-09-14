@@ -68,7 +68,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v59'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v60'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -105,6 +105,7 @@ export interface CraftProject {
   essenceSourceHash?: string
   liquidEmotionSourceHash?: string
   augmentSourceHash?: string
+  corruptionSourceHash?: string
   importedSockets?: (string | null)[]
   importedQuality?: number
 }
@@ -129,7 +130,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 59 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 60 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -147,6 +148,7 @@ function readState(value: unknown): CraftState | null {
       'quality',
       'catalyst',
       'corrupted',
+      'corruption',
       'pendingDesecration',
     ])
   )
@@ -159,6 +161,20 @@ function readState(value: unknown): CraftState | null {
   )
     return null
   if (Object.hasOwn(value, 'corrupted') && value.corrupted !== true) return null
+  let corruption: CraftState['corruption']
+  if (Object.hasOwn(value, 'corruption')) {
+    const entry = value.corruption
+    if (
+      !record(entry) ||
+      !exactKeys(entry, ['modId', 'lines']) ||
+      !nonempty(entry.modId) ||
+      !Array.isArray(entry.lines) ||
+      entry.lines.length > 32 ||
+      !entry.lines.every(nonempty)
+    )
+      return null
+    corruption = { modId: entry.modId, lines: [...entry.lines] }
+  }
   if (value.sourceText !== null && typeof value.sourceText !== 'string') return null
   if (Object.hasOwn(value, 'catalyst') && !isCatalystQuality(value.catalyst)) return null
   if (
@@ -220,6 +236,7 @@ function readState(value: unknown): CraftState | null {
     affixes,
     sourceText: value.sourceText,
     ...(value.corrupted === true ? { corrupted: true } : {}),
+    ...(corruption ? { corruption } : {}),
     ...(isCatalystQuality(value.catalyst) ? { catalyst: { ...value.catalyst } } : {}),
     ...(Array.isArray(value.runeSourceLines)
       ? { runeSourceLines: [...value.runeSourceLines] as string[] }
@@ -278,7 +295,12 @@ function readOperation(value: unknown): CraftStep | null {
             ...(typeof value.removeModId === 'string' ? { removeModId: value.removeModId } : {}),
           }
         : null
-    if (value.kind === 'vaal') return isVaalCraftOperation(value) ? { ...value } : null
+    if (value.kind === 'vaal')
+      return isVaalCraftOperation(value)
+        ? value.outcome === 'enchant'
+          ? { ...value, values: [...value.values] }
+          : { ...value }
+        : null
     if (value.kind === 'artificer') return exactKeys(value, ['kind']) ? { kind: 'artificer' } : null
     if (
       !exactKeys(value, ['kind', 'socketIndex', 'augmentId']) ||
@@ -440,6 +462,7 @@ function validateInitial(
   if (!restored.ok) return { ok: false, error: `项目来源核对失败：${restored.error}` }
   if (
     restored.value.corrupted !== state.corrupted ||
+    JSON.stringify(restored.value.corruption) !== JSON.stringify(state.corruption) ||
     restored.value.rarity !== state.rarity ||
     restored.value.itemLevel !== state.itemLevel ||
     JSON.stringify(restored.value.affixes) !== JSON.stringify(state.affixes)
@@ -502,6 +525,7 @@ export function parseCraftProject(
       'targetImplicitValues',
       'targetAlternatives',
       'augmentSourceHash',
+      'corruptionSourceHash',
       'essenceSourceHash',
       'liquidEmotionSourceHash',
       'desecrationSourceHash',
@@ -518,6 +542,21 @@ export function parseCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  const usesCorruption =
+    (record(value.initialState) && Object.hasOwn(value.initialState, 'corruption')) ||
+    (Array.isArray(value.operations) &&
+      value.operations.some(
+        (step) => record(step) && step.kind === 'vaal' && step.outcome === 'enchant',
+      )) ||
+    Object.hasOwn(value, 'corruptionSourceHash')
+  if (usesCorruption && rulesVersion < 60)
+    return fail('v2–v59 旧版项目不能包含独立腐化强化或其来源指纹。')
+  const corruptionSourceHash = readCorruptionSourceHash(catalog)
+  if (
+    usesCorruption &&
+    (corruptionSourceHash === null || value.corruptionSourceHash !== corruptionSourceHash)
+  )
+    return fail('腐化属性来源指纹与当前目录不一致。')
   if (
     rulesVersion < 59 &&
     ((record(value.initialState) && Object.hasOwn(value.initialState, 'corrupted')) ||
@@ -1453,6 +1492,7 @@ export function parseCraftProject(
         schemaVersion: 1,
         sourceCommit: catalog._meta.sourceCommit,
         rulesVersion: CRAFT_RULES_VERSION,
+        ...(usesCorruption && corruptionSourceHash ? { corruptionSourceHash } : {}),
         ...((initialInput.catalyst !== undefined ||
           usesJewelEffects ||
           usesEffectiveTargets ||
@@ -1575,3 +1615,5 @@ export function serializeCraftProject(project: CraftProject): string {
     throw new Error('报价字段无效，不能序列化项目。')
   return JSON.stringify(project, null, 2)
 }
+
+import { corruptionSourceHash as readCorruptionSourceHash } from './corruptionSource'

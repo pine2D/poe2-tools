@@ -29,10 +29,12 @@ export { BONE_RULES, isCraftBone } from './boneRules'
 export type {
   CatalogAugment,
   CatalogBase,
+  CatalogCorruption,
   CatalogEssence,
   CatalogLiquidEmotion,
   CatalogLiquidEmotionJewel,
   CatalogMod,
+  CatalogModifierData,
   CatalogStatScalar,
   CraftCatalog,
   PoolEntry,
@@ -65,11 +67,13 @@ export type {
   CraftNumericChange,
 } from './comparison'
 export { compareCraftStates } from './comparison'
+export { type CraftCorruption, corruptionCandidates } from './corruptionEnchantments'
 export {
   CORRUPTED_CRAFT_MESSAGE,
   isVaalCraftOperation,
   type VaalCraftOperation,
 } from './corruptionRules'
+export { CORRUPTION_SOURCE, corruptionSourceHash } from './corruptionSource'
 export type { CraftCostQuote, CraftMaterial, CraftMaterialCost, CraftPricing } from './craftCosts'
 export {
   CRAFT_PRICE_UNITS,

@@ -1,4 +1,5 @@
-import type { CatalogMod, CraftCatalog } from './catalog'
+import type { CatalogModifierData, CraftCatalog } from './catalog'
+import { modifierLayers } from './modifierLayers'
 import { readNumericValues } from './numeric'
 import { supportsItemQuality } from './quality'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
@@ -73,7 +74,7 @@ function classify(line: string): { kind: 'flat' | 'increased'; stats: DefenceSta
   return null
 }
 
-function relevantLocal(mod: CatalogMod): boolean {
+function relevantLocal(mod: CatalogModifierData): boolean {
   return LOCAL_GROUP.test(mod.group) && mod.lines.some((line) => DEFENCE_TEXT.test(line))
 }
 
@@ -128,10 +129,9 @@ export function estimateDefences(
     Evasion: { flat: 0, increased: 0 },
     EnergyShield: { flat: 0, increased: 0 },
   }
-  for (const affix of state.affixes) {
-    const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
+  for (const { attribute: affix, mod, layer } of modifierLayers(catalog, state)) {
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
-    if (isHorrorSocketAffix(catalog, state, affix)) continue
+    if (layer === 'explicit' && isHorrorSocketAffix(catalog, state, affix)) continue
     if (
       SPECIAL_MODEL_TEXT.test(mod.group) ||
       mod.lines.some((line) => SPECIAL_MODEL_TEXT.test(line))

@@ -79,6 +79,12 @@ export function WeaponPanel({
                 {LABELS[type as keyof typeof LABELS]}：基底 {entry.baseMin}–{entry.baseMax}
                 ；词缀平值 {entry.affixMin}–{entry.affixMax}；符文平值 {entry.runeMin}–
                 {entry.runeMax}；词缀提高 {entry.affixIncreased}%；符文提高 {entry.runeIncreased}%。
+                {entry.corruptionMin !== undefined
+                  ? ` 腐化平值 ${entry.corruptionMin}–${entry.corruptionMax}。`
+                  : ''}
+                {entry.corruptionIncreased !== undefined
+                  ? ` 腐化提高 ${entry.corruptionIncreased}%。`
+                  : ''}
               </p>
             ))}
             <p>

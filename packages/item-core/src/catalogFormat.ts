@@ -1,4 +1,5 @@
-import type { CraftCatalog } from './catalog'
+import type { CatalogModifierData, CraftCatalog } from './catalog'
+import { corruptionSourceHash } from './corruptionSource'
 import { DESECRATION_FAMILIES, DESECRATION_SOURCE } from './desecration'
 import { JEWEL_SOURCE } from './jewels'
 import { LIQUID_EMOTION_SOURCE, liquidEmotionSourceHash } from './liquidEmotions'
@@ -19,6 +20,51 @@ function numbers(value: unknown): boolean {
 
 function nonempty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+const MODIFIER_FIELDS = [
+  'id',
+  'kind',
+  'name',
+  'group',
+  'level',
+  'lines',
+  'statOrder',
+  'tags',
+  'addsTags',
+  'tradeHashes',
+  'eligibility',
+]
+
+function validModifierData(
+  mod: Record<string, unknown>,
+  requireDefault = true,
+): mod is Record<string, unknown> & CatalogModifierData {
+  return (
+    nonempty(mod.id) &&
+    typeof mod.name === 'string' &&
+    typeof mod.group === 'string' &&
+    finite(mod.level) &&
+    Number.isInteger(mod.level) &&
+    mod.level >= 1 &&
+    strings(mod.lines) &&
+    mod.lines.length > 0 &&
+    Array.isArray(mod.statOrder) &&
+    mod.statOrder.every(finite) &&
+    mod.lines.length === mod.statOrder.length &&
+    strings(mod.tags) &&
+    new Set(mod.tags).size === mod.tags.length &&
+    strings(mod.addsTags) &&
+    record(mod.tradeHashes) &&
+    Object.values(mod.tradeHashes).every(strings) &&
+    Array.isArray(mod.eligibility) &&
+    mod.eligibility.every(
+      (rule) =>
+        record(rule) && typeof rule.tag === 'string' && (rule.value === 0 || rule.value === 1),
+    ) &&
+    (!requireDefault || mod.eligibility.some((rule) => rule.tag === 'default')) &&
+    new Set(mod.eligibility.map((rule) => rule.tag)).size === mod.eligibility.length
+  )
 }
 
 function hasOwn(value: unknown, key: PropertyKey): boolean {
@@ -336,62 +382,45 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     if (
       !record(mod) ||
       !Object.keys(mod).every((key) =>
-        [
-          'id',
-          'kind',
-          'name',
-          'group',
-          'level',
-          'lines',
-          'statOrder',
-          'tags',
-          'addsTags',
-          'tradeHashes',
-          'eligibility',
-          'desecratedOnly',
-          'jewelOnly',
-          'craftedOnly',
-        ].includes(key),
+        [...MODIFIER_FIELDS, 'desecratedOnly', 'jewelOnly', 'craftedOnly'].includes(key),
       ) ||
-      !nonempty(mod.id) ||
+      !validModifierData(mod) ||
+      ids.has(mod.id) ||
+      !['prefix', 'suffix'].includes(String(mod.kind)) ||
       (Object.hasOwn(mod, 'desecratedOnly') && mod.desecratedOnly !== true) ||
       (Object.hasOwn(mod, 'jewelOnly') && mod.jewelOnly !== true) ||
       (Object.hasOwn(mod, 'craftedOnly') && mod.craftedOnly !== true) ||
       (mod.craftedOnly === true && mod.jewelOnly !== true) ||
       (mod.jewelOnly === true && mod.desecratedOnly === true) ||
-      ids.has(mod.id) ||
-      !['prefix', 'suffix'].includes(String(mod.kind)) ||
-      typeof mod.name !== 'string' ||
-      typeof mod.group !== 'string' ||
-      !finite(mod.level) ||
-      !Number.isInteger(mod.level) ||
-      mod.level < 1 ||
-      !strings(mod.lines) ||
-      mod.lines.length === 0 ||
-      !Array.isArray(mod.statOrder) ||
-      !mod.statOrder.every(finite) ||
-      mod.lines.length !== mod.statOrder.length ||
-      !strings(mod.tags) ||
-      new Set(mod.tags).size !== mod.tags.length ||
       (mod.desecratedOnly === true &&
         (!mod.tags.includes('unveiled_mod') ||
           mod.tags.filter((tag) => (DESECRATION_FAMILIES as readonly string[]).includes(tag))
-            .length !== 1)) ||
-      !strings(mod.addsTags) ||
-      !record(mod.tradeHashes) ||
-      !Object.values(mod.tradeHashes).every(strings) ||
-      !Array.isArray(mod.eligibility) ||
-      !mod.eligibility.every(
-        (rule) =>
-          record(rule) && typeof rule.tag === 'string' && (rule.value === 0 || rule.value === 1),
-      ) ||
-      !mod.eligibility.some((rule) => rule.tag === 'default') ||
-      new Set(mod.eligibility.map((rule) => rule.tag)).size !== mod.eligibility.length
+            .length !== 1))
     )
       return invalid()
     ids.add(mod.id)
   }
+  if (Object.hasOwn(value, 'corruptions')) {
+    if (
+      !Array.isArray(value.corruptions) ||
+      value.corruptions.length === 0 ||
+      value.corruptions.length > 1000
+    )
+      return invalid()
+    for (const mod of value.corruptions) {
+      if (
+        !record(mod) ||
+        !Object.keys(mod).every((key) => MODIFIER_FIELDS.includes(key)) ||
+        !['corrupted', 'special-corrupted'].includes(String(mod.kind)) ||
+        !validModifierData(mod, false) ||
+        ids.has(mod.id)
+      )
+        return invalid()
+      ids.add(mod.id)
+    }
+  }
   const catalog = value as unknown as CraftCatalog
+  if (catalog.corruptions !== undefined && corruptionSourceHash(catalog) === null) return invalid()
   for (const mod of catalog.modifiers.filter((entry) => entry.craftedOnly)) {
     const references = (catalog.liquidEmotions ?? [])
       .filter((emotion) => !emotion.radiusJewel)
@@ -479,6 +508,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     const catalog = value as unknown as CraftCatalog
     const patterns = new Set([
       ...catalog.modifiers.flatMap((mod) => mod.lines),
+      ...(catalog.corruptions ?? []).flatMap((mod) => mod.lines),
       ...catalog.bases.flatMap((base) => base.implicit?.split('\n') ?? []),
     ])
     for (const [line, scalars] of Object.entries(value.scalability)) {

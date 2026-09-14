@@ -74,12 +74,16 @@ export function importCatalystQuality(
       )
         return fail('催化属性翻译或数值缺少原文词典依据。')
     }
-    const affix = mod.kind === 'implicit' ? undefined : state.affixes[explicitIndex++]
-    const catalogMod = affix
-      ? catalog.modifiers.find((entry) => entry.id === affix.modId)
-      : undefined
+    const affix =
+      mod.kind === 'implicit' || mod.kind === 'enchant' ? undefined : state.affixes[explicitIndex++]
+    const catalogMod =
+      mod.kind === 'enchant'
+        ? catalog.corruptions?.find((entry) => entry.id === state.corruption?.modId)
+        : affix
+          ? catalog.modifiers.find((entry) => entry.id === affix.modId)
+          : undefined
     const effect =
-      mod.kind === 'implicit'
+      mod.kind === 'implicit' || mod.kind === 'enchant'
         ? { ok: true as const, value: 0 }
         : jewelEffectForKind(catalog, state, mod.kind as 'prefix' | 'suffix')
     if (!effect.ok) return effect

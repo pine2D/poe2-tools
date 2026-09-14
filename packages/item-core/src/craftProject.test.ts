@@ -593,7 +593,7 @@ describe('替代目标项目门禁', () => {
     targetValues: [{ modId: 'shield-alt', bounds: [{ index: 0, min: 15 }] }],
   }
   it('v13严格恢复替代档位和条件，缺失关联立即拒绝', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v59')
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v60')
     expect(parseCraftProject(JSON.stringify(input), source)).toMatchObject({
       ok: true,
       value: { project: input },
