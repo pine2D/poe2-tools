@@ -1,8 +1,13 @@
 import type { CraftCurrency } from './rehearsal'
 
-/** 制作配置 ID；双枚配置的实际材料由 craftOmenMaterials 展开。 */
+/** 制作配置 ID；组合配置的实际材料由 craftOmenMaterials 展开。 */
 export type CraftOmen =
   | 'catalysing_exaltation'
+  | 'catalysing_sinistral_exaltation'
+  | 'catalysing_dextral_exaltation'
+  | 'catalysing_greater_exaltation'
+  | 'catalysing_greater_sinistral_exaltation'
+  | 'catalysing_greater_dextral_exaltation'
   | 'blessed'
   | 'greater_exaltation'
   | 'greater_sinistral_exaltation'
@@ -27,14 +32,67 @@ export const CRAFT_OMEN_RULES: Record<
     effect: 'add' | 'remove' | 'reroll'
     addCount?: 2
     lowestLevel?: true
+    consumesCatalyst?: true
     materials?: readonly string[]
   }
 > = {
   catalysing_exaltation: {
+    consumesCatalyst: true,
     name: 'Omen of Catalysing Exaltation',
     currency: 'exalted',
     kind: null,
     effect: 'add',
+  },
+  catalysing_sinistral_exaltation: {
+    name: 'Omen of Catalysing Exaltation + Omen of Sinistral Exaltation',
+    currency: 'exalted',
+    kind: 'prefix',
+    effect: 'add',
+    consumesCatalyst: true,
+    materials: ['Omen of Catalysing Exaltation', 'Omen of Sinistral Exaltation'],
+  },
+  catalysing_dextral_exaltation: {
+    name: 'Omen of Catalysing Exaltation + Omen of Dextral Exaltation',
+    currency: 'exalted',
+    kind: 'suffix',
+    effect: 'add',
+    consumesCatalyst: true,
+    materials: ['Omen of Catalysing Exaltation', 'Omen of Dextral Exaltation'],
+  },
+  catalysing_greater_exaltation: {
+    name: 'Omen of Catalysing Exaltation + Omen of Greater Exaltation',
+    currency: 'exalted',
+    kind: null,
+    effect: 'add',
+    consumesCatalyst: true,
+    addCount: 2,
+    materials: ['Omen of Catalysing Exaltation', 'Omen of Greater Exaltation'],
+  },
+  catalysing_greater_sinistral_exaltation: {
+    name: 'Omen of Catalysing Exaltation + Omen of Greater Exaltation + Omen of Sinistral Exaltation',
+    currency: 'exalted',
+    kind: 'prefix',
+    effect: 'add',
+    consumesCatalyst: true,
+    addCount: 2,
+    materials: [
+      'Omen of Catalysing Exaltation',
+      'Omen of Greater Exaltation',
+      'Omen of Sinistral Exaltation',
+    ],
+  },
+  catalysing_greater_dextral_exaltation: {
+    name: 'Omen of Catalysing Exaltation + Omen of Greater Exaltation + Omen of Dextral Exaltation',
+    currency: 'exalted',
+    kind: 'suffix',
+    effect: 'add',
+    consumesCatalyst: true,
+    addCount: 2,
+    materials: [
+      'Omen of Catalysing Exaltation',
+      'Omen of Greater Exaltation',
+      'Omen of Dextral Exaltation',
+    ],
   },
   blessed: { name: 'Omen of the Blessed', currency: 'divine', kind: null, effect: 'reroll' },
   greater_exaltation: {
@@ -135,7 +193,7 @@ export function craftOmenError(omen: unknown, currency: CraftCurrency | undefine
   if (omen === undefined) return null
   if (!isCraftOmen(omen)) return '预兆必须是当前支持的制作配置。'
   if (
-    (CRAFT_OMEN_RULES[omen].addCount === 2 || omen === 'catalysing_exaltation') &&
+    (CRAFT_OMEN_RULES[omen].addCount === 2 || CRAFT_OMEN_RULES[omen].consumesCatalyst) &&
     ['exalted', 'greater_exalted', 'perfect_exalted'].includes(currency ?? '')
   )
     return null
@@ -152,8 +210,8 @@ export function craftOmenMaterials(omen: CraftOmen): readonly string[] {
 export function craftOmenDescription(omen: CraftOmen): string {
   if (CRAFT_OMEN_RULES[omen].lowestLevel && CRAFT_OMEN_RULES[omen].kind !== null)
     return `先限定未破裂${CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : '后缀'}，再从中移除目录等级最低的一组；并列时全部可能被移除。另一侧的低等级词缀不参与比较。消耗两枚预兆与一颗基础混沌石；新增仍可为任一合法侧，组合交互待真机核对。`
-  if (omen === 'catalysing_exaltation')
-    return '消耗全部催化品质，提高对应标签词缀的出现机会，但不保证命中。仍可出现任一合法标签，概率与权重未知；已有词缀基础值保留，有效值会随品质消耗下降。仅支持戒指／项链、单枚预兆与三档崇高。'
+  if (CRAFT_OMEN_RULES[omen].consumesCatalyst)
+    return `消耗全部催化品质，提高对应标签词缀的出现机会，但不保证命中。新增 ${CRAFT_OMEN_RULES[omen].addCount ?? 1} 组${CRAFT_OMEN_RULES[omen].kind === 'prefix' ? '前缀' : CRAFT_OMEN_RULES[omen].kind === 'suffix' ? '后缀' : '任一合法侧词缀'}，仍可出现其他标签；概率与权重未知。已有词缀基础值保留，有效值会随品质消耗下降。支持戒指／项链与三档崇高，组合交互待真机核对。`
   if (omen === 'blessed')
     return '只重掷固有属性的数值；显式词缀及其数值保持不变，固有数值仍可能变差。'
   if (omen === 'light')

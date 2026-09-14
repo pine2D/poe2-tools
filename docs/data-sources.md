@@ -31,6 +31,8 @@
 
 ### 催化崇高预兆的品质消耗（2026-09-14）
 
+组合扩展人工参照：[Lolcohol 预兆说明](https://mobalytics.gg/poe-2/guides/omen-crafting)明确可叠加预兆，包含完美崇高的强效加定向示例，并强调催化不保证标签；原文部分其他机制已过时，不据此更新圣化或腐化规则。CoE 公开界面以自造 Gold Ring 核对催化、强效、右旋三枚同时选中，只观察控件状态，不复制数据、实现或权重。沿现有各枚效果组合为指定结果模型，实际触发顺序及品质对第二组权重的影响未确证，不输出概率。[PoE2 Wiki 催化条目](https://www.poe2wiki.net/wiki/Omen_of_Catalysing_Exaltation)经检索显示双组都受影响的社区说法，仅列为待追溯线索，不作为数值公式依据。新增五种配置不新增数据抓取或运行时外站请求。
+
 [PoE2DB 当前公开物品说明](https://poe2db.tw/us/Omen_of_Catalysing_Exaltation)经 Exa 全文核对，按 gray 人工机制参考：下一次崇高消耗全部催化品质，提高对应类型属性的机会；预兆触发时消费。[官方论坛作者实操](https://www.pathofexile.com/forum/view-thread/3849100)报告单枚搭配高级崇高，以及混用预兆的不确定结果；[作者品质消费报告](https://www.pathofexile.com/forum/view-thread/3842222)证实品质被清空但未保证标签，也包含未消费预兆的旧缺陷报告。论坛位置不使玩家报告成为 GGG 官方结论。
 
 [Fubgun 当前 0.5.5 制作指南](https://mobalytics.gg/poe-2/profile/fubgun/builds/0-5-fubgun-ice-shot-deadeye)的作者步骤包含完美崇高与催化崇高；只用于三档崇高兼容的人工交叉核对，不复制装备、模板、代码或权重。材料三语名称沿既有三服官方 static ID，不建立新抓取适配器。首次仅支持已核对品质大于零的普通戒指／项链、单枚配置；珠宝、零品质及多预兆交互未据这些记录推定。消费与非保证标签按物品说明建立指定结果演练，实际游戏与国服格式待验收；没有将社区所称 5 倍权重当成已验证参数。

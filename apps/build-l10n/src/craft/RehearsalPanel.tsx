@@ -1339,7 +1339,7 @@ export function RehearsalPanel({
         {omen ? (
           <p>
             <span lang="en">{CRAFT_OMEN_RULES[omen].name}</span> · 适配
-            {CRAFT_OMEN_RULES[omen].addCount === 2 || omen === 'catalysing_exaltation'
+            {CRAFT_OMEN_RULES[omen].addCount === 2 || CRAFT_OMEN_RULES[omen].consumesCatalyst
               ? '三档'
               : '基础'}
             {CRAFT_CURRENCY_LABELS[CRAFT_OMEN_RULES[omen].currency]}；{craftOmenDescription(omen)}

@@ -25,7 +25,7 @@ import {
 import { jointJewelDivineOperations, liquidRouteContext } from './liquidRouteCandidates'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
-import { CRAFT_OMEN_RULES, type CraftOmen } from './omens'
+import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenMaterials } from './omens'
 import {
   addCraftAffix,
   CRAFT_CURRENCY_RULES,
@@ -159,6 +159,7 @@ export function planCraftTargetRoutes(
     (pricing ? priceCompare(routeCost(a), routeCost(b)) : 0) ||
     routeRisk(a) - routeRisk(b) ||
     a.steps.length - b.steps.length ||
+    (b.finalState.catalyst?.quality ?? 0) - (a.finalState.catalyst?.quality ?? 0) ||
     compare(
       JSON.stringify(a.steps.map((s) => s.operation)),
       JSON.stringify(b.steps.map((s) => s.operation)),
@@ -264,6 +265,30 @@ export function planCraftTargetRoutes(
     JSON.stringify({
       ...current,
       affixes: [...current.affixes].sort((a, b) => compare(a.modId, b.modId)),
+    })
+  // 仅比较已达成全部目标的相同步骤；移除催化材料后其余消费必须逐步完全相同。
+  const withoutCatalystKey = (route: CraftTargetRoute) =>
+    JSON.stringify({
+      state: key(
+        route.finalState.catalyst
+          ? {
+              ...route.finalState,
+              catalyst: { ...route.finalState.catalyst, quality: 0 },
+            }
+          : route.finalState,
+      ),
+      operations: route.steps.map(({ operation }) =>
+        'currency' in operation
+          ? {
+              ...operation,
+              omen: operation.omen
+                ? craftOmenMaterials(operation.omen).filter(
+                    (name) => name !== 'Omen of Catalysing Exaltation',
+                  )
+                : [],
+            }
+          : operation,
+      ),
     })
   type Node = {
     state: CraftState
@@ -489,6 +514,16 @@ export function planCraftTargetRoutes(
           (pricing !== undefined || result.routes.length < 3)
         ) {
           const route = { steps, finalState: current }
+          if (current.catalyst) {
+            const signature = withoutCatalystKey(route)
+            for (let index = result.routes.length - 1; index >= 0; index--) {
+              const prior = result.routes[index]
+              if (!prior || withoutCatalystKey(prior) !== signature) continue
+              const quality = prior.finalState.catalyst?.quality ?? 0
+              if (quality > current.catalyst.quality) return
+              if (quality < current.catalyst.quality) result.routes.splice(index, 1)
+            }
+          }
           if (pricing) {
             const existing = result.routes.findIndex(
               (entry) => key(entry.finalState) === key(current),
@@ -581,6 +616,12 @@ export function planCraftTargetRoutes(
       undefined,
       ...(Object.keys(CRAFT_OMEN_RULES) as CraftOmen[]).filter((omen) => {
         const rule = CRAFT_OMEN_RULES[omen]
+        if (
+          rule.consumesCatalyst &&
+          (!node.state.catalyst?.quality ||
+            !prepareCraftOperation(catalog, node.state, 'exalted', undefined, omen).ok)
+        )
+          return false
         if (rule.lowestLevel && rule.kind !== null) {
           const combined = removableCraftAffixes(catalog, node.state, 'chaos', omen)
           if (!combined.ok) return false
@@ -633,7 +674,12 @@ export function planCraftTargetRoutes(
           : 0
         : 3
     }
-    configs.sort((a, b) => doublePriority(a) - doublePriority(b))
+    configs.sort(
+      (a, b) =>
+        doublePriority(a) - doublePriority(b) ||
+        Number(a !== undefined && CRAFT_OMEN_RULES[a].consumesCatalyst === true) -
+          Number(b !== undefined && CRAFT_OMEN_RULES[b].consumesCatalyst === true),
+    )
     for (const omen of configs) {
       const advice =
         omen === undefined && node.steps.length === 0

@@ -64,7 +64,7 @@ it('定向消减取消不计费，应用保留两枚材料和完整撤销恢复'
   expect(screen.getByText('左旋消抹预兆 × 1')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v64')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v65')
   expect(saved.operations[0]).toMatchObject({
     omen: 'whittling_sinistral_erasure',
     removeModId: 'prefix1',

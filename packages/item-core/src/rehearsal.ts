@@ -649,7 +649,7 @@ export function prepareCraftOperation(
     if (current.rarity !== 'rare')
       return failure(`${CRAFT_CURRENCY_LABELS[currency]}只能用于稀有装备。`)
     draft = current
-    if (omen === 'catalysing_exaltation') {
+    if (omen !== undefined && CRAFT_OMEN_RULES[omen].consumesCatalyst) {
       const base = findBase(catalog, current.baseId)
       if (!base || !['Ring', 'Amulet'].includes(base.type))
         return failure('催化崇高预兆当前只支持戒指和项链；珠宝交互尚未核实。')
