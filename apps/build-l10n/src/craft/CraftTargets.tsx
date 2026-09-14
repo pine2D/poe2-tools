@@ -20,6 +20,7 @@ import {
   craftTargetCandidates,
   craftTargetsSatisfied,
   type EssenceAdviceStep,
+  type ExtractedCraftTargets,
   hasCraftModEligibility,
   hasGenesisModEligibility,
   inspectEssences,
@@ -34,10 +35,12 @@ import { BoneAdvicePanel } from './BoneAdvicePanel'
 import { EssenceAdvicePanel } from './EssenceAdvicePanel'
 import { EssencePreparationPanel } from './EssencePreparationPanel'
 import { ImplicitTargetEditor } from './ImplicitTargetEditor'
+import { TargetExtractionPanel } from './TargetExtractionPanel'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 import { TargetValueEditor } from './TargetValueEditor'
 
 interface CraftTargetsProps {
+  onExtract?: (targets: ExtractedCraftTargets) => void
   minimumTargetCount?: number
   onMinimumTargetCountChange?: (value: number | undefined) => void
   pricing?: CraftPricing
@@ -65,6 +68,7 @@ interface CraftTargetsProps {
 }
 
 export function CraftTargets({
+  onExtract,
   minimumTargetCount,
   onMinimumTargetCountChange,
   pricing,
@@ -298,6 +302,15 @@ export function CraftTargets({
           </strong>
         ) : null}
       </header>
+      {onExtract ? (
+        <TargetExtractionPanel
+          catalog={catalog}
+          state={state}
+          busy={busy}
+          onApply={onExtract}
+          {...(translateLine ? { translateLine } : {})}
+        />
+      ) : null}
       {targetModIds.length > 0 && onMinimumTargetCountChange ? (
         <label>
           显式目标达成条件

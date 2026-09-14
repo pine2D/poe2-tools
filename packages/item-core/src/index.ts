@@ -236,6 +236,7 @@ export {
   strategyStageAt,
   validStrategyStartStep,
 } from './strategyStages'
+export { type ExtractedCraftTargets, extractCraftTargets } from './targetExtraction'
 export type {
   CraftTargetRoute,
   CraftTargetRouteOptions,

@@ -1147,6 +1147,14 @@ export function RehearsalPanel({
         />
       ) : null}
       <CraftTargets
+        onExtract={(targets) => {
+          clearTargetDrafts()
+          setTargetModIds(targets.targetModIds)
+          setTargetValues(targets.targetValues)
+          setTargetFracturedModId(targets.targetFracturedModId)
+          setTargetAlternatives([])
+          setMinimumTargetCount(undefined)
+        }}
         {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
         onMinimumTargetCountChange={(value) => {
           clearTargetDrafts()
