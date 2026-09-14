@@ -69,7 +69,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v62'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v63'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -131,7 +131,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 62 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 63 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -150,6 +150,8 @@ function readState(value: unknown): CraftState | null {
       'catalyst',
       'corrupted',
       'corruption',
+      'secondCorruption',
+      'twiceCorrupted',
       'pendingDesecration',
     ])
   )
@@ -162,9 +164,11 @@ function readState(value: unknown): CraftState | null {
   )
     return null
   if (Object.hasOwn(value, 'corrupted') && value.corrupted !== true) return null
-  let corruption: CraftState['corruption']
-  if (Object.hasOwn(value, 'corruption')) {
-    const entry = value.corruption
+  if (Object.hasOwn(value, 'twiceCorrupted') && value.twiceCorrupted !== true) return null
+  const corruptionFields: Pick<CraftState, 'corruption' | 'secondCorruption'> = {}
+  for (const key of ['corruption', 'secondCorruption'] as const) {
+    if (!Object.hasOwn(value, key)) continue
+    const entry = value[key]
     if (
       !record(entry) ||
       !exactKeys(entry, ['modId', 'lines']) ||
@@ -174,7 +178,7 @@ function readState(value: unknown): CraftState | null {
       !entry.lines.every(nonempty)
     )
       return null
-    corruption = { modId: entry.modId, lines: [...entry.lines] }
+    corruptionFields[key] = { modId: entry.modId, lines: [...entry.lines] }
   }
   if (value.sourceText !== null && typeof value.sourceText !== 'string') return null
   if (Object.hasOwn(value, 'catalyst') && !isCatalystQuality(value.catalyst)) return null
@@ -237,7 +241,8 @@ function readState(value: unknown): CraftState | null {
     affixes,
     sourceText: value.sourceText,
     ...(value.corrupted === true ? { corrupted: true } : {}),
-    ...(corruption ? { corruption } : {}),
+    ...corruptionFields,
+    ...(value.twiceCorrupted ? { twiceCorrupted: true } : {}),
     ...(isCatalystQuality(value.catalyst) ? { catalyst: { ...value.catalyst } } : {}),
     ...(Array.isArray(value.runeSourceLines)
       ? { runeSourceLines: [...value.runeSourceLines] as string[] }
@@ -296,7 +301,12 @@ function readOperation(value: unknown): CraftStep | null {
             ...(typeof value.removeModId === 'string' ? { removeModId: value.removeModId } : {}),
           }
         : null
-    if (value.kind === 'architect') return isArchitectCraftOperation(value) ? { ...value } : null
+    if (value.kind === 'architect')
+      return isArchitectCraftOperation(value)
+        ? value.outcome === 'enchant'
+          ? { ...value, values: [...value.values] }
+          : { ...value }
+        : null
     if (value.kind === 'vaal')
       return isVaalCraftOperation(value)
         ? value.outcome === 'enchant'
@@ -473,6 +483,8 @@ function validateInitial(
   if (
     restored.value.corrupted !== state.corrupted ||
     JSON.stringify(restored.value.corruption) !== JSON.stringify(state.corruption) ||
+    JSON.stringify(restored.value.secondCorruption) !== JSON.stringify(state.secondCorruption) ||
+    restored.value.twiceCorrupted !== state.twiceCorrupted ||
     restored.value.rarity !== state.rarity ||
     restored.value.itemLevel !== state.itemLevel ||
     JSON.stringify(restored.value.affixes) !== JSON.stringify(state.affixes)
@@ -553,6 +565,17 @@ export function parseCraftProject(
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
   if (
+    rulesVersion < 63 &&
+    ((record(value.initialState) &&
+      (Object.hasOwn(value.initialState, 'secondCorruption') ||
+        Object.hasOwn(value.initialState, 'twiceCorrupted'))) ||
+      (Array.isArray(value.operations) &&
+        value.operations.some(
+          (step) => record(step) && step.kind === 'architect' && step.outcome === 'enchant',
+        )))
+  )
+    return fail('v2–v62 旧版项目不能包含建筑师强化或二重腐化状态。')
+  if (
     rulesVersion < 62 &&
     Array.isArray(value.operations) &&
     value.operations.some((step) => record(step) && step.kind === 'architect')
@@ -567,10 +590,16 @@ export function parseCraftProject(
   )
     return fail('v2–v60 旧版项目不能包含腐化顺序重选步骤。')
   const usesCorruption =
-    (record(value.initialState) && Object.hasOwn(value.initialState, 'corruption')) ||
+    (record(value.initialState) &&
+      (Object.hasOwn(value.initialState, 'corruption') ||
+        Object.hasOwn(value.initialState, 'secondCorruption') ||
+        Object.hasOwn(value.initialState, 'twiceCorrupted'))) ||
     (Array.isArray(value.operations) &&
       value.operations.some(
-        (step) => record(step) && step.kind === 'vaal' && step.outcome === 'enchant',
+        (step) =>
+          record(step) &&
+          (step.kind === 'vaal' || step.kind === 'architect') &&
+          step.outcome === 'enchant',
       )) ||
     Object.hasOwn(value, 'corruptionSourceHash')
   if (usesCorruption && rulesVersion < 60)

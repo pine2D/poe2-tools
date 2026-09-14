@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { matchesCatalogLines } from './catalogMatch'
 import { CATALYSTS, type CatalystQuality, readCatalystQuality } from './catalystQuality'
+import { corruptionEntries } from './corruptionEnchantments'
 import type { InspectedMod } from './export'
 import { normalizeJewelFixedImportLine, validateJewelFixedImportLine } from './jewelEffectImport'
 import { jewelEffectForKind, usesJewelEffect } from './jewelEffects'
@@ -63,6 +64,8 @@ export function importCatalystQuality(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail('催化品质基底不存在。')
   let explicitIndex = 0
+  let enchantIndex = 0
+  const corruptions = corruptionEntries(state)
   for (const { mod, stats } of inspected) {
     for (const { source, resolution } of stats) {
       if (
@@ -76,9 +79,10 @@ export function importCatalystQuality(
     }
     const affix =
       mod.kind === 'implicit' || mod.kind === 'enchant' ? undefined : state.affixes[explicitIndex++]
+    const enchant = mod.kind === 'enchant' ? corruptions[enchantIndex++] : undefined
     const catalogMod =
       mod.kind === 'enchant'
-        ? catalog.corruptions?.find((entry) => entry.id === state.corruption?.modId)
+        ? catalog.corruptions?.find((entry) => entry.id === enchant?.modId)
         : affix
           ? catalog.modifiers.find((entry) => entry.id === affix.modId)
           : undefined

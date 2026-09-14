@@ -33,6 +33,8 @@ export interface CraftAffixChange {
 export interface CraftComparison {
   destroyed?: { before: boolean; after: boolean }
   corruption?: { before: CraftCorruption | null; after: CraftCorruption | null }
+  secondCorruption?: { before: CraftCorruption | null; after: CraftCorruption | null }
+  twiceCorrupted?: { before: boolean; after: boolean }
   corrupted?: { before: boolean; after: boolean }
   pendingDesecration?: { before: PendingDesecration | null; after: PendingDesecration | null }
   rarity: { before: CraftRarity; after: CraftRarity } | null
@@ -73,6 +75,15 @@ function samePendingDesecration(
     sameOptions(before.options, after.options) &&
     sameOptions(before.rerollOptions, after.rerollOptions)
   )
+}
+
+function corruptionChange(before: CraftCorruption | undefined, after: CraftCorruption | undefined) {
+  return JSON.stringify(before) === JSON.stringify(after)
+    ? undefined
+    : {
+        before: before ? { ...before, lines: [...before.lines] } : null,
+        after: after ? { ...after, lines: [...after.lines] } : null,
+      }
 }
 
 function comparableValues(patterns: readonly string[], lines: readonly string[]) {
@@ -138,6 +149,8 @@ export function compareCraftStates(
   if (!checkedAfter.ok) return checkedAfter
 
   const previous = new Map(before.affixes.map((affix) => [affix.modId, affix]))
+  const corruption = corruptionChange(before.corruption, after.corruption)
+  const secondCorruption = corruptionChange(before.secondCorruption, after.secondCorruption)
   const next = new Map(after.affixes.map((affix) => [affix.modId, affix]))
   const modifiers = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const affixes: CraftAffixChange[] = []
@@ -233,16 +246,14 @@ export function compareCraftStates(
   return {
     ok: true,
     value: {
-      ...(JSON.stringify(before.corruption) === JSON.stringify(after.corruption)
+      ...(corruption ? { corruption } : {}),
+      ...(secondCorruption ? { secondCorruption } : {}),
+      ...(before.twiceCorrupted === after.twiceCorrupted
         ? {}
         : {
-            corruption: {
-              before: before.corruption
-                ? { ...before.corruption, lines: [...before.corruption.lines] }
-                : null,
-              after: after.corruption
-                ? { ...after.corruption, lines: [...after.corruption.lines] }
-                : null,
+            twiceCorrupted: {
+              before: before.twiceCorrupted === true,
+              after: after.twiceCorrupted === true,
             },
           }),
       ...(before.corrupted === after.corrupted

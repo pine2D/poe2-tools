@@ -115,7 +115,7 @@ it('摧毁项目在所有游标恢复，完整拒绝终止之后的操作、旧�
   ).toBe(false)
 })
 
-it('Twice Corrupted 作为独立状态保留，二重腐化原文不能降格为普通腐化导入', () => {
+it('Twice Corrupted 作为独立状态保留，缺失强化的二重原文不能降格导入', () => {
   const raw =
     'Item Class: Rings\nRarity: Rare\nTest Ring\nGold Ring\n--------\nItem Level: 86\n--------\n{ Implicit Modifier }\n10(6-15)% increased Rarity of Items found\n--------\n{ Prefix Modifier "Hale" }\n+19(10-19) to maximum Life\n--------\nTwice Corrupted'
   const item = parse(raw)

@@ -105,6 +105,8 @@ export interface CraftState {
   /** 仅由摧毁操作产生的终止快照；不能作为存活装备使用。 */
   destroyed?: true
   corruption?: import('./corruptionEnchantments').CraftCorruption
+  secondCorruption?: import('./corruptionEnchantments').CraftCorruption
+  twiceCorrupted?: true
   corrupted?: true
   catalyst?: import('./catalystQuality').CatalystQuality
   pendingDesecration?: PendingDesecration
@@ -204,6 +206,11 @@ function cloneState(state: CraftState): CraftState {
     ...(state.corruption === undefined
       ? {}
       : { corruption: { ...state.corruption, lines: [...state.corruption.lines] } }),
+    ...(state.secondCorruption === undefined
+      ? {}
+      : {
+          secondCorruption: { ...state.secondCorruption, lines: [...state.secondCorruption.lines] },
+        }),
     ...(state.catalyst === undefined ? {} : { catalyst: { ...state.catalyst } }),
     ...(state.pendingDesecration === undefined
       ? {}

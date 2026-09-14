@@ -68,7 +68,7 @@ it('物理符文驱动面板停止条件，替换取消不改值，费用与撤�
     ).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v62')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v63')
   expect(saved.operations).toHaveLength(3)
   click('撤销')
   expect(panel().getByText('物理 DPS：25.2')).toBeDefined()

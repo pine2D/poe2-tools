@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { matchesCatalogLines } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { corruptionEntries } from './corruptionEnchantments'
 import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
 import { readUnlevelledSkillName } from './grantedSkills'
@@ -131,13 +132,16 @@ export function exportCraftItemText(
     affix,
     mod: catalog.modifiers.find((entry) => entry.id === affix.modId),
   }))
-  const corruptionMod = catalog.corruptions?.find((mod) => mod.id === current.corruption?.modId)
+  const corruptions = corruptionEntries(current).map((attribute) => ({
+    attribute,
+    mod: catalog.corruptions?.find((mod) => mod.id === attribute.modId),
+  }))
   const runes = socketEffects(catalog, current).map(({ augment }) => augment)
   const runeLines = runes.flatMap((rune) => rune.lines)
   const names = [
     base.name,
     base.type,
-    ...(corruptionMod?.tags ?? []),
+    ...corruptions.flatMap(({ mod }) => mod?.tags ?? []),
     ...modifiers.flatMap(({ affix, mod }) =>
       mod
         ? [...(mod.name === '' && mod.craftedOnly && affix.crafted ? [] : [mod.name]), ...mod.tags]
@@ -147,7 +151,7 @@ export function exportCraftItemText(
   const lines = [
     ...implicit,
     ...current.affixes.flatMap((affix) => affix.lines),
-    ...(current.corruption?.lines ?? []),
+    ...corruptions.flatMap(({ attribute }) => attribute.lines),
     ...runeLines,
   ]
   // 不删除字符修补目录：结构字符会改变高级分组，必须明确拒绝。
@@ -158,13 +162,16 @@ export function exportCraftItemText(
     lines.some((line) => !line.trim() || /[\r\n\u2028\u2029{}]/u.test(line)) ||
     [
       ...current.affixes.flatMap((affix) => affix.lines),
-      ...(current.corruption?.lines ?? []),
+      ...corruptions.flatMap(({ attribute }) => attribute.lines),
       ...runeLines,
     ].some(isItemStructureLine) ||
     implicit.some((line) => isItemStructureLine(line) && !/^Grants Skill\s*:/i.test(line))
   )
     return { ok: false, error: '名称、标签或属性行包含不支持的装备文本结构字符。' }
   const warnings = [
+    ...(current.twiceCorrupted && locale !== 'en'
+      ? ['二重腐化保留英文 Twice Corrupted 标记；中文客户端原生格式待验收。']
+      : []),
     `这是演练${locale === 'en' ? '英文' : '中文'}文本，未写入推算攻击/防御面板、穿戴需求或目录未提供的 Tier；不保证游戏或 CoE 全类别兼容。`,
     '文本不保存完整孔位身份、孔序和演练历史；S 只表示孔数，再导入须核对孔位，完整恢复请使用 .craft.json 项目。',
   ]
@@ -213,9 +220,10 @@ export function exportCraftItemText(
   block([`${labels.itemLevel}: ${current.itemLevel}`])
   if (current.sockets?.length)
     block([`${labels.sockets}: ${current.sockets.map(() => 'S').join(' ')}`])
-  if (current.corruption && corruptionMod) {
+  for (const { attribute, mod: corruptionMod } of corruptions) {
+    if (!corruptionMod) return { ok: false, error: '腐化强化不在当前目录中。' }
     const outputLines: string[] = []
-    for (const line of current.corruption.lines) {
+    for (const line of attribute.lines) {
       const complete = current.catalyst
         ? completeBaseRanges(corruptionMod.lines, line)
         : { ok: true as const, value: line }
@@ -268,7 +276,8 @@ export function exportCraftItemText(
     ])
   }
   if (current.affixes.some((affix) => affix.fractured)) block(['Fractured Item'])
-  if (current.corrupted)
+  if (current.twiceCorrupted) block(['Twice Corrupted'])
+  else if (current.corrupted)
     block([locale === 'zh-CN' ? '被腐化' : locale === 'zh-TW' ? '已腐化' : 'Corrupted'])
   block([labels.note])
   return { ok: true, value: { text: output.join('\n'), warnings: [...new Set(warnings)] } }

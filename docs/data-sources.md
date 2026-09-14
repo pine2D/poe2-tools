@@ -1,6 +1,6 @@
 # 数据源登记表
 
-建筑师摧毁（2026-09-14）：新增人工 gray 规则参考 [Lolcohol / Mobalytics《Vaal Currency Items》](https://mobalytics.gg/poe-2/guides/vaal-currency)（页面更新 2026-07-21），结合已登记 PoE2DB 的 [Architect's Orb 说明](https://poe2db.tw/us/Architects_Orb)。仅支持手选摧毁分支，未采用作者给出的概率，成功追加强化及组间资格仍待确认。已登记固定 MIT PoB2 的 Item.lua 用于核对英文 Twice Corrupted 标记，不猜国服或台服译文。无新增抓取适配器、转载表格或同行实现。 本轮 CoE 黑盒观察：自造英文 Antler Focus 在 language=cn 页面提示基底未找到，英文页面可导入；Temple → Architect's Orb 显示该方法没有处理器。仅记录当前页面行为，不据此推断游戏规则或其他入口能力。
+建筑师摧毁（2026-09-14）：新增人工 gray 规则参考 [Lolcohol / Mobalytics《Vaal Currency Items》](https://mobalytics.gg/poe-2/guides/vaal-currency)（页面更新 2026-07-21），结合已登记 PoE2DB 的 [Architect's Orb 说明](https://poe2db.tw/us/Architects_Orb)。v62 支持手选摧毁，v63 增加手选追加强化，未采用作者给出的概率。成功组合沿用已登记固定 MIT PoB2 ModCorrupted.lua 的组、附加标签及资格数据建立模型；组间交互、无原强化结果和二重后不可重复仍待真机确认，不宣称服务端规则已证实。已登记固定 MIT PoB2 的 Item.lua 用于核对英文 Twice Corrupted 标记，不猜国服或台服译文。无新增抓取适配器、转载表格或同行实现。 本轮 CoE 黑盒观察：自造英文 Antler Focus 在 language=cn 页面提示基底未找到，英文页面可导入；Temple → Architect's Orb 显示该方法没有处理器。仅记录当前页面行为，不据此推断游戏规则或其他入口能力。
 
 
 瓦尔顺序重选（2026-09-14）：新增人工 gray 规则参考 [Mobalytics / sirgog 原创攻略](https://mobalytics.gg/poe-2/guides/vaal-corrupting)（页面标注 2025-01-16），与已登记 Maxroll 腐化说明交叉核对。使用一至三次类似混沌替换、可作用于魔法装备的文字描述；顺序重新生成候选、可再次命中新组是该描述的模型推导，未获服务端或真机验证。没有转载结果表、抓取适配器或同行实现，未采用旧 25% 概率／法系品质结论；特殊来源交互暂不开放。CoE 自造法器选择 Vaal Orb 后显示该方法没有处理器，仅登记为界面观察，不能证明游戏行为。

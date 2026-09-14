@@ -4,6 +4,7 @@ import {
   type CraftCatalog,
   type CraftState,
   corruptionCandidates,
+  corruptionEntries,
   inspectNumericLines,
   renderNumericLines,
   type VaalCraftOperation,
@@ -71,6 +72,11 @@ export function CorruptionPanel({
   translateLine,
 }: Props) {
   const preview = useRef<HTMLElement>(null)
+  const corruptedHeading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (state.twiceCorrupted) corruptedHeading.current?.focus()
+  }, [state.twiceCorrupted])
+
   const [selectedId, setSelectedId] = useState('')
   const candidates = useMemo(() => corruptionCandidates(catalog, state), [catalog, state])
   const selected = candidates.find((mod) => mod.id === selectedId)
@@ -81,11 +87,13 @@ export function CorruptionPanel({
   if (state.corrupted)
     return (
       <section className="craft-sockets" aria-label="腐化状态">
-        <h3>已腐化</h3>
-        {state.corruption ? (
-          <article aria-label="当前腐化强化">
+        <h3 ref={corruptedHeading} tabIndex={-1}>
+          {state.twiceCorrupted ? '已二重腐化' : '已腐化'}
+        </h3>
+        {corruptionEntries(state).map((entry, index) => (
+          <article key={entry.modId} aria-label={index === 0 ? '当前腐化强化' : '第二组腐化强化'}>
             <h4>腐化强化 · 独立属性</h4>
-            {state.corruption.lines.map((line) => (
+            {entry.lines.map((line) => (
               <p key={line}>
                 {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
                 <code>{line}</code>
@@ -95,6 +103,9 @@ export function CorruptionPanel({
               <p>这里保留高级基础值；命中催化标签的实际贡献已计入支持的估算面板。</p>
             ) : null}
           </article>
+        ))}
+        {state.twiceCorrupted ? (
+          <p>已完成二重腐化，不能再次使用建筑师宝珠；两组强化分别计入已支持的面板。</p>
         ) : null}
         <p>普通通货、精华、骨骼、破裂和巧匠石已停用。已有孔仍可镶嵌或覆盖已支持的符文与魂核。</p>
         <p>演练中可撤销以比较路线；游戏中的腐化不能撤销。</p>

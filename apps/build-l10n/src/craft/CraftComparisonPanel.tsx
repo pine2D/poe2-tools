@@ -224,6 +224,8 @@ export function CraftComparisonPanel({
           {result.value.rarity === null &&
           result.value.corrupted === undefined &&
           result.value.corruption === undefined &&
+          result.value.secondCorruption === undefined &&
+          result.value.twiceCorrupted === undefined &&
           result.value.affixes.length === 0 &&
           result.value.implicit === null &&
           result.value.socketCount === undefined &&
@@ -242,6 +244,23 @@ export function CraftComparisonPanel({
               腐化状态：{result.value.corrupted.before ? '已腐化' : '未腐化'} →{' '}
               {result.value.corrupted.after ? '已腐化' : '未腐化'}
             </p>
+          ) : null}
+          {result.value.twiceCorrupted ? (
+            <p>
+              二重腐化状态：{result.value.twiceCorrupted.before ? '是' : '否'} →{' '}
+              {result.value.twiceCorrupted.after ? '是' : '否'}
+            </p>
+          ) : null}
+          {result.value.secondCorruption ? (
+            <section aria-label="第二组腐化强化变化">
+              <h4>第二组腐化强化</h4>
+              {group(
+                '第二组腐化强化',
+                result.value.secondCorruption.before?.lines ?? null,
+                result.value.secondCorruption.after?.lines ?? null,
+                [],
+              )}
+            </section>
           ) : null}
           {result.value.corruption ? (
             <article className="comparison-group">

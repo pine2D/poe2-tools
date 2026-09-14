@@ -84,11 +84,10 @@ export function importCraftState(
       return fail('词缀检查结果与来源原文不一致。')
   }
   const originalFlags = parseItem(item.rawText)
-  if (item.twiceCorrupted || (originalFlags.ok && originalFlags.item.twiceCorrupted))
-    return fail('已识别二重腐化；双强化和后续操作尚未支持，当前保留原文对比。')
   if (
     !originalFlags.ok ||
     originalFlags.item.corrupted !== item.corrupted ||
+    originalFlags.item.twiceCorrupted !== item.twiceCorrupted ||
     originalFlags.item.mirrored !== item.mirrored ||
     originalFlags.item.unidentified !== item.unidentified
   )
@@ -465,6 +464,7 @@ export function importCraftState(
   }
   const state: CraftState = {
     ...(item.corrupted ? { corrupted: true } : {}),
+    ...(item.twiceCorrupted ? { twiceCorrupted: true } : {}),
     baseId,
     itemLevel: item.itemLevel,
     rarity: item.rarity,
@@ -483,7 +483,7 @@ export function importCraftState(
     inspection.mods.filter(({ mod }) => mod.kind === 'enchant'),
   )
   if (!corruption.ok) return corruption
-  if (corruption.value) state.corruption = corruption.value
+  Object.assign(state, corruption.value)
   const catalyst = importCatalystQuality(
     catalog,
     item,

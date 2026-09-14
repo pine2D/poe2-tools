@@ -19,6 +19,58 @@ afterEach(() => {
   localStorage.clear()
 })
 
+it('建筑师成功保留两组强化，取消不计费，应用后可比较、撤销和恢复', () => {
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{ "Architect's Orb": '建筑师宝珠' }}
+      initialState={{
+        baseId: 'Gold Ring',
+        itemLevel: 86,
+        rarity: 'normal',
+        sourceText: null,
+        affixes: [],
+      }}
+    />,
+  )
+  fireEvent.change(screen.getByLabelText('选择腐化强化'), {
+    target: { value: 'CorruptionChaosResistance1' },
+  })
+  click('预演腐化：新增强化属性')
+  click('应用腐化结果')
+  fireEvent.change(screen.getByLabelText('选择建筑师强化'), {
+    target: { value: 'CorruptionAllResistances1' },
+  })
+  fireEvent.change(screen.getByLabelText('建筑师强化 · 数值 1'), { target: { value: '10' } })
+  click('预演建筑师：新增强化')
+  click('取消建筑师结果')
+  expect(screen.queryByText('建筑师宝珠 × 1')).toBeNull()
+  click('预演建筑师：新增强化')
+  click('应用建筑师强化结果')
+  expect(document.activeElement).toBe(screen.getByRole('heading', { name: '已二重腐化' }))
+  expect(screen.getByRole('heading', { name: '已二重腐化' })).toBeDefined()
+  expect(screen.getByLabelText('第二组腐化强化').textContent).toContain(
+    '+10(5-10)% to all Elemental Resistances',
+  )
+  expect(screen.queryByRole('button', { name: '预演建筑师：摧毁物品' })).toBeNull()
+  expect(screen.getByText('建筑师宝珠 × 1')).toBeDefined()
+  click('展开前后变化')
+  expect(screen.getByText('二重腐化状态：否 → 是')).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(saved.operations[1]).toEqual({
+    kind: 'architect',
+    outcome: 'enchant',
+    modId: 'CorruptionAllResistances1',
+    values: [10],
+  })
+  expect(saved.corruptionSourceHash).toBe(CORRUPTION_SOURCE.sha256)
+  click('撤销')
+  expect(screen.queryByLabelText('第二组腐化强化')).toBeNull()
+  click('恢复本机演练')
+  expect(screen.getByLabelText('第二组腐化强化')).toBeDefined()
+})
+
 it('建筑师摧毁预览可取消，应用后保留费用和项目恢复而停止装备操作', () => {
   render(
     <RehearsalPanel
@@ -168,7 +220,7 @@ it('瓦尔加孔预览、取消、镶嵌、保存及撤销恢复腐化限制', (
       augmentId: 'pob2:augment:["Soul Core of Quipolatl","weapon"]',
     },
   ])
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v62')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v63')
   click('撤销')
   expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
   click('撤销')

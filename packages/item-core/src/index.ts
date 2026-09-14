@@ -68,7 +68,12 @@ export type {
   CraftNumericChange,
 } from './comparison'
 export { compareCraftStates } from './comparison'
-export { type CraftCorruption, corruptionCandidates } from './corruptionEnchantments'
+export {
+  architectCandidates,
+  type CraftCorruption,
+  corruptionCandidates,
+  corruptionEntries,
+} from './corruptionEnchantments'
 export { prepareVaalReplacement, replayVaalReplacements } from './corruptionReroll'
 export type { VaalReplacement } from './corruptionRules'
 export {

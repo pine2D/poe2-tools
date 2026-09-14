@@ -2,6 +2,7 @@ import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { corruptionEntries } from './corruptionEnchantments'
 import { essenceSourceHash } from './essences'
 import { jewelEffectForKind } from './jewelEffects'
 import { isBasicJewel } from './jewels'
@@ -221,14 +222,15 @@ export function estimateCatalystEffects(
       ),
     })
   }
-  const corruption = catalog.corruptions?.find((mod) => mod.id === state.corruption?.modId)
-  if (corruption && state.corruption) {
+  for (const entry of corruptionEntries(state)) {
+    const corruption = catalog.corruptions?.find((mod) => mod.id === entry.modId)
+    if (!corruption) continue
     const matched = matches(corruption.tags)
     groups.push({
       id: corruption.id,
       kind: 'corruption',
       matched,
-      lines: state.corruption.lines.map((line) =>
+      lines: entry.lines.map((line) =>
         estimateLine(catalog, corruption.lines, line, matched, quality),
       ),
     })
