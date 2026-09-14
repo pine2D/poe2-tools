@@ -8,6 +8,8 @@ import {
   type ItemDictionary,
   type ItemDocument,
   inspectModPool,
+  isBasicJewel,
+  jewelSourceHash,
   matchCatalogMods,
   type PoolEntry,
   parseCraftCatalog,
@@ -18,6 +20,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CraftEntry } from './CraftEntry'
 import { EssenceCatalog } from './EssenceCatalog'
+import { LiquidEmotionCatalog } from './LiquidEmotionCatalog'
 import { ModStateBadges } from './ModStateBadges'
 import { ProjectControls } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
@@ -49,7 +52,7 @@ type LoadState =
   | { status: 'ready'; catalog: CraftCatalog }
 
 const MOD_LIMIT = 80
-const SPECIAL_TYPES = new Set(['jewel', 'flask', 'charm'])
+const SPECIAL_TYPES = new Set(['flask', 'charm'])
 const PROPERTY_LABELS: Record<string, string> = {
   level: '等级',
   int: '智慧',
@@ -155,7 +158,7 @@ function ModGroup({
         {entries.map(({ mod }) => (
           <article key={mod.id}>
             <header>
-              <strong>{mod.name}</strong>
+              <strong>{mod.name || mod.id}</strong>
               <span>需求等级 {mod.level}</span>
             </header>
             {mod.lines.map((line) => {
@@ -357,9 +360,17 @@ export function CatalogPanel({
         : [],
     [catalog, imported?.implicitLines, initialBaseId, selectedBase],
   )
-  const specialPool = selectedBase
-    ? SPECIAL_TYPES.has(selectedBase.type.trim().toLowerCase())
-    : false
+  const unavailablePoolReason = !selectedBase
+    ? null
+    : SPECIAL_TYPES.has(selectedBase.type.trim().toLowerCase())
+      ? '药剂与咒符的专属词缀池尚未收录，因此不展示词缀结果。'
+      : selectedBase.type === 'Jewel'
+        ? !isBasicJewel(selectedBase)
+          ? '范围与特殊珠宝的制作词缀池尚未开放。'
+          : !catalog || jewelSourceHash(catalog) === null
+            ? '当前目录缺少已核验的普通珠宝词缀来源。'
+            : null
+        : null
   const importedMatches = useMemo(
     () =>
       selectedBase &&
@@ -381,10 +392,10 @@ export function CatalogPanel({
   )
   const inspected = useMemo(
     () =>
-      selectedBase && catalog && !specialPool
+      selectedBase && catalog && !unavailablePoolReason
         ? inspectModPool(selectedBase, catalog.modifiers, itemLevel, occupiedGroups)
         : [],
-    [catalog, itemLevel, occupiedGroups, selectedBase, specialPool],
+    [catalog, itemLevel, occupiedGroups, selectedBase, unavailablePoolReason],
   )
   const filtered = useMemo(() => {
     const needle = modQuery.trim().toLowerCase()
@@ -583,12 +594,21 @@ export function CatalogPanel({
               {selectedBase.variant?.visibility === 'mixed' && (
                 <p className="catalog-variant-note">此变体来源含隐藏记录。</p>
               )}
-              <EssenceCatalog
-                catalog={readyCatalog}
-                base={selectedBase}
-                locale={locale}
-                translateLine={translateLine}
-              />
+              {selectedBase.type === 'Jewel' ? (
+                <LiquidEmotionCatalog
+                  catalog={readyCatalog}
+                  base={selectedBase}
+                  locale={locale}
+                  translateLine={translateLine}
+                />
+              ) : (
+                <EssenceCatalog
+                  catalog={readyCatalog}
+                  base={selectedBase}
+                  locale={locale}
+                  translateLine={translateLine}
+                />
+              )}
               {restored ? (
                 <RehearsalPanel
                   key={restored.id}
@@ -631,12 +651,15 @@ export function CatalogPanel({
                     fractured={imported.item?.fractured === true}
                   />
                 )}
-              {specialPool ? (
-                <p className="catalog-empty">
-                  珠宝、药剂与咒符的专属词缀池尚未收录，因此不展示词缀结果。
-                </p>
+              {unavailablePoolReason ? (
+                <p className="catalog-empty">{unavailablePoolReason}</p>
               ) : (
                 <section className="catalog-pool" aria-label="词缀池">
+                  {isBasicJewel(selectedBase) ? (
+                    <p>
+                      普通常规词缀池；液态保证属性请查看上方材料目录。目录等级用于核对生成资格，不代表游戏词缀阶级；当前没有真实权重。
+                    </p>
+                  ) : null}
                   <div className="catalog-pool-controls">
                     <label>
                       搜索词缀

@@ -11,6 +11,7 @@ import {
   renderNumericLines,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
+import { matchesLiquidEmotion } from './liquidEmotionSearch'
 import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
 
@@ -103,45 +104,41 @@ export function LiquidEmotionCraftPanel({
       <section className="essence-catalog-list" tabIndex={0} aria-label="液态情感材料列表">
         {entries
           .filter(
-            ({ emotion }) =>
-              (!configuration || emotion.id === configuration.emotionId) &&
-              [emotion.id, emotion.name, local(emotion.name)].some((text) =>
-                text.toLowerCase().includes(query.trim().toLowerCase()),
-              ),
+            (entry) =>
+              (!configuration || entry.emotion.id === configuration.emotionId) &&
+              matchesLiquidEmotion(entry, query, local, translateLine),
           )
           .map(({ emotion, options, reason }) => (
             <article key={emotion.id}>
               <h4>{local(emotion.name)}</h4>
+              {options.map(({ mod: outcome }) => (
+                <p key={outcome.id}>
+                  {options.length > 1
+                    ? `${outcome.kind === 'prefix' ? '前缀' : '后缀'}工艺：`
+                    : '保证工艺属性：'}
+                  {outcome.lines.map((line) => translateLine?.(line) ?? line).join('；')}
+                </p>
+              ))}
               {options.some((option) => option.prepared.ok) ? (
-                <>
-                  {options.map(({ mod: outcome }) => (
-                    <p key={outcome.id}>
-                      {options.length > 1
-                        ? `${outcome.kind === 'prefix' ? '前缀' : '后缀'}工艺：`
-                        : ''}
-                      {outcome.lines.map((line) => translateLine?.(line) ?? line).join('；')}
-                    </p>
-                  ))}
-                  <button
-                    type="button"
-                    aria-label={`选择液态情感 ${local(emotion.name)}`}
-                    disabled={disabled}
-                    onClick={() => {
-                      const ranges = inspectNumericLines(
-                        options.length === 1 ? (options[0]?.mod.lines ?? []) : [],
-                      )
-                      if (ranges.ok)
-                        setSelection({
-                          kind: 'liquid-emotion',
-                          emotionId: emotion.id,
-                          removeModId: '',
-                          values: ranges.value.map((range) => range.min),
-                        })
-                    }}
-                  >
-                    选择材料
-                  </button>
-                </>
+                <button
+                  type="button"
+                  aria-label={`选择液态情感 ${local(emotion.name)}`}
+                  disabled={disabled}
+                  onClick={() => {
+                    const ranges = inspectNumericLines(
+                      options.length === 1 ? (options[0]?.mod.lines ?? []) : [],
+                    )
+                    if (ranges.ok)
+                      setSelection({
+                        kind: 'liquid-emotion',
+                        emotionId: emotion.id,
+                        removeModId: '',
+                        values: ranges.value.map((range) => range.min),
+                      })
+                  }}
+                >
+                  选择材料
+                </button>
               ) : (
                 <p>
                   {reason ??
