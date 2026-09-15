@@ -156,7 +156,10 @@ export function applyCraftStep(
     return isFractureCraftOperation(step)
       ? applyFracture(catalog, state, step)
       : { ok: false, error: '破裂操作字段无效。' }
-  if (Object.hasOwn(state, 'pendingDesecration'))
+  if (
+    Object.hasOwn(state, 'pendingDesecration') &&
+    !('kind' in step && step.kind === 'liquid-emotion')
+  )
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   if ('kind' in step) {
     if (step.kind === 'alloy') {

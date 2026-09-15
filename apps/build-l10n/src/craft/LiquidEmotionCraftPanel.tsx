@@ -91,6 +91,13 @@ export function LiquidEmotionCraftPanel({
       <p>
         游戏随机移除一组词缀，加入材料对应的工艺属性。这里选择一种可能结果进行演练；已有工艺最多一组。双侧材料的结果选择仅用于演练。
       </p>
+      {state.pendingDesecration ? (
+        <p>
+          {state.pendingDesecration.options
+            ? '已固定揭示候选，请先完成揭示；固定候选后的再加工尚待核实。'
+            : '当前可演练移除明文词缀、保留未揭示占位的结果。占位被移除的分支尚待核实，此处未列出全部随机结果。'}
+        </p>
+      ) : null}
       <label>
         搜索液态情感
         <input

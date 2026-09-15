@@ -73,7 +73,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v71'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v72'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -136,7 +136,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 71 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 72 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -1671,6 +1671,13 @@ export function parseCraftProject(
       return fail('旧版项目不能包含新数值操作。')
     const operation = readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
+    if (
+      rulesVersion < 72 &&
+      current.pendingDesecration &&
+      'kind' in operation &&
+      operation.kind === 'liquid-emotion'
+    )
+      return fail('旧版项目不能包含未揭示期间的液态情感操作。')
     const next = applyCraftStep(catalog, current, operation)
     if (!next.ok) return fail(`第 ${index + 1} 步无法回放：${next.error}`)
     const effectError = validateEffectState(next.value)

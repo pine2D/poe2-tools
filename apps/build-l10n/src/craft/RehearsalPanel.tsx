@@ -1687,7 +1687,7 @@ export function RehearsalPanel({
               guaranteedDraft ||
               boneDraft ||
               fractureDraft ||
-              current.pendingDesecration,
+              current.pendingDesecration?.options,
           )}
           {...(translateLine ? { translateLine } : {})}
           onPreview={startGuaranteed}

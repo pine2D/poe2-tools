@@ -82,7 +82,8 @@ export type BoneCraftOperation =
   | OfferDesecrationOperation
   | RerollDesecrationOperation
   | RevealDesecrationOperation
-export const PENDING_DESECRATION_MESSAGE = '请先完成亵渎揭示；本工具尚未实现未揭示期间的交错制作。'
+export const PENDING_DESECRATION_MESSAGE =
+  '请先完成亵渎揭示；本工具尚未支持在未揭示期间进行此操作。'
 
 const TYPES = {
   jewel: ['Jewel'],

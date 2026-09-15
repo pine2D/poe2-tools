@@ -139,7 +139,7 @@ export function BoneAdvicePanel({
     <section aria-label="骨骼目标建议">
       <h4>骨骼与揭示 · {steps.length} 种指定结果</h4>
       <p>
-        施加骨骼、固定候选、重选和揭示分别演练；骨骼及施加预兆在施加时计费，回响在固定首组时另计一份，重选与最终揭示免费。未揭示期间的交错制作尚未在本工具实现。
+        施加骨骼、固定候选、重选和揭示分别演练；骨骼及施加预兆在施加时计费，回响在固定首组时另计一份，重选与最终揭示免费。未揭示期间支持破裂，以及珠宝未固定候选时保留占位的液态工艺；其余交错结果待核对。
       </p>
       {(showAll ? steps : steps.slice(0, 3)).map((step) => (
         <article key={JSON.stringify(step.operation)}>

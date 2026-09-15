@@ -34,8 +34,8 @@ function project(): CraftProject {
 const restore = (input: unknown) => parseCraftProject(JSON.stringify(input), catalog, dictionary)
 
 it('v70 保存品质分流且在各历史游标重算；未知未来 v71 拒绝', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v71')
-  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v72' }).ok).toBe(false)
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v72')
+  expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v73' }).ok).toBe(false)
   for (const cursor of [0, 1]) {
     const result = restore({ ...project(), cursor })
     if (!result.ok) throw Error(result.error)

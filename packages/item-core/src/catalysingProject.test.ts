@@ -58,8 +58,8 @@ function restore(value: unknown) {
 
 describe('催化崇高项目版本与消费历史', () => {
   it('当前格式为 v70，拒绝未来 v71', () => {
-    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v71')
-    expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v72' }).ok).toBe(false)
+    expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v72')
+    expect(restore({ ...project(), rulesVersion: 'basic-2026-09-12-v73' }).ok).toBe(false)
   })
 
   it.each(currencies)('%s 的各游标恢复品质、原文、持续指引和实际材料费用', (currency) => {

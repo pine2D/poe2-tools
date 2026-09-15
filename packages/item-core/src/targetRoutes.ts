@@ -594,13 +594,13 @@ export function planCraftTargetRoutes(
     })
     if (boneAdvice.ok)
       for (const step of boneAdvice.value) offer(step.operation, step.atRiskTargetIds)
-    if (node.state.pendingDesecration) continue
     if (liquid.enabled) {
       for (const candidate of liquid.candidates(node.state)) {
         if (result.candidateApplications >= 4096) break
         offer(candidate.operation, candidate.atRiskTargetIds)
       }
     }
+    if (node.state.pendingDesecration) continue
     if (sovereign.enabled) {
       for (const candidate of sovereign.candidates(node.state)) {
         if (result.candidateApplications >= 4096) break

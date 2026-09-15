@@ -238,7 +238,7 @@ export function liquidRouteContext(
   function* candidates(
     state: CraftState,
   ): Generator<{ operation: CraftStep; atRiskTargetIds: string[] }> {
-    if (!enabled || state.pendingDesecration) return
+    if (!enabled || state.pendingDesecration?.options) return
     const present = state.affixes
       .filter((affix) => accepted.has(affix.modId) && !affix.fractured)
       .map((affix) => affix.modId)
@@ -283,6 +283,7 @@ export function liquidRouteContext(
             }
       }
     }
+    if (state.pendingDesecration) return
     const crafted = state.affixes.find((affix) => affix.crafted)
     if (crafted) {
       const plain = removableCraftAffixes(catalog, state, 'annulment')
