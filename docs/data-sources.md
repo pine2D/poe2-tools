@@ -259,6 +259,10 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 
 数值 cap 的二级依据：[Fextralife Weapons](https://pathofexile2.wiki.fextralife.com/Weapons)单双手通则；不把旧 Mobalytics 页面关于 caster 不可镶嵌的说法作为现行事实。[GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495)具名 Limit 调整与当前四族目录无 limit 的事实共同支持普通四族重复镶嵌，不泛化有数量限制的其他 Rune/Idol/Soul Core。上述均为自有规则的人工证据登记。
 
+### 符文锻造模型依据（2026-09-16）
+
+符文锻造补充核对（2026-09-16）：沿用相同 MIT 固定提交的 `Item.lua:2561–2595` 和 `ModParser.lua`，用于结界、品质与本地修正的模型设计，不新增抓取适配器或提交第三方实现。[GGG 0.5.1 Hotfix 2](https://www.pathofexile.com/forum/view-thread/3949984) 提供保留破裂身份的直接依据；[GGG 0.5.2](https://www.pathofexile.com/forum/view-thread/3960375) 提供锻造预览镶嵌效果修复，[GGG 0.5.3](https://www.pathofexile.com/forum/view-thread/3968601) 提供高级非传奇防御损失调整及孔内珠宝保留修复。只人工引用官方说明；逐件转换、消费与其他交互仍需核对。范围、目录审计和验收算例见 [符文锻造调研](runeforging-research.md)。当前未启用锻造基底制作或转换操作。
+
 ### 武器面板公式参考（2026-09-13）
 
 沿用已登记 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e`，人工查阅 `src/Classes/Item.lua` 的本地属性派生公式（2500–2540）与本地修正判定（2423–2450），用自有 TypeScript 数学实现估算武器伤害、攻速、暴击和弩装填时间。仅作 primary 开源模型参考，不新增抓取适配器、不将第三方实现文件入库。公式与舍入是快照模型，游戏当前版本及真机显示待验收；目录 sourceQuality 不代表用户装备品质。
