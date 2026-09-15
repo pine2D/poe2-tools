@@ -7,6 +7,7 @@ import {
   type CraftResult,
   type CraftTargetRoutes,
   type LiquidEmotionCraftOperation,
+  loadWorkbenchProject,
   parseCraftProject,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
@@ -38,7 +39,11 @@ const operation: LiquidEmotionCraftOperation = {
   removeModId: 'JewelBleedingDuration',
   values: [50],
 }
-function fixture() {
+function fixture(identified = false) {
+  const selectedOperation: LiquidEmotionCraftOperation = {
+    ...operation,
+    ...(identified ? { removeAffixId: 'a4' } : {}),
+  }
   const initialState = {
     baseId: 'Ruby',
     itemLevel: 86,
@@ -54,7 +59,7 @@ function fixture() {
   ]
   const source = (path: string) =>
     catalog._meta.sources.find((entry) => entry.path === path)?.sha256
-  const restored = parseCraftProject(
+  const restored = (identified ? loadWorkbenchProject : parseCraftProject)(
     JSON.stringify({
       schemaVersion: 1,
       rulesVersion: CRAFT_RULES_VERSION,
@@ -78,7 +83,7 @@ function fixture() {
   if (!restored.ok) throw Error(restored.error)
   const state = restored.value.states[1]
   if (!state) throw Error('缺少点金起点')
-  const next = applyCraftStep(catalog, state, operation)
+  const next = applyCraftStep(catalog, state, selectedOperation)
   if (!next.ok) throw Error(next.error)
   const result: CraftResult<CraftTargetRoutes> = {
     ok: true,
@@ -92,7 +97,7 @@ function fixture() {
           finalState: next.value,
           steps: [
             {
-              operation,
+              operation: selectedOperation,
               state: next.value,
               matchedTargetIds: [effectId, 'JewelArmour'],
               gainedTargetIds: [effectId],
@@ -105,7 +110,7 @@ function fixture() {
       ],
     },
   }
-  return { state, restored: restored.value, result }
+  return { state, restored: restored.value, result, selectedOperation }
 }
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }))
 afterEach(() => {
@@ -140,7 +145,7 @@ it('液态路线显示方向、保证数值、整组移除及跨结果池风险'
 })
 
 it('路线第一步进入液态草稿，取消不计费，应用后清旧路线且项目可回放', () => {
-  const { state, restored, result } = fixture()
+  const { state, restored, result, selectedOperation } = fixture(true)
   render(
     <RehearsalPanel
       catalog={catalog}
@@ -163,8 +168,9 @@ it('路线第一步进入液态草稿，取消不计费，应用后清旧路线�
   ).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.operations.at(-1)).toEqual(operation)
-  expect(parseCraftProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.operations.at(-1)).toEqual(selectedOperation)
+  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('撤销')
   expect(screen.queryByLabelText('珠宝词缀增效')).toBeNull()
   click('重做')

@@ -118,7 +118,7 @@ it('破裂规则选择现有实际组，应用后满足必选破裂目标', () =
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
   click('保存演练到本机')
   expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').operations.at(-1)).toEqual(
-    { kind: 'fracture', modId: 'prefix1' },
+    { kind: 'fracture', modId: 'prefix1', affixId: 'a1' },
   )
 })
 it('完美精华固定方向配置，取消或编辑规则清除待选结果且不消费', () => {

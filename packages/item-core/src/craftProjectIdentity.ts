@@ -1,7 +1,7 @@
 import {
-  craftAffixIdentityError,
   enableCraftAffixIdentity,
   type IdentifiedCraftState,
+  isIdentifiedCraftState,
 } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
 import { type CraftProject, MAX_CRAFT_PROJECT_BYTES, parseCraftProject } from './craftProject'
@@ -11,7 +11,7 @@ import {
   projectStateWithoutIdentity,
   upgradeProjectOperationIdentity,
 } from './projectOperationIdentity'
-import type { CraftResult, CraftState } from './rehearsal'
+import type { CraftResult } from './rehearsal'
 
 export const IDENTITY_CRAFT_RULES_VERSION = 'basic-2026-09-12-v73'
 
@@ -23,10 +23,6 @@ export interface IdentityCraftProject extends Omit<CraftProject, 'rulesVersion' 
 export interface RestoredIdentityCraftProject {
   project: IdentityCraftProject
   states: IdentifiedCraftState[]
-}
-
-function hasCompleteIdentity(state: CraftState): state is IdentifiedCraftState {
-  return state.nextAffixId !== undefined && craftAffixIdentityError(state) === null
 }
 
 /** 原始旧项目先完整验证，再显式迁移实例；此入口不替代新格式的严格恢复。 */
@@ -47,7 +43,7 @@ export function upgradeCraftProjectIdentity(
     if (!next.ok) return { ok: false, error: `第 ${index + 1} 步不能迁移实例：${next.error}` }
     const after = next.value.afterState
     // 状态已由真实操作构造；这里只核对身份，也保留不可再次制作的摧毁终止快照。
-    if (!hasCompleteIdentity(after))
+    if (!isIdentifiedCraftState(after))
       return { ok: false, error: `第 ${index + 1} 步迁移后实例身份不完整或无效。` }
     if (
       JSON.stringify(projectStateWithoutIdentity(after)) !==

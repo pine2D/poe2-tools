@@ -9,6 +9,7 @@ import {
   matchesTargetInterval,
   prepareLiquidEmotionCraft,
   renderNumericLines,
+  resolveCraftAffix,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
 import { matchesLiquidEmotion } from './liquidEmotionSearch'
@@ -44,7 +45,17 @@ export function LiquidEmotionCraftPanel({
   targetValues = [],
 }: Props) {
   const [query, setQuery] = useState('')
-  const [selection, setSelection] = useState<LiquidEmotionCraftOperation | null>(null)
+  const context = useMemo(
+    () => ({ catalog, state, configuration }),
+    [catalog, state, configuration],
+  )
+  const [draft, setDraft] = useState<{
+    context: typeof context
+    selection: LiquidEmotionCraftOperation
+  } | null>(null)
+  const selection = draft?.context === context ? draft.selection : null
+  const setSelection = (selection: LiquidEmotionCraftOperation | null) =>
+    setDraft(selection ? { context, selection } : null)
   const entries = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)
     if (!base) return []
@@ -77,12 +88,23 @@ export function LiquidEmotionCraftPanel({
   const removedTargets = selection ? targetsFor(selection.removeModId) : []
   const atRisk = [...new Set(removable.flatMap((affix) => targetsFor(affix.modId)))]
   const goal = targetValues.find((entry) => entry.modId === mod?.id)
+  const removed = selection?.removeModId
+    ? resolveCraftAffix(state, {
+        modId: selection.removeModId,
+        ...(selection.removeAffixId === undefined ? {} : { affixId: selection.removeAffixId }),
+      })
+    : null
   const valid =
     selection &&
     mod &&
     (!configuration || configuration.emotionId === selection.emotionId) &&
     renderNumericLines(mod.lines, selection.values).ok &&
-    removable.some((affix) => affix.modId === selection.removeModId)
+    removed?.ok &&
+    removable.some(
+      (affix) =>
+        (affix.affixId ?? affix.modId) ===
+        (removed.value.affix.affixId ?? removed.value.affix.modId),
+    )
   if (!entries.length || catalog.bases.find((base) => base.id === state.baseId)?.type !== 'Jewel')
     return null
   return (
@@ -207,14 +229,22 @@ export function LiquidEmotionCraftPanel({
                 指定移除整组
                 <select
                   aria-label="液态情感移除结果"
-                  value={selection.removeModId}
-                  onChange={(event) =>
-                    setSelection({ ...selection, removeModId: event.target.value })
-                  }
+                  value={selection.removeAffixId ?? selection.removeModId}
+                  onChange={(event) => {
+                    const affix = removable.find(
+                      (entry) => (entry.affixId ?? entry.modId) === event.target.value,
+                    )
+                    const { removeAffixId: _, ...rest } = selection
+                    setSelection({
+                      ...rest,
+                      removeModId: affix?.modId ?? '',
+                      ...(affix?.affixId === undefined ? {} : { removeAffixId: affix.affixId }),
+                    })
+                  }}
                 >
                   <option value="">选择要演练的移除结果</option>
                   {removable.map((affix) => (
-                    <option key={affix.modId} value={affix.modId}>
+                    <option key={affix.affixId ?? affix.modId} value={affix.affixId ?? affix.modId}>
                       {affix.modId} ·{' '}
                       {affix.lines.map((line) => translateLine?.(line) ?? line).join('；')}
                     </option>

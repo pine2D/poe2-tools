@@ -4,6 +4,7 @@ import {
   type CraftCurrency,
   type CraftState,
   DESECRATION_SOURCE,
+  IDENTITY_CRAFT_RULES_VERSION,
   type RestoredCraftProject,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
@@ -405,8 +406,15 @@ describe('RehearsalPanel', () => {
     expect(screen.getByText('高级蜕变石 × 1')).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
     const p = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-    expect(p.operations[0].currency).toBe('greater_transmutation')
-    expect(p.rulesVersion).toBe(CRAFT_RULES_VERSION)
+    expect(p.operations).toEqual([
+      {
+        currency: 'greater_transmutation',
+        modIds: ['ArmourA'],
+        rolls: [{ modId: 'ArmourA', affixId: 'a1', values: [10] }],
+      },
+    ])
+    expect(p.initialState).toEqual({ ...state(), nextAffixId: 1 })
+    expect(p.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
     fireEvent.click(screen.getByRole('button', { name: '撤销' }))
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
     expect(screen.getByText('高级蜕变石 × 1')).toBeDefined()

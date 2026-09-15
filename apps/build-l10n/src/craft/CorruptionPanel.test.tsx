@@ -151,8 +151,8 @@ it('按中间状态连续重选，取消不写历史，应用后仅一条瓦尔�
     select('腐化重选 · 数值 1', value)
     click('确认本次替换')
   }
-  replace('IncreasedLife1', 'IncreasedLife2', '25')
-  replace('IncreasedLife2', 'IncreasedLife3', '35')
+  replace('a1', 'IncreasedLife2', '25')
+  replace('a2', 'IncreasedLife3', '35')
   expect(screen.getByRole('list', { name: '腐化替换顺序' }).children).toHaveLength(2)
   click('预演腐化：重选词缀')
   click('取消腐化结果')
@@ -168,8 +168,8 @@ it('按中间状态连续重选，取消不写历史，应用后仅一条瓦尔�
     kind: 'vaal',
     outcome: 'reroll',
     replacements: [
-      { removeModId: 'IncreasedLife1', modId: 'IncreasedLife2', values: [25] },
-      { removeModId: 'IncreasedLife2', modId: 'IncreasedLife3', values: [35] },
+      { removeModId: 'IncreasedLife1', removeAffixId: 'a1', modId: 'IncreasedLife2', values: [25] },
+      { removeModId: 'IncreasedLife2', removeAffixId: 'a2', modId: 'IncreasedLife3', values: [35] },
     ],
   })
   click('撤销')
@@ -220,7 +220,7 @@ it('瓦尔加孔预览、取消、镶嵌、保存及撤销恢复腐化限制', (
       augmentId: 'pob2:augment:["Soul Core of Quipolatl","weapon"]',
     },
   ])
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v72')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
   click('撤销')
   expect(screen.getByRole('region', { name: '腐化状态' })).toBeDefined()
   click('撤销')

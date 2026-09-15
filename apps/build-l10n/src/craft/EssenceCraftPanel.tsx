@@ -12,6 +12,7 @@ import {
   prepareEssenceCraft,
   projectCraftTargetValues,
   renderNumericLines,
+  resolveCraftAffix,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
 import { NumericControls } from './NumericControls'
@@ -45,8 +46,19 @@ export function EssenceCraftPanel({
   targetValues = [],
 }: EssenceCraftPanelProps) {
   const [query, setQuery] = useState('')
-  const [omen, setOmen] = useState<EssenceOmen | undefined>(configuration?.omen)
-  const [selection, setSelection] = useState<EssenceCraftOperation | null>(null)
+  const [freeOmen, setOmen] = useState<EssenceOmen | undefined>()
+  const omen = configuration === undefined ? freeOmen : configuration.omen
+  const context = useMemo(
+    () => ({ catalog, state, configuration }),
+    [catalog, state, configuration],
+  )
+  const [draft, setDraft] = useState<{
+    context: typeof context
+    selection: EssenceCraftOperation
+  } | null>(null)
+  const selection = draft?.context === context ? draft.selection : null
+  const setSelection = (selection: EssenceCraftOperation | null) =>
+    setDraft(selection ? { context, selection } : null)
   const entries = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)
     return base
@@ -104,8 +116,20 @@ export function EssenceCraftPanel({
     ...new Set(removableAffixes.flatMap((affix) => affectedTargets(affix.modId))),
   ]
   const lostTargets = selection?.removeModId ? affectedTargets(selection.removeModId) : []
+  const removed = selection?.removeModId
+    ? resolveCraftAffix(state, {
+        modId: selection.removeModId,
+        ...(selection.removeAffixId === undefined ? {} : { affixId: selection.removeAffixId }),
+      })
+    : null
   const validRemoval =
-    !replacement || removableAffixes.some((affix) => affix.modId === selection?.removeModId)
+    !replacement ||
+    (removed?.ok &&
+      removableAffixes.some(
+        (affix) =>
+          (affix.affixId ?? affix.modId) ===
+          (removed.value.affix.affixId ?? removed.value.affix.modId),
+      ))
 
   return (
     <section
@@ -220,12 +244,24 @@ export function EssenceCraftPanel({
                 {removableAffixes.map((affix) => {
                   const existing = catalog.modifiers.find((entry) => entry.id === affix.modId)
                   return (
-                    <label className="essence-removal-option" key={affix.modId}>
+                    <label className="essence-removal-option" key={affix.affixId ?? affix.modId}>
                       <input
                         type="radio"
                         name="essence-removal"
-                        checked={selection.removeModId === affix.modId}
-                        onChange={() => setSelection({ ...selection, removeModId: affix.modId })}
+                        value={affix.affixId ?? affix.modId}
+                        checked={
+                          (selection.removeAffixId ?? selection.removeModId) ===
+                          (affix.affixId ?? affix.modId)
+                        }
+                        onChange={() =>
+                          setSelection({
+                            ...selection,
+                            removeModId: affix.modId,
+                            ...(affix.affixId === undefined
+                              ? {}
+                              : { removeAffixId: affix.affixId }),
+                          })
+                        }
                       />
                       <span>
                         {existing?.kind === 'prefix' ? '前缀' : '后缀'} · {affix.modId} ·{' '}

@@ -1,8 +1,8 @@
 import {
   type CatalogBase,
-  CRAFT_RULES_VERSION,
   type CraftCatalog,
   createCatalogTranslator,
+  IDENTITY_CRAFT_RULES_VERSION,
   inspectItem,
   parseItem,
 } from '@poe2-tools/item-core'
@@ -151,7 +151,7 @@ it('武器打孔及中文预览、取消零花费、覆盖、撤销与重载恢�
   expect(screen.queryByText(/钢铁符文防御提高/)).toBeNull()
   click('应用镶嵌')
   const saved = save()
-  expect(saved.rulesVersion).toBe(CRAFT_RULES_VERSION)
+  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
   expect(saved.operations).toHaveLength(3)
   expect(screen.getByText('巧匠石 × 1')).toBeDefined()
   click('撤销')

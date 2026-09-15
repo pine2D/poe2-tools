@@ -8,6 +8,7 @@ import {
   type BoneOmenConfig,
   boneRevealOmenError,
   type CatalogMod,
+  type CraftAffixSelector,
   type CraftBone,
   type CraftCatalog,
   type CraftState,
@@ -21,6 +22,7 @@ import {
   prepareDesecration,
   projectCraftTargetValues,
   renderNumericLines,
+  resolveCraftAffix,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
@@ -40,7 +42,16 @@ interface BoneCraftPanelProps {
   targetAlternatives?: CraftTargetAlternative[]
   targetValues?: CraftTargetValues[]
 }
-export function BoneCraftPanel({
+export function BoneCraftPanel(props: BoneCraftPanelProps) {
+  return (
+    <BoneCraftEditor
+      key={JSON.stringify([props.catalog._meta, props.state, props.configuration])}
+      {...props}
+    />
+  )
+}
+
+function BoneCraftEditor({
   catalog,
   configuration,
   state,
@@ -63,7 +74,7 @@ export function BoneCraftPanel({
     ...(lichOmen ? { lichOmen } : {}),
   }
   const [kind, setKind] = useState<'prefix' | 'suffix' | null>(null)
-  const [removeModId, setRemoveModId] = useState<string | null>(null)
+  const [removeSelector, setRemoveSelector] = useState<CraftAffixSelector | null>(null)
   const [query, setQuery] = useState('')
   const [options, setOptions] = useState<string[]>([])
   const [echoes, setEchoes] = useState(false)
@@ -106,21 +117,21 @@ export function BoneCraftPanel({
   const selectedOmenLabels = boneOmenLabels(pending ?? config, catalog, translations)
   const resetResult = () => {
     setKind(null)
-    setRemoveModId(null)
+    setRemoveSelector(null)
   }
   const localize = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
-  const removal = removeModId ? byId.get(removeModId) : undefined
-  const removalSpace = removal
+  const removal = removeSelector ? resolveCraftAffix(state, removeSelector) : null
+  const removalSpace = removal?.ok
     ? craftAffixSpace(catalog, {
         ...state,
-        affixes: state.affixes.filter((affix) => affix.modId !== removal.id),
+        affixes: state.affixes.filter((_, index) => index !== removal.value.index),
       })
     : null
   const requiresRemoval = prepared?.ok && prepared.value.requiresRemoval
   const kinds = prepared?.ok
     ? requiresRemoval
-      ? removal
+      ? removal?.ok
         ? prepared.value.kinds.filter((kind) => (removalSpace?.[kind] ?? 0) > 0)
         : []
       : prepared.value.kinds
@@ -133,7 +144,7 @@ export function BoneCraftPanel({
           (entry) => entry.targetModId === targetId && entry.modIds.includes(modId),
         ),
     )
-  const lostTargets = removeModId ? affected(removeModId) : []
+  const lostTargets = removal?.ok ? affected(removal.value.affix.modId) : []
   const riskTargets = prepared?.ok
     ? [...new Set(prepared.value.removableAffixes.flatMap((affix) => affected(affix.modId)))]
     : []
@@ -422,14 +433,22 @@ export function BoneCraftPanel({
                 {prepared.value.removableAffixes.map((affix) => {
                   const mod = byId.get(affix.modId)
                   return (
-                    <label className="essence-removal-option" key={affix.modId}>
+                    <label className="essence-removal-option" key={affix.affixId ?? affix.modId}>
                       <input
                         type="radio"
                         name={`${id}-remove`}
+                        value={affix.affixId ?? affix.modId}
                         aria-label={`骨骼移除 ${affix.modId}`}
-                        checked={removeModId === affix.modId}
+                        checked={
+                          removal?.ok === true &&
+                          removal.value.affix.modId === affix.modId &&
+                          removal.value.affix.affixId === affix.affixId
+                        }
                         onChange={() => {
-                          setRemoveModId(affix.modId)
+                          setRemoveSelector({
+                            modId: affix.modId,
+                            ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+                          })
                           setKind(mod?.kind ?? null)
                         }}
                       />
@@ -483,7 +502,7 @@ export function BoneCraftPanel({
               !boneId ||
               !kind ||
               !kinds.includes(kind) ||
-              (requiresRemoval && !removeModId)
+              (requiresRemoval && !removal?.ok)
             }
             onClick={() => {
               if (boneId && kind)
@@ -492,7 +511,14 @@ export function BoneCraftPanel({
                   ...config,
                   boneId,
                   affixKind: kind,
-                  ...(removeModId ? { removeModId } : {}),
+                  ...(removal?.ok
+                    ? {
+                        removeModId: removal.value.affix.modId,
+                        ...(removal.value.affix.affixId === undefined
+                          ? {}
+                          : { removeAffixId: removal.value.affix.affixId }),
+                      }
+                    : {}),
                 })
             }}
           >

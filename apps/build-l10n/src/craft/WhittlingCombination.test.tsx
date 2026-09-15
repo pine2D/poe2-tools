@@ -1,5 +1,6 @@
 import {
   exportCraftItemText,
+  IDENTITY_CRAFT_RULES_VERSION,
   importCraftState,
   inspectItem,
   parseItem,
@@ -64,11 +65,19 @@ it('定向消减取消不计费，应用保留两枚材料和完整撤销恢复'
   expect(screen.getByText('左旋消抹预兆 × 1')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v72')
-  expect(saved.operations[0]).toMatchObject({
+  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  expect(saved.initialState).toEqual({
+    ...initial.value,
+    affixes: initial.value.affixes.map((affix, index) => ({ ...affix, affixId: `a${index + 1}` })),
+    nextAffixId: 5,
+  })
+  expect(saved.operations[0]).toEqual({
+    currency: 'chaos',
     omen: 'whittling_sinistral_erasure',
     removeModId: 'prefix1',
+    removeAffixId: 'a1',
     modIds: ['suffix3'],
+    rolls: [{ modId: 'suffix3', affixId: 'a5', values: [1] }],
   })
   click('撤销')
   expect(screen.queryByText('消减预兆 × 1')).toBeNull()

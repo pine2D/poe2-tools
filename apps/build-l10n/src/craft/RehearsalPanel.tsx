@@ -13,8 +13,8 @@ import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
   CRAFT_OMEN_RULES,
-  CRAFT_RULES_VERSION,
   type CraftAdviceStep,
+  type CraftAffixSelector,
   type CraftCatalog,
   type CraftCurrency,
   type CraftCurrencyTier,
@@ -22,7 +22,6 @@ import {
   type CraftOmen,
   type CraftOperation,
   type CraftPricing,
-  type CraftProject,
   type CraftState,
   type CraftStep,
   type CraftStrategy,
@@ -36,28 +35,37 @@ import {
   craftOmenDescription,
   craftOmenMaterials,
   craftStrategyLeaves,
-  createCraftState,
   desecrationSourceHash,
   ESSENCE_OMEN_RULES,
   type EssenceCraftOperation,
   type EssenceOmen,
+  enableCraftAffixIdentity,
   type FractureCraftOperation,
+  IDENTITY_CRAFT_RULES_VERSION,
+  type IdentifiedCraftState,
+  type IdentityCraftProject,
   type ItemDictionary,
   inspectNumericLines,
   isBasicJewel,
+  isIdentifiedCraftState,
   JEWEL_EFFECT_EMOTION_ID,
   jewelSourceHash,
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
+  loadWorkbenchProject,
   prepareCraftOperation,
   prepareStrategySocket,
   type RemovalCraftCurrency,
   type RestoredCraftProject,
+  type RestoredIdentityCraftProject,
   readNumericValues,
   removableCraftAffixes,
+  resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
   type SocketCraftOperation,
+  serializeCraftProject,
+  serializeIdentityCraftProject,
   statScalabilitySourceHash,
   strategyStageAt,
   usesExplicitModEffect,
@@ -102,14 +110,14 @@ export interface RehearsalPanelProps {
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   dictionary?: ItemDictionary
-  initialProject?: RestoredCraftProject
+  initialProject?: RestoredCraftProject | RestoredIdentityCraftProject
   importedSockets?: (string | null)[]
   importedQuality?: number
 }
 
 interface HistoryEntry {
   id: number
-  state: CraftState
+  state: IdentifiedCraftState
   operation: CraftStep | null
 }
 
@@ -120,8 +128,20 @@ interface Draft {
   count: number
   modIds: string[]
   removeModId?: string
+  removeAffixId?: string
   rolls?: NonNullable<CraftOperation['rolls']>
   implicitValues?: number[]
+}
+
+function removalSelector(
+  operation: Pick<Draft, 'removeModId' | 'removeAffixId'>,
+): CraftAffixSelector | undefined {
+  return operation.removeModId === undefined
+    ? undefined
+    : {
+        modId: operation.removeModId,
+        ...(operation.removeAffixId === undefined ? {} : { affixId: operation.removeAffixId }),
+      }
 }
 
 function draftOperation(draft: Draft): CraftOperation {
@@ -130,9 +150,10 @@ function draftOperation(draft: Draft): CraftOperation {
     ...(draft.omen === undefined ? {} : { omen: draft.omen }),
     modIds: [...draft.modIds],
     ...(draft.removeModId === undefined ? {} : { removeModId: draft.removeModId }),
+    ...(draft.removeAffixId === undefined ? {} : { removeAffixId: draft.removeAffixId }),
     ...(draft.rolls === undefined
       ? {}
-      : { rolls: draft.rolls.map((roll) => ({ modId: roll.modId, values: [...roll.values] })) }),
+      : { rolls: draft.rolls.map((roll) => ({ ...roll, values: [...roll.values] })) }),
     ...(draft.implicitValues === undefined ? {} : { implicitValues: [...draft.implicitValues] }),
   }
 }
@@ -263,13 +284,29 @@ export function RehearsalPanel({
   translations,
   translateLine,
   dictionary,
-  initialProject,
+  initialProject: providedProject,
   importedSockets,
   importedQuality,
 }: RehearsalPanelProps) {
+  const restored = useMemo(() => {
+    if (!providedProject) return null
+    try {
+      const saved =
+        providedProject.project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION
+          ? serializeIdentityCraftProject(providedProject.project, catalog, dictionary)
+          : { ok: true as const, value: serializeCraftProject(providedProject.project) }
+      return saved.ok ? loadWorkbenchProject(saved.value, catalog, dictionary) : saved
+    } catch {
+      return { ok: false as const, error: '演练项目无法读取。' }
+    }
+  }, [providedProject, catalog, dictionary])
+  const initialProject = restored?.ok ? restored.value : undefined
   const initial = useMemo(
-    () => createCraftState(catalog, initialProject?.project.initialState ?? initialState),
-    [catalog, initialProject, initialState],
+    () =>
+      restored && !restored.ok
+        ? restored
+        : enableCraftAffixIdentity(catalog, initialProject?.project.initialState ?? initialState),
+    [catalog, initialProject, initialState, restored],
   )
   const [history, setHistory] = useState<HistoryEntry[]>(() =>
     initialProject
@@ -393,7 +430,9 @@ export function RehearsalPanel({
   const preparationTriggerRef = useRef<HTMLElement | null>(null)
   const restorePreparationFocusRef = useRef(false)
   const draftRef = useRef<HTMLElement>(null)
-  const activeDraftKey = draft ? `${draft.currency}:${draft.removeModId ?? ''}` : null
+  const activeDraftKey = draft
+    ? `${draft.currency}:${draft.removeAffixId ?? draft.removeModId ?? ''}`
+    : null
   useEffect(() => {
     if (activeDraftKey !== null) draftRef.current?.focus()
     else {
@@ -523,7 +562,12 @@ export function RehearsalPanel({
           setMessage(values.error)
           return
         }
-        if (values.value.length > 0) next.rolls.push({ modId: mod.id, values: values.value })
+        if (values.value.length > 0)
+          next.rolls.push({
+            modId: mod.id,
+            values: values.value,
+            ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+          })
       }
       if (!implicit?.ok) {
         setMessage(implicit && !implicit.ok ? implicit.error : '固有属性无法核对。')
@@ -543,11 +587,11 @@ export function RehearsalPanel({
   }
   const chooseRemoval = (
     currency: RemovalCraftCurrency,
-    removeModId: string,
+    selection: CraftAffixSelector,
     operationOmen: CraftOmen | undefined,
   ) => {
     setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
-    const prepared = prepareCraftOperation(catalog, current, currency, removeModId, operationOmen)
+    const prepared = prepareCraftOperation(catalog, current, currency, selection, operationOmen)
     if (!prepared.ok) {
       setMessage(prepared.error)
       return
@@ -558,7 +602,8 @@ export function RehearsalPanel({
       state: prepared.value.state,
       count: prepared.value.count,
       modIds: [],
-      removeModId,
+      removeModId: selection.modId,
+      ...(selection.affixId === undefined ? {} : { removeAffixId: selection.affixId }),
     })
     setRemovalCurrency(null)
     setQuery('')
@@ -578,12 +623,26 @@ export function RehearsalPanel({
       setMessage(values.error)
       return
     }
+    const added = next.value.affixes[draft.state.affixes.length]
+    if (!added) {
+      setMessage('无法核对本次新增的词缀实例。')
+      return
+    }
     setDraft({
       ...draft,
       state: next.value,
       modIds: [...draft.modIds, modId],
       ...(values.value.length > 0
-        ? { rolls: [...(draft.rolls ?? []), { modId, values: values.value }] }
+        ? {
+            rolls: [
+              ...(draft.rolls ?? []),
+              {
+                modId,
+                values: values.value,
+                ...(added.affixId === undefined ? {} : { affixId: added.affixId }),
+              },
+            ],
+          }
         : {}),
     })
     setMessage('')
@@ -593,7 +652,8 @@ export function RehearsalPanel({
       return
     setOmen(step.omen)
     if (isRemovalCurrency(step.currency)) {
-      if (step.removeModId) chooseRemoval(step.currency, step.removeModId, step.omen)
+      const selection = removalSelector(step)
+      if (selection) chooseRemoval(step.currency, selection, step.omen)
     } else {
       startOperation(step.currency, step.omen)
     }
@@ -634,7 +694,7 @@ export function RehearsalPanel({
       catalog,
       current,
       operation.currency,
-      operation.removeModId,
+      removalSelector(operation),
       operation.omen,
     )
     if (!prepared.ok) {
@@ -650,7 +710,7 @@ export function RehearsalPanel({
       modIds: [...operation.modIds],
       ...(operation.rolls
         ? {
-            rolls: operation.rolls.map((roll) => ({ modId: roll.modId, values: [...roll.values] })),
+            rolls: operation.rolls.map((roll) => ({ ...roll, values: [...roll.values] })),
           }
         : {}),
     })
@@ -730,6 +790,10 @@ export function RehearsalPanel({
       setMessage(applied.error)
       return
     }
+    if (!isIdentifiedCraftState(applied.value)) {
+      setMessage('操作结果缺少完整词缀实例身份，未应用本次结果。')
+      return
+    }
     const next = [
       ...history.slice(0, cursor + 1),
       {
@@ -770,7 +834,7 @@ export function RehearsalPanel({
       catalog,
       current,
       draft.currency,
-      draft.removeModId,
+      removalSelector(draft),
       draft.omen,
     )
     if (!prepared.ok) {
@@ -787,7 +851,14 @@ export function RehearsalPanel({
       }
       state = next.value
     }
-    const rolls = draft.rolls?.filter((roll) => remaining.includes(roll.modId))
+    const added = state.affixes.slice(prepared.value.state.affixes.length)
+    const rolls = draft.rolls?.filter((roll) =>
+      added.some(
+        (affix) =>
+          affix.modId === roll.modId &&
+          (roll.affixId === undefined || affix.affixId === roll.affixId),
+      ),
+    )
     setDraft({ ...draft, state, modIds: remaining, ...(rolls === undefined ? {} : { rolls }) })
     setMessage('')
   }
@@ -943,13 +1014,13 @@ export function RehearsalPanel({
       : null
   const alloyUsage = alloyProjectUsage({ history, referencedTargetIds, strategy, pricing })
   const alloySignature = alloyUsage.used ? alloyCatalogSignature(catalog) : null
-  const project: CraftProject = {
+  const project: IdentityCraftProject = {
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
     ...(strategy ? { strategy } : {}),
     ...(strategy?.flow ? { strategyStartStep: strategyStartStep ?? 0 } : {}),
     sourceCommit: catalog._meta.sourceCommit,
-    rulesVersion: CRAFT_RULES_VERSION,
+    rulesVersion: IDENTITY_CRAFT_RULES_VERSION,
     ...(alloySignature ? { alloyCatalogSignature: alloySignature } : {}),
     ...((effectSourcesNeeded ||
       alloyUsage.resistanceEffect ||
@@ -987,7 +1058,7 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const restoreProject = (restored: RestoredCraftProject) => {
+  const restoreProject = (restored: RestoredIdentityCraftProject) => {
     setPricing(restored.project.pricing)
     setStrategy(restored.project.strategy)
     setStrategyStartStep(restored.project.strategyStartStep)
@@ -1450,7 +1521,7 @@ export function RehearsalPanel({
             })().map((affix) => {
               const mod = modById.get(affix.modId)
               return (
-                <div className="rehearsal-removal-choice" key={affix.modId}>
+                <div className="rehearsal-removal-choice" key={affix.affixId ?? affix.modId}>
                   {omen && CRAFT_OMEN_RULES[omen].lowestLevel && mod ? (
                     <p>目录词缀等级 {mod.level}</p>
                   ) : null}
@@ -1465,7 +1536,7 @@ export function RehearsalPanel({
                   <button
                     type="button"
                     aria-label={removalLabel(mod, affix.lines, translateLine)}
-                    onClick={() => chooseRemoval(removalCurrency, affix.modId, omen)}
+                    onClick={() => chooseRemoval(removalCurrency, affix, omen)}
                   >
                     选择移除此组
                   </button>
@@ -1606,6 +1677,7 @@ export function RehearsalPanel({
           <h3>{stepLabel(boneDraft)}</h3>
           <BoneOperationDetails
             catalog={catalog}
+            state={current}
             operation={boneDraft}
             translations={translations}
             {...(translateLine ? { translateLine } : {})}
@@ -1886,7 +1958,7 @@ export function RehearsalPanel({
           ) : null}
           {prefixes.map((affix) => (
             <AffixCard
-              key={affix.modId}
+              key={affix.affixId ?? affix.modId}
               mod={modById.get(affix.modId)}
               crafted={affix.crafted}
               desecrated={affix.desecrated}
@@ -1914,7 +1986,7 @@ export function RehearsalPanel({
           ) : null}
           {suffixes.map((affix) => (
             <AffixCard
-              key={affix.modId}
+              key={affix.affixId ?? affix.modId}
               mod={modById.get(affix.modId)}
               crafted={affix.crafted}
               desecrated={affix.desecrated}
@@ -2032,20 +2104,20 @@ export function RehearsalPanel({
           ) : draft.modIds.length > 0 ? (
             <p>新增范围初始填入下限，可调整数值或按范围试掷；应用前请核对。</p>
           ) : null}
-          {draft.rolls?.map((roll) => {
+          {draft.rolls?.map((roll, rollIndex) => {
             const mod = modById.get(roll.modId)
             if (!mod) return null
             return (
               <NumericControls
-                key={roll.modId}
+                key={roll.affixId ?? roll.modId}
                 label={mod.name || mod.id}
                 patterns={mod.lines}
                 values={roll.values}
                 onChange={(values) =>
                   setDraft({
                     ...draft,
-                    rolls: (draft.rolls ?? []).map((entry) =>
-                      entry.modId === roll.modId ? { ...entry, values } : entry,
+                    rolls: (draft.rolls ?? []).map((entry, index) =>
+                      index === rollIndex ? { ...entry, values } : entry,
                     ),
                   })
                 }
@@ -2071,7 +2143,9 @@ export function RehearsalPanel({
             <section className="rehearsal-removed" aria-label="将移除的词缀">
               <h4 className="rehearsal-selected-title">将移除</h4>
               {(() => {
-                const affix = current.affixes.find((entry) => entry.modId === draft.removeModId)
+                const selection = removalSelector(draft)
+                const resolved = selection ? resolveCraftAffix(current, selection) : null
+                const affix = resolved?.ok ? resolved.value.affix : undefined
                 return affix ? (
                   <AffixCard
                     mod={modById.get(affix.modId)}
@@ -2088,13 +2162,12 @@ export function RehearsalPanel({
           {draft.modIds.length > 0 && (
             <section className="rehearsal-selected" aria-label="已选词缀">
               <h4 className="rehearsal-selected-title">应用前核对</h4>
-              {draft.modIds.map((modId) => {
-                const affix = (preview?.ok ? preview.value : draft.state).affixes.find(
-                  (entry) => entry.modId === modId,
-                )
-                return affix ? (
+              {draft.modIds.map((modId, index) => {
+                const affixes = (preview?.ok ? preview.value : draft.state).affixes
+                const affix = affixes[affixes.length - draft.modIds.length + index]
+                return affix?.modId === modId ? (
                   <AffixCard
-                    key={modId}
+                    key={affix.affixId ?? modId}
                     mod={modById.get(modId)}
                     crafted={affix.crafted}
                     desecrated={affix.desecrated}

@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path'
 import {
   type CraftCatalog,
   type CraftState,
-  parseCraftProject,
+  parseIdentityCraftProject,
   statScalabilitySourceHash,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
@@ -129,14 +129,14 @@ it('仅选择增效目标也保存缩放来源，未执行策略仍可恢复', (
   expect(screen.getByLabelText('演练项目').textContent).toContain('演练项目已保存到本机')
   const read = () => JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(read().scalabilitySourceHash).toBe(statScalabilitySourceHash(catalog))
-  expect(parseCraftProject(JSON.stringify(read()), catalog).ok).toBe(true)
+  expect(parseIdentityCraftProject(JSON.stringify(read()), catalog).ok).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: '启用条件指引示例' }))
   fireEvent.change(screen.getByLabelText('规则 4 动作'), { target: { value: 'liquid-emotion' } })
   fireEvent.change(screen.getByLabelText('规则 4 液态情感'), {
     target: { value: 'Metadata/Items/Currency/EndgameDistilledEmotion2' },
   })
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
-  expect(parseCraftProject(JSON.stringify(read()), catalog).ok).toBe(true)
+  expect(parseIdentityCraftProject(JSON.stringify(read()), catalog).ok).toBe(true)
 })
 
 it('无名称的增效工艺在神圣草稿中有独立数值标签', () => {

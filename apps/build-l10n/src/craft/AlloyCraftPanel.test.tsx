@@ -5,9 +5,10 @@ import {
   type CraftState,
   createCraftItemDictionary,
   exportCraftItemText,
+  IDENTITY_CRAFT_RULES_VERSION,
   importCraftState,
   inspectItem,
-  parseCraftProject,
+  parseIdentityCraftProject,
   parseItem,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
@@ -56,14 +57,14 @@ const click = (name: string) => {
 it('合金取消不计费，应用后保存完整未来历史与签名，撤销重做及恢复一致', () => {
   render(<RehearsalPanel catalog={catalog} initialState={imported()} translations={{}} />)
   click('选择合金 符文合金')
-  fireEvent.change(screen.getByLabelText('合金移除结果'), { target: { value: 'IncreasedLife1' } })
+  fireEvent.change(screen.getByLabelText('合金移除结果'), { target: { value: 'a1' } })
   click('预览合金结果')
   expect(screen.getByRole('region', { name: '合金待应用结果' })).toBe(document.activeElement)
   click('取消合金结果')
   expect(document.activeElement?.textContent).toBe('合金制作')
   expect(screen.queryByText('符文合金 × 1')).toBeNull()
   click('选择合金 符文合金')
-  fireEvent.change(screen.getByLabelText('合金移除结果'), { target: { value: 'IncreasedLife1' } })
+  fireEvent.change(screen.getByLabelText('合金移除结果'), { target: { value: 'a1' } })
   click('预览合金结果')
   click('应用合金结果')
   expect(screen.getByText('符文合金 × 1')).toBeDefined()
@@ -71,9 +72,33 @@ it('合金取消不计费，应用后保存完整未来历史与签名，撤销�
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(saved.cursor).toBe(0)
-  expect(saved.operations).toHaveLength(1)
+  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  const initial = imported()
+  expect(saved.initialState).toEqual({
+    ...initial,
+    affixes: initial.affixes.map((affix, index) => ({ ...affix, affixId: `a${index + 1}` })),
+    nextAffixId: 3,
+  })
+  expect(saved.operations).toEqual([
+    {
+      kind: 'alloy',
+      alloyId: 'Metadata/Items/Currency/CurrencyVerisiumAlloy1',
+      removeModId: 'IncreasedLife1',
+      removeAffixId: 'a1',
+      values: [37],
+    },
+  ])
   expect(saved.alloyCatalogSignature).toBe(alloyCatalogSignature(catalog))
-  expect(parseCraftProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  const restored = parseIdentityCraftProject(JSON.stringify(saved), catalog)
+  expect(restored.ok).toBe(true)
+  if (!restored.ok) throw Error(restored.error)
+  expect(
+    restored.value.states[1]?.affixes.map(({ modId, affixId }) => ({ modId, affixId })),
+  ).toEqual([
+    { modId: 'FireResist1', affixId: 'a2' },
+    { modId: 'AlloyMaximumRunicWard1', affixId: 'a3' },
+  ])
+  expect(restored.value.states[1]?.nextAffixId).toBe(4)
   expect(screen.queryByText('符文合金 × 1')).toBeNull()
   click('重做')
   expect(screen.getByText('符文合金 × 1')).toBeDefined()

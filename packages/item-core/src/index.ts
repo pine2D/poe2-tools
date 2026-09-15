@@ -4,6 +4,7 @@ export {
   enableCraftAffixIdentity,
   type IdentifiedCraftAffix,
   type IdentifiedCraftState,
+  isIdentifiedCraftState,
   resolveCraftAffix,
 } from './affixIdentity'
 export { type AlloyAdviceStep, analyzeAlloyTargets } from './alloyAdvice'
@@ -122,6 +123,14 @@ export {
   parseCraftProject,
   serializeCraftProject,
 } from './craftProject'
+export {
+  IDENTITY_CRAFT_RULES_VERSION,
+  type IdentityCraftProject,
+  type RestoredIdentityCraftProject,
+  upgradeCraftProjectIdentity,
+} from './craftProjectIdentity'
+export { parseIdentityCraftProject } from './craftProjectIdentityReader'
+export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 export type {
   ArtificerCraftOperation,
   CraftStep,
@@ -241,7 +250,7 @@ export {
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'
-export { reuseCraftPlan } from './projectPlan'
+export { reuseCraftPlan, reuseIdentityCraftPlan } from './projectPlan'
 export { readItemQuality, supportsItemQuality } from './quality'
 export type {
   BasicCraftCurrency,
@@ -336,3 +345,4 @@ export type {
 } from './types.js'
 export type { WeaponDamageEstimate, WeaponDamageType, WeaponEstimate } from './weaponStats'
 export { estimateWeaponStats, supportsWeaponQuality } from './weaponStats'
+export { loadWorkbenchProject } from './workbenchProject'

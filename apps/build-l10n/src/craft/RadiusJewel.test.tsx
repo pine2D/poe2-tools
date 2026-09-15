@@ -40,9 +40,9 @@ it('实际演练入口显示当前半径，剥离预览和应用显示大到小'
   expect(within(panel).getByText('小')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v72')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
   expect(saved.operations).toMatchObject([
-    { currency: 'annulment', modIds: [], removeModId: 'JewelRadiusLargeSize' },
+    { currency: 'annulment', modIds: [], removeModId: 'JewelRadiusLargeSize', removeAffixId: 'a1' },
   ])
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))

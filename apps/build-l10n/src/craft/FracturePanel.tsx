@@ -1,5 +1,6 @@
 import {
   analyzeCraftTargets,
+  applyFracture,
   type CraftCatalog,
   type CraftState,
   type CraftTargetAlternative,
@@ -76,9 +77,14 @@ export function FracturePanel({
             {prepared.value.candidates.map((affix) => {
               const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
               const target = targets.find((entry) => entry.modId === affix.modId)
-              const unresolved = prepared.value.unresolvedModIds.includes(affix.modId)
+              const operation: FractureCraftOperation = {
+                kind: 'fracture',
+                modId: affix.modId,
+                ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+              }
+              const unresolved = !applyFracture(catalog, state, operation).ok
               return (
-                <article className="rehearsal-affix" key={affix.modId}>
+                <article className="rehearsal-affix" key={affix.affixId ?? affix.modId}>
                   <header>
                     <strong>{mod?.name ?? affix.modId}</strong>
                     <span>{mod?.kind === 'prefix' ? '前缀' : '后缀'}</span>
@@ -109,7 +115,7 @@ export function FracturePanel({
                     type="button"
                     disabled={disabled || unresolved}
                     aria-label={`预览破裂 ${affix.modId}`}
-                    onClick={() => onPreview({ kind: 'fracture', modId: affix.modId })}
+                    onClick={() => onPreview(operation)}
                   >
                     预览锁定此组
                   </button>

@@ -1,8 +1,16 @@
 import type { CraftCatalog } from './catalog'
-import { parseCraftProject, type RestoredCraftProject, serializeCraftProject } from './craftProject'
+import {
+  type CraftProject,
+  parseCraftProject,
+  type RestoredCraftProject,
+  serializeCraftProject,
+} from './craftProject'
+import type { IdentityCraftProject, RestoredIdentityCraftProject } from './craftProjectIdentity'
+import { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 import type { ItemDictionary } from './export'
 import type { CraftResult } from './rehearsal'
 import { craftStrategyLeaves } from './strategyConditions'
+import { loadWorkbenchProject } from './workbenchProject'
 
 /** 沿用目标和指引，保持接收方完整历史、来源声明与报价。两份输入均须独立合法。 */
 export function reuseCraftPlan(
@@ -15,12 +23,41 @@ export function reuseCraftPlan(
   if (!current.ok) return { ok: false, error: `当前项目无效：${current.error}` }
   const template = parseCraftProject(templateText, catalog, dictionary)
   if (!template.ok) return { ok: false, error: `收藏方案无效：${template.error}` }
-  const source = template.value.project
+  const next = transplantPlan(current.value.project, template.value.project, catalog)
+  if (!next.ok) return next
+  const restored = parseCraftProject(serializeCraftProject(next.value), catalog, dictionary)
+  return restored.ok ? restored : { ok: false, error: `方案与当前装备不兼容：${restored.error}` }
+}
+
+/** 工作台可沿用旧版或实例方案；目标之外的完整历史与来源声明均归接收方。 */
+export function reuseIdentityCraftPlan(
+  currentText: string,
+  templateText: string,
+  catalog: CraftCatalog,
+  dictionary?: ItemDictionary,
+): CraftResult<RestoredIdentityCraftProject> {
+  const current = loadWorkbenchProject(currentText, catalog, dictionary)
+  if (!current.ok) return { ok: false, error: `当前项目无效：${current.error}` }
+  const template = loadWorkbenchProject(templateText, catalog, dictionary)
+  if (!template.ok) return { ok: false, error: `收藏方案无效：${template.error}` }
+  const next = transplantPlan(current.value.project, template.value.project, catalog)
+  if (!next.ok) return next
+  const checked = serializeIdentityCraftProject(next.value, catalog, dictionary)
+  if (!checked.ok) return { ok: false, error: `方案与当前装备不兼容：${checked.error}` }
+  // 严格保存已完整验证新配置；移植不改装备历史，不必再次解析和回放。
+  return { ok: true, value: { project: next.value, states: current.value.states } }
+}
+
+function transplantPlan<Project extends CraftProject | IdentityCraftProject>(
+  current: Project,
+  source: CraftProject | IdentityCraftProject,
+  catalog: CraftCatalog,
+): CraftResult<Project> {
   if (!source.strategy && !source.targetModIds?.length && !source.targetImplicitValues?.length)
     return { ok: false, error: '这份收藏没有制作目标或条件指引，无法沿用方案。' }
   if (source.targetImplicitValues?.length) {
     const from = catalog.bases.find((base) => base.id === source.initialState.baseId)
-    const to = catalog.bases.find((base) => base.id === current.value.project.initialState.baseId)
+    const to = catalog.bases.find((base) => base.id === current.initialState.baseId)
     if (!from || !to || from.implicit !== to.implicit)
       return {
         ok: false,
@@ -40,7 +77,7 @@ export function reuseCraftPlan(
       ok: false,
       error: `收藏方案引用了已移除的目标：${[...new Set(missing)].join('、')}。请先修复收藏中的条件。`,
     }
-  const next = { ...current.value.project }
+  const next = { ...current }
   // 可选字段缺省意味着清除接收方旧配置，不能混成两套目标。
   for (const key of [
     'targetModIds',
@@ -75,6 +112,5 @@ export function reuseCraftPlan(
     'scalabilitySourceHash',
   ] as const)
     if (source[key] !== undefined) next[key] = source[key]
-  const restored = parseCraftProject(serializeCraftProject(next), catalog, dictionary)
-  return restored.ok ? restored : { ok: false, error: `方案与当前装备不兼容：${restored.error}` }
+  return { ok: true, value: next }
 }

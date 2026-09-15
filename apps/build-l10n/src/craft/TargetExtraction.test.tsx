@@ -81,16 +81,21 @@ function save() {
 it('取消不改变目标；确认一次替换显式要求并保留固有目标、来源和零消费历史', () => {
   start()
   const before = save()
+  expect(before.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(before.initialState).toMatchObject({
+    nextAffixId: 2,
+    affixes: [{ modId: 'IncreasedLife1', affixId: 'a1' }],
+  })
   click('从当前装备提取目标')
   fireEvent.click(screen.getByLabelText('复制基础数值为精确条件'))
   click('取消提取')
   expect(save()).toEqual(before)
   click('从当前装备提取目标')
-  fireEvent.click(screen.getByLabelText('提取词缀 IncreasedLife1'))
+  fireEvent.click(screen.getByLabelText('提取词缀 IncreasedLife1 · a1'))
   expect(
     (screen.getByRole('button', { name: '用所选词缀替换显式目标' }) as HTMLButtonElement).disabled,
   ).toBe(true)
-  fireEvent.click(screen.getByLabelText('提取词缀 IncreasedLife1'))
+  fireEvent.click(screen.getByLabelText('提取词缀 IncreasedLife1 · a1'))
   fireEvent.click(screen.getByLabelText('复制基础数值为精确条件'))
   click('用所选词缀替换显式目标')
   const after = save()
@@ -118,9 +123,9 @@ it('制作预览期间不提取草稿，历史变化使尚未应用的选择失�
   ).toBe(true)
   click('应用本次结果')
   click('从当前装备提取目标')
-  expect(screen.getByLabelText('提取词缀 FireResist1')).toBeDefined()
+  expect(screen.getByLabelText('提取词缀 FireResist1 · a2')).toBeDefined()
   click('撤销')
   expect(screen.queryByLabelText('提取制作目标')).toBeNull()
   click('从当前装备提取目标')
-  expect(screen.queryByLabelText('提取词缀 FireResist1')).toBeNull()
+  expect(screen.queryByLabelText('提取词缀 FireResist1 · a2')).toBeNull()
 })

@@ -3,6 +3,7 @@ import {
   DESECRATION_SOURCE,
   importCraftState,
   inspectItem,
+  loadWorkbenchProject,
   parseCraftProject,
   parseItem,
 } from '@poe2-tools/item-core'
@@ -71,7 +72,7 @@ it('破裂预览不消费，应用保留数值并支持取消、撤销与项目�
   expect(screen.getByText('破溃宝珠 × 1')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.operations).toEqual([{ kind: 'fracture', modId: 'prefix1' }])
+  expect(saved.operations).toEqual([{ kind: 'fracture', modId: 'prefix1', affixId: 'a1' }])
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))
   expect(screen.queryByText('破溃宝珠 × 1')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
@@ -180,7 +181,7 @@ it('回响第二组期间破裂可应用和恢复，保留两组候选与已有�
   expect(screen.getByLabelText('首组揭示选项')).toBeDefined()
   expect(screen.getByLabelText('第二组揭示选项')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
-  const result = parseCraftProject(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '', catalog)
+  const result = loadWorkbenchProject(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '', catalog)
   if (!result.ok) throw new Error(result.error)
   expect(result.value.states.at(-1)?.pendingDesecration).toEqual(
     restored.value.states.at(-1)?.pendingDesecration,

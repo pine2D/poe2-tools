@@ -40,7 +40,7 @@ it('远古材料预览不改当前半径，应用、撤销重做和恢复保留�
   const radius = () => within(screen.getByRole('region', { name: '珠宝半径' }))
   fireEvent.click(screen.getByRole('button', { name: '选择液态情感 远古的强效液化忧郁' }))
   fireEvent.change(screen.getByLabelText('液态情感移除结果'), {
-    target: { value: 'JewelRadiusCastSpeed' },
+    target: { value: 'a1' },
   })
   fireEvent.click(screen.getByRole('button', { name: '预览液态情感结果' }))
   expect(radius().getByText('小')).toBeDefined()
@@ -53,13 +53,14 @@ it('远古材料预览不改当前半径，应用、撤销重做和恢复保留�
   expect(radius().getByText('超大')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v72')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
   expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
   expect(saved.operations).toEqual([
     {
       kind: 'liquid-emotion',
       emotionId: 'Metadata/Items/Currency/EndgameDistilledEmotionTimeLost1',
       removeModId: 'JewelRadiusCastSpeed',
+      removeAffixId: 'a1',
       values: [],
     },
   ])

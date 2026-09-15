@@ -11,6 +11,7 @@ import {
   prepareEssenceCraft,
   prepareLiquidEmotionCraft,
   renderNumericLines,
+  resolveCraftAffix,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
 
@@ -35,7 +36,15 @@ export function EssenceResultDetails({
         : prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
   if (!prepared.ok) return <p role="alert">{prepared.error}</p>
   const rendered = renderNumericLines(prepared.value.mod.lines, operation.values)
-  const removed = state.affixes.find((affix) => affix.modId === operation.removeModId)
+  const resolved =
+    operation.removeModId !== undefined
+      ? resolveCraftAffix(state, {
+          modId: operation.removeModId,
+          ...(operation.removeAffixId === undefined ? {} : { affixId: operation.removeAffixId }),
+        })
+      : null
+  if (resolved && !resolved.ok) return <p role="alert">{resolved.error}</p>
+  const removed = resolved?.ok ? resolved.value.affix : undefined
   return (
     <>
       {operation.kind === 'liquid-emotion' ? (
@@ -105,7 +114,7 @@ export function EssenceAdvicePanel({
         const omenName = operation.omen ? ESSENCE_OMEN_RULES[operation.omen].name : null
         return (
           <article
-            key={`${operation.essenceId}:${operation.omen ?? ''}:${operation.removeModId ?? ''}`}
+            key={`${operation.essenceId}:${operation.omen ?? ''}:${operation.removeAffixId ?? operation.removeModId ?? ''}`}
           >
             <h4>
               {localized}

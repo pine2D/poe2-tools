@@ -42,7 +42,17 @@ export function AlloyCraftPanel({
   targetValues = [],
 }: Props) {
   const [query, setQuery] = useState('')
-  const [selection, setSelection] = useState<AlloyCraftOperation | null>(null)
+  const context = useMemo(
+    () => ({ catalog, state, configuration }),
+    [catalog, state, configuration],
+  )
+  const [draft, setDraft] = useState<{
+    context: typeof context
+    selection: AlloyCraftOperation
+  } | null>(null)
+  const selection = draft?.context === context ? draft.selection : null
+  const setSelection = (selection: AlloyCraftOperation | null) =>
+    setDraft(selection ? { context, selection } : null)
   const entries = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)
     return base
@@ -159,14 +169,22 @@ export function AlloyCraftPanel({
                 指定移除整组
                 <select
                   aria-label="合金移除结果"
-                  value={selection.removeModId}
-                  onChange={(event) =>
-                    setSelection({ ...selection, removeModId: event.target.value })
-                  }
+                  value={selection.removeAffixId ?? selection.removeModId}
+                  onChange={(event) => {
+                    const affix = removable.find(
+                      (entry) => (entry.affixId ?? entry.modId) === event.target.value,
+                    )
+                    const { removeAffixId: _, ...rest } = selection
+                    setSelection({
+                      ...rest,
+                      removeModId: affix?.modId ?? '',
+                      ...(affix?.affixId === undefined ? {} : { removeAffixId: affix.affixId }),
+                    })
+                  }}
                 >
                   <option value="">选择要演练的移除结果</option>
                   {removable.map((affix) => (
-                    <option key={affix.modId} value={affix.modId}>
+                    <option key={affix.affixId ?? affix.modId} value={affix.affixId ?? affix.modId}>
                       {affix.modId} · {affix.lines.map(text).join('；')}
                     </option>
                   ))}

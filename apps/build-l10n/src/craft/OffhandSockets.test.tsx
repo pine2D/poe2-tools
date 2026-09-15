@@ -1,8 +1,8 @@
 import {
   type CatalogBase,
-  CRAFT_RULES_VERSION,
   type CraftCatalog,
   createCatalogTranslator,
+  IDENTITY_CRAFT_RULES_VERSION,
   inspectItem,
   parseItem,
 } from '@poe2-tools/item-core'
@@ -158,7 +158,7 @@ it.each([
     click('应用镶嵌')
     expect(panel().getByText(before)).toBeDefined()
     const saved = save()
-    expect(saved.rulesVersion).toBe(CRAFT_RULES_VERSION)
+    expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
     expect(saved.initialState.sockets).toEqual([])
     expect(saved.operations).toHaveLength(3)
     expect(screen.getByText('巧匠石 × 1')).toBeDefined()
@@ -191,7 +191,7 @@ it('中文法器缺少品质和孔位先保持未知；核对零孔后保留词�
   expect(saved.importedQuality).toBe(0)
   expect(saved.importedSockets).toEqual([])
   expect(saved.initialState.affixes).toEqual([
-    { modId: 'FlatES', lines: ['+25(20-30) to maximum Energy Shield'] },
+    { modId: 'FlatES', affixId: 'a1', lines: ['+25(20-30) to maximum Energy Shield'] },
   ])
   click('恢复本机演练')
   expect(panel().getByText('78')).toBeDefined()

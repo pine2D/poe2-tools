@@ -6,6 +6,7 @@ import {
   type CraftCatalog,
   type CraftState,
   renderNumericLines,
+  resolveCraftAffix,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
@@ -18,9 +19,17 @@ interface Labels {
 export function BoneOperationDetails({
   catalog,
   operation,
+  state,
   translations = {},
   translateLine,
-}: Labels & { operation: BoneCraftOperation }) {
+}: Labels & { operation: BoneCraftOperation; state?: CraftState }) {
+  const removal =
+    state && operation.kind === 'desecrate' && operation.removeModId
+      ? resolveCraftAffix(state, {
+          modId: operation.removeModId,
+          ...(operation.removeAffixId === undefined ? {} : { affixId: operation.removeAffixId }),
+        })
+      : null
   const modDetails = (id: string, values?: number[]) => {
     const mod = catalog.modifiers.find((mod) => mod.id === id)
     const rendered = mod && values ? renderNumericLines(mod.lines, values) : null
@@ -50,6 +59,17 @@ export function BoneOperationDetails({
             ? `${operation.boneId === 'preserved_cranium' ? '容量已满' : '满六组'}，本次指定移除：${operation.removeModId}。`
             : ''}
         </p>
+        {removal?.ok ? (
+          <section aria-label="本次骨骼移除词缀">
+            {removal.value.affix.lines.map((line, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: 已有词缀可包含重复静态行。
+              <p key={`${index}:${line}`}>
+                {translateLine?.(line) ? <span>{translateLine(line)} · </span> : null}
+                <code>{line}</code>
+              </p>
+            ))}
+          </section>
+        ) : null}
         {boneOmenLabels(operation, catalog, translations).length ? (
           <p>
             施加预兆：
@@ -151,6 +171,7 @@ export function BoneAdvicePanel({
           </p>
           <BoneOperationDetails
             catalog={catalog}
+            state={state}
             operation={step.operation}
             translations={translations}
             {...(translateLine ? { translateLine } : {})}

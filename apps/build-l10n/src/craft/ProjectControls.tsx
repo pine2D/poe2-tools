@@ -1,12 +1,15 @@
 import {
   type CraftCatalog,
   type CraftProject,
+  IDENTITY_CRAFT_RULES_VERSION,
+  type IdentityCraftProject,
   type ItemDictionary,
+  loadWorkbenchProject,
   MAX_CRAFT_PROJECT_BYTES,
-  parseCraftProject,
-  type RestoredCraftProject,
-  reuseCraftPlan,
+  type RestoredIdentityCraftProject,
+  reuseIdentityCraftPlan,
   serializeCraftProject,
+  serializeIdentityCraftProject,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 
@@ -16,8 +19,8 @@ export const REHEARSAL_PROJECT_KEY = 'poe2-tools:craft-rehearsal:v1'
 export interface ProjectControlsProps {
   catalog: CraftCatalog
   dictionary?: ItemDictionary
-  project?: CraftProject
-  onRestore: (restored: RestoredCraftProject) => void
+  project?: CraftProject | IdentityCraftProject
+  onRestore: (restored: RestoredIdentityCraftProject) => void
 }
 
 export function ProjectControls({ catalog, dictionary, project, onRestore }: ProjectControlsProps) {
@@ -29,7 +32,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const [planPreview, setPlanPreview] = useState<{
     text: string
     name: string
-    restored: RestoredCraftProject
+    restored: RestoredIdentityCraftProject
   } | null>(null)
   useEffect(() => {
     if (planPreview) previewRef.current?.focus()
@@ -50,19 +53,21 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const validatedText = () => {
     if (!project) return { ok: false as const, error: '当前没有可保存的演练项目。' }
     try {
+      if (project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION)
+        return serializeIdentityCraftProject(project, catalog, dictionary)
       const text = serializeCraftProject(project)
       if (new Blob([text]).size > MAX_CRAFT_PROJECT_BYTES)
         return { ok: false as const, error: '演练项目超过 2 MB 限制，无法保存。' }
-      const checked = parseCraftProject(text, catalog, dictionary)
+      const checked = loadWorkbenchProject(text, catalog, dictionary)
       if (!checked.ok) return checked
-      return { ok: true as const, value: text }
+      return serializeIdentityCraftProject(checked.value.project, catalog, dictionary)
     } catch {
       return { ok: false as const, error: '演练项目无法序列化。' }
     }
   }
 
   const restoreText = (text: string, request: number) => {
-    const restored = parseCraftProject(text, catalog, dictionary)
+    const restored = loadWorkbenchProject(text, catalog, dictionary)
     if (request !== requestRef.current) return
     setPlanPreview(null)
     if (!restored.ok) {
@@ -145,7 +150,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
       setMessage(current.error)
       return
     }
-    const reused = reuseCraftPlan(current.value, text, catalog, dictionary)
+    const reused = reuseIdentityCraftPlan(current.value, text, catalog, dictionary)
     if (!reused.ok) {
       setMessage(reused.error)
       return
@@ -162,7 +167,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
       setPlanPreview(null)
       return
     }
-    const reused = reuseCraftPlan(current.value, planPreview.text, catalog, dictionary)
+    const reused = reuseIdentityCraftPlan(current.value, planPreview.text, catalog, dictionary)
     setPlanPreview(null)
     if (!reused.ok) {
       setMessage(reused.error)

@@ -1,4 +1,9 @@
-import { CRAFT_RULES_VERSION, type CraftCatalog, type CraftProject } from '@poe2-tools/item-core'
+import {
+  CRAFT_RULES_VERSION,
+  type CraftCatalog,
+  type CraftProject,
+  IDENTITY_CRAFT_RULES_VERSION,
+} from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProjectControls, REHEARSAL_PROJECT_KEY } from './ProjectControls'
@@ -69,9 +74,15 @@ describe('ProjectControls', () => {
     const onRestore = vi.fn()
     render(<ProjectControls catalog={catalog} project={project} onRestore={onRestore} />)
     fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
-    expect(localStorage.getItem(REHEARSAL_PROJECT_KEY)).toContain(CRAFT_RULES_VERSION)
+    const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+    expect(saved).toEqual({
+      ...project,
+      rulesVersion: IDENTITY_CRAFT_RULES_VERSION,
+      initialState: { ...initialState, nextAffixId: 1 },
+    })
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
     expect(onRestore).toHaveBeenCalledTimes(1)
+    expect(onRestore).toHaveBeenCalledWith({ project: saved, states: [saved.initialState] })
 
     localStorage.setItem(REHEARSAL_PROJECT_KEY, '{broken')
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))

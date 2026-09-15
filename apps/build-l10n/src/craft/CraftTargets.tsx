@@ -726,7 +726,7 @@ export function CraftTargets({
                 const currency = CRAFT_CURRENCY_LABELS[step.currency]
                 const removal = step.removeModId ? modLabel(step.removeModId) : null
                 return (
-                  <article key={`${step.currency}:${step.removeModId ?? ''}`}>
+                  <article key={`${step.currency}:${step.removeAffixId ?? step.removeModId ?? ''}`}>
                     <h4>
                       {currency}
                       {removal ? ` · 演练移除 ${removal}` : ''}

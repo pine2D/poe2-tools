@@ -9,7 +9,7 @@ import {
   createCraftState,
   type ItemDictionary,
   importCraftState,
-  type RestoredCraftProject,
+  type RestoredIdentityCraftProject,
   readBaseGrantedSkills,
   readCatalystQuality,
   readItemQuality,
@@ -42,7 +42,7 @@ export function CraftEntry({
   translations: Record<string, string>
   translateLine: CatalogPanelProps['translateLine']
   dictionary: ItemDictionary | undefined
-  onRestore: (project: RestoredCraftProject) => void
+  onRestore: (project: RestoredIdentityCraftProject) => void
 }) {
   const [session, setSession] = useState<{
     state: CraftState

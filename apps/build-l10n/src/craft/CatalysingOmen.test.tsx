@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path'
 import {
   type CraftCatalog,
   createCraftItemDictionary,
+  IDENTITY_CRAFT_RULES_VERSION,
   importCraftState,
   inspectItem,
   parseItem,
@@ -127,9 +128,24 @@ it.each(['catalysing_exaltation', 'catalysing_greater_dextral_exaltation'])(
     ).toBeDefined()
     click('保存演练到本机')
     const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-    expect(saved.rulesVersion).toBe('basic-2026-09-12-v72')
-    expect(saved.operations).toHaveLength(1)
-    expect(saved.operations[0].omen).toBe(omen)
+    expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+    const greater = omen === 'catalysing_greater_dextral_exaltation'
+    expect(saved.operations).toEqual([
+      {
+        currency: 'exalted',
+        omen,
+        modIds: greater ? ['FireResist1', 'ColdResist1'] : ['FireResist1'],
+        rolls: [
+          { modId: 'FireResist1', affixId: 'a2', values: [6] },
+          ...(greater ? [{ modId: 'ColdResist1', affixId: 'a3', values: [6] }] : []),
+        ],
+      },
+    ])
+    expect(saved.initialState).toEqual({
+      ...imported.value,
+      affixes: imported.value.affixes.map((affix) => ({ ...affix, affixId: 'a1' })),
+      nextAffixId: 2,
+    })
     if (omen === 'catalysing_greater_dextral_exaltation') {
       expect(saved.operations[0].modIds).toEqual(['FireResist1', 'ColdResist1'])
       expect(screen.getAllByText('强效崇高预兆 × 1').length).toBeGreaterThan(0)

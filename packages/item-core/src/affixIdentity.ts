@@ -43,6 +43,11 @@ export function craftAffixIdentityError(state: CraftState): string | null {
   return null
 }
 
+/** 只核对身份完整性；真实操作产生的摧毁终止快照也保留实例。 */
+export function isIdentifiedCraftState(state: CraftState): state is IdentifiedCraftState {
+  return state.nextAffixId !== undefined && craftAffixIdentityError(state) === null
+}
+
 export function enableCraftAffixIdentity(
   catalog: CraftCatalog,
   state: CraftState,

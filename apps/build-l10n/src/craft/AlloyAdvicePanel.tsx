@@ -37,7 +37,7 @@ export function AlloyAdvicePanel({
       </p>
       {(showAll ? steps : steps.slice(0, 3)).map((step) => (
         <article
-          key={`${step.operation.alloyId}:${step.operation.removeModId}:${step.operation.values.join(',')}`}
+          key={`${step.operation.alloyId}:${step.operation.removeAffixId ?? step.operation.removeModId}:${step.operation.values.join(',')}`}
         >
           <h4>
             {local(

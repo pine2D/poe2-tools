@@ -1,5 +1,6 @@
 import {
   type CatalogMod,
+  type CraftAffixSelector,
   type CraftCatalog,
   type CraftState,
   craftCandidates,
@@ -7,6 +8,7 @@ import {
   prepareVaalReplacement,
   renderNumericLines,
   replayVaalReplacements,
+  resolveCraftAffix,
   type VaalCraftOperation,
   type VaalReplacement,
 } from '@poe2-tools/item-core'
@@ -51,9 +53,13 @@ function ReplacementValues({
   )
 }
 
-export function VaalRerollChoice({ catalog, state, disabled, onPreview, translateLine }: Props) {
+export function VaalRerollChoice(props: Props) {
+  return <VaalRerollEditor key={JSON.stringify([props.catalog._meta, props.state])} {...props} />
+}
+
+function VaalRerollEditor({ catalog, state, disabled, onPreview, translateLine }: Props) {
   const [replacements, setReplacements] = useState<VaalReplacement[]>([])
-  const [removeId, setRemoveId] = useState('')
+  const [removeSelector, setRemoveSelector] = useState<CraftAffixSelector | null>(null)
   const [addId, setAddId] = useState('')
   const [query, setQuery] = useState('')
   const current = useMemo(
@@ -62,8 +68,10 @@ export function VaalRerollChoice({ catalog, state, disabled, onPreview, translat
   )
   const removed = useMemo(
     () =>
-      current.ok && removeId ? prepareVaalReplacement(catalog, current.value, removeId) : null,
-    [catalog, current, removeId],
+      current.ok && removeSelector
+        ? prepareVaalReplacement(catalog, current.value, removeSelector)
+        : null,
+    [catalog, current, removeSelector],
   )
   const candidates = useMemo(
     () => (removed?.ok ? craftCandidates(catalog, removed.value) : []),
@@ -73,7 +81,7 @@ export function VaalRerollChoice({ catalog, state, disabled, onPreview, translat
   const describe = (lines: string[]) =>
     lines.map((line) => translateLine?.(line) ?? line).join('；')
   const resetChoice = () => {
-    setRemoveId('')
+    setRemoveSelector(null)
     setAddId('')
     setQuery('')
   }
@@ -93,12 +101,15 @@ export function VaalRerollChoice({ catalog, state, disabled, onPreview, translat
               const added = catalog.modifiers.find((candidate) => candidate.id === entry.modId)
               const previous = replayVaalReplacements(catalog, state, replacements.slice(0, index))
               const old = previous.ok
-                ? previous.value.affixes.find((affix) => affix.modId === entry.removeModId)
+                ? resolveCraftAffix(previous.value, {
+                    modId: entry.removeModId,
+                    ...(entry.removeAffixId === undefined ? {} : { affixId: entry.removeAffixId }),
+                  })
                 : null
               const lines = added ? renderNumericLines(added.lines, entry.values) : null
               return (
                 <li key={JSON.stringify(replacements.slice(0, index + 1))}>
-                  <p>移除：{old ? describe(old.lines) : entry.removeModId}</p>
+                  <p>移除：{old?.ok ? describe(old.value.affix.lines) : entry.removeModId}</p>
                   <p>加入：{lines?.ok ? describe(lines.value) : entry.modId}</p>
                 </li>
               )
@@ -122,16 +133,26 @@ export function VaalRerollChoice({ catalog, state, disabled, onPreview, translat
             先选择当前要移除的词缀
             <select
               aria-label="腐化重选：移除词缀"
-              value={removeId}
+              value={removeSelector?.affixId ?? removeSelector?.modId ?? ''}
               onChange={(event) => {
-                setRemoveId(event.target.value)
+                const affix = current.value.affixes.find(
+                  (affix) => (affix.affixId ?? affix.modId) === event.target.value,
+                )
+                setRemoveSelector(
+                  affix
+                    ? {
+                        modId: affix.modId,
+                        ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+                      }
+                    : null,
+                )
                 setAddId('')
                 setQuery('')
               }}
             >
               <option value="">选择移除结果</option>
               {current.value.affixes.map((affix) => (
-                <option key={affix.modId} value={affix.modId}>
+                <option key={affix.affixId ?? affix.modId} value={affix.affixId ?? affix.modId}>
                   {describe(affix.lines)}
                 </option>
               ))}
@@ -174,13 +195,21 @@ export function VaalRerollChoice({ catalog, state, disabled, onPreview, translat
               </label>
               {mod ? (
                 <ReplacementValues
-                  key={`${removeId}:${mod.id}`}
+                  key={JSON.stringify([removeSelector, mod.id])}
                   mod={mod}
                   translateLine={translateLine}
                   onAdd={(values) => {
+                    if (!removeSelector) return
                     setReplacements([
                       ...replacements,
-                      { removeModId: removeId, modId: mod.id, values: [...values] },
+                      {
+                        removeModId: removeSelector.modId,
+                        ...(removeSelector.affixId === undefined
+                          ? {}
+                          : { removeAffixId: removeSelector.affixId }),
+                        modId: mod.id,
+                        values: [...values],
+                      },
                     ])
                     resetChoice()
                   }}
