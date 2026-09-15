@@ -1,5 +1,12 @@
 # 数据源登记表
 
+## 2026-09-16 制作步骤清单与权重来源复查
+
+[CoE 路线图](https://beta.craftofexile.com/roadmap)中公开的操作历史、变化、费用明细及模拟导出仅作流程参考。新增清单由本项目已有回放、材料计费、已登记目录及独立简体中文译名生成，没有抓取或复制同行代码、权重或数据，没有新增构建适配器与浏览器外站请求。
+
+本轮 Exa 搜索发现 [pyoe2-craftpath README](https://github.com/WladHD/pyoe2-craftpath)列出 MIT 代码许可，但作者明确说明其词缀权重来自获准使用的 CoE 数据，并标记针对 PoE2 0.4.0 测试。该许可不能直接证明上游权重对本项目的授权与当前版本覆盖；只读说明，没有获取代码或数据文件。RePoE-fork 的客户端导出也不符合本项目禁止入库客户端解包产物的约束，未作为新来源接入。真实权重与概率仍未获得完整可用证据。
+
+
 ### 已有高催化品质与裂隙精华（2026-09-16，实施前登记）
 
 [PoE2 Wiki Quality](https://www.poe2wiki.net/wiki/Quality) 的检索全文（返回修订 oldid=129776）明确裂隙精华增加最大品质 20%，移除该词缀不改变已有品质；直连正文曾返回 403，按已取得的索引正文记录证据。[2026-07-16 制作者原始讨论](https://www.reddit.com/r/PathOfExile2/comments/1uxszex/hey_guys_what_do_i_do_from_here/)有两位参与者描述移除后保留品质，作为 gray 人工交叉参考，不是官方或国服真机保证。程序继续用已登记固定 MIT Essence.lua/ModItem.lua 的材料、类别与完整工艺声明授权；不复制玩家装备或新增第三方数据表。

@@ -116,6 +116,26 @@ function apply() {
 afterEach(cleanup)
 
 describe('RehearsalPanel', () => {
+  it('步骤清单跟随真实应用、撤销和重做，打开的草稿不计入清单或费用', () => {
+    renderPanel()
+    fireEvent.click(screen.getByRole('button', { name: '导出制作步骤清单' }))
+    const report = () =>
+      (screen.getByRole('textbox', { name: '制作步骤清单文本' }) as HTMLTextAreaElement).value
+    prepare('蜕变石')
+    choose('ArmourA')
+    expect(report()).not.toContain('步骤 1：')
+    expect(report()).toContain('尚未消耗材料')
+    apply()
+    expect(report()).toContain('步骤 1：蜕变石')
+    expect(report()).toContain('+10(10-20) to Armour')
+    expect(report()).toContain('蜕变石 × 1')
+    fireEvent.click(screen.getByRole('button', { name: '撤销' }))
+    expect(report()).not.toContain('步骤 1：')
+    expect(report()).toContain('可重做 1 步未计入')
+    fireEvent.click(screen.getByRole('button', { name: '重做' }))
+    expect(report()).toContain('步骤 1：蜕变石')
+  })
+
   it('导出语言切换不改变已应用历史、费用或撤销游标', async () => {
     const inner = fakeDictFetch(miniBundle)
     const fetchMock = vi
