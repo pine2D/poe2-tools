@@ -4,8 +4,9 @@ import {
   type CraftCatalog,
   type CraftOperation,
   type CraftState,
+  type CraftTargetDefinitions,
+  type DefinitionEssencePreparationRoute,
   ESSENCE_OMEN_RULES,
-  type EssencePreparationRoute,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
@@ -13,7 +14,8 @@ import { EssenceResultDetails } from './EssenceAdvicePanel'
 interface EssencePreparationPanelProps {
   catalog: CraftCatalog
   state: CraftState
-  routes: EssencePreparationRoute[]
+  definitions: CraftTargetDefinitions
+  routes: DefinitionEssencePreparationRoute[]
   truncated: boolean
   translations: Record<string, string>
   busy: boolean
@@ -25,6 +27,7 @@ export function EssencePreparationPanel({
   catalog,
   state,
   routes,
+  definitions,
   truncated,
   translations,
   busy,
@@ -35,6 +38,14 @@ export function EssencePreparationPanel({
   if (!routes.length && !truncated) return null
   const localize = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+  const modLabel = (id: string) => {
+    const mod = catalog.modifiers.find((mod) => mod.id === id)
+    return mod ? `${id} · ${mod.lines.map((line) => translateLine?.(line) ?? line).join('；')}` : id
+  }
+  const targetLabel = (targetId: string) => {
+    const target = definitions.targets.find((target) => target.targetId === targetId)
+    return target ? modLabel(target.modId) : '已失联目标'
+  }
   return (
     <section aria-label="精华准备路线">
       <h4>示例准备路线 · {routes.length} 条</h4>
@@ -49,7 +60,14 @@ export function EssencePreparationPanel({
         for (const operation of route.preparations) {
           const applied = applyCraftStep(catalog, preparedState, operation)
           if (!applied.ok) return null
-          preparations.push({ operation, result: applied.value })
+          preparations.push({
+            operation,
+            added: applied.value.affixes.filter((affix) =>
+              affix.affixId === undefined
+                ? !preparedState.affixes.some((previous) => previous.modId === affix.modId)
+                : !preparedState.affixes.some((previous) => previous.affixId === affix.affixId),
+            ),
+          })
           preparedState = applied.value
         }
         const first = route.preparations[0]
@@ -60,19 +78,16 @@ export function EssencePreparationPanel({
         )
         const omenName = final.omen ? localize(ESSENCE_OMEN_RULES[final.omen].name) : null
         return (
-          <article key={final.essenceId}>
-            {preparations.map(({ operation, result }, index) => (
+          <article key={JSON.stringify([route.preparations, final])}>
+            {preparations.map(({ operation, added }, index) => (
               <div key={operation.currency}>
                 <h4>
                   {index + 1}. {CRAFT_CURRENCY_LABELS[operation.currency]}
                 </h4>
-                {operation.modIds.map((id) => (
-                  <p key={id}>
-                    {id} ·{' '}
-                    {result.affixes
-                      .find((affix) => affix.modId === id)
-                      ?.lines.map((line) => translateLine?.(line) ?? line)
-                      .join('；')}
+                {added.map((affix) => (
+                  <p key={affix.affixId ?? affix.modId}>
+                    {affix.modId} ·{' '}
+                    {affix.lines.map((line) => translateLine?.(line) ?? line).join('；')}
                   </p>
                 ))}
               </div>
@@ -91,9 +106,12 @@ export function EssencePreparationPanel({
               <>
                 <p>
                   整个合法移除池中的目标风险：
-                  {route.final.atRiskTargetIds.join('；') || '无现有目标档位'}。
+                  {route.final.atRiskModIds.map(modLabel).join('；') || '无现有目标档位'}。
                 </p>
-                <p>本次指定结果失去目标：{route.final.lostTargetIds.join('；') || '无'}。</p>
+                <p>
+                  本次指定结果失去目标：
+                  {route.final.lostTargetIds.map(targetLabel).join('；') || '无'}。
+                </p>
               </>
             ) : null}
             <p>

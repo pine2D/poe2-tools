@@ -4,8 +4,8 @@ import {
   type CraftCurrency,
   type CraftState,
   DESECRATION_SOURCE,
-  IDENTITY_CRAFT_RULES_VERSION,
   type RestoredCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -15,13 +15,13 @@ import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { RehearsalPanel } from './RehearsalPanel'
 
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (result: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (result: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      callback(planCraftTargetRoutes(...args))
+      callback(planTargetDefinitionRoutes(...args))
       return () => {}
     },
   }
@@ -253,7 +253,7 @@ describe('RehearsalPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: `保存数值条件 ${id}` }))
     }
     expect(screen.getByText('已达成 0 / 1')).toBeDefined()
-    expect(screen.getByText(/涉及数值目标：Sturdy/)).toBeDefined()
+    expect(screen.getByText(/涉及数值目标：Alternate/)).toBeDefined()
     expect(screen.getByText(/需要先移除才能选择该精确档位/)).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '演练建议：神圣石' }))
     fireEvent.change(screen.getByLabelText('Sturdy · 数值 1'), { target: { value: '19' } })
@@ -264,13 +264,14 @@ describe('RehearsalPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
     expect(screen.getByText('演练项目已保存到本机；未应用的草稿不会保存。')).toBeDefined()
     const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-    expect(saved.targetAlternatives).toEqual([{ targetModId: 'ArmourTier', modIds: ['ArmourA'] }])
-    expect(saved.targetValues).toHaveLength(2)
+    expect(saved.targetDefinitions.alternatives).toEqual([{ targetId: 't1', modIds: ['ArmourA'] }])
+    expect(saved.targetDefinitions.values).toHaveLength(2)
     fireEvent.click(screen.getByRole('checkbox', { name: '接受档位 ArmourA' }))
     fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
     expect(
-      JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}').targetValues,
-    ).toEqual([{ modId: 'ArmourTier', bounds: [{ index: 0, min: 38 }] }])
+      JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}').targetDefinitions
+        .values,
+    ).toEqual([{ targetId: 't1', modId: 'ArmourTier', bounds: [{ index: 0, min: 38 }] }])
     localStorage.setItem('poe2-tools:craft-rehearsal:v1', JSON.stringify(saved))
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
     expect(
@@ -281,9 +282,10 @@ describe('RehearsalPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '移除目标 ArmourTier' }))
     fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
     const cleared = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-    expect(cleared.targetModIds).toBeUndefined()
-    expect(cleared.targetValues).toBeUndefined()
-    expect(cleared.targetAlternatives).toBeUndefined()
+    expect(cleared.targetDefinitions.targets).toEqual([])
+    expect(cleared.targetDefinitions.nextTargetId).toBe(2)
+    expect(cleared.targetDefinitions.values).toEqual([])
+    expect(cleared.targetDefinitions.alternatives).toEqual([])
     localStorage.clear()
   })
   it('符文草稿对比、覆盖、混合通货历史和项目恢复使用同一起点', () => {
@@ -414,7 +416,7 @@ describe('RehearsalPanel', () => {
       },
     ])
     expect(p.initialState).toEqual({ ...state(), nextAffixId: 1 })
-    expect(p.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+    expect(p.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
     fireEvent.click(screen.getByRole('button', { name: '撤销' }))
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
     expect(screen.getByText('高级蜕变石 × 1')).toBeDefined()
@@ -505,8 +507,9 @@ describe('RehearsalPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '保存数值条件 Fire' }))
     fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
     expect(
-      JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}').targetValues,
-    ).toBeUndefined()
+      JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}').targetDefinitions
+        .values,
+    ).toEqual([])
     fireEvent.change(screen.getByLabelText('Fire · 数值 1 最小值'), { target: { value: '' } })
     fireEvent.change(screen.getByLabelText('Fire · 数值 1 最大值'), { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: '保存数值条件 Fire' }))
@@ -1024,7 +1027,14 @@ it('整组数值未变时仍展示亵渎来源变化', () => {
   }
   const before = state('rare', [{ modId: 'ArmourA', lines: ['+15 to Armour'], desecrated: true }])
   const after = state('rare', [{ modId: 'ArmourA', lines: ['+15 to Armour'] }])
-  render(<CraftComparisonPanel catalog={source} before={before} after={after} />)
+  render(
+    <CraftComparisonPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
+      catalog={source}
+      before={before}
+      after={after}
+    />,
+  )
   expect(screen.getByText('来源变化')).toBeDefined()
   expect(screen.getByText('亵渎来源：亵渎 → 普通')).toBeDefined()
 })

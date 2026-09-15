@@ -4,11 +4,13 @@ import {
   applyCraftStep,
   CRAFT_RULES_VERSION,
   type CraftCatalog,
+  type CraftDefinitionRoutes,
   type CraftResult,
-  type CraftTargetRoutes,
   type LiquidEmotionCraftOperation,
   loadWorkbenchProject,
   parseCraftProject,
+  parseTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -17,7 +19,7 @@ import { RehearsalPanel } from './RehearsalPanel'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 
 const pending = vi.hoisted(() => ({
-  callback: null as null | ((result: CraftResult<CraftTargetRoutes>) => void),
+  callback: null as null | ((result: CraftResult<CraftDefinitionRoutes>) => void),
 }))
 vi.mock('./targetRoutesWorkerClient', () => ({
   requestTargetRoutes: (_args: unknown[], callback: typeof pending.callback) => {
@@ -85,7 +87,7 @@ function fixture(identified = false) {
   if (!state) throw Error('缺少点金起点')
   const next = applyCraftStep(catalog, state, selectedOperation)
   if (!next.ok) throw Error(next.error)
-  const result: CraftResult<CraftTargetRoutes> = {
+  const result: CraftResult<CraftDefinitionRoutes> = {
     ok: true,
     value: {
       alreadyMatched: false,
@@ -99,11 +101,14 @@ function fixture(identified = false) {
             {
               operation: selectedOperation,
               state: next.value,
-              matchedTargetIds: [effectId, 'JewelArmour'],
-              gainedTargetIds: [effectId],
+              matchedTargetIds: ['t1', 't2'],
+              gainedTargetIds: ['t1'],
               lostTargetIds: [],
-              atRiskTargetIds: ['JewelArmour'],
+              atRiskTargetIds: ['t2'],
               rerolledTargetIds: [],
+              affectedModIds: [],
+              atRiskModIds: ['JewelArmour'],
+              rerolledModIds: [],
             },
           ],
         },
@@ -126,9 +131,15 @@ it('液态路线显示方向、保证数值、整组移除及跨结果池风险'
     <TargetRoutesPanel
       catalog={catalog}
       state={state}
-      ids={[effectId, 'JewelArmour']}
-      values={[]}
-      alternatives={[]}
+      definitions={{
+        nextTargetId: 3,
+        targets: [
+          { targetId: 't1', modId: effectId },
+          { targetId: 't2', modId: 'JewelArmour' },
+        ],
+        alternatives: [],
+        values: [],
+      }}
       busy={false}
       translations={{}}
       onPreview={onPreview}
@@ -168,9 +179,9 @@ it('路线第一步进入液态草稿，取消不计费，应用后清旧路线�
   ).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
   expect(saved.operations.at(-1)).toEqual(selectedOperation)
-  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(parseTargetCraftProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('撤销')
   expect(screen.queryByLabelText('珠宝词缀增效')).toBeNull()
   click('重做')

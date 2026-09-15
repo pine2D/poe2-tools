@@ -6,6 +6,8 @@ import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
 
+const emptyDefinitions = { nextTargetId: 1, targets: [], alternatives: [], values: [] }
+
 const essenceId = 'Metadata/Items/Currency/CurrencyLesserEssenceLife'
 const catalog: CraftCatalog = {
   _meta: {
@@ -102,6 +104,7 @@ it.each(['Lesser', '', 'Greater'])('前三档 %s 精华仍直接升级且不携�
   const onPreview = vi.fn()
   render(
     <EssenceCraftPanel
+      definitions={emptyDefinitions}
       catalog={{
         ...catalog,
         essences: [
@@ -150,8 +153,12 @@ it('替换必须显式选择整组，并提示接受替代目标的风险', () =
       translations={translations}
       translateLine={(line) => (line === '+18% to Fire Resistance' ? '+18% 火焰抗性' : null)}
       disabled={false}
-      targetModIds={['BestFire']}
-      targetAlternatives={[{ targetModId: 'BestFire', modIds: ['Fire'] }]}
+      definitions={{
+        nextTargetId: 8,
+        targets: [{ targetId: 't7', modId: 'BestFire' }],
+        alternatives: [{ targetId: 't7', modIds: ['Fire'] }],
+        values: [],
+      }}
       onPreview={onPreview}
     />,
   )
@@ -257,9 +264,12 @@ it('精华搜索、禁用原因及目标替代数值条件使用同一草稿', (
       state={state}
       translations={translations}
       disabled={false}
-      targetModIds={['OtherLife']}
-      targetAlternatives={[{ targetModId: 'OtherLife', modIds: ['Life'] }]}
-      targetValues={[{ modId: 'Life', bounds: [{ index: 0, min: 15 }] }]}
+      definitions={{
+        nextTargetId: 8,
+        targets: [{ targetId: 't7', modId: 'OtherLife' }],
+        alternatives: [{ targetId: 't7', modIds: ['Life'] }],
+        values: [{ targetId: 't7', modId: 'Life', bounds: [{ index: 0, min: 15 }] }],
+      }}
       onPreview={onPreview}
     />,
   )
@@ -336,6 +346,7 @@ it('低物等显示工具覆盖边界，英文搜索和越界数值阻止预览'
   const onPreview = vi.fn()
   const view = render(
     <EssenceCraftPanel
+      definitions={emptyDefinitions}
       catalog={higherCatalog}
       state={{ ...state, itemLevel: 5 }}
       translations={translations}
@@ -349,6 +360,7 @@ it('低物等显示工具覆盖边界，英文搜索和越界数值阻止预览'
   expect(screen.getByText('低物等交互尚未验证，暂不支持。')).toBeDefined()
   view.rerender(
     <EssenceCraftPanel
+      definitions={emptyDefinitions}
       catalog={catalog}
       state={state}
       translations={translations}
@@ -374,7 +386,14 @@ it('对比明确区分工艺来源变化与纯数值变化', () => {
     ...normal,
     affixes: [{ modId: 'Life', lines: ['+18 to maximum Life'], crafted: true }],
   }
-  render(<CraftComparisonPanel catalog={catalog} before={crafted} after={normal} />)
+  render(
+    <CraftComparisonPanel
+      definitions={emptyDefinitions}
+      catalog={catalog}
+      before={crafted}
+      after={normal}
+    />,
+  )
   expect(screen.getByText('来源变化')).toBeDefined()
   expect(screen.getByText('工艺来源：工艺 → 普通')).toBeDefined()
   expect(screen.queryByText('数值变化')).toBeNull()
@@ -383,6 +402,7 @@ it('对比明确区分工艺来源变化与纯数值变化', () => {
 it('无法制作时仍可按保证属性搜索，过滤没有当前类别映射的精华', () => {
   render(
     <EssenceCraftPanel
+      definitions={emptyDefinitions}
       catalog={{
         ...catalog,
         essences: [
@@ -445,8 +465,15 @@ it('结晶预兆过滤目标风险，切换清空材料、移除及数值选择'
       translations={omenTranslations}
       disabled={false}
       onPreview={vi.fn()}
-      targetModIds={['Armour', 'BestFire']}
-      targetAlternatives={[{ targetModId: 'BestFire', modIds: ['Fire'] }]}
+      definitions={{
+        nextTargetId: 9,
+        targets: [
+          { targetId: 't7', modId: 'Armour' },
+          { targetId: 't8', modId: 'BestFire' },
+        ],
+        alternatives: [{ targetId: 't8', modIds: ['Fire'] }],
+        values: [],
+      }}
     />,
   )
   fireEvent.click(screen.getByRole('button', { name: '选择精华 Perfect Essence of Life' }))
@@ -481,6 +508,7 @@ it('右旋允许跨保证侧移除，左旋空交集使材料不可用', () => {
   const onPreview = vi.fn()
   render(
     <EssenceCraftPanel
+      definitions={emptyDefinitions}
       catalog={catalog}
       state={replacementState}
       translations={omenTranslations}
@@ -514,6 +542,7 @@ it('右旋允许跨保证侧移除，左旋空交集使材料不可用', () => {
 it.each(['Lesser', '', 'Greater'])('结晶预兆禁用 %s 档升级精华', (tier) => {
   render(
     <EssenceCraftPanel
+      definitions={emptyDefinitions}
       catalog={{
         ...catalog,
         essences: [

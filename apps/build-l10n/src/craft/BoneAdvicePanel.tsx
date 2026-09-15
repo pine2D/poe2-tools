@@ -2,9 +2,10 @@ import {
   applyCraftStep,
   BONE_RULES,
   type BoneCraftOperation,
-  type CraftBoneAdviceStep,
   type CraftCatalog,
   type CraftState,
+  type CraftTargetDefinitions,
+  type DefinitionBoneAdviceStep,
   renderNumericLines,
   resolveCraftAffix,
 } from '@poe2-tools/item-core'
@@ -119,7 +120,8 @@ export function BoneOperationDetails({
 }
 interface Props extends Labels {
   state: CraftState
-  steps: CraftBoneAdviceStep[]
+  definitions: CraftTargetDefinitions
+  steps: DefinitionBoneAdviceStep[]
   translations: Record<string, string>
   busy: boolean
   onPreview: (operation: BoneCraftOperation) => void
@@ -128,6 +130,7 @@ export function BoneAdvicePanel({
   catalog,
   state,
   steps,
+  definitions,
   translations,
   busy,
   onPreview,
@@ -138,6 +141,10 @@ export function BoneAdvicePanel({
   const label = (id: string) => {
     const mod = catalog.modifiers.find((mod) => mod.id === id)
     return `${id} · ${mod?.lines.map((line) => translateLine?.(line) ?? line).join('；') ?? id}`
+  }
+  const targetLabel = (targetId: string) => {
+    const target = definitions.targets.find((target) => target.targetId === targetId)
+    return target ? label(target.modId) : '已失联目标'
   }
   const title = (operation: BoneCraftOperation) => {
     if (operation.kind === 'desecration-offer')
@@ -179,15 +186,15 @@ export function BoneAdvicePanel({
           {step.randomRemovalRisk ? (
             <p className="target-warning">
               满容量包含随机移除；指定安全结果不代表随机安全。本工具可演练移除池内的目标风险：
-              {step.atRiskTargetIds.length
-                ? step.atRiskTargetIds.map(label).join('；')
+              {step.atRiskModIds.length
+                ? step.atRiskModIds.map(label).join('；')
                 : '无现有目标档位'}
               。
             </p>
           ) : null}
           {step.lostTargetIds.length ? (
             <p className="target-warning">
-              本次指定移除的目标词缀：{step.lostTargetIds.map(label).join('；')}
+              本次指定结果失去目标：{step.lostTargetIds.map(targetLabel).join('；')}
             </p>
           ) : null}
           <button

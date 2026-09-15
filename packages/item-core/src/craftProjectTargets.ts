@@ -12,11 +12,7 @@ import type {
   DefinitionCraftStrategy,
   DefinitionCraftStrategyCondition,
 } from './definitionStrategy'
-import { desecrationSourceHash } from './desecration'
-import { essenceSourceHash } from './essences'
 import type { ItemDictionary } from './export'
-import { jewelSourceHash } from './jewels'
-import { liquidEmotionSourceHash } from './liquidEmotions'
 import type { CraftResult } from './rehearsal'
 import type { CraftStrategyCondition } from './strategyConditions'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
@@ -29,7 +25,7 @@ import {
   type CraftTargetDefinitions,
   projectTargetDefinitions,
 } from './targetDefinitions'
-import { targetProjectSourceUsage } from './targetProjectSources'
+import { targetProjectSourceHashes } from './targetProjectSources'
 import { loadWorkbenchProject } from './workbenchProject'
 
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
@@ -153,23 +149,15 @@ export function upgradeTargetCraftProject(
   if (!context.ok) return context
   const upgraded = withTargetContext(project, context.value)
   const definitions = context.value.definitions
-  const sources = targetProjectSourceUsage(catalog, project.initialState.baseId, [
+  const sources = targetProjectSourceHashes(catalog, project.initialState.baseId, [
     ...definitions.targets.map((target) => target.modId),
     ...definitions.alternatives.flatMap((entry) => entry.modIds),
     ...definitions.values.map((entry) => entry.modId),
     ...context.value.orphanedTargets.map((target) => target.modId),
   ])
   // 旧原文已通过原版本与来源检查；仅在显式升级时记录新版额外要求的目录指纹。
-  for (const [required, key, hash] of [
-    [sources.essence, 'essenceSourceHash', essenceSourceHash(catalog)],
-    [sources.desecration, 'desecrationSourceHash', desecrationSourceHash(catalog)],
-    [sources.liquid, 'liquidEmotionSourceHash', liquidEmotionSourceHash(catalog)],
-    [sources.jewel, 'jewelSourceHash', jewelSourceHash(catalog)],
-  ] as const) {
-    if (!required) continue
-    if (hash === null) return { ok: false, error: `目标项目升级缺少 ${key} 对应目录来源。` }
-    if (!Object.hasOwn(upgraded, key)) upgraded[key] = hash
-  }
+  if (!sources.ok) return sources
+  Object.assign(upgraded, sources.value)
   const saved = serializeTargetCraftProject(upgraded, catalog, dictionary)
   return saved.ok
     ? { ok: true, value: { project: upgraded, states: previous.value.states } }

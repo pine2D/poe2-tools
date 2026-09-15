@@ -3,6 +3,7 @@ import {
   type CraftProject,
   exportCraftItemText,
   parseCraftProject,
+  parseTargetCraftProject,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -10,13 +11,13 @@ import { boneCatalog, boneState } from '../../../../packages/item-core/src/boneT
 import { RehearsalPanel } from './RehearsalPanel'
 
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (r: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (r: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      callback(planCraftTargetRoutes(...args))
+      callback(planTargetDefinitionRoutes(...args))
       return () => {}
     },
   }
@@ -83,6 +84,7 @@ it('路线报价区分同译名且不重复计算起点，应用和撤销更新�
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const p = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(p.pricing.prices['currency:exalted']).toBe(0.1)
+  expect(parseTargetCraftProject(JSON.stringify(p), boneCatalog()).ok).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))
   expect(screen.getByText('当前总成本：2 神圣石')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))

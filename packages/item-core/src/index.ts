@@ -228,6 +228,7 @@ export {
   craftImplicitTargetCandidates,
   projectImplicitTargetValues,
   validateCraftImplicitTargets,
+  validateStoredCraftImplicitTargets,
 } from './implicitTargets'
 export type { CraftProperty } from './itemProperties'
 export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
@@ -327,7 +328,12 @@ export {
   validStrategyStartStep,
 } from './strategyStages'
 export type { CraftDefinitionAdvice, CraftDefinitionAdviceStep } from './targetDefinitionAdvice'
-export { analyzeTargetDefinitions, definitionTargetsSatisfied } from './targetDefinitionAdvice'
+export {
+  analyzeTargetDefinitions,
+  definitionTargetIdsForMods,
+  definitionTargetsSatisfied,
+  targetDefinitionChanges,
+} from './targetDefinitionAdvice'
 export {
   editTargetDefinitionContext,
   readTargetDefinitionContext,
@@ -345,6 +351,20 @@ export type {
 } from './targetDefinitionRoutes'
 export { planTargetDefinitionRoutes } from './targetDefinitionRoutes'
 export type {
+  DefinitionAlloyAdviceStep,
+  DefinitionBoneAdviceStep,
+  DefinitionEssenceAdviceStep,
+  DefinitionEssencePreparationAdvice,
+  DefinitionEssencePreparationRoute,
+  DefinitionSpecialAdviceProgress,
+} from './targetDefinitionSpecialAdvice'
+export {
+  analyzeAlloyTargetDefinitions,
+  analyzeBoneTargetDefinitions,
+  analyzeEssencePreparationDefinitions,
+  analyzeEssenceTargetDefinitions,
+} from './targetDefinitionSpecialAdvice'
+export type {
   CraftTargetDefinition,
   CraftTargetDefinitionAlternative,
   CraftTargetDefinitions,
@@ -353,10 +373,13 @@ export type {
 } from './targetDefinitions'
 export {
   createTargetDefinitions,
+  projectTargetDefinitions,
   validateStoredTargetDefinitions,
   validateTargetDefinitions,
 } from './targetDefinitions'
 export { type ExtractedCraftTargets, extractCraftTargets } from './targetExtraction'
+export { evaluateTargetDefinitions } from './targetProgress'
+export { targetProjectSourceUsage } from './targetProjectSources'
 export type {
   CraftTargetRoute,
   CraftTargetRouteOptions,
@@ -379,6 +402,7 @@ export {
   validateCraftTargets,
   validateCraftTargetValues,
 } from './targets'
+export { loadTargetWorkbenchProject, reuseTargetCraftPlan } from './targetWorkbenchProject'
 export type {
   ItemBlock,
   ItemDiagnostic,

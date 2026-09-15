@@ -11,13 +11,13 @@ import { RehearsalPanel } from './RehearsalPanel'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (result: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (result: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      callback(planCraftTargetRoutes(...args))
+      callback(planTargetDefinitionRoutes(...args))
       return () => {}
     },
   }
@@ -70,9 +70,14 @@ it.each(['whittling', 'whittling_sinistral_erasure'] as const)(
       <TargetRoutesPanel
         catalog={catalog}
         state={state}
-        ids={['prefix1', 'prefix2', 'prefix4', 'suffix1', 'suffix2', 'suffix3']}
-        values={[]}
-        alternatives={[]}
+        definitions={{
+          nextTargetId: 20,
+          targets: ['prefix1', 'prefix2', 'prefix4', 'suffix1', 'suffix2', 'suffix3'].map(
+            (modId, index) => ({ targetId: `t${index + 1}`, modId }),
+          ),
+          values: [],
+          alternatives: [],
+        }}
         busy={false}
         translations={{ 'Omen of Whittling': '消减预兆' }}
         onPreview={preview}

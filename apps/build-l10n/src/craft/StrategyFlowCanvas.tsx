@@ -1,7 +1,7 @@
 import {
-  type CraftStrategy,
   type CraftStrategyDecision,
-  readCraftStrategy,
+  type DefinitionCraftStrategy,
+  readDefinitionCraftStrategy,
 } from '@poe2-tools/item-core'
 import { type Ref, useEffect, useId, useImperativeHandle, useRef, useState } from 'react'
 import {
@@ -18,11 +18,11 @@ import './flow-canvas.css'
 export interface StrategyFlowCanvasProps {
   active?: boolean
   connectionControl?: Ref<{ cancelConnection: () => boolean }>
-  strategy: CraftStrategy
+  strategy: DefinitionCraftStrategy
   stageId: string | undefined
   decision: CraftStrategyDecision | null
   ruleLabels: readonly string[]
-  onChange: (strategy: CraftStrategy) => void
+  onChange: (strategy: DefinitionCraftStrategy) => void
   onEditRule: (index: number) => void
 }
 export function StrategyFlowCanvas({
@@ -38,7 +38,7 @@ export function StrategyFlowCanvas({
   const [selectedId, setSelectedId] = useState(stageId)
   const [zoom, setZoom] = useState(100)
   const [connection, setConnection] = useState<{
-    strategy: CraftStrategy
+    strategy: DefinitionCraftStrategy
     ruleIndex: number
     field: 'nextStageId' | 'onBlockedStageId'
   } | null>(null)
@@ -78,8 +78,8 @@ export function StrategyFlowCanvas({
       ? strategy.rules[decision.ruleIndex]
       : undefined
   const width = flow.stages.length * 240 + 48
-  const apply = (next: CraftStrategy) => {
-    if (readCraftStrategy(next).ok) onChange(next)
+  const apply = (next: DefinitionCraftStrategy) => {
+    if (readDefinitionCraftStrategy(next).ok) onChange(next)
   }
   const select = (id: string) => {
     setSelectedId(id)

@@ -117,7 +117,7 @@ it('失落珠宝已有品质可比较和保存，显示估算保留范围条件�
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
   expect(saved.initialState.catalyst).toEqual({ id: 'Necrotic', quality: 20 })
   expect(saved.operations).toEqual([])
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.scalabilitySourceHash).toBeTruthy()
 })
 

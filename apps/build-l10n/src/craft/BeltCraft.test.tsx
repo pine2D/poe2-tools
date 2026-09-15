@@ -1,4 +1,4 @@
-import { inspectItem, parseItem } from '@poe2-tools/item-core'
+import { inspectItem, parseItem, parseTargetCraftProject } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import {
@@ -11,13 +11,13 @@ import { CraftEntry } from './CraftEntry'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
 
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (value: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (value: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      callback(planCraftTargetRoutes(...args))
+      callback(planTargetDefinitionRoutes(...args))
       return () => {}
     },
   }
@@ -57,6 +57,7 @@ it('搜索30级两栏起点、神圣范围、保存撤销和恢复使用同一�
   const project = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
   expect(project.initialState.implicitLines[0]).toBe('Has 2(1-2) Charm Slot')
   expect(project.operations[0].implicitValues[0]).toBe(1)
+  expect(parseTargetCraftProject(JSON.stringify(project), beltCatalog()).ok).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))
   expect(screen.getByText('咒符栏：2；可重掷范围：1–2。')).toBeDefined()
   expect(screen.queryByText('神圣石 × 1')).toBeNull()
@@ -149,6 +150,13 @@ it('plain未知范围明确禁用神圣，骨骼可继续并保存完整原文',
   expect(saved.initialState.implicitLines[0]).toBe('Has 2 Charm Slot')
   expect(saved.initialState.sourceText).toContain('具有 2 个咒符栏')
   expect(saved.operations[0].kind).toBe('desecrate')
+  expect(
+    parseTargetCraftProject(
+      JSON.stringify(saved),
+      beltCatalog(),
+      beltSource('zh-CN', '2', 80).dictionary,
+    ).ok,
+  ).toBe(true)
   for (const id of ['suffix1', 'exclusive1', 'exclusive2'])
     fireEvent.click(screen.getByLabelText(`候选 ${id}`))
   fireEvent.click(screen.getByRole('button', { name: '预览三项候选' }))

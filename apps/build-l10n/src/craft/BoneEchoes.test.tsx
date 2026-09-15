@@ -7,6 +7,8 @@ import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
 
+const emptyDefinitions = { nextTargetId: 1, targets: [], alternatives: [], values: [] }
+
 afterEach(() => {
   cleanup()
   localStorage.clear()
@@ -23,7 +25,7 @@ it('首组三项前声明回响，预览包含购买机会且busy锁定', () => 
     translations,
     onPreview,
   }
-  const view = render(<BoneCraftPanel {...props} disabled={false} />)
+  const view = render(<BoneCraftPanel definitions={emptyDefinitions} {...props} disabled={false} />)
   fireEvent.click(screen.getByLabelText('首次揭示使用深渊回响'))
   for (const id of ['suffix1', 'suffix2', 'suffix3'])
     fireEvent.click(screen.getByLabelText(`候选 ${id}`))
@@ -34,18 +36,18 @@ it('首组三项前声明回响，预览包含购买机会且busy锁定', () => 
     modIds: ['suffix1', 'suffix2', 'suffix3'],
     revealOmen: 'abyssal_echoes',
   })
-  view.rerender(<BoneCraftPanel {...props} disabled={true} />)
+  view.rerender(<BoneCraftPanel definitions={emptyDefinitions} {...props} disabled={true} />)
   expect((screen.getByLabelText('首次揭示使用深渊回响') as HTMLInputElement).disabled).toBe(true)
 })
 
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (result: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (result: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      callback(planCraftTargetRoutes(...args))
+      callback(planTargetDefinitionRoutes(...args))
       return () => {}
     },
   }
@@ -136,6 +138,7 @@ it('Ancient及巫妖交互显示工具未验证原因，已有首组不能晚补
   ]) {
     render(
       <BoneCraftPanel
+        definitions={emptyDefinitions}
         catalog={boneCatalog('Ring')}
         state={{ ...boneState(), pendingDesecration: pending }}
         translations={translations}
@@ -149,6 +152,7 @@ it('Ancient及巫妖交互显示工具未验证原因，已有首组不能晚补
   }
   render(
     <BoneCraftPanel
+      definitions={emptyDefinitions}
       catalog={boneCatalog()}
       state={{
         ...boneState(),
@@ -181,7 +185,7 @@ it('两组同ID按钮有独立可访问名称与选中状态，最终只预览�
     },
   }
   const props = { catalog, state, translations, onPreview: preview }
-  const view = render(<BoneCraftPanel {...props} disabled={false} />)
+  const view = render(<BoneCraftPanel definitions={emptyDefinitions} {...props} disabled={false} />)
   const first = screen.getByRole('button', { name: '首组：选择揭示 suffix1' })
   const second = screen.getByRole('button', { name: '第二组：选择揭示 suffix1' })
   fireEvent.click(second)
@@ -194,7 +198,7 @@ it('两组同ID按钮有独立可访问名称与选中状态，最终只预览�
     modId: 'suffix1',
     values: [8],
   })
-  view.rerender(<BoneCraftPanel {...props} disabled={true} />)
+  view.rerender(<BoneCraftPanel definitions={emptyDefinitions} {...props} disabled={true} />)
   expect((first as HTMLButtonElement).disabled).toBe(true)
   expect((second as HTMLButtonElement).disabled).toBe(true)
 })
@@ -252,6 +256,7 @@ it('比较明确保留首组并追加第二组及已购买机会', () => {
   }
   render(
     <CraftComparisonPanel
+      definitions={emptyDefinitions}
       catalog={boneCatalog()}
       before={before}
       after={after}

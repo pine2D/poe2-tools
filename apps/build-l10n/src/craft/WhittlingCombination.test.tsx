@@ -1,9 +1,10 @@
 import {
   exportCraftItemText,
-  IDENTITY_CRAFT_RULES_VERSION,
   importCraftState,
   inspectItem,
   parseItem,
+  parseTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
@@ -65,7 +66,8 @@ it('定向消减取消不计费，应用保留两枚材料和完整撤销恢复'
   expect(screen.getByText('左旋消抹预兆 × 1')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
+  expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
   expect(saved.initialState).toEqual({
     ...initial.value,
     affixes: initial.value.affixes.map((affix, index) => ({ ...affix, affixId: `a${index + 1}` })),

@@ -1,8 +1,8 @@
-import type { CraftStrategy } from '@poe2-tools/item-core'
+import type { DefinitionCraftStrategy } from '@poe2-tools/item-core'
 import { expect, it } from 'vitest'
 import { strategyEdgeGeometry, strategyGraphEdges } from './strategyGraph'
 
-const strategy: CraftStrategy = {
+const strategy: DefinitionCraftStrategy = {
   maxSteps: 10,
   flow: {
     entryStageId: 'a',
@@ -29,7 +29,7 @@ it('同端点的多规则和备用路线都有独立路径及可读标签间距'
     expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBeGreaterThanOrEqual(16)
 })
 it('自环与回连也分别保留输出身份，停止与默认留在阶段不画假连接', () => {
-  const p: CraftStrategy = {
+  const p: DefinitionCraftStrategy = {
     ...strategy,
     rules: [
       { stageId: 'a', conditions: [{ kind: 'always' }], action: { kind: 'stop' } },

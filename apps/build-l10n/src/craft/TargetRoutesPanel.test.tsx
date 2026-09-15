@@ -1,24 +1,34 @@
 import type {
   CraftCatalog,
+  CraftDefinitionRoutes,
   CraftResult,
   CraftState,
-  CraftTargetRoutes,
+  CraftTargetDefinitions,
 } from '@poe2-tools/item-core'
 import {
   applyCraftStep,
   BONE_RULES,
   enableCraftAffixIdentity,
-  planCraftTargetRoutes,
+  planTargetDefinitionRoutes,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { boneCatalog, boneState } from '../../../../packages/item-core/src/boneTestFixture'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 
+function definitions(ids: string[]): CraftTargetDefinitions {
+  return {
+    nextTargetId: 40,
+    targets: ids.map((modId, i) => ({ targetId: `t${27 + i}`, modId })),
+    values: [],
+    alternatives: [],
+  }
+}
+
 const pending = vi.hoisted(() => ({
   calls: [] as {
     args: unknown[]
-    callback: (result: CraftResult<CraftTargetRoutes>) => void
+    callback: (result: CraftResult<CraftDefinitionRoutes>) => void
     cancel: ReturnType<typeof vi.fn>
   }[],
 }))
@@ -47,8 +57,10 @@ it('路线明细区分同类型的旧实例移除与新实例生成', () => {
     <TargetRoutesPanel
       {...props}
       state={enabled.value}
-      ids={['Life']}
-      values={[{ modId: 'Life', bounds: [{ index: 0, min: 15 }] }]}
+      definitions={{
+        ...definitions(['Life']),
+        values: [{ targetId: 't27', modId: 'Life', bounds: [{ index: 0, min: 15 }] }],
+      }}
     />,
   )
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
@@ -67,11 +79,14 @@ it('路线明细区分同类型的旧实例移除与新实例生成', () => {
               {
                 operation: step,
                 state: applied.value,
-                matchedTargetIds: ['Life'],
-                gainedTargetIds: ['Life'],
+                matchedTargetIds: ['t27'],
+                gainedTargetIds: ['t27'],
                 lostTargetIds: [],
                 atRiskTargetIds: [],
                 rerolledTargetIds: [],
+                affectedModIds: [],
+                atRiskModIds: [],
+                rerolledModIds: [],
               },
             ],
           },
@@ -83,33 +98,41 @@ it('路线明细区分同类型的旧实例移除与新实例生成', () => {
   expect(screen.getByText(/得到 \/ 更新：\+15\(10-15\) to maximum Life/)).toBeDefined()
 })
 
-it('改变破裂目标终止旧搜索，传递第八参并丢弃迟到路线', () => {
+it('改变破裂目标终止旧搜索，传递完整定义并丢弃迟到路线', () => {
   const props = {
     catalog: boneCatalog('Ring'),
     state: boneState(['prefix1', 'prefix2', 'suffix1', 'suffix2']),
-    ids: ['prefix1', 'suffix1'],
-    values: [],
-    alternatives: [],
+    definitions: definitions(['prefix1', 'suffix1']),
     busy: false,
     translations: {},
     onPreview: vi.fn(),
   }
-  const view = render(<TargetRoutesPanel {...props} targetFracturedModId="prefix1" />)
+  const view = render(
+    <TargetRoutesPanel
+      {...props}
+      definitions={{ ...props.definitions, fracturedTargetId: 't27' }}
+    />,
+  )
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
   const first = pending.calls.at(-1)
   if (!first) throw new Error('未创建搜索')
-  expect(first.args[7]).toBe('prefix1')
-  view.rerender(<TargetRoutesPanel {...props} targetFracturedModId="suffix1" />)
+  expect(first.args[2]).toMatchObject({ fracturedTargetId: 't27' })
+  view.rerender(
+    <TargetRoutesPanel
+      {...props}
+      definitions={{ ...props.definitions, fracturedTargetId: 't28' }}
+    />,
+  )
   expect(first.cancel).toHaveBeenCalledTimes(1)
   act(() => first.callback(result))
   expect(screen.queryByText(/找到 .*条全部目标达成/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(pending.calls.at(-1)?.args[7]).toBe('suffix1')
+  expect(pending.calls.at(-1)?.args[2]).toMatchObject({ fracturedTargetId: 't28' })
 })
 vi.mock('./targetRoutesWorkerClient', () => ({
   requestTargetRoutes: (
     args: unknown[],
-    callback: (result: CraftResult<CraftTargetRoutes>) => void,
+    callback: (result: CraftResult<CraftDefinitionRoutes>) => void,
   ) => {
     const cancel = vi.fn()
     pending.calls.push({ args, callback, cancel })
@@ -174,7 +197,7 @@ function state(
   return { baseId: base.id, itemLevel: 80, rarity, affixes, sourceText: null }
 }
 
-const result: CraftResult<CraftTargetRoutes> = {
+const result: CraftResult<CraftDefinitionRoutes> = {
   ok: true,
   value: {
     alreadyMatched: false,
@@ -188,11 +211,14 @@ const result: CraftResult<CraftTargetRoutes> = {
           {
             operation: { currency: 'transmutation', modIds: ['Life'] },
             state: state('magic'),
-            matchedTargetIds: ['Life'],
-            gainedTargetIds: ['Life'],
+            matchedTargetIds: ['t27'],
+            gainedTargetIds: ['t27'],
             lostTargetIds: [],
             atRiskTargetIds: [],
             rerolledTargetIds: [],
+            affectedModIds: [],
+            atRiskModIds: [],
+            rerolledModIds: [],
           },
         ],
       },
@@ -202,9 +228,7 @@ const result: CraftResult<CraftTargetRoutes> = {
 const props = {
   catalog,
   state: state(),
-  ids: ['Life'],
-  values: [],
-  alternatives: [],
+  definitions: definitions(['Life']),
   busy: false,
   translations: {},
   onPreview: vi.fn(),
@@ -231,7 +255,7 @@ describe('路线按需计算生命周期', () => {
     const view = render(<TargetRoutesPanel {...props} />)
     expect(pending.calls).toHaveLength(0)
     fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-    view.rerender(<TargetRoutesPanel {...props} ids={['Fire']} />)
+    view.rerender(<TargetRoutesPanel {...props} definitions={definitions(['Fire'])} />)
     expect(pending.calls[0]?.cancel).toHaveBeenCalled()
     act(() => pending.calls[0]?.callback(result))
     expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
@@ -265,19 +289,21 @@ describe('路线按需计算生命周期', () => {
       (screen.getByRole('checkbox', { name: '保留当前已达成目标' }) as HTMLInputElement).checked,
     ).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-    expect(pending.calls[1]?.args[5]).toEqual({ preserveMatched: false })
+    expect(pending.calls[1]?.args[3]).toEqual({ preserveMatched: false })
   })
 })
 
-it('仅固有请求位于第7参数，条件改变取消任务并丢弃迟到结果', () => {
+it('仅固有请求位于第5参数，条件改变取消任务并丢弃迟到结果', () => {
   const implicitValues = [{ lineIndex: 0, bounds: [{ index: 0, min: 2 }] }]
-  const view = render(<TargetRoutesPanel {...props} ids={[]} implicitValues={implicitValues} />)
+  const view = render(
+    <TargetRoutesPanel {...props} definitions={definitions([])} implicitValues={implicitValues} />,
+  )
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(pending.calls[0]?.args[6]).toEqual(implicitValues)
+  expect(pending.calls[0]?.args[4]).toEqual(implicitValues)
   view.rerender(
     <TargetRoutesPanel
       {...props}
-      ids={[]}
+      definitions={definitions([])}
       implicitValues={[{ lineIndex: 0, bounds: [{ index: 0, min: 3 }] }]}
     />,
   )
@@ -285,13 +311,13 @@ it('仅固有请求位于第7参数，条件改变取消任务并丢弃迟到结
   act(() => pending.calls[0]?.callback(result))
   expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(pending.calls[1]?.args[6]).toEqual([{ lineIndex: 0, bounds: [{ index: 0, min: 3 }] }])
+  expect(pending.calls[1]?.args[4]).toEqual([{ lineIndex: 0, bounds: [{ index: 0, min: 3 }] }])
 })
 
 it.each([0, 1, 2])('骨骼路线预计材料仅计真实消耗，起始阶段%s', (startIndex) => {
   const catalog = boneCatalog()
   const initial = boneState()
-  const planned = planCraftTargetRoutes(catalog, initial, ['exclusive1'])
+  const planned = planTargetDefinitionRoutes(catalog, initial, definitions(['exclusive1']))
   if (!planned.ok) throw new Error(planned.error)
   const route = planned.value.routes[0]
   if (!route) throw new Error('缺少合成路线')
@@ -303,7 +329,7 @@ it.each([0, 1, 2])('骨骼路线预计材料仅计真实消耗，起始阶段%s'
       {...props}
       catalog={catalog}
       state={startIndex === 0 ? initial : (route.steps[startIndex - 1]?.state ?? initial)}
-      ids={['exclusive1']}
+      definitions={definitions(['exclusive1'])}
     />,
   )
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
@@ -323,9 +349,7 @@ it('费用优先需要报价，改价终止旧搜索并拒绝迟到结果，清�
   const props = {
     catalog,
     state: state(),
-    ids: ['Life'],
-    values: [],
-    alternatives: [],
+    definitions: definitions(['Life']),
     busy: false,
     translations: {},
     onPreview: vi.fn(),
@@ -340,32 +364,78 @@ it('费用优先需要报价，改价终止旧搜索并拒绝迟到结果，清�
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
   const first = pending.calls.at(-1)
   if (!first) throw Error('没有任务')
-  expect(first.args[5]).toMatchObject({ pricing })
+  expect(first.args[3]).toMatchObject({ pricing })
   const repriced = { ...pricing, prices: { 'currency:transmutation': 0.2 } }
   view.rerender(<TargetRoutesPanel {...props} pricing={repriced} />)
   expect(first.cancel).toHaveBeenCalledTimes(1)
   act(() => first.callback(result))
   expect(screen.queryByText(/找到 .*条全部目标达成/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(pending.calls.at(-1)?.args[5]).toMatchObject({ pricing: repriced })
+  expect(pending.calls.at(-1)?.args[3]).toMatchObject({ pricing: repriced })
   view.rerender(<TargetRoutesPanel {...props} />)
   expect(
     (screen.getByRole('checkbox', { name: '按自填报价优先搜索' }) as HTMLInputElement).checked,
   ).toBe(false)
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(pending.calls.at(-1)?.args[5]).not.toHaveProperty('pricing')
+  expect(pending.calls.at(-1)?.args[3]).not.toHaveProperty('pricing')
 })
 
 it('仅修改数量条件终止旧 Worker，迟到的全部模式结果不能覆盖新条件', () => {
-  const view = render(<TargetRoutesPanel {...props} minimumTargetCount={1} />)
+  const view = render(
+    <TargetRoutesPanel {...props} definitions={{ ...props.definitions, minimumTargetCount: 1 }} />,
+  )
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
   const first = pending.calls.at(-1)
   if (!first) throw new Error('没有旧搜索')
-  expect(first.args[5]).toMatchObject({ minimumTargetCount: 1 })
+  expect(first.args[2]).toMatchObject({ minimumTargetCount: 1 })
   view.rerender(<TargetRoutesPanel {...props} />)
   expect(first.cancel).toHaveBeenCalledTimes(1)
   act(() => first.callback(result))
   expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
-  expect(pending.calls.at(-1)?.args[5]).not.toHaveProperty('minimumTargetCount')
+  expect(pending.calls.at(-1)?.args[2]).not.toHaveProperty('minimumTargetCount')
+})
+
+it('删除再加同一类型分配新目标身份，旧 Worker 必须取消且结果不复活', () => {
+  const view = render(<TargetRoutesPanel {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  const first = pending.calls.at(-1)
+  if (!first) throw Error('缺少请求')
+  const replacement = {
+    ...props.definitions,
+    nextTargetId: 41,
+    targets: [{ targetId: 't40', modId: 'Life' }],
+  }
+  view.rerender(<TargetRoutesPanel {...props} definitions={replacement} />)
+  expect(first.cancel).toHaveBeenCalledTimes(1)
+  act(() => first.callback(result))
+  expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  expect(pending.calls.at(-1)?.args[2]).toEqual(replacement)
+})
+
+it('随机移除风险保留实际接受档位，目标失配说明独立使用目标定义', () => {
+  const source = {
+    ...catalog,
+    modifiers: catalog.modifiers.map((mod) =>
+      mod.id === 'ArmourB' ? { ...mod, group: 'ArmourAGroup' } : mod,
+    ),
+  }
+  const current = state('rare', [{ modId: 'ArmourB', lines: ['+25 to Armour'] }])
+  const config = {
+    ...definitions(['ArmourA']),
+    alternatives: [{ targetId: 't27', modIds: ['ArmourB'] }],
+  }
+  const planned = structuredClone(result)
+  if (!planned.ok) throw Error('缺少路线')
+  const step = planned.value.routes[0]?.steps[0]
+  if (!step) throw Error('缺少步骤')
+  step.atRiskTargetIds = ['t27']
+  step.atRiskModIds = ['ArmourB']
+  step.lostTargetIds = ['t27']
+  render(<TargetRoutesPanel {...props} catalog={source} state={current} definitions={config} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  act(() => pending.calls[0]?.callback(planned))
+  expect(screen.getByText(/整个合法随机移除池内的目标风险：Strong/)).toBeDefined()
+  expect(screen.getByText(/指定结果丢失目标身份或数值条件：Sturdy/)).toBeDefined()
 })

@@ -1,4 +1,9 @@
-import type { CraftCatalog, CraftState, CraftStrategyLeafCondition } from '@poe2-tools/item-core'
+import type {
+  CraftCatalog,
+  CraftState,
+  CraftTargetDefinition,
+  DefinitionCraftStrategyLeafCondition,
+} from '@poe2-tools/item-core'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from '@poe2-tools/item-core'
 import { StrategyPropertyCondition } from './StrategyPropertyCondition'
 import { StrategyQualityCondition } from './StrategyQualityCondition'
@@ -19,13 +24,13 @@ export const CONDITION_LABELS = {
   'open-sockets': '空孔数范围',
 } as const
 export function defaultCondition(
-  kind: CraftStrategyLeafCondition['kind'],
+  kind: DefinitionCraftStrategyLeafCondition['kind'],
   targetIds: readonly string[] = [],
-): CraftStrategyLeafCondition | null {
+): DefinitionCraftStrategyLeafCondition | null {
   if (kind === 'quality') return { kind, source: 'ordinary', min: 0 }
   if (kind === 'item-property') return { kind, property: 'physicalDps', min: 0 }
   if (kind === 'selected-targets')
-    return targetIds[0] ? { kind, modIds: [targetIds[0]], min: 1, value: true } : null
+    return targetIds[0] ? { kind, targetIds: [targetIds[0]], min: 1, value: true } : null
   if (kind === 'socket-count' || kind === 'open-sockets') return { kind, min: 1, max: 3 }
   if (kind === 'desecration-stage') return { kind, value: 'unrevealed' }
   if (kind === 'always') return { kind }
@@ -35,29 +40,35 @@ export function defaultCondition(
 }
 
 interface Props {
-  condition: CraftStrategyLeafCondition
+  condition: DefinitionCraftStrategyLeafCondition
   prefix: string
   valuePrefix: string
-  targetModIds: readonly string[]
+  targets: readonly CraftTargetDefinition[]
+  orphanedTargets: readonly CraftTargetDefinition[]
   catalog: CraftCatalog
   state: CraftState
   translateLine?: (line: string) => string | null
-  canChange: (condition: CraftStrategyLeafCondition | null) => boolean
-  onChange: (condition: CraftStrategyLeafCondition) => void
+  canChange: (condition: DefinitionCraftStrategyLeafCondition | null) => boolean
+  onChange: (condition: DefinitionCraftStrategyLeafCondition) => void
 }
 export function StrategyConditionEditor({
   condition,
   prefix,
   valuePrefix,
-  targetModIds,
+  targets,
+  orphanedTargets,
   catalog,
   state,
   translateLine,
   canChange,
   onChange,
 }: Props) {
-  const nextCondition = (kind: CraftStrategyLeafCondition['kind']) => {
-    if (kind !== 'item-property') return defaultCondition(kind, targetModIds)
+  const nextCondition = (kind: DefinitionCraftStrategyLeafCondition['kind']) => {
+    if (kind !== 'item-property')
+      return defaultCondition(
+        kind,
+        targets.map((target) => target.targetId),
+      )
     if (condition.kind === 'item-property') return condition
     return (
       (Object.keys(CRAFT_PROPERTY_LABELS) as CraftProperty[])
@@ -73,15 +84,19 @@ export function StrategyConditionEditor({
           aria-label={prefix}
           value={condition.kind}
           onChange={(event) => {
-            const value = nextCondition(event.target.value as CraftStrategyLeafCondition['kind'])
+            const value = nextCondition(
+              event.target.value as DefinitionCraftStrategyLeafCondition['kind'],
+            )
             if (value) onChange(value)
           }}
         >
-          {(Object.keys(CONDITION_LABELS) as CraftStrategyLeafCondition['kind'][]).map((kind) => (
-            <option key={kind} value={kind} disabled={!canChange(nextCondition(kind))}>
-              {CONDITION_LABELS[kind]}
-            </option>
-          ))}
+          {(Object.keys(CONDITION_LABELS) as DefinitionCraftStrategyLeafCondition['kind'][]).map(
+            (kind) => (
+              <option key={kind} value={kind} disabled={!canChange(nextCondition(kind))}>
+                {CONDITION_LABELS[kind]}
+              </option>
+            ),
+          )}
         </select>
       </label>
       {condition.kind === 'item-property' ? (
@@ -109,7 +124,8 @@ export function StrategyConditionEditor({
         <StrategyTargetCondition
           prefix={prefix}
           condition={condition}
-          targetModIds={targetModIds ?? []}
+          targets={targets}
+          orphanedTargets={orphanedTargets}
           catalog={catalog}
           {...(translateLine ? { translateLine } : {})}
           onChange={(value) => onChange(value)}

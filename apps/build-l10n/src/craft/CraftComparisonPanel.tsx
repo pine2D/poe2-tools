@@ -1,14 +1,13 @@
 import {
   analyzeCraftImplicitTargets,
-  analyzeCraftTargets,
+  analyzeTargetDefinitions,
   BONE_RULES,
   CATALYSTS,
   type CraftCatalog,
   type CraftImplicitTargetValues,
   type CraftNumericChange,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
   compareCraftStates,
   type PendingDesecration,
 } from '@poe2-tools/item-core'
@@ -18,13 +17,9 @@ import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { ModStateBadges } from './ModStateBadges'
 
 interface CraftComparisonPanelProps {
-  minimumTargetCount?: number
   targetImplicitValues?: CraftImplicitTargetValues[]
-  targetModIds?: string[]
-  targetValues?: CraftTargetValues[]
-  targetAlternatives?: CraftTargetAlternative[]
-  targetFracturedModId?: string
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   before: CraftState
   after: CraftState
   translations?: Record<string, string>
@@ -35,34 +30,27 @@ const RARITY_LABELS = { normal: '普通', magic: '魔法', rare: '稀有' } as c
 const CHANGE_LABELS = { added: '新增', removed: '移除', changed: '数值变化' } as const
 
 export function CraftComparisonPanel({
-  minimumTargetCount,
   catalog,
+  definitions,
   before,
   after,
   translateLine,
   translations = {},
   targetImplicitValues = [],
-  targetModIds = [],
-  targetValues = [],
-  targetAlternatives = [],
-  targetFracturedModId,
 }: CraftComparisonPanelProps) {
   const fractureGoalState = (state: CraftState) => {
-    if (!targetFracturedModId) return null
-    const analyzed = analyzeCraftTargets(
+    if (!definitions.fracturedTargetId) return null
+    const analyzed = analyzeTargetDefinitions(
       catalog,
       state,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
+      definitions,
       undefined,
       targetImplicitValues,
-      targetFracturedModId,
-      minimumTargetCount,
     )
     return analyzed.ok
-      ? (analyzed.value.targets.find((target) => target.modId === targetFracturedModId)?.matched ??
-          null)
+      ? analyzed.value.progress.matches.some(
+          (match) => match.targetId === definitions.fracturedTargetId,
+        )
       : null
   }
   const fractureBefore = fractureGoalState(before)
@@ -176,7 +164,7 @@ export function CraftComparisonPanel({
           <p>品质消耗会改变匹配属性的有效值，已有词缀基础数值与破裂锁定保持不变。</p>
         </section>
       ) : null}
-      {targetFracturedModId ? (
+      {definitions.fracturedTargetId ? (
         <p>
           破裂目标：{fractureBefore === null ? '无法判断' : fractureBefore ? '已达成' : '未达成'} →{' '}
           {fractureAfter === null ? '无法判断' : fractureAfter ? '已达成' : '未达成'}

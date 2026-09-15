@@ -2,13 +2,14 @@ import {
   type CraftCatalog,
   type CraftOmen,
   type CraftState,
-  type CraftStrategy,
-  type CraftStrategyCondition,
-  type CraftStrategyGoals,
-  type CraftStrategyRule,
   type CraftStrategyWorkAction,
-  evaluateCraftStrategy,
-  readCraftStrategy,
+  type CraftTargetDefinition,
+  type DefinitionCraftStrategy,
+  type DefinitionCraftStrategyCondition,
+  type DefinitionCraftStrategyGoals,
+  type DefinitionCraftStrategyRule,
+  evaluateDefinitionCraftStrategy,
+  readDefinitionCraftStrategy,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './strategy.css'
@@ -17,7 +18,7 @@ import { defaultCondition } from './StrategyConditionEditor'
 import { StrategyConditionTree } from './StrategyConditionTree'
 import { StrategyFlowEditor, StrategyRuleStages } from './StrategyFlowEditor'
 
-function example(): CraftStrategy {
+function example(): DefinitionCraftStrategy {
   return {
     maxSteps: 50,
     rules: [
@@ -47,12 +48,13 @@ interface Props {
   translations?: Record<string, string>
   translateLine?: (line: string) => string | null
   state: CraftState
-  strategy: CraftStrategy | undefined
-  goals: CraftStrategyGoals
+  strategy: DefinitionCraftStrategy | undefined
+  goals: DefinitionCraftStrategyGoals
+  orphanedTargets: readonly CraftTargetDefinition[]
   appliedSteps: number
   pending: boolean
   omenLabel: (id: CraftOmen) => string
-  onChange: (strategy: CraftStrategy | undefined) => void
+  onChange: (strategy: DefinitionCraftStrategy | undefined) => void
   onStart: (action: CraftStrategyWorkAction) => void
 }
 
@@ -67,6 +69,7 @@ export function CraftStrategyPanel({
   state,
   strategy,
   goals,
+  orphanedTargets,
   appliedSteps,
   pending,
   omenLabel,
@@ -95,12 +98,12 @@ export function CraftStrategyPanel({
   const evaluated = useMemo(
     () =>
       strategy
-        ? evaluateCraftStrategy(catalog, state, strategy, appliedSteps, goals, stageId)
+        ? evaluateDefinitionCraftStrategy(catalog, state, strategy, appliedSteps, goals, stageId)
         : null,
     [catalog, state, strategy, appliedSteps, goals, stageId],
   )
   const decision = !stageError && evaluated?.ok ? evaluated.value : null
-  const replaceRule = (index: number, rule: CraftStrategyRule) => {
+  const replaceRule = (index: number, rule: DefinitionCraftStrategyRule) => {
     if (strategy)
       onChange({
         ...strategy,
@@ -236,8 +239,8 @@ export function CraftStrategyPanel({
             <p>每条规则最多 32 个条件节点、4 层嵌套，每组最多 4 项。未知孔位取反后仍不算满足。</p>
             {strategy.rules.map((rule, index) => {
               const number = index + 1
-              const validConditions = (conditions: CraftStrategyCondition[]) =>
-                readCraftStrategy({
+              const validConditions = (conditions: DefinitionCraftStrategyCondition[]) =>
+                readDefinitionCraftStrategy({
                   ...strategy,
                   rules: strategy.rules.map((entry, ri) =>
                     ri === index ? { ...rule, conditions } : entry,
@@ -261,11 +264,16 @@ export function CraftStrategyPanel({
               ).find(
                 (kind) =>
                   !rule.conditions.some((entry) => entry.kind === kind) &&
-                  (kind !== 'selected-targets' || Boolean(goals.targetModIds?.length)),
+                  (kind !== 'selected-targets' || Boolean(goals.definitions.targets.length)),
               )
-              const nextCondition = next ? defaultCondition(next, goals.targetModIds) : null
+              const nextCondition = next
+                ? defaultCondition(
+                    next,
+                    goals.definitions.targets.map((target) => target.targetId),
+                  )
+                : null
 
-              const updateCondition = (ci: number, condition: CraftStrategyCondition) =>
+              const updateCondition = (ci: number, condition: DefinitionCraftStrategyCondition) =>
                 replaceRule(index, {
                   ...rule,
                   conditions: rule.conditions.map((entry, i) => (i === ci ? condition : entry)),
@@ -289,7 +297,8 @@ export function CraftStrategyPanel({
                         valuePrefix={`规则 ${number}`}
                         catalog={catalog}
                         state={state}
-                        targetModIds={goals.targetModIds ?? []}
+                        targets={goals.definitions.targets}
+                        orphanedTargets={orphanedTargets}
                         {...(translateLine ? { translateLine } : {})}
                         canChange={(candidate) =>
                           candidate !== null &&

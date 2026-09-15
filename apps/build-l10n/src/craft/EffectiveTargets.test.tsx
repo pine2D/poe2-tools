@@ -47,10 +47,19 @@ it('网页有效生命22目标在基础19后达成，并保存有效口径', () 
   expect(within(targets).getByText('已达成 1 / 1')).toBeDefined()
   click('保存演练到本机')
   const p = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(p.targetValues[0]).toEqual({
-    modId: 'IncreasedLife1',
-    basis: 'effective',
-    bounds: [{ index: 0, min: 22 }],
+  expect(p.rulesVersion).toBe('basic-2026-09-12-v74')
+  expect(p.targetDefinitions).toEqual({
+    nextTargetId: 2,
+    targets: [{ targetId: 't1', modId: 'IncreasedLife1' }],
+    alternatives: [],
+    values: [
+      {
+        targetId: 't1',
+        modId: 'IncreasedLife1',
+        basis: 'effective',
+        bounds: [{ index: 0, min: 22 }],
+      },
+    ],
   })
 })
 it('固有条件可保存有效火抗36，基础30后显示达成并可恢复', () => {
@@ -78,6 +87,13 @@ it('固有条件可保存有效火抗36，基础30后显示达成并可恢复', 
   expect(screen.getByText('固有目标已达成')).toBeDefined()
   click('保存演练到本机')
   const p = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(p.rulesVersion).toBe('basic-2026-09-12-v74')
+  expect(p.targetDefinitions).toEqual({
+    nextTargetId: 1,
+    targets: [],
+    alternatives: [],
+    values: [],
+  })
   expect(p.targetImplicitValues[0]).toEqual({
     lineIndex: 0,
     basis: 'effective',

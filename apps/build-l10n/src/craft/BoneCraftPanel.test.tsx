@@ -102,13 +102,17 @@ it('满六组的目标移除风险及占位侧联动在预览前可核对', () =
   const onPreview = vi.fn()
   render(
     <BoneCraftPanel
+      definitions={{
+        nextTargetId: 8,
+        targets: [{ targetId: 't7', modId: 'prefix1' }],
+        alternatives: [{ targetId: 't7', modIds: ['prefix2'] }],
+        values: [],
+      }}
       catalog={boneCatalog()}
       state={boneState(['prefix1', 'prefix2', 'prefix3', 'suffix1', 'suffix2', 'suffix3'])}
       translations={{ 'Preserved Rib': '保存肋骨' }}
       disabled={false}
       onPreview={onPreview}
-      targetModIds={['prefix1']}
-      targetAlternatives={[{ targetModId: 'prefix1', modIds: ['prefix2'] }]}
     />,
   )
   fireEvent.change(screen.getByLabelText('骨骼材料'), { target: { value: 'preserved_rib' } })
@@ -117,7 +121,7 @@ it('满六组的目标移除风险及占位侧联动在预览前可核对', () =
     true,
   )
   fireEvent.click(screen.getByLabelText('骨骼移除 prefix2'))
-  expect(screen.getByText(/本次指定移除将移除对应目标词缀：prefix1/)).toBeDefined()
+  expect(screen.queryByText(/本次指定移除将移除对应目标词缀：prefix1/)).toBeNull()
   expect((screen.getByLabelText('占用前缀') as HTMLInputElement).checked).toBe(true)
   expect((screen.getByLabelText('占用后缀') as HTMLInputElement).disabled).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: '预览骨骼结果' }))
@@ -161,8 +165,12 @@ it('固定选项逐项显示普通目标，数值达成与disabled覆盖数值�
     state,
     translations: {},
     onPreview: vi.fn(),
-    targetModIds: ['suffix1'],
-    targetValues: [{ modId: 'suffix1', bounds: [{ index: 0, min: 7 }] }],
+    definitions: {
+      nextTargetId: 8,
+      targets: [{ targetId: 't7', modId: 'suffix1' }],
+      alternatives: [],
+      values: [{ targetId: 't7', modId: 'suffix1', bounds: [{ index: 0, min: 7 }] }],
+    },
   }
   const { rerender } = render(<BoneCraftPanel {...props} disabled={false} />)
   expect(screen.getByText(/对应目标：suffix1/)).toBeDefined()

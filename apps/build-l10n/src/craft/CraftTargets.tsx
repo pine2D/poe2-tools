@@ -1,34 +1,33 @@
 import {
-  analyzeAlloyTargets,
-  analyzeBoneTargets,
-  analyzeCraftTargets,
-  analyzeEssencePreparation,
-  analyzeEssenceTargets,
+  analyzeAlloyTargetDefinitions,
+  analyzeBoneTargetDefinitions,
+  analyzeEssencePreparationDefinitions,
+  analyzeEssenceTargetDefinitions,
+  analyzeTargetDefinitions,
   type CatalogMod,
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
-  type CraftAdviceStep,
   type CraftCatalog,
+  type CraftDefinitionAdviceStep,
   type CraftImplicitTargetValues,
   type CraftOmen,
   type CraftOperation,
   type CraftPricing,
   type CraftState,
   type CraftStep,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitionEdit,
+  type CraftTargetDefinitions,
   craftOmenDescription,
   craftTargetCandidates,
-  craftTargetsSatisfied,
-  type EssenceAdviceStep,
+  type DefinitionEssenceAdviceStep,
+  definitionTargetsSatisfied,
   type ExtractedCraftTargets,
+  editTargetDefinitions,
   hasCraftModEligibility,
   hasGenesisModEligibility,
   inspectCraftAlloys,
   inspectEssences,
   validateCraftFractureTarget,
-  validateCraftTargetAlternatives,
-  validateCraftTargets,
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
 import { AlloyAdvicePanel } from './AlloyAdvicePanel'
@@ -43,24 +42,16 @@ import { TargetValueEditor } from './TargetValueEditor'
 
 interface CraftTargetsProps {
   onExtract?: (targets: ExtractedCraftTargets) => void
-  minimumTargetCount?: number
-  onMinimumTargetCountChange?: (value: number | undefined) => void
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
   state: CraftState
   targetImplicitValues?: CraftImplicitTargetValues[]
   onImplicitValuesChange?: (values: CraftImplicitTargetValues[]) => void
-  targetModIds: string[]
-  targetValues: CraftTargetValues[]
-  targetAlternatives?: CraftTargetAlternative[]
-  targetFracturedModId?: string
-  onFracturedTargetChange?: (id: string | undefined) => void
-  onAlternativesChange?: (alternatives: CraftTargetAlternative[]) => void
-  onValuesChange: (values: CraftTargetValues[]) => void
-  onChange: (ids: string[]) => void
-  onStart: (step: CraftAdviceStep) => void
-  onStartEssence: (step: EssenceAdviceStep) => void
+  definitions: CraftTargetDefinitions
+  onEdit: (edit: CraftTargetDefinitionEdit) => void
+  onStart: (step: CraftDefinitionAdviceStep) => void
+  onStartEssence: (step: DefinitionEssenceAdviceStep) => void
   onStartPreparation: (operation: CraftOperation) => void
   onPreviewRoute: (operation: CraftStep) => void
   translations: Record<string, string>
@@ -71,22 +62,14 @@ interface CraftTargetsProps {
 
 export function CraftTargets({
   onExtract,
-  minimumTargetCount,
-  onMinimumTargetCountChange,
   pricing,
   spentSteps,
   catalog,
   state,
-  targetModIds,
+  definitions,
+  onEdit,
   targetImplicitValues = [],
   onImplicitValuesChange,
-  targetValues,
-  targetAlternatives = [],
-  targetFracturedModId,
-  onFracturedTargetChange,
-  onAlternativesChange,
-  onValuesChange,
-  onChange,
   onStart,
   onStartEssence,
   onStartPreparation,
@@ -96,6 +79,13 @@ export function CraftTargets({
   omen,
   translateLine,
 }: CraftTargetsProps) {
+  const { minimumTargetCount } = definitions
+  const targetModIds = definitions.targets.map((target) => target.modId)
+  const targetAlternatives = definitions.alternatives.map((entry) => ({
+    targetModId:
+      definitions.targets.find((target) => target.targetId === entry.targetId)?.modId ?? '',
+    modIds: entry.modIds,
+  }))
   const [query, setQuery] = useState('')
   const [message, setMessage] = useState('')
   const [showAllSteps, setShowAllSteps] = useState(false)
@@ -164,116 +154,48 @@ export function CraftTargets({
     })
   }, [pool, query, translateLine])
   const advice = useMemo(
-    () =>
-      analyzeCraftTargets(
-        catalog,
-        state,
-        targetModIds,
-        targetValues,
-        targetAlternatives,
-        omen,
-        targetImplicitValues,
-        targetFracturedModId,
-        minimumTargetCount,
-      ),
-    [
-      catalog,
-      state,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
-      omen,
-      targetImplicitValues,
-      targetFracturedModId,
-      minimumTargetCount,
-    ],
+    () => analyzeTargetDefinitions(catalog, state, definitions, omen, targetImplicitValues),
+    [catalog, state, definitions, omen, targetImplicitValues],
   )
   const boneAdvice = useMemo(
-    () =>
-      analyzeBoneTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
-        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
-        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
-      }),
-    [
-      catalog,
-      state,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
-      minimumTargetCount,
-      targetFracturedModId,
-    ],
+    () => analyzeBoneTargetDefinitions(catalog, state, definitions),
+    [catalog, state, definitions],
   )
-  const boneSteps = boneAdvice.ok ? boneAdvice.value : []
   const essenceAdvice = useMemo(
-    () =>
-      analyzeEssenceTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
-        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
-        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
-      }),
-    [
-      catalog,
-      state,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
-      minimumTargetCount,
-      targetFracturedModId,
-    ],
+    () => analyzeEssenceTargetDefinitions(catalog, state, definitions),
+    [catalog, state, definitions],
   )
   const alloyAdvice = useMemo(
-    () =>
-      analyzeAlloyTargets(catalog, state, targetModIds, targetValues, targetAlternatives, {
-        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
-        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
-      }),
-    [
-      catalog,
-      state,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
-      minimumTargetCount,
-      targetFracturedModId,
-    ],
+    () => analyzeAlloyTargetDefinitions(catalog, state, definitions),
+    [catalog, state, definitions],
   )
   const preparationAdvice = useMemo(
-    () =>
-      analyzeEssencePreparation(catalog, state, targetModIds, targetValues, targetAlternatives, {
-        ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
-        ...(targetFracturedModId === undefined ? {} : { fracturedTargetId: targetFracturedModId }),
-      }),
-    [
-      catalog,
-      state,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
-      minimumTargetCount,
-      targetFracturedModId,
-    ],
+    () => analyzeEssencePreparationDefinitions(catalog, state, definitions),
+    [catalog, state, definitions],
   )
-  const preparationRoutes = preparationAdvice.ok ? preparationAdvice.value.routes : []
+  const boneSteps = boneAdvice.ok ? boneAdvice.value : []
   const essenceSteps = essenceAdvice.ok ? essenceAdvice.value : []
+  const preparationRoutes = preparationAdvice.ok ? preparationAdvice.value.routes : []
+  const edit = (change: CraftTargetDefinitionEdit) => {
+    const checked = editTargetDefinitions(catalog, state, definitions, change)
+    if (!checked.ok) {
+      setMessage(checked.error)
+      return
+    }
+    onEdit(change)
+    setMessage(
+      change.kind === 'remove' && checked.value.minimumTargetCount !== minimumTargetCount
+        ? '目标减少，达成数量已调整为剩余目标数。'
+        : '',
+    )
+  }
   const addTarget = (id: string) => {
     const mod = modById.get(id)
     if (mod && targetModIds.some((targetId) => modById.get(targetId)?.group === mod.group)) {
       setMessage('同组已有目标；请在已有目标中勾选可接受的同组档位。')
       return
     }
-    const checked = validateCraftTargets(
-      catalog,
-      state.baseId,
-      [...targetModIds, id],
-      minimumTargetCount,
-      targetFracturedModId,
-    )
-    if (!checked.ok) {
-      setMessage(checked.error)
-      return
-    }
-    onChange(checked.value)
-    setMessage('')
+    edit({ kind: 'add', modId: id })
   }
   const visibleSteps = useMemo(() => {
     if (!advice.ok) return []
@@ -295,7 +217,7 @@ export function CraftTargets({
     !state.pendingDesecration &&
     totalTargets > 0 &&
     advice.ok &&
-    craftTargetsSatisfied(advice.value, minimumTargetCount, targetFracturedModId)
+    definitionTargetsSatisfied(advice.value)
   const implicitLabel = (index: number) => {
     const line =
       catalog.bases.find((base) => base.id === state.baseId)?.implicit?.split('\n')[index] ?? ''
@@ -307,6 +229,8 @@ export function CraftTargets({
     const firstLine = mod.lines[0] ?? ''
     return `${mod.name} · ${translateLine?.(firstLine) ?? firstLine}`
   }
+  const targetLabel = (id: string) =>
+    modLabel(definitions.targets.find((target) => target.targetId === id)?.modId ?? id)
   const properties = (mod: CatalogMod) => (
     <>
       <strong>{mod.name}</strong>
@@ -347,31 +271,22 @@ export function CraftTargets({
           catalog={catalog}
           state={state}
           busy={busy}
+          context={definitions}
           onApply={onExtract}
           {...(translateLine ? { translateLine } : {})}
         />
       ) : null}
-      {targetModIds.length > 0 && onMinimumTargetCountChange ? (
+      {targetModIds.length > 0 ? (
         <label>
           显式目标达成条件
           <select
             aria-label="显式目标达成条件"
             value={minimumTargetCount ?? 'all'}
             onChange={(event) => {
-              const required = event.target.value === 'all' ? undefined : Number(event.target.value)
-              const checked = validateCraftTargets(
-                catalog,
-                state.baseId,
-                targetModIds,
-                required,
-                targetFracturedModId,
-              )
-              if (!checked.ok) {
-                setMessage(checked.error)
-                return
-              }
-              onMinimumTargetCountChange(required)
-              setMessage('')
+              edit({
+                kind: 'minimum',
+                count: event.target.value === 'all' ? null : Number(event.target.value),
+              })
             }}
           >
             <option value="all">全部显式目标组</option>
@@ -394,6 +309,7 @@ export function CraftTargets({
       </p>
       {onImplicitValuesChange ? (
         <ImplicitTargetEditor
+          context={definitions}
           catalog={catalog}
           state={state}
           values={targetImplicitValues}
@@ -402,16 +318,12 @@ export function CraftTargets({
         />
       ) : null}
       <TargetRoutesPanel
-        {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
         {...(pricing ? { pricing } : {})}
         {...(spentSteps ? { spentSteps } : {})}
         catalog={catalog}
         state={state}
-        ids={targetModIds}
-        values={targetValues}
-        alternatives={targetAlternatives}
+        definitions={definitions}
         implicitValues={targetImplicitValues}
-        {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
         busy={busy}
         translations={translations}
         onPreview={onPreviewRoute}
@@ -460,357 +372,322 @@ export function CraftTargets({
         <p className="target-warning" role="status">
           {advice.error}
         </p>
-      ) : (
-        <>
-          <div className="target-list">
-            {advice.value.targets.map((target) => {
-              const mod = modById.get(target.modId)
-              return (
-                <article key={target.modId}>
-                  <span className={target.matched ? 'target-met' : 'target-meta'}>
-                    {target.matched ? '已达成' : '未达成'}
-                  </span>
-                  {onFracturedTargetChange &&
-                  validateCraftFractureTarget(
-                    catalog,
-                    targetModIds,
-                    targetAlternatives,
-                    target.modId,
-                  ).ok ? (
-                    <label className="target-alternative">
-                      <input
-                        type="checkbox"
-                        aria-label={`要求破裂 ${target.modId}`}
-                        checked={targetFracturedModId === target.modId}
-                        onChange={(event) => {
-                          const required = event.target.checked ? target.modId : undefined
-                          const combined = validateCraftTargets(
-                            catalog,
-                            state.baseId,
-                            targetModIds,
-                            minimumTargetCount,
-                            required,
-                          )
-                          if (!combined.ok) {
-                            setMessage(combined.error)
-                            return
-                          }
-                          onFracturedTargetChange(required)
-                          setMessage('')
-                        }}
-                      />
-                      要求此组破裂（同组任一已接受档位；每件最多一组）
-                    </label>
-                  ) : null}
-                  {(target.alternatives ?? [target]).map((member) => {
-                    const memberMod = modById.get(member.modId)
-                    return (
-                      <section key={member.modId} aria-label={`目标档位 ${member.modId}`}>
-                        {target.alternatives ? (
-                          <p className={member.matched ? 'target-met' : 'target-meta'}>
-                            {member.modId === target.modId ? '主档位' : '替代档位'} ·{' '}
-                            {member.matched ? '已达成' : '未达成'}
-                          </p>
-                        ) : null}
-                        {memberMod ? properties(memberMod) : <code>{member.modId}</code>}
-                        {member.numeric.map((value) => (
-                          <p key={value.index}>
-                            {targetValues.find((entry) => entry.modId === member.modId)?.basis ===
-                            'effective'
-                              ? '有效'
-                              : '基础'}
-                            数值 {value.index + 1}：当前{' '}
-                            {value.actualRange
-                              ? `${value.actualRange.min}–${value.actualRange.max}`
-                              : (value.actual ?? '未知')}
-                            ；{value.min === undefined ? '' : `至少 ${value.min}`}
-                            {value.min !== undefined && value.max !== undefined ? '，' : ''}
-                            {value.max === undefined ? '' : `至多 ${value.max}`} ·{' '}
-                            {value.matched ? '达成' : '未达成'}
-                          </p>
-                        ))}
-                        {memberMod ? (
-                          <TargetValueEditor
-                            {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
-                            key={`${member.modId}:${JSON.stringify(targetValues.find((entry) => entry.modId === member.modId) ?? null)}`}
-                            catalog={catalog}
-                            baseId={state.baseId}
-                            state={state}
-                            ids={targetModIds}
-                            alternatives={targetAlternatives}
-                            values={targetValues}
-                            mod={memberMod}
-                            onChange={onValuesChange}
-                            {...(translateLine === undefined ? {} : { translateLine })}
-                          />
-                        ) : null}
-                        {!target.matched && member.reasons.length > 0 ? (
-                          <ul>
-                            {member.reasons.map((reason) => (
-                              <li key={reason}>{reason}</li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </section>
-                    )
-                  })}
-                  {mod && onAlternativesChange ? (
-                    <details>
-                      <summary>可接受的同组档位 · {mod.name}</summary>
-                      <p>仅明确勾选的档位计入目标；每个档位分别设置数值条件。</p>
-                      {pool
-                        .filter(
-                          (candidate) =>
-                            candidate.id !== mod.id &&
-                            candidate.kind === mod.kind &&
-                            candidate.group === mod.group,
-                        )
-                        .map((candidate) => {
-                          const selected =
-                            targetAlternatives.find((entry) => entry.targetModId === mod.id)
-                              ?.modIds ?? []
-                          return (
-                            <label key={candidate.id} className="target-alternative">
-                              <input
-                                type="checkbox"
-                                aria-label={`接受档位 ${candidate.id}`}
-                                checked={selected.includes(candidate.id)}
-                                onChange={(event) => {
-                                  const modIds = event.target.checked
-                                    ? [...selected, candidate.id]
-                                    : selected.filter((id) => id !== candidate.id)
-                                  const next = targetAlternatives.filter(
-                                    (entry) => entry.targetModId !== mod.id,
-                                  )
-                                  if (modIds.length) next.push({ targetModId: mod.id, modIds })
-                                  const checked = validateCraftTargetAlternatives(
-                                    catalog,
-                                    state.baseId,
-                                    targetModIds,
-                                    next,
-                                    minimumTargetCount,
-                                  )
-                                  if (!checked.ok) {
-                                    setMessage(checked.error)
-                                    return
-                                  }
-                                  if (targetFracturedModId) {
-                                    const fracture = validateCraftFractureTarget(
-                                      catalog,
-                                      targetModIds,
-                                      checked.value,
-                                      targetFracturedModId,
-                                    )
-                                    if (!fracture.ok) {
-                                      setMessage(fracture.error)
-                                      return
-                                    }
-                                  }
-                                  onAlternativesChange(checked.value)
-                                  setMessage('')
-                                }}
-                              />
-                              <span>{properties(candidate)}</span>
-                            </label>
-                          )
-                        })}
-                    </details>
-                  ) : null}
-                  <button
-                    type="button"
-                    aria-label={`移除目标 ${target.modId}`}
-                    onClick={() => {
-                      const next = targetModIds.filter((id) => id !== target.modId)
-                      const required =
-                        minimumTargetCount !== undefined && minimumTargetCount > next.length
-                          ? undefined
-                          : minimumTargetCount
-                      const checked = validateCraftTargets(
-                        catalog,
-                        state.baseId,
-                        next,
-                        required,
-                        next.includes(targetFracturedModId ?? '')
-                          ? targetFracturedModId
-                          : undefined,
-                      )
-                      if (!checked.ok) {
-                        setMessage('移除后无法按全部模式满足条件，请先调整达成数量。')
-                        return
-                      }
-                      onChange(next)
-                      setMessage(
-                        required !== minimumTargetCount ? '目标减少，达成条件已恢复为全部。' : '',
-                      )
-                    }}
-                  >
-                    移除目标
-                  </button>
-                </article>
-              )
-            })}
-          </div>
-          {totalTargets > 0 || state.pendingDesecration ? (
-            <details className="target-advice" open>
-              <summary>
-                下一步提示 ·{' '}
-                {advice.value.steps.length +
-                  essenceSteps.length +
-                  preparationRoutes.length +
-                  boneSteps.length}{' '}
-                种指定结果
-              </summary>
-              <p>
-                列出可推进目标的受支持通货及精华；请同时核对重掷、移除和重置风险。没有比较概率或价格，也不保证完整路线可达。
-              </p>
-              {state.pendingDesecration ? (
-                <p>当前仍有未揭示亵渎，请先完成候选与揭示；已有目标达成不代表隐藏状态已结束。</p>
+      ) : null}
+      <div className="target-list">
+        {definitions.targets.map((target, index) => {
+          const mod = modById.get(target.modId)
+          const status = advice.ok
+            ? advice.value.targets.find((entry) => entry.targetId === target.targetId)
+            : undefined
+          const selected =
+            definitions.alternatives.find((entry) => entry.targetId === target.targetId)?.modIds ??
+            []
+          return (
+            <article key={target.targetId}>
+              <span className={status?.matched ? 'target-met' : 'target-meta'}>
+                {status ? (status.matched ? '已达成' : '未达成') : '当前无法判断'}
+              </span>
+              {validateCraftFractureTarget(catalog, targetModIds, targetAlternatives, target.modId)
+                .ok ? (
+                <label className="target-alternative">
+                  <input
+                    type="checkbox"
+                    aria-label={`要求破裂 ${target.modId}`}
+                    checked={definitions.fracturedTargetId === target.targetId}
+                    onChange={(event) =>
+                      edit({
+                        kind: 'fractured',
+                        targetId: event.target.checked ? target.targetId : null,
+                      })
+                    }
+                  />
+                  要求此组破裂（同组任一已接受档位；每件最多一组）
+                </label>
               ) : null}
-              {allMatched ? (
-                <p>
-                  {minimumTargetCount !== undefined
-                    ? '数量条件及必选目标均已达成，可停止当前路线。'
-                    : targetImplicitValues.length
-                      ? '所有目标组及固有条件均已达成，可停止当前路线。'
-                      : '所有目标组均已达成，可停止当前路线。'}
-                </p>
-              ) : null}
-              {!allMatched &&
-              advice.value.steps.length === 0 &&
-              essenceSteps.length === 0 &&
-              preparationRoutes.length === 0 &&
-              boneSteps.length === 0 ? (
-                <p>
-                  当前没有可直接推进目标的受支持通货、精华或骨骼提示。请检查物等、冲突和目标条件；这不代表所有游戏制作路线都不可行。
-                </p>
-              ) : null}
-              {!boneAdvice.ok ? <p role="status">{boneAdvice.error}</p> : null}
-              <BoneAdvicePanel
-                catalog={catalog}
-                state={state}
-                steps={boneSteps}
-                translations={translations}
-                busy={busy}
-                onPreview={onPreviewRoute}
-                {...(translateLine ? { translateLine } : {})}
-              />
-              <EssencePreparationPanel
-                catalog={catalog}
-                state={state}
-                routes={preparationRoutes}
-                truncated={preparationAdvice.ok && preparationAdvice.value.truncated}
-                translations={translations}
-                busy={busy}
-                onStartPreparation={onStartPreparation}
-                {...(translateLine ? { translateLine } : {})}
-              />
-              <AlloyAdvicePanel
-                catalog={catalog}
-                state={state}
-                steps={alloyAdvice.ok ? alloyAdvice.value : []}
-                translations={translations}
-                busy={busy}
-                onPreview={onPreviewRoute}
-                {...(translateLine ? { translateLine } : {})}
-              />
-              <EssenceAdvicePanel
-                catalog={catalog}
-                state={state}
-                steps={essenceSteps}
-                translations={translations}
-                busy={busy}
-                onStartEssence={onStartEssence}
-                {...(translateLine ? { translateLine } : {})}
-              />
-              {visibleSteps.map((step) => {
-                const currency = CRAFT_CURRENCY_LABELS[step.currency]
-                const removal = step.removeModId ? modLabel(step.removeModId) : null
+              {[target.modId, ...selected].map((modId) => {
+                const memberMod = modById.get(modId)
+                const member =
+                  status?.alternatives?.find((entry) => entry.modId === modId) ??
+                  (status?.modId === modId ? status : undefined)
+                const saved = definitions.values.find(
+                  (entry) => entry.targetId === target.targetId && entry.modId === modId,
+                )
                 return (
-                  <article key={`${step.currency}:${step.removeAffixId ?? step.removeModId ?? ''}`}>
-                    <h4>
-                      {currency}
-                      {removal ? ` · 演练移除 ${removal}` : ''}
-                    </h4>
-                    {CRAFT_CURRENCY_RULES[step.currency].minModLevel > 0 ? (
-                      <p>
-                        最低词缀等级 {CRAFT_CURRENCY_RULES[step.currency].minModLevel}
-                        ，包含整类低档词缀的最高可用档位例外。
+                  <section key={modId} aria-label={`目标档位 ${modId}`}>
+                    {selected.length ? (
+                      <p className={member?.matched ? 'target-met' : 'target-meta'}>
+                        {modId === target.modId ? '主档位' : '替代档位'} ·{' '}
+                        {member ? (member.matched ? '已达成' : '未达成') : '当前无法判断'}
                       </p>
                     ) : null}
-                    <p>
-                      {step.currency === 'divine'
-                        ? '已有目标数值尚未满足，可重掷这些目标：'
-                        : step.currency === 'annulment'
-                          ? '指定移除后，可在下一次增幅或崇高中选择：'
-                          : '准备本次通货后，可选择以下目标之一：'}
-                    </p>
-                    <ul>
-                      {step.targetImplicitLineIndexes?.map((index) => (
-                        <li key={`implicit:${index}`}>{implicitLabel(index)}</li>
-                      ))}
-                      {step.targetModIds.map((id) => (
-                        <li key={id}>{modLabel(id)}</li>
-                      ))}
-                    </ul>
-                    {step.currency === 'divine' ? (
-                      <p className="target-warning">
-                        {step.omen === 'blessed'
-                          ? craftOmenDescription('blessed')
-                          : '神圣同时重掷显式与固有范围，其他已达成数值条件也可能变差；不保证达到目标。'}
-                        {step.rerolledImplicitLineIndexes?.length
-                          ? `涉及固有目标：${step.rerolledImplicitLineIndexes.map(implicitLabel).join('；')}`
-                          : ''}
-                        {step.rerolledTargetIds?.length
-                          ? `涉及数值目标：${step.rerolledTargetIds.map(modLabel).join('；')}`
-                          : ''}
+                    {memberMod ? properties(memberMod) : <code>{modId}</code>}
+                    {(
+                      member?.numeric ??
+                      saved?.bounds.map((bound) => ({
+                        ...bound,
+                        actual: null,
+                        matched: false,
+                        actualRange: undefined,
+                      })) ??
+                      []
+                    ).map((value) => (
+                      <p key={value.index}>
+                        {saved?.basis === 'effective' ? '有效' : '基础'}数值 {value.index + 1}：当前{' '}
+                        {value.actualRange
+                          ? `${value.actualRange.min}–${value.actualRange.max}`
+                          : (value.actual ?? '未知')}
+                        ；{value.min === undefined ? '' : `至少 ${value.min}`}
+                        {value.min !== undefined && value.max !== undefined ? '，' : ''}
+                        {value.max === undefined ? '' : `至多 ${value.max}`} ·{' '}
+                        {member ? (value.matched ? '达成' : '未达成') : '当前无法判断'}
                       </p>
+                    ))}
+                    {memberMod ? (
+                      <TargetValueEditor
+                        catalog={catalog}
+                        state={state}
+                        definitions={definitions}
+                        targetId={target.targetId}
+                        mod={memberMod}
+                        onEdit={onEdit}
+                        {...(translateLine ? { translateLine } : {})}
+                      />
                     ) : null}
-                    {step.randomRemovalRisk ? (
-                      <p className="target-warning">
-                        {step.omen
-                          ? craftOmenDescription(step.omen)
-                          : '游戏实际随机移除；已有目标没有被保护。'}
-                        这里指定移除结果仅用于演练。
-                      </p>
+                    {!status?.matched && member?.reasons.length ? (
+                      <ul>
+                        {member.reasons.map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
                     ) : null}
-                    {step.clearsAll ? (
-                      <p className="target-warning">
-                        将清除全部已有显式词缀；需依次选择四组，后续每组仍需校验，不能据此保证整套组合可达。
-                      </p>
-                    ) : null}
-                    {step.lostTargetIds.length > 0 ? (
-                      <p className="target-warning">
-                        该指定结果会失去已有目标：{step.lostTargetIds.map(modLabel).join('；')}
-                      </p>
-                    ) : null}
-                    {step.lostImplicitLineIndexes?.length ? (
-                      <p className="target-warning">
-                        该指定结果会失去已有固有目标：
-                        {step.lostImplicitLineIndexes.map(implicitLabel).join('；')}
-                      </p>
-                    ) : null}
-                    <button
-                      type="button"
-                      disabled={busy}
-                      aria-label={`演练建议：${currency}${step.removeModId ? `，移除 ${step.removeModId}` : ''}`}
-                      onClick={() => onStart(step)}
-                    >
-                      打开{currency}演练
-                    </button>
-                  </article>
+                  </section>
                 )
               })}
-              {showAllSteps || advice.value.steps.length > visibleSteps.length ? (
-                <button type="button" onClick={() => setShowAllSteps(!showAllSteps)}>
-                  {showAllSteps
-                    ? '收起其余建议'
-                    : `显示其余 ${advice.value.steps.length - visibleSteps.length} 种建议`}
-                </button>
+              {mod ? (
+                <details>
+                  <summary>可接受的同组档位 · {mod.name}</summary>
+                  <p>仅明确勾选的档位计入目标；每个档位分别设置数值条件。</p>
+                  {pool
+                    .filter(
+                      (candidate) =>
+                        candidate.id !== mod.id &&
+                        candidate.kind === mod.kind &&
+                        candidate.group === mod.group,
+                    )
+                    .map((candidate) => (
+                      <label key={candidate.id} className="target-alternative">
+                        <input
+                          type="checkbox"
+                          aria-label={`接受档位 ${candidate.id}`}
+                          checked={selected.includes(candidate.id)}
+                          onChange={(event) =>
+                            edit({
+                              kind: 'alternatives',
+                              targetId: target.targetId,
+                              modIds: event.target.checked
+                                ? [...selected, candidate.id]
+                                : selected.filter((id) => id !== candidate.id),
+                            })
+                          }
+                        />
+                        <span>{properties(candidate)}</span>
+                      </label>
+                    ))}
+                </details>
               ) : null}
-            </details>
+              {([-1, 1] as const).map((direction) => (
+                <button
+                  key={direction}
+                  type="button"
+                  aria-label={`${direction === -1 ? '上移' : '下移'}目标 ${target.modId}`}
+                  disabled={
+                    index + direction < 0 || index + direction >= definitions.targets.length
+                  }
+                  onClick={() => {
+                    const ids = definitions.targets.map((entry) => entry.targetId)
+                    const other = ids[index + direction] as string
+                    ids[index + direction] = target.targetId
+                    ids[index] = other
+                    edit({ kind: 'reorder', targetIds: ids })
+                  }}
+                >
+                  {direction === -1 ? '上移' : '下移'}
+                </button>
+              ))}
+              <button
+                type="button"
+                aria-label={`移除目标 ${target.modId}`}
+                onClick={() => edit({ kind: 'remove', targetId: target.targetId })}
+              >
+                移除目标
+              </button>
+            </article>
+          )
+        })}
+      </div>
+      {advice.ok && (totalTargets > 0 || state.pendingDesecration) ? (
+        <details className="target-advice" open>
+          <summary>
+            下一步提示 ·{' '}
+            {advice.value.steps.length +
+              essenceSteps.length +
+              preparationRoutes.length +
+              boneSteps.length}{' '}
+            种指定结果
+          </summary>
+          <p>
+            列出可推进目标的受支持通货及精华；请同时核对重掷、移除和重置风险。没有比较概率或价格，也不保证完整路线可达。
+          </p>
+          {state.pendingDesecration ? (
+            <p>当前仍有未揭示亵渎，请先完成候选与揭示；已有目标达成不代表隐藏状态已结束。</p>
           ) : null}
-        </>
-      )}
+          {allMatched ? (
+            <p>
+              {minimumTargetCount !== undefined
+                ? '数量条件及必选目标均已达成，可停止当前路线。'
+                : targetImplicitValues.length
+                  ? '所有目标组及固有条件均已达成，可停止当前路线。'
+                  : '所有目标组均已达成，可停止当前路线。'}
+            </p>
+          ) : null}
+          {!allMatched &&
+          advice.value.steps.length === 0 &&
+          essenceSteps.length === 0 &&
+          preparationRoutes.length === 0 &&
+          boneSteps.length === 0 ? (
+            <p>
+              当前没有可直接推进目标的受支持通货、精华或骨骼提示。请检查物等、冲突和目标条件；这不代表所有游戏制作路线都不可行。
+            </p>
+          ) : null}
+          {!boneAdvice.ok ? <p role="status">{boneAdvice.error}</p> : null}
+          <BoneAdvicePanel
+            definitions={definitions}
+            catalog={catalog}
+            state={state}
+            steps={boneSteps}
+            translations={translations}
+            busy={busy}
+            onPreview={onPreviewRoute}
+            {...(translateLine ? { translateLine } : {})}
+          />
+          <EssencePreparationPanel
+            definitions={definitions}
+            catalog={catalog}
+            state={state}
+            routes={preparationRoutes}
+            truncated={preparationAdvice.ok && preparationAdvice.value.truncated}
+            translations={translations}
+            busy={busy}
+            onStartPreparation={onStartPreparation}
+            {...(translateLine ? { translateLine } : {})}
+          />
+          <AlloyAdvicePanel
+            definitions={definitions}
+            catalog={catalog}
+            state={state}
+            steps={alloyAdvice.ok ? alloyAdvice.value : []}
+            translations={translations}
+            busy={busy}
+            onPreview={onPreviewRoute}
+            {...(translateLine ? { translateLine } : {})}
+          />
+          <EssenceAdvicePanel
+            definitions={definitions}
+            catalog={catalog}
+            state={state}
+            steps={essenceSteps}
+            translations={translations}
+            busy={busy}
+            onStartEssence={onStartEssence}
+            {...(translateLine ? { translateLine } : {})}
+          />
+          {visibleSteps.map((step) => {
+            const currency = CRAFT_CURRENCY_LABELS[step.currency]
+            const removal = step.removeModId ? modLabel(step.removeModId) : null
+            return (
+              <article key={`${step.currency}:${step.removeAffixId ?? step.removeModId ?? ''}`}>
+                <h4>
+                  {currency}
+                  {removal ? ` · 演练移除 ${removal}` : ''}
+                </h4>
+                {CRAFT_CURRENCY_RULES[step.currency].minModLevel > 0 ? (
+                  <p>
+                    最低词缀等级 {CRAFT_CURRENCY_RULES[step.currency].minModLevel}
+                    ，包含整类低档词缀的最高可用档位例外。
+                  </p>
+                ) : null}
+                <p>
+                  {step.currency === 'divine'
+                    ? '已有目标数值尚未满足，可重掷这些目标：'
+                    : step.currency === 'annulment'
+                      ? '指定移除后，可在下一次增幅或崇高中选择：'
+                      : '准备本次通货后，可选择以下目标之一：'}
+                </p>
+                <ul>
+                  {step.targetImplicitLineIndexes?.map((index) => (
+                    <li key={`implicit:${index}`}>{implicitLabel(index)}</li>
+                  ))}
+                  {step.targetModIds.map((id) => (
+                    <li key={id}>{modLabel(id)}</li>
+                  ))}
+                </ul>
+                {step.currency === 'divine' ? (
+                  <p className="target-warning">
+                    {step.omen === 'blessed'
+                      ? craftOmenDescription('blessed')
+                      : '神圣同时重掷显式与固有范围，其他已达成数值条件也可能变差；不保证达到目标。'}
+                    {step.rerolledImplicitLineIndexes?.length
+                      ? `涉及固有目标：${step.rerolledImplicitLineIndexes.map(implicitLabel).join('；')}`
+                      : ''}
+                    {step.rerolledTargetIds?.length
+                      ? `涉及数值目标：${step.rerolledTargetIds.map(targetLabel).join('；')}`
+                      : ''}
+                  </p>
+                ) : null}
+                {step.randomRemovalRisk ? (
+                  <p className="target-warning">
+                    {step.omen
+                      ? craftOmenDescription(step.omen)
+                      : '游戏实际随机移除；已有目标没有被保护。'}
+                    这里指定移除结果仅用于演练。
+                  </p>
+                ) : null}
+                {step.clearsAll ? (
+                  <p className="target-warning">
+                    将清除全部已有显式词缀；需依次选择四组，后续每组仍需校验，不能据此保证整套组合可达。
+                  </p>
+                ) : null}
+                {step.lostTargetIds.length > 0 ? (
+                  <p className="target-warning">
+                    该指定结果会失去已有目标：{step.lostTargetIds.map(targetLabel).join('；')}
+                  </p>
+                ) : null}
+                {step.lostImplicitLineIndexes?.length ? (
+                  <p className="target-warning">
+                    该指定结果会失去已有固有目标：
+                    {step.lostImplicitLineIndexes.map(implicitLabel).join('；')}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-label={`演练建议：${currency}${step.removeModId ? `，移除 ${step.removeModId}` : ''}`}
+                  onClick={() => onStart(step)}
+                >
+                  打开{currency}演练
+                </button>
+              </article>
+            )
+          })}
+          {showAllSteps || advice.value.steps.length > visibleSteps.length ? (
+            <button type="button" onClick={() => setShowAllSteps(!showAllSteps)}>
+              {showAllSteps
+                ? '收起其余建议'
+                : `显示其余 ${advice.value.steps.length - visibleSteps.length} 种建议`}
+            </button>
+          ) : null}
+        </details>
+      ) : null}
     </section>
   )
 }

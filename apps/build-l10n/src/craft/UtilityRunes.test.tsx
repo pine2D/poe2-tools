@@ -78,7 +78,7 @@ it('新增符文从导入到恐惧增效、覆盖、费用及历史恢复一致'
   expect(effects().getByText('+48 to maximum Mana')).toBeDefined()
   click('保存演练到本机')
   const project = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(project.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(project.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(project.operations).toHaveLength(2)
   expect(project.initialState.runeSourceLines).toEqual([
     '+45 to maximum Life',

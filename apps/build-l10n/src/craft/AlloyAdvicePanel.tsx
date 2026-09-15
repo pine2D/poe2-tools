@@ -1,9 +1,10 @@
 import {
-  type AlloyAdviceStep,
   applyCraftStep,
   type CraftCatalog,
   type CraftState,
   type CraftStep,
+  type CraftTargetDefinitions,
+  type DefinitionAlloyAdviceStep,
 } from '@poe2-tools/item-core'
 import { useState } from 'react'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
@@ -12,6 +13,7 @@ export function AlloyAdvicePanel({
   catalog,
   state,
   steps,
+  definitions,
   translations,
   busy,
   onPreview,
@@ -19,7 +21,8 @@ export function AlloyAdvicePanel({
 }: {
   catalog: CraftCatalog
   state: CraftState
-  steps: AlloyAdviceStep[]
+  definitions: CraftTargetDefinitions
+  steps: DefinitionAlloyAdviceStep[]
   translations: Record<string, string>
   busy: boolean
   onPreview: (operation: CraftStep) => void
@@ -29,6 +32,14 @@ export function AlloyAdvicePanel({
   if (!steps.length) return null
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+  const modLabel = (id: string) => {
+    const mod = catalog.modifiers.find((mod) => mod.id === id)
+    return mod ? `${id} · ${mod.lines.map((line) => translateLine?.(line) ?? line).join('；')}` : id
+  }
+  const targetLabel = (targetId: string) => {
+    const target = definitions.targets.find((target) => target.targetId === targetId)
+    return target ? modLabel(target.modId) : '已失联目标'
+  }
   return (
     <section aria-label="合金目标建议">
       <h4>合金方案 · {steps.length} 种指定结果</h4>
@@ -55,14 +66,14 @@ export function AlloyAdvicePanel({
             operation={step.operation}
             {...(translateLine ? { translateLine } : {})}
           />
-          {step.atRiskTargetIds.length ? (
+          {step.atRiskModIds.length ? (
             <p>
-              随机移除池中存在已有目标：{step.atRiskTargetIds.join('、')}
+              随机移除池中存在已有目标：{step.atRiskModIds.map(modLabel).join('、')}
               。指定安全结果不代表随机安全。
             </p>
           ) : null}
           {step.lostTargetIds.length ? (
-            <p>此结果将移除或使已有目标失配：{step.lostTargetIds.join('、')}</p>
+            <p>此结果将移除或使已有目标失配：{step.lostTargetIds.map(targetLabel).join('、')}</p>
           ) : null}
           <button
             type="button"

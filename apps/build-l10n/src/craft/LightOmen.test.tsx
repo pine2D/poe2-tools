@@ -11,13 +11,13 @@ import { RehearsalPanel } from './RehearsalPanel'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (result: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (result: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      callback(planCraftTargetRoutes(...args))
+      callback(planTargetDefinitionRoutes(...args))
       return () => {}
     },
   }
@@ -34,9 +34,15 @@ it('允许牺牲亵渎目标时，光明首步显示确定损失而非随机移�
     <TargetRoutesPanel
       catalog={catalog}
       state={state}
-      ids={['prefix1', 'suffix1', 'exclusive1']}
-      values={[]}
-      alternatives={[]}
+      definitions={{
+        nextTargetId: 20,
+        targets: ['prefix1', 'suffix1', 'exclusive1'].map((modId, index) => ({
+          targetId: `t${index + 1}`,
+          modId,
+        })),
+        values: [],
+        alternatives: [],
+      }}
       busy={false}
       translations={{ 'Omen of Light': '光明预兆' }}
       onPreview={() => {}}
@@ -106,9 +112,15 @@ it('重新亵渎路线显示光明规则、材料并预览真实剥离步骤', a
     <TargetRoutesPanel
       catalog={catalog}
       state={state}
-      ids={['prefix1', 'suffix2', 'exclusive1']}
-      values={[]}
-      alternatives={[]}
+      definitions={{
+        nextTargetId: 20,
+        targets: ['prefix1', 'suffix2', 'exclusive1'].map((modId, index) => ({
+          targetId: `t${index + 1}`,
+          modId,
+        })),
+        values: [],
+        alternatives: [],
+      }}
       busy={false}
       translations={{ 'Omen of Light': '光明预兆' }}
       onPreview={preview}

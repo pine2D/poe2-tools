@@ -5,12 +5,14 @@ import {
   type CraftImplicitTargetValues,
   type CraftState,
   craftImplicitTargetCandidates,
+  inspectNumericLines,
   projectImplicitTargetValues,
-  validateCraftImplicitTargets,
+  validateStoredCraftImplicitTargets,
 } from '@poe2-tools/item-core'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 interface Props {
+  context?: unknown
   catalog: CraftCatalog
   state: CraftState
   values: CraftImplicitTargetValues[]
@@ -26,13 +28,32 @@ export function ImplicitTargetEditor(props: Props) {
     () => analyzeCraftImplicitTargets(props.catalog, props.state, props.values),
     [props.catalog, props.state, props.values],
   )
-  if (!candidates.ok) return <p role="status">{candidates.error}</p>
-  if (!candidates.value.length) return null
+  const visible = candidates.ok
+    ? candidates.value
+    : props.values.flatMap((value) => {
+        const line = props.catalog.bases
+          .find((base) => base.id === props.state.baseId)
+          ?.implicit?.split('\n')[value.lineIndex]
+        if (line === undefined) return []
+        const ranges = inspectNumericLines([line])
+        if (!ranges.ok) return []
+        return [
+          {
+            lineIndex: value.lineIndex,
+            line,
+            ranges: ranges.value,
+            actual: ranges.value.map(() => null),
+            rerollable: false,
+            reasons: [candidates.error],
+          },
+        ]
+      })
+  if (!visible.length) return candidates.ok ? null : <p role="status">{candidates.error}</p>
   return (
     <section className="target-list" aria-label="固有属性目标">
       <h4>固有属性条件</h4>
       <p>目录范围用于设置条件，当前可重掷范围以各行说明为准。空白表示不限；保存条件不消耗材料。</p>
-      {candidates.value.map((candidate) => (
+      {visible.map((candidate) => (
         <article key={candidate.lineIndex}>
           <h5>固有属性 {candidate.lineIndex + 1}</h5>
           {props.translateLine?.(candidate.line) ? (
@@ -90,6 +111,7 @@ export function ImplicitTargetEditor(props: Props) {
   )
 }
 function RowEditor({
+  context,
   catalog,
   state,
   values,
@@ -114,6 +136,23 @@ function RowEditor({
   )
   const [message, setMessage] = useState('')
   const root = useRef<HTMLDivElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 快照或目标上下文变化必须丢弃尚未保存的数值草稿。
+  useEffect(() => {
+    const current = values.find((value) => value.lineIndex === candidate.lineIndex)
+    setBasis(current?.basis ?? 'base')
+    setInputs(
+      Object.fromEntries(
+        current?.bounds.map((bound) => [
+          bound.index,
+          {
+            min: bound.min === undefined ? '' : String(bound.min),
+            max: bound.max === undefined ? '' : String(bound.max),
+          },
+        ]) ?? [],
+      ),
+    )
+    setMessage('')
+  }, [catalog, state, values, candidate.lineIndex, context])
   const save = () => {
     if (
       [...(root.current?.querySelectorAll('input') ?? [])].some((input) => input.validity.badInput)
@@ -139,7 +178,7 @@ function RowEditor({
         bounds,
         ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
       })
-    const checked = validateCraftImplicitTargets(catalog, state.baseId, next, state)
+    const checked = validateStoredCraftImplicitTargets(catalog, state.baseId, next)
     if (!checked.ok) {
       setMessage(checked.error)
       return

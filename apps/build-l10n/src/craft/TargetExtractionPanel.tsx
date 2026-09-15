@@ -7,19 +7,24 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 export function TargetExtractionPanel({
+  context: targetContext,
   catalog,
   state,
   busy,
   onApply,
   translateLine,
 }: {
+  context?: unknown
   catalog: CraftCatalog
   state: CraftState
   busy: boolean
   onApply: (targets: ExtractedCraftTargets) => void
   translateLine?: (line: string) => string | null
 }) {
-  const context = useMemo(() => ({ catalog, state, busy }), [catalog, state, busy])
+  const context = useMemo(
+    () => ({ catalog, state, busy, targetContext }),
+    [catalog, state, busy, targetContext],
+  )
   const [draft, setDraft] = useState<{
     context: typeof context
     ids: string[]

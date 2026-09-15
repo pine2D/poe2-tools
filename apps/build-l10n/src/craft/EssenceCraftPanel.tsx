@@ -1,8 +1,9 @@
 import {
+  applyCraftStep,
   type CraftCatalog,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
+  definitionTargetIdsForMods,
   ESSENCE_OMEN_RULES,
   type EssenceCraftOperation,
   type EssenceOmen,
@@ -13,6 +14,7 @@ import {
   projectCraftTargetValues,
   renderNumericLines,
   resolveCraftAffix,
+  targetDefinitionChanges,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
 import { NumericControls } from './NumericControls'
@@ -22,35 +24,31 @@ interface EssenceCraftPanelProps {
   entryRef?: Ref<HTMLElement>
   configuration?: { essenceId: string; omen?: EssenceOmen }
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   state: CraftState
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   disabled: boolean
   onPreview: (step: EssenceCraftOperation) => void
-  targetModIds?: string[]
-  targetAlternatives?: CraftTargetAlternative[]
-  targetValues?: CraftTargetValues[]
 }
 
 export function EssenceCraftPanel({
   entryRef,
   catalog,
+  definitions,
   configuration,
   state,
   translations,
   translateLine,
   disabled,
   onPreview,
-  targetModIds = [],
-  targetAlternatives = [],
-  targetValues = [],
 }: EssenceCraftPanelProps) {
   const [query, setQuery] = useState('')
   const [freeOmen, setOmen] = useState<EssenceOmen | undefined>()
   const omen = configuration === undefined ? freeOmen : configuration.omen
   const context = useMemo(
-    () => ({ catalog, state, configuration }),
-    [catalog, state, configuration],
+    () => ({ catalog, state, configuration, definitions }),
+    [catalog, state, configuration, definitions],
   )
   const [draft, setDraft] = useState<{
     context: typeof context
@@ -85,15 +83,13 @@ export function EssenceCraftPanel({
     : undefined
   const prepared = selected?.prepared
   const mod = prepared?.ok ? prepared.value.mod : undefined
-  const targeted =
-    mod &&
-    (targetModIds.includes(mod.id) ||
-      targetAlternatives.some(
-        (entry) => targetModIds.includes(entry.targetModId) && entry.modIds.includes(mod.id),
-      ))
-  const goal = targetValues.find((entry) => entry.modId === mod?.id)
+  const result = selection ? applyCraftStep(catalog, state, selection) : null
+  const targeted = mod && definitionTargetIdsForMods(definitions, [mod.id]).length > 0
+  const goal = definitions.values.find((entry) => entry.modId === mod?.id)
   const bounds = goal?.bounds
-  const projected = mod ? projectCraftTargetValues(catalog, state, mod, goal) : null
+  const projected = mod
+    ? projectCraftTargetValues(catalog, result?.ok ? result.value : state, mod, goal)
+    : null
   const targetText = mod && selection ? renderNumericLines(mod.lines, selection.values) : null
   const actualTargetValues =
     projected?.ok && targetText?.ok ? projected.value.read(targetText.value) : null
@@ -104,18 +100,18 @@ export function EssenceCraftPanel({
   const validValues = mod && selection ? renderNumericLines(mod.lines, selection.values).ok : false
   const replacement = prepared?.ok && prepared.value.mode === 'replace'
   const removableAffixes = prepared?.ok ? prepared.value.removableAffixes : []
+  const targetLabels = (ids: string[]) =>
+    definitions.targets
+      .filter((target) => ids.includes(target.targetId))
+      .map((target) => target.modId)
   const affectedTargets = (modId: string) =>
-    targetModIds.filter(
-      (targetId) =>
-        targetId === modId ||
-        targetAlternatives.some(
-          (entry) => entry.targetModId === targetId && entry.modIds.includes(modId),
-        ),
-    )
+    targetLabels(definitionTargetIdsForMods(definitions, [modId]))
   const riskTargets = [
     ...new Set(removableAffixes.flatMap((affix) => affectedTargets(affix.modId))),
   ]
-  const lostTargets = selection?.removeModId ? affectedTargets(selection.removeModId) : []
+  const lostTargets = result?.ok
+    ? targetLabels(targetDefinitionChanges(catalog, state, result.value, definitions).lostTargetIds)
+    : []
   const removed = selection?.removeModId
     ? resolveCraftAffix(state, {
         modId: selection.removeModId,

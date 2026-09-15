@@ -53,7 +53,7 @@ it('远古材料预览不改当前半径，应用、撤销重做和恢复保留�
   expect(radius().getByText('超大')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
   expect(saved.operations).toEqual([
     {

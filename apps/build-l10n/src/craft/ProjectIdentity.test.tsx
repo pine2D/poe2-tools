@@ -1,8 +1,8 @@
 import {
   CRAFT_RULES_VERSION,
   type CraftProject,
-  IDENTITY_CRAFT_RULES_VERSION,
   loadWorkbenchProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -38,7 +38,7 @@ it('本机旧项目一次升级全部未来历史，恢复游标保持原位置'
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
   expect(onRestore).toHaveBeenCalledWith(
     expect.objectContaining({
-      project: expect.objectContaining({ rulesVersion: IDENTITY_CRAFT_RULES_VERSION, cursor: 1 }),
+      project: expect.objectContaining({ rulesVersion: TARGET_CRAFT_RULES_VERSION, cursor: 1 }),
       states: [
         expect.objectContaining({ nextAffixId: 1 }),
         expect.objectContaining({ nextAffixId: 2 }),
@@ -62,7 +62,7 @@ it('新项目保存完整未来步骤，恢复时错误ID不能降级修复', ()
   const text = localStorage.getItem(REHEARSAL_PROJECT_KEY)
   expect(text).not.toBeNull()
   const saved = JSON.parse(text ?? '{}')
-  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
   expect(saved.cursor).toBe(1)
   expect(saved.operations[1].rolls[0].affixId).toBe('a2')
   saved.operations[1].rolls[0].affixId = 'a1'
@@ -71,7 +71,7 @@ it('新项目保存完整未来步骤，恢复时错误ID不能降级修复', ()
   expect(onRestore).not.toHaveBeenCalled()
   expect(screen.getByText(/不能自动补全或修复/)).toBeTruthy()
 })
-it('新会话从空白基底启用身份，实际制作后可保存v73再撤销恢复', () => {
+it('新会话从空白基底启用身份，实际制作后可保存v74再撤销恢复', () => {
   render(<RehearsalPanel catalog={catalog} initialState={state('normal')} translations={{}} />)
   fireEvent.click(screen.getByRole('button', { name: '蜕变石' }))
   fireEvent.click(screen.getByRole('button', { name: /^p1 ·/ }))
@@ -80,7 +80,7 @@ it('新会话从空白基底启用身份，实际制作后可保存v73再撤销�
   const text = localStorage.getItem(REHEARSAL_PROJECT_KEY)
   expect(text).not.toBeNull()
   const saved = JSON.parse(text ?? '{}')
-  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
   expect(saved.initialState.nextAffixId).toBe(1)
   expect(saved.operations[0].rolls[0].affixId).toBe('a1')
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))

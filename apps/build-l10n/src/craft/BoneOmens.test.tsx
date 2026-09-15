@@ -26,6 +26,7 @@ it('两类预兆独立选择，配置变化清除侧与移除结果，预览固�
   const onPreview = vi.fn()
   render(
     <BoneCraftPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={boneCatalog('Ring')}
       state={boneState(['prefix1', 'prefix2', 'prefix3', 'suffix1', 'suffix2', 'suffix3'])}
       translations={translations}
@@ -58,14 +59,14 @@ it('两类预兆独立选择，配置变化清除侧与移除结果，预览固�
 
 const forced = vi.hoisted(() => ({ operations: [] as CraftStep[] }))
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { applyCraftStep, planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { applyCraftStep, planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (value: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (value: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
       if (!forced.operations.length) {
-        callback(planCraftTargetRoutes(...args))
+        callback(planTargetDefinitionRoutes(...args))
         return () => {}
       }
       let state = args[1]
@@ -81,6 +82,9 @@ vi.mock('./targetRoutesWorkerClient', async () => {
           lostTargetIds: [],
           atRiskTargetIds: [],
           rerolledTargetIds: [],
+          affectedModIds: [],
+          atRiskModIds: [],
+          rerolledModIds: [],
         }
       })
       callback({
@@ -183,10 +187,21 @@ it('骨骼建议及路线展示双预兆，三阶段预计材料各一份且offe
     <BoneAdvicePanel
       catalog={catalog}
       state={state}
+      definitions={{
+        nextTargetId: 2,
+        targets: [{ targetId: 't1', modId: 'exclusive1' }],
+        alternatives: [],
+        values: [],
+      }}
       steps={[
         {
           operation: double,
           targetModIds: ['exclusive1'],
+          targetIds: ['t1'],
+          matchedTargetIds: [],
+          gainedTargetIds: [],
+          affectedModIds: [],
+          atRiskModIds: [],
           atRiskTargetIds: [],
           lostTargetIds: [],
           randomRemovalRisk: false,
@@ -209,9 +224,12 @@ it('骨骼建议及路线展示双预兆，三阶段预计材料各一份且offe
     <TargetRoutesPanel
       catalog={catalog}
       state={state}
-      ids={['exclusive1']}
-      values={[]}
-      alternatives={[]}
+      definitions={{
+        nextTargetId: 2,
+        targets: [{ targetId: 't1', modId: 'exclusive1' }],
+        alternatives: [],
+        values: [],
+      }}
       busy={false}
       translations={translations}
       onPreview={preview}
@@ -231,6 +249,7 @@ it('切换预兆即时显示选中材料不可用原因，部位限制及不足�
   const catalog = boneCatalog('Ring')
   render(
     <BoneCraftPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={catalog}
       state={boneState()}
       translations={translations}
@@ -258,6 +277,7 @@ it('切换预兆即时显示选中材料不可用原因，部位限制及不足�
   cleanup()
   render(
     <BoneCraftPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={boneCatalog()}
       state={boneState()}
       translations={translations}
@@ -274,6 +294,7 @@ it('前后比较能明确展示新增固化的两类预兆', () => {
   const pending = { boneId: 'preserved_collarbone' as const, kind: 'suffix' as const }
   render(
     <CraftComparisonPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={boneCatalog('Ring')}
       before={{ ...boneState(), pendingDesecration: pending }}
       after={{
@@ -295,9 +316,12 @@ it('路线按材料身份区分同译名，已有双预兆pending的后两步无
   forced.operations = [double, ...tail]
   const props = {
     catalog,
-    ids: ['exclusive1'],
-    values: [],
-    alternatives: [],
+    definitions: {
+      nextTargetId: 2,
+      targets: [{ targetId: 't1', modId: 'exclusive1' }],
+      alternatives: [],
+      values: [],
+    },
     busy: false,
     onPreview: vi.fn(),
   }

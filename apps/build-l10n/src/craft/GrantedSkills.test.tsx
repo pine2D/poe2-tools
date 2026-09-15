@@ -2,9 +2,10 @@ import {
   type CatalogBase,
   type CraftCatalog,
   createCatalogTranslator,
-  IDENTITY_CRAFT_RULES_VERSION,
   inspectItem,
   parseItem,
+  parseTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -140,7 +141,8 @@ it('中文带最高等级的权杖保留混合词缀，崇高、撤销和恢复�
   fireEvent.click(screen.getByRole('button', { name: /Added · Test added/ }))
   click('应用本次结果')
   const saved = save()
-  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
+  expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
   expect(saved.initialState.affixes).toHaveLength(2)
   expect(saved.initialState.affixes[1].lines).toHaveLength(2)
   expect(saved.initialState.implicitLines).toHaveLength(1)

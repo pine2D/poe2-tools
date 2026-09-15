@@ -1,12 +1,12 @@
-import type { CraftStrategy } from '@poe2-tools/item-core'
+import type { DefinitionCraftStrategy } from '@poe2-tools/item-core'
 
 export function StrategyStageList({
   strategy,
   onChange,
   labelPrefix = '',
 }: {
-  strategy: CraftStrategy
-  onChange: (strategy: CraftStrategy) => void
+  strategy: DefinitionCraftStrategy
+  onChange: (strategy: DefinitionCraftStrategy) => void
   labelPrefix?: string
 }) {
   const flow = strategy.flow

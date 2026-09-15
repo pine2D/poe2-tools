@@ -3,7 +3,7 @@ import {
   DESECRATION_SOURCE,
   importCraftState,
   inspectItem,
-  loadWorkbenchProject,
+  loadTargetWorkbenchProject,
   parseCraftProject,
   parseItem,
 } from '@poe2-tools/item-core'
@@ -107,13 +107,16 @@ it('未知数值保留在全部候选中但不能锁定，未达成目标说明�
   unknown.lines = ['prefix2 (1-10)']
   render(
     <FracturePanel
+      definitions={{
+        nextTargetId: 8,
+        targets: [{ targetId: 't7', modId: 'prefix1' }],
+        alternatives: [],
+        values: [{ targetId: 't7', modId: 'prefix1', bounds: [{ index: 0, min: 9 }] }],
+      }}
       catalog={boneCatalog()}
       state={state}
       label="破溃宝珠"
       disabled={false}
-      targetModIds={['prefix1']}
-      targetValues={[{ modId: 'prefix1', bounds: [{ index: 0, min: 9 }] }]}
-      targetAlternatives={[]}
       onPreview={vi.fn()}
     />,
   )
@@ -181,7 +184,10 @@ it('回响第二组期间破裂可应用和恢复，保留两组候选与已有�
   expect(screen.getByLabelText('首组揭示选项')).toBeDefined()
   expect(screen.getByLabelText('第二组揭示选项')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
-  const result = loadWorkbenchProject(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '', catalog)
+  const result = loadTargetWorkbenchProject(
+    localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '',
+    catalog,
+  )
   if (!result.ok) throw new Error(result.error)
   expect(result.value.states.at(-1)?.pendingDesecration).toEqual(
     restored.value.states.at(-1)?.pendingDesecration,

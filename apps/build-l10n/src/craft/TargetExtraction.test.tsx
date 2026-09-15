@@ -81,7 +81,15 @@ function save() {
 it('取消不改变目标；确认一次替换显式要求并保留固有目标、来源和零消费历史', () => {
   start()
   const before = save()
-  expect(before.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(before.rulesVersion).toBe('basic-2026-09-12-v74')
+  expect(before.targetDefinitions).toEqual({
+    nextTargetId: 2,
+    targets: [{ targetId: 't1', modId: 'FireResist1' }],
+    alternatives: [{ targetId: 't1', modIds: ['FireResist2'] }],
+    values: [{ targetId: 't1', modId: 'FireResist1', bounds: [{ index: 0, min: 8 }] }],
+    minimumTargetCount: 1,
+    fracturedTargetId: 't1',
+  })
   expect(before.initialState).toMatchObject({
     nextAffixId: 2,
     affixes: [{ modId: 'IncreasedLife1', affixId: 'a1' }],
@@ -99,13 +107,13 @@ it('取消不改变目标；确认一次替换显式要求并保留固有目标�
   fireEvent.click(screen.getByLabelText('复制基础数值为精确条件'))
   click('用所选词缀替换显式目标')
   const after = save()
-  expect(after.targetModIds).toEqual(['IncreasedLife1'])
-  expect(after.targetValues).toEqual([
-    { modId: 'IncreasedLife1', bounds: [{ index: 0, min: 19, max: 19 }] },
-  ])
-  expect(after.targetAlternatives ?? []).toEqual([])
-  expect(after.minimumTargetCount).toBeUndefined()
-  expect(after.targetFracturedModId).toBeUndefined()
+  expect(after.targetDefinitions).toEqual({
+    nextTargetId: 3,
+    targets: [{ targetId: 't2', modId: 'IncreasedLife1' }],
+    values: [{ targetId: 't2', modId: 'IncreasedLife1', bounds: [{ index: 0, min: 19, max: 19 }] }],
+    alternatives: [],
+  })
+  expect(after.orphanedTargets).toEqual([])
   expect(after.targetImplicitValues).toEqual(before.targetImplicitValues)
   expect(after.initialState).toEqual(before.initialState)
   expect(after.operations).toEqual([])

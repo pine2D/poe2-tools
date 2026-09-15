@@ -1,4 +1,4 @@
-import type { planCraftTargetRoutes } from '@poe2-tools/item-core'
+import type { planTargetDefinitionRoutes } from '@poe2-tools/item-core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
@@ -15,7 +15,7 @@ class FakeWorker {
 }
 afterEach(() => vi.unstubAllGlobals())
 describe('路线 Worker 生命周期', () => {
-  const args = [] as unknown as Parameters<typeof planCraftTargetRoutes>
+  const args = [] as unknown as Parameters<typeof planTargetDefinitionRoutes>
   it('仅按请求创建worker，取消后忽略迟到结果', () => {
     vi.stubGlobal('Worker', FakeWorker)
     const callback = vi.fn()

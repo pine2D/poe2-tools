@@ -14,7 +14,7 @@ import {
   matchCatalogMods,
   type PoolEntry,
   parseCraftCatalog,
-  type RestoredIdentityCraftProject,
+  type RestoredTargetCraftProject,
   resolveCatalogBase,
   searchBases,
 } from '@poe2-tools/item-core'
@@ -288,7 +288,7 @@ export function CatalogPanel({
     imported?.runes?.map(({ resolution }) => resolution.english),
   ])
   const [restoredSession, setRestoredSession] = useState<{
-    value: RestoredIdentityCraftProject
+    value: RestoredTargetCraftProject
     id: number
     inputKey: string
   } | null>(null)
@@ -296,7 +296,7 @@ export function CatalogPanel({
   useEffect(() => {
     setRestoredSession((previous) => (previous?.inputKey === inputKey ? previous : null))
   }, [inputKey])
-  const restoreProject = (value: RestoredIdentityCraftProject) => {
+  const restoreProject = (value: RestoredTargetCraftProject) => {
     // 显式恢复优先于目录刚加载时尚未执行的初始定位。
     appliedImport.current = importSignature
     setSelectedBaseId(value.project.initialState.baseId)

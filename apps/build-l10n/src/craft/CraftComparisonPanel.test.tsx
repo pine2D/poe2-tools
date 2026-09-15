@@ -3,6 +3,8 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 
+const emptyDefinitions = { nextTargetId: 1, targets: [], alternatives: [], values: [] }
+
 afterEach(cleanup)
 
 const catalog: CraftCatalog = {
@@ -69,9 +71,37 @@ const desecrationCatalog: CraftCatalog = {
 }
 
 describe('CraftComparisonPanel', () => {
+  it('破裂目标按稳定目标ID关联实际词缀，并在同一实例核对数值', () => {
+    const definitions = {
+      nextTargetId: 8,
+      targets: [{ targetId: 't7', modId: 'life' }],
+      alternatives: [],
+      values: [{ targetId: 't7', modId: 'life', bounds: [{ index: 0, min: 15 }] }],
+      fracturedTargetId: 't7',
+    }
+    const props = { catalog, definitions, before }
+    const view = render(
+      <CraftComparisonPanel
+        {...props}
+        after={{ ...after, affixes: after.affixes.map((affix) => ({ ...affix, fractured: true })) }}
+      />,
+    )
+    expect(screen.getByText('破裂目标：未达成 → 已达成')).toBeDefined()
+    view.rerender(
+      <CraftComparisonPanel
+        {...props}
+        after={{
+          ...before,
+          affixes: before.affixes.map((affix) => ({ ...affix, fractured: true })),
+        }}
+      />,
+    )
+    expect(screen.getByText('破裂目标：未达成 → 未达成')).toBeDefined()
+  })
   it('按变化组展示中文与英文，前后区域有可访问名称并保留整组常量行', () => {
     render(
       <CraftComparisonPanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         before={before}
         after={after}
@@ -94,11 +124,25 @@ describe('CraftComparisonPanel', () => {
 
   it('新增与移除用文字区分，空侧明确无此词缀', () => {
     const empty = { ...before, affixes: [], rarity: 'normal' as const }
-    const view = render(<CraftComparisonPanel catalog={catalog} before={empty} after={before} />)
+    const view = render(
+      <CraftComparisonPanel
+        definitions={emptyDefinitions}
+        catalog={catalog}
+        before={empty}
+        after={before}
+      />,
+    )
     expect(screen.getByText('新增')).toBeDefined()
     expect(screen.getByText('稀有度：普通 → 稀有')).toBeDefined()
     expect(screen.getByText('无此词缀')).toBeDefined()
-    view.rerender(<CraftComparisonPanel catalog={catalog} before={before} after={empty} />)
+    view.rerender(
+      <CraftComparisonPanel
+        definitions={emptyDefinitions}
+        catalog={catalog}
+        before={before}
+        after={empty}
+      />,
+    )
     expect(screen.getByText('移除')).toBeDefined()
     expect(screen.getByText('无此词缀')).toBeDefined()
   })
@@ -106,6 +150,7 @@ describe('CraftComparisonPanel', () => {
   it('固有属性变化保留未知值提示，不把未知值显示成零', () => {
     render(
       <CraftComparisonPanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         before={before}
         after={{ ...before, implicitLines: ['+7 to Strength'] }}
@@ -117,15 +162,30 @@ describe('CraftComparisonPanel', () => {
   })
 
   it('无语义变化清楚说明，不显示空前后区域', () => {
-    render(<CraftComparisonPanel catalog={catalog} before={before} after={before} />)
+    render(
+      <CraftComparisonPanel
+        definitions={emptyDefinitions}
+        catalog={catalog}
+        before={before}
+        after={before}
+      />,
+    )
     expect(screen.getByText('没有可识别的属性变化。')).toBeDefined()
     expect(screen.queryByRole('region', { name: /操作前$/ })).toBeNull()
   })
 
   it('非法起点显示错误，不保留上一份对比', () => {
-    const view = render(<CraftComparisonPanel catalog={catalog} before={before} after={after} />)
+    const view = render(
+      <CraftComparisonPanel
+        definitions={emptyDefinitions}
+        catalog={catalog}
+        before={before}
+        after={after}
+      />,
+    )
     view.rerender(
       <CraftComparisonPanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         before={before}
         after={{ ...after, itemLevel: 71 }}
@@ -163,6 +223,7 @@ describe('CraftComparisonPanel', () => {
     }
     const view = render(
       <CraftComparisonPanel
+        definitions={emptyDefinitions}
         catalog={transformedCatalog}
         before={identifiedBefore}
         after={identifiedAfter}
@@ -171,6 +232,7 @@ describe('CraftComparisonPanel', () => {
     const instanceArticle = screen.getByRole('heading', { name: 'Healthy' }).closest('article')
     view.rerender(
       <CraftComparisonPanel
+        definitions={emptyDefinitions}
         catalog={transformedCatalog}
         before={identifiedBefore}
         after={{
@@ -203,6 +265,7 @@ describe('CraftComparisonPanel', () => {
   it('同类型旧实例移除和新实例加入分开展示，来源徽标各自对应所属实例', () => {
     render(
       <CraftComparisonPanel
+        definitions={emptyDefinitions}
         catalog={desecrationCatalog}
         before={{
           ...before,

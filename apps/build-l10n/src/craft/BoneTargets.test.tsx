@@ -1,4 +1,9 @@
-import { type CraftState, inspectItem, parseItem } from '@poe2-tools/item-core'
+import {
+  type CraftState,
+  inspectItem,
+  parseItem,
+  parseTargetCraftProject,
+} from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import {
@@ -16,13 +21,13 @@ const delayed = vi.hoisted(() => ({
   calls: [] as { finish: () => void; cancel: ReturnType<typeof vi.fn> }[],
 }))
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (result: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (result: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      const finish = () => callback(planCraftTargetRoutes(...args))
+      const finish = () => callback(planTargetDefinitionRoutes(...args))
       const cancel = vi.fn()
       if (delayed.hold) delayed.calls.push({ finish, cancel })
       else finish()
@@ -115,8 +120,14 @@ it('骨骼后与offer后保存恢复目标和固定三项，恢复清草稿与�
     apply()
   }
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
-  expect(saved().targetModIds).toEqual(['exclusive1'])
+  expect(saved().targetDefinitions).toEqual({
+    nextTargetId: 2,
+    targets: [{ targetId: 't1', modId: 'exclusive1' }],
+    alternatives: [],
+    values: [],
+  })
   expect(saved().operations.at(-1).kind).toBe('desecrate')
+  expect(parseTargetCraftProject(JSON.stringify(saved()), boneCatalog()).ok).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
   firstStep()
   apply()
@@ -139,7 +150,12 @@ it('骨骼后与offer后保存恢复目标和固定三项，恢复清草稿与�
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   expect(saved().operations[saved().cursor - 1].modIds).toEqual(fixed)
-  expect(saved().targetModIds).toEqual(['exclusive1'])
+  expect(saved().targetDefinitions).toEqual({
+    nextTargetId: 2,
+    targets: [{ targetId: 't1', modId: 'exclusive1' }],
+    alternatives: [],
+    values: [],
+  })
   fireEvent.click(screen.getByRole('button', { name: '重做' }))
   expect(screen.getByText('已达成 1 / 1')).toBeDefined()
 })
@@ -217,6 +233,7 @@ it('中文导入腰带联合固有与专属目标，完成后保存真实来源'
   expect(screen.getByText('已达成 2 / 2')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   expect(saved().initialState.sourceText).toBe(parsed.item.rawText)
+  expect(parseTargetCraftProject(JSON.stringify(saved()), catalog, source.dictionary).ok).toBe(true)
   expect(saved().targetImplicitValues).toEqual([{ lineIndex: 0, bounds: [{ index: 0, min: 2 }] }])
   expect(
     saved().operations.filter((op: { kind?: string }) => op.kind === 'desecrate'),

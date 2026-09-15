@@ -1,4 +1,4 @@
-import type { CraftStrategy } from '@poe2-tools/item-core'
+import type { DefinitionCraftStrategy } from '@poe2-tools/item-core'
 
 export interface StrategyGraphEdge {
   ruleIndex: number
@@ -12,7 +12,7 @@ export const GRAPH_NODE_HEIGHT = 110
 export const graphNodeX = (index: number) => 48 + index * 240
 
 /** 只绘显式连接；工作动作未设下一阶段时，在详情说明默认留在本阶段。 */
-export function strategyGraphEdges(strategy: CraftStrategy): StrategyGraphEdge[] {
+export function strategyGraphEdges(strategy: DefinitionCraftStrategy): StrategyGraphEdge[] {
   return strategy.rules.flatMap((rule, ruleIndex) => {
     if (!rule.stageId || rule.action.kind === 'stop') return []
     const edges: StrategyGraphEdge[] = []

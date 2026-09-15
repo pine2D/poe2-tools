@@ -1,14 +1,15 @@
 import {
   type AlloyCraftOperation,
-  analyzeCraftTargets,
   applyCraftStep,
   type CraftCatalog,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
+  definitionTargetIdsForMods,
+  evaluateTargetDefinitions,
   inspectCraftAlloys,
   inspectNumericLines,
   prepareAlloyCraft,
+  targetDefinitionChanges,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
 import { NumericControls } from './NumericControls'
@@ -18,33 +19,29 @@ interface Props {
   entryRef?: Ref<HTMLElement>
   configuration?: { alloyId: string }
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   state: CraftState
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   disabled: boolean
   onPreview: (step: AlloyCraftOperation) => void
-  targetModIds?: string[]
-  targetAlternatives?: CraftTargetAlternative[]
-  targetValues?: CraftTargetValues[]
 }
 
 export function AlloyCraftPanel({
   entryRef,
   configuration,
   catalog,
+  definitions,
   state,
   translations,
   translateLine,
   disabled,
   onPreview,
-  targetModIds = [],
-  targetAlternatives = [],
-  targetValues = [],
 }: Props) {
   const [query, setQuery] = useState('')
   const context = useMemo(
-    () => ({ catalog, state, configuration }),
-    [catalog, state, configuration],
+    () => ({ catalog, state, configuration, definitions }),
+    [catalog, state, configuration, definitions],
   )
   const [draft, setDraft] = useState<{
     context: typeof context
@@ -69,14 +66,11 @@ export function AlloyCraftPanel({
   const prepared = selected?.prepared
   const mod = prepared?.ok ? prepared.value.mod : undefined
   const removable = prepared?.ok ? prepared.value.removableAffixes : []
-  const targetsFor = (id: string) =>
-    targetModIds.filter(
-      (target) =>
-        target === id ||
-        targetAlternatives.some(
-          (entry) => entry.targetModId === target && entry.modIds.includes(id),
-        ),
-    )
+  const targetLabels = (ids: string[]) =>
+    definitions.targets
+      .filter((target) => ids.includes(target.targetId))
+      .map((target) => target.modId)
+  const targetsFor = (id: string) => targetLabels(definitionTargetIdsForMods(definitions, [id]))
   const atRisk = [...new Set(removable.flatMap((entry) => targetsFor(entry.modId)))]
   const result = useMemo(
     () =>
@@ -87,11 +81,14 @@ export function AlloyCraftPanel({
   )
   const progress = useMemo(
     () =>
-      result?.ok && targetModIds.length
-        ? analyzeCraftTargets(catalog, result.value, targetModIds, targetValues, targetAlternatives)
+      result?.ok && definitions.targets.length
+        ? evaluateTargetDefinitions(catalog, result.value, definitions)
         : null,
-    [catalog, result, targetModIds, targetValues, targetAlternatives],
+    [catalog, result, definitions],
   )
+  const lostTargets = result?.ok
+    ? targetLabels(targetDefinitionChanges(catalog, state, result.value, definitions).lostTargetIds)
+    : []
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const visible = entries.filter(
     (entry) =>
@@ -190,9 +187,7 @@ export function AlloyCraftPanel({
                   ))}
                 </select>
               </label>
-              {targetsFor(selection.removeModId).length ? (
-                <p>本次将移除已有目标：{targetsFor(selection.removeModId).join('、')}</p>
-              ) : null}
+              {lostTargets.length ? <p>本次将移除已有目标：{lostTargets.join('、')}</p> : null}
               <NumericControls
                 label="合金保证属性"
                 patterns={mod.lines}
@@ -200,10 +195,10 @@ export function AlloyCraftPanel({
                 onChange={(values) => setSelection({ ...selection, values })}
                 {...(translateLine ? { translateLine } : {})}
               />
-              {progress?.ok ? (
+              {progress ? (
                 <p>
-                  此完整结果满足 {progress.value.targets.filter((entry) => entry.matched).length} /{' '}
-                  {progress.value.targets.length} 组显式目标，已按目标的基础值或有效值口径核对。
+                  此完整结果满足 {progress.matches.length} / {definitions.targets.length}{' '}
+                  组显式目标，已按目标的基础值或有效值口径核对。
                 </p>
               ) : null}
               {selection.removeModId && result && !result.ok ? (

@@ -20,6 +20,8 @@ import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FracturePanel } from './FracturePanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 
+const emptyDefinitions = { nextTargetId: 1, targets: [], alternatives: [], values: [] }
+
 afterEach(cleanup)
 function must<T>(result: CraftResult<T>): T {
   if (!result.ok) throw new Error(result.error)
@@ -105,6 +107,76 @@ function jewel(identified: boolean) {
 }
 
 describe('特殊制作的实例选择与草稿', () => {
+  it('合金完整结果计数保留独立破裂要求，未达成目标被移除不误报达成损失', () => {
+    const definitions = {
+      nextTargetId: 8,
+      targets: [{ targetId: 't7', modId: 'FireResist1' }],
+      alternatives: [],
+      values: [],
+      fracturedTargetId: 't7',
+      minimumTargetCount: 1,
+    }
+    const props = {
+      catalog,
+      state: ring(true),
+      configuration: { alloyId },
+      definitions,
+      translations: {},
+      disabled: false,
+      onPreview: () => {},
+    }
+    const view = render(<AlloyCraftPanel {...props} />)
+    click('选择合金 符文合金')
+    select('合金移除结果', 'a1')
+    expect(screen.getByText(/此完整结果满足 0 \/ 1 组显式目标/)).toBeDefined()
+    select('合金移除结果', 'a2')
+    expect(screen.queryByText('本次将移除已有目标：FireResist1')).toBeNull()
+    const { fracturedTargetId: _, ...withoutFracture } = definitions
+    view.rerender(<AlloyCraftPanel {...props} definitions={withoutFracture} />)
+    expect(screen.queryByLabelText('合金移除结果')).toBeNull()
+    click('选择合金 符文合金')
+    select('合金移除结果', 'a1')
+    expect(screen.getByText(/此完整结果满足 1 \/ 1 组显式目标/)).toBeDefined()
+    select('合金移除结果', 'a2')
+    expect(screen.getByText('本次将移除已有目标：FireResist1')).toBeDefined()
+  })
+
+  it('同类型目标换成新tN时精华草稿清空，数值目标通过完整定义取得', () => {
+    const modId = 'EssenceIncreasedManaPercent1'
+    const definitions = {
+      nextTargetId: 8,
+      targets: [{ targetId: 't7', modId }],
+      alternatives: [],
+      values: [{ targetId: 't7', modId, bounds: [{ index: 0, min: 6 }] }],
+    }
+    const props = {
+      catalog,
+      state: ring(true),
+      configuration: { essenceId },
+      translations: {},
+      disabled: false,
+      onPreview: () => {},
+    }
+    const view = render(<EssenceCraftPanel {...props} definitions={definitions} />)
+    click(/^选择精华 /)
+    fireEvent.click(screen.getByRole('radio', { name: /IncreasedLife1/ }))
+    expect(screen.getByText('当前数值不满足此词缀的目标条件。')).toBeDefined()
+    select('Perfect Essence of the Mind · 数值 1', '6')
+    expect(screen.getByText('当前数值满足此词缀的目标条件。')).toBeDefined()
+    view.rerender(
+      <EssenceCraftPanel
+        {...props}
+        definitions={{
+          nextTargetId: 10,
+          targets: [{ targetId: 't9', modId }],
+          alternatives: [],
+          values: [{ targetId: 't9', modId, bounds: [{ index: 0, min: 6 }] }],
+        }}
+      />,
+    )
+    expect(screen.queryByRole('region', { name: '精华保证结果' })).toBeNull()
+  })
+
   it('固定精华的左旋配置切换为右旋时，移除池、禁用控件和实际操作一同切换', () => {
     const state = ring(true)
     const previews: CraftStep[] = []
@@ -117,6 +189,7 @@ describe('特殊制作的实例选择与草稿', () => {
     }
     const view = render(
       <EssenceCraftPanel
+        definitions={emptyDefinitions}
         {...props}
         configuration={{ essenceId, omen: 'sinistral_crystallisation' }}
       />,
@@ -126,6 +199,7 @@ describe('特殊制作的实例选择与草稿', () => {
     select('Perfect Essence of the Mind · 数值 1', '6')
     view.rerender(
       <EssenceCraftPanel
+        definitions={emptyDefinitions}
         {...props}
         configuration={{ essenceId, omen: 'dextral_crystallisation' }}
       />,
@@ -164,13 +238,16 @@ describe('特殊制作的实例选择与草稿', () => {
     }
     const view = render(
       <EssenceCraftPanel
+        definitions={emptyDefinitions}
         {...props}
         configuration={{ essenceId, omen: 'sinistral_crystallisation' }}
       />,
     )
     click(/^选择精华 /)
     fireEvent.click(screen.getByRole('radio', { name: /IncreasedLife1/ }))
-    view.rerender(<EssenceCraftPanel {...props} configuration={{ essenceId }} />)
+    view.rerender(
+      <EssenceCraftPanel definitions={emptyDefinitions} {...props} configuration={{ essenceId }} />,
+    )
     expect(screen.queryByRole('region', { name: '精华保证结果' })).toBeNull()
     const omen = screen.getByLabelText('精华预兆') as HTMLSelectElement
     expect(omen.disabled).toBe(true)
@@ -192,16 +269,18 @@ describe('特殊制作的实例选择与草稿', () => {
       disabled: false,
       onPreview: () => {},
     }
-    const view = render(<EssenceCraftPanel {...props} />)
+    const view = render(<EssenceCraftPanel definitions={emptyDefinitions} {...props} />)
     select('精华预兆', 'sinistral_crystallisation')
     click('选择精华 Perfect Essence of the Mind')
     fireEvent.click(screen.getByRole('radio', { name: /IncreasedLife1/ }))
-    view.rerender(<EssenceCraftPanel {...props} configuration={{ essenceId }} />)
+    view.rerender(
+      <EssenceCraftPanel definitions={emptyDefinitions} {...props} configuration={{ essenceId }} />,
+    )
     expect(screen.queryByRole('region', { name: '精华保证结果' })).toBeNull()
     expect((screen.getByLabelText('精华预兆') as HTMLSelectElement).value).toBe('')
     click(/^选择精华 /)
     expect(screen.getAllByRole('radio')).toHaveLength(2)
-    view.rerender(<EssenceCraftPanel {...props} />)
+    view.rerender(<EssenceCraftPanel definitions={emptyDefinitions} {...props} />)
     expect(screen.queryByRole('region', { name: '精华保证结果' })).toBeNull()
     const omen = screen.getByLabelText('精华预兆') as HTMLSelectElement
     expect(omen.disabled).toBe(false)
@@ -219,6 +298,7 @@ describe('特殊制作的实例选择与草稿', () => {
     const previews: CraftStep[] = []
     render(
       <EssenceCraftPanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         state={state}
         configuration={{ essenceId }}
@@ -248,6 +328,7 @@ describe('特殊制作的实例选择与草稿', () => {
     const previews: CraftStep[] = []
     render(
       <AlloyCraftPanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         state={state}
         configuration={{ alloyId }}
@@ -274,6 +355,7 @@ describe('特殊制作的实例选择与草稿', () => {
     const previews: CraftStep[] = []
     render(
       <LiquidEmotionCraftPanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         state={state}
         configuration={{ emotionId }}
@@ -320,7 +402,9 @@ describe('特殊制作的实例选择与草稿', () => {
     const state = ring(true)
     const configuration = { essenceId }
     const props = { catalog, configuration, translations: {}, disabled: false, onPreview: () => {} }
-    const view = render(<EssenceCraftPanel {...props} state={state} />)
+    const view = render(
+      <EssenceCraftPanel definitions={emptyDefinitions} {...props} state={state} />,
+    )
     click(/^选择精华 /)
     fireEvent.click(screen.getByRole('radio', { name: /FireResist1/ }))
     const next = must(
@@ -332,7 +416,7 @@ describe('特殊制作的实例选择与草稿', () => {
         ),
       }),
     )
-    view.rerender(<EssenceCraftPanel {...props} state={next} />)
+    view.rerender(<EssenceCraftPanel definitions={emptyDefinitions} {...props} state={next} />)
     expect(screen.queryByRole('region', { name: '精华保证结果' })).toBeNull()
     click(/^选择精华 /)
     expect((screen.getByRole('radio', { name: /FireResist1/ }) as HTMLInputElement).checked).toBe(
@@ -350,7 +434,7 @@ describe('特殊制作的实例选择与草稿', () => {
       disabled: false,
       onPreview: () => {},
     }
-    const view = render(<AlloyCraftPanel {...props} state={state} />)
+    const view = render(<AlloyCraftPanel definitions={emptyDefinitions} {...props} state={state} />)
     click(/^选择合金 /)
     select('合金移除结果', 'a2')
     const next = must(
@@ -362,7 +446,7 @@ describe('特殊制作的实例选择与草稿', () => {
         ),
       }),
     )
-    view.rerender(<AlloyCraftPanel {...props} state={next} />)
+    view.rerender(<AlloyCraftPanel definitions={emptyDefinitions} {...props} state={next} />)
     expect(screen.queryByLabelText('合金移除结果')).toBeNull()
     view.unmount()
     const liquid = jewel(true)
@@ -373,7 +457,13 @@ describe('特殊制作的实例选择与草稿', () => {
       disabled: false,
       onPreview: () => {},
     }
-    const other = render(<LiquidEmotionCraftPanel {...liquidProps} state={liquid.state} />)
+    const other = render(
+      <LiquidEmotionCraftPanel
+        definitions={emptyDefinitions}
+        {...liquidProps}
+        state={liquid.state}
+      />,
+    )
     click('选择液态情感 Synthetic Emotion')
     select('液态情感保证结果', 'prefix')
     select('液态情感移除结果', 'a1')
@@ -386,7 +476,9 @@ describe('特殊制作的实例选择与草稿', () => {
         ),
       }),
     )
-    other.rerender(<LiquidEmotionCraftPanel {...liquidProps} state={nextJewel} />)
+    other.rerender(
+      <LiquidEmotionCraftPanel definitions={emptyDefinitions} {...liquidProps} state={nextJewel} />,
+    )
     expect(screen.queryByLabelText('液态情感保证结果')).toBeNull()
   })
 
@@ -398,13 +490,11 @@ describe('特殊制作的实例选择与草稿', () => {
     const previews: CraftStep[] = []
     render(
       <FracturePanel
+        definitions={emptyDefinitions}
         catalog={catalog}
         state={state}
         label="破裂"
         disabled={false}
-        targetModIds={[]}
-        targetValues={[]}
-        targetAlternatives={[]}
         onPreview={(operation) => previews.push(operation)}
       />,
     )

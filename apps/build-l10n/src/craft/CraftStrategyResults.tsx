@@ -3,8 +3,7 @@ import type {
   CraftState,
   CraftStep,
   CraftStrategyWorkAction,
-  CraftTargetAlternative,
-  CraftTargetValues,
+  CraftTargetDefinitions,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef } from 'react'
 import { AlloyCraftPanel } from './AlloyCraftPanel'
@@ -19,14 +18,10 @@ export type SpecialStrategyAction = Exclude<
 interface Props {
   action: SpecialStrategyAction
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   state: CraftState
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
-  targetModIds: string[]
-  targetValues: CraftTargetValues[]
-  targetAlternatives: CraftTargetAlternative[]
-  targetFracturedModId?: string
-  minimumTargetCount?: number
   fractureLabel: string
   onPreview: (step: CraftStep) => void
   onCancel: () => void

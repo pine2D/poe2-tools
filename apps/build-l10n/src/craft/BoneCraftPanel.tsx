@@ -1,4 +1,5 @@
 import {
+  applyCraftStep,
   BONE_DIRECTION_OMEN_RULES,
   BONE_LICH_OMEN_RULES,
   BONE_RULES,
@@ -12,9 +13,9 @@ import {
   type CraftBone,
   type CraftCatalog,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
   craftAffixSpace,
+  definitionTargetIdsForMods,
   desecrationCandidates,
   inspectNumericLines,
   isCraftBone,
@@ -23,6 +24,7 @@ import {
   projectCraftTargetValues,
   renderNumericLines,
   resolveCraftAffix,
+  targetDefinitionChanges,
 } from '@poe2-tools/item-core'
 import { useId, useMemo, useState } from 'react'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
@@ -33,19 +35,22 @@ import './essence-catalog.css'
 interface BoneCraftPanelProps {
   configuration?: { boneId: CraftBone } & BoneOmenConfig
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   state: CraftState
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   disabled: boolean
   onPreview: (step: BoneCraftOperation) => void
-  targetModIds?: string[]
-  targetAlternatives?: CraftTargetAlternative[]
-  targetValues?: CraftTargetValues[]
 }
 export function BoneCraftPanel(props: BoneCraftPanelProps) {
   return (
     <BoneCraftEditor
-      key={JSON.stringify([props.catalog._meta, props.state, props.configuration])}
+      key={JSON.stringify([
+        props.catalog._meta,
+        props.state,
+        props.configuration,
+        props.definitions,
+      ])}
       {...props}
     />
   )
@@ -53,15 +58,13 @@ export function BoneCraftPanel(props: BoneCraftPanelProps) {
 
 function BoneCraftEditor({
   catalog,
+  definitions,
   configuration,
   state,
   translations,
   translateLine,
   disabled,
   onPreview,
-  targetModIds = [],
-  targetAlternatives = [],
-  targetValues = [],
 }: BoneCraftPanelProps) {
   const id = useId()
   const [boneId, setBoneId] = useState<CraftBone | null>(configuration?.boneId ?? null)
@@ -136,15 +139,24 @@ function BoneCraftEditor({
         : []
       : prepared.value.kinds
     : []
-  const affected = (modId: string) =>
-    targetModIds.filter(
-      (targetId) =>
-        targetId === modId ||
-        targetAlternatives.some(
-          (entry) => entry.targetModId === targetId && entry.modIds.includes(modId),
-        ),
-    )
-  const lostTargets = removal?.ok ? affected(removal.value.affix.modId) : []
+  const targetLabels = (ids: string[]) =>
+    definitions.targets
+      .filter((target) => ids.includes(target.targetId))
+      .map((target) => target.modId)
+  const affected = (modId: string) => targetLabels(definitionTargetIdsForMods(definitions, [modId]))
+  const lostTargets = removal?.ok
+    ? targetLabels(
+        targetDefinitionChanges(
+          catalog,
+          state,
+          {
+            ...state,
+            affixes: state.affixes.filter((_, index) => index !== removal.value.index),
+          },
+          definitions,
+        ).lostTargetIds,
+      )
+    : []
   const riskTargets = prepared?.ok
     ? [...new Set(prepared.value.removableAffixes.flatMap((affix) => affected(affix.modId)))]
     : []
@@ -160,9 +172,18 @@ function BoneCraftEditor({
       ...mod.lines.map((line) => translateLine?.(line)),
     ].some((text) => text?.toLowerCase().includes(needle)),
   )
-  const goal = targetValues.find((entry) => entry.modId === reveal?.modId)
+  const goal = definitions.values.find((entry) => entry.modId === reveal?.modId)
   const bounds = goal?.bounds
-  const projected = selected ? projectCraftTargetValues(catalog, state, selected, goal) : null
+  const revealed = reveal
+    ? applyCraftStep(catalog, state, {
+        kind: 'desecration-reveal',
+        modId: reveal.modId,
+        values: reveal.values,
+      })
+    : null
+  const projected = selected
+    ? projectCraftTargetValues(catalog, revealed?.ok ? revealed.value : state, selected, goal)
+    : null
   const targetText = selected && reveal ? renderNumericLines(selected.lines, reveal.values) : null
   const actualTargetValues =
     projected?.ok && targetText?.ok ? projected.value.read(targetText.value) : null

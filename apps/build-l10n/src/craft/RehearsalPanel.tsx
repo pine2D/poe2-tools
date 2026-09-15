@@ -24,9 +24,7 @@ import {
   type CraftPricing,
   type CraftState,
   type CraftStep,
-  type CraftStrategy,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitionContext,
   collectCraftCosts,
   corruptionSourceHash,
   craftAffixCapacities,
@@ -34,16 +32,16 @@ import {
   craftCandidates,
   craftOmenDescription,
   craftOmenMaterials,
-  craftStrategyLeaves,
+  definitionStrategyStageAt,
   desecrationSourceHash,
   ESSENCE_OMEN_RULES,
   type EssenceCraftOperation,
   type EssenceOmen,
+  editTargetDefinitionContext,
   enableCraftAffixIdentity,
   type FractureCraftOperation,
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentifiedCraftState,
-  type IdentityCraftProject,
   type ItemDictionary,
   inspectNumericLines,
   isBasicJewel,
@@ -52,12 +50,14 @@ import {
   jewelSourceHash,
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
-  loadWorkbenchProject,
+  loadTargetWorkbenchProject,
   prepareCraftOperation,
   prepareStrategySocket,
+  projectTargetDefinitions,
   type RemovalCraftCurrency,
   type RestoredCraftProject,
   type RestoredIdentityCraftProject,
+  type RestoredTargetCraftProject,
   readNumericValues,
   removableCraftAffixes,
   resolveCraftAffix,
@@ -66,8 +66,12 @@ import {
   type SocketCraftOperation,
   serializeCraftProject,
   serializeIdentityCraftProject,
+  serializeTargetCraftProject,
+  setTargetDefinitionStrategy,
   statScalabilitySourceHash,
-  strategyStageAt,
+  TARGET_CRAFT_RULES_VERSION,
+  type TargetCraftProject,
+  targetProjectSourceUsage,
   usesExplicitModEffect,
   usesJewelCapacity,
   usesJewelEffect,
@@ -110,7 +114,7 @@ export interface RehearsalPanelProps {
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   dictionary?: ItemDictionary
-  initialProject?: RestoredCraftProject | RestoredIdentityCraftProject
+  initialProject?: RestoredCraftProject | RestoredIdentityCraftProject | RestoredTargetCraftProject
   importedSockets?: (string | null)[]
   importedQuality?: number
 }
@@ -292,10 +296,12 @@ export function RehearsalPanel({
     if (!providedProject) return null
     try {
       const saved =
-        providedProject.project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION
-          ? serializeIdentityCraftProject(providedProject.project, catalog, dictionary)
-          : { ok: true as const, value: serializeCraftProject(providedProject.project) }
-      return saved.ok ? loadWorkbenchProject(saved.value, catalog, dictionary) : saved
+        providedProject.project.rulesVersion === TARGET_CRAFT_RULES_VERSION
+          ? serializeTargetCraftProject(providedProject.project, catalog, dictionary)
+          : providedProject.project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION
+            ? serializeIdentityCraftProject(providedProject.project, catalog, dictionary)
+            : { ok: true as const, value: serializeCraftProject(providedProject.project) }
+      return saved.ok ? loadTargetWorkbenchProject(saved.value, catalog, dictionary) : saved
     } catch {
       return { ok: false as const, error: '演练项目无法读取。' }
     }
@@ -322,9 +328,25 @@ export function RehearsalPanel({
   const [strategyResultAction, setStrategyResultAction] = useState<SpecialStrategyAction | null>(
     null,
   )
-  const [strategy, setStrategy] = useState<CraftStrategy | undefined>(
-    initialProject?.project.strategy,
+  const [targetContext, setTargetContext] = useState<CraftTargetDefinitionContext>(() =>
+    initialProject
+      ? {
+          definitions: initialProject.project.targetDefinitions,
+          orphanedTargets: initialProject.project.orphanedTargets,
+          ...(initialProject.project.strategy ? { strategy: initialProject.project.strategy } : {}),
+        }
+      : {
+          definitions: { nextTargetId: 1, targets: [], alternatives: [], values: [] },
+          orphanedTargets: [],
+        },
   )
+  const { definitions, strategy } = targetContext
+  // 已验证定义的只读候选输入；目标身份及全部编辑始终以 context 为唯一事实源。
+  const {
+    targetModIds,
+    targetValues = [],
+    targetAlternatives = [],
+  } = useMemo(() => projectTargetDefinitions(definitions), [definitions])
   const [strategyStartStep, setStrategyStartStep] = useState(
     initialProject?.project.strategyStartStep,
   )
@@ -335,21 +357,6 @@ export function RehearsalPanel({
   )
   const [qualityDeclaration, setQualityDeclaration] = useState(
     initialProject ? initialProject.project.importedQuality : importedQuality,
-  )
-  const [targetModIds, setTargetModIds] = useState<string[]>(
-    initialProject?.project.targetModIds ?? [],
-  )
-  const [minimumTargetCount, setMinimumTargetCount] = useState<number | undefined>(
-    initialProject?.project.minimumTargetCount,
-  )
-  const [targetValues, setTargetValues] = useState<CraftTargetValues[]>(
-    initialProject?.project.targetValues ?? [],
-  )
-  const [targetAlternatives, setTargetAlternatives] = useState<CraftTargetAlternative[]>(
-    initialProject?.project.targetAlternatives ?? [],
-  )
-  const [targetFracturedModId, setTargetFracturedModId] = useState<string | undefined>(
-    initialProject?.project.targetFracturedModId,
   )
   const [targetImplicitValues, setTargetImplicitValues] = useState<CraftImplicitTargetValues[]>(
     initialProject?.project.targetImplicitValues ?? [],
@@ -490,36 +497,17 @@ export function RehearsalPanel({
   const stageResult = useMemo(
     () =>
       strategy?.flow
-        ? strategyStageAt(
+        ? definitionStrategyStageAt(
             catalog,
             history.map((entry) => entry.state),
             history.slice(1).flatMap((entry) => (entry.operation ? [entry.operation] : [])),
             strategy,
             strategyStartStep ?? 0,
             cursor,
-            {
-              targetModIds,
-              targetValues,
-              targetAlternatives,
-              targetImplicitValues,
-              ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
-              ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
-            },
+            { definitions, targetImplicitValues },
           )
         : null,
-    [
-      catalog,
-      history,
-      strategy,
-      strategyStartStep,
-      cursor,
-      targetModIds,
-      targetValues,
-      targetAlternatives,
-      targetImplicitValues,
-      minimumTargetCount,
-      targetFracturedModId,
-    ],
+    [catalog, history, strategy, strategyStartStep, cursor, definitions, targetImplicitValues],
   )
 
   if (!initial.ok || !current || !base) {
@@ -966,17 +954,13 @@ export function RehearsalPanel({
     )
       ? desecrationSourceHash(catalog)
       : null
-  const jewelHash = base.type === 'Jewel' ? jewelSourceHash(catalog) : null
   const referencedTargetIds = [
     ...targetModIds,
     ...targetAlternatives.flatMap((entry) => entry.modIds),
     ...targetValues.map((entry) => entry.modId),
-    ...(strategy?.rules.flatMap((rule) =>
-      craftStrategyLeaves(rule.conditions).flatMap((condition) =>
-        condition.kind === 'selected-targets' ? condition.modIds : [],
-      ),
-    ) ?? []),
+    ...targetContext.orphanedTargets.map((target) => target.modId),
   ]
+  const targetSources = targetProjectSourceUsage(catalog, current.baseId, referencedTargetIds)
   const effectSourcesNeeded =
     usesJewelEffect(catalog, {
       affixes: referencedTargetIds.map((modId) => ({ modId, lines: [] })),
@@ -1014,13 +998,15 @@ export function RehearsalPanel({
       : null
   const alloyUsage = alloyProjectUsage({ history, referencedTargetIds, strategy, pricing })
   const alloySignature = alloyUsage.used ? alloyCatalogSignature(catalog) : null
-  const project: IdentityCraftProject = {
+  const project: TargetCraftProject = {
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
     ...(strategy ? { strategy } : {}),
     ...(strategy?.flow ? { strategyStartStep: strategyStartStep ?? 0 } : {}),
     sourceCommit: catalog._meta.sourceCommit,
-    rulesVersion: IDENTITY_CRAFT_RULES_VERSION,
+    rulesVersion: TARGET_CRAFT_RULES_VERSION,
+    targetDefinitions: definitions,
+    orphanedTargets: targetContext.orphanedTargets,
     ...(alloySignature ? { alloyCatalogSignature: alloySignature } : {}),
     ...((effectSourcesNeeded ||
       alloyUsage.resistanceEffect ||
@@ -1035,13 +1021,21 @@ export function RehearsalPanel({
       .slice(1)
       .flatMap((entry) => (entry.operation === null ? [] : [entry.operation])),
     cursor,
-    ...(desecratedHash ? { desecrationSourceHash: desecratedHash } : {}),
+    ...((desecratedHash || targetSources.desecration) && desecrationSourceHash(catalog)
+      ? { desecrationSourceHash: desecrationSourceHash(catalog) as string }
+      : {}),
     ...(history.some((entry) => entry.state.corruption) && corruptionSourceHash(catalog)
       ? { corruptionSourceHash: corruptionSourceHash(catalog) as string }
       : {}),
-    ...(jewelHash ? { jewelSourceHash: jewelHash } : {}),
-    ...(emotionHash ? { liquidEmotionSourceHash: emotionHash } : {}),
-    ...(hasEssenceHistory && essenceSourceHash ? { essenceSourceHash } : {}),
+    ...((base.type === 'Jewel' || targetSources.jewel) && jewelSourceHash(catalog)
+      ? { jewelSourceHash: jewelSourceHash(catalog) as string }
+      : {}),
+    ...((emotionHash || targetSources.liquid) && liquidEmotionSourceHash(catalog)
+      ? { liquidEmotionSourceHash: liquidEmotionSourceHash(catalog) as string }
+      : {}),
+    ...((hasEssenceHistory || targetSources.essence) && essenceSourceHash
+      ? { essenceSourceHash }
+      : {}),
     ...((history[0]?.state.sockets !== undefined ||
       strategy?.rules.some(
         (rule) => rule.action.kind === 'socket' || rule.action.kind === 'artificer',
@@ -1049,18 +1043,17 @@ export function RehearsalPanel({
     augmentSourceHash
       ? { augmentSourceHash }
       : {}),
-    ...(targetModIds.length === 0 ? {} : { targetModIds }),
-    ...(targetValues.length === 0 ? {} : { targetValues }),
-    ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
     ...(targetImplicitValues.length === 0 ? {} : { targetImplicitValues }),
-    ...(targetAlternatives.length === 0 ? {} : { targetAlternatives }),
-    ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const restoreProject = (restored: RestoredIdentityCraftProject) => {
+  const restoreProject = (restored: RestoredTargetCraftProject) => {
     setPricing(restored.project.pricing)
-    setStrategy(restored.project.strategy)
+    setTargetContext({
+      definitions: restored.project.targetDefinitions,
+      orphanedTargets: restored.project.orphanedTargets,
+      ...(restored.project.strategy ? { strategy: restored.project.strategy } : {}),
+    })
     setStrategyStartStep(restored.project.strategyStartStep)
     setHistory(
       restored.states.map((state, index) => ({
@@ -1071,12 +1064,7 @@ export function RehearsalPanel({
     )
     setCursor(restored.project.cursor)
     setOmen(undefined)
-    setTargetModIds(restored.project.targetModIds ?? [])
-    setTargetValues(restored.project.targetValues ?? [])
-    setMinimumTargetCount(restored.project.minimumTargetCount)
     setTargetImplicitValues(restored.project.targetImplicitValues ?? [])
-    setTargetAlternatives(restored.project.targetAlternatives ?? [])
-    setTargetFracturedModId(restored.project.targetFracturedModId)
     setSocketDeclaration(restored.project.importedSockets)
     setQualityDeclaration(restored.project.importedQuality)
     setTargetSession((value) => value + 1)
@@ -1273,22 +1261,21 @@ export function RehearsalPanel({
         {...(translateLine ? { translateLine } : {})}
         state={current}
         strategy={strategy}
-        goals={{
-          targetModIds,
-          targetValues,
-          targetAlternatives,
-          targetImplicitValues,
-          ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
-          ...(targetFracturedModId === undefined ? {} : { targetFracturedModId }),
-        }}
+        goals={{ definitions, targetImplicitValues }}
+        orphanedTargets={targetContext.orphanedTargets}
         appliedSteps={cursor}
         pending={Boolean(
           draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft,
         )}
         omenLabel={omenLabel}
         onChange={(value) => {
+          const changed = setTargetDefinitionStrategy(catalog, current.baseId, targetContext, value)
+          if (!changed.ok) {
+            setMessage(changed.error)
+            return
+          }
           clearTargetDrafts()
-          setStrategy(value)
+          setTargetContext(changed.value)
           setStrategyStartStep(value?.flow ? cursor : undefined)
         }}
         onStart={(action) => {
@@ -1327,11 +1314,7 @@ export function RehearsalPanel({
           catalog={catalog}
           state={current}
           translations={translations}
-          targetModIds={targetModIds}
-          targetValues={targetValues}
-          targetAlternatives={targetAlternatives}
-          {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
-          {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
+          definitions={definitions}
           {...(translateLine ? { translateLine } : {})}
           fractureLabel={fractureLabel}
           onPreview={(operation) => {
@@ -1343,60 +1326,43 @@ export function RehearsalPanel({
       ) : null}
       <CraftTargets
         onExtract={(targets) => {
+          const config = {
+            targetModIds: targets.targetModIds,
+            targetValues: targets.targetValues,
+            ...(targets.targetFracturedModId === undefined
+              ? {}
+              : { targetFracturedModId: targets.targetFracturedModId }),
+          }
+          const changed = editTargetDefinitionContext(catalog, current, targetContext, {
+            kind: 'replace',
+            config,
+          })
+          if (!changed.ok) {
+            setMessage(changed.error)
+            return
+          }
           clearTargetDrafts()
-          setTargetModIds(targets.targetModIds)
-          setTargetValues(targets.targetValues)
-          setTargetFracturedModId(targets.targetFracturedModId)
-          setTargetAlternatives([])
-          setMinimumTargetCount(undefined)
-        }}
-        {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
-        onMinimumTargetCountChange={(value) => {
-          clearTargetDrafts()
-          setMinimumTargetCount(value)
+          setTargetContext(changed.value)
         }}
         key={`${current.baseId}:${targetSession}`}
         catalog={catalog}
         state={current}
+        definitions={definitions}
+        onEdit={(edit) => {
+          const changed = editTargetDefinitionContext(catalog, current, targetContext, edit)
+          if (!changed.ok) {
+            setMessage(changed.error)
+            return
+          }
+          clearTargetDrafts()
+          setTargetContext(changed.value)
+        }}
         targetImplicitValues={targetImplicitValues}
         onImplicitValuesChange={(values) => {
           clearTargetDrafts()
           setTargetImplicitValues(values)
         }}
-        targetModIds={targetModIds}
-        targetValues={targetValues}
-        targetAlternatives={targetAlternatives}
-        {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
-        onFracturedTargetChange={(id) => {
-          clearTargetDrafts()
-          setTargetFracturedModId(id)
-        }}
         {...(omen === undefined ? {} : { omen })}
-        onAlternativesChange={(alternatives) => {
-          clearTargetDrafts()
-          setTargetAlternatives(alternatives)
-          const accepted = new Set([
-            ...targetModIds,
-            ...alternatives.flatMap((entry) => entry.modIds),
-          ])
-          setTargetValues((values) => values.filter((entry) => accepted.has(entry.modId)))
-        }}
-        onValuesChange={(values) => {
-          clearTargetDrafts()
-          setTargetValues(values)
-        }}
-        onChange={(ids) => {
-          clearTargetDrafts()
-          if (targetFracturedModId && !ids.includes(targetFracturedModId))
-            setTargetFracturedModId(undefined)
-          setTargetModIds(ids)
-          if (minimumTargetCount !== undefined && minimumTargetCount > ids.length)
-            setMinimumTargetCount(undefined)
-          const alternatives = targetAlternatives.filter((entry) => ids.includes(entry.targetModId))
-          setTargetAlternatives(alternatives)
-          const accepted = new Set([...ids, ...alternatives.flatMap((entry) => entry.modIds)])
-          setTargetValues((values) => values.filter((entry) => accepted.has(entry.modId)))
-        }}
         onStart={startAdvice}
         onStartPreparation={startPreparation}
         onPreviewRoute={startRoute}
@@ -1573,14 +1539,10 @@ export function RehearsalPanel({
           </button>
           {comparisonOpen ? (
             <CraftComparisonPanel
-              {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
               catalog={catalog}
               translations={translations}
               targetImplicitValues={targetImplicitValues}
-              targetModIds={targetModIds}
-              targetValues={targetValues}
-              targetAlternatives={targetAlternatives}
-              {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
+              definitions={definitions}
               before={comparisonBefore}
               after={comparisonAfter}
               {...(translateLine === undefined ? {} : { translateLine })}
@@ -1591,14 +1553,10 @@ export function RehearsalPanel({
       <div ref={fracturePanelRef} tabIndex={-1}>
         {!strategyResultAction ? (
           <FracturePanel
-            {...(minimumTargetCount === undefined ? {} : { minimumTargetCount })}
             catalog={catalog}
             state={current}
             label={fractureLabel}
-            targetModIds={targetModIds}
-            targetValues={targetValues}
-            targetAlternatives={targetAlternatives}
-            {...(targetFracturedModId === undefined ? {} : { targetFracturedModId })}
+            definitions={definitions}
             disabled={Boolean(
               draft ||
                 removalCurrency ||
@@ -1651,9 +1609,7 @@ export function RehearsalPanel({
             catalog={catalog}
             state={current}
             translations={translations}
-            targetModIds={targetModIds}
-            targetValues={targetValues}
-            targetAlternatives={targetAlternatives}
+            definitions={definitions}
             disabled={Boolean(
               draft ||
                 removalCurrency ||
@@ -1725,9 +1681,7 @@ export function RehearsalPanel({
           catalog={catalog}
           state={current}
           translations={translations}
-          targetModIds={targetModIds}
-          targetAlternatives={targetAlternatives}
-          targetValues={targetValues}
+          definitions={definitions}
           disabled={
             draft !== null ||
             removalCurrency !== null ||
@@ -1749,9 +1703,7 @@ export function RehearsalPanel({
           catalog={catalog}
           state={current}
           translations={translations}
-          targetModIds={targetModIds}
-          targetAlternatives={targetAlternatives}
-          targetValues={targetValues}
+          definitions={definitions}
           disabled={Boolean(
             draft ||
               removalCurrency ||
@@ -1772,9 +1724,7 @@ export function RehearsalPanel({
           catalog={catalog}
           state={current}
           translations={translations}
-          targetModIds={targetModIds}
-          targetAlternatives={targetAlternatives}
-          targetValues={targetValues}
+          definitions={definitions}
           disabled={Boolean(
             draft ||
               removalCurrency ||

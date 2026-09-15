@@ -1,16 +1,20 @@
-import type { CraftStrategy, CraftStrategyDecision, CraftStrategyRule } from '@poe2-tools/item-core'
+import type {
+  CraftStrategyDecision,
+  DefinitionCraftStrategy,
+  DefinitionCraftStrategyRule,
+} from '@poe2-tools/item-core'
 
 import { StrategyFlowDialog } from './StrategyFlowDialog'
 import { StrategyStageList } from './StrategyStageList'
 
 interface Props {
-  strategy: CraftStrategy
+  strategy: DefinitionCraftStrategy
   decision: CraftStrategyDecision | null
   ruleLabels: readonly string[]
   onEditRule: (index: number) => void
   stageId: string | undefined
   startStep: number
-  onChange: (strategy: CraftStrategy) => void
+  onChange: (strategy: DefinitionCraftStrategy) => void
   onRestart: () => void
 }
 export function StrategyFlowEditor({
@@ -132,10 +136,10 @@ export function StrategyRuleStages({
   number,
   onChange,
 }: {
-  strategy: CraftStrategy
-  rule: CraftStrategyRule
+  strategy: DefinitionCraftStrategy
+  rule: DefinitionCraftStrategyRule
   number: number
-  onChange: (rule: CraftStrategyRule) => void
+  onChange: (rule: DefinitionCraftStrategyRule) => void
 }) {
   if (!strategy.flow) return null
   const options = strategy.flow.stages.map((stage) => (

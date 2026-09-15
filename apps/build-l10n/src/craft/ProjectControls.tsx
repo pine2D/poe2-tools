@@ -4,12 +4,15 @@ import {
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentityCraftProject,
   type ItemDictionary,
-  loadWorkbenchProject,
+  loadTargetWorkbenchProject,
   MAX_CRAFT_PROJECT_BYTES,
-  type RestoredIdentityCraftProject,
-  reuseIdentityCraftPlan,
+  type RestoredTargetCraftProject,
+  reuseTargetCraftPlan,
   serializeCraftProject,
   serializeIdentityCraftProject,
+  serializeTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
+  type TargetCraftProject,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 
@@ -19,8 +22,8 @@ export const REHEARSAL_PROJECT_KEY = 'poe2-tools:craft-rehearsal:v1'
 export interface ProjectControlsProps {
   catalog: CraftCatalog
   dictionary?: ItemDictionary
-  project?: CraftProject | IdentityCraftProject
-  onRestore: (restored: RestoredIdentityCraftProject) => void
+  project?: CraftProject | IdentityCraftProject | TargetCraftProject
+  onRestore: (restored: RestoredTargetCraftProject) => void
 }
 
 export function ProjectControls({ catalog, dictionary, project, onRestore }: ProjectControlsProps) {
@@ -32,7 +35,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const [planPreview, setPlanPreview] = useState<{
     text: string
     name: string
-    restored: RestoredIdentityCraftProject
+    restored: RestoredTargetCraftProject
   } | null>(null)
   useEffect(() => {
     if (planPreview) previewRef.current?.focus()
@@ -53,21 +56,24 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const validatedText = () => {
     if (!project) return { ok: false as const, error: '当前没有可保存的演练项目。' }
     try {
-      if (project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION)
-        return serializeIdentityCraftProject(project, catalog, dictionary)
-      const text = serializeCraftProject(project)
-      if (new Blob([text]).size > MAX_CRAFT_PROJECT_BYTES)
-        return { ok: false as const, error: '演练项目超过 2 MB 限制，无法保存。' }
-      const checked = loadWorkbenchProject(text, catalog, dictionary)
-      if (!checked.ok) return checked
-      return serializeIdentityCraftProject(checked.value.project, catalog, dictionary)
+      if (project.rulesVersion === TARGET_CRAFT_RULES_VERSION)
+        return serializeTargetCraftProject(project, catalog, dictionary)
+      const saved =
+        project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION
+          ? serializeIdentityCraftProject(project, catalog, dictionary)
+          : { ok: true as const, value: serializeCraftProject(project) }
+      if (!saved.ok) return saved
+      const checked = loadTargetWorkbenchProject(saved.value, catalog, dictionary)
+      return checked.ok
+        ? serializeTargetCraftProject(checked.value.project, catalog, dictionary)
+        : checked
     } catch {
       return { ok: false as const, error: '演练项目无法序列化。' }
     }
   }
 
   const restoreText = (text: string, request: number) => {
-    const restored = loadWorkbenchProject(text, catalog, dictionary)
+    const restored = loadTargetWorkbenchProject(text, catalog, dictionary)
     if (request !== requestRef.current) return
     setPlanPreview(null)
     if (!restored.ok) {
@@ -150,7 +156,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
       setMessage(current.error)
       return
     }
-    const reused = reuseIdentityCraftPlan(current.value, text, catalog, dictionary)
+    const reused = reuseTargetCraftPlan(current.value, text, catalog, dictionary)
     if (!reused.ok) {
       setMessage(reused.error)
       return
@@ -167,7 +173,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
       setPlanPreview(null)
       return
     }
-    const reused = reuseIdentityCraftPlan(current.value, planPreview.text, catalog, dictionary)
+    const reused = reuseTargetCraftPlan(current.value, planPreview.text, catalog, dictionary)
     setPlanPreview(null)
     if (!reused.ok) {
       setMessage(reused.error)
@@ -231,7 +237,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
             步及报价保留；未应用草稿会清除。
           </p>
           <p>
-            显式目标 {planPreview.restored.project.targetModIds?.length ?? 0} 组，固有目标{' '}
+            显式目标 {planPreview.restored.project.targetDefinitions.targets.length} 组，固有目标{' '}
             {planPreview.restored.project.targetImplicitValues?.length ?? 0} 行。
           </p>
           {planPreview.restored.project.strategy ? (
@@ -247,6 +253,12 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
           <p>
             动作仍按当前装备核对，孔位或数值未知的条件保持未知。应用方案本身不消耗材料，也不修改收藏。
           </p>
+          {planPreview.restored.project.orphanedTargets.length > 0 ? (
+            <p>
+              此方案仍引用 {planPreview.restored.project.orphanedTargets.length}{' '}
+              个已移除目标；沿用后需编辑条件，重新选择目标。
+            </p>
+          ) : null}
           <button type="button" onClick={applyPlan}>
             应用收藏方案
           </button>

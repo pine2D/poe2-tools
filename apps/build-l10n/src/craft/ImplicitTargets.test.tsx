@@ -26,13 +26,13 @@ const delayed = vi.hoisted(() => ({
   calls: [] as { finish: () => void; cancel: ReturnType<typeof vi.fn> }[],
 }))
 vi.mock('./targetRoutesWorkerClient', async () => {
-  const { planCraftTargetRoutes } = await import('@poe2-tools/item-core')
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
   return {
     requestTargetRoutes: (
-      args: Parameters<typeof planCraftTargetRoutes>,
-      callback: (value: ReturnType<typeof planCraftTargetRoutes>) => void,
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (value: ReturnType<typeof planTargetDefinitionRoutes>) => void,
     ) => {
-      const finish = () => callback(planCraftTargetRoutes(...args))
+      const finish = () => callback(planTargetDefinitionRoutes(...args))
       const cancel = vi.fn()
       if (delayed.hold) delayed.calls.push({ finish, cancel })
       else finish()
@@ -205,12 +205,15 @@ it('显式和固有联合计数及前后达成/失去均使用目录身份', () 
     <CraftTargets
       catalog={catalog}
       state={state}
-      targetModIds={['prefix1']}
-      targetValues={[]}
+      definitions={{
+        nextTargetId: 2,
+        targets: [{ targetId: 't1', modId: 'prefix1' }],
+        alternatives: [],
+        values: [],
+      }}
       targetImplicitValues={goals}
       onImplicitValuesChange={vi.fn()}
-      onValuesChange={vi.fn()}
-      onChange={vi.fn()}
+      onEdit={vi.fn()}
       onStart={vi.fn()}
       onStartEssence={vi.fn()}
       onStartPreparation={vi.fn()}
@@ -227,6 +230,7 @@ it('显式和固有联合计数及前后达成/失去均使用目录身份', () 
   }
   const view = render(
     <CraftComparisonPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={catalog}
       before={state}
       after={after}
@@ -238,6 +242,7 @@ it('显式和固有联合计数及前后达成/失去均使用目录身份', () 
   )
   view.rerender(
     <CraftComparisonPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={catalog}
       before={after}
       after={state}

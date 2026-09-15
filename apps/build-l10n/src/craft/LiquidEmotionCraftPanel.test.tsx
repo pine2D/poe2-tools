@@ -1,7 +1,7 @@
 import {
   CRAFT_RULES_VERSION,
   LIQUID_EMOTION_SOURCE,
-  loadWorkbenchProject,
+  loadTargetWorkbenchProject,
   parseCraftProject,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
@@ -126,6 +126,12 @@ it('双侧液态材料先明确可能结果，切换侧别会清除移除选择'
   const preview = vi.fn()
   render(
     <LiquidEmotionCraftPanel
+      definitions={{
+        nextTargetId: 8,
+        targets: [{ targetId: 't7', modId: 'prefix1' }],
+        alternatives: [],
+        values: [],
+      }}
       catalog={catalog}
       state={state}
       translations={{ 'Potent Liquid Contempt': '强效的液化轻蔑' }}
@@ -191,10 +197,10 @@ it('增容沿条件指引预览应用并更新空位，项目保存与撤销恢�
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(saved.operations.at(-1).resultKind).toBe('prefix')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.operations.at(-1).removeAffixId).toBe('a1')
   expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
-  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(loadTargetWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('撤销')
   expect(screen.getByRole('heading', { name: '后缀 2/2' })).toBeDefined()
   click('重做')
@@ -244,11 +250,11 @@ it('移除增容后显示已有三后缀保留，满五组拒绝新增且项目�
   expect(screen.getByText('稀有装备词缀已满。')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.operations[3].removeAffixId).toBe('a5')
   expect(saved.operations.at(-1).rolls).toEqual([{ modId: 'prefix2', values: [5], affixId: 'a7' }])
   expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
-  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(loadTargetWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('恢复本机演练')
   expect(screen.getByRole('heading', { name: '后缀 3/2' })).toBeDefined()
 })
@@ -279,12 +285,17 @@ it('液态制作选择合法移除对象和数值后才能预览，显示移除�
   const preview = vi.fn()
   render(
     <LiquidEmotionCraftPanel
+      definitions={{
+        nextTargetId: 8,
+        targets: [{ targetId: 't7', modId: 'prefix1' }],
+        alternatives: [],
+        values: [],
+      }}
       catalog={catalog}
       state={state}
       translations={translations}
       disabled={false}
       onPreview={preview}
-      targetModIds={['prefix1']}
     />,
   )
   click('选择液态情感 稀释的液化愤怒')
@@ -325,10 +336,10 @@ it('液态结果取消不计费，应用后工艺标记与撤销重做、保存�
   expect(screen.getByText('稀释的液化愤怒 × 1')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.operations.at(-1).removeAffixId).toBe('a1')
   expect(saved.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
-  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(loadTargetWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('撤销')
   expect(screen.queryByText('稀释的液化愤怒 × 1')).toBeNull()
   click('重做')
@@ -368,7 +379,7 @@ it('条件指引固定材料，应用后达到目标并停止，编辑规则清�
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(loadTargetWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('撤销')
   expect(screen.getByText('命中规则 4：稀释的液化愤怒')).toBeDefined()
   click('开始指引步骤')
@@ -391,7 +402,7 @@ it('固定条件效果无需数值，目标独立保存来源并沿指引达标�
   click('保存演练到本机')
   const targetOnly = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(targetOnly.liquidEmotionSourceHash).toBe(LIQUID_EMOTION_SOURCE.sha256)
-  expect(loadWorkbenchProject(JSON.stringify(targetOnly), catalog).ok).toBe(true)
+  expect(loadTargetWorkbenchProject(JSON.stringify(targetOnly), catalog).ok).toBe(true)
   click('启用条件指引示例')
   fireEvent.change(screen.getByLabelText('规则 4 动作'), { target: { value: 'liquid-emotion' } })
   click('开始指引步骤')
@@ -405,7 +416,7 @@ it('固定条件效果无需数值，目标独立保存来源并沿指引达标�
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(saved.operations.at(-1).values).toEqual([])
-  expect(loadWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
+  expect(loadTargetWorkbenchProject(JSON.stringify(saved), catalog).ok).toBe(true)
   click('撤销')
   expect(screen.queryByText('强效的液化悲哀 × 1')).toBeNull()
   click('重做')

@@ -5,11 +5,11 @@ import {
   type CraftState,
   createCraftItemDictionary,
   exportCraftItemText,
-  IDENTITY_CRAFT_RULES_VERSION,
   importCraftState,
   inspectItem,
-  parseIdentityCraftProject,
   parseItem,
+  parseTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -72,7 +72,7 @@ it('合金取消不计费，应用后保存完整未来历史与签名，撤销�
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
   expect(saved.cursor).toBe(0)
-  expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+  expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
   const initial = imported()
   expect(saved.initialState).toEqual({
     ...initial,
@@ -89,7 +89,7 @@ it('合金取消不计费，应用后保存完整未来历史与签名，撤销�
     },
   ])
   expect(saved.alloyCatalogSignature).toBe(alloyCatalogSignature(catalog))
-  const restored = parseIdentityCraftProject(JSON.stringify(saved), catalog)
+  const restored = parseTargetCraftProject(JSON.stringify(saved), catalog)
   expect(restored.ok).toBe(true)
   if (!restored.ok) throw Error(restored.error)
   expect(
@@ -114,7 +114,12 @@ it('目标风险与物等限制可读，材料切换不会沿用非法移除对�
     translations: {},
     disabled: false,
     onPreview: preview,
-    targetModIds: ['FireResist1'],
+    definitions: {
+      nextTargetId: 8,
+      targets: [{ targetId: 't7', modId: 'FireResist1' }],
+      alternatives: [],
+      values: [],
+    },
   }
   const view = render(<AlloyCraftPanel {...props} />)
   click('选择合金 符文合金')
@@ -159,8 +164,8 @@ it('只填火抗有效值即可预览君王建议，应用与保存恢复保留�
   expect(screen.getByText('君王合金 × 1')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem('poe2-tools:craft-rehearsal:v1') ?? '{}')
-  expect(saved.targetModIds).toEqual(['FireResist1'])
-  expect(saved.targetValues[0].basis).toBe('effective')
+  expect(saved.targetDefinitions.targets).toEqual([{ targetId: 't1', modId: 'FireResist1' }])
+  expect(saved.targetDefinitions.values[0].basis).toBe('effective')
   expect(saved.alloyCatalogSignature).toBe(alloyCatalogSignature(catalog))
   expect(saved.scalabilitySourceHash).toBeTruthy()
   click('撤销')

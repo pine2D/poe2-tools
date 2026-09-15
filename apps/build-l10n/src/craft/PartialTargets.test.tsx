@@ -27,7 +27,18 @@ it('网页一组达成即停止建议，保存、撤销和恢复保留数量条�
   click('应用本次结果')
   expect(screen.getByText('数量条件及必选目标均已达成，可停止当前路线。')).toBeDefined()
   click('保存演练到本机')
-  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').minimumTargetCount).toBe(1)
+  const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
+  expect(saved.targetDefinitions).toEqual({
+    nextTargetId: 3,
+    targets: [
+      { targetId: 't1', modId: 'p1' },
+      { targetId: 't2', modId: 's1' },
+    ],
+    alternatives: [],
+    values: [],
+    minimumTargetCount: 1,
+  })
   click('撤销')
   expect(screen.queryByText('数量条件及必选目标均已达成，可停止当前路线。')).toBeNull()
   click('恢复本机演练')
@@ -48,18 +59,53 @@ it('备选四前缀时允许数值编辑，切回无法共存的全部模式须�
   expect((screen.getByLabelText('显式目标达成条件') as HTMLSelectElement).value).toBe('2')
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.targetModIds).toEqual(['p1', 'p2', 'p3', 'p4'])
-  expect(saved.targetValues[0].bounds).toEqual([{ index: 0, min: 8 }])
+  expect(saved.targetDefinitions).toEqual({
+    nextTargetId: 5,
+    targets: [
+      { targetId: 't1', modId: 'p1' },
+      { targetId: 't2', modId: 'p2' },
+      { targetId: 't3', modId: 'p3' },
+      { targetId: 't4', modId: 'p4' },
+    ],
+    alternatives: [],
+    values: [{ targetId: 't1', modId: 'p1', bounds: [{ index: 0, min: 8 }] }],
+    minimumTargetCount: 2,
+  })
 })
 
-it('移除使数量越界时恢复全部，并显示原因，不静默降低数量', () => {
+it('移除使数量越界时收缩为剩余数量，并显示原因，重新添加保留数量条件', () => {
   render(<RehearsalPanel catalog={catalog()} initialState={state('normal')} translations={{}} />)
   add('p1')
   add('s1')
   fireEvent.change(screen.getByLabelText('显式目标达成条件'), { target: { value: '2' } })
   click('移除目标 s1')
-  expect((screen.getByLabelText('显式目标达成条件') as HTMLSelectElement).value).toBe('all')
-  expect(screen.getByText('目标减少，达成条件已恢复为全部。')).toBeDefined()
+  expect((screen.getByLabelText('显式目标达成条件') as HTMLSelectElement).value).toBe('1')
+  expect(screen.getByText('目标减少，达成数量已调整为剩余目标数。')).toBeDefined()
+  click('保存演练到本机')
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').targetDefinitions).toEqual(
+    {
+      nextTargetId: 3,
+      targets: [{ targetId: 't1', modId: 'p1' }],
+      alternatives: [],
+      values: [],
+      minimumTargetCount: 1,
+    },
+  )
+  add('s1')
+  expect((screen.getByLabelText('显式目标达成条件') as HTMLSelectElement).value).toBe('1')
+  click('保存演练到本机')
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').targetDefinitions).toEqual(
+    {
+      nextTargetId: 4,
+      targets: [
+        { targetId: 't1', modId: 'p1' },
+        { targetId: 't3', modId: 's1' },
+      ],
+      alternatives: [],
+      values: [],
+      minimumTargetCount: 1,
+    },
+  )
 })
 
 it('开启破裂或增加数量不得造成必选组与所有合法组合互斥', () => {
@@ -83,8 +129,18 @@ it('开启破裂或增加数量不得造成必选组与所有合法组合互斥'
   fireEvent.change(screen.getByLabelText('显式目标达成条件'), { target: { value: '2' } })
   expect((screen.getByLabelText('显式目标达成条件') as HTMLSelectElement).value).toBe('1')
   click('保存演练到本机')
-  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')).toMatchObject({
-    minimumTargetCount: 1,
-    targetFracturedModId: 'ess',
-  })
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').targetDefinitions).toEqual(
+    {
+      nextTargetId: 4,
+      targets: [
+        { targetId: 't1', modId: 'ess' },
+        { targetId: 't2', modId: 'fire' },
+        { targetId: 't3', modId: 'cold' },
+      ],
+      alternatives: [],
+      values: [],
+      minimumTargetCount: 1,
+      fracturedTargetId: 't1',
+    },
+  )
 })

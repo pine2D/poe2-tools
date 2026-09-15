@@ -1,10 +1,15 @@
-import type { CraftCatalog, CraftStrategyCondition } from '@poe2-tools/item-core'
+import type {
+  CraftCatalog,
+  CraftTargetDefinition,
+  DefinitionCraftStrategyCondition,
+} from '@poe2-tools/item-core'
 
-type Condition = Extract<CraftStrategyCondition, { kind: 'selected-targets' }>
+type Condition = Extract<DefinitionCraftStrategyCondition, { kind: 'selected-targets' }>
 interface Props {
   prefix: string
   condition: Condition
-  targetModIds: readonly string[]
+  targets: readonly CraftTargetDefinition[]
+  orphanedTargets: readonly CraftTargetDefinition[]
   catalog: CraftCatalog
   translateLine?: (line: string) => string | null
   onChange: (value: Condition) => void
@@ -12,19 +17,25 @@ interface Props {
 export function StrategyTargetCondition({
   prefix,
   condition,
-  targetModIds,
+  targets,
+  orphanedTargets,
   catalog,
   translateLine,
   onChange,
 }: Props) {
-  const ids = [...new Set([...targetModIds, ...condition.modIds])]
+  const activeIds = targets.map((target) => target.targetId)
+  const metadata = new Map(
+    [...targets, ...orphanedTargets].map((target) => [target.targetId, target.modId]),
+  )
+  const ids = [...new Set([...activeIds, ...condition.targetIds])]
   return (
     <div className="strategy-selected-targets">
       <p>选择要检查的主目标组。沿用目标区的数值、替代档位与破裂要求；未选择的目标不参与本条件。</p>
       {ids.map((id) => {
-        const line = catalog.modifiers.find((mod) => mod.id === id)?.lines[0] ?? id
-        const selected = condition.modIds.includes(id)
-        const missing = !targetModIds.includes(id)
+        const modId = metadata.get(id) ?? id
+        const line = catalog.modifiers.find((mod) => mod.id === modId)?.lines[0] ?? modId
+        const selected = condition.targetIds.includes(id)
+        const missing = !activeIds.includes(id)
         return (
           <label className="strategy-target-option" key={id}>
             <input
@@ -32,19 +43,23 @@ export function StrategyTargetCondition({
               aria-label={`${prefix} 目标 ${id}`}
               checked={selected}
               disabled={
-                (selected && condition.modIds.length === 1) ||
-                (!selected && condition.modIds.length >= 6)
+                (selected && condition.targetIds.length === 1) ||
+                (!selected && condition.targetIds.length >= 6)
               }
               onChange={(event) => {
-                const modIds = event.target.checked
-                  ? [...condition.modIds, id]
-                  : condition.modIds.filter((entry) => entry !== id)
-                if (modIds.length && modIds.length <= 6)
-                  onChange({ ...condition, modIds, min: Math.min(condition.min, modIds.length) })
+                const targetIds = event.target.checked
+                  ? [...condition.targetIds, id]
+                  : condition.targetIds.filter((entry) => entry !== id)
+                if (targetIds.length && targetIds.length <= 6)
+                  onChange({
+                    ...condition,
+                    targetIds,
+                    min: Math.min(condition.min, targetIds.length),
+                  })
               }}
             />
             <span>
-              <code>{id}</code> · {translateLine?.(line) ?? line}
+              <code>{modId}</code> · {translateLine?.(line) ?? line}
               {missing ? '（已从目标区移除，需修复引用）' : ''}
             </span>
           </label>
@@ -61,7 +76,7 @@ export function StrategyTargetCondition({
             value={condition.min}
             onChange={(event) => onChange({ ...condition, min: Number(event.target.value) })}
           >
-            {[1, 2, 3, 4, 5, 6].slice(0, condition.modIds.length).map((count) => (
+            {[1, 2, 3, 4, 5, 6].slice(0, condition.targetIds.length).map((count) => (
               <option key={count} value={count}>
                 {count}
               </option>

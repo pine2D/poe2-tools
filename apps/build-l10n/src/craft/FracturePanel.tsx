@@ -1,10 +1,10 @@
 import {
-  analyzeCraftTargets,
   applyFracture,
   type CraftCatalog,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
+  definitionTargetIdsForMods,
+  evaluateTargetDefinitions,
   type FractureCraftOperation,
   prepareFracture,
 } from '@poe2-tools/item-core'
@@ -12,52 +12,26 @@ import { useMemo } from 'react'
 import { ModStateBadges } from './ModStateBadges'
 
 interface FracturePanelProps {
-  minimumTargetCount?: number
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   state: CraftState
   label: string
   disabled: boolean
-  targetModIds: string[]
-  targetValues: CraftTargetValues[]
-  targetAlternatives: CraftTargetAlternative[]
-  targetFracturedModId?: string
   translateLine?: (line: string) => string | null
   onPreview: (operation: FractureCraftOperation) => void
 }
 
 /** 仅展示当前合法候选，选择结果交给父组件的共同草稿与历史。 */
 export function FracturePanel({
-  minimumTargetCount,
   catalog,
+  definitions,
   state,
   label,
   disabled,
-  targetModIds,
-  targetValues,
-  targetAlternatives,
-  targetFracturedModId,
   translateLine,
   onPreview,
 }: FracturePanelProps) {
   const prepared = useMemo(() => prepareFracture(catalog, state), [catalog, state])
-  const analysis = useMemo(
-    () =>
-      analyzeCraftTargets(
-        catalog,
-        state,
-        targetModIds,
-        targetValues,
-        targetAlternatives,
-        undefined,
-        [],
-        undefined,
-        minimumTargetCount,
-      ),
-    [catalog, state, targetModIds, targetValues, targetAlternatives, minimumTargetCount],
-  )
-  const targets = analysis.ok
-    ? analysis.value.targets.flatMap((target) => target.alternatives ?? [target])
-    : []
   return (
     <section className="rehearsal-fracture" aria-label="破裂制作">
       <h3>{label} · 破裂制作</h3>
@@ -76,13 +50,21 @@ export function FracturePanel({
           <div className="rehearsal-fracture-candidates">
             {prepared.value.candidates.map((affix) => {
               const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
-              const target = targets.find((entry) => entry.modId === affix.modId)
+              const targetId = definitionTargetIdsForMods(definitions, [affix.modId])[0]
               const operation: FractureCraftOperation = {
                 kind: 'fracture',
                 modId: affix.modId,
                 ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
               }
-              const unresolved = !applyFracture(catalog, state, operation).ok
+              const result = applyFracture(catalog, state, operation)
+              const unresolved = !result.ok
+              const matched =
+                targetId !== undefined &&
+                result.ok &&
+                evaluateTargetDefinitions(catalog, result.value, {
+                  ...definitions,
+                  fracturedTargetId: targetId,
+                }).matches.some((match) => match.targetId === targetId)
               return (
                 <article className="rehearsal-affix" key={affix.affixId ?? affix.modId}>
                   <header>
@@ -90,11 +72,7 @@ export function FracturePanel({
                     <span>{mod?.kind === 'prefix' ? '前缀' : '后缀'}</span>
                   </header>
                   <ModStateBadges states={affix.crafted ? ['crafted'] : []} />
-                  {targetFracturedModId &&
-                  (targetFracturedModId === affix.modId ||
-                    targetAlternatives
-                      .find((entry) => entry.targetModId === targetFracturedModId)
-                      ?.modIds.includes(affix.modId)) ? (
+                  {targetId !== undefined && targetId === definitions.fracturedTargetId ? (
                     <p>此组属于当前要求破裂的目标。</p>
                   ) : null}
                   {affix.lines.map((line) => (
@@ -103,9 +81,9 @@ export function FracturePanel({
                       <code>{line}</code>
                     </div>
                   ))}
-                  {target ? (
+                  {targetId ? (
                     <p>
-                      {target.matched
+                      {matched
                         ? '此组身份与数值条件已满足，可演练锁定。'
                         : '此组目标数值尚未达成，破裂后不能再用神圣调整。'}
                     </p>

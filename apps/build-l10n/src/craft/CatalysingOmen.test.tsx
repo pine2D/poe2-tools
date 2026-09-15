@@ -3,10 +3,11 @@ import { dirname, resolve } from 'node:path'
 import {
   type CraftCatalog,
   createCraftItemDictionary,
-  IDENTITY_CRAFT_RULES_VERSION,
   importCraftState,
   inspectItem,
   parseItem,
+  parseTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
@@ -128,7 +129,8 @@ it.each(['catalysing_exaltation', 'catalysing_greater_dextral_exaltation'])(
     ).toBeDefined()
     click('保存演练到本机')
     const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-    expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+    expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
+    expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
     const greater = omen === 'catalysing_greater_dextral_exaltation'
     expect(saved.operations).toEqual([
       {

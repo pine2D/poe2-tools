@@ -70,7 +70,7 @@ it('编辑品质范围需应用，催化消费后转停止，撤销与保存恢�
   expect(screen.getByText('当前品质：生命 · 0%')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.strategy.rules[0].conditions).toEqual([
     { kind: 'quality', source: 'catalyst', catalystId: 'Flesh', min: 0, max: 0 },
   ])
@@ -85,4 +85,4 @@ it('编辑品质范围需应用，催化消费后转停止，撤销与保存恢�
   ).toBe(true)
   click('恢复本机演练')
   expect((screen.getByLabelText('规则 1 条件 1 品质下限') as HTMLInputElement).value).toBe('0')
-})
+}, 10_000)

@@ -3,14 +3,13 @@ import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_OMEN_RULES,
   type CraftCatalog,
+  type CraftDefinitionRoutes,
   type CraftImplicitTargetValues,
   type CraftPricing,
   type CraftResult,
   type CraftState,
   type CraftStep,
-  type CraftTargetAlternative,
-  type CraftTargetRoutes,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
   collectCraftCosts,
   compareCraftStates,
   craftOmenDescription,
@@ -27,16 +26,12 @@ import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
-  minimumTargetCount?: number
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
   state: CraftState
-  ids: string[]
-  values: CraftTargetValues[]
-  alternatives: CraftTargetAlternative[]
+  definitions: CraftTargetDefinitions
   implicitValues?: CraftImplicitTargetValues[]
-  targetFracturedModId?: string
   busy: boolean
   translations: Record<string, string>
   onPreview: (operation: CraftStep) => void
@@ -56,12 +51,8 @@ export function TargetRoutesPanel(props: Props) {
       key={JSON.stringify([
         props.catalog._meta,
         props.state,
-        props.ids,
-        props.values,
-        props.alternatives,
+        props.definitions,
         props.implicitValues,
-        props.targetFracturedModId,
-        props.minimumTargetCount,
         preserveMatched,
         costSearch ? props.pricing : null,
       ])}
@@ -74,16 +65,12 @@ export function TargetRoutesPanel(props: Props) {
   )
 }
 function RouteSearch({
-  minimumTargetCount,
   pricing,
   spentSteps = [],
   catalog,
   state,
-  ids,
-  values,
-  alternatives,
+  definitions,
   implicitValues = [],
-  targetFracturedModId,
   busy,
   translations,
   onPreview,
@@ -98,7 +85,7 @@ function RouteSearch({
   costSearch: boolean
   onCostSearchChange: (value: boolean) => void
 }) {
-  const [result, setResult] = useState<CraftResult<CraftTargetRoutes> | null>(null)
+  const [result, setResult] = useState<CraftResult<CraftDefinitionRoutes> | null>(null)
   const [running, setRunning] = useState(false)
   const cancelRef = useRef<(() => void) | null>(null)
   const requestId = useRef(0)
@@ -160,6 +147,10 @@ function RouteSearch({
       ? `${mod.name || mod.id} · ${translateLine?.(mod.lines[0] ?? '') ?? mod.lines[0] ?? id}`
       : id
   }
+  const targetLabel = (targetId: string) => {
+    const target = definitions.targets.find((target) => target.targetId === targetId)
+    return target ? modLabel(target.modId) : '已失联目标'
+  }
   const implicitLabel = (index: number) => {
     const line =
       catalog.bases.find((base) => base.id === state.baseId)?.implicit?.split('\n')[index] ?? ''
@@ -210,7 +201,9 @@ function RouteSearch({
       <button
         type="button"
         disabled={
-          busy || running || (ids.length + implicitValues.length === 0 && !state.pendingDesecration)
+          busy ||
+          running ||
+          (definitions.targets.length + implicitValues.length === 0 && !state.pendingDesecration)
         }
         onClick={() => {
           stop()
@@ -222,16 +215,12 @@ function RouteSearch({
               [
                 catalog,
                 state,
-                ids,
-                values,
-                alternatives,
+                definitions,
                 {
                   preserveMatched,
-                  ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
                   ...(costSearch && pricing ? { pricing } : {}),
                 },
                 implicitValues,
-                targetFracturedModId,
               ],
               (next) => {
                 if (requestId.current !== id) return
@@ -264,11 +253,11 @@ function RouteSearch({
         <>
           <p role="status">
             {result.value.alreadyMatched
-              ? minimumTargetCount === undefined
+              ? definitions.minimumTargetCount === undefined
                 ? '全部目标已达成，无需新增路线。'
                 : '数量条件及必选目标已达成，无需新增路线。'
               : result.value.routes.length
-                ? minimumTargetCount === undefined
+                ? definitions.minimumTargetCount === undefined
                   ? `找到 ${result.value.routes.length} 条全部目标达成的示例路线。`
                   : `找到 ${result.value.routes.length} 条满足数量及必选条件的示例路线。`
                 : '本次有限搜索未找到完整路线，不能证明目标不可达。'}
@@ -366,12 +355,12 @@ function RouteSearch({
                             {...(translateLine ? { translateLine } : {})}
                           />
                         ) : null}
-                        {ids.length + implicitValues.length > 0 ? (
+                        {definitions.targets.length + implicitValues.length > 0 ? (
                           <p>
                             已达成{' '}
                             {step.matchedTargetIds.length +
                               (step.matchedImplicitLineIndexes?.length ?? 0)}{' '}
-                            / {ids.length + implicitValues.length}
+                            / {definitions.targets.length + implicitValues.length}
                           </p>
                         ) : (
                           <p>未设置制作目标；本路线用于完成揭示。</p>
@@ -427,10 +416,10 @@ function RouteSearch({
                         {step.lostTargetIds.length ? (
                           <p className="target-warning">
                             指定结果丢失目标身份或数值条件：
-                            {step.lostTargetIds.map(modLabel).join('；')}
+                            {step.lostTargetIds.map(targetLabel).join('；')}
                           </p>
                         ) : null}
-                        {step.atRiskTargetIds.length ? (
+                        {step.atRiskModIds.length ? (
                           <p className="target-warning">
                             {'kind' in step.operation &&
                             (step.operation.kind === 'liquid-emotion' ||
@@ -443,7 +432,7 @@ function RouteSearch({
                                     CRAFT_OMEN_RULES[step.operation.omen].lowestLevel
                                   ? '最低等级候选内的目标风险：'
                                   : '整个合法随机移除池内的目标风险：'}
-                            {step.atRiskTargetIds.map(modLabel).join('；')}
+                            {step.atRiskModIds.map(modLabel).join('；')}
                             。所选安全结果不代表随机安全。
                           </p>
                         ) : null}
@@ -458,7 +447,7 @@ function RouteSearch({
                               : ''}
                             涉及目标：
                             {[
-                              ...step.rerolledTargetIds.map(modLabel),
+                              ...step.rerolledModIds.map(modLabel),
                               ...(step.rerolledImplicitLineIndexes?.map(implicitLabel) ?? []),
                             ].join('；')}
                             。固有示例值：

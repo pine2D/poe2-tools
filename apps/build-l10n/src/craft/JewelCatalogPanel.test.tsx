@@ -77,6 +77,7 @@ it('开始制作前可以按中文保证属性查到双侧液态材料，工艺�
 it('液态制作按保证属性检索，尚未准备稀有装备也能查看结果与不可用原因', () => {
   render(
     <LiquidEmotionCraftPanel
+      definitions={{ nextTargetId: 1, targets: [], alternatives: [], values: [] }}
       catalog={catalog}
       state={{ baseId: 'Ruby', itemLevel: 86, rarity: 'normal', affixes: [], sourceText: null }}
       translations={{}}

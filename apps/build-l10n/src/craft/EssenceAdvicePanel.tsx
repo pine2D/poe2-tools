@@ -3,8 +3,9 @@ import {
   applyCraftStep,
   type CraftCatalog,
   type CraftState,
+  type CraftTargetDefinitions,
+  type DefinitionEssenceAdviceStep,
   ESSENCE_OMEN_RULES,
-  type EssenceAdviceStep,
   type EssenceCraftOperation,
   type LiquidEmotionCraftOperation,
   prepareAlloyCraft,
@@ -77,10 +78,11 @@ export function EssenceResultDetails({
 interface EssenceAdvicePanelProps {
   catalog: CraftCatalog
   state: CraftState
-  steps: EssenceAdviceStep[]
+  definitions: CraftTargetDefinitions
+  steps: DefinitionEssenceAdviceStep[]
   translations: Record<string, string>
   busy: boolean
-  onStartEssence: (step: EssenceAdviceStep) => void
+  onStartEssence: (step: DefinitionEssenceAdviceStep) => void
   translateLine?: (line: string) => string | null
 }
 
@@ -88,6 +90,7 @@ export function EssenceAdvicePanel({
   catalog,
   state,
   steps,
+  definitions,
   translations,
   busy,
   onStartEssence,
@@ -98,6 +101,10 @@ export function EssenceAdvicePanel({
   const modLabel = (id: string) => {
     const mod = catalog.modifiers.find((entry) => entry.id === id)
     return mod ? `${id} · ${mod.lines.map((line) => translateLine?.(line) ?? line).join('；')}` : id
+  }
+  const targetLabel = (targetId: string) => {
+    const target = definitions.targets.find((target) => target.targetId === targetId)
+    return target ? modLabel(target.modId) : '已失联目标'
   }
   return (
     <section aria-label="精华目标建议">
@@ -132,14 +139,17 @@ export function EssenceAdvicePanel({
               <>
                 <p className="target-warning">
                   整个合法移除池中的目标风险：
-                  {step.atRiskTargetIds.length
-                    ? step.atRiskTargetIds.map(modLabel).join('；')
+                  {step.atRiskModIds.length
+                    ? step.atRiskModIds.map(modLabel).join('；')
                     : '无现有目标档位'}
                   。
                 </p>
                 <p>
                   本次指定结果失去目标：
-                  {step.lostTargetIds.length ? step.lostTargetIds.map(modLabel).join('；') : '无'}。
+                  {step.lostTargetIds.length
+                    ? step.lostTargetIds.map(targetLabel).join('；')
+                    : '无'}
+                  。
                 </p>
               </>
             ) : null}

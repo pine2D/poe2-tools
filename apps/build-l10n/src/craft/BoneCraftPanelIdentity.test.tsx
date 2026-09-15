@@ -11,6 +11,8 @@ import { boneCatalog, boneState } from '../../../../packages/item-core/src/boneT
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
 
+const emptyDefinitions = { nextTargetId: 1, targets: [], alternatives: [], values: [] }
+
 afterEach(cleanup)
 function must<T>(result: CraftResult<T>): T {
   if (!result.ok) throw Error(result.error)
@@ -26,6 +28,7 @@ it.each([false, true])('骨骼移除保留完整实例选择，预演不修改�
   const onPreview = vi.fn<(step: BoneCraftOperation) => void>()
   render(
     <BoneCraftPanel
+      definitions={emptyDefinitions}
       catalog={catalog}
       state={state}
       translations={{}}
@@ -55,7 +58,7 @@ it.each([false, true])('骨骼移除保留完整实例选择，预演不修改�
 it('同类型不同实例的上下文清除旧骨骼移除选择', () => {
   const state = must(enableCraftAffixIdentity(catalog, full))
   const props = { catalog, state, translations: {}, disabled: false, onPreview: vi.fn() }
-  const { rerender } = render(<BoneCraftPanel {...props} />)
+  const { rerender } = render(<BoneCraftPanel definitions={emptyDefinitions} {...props} />)
   fireEvent.change(screen.getByLabelText('骨骼材料'), { target: { value: 'preserved_rib' } })
   fireEvent.click(screen.getByLabelText('骨骼移除 suffix2'))
   const replacement: CraftState = {
@@ -65,7 +68,7 @@ it('同类型不同实例的上下文清除旧骨骼移除选择', () => {
       index === 4 ? { ...affix, affixId: 'a9' } : affix,
     ),
   }
-  rerender(<BoneCraftPanel {...props} state={replacement} />)
+  rerender(<BoneCraftPanel definitions={emptyDefinitions} {...props} state={replacement} />)
   expect((screen.getByRole('button', { name: '预览骨骼结果' }) as HTMLButtonElement).disabled).toBe(
     true,
   )
@@ -86,13 +89,15 @@ it.each([false, true])(
       : boneState(['prefix1'])
     const onPreview = vi.fn<(step: BoneCraftOperation) => void>()
     const props = { catalog, translations: {}, disabled: false, onPreview }
-    const { rerender } = render(<BoneCraftPanel {...props} state={state} />)
+    const { rerender } = render(
+      <BoneCraftPanel definitions={emptyDefinitions} {...props} state={state} />,
+    )
     const apply = () => {
       const operation = onPreview.mock.calls.at(-1)?.[0]
       if (!operation) throw Error('缺少预演操作')
       expect(JSON.stringify(operation)).not.toMatch(/affixId|removeAffixId/)
       state = must(applyCraftStep(catalog, state, operation))
-      rerender(<BoneCraftPanel {...props} state={state} />)
+      rerender(<BoneCraftPanel definitions={emptyDefinitions} {...props} state={state} />)
     }
     fireEvent.change(screen.getByLabelText('骨骼材料'), { target: { value: 'preserved_rib' } })
     fireEvent.click(screen.getByLabelText('占用后缀'))

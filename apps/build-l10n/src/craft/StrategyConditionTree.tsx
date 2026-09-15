@@ -1,16 +1,22 @@
-import type { CraftCatalog, CraftState, CraftStrategyCondition } from '@poe2-tools/item-core'
+import type {
+  CraftCatalog,
+  CraftState,
+  CraftTargetDefinition,
+  DefinitionCraftStrategyCondition,
+} from '@poe2-tools/item-core'
 import { StrategyConditionEditor } from './StrategyConditionEditor'
 
 interface Props {
-  condition: CraftStrategyCondition
+  condition: DefinitionCraftStrategyCondition
   prefix: string
   valuePrefix: string
   catalog: CraftCatalog
   state: CraftState
-  targetModIds: readonly string[]
+  targets: readonly CraftTargetDefinition[]
+  orphanedTargets: readonly CraftTargetDefinition[]
   translateLine?: (line: string) => string | null
-  canChange: (condition: CraftStrategyCondition | null) => boolean
-  onChange: (condition: CraftStrategyCondition) => void
+  canChange: (condition: DefinitionCraftStrategyCondition | null) => boolean
+  onChange: (condition: DefinitionCraftStrategyCondition) => void
 }
 /** 路径只用于编辑定位；每个候选变更都由完整规则验证，不保存 UI 状态。 */
 export function StrategyConditionTree(props: Props) {
@@ -22,11 +28,13 @@ export function StrategyConditionTree(props: Props) {
       : condition.kind === 'all' || condition.kind === 'any'
         ? condition.conditions
         : []
-  const withChildren = (next: CraftStrategyCondition[]): CraftStrategyCondition =>
+  const withChildren = (
+    next: DefinitionCraftStrategyCondition[],
+  ): DefinitionCraftStrategyCondition =>
     condition.kind === 'not'
       ? { kind: 'not', condition: next[0] ?? { kind: 'always' } }
       : { kind: condition.kind === 'any' ? 'any' : 'all', conditions: next }
-  const change = (next: CraftStrategyCondition) => {
+  const change = (next: DefinitionCraftStrategyCondition) => {
     if (canChange(next)) onChange(next)
   }
   const added = withChildren([...children, { kind: 'rarity', value: 'rare' }])
@@ -60,7 +68,7 @@ export function StrategyConditionTree(props: Props) {
             <p>下面条件不满足时才匹配；未知不会因取反变为满足。</p>
           )}
           {children.map((child, index) => {
-            const replace = (next: CraftStrategyCondition) =>
+            const replace = (next: DefinitionCraftStrategyCondition) =>
               withChildren(children.map((c, i) => (i === index ? next : c)))
             return (
               <div
@@ -117,7 +125,8 @@ export function StrategyConditionTree(props: Props) {
           condition={condition}
           prefix={prefix}
           valuePrefix={valuePrefix}
-          targetModIds={props.targetModIds}
+          targets={props.targets}
+          orphanedTargets={props.orphanedTargets}
           catalog={props.catalog}
           {...(props.translateLine ? { translateLine: props.translateLine } : {})}
           canChange={canChange}
@@ -126,7 +135,7 @@ export function StrategyConditionTree(props: Props) {
       )}
       <div className="strategy-toolbar">
         {(['all', 'any', 'not'] as const).map((kind) => {
-          const next: CraftStrategyCondition =
+          const next: DefinitionCraftStrategyCondition =
             kind === 'not' ? { kind, condition } : { kind, conditions: [condition] }
           const label = kind === 'not' ? '取反' : kind === 'all' ? '包为全部满足' : '包为任一满足'
           return (

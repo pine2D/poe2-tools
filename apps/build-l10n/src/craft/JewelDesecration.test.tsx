@@ -79,7 +79,7 @@ it('未揭示期间补液态工艺可取消、应用、保存、撤销和恢复'
   expect(screen.getByText('未揭示亵渎前缀')).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.operations.map((step: { kind: string }) => step.kind)).toEqual([
     'desecrate',
     'liquid-emotion',
@@ -133,7 +133,7 @@ it('珠宝颅骨揭示、费用、撤销与本机恢复组成完整页面流程'
   expect(screen.getByText('亵渎词缀 1/1')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v73')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v74')
   expect(saved.initialState.nextAffixId).toBe(1)
   expect(saved.operations).toHaveLength(3)
   expect(saved.desecrationSourceHash).toMatch(/^[a-f0-9]{64}$/)

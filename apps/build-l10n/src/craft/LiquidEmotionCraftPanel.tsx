@@ -1,15 +1,18 @@
 import {
+  applyCraftStep,
   type CraftCatalog,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitions,
+  definitionTargetIdsForMods,
   inspectLiquidEmotions,
   inspectNumericLines,
   type LiquidEmotionCraftOperation,
   matchesTargetInterval,
   prepareLiquidEmotionCraft,
+  projectCraftTargetValues,
   renderNumericLines,
   resolveCraftAffix,
+  targetDefinitionChanges,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
 import { matchesLiquidEmotion } from './liquidEmotionSearch'
@@ -20,34 +23,30 @@ interface Props {
   entryRef?: Ref<HTMLElement>
   configuration?: { emotionId: string }
   catalog: CraftCatalog
+  definitions: CraftTargetDefinitions
   state: CraftState
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   disabled: boolean
   onPreview: (step: LiquidEmotionCraftOperation) => void
-  targetModIds?: string[]
-  targetAlternatives?: CraftTargetAlternative[]
-  targetValues?: CraftTargetValues[]
 }
 
 /** 材料固定属性身份，移除对象与数值只代表用户选择的演练结果。 */
 export function LiquidEmotionCraftPanel({
   entryRef,
   catalog,
+  definitions,
   state,
   translations,
   translateLine,
   disabled,
   onPreview,
   configuration,
-  targetModIds = [],
-  targetAlternatives = [],
-  targetValues = [],
 }: Props) {
   const [query, setQuery] = useState('')
   const context = useMemo(
-    () => ({ catalog, state, configuration }),
-    [catalog, state, configuration],
+    () => ({ catalog, state, configuration, definitions }),
+    [catalog, state, configuration, definitions],
   )
   const [draft, setDraft] = useState<{
     context: typeof context
@@ -79,15 +78,28 @@ export function LiquidEmotionCraftPanel({
   )?.prepared
   const mod = prepared?.ok ? prepared.value.mod : undefined
   const removable = prepared?.ok ? prepared.value.removableAffixes : []
-  const targetsFor = (id: string) =>
-    targetModIds.filter(
-      (target) =>
-        target === id ||
-        targetAlternatives.some((a) => a.targetModId === target && a.modIds.includes(id)),
-    )
-  const removedTargets = selection ? targetsFor(selection.removeModId) : []
+  const targetLabels = (ids: string[]) =>
+    definitions.targets
+      .filter((target) => ids.includes(target.targetId))
+      .map((target) => target.modId)
+  const targetsFor = (id: string) => targetLabels(definitionTargetIdsForMods(definitions, [id]))
+  const result = selection ? applyCraftStep(catalog, state, selection) : null
+  const removedTargets = result?.ok
+    ? targetLabels(targetDefinitionChanges(catalog, state, result.value, definitions).lostTargetIds)
+    : []
   const atRisk = [...new Set(removable.flatMap((affix) => targetsFor(affix.modId)))]
-  const goal = targetValues.find((entry) => entry.modId === mod?.id)
+  const goal = definitions.values.find((entry) => entry.modId === mod?.id)
+  const projected = mod
+    ? projectCraftTargetValues(catalog, result?.ok ? result.value : state, mod, goal)
+    : null
+  const targetText = mod && selection ? renderNumericLines(mod.lines, selection.values) : null
+  const actualTargetValues =
+    projected?.ok && targetText?.ok ? projected.value.read(targetText.value) : null
+  const meetsBounds =
+    actualTargetValues?.ok &&
+    goal?.bounds.every((bound) =>
+      matchesTargetInterval(actualTargetValues.value[bound.index], bound),
+    )
   const removed = selection?.removeModId
     ? resolveCraftAffix(state, {
         modId: selection.removeModId,
@@ -262,18 +274,7 @@ export function LiquidEmotionCraftPanel({
                 {...(translateLine ? { translateLine } : {})}
               />
               {goal ? (
-                <p>
-                  {goal.bounds.every((bound) => {
-                    const value = selection.values[bound.index]
-                    return (
-                      value !== undefined &&
-                      Number.isFinite(value) &&
-                      matchesTargetInterval({ min: value, max: value }, bound)
-                    )
-                  })
-                    ? '演练数值满足该目标区间。'
-                    : '演练数值尚未满足该目标区间。'}
-                </p>
+                <p>{meetsBounds ? '演练数值满足该目标区间。' : '演练数值尚未满足该目标区间。'}</p>
               ) : null}
               <button type="button" disabled={!valid} onClick={() => onPreview(selection)}>
                 预览液态情感结果

@@ -1,4 +1,7 @@
-import { type CraftStrategyCondition, readCraftStrategy } from '@poe2-tools/item-core'
+import {
+  type DefinitionCraftStrategyCondition,
+  readDefinitionCraftStrategy,
+} from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 import { catalog, state } from '../../../../packages/item-core/src/partialTargetFixture'
@@ -35,7 +38,7 @@ it('指定一组可以提前停止，改为两组后继续制作并保存撤销�
   pick('p1')
   click('应用本次结果')
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
-  fireEvent.click(screen.getByLabelText('规则 1 条件 1 目标 s1'))
+  fireEvent.click(screen.getByLabelText('规则 1 条件 1 目标 t2'))
   change('规则 1 条件 1 满足组数', '2')
   expect(screen.getByText('命中规则 3：富豪石')).toBeDefined()
   click('开始指引步骤')
@@ -44,9 +47,14 @@ it('指定一组可以提前停止，改为两组后继续制作并保存撤销�
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
   click('保存演练到本机')
   const p = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(p.rulesVersion).toBe('basic-2026-09-12-v74')
+  expect(p.targetDefinitions.targets).toEqual([
+    { targetId: 't1', modId: 'p1' },
+    { targetId: 't2', modId: 's1' },
+  ])
   expect(p.strategy.rules[0].conditions[0]).toEqual({
     kind: 'selected-targets',
-    modIds: ['p1', 's1'],
+    targetIds: ['t1', 't2'],
     min: 2,
     value: true,
   })
@@ -55,21 +63,25 @@ it('指定一组可以提前停止，改为两组后继续制作并保存撤销�
   click('恢复本机演练')
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
 })
-it('删除引用的目标会阻塞并保存待修复规则，重新加入目标可恢复', () => {
+it('删除引用的目标会阻塞并保存，同类型重加仍需明确修复旧引用', () => {
   start()
   change('规则 1 条件 1 目标组状态', 'false')
   click('移除目标 p1')
-  expect(screen.getByText(/规则 1 无法开始：规则引用的目标已移除：p1/)).toBeDefined()
+  expect(screen.getByText(/规则 1 无法开始：规则引用的目标已移除：t1/)).toBeDefined()
   expect(screen.queryByRole('button', { name: '开始指引步骤' })).toBeNull()
   click('保存演练到本机')
   const p = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(p.strategy.rules[0].conditions[0].modIds).toEqual(['p1'])
+  expect(p.rulesVersion).toBe('basic-2026-09-12-v74')
+  expect(p.targetDefinitions.targets).toEqual([{ targetId: 't2', modId: 's1' }])
+  expect(p.orphanedTargets).toEqual([{ targetId: 't1', modId: 'p1' }])
+  expect(p.strategy.rules[0].conditions[0].targetIds).toEqual(['t1'])
   add('p1')
-  expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
+  expect(screen.getByText(/规则 1 无法开始：规则引用的目标已移除：t1/)).toBeDefined()
+  expect((screen.getByLabelText('规则 1 条件 1 目标 t3') as HTMLInputElement).checked).toBe(false)
   click('恢复本机演练')
-  expect(screen.getByText(/规则 1 无法开始：规则引用的目标已移除：p1/)).toBeDefined()
-  fireEvent.click(screen.getByLabelText('规则 1 条件 1 目标 s1'))
-  fireEvent.click(screen.getByLabelText('规则 1 条件 1 目标 p1'))
+  expect(screen.getByText(/规则 1 无法开始：规则引用的目标已移除：t1/)).toBeDefined()
+  fireEvent.click(screen.getByLabelText('规则 1 条件 1 目标 t2'))
+  fireEvent.click(screen.getByLabelText('规则 1 条件 1 目标 t1'))
   expect(screen.getByText('命中规则 1：停止。')).toBeDefined()
 })
 it('改变子集条件取消旧草稿，未设置目标时不提供新建子集条件', () => {
@@ -89,16 +101,20 @@ it('改变子集条件取消旧草稿，未设置目标时不提供新建子集�
 })
 
 it('满六组且有残留引用时，先移除旧组再加入新组，配置始终可保存', () => {
-  let condition: Extract<CraftStrategyCondition, { kind: 'selected-targets' }> = {
+  let condition: Extract<DefinitionCraftStrategyCondition, { kind: 'selected-targets' }> = {
     kind: 'selected-targets',
-    modIds: ['p1', 'p2', 'p3', 'p4', 's1', 's2'],
+    targetIds: ['t1', 't2', 't3', 't4', 't5', 't6'],
     min: 2,
     value: true,
   }
   const props = {
     prefix: '测试条件',
     catalog: catalog(),
-    targetModIds: ['p2', 'p3', 'p4', 's1', 's2', 's3'],
+    targets: ['p2', 'p3', 'p4', 's1', 's2', 's3'].map((modId, index) => ({
+      targetId: `t${index + 2}`,
+      modId,
+    })),
+    orphanedTargets: [{ targetId: 't1', modId: 'p1' }],
   }
   const changeCondition = (next: typeof condition) => {
     condition = next
@@ -109,15 +125,15 @@ it('满六组且有残留引用时，先移除旧组再加入新组，配置始�
   const view = render(
     <StrategyTargetCondition {...props} condition={condition} onChange={changeCondition} />,
   )
-  expect((screen.getByLabelText('测试条件 目标 s3') as HTMLInputElement).disabled).toBe(true)
-  fireEvent.click(screen.getByLabelText('测试条件 目标 s3'))
-  expect(condition.modIds).toHaveLength(6)
-  fireEvent.click(screen.getByLabelText('测试条件 目标 p1'))
-  expect((screen.getByLabelText('测试条件 目标 s3') as HTMLInputElement).disabled).toBe(false)
-  fireEvent.click(screen.getByLabelText('测试条件 目标 s3'))
-  expect(condition.modIds).toEqual(['p2', 'p3', 'p4', 's1', 's2', 's3'])
+  expect((screen.getByLabelText('测试条件 目标 t7') as HTMLInputElement).disabled).toBe(true)
+  fireEvent.click(screen.getByLabelText('测试条件 目标 t7'))
+  expect(condition.targetIds).toHaveLength(6)
+  fireEvent.click(screen.getByLabelText('测试条件 目标 t1'))
+  expect((screen.getByLabelText('测试条件 目标 t7') as HTMLInputElement).disabled).toBe(false)
+  fireEvent.click(screen.getByLabelText('测试条件 目标 t7'))
+  expect(condition.targetIds).toEqual(['t2', 't3', 't4', 't5', 't6', 't7'])
   expect(
-    readCraftStrategy({
+    readDefinitionCraftStrategy({
       maxSteps: 20,
       rules: [{ conditions: [condition], action: { kind: 'stop' } }],
     }).ok,

@@ -2,39 +2,36 @@ import {
   type CatalogMod,
   type CraftCatalog,
   type CraftState,
-  type CraftTargetAlternative,
-  type CraftTargetValues,
+  type CraftTargetDefinitionEdit,
+  type CraftTargetDefinitions,
+  editTargetDefinitions,
   inspectNumericLines,
   projectCraftTargetValues,
-  validateCraftTargetValues,
 } from '@poe2-tools/item-core'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Props {
-  minimumTargetCount?: number
   catalog: CraftCatalog
-  baseId: string
   state: CraftState
-  ids: string[]
-  alternatives?: CraftTargetAlternative[]
-  values: CraftTargetValues[]
+  definitions: CraftTargetDefinitions
+  targetId: string
   mod: CatalogMod
-  onChange: (values: CraftTargetValues[]) => void
+  onEdit: (edit: CraftTargetDefinitionEdit) => void
   translateLine?: (line: string) => string | null
 }
 
 export function TargetValueEditor({
-  minimumTargetCount,
   catalog,
-  baseId,
   state,
-  ids,
-  alternatives = [],
-  values,
+  definitions,
+  targetId,
   mod,
-  onChange,
+  onEdit,
   translateLine,
 }: Props) {
+  const values = definitions.values
+    .filter((entry) => entry.targetId === targetId)
+    .map(({ targetId: _, ...entry }) => entry)
   const saved = values.find((entry) => entry.modId === mod.id)
   const [basis, setBasis] = useState(saved?.basis ?? 'base')
   const projection = projectCraftTargetValues(
@@ -67,6 +64,26 @@ export function TargetValueEditor({
   )
   const [message, setMessage] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 快照变化必须丢弃尚未保存的数值草稿。
+  useEffect(() => {
+    const current = definitions.values.find(
+      (entry) => entry.targetId === targetId && entry.modId === mod.id,
+    )
+    setBasis(current?.basis ?? 'base')
+    setInputs(
+      Object.fromEntries(
+        current?.bounds.map((bound) => [
+          bound.index,
+          {
+            min: bound.min === undefined ? '' : String(bound.min),
+            max: bound.max === undefined ? '' : String(bound.max),
+          },
+        ]) ?? [],
+      ),
+    )
+    setOpen(false)
+    setMessage('')
+  }, [catalog, state, definitions, targetId, mod])
   if (!ranges.ok || ranges.value.length === 0) return null
   const save = () => {
     // 未完成的数字也可能暴露为空 value，不能当成用户清空条件。
@@ -96,20 +113,13 @@ export function TargetValueEditor({
         bounds,
         ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
       })
-    const checked = validateCraftTargetValues(
-      catalog,
-      baseId,
-      ids,
-      next,
-      alternatives,
-      state,
-      minimumTargetCount,
-    )
+    const change: CraftTargetDefinitionEdit = { kind: 'values', targetId, values: next }
+    const checked = editTargetDefinitions(catalog, state, definitions, change)
     if (!checked.ok) {
       setMessage(checked.error)
       return
     }
-    onChange(checked.value)
+    onEdit(change)
     setMessage('')
     setOpen(false)
   }
@@ -127,7 +137,13 @@ export function TargetValueEditor({
         <button
           type="button"
           aria-label={`清除数值条件 ${mod.id}`}
-          onClick={() => onChange(values.filter((entry) => entry.modId !== mod.id))}
+          onClick={() =>
+            onEdit({
+              kind: 'values',
+              targetId,
+              values: values.filter((entry) => entry.modId !== mod.id),
+            })
+          }
         >
           清除数值条件
         </button>

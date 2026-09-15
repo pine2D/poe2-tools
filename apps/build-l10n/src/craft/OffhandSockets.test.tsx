@@ -2,9 +2,10 @@ import {
   type CatalogBase,
   type CraftCatalog,
   createCatalogTranslator,
-  IDENTITY_CRAFT_RULES_VERSION,
   inspectItem,
   parseItem,
+  parseTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -158,7 +159,14 @@ it.each([
     click('应用镶嵌')
     expect(panel().getByText(before)).toBeDefined()
     const saved = save()
-    expect(saved.rulesVersion).toBe(IDENTITY_CRAFT_RULES_VERSION)
+    expect(saved.rulesVersion).toBe(TARGET_CRAFT_RULES_VERSION)
+    expect(
+      parseTargetCraftProject(
+        JSON.stringify(saved),
+        { ...catalog, bases: [{ ...focus, type, properties, tags: ['default', ...tags] }] },
+        dictionary,
+      ).ok,
+    ).toBe(true)
     expect(saved.initialState.sockets).toEqual([])
     expect(saved.operations).toHaveLength(3)
     expect(screen.getByText('巧匠石 × 1')).toBeDefined()

@@ -2,7 +2,7 @@ import {
   CRAFT_RULES_VERSION,
   type CraftCatalog,
   type CraftProject,
-  IDENTITY_CRAFT_RULES_VERSION,
+  TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -77,8 +77,10 @@ describe('ProjectControls', () => {
     const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
     expect(saved).toEqual({
       ...project,
-      rulesVersion: IDENTITY_CRAFT_RULES_VERSION,
+      rulesVersion: TARGET_CRAFT_RULES_VERSION,
       initialState: { ...initialState, nextAffixId: 1 },
+      targetDefinitions: { nextTargetId: 1, targets: [], alternatives: [], values: [] },
+      orphanedTargets: [],
     })
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
     expect(onRestore).toHaveBeenCalledTimes(1)
