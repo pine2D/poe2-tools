@@ -12,6 +12,7 @@ import {
   type CraftTargetRoutes,
   type CraftTargetValues,
   collectCraftCosts,
+  compareCraftStates,
   craftOmenDescription,
   craftOmenMaterials,
   ESSENCE_OMEN_RULES,
@@ -317,17 +318,10 @@ function RouteSearch({
                   {route.steps.map((step, stepIndex) => {
                     const previous =
                       stepIndex === 0 ? state : (route.steps[stepIndex - 1]?.state ?? state)
-                    const removed = previous.affixes.filter(
-                      (a) => !step.state.affixes.some((b) => a.modId === b.modId),
-                    )
-                    const gained = step.state.affixes.filter(
-                      (a) =>
-                        !previous.affixes.some(
-                          (b) =>
-                            a.modId === b.modId &&
-                            JSON.stringify(a.lines) === JSON.stringify(b.lines),
-                        ),
-                    )
+                    const comparison = compareCraftStates(catalog, previous, step.state)
+                    const changes = comparison.ok ? comparison.value.affixes : []
+                    const removed = changes.filter((change) => change.kind === 'removed')
+                    const gained = changes.filter((change) => change.kind !== 'removed')
                     return (
                       <li key={JSON.stringify([step.operation, step.state])}>
                         <strong>
@@ -397,16 +391,36 @@ function RouteSearch({
                             {step.lostImplicitLineIndexes.map(implicitLabel).join('；')}
                           </p>
                         ) : null}
+                        {!comparison.ok ? (
+                          <p role="status">无法核对词缀变化：{comparison.error}</p>
+                        ) : null}
                         {gained.map((a) => (
-                          <p key={a.modId}>
+                          <p key={a.affixId ?? a.modId}>
+                            {a.beforeModId && a.afterModId && a.beforeModId !== a.afterModId ? (
+                              <>
+                                转换前：
+                                {(a.beforeLines ?? [])
+                                  .map((line) => translateLine?.(line) ?? line)
+                                  .join('；')}
+                                （
+                                {catalog.modifiers.find((m) => m.id === a.beforeModId)?.name ||
+                                  a.beforeModId}
+                                ） →{' '}
+                              </>
+                            ) : null}
                             得到 / 更新：
-                            {a.lines.map((line) => translateLine?.(line) ?? line).join('；')}（
-                            {catalog.modifiers.find((m) => m.id === a.modId)?.name || a.modId}）
+                            {(a.afterLines ?? [])
+                              .map((line) => translateLine?.(line) ?? line)
+                              .join('；')}
+                            （{catalog.modifiers.find((m) => m.id === a.modId)?.name || a.modId}）
                           </p>
                         ))}
                         {removed.map((a) => (
-                          <p key={a.modId}>
-                            移除：{a.lines.map((line) => translateLine?.(line) ?? line).join('；')}
+                          <p key={a.affixId ?? a.modId}>
+                            移除：
+                            {(a.beforeLines ?? [])
+                              .map((line) => translateLine?.(line) ?? line)
+                              .join('；')}
                             （{catalog.modifiers.find((m) => m.id === a.modId)?.name || a.modId}）
                           </p>
                         ))}

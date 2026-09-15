@@ -4,7 +4,12 @@ import type {
   CraftState,
   CraftTargetRoutes,
 } from '@poe2-tools/item-core'
-import { BONE_RULES, planCraftTargetRoutes } from '@poe2-tools/item-core'
+import {
+  applyCraftStep,
+  BONE_RULES,
+  enableCraftAffixIdentity,
+  planCraftTargetRoutes,
+} from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { boneCatalog, boneState } from '../../../../packages/item-core/src/boneTestFixture'
@@ -17,6 +22,66 @@ const pending = vi.hoisted(() => ({
     cancel: ReturnType<typeof vi.fn>
   }[],
 }))
+
+it('路线明细区分同类型的旧实例移除与新实例生成', () => {
+  const enabled = enableCraftAffixIdentity(
+    catalog,
+    state('rare', [{ modId: 'Life', lines: ['+10(10-15) to maximum Life'] }]),
+  )
+  if (!enabled.ok) throw Error(enabled.error)
+  const operation = {
+    currency: 'chaos',
+    modIds: ['Life'],
+    removeModId: 'Life',
+    removeAffixId: 'a1',
+    rolls: [{ modId: 'Life', affixId: 'a2', values: [15] }],
+  } as const
+  const step = {
+    ...operation,
+    modIds: [...operation.modIds],
+    rolls: operation.rolls.map((roll) => ({ ...roll, values: [...roll.values] })),
+  }
+  const applied = applyCraftStep(catalog, enabled.value, step)
+  if (!applied.ok) throw Error(applied.error)
+  render(
+    <TargetRoutesPanel
+      {...props}
+      state={enabled.value}
+      ids={['Life']}
+      values={[{ modId: 'Life', bounds: [{ index: 0, min: 15 }] }]}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  act(() =>
+    pending.calls[0]?.callback({
+      ok: true,
+      value: {
+        alreadyMatched: false,
+        truncated: false,
+        examinedStates: 2,
+        candidateApplications: 1,
+        routes: [
+          {
+            finalState: applied.value,
+            steps: [
+              {
+                operation: step,
+                state: applied.value,
+                matchedTargetIds: ['Life'],
+                gainedTargetIds: ['Life'],
+                lostTargetIds: [],
+                atRiskTargetIds: [],
+                rerolledTargetIds: [],
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  )
+  expect(screen.getByText(/移除：\+10\(10-15\) to maximum Life/)).toBeDefined()
+  expect(screen.getByText(/得到 \/ 更新：\+15\(10-15\) to maximum Life/)).toBeDefined()
+})
 
 it('改变破裂目标终止旧搜索，传递第八参并丢弃迟到路线', () => {
   const props = {

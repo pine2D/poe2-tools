@@ -1,4 +1,4 @@
-import type { CraftCatalog, CraftState } from '@poe2-tools/item-core'
+import { type CraftCatalog, type CraftState, DESECRATION_SOURCE } from '@poe2-tools/item-core'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
@@ -58,6 +58,14 @@ const before: CraftState = {
 const after: CraftState = {
   ...before,
   affixes: [{ modId: 'life', lines: ['+18 to maximum Life', 'Grants Level 12 Skill'] }],
+}
+const desecrationCatalog: CraftCatalog = {
+  ...catalog,
+  _meta: {
+    ...catalog._meta,
+    sourceCommit: DESECRATION_SOURCE.commit,
+    sources: [DESECRATION_SOURCE],
+  },
 }
 
 describe('CraftComparisonPanel', () => {
@@ -125,5 +133,98 @@ describe('CraftComparisonPanel', () => {
     )
     expect(screen.getByRole('status').textContent).toContain('相同基底')
     expect(screen.queryByText('+18 to maximum Life')).toBeNull()
+  })
+
+  it('同一实例换类型展示两侧名称和文本，连续预览保持实例节点且不显示跨类型差值', () => {
+    const firstMod = catalog.modifiers[0]
+    if (!firstMod) throw new Error('缺少测试词缀')
+    const transformedCatalog: CraftCatalog = {
+      ...desecrationCatalog,
+      modifiers: [
+        firstMod,
+        {
+          ...firstMod,
+          id: 'mana',
+          name: 'Resourceful',
+          group: 'mana',
+          lines: ['+(10-20) to maximum Mana'],
+        },
+      ],
+    }
+    const identifiedBefore: CraftState = {
+      ...before,
+      nextAffixId: 2,
+      affixes: before.affixes.map((affix) => ({ ...affix, affixId: 'a1' })),
+    }
+    const identifiedAfter: CraftState = {
+      ...after,
+      nextAffixId: 2,
+      affixes: after.affixes.map((affix) => ({ ...affix, affixId: 'a1' })),
+    }
+    const view = render(
+      <CraftComparisonPanel
+        catalog={transformedCatalog}
+        before={identifiedBefore}
+        after={identifiedAfter}
+      />,
+    )
+    const instanceArticle = screen.getByRole('heading', { name: 'Healthy' }).closest('article')
+    view.rerender(
+      <CraftComparisonPanel
+        catalog={transformedCatalog}
+        before={identifiedBefore}
+        after={{
+          ...identifiedAfter,
+          affixes: [
+            { modId: 'mana', affixId: 'a1', lines: ['+18 to maximum Mana'], desecrated: true },
+          ],
+        }}
+      />,
+    )
+    const title = screen.getByRole('heading', { name: 'Healthy → Resourceful' })
+    expect(title.closest('article')).toBe(instanceArticle)
+    expect(screen.getByText('词缀转换')).toBeDefined()
+    expect(screen.getByText('亵渎来源：普通 → 亵渎')).toBeDefined()
+    expect(
+      within(screen.getByRole('region', { name: 'Healthy → Resourceful · 操作前' })).getByText(
+        '+12 to maximum Life',
+      ),
+    ).toBeDefined()
+    expect(
+      within(screen.getByRole('region', { name: 'Healthy → Resourceful · 操作后' })).getByText(
+        '+18 to maximum Mana',
+      ),
+    ).toBeDefined()
+    expect(screen.queryByText(/数值 1：/)).toBeNull()
+    expect(screen.queryByText('新增')).toBeNull()
+    expect(screen.queryByText('移除')).toBeNull()
+  })
+
+  it('同类型旧实例移除和新实例加入分开展示，来源徽标各自对应所属实例', () => {
+    render(
+      <CraftComparisonPanel
+        catalog={desecrationCatalog}
+        before={{
+          ...before,
+          nextAffixId: 2,
+          affixes: before.affixes.map((affix) => ({ ...affix, affixId: 'a1', desecrated: true })),
+        }}
+        after={{
+          ...after,
+          nextAffixId: 3,
+          affixes: after.affixes.map((affix) => ({ ...affix, affixId: 'a2', crafted: true })),
+        }}
+      />,
+    )
+    const removed = screen.getByText('移除').closest('article')
+    const added = screen.getByText('新增').closest('article')
+    if (!removed || !added) throw new Error('缺少独立实例对照')
+    expect(within(removed).getByText('亵渎')).toBeDefined()
+    expect(within(removed).queryByText('工艺')).toBeNull()
+    expect(within(added).getByText('工艺')).toBeDefined()
+    expect(within(added).queryByText('亵渎')).toBeNull()
+    expect(within(removed).getByText('+12 to maximum Life')).toBeDefined()
+    expect(within(added).getByText('+18 to maximum Life')).toBeDefined()
+    expect(screen.queryByText('数值变化')).toBeNull()
   })
 })

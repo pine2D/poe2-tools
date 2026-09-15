@@ -21,6 +21,9 @@ export interface CraftLineChange {
 
 export interface CraftAffixChange {
   modId: string
+  affixId?: string
+  beforeModId?: string | null
+  afterModId?: string | null
   kind: 'added' | 'removed' | 'changed'
   beforeLines: string[] | null
   afterLines: string[] | null
@@ -147,18 +150,23 @@ export function compareCraftStates(
   if (!checkedBefore.ok) return checkedBefore
   const checkedAfter = createCraftState(catalog, after)
   if (!checkedAfter.ok) return checkedAfter
+  if (Object.hasOwn(before, 'nextAffixId') !== Object.hasOwn(after, 'nextAffixId'))
+    return { ok: false, error: '只能对比词缀实例身份模式一致的装备状态。' }
 
-  const previous = new Map(before.affixes.map((affix) => [affix.modId, affix]))
+  const previous = new Map(before.affixes.map((affix) => [affix.affixId ?? affix.modId, affix]))
   const corruption = corruptionChange(before.corruption, after.corruption)
   const secondCorruption = corruptionChange(before.secondCorruption, after.secondCorruption)
-  const next = new Map(after.affixes.map((affix) => [affix.modId, affix]))
+  const next = new Map(after.affixes.map((affix) => [affix.affixId ?? affix.modId, affix]))
   const modifiers = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const affixes: CraftAffixChange[] = []
   for (const affix of before.affixes) {
-    const current = next.get(affix.modId)
+    const current = next.get(affix.affixId ?? affix.modId)
     if (current === undefined) {
       affixes.push({
         modId: affix.modId,
+        ...(affix.affixId === undefined
+          ? {}
+          : { affixId: affix.affixId, beforeModId: affix.modId, afterModId: null }),
         kind: 'removed',
         beforeLines: [...affix.lines],
         afterLines: null,
@@ -166,7 +174,10 @@ export function compareCraftStates(
       })
       continue
     }
-    const change = compareLines(modifiers.get(affix.modId)?.lines ?? [], affix.lines, current.lines)
+    const typeChanged = affix.modId !== current.modId
+    const change = typeChanged
+      ? null
+      : compareLines(modifiers.get(affix.modId)?.lines ?? [], affix.lines, current.lines)
     const crafted =
       affix.crafted !== current.crafted
         ? { before: affix.crafted === true, after: current.crafted === true }
@@ -180,13 +191,17 @@ export function compareCraftStates(
         ? { before: affix.fractured === true, after: current.fractured === true }
         : undefined
     if (
+      typeChanged ||
       change !== null ||
       crafted !== undefined ||
       desecrated !== undefined ||
       fractured !== undefined
     )
       affixes.push({
-        modId: affix.modId,
+        modId: current.modId,
+        ...(affix.affixId === undefined
+          ? {}
+          : { affixId: affix.affixId, beforeModId: affix.modId, afterModId: current.modId }),
         kind: 'changed',
         beforeLines: [...affix.lines],
         afterLines: [...current.lines],
@@ -197,9 +212,12 @@ export function compareCraftStates(
       })
   }
   for (const affix of after.affixes) {
-    if (!previous.has(affix.modId))
+    if (!previous.has(affix.affixId ?? affix.modId))
       affixes.push({
         modId: affix.modId,
+        ...(affix.affixId === undefined
+          ? {}
+          : { affixId: affix.affixId, beforeModId: null, afterModId: affix.modId }),
         kind: 'added',
         beforeLines: null,
         afterLines: [...affix.lines],

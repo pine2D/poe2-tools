@@ -291,18 +291,35 @@ export function CraftComparisonPanel({
           ) : null}
           {result.value.affixes.map((change) => {
             const mod = modById.get(change.modId)
-            const label = mod?.name ?? change.modId
+            const transformed =
+              change.beforeModId != null &&
+              change.afterModId != null &&
+              change.beforeModId !== change.afterModId
+            const previousLabel =
+              modById.get(change.beforeModId ?? change.modId)?.name ??
+              change.beforeModId ??
+              change.modId
+            const currentLabel = mod?.name ?? change.modId
+            const label = transformed ? `${previousLabel} → ${currentLabel}` : currentLabel
+            const displayedAffix = (change.kind === 'removed' ? before : after).affixes.find(
+              (affix) =>
+                change.affixId === undefined
+                  ? affix.modId === change.modId
+                  : affix.affixId === change.affixId,
+            )
             return (
-              <article className="comparison-group" key={change.modId}>
+              <article className="comparison-group" key={change.affixId ?? change.modId}>
                 <header>
                   <span className="comparison-kind">
-                    {change.fractured
-                      ? '破裂状态变化'
-                      : change.crafted || change.desecrated
-                        ? change.numeric.length
-                          ? '来源与数值变化'
-                          : '来源变化'
-                        : CHANGE_LABELS[change.kind]}
+                    {transformed
+                      ? '词缀转换'
+                      : change.fractured
+                        ? '破裂状态变化'
+                        : change.crafted || change.desecrated
+                          ? change.numeric.length
+                            ? '来源与数值变化'
+                            : '来源变化'
+                          : CHANGE_LABELS[change.kind]}
                   </span>
                   <h4>{label}</h4>
                   {mod ? (
@@ -323,21 +340,14 @@ export function CraftComparisonPanel({
                     {change.desecrated.after ? '亵渎' : '普通'}
                   </p>
                 ) : null}
-                {(change.kind === 'removed' ? before : after).affixes.find(
-                  (affix) => affix.modId === change.modId,
-                )?.desecrated ? (
-                  <ModStateBadges states={['desecrated']} />
-                ) : null}
+                {displayedAffix?.desecrated ? <ModStateBadges states={['desecrated']} /> : null}
                 {change.crafted ? (
                   <p>
                     工艺来源：{change.crafted.before ? '工艺' : '普通'} →{' '}
                     {change.crafted.after ? '工艺' : '普通'}
                   </p>
                 ) : null}
-                {change.kind !== 'changed' &&
-                (change.kind === 'added' ? after : before).affixes.find(
-                  (affix) => affix.modId === change.modId,
-                )?.crafted ? (
+                {change.kind !== 'changed' && displayedAffix?.crafted ? (
                   <ModStateBadges states={['crafted']} />
                 ) : null}
                 {group(label, change.beforeLines, change.afterLines, change.numeric)}
