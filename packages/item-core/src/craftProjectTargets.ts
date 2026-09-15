@@ -1,6 +1,10 @@
 import { type IdentifiedCraftState, isIdentifiedCraftState } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
 import {
+  COMBAT_ARMOUR_RUNE_RULES_VERSION,
+  requiresCombatArmourRuneProjectVersion,
+} from './combatArmourRuneProjectVersion'
+import {
   CORRUPTION_STRATEGY_RULES_VERSION,
   requiresCorruptionStrategyProjectVersion,
 } from './corruptionStrategyProjectVersion'
@@ -49,10 +53,12 @@ import { loadWorkbenchProject } from './workbenchProject'
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
 export const FLUX_CRAFT_RULES_VERSION = 'basic-2026-09-12-v75'
 export {
+  COMBAT_ARMOUR_RUNE_RULES_VERSION,
   CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   RETAINED_CATALYST_RULES_VERSION,
+  requiresCombatArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
@@ -77,6 +83,7 @@ export interface TargetCraftProject
     | typeof EXTRACTION_CRAFT_RULES_VERSION
     | typeof CORRUPTION_STRATEGY_RULES_VERSION
     | typeof RETAINED_CATALYST_RULES_VERSION
+    | typeof COMBAT_ARMOUR_RUNE_RULES_VERSION
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
@@ -242,10 +249,21 @@ export function parseTargetCraftProject(
       EXTRACTION_CRAFT_RULES_VERSION,
       CORRUPTION_STRATEGY_RULES_VERSION,
       RETAINED_CATALYST_RULES_VERSION,
+      COMBAT_ARMOUR_RUNE_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
-    return { ok: false, error: '目标项目必须使用精确的 v74、v75、v76、v77、v78 或 v79 规则版本。' }
-  const retainedCatalyst = original.rulesVersion === RETAINED_CATALYST_RULES_VERSION
+    return {
+      ok: false,
+      error: '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79 或 v80 规则版本。',
+    }
+  const combatArmourRunes = original.rulesVersion === COMBAT_ARMOUR_RUNE_RULES_VERSION
+  if (!combatArmourRunes && requiresCombatArmourRuneProjectVersion(original, catalog))
+    return {
+      ok: false,
+      error: '防具荆棘与减益符文必须使用 v80 项目，包括起点、导入声明、未来操作和指引。',
+    }
+  const retainedCatalyst =
+    combatArmourRunes || original.rulesVersion === RETAINED_CATALYST_RULES_VERSION
   if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(original, catalog))
     return { ok: false, error: '已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。' }
   const corruptionStrategy =
@@ -315,6 +333,7 @@ export function parseTargetCraftProject(
         extraction,
         corruptionStrategy,
         retainedCatalyst,
+        combatArmourRunes,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -336,15 +355,17 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = retainedCatalyst
-      ? RETAINED_CATALYST_RULES_VERSION
-      : corruptionStrategy
-        ? CORRUPTION_STRATEGY_RULES_VERSION
-        : extraction
-          ? EXTRACTION_CRAFT_RULES_VERSION
-          : perfectFlux
-            ? PERFECT_FLUX_CRAFT_RULES_VERSION
-            : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = combatArmourRunes
+      ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+      : retainedCatalyst
+        ? RETAINED_CATALYST_RULES_VERSION
+        : corruptionStrategy
+          ? CORRUPTION_STRATEGY_RULES_VERSION
+          : extraction
+            ? EXTRACTION_CRAFT_RULES_VERSION
+            : perfectFlux
+              ? PERFECT_FLUX_CRAFT_RULES_VERSION
+              : FLUX_CRAFT_RULES_VERSION
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
   }
   if (!equivalentProjectJSON(original, project))

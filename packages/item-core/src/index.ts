@@ -139,12 +139,14 @@ export { parseIdentityCraftProject } from './craftProjectIdentityReader'
 export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 export type { RestoredTargetCraftProject, TargetCraftProject } from './craftProjectTargets'
 export {
+  COMBAT_ARMOUR_RUNE_RULES_VERSION,
   CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   FLUX_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
   RETAINED_CATALYST_RULES_VERSION,
+  requiresCombatArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,

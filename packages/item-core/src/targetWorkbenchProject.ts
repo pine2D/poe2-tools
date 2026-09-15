@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
 import {
+  COMBAT_ARMOUR_RUNE_RULES_VERSION,
   CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   FLUX_CRAFT_RULES_VERSION,
@@ -8,6 +9,7 @@ import {
   parseTargetCraftProject,
   RETAINED_CATALYST_RULES_VERSION,
   type RestoredTargetCraftProject,
+  requiresCombatArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
@@ -46,7 +48,8 @@ export function loadTargetWorkbenchProject(
       value.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION ||
       value.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION ||
       value.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION ||
-      value.rulesVersion === RETAINED_CATALYST_RULES_VERSION)
+      value.rulesVersion === RETAINED_CATALYST_RULES_VERSION ||
+      value.rulesVersion === COMBAT_ARMOUR_RUNE_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
     : upgradeTargetCraftProject(text, catalog, dictionary)
 }
@@ -84,7 +87,8 @@ export function reuseTargetCraftPlan(
       next.rulesVersion !== PERFECT_FLUX_CRAFT_RULES_VERSION &&
       next.rulesVersion !== EXTRACTION_CRAFT_RULES_VERSION &&
       next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
-      next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION
+      next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION &&
+      next.rulesVersion !== COMBAT_ARMOUR_RUNE_RULES_VERSION
     )
       next.rulesVersion = FLUX_CRAFT_RULES_VERSION
     next.fluxCatalogSignature = source.fluxCatalogSignature
@@ -98,11 +102,17 @@ export function reuseTargetCraftPlan(
   if (source.strategy?.flow) next.strategyStartStep = next.cursor
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
-  if (requiresRetainedCatalystProjectVersion(current.value.states, catalog))
+  if (requiresCombatArmourRuneProjectVersion(next, catalog))
+    next.rulesVersion = COMBAT_ARMOUR_RUNE_RULES_VERSION
+  if (
+    next.rulesVersion !== COMBAT_ARMOUR_RUNE_RULES_VERSION &&
+    requiresRetainedCatalystProjectVersion(current.value.states, catalog)
+  )
     next.rulesVersion = RETAINED_CATALYST_RULES_VERSION
   if (
     next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
-    next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION
+    next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION &&
+    next.rulesVersion !== COMBAT_ARMOUR_RUNE_RULES_VERSION
   ) {
     if (requiresCorruptionStrategyProjectVersion(next))
       next.rulesVersion = CORRUPTION_STRATEGY_RULES_VERSION

@@ -9,6 +9,7 @@ import {
   applyCraftStep,
   type BoneCraftOperation,
   type CatalogMod,
+  COMBAT_ARMOUR_RUNE_RULES_VERSION,
   CORRUPTION_STRATEGY_RULES_VERSION,
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
@@ -68,6 +69,7 @@ import {
   readCraftGrantedSkillLevel,
   readNumericValues,
   removableCraftAffixes,
+  requiresCombatArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
@@ -1085,15 +1087,17 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const project: TargetCraftProject = retainedCatalystHistory
-    ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
-    : requiresCorruptionStrategyProjectVersion(projectConfig)
-      ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
-      : requiresExtractionProjectVersion(projectConfig)
-        ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
-        : requiresPerfectFluxProjectVersion(projectConfig)
-          ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
-          : projectConfig
+  const project: TargetCraftProject = requiresCombatArmourRuneProjectVersion(projectConfig, catalog)
+    ? { ...projectConfig, rulesVersion: COMBAT_ARMOUR_RUNE_RULES_VERSION }
+    : retainedCatalystHistory
+      ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
+      : requiresCorruptionStrategyProjectVersion(projectConfig)
+        ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
+        : requiresExtractionProjectVersion(projectConfig)
+          ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
+          : requiresPerfectFluxProjectVersion(projectConfig)
+            ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+            : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
         essence: '精华',

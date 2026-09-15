@@ -1,5 +1,13 @@
 # 数据源登记表
 
+## 防具荆棘与减益符文（2026-09-16，实施前登记）
+
+沿用已登记 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [ModRunes.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModRunes.lua)。本轮重新核对缓存 SHA-256 `d3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a` 与目录来源一致：三档 Tempered Rune、Greater Rune of Tithing／Leadership／Alacrity／Nobility 的 armour 分支均为单行、非本地效果、无数量限制声明。采用既有目录普通效果，`bonded` 保留为来源信息，不施加其附加能力；穿戴需求不解释为物等门槛。
+
+物理及闪电荆棘分别核对伤害两端，不能解释为可选词缀数值范围，也不计入武器 DPS。承伤转换作用于召唤生物，减益消退与感电效果降低各自保留语义；这里只比较装备贡献，不推算角色或召唤生物最终伤害与承伤。恐惧增效沿现有逐枚逐值整数取整模型，实际游戏显示待验收。三服名称及属性沿独立现有词典；不新增数据文件、依赖或浏览器外站请求。
+
+本轮人工打开 PoE2DB 对应符文页，提取正文未包含完整效果段，未用其证明数值或数量限制。CoE 仅作已登记的制作与历史流程参考，不读取或复制执行代码及权重。新能力按 v80 项目保存，旧版起点、导入声明、未来操作及未命中指引都须拒绝夹带。
+
 ## 2026-09-16 品质逐颗实验与注能器统计
 
 [Krydax 原始实验](https://www.reddit.com/r/PathOfExile2/comments/1r4snoi/i_applied_1734_vaal_infusers_to_314_items_so_you/)和 [SpecialistAd670 原始实验](https://www.reddit.com/r/PathOfExile2/comments/1s80jza/i_tracked_750_vaal_infuser_attempts_here_is_what/)按 gray 人工机制参考登记。作者公开的有限汇总用于自写统计核对；玩家实验不是 GGG 保证，也没有证明当前四种注能器共用概率。没有下载或入库原始表格、图片、装备样本、同行实现或权重；未取得完整数据再分发许可，不建立数据适配器。

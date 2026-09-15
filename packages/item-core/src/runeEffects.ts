@@ -1,7 +1,13 @@
 import type { CatalogAugment } from './catalog'
+import {
+  COMBAT_ARMOUR_TOTALS,
+  isCombatArmourRune,
+  readCombatArmourRuneLine,
+} from './combatArmourRuneEffects'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
 
 export type RuneEffectKey =
+  | keyof typeof COMBAT_ARMOUR_TOTALS
   | keyof typeof ARMOUR_SOUL_TOTALS
   | 'Fire'
   | 'Cold'
@@ -32,6 +38,13 @@ const FLAT_KEYS = {
   Intelligence: 'Intelligence',
 } as const
 export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
+  PhysicalThornsMin: '物理荆棘伤害下限',
+  PhysicalThornsMax: '物理荆棘伤害上限',
+  LightningThornsMin: '闪电荆棘伤害下限',
+  LightningThornsMax: '闪电荆棘伤害上限',
+  MinionPhysicalAsLightning: '召唤生物承受的物理伤害视为闪电',
+  DebuffExpiry: '减益效果消退加快',
+  ShockReduction: '感电效果降低',
   Chaos: '混沌抗性',
   GoldQuantity: '金币数量提高',
   SlowReduction: '减速强度降低',
@@ -52,6 +65,7 @@ export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
   Intelligence: '智慧',
 }
 const emptyTotals = (): RuneEffectTotals => ({
+  ...COMBAT_ARMOUR_TOTALS,
   ...ARMOUR_SOUL_TOTALS,
   Fire: 0,
   Cold: 0,
@@ -86,6 +100,15 @@ const FAMILIES = {
 export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotals | null {
   const totals = emptyTotals()
   for (const line of lines) {
+    const combat = readCombatArmourRuneLine(line)
+    if (combat) {
+      for (const [key, value] of Object.entries(combat)) {
+        const total = totals[key as RuneEffectKey] + value
+        if (!Number.isSafeInteger(total)) return null
+        totals[key as RuneEffectKey] = total
+      }
+      continue
+    }
     const soul = readSoulCoreLine(line, 'armour')
     if (soul) {
       const keys: RuneEffectKey[] =
@@ -122,6 +145,7 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
 
 /** 身份、类别、本地标志和完整效果语义必须一致。 */
 export function isSupportedArmourRune(augment: CatalogAugment): boolean {
+  if (isCombatArmourRune(augment)) return true
   const family = Object.entries(FAMILIES).find(([name]) =>
     TIERS.some((tier) => augment.name === `${tier}${name}`),
   )?.[1]

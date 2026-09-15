@@ -14,6 +14,7 @@ import {
 } from './boneRules'
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
 import { isCatalystQuality } from './catalystQuality'
+import { requiresCombatArmourRuneProjectVersion } from './combatArmourRuneProjectVersion'
 import { isVaalCraftOperation } from './corruptionRules'
 import { requiresCorruptionStrategyProjectVersion } from './corruptionStrategyProjectVersion'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
@@ -634,6 +635,7 @@ export function readNativeTargetProjectProjection(
   extraction = false,
   corruptionStrategy = false,
   retainedCatalyst = false,
+  combatArmourRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -645,6 +647,7 @@ export function readNativeTargetProjectProjection(
     extraction,
     corruptionStrategy,
     retainedCatalyst,
+    combatArmourRunes,
   )
 }
 
@@ -658,6 +661,7 @@ function readCraftProject(
   extraction = false,
   corruptionStrategy = false,
   retainedCatalyst = false,
+  combatArmourRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -676,6 +680,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!combatArmourRunes && requiresCombatArmourRuneProjectVersion(value, catalog))
+    return fail('防具荆棘与减益符文必须使用 v80 项目，包括起点、导入声明、未来操作和指引。')
   if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(value, catalog))
     return fail('已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。')
   if (!corruptionStrategy && requiresCorruptionStrategyProjectVersion(value))
