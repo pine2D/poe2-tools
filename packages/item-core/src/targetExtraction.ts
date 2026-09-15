@@ -1,3 +1,4 @@
+import { type CraftAffixSelector, resolveCraftAffix } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
 import { validateCraftFractureTarget } from './fractureTargets'
 import { readNumericValues } from './numeric'
@@ -14,21 +15,38 @@ export interface ExtractedCraftTargets {
 export function extractCraftTargets(
   catalog: CraftCatalog,
   state: CraftState,
-  ids: readonly string[],
+  selections: readonly (string | CraftAffixSelector)[],
   copyValues: boolean,
   copyFracture: boolean,
 ): CraftResult<ExtractedCraftTargets> {
   const checkedState = createCraftState(catalog, state)
   if (!checkedState.ok) return checkedState
-  const checkedIds = validateCraftTargets(catalog, state.baseId, ids)
+  if (!Array.isArray(selections) || selections.length > 6)
+    return { ok: false, error: '请选择至多六组当前装备上的词缀。' }
+  const affixes: CraftState['affixes'] = []
+  for (const selection of selections) {
+    const selector = typeof selection === 'string' ? { modId: selection } : selection
+    if (
+      selector === null ||
+      typeof selector !== 'object' ||
+      Array.isArray(selector) ||
+      Object.keys(selector).some((key) => key !== 'modId' && key !== 'affixId')
+    )
+      return { ok: false, error: '词缀选择只能包含类型 ID 与实例 ID。' }
+    const resolved = resolveCraftAffix(checkedState.value, selector)
+    if (!resolved.ok) return resolved
+    affixes.push(resolved.value.affix)
+  }
+  const ids = affixes.map((affix) => affix.modId)
+  const checkedIds = validateCraftTargets(catalog, checkedState.value.baseId, ids)
   if (!checkedIds.ok) return checkedIds
   if (ids.length === 0) return { ok: false, error: '请至少选择一组当前装备上的词缀。' }
   const values: CraftTargetValues[] = []
   let fractured: string | undefined
-  for (const id of ids) {
-    const affix = state.affixes.find((entry) => entry.modId === id)
+  for (const affix of affixes) {
+    const id = affix.modId
     const mod = catalog.modifiers.find((entry) => entry.id === id)
-    if (!affix || !mod) return { ok: false, error: `当前装备没有词缀 ${id}。` }
+    if (!mod) return { ok: false, error: `当前装备没有词缀 ${id}。` }
     if (copyValues) {
       const rolls = readNumericValues(mod.lines, affix.lines)
       if (!rolls.ok || rolls.value.some((value) => value === null))

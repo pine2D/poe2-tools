@@ -33,7 +33,20 @@ export function TargetExtractionPanel({
   const result = useMemo(
     () =>
       active
-        ? extractCraftTargets(catalog, state, active.ids, active.values, active.fracture)
+        ? extractCraftTargets(
+            catalog,
+            state,
+            active.ids.flatMap((id) =>
+              state.affixes
+                .filter((affix) => (affix.affixId ?? affix.modId) === id)
+                .map((affix) => ({
+                  modId: affix.modId,
+                  ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+                })),
+            ),
+            active.values,
+            active.fracture,
+          )
         : null,
     [catalog, state, active],
   )
@@ -47,7 +60,12 @@ export function TargetExtractionPanel({
           setDraft(
             active
               ? null
-              : { context, ids: state.affixes.map((a) => a.modId), values: false, fracture: false },
+              : {
+                  context,
+                  ids: state.affixes.map((a) => a.affixId ?? a.modId),
+                  values: false,
+                  fracture: false,
+                },
           )
         }
       >
@@ -60,18 +78,19 @@ export function TargetExtractionPanel({
           <div className="target-extraction-choices">
             {state.affixes.map((affix) => {
               const mod = catalog.modifiers.find((m) => m.id === affix.modId)
+              const key = affix.affixId ?? affix.modId
               return (
-                <label key={affix.modId}>
+                <label key={key}>
                   <input
                     type="checkbox"
-                    aria-label={`提取词缀 ${affix.modId}`}
-                    checked={active.ids.includes(affix.modId)}
+                    aria-label={`提取词缀 ${affix.modId}${affix.affixId === undefined ? '' : ` · ${affix.affixId}`}`}
+                    checked={active.ids.includes(key)}
                     onChange={(e) =>
                       setDraft({
                         ...active,
                         ids: e.target.checked
-                          ? [...active.ids, affix.modId]
-                          : active.ids.filter((id) => id !== affix.modId),
+                          ? [...active.ids, key]
+                          : active.ids.filter((id) => id !== key),
                       })
                     }
                   />
