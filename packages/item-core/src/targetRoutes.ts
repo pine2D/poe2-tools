@@ -61,6 +61,15 @@ import {
   craftTargetsSatisfied,
 } from './targets'
 
+/** 包内阶段分汇总：有效负分代表真实阻碍，只有没有有效上下文时才归零。 */
+export function targetRouteContextPriority(
+  contexts: readonly { enabled: boolean; priority: (state: CraftState) => number }[],
+): (state: CraftState) => number {
+  const active = contexts.filter((context) => context.enabled)
+  return (state) =>
+    active.length ? Math.max(...active.map((context) => context.priority(state))) : 0
+}
+
 export interface CraftTargetRouteOptions {
   minimumTargetCount?: number
   /** 传入报价后先按目标推进取得完整示例，再按新增费用改进；不含起点或历史消费。 */
@@ -281,8 +290,7 @@ export function planCraftTargetContext(
   )
   const liquid = {
     enabled: liquids.some((context) => context.enabled),
-    priority: (current: CraftState) =>
-      Math.max(0, ...liquids.map((context) => context.priority(current))),
+    priority: targetRouteContextPriority(liquids),
     candidates: function* (current: CraftState, consume: () => boolean) {
       const seen = new Set<string>()
       for (const context of liquids)
@@ -297,8 +305,7 @@ export function planCraftTargetContext(
   }
   const sovereign = {
     enabled: sovereigns.some((context) => context.enabled),
-    priority: (current: CraftState) =>
-      Math.max(0, ...sovereigns.map((context) => context.priority(current))),
+    priority: targetRouteContextPriority(sovereigns),
     candidates: function* (current: CraftState, consume: () => boolean) {
       const seen = new Set<string>()
       for (const context of sovereigns)
@@ -1022,11 +1029,13 @@ export function planCraftTargetContext(
                   (other) => JSON.stringify(other) === JSON.stringify(numbers),
                 ) === index,
             )
+            let filled = false
             for (const numbers of unique) {
               if (numbers === null) continue
               if (!spend()) return
               const added = addCraftAffix(catalog, current, mod.id, currency, omen)
               if (!added.ok) continue
+              filled = true
               const addedAffix = added.value.affixes[current.affixes.length]
               fill(added.value, {
                 ...selected,
@@ -1046,11 +1055,11 @@ export function planCraftTargetContext(
                     : []),
                 ],
               })
-              // 点金提供每个首目标的一组合法完整选择，避免排列爆炸。
-              if (prepared.value.count > 1) {
-                if (candidates.length > 1) omitted()
-                break
-              }
+            }
+            // 同一候选保留全部独立数值；多新增不再遍历其他填充类型的排列。
+            if (filled && prepared.value.count > 1) {
+              if (candidates.length > 1) omitted()
+              break
             }
           }
         }
