@@ -2,18 +2,14 @@ import type { CraftCatalog } from './catalog'
 import { analyzeCraftImplicitTargets, type CraftImplicitTargetValues } from './implicitTargets'
 import type { CraftResult, CraftState } from './rehearsal'
 import { definitionTargetIdsForMods, targetDefinitionChanges } from './targetDefinitionAdvice'
-import {
-  type CraftTargetDefinitions,
-  projectTargetDefinitions,
-  validateTargetDefinitions,
-} from './targetDefinitions'
+import { type CraftTargetDefinitions, validateTargetDefinitions } from './targetDefinitions'
 import { evaluateTargetDefinitions } from './targetProgress'
 import {
   type CraftTargetRoute,
   type CraftTargetRouteOptions,
   type CraftTargetRouteStep,
   type CraftTargetRoutes,
-  planCraftTargetRoutes,
+  planCraftTargetContext,
 } from './targetRoutes'
 
 export type CraftDefinitionRouteOptions = Omit<CraftTargetRouteOptions, 'minimumTargetCount'>
@@ -61,21 +57,21 @@ export function planTargetDefinitionRoutes(
   const checked = validateTargetDefinitions(catalog, state, definitions)
   if (!checked.ok) return checked
   const config = checked.value
-  const legacy = projectTargetDefinitions(config)
-  const result = planCraftTargetRoutes(
+  const result = planCraftTargetContext(
     catalog,
     state,
-    legacy.targetModIds,
-    legacy.targetValues,
-    legacy.targetAlternatives,
+    config.targets.map((target) => target.targetId),
+    config.values,
+    [],
     {
       ...options,
-      ...(legacy.minimumTargetCount === undefined
+      ...(config.minimumTargetCount === undefined
         ? {}
-        : { minimumTargetCount: legacy.minimumTargetCount }),
+        : { minimumTargetCount: config.minimumTargetCount }),
     },
     implicitValues,
-    legacy.targetFracturedModId,
+    config.fracturedTargetId,
+    config,
   )
   if (!result.ok) return result
   const completed = (current: CraftState): CraftResult<boolean> => {
@@ -105,7 +101,8 @@ export function planTargetDefinitionRoutes(
         let before = state
         const steps = route.steps.map((step): CraftDefinitionRouteStep => {
           const {
-            lostTargetIds: affectedModIds,
+            lostTargetIds: legacyAffectedModIds,
+            affectedModIds = legacyAffectedModIds,
             atRiskTargetIds: atRiskModIds,
             rerolledTargetIds: rerolledModIds,
             ...rest

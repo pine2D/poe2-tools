@@ -3,6 +3,7 @@ import type { CraftCatalog } from './catalog'
 import { validateCraftFractureTarget } from './fractureTargets'
 import { readNumericValues } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { type CraftTargetDefinitions, validateTargetDefinitions } from './targetDefinitions'
 import { type CraftTargetValues, validateCraftTargets, validateCraftTargetValues } from './targets'
 
 export interface ExtractedCraftTargets {
@@ -77,4 +78,63 @@ export function extractCraftTargets(
       ...(fractured === undefined ? {} : { targetFracturedModId: fractured }),
     },
   }
+}
+
+/** 逐实例提取独立条件；临时目标ID由完整替换时重新分配，不绑定来源实例。 */
+export function extractTargetDefinitions(
+  catalog: CraftCatalog,
+  state: CraftState,
+  selections: readonly (string | CraftAffixSelector)[],
+  copyValues: boolean,
+  copyFracture: boolean,
+): CraftResult<CraftTargetDefinitions> {
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  if (!Array.isArray(selections) || selections.length < 1 || selections.length > 6)
+    return { ok: false, error: '请选择一至六组当前装备上的词缀。' }
+  const definitions: CraftTargetDefinitions = {
+    nextTargetId: selections.length + 1,
+    targets: [],
+    alternatives: [],
+    values: [],
+  }
+  const seen = new Set<number>()
+  for (const selection of selections) {
+    const selector = typeof selection === 'string' ? { modId: selection } : selection
+    if (
+      selector === null ||
+      typeof selector !== 'object' ||
+      Array.isArray(selector) ||
+      Object.keys(selector).some((key) => key !== 'modId' && key !== 'affixId')
+    )
+      return { ok: false, error: '词缀选择只能包含类型 ID 与实例 ID。' }
+    const resolved = resolveCraftAffix(checked.value, selector)
+    if (!resolved.ok) return resolved
+    if (seen.has(resolved.value.index))
+      return { ok: false, error: '同一词缀实例不能重复提取为目标。' }
+    seen.add(resolved.value.index)
+    const affix = resolved.value.affix
+    const targetId = `t${definitions.targets.length + 1}`
+    definitions.targets.push({ targetId, modId: affix.modId })
+    if (copyValues) {
+      const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
+      if (!mod) return { ok: false, error: `当前装备没有词缀 ${affix.modId}。` }
+      const rolls = readNumericValues(mod.lines, affix.lines)
+      if (!rolls.ok || rolls.value.some((value) => value === null))
+        return {
+          ok: false,
+          error: `${affix.modId} 缺少可核对的实际基础数值；可关闭精确数值，只提取档位。`,
+        }
+      if (rolls.value.length)
+        definitions.values.push({
+          targetId,
+          modId: affix.modId,
+          bounds: rolls.value.flatMap((value, index) =>
+            value === null ? [] : [{ index, min: value, max: value }],
+          ),
+        })
+    }
+    if (copyFracture && affix.fractured) definitions.fracturedTargetId = targetId
+  }
+  return validateTargetDefinitions(catalog, checked.value, definitions)
 }

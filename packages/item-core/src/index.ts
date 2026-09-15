@@ -133,6 +133,7 @@ export { parseIdentityCraftProject } from './craftProjectIdentityReader'
 export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 export type { RestoredTargetCraftProject, TargetCraftProject } from './craftProjectTargets'
 export {
+  FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
   serializeTargetCraftProject,
   TARGET_CRAFT_RULES_VERSION,
@@ -197,10 +198,18 @@ export type {
 } from './export'
 export { createCoeUrl, inspectItem } from './export'
 export {
+  applyFluxCraft,
+  type FluxCraftOperation,
+  isFluxCraftOperation,
+  type PreparedFluxCraft,
+  prepareFluxCraft,
+} from './fluxCraft'
+export {
   FLUXES,
   type FluxCatalog,
   type FluxElement,
   type FluxInspection,
+  fluxCatalogSignature,
   inspectFluxes,
   parseFluxCatalog,
 } from './fluxes'
@@ -293,7 +302,7 @@ export {
   prepareCraftOperation,
   removableCraftAffixes,
 } from './rehearsal'
-export { importCraftState, importSocketCount } from './rehearsalImport'
+export { importCraftState, importIdentifiedCraftState, importSocketCount } from './rehearsalImport'
 export type { ResistanceProperty } from './resistances'
 export { estimateResistances, RESISTANCE_LABELS } from './resistances'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
@@ -372,12 +381,17 @@ export type {
   LegacyCraftTargetConfig,
 } from './targetDefinitions'
 export {
+  craftTargetDefinitionCandidates,
   createTargetDefinitions,
   projectTargetDefinitions,
   validateStoredTargetDefinitions,
   validateTargetDefinitions,
 } from './targetDefinitions'
-export { type ExtractedCraftTargets, extractCraftTargets } from './targetExtraction'
+export {
+  type ExtractedCraftTargets,
+  extractCraftTargets,
+  extractTargetDefinitions,
+} from './targetExtraction'
 export { evaluateTargetDefinitions } from './targetProgress'
 export { targetProjectSourceUsage } from './targetProjectSources'
 export type {

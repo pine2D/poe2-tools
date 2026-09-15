@@ -11,6 +11,7 @@ import { importCatalystQuality } from './catalystImport'
 import { importCorruption, knownCorruptionHeader } from './corruptionEnchantments'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
+import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
 import { normalizeJewelFixedImportLine } from './jewelEffectImport'
 import { usesJewelEffect } from './jewelEffects'
@@ -40,6 +41,55 @@ export function importSocketCount(item: ItemDocument): CraftResult<number | null
 
 /** 只有整件输入处于已知范围，才允许进入普通通货演练。 */
 export function importCraftState(
+  catalog: CraftCatalog,
+  baseId: string,
+  item: ItemDocument,
+  inspection: Pick<ItemInspection, 'base' | 'mods' | 'comparisonOnly'> &
+    Partial<Pick<ItemInspection, 'runes' | 'skills'>>,
+  importedSockets?: readonly (string | null)[],
+  importedQuality?: number,
+  skillEntries?: readonly StatTemplate[],
+  declaredCatalystId?: string,
+): CraftResult<CraftState> {
+  return readCraftImport(
+    false,
+    catalog,
+    baseId,
+    item,
+    inspection,
+    importedSockets,
+    importedQuality,
+    skillEntries,
+    declaredCatalystId,
+  )
+}
+
+export function importIdentifiedCraftState(
+  catalog: CraftCatalog,
+  baseId: string,
+  item: ItemDocument,
+  inspection: Pick<ItemInspection, 'base' | 'mods' | 'comparisonOnly'> &
+    Partial<Pick<ItemInspection, 'runes' | 'skills'>>,
+  importedSockets?: readonly (string | null)[],
+  importedQuality?: number,
+  skillEntries?: readonly StatTemplate[],
+  declaredCatalystId?: string,
+): CraftResult<CraftState> {
+  return readCraftImport(
+    true,
+    catalog,
+    baseId,
+    item,
+    inspection,
+    importedSockets,
+    importedQuality,
+    skillEntries,
+    declaredCatalystId,
+  )
+}
+
+function readCraftImport(
+  native: boolean,
   catalog: CraftCatalog,
   baseId: string,
   item: ItemDocument,
@@ -122,6 +172,30 @@ export function importCraftState(
           return fail('腐化词缀翻译缺少词典依据，或数字范围与原文不一致。')
       }
     }
+  }
+  if (native) {
+    if (
+      JSON.stringify(originalFlags.item) !== JSON.stringify(item) ||
+      inspection.mods.length !== item.mods.length ||
+      inspection.mods.some(
+        ({ mod, stats }, i) =>
+          JSON.stringify(mod) !== JSON.stringify(item.mods[i]) ||
+          stats.length !== mod.stats.length ||
+          stats.some(({ source }, j) => JSON.stringify(source) !== JSON.stringify(mod.stats[j])),
+      )
+    )
+      return fail('实例导入必须与完整来源原文一致。')
+    for (const { stats } of inspection.mods)
+      for (const { source, resolution } of stats) {
+        const english = resolution.english ?? source.raw
+        if (
+          english !== source.raw &&
+          !resolveStat(source.raw, skillEntries ?? []).candidates.some(
+            (candidate) => candidate.english === english,
+          )
+        )
+          return fail('实例导入翻译或数字范围缺少原文词典依据。')
+      }
   }
   if (item.mirrored || item.unidentified) return fail('本阶段仅支持已鉴定、未镜像的装备。')
   if (item.itemLevel === null || item.diagnostics.length > 0)
@@ -346,9 +420,10 @@ export function importCraftState(
   for (const entry of inspectLiquidEmotions(catalog, base))
     if (entry.reason === null) for (const mod of entry.outcomes) mappedIds.add(mod.id)
   for (const entry of inspectCraftAlloys(catalog, base)) if (entry.mod) mappedIds.add(entry.mod.id)
+  const fluxEligible = native ? fluxEligibleModIds(catalog, base) : null
   const matches = explicit.map((source, sourceIndex) => {
     // 工艺组只使用精华、液态和合金的精确映射；临时匹配视图不改变原目录生成资格。
-    const modifiers = source.mod.states?.includes('crafted')
+    let modifiers: CraftCatalog['modifiers'] = source.mod.states?.includes('crafted')
       ? catalog.modifiers.map((mod) =>
           mappedIds.has(mod.id)
             ? (() => {
@@ -361,6 +436,20 @@ export function importCraftState(
             : mod,
         )
       : catalog.modifiers
+    if (native && !source.mod.states?.includes('crafted'))
+      modifiers = modifiers.map((mod) => {
+        if (
+          !fluxEligible?.[
+            source.mod.states?.includes('desecrated') ? 'desecrated' : 'ordinary'
+          ].has(mod.id)
+        )
+          return mod
+        const { craftedOnly: _craftedOnly, ...matchable } = mod
+        return {
+          ...matchable,
+          eligibility: [{ tag: base.tags[0] ?? 'default', value: 1 as const }],
+        }
+      })
     const matchingSource = differentFixedValue
       ? {
           ...source,
@@ -455,6 +544,7 @@ export function importCraftState(
     )
       return fail('无词缀名称的显式头仅支持已核实的工艺专属属性。')
     affixes.push({
+      ...(native ? { affixId: `a${affixes.length + 1}` } : {}),
       modId: candidate.id,
       lines: source.stats.map(({ source, resolution }) =>
         stripModifierStateAnnotations(
@@ -469,6 +559,7 @@ export function importCraftState(
     })
   }
   const state: CraftState = {
+    ...(native ? { nextAffixId: affixes.length + 1 } : {}),
     ...(item.corrupted ? { corrupted: true } : {}),
     ...(item.twiceCorrupted ? { twiceCorrupted: true } : {}),
     baseId,

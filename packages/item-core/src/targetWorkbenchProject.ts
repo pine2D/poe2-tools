@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
 import {
+  FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
   type RestoredTargetCraftProject,
   serializeTargetCraftProject,
@@ -32,7 +33,8 @@ export function loadTargetWorkbenchProject(
     typeof value === 'object' &&
     !Array.isArray(value) &&
     'rulesVersion' in value &&
-    value.rulesVersion === TARGET_CRAFT_RULES_VERSION
+    (value.rulesVersion === TARGET_CRAFT_RULES_VERSION ||
+      value.rulesVersion === FLUX_CRAFT_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
     : upgradeTargetCraftProject(text, catalog, dictionary)
 }
@@ -65,6 +67,10 @@ export function reuseTargetCraftPlan(
       }
   }
   const next = structuredClone(current.value.project)
+  if (source.rulesVersion === FLUX_CRAFT_RULES_VERSION) {
+    next.rulesVersion = FLUX_CRAFT_RULES_VERSION
+    next.fluxCatalogSignature = source.fluxCatalogSignature as string
+  }
   next.targetDefinitions = structuredClone(source.targetDefinitions)
   next.orphanedTargets = structuredClone(source.orphanedTargets)
   delete next.strategy

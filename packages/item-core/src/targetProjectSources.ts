@@ -2,6 +2,7 @@ import { type CraftCatalog, hasExistingModEligibility } from './catalog'
 import type { CraftProject } from './craftProject'
 import { desecrationSourceHash } from './desecration'
 import { essenceSourceHash, supportedEssenceId } from './essences'
+import { fluxEligibleModIds } from './fluxes'
 import { jewelSourceHash } from './jewels'
 import { liquidEmotionSourceHash } from './liquidEmotions'
 import type { CraftResult } from './rehearsal'
@@ -48,12 +49,13 @@ export function targetProjectSourceUsage(
       .filter((entry) => supportedEssenceId(entry.id))
       .flatMap((entry) => Object.values(entry.mods)),
   )
+  const flux = base ? fluxEligibleModIds(catalog, base) : null
   return {
     essence:
       base !== undefined &&
       mods.some((mod) => essenceIds.has(mod.id) && !hasExistingModEligibility(base, mod)),
     desecration: mods.some((mod) => mod.desecratedOnly),
-    liquid: mods.some((mod) => mod.jewelOnly && mod.craftedOnly),
+    liquid: mods.some((mod) => mod.jewelOnly && mod.craftedOnly && !flux?.ordinary.has(mod.id)),
     jewel: mods.some((mod) => mod.jewelOnly),
   }
 }

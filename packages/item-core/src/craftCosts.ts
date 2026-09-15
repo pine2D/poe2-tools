@@ -8,6 +8,7 @@ import { BONE_RULES } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import type { CraftStep } from './craftSteps'
 import { ESSENCE_OMEN_RULES } from './essenceOmens'
+import { FLUXES, fluxCatalogSignature } from './fluxes'
 import { supportedLiquidEmotionId } from './liquidEmotions'
 import { CRAFT_OMEN_RULES, craftOmenMaterials } from './omens'
 import { CRAFT_CURRENCY_LABELS, type CraftResult } from './rehearsal'
@@ -61,6 +62,10 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     ...(alloyCatalogSignature(catalog) !== null ? (catalog.alloys?.alloys ?? []) : []).map(
       (entry) => ({ id: `alloy:${entry.id}`, name: entry.name }),
     ),
+    ...(fluxCatalogSignature(catalog) !== null ? FLUXES : []).map((entry) => ({
+      id: `flux:${entry.id}`,
+      name: entry.name,
+    })),
     ...(catalog.liquidEmotions ?? [])
       .filter((e) => supportedLiquidEmotionId(e.id))
       .map((e) => ({ id: `emotion:${e.id}`, name: e.name })),
@@ -108,6 +113,8 @@ export function collectCraftCosts(
       add(`augment:${augment.name}`)
     } else if (step.kind === 'alloy') {
       add(`alloy:${step.alloyId}`)
+    } else if (step.kind === 'flux') {
+      add(`flux:${step.fluxId}`)
     } else if (step.kind === 'liquid-emotion') {
       if (!supportedLiquidEmotionId(step.emotionId))
         return fail('该液态情感材料尚未支持，不能计费。')
@@ -153,7 +160,7 @@ export function parseCraftPricing(
       ([id, price]) =>
         !validPrice(price) ||
         id.length > 512 ||
-        !/^(currency|bone|essence|emotion|alloy|augment|omen):.+$/.test(id) ||
+        !/^(currency|bone|essence|emotion|alloy|flux|augment|omen):.+$/.test(id) ||
         (allowed !== null && !allowed.has(id)),
     )
   )

@@ -39,7 +39,11 @@ import {
   type EssenceOmen,
   editTargetDefinitionContext,
   enableCraftAffixIdentity,
+  FLUX_CRAFT_RULES_VERSION,
+  FLUXES,
+  type FluxCraftOperation,
   type FractureCraftOperation,
+  fluxCatalogSignature,
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentifiedCraftState,
   type ItemDictionary,
@@ -83,6 +87,7 @@ import { ArchitectPanel } from './ArchitectPanel'
 import { CorruptionPanel } from './CorruptionPanel'
 import { CraftPricingPanel } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
+import { FluxCraftPanel } from './FluxCraftPanel'
 import './rehearsal.css'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
@@ -292,11 +297,12 @@ export function RehearsalPanel({
   importedSockets,
   importedQuality,
 }: RehearsalPanelProps) {
+  const fluxSignature = useMemo(() => fluxCatalogSignature(catalog), [catalog])
   const restored = useMemo(() => {
     if (!providedProject) return null
     try {
       const saved =
-        providedProject.project.rulesVersion === TARGET_CRAFT_RULES_VERSION
+        'targetDefinitions' in providedProject.project
           ? serializeTargetCraftProject(providedProject.project, catalog, dictionary)
           : providedProject.project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION
             ? serializeIdentityCraftProject(providedProject.project, catalog, dictionary)
@@ -373,7 +379,11 @@ export function RehearsalPanel({
     | null
   >(null)
   const [guaranteedDraft, setGuaranteedDraft] = useState<
-    EssenceCraftOperation | LiquidEmotionCraftOperation | AlloyCraftOperation | null
+    | EssenceCraftOperation
+    | LiquidEmotionCraftOperation
+    | AlloyCraftOperation
+    | FluxCraftOperation
+    | null
   >(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
   const [fractureDraft, setFractureDraft] = useState<FractureCraftOperation | null>(null)
@@ -403,12 +413,13 @@ export function RehearsalPanel({
   const guaranteedDraftRef = useRef<HTMLElement>(null)
   const essenceTriggerRef = useRef<HTMLElement | null>(null)
   const restoreEssenceFocusRef = useRef(false)
+  const fluxEntryRef = useRef<HTMLElement>(null)
   const alloyEntryRef = useRef<HTMLElement>(null)
   const emotionEntryRef = useRef<HTMLElement>(null)
   const essenceEntryRef = useRef<HTMLElement>(null)
   const strategyTriggerRef = useRef<HTMLElement | null>(null)
   const guaranteedOriginRef = useRef<{
-    kind: 'essence' | 'liquid-emotion' | 'alloy'
+    kind: 'essence' | 'liquid-emotion' | 'alloy' | 'flux'
     strategy: boolean
   } | null>(null)
   useEffect(() => {
@@ -419,11 +430,13 @@ export function RehearsalPanel({
         const origin = guaranteedOriginRef.current
         const fallback = origin?.strategy
           ? strategyTriggerRef.current
-          : origin?.kind === 'alloy'
-            ? alloyEntryRef.current
-            : origin?.kind === 'liquid-emotion'
-              ? emotionEntryRef.current
-              : essenceEntryRef.current
+          : origin?.kind === 'flux'
+            ? fluxEntryRef.current
+            : origin?.kind === 'alloy'
+              ? alloyEntryRef.current
+              : origin?.kind === 'liquid-emotion'
+                ? emotionEntryRef.current
+                : essenceEntryRef.current
         const trigger = essenceTriggerRef.current?.isConnected
           ? essenceTriggerRef.current
           : fallback
@@ -666,7 +679,8 @@ export function RehearsalPanel({
       if (
         operation.kind === 'essence' ||
         operation.kind === 'liquid-emotion' ||
-        operation.kind === 'alloy'
+        operation.kind === 'alloy' ||
+        operation.kind === 'flux'
       ) {
         setOmen(undefined)
         startGuaranteed(operation)
@@ -717,7 +731,11 @@ export function RehearsalPanel({
     startRoute(operation)
   }
   const startGuaranteed = (
-    operation: EssenceCraftOperation | LiquidEmotionCraftOperation | AlloyCraftOperation,
+    operation:
+      | EssenceCraftOperation
+      | LiquidEmotionCraftOperation
+      | AlloyCraftOperation
+      | FluxCraftOperation,
   ) => {
     if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
@@ -886,6 +904,10 @@ export function RehearsalPanel({
     if (!('kind' in step))
       return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
     if (step.kind === 'fracture') return fractureLabel
+    if (step.kind === 'flux') {
+      const name = FLUXES.find((f) => f.id === step.fluxId)?.name ?? step.fluxId
+      return translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+    }
     if (step.kind === 'alloy') {
       const name =
         catalog.alloys?.alloys.find((entry) => entry.id === step.alloyId)?.name ?? step.alloyId
@@ -977,13 +999,9 @@ export function RehearsalPanel({
         operation.kind === 'liquid-emotion' &&
         operation.emotionId === JEWEL_EFFECT_EMOTION_ID,
     )
-  const craftedJewelTarget = [...referencedTargetIds].some((id) => {
-    const mod = modById.get(id)
-    return mod?.jewelOnly && mod.craftedOnly
-  })
   const emotionHash =
     effectSourcesNeeded ||
-    craftedJewelTarget ||
+    targetSources.liquid ||
     (isBasicJewel(base) &&
       (['prefix', 'suffix'] as const).some(
         (kind) => targetModIds.filter((id) => modById.get(id)?.kind === kind).length > 2,
@@ -1004,7 +1022,8 @@ export function RehearsalPanel({
     ...(strategy ? { strategy } : {}),
     ...(strategy?.flow ? { strategyStartStep: strategyStartStep ?? 0 } : {}),
     sourceCommit: catalog._meta.sourceCommit,
-    rulesVersion: TARGET_CRAFT_RULES_VERSION,
+    rulesVersion: fluxSignature ? FLUX_CRAFT_RULES_VERSION : TARGET_CRAFT_RULES_VERSION,
+    ...(fluxSignature ? { fluxCatalogSignature: fluxSignature } : {}),
     targetDefinitions: definitions,
     orphanedTargets: targetContext.orphanedTargets,
     ...(alloySignature ? { alloyCatalogSignature: alloySignature } : {}),
@@ -1326,16 +1345,9 @@ export function RehearsalPanel({
       ) : null}
       <CraftTargets
         onExtract={(targets) => {
-          const config = {
-            targetModIds: targets.targetModIds,
-            targetValues: targets.targetValues,
-            ...(targets.targetFracturedModId === undefined
-              ? {}
-              : { targetFracturedModId: targets.targetFracturedModId }),
-          }
           const changed = editTargetDefinitionContext(catalog, current, targetContext, {
-            kind: 'replace',
-            config,
+            kind: 'replace-definitions',
+            definitions: targets,
           })
           if (!changed.ok) {
             setMessage(changed.error)
@@ -1739,29 +1751,57 @@ export function RehearsalPanel({
           onPreview={startGuaranteed}
         />
       ) : null}
+      {!strategyResultAction ? (
+        <FluxCraftPanel
+          key={`flux:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          entryRef={fluxEntryRef}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft,
+          )}
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
       {guaranteedDraft ? (
         <section
           ref={guaranteedDraftRef}
           tabIndex={-1}
           className="rehearsal-draft"
-          aria-label={`${guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}待应用结果`}
+          aria-label={`${guaranteedDraft.kind === 'flux' ? '溶剂' : guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}待应用结果`}
         >
           <h3>{stepLabel(guaranteedDraft)}</h3>
-          <EssenceResultDetails
-            catalog={catalog}
-            state={current}
-            operation={guaranteedDraft}
-            {...(translateLine ? { translateLine } : {})}
-          />
+          {guaranteedDraft.kind !== 'flux' ? (
+            <EssenceResultDetails
+              catalog={catalog}
+              state={current}
+              operation={guaranteedDraft}
+              {...(translateLine ? { translateLine } : {})}
+            />
+          ) : (
+            <p>
+              将转换 {guaranteedDraft.rolls.length}{' '}
+              条抗性，保留每条词缀的独立身份。下方对照显示全部结果。
+            </p>
+          )}
           {preview?.ok ? (
             <p>
-              {guaranteedDraft.kind === 'alloy'
-                ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
-                : guaranteedDraft.kind === 'liquid-emotion'
-                  ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
-                  : guaranteedDraft.removeModId
-                    ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                    : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+              {guaranteedDraft.kind === 'flux'
+                ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
+                : guaranteedDraft.kind === 'alloy'
+                  ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
+                  : guaranteedDraft.kind === 'liquid-emotion'
+                    ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                    : guaranteedDraft.removeModId
+                      ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                      : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>
@@ -1780,7 +1820,7 @@ export function RehearsalPanel({
               setEssenceSession((value) => value + 1)
             }}
           >
-            {`取消${guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
+            {`取消${guaranteedDraft.kind === 'flux' ? '溶剂' : guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
           </button>
           <button
             type="button"
@@ -1788,7 +1828,7 @@ export function RehearsalPanel({
             disabled={!preview?.ok}
             onClick={() => applyStep(guaranteedDraft)}
           >
-            {`应用${guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
+            {`应用${guaranteedDraft.kind === 'flux' ? '溶剂' : guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
           </button>
         </section>
       ) : null}

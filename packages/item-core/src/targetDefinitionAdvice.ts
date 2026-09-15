@@ -2,13 +2,10 @@ import type { CraftCatalog } from './catalog'
 import type { CraftImplicitTargetValues } from './implicitTargets'
 import type { CraftOmen } from './omens'
 import { type CraftResult, type CraftState, prepareCraftOperation } from './rehearsal'
-import {
-  type CraftTargetDefinitions,
-  projectTargetDefinitions,
-  validateTargetDefinitions,
-} from './targetDefinitions'
+import { definitionFluxSourceModIds } from './targetDefinitionRolls'
+import { type CraftTargetDefinitions, validateTargetDefinitions } from './targetDefinitions'
 import { type CraftTargetDefinitionProgress, evaluateTargetDefinitions } from './targetProgress'
-import { analyzeCraftTargets, type CraftAdvice, type CraftAdviceStep } from './targets'
+import { analyzeCraftTargetContext, type CraftAdvice, type CraftAdviceStep } from './targets'
 
 export interface CraftDefinitionAdviceStep
   extends Omit<CraftAdviceStep, 'lostTargetIds' | 'rerolledTargetIds'> {
@@ -29,7 +26,7 @@ export interface CraftDefinitionAdvice extends Omit<CraftAdvice, 'targets' | 'st
   pendingDesecration: boolean
 }
 
-/** 包内说明投影：调用方先验证定义，每个接受档位只归属于一个目标。 */
+/** 包内说明投影：调用方先验证定义，同一接受档位可关联多个独立目标。 */
 export function definitionTargetIdsForMods(
   definitions: CraftTargetDefinitions,
   modIds: readonly string[],
@@ -76,7 +73,7 @@ export function definitionTargetsSatisfied(advice: CraftDefinitionAdvice): boole
   )
 }
 
-/** 新入口先完整验证定义；旧引擎仅提供候选与说明，不承担目标身份判断。 */
+/** 新入口先完整验证定义；共用引擎直接消费独立条件和匹配，实际候选仍遵守制作规则。 */
 export function analyzeTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
@@ -87,17 +84,17 @@ export function analyzeTargetDefinitions(
   const checked = validateTargetDefinitions(catalog, state, definitions)
   if (!checked.ok) return checked
   const config = checked.value
-  const legacy = projectTargetDefinitions(config)
-  const analyzed = analyzeCraftTargets(
+  const analyzed = analyzeCraftTargetContext(
     catalog,
     state,
-    legacy.targetModIds,
-    legacy.targetValues,
-    legacy.targetAlternatives,
+    config.targets.map((target) => target.targetId),
+    config.values,
+    [],
     omen,
     implicitValues,
-    legacy.targetFracturedModId,
-    legacy.minimumTargetCount,
+    config.fracturedTargetId,
+    config.minimumTargetCount,
+    config,
   )
   if (!analyzed.ok) return analyzed
   const progress = evaluateTargetDefinitions(catalog, state, config)
@@ -115,7 +112,19 @@ export function analyzeTargetDefinitions(
     const { lostTargetIds: affectedModIds, rerolledTargetIds: rerolledModIds, ...rest } = step
     steps.push({
       ...rest,
-      targetIds: definitionTargetIdsForMods(config, step.targetModIds),
+      targetIds: config.targets
+        .filter((target) => {
+          if (progress.matches.some((match) => match.targetId === target.targetId)) return false
+          const accepted = [
+            target.modId,
+            ...(config.alternatives.find((entry) => entry.targetId === target.targetId)?.modIds ??
+              []),
+          ]
+          return [...accepted, ...definitionFluxSourceModIds(catalog, state, accepted)].some((id) =>
+            step.targetModIds.includes(id),
+          )
+        })
+        .map((target) => target.targetId),
       lostTargetIds: targetDefinitionChanges(catalog, state, prepared.value.state, config)
         .lostTargetIds,
       affectedModIds,
@@ -132,7 +141,7 @@ export function analyzeTargetDefinitions(
     value: {
       ...analyzed.value,
       targets: analyzed.value.targets.map((target, index) => {
-        // 旧引擎保留已验证主目标顺序；身份只取自完整定义。
+        // 共用引擎保留已验证主目标顺序；身份只取自完整定义。
         const definition = config.targets[index] as CraftTargetDefinitions['targets'][number]
         const match = progress.matches.find((entry) => entry.targetId === definition.targetId)
         const { matchedAffixId: _, ...rest } = target

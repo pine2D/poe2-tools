@@ -37,6 +37,7 @@ import { corruptionStateError } from './corruptionEnchantments'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
+import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { jewelEffectModKind } from './jewelEffectRules'
 import { craftAffixLimit, isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
@@ -416,11 +417,19 @@ export function createCraftState(
 
   const catalystError = catalystStateError(catalog, input)
   if (catalystError) return failure(catalystError)
+  const flux = input.nextAffixId === undefined ? null : fluxEligibleModIds(catalog, base)
+  const fluxMember = (mod: CatalogMod) => flux?.ordinary.has(mod.id) || flux?.desecrated.has(mod.id)
   const accepted: CatalogMod[] = []
   let prefixes = input.pendingDesecration?.kind === 'prefix' ? 1 : 0
   let suffixes = input.pendingDesecration?.kind === 'suffix' ? 1 : 0
   for (const { affix, mod } of resolved) {
-    if (accepted.some((existing) => craftModsConflict(existing, mod)))
+    if (
+      accepted.some(
+        (existing) =>
+          craftModsConflict(existing, mod) &&
+          !(existing.group === mod.group && fluxMember(existing) && fluxMember(mod)),
+      )
+    )
       return failure(
         accepted.some((existing) => existing.group === mod.group)
           ? `词缀组 ${mod.group} 重复。`
@@ -433,7 +442,9 @@ export function createCraftState(
         : (affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) ||
           (affix.crafted === true &&
             (isEssenceMappedMod(catalog, base, mod.id) || isAlloyMappedMod(catalog, base, mod.id)))
-    if (!validSource) return failure(`词缀 ${affix.modId} 对该基底无效。`)
+    const convertedSource =
+      affix.crafted !== true && (affix.desecrated ? flux?.desecrated : flux?.ordinary)?.has(mod.id)
+    if (!validSource && !convertedSource) return failure(`词缀 ${affix.modId} 对该基底无效。`)
     accepted.push(mod)
     if (mod.kind === 'prefix') prefixes += 1
     else suffixes += 1

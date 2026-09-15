@@ -24,6 +24,8 @@ import {
   prepareCraftOperation,
   removableCraftAffixes,
 } from './rehearsal'
+import { nativeTargetRollOperations } from './targetDefinitionRolls'
+import type { CraftTargetDefinitions } from './targetDefinitions'
 import { targetRollsPreservingValues } from './targetRolls'
 import type { CraftTargetValues } from './targets'
 
@@ -427,6 +429,8 @@ export function* jointEffectDivineOperations(
   implicitValues: readonly CraftImplicitTargetValues[],
   allowPartial: boolean,
   requiredIds: readonly string[],
+  definitions?: CraftTargetDefinitions,
+  consume: () => boolean = () => true,
 ): Generator<CraftOperation> {
   if (!values.length && !implicitValues.length) return
   const effectIndex = state.affixes.findIndex(
@@ -463,6 +467,7 @@ export function* jointEffectDivineOperations(
   for (let value = range.min; value <= range.max; value += range.step) {
     const effectGoal = values.find((entry) => entry.modId === effect.id)
     if (
+      !definitions &&
       effectGoal?.bounds.some(
         (bound) => !matchesTargetInterval({ min: value, max: value }, bound),
       ) &&
@@ -476,6 +481,17 @@ export function* jointEffectDivineOperations(
       affixes: state.affixes.map((affix, index) =>
         index === effectIndex ? { ...affix, lines: rendered.value } : affix,
       ),
+    }
+    if (definitions) {
+      for (const operation of nativeTargetRollOperations(
+        catalog,
+        future,
+        definitions,
+        { kind: 'divine', implicitValues, fixed: { affixIndex: effectIndex, values: [value] } },
+        consume,
+      ))
+        if ('currency' in operation) yield operation
+      continue
     }
     const rolls: NonNullable<CraftOperation['rolls']> = [
       {

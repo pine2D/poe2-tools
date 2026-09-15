@@ -1,4 +1,5 @@
 import { usesJewelCapacity } from './affixCapacity'
+import { isIdentifiedCraftState } from './affixIdentity'
 import { usesSovereignResistance } from './alloyEffects'
 import { alloyProjectUsage } from './alloyProjectUsage'
 import { alloyCatalogSignature as readAlloyCatalogSignature } from './alloys'
@@ -16,6 +17,7 @@ import { isCatalystQuality } from './catalystQuality'
 import { isVaalCraftOperation } from './corruptionRules'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
+import { equivalentProjectJSON } from './craftProjectJSON'
 import { applyCraftStep, type CraftStep, isAlloyCraftOperation } from './craftSteps'
 import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
@@ -26,6 +28,8 @@ import {
   essenceSourceHash as readEssenceSourceHash,
 } from './essences'
 import { type ItemDictionary, inspectItem } from './export'
+import { isFluxCraftOperation } from './fluxCraft'
+import { fluxEligibleModIds } from './fluxes'
 import { isFractureCraftOperation } from './fracture'
 import { validateCraftFractureTarget } from './fractureTargets'
 import {
@@ -57,7 +61,7 @@ import {
   type CraftState,
   createCraftState,
 } from './rehearsal'
-import { importCraftState } from './rehearsalImport'
+import { importCraftState, importIdentifiedCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
 import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
@@ -142,10 +146,11 @@ function readRulesVersion(value: unknown): number | null {
   return String(version) === match[1] && version >= 2 && version <= 72 ? version : null
 }
 
-function readState(value: unknown): CraftState | null {
+function readState(value: unknown, native = false): CraftState | null {
   if (
     !record(value) ||
     !exactKeys(value, [
+      ...(native ? ['nextAffixId'] : []),
       'baseId',
       'itemLevel',
       'rarity',
@@ -222,7 +227,14 @@ function readState(value: unknown): CraftState | null {
   for (const affix of value.affixes) {
     if (
       !record(affix) ||
-      !exactKeys(affix, ['modId', 'lines', 'crafted', 'desecrated', 'fractured']) ||
+      !exactKeys(affix, [
+        'modId',
+        'lines',
+        'crafted',
+        'desecrated',
+        'fractured',
+        ...(native ? ['affixId'] : []),
+      ]) ||
       (Object.hasOwn(affix, 'crafted') && affix.crafted !== true) ||
       (Object.hasOwn(affix, 'desecrated') && affix.desecrated !== true) ||
       (Object.hasOwn(affix, 'fractured') && affix.fractured !== true) ||
@@ -232,6 +244,7 @@ function readState(value: unknown): CraftState | null {
     )
       return null
     affixes.push({
+      ...(native ? { affixId: affix.affixId as string } : {}),
       modId: affix.modId,
       lines: [...affix.lines],
       ...(affix.crafted === true ? { crafted: true } : {}),
@@ -243,6 +256,7 @@ function readState(value: unknown): CraftState | null {
     ...(isPendingDesecration(value.pendingDesecration)
       ? { pendingDesecration: clonePendingDesecration(value.pendingDesecration) }
       : {}),
+    ...(native ? { nextAffixId: value.nextAffixId as number } : {}),
     baseId: value.baseId,
     itemLevel: value.itemLevel,
     rarity: value.rarity as CraftState['rarity'],
@@ -379,6 +393,41 @@ function readOperation(value: unknown): CraftStep | null {
   }
 }
 
+/** v75 操作要求每个选择和数值条目保留身份；结构投影只复用旧语法，执行始终用原操作。 */
+function readNativeOperation(input: unknown): CraftStep | null {
+  if (!record(input)) return null
+  if (input.kind === 'flux') return isFluxCraftOperation(input) ? input : null
+  const projection = structuredClone(input)
+  if (Object.hasOwn(projection, 'removeModId')) {
+    if (!nonempty(projection.removeAffixId)) return null
+    delete projection.removeAffixId
+  }
+  if (projection.kind === 'fracture') {
+    if (!nonempty(projection.affixId)) return null
+    delete projection.affixId
+  }
+  if (typeof projection.currency === 'string' && Array.isArray(projection.rolls)) {
+    for (const roll of projection.rolls) {
+      if (!record(roll) || !nonempty(roll.affixId)) return null
+      delete roll.affixId
+    }
+  }
+  if (
+    projection.kind === 'vaal' &&
+    projection.outcome === 'reroll' &&
+    Array.isArray(projection.replacements)
+  ) {
+    for (const replacement of projection.replacements) {
+      if (!record(replacement) || !nonempty(replacement.removeAffixId)) return null
+      delete replacement.removeAffixId
+    }
+  }
+  const checked = readOperation(projection)
+  return checked && equivalentProjectJSON(projection, checked)
+    ? (input as unknown as CraftStep)
+    : null
+}
+
 function validateInitial(
   state: CraftState,
   catalog: CraftCatalog,
@@ -386,9 +435,17 @@ function validateInitial(
   importedSockets?: readonly (string | null)[],
   importedQuality?: number,
   legacy = false,
+  native = false,
 ): CraftResult<CraftState> {
   if (Object.hasOwn(state, 'pendingDesecration'))
     return { ok: false, error: '项目起点不能预装待揭示亵渎；必须从已支持的起点回放骨骼操作。' }
+  if (
+    native &&
+    (!isIdentifiedCraftState(state) ||
+      state.nextAffixId !== state.affixes.length + 1 ||
+      state.affixes.some((a, i) => a.affixId !== `a${i + 1}`))
+  )
+    return { ok: false, error: '项目初始词缀身份必须按原文顺序从 a1 连续分配。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (state.sourceText === null) {
@@ -479,7 +536,7 @@ function validateInitial(
     )
     if (candidate) selections[skill.source.line] = candidate.id
   }
-  const restored = importCraftState(
+  const restored = (native ? importIdentifiedCraftState : importCraftState)(
     catalog,
     state.baseId,
     parsed.item,
@@ -497,7 +554,7 @@ function validateInitial(
     restored.value.twiceCorrupted !== state.twiceCorrupted ||
     restored.value.rarity !== state.rarity ||
     restored.value.itemLevel !== state.itemLevel ||
-    JSON.stringify(restored.value.affixes) !== JSON.stringify(state.affixes)
+    !equivalentProjectJSON(restored.value.affixes, state.affixes)
   )
     return { ok: false, error: '项目初始状态与来源装备不一致。' }
   if (
@@ -554,12 +611,27 @@ export function readStoredTargetProjectProjection(
   return readCraftProject(text, catalog, dictionary, true)
 }
 
+/** 包内 v75 来源投影入口：目标已按原生上下文校验；直接回放完整实例，绝不降级重建身份。 */
+export function readNativeTargetProjectProjection(
+  text: string,
+  catalog: CraftCatalog,
+  dictionary: ItemDictionary,
+): CraftResult<RestoredCraftProject> {
+  return readCraftProject(text, catalog, dictionary, true, true)
+}
+
 function readCraftProject(
   text: string,
   catalog: CraftCatalog,
   dictionary: ItemDictionary,
   storedTargets: boolean,
+  native = false,
 ): CraftResult<RestoredCraftProject> {
+  // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
+  if (!native && catalog.fluxes) {
+    const { fluxes: _fluxes, ...legacyCatalog } = catalog
+    catalog = legacyCatalog
+  }
   const fail = (error: string): CraftResult<RestoredCraftProject> => ({ ok: false, error })
   if (
     text.length > MAX_CRAFT_PROJECT_BYTES ||
@@ -572,7 +644,7 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
-  if (hasAffixIdentityFields(value))
+  if (!native && hasAffixIdentityFields(value))
     return fail('v2–v72 项目尚不支持词缀实例字段，不能恢复此状态或历史。')
   if (
     !record(value) ||
@@ -612,6 +684,15 @@ function readCraftProject(
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
   if (rulesVersion === null) return fail('项目与当前通货规则版本不同，暂不能恢复。')
+  if (!native && JSON.stringify(value).includes('"kind":"flux"'))
+    return fail('v2–v74 项目不能包含溶剂步骤或指引，包括撤销位置之后的步骤。 ')
+  if (
+    !native &&
+    record(value.pricing) &&
+    record(value.pricing.prices) &&
+    Object.keys(value.pricing.prices).some((key) => key.startsWith('flux:'))
+  )
+    return fail('v2–v74 项目不能包含溶剂报价。 ')
   const alloyUsage = alloyProjectUsage(value)
   const needsAlloyCatalog = alloyUsage.used || Object.hasOwn(value, 'alloyCatalogSignature')
   const alloyCatalogSignature = readAlloyCatalogSignature(catalog)
@@ -977,8 +1058,12 @@ function readCraftProject(
     (Array.isArray(value.operations) && value.operations.some(effectAction))
   if (rulesVersion < 53 && usesJewelEffects)
     return fail('v2–v52 旧版项目不能包含珠宝增效目标、指引或步骤，包括撤销位置之后的步骤。')
+  const fluxBase = native ? catalog.bases.find((base) => base.id === initialBaseId) : undefined
+  const fluxTargets = fluxBase ? fluxEligibleModIds(catalog, fluxBase).ordinary : null
   const craftedJewelIds = new Set(
-    catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly).map((mod) => mod.id),
+    catalog.modifiers
+      .filter((mod) => mod.jewelOnly && mod.craftedOnly && !fluxTargets?.has(mod.id))
+      .map((mod) => mod.id),
   )
   const storedTargetSources = storedTargets
     ? targetProjectSourceUsage(catalog, initialBaseId, targetIds)
@@ -1282,7 +1367,7 @@ function readCraftProject(
     value.cursor > value.operations.length
   )
     return fail('演练历史游标无效。')
-  const initialInput = readState(value.initialState)
+  const initialInput = readState(value.initialState, native)
   if (!initialInput) return fail('演练起点结构无效。')
   const initialEffectError = validateEffectState(initialInput)
   if (initialEffectError) return fail(initialEffectError)
@@ -1527,6 +1612,7 @@ function readCraftProject(
     importedSockets,
     importedQuality,
     rulesVersion < 9,
+    native,
   )
   if (!initial.ok) return initial
   const restoredEffectError = validateEffectState(initial.value)
@@ -1583,24 +1669,28 @@ function readCraftProject(
   if (Object.hasOwn(value, 'targetModIds')) {
     if (!Array.isArray(value.targetModIds) || !value.targetModIds.every(nonempty))
       return fail('制作目标列表无效。')
-    const targets = validateCraftTargets(
-      targetCatalog,
-      initial.value.baseId,
-      value.targetModIds,
-      minimumTargetCount,
-    )
+    const targets = native
+      ? { ok: true as const, value: value.targetModIds as string[] }
+      : validateCraftTargets(
+          targetCatalog,
+          initial.value.baseId,
+          value.targetModIds,
+          minimumTargetCount,
+        )
     if (!targets.ok) return fail(`制作目标无效：${targets.error}`)
     targetModIds = targets.value
   }
   let targetAlternatives: CraftTargetAlternative[] | undefined
   if (Object.hasOwn(value, 'targetAlternatives')) {
-    const accepted = validateCraftTargetAlternatives(
-      targetCatalog,
-      initial.value.baseId,
-      targetModIds ?? [],
-      value.targetAlternatives,
-      minimumTargetCount,
-    )
+    const accepted = native
+      ? { ok: true as const, value: value.targetAlternatives as CraftTargetAlternative[] }
+      : validateCraftTargetAlternatives(
+          targetCatalog,
+          initial.value.baseId,
+          targetModIds ?? [],
+          value.targetAlternatives,
+          minimumTargetCount,
+        )
     if (!accepted.ok) return fail(`替代档位无效：${accepted.error}`)
     targetAlternatives = accepted.value
   }
@@ -1613,47 +1703,53 @@ function readCraftProject(
     return fail('旧规则项目不能包含亵渎专属目标或替代档位。')
   let targetFracturedModId: string | undefined
   if (Object.hasOwn(value, 'targetFracturedModId')) {
-    const fracture = validateCraftFractureTarget(
-      catalog,
-      targetModIds ?? [],
-      targetAlternatives ?? [],
-      value.targetFracturedModId,
-    )
+    const fracture = native
+      ? { ok: true as const, value: value.targetFracturedModId as string }
+      : validateCraftFractureTarget(
+          catalog,
+          targetModIds ?? [],
+          targetAlternatives ?? [],
+          value.targetFracturedModId,
+        )
     if (!fracture.ok) return fail(fracture.error)
     targetFracturedModId = fracture.value
-    const combined = validateCraftTargets(
-      targetCatalog,
-      initial.value.baseId,
-      targetModIds ?? [],
-      minimumTargetCount,
-      targetFracturedModId,
-    )
+    const combined = native
+      ? { ok: true as const }
+      : validateCraftTargets(
+          targetCatalog,
+          initial.value.baseId,
+          targetModIds ?? [],
+          minimumTargetCount,
+          targetFracturedModId,
+        )
     if (!combined.ok) return fail(combined.error)
   }
   let targetValues: CraftTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetValues')) {
-    const checkedValues = storedTargets
-      ? validateStoredCraftTargetValues(
-          targetCatalog,
-          initial.value.baseId,
-          targetModIds ?? [],
-          value.targetValues,
-          targetAlternatives,
-          minimumTargetCount,
-        )
-      : validateCraftTargetValues(
-          targetCatalog,
-          initial.value.baseId,
-          targetModIds ?? [],
-          value.targetValues,
-          targetAlternatives,
-          initial.value,
-          minimumTargetCount,
-        )
+    const checkedValues = native
+      ? { ok: true as const, value: value.targetValues as CraftTargetValues[] }
+      : storedTargets
+        ? validateStoredCraftTargetValues(
+            targetCatalog,
+            initial.value.baseId,
+            targetModIds ?? [],
+            value.targetValues,
+            targetAlternatives,
+            minimumTargetCount,
+          )
+        : validateCraftTargetValues(
+            targetCatalog,
+            initial.value.baseId,
+            targetModIds ?? [],
+            value.targetValues,
+            targetAlternatives,
+            initial.value,
+            minimumTargetCount,
+          )
     if (!checkedValues.ok) return fail(`数值目标无效：${checkedValues.error}`)
     targetValues = checkedValues.value
   }
-  if (usesJewel && (targetModIds?.length ?? 0) > 0) {
+  if (!native && usesJewel && (targetModIds?.length ?? 0) > 0) {
     const ids = targetModIds ?? []
     const required = minimumTargetCount ?? ids.length
     // 替代档位与主组同侧同冲突组，只枚举主组，不能把多个备选误算成已有属性。
@@ -1735,7 +1831,8 @@ function readCraftProject(
         Object.hasOwn(input, 'implicitValues'))
     )
       return fail('旧版项目不能包含新数值操作。')
-    const operation = readOperation(input)
+    // applyCraftStep 自身严格检查每种操作的字段及实例断言；旧入口仍只接受旧结构。
+    const operation = native ? readNativeOperation(input) : readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     if (
       rulesVersion < 72 &&

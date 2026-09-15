@@ -7,8 +7,10 @@ import {
   type CraftState,
   catalystQualityLimit,
   createCraftState,
+  fluxCatalogSignature,
   type ItemDictionary,
   importCraftState,
+  importIdentifiedCraftState,
   type RestoredTargetCraftProject,
   readBaseGrantedSkills,
   readCatalystQuality,
@@ -95,7 +97,7 @@ export function CraftEntry({
       : undefined
   const fromImport =
     matchingImport && imported.item
-      ? importCraftState(
+      ? (fluxCatalogSignature(catalog) ? importIdentifiedCraftState : importCraftState)(
           catalog,
           base.id,
           imported.item,

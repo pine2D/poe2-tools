@@ -1,15 +1,16 @@
-import { type AlloyAdviceStep, analyzeAlloyTargets } from './alloyAdvice'
-import { analyzeBoneTargets, type CraftBoneAdviceStep } from './boneAdvice'
+import { type AlloyAdviceStep, analyzeAlloyTargetContext } from './alloyAdvice'
+import { analyzeBoneTargetContext, type CraftBoneAdviceStep } from './boneAdvice'
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep, type CraftStep } from './craftSteps'
-import { analyzeEssenceTargets, type EssenceAdviceStep } from './essenceAdvice'
+import { analyzeEssenceTargetContext, type EssenceAdviceStep } from './essenceAdvice'
 import {
-  analyzeEssencePreparation,
+  analyzeEssencePreparationContext,
   type EssencePreparationAdvice,
   type EssencePreparationRoute,
 } from './essencePreparation'
 import type { CraftResult, CraftState } from './rehearsal'
 import { definitionTargetIdsForMods, targetDefinitionChanges } from './targetDefinitionAdvice'
+import { specialTargetContext } from './targetDefinitionSpecialContext'
 import {
   type CraftTargetDefinitions,
   projectTargetDefinitions,
@@ -68,7 +69,7 @@ type SpecialStep = {
   atRiskTargetIds: string[]
 }
 
-/** 只对旧引擎已产生的操作回放，不生成或重新搜索候选。 */
+/** 只对共用引擎已产生的操作回放，不生成或重新搜索候选。 */
 function describeStep<T extends SpecialStep>(
   catalog: CraftCatalog,
   before: CraftState,
@@ -82,7 +83,7 @@ function describeStep<T extends SpecialStep>(
     ok: true,
     value: {
       ...step,
-      targetIds: definitionTargetIdsForMods(definitions, modIds),
+      targetIds: specialTargetContext(catalog, before, definitions).targetIdsForMods(modIds),
       ...targetDefinitionChanges(catalog, before, after.value, definitions),
       affectedModIds: [...step.lostTargetIds],
       atRiskModIds: [...step.atRiskTargetIds],
@@ -121,13 +122,14 @@ export function analyzeBoneTargetDefinitions(
     state,
     definitions,
     (legacy) =>
-      analyzeBoneTargets(
+      analyzeBoneTargetContext(
         catalog,
         state,
         legacy.targetModIds,
         legacy.targetValues,
         legacy.targetAlternatives,
         legacyAdviceOptions(legacy),
+        definitions,
       ),
     (step) => step.targetModIds,
   )
@@ -143,13 +145,14 @@ export function analyzeEssenceTargetDefinitions(
     state,
     definitions,
     (legacy) =>
-      analyzeEssenceTargets(
+      analyzeEssenceTargetContext(
         catalog,
         state,
         legacy.targetModIds,
         legacy.targetValues,
         legacy.targetAlternatives,
         legacyAdviceOptions(legacy),
+        definitions,
       ),
     (step) => [step.targetModId],
   )
@@ -165,13 +168,14 @@ export function analyzeAlloyTargetDefinitions(
     state,
     definitions,
     (legacy) =>
-      analyzeAlloyTargets(
+      analyzeAlloyTargetContext(
         catalog,
         state,
         legacy.targetModIds,
         legacy.targetValues,
         legacy.targetAlternatives,
         legacyAdviceOptions(legacy),
+        definitions,
       ),
     (step) => [step.targetModId],
   )
@@ -186,13 +190,14 @@ export function analyzeEssencePreparationDefinitions(
   if (!checked.ok) return checked
   const config = checked.value
   const legacy = projectTargetDefinitions(config)
-  const result = analyzeEssencePreparation(
+  const result = analyzeEssencePreparationContext(
     catalog,
     state,
     legacy.targetModIds,
     legacy.targetValues,
     legacy.targetAlternatives,
     legacyAdviceOptions(legacy),
+    config,
   )
   if (!result.ok) return result
   const initial = evaluateTargetDefinitions(catalog, state, config).matches.map(

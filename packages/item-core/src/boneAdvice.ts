@@ -11,9 +11,11 @@ import { BONE_RULES, type BoneCraftOperation, boneBaseError, type CraftBone } fr
 import type { CraftCatalog } from './catalog'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
+import { specialTargetContext } from './targetDefinitionSpecialContext'
+import type { CraftTargetDefinitions } from './targetDefinitions'
 import { lostCraftTargetIds } from './targetProgress'
 import {
-  analyzeCraftTargets,
+  analyzeCraftTargetContext,
   type CraftTargetAlternative,
   type CraftTargetValues,
   craftTargetsSatisfied,
@@ -32,14 +34,16 @@ export interface CraftBoneAdviceOptions {
   consumeCandidate?: () => boolean
 }
 /** 每项是独立的真实原子操作；内部证明也消费调用方共享预算。 */
-export function analyzeBoneTargets(
+export function analyzeBoneTargetContext(
   catalog: CraftCatalog,
   state: CraftState,
   ids: readonly string[],
   values: readonly CraftTargetValues[] = [],
   alternatives: readonly CraftTargetAlternative[] = [],
   options: CraftBoneAdviceOptions = {},
+  definitions?: CraftTargetDefinitions,
 ): CraftResult<CraftBoneAdviceStep[]> {
+  const native = definitions ? specialTargetContext(catalog, state, definitions) : undefined
   if (
     !options ||
     typeof options !== 'object' ||
@@ -50,7 +54,7 @@ export function analyzeBoneTargets(
     (options.consumeCandidate !== undefined && typeof options.consumeCandidate !== 'function')
   )
     return { ok: false, error: '骨骼建议配置无效。' }
-  const analysis = analyzeCraftTargets(
+  const analysis = analyzeCraftTargetContext(
     catalog,
     state,
     ids,
@@ -60,23 +64,35 @@ export function analyzeBoneTargets(
     [],
     options.fracturedTargetId,
     options.minimumTargetCount,
+    definitions,
   )
   if (!analysis.ok) return analysis
   if (
     !state.pendingDesecration &&
-    craftTargetsSatisfied(analysis.value, options.minimumTargetCount, options.fracturedTargetId)
+    (native
+      ? native.progress.satisfied
+      : craftTargetsSatisfied(
+          analysis.value,
+          options.minimumTargetCount,
+          options.fracturedTargetId,
+        ))
   )
     return { ok: true, value: [] }
-  const accepted = new Set([...ids, ...alternatives.flatMap((entry) => entry.modIds)])
-  const missing = new Set(
-    analysis.value.targets
-      .filter((target) => !target.matched)
-      .flatMap((target) => (target.alternatives ?? [target]).map((member) => member.modId)),
+  const accepted = new Set(
+    native
+      ? native.groups.flatMap((group) => group.modIds)
+      : [...ids, ...alternatives.flatMap((entry) => entry.modIds)],
   )
-  const groups = ids.map((id) => [
-    id,
-    ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? []),
-  ])
+  const missing =
+    native?.missing ??
+    new Set(
+      analysis.value.targets
+        .filter((target) => !target.matched)
+        .flatMap((target) => (target.alternatives ?? [target]).map((member) => member.modId)),
+    )
+  const groups =
+    native?.groups.map((group) => group.modIds) ??
+    ids.map((id) => [id, ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? [])])
   const goal = (id: string) => values.find((value) => value.modId === id)
   let exhausted = false
   const apply = (current: CraftState, operation: BoneCraftOperation): CraftState | null => {
@@ -98,26 +114,40 @@ export function analyzeBoneTargets(
       operation,
       targetModIds: targets,
       atRiskTargetIds: risk,
-      lostTargetIds: lostCraftTargetIds(
-        catalog,
-        state,
-        next,
-        ids,
-        groups,
-        values,
-        options.fracturedTargetId,
-      ),
+      lostTargetIds: native
+        ? native.affected(next)
+        : lostCraftTargetIds(catalog, state, next, ids, groups, values, options.fracturedTargetId),
       randomRemovalRisk: operation.kind === 'desecrate' && operation.removeModId !== undefined,
     })
+  const rollOptions = (
+    current: CraftState,
+    mod: NonNullable<ReturnType<typeof catalog.modifiers.find>>,
+    useTarget = true,
+  ) => {
+    if (native && useTarget) return native.rolls(current, mod)
+    const numbers = minimumCraftTargetRolls(
+      catalog,
+      current,
+      mod,
+      useTarget ? goal(mod.id) : undefined,
+    )
+    return numbers === null ? [] : [numbers]
+  }
   const reveal = (current: CraftState, id: string, useTarget: boolean) => {
     const mod = catalog.modifiers.find((mod) => mod.id === id)
-    const numbers = mod
-      ? minimumCraftTargetRolls(catalog, current, mod, useTarget ? goal(id) : undefined)
-      : null
-    if (numbers === null) return null
-    const operation: BoneCraftOperation = { kind: 'desecration-reveal', modId: id, values: numbers }
-    const next = apply(current, operation)
-    return next ? { operation, next } : null
+    if (!mod) return []
+    const result: { operation: BoneCraftOperation; next: CraftState }[] = []
+    for (const numbers of rollOptions(current, mod, useTarget)) {
+      const operation: BoneCraftOperation = {
+        kind: 'desecration-reveal',
+        modId: id,
+        values: numbers,
+      }
+      const next = apply(current, operation)
+      if (next) result.push({ operation, next })
+      if (exhausted) break
+    }
+    return result
   }
   const pending = state.pendingDesecration
   const offers = (
@@ -129,9 +159,7 @@ export function analyzeBoneTargets(
     const candidates = desecrationCandidates(catalog, current)
     if (candidates.length < 3) return []
     const targets = candidates.filter(
-      (mod) =>
-        eligible.has(mod.id) &&
-        minimumCraftTargetRolls(catalog, current, mod, goal(mod.id)) !== null,
+      (mod) => eligible.has(mod.id) && rollOptions(current, mod).length > 0,
     )
     if (requireTarget && !targets.length) return []
     const seeds = targets.length ? targets : candidates.slice(0, 1)
@@ -158,19 +186,32 @@ export function analyzeBoneTargets(
   if (pending?.options) {
     if (pending.revealOmen && !pending.rerollOptions) {
       const needsReroll = new Set(
-        analysis.value.targets
-          .filter((target) => {
-            if (target.matched) return false
-            return !(target.alternatives ?? [target]).some((member) => {
-              const mod = catalog.modifiers.find((mod) => mod.id === member.modId)
-              return (
-                pending.options?.includes(member.modId) &&
-                mod &&
-                minimumCraftTargetRolls(catalog, state, mod, goal(member.modId)) !== null
+        native
+          ? native.groups
+              .filter(
+                (group) =>
+                  native.progress.unmatchedTargetIds.includes(group.targetId) &&
+                  !native.candidateModIds(group.modIds).some((id) => {
+                    const mod = catalog.modifiers.find((mod) => mod.id === id)
+                    return (
+                      pending.options?.includes(id) && mod && rollOptions(state, mod).length > 0
+                    )
+                  }),
               )
-            })
-          })
-          .flatMap((target) => (target.alternatives ?? [target]).map((member) => member.modId)),
+              .flatMap((group) => native.candidateModIds(group.modIds))
+          : analysis.value.targets
+              .filter((target) => {
+                if (target.matched) return false
+                return !(target.alternatives ?? [target]).some((member) => {
+                  const mod = catalog.modifiers.find((mod) => mod.id === member.modId)
+                  return (
+                    pending.options?.includes(member.modId) &&
+                    mod &&
+                    rollOptions(state, mod).length > 0
+                  )
+                })
+              })
+              .flatMap((target) => (target.alternatives ?? [target]).map((member) => member.modId)),
       )
       for (const proposal of offers(state, true, needsReroll, 'desecration-reroll')) {
         const next = apply(state, proposal.operation)
@@ -182,9 +223,9 @@ export function analyzeBoneTargets(
       (a, b) => Number(missing.has(b)) - Number(missing.has(a)),
     )) {
       const targeted = reveal(state, id, true)
-      const completed = targeted ?? (!exhausted ? reveal(state, id, false) : null)
-      if (completed)
-        push(completed.operation, completed.next, missing.has(id) && targeted ? [id] : [])
+      const completed = targeted.length ? targeted : !exhausted ? reveal(state, id, false) : []
+      for (const entry of completed)
+        push(entry.operation, entry.next, missing.has(id) && targeted.length ? [id] : [])
       if (exhausted) break
     }
     return { ok: true, value: result }
@@ -248,9 +289,11 @@ export function analyzeBoneTargets(
       const removals = prepared.value.requiresRemoval
         ? prepared.value.removableAffixes
         : [undefined]
-      const risk = prepared.value.removableAffixes
-        .filter((affix) => accepted.has(affix.modId))
-        .map((affix) => affix.modId)
+      const risk =
+        native?.risk(prepared.value.removableAffixes) ??
+        prepared.value.removableAffixes
+          .filter((affix) => accepted.has(affix.modId))
+          .map((affix) => affix.modId)
       for (const removed of removals) {
         for (const affixKind of prepared.value.kinds) {
           const operation: BoneCraftOperation = {
@@ -266,8 +309,8 @@ export function analyzeBoneTargets(
           for (const proposal of offers(next, true)) {
             if (!proposal.target) continue
             const offered = apply(next, proposal.operation)
-            const completed = offered ? reveal(offered, proposal.target, true) : null
-            if (completed) {
+            const completed = offered ? reveal(offered, proposal.target, true) : []
+            if (completed.length) {
               push(operation, next, [proposal.target], risk)
               break
             }
@@ -281,4 +324,16 @@ export function analyzeBoneTargets(
     if (exhausted) break
   }
   return { ok: true, value: result }
+}
+
+/** 旧入口不接受独立定义，保留原资格与输出合同。 */
+export function analyzeBoneTargets(
+  catalog: CraftCatalog,
+  state: CraftState,
+  ids: readonly string[],
+  values: readonly CraftTargetValues[] = [],
+  alternatives: readonly CraftTargetAlternative[] = [],
+  options: NonNullable<Parameters<typeof analyzeBoneTargetContext>[5]> = {},
+) {
+  return analyzeBoneTargetContext(catalog, state, ids, values, alternatives, options)
 }

@@ -11,7 +11,6 @@ import {
   serializeCraftProject,
   serializeIdentityCraftProject,
   serializeTargetCraftProject,
-  TARGET_CRAFT_RULES_VERSION,
   type TargetCraftProject,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
@@ -56,7 +55,7 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
   const validatedText = () => {
     if (!project) return { ok: false as const, error: '当前没有可保存的演练项目。' }
     try {
-      if (project.rulesVersion === TARGET_CRAFT_RULES_VERSION)
+      if ('targetDefinitions' in project)
         return serializeTargetCraftProject(project, catalog, dictionary)
       const saved =
         project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION

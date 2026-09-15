@@ -1,9 +1,11 @@
 import {
   type CraftCatalog,
   type CraftState,
+  fluxCatalogSignature,
   type ItemDocument,
   type ItemInspection,
   importCraftState,
+  importIdentifiedCraftState,
   importSocketCount,
   type StatTemplate,
   socketCandidates,
@@ -49,7 +51,7 @@ export function ImportSocketSetup({
   const checked =
     sockets === undefined
       ? null
-      : importCraftState(
+      : (fluxCatalogSignature(catalog) ? importIdentifiedCraftState : importCraftState)(
           catalog,
           state.baseId,
           item,

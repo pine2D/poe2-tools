@@ -14,6 +14,8 @@ interface Props {
   locale?: 'zh-CN' | 'zh-TW'
   translateLine?: ((line: string) => string | null) | undefined
   fetchImpl?: typeof fetch
+  resource?: ReturnType<typeof useFluxCatalog>
+  onRequest?: () => void
 }
 
 const ELEMENTS = { fire: '火焰', cold: '冰霜', lightning: '闪电', chaos: '混沌' }
@@ -61,10 +63,13 @@ export function FluxCatalog({
   locale = 'zh-CN',
   translateLine,
   fetchImpl = fetch,
+  resource,
+  onRequest,
 }: Props) {
   const [requested, setRequested] = useState(false)
   const [query, setQuery] = useState('')
-  const current = useFluxCatalog(catalog, fetchImpl, requested)
+  const ownResource = useFluxCatalog(catalog, fetchImpl, !resource && requested)
+  const current = resource ?? ownResource
   const entries = useMemo(
     () =>
       current.table
@@ -100,12 +105,17 @@ export function FluxCatalog({
     <details
       className="essence-catalog"
       onToggle={(event) => {
-        if (event.currentTarget.open) setRequested(true)
+        if (event.currentTarget.open) {
+          if (resource) onRequest?.()
+          else setRequested(true)
+        }
       }}
     >
       <summary>溶剂与抗性转换</summary>
       <section aria-label="溶剂抗性转换目录">
-        <p className="essence-catalog-notice">当前仅支持转换关系查询，尚未接入制作演练。</p>
+        <p className="essence-catalog-notice">
+          转换关系用于查询；具体演练资格以当前装备的溶剂制作面板为准。
+        </p>
         <p>查看当前装备类别的抗性转换关系。已解析表示找到了对应属性，实际制作条件仍需核实。</p>
         {current.loading ? <p role="status">正在加载溶剂目录…</p> : null}
         {current.error ? (

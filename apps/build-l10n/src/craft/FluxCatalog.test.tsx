@@ -37,7 +37,9 @@ it('展开后才请求同源表，材料与属性可用中英文搜索，查询�
   open()
   await screen.findByLabelText('搜索溶剂与转换属性')
   expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual(['/craft-data/fluxes.json'])
-  expect(screen.getByText('当前仅支持转换关系查询，尚未接入制作演练。')).toBeDefined()
+  expect(
+    screen.getByText('转换关系用于查询；具体演练资格以当前装备的溶剂制作面板为准。'),
+  ).toBeDefined()
   expect(screen.queryAllByRole('button')).toHaveLength(0)
   const search = screen.getByLabelText('搜索溶剂与转换属性')
   fireEvent.change(search, { target: { value: '炽焰 冰霜抗性测试' } })

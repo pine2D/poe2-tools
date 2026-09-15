@@ -18,6 +18,7 @@ export type CraftTargetDefinitionEdit =
   | { kind: 'fractured'; targetId: string | null }
   | { kind: 'minimum'; count: number | null }
   | { kind: 'replace'; config: LegacyCraftTargetConfig }
+  | { kind: 'replace-definitions'; definitions: CraftTargetDefinitions }
 
 function fail(error: string): CraftResult<never> {
   return { ok: false, error }
@@ -100,7 +101,17 @@ export function editTargetDefinitions(
   if (!checked.ok) return checked
   const next = checked.value
   if (
-    !record(edit, ['kind', 'modId', 'targetId', 'targetIds', 'modIds', 'values', 'count', 'config'])
+    !record(edit, [
+      'kind',
+      'modId',
+      'targetId',
+      'targetIds',
+      'modIds',
+      'values',
+      'count',
+      'config',
+      'definitions',
+    ])
   )
     return fail('目标编辑字段无效，不能包含未知字段或显式缺省值。')
   switch (edit.kind) {
@@ -198,10 +209,17 @@ export function editTargetDefinitions(
       else next.minimumTargetCount = edit.count
       break
     }
-    case 'replace': {
-      if (!record(edit, ['kind', 'config']) || !legacyConfig(edit.config))
-        return fail('完整替换需要有效旧目标配置，不能包含身份字段或显式缺省值。')
-      const created = createStoredTargetDefinitions(catalog, state.baseId, edit.config)
+    case 'replace':
+    case 'replace-definitions': {
+      let created: CraftResult<CraftTargetDefinitions>
+      if (edit.kind === 'replace') {
+        if (!record(edit, ['kind', 'config']) || !legacyConfig(edit.config))
+          return fail('完整替换需要有效旧目标配置，不能包含身份字段或显式缺省值。')
+        created = createStoredTargetDefinitions(catalog, state.baseId, edit.config)
+      } else {
+        if (!record(edit, ['kind', 'definitions'])) return fail('完整替换需要有效独立目标定义。')
+        created = validateStoredTargetDefinitions(catalog, state.baseId, edit.definitions)
+      }
       if (!created.ok) return created
       const replacement = created.value
       const cursor = next.nextTargetId + replacement.targets.length

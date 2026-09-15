@@ -18,10 +18,9 @@ import {
   type CraftTargetDefinitionEdit,
   type CraftTargetDefinitions,
   craftOmenDescription,
-  craftTargetCandidates,
+  craftTargetDefinitionCandidates,
   type DefinitionEssenceAdviceStep,
   definitionTargetsSatisfied,
-  type ExtractedCraftTargets,
   editTargetDefinitions,
   hasCraftModEligibility,
   hasGenesisModEligibility,
@@ -41,7 +40,7 @@ import { TargetRoutesPanel } from './TargetRoutesPanel'
 import { TargetValueEditor } from './TargetValueEditor'
 
 interface CraftTargetsProps {
-  onExtract?: (targets: ExtractedCraftTargets) => void
+  onExtract?: (targets: CraftTargetDefinitions) => void
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
@@ -93,7 +92,10 @@ export function CraftTargets({
     () => new Map(catalog.modifiers.map((mod) => [mod.id, mod])),
     [catalog.modifiers],
   )
-  const pool = useMemo(() => craftTargetCandidates(catalog, state.baseId), [catalog, state.baseId])
+  const pool = useMemo(
+    () => craftTargetDefinitionCandidates(catalog, state.baseId),
+    [catalog, state.baseId],
+  )
   const genesisOnly = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)
     return new Set(
@@ -190,9 +192,14 @@ export function CraftTargets({
     )
   }
   const addTarget = (id: string) => {
+    const checked = editTargetDefinitions(catalog, state, definitions, { kind: 'add', modId: id })
     const mod = modById.get(id)
-    if (mod && targetModIds.some((targetId) => modById.get(targetId)?.group === mod.group)) {
-      setMessage('同组已有目标；请在已有目标中勾选可接受的同组档位。')
+    if (
+      !checked.ok &&
+      mod &&
+      targetModIds.some((targetId) => modById.get(targetId)?.group === mod.group)
+    ) {
+      setMessage(`${checked.error} 如需接受不同档位，请在已有目标中勾选可接受的同组档位。`)
       return
     }
     edit({ kind: 'add', modId: id })
@@ -345,19 +352,26 @@ export function CraftTargets({
             匹配 {results.length} 条，显示前 {Math.min(results.length, 30)} 条；可继续输入缩小范围。
           </p>
           <section className="target-search-results" aria-label="目标词缀搜索结果">
-            {results.slice(0, 30).map((mod) => (
-              <article key={mod.id}>
-                {properties(mod)}
-                <button
-                  type="button"
-                  aria-label={`加入目标 ${mod.id}`}
-                  disabled={targetModIds.includes(mod.id)}
-                  onClick={() => addTarget(mod.id)}
-                >
-                  {targetModIds.includes(mod.id) ? '已加入目标' : '加入目标'}
-                </button>
-              </article>
-            ))}
+            {results.slice(0, 30).map((mod) => {
+              const exists = targetModIds.includes(mod.id)
+              const canAdd =
+                !exists ||
+                editTargetDefinitions(catalog, state, definitions, { kind: 'add', modId: mod.id })
+                  .ok
+              return (
+                <article key={mod.id}>
+                  {properties(mod)}
+                  <button
+                    type="button"
+                    aria-label={`加入目标 ${mod.id}`}
+                    disabled={!canAdd}
+                    onClick={() => addTarget(mod.id)}
+                  >
+                    {exists ? (canAdd ? '再加入一项目标' : '已加入目标') : '加入目标'}
+                  </button>
+                </article>
+              )
+            })}
           </section>
         </>
       ) : (

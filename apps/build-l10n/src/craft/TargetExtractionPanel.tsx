@@ -1,8 +1,8 @@
 import {
   type CraftCatalog,
   type CraftState,
-  type ExtractedCraftTargets,
-  extractCraftTargets,
+  type CraftTargetDefinitions,
+  extractTargetDefinitions,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -18,7 +18,7 @@ export function TargetExtractionPanel({
   catalog: CraftCatalog
   state: CraftState
   busy: boolean
-  onApply: (targets: ExtractedCraftTargets) => void
+  onApply: (targets: CraftTargetDefinitions) => void
   translateLine?: (line: string) => string | null
 }) {
   const context = useMemo(
@@ -38,7 +38,7 @@ export function TargetExtractionPanel({
   const result = useMemo(
     () =>
       active
-        ? extractCraftTargets(
+        ? extractTargetDefinitions(
             catalog,
             state,
             active.ids.flatMap((id) =>
@@ -137,8 +137,8 @@ export function TargetExtractionPanel({
           </p>
           {result?.ok ? (
             <p>
-              已选 {result.value.targetModIds.length} 组，
-              {result.value.targetValues.reduce((count, entry) => count + entry.bounds.length, 0)}{' '}
+              已选 {result.value.targets.length} 组，
+              {result.value.values.reduce((count, entry) => count + entry.bounds.length, 0)}{' '}
               项精确数值条件。
             </p>
           ) : result ? (

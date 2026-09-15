@@ -230,3 +230,103 @@ export function inspectFluxes(
     )
   })
 }
+
+/** 关系签名绑定来源与精确成员，排列和审核日期不改变项目身份。 */
+export function fluxCatalogSignature(catalog: CraftCatalog): string | null {
+  if (!catalog.fluxes) return null
+  try {
+    const table = parseFluxCatalog(catalog.fluxes, catalog)
+    return JSON.stringify([
+      COMMIT,
+      MODIFIER_SOURCES.map((source) => [source.path, source.sha256]),
+      FLUXES.map((flux) => [flux.id, flux.name, flux.target]),
+      table.rows
+        .map((row) => [
+          row.id,
+          ELEMENTS.map((element) => {
+            const member = row.members[element]
+            return [element, member.modId, member.domain, member.source]
+          }),
+        ])
+        .sort((left, right) => String(left[0]).localeCompare(String(right[0]), 'en')),
+    ])
+  } catch {
+    return null
+  }
+}
+
+/** 一次构造供完整状态/目标组合共用；来源标记不被合并成普通生成资格。 */
+export function fluxEligibleModIds(
+  catalog: CraftCatalog,
+  base: CatalogBase,
+): {
+  ordinary: ReadonlySet<string>
+  desecrated: ReadonlySet<string>
+} {
+  const ordinary = new Set<string>(),
+    desecrated = new Set<string>()
+  if (
+    !catalog.fluxes ||
+    base.type === 'Charm' ||
+    (base.type === 'Jewel' && !isBasicJewel(base) && !isRadiusJewel(base))
+  )
+    return { ordinary, desecrated }
+  let table: FluxCatalog
+  try {
+    table = parseFluxCatalog(catalog.fluxes, catalog)
+  } catch {
+    return { ordinary, desecrated }
+  }
+  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
+  for (const row of table.rows) {
+    if ((row.members.fire.domain === 'jewel') !== (base.type === 'Jewel')) continue
+    const members = ELEMENTS.flatMap((element) => {
+      const member = row.members[element]
+      const mod = member.modId === null ? undefined : mods.get(member.modId)
+      return mod ? [{ element, mod }] : []
+    })
+    if (
+      base.type === 'Jewel' &&
+      members.some(({ mod }) => (mod.radiusJewelOnly === true) !== isRadiusJewel(base))
+    )
+      continue
+    for (const marked of [false, true]) {
+      // 混沌不能逆推；实际工艺来源的转换尚未核实，不能作为可达资格的起点。
+      const reachable = members.some(
+        ({ element, mod }) =>
+          element !== 'chaos' &&
+          !mod.craftedOnly &&
+          (mod.desecratedOnly === true) === marked &&
+          hasExistingModEligibility(base, mod),
+      )
+      if (!reachable) continue
+      const result = marked ? desecrated : ordinary
+      for (const { mod } of members) result.add(mod.id)
+    }
+  }
+  return { ordinary, desecrated }
+}
+
+export function hasFluxModEligibility(
+  catalog: CraftCatalog,
+  base: CatalogBase,
+  mod: CatalogMod,
+  source?: { desecrated?: true },
+): boolean {
+  const eligible = fluxEligibleModIds(catalog, base)
+  return (source?.desecrated ? eligible.desecrated : eligible.ordinary).has(mod.id)
+}
+
+/** 只描述已识别实例的族共存，调用方仍须核对来源标记、容量及所有其他冲突。 */
+export function fluxModsCanCoexist(
+  catalog: CraftCatalog,
+  base: CatalogBase,
+  left: CatalogMod,
+  right: CatalogMod,
+): boolean {
+  if (left.group !== right.group) return false
+  const eligible = fluxEligibleModIds(catalog, base)
+  const supported = (mod: CatalogMod) =>
+    eligible.ordinary.has(mod.id) || eligible.desecrated.has(mod.id)
+  return supported(left) && supported(right)
+}

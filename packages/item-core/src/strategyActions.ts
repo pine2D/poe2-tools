@@ -6,7 +6,9 @@ import type { CraftCatalog } from './catalog'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCraftMode } from './essences'
-import { prepareFracture } from './fracture'
+import { prepareFluxCraft } from './fluxCraft'
+import { FLUXES } from './fluxes'
+import { applyFracture, prepareFracture } from './fracture'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { supportedLiquidEmotionId } from './liquidEmotions'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
@@ -30,6 +32,7 @@ export type CraftStrategyAction =
   | { kind: 'essence'; essenceId: string; omen?: EssenceOmen }
   | { kind: 'liquid-emotion'; emotionId: string }
   | { kind: 'alloy'; alloyId: string }
+  | { kind: 'flux'; fluxId: string }
   | ({ kind: 'desecrate'; boneId: CraftBone } & BoneOmenConfig)
   | { kind: 'reveal' }
   | { kind: 'fracture' }
@@ -51,6 +54,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
       'essenceId',
       'emotionId',
       'alloyId',
+      'fluxId',
       'boneId',
       'directionOmen',
       'lichOmen',
@@ -90,6 +94,13 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
     if (!isBoneOmenConfig(config)) return null
     return boneOmenError(config, boneId) === null ? { kind: 'desecrate', boneId, ...config } : null
   }
+  if (
+    value.kind === 'flux' &&
+    keys(value, ['kind', 'fluxId']) &&
+    typeof value.fluxId === 'string' &&
+    FLUXES.some((flux) => flux.id === value.fluxId)
+  )
+    return { kind: 'flux', fluxId: value.fluxId }
   if (
     value.kind === 'alloy' &&
     keys(value, ['kind', 'alloyId']) &&
@@ -153,6 +164,10 @@ export function checkCraftStrategyAction(
     const result = prepareAlloyCraft(catalog, state, action.alloyId)
     return result.ok ? ok : result
   }
+  if (action.kind === 'flux') {
+    const result = prepareFluxCraft(catalog, state, action.fluxId)
+    return result.ok ? ok : result
+  }
   if (action.kind === 'liquid-emotion') {
     const result = prepareLiquidEmotionCraft(catalog, state, action.emotionId)
     if (result.ok) return ok
@@ -179,7 +194,12 @@ export function checkCraftStrategyAction(
     const result = prepareFracture(catalog, state)
     if (!result.ok) return result
     return result.value.candidates.some(
-      (affix) => !result.value.unresolvedModIds.includes(affix.modId),
+      (affix) =>
+        applyFracture(catalog, state, {
+          kind: 'fracture',
+          modId: affix.modId,
+          ...(affix.affixId ? { affixId: affix.affixId } : {}),
+        }).ok,
     )
       ? ok
       : { ok: false, error: '所有破裂候选的实际数值均未知，请先核对。' }
@@ -194,7 +214,7 @@ export function checkCraftStrategyAction(
     )
     if (!removable.ok) return removable
     const results = removable.value.map((affix) =>
-      prepareCraftOperation(catalog, state, action.currency, affix.modId, action.omen),
+      prepareCraftOperation(catalog, state, action.currency, affix, action.omen),
     )
     if (results.some((result) => result.ok)) return ok
     const failed = results.find((result) => !result.ok)

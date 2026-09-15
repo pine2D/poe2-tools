@@ -59,8 +59,11 @@ function Harness({
           if (!next.ok) throw Error(next.error)
           setGoals(next.value)
         }}
-        onExtract={(config) => {
-          const next = editTargetDefinitions(data, item, goals, { kind: 'replace', config })
+        onExtract={(definitions) => {
+          const next = editTargetDefinitions(data, item, goals, {
+            kind: 'replace-definitions',
+            definitions,
+          })
           if (!next.ok) throw Error(next.error)
           setGoals(next.value)
         }}

@@ -1,11 +1,15 @@
-import type { CraftCatalog } from './catalog'
+import type { CatalogMod, CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
+import { fluxEligibleModIds, fluxModsCanCoexist, hasFluxModEligibility } from './fluxes'
 import { validateCraftFractureTarget } from './fractureTargets'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { readTargetDefinitionValues } from './targetDefinitionValues'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
+  craftTargetCandidates,
+  targetImplicitLines,
+  targetPools,
   validateCraftTargetAlternatives,
   validateCraftTargets,
   validateCraftTargetValues,
@@ -211,7 +215,7 @@ export function targetNumber(value: unknown): number | null {
   return Number.isSafeInteger(number) && value === `t${number}` ? number : null
 }
 
-/** 独立身份不授权重复类型；合法共存、来源和数值继续使用现有目标校验。 */
+/** 重复只限可信转换族；目标身份本身不授权冲突或普通生成。 */
 export function validateTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
@@ -232,6 +236,108 @@ export function validateStoredTargetDefinitions(
     return fail('存储目标定义对象无法安全检查。')
   }
   return readTargetDefinitions(catalog, baseId, input)
+}
+
+function validateDefinitionCombination(
+  catalog: CraftCatalog,
+  baseId: string,
+  targets: readonly CraftTargetDefinition[],
+  minimum?: number,
+  fractured?: string,
+): CraftResult<true> {
+  if (
+    minimum !== undefined &&
+    (!Number.isInteger(minimum) || minimum < 1 || minimum > targets.length)
+  )
+    return fail('至少达成数量必须是 1 至已选显式目标组数的整数。')
+  const base = catalog.bases.find((entry) => entry.id === baseId)
+  if (!base) return fail('当前基底不在制作目录中。')
+  const pools = targetPools(catalog, baseId)
+  const mods = []
+  const affixes: CraftState['affixes'] = []
+  for (const target of targets) {
+    const mod = catalog.modifiers.find((entry) => entry.id === target.modId)
+    if (!mod) return fail(`目标词缀 ${target.modId} 不在制作目录中。`)
+    const flux = hasFluxModEligibility(
+      catalog,
+      base,
+      mod,
+      mod.desecratedOnly ? { desecrated: true } : undefined,
+    )
+    if (!flux) {
+      const single = validateCraftTargets(catalog, baseId, [mod.id])
+      if (!single.ok) return single
+    }
+    const crafted =
+      !flux &&
+      !mod.desecratedOnly &&
+      !pools.ordinary.has(mod.id) &&
+      !pools.genesis.has(mod.id) &&
+      (pools.essence.has(mod.id) || pools.liquid.has(mod.id) || pools.alloy.has(mod.id))
+    mods.push(mod)
+    affixes.push({
+      modId: mod.id,
+      lines: [...mod.lines],
+      ...(crafted ? { crafted: true } : {}),
+      ...(mod.desecratedOnly ? { desecrated: true } : {}),
+    })
+  }
+  const check = (indices: number[]) =>
+    createCraftState(catalog, {
+      baseId,
+      itemLevel: 100,
+      rarity: 'rare',
+      sourceText: null,
+      ...targetImplicitLines(catalog, baseId),
+      nextAffixId: indices.length + 1,
+      affixes: indices.flatMap((index, position) => {
+        const affix = affixes[index]
+        return affix ? [{ ...affix, affixId: `a${position + 1}` }] : []
+      }),
+    })
+  if (minimum !== undefined && minimum < targets.length) {
+    for (let left = 0; left < mods.length; left++)
+      for (let right = left + 1; right < mods.length; right++) {
+        const a = mods[left],
+          b = mods[right]
+        if (a && b && a.group === b.group && !fluxModsCanCoexist(catalog, base, a, b))
+          return fail('同一词缀冲突组只能作为一个目标，请使用替代档位。')
+      }
+    for (let mask = 1; mask < 2 ** targets.length; mask++) {
+      const indices = targets.flatMap((_, index) => ((mask & (1 << index)) !== 0 ? [index] : []))
+      if (
+        indices.length === minimum &&
+        (fractured === undefined ||
+          indices.some((index) => targets[index]?.targetId === fractured)) &&
+        check(indices).ok
+      )
+        return { ok: true, value: true }
+    }
+    return fail(
+      fractured === undefined
+        ? '当前基底的容量或冲突规则无法同时容纳要求数量的目标组。'
+        : '不存在包含必选破裂组、且满足要求数量的合法目标组合。',
+    )
+  }
+  const checked = check(targets.map((_, index) => index))
+  return checked.ok ? { ok: true, value: true } : checked
+}
+
+/** 独立目标搜索包含可信转换可达档位；不改变任何普通制作生成池。 */
+export function craftTargetDefinitionCandidates(
+  catalog: CraftCatalog,
+  baseId: string,
+): CatalogMod[] {
+  const ordinary = new Set(craftTargetCandidates(catalog, baseId).map((mod) => mod.id))
+  const base = catalog.bases.find((base) => base.id === baseId)
+  if (!base) return []
+  const flux = fluxEligibleModIds(catalog, base)
+  return catalog.modifiers.filter(
+    (mod) =>
+      ordinary.has(mod.id) ||
+      ((flux.ordinary.has(mod.id) || flux.desecrated.has(mod.id)) &&
+        validateDefinitionCombination(catalog, baseId, [{ targetId: 't1', modId: mod.id }]).ok),
+  )
 }
 
 function readTargetDefinitions(
@@ -291,13 +397,7 @@ function readTargetDefinitions(
   }
   const ids = targets.map((target) => target.modId)
   // 共存资格仍遵守已核对规则；目标关联本身不再经旧格式往返。
-  const primary = validateCraftTargets(
-    catalog,
-    baseId,
-    ids,
-    minimum,
-    fractured === undefined ? undefined : byId.get(fractured),
-  )
+  const primary = validateDefinitionCombination(catalog, baseId, targets, minimum, fractured)
   if (!primary.ok) return primary
   const alternatives: CraftTargetDefinitionAlternative[] = []
   const seenAlternatives = new Set<string>()
@@ -322,8 +422,10 @@ function readTargetDefinitions(
       const alternative = modById.get(id)
       if (!alternative || alternative.kind !== mod?.kind || alternative.group !== mod.group)
         return fail('替代档位必须与主目标属于同一词缀类型和冲突组。')
-      const replaced = ids.map((primaryId, position) => (position === index ? id : primaryId))
-      const checked = validateCraftTargets(catalog, baseId, replaced, minimum)
+      const replaced = targets.map((target, position) =>
+        position === index ? { ...target, modId: id } : target,
+      )
+      const checked = validateDefinitionCombination(catalog, baseId, replaced, minimum)
       if (!checked.ok) return checked
     }
     seenAlternatives.add(entry.targetId)

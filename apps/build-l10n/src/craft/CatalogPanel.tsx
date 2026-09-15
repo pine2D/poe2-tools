@@ -28,6 +28,7 @@ import { ModStateBadges } from './ModStateBadges'
 import { ProjectControls } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
 import { useAlloyCatalog } from './useAlloyCatalog'
+import { useFluxCatalog } from './useFluxCatalog'
 import './catalog.css'
 
 export interface CatalogPanelProps {
@@ -332,10 +333,19 @@ export function CatalogPanel({
   const primaryCatalog = loadState.status === 'ready' ? loadState.catalog : undefined
   const alloyResource = useAlloyCatalog(primaryCatalog, fetchImpl, true)
   const alloyTable = alloyResource.table
+  const [fluxRequested, setFluxRequested] = useState(false)
+  const fluxResource = useFluxCatalog(primaryCatalog, fetchImpl, fluxRequested)
+  const fluxTable = fluxResource.table
   const catalog = useMemo(
     () =>
-      primaryCatalog && alloyTable ? { ...primaryCatalog, alloys: alloyTable } : primaryCatalog,
-    [primaryCatalog, alloyTable],
+      primaryCatalog && (alloyTable || fluxTable)
+        ? {
+            ...primaryCatalog,
+            ...(alloyTable ? { alloys: alloyTable } : {}),
+            ...(fluxTable ? { fluxes: fluxTable } : {}),
+          }
+        : primaryCatalog,
+    [primaryCatalog, alloyTable, fluxTable],
   )
   useEffect(() => {
     if (catalog) onCatalogReady?.(catalog)
@@ -444,6 +454,22 @@ export function CatalogPanel({
 
   return (
     <section className="catalog-panel">
+      {fluxResource.table ? (
+        <p role="status">溶剂关系已加载，可恢复包含转换历史的项目。</p>
+      ) : fluxResource.loading ? (
+        <p role="status">正在加载溶剂关系，其他制作可继续使用。</p>
+      ) : fluxResource.error ? (
+        <p role="status">
+          {fluxResource.error}{' '}
+          <button type="button" onClick={fluxResource.retry}>
+            重载溶剂关系
+          </button>
+        </p>
+      ) : (
+        <button type="button" onClick={() => setFluxRequested(true)}>
+          加载溶剂关系
+        </button>
+      )}
       {alloyResource.loading ? (
         <p role="status">正在加载可选合金关系，普通制作可继续使用。</p>
       ) : null}
@@ -641,6 +667,8 @@ export function CatalogPanel({
               />
               <FluxCatalog
                 catalog={loadState.catalog}
+                resource={fluxResource}
+                onRequest={() => setFluxRequested(true)}
                 base={selectedBase}
                 locale={locale}
                 translateLine={translateLine}

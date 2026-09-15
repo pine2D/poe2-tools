@@ -1,5 +1,6 @@
+import { type IdentifiedCraftState, isIdentifiedCraftState } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
-import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
+import { MAX_CRAFT_PROJECT_BYTES, readNativeTargetProjectProjection } from './craftProject'
 import {
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentityCraftProject,
@@ -13,6 +14,7 @@ import type {
   DefinitionCraftStrategyCondition,
 } from './definitionStrategy'
 import type { ItemDictionary } from './export'
+import { fluxCatalogSignature } from './fluxes'
 import type { CraftResult } from './rehearsal'
 import type { CraftStrategyCondition } from './strategyConditions'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
@@ -29,6 +31,7 @@ import { targetProjectSourceHashes } from './targetProjectSources'
 import { loadWorkbenchProject } from './workbenchProject'
 
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
+export const FLUX_CRAFT_RULES_VERSION = 'basic-2026-09-12-v75'
 
 export interface TargetCraftProject
   extends Omit<
@@ -41,7 +44,8 @@ export interface TargetCraftProject
     | 'minimumTargetCount'
     | 'strategy'
   > {
-  rulesVersion: typeof TARGET_CRAFT_RULES_VERSION
+  rulesVersion: typeof TARGET_CRAFT_RULES_VERSION | typeof FLUX_CRAFT_RULES_VERSION
+  fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
   strategy?: DefinitionCraftStrategy
@@ -181,8 +185,15 @@ export function parseTargetCraftProject(
   } catch {
     return { ok: false, error: '演练项目不是有效 JSON。' }
   }
-  if (!record(original) || original.rulesVersion !== TARGET_CRAFT_RULES_VERSION)
-    return { ok: false, error: '目标项目必须使用精确的 v74 规则版本。' }
+  if (
+    !record(original) ||
+    ![TARGET_CRAFT_RULES_VERSION, FLUX_CRAFT_RULES_VERSION].includes(String(original.rulesVersion))
+  )
+    return { ok: false, error: '目标项目必须使用精确的 v74 或 v75 规则版本。' }
+  const native = original.rulesVersion === FLUX_CRAFT_RULES_VERSION
+  const fluxSignature = native ? fluxCatalogSignature(catalog) : null
+  if (native && (fluxSignature === null || original.fluxCatalogSignature !== fluxSignature))
+    return { ok: false, error: '项目溶剂关系签名缺失或与当前目录不同，请先加载相同溶剂关系目录。 ' }
   if (LEGACY_TARGET_KEYS.some((key) => Object.hasOwn(original, key)))
     return { ok: false, error: 'v74 项目不能混入旧目标字段。' }
   if (!record(original.initialState) || typeof original.initialState.baseId !== 'string')
@@ -194,6 +205,7 @@ export function parseTargetCraftProject(
   })
   if (!context.ok) return context
   const {
+    fluxCatalogSignature: _fluxSignature,
     targetDefinitions: _definitions,
     orphanedTargets: _orphaned,
     strategy: _strategy,
@@ -204,16 +216,39 @@ export function parseTargetCraftProject(
   try {
     projection = JSON.stringify({
       ...rest,
-      rulesVersion: IDENTITY_CRAFT_RULES_VERSION,
+      rulesVersion: native ? 'basic-2026-09-12-v72' : IDENTITY_CRAFT_RULES_VERSION,
+      ...(!native && Object.hasOwn(original, 'fluxCatalogSignature')
+        ? { fluxCatalogSignature: original.fluxCatalogSignature }
+        : {}),
       ...projectTargetDefinitions(context.value.definitions),
       ...(strategy === undefined ? {} : { strategy }),
     })
   } catch {
     return { ok: false, error: '目标项目结构过深，无法建立可验证的来源投影。' }
   }
-  const checked = readIdentityStoredTargetProjection(projection, catalog, dictionary)
+  const replay = native ? readNativeTargetProjectProjection(projection, catalog, dictionary) : null
+  if (replay && !replay.ok) return replay
+  if (replay?.ok && !replay.value.states.every(isIdentifiedCraftState))
+    return { ok: false, error: '项目回放未保留完整词缀实例。 ' }
+  const checked = replay?.ok
+    ? {
+        ok: true as const,
+        value: {
+          project: {
+            ...replay.value.project,
+            rulesVersion: IDENTITY_CRAFT_RULES_VERSION as typeof IDENTITY_CRAFT_RULES_VERSION,
+            initialState: replay.value.project.initialState as IdentifiedCraftState,
+          },
+          states: replay.value.states as IdentifiedCraftState[],
+        },
+      }
+    : readIdentityStoredTargetProjection(projection, catalog, dictionary)
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
+  if (native) {
+    project.rulesVersion = FLUX_CRAFT_RULES_VERSION
+    project.fluxCatalogSignature = original.fluxCatalogSignature as string
+  }
   if (!equivalentProjectJSON(original, project))
     return { ok: false, error: '目标项目与完整回放结果不一致；不能自动补全或修复身份及配置。' }
   return { ok: true, value: { project, states: checked.value.states } }

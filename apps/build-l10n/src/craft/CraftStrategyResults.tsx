@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react'
 import { AlloyCraftPanel } from './AlloyCraftPanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
+import { FluxCraftPanel } from './FluxCraftPanel'
 import { FracturePanel } from './FracturePanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 export type SpecialStrategyAction = Exclude<
@@ -41,6 +42,9 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       </button>
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'flux' ? (
+        <FluxCraftPanel {...props} disabled={false} configuration={action} />
       ) : null}
       {action.kind === 'alloy' ? (
         <AlloyCraftPanel {...props} disabled={false} configuration={action} />

@@ -1,7 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
-import { analyzeEssenceTargets, type EssenceAdviceStep } from './essenceAdvice'
+import { analyzeEssenceTargetContext, type EssenceAdviceStep } from './essenceAdvice'
 import { essenceCategory, essenceCraftMode, essenceSourceHash } from './essences'
 import { craftModsConflict } from './modConflicts'
 import {
@@ -11,8 +11,10 @@ import {
   craftCandidates,
   prepareCraftOperation,
 } from './rehearsal'
+import { specialTargetContext } from './targetDefinitionSpecialContext'
+import type { CraftTargetDefinitions } from './targetDefinitions'
 import {
-  analyzeCraftTargets,
+  analyzeCraftTargetContext,
   type CraftTargetAlternative,
   type CraftTargetValues,
   craftTargetsSatisfied,
@@ -32,19 +34,29 @@ export interface EssencePreparationAdvice {
 const compareId = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
 /** 只搜索真实通货结果；所有目标共用 128 个候选准备状态的确定性预算。 */
-export function analyzeEssencePreparation(
+export function analyzeEssencePreparationContext(
   catalog: CraftCatalog,
   state: CraftState,
   ids: readonly string[],
   values: readonly CraftTargetValues[] = [],
   alternatives: readonly CraftTargetAlternative[] = [],
   options: { minimumTargetCount?: number; fracturedTargetId?: string } = {},
+  definitions?: CraftTargetDefinitions,
 ): CraftResult<EssencePreparationAdvice> {
-  const direct = analyzeEssenceTargets(catalog, state, ids, values, alternatives, options)
+  const native = definitions ? specialTargetContext(catalog, state, definitions) : undefined
+  const direct = analyzeEssenceTargetContext(
+    catalog,
+    state,
+    ids,
+    values,
+    alternatives,
+    options,
+    definitions,
+  )
   if (!direct.ok) return direct
   const result: EssencePreparationAdvice = { routes: [], examinedStates: 0, truncated: false }
   if (options.minimumTargetCount !== undefined) {
-    const progress = analyzeCraftTargets(
+    const progress = analyzeCraftTargetContext(
       catalog,
       state,
       ids,
@@ -54,10 +66,17 @@ export function analyzeEssencePreparation(
       [],
       options.fracturedTargetId,
       options.minimumTargetCount,
+      definitions,
     )
     if (!progress.ok) return progress
     if (
-      craftTargetsSatisfied(progress.value, options.minimumTargetCount, options.fracturedTargetId)
+      native
+        ? native.progress.satisfied
+        : craftTargetsSatisfied(
+            progress.value,
+            options.minimumTargetCount,
+            options.fracturedTargetId,
+          )
     )
       return { ok: true, value: result }
   }
@@ -70,12 +89,13 @@ export function analyzeEssencePreparation(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (base === undefined) return { ok: false, error: '当前基底不在制作目录中。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const groups = ids.map((id) => [
-    id,
-    ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? []),
-  ])
+  const groups =
+    native?.groups.map((group) => group.modIds) ??
+    ids.map((id) => [id, ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? [])])
   const present = new Set(state.affixes.map((affix) => affix.modId))
-  const missing = new Set(groups.filter((group) => !group.some((id) => present.has(id))).flat())
+  const missing =
+    native?.missing ??
+    new Set(groups.filter((group) => !group.some((id) => present.has(id))).flat())
   const directIds = new Set(direct.value.map((step) => step.targetModId))
   const accepted = new Set(groups.flat())
   const category = essenceCategory(base)
@@ -90,12 +110,14 @@ export function analyzeEssencePreparation(
           const existing = byId.get(affix.modId)
           return existing !== undefined && craftModsConflict(existing, mod)
         }) &&
-        minimumCraftTargetRolls(
-          catalog,
-          state,
-          mod,
-          values.find((entry) => entry.modId === id),
-        ) !== null &&
+        (native
+          ? native.rolls(state, mod).length > 0
+          : minimumCraftTargetRolls(
+              catalog,
+              state,
+              mod,
+              values.find((entry) => entry.modId === id),
+            ) !== null) &&
         (catalog.essences ?? []).some(
           (essence) =>
             Object.hasOwn(essence.mods, category) &&
@@ -125,7 +147,15 @@ export function analyzeEssencePreparation(
         preparations.length > 0 &&
         (current.rarity === 'rare' ? modes.has('replace') : modes.has('upgrade'))
       ) {
-        const final = analyzeEssenceTargets(catalog, current, ids, values, alternatives, options)
+        const final = analyzeEssenceTargetContext(
+          catalog,
+          current,
+          ids,
+          values,
+          alternatives,
+          options,
+          definitions,
+        )
         if (final.ok) {
           const selected = final.value.find((step) => step.targetModId === targetId)
           if (selected !== undefined)
@@ -144,38 +174,46 @@ export function analyzeEssencePreparation(
             Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compareId(a.id, b.id),
         )
       for (const mod of candidates) {
-        const rolls = minimumCraftTargetRolls(
-          catalog,
-          current,
-          mod,
-          values.find((entry) => entry.modId === mod.id),
-        )
-        if (rolls === null) continue
-        const operation: CraftOperation = {
-          currency,
-          modIds: [mod.id],
-          rolls: [{ modId: mod.id, values: rolls }],
-        }
-        const path = [...preparations, operation]
-        const key = JSON.stringify(path)
-        let applied = states.get(key)
-        if (applied === undefined) {
-          if (result.examinedStates >= 128) {
-            result.truncated = true
-            return null
+        const defaultRolls = native
+          ? null
+          : minimumCraftTargetRolls(
+              catalog,
+              current,
+              mod,
+              values.find((entry) => entry.modId === mod.id),
+            )
+        const outcomes = native
+          ? native.rolls(current, mod)
+          : defaultRolls === null
+            ? []
+            : [defaultRolls]
+        for (const rolls of outcomes) {
+          const operation: CraftOperation = {
+            currency,
+            modIds: [mod.id],
+            rolls: [{ modId: mod.id, values: rolls }],
           }
-          result.examinedStates += 1
-          applied = applyCraftStep(catalog, current, operation)
-          states.set(key, applied)
+          const path = [...preparations, operation]
+          const key = JSON.stringify(path)
+          let applied = states.get(key)
+          if (applied === undefined) {
+            if (result.examinedStates >= 128) {
+              result.truncated = true
+              return null
+            }
+            result.examinedStates += 1
+            applied = applyCraftStep(catalog, current, operation)
+            states.set(key, applied)
+          }
+          if (!applied.ok) continue
+          const added = applied.value.affixes.at(-1)
+          if (!added || added.modId !== mod.id) continue
+          if (added.affixId !== undefined)
+            operation.rolls = [{ modId: mod.id, affixId: added.affixId, values: rolls }]
+          const found = search(applied.value, path)
+          if (found !== null) return found
+          if (result.truncated) return null
         }
-        if (!applied.ok) continue
-        const added = applied.value.affixes.at(-1)
-        if (!added || added.modId !== mod.id) continue
-        if (added.affixId !== undefined)
-          operation.rolls = [{ modId: mod.id, affixId: added.affixId, values: rolls }]
-        const found = search(applied.value, path)
-        if (found !== null) return found
-        if (result.truncated) return null
       }
       return null
     }
@@ -183,4 +221,16 @@ export function analyzeEssencePreparation(
     if (route !== null) result.routes.push(route)
   }
   return { ok: true, value: result }
+}
+
+/** 旧入口不接受独立定义，保留原资格与输出合同。 */
+export function analyzeEssencePreparation(
+  catalog: CraftCatalog,
+  state: CraftState,
+  ids: readonly string[],
+  values: readonly CraftTargetValues[] = [],
+  alternatives: readonly CraftTargetAlternative[] = [],
+  options: NonNullable<Parameters<typeof analyzeEssencePreparationContext>[5]> = {},
+) {
+  return analyzeEssencePreparationContext(catalog, state, ids, values, alternatives, options)
 }

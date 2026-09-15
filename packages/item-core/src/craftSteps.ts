@@ -23,6 +23,7 @@ import {
 } from './corruptionRules'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
+import { applyFluxCraft, type FluxCraftOperation, isFluxCraftOperation } from './fluxCraft'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { renderNumericLines } from './numeric'
@@ -90,6 +91,7 @@ export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperat
 }
 
 export type CraftStep =
+  | FluxCraftOperation
   | AlloyCraftOperation
   | ArchitectCraftOperation
   | VaalCraftOperation
@@ -144,6 +146,10 @@ export function applyCraftStep(
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
+  if ('kind' in step && step.kind === 'flux')
+    return isFluxCraftOperation(step)
+      ? applyFluxCraft(catalog, state, step)
+      : { ok: false, error: '溶剂步骤字段无效。' }
   if ('kind' in step && step.kind === 'architect')
     return isArchitectCraftOperation(step)
       ? applyArchitect(catalog, state, step)

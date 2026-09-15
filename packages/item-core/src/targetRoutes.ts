@@ -1,9 +1,9 @@
-import { analyzeAlloyTargets } from './alloyAdvice'
+import { analyzeAlloyTargetContext } from './alloyAdvice'
 import { usesSovereignResistance } from './alloyEffects'
 import { inspectCraftAlloys } from './alloys'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
-import { analyzeBoneTargets } from './boneAdvice'
-import type { CraftCatalog } from './catalog'
+import { analyzeBoneTargetContext } from './boneAdvice'
+import type { CatalogMod, CraftCatalog } from './catalog'
 import {
   type CraftPricing,
   collectCraftCosts,
@@ -13,8 +13,10 @@ import {
 import { craftStateSemanticKey } from './craftStateSemanticKey'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
-import { analyzeEssenceTargets } from './essenceAdvice'
+import { analyzeEssenceTargetContext } from './essenceAdvice'
 import { essenceCategory } from './essences'
+import { prepareFluxCraft } from './fluxCraft'
+import { FLUXES } from './fluxes'
 import { prepareFracture } from './fracture'
 import {
   analyzeCraftImplicitTargets,
@@ -38,10 +40,22 @@ import {
   removableCraftAffixes,
 } from './rehearsal'
 import { sovereignRouteContext } from './sovereignRouteCandidates'
-import { lostCraftTargetIds, matchedCraftTargetIds } from './targetProgress'
+import {
+  definitionFluxSourceModIds,
+  definitionModRollOptions,
+  nativeTargetRollOperations,
+  targetValueCandidateContexts,
+} from './targetDefinitionRolls'
+import { specialTargetContext } from './targetDefinitionSpecialContext'
+import type { CraftTargetDefinitions } from './targetDefinitions'
+import {
+  evaluateTargetDefinitions,
+  lostCraftTargetIds,
+  matchedCraftTargetIds,
+} from './targetProgress'
 import { targetRollsPreservingValues } from './targetRolls'
 import {
-  analyzeCraftTargets,
+  analyzeCraftTargetContext,
   type CraftTargetAlternative,
   type CraftTargetValues,
   craftTargetsSatisfied,
@@ -56,6 +70,8 @@ export interface CraftTargetRouteOptions {
   maxDepth?: number
 }
 export interface CraftTargetRouteStep {
+  /** 原生搜索风险按tN计数；实际受影响档位单列，旧路线省略此字段。 */
+  affectedModIds?: string[]
   fractureCandidateModIds?: string[]
   matchedImplicitLineIndexes?: number[]
   gainedImplicitLineIndexes?: number[]
@@ -112,6 +128,30 @@ export function planCraftTargetRoutes(
   options: CraftTargetRouteOptions = {},
   implicitValues: readonly CraftImplicitTargetValues[] = [],
   fracturedTargetId?: string,
+): CraftResult<CraftTargetRoutes> {
+  return planCraftTargetContext(
+    catalog,
+    state,
+    ids,
+    values,
+    alternatives,
+    options,
+    implicitValues,
+    fracturedTargetId,
+  )
+}
+
+/** 单一搜索引擎；原生目标按独立身份推进与保护，候选执行仍共用全部操作。 */
+export function planCraftTargetContext(
+  catalog: CraftCatalog,
+  state: CraftState,
+  ids: readonly string[],
+  values: readonly CraftTargetValues[] = [],
+  alternatives: readonly CraftTargetAlternative[] = [],
+  options: CraftTargetRouteOptions = {},
+  implicitValues: readonly CraftImplicitTargetValues[] = [],
+  fracturedTargetId?: string,
+  definitions?: CraftTargetDefinitions,
 ): CraftResult<CraftTargetRoutes> {
   if (
     !options ||
@@ -177,7 +217,7 @@ export function planCraftTargetRoutes(
     maxDepth > 16
   )
     return { ok: false, error: '展开状态预算须为 1–512 的整数，深度须为 1–16 的整数。' }
-  const initial = analyzeCraftTargets(
+  const initial = analyzeCraftTargetContext(
     catalog,
     state,
     ids,
@@ -187,6 +227,7 @@ export function planCraftTargetRoutes(
     implicitValues,
     fracturedTargetId,
     options.minimumTargetCount,
+    definitions,
   )
   if (!initial.ok) return initial
   const result: CraftTargetRoutes = {
@@ -197,30 +238,79 @@ export function planCraftTargetRoutes(
     alreadyMatched:
       !state.pendingDesecration &&
       (ids.length > 0 || implicitValues.length > 0) &&
-      craftTargetsSatisfied(initial.value, options.minimumTargetCount, fracturedTargetId),
+      (definitions
+        ? evaluateTargetDefinitions(catalog, state, definitions).satisfied &&
+          (initial.value.implicitTargets ?? []).every((target) => target.matched)
+        : craftTargetsSatisfied(initial.value, options.minimumTargetCount, fracturedTargetId)),
   }
   if ((!ids.length && !implicitValues.length && !state.pendingDesecration) || result.alreadyMatched)
     return { ok: true, value: result }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const groups = ids.map((id) => [
-    id,
-    ...(alternatives.find((a) => a.targetModId === id)?.modIds ?? []),
-  ])
+  const groups = definitions
+    ? definitions.targets.map((target) => [
+        target.modId,
+        ...(definitions.alternatives.find((entry) => entry.targetId === target.targetId)?.modIds ??
+          []),
+      ])
+    : ids.map((id) => [id, ...(alternatives.find((a) => a.targetModId === id)?.modIds ?? [])])
+  const generatingGroups = definitions
+    ? groups.map((group) => [...group, ...definitionFluxSourceModIds(catalog, state, group)])
+    : groups
   const accepted = new Set(groups.flat())
-  const liquid = liquidRouteContext(catalog, state, groups, values, () => {
+  const onOmitted = () => {
     result.truncated = true
-  })
-  const sovereign = sovereignRouteContext(
-    catalog,
-    state,
-    groups,
-    values,
-    () => {
-      result.truncated = true
-    },
-    options.minimumTargetCount,
-    fracturedTargetId,
+  }
+  const valueContexts = definitions
+    ? targetValueCandidateContexts(definitions, onOmitted)
+    : [values]
+  const liquids = valueContexts.map((context) =>
+    liquidRouteContext(catalog, state, groups, context, onOmitted),
   )
+  const sovereigns = valueContexts.map((context) =>
+    sovereignRouteContext(
+      catalog,
+      state,
+      groups,
+      context,
+      onOmitted,
+      options.minimumTargetCount,
+      definitions
+        ? definitions.targets.find((target) => target.targetId === fracturedTargetId)?.modId
+        : fracturedTargetId,
+    ),
+  )
+  const liquid = {
+    enabled: liquids.some((context) => context.enabled),
+    priority: (current: CraftState) =>
+      Math.max(0, ...liquids.map((context) => context.priority(current))),
+    candidates: function* (current: CraftState, consume: () => boolean) {
+      const seen = new Set<string>()
+      for (const context of liquids)
+        for (const candidate of context.candidates(current, consume)) {
+          const key = JSON.stringify(candidate.operation)
+          if (seen.has(key)) continue
+          seen.add(key)
+          yield candidate
+        }
+    },
+    rolls: (current: CraftState, mod: CatalogMod) => liquids[0]?.rolls(current, mod) ?? null,
+  }
+  const sovereign = {
+    enabled: sovereigns.some((context) => context.enabled),
+    priority: (current: CraftState) =>
+      Math.max(0, ...sovereigns.map((context) => context.priority(current))),
+    candidates: function* (current: CraftState, consume: () => boolean) {
+      const seen = new Set<string>()
+      for (const context of sovereigns)
+        for (const candidate of context.candidates(current, consume)) {
+          const key = JSON.stringify(candidate.operation)
+          if (seen.has(key)) continue
+          seen.add(key)
+          yield candidate
+        }
+    },
+    rolls: (current: CraftState, mod: CatalogMod) => sovereigns[0]?.rolls(current, mod) ?? null,
+  }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const category = base ? essenceCategory(base) : ''
   const essenceIds = new Set(
@@ -233,11 +323,22 @@ export function planCraftTargetRoutes(
     for (const entry of inspectCraftAlloys(catalog, base))
       if (entry.mod && accepted.has(entry.mod.id)) essenceIds.add(entry.mod.id)
   const goal = (id: string) => values.find((v) => v.modId === id)
+  const numericDefinitions = definitions
+    ? (({ fracturedTargetId: _, ...rest }) => rest)(definitions)
+    : undefined
   const numericMatched = (current: CraftState) =>
-    matchedCraftTargetIds(catalog, current, ids, groups, values)
+    numericDefinitions
+      ? evaluateTargetDefinitions(catalog, current, numericDefinitions).matches.map(
+          (match) => match.targetId,
+        )
+      : matchedCraftTargetIds(catalog, current, ids, groups, values)
   // 起点保护只看身份与数值；完整目标推进还需锁定对应的已接受组。
   const matched = (current: CraftState) =>
-    matchedCraftTargetIds(catalog, current, ids, groups, values, fracturedTargetId)
+    definitions
+      ? evaluateTargetDefinitions(catalog, current, definitions).matches.map(
+          (match) => match.targetId,
+        )
+      : matchedCraftTargetIds(catalog, current, ids, groups, values, fracturedTargetId)
   const fracturePriority = (current: CraftState) => {
     if (!fracturedTargetId || current.affixes.some((affix) => affix.fractured)) return 0
     return (
@@ -413,14 +514,9 @@ export function planCraftTargetRoutes(
             )
             .map((candidate) => candidate.lineIndex)
         : []
-      const lostTargetIds = lostCraftTargetIds(
-        catalog,
-        node.state,
-        applied.value,
-        ids,
-        groups,
-        values,
-      )
+      const lostTargetIds = definitions
+        ? beforeNumeric.filter((id) => !afterNumeric.includes(id))
+        : lostCraftTargetIds(catalog, node.state, applied.value, ids, groups, values)
       const rerolledTargetIds =
         'currency' in operation && operation.currency === 'divine' && operation.omen !== 'blessed'
           ? [
@@ -462,6 +558,15 @@ export function planCraftTargetRoutes(
       } else seen.set(stateKey, { depth, risk })
       const step: CraftTargetRouteStep = {
         ...(fractureCandidateModIds ? { fractureCandidateModIds } : {}),
+        ...(numericDefinitions
+          ? {
+              affectedModIds: specialTargetContext(
+                catalog,
+                node.state,
+                numericDefinitions,
+              ).affected(applied.value),
+            }
+          : {}),
         operation: structuredClone(operation),
         state: applied.value,
         matchedTargetIds: afterMatched,
@@ -494,7 +599,7 @@ export function planCraftTargetRoutes(
           if (!replay.ok) return
           current = replay.value
         }
-        const final = analyzeCraftTargets(
+        const final = analyzeCraftTargetContext(
           catalog,
           current,
           ids,
@@ -504,11 +609,15 @@ export function planCraftTargetRoutes(
           implicitValues,
           fracturedTargetId,
           options.minimumTargetCount,
+          definitions,
         )
         if (
           !current.pendingDesecration &&
           final.ok &&
-          craftTargetsSatisfied(final.value, options.minimumTargetCount, fracturedTargetId) &&
+          (definitions
+            ? evaluateTargetDefinitions(catalog, current, definitions).satisfied &&
+              (final.value.implicitTargets ?? []).every((target) => target.matched)
+            : craftTargetsSatisfied(final.value, options.minimumTargetCount, fracturedTargetId)) &&
           (pricing !== undefined || result.routes.length < 3)
         ) {
           const route = { steps, finalState: current }
@@ -567,6 +676,28 @@ export function planCraftTargetRoutes(
       if (entries.length > count) omitted()
       return entries.slice(0, count)
     }
+    if (definitions) {
+      for (const flux of FLUXES) {
+        const prepared = prepareFluxCraft(catalog, node.state, flux.id)
+        if (!prepared.ok) continue
+        for (const operation of nativeTargetRollOperations(
+          catalog,
+          node.state,
+          definitions,
+          { kind: 'flux', prepared: prepared.value },
+          spend,
+        ))
+          offer(operation)
+      }
+      for (const operation of nativeTargetRollOperations(
+        catalog,
+        node.state,
+        definitions,
+        { kind: 'divine', implicitValues },
+        spend,
+      ))
+        offer(operation)
+    }
     if (fracturedTargetId && numericMatched(node.state).includes(fracturedTargetId)) {
       const prepared = prepareFracture(catalog, node.state)
       const group = groups[ids.indexOf(fracturedTargetId)] ?? []
@@ -583,13 +714,21 @@ export function planCraftTargetRoutes(
               prepared.value.candidates.map((candidate) => candidate.modId),
             )
     }
-    const boneAdvice = analyzeBoneTargets(catalog, node.state, ids, values, alternatives, {
-      consumeCandidate: spend,
-      ...(options.minimumTargetCount === undefined
-        ? {}
-        : { minimumTargetCount: options.minimumTargetCount }),
-      ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
-    })
+    const boneAdvice = analyzeBoneTargetContext(
+      catalog,
+      node.state,
+      ids,
+      values,
+      alternatives,
+      {
+        consumeCandidate: spend,
+        ...(options.minimumTargetCount === undefined
+          ? {}
+          : { minimumTargetCount: options.minimumTargetCount }),
+        ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
+      },
+      definitions,
+    )
     if (boneAdvice.ok)
       for (const step of boneAdvice.value) offer(step.operation, step.atRiskTargetIds)
     if (liquid.enabled) {
@@ -613,6 +752,8 @@ export function planCraftTargetRoutes(
         implicitValues,
         options.minimumTargetCount !== undefined && options.minimumTargetCount < ids.length,
         groups[ids.indexOf(fracturedTargetId ?? '')] ?? [],
+        definitions,
+        spend,
       )) {
         if (result.candidateApplications >= 4096) break
         offer(operation)
@@ -664,6 +805,21 @@ export function planCraftTargetRoutes(
             })
           )
         if (rule.addCount !== 2) return true
+        if (definitions) {
+          const available = new Set(
+            craftCandidates(catalog, node.state, rule.currency, omen).map((mod) => mod.id),
+          )
+          return (
+            groups.filter(
+              (group, index) =>
+                !beforeMatched.includes(ids[index] ?? '') &&
+                (generatingGroups[index] ?? group).some(
+                  (id) =>
+                    available.has(id) && (rule.kind === null || byId.get(id)?.kind === rule.kind),
+                ),
+            ).length >= 2
+          )
+        }
         // 单个目标不推荐付出额外预兆并占用无关空位；手动演练仍允许指定填充组。
         return (
           groups.filter(
@@ -698,7 +854,7 @@ export function planCraftTargetRoutes(
       const advice =
         omen === undefined && node.steps.length === 0
           ? initial
-          : analyzeCraftTargets(
+          : analyzeCraftTargetContext(
               catalog,
               node.state,
               ids,
@@ -708,6 +864,7 @@ export function planCraftTargetRoutes(
               implicitValues,
               fracturedTargetId,
               options.minimumTargetCount,
+              definitions,
             )
       if (!advice.ok) continue
       for (const suggestion of advice.value.steps) {
@@ -756,6 +913,7 @@ export function planCraftTargetRoutes(
           ...(removeAffixId === undefined ? {} : { removeAffixId }),
         }
         if (currency === 'divine') {
+          if (definitions && omen !== 'blessed') continue
           const rolls: NonNullable<CraftOperation['rolls']> = []
           let valid = true
           for (const affix of node.state.affixes) {
@@ -825,41 +983,74 @@ export function planCraftTargetRoutes(
             )
             .sort(
               (a, b) =>
-                Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compare(a.id, b.id),
+                Number(accepted.has(b.id)) - Number(accepted.has(a.id)) ||
+                (definitions
+                  ? Number(suggestion.targetModIds.includes(b.id)) -
+                    Number(suggestion.targetModIds.includes(a.id))
+                  : 0) ||
+                compare(a.id, b.id),
             )
           for (const mod of limit(candidates, selected.modIds.length === 0 ? 12 : 6)) {
-            const numbers = liquid.enabled
-              ? liquid.rolls(node.state, mod)
-              : sovereign.enabled
-                ? sovereign.rolls(current, mod)
-                : minimumCraftTargetRolls(catalog, current, mod, goal(mod.id))
-            if (numbers === null) continue
-            if (!spend()) return
-            const added = addCraftAffix(catalog, current, mod.id, currency, omen)
-            if (!added.ok) continue
-            const addedAffix = added.value.affixes[current.affixes.length]
-            fill(added.value, {
-              ...selected,
-              modIds: [...selected.modIds, mod.id],
-              rolls: [
-                ...(selected.rolls ?? []),
-                ...(numbers.length
-                  ? [
-                      {
-                        modId: mod.id,
-                        values: numbers,
-                        ...(addedAffix?.affixId === undefined
-                          ? {}
-                          : { affixId: addedAffix.affixId }),
-                      },
-                    ]
-                  : []),
-              ],
-            })
-            // 点金提供每个首目标的一组合法完整选择，避免排列爆炸。
-            if (prepared.value.count > 1) {
-              if (candidates.length > 1) omitted()
-              break
+            const numberOptions = definitions
+              ? [
+                  ...definitionModRollOptions(catalog, current, definitions, mod),
+                  ...liquids.flatMap((context) =>
+                    context.enabled
+                      ? [context.rolls(current, mod)].filter(
+                          (value): value is number[] => value !== null,
+                        )
+                      : [],
+                  ),
+                  ...sovereigns.flatMap((context) =>
+                    context.enabled
+                      ? [context.rolls(current, mod)].filter(
+                          (value): value is number[] => value !== null,
+                        )
+                      : [],
+                  ),
+                ]
+              : [
+                  liquid.enabled
+                    ? liquid.rolls(node.state, mod)
+                    : sovereign.enabled
+                      ? sovereign.rolls(current, mod)
+                      : minimumCraftTargetRolls(catalog, current, mod, goal(mod.id)),
+                ]
+            const unique = numberOptions.filter(
+              (numbers, index) =>
+                numberOptions.findIndex(
+                  (other) => JSON.stringify(other) === JSON.stringify(numbers),
+                ) === index,
+            )
+            for (const numbers of unique) {
+              if (numbers === null) continue
+              if (!spend()) return
+              const added = addCraftAffix(catalog, current, mod.id, currency, omen)
+              if (!added.ok) continue
+              const addedAffix = added.value.affixes[current.affixes.length]
+              fill(added.value, {
+                ...selected,
+                modIds: [...selected.modIds, mod.id],
+                rolls: [
+                  ...(selected.rolls ?? []),
+                  ...(numbers.length
+                    ? [
+                        {
+                          modId: mod.id,
+                          values: numbers,
+                          ...(addedAffix?.affixId === undefined
+                            ? {}
+                            : { affixId: addedAffix.affixId }),
+                        },
+                      ]
+                    : []),
+                ],
+              })
+              // 点金提供每个首目标的一组合法完整选择，避免排列爆炸。
+              if (prepared.value.count > 1) {
+                if (candidates.length > 1) omitted()
+                break
+              }
             }
           }
         }
@@ -867,23 +1058,39 @@ export function planCraftTargetRoutes(
       }
     }
     // 精华分析内部的 apply 与本搜索的 apply 均计入同一个独立预算。
-    const essenceAdvice = analyzeEssenceTargets(catalog, node.state, ids, values, alternatives, {
-      consumeCandidate: spend,
-      ...(options.minimumTargetCount === undefined
-        ? {}
-        : { minimumTargetCount: options.minimumTargetCount }),
-      ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
-    })
+    const essenceAdvice = analyzeEssenceTargetContext(
+      catalog,
+      node.state,
+      ids,
+      values,
+      alternatives,
+      {
+        consumeCandidate: spend,
+        ...(options.minimumTargetCount === undefined
+          ? {}
+          : { minimumTargetCount: options.minimumTargetCount }),
+        ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
+      },
+      definitions,
+    )
     if (essenceAdvice.ok)
       for (const step of essenceAdvice.value) offer(step.operation, step.atRiskTargetIds)
-    const alloyAdvice = analyzeAlloyTargets(catalog, node.state, ids, values, alternatives, {
-      consumeCandidate: spend,
-      includePreparatory: true,
-      ...(options.minimumTargetCount === undefined
-        ? {}
-        : { minimumTargetCount: options.minimumTargetCount }),
-      ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
-    })
+    const alloyAdvice = analyzeAlloyTargetContext(
+      catalog,
+      node.state,
+      ids,
+      values,
+      alternatives,
+      {
+        consumeCandidate: spend,
+        includePreparatory: true,
+        ...(options.minimumTargetCount === undefined
+          ? {}
+          : { minimumTargetCount: options.minimumTargetCount }),
+        ...(fracturedTargetId === undefined ? {} : { fracturedTargetId }),
+      },
+      definitions,
+    )
     if (alloyAdvice.ok)
       for (const step of alloyAdvice.value) offer(step.operation, step.atRiskTargetIds)
     // 精华与合金专属目标不在普通新增池；普通单步建议无法提示其阻挡，另列合法剥离准备。
@@ -897,12 +1104,19 @@ export function planCraftTargetRoutes(
     const replacementAcceptedIds = new Set(
       groups.flatMap((group, index) => {
         if (beforeMatched.includes(ids[index] ?? '')) return []
+        const replacementGoal = (id: string) =>
+          definitions
+            ? definitions.values.find(
+                (value) =>
+                  value.targetId === definitions.targets[index]?.targetId && value.modId === id,
+              )
+            : goal(id)
         const feasibleReplacement = group.some((id) => {
           const alternative = byId.get(id)
           return (
             alternative !== undefined &&
             alternative.level <= node.state.itemLevel &&
-            minimumCraftTargetRolls(catalog, node.state, alternative, goal(id)) !== null
+            minimumCraftTargetRolls(catalog, node.state, alternative, replacementGoal(id)) !== null
           )
         })
         if (!feasibleReplacement) return []
@@ -912,8 +1126,13 @@ export function planCraftTargetRoutes(
           if (
             !mod ||
             (divineAvailable &&
-              minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id), existing.lines) !==
-                null)
+              minimumCraftTargetRolls(
+                catalog,
+                node.state,
+                mod,
+                replacementGoal(mod.id),
+                existing.lines,
+              ) !== null)
           )
             return []
           return [existing.affixId ?? existing.modId]
@@ -983,22 +1202,32 @@ export function planCraftTargetRoutes(
               Number(accepted.has(b.id)) - Number(accepted.has(a.id)) || compare(a.id, b.id),
           )
         for (const mod of limit(candidates, 8)) {
-          const numbers = minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))
-          if (numbers === null) continue
-          let affixId: string | undefined
-          if (numbers.length) {
-            if (!spend()) break
-            const added = addCraftAffix(catalog, prepared.value.state, mod.id, currency)
-            if (!added.ok) continue
-            affixId = added.value.affixes[prepared.value.state.affixes.length]?.affixId
+          const options = definitions
+            ? definitionModRollOptions(catalog, node.state, definitions, mod)
+            : [minimumCraftTargetRolls(catalog, node.state, mod, goal(mod.id))]
+          for (const numbers of options) {
+            if (numbers === null) continue
+            let affixId: string | undefined
+            if (numbers.length) {
+              if (!spend()) break
+              const added = addCraftAffix(catalog, prepared.value.state, mod.id, currency)
+              if (!added.ok) continue
+              affixId = added.value.affixes[prepared.value.state.affixes.length]?.affixId
+            }
+            offer({
+              currency,
+              modIds: [mod.id],
+              rolls: numbers.length
+                ? [
+                    {
+                      modId: mod.id,
+                      values: numbers,
+                      ...(affixId === undefined ? {} : { affixId }),
+                    },
+                  ]
+                : [],
+            })
           }
-          offer({
-            currency,
-            modIds: [mod.id],
-            rolls: numbers.length
-              ? [{ modId: mod.id, values: numbers, ...(affixId === undefined ? {} : { affixId }) }]
-              : [],
-          })
         }
       }
     }

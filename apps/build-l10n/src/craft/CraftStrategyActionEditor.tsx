@@ -16,6 +16,8 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceOmen,
   essenceCraftMode,
+  FLUXES,
+  fluxCatalogSignature,
   inspectCraftAlloys,
   inspectLiquidEmotions,
   socketCandidates,
@@ -33,6 +35,8 @@ export function strategyActionLabel(
   if (action.kind === 'jump') return '仅判断并跳转'
   if (action.kind === 'reveal') return '继续亵渎揭示'
   if (action.kind === 'fracture') return local('Fracturing Orb')
+  if (action.kind === 'flux')
+    return local(FLUXES.find((flux) => flux.id === action.fluxId)?.name ?? action.fluxId)
   if (action.kind === 'alloy')
     return local(
       catalog.alloys?.alloys.find((entry) => entry.id === action.alloyId)?.name ?? action.alloyId,
@@ -132,7 +136,8 @@ export function CraftStrategyActionEditor({
             else if (value === 'essence') {
               const first = essences[0]
               if (first) onChange({ kind: 'essence', essenceId: first.id })
-            } else if (value === 'alloy') {
+            } else if (value === 'flux') onChange({ kind: 'flux', fluxId: FLUXES[0].id })
+            else if (value === 'alloy') {
               const first = alloys[0]
               if (first) onChange({ kind: 'alloy', alloyId: first.id })
             } else if (value === 'liquid-emotion') {
@@ -155,6 +160,9 @@ export function CraftStrategyActionEditor({
           </option>
           <option value="alloy" disabled={!alloys.length}>
             合金制作
+          </option>
+          <option value="flux" disabled={fluxCatalogSignature(catalog) === null}>
+            溶剂转换
           </option>
           <option value="desecrate">骨骼施加</option>
           <option value="liquid-emotion" disabled={!emotions.length || type !== 'Jewel'}>
@@ -241,6 +249,27 @@ export function CraftStrategyActionEditor({
                   {omenLabel(id)}
                 </option>
               ))}
+          </select>
+        </label>
+      ) : null}
+      {action.kind === 'flux' ? (
+        <label>
+          溶剂
+          <select
+            aria-label={`规则 ${number} 溶剂`}
+            value={action.fluxId}
+            onChange={(event) => onChange({ kind: 'flux', fluxId: event.target.value })}
+          >
+            {!FLUXES.some((flux) => flux.id === action.fluxId) ? (
+              <option value={action.fluxId} disabled>
+                {action.fluxId}（当前不支持）
+              </option>
+            ) : null}
+            {FLUXES.map((flux) => (
+              <option key={flux.id} value={flux.id}>
+                {local(flux.name)}
+              </option>
+            ))}
           </select>
         </label>
       ) : null}

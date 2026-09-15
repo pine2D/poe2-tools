@@ -1,7 +1,7 @@
 import {
   type CraftResult,
+  type CraftTargetDefinitions,
   createCraftState,
-  type ExtractedCraftTargets,
   enableCraftAffixIdentity,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -29,7 +29,7 @@ describe('TargetExtractionPanel 实例选择', () => {
   it('真实已识别装备默认全选，取消第一实例后只提取第二实例的基础值和破裂要求', () => {
     const state = value(enableCraftAffixIdentity(catalog, fixture()))
     const before = structuredClone(state)
-    const applied: ExtractedCraftTargets[] = []
+    const applied: CraftTargetDefinitions[] = []
     render(
       <TargetExtractionPanel
         catalog={catalog}
@@ -47,9 +47,11 @@ describe('TargetExtractionPanel 实例选择', () => {
     click('用所选词缀替换显式目标')
     expect(applied).toEqual([
       {
-        targetModIds: ['suffix1'],
-        targetValues: [{ modId: 'suffix1', bounds: [{ index: 0, min: 8, max: 8 }] }],
-        targetFracturedModId: 'suffix1',
+        nextTargetId: 2,
+        targets: [{ targetId: 't1', modId: 'suffix1' }],
+        alternatives: [],
+        values: [{ targetId: 't1', modId: 'suffix1', bounds: [{ index: 0, min: 8, max: 8 }] }],
+        fracturedTargetId: 't1',
       },
     ])
     expect(screen.queryByRole('group', { name: '提取制作目标' })).toBeNull()
@@ -58,8 +60,8 @@ describe('TargetExtractionPanel 实例选择', () => {
 
   it('同类型换新实例快照关闭草稿，重开恢复全选及默认选项', () => {
     const state = value(enableCraftAffixIdentity(catalog, fixture()))
-    const applied: ExtractedCraftTargets[] = []
-    const onApply = (targets: ExtractedCraftTargets) => applied.push(targets)
+    const applied: CraftTargetDefinitions[] = []
+    const onApply = (targets: CraftTargetDefinitions) => applied.push(targets)
     const view = render(
       <TargetExtractionPanel catalog={catalog} state={state} busy={false} onApply={onApply} />,
     )
@@ -88,11 +90,21 @@ describe('TargetExtractionPanel 实例选择', () => {
     expect(checkbox('复制基础数值为精确条件').checked).toBe(false)
     expect(checkbox('保留所选词缀的破裂要求').checked).toBe(false)
     click('用所选词缀替换显式目标')
-    expect(applied).toEqual([{ targetModIds: ['prefix1', 'suffix1'], targetValues: [] }])
+    expect(applied).toEqual([
+      {
+        nextTargetId: 3,
+        targets: [
+          { targetId: 't1', modId: 'prefix1' },
+          { targetId: 't2', modId: 'suffix1' },
+        ],
+        alternatives: [],
+        values: [],
+      },
+    ])
   })
 
-  it('legacy 保留标签与输出；取消不应用，未选词缀不能确认', () => {
-    const applied: ExtractedCraftTargets[] = []
+  it('legacy 保留选择标签并提取原生目标；取消不应用，未选词缀不能确认', () => {
+    const applied: CraftTargetDefinitions[] = []
     render(
       <TargetExtractionPanel
         catalog={catalog}
@@ -118,9 +130,11 @@ describe('TargetExtractionPanel 实例选择', () => {
     click('用所选词缀替换显式目标')
     expect(applied).toEqual([
       {
-        targetModIds: ['suffix1'],
-        targetValues: [{ modId: 'suffix1', bounds: [{ index: 0, min: 8, max: 8 }] }],
-        targetFracturedModId: 'suffix1',
+        nextTargetId: 2,
+        targets: [{ targetId: 't1', modId: 'suffix1' }],
+        alternatives: [],
+        values: [{ targetId: 't1', modId: 'suffix1', bounds: [{ index: 0, min: 8, max: 8 }] }],
+        fracturedTargetId: 't1',
       },
     ])
   })
