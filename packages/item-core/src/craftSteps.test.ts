@@ -116,18 +116,39 @@ describe('统一制作步骤', () => {
     expect(initial).toEqual(snapshot)
   })
 
-  it.each<CraftStep>([
+  it.each<Extract<CraftStep, { kind: string }>>([
     { kind: 'artificer' },
     { kind: 'socket', socketIndex: 0, augmentId: 'fire' },
     { kind: 'vaal', outcome: 'unchanged' },
+  ])('独立 $kind 层保留现有词缀实例和游标', (step) => {
+    const initial: CraftState = {
+      ...state,
+      itemLevel: 86,
+      rarity: 'rare',
+      nextAffixId: 5,
+      affixes: [{ modId: 'life', lines: ['15 life'], affixId: 'a1' }],
+      sockets: step.kind === 'artificer' ? [] : [null],
+    }
+    const snapshot = structuredClone(initial)
+    const result = applyCraftStep(catalog, initial, step)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.affixes).toEqual(initial.affixes)
+    expect(result.value.nextAffixId).toBe(5)
+    if (step.kind === 'artificer') expect(result.value.sockets).toEqual([null])
+    if (step.kind === 'socket') expect(result.value.sockets).toEqual(['fire'])
+    if (step.kind === 'vaal') expect(result.value.corrupted).toBe(true)
+    expect(initial).toEqual(snapshot)
+  })
+
+  it.each<CraftStep>([
     { kind: 'essence', essenceId: 'unmigrated', values: [] },
     { kind: 'alloy', alloyId: 'unmigrated', removeModId: 'life', values: [] },
     { kind: 'liquid-emotion', emotionId: 'unmigrated', removeModId: 'life', values: [] },
-  ])('未迁移的 $kind 操作明确拒绝实例状态', (step) => {
+  ])('$kind 的实例状态不能绕过未知材料限制', (step) => {
     const initial: CraftState = { ...state, nextAffixId: 1 }
     const result = applyCraftStep(catalog, initial, step)
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.error).toContain('实例')
     expect(initial).toEqual({ ...state, nextAffixId: 1 })
   })
 

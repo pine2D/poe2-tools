@@ -62,6 +62,7 @@ export interface DesecrateCraftOperation extends BoneOmenConfig {
   boneId: CraftBone
   affixKind: 'prefix' | 'suffix'
   removeModId?: string
+  removeAffixId?: string
 }
 export interface OfferDesecrationOperation {
   kind: 'desecration-offer'
@@ -149,11 +150,20 @@ export function isBoneCraftOperation(value: unknown): value is BoneCraftOperatio
   if (!record(value)) return false
   if (value.kind === 'desecrate')
     return (
-      keys(value, ['kind', 'boneId', 'affixKind', 'removeModId', 'directionOmen', 'lichOmen']) &&
+      keys(value, [
+        'kind',
+        'boneId',
+        'affixKind',
+        'removeModId',
+        'removeAffixId',
+        'directionOmen',
+        'lichOmen',
+      ]) &&
       hasValidBoneOmenFields(value) &&
       isCraftBone(value.boneId) &&
       (value.affixKind === 'prefix' || value.affixKind === 'suffix') &&
-      (!Object.hasOwn(value, 'removeModId') || id(value.removeModId))
+      (!Object.hasOwn(value, 'removeModId') || id(value.removeModId)) &&
+      (!Object.hasOwn(value, 'removeAffixId') || (id(value.removeAffixId) && id(value.removeModId)))
     )
   if (value.kind === 'desecration-offer')
     return (

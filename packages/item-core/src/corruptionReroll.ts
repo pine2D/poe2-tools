@@ -1,3 +1,4 @@
+import type { CraftAffixSelector } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE, isVaalReplacement, type VaalReplacement } from './corruptionRules'
 import { renderNumericLines } from './numeric'
@@ -27,11 +28,11 @@ function supportedState(catalog: CraftCatalog, state: CraftState): CraftResult<C
 export function prepareVaalReplacement(
   catalog: CraftCatalog,
   state: CraftState,
-  removeModId: string,
+  removeSelector: string | CraftAffixSelector,
 ): CraftResult<CraftState> {
   const checked = supportedState(catalog, state)
   if (!checked.ok) return checked
-  const prepared = prepareCraftOperation(catalog, checked.value, 'annulment', removeModId)
+  const prepared = prepareCraftOperation(catalog, checked.value, 'annulment', removeSelector)
   return prepared.ok ? { ok: true, value: prepared.value.state } : prepared
 }
 
@@ -51,7 +52,10 @@ export function replayVaalReplacements(
     return { ok: false, error: '腐化替换序列无效，最多指定三次。' }
   let current = checked.value
   for (const entry of replacements) {
-    const removed = prepareVaalReplacement(catalog, current, entry.removeModId)
+    const removed = prepareVaalReplacement(catalog, current, {
+      modId: entry.removeModId,
+      ...(entry.removeAffixId === undefined ? {} : { affixId: entry.removeAffixId }),
+    })
     if (!removed.ok) return removed
     const added = addCraftAffix(catalog, removed.value, entry.modId)
     if (!added.ok) return added
@@ -61,8 +65,8 @@ export function replayVaalReplacements(
     if (!rendered.ok) return rendered
     const next = createCraftState(catalog, {
       ...added.value,
-      affixes: added.value.affixes.map((affix) =>
-        affix.modId === mod.id ? { ...affix, lines: rendered.value } : affix,
+      affixes: added.value.affixes.map((affix, index) =>
+        index === removed.value.affixes.length ? { ...affix, lines: rendered.value } : affix,
       ),
     })
     if (!next.ok) return next

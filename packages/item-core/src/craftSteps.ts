@@ -1,4 +1,4 @@
-import { craftAffixIdentityError } from './affixIdentity'
+import { appendCraftAffix, craftAffixIdentityError, resolveCraftAffix } from './affixIdentity'
 import { prepareAlloyCraft } from './alloyCraft'
 import {
   type ArchitectCraftOperation,
@@ -28,6 +28,7 @@ import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { renderNumericLines } from './numeric'
 import {
   applyCraftOperation,
+  type CraftAffix,
   type CraftOperation,
   type CraftResult,
   type CraftState,
@@ -50,6 +51,7 @@ export interface EssenceCraftOperation {
   essenceId: string
   omen?: EssenceOmen
   removeModId?: string
+  removeAffixId?: string
   values: number[]
 }
 
@@ -58,6 +60,7 @@ export interface LiquidEmotionCraftOperation {
   emotionId: string
   resultKind?: 'prefix' | 'suffix'
   removeModId: string
+  removeAffixId?: string
   values: number[]
 }
 
@@ -65,6 +68,7 @@ export interface AlloyCraftOperation {
   kind: 'alloy'
   alloyId: string
   removeModId: string
+  removeAffixId?: string
   values: number[]
 }
 
@@ -72,7 +76,9 @@ export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperat
   return (
     record(value) &&
     value.kind === 'alloy' &&
-    onlyKeys(value, ['kind', 'alloyId', 'removeModId', 'values']) &&
+    onlyKeys(value, ['kind', 'alloyId', 'removeModId', 'removeAffixId', 'values']) &&
+    (!Object.hasOwn(value, 'removeAffixId') ||
+      (typeof value.removeAffixId === 'string' && value.removeAffixId.length > 0)) &&
     typeof value.alloyId === 'string' &&
     value.alloyId.length > 0 &&
     typeof value.removeModId === 'string' &&
@@ -103,6 +109,31 @@ function onlyKeys(value: Record<string, unknown>, keys: readonly string[]): bool
   return Object.keys(value).every((key) => keys.includes(key))
 }
 
+/** 先从完整状态定位，再检查可移除池；候选筛选不能消除实例歧义。 */
+function removeGuaranteedAffix(
+  state: CraftState,
+  removable: CraftAffix[],
+  step: { removeModId?: string; removeAffixId?: string },
+): CraftResult<CraftState> {
+  if (typeof step.removeModId !== 'string')
+    return { ok: false, error: '必须选择合法的可移除词缀。' }
+  const selected = resolveCraftAffix(state, {
+    modId: step.removeModId,
+    ...(Object.hasOwn(step, 'removeAffixId') ? { affixId: step.removeAffixId } : {}),
+  })
+  if (!selected.ok) return selected
+  const { affix, index } = selected.value
+  if (
+    !removable.some((candidate) =>
+      affix.affixId === undefined
+        ? candidate.modId === affix.modId
+        : candidate.affixId === affix.affixId,
+    )
+  )
+    return { ok: false, error: '必须选择合法的可移除词缀。' }
+  return { ok: true, value: { ...state, affixes: state.affixes.filter((_, i) => i !== index) } }
+}
+
 /** 在独立镶嵌层和原通货引擎间严格分发，未来 kind 不能退化为通货操作。 */
 export function applyCraftStep(
   catalog: CraftCatalog,
@@ -112,8 +143,6 @@ export function applyCraftStep(
   if (!record(step)) return { ok: false, error: '制作步骤必须是对象。' }
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
-  if (Object.hasOwn(state, 'nextAffixId') && 'kind' in step && step.kind !== 'fracture')
-    return { ok: false, error: '此制作操作尚未接入词缀实例定位，暂不能用于实例状态。' }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
   if ('kind' in step && step.kind === 'architect')
     return isArchitectCraftOperation(step)
@@ -171,21 +200,27 @@ export function applyCraftStep(
       if (!isAlloyCraftOperation(step)) return { ok: false, error: '合金步骤字段无效。' }
       const prepared = prepareAlloyCraft(catalog, state, step.alloyId)
       if (!prepared.ok) return prepared
-      if (!prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId))
-        return { ok: false, error: '必须选择合法的可移除词缀。' }
+      const remaining = removeGuaranteedAffix(state, prepared.value.removableAffixes, step)
+      if (!remaining.ok) return remaining
       const rendered = renderNumericLines(prepared.value.mod.lines, step.values)
       if (!rendered.ok) return rendered
-      return createCraftState(catalog, {
-        ...state,
-        affixes: [
-          ...state.affixes.filter((affix) => affix.modId !== step.removeModId),
-          { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
-        ],
+      const appended = appendCraftAffix(remaining.value, {
+        modId: prepared.value.mod.id,
+        lines: rendered.value,
+        crafted: true,
       })
+      return appended.ok ? createCraftState(catalog, appended.value) : appended
     }
     if (step.kind === 'liquid-emotion') {
       if (
-        !onlyKeys(step, ['kind', 'emotionId', 'removeModId', 'values', 'resultKind']) ||
+        !onlyKeys(step, [
+          'kind',
+          'emotionId',
+          'removeModId',
+          'removeAffixId',
+          'values',
+          'resultKind',
+        ]) ||
         (Object.hasOwn(step, 'resultKind') &&
           step.resultKind !== 'prefix' &&
           step.resultKind !== 'suffix') ||
@@ -203,21 +238,20 @@ export function applyCraftStep(
         step.resultKind === 'prefix' || step.resultKind === 'suffix' ? step.resultKind : undefined,
       )
       if (!prepared.ok) return prepared
-      if (!prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId))
-        return { ok: false, error: '必须选择合法的可移除词缀。' }
+      const remaining = removeGuaranteedAffix(state, prepared.value.removableAffixes, step)
+      if (!remaining.ok) return remaining
       const rendered = renderNumericLines(prepared.value.mod.lines, step.values)
       if (!rendered.ok) return rendered
-      return createCraftState(catalog, {
-        ...state,
-        affixes: [
-          ...state.affixes.filter((affix) => affix.modId !== step.removeModId),
-          { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
-        ],
+      const appended = appendCraftAffix(remaining.value, {
+        modId: prepared.value.mod.id,
+        lines: rendered.value,
+        crafted: true,
       })
+      return appended.ok ? createCraftState(catalog, appended.value) : appended
     }
     if (step.kind === 'essence') {
       if (
-        !onlyKeys(step, ['kind', 'essenceId', 'values', 'removeModId', 'omen']) ||
+        !onlyKeys(step, ['kind', 'essenceId', 'values', 'removeModId', 'removeAffixId', 'omen']) ||
         (Object.hasOwn(step, 'omen') && !isEssenceOmen(step.omen)) ||
         typeof step.essenceId !== 'string' ||
         !Array.isArray(step.values) ||
@@ -234,21 +268,23 @@ export function applyCraftStep(
       if (!prepared.ok) return prepared
       if (
         prepared.value.mode === 'upgrade'
-          ? Object.hasOwn(step, 'removeModId')
+          ? Object.hasOwn(step, 'removeModId') || Object.hasOwn(step, 'removeAffixId')
           : typeof step.removeModId !== 'string' ||
             !prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId)
       )
         return { ok: false, error: '升级精华不能指定移除；替换精华必须选择合法的移除词缀。' }
+      const remaining =
+        prepared.value.mode === 'upgrade'
+          ? { ok: true as const, value: state }
+          : removeGuaranteedAffix(state, prepared.value.removableAffixes, step)
+      if (!remaining.ok) return remaining
       const rendered = renderNumericLines(prepared.value.mod.lines, step.values)
       if (!rendered.ok) return rendered
-      return createCraftState(catalog, {
-        ...state,
-        rarity: 'rare',
-        affixes: [
-          ...state.affixes.filter((affix) => affix.modId !== step.removeModId),
-          { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
-        ],
-      })
+      const appended = appendCraftAffix(
+        { ...remaining.value, rarity: 'rare' },
+        { modId: prepared.value.mod.id, lines: rendered.value, crafted: true },
+      )
+      return appended.ok ? createCraftState(catalog, appended.value) : appended
     }
     if (step.kind === 'artificer') {
       if (!onlyKeys(step, ['kind'])) return { ok: false, error: '巧匠石步骤字段无效。' }

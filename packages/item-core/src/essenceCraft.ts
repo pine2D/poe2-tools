@@ -1,3 +1,4 @@
+import { appendCraftAffix } from './affixIdentity'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
@@ -60,21 +61,27 @@ export function prepareEssenceCraft(
   const numeric = inspectNumericLines(mod.lines)
   if (!numeric.ok) return numeric
   const guaranteed: CraftAffix = { modId: mod.id, lines: [...mod.lines], crafted: true }
-  const withGuaranteed = (affixes: CraftAffix[]) =>
-    createCraftState(catalog, {
-      ...checked.value,
-      rarity: 'rare',
-      affixes: [...affixes, guaranteed],
-    })
+  const withGuaranteed = (affixes: CraftAffix[]) => {
+    const appended = appendCraftAffix(
+      {
+        ...checked.value,
+        rarity: 'rare',
+        affixes,
+      },
+      guaranteed,
+    )
+    return appended.ok ? createCraftState(catalog, appended.value) : appended
+  }
   if (mode === 'upgrade') {
     const capacity = withGuaranteed(checked.value.affixes)
     if (!capacity.ok) return capacity
     return { ok: true, value: { essence, mod, mode, removableAffixes: [] } }
   }
   const removableAffixes = checked.value.affixes.filter(
-    (removed) =>
+    (removed, index) =>
       !removed.fractured &&
-      withGuaranteed(checked.value.affixes.filter((affix) => affix.modId !== removed.modId)).ok,
+      withGuaranteed(checked.value.affixes.filter((_, candidateIndex) => candidateIndex !== index))
+        .ok,
   )
   if (removableAffixes.length === 0)
     return fail('没有满足容量与装备状态约束的可移除词缀，暂不支持。')

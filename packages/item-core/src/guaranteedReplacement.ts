@@ -1,4 +1,5 @@
 import { craftAffixSpace } from './affixCapacity'
+import { appendCraftAffix } from './affixIdentity'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
@@ -26,15 +27,17 @@ export function guaranteedReplacementCandidates(
   )
   if (!minimum.ok) return minimum
   const guaranteed: CraftAffix = { modId: mod.id, lines: minimum.value, crafted: true }
-  const removable = state.affixes.filter((removed) => {
+  const removable = state.affixes.filter((removed, index) => {
     if (removed.fractured) return false
     const remaining = {
       ...state,
-      affixes: state.affixes.filter((affix) => affix.modId !== removed.modId),
+      affixes: state.affixes.filter((_, candidateIndex) => candidateIndex !== index),
     }
+    const appended = appendCraftAffix(remaining, guaranteed)
     return (
       craftAffixSpace(catalog, remaining)[mod.kind] > 0 &&
-      createCraftState(catalog, { ...remaining, affixes: [...remaining.affixes, guaranteed] }).ok
+      appended.ok &&
+      createCraftState(catalog, appended.value).ok
     )
   })
   return removable.length > 0

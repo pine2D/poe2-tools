@@ -14,6 +14,7 @@ interface VaalEnchantOperation {
 }
 export interface VaalReplacement {
   removeModId: string
+  removeAffixId?: string
   modId: string
   values: number[]
 }
@@ -28,9 +29,13 @@ export function isVaalReplacement(value: unknown): value is VaalReplacement {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
   const entry = value as Record<string, unknown>
   return (
-    Object.keys(entry).every((key) => ['removeModId', 'modId', 'values'].includes(key)) &&
+    Object.keys(entry).every((key) =>
+      ['removeModId', 'removeAffixId', 'modId', 'values'].includes(key),
+    ) &&
     typeof entry.removeModId === 'string' &&
     entry.removeModId.length > 0 &&
+    (!Object.hasOwn(entry, 'removeAffixId') ||
+      (typeof entry.removeAffixId === 'string' && entry.removeAffixId.length > 0)) &&
     typeof entry.modId === 'string' &&
     entry.modId.length > 0 &&
     Array.isArray(entry.values) &&

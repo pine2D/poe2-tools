@@ -1,3 +1,4 @@
+import { appendCraftAffix } from './affixIdentity'
 import { boneOmenError, boneRevealOmenError, matchesBoneLich } from './boneOmens'
 import { BONE_RULES } from './boneRules'
 import { type CatalogMod, type CraftCatalog, inspectModPool } from './catalog'
@@ -54,13 +55,12 @@ export function collectDesecrationCandidates(
   for (const mod of [...candidates].sort((a, b) => b.level - a.level)) {
     const key = family(mod)
     if (mod.level < minimum && mod.level < (highest.get(key) ?? 0)) continue
-    if (
-      !validate({
-        ...ordinary,
-        affixes: [...ordinary.affixes, { modId: mod.id, lines: [...mod.lines], desecrated: true }],
-      })
-    )
-      continue
+    const appended = appendCraftAffix(ordinary, {
+      modId: mod.id,
+      lines: mod.lines,
+      desecrated: true,
+    })
+    if (!appended.ok || !validate(appended.value)) continue
     highest.set(key, Math.max(highest.get(key) ?? 0, mod.level))
     if (selected === null || selected.has(mod.id)) accepted.add(mod)
     if (accepted.size >= limit) break

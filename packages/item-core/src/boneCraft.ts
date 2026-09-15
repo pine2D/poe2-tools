@@ -1,4 +1,5 @@
 import { craftAffixSpace } from './affixCapacity'
+import { appendCraftAffix, resolveCraftAffix } from './affixIdentity'
 import { collectDesecrationCandidates, pendingBoneOmenError } from './boneCandidates'
 import {
   BONE_DIRECTION_OMEN_RULES,
@@ -58,23 +59,23 @@ export function prepareDesecration(
   ).filter((kind) => direction === null || direction === kind)
   let removableAffixes = requiresRemoval
     ? checked.value.affixes.filter(
-        (affix) =>
+        (affix, index) =>
           !affix.fractured &&
           openKinds(catalog, {
             ...checked.value,
-            affixes: checked.value.affixes.filter((other) => other.modId !== affix.modId),
+            affixes: checked.value.affixes.filter((_, otherIndex) => otherIndex !== index),
           }).some((kind) => kinds.includes(kind)),
       )
     : []
   if (config.directionOmen || config.lichOmen) {
-    const viable = new Set<string>()
+    const viable = new Set<CraftAffix>()
     const removals = requiresRemoval ? removableAffixes : [undefined]
     kinds = kinds.filter((kind) => {
       let allowed = false
       for (const removed of removals) {
         const next = {
           ...checked.value,
-          affixes: checked.value.affixes.filter((affix) => affix.modId !== removed?.modId),
+          affixes: checked.value.affixes.filter((affix) => affix !== removed),
         }
         if (!openKinds(catalog, next).includes(kind)) continue
         const proposed = { ...next, pendingDesecration: { boneId, kind, ...config } }
@@ -86,12 +87,12 @@ export function prepareDesecration(
           ) === null
         ) {
           allowed = true
-          if (removed) viable.add(removed.modId)
+          if (removed) viable.add(removed)
         }
       }
       return allowed
     })
-    removableAffixes = removableAffixes.filter((affix) => viable.has(affix.modId))
+    removableAffixes = removableAffixes.filter((affix) => viable.has(affix))
     if (!kinds.length)
       return {
         ok: false,
@@ -137,15 +138,30 @@ export function applyBoneCraft(
     }
     const prepared = prepareDesecration(catalog, current, step.boneId, config)
     if (!prepared.ok) return prepared
-    if (
-      prepared.value.requiresRemoval
-        ? !prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId)
-        : Object.hasOwn(step, 'removeModId')
-    )
+    let removeIndex = -1
+    if (prepared.value.requiresRemoval) {
+      if (step.removeModId === undefined)
+        return { ok: false, error: '容量已满必须指定合法移除结果；有空位时不能移除。' }
+      const selected = resolveCraftAffix(current, {
+        modId: step.removeModId,
+        ...(Object.hasOwn(step, 'removeAffixId') ? { affixId: step.removeAffixId } : {}),
+      })
+      if (!selected.ok) return selected
+      if (
+        !prepared.value.removableAffixes.some(
+          (affix) =>
+            affix.modId === selected.value.affix.modId &&
+            affix.affixId === selected.value.affix.affixId,
+        )
+      )
+        return { ok: false, error: '容量已满必须指定合法移除结果；有空位时不能移除。' }
+      removeIndex = selected.value.index
+    } else if (Object.hasOwn(step, 'removeModId') || Object.hasOwn(step, 'removeAffixId')) {
       return { ok: false, error: '容量已满必须指定合法移除结果；有空位时不能移除。' }
+    }
     const next = {
       ...current,
-      affixes: current.affixes.filter((affix) => affix.modId !== step.removeModId),
+      affixes: current.affixes.filter((_, index) => index !== removeIndex),
     }
     if (
       !prepared.value.kinds.includes(step.affixKind) ||
@@ -205,8 +221,10 @@ export function applyBoneCraft(
   const rendered = renderNumericLines(mod.lines, step.values)
   if (!rendered.ok) return rendered
   const { pendingDesecration: _, ...revealed } = current
-  return createCraftState(catalog, {
-    ...revealed,
-    affixes: [...revealed.affixes, { modId: mod.id, lines: rendered.value, desecrated: true }],
+  const appended = appendCraftAffix(revealed, {
+    modId: mod.id,
+    lines: rendered.value,
+    desecrated: true,
   })
+  return appended.ok ? createCraftState(catalog, appended.value) : appended
 }
