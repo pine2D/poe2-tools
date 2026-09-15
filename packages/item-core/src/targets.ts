@@ -628,8 +628,14 @@ export function analyzeCraftTargets(
         if (current.affixes.some((affix) => affix.desecrated))
           reasons.push('唯一亵渎位置已占用，需先移除已有亵渎词缀。')
       }
-      if (current.pendingDesecration) reasons.push(PENDING_DESECRATION_MESSAGE)
-      if (liquidOnly) reasons.push('此目标需要对应液态情感的保证属性，普通通货不能生成。')
+      const pendingLiquid =
+        current.pendingDesecration &&
+        !current.pendingDesecration.options &&
+        staticPools.liquid.has(modId)
+      if (current.pendingDesecration && !pendingLiquid) reasons.push(PENDING_DESECRATION_MESSAGE)
+      if (pendingLiquid && !liquidOnly)
+        reasons.push('未揭示阶段的此目标使用对应液态情感演练，普通通货仍需先揭示。')
+      else if (liquidOnly) reasons.push('此目标需要对应液态情感的保证属性，普通通货不能生成。')
       else if (essenceOnly) reasons.push('此目标需要对应精华的保证属性，普通通货不能生成。')
       else if (!mod.desecratedOnly && !pool.has(modId))
         reasons.push('当前词缀产生的动态标签阻止生成此目标。')

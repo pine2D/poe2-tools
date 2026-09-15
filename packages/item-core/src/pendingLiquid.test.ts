@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest'
 import { desecrationCandidates } from './boneCraft'
+import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import { inspectModPool } from './catalog'
 import { catalog, dictionary } from './catalystTestFixture'
 import { collectCraftCosts } from './craftCosts'
@@ -14,15 +15,18 @@ import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import type { CraftResult, CraftState } from './rehearsal'
 import { checkCraftStrategyAction } from './strategyActions'
+import { analyzeCraftTargets } from './targets'
 
 const must = <T>(r: CraftResult<T>): T => {
   if (!r.ok) throw Error(r.error)
   return r.value
 }
-function fixture(baseId = 'Time-Lost Sapphire') {
+function fixture(baseId = 'Time-Lost Sapphire', selectedEmotionId?: string) {
   const base = catalog.bases.find((entry) => entry.id === baseId)
   if (!base) throw Error('缺少基底')
-  const emotionId = `Metadata/Items/Currency/EndgameDistilledEmotion${baseId.startsWith('Time-Lost') ? 'TimeLost' : ''}1`
+  const emotionId =
+    selectedEmotionId ??
+    `Metadata/Items/Currency/EndgameDistilledEmotion${baseId.startsWith('Time-Lost') ? 'TimeLost' : ''}1`
   const guaranteed = inspectLiquidEmotions(catalog, base).find(
     (entry) => entry.emotion.id === emotionId,
   )?.outcomes[0]
@@ -61,7 +65,7 @@ function fixture(baseId = 'Time-Lost Sapphire') {
     kind: 'liquid-emotion',
     emotionId,
     removeModId: removed.modId,
-    values: [],
+    values: must(inspectNumericLines(prepared.mod.lines)).map((range) => range.min),
   }
   return { initial, preparation, pending, operation, mod: prepared.mod }
 }
@@ -108,6 +112,24 @@ it.each([
   expect(collectCraftCosts(catalog, [operation])).toMatchObject({ ok: true, value: [{ count: 1 }] })
 })
 
+it('普通池与液态池重合的目标也可在未固定候选时生成，固定后恢复阶段限制', () => {
+  const { pending, operation, mod } = fixture('Ruby', 'Metadata/Items/Currency/DistilledEmotion1')
+  expect(mod.id).toBe('JewelArmour')
+  expect(applyCraftStep(catalog, pending, operation).ok).toBe(true)
+  const reasons = (state: CraftState) =>
+    must(analyzeCraftTargets(catalog, state, [mod.id])).targets[0]?.reasons
+  expect(reasons(pending)).not.toContain(PENDING_DESECRATION_MESSAGE)
+  const offered = must(
+    applyCraftStep(catalog, pending, {
+      kind: 'desecration-offer',
+      modIds: desecrationCandidates(catalog, pending)
+        .slice(0, 3)
+        .map((mod) => mod.id),
+    }),
+  )
+  expect(reasons(offered)).toContain(PENDING_DESECRATION_MESSAGE)
+})
+
 it('固定首组后不放行再加工，其他通货与伪造占位移除也不放行', () => {
   const { pending, operation } = fixture()
   const ids = desecrationCandidates(catalog, pending)
@@ -135,6 +157,8 @@ it('固定首组后不放行再加工，其他通货与伪造占位移除也不�
 it('待揭示液态目标生成可直接执行的候选，并在旧版完整未来历史中拒绝新交互', () => {
   const { initial, preparation, pending, operation, mod } = fixture()
   const context = liquidRouteContext(catalog, pending, [[mod.id]], [])
+  const advice = must(analyzeCraftTargets(catalog, pending, [mod.id]))
+  expect(advice.targets[0]?.reasons).not.toContain(PENDING_DESECRATION_MESSAGE)
   const candidates = [...context.candidates(pending)]
   expect(candidates.length).toBeGreaterThan(0)
   expect(candidates.every(({ operation }) => applyCraftStep(catalog, pending, operation).ok)).toBe(
