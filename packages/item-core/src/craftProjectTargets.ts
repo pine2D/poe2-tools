@@ -28,6 +28,10 @@ import {
   requiresPerfectFluxProjectVersion,
 } from './perfectFluxProjectVersion'
 import type { CraftResult } from './rehearsal'
+import {
+  RETAINED_CATALYST_RULES_VERSION,
+  requiresRetainedCatalystProjectVersion,
+} from './retainedCatalystProjectVersion'
 import type { CraftStrategyCondition } from './strategyConditions'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
 import {
@@ -48,9 +52,11 @@ export {
   CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
+  RETAINED_CATALYST_RULES_VERSION,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
+  requiresRetainedCatalystProjectVersion,
 }
 
 export interface TargetCraftProject
@@ -70,6 +76,7 @@ export interface TargetCraftProject
     | typeof PERFECT_FLUX_CRAFT_RULES_VERSION
     | typeof EXTRACTION_CRAFT_RULES_VERSION
     | typeof CORRUPTION_STRATEGY_RULES_VERSION
+    | typeof RETAINED_CATALYST_RULES_VERSION
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
@@ -234,10 +241,15 @@ export function parseTargetCraftProject(
       PERFECT_FLUX_CRAFT_RULES_VERSION,
       EXTRACTION_CRAFT_RULES_VERSION,
       CORRUPTION_STRATEGY_RULES_VERSION,
+      RETAINED_CATALYST_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
-    return { ok: false, error: '目标项目必须使用精确的 v74、v75、v76、v77 或 v78 规则版本。' }
-  const corruptionStrategy = original.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION
+    return { ok: false, error: '目标项目必须使用精确的 v74、v75、v76、v77、v78 或 v79 规则版本。' }
+  const retainedCatalyst = original.rulesVersion === RETAINED_CATALYST_RULES_VERSION
+  if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(original, catalog))
+    return { ok: false, error: '已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。' }
+  const corruptionStrategy =
+    retainedCatalyst || original.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION
   if (!corruptionStrategy && requiresCorruptionStrategyProjectVersion(original))
     return { ok: false, error: '腐化材料指引及腐化状态条件必须使用 v78 项目，包括未执行阶段。' }
   const extraction = corruptionStrategy || original.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION
@@ -302,6 +314,7 @@ export function parseTargetCraftProject(
         perfectFlux,
         extraction,
         corruptionStrategy,
+        retainedCatalyst,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -323,13 +336,15 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = corruptionStrategy
-      ? CORRUPTION_STRATEGY_RULES_VERSION
-      : extraction
-        ? EXTRACTION_CRAFT_RULES_VERSION
-        : perfectFlux
-          ? PERFECT_FLUX_CRAFT_RULES_VERSION
-          : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = retainedCatalyst
+      ? RETAINED_CATALYST_RULES_VERSION
+      : corruptionStrategy
+        ? CORRUPTION_STRATEGY_RULES_VERSION
+        : extraction
+          ? EXTRACTION_CRAFT_RULES_VERSION
+          : perfectFlux
+            ? PERFECT_FLUX_CRAFT_RULES_VERSION
+            : FLUX_CRAFT_RULES_VERSION
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
   }
   if (!equivalentProjectJSON(original, project))

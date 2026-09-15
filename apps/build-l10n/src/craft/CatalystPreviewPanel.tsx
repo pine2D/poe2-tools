@@ -8,7 +8,7 @@ import {
   isRadiusJewel,
   usesExplicitModEffect,
 } from '@poe2-tools/item-core'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import './catalysts.css'
 
 const KINDS = { implicit: '固有属性', prefix: '前缀', suffix: '后缀', corruption: '腐化强化' }
@@ -25,7 +25,15 @@ export function CatalystPreviewPanel({
   translateLine?: (line: string) => string | null
 }) {
   const id = useId()
-  const [comparison, setComparison] = useState<{ catalyst: string; quality: string } | null>(null)
+  const [comparisonDraft, setComparison] = useState<{
+    catalog: CraftCatalog
+    catalyst: string
+    quality: string
+  } | null>(null)
+  const comparison = comparisonDraft?.catalog === catalog ? comparisonDraft : null
+  useEffect(() => {
+    if (comparisonDraft && comparisonDraft.catalog !== catalog) setComparison(null)
+  }, [catalog, comparisonDraft])
   const catalyst = comparison?.catalyst ?? state.catalyst?.id ?? 'Flesh'
   const quality = comparison?.quality ?? String(state.catalyst?.quality ?? 20)
   const options = useMemo(() => catalystChoices(catalog, state), [catalog, state])
@@ -64,6 +72,11 @@ export function CatalystPreviewPanel({
             {state.catalyst.quality}%
           </h4>
           <p>起点已有品质不计材料费用；当前品质按实际演练步骤更新并保存。</p>
+          {options.ok && state.catalyst.quality > options.value.maxQuality ? (
+            <p>
+              已有品质保留，不因当前上限降低而减少；只按当前已保存的类型与数值估算，不代表可重新施加到该数值。
+            </p>
+          ) : null}
         </section>
       ) : null}
       <details open={state.catalyst ? true : undefined}>
@@ -91,7 +104,9 @@ export function CatalystPreviewPanel({
                 <select
                   id={`${id}-type`}
                   value={catalyst}
-                  onChange={(event) => setComparison({ catalyst: event.target.value, quality })}
+                  onChange={(event) =>
+                    setComparison({ catalog, catalyst: event.target.value, quality })
+                  }
                 >
                   {options.value.choices.map((choice) => (
                     <option key={choice.id} value={choice.id}>
@@ -106,10 +121,17 @@ export function CatalystPreviewPanel({
                   id={`${id}-quality`}
                   type="number"
                   min={0}
-                  max={options.value.maxQuality}
+                  max={Math.max(
+                    options.value.maxQuality,
+                    catalyst === state.catalyst?.id && quality === String(state.catalyst.quality)
+                      ? state.catalyst.quality
+                      : 0,
+                  )}
                   step={1}
                   value={quality}
-                  onChange={(event) => setComparison({ catalyst, quality: event.target.value })}
+                  onChange={(event) =>
+                    setComparison({ catalog, catalyst, quality: event.target.value })
+                  }
                 />
               </label>
             </div>
@@ -119,7 +141,7 @@ export function CatalystPreviewPanel({
               </button>
             ) : null}
             <p>
-              当前装备的预览上限：{options.value.maxQuality}
+              当前可施加上限：{options.value.maxQuality}
               %。切换类型会重新比较，不叠加不同催化效果。
             </p>
           </>

@@ -64,6 +64,7 @@ import {
   prepareExtractionCraft,
   prepareStrategySocket,
   projectTargetDefinitions,
+  RETAINED_CATALYST_RULES_VERSION,
   type RemovalCraftCurrency,
   type RestoredCraftProject,
   type RestoredIdentityCraftProject,
@@ -74,6 +75,7 @@ import {
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
+  requiresRetainedCatalystProjectVersion,
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
@@ -1017,6 +1019,7 @@ export function RehearsalPanel({
   const essenceSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/Essence.lua',
   )?.sha256
+  const retainedCatalystHistory = requiresRetainedCatalystProjectVersion({ history }, catalog)
   const hasEssenceHistory =
     strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
     history.some(
@@ -1113,7 +1116,7 @@ export function RehearsalPanel({
     ...((emotionHash || targetSources.liquid) && liquidEmotionSourceHash(catalog)
       ? { liquidEmotionSourceHash: liquidEmotionSourceHash(catalog) as string }
       : {}),
-    ...((hasEssenceHistory || targetSources.essence) && essenceSourceHash
+    ...((retainedCatalystHistory || hasEssenceHistory || targetSources.essence) && essenceSourceHash
       ? { essenceSourceHash }
       : {}),
     ...((history[0]?.state.sockets !== undefined ||
@@ -1130,13 +1133,15 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const project: TargetCraftProject = requiresCorruptionStrategyProjectVersion(projectConfig)
-    ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
-    : requiresExtractionProjectVersion(projectConfig)
-      ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
-      : requiresPerfectFluxProjectVersion(projectConfig)
-        ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
-        : projectConfig
+  const project: TargetCraftProject = retainedCatalystHistory
+    ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
+    : requiresCorruptionStrategyProjectVersion(projectConfig)
+      ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
+      : requiresExtractionProjectVersion(projectConfig)
+        ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
+        : requiresPerfectFluxProjectVersion(projectConfig)
+          ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+          : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
         essence: '精华',

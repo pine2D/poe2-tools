@@ -5,7 +5,7 @@ import {
   type CatalogBase,
   type CraftCatalog,
   type CraftState,
-  catalystQualityLimit,
+  catalystStoredQualityLimit,
   createCraftState,
   fluxCatalogSignature,
   type ItemDictionary,
@@ -56,7 +56,7 @@ export function CraftEntry({
   const [blankCatalystQuality, setBlankCatalystQuality] = useState('20')
   const [catalystDeclaration, setCatalystDeclaration] = useState('')
   const [catalystConfirmed, setCatalystConfirmed] = useState(false)
-  const catalystLimit = catalystQualityLimit(base)
+  const catalystLimit = catalystStoredQualityLimit(catalog, base)
   const [emptySockets, setEmptySockets] = useState(0)
   const [blankQuality, setBlankQuality] = useState(0)
   const [qualityDeclaration, setQualityDeclaration] = useState('')

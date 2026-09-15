@@ -80,7 +80,13 @@ export {
   estimateCatalystEffects,
 } from './catalystEffects'
 export type { CatalystQuality } from './catalystQuality'
-export { CATALYSTS, catalystQualityLimit, readCatalystQuality } from './catalystQuality'
+export {
+  CATALYSTS,
+  catalystActiveQualityLimit,
+  catalystQualityLimit,
+  catalystStoredQualityLimit,
+  readCatalystQuality,
+} from './catalystQuality'
 export type {
   CraftAffixChange,
   CraftComparison,
@@ -138,9 +144,11 @@ export {
   FLUX_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
+  RETAINED_CATALYST_RULES_VERSION,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
+  requiresRetainedCatalystProjectVersion,
   serializeTargetCraftProject,
   TARGET_CRAFT_RULES_VERSION,
   upgradeTargetCraftProject,

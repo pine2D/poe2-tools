@@ -6,10 +6,12 @@ import {
   FLUX_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
+  RETAINED_CATALYST_RULES_VERSION,
   type RestoredTargetCraftProject,
   requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
+  requiresRetainedCatalystProjectVersion,
   serializeTargetCraftProject,
   TARGET_CRAFT_RULES_VERSION,
   upgradeTargetCraftProject,
@@ -43,7 +45,8 @@ export function loadTargetWorkbenchProject(
       value.rulesVersion === FLUX_CRAFT_RULES_VERSION ||
       value.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION ||
       value.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION ||
-      value.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION)
+      value.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION ||
+      value.rulesVersion === RETAINED_CATALYST_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
     : upgradeTargetCraftProject(text, catalog, dictionary)
 }
@@ -80,7 +83,8 @@ export function reuseTargetCraftPlan(
     if (
       next.rulesVersion !== PERFECT_FLUX_CRAFT_RULES_VERSION &&
       next.rulesVersion !== EXTRACTION_CRAFT_RULES_VERSION &&
-      next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION
+      next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
+      next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION
     )
       next.rulesVersion = FLUX_CRAFT_RULES_VERSION
     next.fluxCatalogSignature = source.fluxCatalogSignature
@@ -94,7 +98,12 @@ export function reuseTargetCraftPlan(
   if (source.strategy?.flow) next.strategyStartStep = next.cursor
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
-  if (next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION) {
+  if (requiresRetainedCatalystProjectVersion(current.value.states, catalog))
+    next.rulesVersion = RETAINED_CATALYST_RULES_VERSION
+  if (
+    next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
+    next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION
+  ) {
     if (requiresCorruptionStrategyProjectVersion(next))
       next.rulesVersion = CORRUPTION_STRATEGY_RULES_VERSION
     else if (requiresExtractionProjectVersion(next))

@@ -68,6 +68,7 @@ import {
 } from './rehearsal'
 import { importCraftState, importIdentifiedCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
+import { requiresRetainedCatalystProjectVersion } from './retainedCatalystProjectVersion'
 import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
@@ -632,6 +633,7 @@ export function readNativeTargetProjectProjection(
   perfectFlux = false,
   extraction = false,
   corruptionStrategy = false,
+  retainedCatalyst = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -642,6 +644,7 @@ export function readNativeTargetProjectProjection(
     perfectFlux,
     extraction,
     corruptionStrategy,
+    retainedCatalyst,
   )
 }
 
@@ -654,6 +657,7 @@ function readCraftProject(
   perfectFlux = false,
   extraction = false,
   corruptionStrategy = false,
+  retainedCatalyst = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -672,6 +676,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(value, catalog))
+    return fail('已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。')
   if (!corruptionStrategy && requiresCorruptionStrategyProjectVersion(value))
     return fail('腐化材料指引及腐化状态条件必须使用 v78 项目，包括未执行阶段。')
   if (!extraction && requiresExtractionProjectVersion(value))
@@ -1174,6 +1180,13 @@ function readCraftProject(
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
   const scalabilitySourceHash = statScalabilitySourceHash(catalog)
   const validateEffectState = (state: CraftState): string | null => {
+    if (requiresRetainedCatalystProjectVersion(state, catalog)) {
+      if (!retainedCatalyst)
+        return '已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。'
+      const sourceHash = readEssenceSourceHash(catalog)
+      if (sourceHash === null || value.essenceSourceHash !== sourceHash)
+        return '项目精华来源指纹缺失或与当前目录不同，不能恢复已有扩展催化品质。'
+    }
     if (
       rulesVersion < 69 &&
       state.catalyst !== undefined &&
@@ -1623,6 +1636,7 @@ function readCraftProject(
       return fail('项目镶嵌物来源指纹缺失或与当前目录不同，不能恢复。')
   }
   const usesEssences =
+    requiresRetainedCatalystProjectVersion(initialInput, catalog) ||
     storedTargetSources.essence ||
     strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
     value.operations.some((step) => record(step) && step.kind === 'essence')

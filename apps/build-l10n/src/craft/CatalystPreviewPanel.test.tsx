@@ -137,11 +137,11 @@ it('裂隙精华后预览上限跟随装备，移除后提示原有预览值超�
     <CatalystPreviewPanel catalog={catalog} state={before} translations={translations} />,
   )
   fireEvent.click(screen.getByText('比较催化剂效果'))
-  expect(screen.getByText(/当前装备的预览上限：20%/)).toBeDefined()
+  expect(screen.getByText(/当前可施加上限：20%/)).toBeDefined()
   rerender(
     <CatalystPreviewPanel catalog={catalog} state={crafted.value} translations={translations} />,
   )
-  expect(screen.getByText(/当前装备的预览上限：40%/)).toBeDefined()
+  expect(screen.getByText(/当前可施加上限：40%/)).toBeDefined()
   fireEvent.change(screen.getByLabelText('预览品质（%）'), { target: { value: '40' } })
   expect(screen.getByText('+26 to maximum Life')).toBeDefined()
   expect(screen.getByText(/未施加到装备/)).toBeDefined()

@@ -1,13 +1,12 @@
 import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
-import { CATALYSTS } from './catalystQuality'
+import { CATALYSTS, catalystActiveQualityLimit } from './catalystQuality'
 import { corruptionEntries } from './corruptionEnchantments'
-import { essenceSourceHash } from './essences'
 import { explicitModEffect } from './jewelEffects'
 import { isBasicJewel, isRadiusJewel } from './jewels'
 import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
-import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import type { CraftResult, CraftState } from './rehearsal'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 
 export interface CatalystChoice {
@@ -40,8 +39,8 @@ export function catalystChoices(
   catalog: CraftCatalog,
   state: CraftState,
 ): CraftResult<{ maxQuality: number; choices: CatalystChoice[] }> {
-  const checked = createCraftState(catalog, state)
-  if (!checked.ok) return checked
+  const active = catalystActiveQualityLimit(catalog, state)
+  if (!active.ok) return active
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (
     !base ||
@@ -56,41 +55,10 @@ export function catalystChoices(
     return { ok: false, error: '已有品质的类型与基础数值尚未核对，不能再次叠乘催化效果。' }
   if (state.pendingDesecration)
     return { ok: false, error: '请先揭示亵渎词缀，再比较完整装备的催化效果。' }
-  const breach =
-    base.id === 'Breach Ring' && base.type === 'Ring' && base.implicit === '+20% to Maximum Quality'
-  // 只读上限只接收精确的裂隙精华声明，不把任意品质文字当成可叠加效果。
-  const qualityAffixes = state.affixes.filter((affix) =>
-    affix.lines.some((line) => /quality/i.test(line)),
-  )
-  const qualityAffix = qualityAffixes[0]
-  const qualityMod = catalog.modifiers.find((mod) => mod.id === 'EssenceBreach')
-  const breachEssence =
-    qualityAffixes.length === 1 &&
-    qualityAffix?.crafted === true &&
-    qualityAffix.modId === 'EssenceBreach' &&
-    qualityAffix.lines.length === 1 &&
-    qualityAffix.lines[0] === '+20% to Maximum Quality' &&
-    qualityMod?.kind === 'prefix' &&
-    qualityMod.group === 'LocalMaximumQuality' &&
-    qualityMod.lines.length === 1 &&
-    qualityMod.lines[0] === '+20% to Maximum Quality' &&
-    ['Ring', 'Amulet'].includes(base.type) &&
-    essenceSourceHash(catalog) !== null &&
-    catalog.essences?.some(
-      (essence) =>
-        essence.id === 'Metadata/Items/Currency/CurrencyCorruptedEssenceBreach' &&
-        Object.hasOwn(essence.mods, base.type) &&
-        essence.mods[base.type] === 'EssenceBreach',
-    )
-  if (
-    (!breach && /quality/i.test(base.implicit ?? '')) ||
-    (qualityAffixes.length > 0 && !breachEssence)
-  )
-    return { ok: false, error: '此装备具有尚未核对的特殊品质规则，暂不提供催化估算。' }
   return {
     ok: true,
     value: {
-      maxQuality: (breach ? 40 : 20) + (breachEssence ? 20 : 0),
+      maxQuality: active.value,
       choices: CATALYSTS.map((entry) => ({
         ...entry,
         name: `${isBasicJewel(base) || isRadiusJewel(base) ? 'Refined ' : ''}${entry.id} Catalyst`,
@@ -187,7 +155,12 @@ export function estimateCatalystEffects(
   if (!options.ok) return options
   const choice = options.value.choices.find((entry) => entry.id === catalystId)
   if (!choice) return { ok: false, error: '未知催化剂类别。' }
-  if (!Number.isInteger(quality) || quality < 0 || quality > options.value.maxQuality)
+  const retained = state.catalyst?.id === catalystId && state.catalyst.quality === quality
+  if (
+    !Number.isInteger(quality) ||
+    quality < 0 ||
+    (quality > options.value.maxQuality && !retained)
+  )
     return { ok: false, error: `预览品质必须是 0–${options.value.maxQuality} 的整数。` }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const patterns = base?.implicit?.split('\n') ?? []

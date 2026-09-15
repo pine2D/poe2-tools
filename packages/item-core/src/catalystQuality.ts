@@ -1,9 +1,10 @@
 import { isSovereignAffix } from './alloyEffects'
 import type { CatalogBase, CraftCatalog } from './catalog'
+import { essenceSourceHash } from './essences'
 import { jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel, isRadiusJewel } from './jewels'
 import { isLiquidEmotionMappedMod } from './liquidEmotions'
-import type { CraftResult, CraftState } from './rehearsal'
+import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { statScalabilitySourceHash } from './statScalability'
 import type { ItemDocument } from './types'
 
@@ -61,8 +62,8 @@ export function readCatalystQuality(item: ItemDocument): CraftResult<
     /^(?:Quality|品质|品質)\s*(?:\(([^()（）]+)\)|（([^()（）]+)）)\s*[:：]\s*\+?(\d+)%\s*(?:\(augmented\))?$/i,
   )
   const quality = Number(match?.[3])
-  if (!match || !Number.isInteger(quality) || quality < 0 || quality > 40)
-    return { ok: false, error: '催化品质格式无效，数值应为 0–40 的整数。' }
+  if (!match || !Number.isInteger(quality) || quality < 0 || quality > 60)
+    return { ok: false, error: '催化品质格式无效，数值应为 0–60 的整数。' }
   const descriptor = (match[1] ?? match[2] ?? '').trim()
   const definition = CATALYSTS.find(
     (entry) => `${entry.descriptor} Modifiers`.toLowerCase() === descriptor.toLowerCase(),
@@ -79,7 +80,7 @@ export function isCatalystQuality(value: unknown): value is CatalystQuality {
     typeof record.quality === 'number' &&
     Number.isInteger(record.quality) &&
     record.quality >= 0 &&
-    record.quality <= 40 &&
+    record.quality <= 60 &&
     (!Object.hasOwn(record, 'declared') || record.declared === true)
   )
 }
@@ -104,7 +105,7 @@ export function catalystStateError(catalog: CraftCatalog, state: CraftState): st
   if (state.catalyst === undefined) return null
   if (!isCatalystQuality(state.catalyst)) return '催化品质字段无效。'
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  const limit = base ? catalystQualityLimit(base) : null
+  const limit = base ? catalystStoredQualityLimit(catalog, base) : null
   if (limit === null) return '此基底的催化品质规则尚未支持。'
   if (state.quality !== undefined) return '催化品质不能同时作为普通品质保存。'
   if (state.catalyst.quality > limit) return `此基底的催化品质上限为 ${limit}%。`
@@ -112,6 +113,7 @@ export function catalystStateError(catalog: CraftCatalog, state: CraftState): st
   if (
     state.affixes.some(
       (affix) =>
+        !(base && isBreachQualityAffix(catalog, base, affix)) &&
         !isSovereignAffix(catalog, state, affix, 'resistance') &&
         !(
           affix.crafted &&
@@ -130,4 +132,66 @@ export function catalystStateError(catalog: CraftCatalog, state: CraftState): st
   )
     return '此装备另有尚未核对的品质或词缀增效规则。'
   return null
+}
+
+/** 精确来源映射及固定属性声明，不从任意品质文本推断扩展上限。 */
+function hasBreachQualityRule(catalog: CraftCatalog, base: CatalogBase): boolean {
+  const mod = catalog.modifiers.find((entry) => entry.id === 'EssenceBreach')
+  return (
+    ['Ring', 'Amulet'].includes(base.type) &&
+    essenceSourceHash(catalog) !== null &&
+    mod?.kind === 'prefix' &&
+    mod.group === 'LocalMaximumQuality' &&
+    mod.lines.length === 1 &&
+    mod.lines[0] === '+20% to Maximum Quality' &&
+    catalog.essences?.some(
+      (essence) =>
+        essence.id === 'Metadata/Items/Currency/CurrencyCorruptedEssenceBreach' &&
+        Object.hasOwn(essence.mods, base.type) &&
+        essence.mods[base.type] === mod.id,
+    ) === true
+  )
+}
+
+function isBreachQualityAffix(
+  catalog: CraftCatalog,
+  base: CatalogBase,
+  affix: CraftAffix,
+): boolean {
+  return (
+    affix.crafted === true &&
+    affix.modId === 'EssenceBreach' &&
+    affix.lines.length === 1 &&
+    affix.lines[0] === '+20% to Maximum Quality' &&
+    hasBreachQualityRule(catalog, base)
+  )
+}
+
+/** 移除最大品质工艺后仍可保留的已有量；不是施加催化剂的资格。 */
+export function catalystStoredQualityLimit(
+  catalog: CraftCatalog,
+  base: CatalogBase,
+): number | null {
+  const limit = catalystQualityLimit(base)
+  return limit === null ? null : limit + (hasBreachQualityRule(catalog, base) ? 20 : 0)
+}
+
+/** 完整状态验证后读取当前施加上限，不能把已有超限量当成新的施加能力。 */
+export function catalystActiveQualityLimit(
+  catalog: CraftCatalog,
+  state: CraftState,
+): CraftResult<number> {
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  const base = catalog.bases.find((entry) => entry.id === checked.value.baseId)
+  const limit = base ? catalystQualityLimit(base) : null
+  if (limit === null || !base) return { ok: false, error: '此基底的催化品质规则尚未支持。' }
+  const qualityAffixes = checked.value.affixes.filter((affix) =>
+    affix.lines.some((line) => /quality/i.test(line)),
+  )
+  if (qualityAffixes.length === 0) return { ok: true, value: limit }
+  const affix = qualityAffixes[0]
+  if (qualityAffixes.length !== 1 || !affix || !isBreachQualityAffix(catalog, base, affix))
+    return { ok: false, error: '此装备具有尚未核对的特殊品质规则，暂不提供催化估算。' }
+  return { ok: true, value: limit + 20 }
 }

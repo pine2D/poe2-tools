@@ -119,12 +119,14 @@ describe('裂隙精华制作后的催化预览', () => {
         affixes: state.affixes.map(({ modId, lines }) => ({ modId, lines })),
       }).ok,
     ).toBe(false)
-    // 本次仅修复只读预览，不放宽已有催化品质状态的特殊规则。
-    expect(catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality: 20 } })).toEqual({
-      ok: false,
-      error: '此装备另有尚未核对的品质或词缀增效规则。',
-    })
-    expect(catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality: 40 } }).ok).toBe(
+    for (const quality of [20, 40])
+      expect(
+        catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality } }),
+      ).toMatchObject({
+        ok: true,
+        value: { maxQuality: 40 },
+      })
+    expect(catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality: 41 } }).ok).toBe(
       false,
     )
   })
