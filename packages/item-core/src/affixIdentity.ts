@@ -51,17 +51,17 @@ export function enableCraftAffixIdentity(
   if (!checked.ok) return checked
   if (Object.hasOwn(checked.value, 'nextAffixId'))
     return { ok: true, value: checked.value as IdentifiedCraftState }
-  return {
-    ok: true,
-    value: {
-      ...checked.value,
-      nextAffixId: checked.value.affixes.length + 1,
-      affixes: checked.value.affixes.map((affix, index) => ({
-        ...affix,
-        affixId: `a${index + 1}`,
-      })),
-    },
+  const identified: IdentifiedCraftState = {
+    ...checked.value,
+    nextAffixId: checked.value.affixes.length + 1,
+    affixes: checked.value.affixes.map((affix, index) => ({
+      ...affix,
+      affixId: `a${index + 1}`,
+    })),
   }
+  const confirmed = createCraftState(catalog, identified)
+  if (!confirmed.ok) return { ok: false, error: `此状态尚不能启用词缀实例：${confirmed.error}` }
+  return { ok: true, value: confirmed.value as IdentifiedCraftState }
 }
 
 export function resolveCraftAffix(
