@@ -2,6 +2,7 @@ import type { CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { validateCraftFractureTarget } from './fractureTargets'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { readTargetDefinitionValues } from './targetDefinitionValues'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
@@ -275,9 +276,32 @@ function readTargetDefinitions(
     byId.set(entry.targetId, entry.modId)
     targets.push({ targetId: entry.targetId, modId: entry.modId })
   }
-  const alternatives: CraftTargetAlternative[] = []
-  const memberIds = new Map(targets.map((target) => [target.targetId, new Set([target.modId])]))
+  if (
+    Object.hasOwn(input, 'fracturedTargetId') &&
+    (typeof input.fracturedTargetId !== 'string' || !byId.has(input.fracturedTargetId))
+  )
+    return fail('破裂要求必须关联一个已有目标。')
+  const minimum = input.minimumTargetCount as number | undefined
+  const fractured = input.fracturedTargetId as string | undefined
+  let current: CraftState | undefined
+  if (state) {
+    const checked = createCraftState(catalog, state)
+    if (!checked.ok) return checked
+    current = checked.value
+  }
+  const ids = targets.map((target) => target.modId)
+  // 共存资格仍遵守已核对规则；目标关联本身不再经旧格式往返。
+  const primary = validateCraftTargets(
+    catalog,
+    baseId,
+    ids,
+    minimum,
+    fractured === undefined ? undefined : byId.get(fractured),
+  )
+  if (!primary.ok) return primary
+  const alternatives: CraftTargetDefinitionAlternative[] = []
   const seenAlternatives = new Set<string>()
+  const modById = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   for (const entry of input.alternatives) {
     if (
       !record(entry, ['targetId', 'modIds']) ||
@@ -285,54 +309,57 @@ function readTargetDefinitions(
       !byId.has(entry.targetId) ||
       seenAlternatives.has(entry.targetId) ||
       !Array.isArray(entry.modIds) ||
-      !entry.modIds.every((id): id is string => typeof id === 'string')
+      entry.modIds.length < 1 ||
+      entry.modIds.length > 31 ||
+      !entry.modIds.every((id): id is string => typeof id === 'string') ||
+      new Set(entry.modIds).size !== entry.modIds.length ||
+      entry.modIds.includes(byId.get(entry.targetId) as string)
     )
-      return fail('替代档位必须关联唯一的已有目标。')
+      return fail('替代档位必须关联唯一的已有目标，并包含 1–31 个不重复的其他词缀 ID。')
+    const index = targets.findIndex((target) => target.targetId === entry.targetId)
+    const mod = modById.get(ids[index] as string)
+    for (const id of entry.modIds) {
+      const alternative = modById.get(id)
+      if (!alternative || alternative.kind !== mod?.kind || alternative.group !== mod.group)
+        return fail('替代档位必须与主目标属于同一词缀类型和冲突组。')
+      const replaced = ids.map((primaryId, position) => (position === index ? id : primaryId))
+      const checked = validateCraftTargets(catalog, baseId, replaced, minimum)
+      if (!checked.ok) return checked
+    }
     seenAlternatives.add(entry.targetId)
-    for (const id of entry.modIds) memberIds.get(entry.targetId)?.add(id)
-    alternatives.push({
-      targetModId: byId.get(entry.targetId) as string,
-      modIds: [...entry.modIds],
-    })
+    alternatives.push({ targetId: entry.targetId, modIds: [...entry.modIds] })
   }
-  const values: Record<string, unknown>[] = []
-  const seenValues = new Set<string>()
-  for (const entry of input.values) {
-    if (
-      !record(entry, ['targetId', 'modId', 'bounds', 'basis']) ||
-      typeof entry.targetId !== 'string' ||
-      typeof entry.modId !== 'string' ||
-      !memberIds.get(entry.targetId)?.has(entry.modId)
+  if (fractured !== undefined) {
+    const modId = byId.get(fractured) as string
+    const accepted = alternatives.find((entry) => entry.targetId === fractured)
+    const checked = validateCraftFractureTarget(
+      catalog,
+      [modId],
+      accepted ? [{ targetModId: modId, modIds: accepted.modIds }] : [],
+      modId,
     )
-      return fail('数值条件必须关联对应目标的主类型或替代档位，不能跨目标关联。')
-    const key = JSON.stringify([entry.targetId, entry.modId])
-    if (seenValues.has(key)) return fail('同一目标的同类型数值条件不能重复。')
-    seenValues.add(key)
-    const { targetId: _, ...goal } = entry
-    values.push(goal)
+    if (!checked.ok) return checked
   }
-  if (
-    Object.hasOwn(input, 'fracturedTargetId') &&
-    (typeof input.fracturedTargetId !== 'string' || !byId.has(input.fracturedTargetId))
+  const values = readTargetDefinitionValues(
+    catalog,
+    baseId,
+    targets,
+    alternatives,
+    input.values,
+    current === undefined ? undefined : { state: current },
   )
-    return fail('破裂要求必须关联一个已有目标。')
-  const legacy = {
-    targetModIds: targets.map((target) => target.modId),
-    targetAlternatives: alternatives,
-    targetValues: values,
-    ...(typeof input.fracturedTargetId === 'string'
-      ? { targetFracturedModId: byId.get(input.fracturedTargetId) }
-      : {}),
-    ...(Object.hasOwn(input, 'minimumTargetCount')
-      ? { minimumTargetCount: input.minimumTargetCount }
-      : {}),
+  if (!values.ok) return values
+  return {
+    ok: true,
+    value: {
+      nextTargetId: input.nextTargetId,
+      targets,
+      alternatives,
+      values: values.value,
+      ...(fractured === undefined ? {} : { fracturedTargetId: fractured }),
+      ...(minimum === undefined ? {} : { minimumTargetCount: minimum }),
+    },
   }
-  const checked = state
-    ? checkedLegacyConfig(catalog, state, legacy)
-    : readLegacyConfig(catalog, baseId, legacy)
-  return checked.ok
-    ? { ok: true, value: withTargetIds(checked.value, targets, input.nextTargetId) }
-    : checked
 }
 
 /** 包内部使用：调用方须先验证定义；投影不会改变目标或关联数组的顺序。 */

@@ -9,11 +9,7 @@ import {
 } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { desecrationSourceHash } from './desecration'
-import {
-  matchesTargetInterval,
-  minimumCraftTargetRolls,
-  projectCraftTargetValues,
-} from './effectiveTargetValues'
+import { matchesTargetInterval, minimumCraftTargetRolls } from './effectiveTargetValues'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { validateCraftFractureTarget } from './fractureTargets'
 import {
@@ -41,6 +37,7 @@ import {
   removableCraftAffixes,
 } from './rehearsal'
 import { inspectCraftTargetInstances, lostCraftTargetIds } from './targetProgress'
+import { readCraftTargetValue } from './targetValueValidation'
 
 export interface CraftTargetBound {
   index: number
@@ -406,7 +403,6 @@ function readTargetValues(
   ])
   if (!Array.isArray(values) || values.length > 192)
     return { ok: false, error: '数值目标必须是最多 192 项条件的数组。' }
-  const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const seen = new Set<string>()
   const result: CraftTargetValues[] = []
   for (const value of values) {
@@ -421,69 +417,10 @@ function readTargetValues(
       value.bounds.length > 32
     )
       return { ok: false, error: '数值目标必须关联唯一的已选词缀，并包含 1–32 个条件。' }
-    const mod = byId.get(value.modId)
-    if (mod === undefined) return { ok: false, error: '数值目标词缀不在制作目录中。' }
-    const ranges = inspectNumericLines(mod.lines)
-    if (!ranges.ok) return ranges
-    if (value.basis === 'effective' && runtime) {
-      const state = runtime.state
-      if (!state || state.baseId !== baseId)
-        return { ok: false, error: '有效值目标需要当前装备状态。' }
-      const actuals = state.affixes
-        .filter((affix) => affix.modId === mod.id)
-        .map((affix) => affix.lines)
-      const projections = (actuals.length ? actuals : [undefined]).map((actual) =>
-        projectCraftTargetValues(
-          catalog,
-          state,
-          mod,
-          { modId: mod.id, basis: 'effective', bounds: [] },
-          actual,
-        ),
-      )
-      const projection = projections.find((entry) => entry.ok) ?? projections[0]
-      if (projection && !projection.ok) return projection
-    }
-    const indices = new Set<number>()
-    const bounds: CraftTargetBound[] = []
-    for (const bound of value.bounds) {
-      if (
-        !hasOnlyKeys(bound, ['index', 'min', 'max']) ||
-        typeof bound.index !== 'number' ||
-        !Number.isInteger(bound.index) ||
-        bound.index < 0 ||
-        indices.has(bound.index)
-      )
-        return { ok: false, error: '数值条件必须使用唯一的非负整数范围索引。' }
-      const range = ranges.value[bound.index]
-      if (range === undefined) return { ok: false, error: '数值条件索引不在词缀的可识别范围内。' }
-      const hasMin = Object.hasOwn(bound, 'min')
-      const hasMax = Object.hasOwn(bound, 'max')
-      if (!hasMin && !hasMax) return { ok: false, error: '数值条件至少需要一个上限或下限。' }
-      const copy: CraftTargetBound = { index: bound.index }
-      for (const key of ['min', 'max'] as const) {
-        if (!Object.hasOwn(bound, key)) continue
-        const threshold = bound[key]
-        if (
-          typeof threshold !== 'number' ||
-          !Number.isFinite(threshold) ||
-          (value.basis !== 'effective' && (threshold < range.min || threshold > range.max))
-        )
-          return { ok: false, error: `数值条件必须是 ${range.min}–${range.max} 内的有限数值。` }
-        // 条件是比较阈值，不受演练生成值的显示网格约束。
-        copy[key] = threshold
-      }
-      if (copy.min !== undefined && copy.max !== undefined && copy.min > copy.max)
-        return { ok: false, error: '数值条件下限不能大于上限。' }
-      indices.add(bound.index)
-      bounds.push(copy)
-    }
+    const checked = readCraftTargetValue(catalog, baseId, value, runtime)
+    if (!checked.ok) return checked
     seen.add(value.modId)
-    result.push({
-      modId: value.modId,
-      bounds,
-      ...(value.basis === 'effective' ? { basis: 'effective' as const } : {}),
-    })
+    result.push(checked.value)
   }
   return { ok: true, value: result }
 }
