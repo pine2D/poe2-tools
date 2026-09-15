@@ -1,5 +1,9 @@
 import { type IdentifiedCraftState, isIdentifiedCraftState } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
+import {
+  CORRUPTION_STRATEGY_RULES_VERSION,
+  requiresCorruptionStrategyProjectVersion,
+} from './corruptionStrategyProjectVersion'
 import { MAX_CRAFT_PROJECT_BYTES, readNativeTargetProjectProjection } from './craftProject'
 import {
   IDENTITY_CRAFT_RULES_VERSION,
@@ -41,8 +45,10 @@ import { loadWorkbenchProject } from './workbenchProject'
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
 export const FLUX_CRAFT_RULES_VERSION = 'basic-2026-09-12-v75'
 export {
+  CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
+  requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
 }
@@ -63,6 +69,7 @@ export interface TargetCraftProject
     | typeof FLUX_CRAFT_RULES_VERSION
     | typeof PERFECT_FLUX_CRAFT_RULES_VERSION
     | typeof EXTRACTION_CRAFT_RULES_VERSION
+    | typeof CORRUPTION_STRATEGY_RULES_VERSION
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
@@ -226,10 +233,14 @@ export function parseTargetCraftProject(
       FLUX_CRAFT_RULES_VERSION,
       PERFECT_FLUX_CRAFT_RULES_VERSION,
       EXTRACTION_CRAFT_RULES_VERSION,
+      CORRUPTION_STRATEGY_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
-    return { ok: false, error: '目标项目必须使用精确的 v74、v75、v76 或 v77 规则版本。' }
-  const extraction = original.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION
+    return { ok: false, error: '目标项目必须使用精确的 v74、v75、v76、v77 或 v78 规则版本。' }
+  const corruptionStrategy = original.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION
+  if (!corruptionStrategy && requiresCorruptionStrategyProjectVersion(original))
+    return { ok: false, error: '腐化材料指引及腐化状态条件必须使用 v78 项目，包括未执行阶段。' }
+  const extraction = corruptionStrategy || original.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION
   if (!extraction && requiresExtractionProjectVersion(original))
     return { ok: false, error: '萃取石及相关指引或报价必须使用 v77 项目，包括未来历史。' }
   const perfectFlux = extraction || original.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION
@@ -284,7 +295,14 @@ export function parseTargetCraftProject(
     return { ok: false, error: '目标项目结构过深，无法建立可验证的来源投影。' }
   }
   const replay = native
-    ? readNativeTargetProjectProjection(projection, catalog, dictionary, perfectFlux, extraction)
+    ? readNativeTargetProjectProjection(
+        projection,
+        catalog,
+        dictionary,
+        perfectFlux,
+        extraction,
+        corruptionStrategy,
+      )
     : null
   if (replay && !replay.ok) return replay
   if (replay?.ok && !replay.value.states.every(isIdentifiedCraftState))
@@ -305,11 +323,13 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = extraction
-      ? EXTRACTION_CRAFT_RULES_VERSION
-      : perfectFlux
-        ? PERFECT_FLUX_CRAFT_RULES_VERSION
-        : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = corruptionStrategy
+      ? CORRUPTION_STRATEGY_RULES_VERSION
+      : extraction
+        ? EXTRACTION_CRAFT_RULES_VERSION
+        : perfectFlux
+          ? PERFECT_FLUX_CRAFT_RULES_VERSION
+          : FLUX_CRAFT_RULES_VERSION
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
   }
   if (!equivalentProjectJSON(original, project))

@@ -7,7 +7,9 @@ import type {
 } from '@poe2-tools/item-core'
 import { useEffect, useRef } from 'react'
 import { AlloyCraftPanel } from './AlloyCraftPanel'
+import { ArchitectPanel } from './ArchitectPanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
+import { CorruptionPanel } from './CorruptionPanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { ExtractionPanel } from './ExtractionPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
@@ -42,6 +44,30 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       <button type="button" onClick={onCancel}>
         取消指引结果选择
       </button>
+      {action.kind === 'vaal' ? (
+        <CorruptionPanel
+          {...props}
+          draft={null}
+          busy={false}
+          canApply={false}
+          onPreview={(step) => {
+            if (step) props.onPreview(step)
+          }}
+          onApply={() => undefined}
+        />
+      ) : null}
+      {action.kind === 'architect' ? (
+        <ArchitectPanel
+          {...props}
+          draft={null}
+          busy={false}
+          canApply={false}
+          onPreview={(step) => {
+            if (step) props.onPreview(step)
+          }}
+          onApply={() => undefined}
+        />
+      ) : null}
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
       ) : null}

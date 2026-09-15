@@ -10,6 +10,7 @@ import {
   BONE_RULES,
   type BoneCraftOperation,
   type CatalogMod,
+  CORRUPTION_STRATEGY_RULES_VERSION,
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
   CRAFT_OMEN_RULES,
@@ -70,6 +71,7 @@ import {
   readCraftGrantedSkillLevel,
   readNumericValues,
   removableCraftAffixes,
+  requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   resolveCraftAffix,
@@ -432,6 +434,14 @@ export function RehearsalPanel({
   const emotionEntryRef = useRef<HTMLElement>(null)
   const essenceEntryRef = useRef<HTMLElement>(null)
   const strategyTriggerRef = useRef<HTMLElement | null>(null)
+  const corruptionStrategyRef = useRef(false)
+  const restoreCorruptionFocusRef = useRef(false)
+  useEffect(() => {
+    if (!socketDraft && restoreCorruptionFocusRef.current) {
+      restoreCorruptionFocusRef.current = false
+      strategyTriggerRef.current?.focus()
+    }
+  }, [socketDraft])
   const guaranteedOriginRef = useRef<{
     kind: 'essence' | 'liquid-emotion' | 'alloy' | 'flux' | 'perfect-flux' | 'extraction'
     strategy: boolean
@@ -486,6 +496,20 @@ export function RehearsalPanel({
   const [query, setQuery] = useState('')
   const [message, setMessage] = useState(initial.ok ? '' : initial.error)
   const current = history[cursor]?.state
+  const corruptionContextRef = useRef({ catalog, current })
+  useEffect(() => {
+    const previous = corruptionContextRef.current
+    if (previous.catalog === catalog && previous.current === current) return
+    corruptionContextRef.current = { catalog, current }
+    setSocketDraft((pending) =>
+      pending?.kind === 'vaal' || pending?.kind === 'architect' ? null : pending,
+    )
+    setStrategyResultAction((action) =>
+      action?.kind === 'vaal' || action?.kind === 'architect' ? null : action,
+    )
+    corruptionStrategyRef.current = false
+    restoreCorruptionFocusRef.current = false
+  }, [catalog, current])
   const destroyedHeading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     if (current?.destroyed) destroyedHeading.current?.focus()
@@ -681,6 +705,17 @@ export function RehearsalPanel({
     if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
     if ('kind' in operation) {
+      if (operation.kind === 'vaal' || operation.kind === 'architect') {
+        const checked = applyCraftStep(catalog, current, operation)
+        if (!checked.ok) {
+          setMessage(checked.error)
+          return
+        }
+        setOmen(undefined)
+        setSocketDraft(operation)
+        setMessage('')
+        return
+      }
       if (operation.kind === 'fracture') {
         startFracture(operation)
         return
@@ -800,6 +835,8 @@ export function RehearsalPanel({
     setMessage('')
   }
   const clearTargetDrafts = () => {
+    corruptionStrategyRef.current = false
+    restoreCorruptionFocusRef.current = false
     if (strategy?.flow) setStrategyStartStep(cursor)
     setStrategyResultAction(null)
     setDraft(null)
@@ -1093,11 +1130,13 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const project: TargetCraftProject = requiresExtractionProjectVersion(projectConfig)
-    ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
-    : requiresPerfectFluxProjectVersion(projectConfig)
-      ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
-      : projectConfig
+  const project: TargetCraftProject = requiresCorruptionStrategyProjectVersion(projectConfig)
+    ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
+    : requiresExtractionProjectVersion(projectConfig)
+      ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
+      : requiresPerfectFluxProjectVersion(projectConfig)
+        ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+        : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
         essence: '精华',
@@ -1409,10 +1448,15 @@ export function RehearsalPanel({
           {...(translateLine ? { translateLine } : {})}
           fractureLabel={fractureLabel}
           onPreview={(operation) => {
+            corruptionStrategyRef.current =
+              'kind' in operation && (operation.kind === 'vaal' || operation.kind === 'architect')
             setStrategyResultAction(null)
             startRoute(operation)
           }}
-          onCancel={() => setStrategyResultAction(null)}
+          onCancel={() => {
+            setStrategyResultAction(null)
+            strategyTriggerRef.current?.focus()
+          }}
         />
       ) : null}
       <CraftTargets
@@ -1971,52 +2015,64 @@ export function RehearsalPanel({
         translations={translations}
         {...(translateLine ? { translateLine } : {})}
       />
-      <ArchitectPanel
-        key={`architect:${targetSession}:${cursor}:${history[cursor]?.id}`}
-        catalog={catalog}
-        state={current}
-        {...(translateLine ? { translateLine } : {})}
-        draft={socketDraft?.kind === 'architect' ? socketDraft : null}
-        busy={Boolean(
-          draft ||
-            removalCurrency ||
-            guaranteedDraft ||
-            boneDraft ||
-            fractureDraft ||
-            (socketDraft && socketDraft.kind !== 'architect'),
-        )}
-        canApply={preview?.ok === true}
-        onPreview={(step) => {
-          setSocketDraft(step)
-          setMessage('')
-        }}
-        onApply={() => {
-          if (socketDraft?.kind === 'architect') applyStep(socketDraft)
-        }}
-      />
-      <CorruptionPanel
-        key={`corruption:${targetSession}:${cursor}:${history[cursor]?.id}`}
-        catalog={catalog}
-        state={current}
-        {...(translateLine ? { translateLine } : {})}
-        draft={socketDraft?.kind === 'vaal' ? socketDraft : null}
-        busy={Boolean(
-          draft ||
-            removalCurrency ||
-            guaranteedDraft ||
-            boneDraft ||
-            fractureDraft ||
-            (socketDraft && socketDraft.kind !== 'vaal'),
-        )}
-        canApply={preview?.ok === true}
-        onPreview={(step) => {
-          setSocketDraft(step)
-          setMessage('')
-        }}
-        onApply={() => {
-          if (socketDraft?.kind === 'vaal') applyStep(socketDraft)
-        }}
-      />
+      {!strategyResultAction ? (
+        <ArchitectPanel
+          key={`architect:${targetSession}:${cursor}:${history[cursor]?.id}`}
+          catalog={catalog}
+          state={current}
+          {...(translateLine ? { translateLine } : {})}
+          draft={socketDraft?.kind === 'architect' ? socketDraft : null}
+          busy={Boolean(
+            draft ||
+              removalCurrency ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft ||
+              (socketDraft && socketDraft.kind !== 'architect'),
+          )}
+          canApply={preview?.ok === true}
+          onPreview={(step) => {
+            setSocketDraft(step)
+            setMessage('')
+            if (!step && corruptionStrategyRef.current) {
+              corruptionStrategyRef.current = false
+              restoreCorruptionFocusRef.current = true
+            }
+          }}
+          onApply={() => {
+            if (socketDraft?.kind === 'architect') applyStep(socketDraft)
+          }}
+        />
+      ) : null}
+      {!strategyResultAction ? (
+        <CorruptionPanel
+          key={`corruption:${targetSession}:${cursor}:${history[cursor]?.id}`}
+          catalog={catalog}
+          state={current}
+          {...(translateLine ? { translateLine } : {})}
+          draft={socketDraft?.kind === 'vaal' ? socketDraft : null}
+          busy={Boolean(
+            draft ||
+              removalCurrency ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft ||
+              (socketDraft && socketDraft.kind !== 'vaal'),
+          )}
+          canApply={preview?.ok === true}
+          onPreview={(step) => {
+            setSocketDraft(step)
+            setMessage('')
+            if (!step && corruptionStrategyRef.current) {
+              corruptionStrategyRef.current = false
+              restoreCorruptionFocusRef.current = true
+            }
+          }}
+          onApply={() => {
+            if (socketDraft?.kind === 'vaal') applyStep(socketDraft)
+          }}
+        />
+      ) : null}
       <SocketPanel
         key={`${targetSession}:${cursor}:${history[cursor]?.id}`}
         catalog={catalog}

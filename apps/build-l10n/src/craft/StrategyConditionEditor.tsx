@@ -11,6 +11,7 @@ import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 export const CONDITION_LABELS = {
   quality: '品质类型与范围',
+  'corruption-state': '腐化状态',
   'granted-skill-level': '装备固有技能最高等级',
   'item-property': '装备面板范围',
   always: '任何状态',
@@ -28,6 +29,7 @@ export function defaultCondition(
   kind: DefinitionCraftStrategyLeafCondition['kind'],
   targetIds: readonly string[] = [],
 ): DefinitionCraftStrategyLeafCondition | null {
+  if (kind === 'corruption-state') return { kind, value: 'none' }
   if (kind === 'quality') return { kind, source: 'ordinary', min: 0 }
   if (kind === 'item-property') return { kind, property: 'physicalDps', min: 0 }
   if (kind === 'selected-targets')
@@ -179,6 +181,25 @@ export function StrategyConditionEditor({
           {...(translateLine ? { translateLine } : {})}
           onChange={(value) => onChange(value)}
         />
+      ) : null}
+      {condition.kind === 'corruption-state' ? (
+        <label>
+          腐化状态
+          <select
+            aria-label={`${valuePrefix} 腐化状态`}
+            value={condition.value}
+            onChange={(event) =>
+              onChange({
+                kind: 'corruption-state',
+                value: event.target.value as 'none' | 'once' | 'twice',
+              })
+            }
+          >
+            <option value="none">未腐化</option>
+            <option value="once">仅一次腐化</option>
+            <option value="twice">已二重腐化</option>
+          </select>
+        </label>
       ) : null}
       {condition.kind === 'rarity' ? (
         <label>

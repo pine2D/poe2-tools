@@ -4,6 +4,7 @@ import { type BoneOmenConfig, boneOmenError, isBoneOmenConfig } from './boneOmen
 import { type CraftBone, isCraftBone } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
+import { applyCraftStep } from './craftSteps'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCraftMode } from './essences'
@@ -49,6 +50,8 @@ export type CraftStrategyAction =
   | ({ kind: 'desecrate'; boneId: CraftBone } & BoneOmenConfig)
   | { kind: 'reveal' }
   | { kind: 'fracture' }
+  | { kind: 'vaal' }
+  | { kind: 'architect' }
 export type CraftStrategyWorkAction = Exclude<CraftStrategyAction, { kind: 'stop' | 'jump' }>
 function keys(value: unknown, allowed: string[]): value is Record<string, unknown> {
   return (
@@ -88,6 +91,8 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
       value.kind === 'jump' ||
       value.kind === 'reveal' ||
       value.kind === 'fracture' ||
+      value.kind === 'vaal' ||
+      value.kind === 'architect' ||
       value.kind === 'artificer') &&
     keys(value, ['kind'])
   )
@@ -172,6 +177,17 @@ export function checkCraftStrategyAction(
   action: CraftStrategyWorkAction,
 ): CraftResult<null> {
   const ok: CraftResult<null> = { ok: true, value: null }
+  if (action.kind === 'vaal' || action.kind === 'architect') {
+    if (!readCraftStrategyAction(action)) return { ok: false, error: '腐化材料动作只能包含 kind。' }
+    const result = applyCraftStep(
+      catalog,
+      state,
+      action.kind === 'vaal'
+        ? { kind: 'vaal', outcome: 'unchanged' }
+        : { kind: 'architect', outcome: 'destroy' },
+    )
+    return result.ok ? ok : result
+  }
   if (action.kind === 'extraction') {
     if (!isExtractionCraftOperation(action)) return { ok: false, error: '萃取石动作字段无效。' }
     const result = prepareExtractionCraft(catalog, state)

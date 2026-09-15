@@ -1,11 +1,13 @@
 import type { CraftCatalog } from './catalog'
 import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
 import {
+  CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   FLUX_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
   type RestoredTargetCraftProject,
+  requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   serializeTargetCraftProject,
@@ -40,7 +42,8 @@ export function loadTargetWorkbenchProject(
     (value.rulesVersion === TARGET_CRAFT_RULES_VERSION ||
       value.rulesVersion === FLUX_CRAFT_RULES_VERSION ||
       value.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION ||
-      value.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION)
+      value.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION ||
+      value.rulesVersion === CORRUPTION_STRATEGY_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
     : upgradeTargetCraftProject(text, catalog, dictionary)
 }
@@ -76,7 +79,8 @@ export function reuseTargetCraftPlan(
   if (source.fluxCatalogSignature !== undefined) {
     if (
       next.rulesVersion !== PERFECT_FLUX_CRAFT_RULES_VERSION &&
-      next.rulesVersion !== EXTRACTION_CRAFT_RULES_VERSION
+      next.rulesVersion !== EXTRACTION_CRAFT_RULES_VERSION &&
+      next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION
     )
       next.rulesVersion = FLUX_CRAFT_RULES_VERSION
     next.fluxCatalogSignature = source.fluxCatalogSignature
@@ -90,12 +94,17 @@ export function reuseTargetCraftPlan(
   if (source.strategy?.flow) next.strategyStartStep = next.cursor
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
-  if (requiresExtractionProjectVersion(next)) next.rulesVersion = EXTRACTION_CRAFT_RULES_VERSION
-  else if (
-    next.rulesVersion !== EXTRACTION_CRAFT_RULES_VERSION &&
-    requiresPerfectFluxProjectVersion(next)
-  )
-    next.rulesVersion = PERFECT_FLUX_CRAFT_RULES_VERSION
+  if (next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION) {
+    if (requiresCorruptionStrategyProjectVersion(next))
+      next.rulesVersion = CORRUPTION_STRATEGY_RULES_VERSION
+    else if (requiresExtractionProjectVersion(next))
+      next.rulesVersion = EXTRACTION_CRAFT_RULES_VERSION
+    else if (
+      next.rulesVersion !== EXTRACTION_CRAFT_RULES_VERSION &&
+      requiresPerfectFluxProjectVersion(next)
+    )
+      next.rulesVersion = PERFECT_FLUX_CRAFT_RULES_VERSION
+  }
   for (const key of [
     'essenceSourceHash',
     'liquidEmotionSourceHash',

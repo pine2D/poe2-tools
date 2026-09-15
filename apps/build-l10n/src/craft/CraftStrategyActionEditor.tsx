@@ -36,6 +36,8 @@ export function strategyActionLabel(
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   if (action.kind === 'perfect-flux')
     return `${local('Perfect Flux')}（操作前最高等级 ${action.previousMaxLevel} → 20）`
+  if (action.kind === 'vaal') return local('Vaal Orb')
+  if (action.kind === 'architect') return local("Architect's Orb")
   if (action.kind === 'extraction') return local('Orb of Extraction')
   if (action.kind === 'stop') return '停止'
   if (action.kind === 'jump') return '仅判断并跳转'
@@ -151,7 +153,9 @@ export function CraftStrategyActionEditor({
               value === 'fracture' ||
               value === 'reveal' ||
               value === 'artificer' ||
-              value === 'extraction'
+              value === 'extraction' ||
+              value === 'vaal' ||
+              value === 'architect'
             )
               onChange({ kind: value })
             else if (value === 'socket') {
@@ -191,6 +195,8 @@ export function CraftStrategyActionEditor({
             溶剂转换
           </option>
           <option value="perfect-flux">完美溶剂：装备技能升至 20</option>
+          <option value="vaal">瓦尔石：选择本次腐化结果</option>
+          <option value="architect">建筑师宝珠：选择二重腐化结果</option>
           <option value="extraction">萃取石：摧毁装备并返还镶嵌物</option>
           <option value="desecrate">骨骼施加</option>
           <option value="liquid-emotion" disabled={!emotions.length || type !== 'Jewel'}>

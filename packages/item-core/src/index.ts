@@ -133,10 +133,12 @@ export { parseIdentityCraftProject } from './craftProjectIdentityReader'
 export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 export type { RestoredTargetCraftProject, TargetCraftProject } from './craftProjectTargets'
 export {
+  CORRUPTION_STRATEGY_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   FLUX_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
+  requiresCorruptionStrategyProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   serializeTargetCraftProject,

@@ -1,5 +1,11 @@
 # 数据源登记表
 
+### 腐化收尾指引（2026-09-16，实施前核对）
+
+[CoE 路线图](https://beta.craftofexile.com/roadmap)与[公开更新记录](https://beta.craftofexile.com/changelog)用于核对制作与条件模拟之间的操作衔接，未读取或复制其执行代码、权重或数据文件。本轮沿本表既有瓦尔石及建筑师宝珠规则，把已实现的手选结果接入指引；未腐化、仅一次腐化与二重腐化直接取自已验证状态，不引入概率或新数据源。
+
+同期查阅 [GGG 0.3.0 公告](https://www.pathofexile.com/forum/view-thread/3826682)、[Lolcohol 亵渎指南](https://mobalytics.gg/poe-2/guides/abyss-crafting)及社区的腐化后揭示资料，确认需区分“施加亵渎”与“揭示已有亵渎”；这些概括性资料不足以独立证明当前单占位模型下的全部腐化交错、固定候选及回响交互，本轮保持既有操作范围，不把 CoE 的开放状态当作游戏规则证明。
+
 ### 萃取石与返还镶嵌物（2026-09-16，实施前登记）
 
 [PoE2DB 萃取石](https://poe2db.tw/us/Orb_of_Extraction)与[绑定镶嵌物说明](https://poe2db.tw/us/Socket-bound_Augments)作为 gray 人工规则参考：材料摧毁装备并返还其中非 Socket-bound 镶嵌物；绑定镶嵌物不可取出或返还。[PoE2 Wiki 萃取石](https://www.poe2wiki.net/wiki/Orb_of_Extraction)的已索引机制说明另记可用于腐化装备；直连正文受站点验证限制，记录该证据边界，不将网页提取成功等同于取得正文。名称复用已登记三服官方 static 的 Orb of Extraction／萃取石，材料标识为 `Metadata/Items/Currency/CurrencyIncursionExtractAllSocketablesCurrency`。返还身份及绑定标志使用现有固定 PoB2 MIT 镶嵌目录，不新增抓取、第三方数据文件、价格或权重。

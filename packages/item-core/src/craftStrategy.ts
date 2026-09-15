@@ -275,6 +275,11 @@ export function evaluateCraftStrategyWithTargets(
   }
   const propertyValues = new Map<CraftProperty, number | null>()
   const matches = (condition: CraftStrategyCondition): boolean | null => {
+    if (condition.kind === 'corruption-state')
+      return (
+        (checked.value.twiceCorrupted ? 'twice' : checked.value.corrupted ? 'once' : 'none') ===
+        condition.value
+      )
     if (condition.kind === 'granted-skill-level') {
       const skill = readCraftGrantedSkillLevel(catalog, checked.value)
       const level = skill.ok ? skill.value.level : null

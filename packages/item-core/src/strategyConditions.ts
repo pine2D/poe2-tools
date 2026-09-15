@@ -4,6 +4,7 @@ import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
 
 export type CraftStrategyLeafCondition =
+  | { kind: 'corruption-state'; value: 'none' | 'once' | 'twice' }
   | { kind: 'granted-skill-level'; min: number; max?: number }
   | {
       kind: 'quality'
@@ -124,6 +125,12 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
   )
     return { kind: 'desecration-stage', value: value.value }
   if (value.kind === 'always' && keys(value, ['kind'])) return { kind: 'always' }
+  if (
+    value.kind === 'corruption-state' &&
+    keys(value, ['kind', 'value']) &&
+    (value.value === 'none' || value.value === 'once' || value.value === 'twice')
+  )
+    return { kind: 'corruption-state', value: value.value }
   if (
     value.kind === 'rarity' &&
     keys(value, ['kind', 'value']) &&

@@ -15,6 +15,7 @@ import {
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
 import { isCatalystQuality } from './catalystQuality'
 import { isVaalCraftOperation } from './corruptionRules'
+import { requiresCorruptionStrategyProjectVersion } from './corruptionStrategyProjectVersion'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
 import { createCraftItemDictionary } from './craftDictionary'
 import { equivalentProjectJSON } from './craftProjectJSON'
@@ -630,8 +631,18 @@ export function readNativeTargetProjectProjection(
   dictionary: ItemDictionary,
   perfectFlux = false,
   extraction = false,
+  corruptionStrategy = false,
 ): CraftResult<RestoredCraftProject> {
-  return readCraftProject(text, catalog, dictionary, true, true, perfectFlux, extraction)
+  return readCraftProject(
+    text,
+    catalog,
+    dictionary,
+    true,
+    true,
+    perfectFlux,
+    extraction,
+    corruptionStrategy,
+  )
 }
 
 function readCraftProject(
@@ -642,6 +653,7 @@ function readCraftProject(
   native = false,
   perfectFlux = false,
   extraction = false,
+  corruptionStrategy = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -660,6 +672,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!corruptionStrategy && requiresCorruptionStrategyProjectVersion(value))
+    return fail('腐化材料指引及腐化状态条件必须使用 v78 项目，包括未执行阶段。')
   if (!extraction && requiresExtractionProjectVersion(value))
     return fail('萃取石及相关指引或报价必须使用 v77 项目，包括未来历史。')
   if (!perfectFlux && requiresPerfectFluxProjectVersion(value))
@@ -1945,6 +1959,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresCorruptionStrategyProjectVersion(project))
+    throw new Error('腐化材料指引及腐化状态条件必须使用 v78 项目。')
   if (requiresExtractionProjectVersion(project))
     throw new Error('萃取石及相关指引或报价必须使用 v77 项目。')
   if (requiresPerfectFluxProjectVersion(project))
