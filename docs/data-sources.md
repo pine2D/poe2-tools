@@ -1,5 +1,13 @@
 # 数据源登记表
 
+### 完美溶剂与技能显示边界（2026-09-16，调研）
+
+[PoE2DB Perfect Flux](https://poe2db.tw/us/Perfect_Flux)及其[通货列表](https://poe2db.tw/us/Stackable_Currency)作为 gray 人工规则参考：公开材料标识为 `Metadata/Items/Currency/CurrencyUpgradeInherentTo20`，效果为将装备上的技能升至 20 级。不把它与四种抗性溶剂或升级 Kalguuran 技能宝石的 Thaumaturgic Flux 合并。名称沿已登记、已缓存的三服官方 static 同一 ID `perfect-flux`：英文 Perfect Flux、国服“完美溶剂”、台服“完美熔劑”；没有新增译名数据或抓取适配器。
+
+[PoE2 Wiki Granted skills](https://www.poe2wiki.net/wiki/Granted_skills)作为 gray 人工机制线索，说明装备技能等级与角色实际可用等级可能不同。该页记载材料影响装备授予的全部技能，但多技能作用范围仍待独立核实；尚未取得可确认普通装备操作前后高级复制文本的第一手样本。[GGG 0.5.4 公告](https://www.pathofexile.com/forum/view-thread/3975218)的需求下调说明明确针对传奇装备，不能据此证明所有普通装备的显示变化。用户权杖原文的“等级 12（最高等级 13）”只证明导入时显示，不能推导使用材料后的显示等级、属性需求或技能加成结果。原文与新的装备技能结果需要分开建模；上述来源登记不代表此材料已经可以演练。未复制同行实现、整页内容、价格或权重。
+
+催化剂同期复核：[Quality](https://www.poe2wiki.net/wiki/Quality)与[Catalyst](https://www.poe2wiki.net/wiki/Catalyst)仅作为 gray 人工线索。物品等级影响品质增量的概括不足以建立逐颗消耗算法，检索到的聚合攻略混有旧上限和 PoE1 规则，未据此更新执行模型。用户已明确没有催化戒指／项链样本，不再重复索取；国服品质头与数值范围格式继续标为待真机核对。
+
 溶剂与破裂保护补充（2026-09-15）：新增 primary 人工规则依据 [GGG 0.5.1 Hotfix 8](https://www.pathofexile.com/forum/view-thread/3956720/filter-account-type/staff)，由 Alexander_GGG 于 2026-06-09 发布，明确禁止溶剂转换破裂词缀；同条也列出四种 Aldur 效果，不能据此推广到其他材料。早期玩家报告的破裂转换行为不能作为该修复后的执行规则。本文仅确认破裂词缀本身不可转换；混有普通抗性时是否允许操作、其他词缀的转换及无效果时的材料消耗仍需独立证据。工艺、亵渎等来源标记继续分别核对。不新增抓取适配器，不转载整页公告。
 
 溶剂材料身份另核对 [Chilling Flux](https://poe2db.tw/us/Chilling_Flux)、[Crackling Flux](https://poe2db.tw/us/Crackling_Flux)、[Void Flux](https://poe2db.tw/us/Void_Flux) 的公开 metadata ID，均按 gray 人工机制参考。独立 `data/craft/fluxes.json` 的 15 行、60 个成员只保存既有词缀 ID、域和关系来源，绑定固定 `ModItem.lua`、`ModJewel.lua`、`ModVeiled.lua` 三份来源指纹；名称沿原 primary 表。普通生成资格不作为转换资格，原始装备文本也不能证明历史制作过程。
