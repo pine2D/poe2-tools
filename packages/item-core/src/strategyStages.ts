@@ -2,6 +2,7 @@ import type { CraftCatalog } from './catalog'
 import type { CraftStep } from './craftSteps'
 import {
   type CraftStrategy,
+  type CraftStrategyDecision,
   type CraftStrategyGoals,
   evaluateCraftStrategy,
   readCraftStrategy,
@@ -65,6 +66,30 @@ export function strategyStageAt(
 ): CraftResult<string | undefined> {
   const checked = readCraftStrategy(strategy)
   if (!checked.ok) return checked
+  return replayStrategyStages(
+    states,
+    operations,
+    strategy,
+    startStep,
+    cursor,
+    (state, index, stageId) =>
+      evaluateCraftStrategy(catalog, state, strategy, index, goals, stageId),
+  )
+}
+
+/** 包内部阶段回放；策略由入口校验，真实操作与状态不做重建。 */
+export function replayStrategyStages(
+  states: readonly CraftState[],
+  operations: readonly CraftStep[],
+  strategy: CraftStrategy,
+  startStep: number,
+  cursor: number,
+  evaluate: (
+    state: CraftState,
+    index: number,
+    stageId: string,
+  ) => CraftResult<CraftStrategyDecision>,
+): CraftResult<string | undefined> {
   if (!strategy.flow) return { ok: true, value: undefined }
   if (
     !validStrategyStartStep(strategy, startStep, operations.length) ||
@@ -80,7 +105,7 @@ export function strategyStageAt(
     const state = states[index],
       operation = operations[index]
     if (!state || !operation) return { ok: false, error: '阶段回放缺少实际操作。' }
-    const result = evaluateCraftStrategy(catalog, state, strategy, index, goals, stageId)
+    const result = evaluate(state, index, stageId)
     if (!result.ok) return result
     if (
       result.value.kind === 'action' &&

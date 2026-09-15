@@ -168,7 +168,7 @@ export function createTargetDefinitions(
   return { ok: true, value: withTargetIds(checked.value, targets, targets.length + 1) }
 }
 
-function targetNumber(value: unknown): number | null {
+export function targetNumber(value: unknown): number | null {
   if (typeof value !== 'string' || !/^t[1-9]\d*$/.test(value)) return null
   const number = Number(value.slice(1))
   return Number.isSafeInteger(number) && value === `t${number}` ? number : null
@@ -271,4 +271,28 @@ export function validateTargetDefinitions(
   return checked.ok
     ? { ok: true, value: withTargetIds(checked.value, targets, input.nextTargetId) }
     : checked
+}
+
+/** 包内部使用：调用方须先验证定义；投影不会改变目标或关联数组的顺序。 */
+export function projectTargetDefinitions(
+  definitions: CraftTargetDefinitions,
+): LegacyCraftTargetConfig {
+  const primaryIds = new Map(definitions.targets.map((target) => [target.targetId, target.modId]))
+  return {
+    targetModIds: definitions.targets.map((target) => target.modId),
+    targetAlternatives: definitions.alternatives.map((entry) => ({
+      targetModId: primaryIds.get(entry.targetId) as string,
+      modIds: [...entry.modIds],
+    })),
+    targetValues: definitions.values.map(({ targetId: _, ...entry }) => ({
+      ...entry,
+      bounds: entry.bounds.map((bound) => ({ ...bound })),
+    })),
+    ...(definitions.fracturedTargetId === undefined
+      ? {}
+      : { targetFracturedModId: primaryIds.get(definitions.fracturedTargetId) as string }),
+    ...(definitions.minimumTargetCount === undefined
+      ? {}
+      : { minimumTargetCount: definitions.minimumTargetCount }),
+  }
 }

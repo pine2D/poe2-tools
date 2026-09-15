@@ -160,6 +160,66 @@ export function evaluateCraftStrategy(
   goals: CraftStrategyGoals = {},
   stageId = strategy.flow?.entryStageId,
 ): CraftResult<CraftStrategyDecision> {
+  return evaluateCraftStrategyWithTargets(
+    catalog,
+    state,
+    strategy,
+    appliedSteps,
+    {
+      targetIds: goals.targetModIds ?? [],
+      inspect: (current) => {
+        const advice = analyzeCraftTargets(
+          catalog,
+          current,
+          goals.targetModIds ?? [],
+          goals.targetValues,
+          goals.targetAlternatives,
+          undefined,
+          goals.targetImplicitValues,
+          goals.targetFracturedModId,
+          goals.minimumTargetCount,
+        )
+        if (!advice.ok) return advice
+        return {
+          ok: true,
+          value: {
+            matchedTargetIds: advice.value.targets
+              .filter((target) => target.matched)
+              .map((target) => target.modId),
+            targetsMet:
+              !state.pendingDesecration &&
+              (goals.targetModIds?.length ?? 0) + (goals.targetImplicitValues?.length ?? 0) > 0 &&
+              craftTargetsSatisfied(
+                advice.value,
+                goals.minimumTargetCount,
+                goals.targetFracturedModId,
+              ),
+          },
+        }
+      },
+    },
+    stageId,
+  )
+}
+
+/** 包内部计算视图：引用字符串保持调用方身份，控制流不解释为目录类型。 */
+export interface StrategyTargetView {
+  targetIds: readonly string[]
+  missingMessage?: (missing: string[]) => string
+  inspect: (
+    state: CraftState,
+  ) => CraftResult<{ matchedTargetIds: readonly string[]; targetsMet: boolean }>
+}
+
+/** 新旧入口分别校验目标引用及计算达成；共享其他条件、动作预检和阶段控制流。 */
+export function evaluateCraftStrategyWithTargets(
+  catalog: CraftCatalog,
+  state: CraftState,
+  strategy: CraftStrategy,
+  appliedSteps: number,
+  targets: StrategyTargetView,
+  stageId = strategy.flow?.entryStageId,
+): CraftResult<CraftStrategyDecision> {
   const configuration = readCraftStrategy(strategy)
   if (!configuration.ok) return configuration
   if (strategy.flow && !strategy.flow.stages.some((stage) => stage.id === stageId))
@@ -177,14 +237,16 @@ export function evaluateCraftStrategy(
   for (const [ruleIndex, rule] of strategy.rules.entries()) {
     const missing = craftStrategyLeaves(rule.conditions).flatMap((condition) =>
       condition.kind === 'selected-targets'
-        ? condition.modIds.filter((id) => !goals.targetModIds?.includes(id))
+        ? condition.modIds.filter((id) => !targets.targetIds.includes(id))
         : [],
     )
     if (missing.length)
       return result({
         kind: 'blocked',
         ruleIndex,
-        message: `规则引用的目标已移除：${missing.join('、')}。请重新加入目标，或编辑该条件。`,
+        message:
+          targets.missingMessage?.(missing) ??
+          `规则引用的目标已移除：${missing.join('、')}。请重新加入目标，或编辑该条件。`,
       })
   }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
@@ -199,23 +261,10 @@ export function evaluateCraftStrategy(
       ),
     )
   ) {
-    const advice = analyzeCraftTargets(
-      catalog,
-      checked.value,
-      goals.targetModIds ?? [],
-      goals.targetValues,
-      goals.targetAlternatives,
-      undefined,
-      goals.targetImplicitValues,
-      goals.targetFracturedModId,
-      goals.minimumTargetCount,
-    )
-    if (!advice.ok) return advice
-    for (const target of advice.value.targets) if (target.matched) matchedTargets.add(target.modId)
-    targetsMet =
-      !state.pendingDesecration &&
-      (goals.targetModIds?.length ?? 0) + (goals.targetImplicitValues?.length ?? 0) > 0 &&
-      craftTargetsSatisfied(advice.value, goals.minimumTargetCount, goals.targetFracturedModId)
+    const progress = targets.inspect(checked.value)
+    if (!progress.ok) return progress
+    for (const id of progress.value.matchedTargetIds) matchedTargets.add(id)
+    targetsMet = progress.value.targetsMet
   }
   const propertyValues = new Map<CraftProperty, number | null>()
   const matches = (condition: CraftStrategyCondition): boolean | null => {

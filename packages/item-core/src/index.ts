@@ -152,6 +152,18 @@ export type {
 export { evaluateCraftStrategy, readCraftStrategy } from './craftStrategy'
 export type { DefenceEstimate } from './defences'
 export { estimateDefences } from './defences'
+export type {
+  DefinitionCraftStrategy,
+  DefinitionCraftStrategyCondition,
+  DefinitionCraftStrategyGoals,
+  DefinitionCraftStrategyLeafCondition,
+  DefinitionCraftStrategyRule,
+} from './definitionStrategy'
+export {
+  definitionStrategyStageAt,
+  evaluateDefinitionCraftStrategy,
+  readDefinitionCraftStrategy,
+} from './definitionStrategy'
 export {
   DESECRATION_FAMILIES,
   DESECRATION_SOURCE,
@@ -307,6 +319,27 @@ export {
   strategyStageAt,
   validStrategyStartStep,
 } from './strategyStages'
+export type { CraftDefinitionAdvice, CraftDefinitionAdviceStep } from './targetDefinitionAdvice'
+export { analyzeTargetDefinitions, definitionTargetsSatisfied } from './targetDefinitionAdvice'
+export type { CraftTargetDefinitionEdit } from './targetDefinitionEdits'
+export { editTargetDefinitions } from './targetDefinitionEdits'
+export type { CraftTargetDefinitionContext } from './targetDefinitionMigration'
+export { createTargetDefinitionContext } from './targetDefinitionMigration'
+export type {
+  CraftDefinitionRoute,
+  CraftDefinitionRouteOptions,
+  CraftDefinitionRouteStep,
+  CraftDefinitionRoutes,
+} from './targetDefinitionRoutes'
+export { planTargetDefinitionRoutes } from './targetDefinitionRoutes'
+export type {
+  CraftTargetDefinition,
+  CraftTargetDefinitionAlternative,
+  CraftTargetDefinitions,
+  CraftTargetDefinitionValues,
+  LegacyCraftTargetConfig,
+} from './targetDefinitions'
+export { createTargetDefinitions, validateTargetDefinitions } from './targetDefinitions'
 export { type ExtractedCraftTargets, extractCraftTargets } from './targetExtraction'
 export type {
   CraftTargetRoute,
