@@ -2,8 +2,10 @@ import type { CraftCatalog } from './catalog'
 import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
 import {
   FLUX_CRAFT_RULES_VERSION,
+  PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
   type RestoredTargetCraftProject,
+  requiresPerfectFluxProjectVersion,
   serializeTargetCraftProject,
   TARGET_CRAFT_RULES_VERSION,
   upgradeTargetCraftProject,
@@ -34,7 +36,8 @@ export function loadTargetWorkbenchProject(
     !Array.isArray(value) &&
     'rulesVersion' in value &&
     (value.rulesVersion === TARGET_CRAFT_RULES_VERSION ||
-      value.rulesVersion === FLUX_CRAFT_RULES_VERSION)
+      value.rulesVersion === FLUX_CRAFT_RULES_VERSION ||
+      value.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
     : upgradeTargetCraftProject(text, catalog, dictionary)
 }
@@ -67,9 +70,10 @@ export function reuseTargetCraftPlan(
       }
   }
   const next = structuredClone(current.value.project)
-  if (source.rulesVersion === FLUX_CRAFT_RULES_VERSION) {
-    next.rulesVersion = FLUX_CRAFT_RULES_VERSION
-    next.fluxCatalogSignature = source.fluxCatalogSignature as string
+  if (source.fluxCatalogSignature !== undefined) {
+    if (next.rulesVersion !== PERFECT_FLUX_CRAFT_RULES_VERSION)
+      next.rulesVersion = FLUX_CRAFT_RULES_VERSION
+    next.fluxCatalogSignature = source.fluxCatalogSignature
   }
   next.targetDefinitions = structuredClone(source.targetDefinitions)
   next.orphanedTargets = structuredClone(source.orphanedTargets)
@@ -80,6 +84,7 @@ export function reuseTargetCraftPlan(
   if (source.strategy?.flow) next.strategyStartStep = next.cursor
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
+  if (requiresPerfectFluxProjectVersion(next)) next.rulesVersion = PERFECT_FLUX_CRAFT_RULES_VERSION
   for (const key of [
     'essenceSourceHash',
     'liquidEmotionSourceHash',

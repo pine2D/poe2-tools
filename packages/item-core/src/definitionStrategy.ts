@@ -1,4 +1,5 @@
 import type { CraftCatalog } from './catalog'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import type { CraftStep } from './craftSteps'
 import {
   type CraftStrategy,
@@ -67,6 +68,7 @@ function referenceFields(input: unknown, toInternal: boolean, depth = 0): unknow
 
 export function readDefinitionCraftStrategy(input: unknown): CraftResult<DefinitionCraftStrategy> {
   try {
+    if (!isPlainProjectJSON(input)) return fail('条件指引必须使用可无损保存的普通 JSON 字段。')
     const parsed = readCraftStrategy(referenceFields(input, true))
     return parsed.ok
       ? { ok: true, value: referenceFields(parsed.value, false) as DefinitionCraftStrategy }

@@ -53,6 +53,8 @@ import {
 } from './liquidEmotions'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
+import { isPerfectFluxCraftOperation } from './perfectFlux'
+import { requiresPerfectFluxProjectVersion } from './perfectFluxProjectVersion'
 import {
   CRAFT_CURRENCY_LABELS,
   type CraftCurrency,
@@ -394,8 +396,10 @@ function readOperation(value: unknown): CraftStep | null {
 }
 
 /** v75 操作要求每个选择和数值条目保留身份；结构投影只复用旧语法，执行始终用原操作。 */
-function readNativeOperation(input: unknown): CraftStep | null {
+function readNativeOperation(input: unknown, perfectFlux: boolean): CraftStep | null {
   if (!record(input)) return null
+  if (input.kind === 'perfect-flux')
+    return perfectFlux && isPerfectFluxCraftOperation(input) ? input : null
   if (input.kind === 'flux') return isFluxCraftOperation(input) ? input : null
   const projection = structuredClone(input)
   if (Object.hasOwn(projection, 'removeModId')) {
@@ -616,8 +620,9 @@ export function readNativeTargetProjectProjection(
   text: string,
   catalog: CraftCatalog,
   dictionary: ItemDictionary,
+  perfectFlux = false,
 ): CraftResult<RestoredCraftProject> {
-  return readCraftProject(text, catalog, dictionary, true, true)
+  return readCraftProject(text, catalog, dictionary, true, true, perfectFlux)
 }
 
 function readCraftProject(
@@ -626,6 +631,7 @@ function readCraftProject(
   dictionary: ItemDictionary,
   storedTargets: boolean,
   native = false,
+  perfectFlux = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -644,6 +650,14 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!perfectFlux && requiresPerfectFluxProjectVersion(value))
+    return fail('完美溶剂、装备技能结果及相关指引或报价必须使用 v76 项目，包括未来历史。')
+  if (
+    record(value) &&
+    record(value.initialState) &&
+    Object.hasOwn(value.initialState, 'grantedSkillLevel')
+  )
+    return fail('项目起点不能预装装备技能升级结果；必须回放完美溶剂操作。')
   if (!native && hasAffixIdentityFields(value))
     return fail('v2–v72 项目尚不支持词缀实例字段，不能恢复此状态或历史。')
   if (
@@ -1832,7 +1846,7 @@ function readCraftProject(
     )
       return fail('旧版项目不能包含新数值操作。')
     // applyCraftStep 自身严格检查每种操作的字段及实例断言；旧入口仍只接受旧结构。
-    const operation = native ? readNativeOperation(input) : readOperation(input)
+    const operation = native ? readNativeOperation(input, perfectFlux) : readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     if (
       rulesVersion < 72 &&
@@ -1912,6 +1926,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresPerfectFluxProjectVersion(project))
+    throw new Error('完美溶剂、装备技能结果及相关指引或报价必须使用 v76 项目。')
   if (hasAffixIdentityFields(project)) throw new Error('v72 项目尚不支持词缀实例字段，不能序列化。')
   if (
     !validStrategyStartStep(

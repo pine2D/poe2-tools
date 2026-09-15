@@ -11,6 +11,7 @@ import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 export const CONDITION_LABELS = {
   quality: '品质类型与范围',
+  'granted-skill-level': '装备固有技能最高等级',
   'item-property': '装备面板范围',
   always: '任何状态',
   rarity: '稀有度',
@@ -109,6 +110,54 @@ export function StrategyConditionEditor({
           canChange={canChange}
           onChange={onChange}
         />
+      ) : null}
+      {condition.kind === 'granted-skill-level' ? (
+        <>
+          <label>
+            技能等级下限
+            <select
+              aria-label={`${prefix} 技能等级下限`}
+              value={condition.min}
+              onChange={(event) => {
+                const min = Number(event.target.value)
+                onChange({
+                  ...condition,
+                  min,
+                  ...(condition.max === undefined ? {} : { max: Math.max(min, condition.max) }),
+                })
+              }}
+            >
+              {Array.from({ length: 20 }, (_, index) => index + 1).map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            技能等级上限
+            <select
+              aria-label={`${prefix} 技能等级上限`}
+              value={condition.max ?? ''}
+              onChange={(event) => {
+                const max = event.target.value === '' ? undefined : Number(event.target.value)
+                onChange({
+                  kind: 'granted-skill-level',
+                  min: max === undefined ? condition.min : Math.min(condition.min, max),
+                  ...(max === undefined ? {} : { max }),
+                })
+              }}
+            >
+              <option value="">不限</option>
+              {Array.from({ length: 20 }, (_, index) => index + 1).map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>只判断装备固有技能的最高等级；原文未确认最高等级时为未知，角色当前使用等级未计算。</p>
+        </>
       ) : null}
       {condition.kind === 'quality' ? (
         <StrategyQualityCondition

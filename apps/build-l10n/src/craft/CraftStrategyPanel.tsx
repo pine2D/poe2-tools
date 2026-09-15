@@ -259,6 +259,7 @@ export function CraftStrategyPanel({
                   'open-sockets',
                   'item-property',
                   'quality',
+                  'granted-skill-level',
                   'always',
                 ] as const
               ).find(

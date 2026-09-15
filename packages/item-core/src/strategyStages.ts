@@ -19,6 +19,8 @@ export function operationMatchesStrategyAction(
   if (action.kind === 'currency')
     return !('kind' in step) && action.currency === step.currency && action.omen === step.omen
   if (!('kind' in step)) return false
+  if (action.kind === 'perfect-flux')
+    return step.kind === 'perfect-flux' && action.previousMaxLevel === step.previousMaxLevel
   if (action.kind === 'reveal') return step.kind === 'desecration-reveal'
   if (action.kind === 'alloy') return step.kind === 'alloy' && action.alloyId === step.alloyId
   if (action.kind === 'liquid-emotion')

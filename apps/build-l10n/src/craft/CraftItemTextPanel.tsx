@@ -33,9 +33,10 @@ export function CraftItemTextPanel({
     null,
   )
   const dictionaryResult = loaded?.context === context ? loaded.result : null
-  const loading = open && locale !== 'en' && dictionaryResult === null
+  const loading =
+    open && state.grantedSkillLevel !== 20 && locale !== 'en' && dictionaryResult === null
   useEffect(() => {
-    if (!context.open || context.locale === 'en') return
+    if (!context.open || context.locale === 'en' || context.state.grantedSkillLevel === 20) return
     let active = true
     void loader(context.locale).then((result) => {
       if (active) setLoaded({ context, result })
@@ -48,7 +49,7 @@ export function CraftItemTextPanel({
     () =>
       !open
         ? null
-        : locale === 'en'
+        : locale === 'en' || state.grantedSkillLevel === 20
           ? exportCraftItemText(catalog, state)
           : dictionaryResult?.ok
             ? exportCraftItemText(catalog, state, {

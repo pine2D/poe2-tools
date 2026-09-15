@@ -10,6 +10,7 @@ import {
   type CraftTargetDefinitions,
   compareCraftStates,
   type PendingDesecration,
+  readCraftGrantedSkillLevel,
 } from '@poe2-tools/item-core'
 import { useMemo } from 'react'
 import './comparison.css'
@@ -78,6 +79,9 @@ export function CraftComparisonPanel({
         <p>摧毁后没有可用装备，不再比较属性数值或目标达成；费用保留在演练记录中。</p>
       </section>
     )
+  const skillChanged = before.grantedSkillLevel !== after.grantedSkillLevel
+  const skillBefore = skillChanged ? readCraftGrantedSkillLevel(catalog, before) : null
+  const skillAfter = skillChanged ? readCraftGrantedSkillLevel(catalog, after) : null
   const side = (label: string, direction: '操作前' | '操作后', lines: string[] | null) => (
     <section className="comparison-side" aria-label={`${label} · ${direction}`}>
       <h5>{direction}</h5>
@@ -154,6 +158,15 @@ export function CraftComparisonPanel({
   return (
     <section className="craft-comparison" aria-label="操作前后变化">
       <h3>操作前后变化</h3>
+      {skillChanged ? (
+        <section aria-label="装备技能最高等级变化">
+          <p>
+            装备技能最高等级：{skillBefore?.ok ? (skillBefore.value.level ?? '未知') : '未知'} →{' '}
+            {skillAfter?.ok ? (skillAfter.value.level ?? '未知') : '未知'}
+          </p>
+          <p>原技能行保留为导入／起点观察；角色当前使用等级未计算。</p>
+        </section>
+      ) : null}
       {before.catalyst?.quality !== after.catalyst?.quality ? (
         <section aria-label="催化品质前后变化">
           <p>
@@ -218,7 +231,8 @@ export function CraftComparisonPanel({
           result.value.implicit === null &&
           result.value.socketCount === undefined &&
           result.value.pendingDesecration === undefined &&
-          !result.value.sockets?.length ? (
+          !result.value.sockets?.length &&
+          !skillChanged ? (
             <p>没有可识别的属性变化。</p>
           ) : null}
           {result.value.rarity ? (

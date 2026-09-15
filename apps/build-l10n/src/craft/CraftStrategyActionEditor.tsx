@@ -20,8 +20,11 @@ import {
   fluxCatalogSignature,
   inspectCraftAlloys,
   inspectLiquidEmotions,
+  inspectPerfectFluxCraft,
+  preparePerfectFluxCraft,
   socketCandidates,
 } from '@poe2-tools/item-core'
+import { useMemo, useState } from 'react'
 
 export function strategyActionLabel(
   action: CraftStrategyAction,
@@ -31,6 +34,8 @@ export function strategyActionLabel(
 ): string {
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+  if (action.kind === 'perfect-flux')
+    return `${local('Perfect Flux')}（操作前最高等级 ${action.previousMaxLevel} → 20）`
   if (action.kind === 'stop') return '停止'
   if (action.kind === 'jump') return '仅判断并跳转'
   if (action.kind === 'reveal') return '继续亵渎揭示'
@@ -87,6 +92,13 @@ export function CraftStrategyActionEditor({
 }: Props) {
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+  const declarationContext = useMemo(() => ({ catalog, state, action }), [catalog, state, action])
+  const [declarationDraft, setDeclarationDraft] = useState<{
+    context: typeof declarationContext
+    value: string
+  } | null>(null)
+  const declaration = declarationDraft?.context === declarationContext ? declarationDraft : null
+  const inspectedPerfect = inspectPerfectFluxCraft(catalog, state)
   const essences = (catalog.essences ?? []).filter((e) => essenceCraftMode(e.id) !== null)
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const alloys = base
@@ -120,6 +132,18 @@ export function CraftStrategyActionEditor({
           value={action.kind === 'currency' ? action.currency : action.kind}
           onChange={(event) => {
             const value = event.target.value
+            setDeclarationDraft(null)
+            if (value === 'perfect-flux') {
+              if (inspectedPerfect.ok && inspectedPerfect.value.previousMaxLevel !== null) {
+                onChange({
+                  kind: 'perfect-flux',
+                  previousMaxLevel: inspectedPerfect.value.previousMaxLevel,
+                })
+              } else {
+                setDeclarationDraft({ context: declarationContext, value: '' })
+              }
+              return
+            }
             if (
               value === 'jump' ||
               value === 'stop' ||
@@ -164,6 +188,7 @@ export function CraftStrategyActionEditor({
           <option value="flux" disabled={fluxCatalogSignature(catalog) === null}>
             溶剂转换
           </option>
+          <option value="perfect-flux">完美溶剂：装备技能升至 20</option>
           <option value="desecrate">骨骼施加</option>
           <option value="liquid-emotion" disabled={!emotions.length || type !== 'Jewel'}>
             液态情感制作
@@ -176,6 +201,36 @@ export function CraftStrategyActionEditor({
           </option>
         </select>
       </label>
+      {action.kind === 'perfect-flux' || declaration ? (
+        <label>
+          操作前装备技能最高等级
+          <input
+            aria-label={`规则 ${number} 操作前装备技能最高等级`}
+            type="number"
+            min={inspectedPerfect.ok ? inspectedPerfect.value.minimumPreviousMaxLevel : 1}
+            max={19}
+            step={1}
+            readOnly={inspectedPerfect.ok && inspectedPerfect.value.previousMaxLevel !== null}
+            value={
+              declaration?.value ?? (action.kind === 'perfect-flux' ? action.previousMaxLevel : '')
+            }
+            onChange={(event) => {
+              const value = event.target.value
+              const checked =
+                value === '' ? null : preparePerfectFluxCraft(catalog, state, Number(value))
+              if (checked?.ok) {
+                setDeclarationDraft(null)
+                onChange({ kind: 'perfect-flux', previousMaxLevel: checked.value.previousMaxLevel })
+              } else setDeclarationDraft({ context: declarationContext, value })
+            }}
+          />
+          {declaration ? (
+            <span>声明有效最高等级后才设置完美溶剂动作；现有规则尚未更改。</span>
+          ) : (
+            <span>装备技能最高等级声明；角色当前使用等级未计算。</span>
+          )}
+        </label>
+      ) : null}
       {action.kind === 'socket' ? (
         <>
           <label>

@@ -55,6 +55,8 @@ import {
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
   loadTargetWorkbenchProject,
+  PERFECT_FLUX_CRAFT_RULES_VERSION,
+  type PerfectFluxCraftOperation,
   prepareCraftOperation,
   prepareStrategySocket,
   projectTargetDefinitions,
@@ -62,8 +64,10 @@ import {
   type RestoredCraftProject,
   type RestoredIdentityCraftProject,
   type RestoredTargetCraftProject,
+  readCraftGrantedSkillLevel,
   readNumericValues,
   removableCraftAffixes,
+  requiresPerfectFluxProjectVersion,
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
@@ -88,6 +92,7 @@ import { CorruptionPanel } from './CorruptionPanel'
 import { CraftPricingPanel } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
 import { FluxCraftPanel } from './FluxCraftPanel'
+import { PerfectFluxPanel } from './PerfectFluxPanel'
 import './rehearsal.css'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
@@ -383,6 +388,7 @@ export function RehearsalPanel({
     | LiquidEmotionCraftOperation
     | AlloyCraftOperation
     | FluxCraftOperation
+    | PerfectFluxCraftOperation
     | null
   >(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
@@ -414,12 +420,13 @@ export function RehearsalPanel({
   const essenceTriggerRef = useRef<HTMLElement | null>(null)
   const restoreEssenceFocusRef = useRef(false)
   const fluxEntryRef = useRef<HTMLElement>(null)
+  const perfectFluxEntryRef = useRef<HTMLElement>(null)
   const alloyEntryRef = useRef<HTMLElement>(null)
   const emotionEntryRef = useRef<HTMLElement>(null)
   const essenceEntryRef = useRef<HTMLElement>(null)
   const strategyTriggerRef = useRef<HTMLElement | null>(null)
   const guaranteedOriginRef = useRef<{
-    kind: 'essence' | 'liquid-emotion' | 'alloy' | 'flux'
+    kind: 'essence' | 'liquid-emotion' | 'alloy' | 'flux' | 'perfect-flux'
     strategy: boolean
   } | null>(null)
   useEffect(() => {
@@ -430,13 +437,15 @@ export function RehearsalPanel({
         const origin = guaranteedOriginRef.current
         const fallback = origin?.strategy
           ? strategyTriggerRef.current
-          : origin?.kind === 'flux'
-            ? fluxEntryRef.current
-            : origin?.kind === 'alloy'
-              ? alloyEntryRef.current
-              : origin?.kind === 'liquid-emotion'
-                ? emotionEntryRef.current
-                : essenceEntryRef.current
+          : origin?.kind === 'perfect-flux'
+            ? perfectFluxEntryRef.current
+            : origin?.kind === 'flux'
+              ? fluxEntryRef.current
+              : origin?.kind === 'alloy'
+                ? alloyEntryRef.current
+                : origin?.kind === 'liquid-emotion'
+                  ? emotionEntryRef.current
+                  : essenceEntryRef.current
         const trigger = essenceTriggerRef.current?.isConnected
           ? essenceTriggerRef.current
           : fallback
@@ -680,7 +689,8 @@ export function RehearsalPanel({
         operation.kind === 'essence' ||
         operation.kind === 'liquid-emotion' ||
         operation.kind === 'alloy' ||
-        operation.kind === 'flux'
+        operation.kind === 'flux' ||
+        operation.kind === 'perfect-flux'
       ) {
         setOmen(undefined)
         startGuaranteed(operation)
@@ -735,7 +745,8 @@ export function RehearsalPanel({
       | EssenceCraftOperation
       | LiquidEmotionCraftOperation
       | AlloyCraftOperation
-      | FluxCraftOperation,
+      | FluxCraftOperation
+      | PerfectFluxCraftOperation,
   ) => {
     if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
@@ -904,6 +915,7 @@ export function RehearsalPanel({
     if (!('kind' in step))
       return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
     if (step.kind === 'fracture') return fractureLabel
+    if (step.kind === 'perfect-flux') return '完美溶剂'
     if (step.kind === 'flux') {
       const name = FLUXES.find((f) => f.id === step.fluxId)?.name ?? step.fluxId
       return translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
@@ -1016,7 +1028,7 @@ export function RehearsalPanel({
       : null
   const alloyUsage = alloyProjectUsage({ history, referencedTargetIds, strategy, pricing })
   const alloySignature = alloyUsage.used ? alloyCatalogSignature(catalog) : null
-  const project: TargetCraftProject = {
+  const projectConfig: TargetCraftProject = {
     schemaVersion: 1 as const,
     ...(pricing ? { pricing } : {}),
     ...(strategy ? { strategy } : {}),
@@ -1066,6 +1078,20 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
+  const project: TargetCraftProject = requiresPerfectFluxProjectVersion(projectConfig)
+    ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+    : projectConfig
+  const guaranteedLabel = guaranteedDraft
+    ? {
+        essence: '精华',
+        'liquid-emotion': '液态情感',
+        alloy: '合金',
+        flux: '溶剂',
+        'perfect-flux': '完美溶剂',
+      }[guaranteedDraft.kind]
+    : ''
+  const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
+
   const restoreProject = (restored: RestoredTargetCraftProject) => {
     setPricing(restored.project.pricing)
     setTargetContext({
@@ -1211,7 +1237,7 @@ export function RehearsalPanel({
             </p>
           ) : null}
           <p className="rehearsal-scope-note">
-            支持普通攻击武器本地面板与三项防御估算；普通品质保留，催化品质按步骤更新，技能与角色面板尚未计算。
+            支持普通攻击武器本地面板与三项防御估算；普通品质保留，催化品质按步骤更新，角色技能等级与角色面板尚未计算。
           </p>
         </div>
         <div>
@@ -1770,15 +1796,37 @@ export function RehearsalPanel({
           onPreview={startGuaranteed}
         />
       ) : null}
+      {!strategyResultAction ? (
+        <PerfectFluxPanel
+          key={`perfect-flux:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          entryRef={perfectFluxEntryRef}
+          catalog={catalog}
+          state={current}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft,
+          )}
+          {...(translateLine ? { translateLine } : {})}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
       {guaranteedDraft ? (
         <section
           ref={guaranteedDraftRef}
           tabIndex={-1}
           className="rehearsal-draft"
-          aria-label={`${guaranteedDraft.kind === 'flux' ? '溶剂' : guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}待应用结果`}
+          aria-label={`${guaranteedLabel}待应用结果`}
         >
           <h3>{stepLabel(guaranteedDraft)}</h3>
-          {guaranteedDraft.kind !== 'flux' ? (
+          {guaranteedDraft.kind === 'perfect-flux' ? (
+            <p>
+              装备技能最高等级：{guaranteedDraft.previousMaxLevel} → 20；角色当前使用等级未计算。
+            </p>
+          ) : guaranteedDraft.kind !== 'flux' ? (
             <EssenceResultDetails
               catalog={catalog}
               state={current}
@@ -1793,15 +1841,17 @@ export function RehearsalPanel({
           )}
           {preview?.ok ? (
             <p>
-              {guaranteedDraft.kind === 'flux'
-                ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
-                : guaranteedDraft.kind === 'alloy'
-                  ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
-                  : guaranteedDraft.kind === 'liquid-emotion'
-                    ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
-                    : guaranteedDraft.removeModId
-                      ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                      : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+              {guaranteedDraft.kind === 'perfect-flux'
+                ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
+                : guaranteedDraft.kind === 'flux'
+                  ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
+                  : guaranteedDraft.kind === 'alloy'
+                    ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
+                    : guaranteedDraft.kind === 'liquid-emotion'
+                      ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                      : guaranteedDraft.removeModId
+                        ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                        : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>
@@ -1820,7 +1870,7 @@ export function RehearsalPanel({
               setEssenceSession((value) => value + 1)
             }}
           >
-            {`取消${guaranteedDraft.kind === 'flux' ? '溶剂' : guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
+            {`取消${guaranteedLabel}结果`}
           </button>
           <button
             type="button"
@@ -1828,7 +1878,7 @@ export function RehearsalPanel({
             disabled={!preview?.ok}
             onClick={() => applyStep(guaranteedDraft)}
           >
-            {`应用${guaranteedDraft.kind === 'flux' ? '溶剂' : guaranteedDraft.kind === 'alloy' ? '合金' : guaranteedDraft.kind === 'liquid-emotion' ? '液态情感' : '精华'}结果`}
+            {`应用${guaranteedLabel}结果`}
           </button>
         </section>
       ) : null}
@@ -1993,9 +2043,21 @@ export function RehearsalPanel({
         </section>
       </div>
 
+      {current.grantedSkillLevel === 20 && grantedSkill.ok ? (
+        <section aria-label="当前装备技能结果" className="rehearsal-implicit">
+          <h3>当前装备技能结果</h3>
+          <p>
+            {translateLine?.(`Grants Skill: Level 20 ${grantedSkill.value.name}`) ??
+              grantedSkill.value.name}{' '}
+            · 装备技能最高等级 20
+          </p>
+          <p>角色当前使用等级未计算。</p>
+        </section>
+      ) : null}
       {(current.implicitLines ?? base.implicit?.split('\n') ?? []).length > 0 ? (
         <section className="rehearsal-implicit" aria-label="当前固有属性">
           <h3>固有属性</h3>
+          {current.grantedSkillLevel === 20 ? <p>导入／起点观察</p> : null}
           {implicit?.ok && implicit.value.charm ? (
             <p>
               {implicit.value.charm.fixed
@@ -2007,7 +2069,7 @@ export function RehearsalPanel({
           ) : null}
           {base.implicit?.includes('Grants Skill:') ? (
             <p>
-              授予技能有等级时保留起点等级，无等级时保留名称；角色需求及全局技能加成尚未计算。带等级范围的授予技能暂不支持神圣石重掷。
+              授予技能原文有等级时保留起点观察，无等级时保留名称；角色需求及全局技能加成尚未计算。带等级范围的授予技能暂不支持神圣石重掷。
             </p>
           ) : null}
           {(current.implicitLines ?? base.implicit?.split('\n') ?? []).map((line) => {

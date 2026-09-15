@@ -49,6 +49,7 @@ import {
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
+import { grantedSkillLevelStateError } from './perfectFlux'
 import { runeSourceStateError } from './runeImport'
 import { hasSpecialSocketRules, socketStateError } from './sockets'
 
@@ -112,6 +113,8 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  /** 完美溶剂产生的装备技能结果；原固有行仍为起点观察，不推导角色当前等级。 */
+  grantedSkillLevel?: 20
   nextAffixId?: number
   /** 仅由摧毁操作产生的终止快照；不能作为存活装备使用。 */
   destroyed?: true
@@ -478,6 +481,8 @@ export function createCraftState(
     (next) => createCraftState(catalog, next).ok,
   )
   if (pendingError) return failure(pendingError)
+  const grantedSkillError = grantedSkillLevelStateError(catalog, input)
+  if (grantedSkillError !== null) return failure(grantedSkillError)
   return { ok: true, value: cloneState(input) }
 }
 

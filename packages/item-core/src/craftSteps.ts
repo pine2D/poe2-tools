@@ -28,6 +28,11 @@ import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } 
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { renderNumericLines } from './numeric'
 import {
+  applyPerfectFluxCraft,
+  isPerfectFluxCraftOperation,
+  type PerfectFluxCraftOperation,
+} from './perfectFlux'
+import {
   applyCraftOperation,
   type CraftAffix,
   type CraftOperation,
@@ -91,6 +96,7 @@ export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperat
 }
 
 export type CraftStep =
+  | PerfectFluxCraftOperation
   | FluxCraftOperation
   | AlloyCraftOperation
   | ArchitectCraftOperation
@@ -146,6 +152,10 @@ export function applyCraftStep(
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
+  if ('kind' in step && step.kind === 'perfect-flux')
+    return isPerfectFluxCraftOperation(step)
+      ? applyPerfectFluxCraft(catalog, state, step)
+      : { ok: false, error: '完美溶剂步骤字段无效。' }
   if ('kind' in step && step.kind === 'flux')
     return isFluxCraftOperation(step)
       ? applyFluxCraft(catalog, state, step)

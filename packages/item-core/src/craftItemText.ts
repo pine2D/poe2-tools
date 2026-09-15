@@ -115,6 +115,12 @@ export function exportCraftItemText(
     return { ok: false, error: '待揭示亵渎不能导出装备文本，请保存项目以保留隐藏状态。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
+  if (checked.value.grantedSkillLevel === 20)
+    return {
+      ok: false,
+      error:
+        '装备技能已由完美溶剂升级；操作后复制格式尚未核实，请保存完整项目，不能导出旧观察行或推定角色等级。',
+    }
   if (
     !options ||
     typeof options !== 'object' ||

@@ -134,7 +134,9 @@ export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 export type { RestoredTargetCraftProject, TargetCraftProject } from './craftProjectTargets'
 export {
   FLUX_CRAFT_RULES_VERSION,
+  PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
+  requiresPerfectFluxProjectVersion,
   serializeTargetCraftProject,
   TARGET_CRAFT_RULES_VERSION,
   upgradeTargetCraftProject,
@@ -279,6 +281,16 @@ export {
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'
+export {
+  applyPerfectFluxCraft,
+  type InspectedPerfectFluxCraft,
+  inspectPerfectFluxCraft,
+  isPerfectFluxCraftOperation,
+  type PerfectFluxCraftOperation,
+  type PreparedPerfectFluxCraft,
+  preparePerfectFluxCraft,
+  readCraftGrantedSkillLevel,
+} from './perfectFlux'
 export { reuseCraftPlan, reuseIdentityCraftPlan } from './projectPlan'
 export { readItemQuality, supportsItemQuality } from './quality'
 export type {

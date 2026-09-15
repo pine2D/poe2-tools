@@ -15,6 +15,10 @@ import type {
 } from './definitionStrategy'
 import type { ItemDictionary } from './export'
 import { fluxCatalogSignature } from './fluxes'
+import {
+  PERFECT_FLUX_CRAFT_RULES_VERSION,
+  requiresPerfectFluxProjectVersion,
+} from './perfectFluxProjectVersion'
 import type { CraftResult } from './rehearsal'
 import type { CraftStrategyCondition } from './strategyConditions'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
@@ -32,6 +36,7 @@ import { loadWorkbenchProject } from './workbenchProject'
 
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
 export const FLUX_CRAFT_RULES_VERSION = 'basic-2026-09-12-v75'
+export { PERFECT_FLUX_CRAFT_RULES_VERSION, requiresPerfectFluxProjectVersion }
 
 export interface TargetCraftProject
   extends Omit<
@@ -44,7 +49,10 @@ export interface TargetCraftProject
     | 'minimumTargetCount'
     | 'strategy'
   > {
-  rulesVersion: typeof TARGET_CRAFT_RULES_VERSION | typeof FLUX_CRAFT_RULES_VERSION
+  rulesVersion:
+    | typeof TARGET_CRAFT_RULES_VERSION
+    | typeof FLUX_CRAFT_RULES_VERSION
+    | typeof PERFECT_FLUX_CRAFT_RULES_VERSION
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
@@ -66,6 +74,22 @@ const LEGACY_TARGET_KEYS = [
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function hasFluxCapability(input: unknown): boolean {
+  const pending = [input]
+  while (pending.length) {
+    const value = pending.pop()
+    if (Array.isArray(value)) {
+      for (const child of value) pending.push(child)
+      continue
+    }
+    if (!record(value)) continue
+    if (value.kind === 'flux' || Object.keys(value).some((key) => key.startsWith('flux:')))
+      return true
+    for (const child of Object.values(value)) pending.push(child)
+  }
+  return false
 }
 
 /** 此投影仅复用项目来源校验，绝不能传给策略执行器；目标身份仍在原上下文中校验。 */
@@ -187,13 +211,32 @@ export function parseTargetCraftProject(
   }
   if (
     !record(original) ||
-    ![TARGET_CRAFT_RULES_VERSION, FLUX_CRAFT_RULES_VERSION].includes(String(original.rulesVersion))
+    ![
+      TARGET_CRAFT_RULES_VERSION,
+      FLUX_CRAFT_RULES_VERSION,
+      PERFECT_FLUX_CRAFT_RULES_VERSION,
+    ].includes(String(original.rulesVersion))
   )
-    return { ok: false, error: '目标项目必须使用精确的 v74 或 v75 规则版本。' }
-  const native = original.rulesVersion === FLUX_CRAFT_RULES_VERSION
-  const fluxSignature = native ? fluxCatalogSignature(catalog) : null
-  if (native && (fluxSignature === null || original.fluxCatalogSignature !== fluxSignature))
+    return { ok: false, error: '目标项目必须使用精确的 v74、v75 或 v76 规则版本。' }
+  const perfectFlux = original.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION
+  if (!perfectFlux && requiresPerfectFluxProjectVersion(original))
+    return {
+      ok: false,
+      error: '完美溶剂、装备技能结果及相关指引或报价必须使用 v76 项目，包括未来历史。',
+    }
+  const native = perfectFlux || original.rulesVersion === FLUX_CRAFT_RULES_VERSION
+  const requiresFlux =
+    original.rulesVersion === FLUX_CRAFT_RULES_VERSION ||
+    (perfectFlux &&
+      (Object.hasOwn(original, 'fluxCatalogSignature') || hasFluxCapability(original)))
+  const fluxSignature = requiresFlux ? fluxCatalogSignature(catalog) : null
+  if (requiresFlux && (fluxSignature === null || original.fluxCatalogSignature !== fluxSignature))
     return { ok: false, error: '项目溶剂关系签名缺失或与当前目录不同，请先加载相同溶剂关系目录。 ' }
+  if (perfectFlux && !requiresFlux && catalog.fluxes) {
+    // 无抗性签名不能借已加载的目录取得转换后的重复/跨基底资格。
+    const { fluxes: _fluxes, ...plainCatalog } = catalog
+    catalog = plainCatalog
+  }
   if (LEGACY_TARGET_KEYS.some((key) => Object.hasOwn(original, key)))
     return { ok: false, error: 'v74 项目不能混入旧目标字段。' }
   if (!record(original.initialState) || typeof original.initialState.baseId !== 'string')
@@ -226,7 +269,9 @@ export function parseTargetCraftProject(
   } catch {
     return { ok: false, error: '目标项目结构过深，无法建立可验证的来源投影。' }
   }
-  const replay = native ? readNativeTargetProjectProjection(projection, catalog, dictionary) : null
+  const replay = native
+    ? readNativeTargetProjectProjection(projection, catalog, dictionary, perfectFlux)
+    : null
   if (replay && !replay.ok) return replay
   if (replay?.ok && !replay.value.states.every(isIdentifiedCraftState))
     return { ok: false, error: '项目回放未保留完整词缀实例。 ' }
@@ -246,8 +291,8 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = FLUX_CRAFT_RULES_VERSION
-    project.fluxCatalogSignature = original.fluxCatalogSignature as string
+    project.rulesVersion = perfectFlux ? PERFECT_FLUX_CRAFT_RULES_VERSION : FLUX_CRAFT_RULES_VERSION
+    if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
   }
   if (!equivalentProjectJSON(original, project))
     return { ok: false, error: '目标项目与完整回放结果不一致；不能自动补全或修复身份及配置。' }

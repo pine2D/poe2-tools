@@ -12,6 +12,7 @@ import { EssenceCraftPanel } from './EssenceCraftPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
 import { FracturePanel } from './FracturePanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
+import { PerfectFluxPanel } from './PerfectFluxPanel'
 export type SpecialStrategyAction = Exclude<
   CraftStrategyWorkAction,
   { kind: 'currency' | 'socket' | 'artificer' }
@@ -42,6 +43,9 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       </button>
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'perfect-flux' ? (
+        <PerfectFluxPanel {...props} disabled={false} configuration={action} />
       ) : null}
       {action.kind === 'flux' ? (
         <FluxCraftPanel {...props} disabled={false} configuration={action} />

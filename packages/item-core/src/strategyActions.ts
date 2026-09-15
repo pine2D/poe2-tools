@@ -13,6 +13,11 @@ import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { supportedLiquidEmotionId } from './liquidEmotions'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
+  isPerfectFluxCraftOperation,
+  type PerfectFluxCraftOperation,
+  preparePerfectFluxCraft,
+} from './perfectFlux'
+import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
   type CraftCurrency,
@@ -25,6 +30,7 @@ import {
 import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
 export type CraftStrategyAction =
+  | PerfectFluxCraftOperation
   | SocketStrategyAction
   | { kind: 'stop' }
   | { kind: 'jump' }
@@ -46,6 +52,7 @@ function keys(value: unknown, allowed: string[]): value is Record<string, unknow
   )
 }
 export function readCraftStrategyAction(value: unknown): CraftStrategyAction | null {
+  if (isPerfectFluxCraftOperation(value)) return { ...value }
   if (
     !keys(value, [
       'kind',
@@ -152,6 +159,10 @@ export function checkCraftStrategyAction(
   action: CraftStrategyWorkAction,
 ): CraftResult<null> {
   const ok: CraftResult<null> = { ok: true, value: null }
+  if (action.kind === 'perfect-flux') {
+    const result = preparePerfectFluxCraft(catalog, state, action.previousMaxLevel)
+    return result.ok ? ok : result
+  }
   if (action.kind === 'socket' || action.kind === 'artificer') {
     const result = prepareStrategySocket(catalog, state, action)
     return result.ok ? ok : result

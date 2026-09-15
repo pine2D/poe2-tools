@@ -62,7 +62,7 @@ export function SkillLevelPanel({
     <section className="defence-panel" aria-label="技能等级词缀贡献">
       <h3>技能等级词缀贡献</h3>
       <p className="rehearsal-scope-note">
-        仅统计本件显式词缀的有效值，计入已核对的品质与工艺增效。同一原文范围合计，不同范围分别列出；条件是否满足、技能标签与角色最终等级尚未计算。固有属性、腐化强化与符文不计入此表，授予技能保留起点等级。
+        仅统计本件显式词缀的有效值，计入已核对的品质与工艺增效。同一原文范围合计，不同范围分别列出；条件是否满足、技能标签与角色最终等级尚未计算。固有属性、腐化强化与符文不计入此表，装备固有技能结果单独显示，原技能行只作起点观察。
       </p>
       {!result.ok ? <p role="status">{result.error}</p> : null}
       <div className="defence-values">

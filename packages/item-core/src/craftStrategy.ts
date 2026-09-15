@@ -1,7 +1,9 @@
 import { craftAffixSpace } from './affixCapacity'
 import type { CraftCatalog } from './catalog'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import type { CraftImplicitTargetValues } from './implicitTargets'
 import { type CraftProperty, readCraftProperty } from './itemProperties'
+import { readCraftGrantedSkillLevel } from './perfectFlux'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
   type CraftStrategyAction,
@@ -74,6 +76,11 @@ const fail = (error: string): { ok: false; error: string } => ({ ok: false, erro
 
 /** 只保存条件与动作，派生决策由当前装备和历史重新计算。 */
 export function readCraftStrategy(value: unknown): CraftResult<CraftStrategy> {
+  try {
+    if (!isPlainProjectJSON(value)) return fail('条件指引必须使用可无损保存的普通 JSON 字段。')
+  } catch {
+    return fail('条件指引结构无效。')
+  }
   if (!keys(value, ['maxSteps', 'rules', 'flow']) || !integer(value.maxSteps, 1, 1000))
     return fail('条件指引的步骤上限必须是 1–1000 的整数，且不能包含未知字段。')
   if (!Array.isArray(value.rules) || value.rules.length < 1 || value.rules.length > 12)
@@ -268,6 +275,13 @@ export function evaluateCraftStrategyWithTargets(
   }
   const propertyValues = new Map<CraftProperty, number | null>()
   const matches = (condition: CraftStrategyCondition): boolean | null => {
+    if (condition.kind === 'granted-skill-level') {
+      const skill = readCraftGrantedSkillLevel(catalog, checked.value)
+      const level = skill.ok ? skill.value.level : null
+      return level === null
+        ? null
+        : level >= condition.min && (condition.max === undefined || level <= condition.max)
+    }
     if (condition.kind === 'quality') {
       const value =
         condition.source === 'ordinary' ? checked.value.quality : checked.value.catalyst?.quality

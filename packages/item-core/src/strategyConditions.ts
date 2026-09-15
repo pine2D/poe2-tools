@@ -1,8 +1,10 @@
 import { CATALYSTS } from './catalystQuality'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
 
 export type CraftStrategyLeafCondition =
+  | { kind: 'granted-skill-level'; min: number; max?: number }
   | {
       kind: 'quality'
       source: 'ordinary' | 'catalyst'
@@ -39,6 +41,19 @@ function integer(value: unknown, min: number, max: number): value is number {
 function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
   if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property', 'source', 'catalystId']))
     return null
+  if (value.kind === 'granted-skill-level') {
+    if (
+      !keys(value, ['kind', 'min', 'max']) ||
+      !integer(value.min, 1, 20) ||
+      (Object.hasOwn(value, 'max') && (!integer(value.max, 1, 20) || value.max < value.min))
+    )
+      return null
+    return {
+      kind: 'granted-skill-level',
+      min: value.min,
+      ...(typeof value.max === 'number' ? { max: value.max } : {}),
+    }
+  }
   if (value.kind === 'quality') {
     if (
       !keys(value, ['kind', 'source', 'catalystId', 'min', 'max']) ||
@@ -132,6 +147,11 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
 
 /** 限深、限量先于递归；只构造已校验副本，循环对象也会在深度边界拒绝。 */
 export function readStrategyConditions(value: unknown): CraftStrategyCondition[] | null {
+  try {
+    if (!isPlainProjectJSON(value)) return null
+  } catch {
+    return null
+  }
   if (!Array.isArray(value) || value.length < 1 || value.length > 4) return null
   let nodes = 0
   const read = (input: unknown, depth: number): CraftStrategyCondition | null => {
