@@ -1,5 +1,13 @@
 # 数据源登记表
 
+## 2026-09-16 品质逐颗实验与注能器统计
+
+[Krydax 原始实验](https://www.reddit.com/r/PathOfExile2/comments/1r4snoi/i_applied_1734_vaal_infusers_to_314_items_so_you/)和 [SpecialistAd670 原始实验](https://www.reddit.com/r/PathOfExile2/comments/1s80jza/i_tracked_750_vaal_infuser_attempts_here_is_what/)按 gray 人工机制参考登记。作者公开的有限汇总用于自写统计核对；玩家实验不是 GGG 保证，也没有证明当前四种注能器共用概率。没有下载或入库原始表格、图片、装备样本、同行实现或权重；未取得完整数据再分发许可，不建立数据适配器。
+
+[2026-08-10 催化种类误用报告](https://www.reddit.com/r/PathOfExile2/comments/1vk8bk4/misclicked_a_neural_catalyst_onto_my_40_caster/)仅作为 gray 第一手自述，记录已有高品质在换种类时被替换的案例。物等与完整逐次记录缺失，不能据单次 2% 结果建立通用材料增量。报告中的求助方案、评论概率与经济建议不作为执行规则。
+
+[GGG 0.5.0 公告](https://www.pathofexile.com/forum/view-thread/3932540)沿用 primary 官方来源。本轮 Web 对带 staff 过滤地址的提取没有返回注能器段落；通过 Exa 读取不带过滤地址的官方正文，重新核对四类材料和至少 20% 品质的说明。完整证据边界、统计复算及接入顺序见 [品质与注能器实验审计](quality-infuser-research.md)。没有改变应用规则、目录版本或国服真机验收状态。
+
 ## 2026-09-16 制作步骤清单与权重来源复查
 
 [CoE 路线图](https://beta.craftofexile.com/roadmap)中公开的操作历史、变化、费用明细及模拟导出仅作流程参考。新增清单由本项目已有回放、材料计费、已登记目录及独立简体中文译名生成，没有抓取或复制同行代码、权重或数据，没有新增构建适配器与浏览器外站请求。
