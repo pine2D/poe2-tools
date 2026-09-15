@@ -1,4 +1,5 @@
 import type { CraftCatalog } from './catalog'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import { validateCraftFractureTarget } from './fractureTargets'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
@@ -7,6 +8,7 @@ import {
   validateCraftTargetAlternatives,
   validateCraftTargets,
   validateCraftTargetValues,
+  validateStoredCraftTargetValues,
 } from './targets'
 
 export interface CraftTargetDefinition {
@@ -65,6 +67,15 @@ function checkedLegacyConfig(
 ): CraftResult<ValidatedLegacyConfig> {
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
+  return readLegacyConfig(catalog, checked.value.baseId, input, checked.value)
+}
+
+function readLegacyConfig(
+  catalog: CraftCatalog,
+  baseId: string,
+  input: unknown,
+  state?: CraftState,
+): CraftResult<ValidatedLegacyConfig> {
   if (
     !record(input, [
       'targetModIds',
@@ -80,17 +91,11 @@ function checkedLegacyConfig(
     return fail('旧目标配置字段无效；不能混入独立目标身份或缺省值。')
   const minimum = input.minimumTargetCount as number | undefined
   const fractured = input.targetFracturedModId as string | undefined
-  const ids = validateCraftTargets(
-    catalog,
-    checked.value.baseId,
-    input.targetModIds,
-    minimum,
-    fractured,
-  )
+  const ids = validateCraftTargets(catalog, baseId, input.targetModIds, minimum, fractured)
   if (!ids.ok) return ids
   const alternatives = validateCraftTargetAlternatives(
     catalog,
-    checked.value.baseId,
+    baseId,
     ids.value,
     Object.hasOwn(input, 'targetAlternatives') ? input.targetAlternatives : [],
     minimum,
@@ -100,15 +105,25 @@ function checkedLegacyConfig(
     const result = validateCraftFractureTarget(catalog, ids.value, alternatives.value, fractured)
     if (!result.ok) return result
   }
-  const values = validateCraftTargetValues(
-    catalog,
-    checked.value.baseId,
-    ids.value,
-    Object.hasOwn(input, 'targetValues') ? input.targetValues : [],
-    alternatives.value,
-    checked.value,
-    minimum,
-  )
+  const inputValues = Object.hasOwn(input, 'targetValues') ? input.targetValues : []
+  const values = state
+    ? validateCraftTargetValues(
+        catalog,
+        baseId,
+        ids.value,
+        inputValues,
+        alternatives.value,
+        state,
+        minimum,
+      )
+    : validateStoredCraftTargetValues(
+        catalog,
+        baseId,
+        ids.value,
+        inputValues,
+        alternatives.value,
+        minimum,
+      )
   if (!values.ok) return values
   return {
     ok: true,
@@ -168,6 +183,27 @@ export function createTargetDefinitions(
   return { ok: true, value: withTargetIds(checked.value, targets, targets.length + 1) }
 }
 
+/** 包内部完整替换使用；不改变旧工厂对当前投影的严格要求。 */
+export function createStoredTargetDefinitions(
+  catalog: CraftCatalog,
+  baseId: string,
+  legacyConfig: LegacyCraftTargetConfig,
+): CraftResult<CraftTargetDefinitions> {
+  try {
+    if (!isPlainProjectJSON(legacyConfig))
+      return fail('存储目标配置必须只包含自有、可枚举的数据字段。')
+  } catch {
+    return fail('存储目标配置对象无法安全检查。')
+  }
+  const checked = readLegacyConfig(catalog, baseId, legacyConfig)
+  if (!checked.ok) return checked
+  const targets = checked.value.targetModIds.map((modId, index) => ({
+    targetId: `t${index + 1}`,
+    modId,
+  }))
+  return { ok: true, value: withTargetIds(checked.value, targets, targets.length + 1) }
+}
+
 export function targetNumber(value: unknown): number | null {
   if (typeof value !== 'string' || !/^t[1-9]\d*$/.test(value)) return null
   const number = Number(value.slice(1))
@@ -179,6 +215,29 @@ export function validateTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   input: unknown,
+): CraftResult<CraftTargetDefinitions> {
+  return readTargetDefinitions(catalog, state.baseId, input, state)
+}
+
+/** 保存完整关联与稳定身份；当前数值行投影失败不影响条件持久化。 */
+export function validateStoredTargetDefinitions(
+  catalog: CraftCatalog,
+  baseId: string,
+  input: unknown,
+): CraftResult<CraftTargetDefinitions> {
+  try {
+    if (!isPlainProjectJSON(input)) return fail('存储目标定义必须只包含自有、可枚举的数据字段。')
+  } catch {
+    return fail('存储目标定义对象无法安全检查。')
+  }
+  return readTargetDefinitions(catalog, baseId, input)
+}
+
+function readTargetDefinitions(
+  catalog: CraftCatalog,
+  baseId: string,
+  input: unknown,
+  state?: CraftState,
 ): CraftResult<CraftTargetDefinitions> {
   if (
     !record(input, [
@@ -257,7 +316,7 @@ export function validateTargetDefinitions(
     (typeof input.fracturedTargetId !== 'string' || !byId.has(input.fracturedTargetId))
   )
     return fail('破裂要求必须关联一个已有目标。')
-  const checked = checkedLegacyConfig(catalog, state, {
+  const legacy = {
     targetModIds: targets.map((target) => target.modId),
     targetAlternatives: alternatives,
     targetValues: values,
@@ -267,7 +326,10 @@ export function validateTargetDefinitions(
     ...(Object.hasOwn(input, 'minimumTargetCount')
       ? { minimumTargetCount: input.minimumTargetCount }
       : {}),
-  })
+  }
+  const checked = state
+    ? checkedLegacyConfig(catalog, state, legacy)
+    : readLegacyConfig(catalog, baseId, legacy)
   return checked.ok
     ? { ok: true, value: withTargetIds(checked.value, targets, input.nextTargetId) }
     : checked

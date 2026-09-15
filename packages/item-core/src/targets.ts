@@ -7,6 +7,7 @@ import {
   hasGenesisModEligibility,
   inspectModPool,
 } from './catalog'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import { desecrationSourceHash } from './desecration'
 import {
   matchesTargetInterval,
@@ -359,6 +360,36 @@ export function validateCraftTargetValues(
   state?: CraftState,
   minimumTargetCount?: number,
 ): CraftResult<CraftTargetValues[]> {
+  return readTargetValues(catalog, baseId, ids, values, alternatives, minimumTargetCount, { state })
+}
+
+/** 只校验可持久化条件；实际品质、增效和属性行对应由运行时入口验证。 */
+export function validateStoredCraftTargetValues(
+  catalog: CraftCatalog,
+  baseId: string,
+  ids: readonly string[],
+  values: unknown,
+  alternatives: readonly CraftTargetAlternative[] = [],
+  minimumTargetCount?: number,
+): CraftResult<CraftTargetValues[]> {
+  try {
+    if (!isPlainProjectJSON({ ids, values, alternatives }))
+      return { ok: false, error: '存储数值目标必须只包含自有、可枚举的数据字段。' }
+  } catch {
+    return { ok: false, error: '存储数值目标对象无法安全检查。' }
+  }
+  return readTargetValues(catalog, baseId, ids, values, alternatives, minimumTargetCount)
+}
+
+function readTargetValues(
+  catalog: CraftCatalog,
+  baseId: string,
+  ids: readonly string[],
+  values: unknown,
+  alternatives: readonly CraftTargetAlternative[],
+  minimumTargetCount?: number,
+  runtime?: { state: CraftState | undefined },
+): CraftResult<CraftTargetValues[]> {
   const targets = validateCraftTargets(catalog, baseId, ids, minimumTargetCount)
   if (!targets.ok) return targets
   const accepted = validateCraftTargetAlternatives(
@@ -394,7 +425,8 @@ export function validateCraftTargetValues(
     if (mod === undefined) return { ok: false, error: '数值目标词缀不在制作目录中。' }
     const ranges = inspectNumericLines(mod.lines)
     if (!ranges.ok) return ranges
-    if (value.basis === 'effective') {
+    if (value.basis === 'effective' && runtime) {
+      const state = runtime.state
       if (!state || state.baseId !== baseId)
         return { ok: false, error: '有效值目标需要当前装备状态。' }
       const actuals = state.affixes

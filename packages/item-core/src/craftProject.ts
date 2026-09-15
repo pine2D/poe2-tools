@@ -37,6 +37,7 @@ import {
   type CraftImplicitTargetValues,
   readCraftImplicitTargets,
   validateCraftImplicitTargets,
+  validateStoredCraftImplicitTargets,
 } from './implicitTargets'
 import { JEWEL_EFFECT_EMOTION_ID } from './jewelEffectRules'
 import { usesJewelEffect } from './jewelEffects'
@@ -64,12 +65,14 @@ import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
+import { targetProjectSourceUsage } from './targetProjectSources'
 import {
   type CraftTargetAlternative,
   type CraftTargetValues,
   validateCraftTargetAlternatives,
   validateCraftTargets,
   validateCraftTargetValues,
+  validateStoredCraftTargetValues,
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
@@ -539,6 +542,24 @@ export function parseCraftProject(
   catalog: CraftCatalog,
   dictionary: ItemDictionary = {},
 ): CraftResult<RestoredCraftProject> {
+  return readCraftProject(text, catalog, dictionary, false)
+}
+
+/** 仅供新目标项目的 v72 内部投影；历史及来源门禁保持原样。 */
+export function readStoredTargetProjectProjection(
+  text: string,
+  catalog: CraftCatalog,
+  dictionary: ItemDictionary,
+): CraftResult<RestoredCraftProject> {
+  return readCraftProject(text, catalog, dictionary, true)
+}
+
+function readCraftProject(
+  text: string,
+  catalog: CraftCatalog,
+  dictionary: ItemDictionary,
+  storedTargets: boolean,
+): CraftResult<RestoredCraftProject> {
   const fail = (error: string): CraftResult<RestoredCraftProject> => ({ ok: false, error })
   if (
     text.length > MAX_CRAFT_PROJECT_BYTES ||
@@ -585,6 +606,8 @@ export function parseCraftProject(
   )
     return fail('演练项目结构无效。')
   if (value.schemaVersion !== 1) return fail('不支持该演练项目格式版本。')
+  if (storedTargets && value.rulesVersion !== 'basic-2026-09-12-v72')
+    return fail('存储目标投影必须使用固定的 v72 语义基线。')
   if (value.sourceCommit !== catalog._meta.sourceCommit)
     return fail('项目与当前制作目录快照不同，不能混用。')
   const rulesVersion = readRulesVersion(value.rulesVersion)
@@ -957,7 +980,11 @@ export function parseCraftProject(
   const craftedJewelIds = new Set(
     catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly).map((mod) => mod.id),
   )
+  const storedTargetSources = storedTargets
+    ? targetProjectSourceUsage(catalog, initialBaseId, targetIds)
+    : { essence: false, desecration: false, liquid: false, jewel: false }
   const targetUsesCraftedJewel =
+    storedTargetSources.liquid ||
     (Array.isArray(value.targetModIds) &&
       value.targetModIds.some((id) => craftedJewelIds.has(String(id)))) ||
     (Array.isArray(value.targetAlternatives) &&
@@ -1077,8 +1104,13 @@ export function parseCraftProject(
     return fail('v2–v31 旧版项目不能包含珠宝制作起点或来源。')
   const jewelSourceHash = readJewelSourceHash(catalog)
   if (
-    (usesJewel || usesJewelEffects || Object.hasOwn(value, 'jewelSourceHash')) &&
-    (!usesJewel || jewelSourceHash === null || value.jewelSourceHash !== jewelSourceHash)
+    (usesJewel ||
+      storedTargetSources.jewel ||
+      usesJewelEffects ||
+      Object.hasOwn(value, 'jewelSourceHash')) &&
+    ((!usesJewel && !storedTargetSources.jewel) ||
+      jewelSourceHash === null ||
+      value.jewelSourceHash !== jewelSourceHash)
   )
     return fail('项目珠宝来源指纹缺失或与当前目录不同，不能恢复。')
   if (
@@ -1461,6 +1493,7 @@ export function parseCraftProject(
       return fail('项目镶嵌物来源指纹缺失或与当前目录不同，不能恢复。')
   }
   const usesEssences =
+    storedTargetSources.essence ||
     strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
     value.operations.some((step) => record(step) && step.kind === 'essence')
   const essenceSourceHash = readEssenceSourceHash(catalog)
@@ -1469,6 +1502,7 @@ export function parseCraftProject(
       return fail('项目精华来源指纹缺失或与当前目录不同，不能恢复。')
   }
   const usesDesecration =
+    storedTargetSources.desecration ||
     strategy?.rules.some(
       (rule) => rule.action.kind === 'desecrate' || rule.action.kind === 'reveal',
     ) ||
@@ -1598,15 +1632,24 @@ export function parseCraftProject(
   }
   let targetValues: CraftTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetValues')) {
-    const checkedValues = validateCraftTargetValues(
-      targetCatalog,
-      initial.value.baseId,
-      targetModIds ?? [],
-      value.targetValues,
-      targetAlternatives,
-      initial.value,
-      minimumTargetCount,
-    )
+    const checkedValues = storedTargets
+      ? validateStoredCraftTargetValues(
+          targetCatalog,
+          initial.value.baseId,
+          targetModIds ?? [],
+          value.targetValues,
+          targetAlternatives,
+          minimumTargetCount,
+        )
+      : validateCraftTargetValues(
+          targetCatalog,
+          initial.value.baseId,
+          targetModIds ?? [],
+          value.targetValues,
+          targetAlternatives,
+          initial.value,
+          minimumTargetCount,
+        )
     if (!checkedValues.ok) return fail(`数值目标无效：${checkedValues.error}`)
     targetValues = checkedValues.value
   }
@@ -1653,12 +1696,18 @@ export function parseCraftProject(
   const operations: CraftStep[] = []
   let targetImplicitValues: CraftImplicitTargetValues[] | undefined
   if (Object.hasOwn(value, 'targetImplicitValues')) {
-    const implicit = validateCraftImplicitTargets(
-      catalog,
-      initial.value.baseId,
-      value.targetImplicitValues,
-      initial.value,
-    )
+    const implicit = storedTargets
+      ? validateStoredCraftImplicitTargets(
+          catalog,
+          initial.value.baseId,
+          value.targetImplicitValues,
+        )
+      : validateCraftImplicitTargets(
+          catalog,
+          initial.value.baseId,
+          value.targetImplicitValues,
+          initial.value,
+        )
     if (!implicit.ok) return fail(`固有目标无效：${implicit.error}`)
     targetImplicitValues = implicit.value
   }
@@ -1744,7 +1793,9 @@ export function parseCraftProject(
         ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
         ...(strategy === undefined ? {} : { strategy }),
         ...(strategy?.flow ? { strategyStartStep: value.strategyStartStep as number } : {}),
-        ...(usesJewel && jewelSourceHash !== null ? { jewelSourceHash } : {}),
+        ...((usesJewel || storedTargetSources.jewel) && jewelSourceHash !== null
+          ? { jewelSourceHash }
+          : {}),
         ...((usesLiquidEmotions ||
           usesJewelEffects ||
           Object.hasOwn(value, 'liquidEmotionSourceHash')) &&

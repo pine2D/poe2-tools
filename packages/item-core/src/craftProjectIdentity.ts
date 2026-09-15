@@ -4,7 +4,12 @@ import {
   isIdentifiedCraftState,
 } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
-import { type CraftProject, MAX_CRAFT_PROJECT_BYTES, parseCraftProject } from './craftProject'
+import {
+  type CraftProject,
+  MAX_CRAFT_PROJECT_BYTES,
+  parseCraftProject,
+  type RestoredCraftProject,
+} from './craftProject'
 import type { CraftStep } from './craftSteps'
 import type { ItemDictionary } from './export'
 import {
@@ -33,12 +38,20 @@ export function upgradeCraftProjectIdentity(
 ): CraftResult<RestoredIdentityCraftProject> {
   const legacy = parseCraftProject(text, catalog, dictionary)
   if (!legacy.ok) return legacy
-  const initial = enableCraftAffixIdentity(catalog, legacy.value.project.initialState)
+  return identifyVerifiedCraftProject(legacy.value, catalog)
+}
+
+/** 包内共用：调用方必须先完整校验原始版本、全部历史及来源。 */
+export function identifyVerifiedCraftProject(
+  legacy: RestoredCraftProject,
+  catalog: CraftCatalog,
+): CraftResult<RestoredIdentityCraftProject> {
+  const initial = enableCraftAffixIdentity(catalog, legacy.project.initialState)
   if (!initial.ok) return initial
   const states = [initial.value]
   const operations: CraftStep[] = []
   let current = initial.value
-  for (const [index, operation] of legacy.value.project.operations.entries()) {
+  for (const [index, operation] of legacy.project.operations.entries()) {
     const next = upgradeProjectOperationIdentity(catalog, current, operation)
     if (!next.ok) return { ok: false, error: `第 ${index + 1} 步不能迁移实例：${next.error}` }
     const after = next.value.afterState
@@ -47,7 +60,7 @@ export function upgradeCraftProjectIdentity(
       return { ok: false, error: `第 ${index + 1} 步迁移后实例身份不完整或无效。` }
     if (
       JSON.stringify(projectStateWithoutIdentity(after)) !==
-      JSON.stringify(legacy.value.states[index + 1])
+      JSON.stringify(legacy.states[index + 1])
     )
       return { ok: false, error: `第 ${index + 1} 步迁移前后的装备状态不一致。` }
     operations.push(next.value.operation)
@@ -55,7 +68,7 @@ export function upgradeCraftProjectIdentity(
     states.push(current)
   }
   const project: IdentityCraftProject = {
-    ...legacy.value.project,
+    ...legacy.project,
     rulesVersion: IDENTITY_CRAFT_RULES_VERSION,
     initialState: initial.value,
     operations,

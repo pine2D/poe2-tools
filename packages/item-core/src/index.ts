@@ -131,6 +131,13 @@ export {
 } from './craftProjectIdentity'
 export { parseIdentityCraftProject } from './craftProjectIdentityReader'
 export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
+export type { RestoredTargetCraftProject, TargetCraftProject } from './craftProjectTargets'
+export {
+  parseTargetCraftProject,
+  serializeTargetCraftProject,
+  TARGET_CRAFT_RULES_VERSION,
+  upgradeTargetCraftProject,
+} from './craftProjectTargets'
 export type {
   ArtificerCraftOperation,
   CraftStep,
@@ -321,6 +328,11 @@ export {
 } from './strategyStages'
 export type { CraftDefinitionAdvice, CraftDefinitionAdviceStep } from './targetDefinitionAdvice'
 export { analyzeTargetDefinitions, definitionTargetsSatisfied } from './targetDefinitionAdvice'
+export {
+  editTargetDefinitionContext,
+  readTargetDefinitionContext,
+  setTargetDefinitionStrategy,
+} from './targetDefinitionContext'
 export type { CraftTargetDefinitionEdit } from './targetDefinitionEdits'
 export { editTargetDefinitions } from './targetDefinitionEdits'
 export type { CraftTargetDefinitionContext } from './targetDefinitionMigration'
@@ -339,7 +351,11 @@ export type {
   CraftTargetDefinitionValues,
   LegacyCraftTargetConfig,
 } from './targetDefinitions'
-export { createTargetDefinitions, validateTargetDefinitions } from './targetDefinitions'
+export {
+  createTargetDefinitions,
+  validateStoredTargetDefinitions,
+  validateTargetDefinitions,
+} from './targetDefinitions'
 export { type ExtractedCraftTargets, extractCraftTargets } from './targetExtraction'
 export type {
   CraftTargetRoute,

@@ -1,5 +1,6 @@
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import type { CatalogBase, CraftCatalog } from './catalog'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import {
   matchesTargetInterval,
   projectedTargetRolls,
@@ -77,6 +78,28 @@ export function validateCraftImplicitTargets(
     if (!projection.ok) return projection
     if (!goal.bounds.every((bound) => projection.value.ranges[bound.index] !== undefined))
       return fail('此固有属性不支持有效数值目标。')
+  }
+  return checked
+}
+
+/** 目录行与标签资格独立校验，不使用当前装备的行映射或缩放效果。 */
+export function validateStoredCraftImplicitTargets(
+  catalog: CraftCatalog,
+  baseId: string,
+  values: unknown,
+): CraftResult<CraftImplicitTargetValues[]> {
+  try {
+    if (!isPlainProjectJSON(values)) return fail('存储固有目标必须只包含自有、可枚举的数据字段。')
+  } catch {
+    return fail('存储固有目标对象无法安全检查。')
+  }
+  const base = catalog.bases.find((entry) => entry.id === baseId)
+  if (!base) return fail('固有目标基底不在目录中。')
+  const checked = readCraftImplicitTargets(values, descriptors(base))
+  if (!checked.ok) return checked
+  for (const goal of checked.value) {
+    if (goal.basis === 'effective' && !Array.isArray(base.implicitTags[goal.lineIndex]))
+      return fail('固有属性标签或目录身份未知，不能保存有效条件。')
   }
   return checked
 }

@@ -23,7 +23,8 @@ export type DefinitionCraftStrategyLeafCondition =
   | { kind: 'selected-targets'; targetIds: string[]; min: number; value: boolean }
 export type DefinitionCraftStrategyCondition =
   | DefinitionCraftStrategyLeafCondition
-  | { kind: 'all' | 'any'; conditions: DefinitionCraftStrategyCondition[] }
+  | { kind: 'all'; conditions: DefinitionCraftStrategyCondition[] }
+  | { kind: 'any'; conditions: DefinitionCraftStrategyCondition[] }
   | { kind: 'not'; condition: DefinitionCraftStrategyCondition }
 export interface DefinitionCraftStrategyRule extends Omit<CraftStrategyRule, 'conditions'> {
   conditions: DefinitionCraftStrategyCondition[]

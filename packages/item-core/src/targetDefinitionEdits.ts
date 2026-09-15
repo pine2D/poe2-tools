@@ -1,10 +1,11 @@
 import type { CraftCatalog } from './catalog'
-import type { CraftResult, CraftState } from './rehearsal'
+import { isPlainProjectJSON } from './craftProjectJSON'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
   type CraftTargetDefinitions,
-  createTargetDefinitions,
+  createStoredTargetDefinitions,
   type LegacyCraftTargetConfig,
-  validateTargetDefinitions,
+  validateStoredTargetDefinitions,
 } from './targetDefinitions'
 import type { CraftTargetValues } from './targets'
 
@@ -87,7 +88,15 @@ export function editTargetDefinitions(
   definitions: unknown,
   edit: unknown,
 ): CraftResult<CraftTargetDefinitions> {
-  const checked = validateTargetDefinitions(catalog, state, definitions)
+  try {
+    if (!isPlainProjectJSON({ state, definitions, edit }))
+      return fail('目标编辑必须只包含自有、可枚举的数据字段。')
+  } catch {
+    return fail('目标编辑对象无法安全检查。')
+  }
+  const current = createCraftState(catalog, state)
+  if (!current.ok) return current
+  const checked = validateStoredTargetDefinitions(catalog, state.baseId, definitions)
   if (!checked.ok) return checked
   const next = checked.value
   if (
@@ -192,7 +201,7 @@ export function editTargetDefinitions(
     case 'replace': {
       if (!record(edit, ['kind', 'config']) || !legacyConfig(edit.config))
         return fail('完整替换需要有效旧目标配置，不能包含身份字段或显式缺省值。')
-      const created = createTargetDefinitions(catalog, state, edit.config)
+      const created = createStoredTargetDefinitions(catalog, state.baseId, edit.config)
       if (!created.ok) return created
       const replacement = created.value
       const cursor = next.nextTargetId + replacement.targets.length
@@ -203,7 +212,7 @@ export function editTargetDefinitions(
           `t${next.nextTargetId + index}`,
         ]),
       )
-      return validateTargetDefinitions(catalog, state, {
+      return validateStoredTargetDefinitions(catalog, state.baseId, {
         ...replacement,
         nextTargetId: cursor,
         targets: replacement.targets.map((entry) => ({
@@ -226,5 +235,5 @@ export function editTargetDefinitions(
     default:
       return fail('不支持的目标编辑动作。')
   }
-  return validateTargetDefinitions(catalog, state, next)
+  return validateStoredTargetDefinitions(catalog, state.baseId, next)
 }

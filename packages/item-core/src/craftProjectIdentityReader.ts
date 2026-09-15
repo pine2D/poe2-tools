@@ -1,10 +1,12 @@
 import type { CraftCatalog } from './catalog'
-import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
+import { MAX_CRAFT_PROJECT_BYTES, readStoredTargetProjectProjection } from './craftProject'
 import {
   IDENTITY_CRAFT_RULES_VERSION,
+  identifyVerifiedCraftProject,
   type RestoredIdentityCraftProject,
   upgradeCraftProjectIdentity,
 } from './craftProjectIdentity'
+import { equivalentProjectJSON } from './craftProjectJSON'
 import type { ItemDictionary } from './export'
 import type { CraftResult } from './rehearsal'
 
@@ -59,35 +61,29 @@ function legacyProjection(original: Record<string, unknown>): Record<string, unk
   return project
 }
 
-/** JSON 对象键序无关；数组次序及每层完整键集合必须一致。 */
-function equivalent(left: unknown, right: unknown): boolean {
-  const pending: [unknown, unknown][] = [[left, right]]
-  while (pending.length) {
-    const pair = pending.pop()
-    if (!pair) break
-    const [a, b] = pair
-    if (a === b) continue
-    if (Array.isArray(a) || Array.isArray(b)) {
-      if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
-      for (let index = 0; index < a.length; index++) pending.push([a[index], b[index]])
-    } else {
-      if (!record(a) || !record(b)) return false
-      const keys = Object.keys(a)
-      if (keys.length !== Object.keys(b).length) return false
-      for (const key of keys) {
-        if (!Object.hasOwn(b, key)) return false
-        pending.push([a[key], b[key]])
-      }
-    }
-  }
-  return true
-}
-
 /** v73 必须已是完整规范输出；缺失或错误身份不能由读取过程自动修复。 */
 export function parseIdentityCraftProject(
   text: string,
   catalog: CraftCatalog,
   dictionary: ItemDictionary = {},
+): CraftResult<RestoredIdentityCraftProject> {
+  return readIdentityProject(text, catalog, dictionary, false)
+}
+
+/** 包内 v74 目标投影入口；实例、历史与来源仍经过同一严格固定点校验。 */
+export function readIdentityStoredTargetProjection(
+  text: string,
+  catalog: CraftCatalog,
+  dictionary: ItemDictionary,
+): CraftResult<RestoredIdentityCraftProject> {
+  return readIdentityProject(text, catalog, dictionary, true)
+}
+
+function readIdentityProject(
+  text: string,
+  catalog: CraftCatalog,
+  dictionary: ItemDictionary,
+  storedTargets: boolean,
 ): CraftResult<RestoredIdentityCraftProject> {
   if (
     text.length > MAX_CRAFT_PROJECT_BYTES ||
@@ -108,9 +104,15 @@ export function parseIdentityCraftProject(
   } catch {
     return { ok: false, error: '实例项目结构过深，无法建立可验证的旧格式投影。' }
   }
-  const upgraded = upgradeCraftProjectIdentity(projection, catalog, dictionary)
+  const legacy = storedTargets
+    ? readStoredTargetProjectProjection(projection, catalog, dictionary)
+    : undefined
+  if (legacy && !legacy.ok) return legacy
+  const upgraded = legacy?.ok
+    ? identifyVerifiedCraftProject(legacy.value, catalog)
+    : upgradeCraftProjectIdentity(projection, catalog, dictionary)
   if (!upgraded.ok) return upgraded
-  if (!equivalent(original, upgraded.value.project))
+  if (!equivalentProjectJSON(original, upgraded.value.project))
     return { ok: false, error: '实例项目与完整回放结果不一致；不能自动补全或修复身份及配置。' }
   return upgraded
 }
