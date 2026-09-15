@@ -18,6 +18,44 @@ function raw(patch: LuaTable = {}): LuaTable {
   }
 }
 describe('亵渎专属源规范化', () => {
+  it('珠宝专属按正向资格分域，范围核心天赋补全并核验原文', () => {
+    const jewel = raw({
+      weightKey: { '1': 'strjewel', '2': 'default' },
+      modTags: { '1': 'unveiled_mod' },
+    })
+    const radius = raw({
+      nodeType: 2,
+      weightKey: { '1': 'int_radius_jewel', '2': 'default' },
+      modTags: { '1': 'unveiled_mod' },
+      tradeHashes: {
+        '42': { '1': 'Notable Passive Skills in Radius also grant +(1-5) to maximum Life' },
+      },
+    })
+    const result = normalizeDesecratedMods({ jewel, radius })
+    expect(result.excluded).toEqual([])
+    expect(result.modifiers).toMatchObject([
+      { id: 'jewel', jewelOnly: true, desecratedOnly: true },
+      {
+        id: 'radius',
+        jewelOnly: true,
+        radiusJewelOnly: true,
+        desecratedOnly: true,
+        lines: ['Notable Passive Skills in Radius also grant +(1-5) to maximum Life'],
+      },
+    ])
+    for (const patch of [
+      { nodeType: 2 },
+      { modTags: { '1': 'unveiled_mod', '2': 'amanamu_mod' } },
+      {
+        weightKey: { '1': 'strjewel', '2': 'helmet', '3': 'default' },
+        weightVal: { '1': 1, '2': 1, '3': 0 },
+      },
+    ])
+      expect(() => normalizeDesecratedMods({ bad: { ...jewel, ...patch } })).toThrow()
+    expect(() =>
+      normalizeDesecratedMods({ bad: { ...radius, tradeHashes: jewel.tradeHashes } }),
+    ).toThrow()
+  })
   it('只采纳明确side、已揭示且三族唯一的记录，其余完整记录排除原因', () => {
     const { type: _, ...untyped } = raw()
     const source = {

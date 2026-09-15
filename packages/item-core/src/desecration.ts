@@ -1,4 +1,4 @@
-import type { CraftCatalog } from './catalog'
+import type { CatalogMod, CraftCatalog } from './catalog'
 
 /** 固定来源仅描述目录快照，不代表允许执行亵渎制作。 */
 export const DESECRATION_SOURCE = {
@@ -9,6 +9,24 @@ export const DESECRATION_SOURCE = {
 } as const
 
 export const DESECRATION_FAMILIES = ['amanamu_mod', 'kurgal_mod', 'ulaman_mod'] as const
+
+/** 珠宝无巫妖族标签，以源中明确的正向资格隔离；混合领域一律拒绝。 */
+export function desecratedModDomain(
+  mod: Pick<CatalogMod, 'tags' | 'eligibility'>,
+): 'equipment' | 'basic-jewel' | 'radius-jewel' | null {
+  if (!mod.tags.includes('unveiled_mod')) return null
+  const families = DESECRATION_FAMILIES.filter((tag) => mod.tags.includes(tag))
+  const positive = mod.eligibility.filter((rule) => rule.value === 1).map((rule) => rule.tag)
+  const basic = ['strjewel', 'dexjewel', 'intjewel']
+  const radius = ['str_radius_jewel', 'dex_radius_jewel', 'int_radius_jewel']
+  if (positive.some((tag) => basic.includes(tag) || radius.includes(tag))) {
+    if (families.length) return null
+    if (positive.every((tag) => basic.includes(tag))) return 'basic-jewel'
+    if (positive.every((tag) => radius.includes(tag))) return 'radius-jewel'
+    return null
+  }
+  return families.length === 1 ? 'equipment' : null
+}
 
 /** 目录来源必须精确匹配固定快照，不能接受仅有合法哈希形状的伪造声明。 */
 export function desecrationSourceHash(catalog: CraftCatalog): string | null {

@@ -136,7 +136,12 @@ export type {
 export { evaluateCraftStrategy, readCraftStrategy } from './craftStrategy'
 export type { DefenceEstimate } from './defences'
 export { estimateDefences } from './defences'
-export { DESECRATION_FAMILIES, DESECRATION_SOURCE, desecrationSourceHash } from './desecration'
+export {
+  DESECRATION_FAMILIES,
+  DESECRATION_SOURCE,
+  desecratedModDomain,
+  desecrationSourceHash,
+} from './desecration'
 export { matchesTargetInterval, projectCraftTargetValues } from './effectiveTargetValues'
 export type { EssenceAdviceStep } from './essenceAdvice'
 export { analyzeEssenceTargets } from './essenceAdvice'

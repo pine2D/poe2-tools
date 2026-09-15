@@ -7,6 +7,12 @@ import {
 import type { CatalogBase } from './catalog'
 
 export const BONE_RULES = {
+  preserved_cranium: {
+    name: 'Preserved Cranium',
+    category: 'jewel',
+    maxItemLevel: null,
+    minModLevel: 0,
+  },
   gnawed_jawbone: { name: 'Gnawed Jawbone', category: 'weapon', maxItemLevel: 64, minModLevel: 0 },
   preserved_jawbone: {
     name: 'Preserved Jawbone',
@@ -79,6 +85,7 @@ export type BoneCraftOperation =
 export const PENDING_DESECRATION_MESSAGE = '请先完成亵渎揭示；本工具尚未实现未揭示期间的交错制作。'
 
 const TYPES = {
+  jewel: ['Jewel'],
   weapon: [
     'Bow',
     'Claw',

@@ -274,7 +274,7 @@ it('已有液态增效与品质可保留；强化不被前缀增效放大，未�
 })
 
 it('v70 全历史校验珠宝瓦尔与建筑师，拒绝旧版本和缺失指纹，包括撤销之后', () => {
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v70')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v71')
   const operations: CraftStep[] = [
     enchant,
     { kind: 'architect', outcome: 'enchant', modId: 'CorruptionJewelDexterity1', values: [4] },

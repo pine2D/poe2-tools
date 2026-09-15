@@ -312,9 +312,10 @@ export function createCraftState(
     return failure('液态情感工艺词缀只支持稀有珠宝。')
   if (
     (isBasicJewel(base) || isRadiusJewel(base)) &&
-    input.affixes.some((affix) => affix?.desecrated)
+    input.affixes.some((affix) => affix?.desecrated) &&
+    input.rarity !== 'rare'
   )
-    return failure('珠宝亵渎来源的特殊制作尚未支持。')
+    return failure('珠宝亵渎来源只支持稀有珠宝。')
   const implicit = resolveCraftImplicitPatterns(base, input)
   if (!implicit.ok) return implicit
   if (
@@ -437,6 +438,11 @@ export function createCraftState(
     if (input.rarity === 'normal') return failure('普通装备不能带有显式词缀。')
     if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')
     return failure(`稀有装备最多有 ${capacity.prefix} 条前缀和 ${capacity.suffix} 条后缀。`)
+  }
+  if (input.pendingDesecration) {
+    const { pendingDesecration, ...withoutPending } = input
+    if (craftAffixSpace(catalog, withoutPending)[pendingDesecration.kind] === 0)
+      return failure('待揭示亵渎必须占用当前可新增的前后缀空位。')
   }
   const corruptionError = corruptionStateError(catalog, input)
   if (corruptionError) return failure(corruptionError)

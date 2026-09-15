@@ -49,10 +49,10 @@ if (alloyText !== undefined) {
 } else console.log('合金关系目录未提供；继续校验 primary 制作目录')
 if (
   statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
-  Object.keys(catalog.scalability ?? {}).length !== 2953
+  Object.keys(catalog.scalability ?? {}).length !== 2988
 )
-  throw new Error('缩放目录缺少固定来源或 2953 条当前属性文本对应')
-console.log('属性缩放目录校验通过：2953 条文本；261 条未对应保留缺失，不推断内部精度')
+  throw new Error('缩放目录缺少固定来源或 2988 条当前属性文本对应')
+console.log('属性缩放目录校验通过：2988 条文本；271 条未对应保留缺失，不推断内部精度')
 if (
   corruptionSourceHash(catalog) !== CORRUPTION_SOURCE.sha256 ||
   catalog.corruptions?.length !== 127 ||
@@ -79,17 +79,24 @@ const desecratedSource = catalog._meta.sources.filter(
 )
 if (
   catalog.modifiers.filter((mod) => !mod.desecratedOnly && !mod.jewelOnly).length !== 2550 ||
-  catalog.modifiers.filter((mod) => mod.desecratedOnly).length !== 199 ||
-  catalog._meta.excludedDesecratedMods?.length !== 189 ||
+  catalog.modifiers.filter((mod) => mod.desecratedOnly && !mod.jewelOnly).length !== 199 ||
+  catalog.modifiers.filter((mod) => mod.desecratedOnly && mod.jewelOnly && !mod.radiusJewelOnly)
+    .length !== 32 ||
+  catalog.modifiers.filter((mod) => mod.desecratedOnly && mod.radiusJewelOnly).length !== 12 ||
+  catalog._meta.excludedDesecratedMods?.length !== 145 ||
   desecratedSource.length !== 1 ||
   desecratedSource[0]?.sha256 !== DESECRATION_SOURCE.sha256
 )
-  throw new Error('亵渎目录固定来源或 2550 普通 / 199 专属 / 189 排除计数不匹配')
+  throw new Error(
+    '亵渎目录固定来源或 2550 普通 / 199 装备专属 / 32 珠宝专属 / 12 范围专属 / 145 排除计数不匹配',
+  )
 if (
   jewelSourceHash(catalog) !== JEWEL_SOURCE.sha256 ||
-  catalog.modifiers.filter((mod) => mod.jewelOnly && !mod.craftedOnly && !mod.radiusJewelOnly)
+  catalog.modifiers.filter(
+    (mod) => mod.jewelOnly && !mod.craftedOnly && !mod.desecratedOnly && !mod.radiusJewelOnly,
+  ).length !== 160 ||
+  catalog.modifiers.filter((mod) => mod.radiusJewelOnly && !mod.craftedOnly && !mod.desecratedOnly)
     .length !== 160 ||
-  catalog.modifiers.filter((mod) => mod.radiusJewelOnly && !mod.craftedOnly).length !== 160 ||
   catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly).length !== 16 ||
   catalog._meta.excludedJewelMods?.length !== 41
 )

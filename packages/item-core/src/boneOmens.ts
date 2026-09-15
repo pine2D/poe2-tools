@@ -38,7 +38,7 @@ export function boneOmenError(
   boneId: CraftBone,
   kind?: 'prefix' | 'suffix',
 ): string | null {
-  if (config.lichOmen && boneId.endsWith('_rib'))
+  if (config.lichOmen && (boneId.endsWith('_rib') || boneId.endsWith('_cranium')))
     return '巫妖预兆仅支持武器与首饰，不能用于护甲骨骼。'
   if (config.directionOmen && kind && BONE_DIRECTION_OMEN_RULES[config.directionOmen].kind !== kind)
     return '所选亵渎侧与方向预兆不符。'

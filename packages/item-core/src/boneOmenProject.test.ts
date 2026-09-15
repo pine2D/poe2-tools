@@ -36,7 +36,7 @@ it('v25双预兆与固定三项逐游标回放，旧v24任何预兆字段拒绝'
       { kind: 'desecration-reveal', modId: 'exclusive2', values: [5] },
     ],
   }
-  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v70')
+  expect(CRAFT_RULES_VERSION).toBe('basic-2026-09-12-v71')
   for (let cursor = 0; cursor <= 4; cursor++) {
     const result = parseCraftProject(serializeCraftProject({ ...input, cursor }), catalog)
     expect(result.ok).toBe(true)

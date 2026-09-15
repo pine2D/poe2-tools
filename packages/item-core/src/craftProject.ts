@@ -73,7 +73,7 @@ import {
 } from './targets'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
-export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v70'
+export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v71'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
 const ORIGINAL_CURRENCIES = new Set([
   'transmutation',
@@ -136,7 +136,7 @@ function readRulesVersion(value: unknown): number | null {
   const match = /^basic-2026-09-12-v(\d+)$/.exec(value)
   if (!match?.[1]) return null
   const version = Number(match[1])
-  return String(version) === match[1] && version >= 2 && version <= 70 ? version : null
+  return String(version) === match[1] && version >= 2 && version <= 71 ? version : null
 }
 
 function readState(value: unknown): CraftState | null {
@@ -869,6 +869,20 @@ export function parseCraftProject(
   const initialBaseId = record(value.initialState) ? value.initialState.baseId : null
   const usesJewel = catalog.bases.some((base) => base.id === initialBaseId && base.type === 'Jewel')
   if (
+    rulesVersion < 71 &&
+    usesJewel &&
+    (Object.hasOwn(value, 'desecrationSourceHash') ||
+      (record(value.initialState) &&
+        (Object.hasOwn(value.initialState, 'pendingDesecration') ||
+          (Array.isArray(value.initialState.affixes) &&
+            value.initialState.affixes.some(
+              (affix) => record(affix) && Object.hasOwn(affix, 'desecrated'),
+            )))) ||
+      (Array.isArray(value.operations) &&
+        value.operations.some((step) => record(step) && isBoneOperationKind(step.kind))))
+  )
+    return fail('v2–v70 旧版项目不能包含珠宝亵渎状态或步骤。')
+  if (
     rulesVersion < 70 &&
     usesJewel &&
     ((record(value.initialState) && Object.hasOwn(value.initialState, 'corrupted')) ||
@@ -908,6 +922,12 @@ export function parseCraftProject(
       ),
     ) ?? []),
   ]
+  if (
+    usesJewel &&
+    rulesVersion < 71 &&
+    targetIds.some((id) => catalog.modifiers.some((mod) => mod.id === id && mod.desecratedOnly))
+  )
+    return fail('v2–v70 旧版项目不能包含珠宝亵渎专属目标或条件。')
   const targetUsesJewelEffect = usesJewelEffect(catalog, {
     affixes: targetIds.map((modId) => ({ modId, lines: [] })),
   })

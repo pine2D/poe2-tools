@@ -46,7 +46,9 @@ export function BoneOperationDetails({
       <div>
         <p>
           指定{operation.affixKind === 'prefix' ? '前缀' : '后缀'}亵渎占位。
-          {operation.removeModId ? `满六组，本次指定移除：${operation.removeModId}。` : ''}
+          {operation.removeModId
+            ? `${operation.boneId === 'preserved_cranium' ? '容量已满' : '满六组'}，本次指定移除：${operation.removeModId}。`
+            : ''}
         </p>
         {boneOmenLabels(operation, catalog, translations).length ? (
           <p>
@@ -155,7 +157,7 @@ export function BoneAdvicePanel({
           />
           {step.randomRemovalRisk ? (
             <p className="target-warning">
-              满六组包含随机移除；指定安全结果不代表随机安全。本工具可演练移除池内的目标风险：
+              满容量包含随机移除；指定安全结果不代表随机安全。本工具可演练移除池内的目标风险：
               {step.atRiskTargetIds.length
                 ? step.atRiskTargetIds.map(label).join('；')
                 : '无现有目标档位'}

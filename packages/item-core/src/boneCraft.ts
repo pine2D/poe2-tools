@@ -1,3 +1,4 @@
+import { craftAffixSpace } from './affixCapacity'
 import { collectDesecrationCandidates, pendingBoneOmenError } from './boneCandidates'
 import {
   BONE_DIRECTION_OMEN_RULES,
@@ -19,12 +20,8 @@ import { renderNumericLines } from './numeric'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 
 function openKinds(catalog: CraftCatalog, state: CraftState): ('prefix' | 'suffix')[] {
-  return (['prefix', 'suffix'] as const).filter(
-    (kind) =>
-      state.affixes.filter(
-        (affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind === kind,
-      ).length < 3,
-  )
+  const space = craftAffixSpace(catalog, state)
+  return (['prefix', 'suffix'] as const).filter((kind) => space[kind] > 0)
 }
 export function prepareDesecration(
   catalog: CraftCatalog,
@@ -52,7 +49,7 @@ export function prepareDesecration(
   if (error) return { ok: false, error }
   const omenError = boneOmenError(config, boneId)
   if (omenError) return { ok: false, error: omenError }
-  const requiresRemoval = state.affixes.length === 6
+  const requiresRemoval = craftAffixSpace(catalog, state).total === 0
   const direction = config.directionOmen
     ? BONE_DIRECTION_OMEN_RULES[config.directionOmen].kind
     : null
@@ -60,7 +57,14 @@ export function prepareDesecration(
     requiresRemoval ? (['prefix', 'suffix'] as const) : openKinds(catalog, state)
   ).filter((kind) => direction === null || direction === kind)
   let removableAffixes = requiresRemoval
-    ? checked.value.affixes.filter((affix) => !affix.fractured)
+    ? checked.value.affixes.filter(
+        (affix) =>
+          !affix.fractured &&
+          openKinds(catalog, {
+            ...checked.value,
+            affixes: checked.value.affixes.filter((other) => other.modId !== affix.modId),
+          }).some((kind) => kinds.includes(kind)),
+      )
     : []
   if (config.directionOmen || config.lichOmen) {
     const viable = new Set<string>()
@@ -138,7 +142,7 @@ export function applyBoneCraft(
         ? !prepared.value.removableAffixes.some((affix) => affix.modId === step.removeModId)
         : Object.hasOwn(step, 'removeModId')
     )
-      return { ok: false, error: '满六组必须指定合法移除结果；未满六组不能移除。' }
+      return { ok: false, error: '容量已满必须指定合法移除结果；有空位时不能移除。' }
     const next = {
       ...current,
       affixes: current.affixes.filter((affix) => affix.modId !== step.removeModId),
@@ -147,7 +151,7 @@ export function applyBoneCraft(
       !prepared.value.kinds.includes(step.affixKind) ||
       !openKinds(catalog, next).includes(step.affixKind)
     )
-      return { ok: false, error: '选定前后缀没有空位；满六组时须使用被移除侧。' }
+      return { ok: false, error: '选定前后缀没有空位；满容量时须使用移除后有空位的一侧。' }
     return createCraftState(catalog, {
       ...next,
       pendingDesecration: { boneId: step.boneId, kind: step.affixKind, ...config },

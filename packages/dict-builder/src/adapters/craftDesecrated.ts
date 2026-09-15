@@ -1,4 +1,4 @@
-import { type CatalogMod, DESECRATION_FAMILIES } from '@poe2-tools/item-core'
+import { type CatalogMod, DESECRATION_FAMILIES, desecratedModDomain } from '@poe2-tools/item-core'
 import { normalizeMod } from './craftCatalog'
 import type { LuaTable } from './restrictedLua'
 
@@ -23,17 +23,46 @@ export function normalizeDesecratedMods(raw: unknown): {
     const mod = normalizeMod(id, missingType ? { ...fields, type: 'Prefix' } : fields)
     const families = DESECRATION_FAMILIES.filter((tag) => mod.tags.includes(tag))
     if (new Set(mod.tags).size !== mod.tags.length || families.length > 1) fail(id)
+    const domain = desecratedModDomain(mod)
+    const hasJewelEligibility = mod.eligibility.some(
+      (rule) =>
+        rule.value === 1 &&
+        [
+          'strjewel',
+          'intjewel',
+          'dexjewel',
+          'str_radius_jewel',
+          'int_radius_jewel',
+          'dex_radius_jewel',
+        ].includes(rule.tag),
+    )
+    if (hasJewelEligibility && !domain) fail(id)
     const reason = missingType
       ? '未声明前后缀类型'
       : !mod.tags.includes('unveiled_mod')
         ? '不属于揭露词缀'
-        : families.length !== 1
+        : domain === null
           ? '不属于支持的三族亵渎词缀'
           : null
     if (reason) excluded.push({ id, reason })
     else {
-      if (nodeType !== undefined) fail(id)
-      modifiers.push({ ...mod, desecratedOnly: true })
+      if (domain === 'radius-jewel' ? nodeType !== 2 : nodeType !== undefined) fail(id)
+      const lines =
+        domain === 'radius-jewel'
+          ? mod.lines.map((line) => `Notable Passive Skills in Radius also grant ${line}`)
+          : mod.lines
+      if (
+        domain === 'radius-jewel' &&
+        lines.some((line) => !Object.values(mod.tradeHashes).flat().includes(line))
+      )
+        fail(id)
+      modifiers.push({
+        ...mod,
+        lines,
+        desecratedOnly: true,
+        ...(domain !== 'equipment' ? { jewelOnly: true as const } : {}),
+        ...(domain === 'radius-jewel' ? { radiusJewelOnly: true as const } : {}),
+      })
     }
   }
   return { modifiers, excluded }

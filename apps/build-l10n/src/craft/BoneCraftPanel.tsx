@@ -13,6 +13,7 @@ import {
   type CraftState,
   type CraftTargetAlternative,
   type CraftTargetValues,
+  craftAffixSpace,
   desecrationCandidates,
   inspectNumericLines,
   isCraftBone,
@@ -110,11 +111,17 @@ export function BoneCraftPanel({
   const localize = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const removal = removeModId ? byId.get(removeModId) : undefined
+  const removalSpace = removal
+    ? craftAffixSpace(catalog, {
+        ...state,
+        affixes: state.affixes.filter((affix) => affix.modId !== removal.id),
+      })
+    : null
   const requiresRemoval = prepared?.ok && prepared.value.requiresRemoval
   const kinds = prepared?.ok
     ? requiresRemoval
       ? removal
-        ? [removal.kind]
+        ? prepared.value.kinds.filter((kind) => (removalSpace?.[kind] ?? 0) > 0)
         : []
       : prepared.value.kinds
     : []
@@ -321,7 +328,9 @@ export function BoneCraftPanel({
                     ? '武器与箭袋'
                     : rule.category === 'armour'
                       ? '防具与副手'
-                      : '项链、戒指与腰带'}
+                      : rule.category === 'jewel'
+                        ? '稀有珠宝'
+                        : '项链、戒指与腰带'}
                   {rule.maxItemLevel === 64 ? ' · 物等不高于64' : ''}
                   {rule.minModLevel === 40 ? ' · 物等至少40，最低词缀等级40' : ''}
                   {!result.ok ? ` · ${result.error}` : ''}
@@ -397,7 +406,9 @@ export function BoneCraftPanel({
           ) : null}
           {requiresRemoval && prepared?.ok ? (
             <>
-              <p>满六组时游戏会随机移除一组词缀；这里指定结果用于演练，不能控制游戏中的移除。</p>
+              <p>
+                词缀容量已满时游戏会随机移除一组词缀；这里指定结果用于演练，不能控制游戏中的移除。
+              </p>
               {directionOmen || lichOmen ? (
                 <p>
                   这里只列出本工具能够完成三候选演练的移除结果，不代表其他游戏结果不可能，也不保证目标受到保护。

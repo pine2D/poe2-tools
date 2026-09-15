@@ -105,8 +105,9 @@ function required<T>(value: T | undefined): T {
 }
 describe('骨骼规则与拒绝边界', () => {
   it('九材料按明确类别与64/40等级门禁，工艺可共存但不可二次亵渎', () => {
-    expect(Object.keys(BONE_RULES)).toHaveLength(9)
+    expect(Object.keys(BONE_RULES).filter((id) => id !== 'preserved_cranium')).toHaveLength(9)
     for (const [boneId, rule] of Object.entries(BONE_RULES)) {
+      if (boneId === 'preserved_cranium') continue
       const allowed =
         rule.category === 'weapon'
           ? ['Bow', 'Quiver', 'Sceptre']

@@ -1,6 +1,6 @@
 import type { CatalogModifierData, CraftCatalog } from './catalog'
 import { corruptionSourceHash } from './corruptionSource'
-import { DESECRATION_FAMILIES, DESECRATION_SOURCE } from './desecration'
+import { DESECRATION_SOURCE, desecratedModDomain } from './desecration'
 import { JEWEL_SOURCE } from './jewels'
 import { LIQUID_EMOTION_SOURCE, liquidEmotionSourceHash } from './liquidEmotions'
 import { splitStatScalars, statScalabilitySourceHash } from './statScalability'
@@ -400,11 +400,11 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
       (mod.radiusJewelOnly === true && mod.jewelOnly !== true) ||
       (Object.hasOwn(mod, 'craftedOnly') && mod.craftedOnly !== true) ||
       (mod.craftedOnly === true && mod.jewelOnly !== true) ||
-      (mod.jewelOnly === true && mod.desecratedOnly === true) ||
+      (mod.craftedOnly === true && mod.desecratedOnly === true) ||
       (mod.desecratedOnly === true &&
-        (!mod.tags.includes('unveiled_mod') ||
-          mod.tags.filter((tag) => (DESECRATION_FAMILIES as readonly string[]).includes(tag))
-            .length !== 1))
+        (desecratedModDomain(mod) === null ||
+          (mod.jewelOnly === true) !== (desecratedModDomain(mod) !== 'equipment') ||
+          (mod.radiusJewelOnly === true) !== (desecratedModDomain(mod) === 'radius-jewel')))
     )
       return invalid()
     ids.add(mod.id)

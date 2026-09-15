@@ -102,7 +102,7 @@ it('魂核攻速驱动停止条件，覆盖取消、费用、撤销和项目恢�
   ).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(saved.rulesVersion).toBe('basic-2026-09-12-v70')
+  expect(saved.rulesVersion).toBe('basic-2026-09-12-v71')
   expect(saved.operations).toHaveLength(3)
   click('撤销')
   expect(panel().getByText('物理 DPS：11.88')).toBeDefined()
