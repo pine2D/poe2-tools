@@ -1777,7 +1777,6 @@ export function RehearsalPanel({
         {...(translateLine ? { translateLine } : {})}
       />
       <CatalystPreviewPanel
-        key={JSON.stringify(current.catalyst ?? null)}
         catalog={catalog}
         state={current}
         translations={translations}

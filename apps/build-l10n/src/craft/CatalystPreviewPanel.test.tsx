@@ -36,6 +36,26 @@ afterEach(() => {
   localStorage.clear()
 })
 
+it('切换比较类型同时保留指定品质，返回当前时恢复真实类型和品质', () => {
+  const state: CraftState = { ...initialState, catalyst: { id: 'Flesh', quality: 20 } }
+  const { rerender } = render(
+    <CatalystPreviewPanel catalog={catalog} state={state} translations={translations} />,
+  )
+  fireEvent.change(screen.getByLabelText('催化剂类型'), { target: { value: 'Neural' } })
+  rerender(
+    <CatalystPreviewPanel
+      catalog={catalog}
+      state={{ ...state, catalyst: { id: 'Flesh', quality: 0 } }}
+      translations={translations}
+    />,
+  )
+  expect((screen.getByLabelText('催化剂类型') as HTMLSelectElement).value).toBe('Neural')
+  expect((screen.getByLabelText('预览品质（%）') as HTMLInputElement).value).toBe('20')
+  fireEvent.click(screen.getByRole('button', { name: '按当前品质比较' }))
+  expect((screen.getByLabelText('催化剂类型') as HTMLSelectElement).value).toBe('Flesh')
+  expect((screen.getByLabelText('预览品质（%）') as HTMLInputElement).value).toBe('0')
+})
+
 it('失落珠宝已有品质可比较和保存，显示估算保留范围条件且不改变起点', () => {
   const state: CraftState = {
     baseId: 'Time-Lost Sapphire',

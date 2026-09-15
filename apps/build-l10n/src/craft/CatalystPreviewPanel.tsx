@@ -25,8 +25,9 @@ export function CatalystPreviewPanel({
   translateLine?: (line: string) => string | null
 }) {
   const id = useId()
-  const [catalyst, setCatalyst] = useState(state.catalyst?.id ?? 'Flesh')
-  const [quality, setQuality] = useState(String(state.catalyst?.quality ?? 20))
+  const [comparison, setComparison] = useState<{ catalyst: string; quality: string } | null>(null)
+  const catalyst = comparison?.catalyst ?? state.catalyst?.id ?? 'Flesh'
+  const quality = comparison?.quality ?? String(state.catalyst?.quality ?? 20)
   const options = useMemo(() => catalystChoices(catalog, state), [catalog, state])
   const result = useMemo(
     () =>
@@ -74,9 +75,11 @@ export function CatalystPreviewPanel({
           </p>
         ) : null}
         <p className="rehearsal-scope-note">
-          {state.catalyst
-            ? '默认显示当前催化品质下的估算值；修改下方选项仅作比较，不改变已保存品质。'
-            : '比较当前基础属性在指定品质下的估算值，未施加到装备，不计材料费用。'}
+          {comparison
+            ? '正在比较手动指定的品质；制作和撤销会保留此选择。比较未施加到装备，不计材料费用。'
+            : state.catalyst
+              ? '跟随当前催化品质显示估算值；修改下方选项仅作比较，不改变已保存品质。'
+              : '比较当前基础属性在指定品质下的估算值，未施加到装备，不计材料费用。'}
           每颗催化剂的品质增量仍待核实，预览品质不代表材料颗数。
           {hasEffect ? '比较包含已有工艺增效，命中催化标签时相加后一次计算。' : ''}
         </p>
@@ -88,7 +91,7 @@ export function CatalystPreviewPanel({
                 <select
                   id={`${id}-type`}
                   value={catalyst}
-                  onChange={(event) => setCatalyst(event.target.value)}
+                  onChange={(event) => setComparison({ catalyst: event.target.value, quality })}
                 >
                   {options.value.choices.map((choice) => (
                     <option key={choice.id} value={choice.id}>
@@ -106,10 +109,15 @@ export function CatalystPreviewPanel({
                   max={options.value.maxQuality}
                   step={1}
                   value={quality}
-                  onChange={(event) => setQuality(event.target.value)}
+                  onChange={(event) => setComparison({ catalyst, quality: event.target.value })}
                 />
               </label>
             </div>
+            {comparison && state.catalyst ? (
+              <button type="button" onClick={() => setComparison(null)}>
+                按当前品质比较
+              </button>
+            ) : null}
             <p>
               当前装备的预览上限：{options.value.maxQuality}
               %。切换类型会重新比较，不叠加不同催化效果。

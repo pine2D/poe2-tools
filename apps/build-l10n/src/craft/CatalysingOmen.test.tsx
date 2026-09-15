@@ -27,6 +27,54 @@ afterEach(() => {
   localStorage.clear()
 })
 
+it('手动催化比较在消费和撤销后保留，返回当前品质后重新跟随历史', () => {
+  const parsed = parseItem(raw)
+  if (!parsed.ok) throw new Error('测试文本解析失败')
+  const dictionary = createCraftItemDictionary(catalog, {})
+  const imported = importCraftState(
+    catalog,
+    'Gold Ring',
+    parsed.item,
+    inspectItem(parsed.item, dictionary),
+  )
+  if (!imported.ok) throw new Error(imported.error)
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={imported.value}
+      dictionary={dictionary}
+      translations={catalog.localizedNames?.['zh-CN'] ?? {}}
+    />,
+  )
+  const quality = () => (screen.getByLabelText('预览品质（%）') as HTMLInputElement).value
+  fireEvent.change(screen.getByLabelText('预览品质（%）'), { target: { value: '10' } })
+  fireEvent.change(screen.getByLabelText('本次搭配预兆'), {
+    target: { value: 'catalysing_exaltation' },
+  })
+  click('崇高石')
+  fireEvent.change(screen.getByLabelText('搜索合法词缀'), { target: { value: 'FireResist1' } })
+  fireEvent.click(document.querySelector('.rehearsal-candidates button') as HTMLButtonElement)
+  click('应用本次结果')
+  expect(screen.getByLabelText('当前催化品质').textContent).toContain('0%')
+  expect(quality()).toBe('10')
+  expect(
+    within(screen.getByLabelText('催化剂效果预览')).getByText('+20 to maximum Life'),
+  ).toBeDefined()
+  click('保存演练到本机')
+  const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(saved.operations).toHaveLength(1)
+  expect(saved.initialState.catalyst.quality).toBe(20)
+  click('撤销')
+  expect(quality()).toBe('10')
+  click('按当前品质比较')
+  expect(quality()).toBe('20')
+  expect(
+    within(screen.getByLabelText('催化剂效果预览')).getByText('+22 to maximum Life'),
+  ).toBeDefined()
+  click('恢复本机演练')
+  expect(quality()).toBe('0')
+})
+
 it.each(['catalysing_exaltation', 'catalysing_greater_dextral_exaltation'])(
   '%s 沿草稿、取消、应用、消费、撤销与恢复更新当前品质',
   (omen) => {
