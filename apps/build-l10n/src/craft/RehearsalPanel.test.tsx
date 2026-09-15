@@ -344,7 +344,11 @@ describe('RehearsalPanel', () => {
       within(screen.getByLabelText('操作前后变化')).getByText('+10% to Fire Resistance'),
     ).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '应用镶嵌' }))
-    expect(screen.getByText('Lesser Desert Rune × 1')).toBeDefined()
+    expect(
+      within(screen.getByRole('region', { name: '已消耗材料' })).getByText(
+        'Lesser Desert Rune × 1',
+      ),
+    ).toBeDefined()
     selectRune(cold.id)
     expect(screen.getByText(/旧符文会被覆盖/)).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '应用镶嵌' }))
@@ -364,7 +368,11 @@ describe('RehearsalPanel', () => {
     expect(
       within(screen.getByLabelText('当前镶嵌效果')).getByText('+10% to Fire Resistance'),
     ).toBeDefined()
-    expect(screen.queryByText('Lesser Glacial Rune × 1')).toBeNull()
+    expect(
+      within(screen.getByRole('region', { name: '已消耗材料' })).queryByText(
+        'Lesser Glacial Rune × 1',
+      ),
+    ).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
     expect(
       within(screen.getByLabelText('当前镶嵌效果')).getByText('+10% to Cold Resistance'),

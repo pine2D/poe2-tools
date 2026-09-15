@@ -37,6 +37,8 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceCraftOperation,
   type EssenceOmen,
+  EXTRACTION_CRAFT_RULES_VERSION,
+  type ExtractionCraftOperation,
   editTargetDefinitionContext,
   enableCraftAffixIdentity,
   FLUX_CRAFT_RULES_VERSION,
@@ -58,6 +60,7 @@ import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   type PerfectFluxCraftOperation,
   prepareCraftOperation,
+  prepareExtractionCraft,
   prepareStrategySocket,
   projectTargetDefinitions,
   type RemovalCraftCurrency,
@@ -67,6 +70,7 @@ import {
   readCraftGrantedSkillLevel,
   readNumericValues,
   removableCraftAffixes,
+  requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
@@ -91,6 +95,7 @@ import { ArchitectPanel } from './ArchitectPanel'
 import { CorruptionPanel } from './CorruptionPanel'
 import { CraftPricingPanel } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
+import { ExtractionPanel, ExtractionReturns } from './ExtractionPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
 import { PerfectFluxPanel } from './PerfectFluxPanel'
 import './rehearsal.css'
@@ -389,6 +394,7 @@ export function RehearsalPanel({
     | AlloyCraftOperation
     | FluxCraftOperation
     | PerfectFluxCraftOperation
+    | ExtractionCraftOperation
     | null
   >(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
@@ -421,12 +427,13 @@ export function RehearsalPanel({
   const restoreEssenceFocusRef = useRef(false)
   const fluxEntryRef = useRef<HTMLElement>(null)
   const perfectFluxEntryRef = useRef<HTMLElement>(null)
+  const extractionEntryRef = useRef<HTMLElement>(null)
   const alloyEntryRef = useRef<HTMLElement>(null)
   const emotionEntryRef = useRef<HTMLElement>(null)
   const essenceEntryRef = useRef<HTMLElement>(null)
   const strategyTriggerRef = useRef<HTMLElement | null>(null)
   const guaranteedOriginRef = useRef<{
-    kind: 'essence' | 'liquid-emotion' | 'alloy' | 'flux' | 'perfect-flux'
+    kind: 'essence' | 'liquid-emotion' | 'alloy' | 'flux' | 'perfect-flux' | 'extraction'
     strategy: boolean
   } | null>(null)
   useEffect(() => {
@@ -437,15 +444,17 @@ export function RehearsalPanel({
         const origin = guaranteedOriginRef.current
         const fallback = origin?.strategy
           ? strategyTriggerRef.current
-          : origin?.kind === 'perfect-flux'
-            ? perfectFluxEntryRef.current
-            : origin?.kind === 'flux'
-              ? fluxEntryRef.current
-              : origin?.kind === 'alloy'
-                ? alloyEntryRef.current
-                : origin?.kind === 'liquid-emotion'
-                  ? emotionEntryRef.current
-                  : essenceEntryRef.current
+          : origin?.kind === 'extraction'
+            ? extractionEntryRef.current
+            : origin?.kind === 'perfect-flux'
+              ? perfectFluxEntryRef.current
+              : origin?.kind === 'flux'
+                ? fluxEntryRef.current
+                : origin?.kind === 'alloy'
+                  ? alloyEntryRef.current
+                  : origin?.kind === 'liquid-emotion'
+                    ? emotionEntryRef.current
+                    : essenceEntryRef.current
         const trigger = essenceTriggerRef.current?.isConnected
           ? essenceTriggerRef.current
           : fallback
@@ -690,7 +699,8 @@ export function RehearsalPanel({
         operation.kind === 'liquid-emotion' ||
         operation.kind === 'alloy' ||
         operation.kind === 'flux' ||
-        operation.kind === 'perfect-flux'
+        operation.kind === 'perfect-flux' ||
+        operation.kind === 'extraction'
       ) {
         setOmen(undefined)
         startGuaranteed(operation)
@@ -746,7 +756,8 @@ export function RehearsalPanel({
       | LiquidEmotionCraftOperation
       | AlloyCraftOperation
       | FluxCraftOperation
-      | PerfectFluxCraftOperation,
+      | PerfectFluxCraftOperation
+      | ExtractionCraftOperation,
   ) => {
     if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
@@ -915,6 +926,7 @@ export function RehearsalPanel({
     if (!('kind' in step))
       return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
     if (step.kind === 'fracture') return fractureLabel
+    if (step.kind === 'extraction') return '萃取石'
     if (step.kind === 'perfect-flux') return '完美溶剂'
     if (step.kind === 'flux') {
       const name = FLUXES.find((f) => f.id === step.fluxId)?.name ?? step.fluxId
@@ -1069,7 +1081,10 @@ export function RehearsalPanel({
       : {}),
     ...((history[0]?.state.sockets !== undefined ||
       strategy?.rules.some(
-        (rule) => rule.action.kind === 'socket' || rule.action.kind === 'artificer',
+        (rule) =>
+          rule.action.kind === 'socket' ||
+          rule.action.kind === 'artificer' ||
+          rule.action.kind === 'extraction',
       )) &&
     augmentSourceHash
       ? { augmentSourceHash }
@@ -1078,9 +1093,11 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const project: TargetCraftProject = requiresPerfectFluxProjectVersion(projectConfig)
-    ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
-    : projectConfig
+  const project: TargetCraftProject = requiresExtractionProjectVersion(projectConfig)
+    ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
+    : requiresPerfectFluxProjectVersion(projectConfig)
+      ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+      : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
         essence: '精华',
@@ -1088,6 +1105,7 @@ export function RehearsalPanel({
         alloy: '合金',
         flux: '溶剂',
         'perfect-flux': '完美溶剂',
+        extraction: '萃取石',
       }[guaranteedDraft.kind]
     : ''
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
@@ -1153,13 +1171,13 @@ export function RehearsalPanel({
         <button type="button" disabled={cursor === 0} onClick={() => moveTo(0)}>
           回到起点
         </button>
-        <div className="rehearsal-costs">
+        <section className="rehearsal-costs" aria-label="已消耗材料">
           {costs.length > 0 ? (
             costs.map((cost) => <span key={cost}>{cost}</span>)
           ) : (
             <span>{costResult.ok ? '尚未消耗通货' : '材料计费失败'}</span>
           )}
-        </div>
+        </section>
       </div>
 
       <nav className="rehearsal-history" aria-label="演练历史">
@@ -1198,6 +1216,15 @@ export function RehearsalPanel({
       translations={translations}
     />
   )
+  const currentOperation = history[cursor]?.operation
+  const extracted =
+    currentOperation && 'kind' in currentOperation && currentOperation.kind === 'extraction'
+  const extractionBefore = extracted ? history[cursor - 1]?.state : undefined
+  const terminalExtraction = extractionBefore
+    ? prepareExtractionCraft(catalog, extractionBefore)
+    : null
+  const previewExtraction =
+    guaranteedDraft?.kind === 'extraction' ? prepareExtractionCraft(catalog, current) : null
   if (current.destroyed)
     return (
       <section className="rehearsal-panel" aria-label="通货演练">
@@ -1206,8 +1233,27 @@ export function RehearsalPanel({
             装备已摧毁
           </h3>
           <p role="status">
-            {translations[base.name] ?? base.name} 已在演练中摧毁，装备与镶嵌物均不可继续使用。
+            {translations[base.name] ?? base.name}
+            {extracted
+              ? ' 已由萃取石摧毁，装备不可继续使用；返还镶嵌物见清单。'
+              : ' 已在演练中摧毁，装备与镶嵌物均不可继续使用。'}
           </p>
+          {extracted ? (
+            terminalExtraction?.ok ? (
+              <ExtractionReturns
+                returns={terminalExtraction.value.returns}
+                catalog={catalog}
+                translations={translations}
+              />
+            ) : (
+              <p role="alert">
+                无法核对萃取返还：
+                {terminalExtraction && !terminalExtraction.ok
+                  ? terminalExtraction.error
+                  : '缺少操作前装备。'}
+              </p>
+            )
+          ) : null}
           <p>
             已消耗材料与起点成本保留。可撤销、回到起点或恢复项目继续比较路线；游戏中无法撤销摧毁。
           </p>
@@ -1814,6 +1860,24 @@ export function RehearsalPanel({
           onPreview={startGuaranteed}
         />
       ) : null}
+      {!strategyResultAction ? (
+        <ExtractionPanel
+          key={`extraction:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          entryRef={extractionEntryRef}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft,
+          )}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
       {guaranteedDraft ? (
         <section
           ref={guaranteedDraftRef}
@@ -1822,7 +1886,18 @@ export function RehearsalPanel({
           aria-label={`${guaranteedLabel}待应用结果`}
         >
           <h3>{stepLabel(guaranteedDraft)}</h3>
-          {guaranteedDraft.kind === 'perfect-flux' ? (
+          {guaranteedDraft.kind === 'extraction' ? (
+            <>
+              <p>装备将被摧毁，应用后无法继续制作或使用装备；可撤销查看演练前态。</p>
+              {previewExtraction?.ok ? (
+                <ExtractionReturns
+                  returns={previewExtraction.value.returns}
+                  catalog={catalog}
+                  translations={translations}
+                />
+              ) : null}
+            </>
+          ) : guaranteedDraft.kind === 'perfect-flux' ? (
             <p>
               装备技能最高等级：{guaranteedDraft.previousMaxLevel} → 20；角色当前使用等级未计算。
             </p>
@@ -1841,17 +1916,19 @@ export function RehearsalPanel({
           )}
           {preview?.ok ? (
             <p>
-              {guaranteedDraft.kind === 'perfect-flux'
-                ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
-                : guaranteedDraft.kind === 'flux'
-                  ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
-                  : guaranteedDraft.kind === 'alloy'
-                    ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
-                    : guaranteedDraft.kind === 'liquid-emotion'
-                      ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
-                      : guaranteedDraft.removeModId
-                        ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                        : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+              {guaranteedDraft.kind === 'extraction'
+                ? '应用后消耗 1 颗萃取石；返还物只列数量，不抵扣已消耗材料与起点成本。'
+                : guaranteedDraft.kind === 'perfect-flux'
+                  ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
+                  : guaranteedDraft.kind === 'flux'
+                    ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
+                    : guaranteedDraft.kind === 'alloy'
+                      ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
+                      : guaranteedDraft.kind === 'liquid-emotion'
+                        ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                        : guaranteedDraft.removeModId
+                          ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                          : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>

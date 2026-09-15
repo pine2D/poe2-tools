@@ -133,9 +133,11 @@ export { parseIdentityCraftProject } from './craftProjectIdentityReader'
 export { serializeIdentityCraftProject } from './craftProjectIdentitySerializer'
 export type { RestoredTargetCraftProject, TargetCraftProject } from './craftProjectTargets'
 export {
+  EXTRACTION_CRAFT_RULES_VERSION,
   FLUX_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   parseTargetCraftProject,
+  requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   serializeTargetCraftProject,
   TARGET_CRAFT_RULES_VERSION,
@@ -199,6 +201,14 @@ export type {
   ItemInspection,
 } from './export'
 export { createCoeUrl, inspectItem } from './export'
+export {
+  applyExtractionCraft,
+  type ExtractionCraftOperation,
+  type ExtractionReturn,
+  isExtractionCraftOperation,
+  type PreparedExtractionCraft,
+  prepareExtractionCraft,
+} from './extraction'
 export {
   applyFluxCraft,
   type FluxCraftOperation,

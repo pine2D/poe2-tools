@@ -28,6 +28,8 @@ import {
   essenceSourceHash as readEssenceSourceHash,
 } from './essences'
 import { type ItemDictionary, inspectItem } from './export'
+import { isExtractionCraftOperation } from './extraction'
+import { requiresExtractionProjectVersion } from './extractionProjectVersion'
 import { isFluxCraftOperation } from './fluxCraft'
 import { fluxEligibleModIds } from './fluxes'
 import { isFractureCraftOperation } from './fracture'
@@ -396,7 +398,13 @@ function readOperation(value: unknown): CraftStep | null {
 }
 
 /** v75 操作要求每个选择和数值条目保留身份；结构投影只复用旧语法，执行始终用原操作。 */
-function readNativeOperation(input: unknown, perfectFlux: boolean): CraftStep | null {
+function readNativeOperation(
+  input: unknown,
+  perfectFlux: boolean,
+  extraction: boolean,
+): CraftStep | null {
+  if (record(input) && input.kind === 'extraction')
+    return extraction && isExtractionCraftOperation(input) ? input : null
   if (!record(input)) return null
   if (input.kind === 'perfect-flux')
     return perfectFlux && isPerfectFluxCraftOperation(input) ? input : null
@@ -621,8 +629,9 @@ export function readNativeTargetProjectProjection(
   catalog: CraftCatalog,
   dictionary: ItemDictionary,
   perfectFlux = false,
+  extraction = false,
 ): CraftResult<RestoredCraftProject> {
-  return readCraftProject(text, catalog, dictionary, true, true, perfectFlux)
+  return readCraftProject(text, catalog, dictionary, true, true, perfectFlux, extraction)
 }
 
 function readCraftProject(
@@ -632,6 +641,7 @@ function readCraftProject(
   storedTargets: boolean,
   native = false,
   perfectFlux = false,
+  extraction = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -650,6 +660,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!extraction && requiresExtractionProjectVersion(value))
+    return fail('萃取石及相关指引或报价必须使用 v77 项目，包括未来历史。')
   if (!perfectFlux && requiresPerfectFluxProjectVersion(value))
     return fail('完美溶剂、装备技能结果及相关指引或报价必须使用 v76 项目，包括未来历史。')
   if (
@@ -1573,12 +1585,17 @@ function readCraftProject(
   }
   const usesSockets =
     strategy?.rules.some(
-      (rule) => rule.action.kind === 'socket' || rule.action.kind === 'artificer',
+      (rule) =>
+        rule.action.kind === 'socket' ||
+        rule.action.kind === 'artificer' ||
+        rule.action.kind === 'extraction',
     ) ||
     importedSockets !== undefined ||
     initialInput.sockets !== undefined ||
     value.operations.some(
-      (step) => record(step) && (step.kind === 'socket' || step.kind === 'artificer'),
+      (step) =>
+        record(step) &&
+        (step.kind === 'socket' || step.kind === 'artificer' || step.kind === 'extraction'),
     )
   const augmentSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/ModRunes.lua',
@@ -1846,7 +1863,9 @@ function readCraftProject(
     )
       return fail('旧版项目不能包含新数值操作。')
     // applyCraftStep 自身严格检查每种操作的字段及实例断言；旧入口仍只接受旧结构。
-    const operation = native ? readNativeOperation(input, perfectFlux) : readOperation(input)
+    const operation = native
+      ? readNativeOperation(input, perfectFlux, extraction)
+      : readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     if (
       rulesVersion < 72 &&
@@ -1926,6 +1945,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresExtractionProjectVersion(project))
+    throw new Error('萃取石及相关指引或报价必须使用 v77 项目。')
   if (requiresPerfectFluxProjectVersion(project))
     throw new Error('完美溶剂、装备技能结果及相关指引或报价必须使用 v76 项目。')
   if (hasAffixIdentityFields(project)) throw new Error('v72 项目尚不支持词缀实例字段，不能序列化。')

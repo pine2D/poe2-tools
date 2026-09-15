@@ -157,10 +157,10 @@ export function definitionStrategyStageAt(
     current.destroyed &&
     (!previous ||
       !('kind' in previous) ||
-      previous.kind !== 'architect' ||
-      previous.outcome !== 'destroy')
+      (previous.kind !== 'extraction' &&
+        (previous.kind !== 'architect' || previous.outcome !== 'destroy')))
   )
-    return fail('摧毁终点缺少紧邻的建筑师摧毁步骤。')
+    return fail('摧毁终点缺少紧邻的建筑师摧毁或萃取步骤。')
   const context = current.destroyed ? states[cursor - 1] : current
   if (!context) return fail('阶段回放缺少实际操作前状态。')
   const checked = readGoals(catalog, context, goals)

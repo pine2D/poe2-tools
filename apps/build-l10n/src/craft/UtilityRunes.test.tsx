@@ -84,7 +84,11 @@ it('新增符文从导入到恐惧增效、覆盖、费用及历史恢复一致'
     '+45 to maximum Life',
     '21% increased Mana Regeneration Rate',
   ])
-  expect(screen.getByText(`${catalog.localizedNames?.['zh-CN']?.['Mind Rune']} × 1`)).toBeDefined()
+  expect(
+    within(screen.getByRole('region', { name: '已消耗材料' })).getByText(
+      `${catalog.localizedNames?.['zh-CN']?.['Mind Rune']} × 1`,
+    ),
+  ).toBeDefined()
   click('撤销')
   expect(effects().getByText('+72 to maximum Life')).toBeDefined()
   click('撤销')

@@ -1,5 +1,5 @@
 import { type CraftCatalog, inspectItem, parseItem } from '@poe2-tools/item-core'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { CraftEntry } from './CraftEntry'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
@@ -141,7 +141,9 @@ it('原文 S 只固定数量，每孔显式核对，初始符文不计入花费'
   fireEvent.change(screen.getByLabelText('核对孔位 2'), { target: { value: 'empty' } })
   fireEvent.click(begin)
   expect(screen.getByText('孔位 1 · 次级沙漠符文')).toBeDefined()
-  expect(screen.queryByText(/次级沙漠符文 × 1/)).toBeNull()
+  expect(
+    within(screen.getByRole('region', { name: '已消耗材料' })).queryByText(/次级沙漠符文 × 1/),
+  ).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
   expect(saved.importedSockets).toEqual([rune.id, null])

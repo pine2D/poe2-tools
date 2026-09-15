@@ -64,7 +64,9 @@ it('物理符文驱动面板停止条件，替换取消不改值，费用与撤�
   expect(screen.getByText('命中规则 2：蜕变石')).toBeDefined()
   for (const name of ['Tempered Rune', 'Iron Rune', 'Body Rune'])
     expect(
-      screen.getByText(`${catalog.localizedNames?.['zh-CN']?.[name] ?? name} × 1`),
+      within(screen.getByRole('region', { name: '已消耗材料' })).getByText(
+        `${catalog.localizedNames?.['zh-CN']?.[name] ?? name} × 1`,
+      ),
     ).toBeDefined()
   click('保存演练到本机')
   const saved = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')

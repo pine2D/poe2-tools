@@ -36,6 +36,7 @@ export function strategyActionLabel(
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   if (action.kind === 'perfect-flux')
     return `${local('Perfect Flux')}（操作前最高等级 ${action.previousMaxLevel} → 20）`
+  if (action.kind === 'extraction') return local('Orb of Extraction')
   if (action.kind === 'stop') return '停止'
   if (action.kind === 'jump') return '仅判断并跳转'
   if (action.kind === 'reveal') return '继续亵渎揭示'
@@ -149,7 +150,8 @@ export function CraftStrategyActionEditor({
               value === 'stop' ||
               value === 'fracture' ||
               value === 'reveal' ||
-              value === 'artificer'
+              value === 'artificer' ||
+              value === 'extraction'
             )
               onChange({ kind: value })
             else if (value === 'socket') {
@@ -189,6 +191,7 @@ export function CraftStrategyActionEditor({
             溶剂转换
           </option>
           <option value="perfect-flux">完美溶剂：装备技能升至 20</option>
+          <option value="extraction">萃取石：摧毁装备并返还镶嵌物</option>
           <option value="desecrate">骨骼施加</option>
           <option value="liquid-emotion" disabled={!emotions.length || type !== 'Jewel'}>
             液态情感制作

@@ -23,6 +23,11 @@ import {
 } from './corruptionRules'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
+import {
+  applyExtractionCraft,
+  type ExtractionCraftOperation,
+  isExtractionCraftOperation,
+} from './extraction'
 import { applyFluxCraft, type FluxCraftOperation, isFluxCraftOperation } from './fluxCraft'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
@@ -96,6 +101,7 @@ export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperat
 }
 
 export type CraftStep =
+  | ExtractionCraftOperation
   | PerfectFluxCraftOperation
   | FluxCraftOperation
   | AlloyCraftOperation
@@ -152,6 +158,10 @@ export function applyCraftStep(
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
+  if ('kind' in step && step.kind === 'extraction')
+    return isExtractionCraftOperation(step)
+      ? applyExtractionCraft(catalog, state, step)
+      : { ok: false, error: '萃取石步骤字段无效。' }
   if ('kind' in step && step.kind === 'perfect-flux')
     return isPerfectFluxCraftOperation(step)
       ? applyPerfectFluxCraft(catalog, state, step)

@@ -3,9 +3,15 @@ import { desecrationCandidates, prepareDesecration } from './boneCraft'
 import { type BoneOmenConfig, boneOmenError, isBoneOmenConfig } from './boneOmens'
 import { type CraftBone, isCraftBone } from './boneRules'
 import type { CraftCatalog } from './catalog'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCraftMode } from './essences'
+import {
+  type ExtractionCraftOperation,
+  isExtractionCraftOperation,
+  prepareExtractionCraft,
+} from './extraction'
 import { prepareFluxCraft } from './fluxCraft'
 import { FLUXES } from './fluxes'
 import { applyFracture, prepareFracture } from './fracture'
@@ -30,6 +36,7 @@ import {
 import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
 export type CraftStrategyAction =
+  | ExtractionCraftOperation
   | PerfectFluxCraftOperation
   | SocketStrategyAction
   | { kind: 'stop' }
@@ -52,6 +59,12 @@ function keys(value: unknown, allowed: string[]): value is Record<string, unknow
   )
 }
 export function readCraftStrategyAction(value: unknown): CraftStrategyAction | null {
+  try {
+    if (!isPlainProjectJSON(value)) return null
+  } catch {
+    return null
+  }
+  if (isExtractionCraftOperation(value)) return { ...value }
   if (isPerfectFluxCraftOperation(value)) return { ...value }
   if (
     !keys(value, [
@@ -159,6 +172,11 @@ export function checkCraftStrategyAction(
   action: CraftStrategyWorkAction,
 ): CraftResult<null> {
   const ok: CraftResult<null> = { ok: true, value: null }
+  if (action.kind === 'extraction') {
+    if (!isExtractionCraftOperation(action)) return { ok: false, error: '萃取石动作字段无效。' }
+    const result = prepareExtractionCraft(catalog, state)
+    return result.ok ? ok : result
+  }
   if (action.kind === 'perfect-flux') {
     const result = preparePerfectFluxCraft(catalog, state, action.previousMaxLevel)
     return result.ok ? ok : result

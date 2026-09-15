@@ -14,6 +14,10 @@ import type {
   DefinitionCraftStrategyCondition,
 } from './definitionStrategy'
 import type { ItemDictionary } from './export'
+import {
+  EXTRACTION_CRAFT_RULES_VERSION,
+  requiresExtractionProjectVersion,
+} from './extractionProjectVersion'
 import { fluxCatalogSignature } from './fluxes'
 import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
@@ -36,7 +40,12 @@ import { loadWorkbenchProject } from './workbenchProject'
 
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
 export const FLUX_CRAFT_RULES_VERSION = 'basic-2026-09-12-v75'
-export { PERFECT_FLUX_CRAFT_RULES_VERSION, requiresPerfectFluxProjectVersion }
+export {
+  EXTRACTION_CRAFT_RULES_VERSION,
+  PERFECT_FLUX_CRAFT_RULES_VERSION,
+  requiresExtractionProjectVersion,
+  requiresPerfectFluxProjectVersion,
+}
 
 export interface TargetCraftProject
   extends Omit<
@@ -53,6 +62,7 @@ export interface TargetCraftProject
     | typeof TARGET_CRAFT_RULES_VERSION
     | typeof FLUX_CRAFT_RULES_VERSION
     | typeof PERFECT_FLUX_CRAFT_RULES_VERSION
+    | typeof EXTRACTION_CRAFT_RULES_VERSION
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
@@ -215,10 +225,14 @@ export function parseTargetCraftProject(
       TARGET_CRAFT_RULES_VERSION,
       FLUX_CRAFT_RULES_VERSION,
       PERFECT_FLUX_CRAFT_RULES_VERSION,
+      EXTRACTION_CRAFT_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
-    return { ok: false, error: '目标项目必须使用精确的 v74、v75 或 v76 规则版本。' }
-  const perfectFlux = original.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION
+    return { ok: false, error: '目标项目必须使用精确的 v74、v75、v76 或 v77 规则版本。' }
+  const extraction = original.rulesVersion === EXTRACTION_CRAFT_RULES_VERSION
+  if (!extraction && requiresExtractionProjectVersion(original))
+    return { ok: false, error: '萃取石及相关指引或报价必须使用 v77 项目，包括未来历史。' }
+  const perfectFlux = extraction || original.rulesVersion === PERFECT_FLUX_CRAFT_RULES_VERSION
   if (!perfectFlux && requiresPerfectFluxProjectVersion(original))
     return {
       ok: false,
@@ -270,7 +284,7 @@ export function parseTargetCraftProject(
     return { ok: false, error: '目标项目结构过深，无法建立可验证的来源投影。' }
   }
   const replay = native
-    ? readNativeTargetProjectProjection(projection, catalog, dictionary, perfectFlux)
+    ? readNativeTargetProjectProjection(projection, catalog, dictionary, perfectFlux, extraction)
     : null
   if (replay && !replay.ok) return replay
   if (replay?.ok && !replay.value.states.every(isIdentifiedCraftState))
@@ -291,7 +305,11 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = perfectFlux ? PERFECT_FLUX_CRAFT_RULES_VERSION : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = extraction
+      ? EXTRACTION_CRAFT_RULES_VERSION
+      : perfectFlux
+        ? PERFECT_FLUX_CRAFT_RULES_VERSION
+        : FLUX_CRAFT_RULES_VERSION
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
   }
   if (!equivalentProjectJSON(original, project))

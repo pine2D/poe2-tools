@@ -202,8 +202,12 @@ it('本地词缀、两孔钢铁符文与品质独立计算；覆盖、撤销、�
   expect(panel().getByText('121')).toBeDefined()
   click('恢复本机演练')
   expect(panel().getByText('112')).toBeDefined()
-  expect(screen.getByText('次级沙漠符文 × 1')).toBeDefined()
-  expect(screen.getByText('完美钢铁符文 × 1')).toBeDefined()
+  expect(
+    within(screen.getByRole('region', { name: '已消耗材料' })).getByText('次级沙漠符文 × 1'),
+  ).toBeDefined()
+  expect(
+    within(screen.getByRole('region', { name: '已消耗材料' })).getByText('完美钢铁符文 × 1'),
+  ).toBeDefined()
 })
 
 it('中文原文合计28%需与两个孔逐项核对，替换后来源不重复计入', () => {

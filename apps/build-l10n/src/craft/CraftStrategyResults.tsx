@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react'
 import { AlloyCraftPanel } from './AlloyCraftPanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
 import { EssenceCraftPanel } from './EssenceCraftPanel'
+import { ExtractionPanel } from './ExtractionPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
 import { FracturePanel } from './FracturePanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
@@ -43,6 +44,9 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       </button>
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'extraction' ? (
+        <ExtractionPanel {...props} disabled={false} configuration={action} />
       ) : null}
       {action.kind === 'perfect-flux' ? (
         <PerfectFluxPanel {...props} disabled={false} configuration={action} />

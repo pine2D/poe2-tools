@@ -58,6 +58,7 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     { id: 'currency:architect', name: "Architect's Orb" },
     { id: 'currency:fracture', name: 'Fracturing Orb' },
     { id: 'currency:perfect-flux', name: 'Perfect Flux' },
+    { id: 'currency:extraction', name: 'Orb of Extraction' },
     ...Object.entries(BONE_RULES).map(([id, rule]) => ({ id: `bone:${id}`, name: rule.name })),
     ...(catalog.essences ?? []).map((e) => ({ id: `essence:${e.id}`, name: e.name })),
     ...(alloyCatalogSignature(catalog) !== null ? (catalog.alloys?.alloys ?? []) : []).map(
@@ -102,6 +103,7 @@ export function collectCraftCosts(
       continue
     }
     if (
+      step.kind === 'extraction' ||
       step.kind === 'perfect-flux' ||
       step.kind === 'fracture' ||
       step.kind === 'artificer' ||
