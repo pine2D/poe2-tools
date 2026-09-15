@@ -93,6 +93,41 @@ function project(): CraftProject {
 }
 
 describe('演练项目保存与严格恢复', () => {
+  it.each(['state', 'affix', 'removal', 'roll', 'nested'])(
+    'v72 保存不能丢弃或夹带未来词缀实例字段：%s',
+    (location) => {
+      const value = project()
+      if (location === 'state') Object.assign(value.initialState, { nextAffixId: undefined })
+      if (location === 'affix') {
+        value.initialState.affixes.push({ modId: 'shield', lines: ['15 shield'] })
+        Object.assign(value.initialState.affixes[0] ?? {}, { affixId: undefined })
+      }
+      if (location === 'removal')
+        Object.assign(value.operations[1] ?? {}, { removeAffixId: undefined })
+      if (location === 'roll')
+        Object.assign(value.operations[1] ?? {}, {
+          rolls: [{ modId: 'mana', values: [15], affixId: undefined }],
+        })
+      if (location === 'nested')
+        Object.assign(value.operations[1] ?? {}, {
+          replacements: [{ removeAffixId: 'a1' }],
+        })
+      expect(() => serializeCraftProject(value)).toThrow('词缀实例')
+    },
+  )
+
+  it.each([2, 39, 71, 72])('v%s 在完整原始历史中拒绝实例定位字段', (version) => {
+    const value = {
+      ...project(),
+      rulesVersion: `basic-2026-09-12-v${version}`,
+      cursor: 0,
+    }
+    Object.assign(value.operations[1] ?? {}, { removeAffixId: 'a1' })
+    const result = parseCraftProject(JSON.stringify(value), catalog)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toContain('词缀实例')
+  })
+
   it.each([9, 10])('v%s 保留品质字段并严格复核来源品质', (version) => {
     const qualityRaw = raw.replace('物品等级: 46', '品质: +20%\n--------\n物品等级: 46')
     const input = {

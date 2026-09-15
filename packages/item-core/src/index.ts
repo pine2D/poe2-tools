@@ -1,4 +1,11 @@
 export { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+export {
+  type CraftAffixSelector,
+  enableCraftAffixIdentity,
+  type IdentifiedCraftAffix,
+  type IdentifiedCraftState,
+  resolveCraftAffix,
+} from './affixIdentity'
 export { type AlloyAdviceStep, analyzeAlloyTargets } from './alloyAdvice'
 export { type PreparedAlloyCraft, prepareAlloyCraft } from './alloyCraft'
 export { alloyProjectUsage } from './alloyProjectUsage'

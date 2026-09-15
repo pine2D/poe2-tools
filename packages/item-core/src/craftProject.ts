@@ -519,6 +519,21 @@ function validateInitial(
 }
 
 /** 保存格式只包含起点和操作；恢复时回放所有步骤，不能信任外来派生快照。 */
+/** 实例操作尚未接入项目版本；先检查原始树，避免 undefined 被 JSON 静默删除。 */
+function hasAffixIdentityFields(input: unknown): boolean {
+  const pending = [input]
+  const visited = new Set<object>()
+  while (pending.length) {
+    const value = pending.pop()
+    if (value === null || typeof value !== 'object' || visited.has(value)) continue
+    visited.add(value)
+    if (['affixId', 'nextAffixId', 'removeAffixId'].some((key) => Object.hasOwn(value, key)))
+      return true
+    for (const child of Object.values(value)) pending.push(child)
+  }
+  return false
+}
+
 export function parseCraftProject(
   text: string,
   catalog: CraftCatalog,
@@ -536,6 +551,8 @@ export function parseCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (hasAffixIdentityFields(value))
+    return fail('v2–v72 项目尚不支持词缀实例字段，不能恢复此状态或历史。')
   if (
     !record(value) ||
     !exactKeys(value, [
@@ -1747,6 +1764,7 @@ export function parseCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (hasAffixIdentityFields(project)) throw new Error('v72 项目尚不支持词缀实例字段，不能序列化。')
   if (
     !validStrategyStartStep(
       project.strategy,

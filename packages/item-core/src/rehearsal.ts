@@ -1,4 +1,10 @@
 import { craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+import {
+  appendCraftAffix,
+  type CraftAffixSelector,
+  craftAffixIdentityError,
+  resolveCraftAffix,
+} from './affixIdentity'
 import { isSovereignAffix } from './alloyEffects'
 import { isAlloyMappedMod } from './alloys'
 import { readStatAnnotations, UNSCALABLE_SUFFIX } from './annotations'
@@ -96,6 +102,7 @@ export const CRAFT_CURRENCY_RULES: Readonly<
 }
 
 export interface CraftAffix {
+  affixId?: string
   fractured?: true
   crafted?: true
   desecrated?: true
@@ -104,6 +111,7 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  nextAffixId?: number
   /** 仅由摧毁操作产生的终止快照；不能作为存活装备使用。 */
   destroyed?: true
   corruption?: import('./corruptionEnchantments').CraftCorruption
@@ -132,7 +140,8 @@ export interface CraftOperation {
   currency: CraftCurrency
   modIds: string[]
   removeModId?: string
-  rolls?: { modId: string; values: number[] }[]
+  removeAffixId?: string
+  rolls?: { modId: string; affixId?: string; values: number[] }[]
   implicitValues?: number[]
 }
 
@@ -304,6 +313,8 @@ export function createCraftState(
   const runeSourceError = runeSourceStateError(input)
   if (runeSourceError !== null) return failure(runeSourceError)
   if (!Array.isArray(input.affixes)) return failure('词缀列表无效。')
+  const identityError = craftAffixIdentityError(input)
+  if (identityError) return failure(identityError)
   if (
     (isBasicJewel(base) || isRadiusJewel(base)) &&
     input.rarity !== 'rare' &&
@@ -354,7 +365,7 @@ export function createCraftState(
       typeof affix !== 'object' ||
       Array.isArray(affix) ||
       !Object.keys(affix).every((key) =>
-        ['modId', 'lines', 'crafted', 'desecrated', 'fractured'].includes(key),
+        ['modId', 'affixId', 'lines', 'crafted', 'desecrated', 'fractured'].includes(key),
       ) ||
       (Object.hasOwn(affix, 'crafted') && affix.crafted !== true) ||
       (Object.hasOwn(affix, 'desecrated') && affix.desecrated !== true) ||
@@ -526,10 +537,8 @@ export function addCraftAffix(
     (candidate) => candidate.id === modId,
   )
   if (mod === undefined) return failure(`词缀 ${modId} 当前不可添加。`)
-  return createCraftState(catalog, {
-    ...checked.value,
-    affixes: [...checked.value.affixes, { modId: mod.id, lines: [...mod.lines] }],
-  })
+  const appended = appendCraftAffix(checked.value, { modId: mod.id, lines: mod.lines })
+  return appended.ok ? createCraftState(catalog, appended.value) : appended
 }
 
 export function removableCraftAffixes(
@@ -578,7 +587,7 @@ export function prepareCraftOperation(
   catalog: CraftCatalog,
   state: CraftState,
   currency: CraftCurrency,
-  removeModId?: string,
+  removeSelector?: string | CraftAffixSelector,
   omen?: CraftOmen,
 ): CraftResult<{ state: CraftState; count: number }> {
   if (state.corrupted) return failure(CORRUPTED_CRAFT_MESSAGE)
@@ -603,22 +612,44 @@ export function prepareCraftOperation(
       omen,
     )
     if (!removable.ok) return removable
-    if (removeModId === undefined)
+    if (removeSelector === undefined)
       return failure(`${CRAFT_CURRENCY_LABELS[currency]}必须指定一个当前词缀。`)
-    if (!removable.value.some((affix) => affix.modId === removeModId))
+    const selected = resolveCraftAffix(
+      current,
+      typeof removeSelector === 'string' ? { modId: removeSelector } : removeSelector,
+    )
+    if (!selected.ok) {
+      if (
+        typeof removeSelector === 'string' &&
+        !current.affixes.some((affix) => affix.modId === removeSelector)
+      )
+        return failure(
+          omen === undefined
+            ? `要移除的词缀 ${removeSelector} 不在当前装备上。`
+            : '要移除的词缀不在预兆指定侧。',
+        )
+      return selected
+    }
+    if (
+      !removable.value.some((affix) =>
+        selected.value.affix.affixId === undefined
+          ? affix.modId === selected.value.affix.modId
+          : affix.affixId === selected.value.affix.affixId,
+      )
+    )
       return failure(
         omen === undefined
-          ? `要移除的词缀 ${removeModId} 不在当前装备上。`
+          ? `要移除的词缀 ${selected.value.affix.modId} 当前不可移除。`
           : '要移除的词缀不在预兆指定侧。',
       )
     draft = {
       ...current,
       affixes: current.affixes
-        .filter((affix) => affix.modId !== removeModId)
+        .filter((_, index) => index !== selected.value.index)
         .map((affix) => ({ ...affix, lines: [...affix.lines] })),
     }
     count = baseCurrency === 'chaos' ? 1 : 0
-  } else if (removeModId !== undefined) {
+  } else if (removeSelector !== undefined) {
     return failure(`${CRAFT_CURRENCY_LABELS[currency]}不接受移除词缀参数。`)
   } else if (baseCurrency === 'divine') {
     const base = findBase(catalog, current.baseId)
@@ -708,12 +739,25 @@ export function applyCraftOperation(
     typeof operation !== 'object' ||
     Array.isArray(operation) ||
     !Object.keys(operation).every((key) =>
-      ['currency', 'modIds', 'removeModId', 'rolls', 'implicitValues', 'omen'].includes(key),
+      [
+        'currency',
+        'modIds',
+        'removeModId',
+        'removeAffixId',
+        'rolls',
+        'implicitValues',
+        'omen',
+      ].includes(key),
     )
   )
     return failure('通货步骤字段无效。')
   if (Object.hasOwn(operation, 'omen') && operation.omen === undefined)
     return failure('预兆字段无效。')
+  if (
+    Object.hasOwn(operation, 'removeAffixId') &&
+    (typeof operation.removeAffixId !== 'string' || typeof operation.removeModId !== 'string')
+  )
+    return failure('移除实例 ID 必须同时提供词缀类型 ID。')
   if (!Array.isArray(operation.modIds) || !operation.modIds.every((id) => typeof id === 'string'))
     return failure('操作词缀 ID 列表无效。')
   if (
@@ -731,7 +775,9 @@ export function applyCraftOperation(
         (roll) =>
           roll !== null &&
           typeof roll === 'object' &&
+          !Array.isArray(roll) &&
           typeof roll.modId === 'string' &&
+          (!Object.hasOwn(roll, 'affixId') || typeof roll.affixId === 'string') &&
           validValues(roll.values),
       ))
   )
@@ -742,7 +788,9 @@ export function applyCraftOperation(
     catalog,
     state,
     operation.currency,
-    operation.removeModId,
+    Object.hasOwn(operation, 'removeAffixId')
+      ? { modId: operation.removeModId as string, affixId: operation.removeAffixId as string }
+      : operation.removeModId,
     operation.omen,
   )
   if (!prepared.ok) return prepared
@@ -761,31 +809,30 @@ export function applyCraftOperation(
     operation.currency === 'divine' ||
     (operation.omen !== undefined && CRAFT_OMEN_RULES[operation.omen].addCount === 2)
   ) {
-    const ids =
-      operation.currency === 'divine'
-        ? next.affixes
-            .filter((affix) => operation.omen !== 'blessed' && !affix.fractured)
-            .map((affix) => affix.modId)
-        : operation.modIds
-    const required = new Set<string>()
-    for (const id of ids) {
-      const mod = catalog.modifiers.find((entry) => entry.id === id)
-      if (mod === undefined) return failure(`词缀 ${id} 不在制作目录中。`)
+    const required = new Set<number>()
+    for (const [index, affix] of next.affixes.entries()) {
+      const reroll =
+        operation.currency === 'divine'
+          ? operation.omen !== 'blessed' && !affix.fractured
+          : index >= prepared.value.state.affixes.length
+      if (!reroll) continue
+      const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
+      if (mod === undefined) return failure(`词缀 ${affix.modId} 不在制作目录中。`)
       const ranges = inspectNumericLines(mod.lines)
       if (!ranges.ok) return ranges
-      if (ranges.value.length > 0) required.add(id)
+      if (ranges.value.length > 0) required.add(index)
     }
     const rolls = operation.rolls ?? []
-    if (
-      rolls.length !== required.size ||
-      new Set(rolls.map((roll) => roll.modId)).size !== rolls.length ||
-      rolls.some((roll) => !required.has(roll.modId))
-    )
+    if (rolls.length !== required.size)
       return failure('数值参数必须完整且唯一覆盖本次所有可重掷词缀，不能包含其他词缀。')
     for (const roll of rolls) {
+      const selected = resolveCraftAffix(next, roll)
+      if (!selected.ok) return selected
+      if (!required.delete(selected.value.index))
+        return failure('数值参数必须完整且唯一覆盖本次所有可重掷词缀，不能包含其他词缀。')
       const mod = catalog.modifiers.find((entry) => entry.id === roll.modId)
-      const affix = next.affixes.find((entry) => entry.modId === roll.modId)
-      if (mod === undefined || affix === undefined) return failure('数值对应词缀缺失。')
+      const affix = selected.value.affix
+      if (mod === undefined) return failure('数值对应词缀缺失。')
       const rendered = renderPreservingConstants(mod.lines, affix.lines, roll.values)
       if (!rendered.ok) return rendered
       affix.lines = rendered.value

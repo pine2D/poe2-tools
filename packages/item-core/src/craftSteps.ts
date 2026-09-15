@@ -1,3 +1,4 @@
+import { craftAffixIdentityError } from './affixIdentity'
 import { prepareAlloyCraft } from './alloyCraft'
 import {
   type ArchitectCraftOperation,
@@ -109,6 +110,10 @@ export function applyCraftStep(
   step: CraftStep,
 ): CraftResult<CraftState> {
   if (!record(step)) return { ok: false, error: '制作步骤必须是对象。' }
+  const identityError = craftAffixIdentityError(state)
+  if (identityError) return { ok: false, error: identityError }
+  if (Object.hasOwn(state, 'nextAffixId') && 'kind' in step && step.kind !== 'fracture')
+    return { ok: false, error: '此制作操作尚未接入词缀实例定位，暂不能用于实例状态。' }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
   if ('kind' in step && step.kind === 'architect')
     return isArchitectCraftOperation(step)
@@ -277,12 +282,22 @@ export function applyCraftStep(
     return createCraftState(catalog, checked.value)
   }
   if (
-    !onlyKeys(step, ['currency', 'modIds', 'removeModId', 'rolls', 'implicitValues', 'omen']) ||
+    !onlyKeys(step, [
+      'currency',
+      'modIds',
+      'removeModId',
+      'removeAffixId',
+      'rolls',
+      'implicitValues',
+      'omen',
+    ]) ||
     typeof step.currency !== 'string' ||
     (step.removeModId !== undefined && typeof step.removeModId !== 'string') ||
     (step.rolls !== undefined &&
       (!Array.isArray(step.rolls) ||
-        step.rolls.some((roll) => !record(roll) || !onlyKeys(roll, ['modId', 'values']))))
+        step.rolls.some(
+          (roll) => !record(roll) || !onlyKeys(roll, ['modId', 'affixId', 'values']),
+        )))
   )
     return { ok: false, error: '通货步骤字段无效。' }
   return applyCraftOperation(catalog, state, step)

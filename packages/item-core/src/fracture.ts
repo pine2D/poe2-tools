@@ -1,3 +1,4 @@
+import { resolveCraftAffix } from './affixIdentity'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
@@ -6,6 +7,7 @@ import { type CraftAffix, type CraftResult, type CraftState, createCraftState } 
 export interface FractureCraftOperation {
   kind: 'fracture'
   modId: string
+  affixId?: string
 }
 export interface PreparedFracture {
   candidates: CraftAffix[]
@@ -16,10 +18,11 @@ export function isFractureCraftOperation(value: unknown): value is FractureCraft
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
   const step = value as Record<string, unknown>
   return (
-    Object.keys(step).every((key) => key === 'kind' || key === 'modId') &&
+    Object.keys(step).every((key) => key === 'kind' || key === 'modId' || key === 'affixId') &&
     step.kind === 'fracture' &&
     typeof step.modId === 'string' &&
-    step.modId.length > 0
+    step.modId.length > 0 &&
+    (!('affixId' in step) || (typeof step.affixId === 'string' && step.affixId.length > 0))
   )
 }
 
@@ -40,11 +43,7 @@ export function prepareFracture(
   const candidates = current.affixes.filter((affix) => !affix.desecrated)
   if (!candidates.length) return { ok: false, error: '没有可以破裂的非亵渎词缀。' }
   const unresolvedModIds = candidates
-    .filter((affix) => {
-      const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
-      const values = mod ? readCatalogLineValues(mod.lines, affix.lines) : null
-      return values === null || values.flat().some((value) => value === null)
-    })
+    .filter((affix) => hasUnresolvedValues(catalog, affix))
     .map((affix) => affix.modId)
   return { ok: true, value: { candidates, unresolvedModIds } }
 }
@@ -57,14 +56,22 @@ export function applyFracture(
   if (!isFractureCraftOperation(operation)) return { ok: false, error: '破裂操作字段无效。' }
   const prepared = prepareFracture(catalog, state)
   if (!prepared.ok) return prepared
-  if (!prepared.value.candidates.some((affix) => affix.modId === operation.modId))
-    return { ok: false, error: '必须选择当前非亵渎词缀作为破裂结果。' }
-  if (prepared.value.unresolvedModIds.includes(operation.modId))
+  const resolved = resolveCraftAffix(state, operation)
+  if (!resolved.ok) return resolved
+  const { index, affix } = resolved.value
+  if (affix.desecrated) return { ok: false, error: '必须选择当前非亵渎词缀作为破裂结果。' }
+  if (hasUnresolvedValues(catalog, affix))
     return { ok: false, error: '该词缀缺少实际数值，不能锁定未知结果。' }
   return createCraftState(catalog, {
     ...state,
-    affixes: state.affixes.map((affix) =>
-      affix.modId === operation.modId ? { ...affix, fractured: true } : affix,
+    affixes: state.affixes.map((current, currentIndex) =>
+      currentIndex === index ? { ...current, fractured: true } : current,
     ),
   })
+}
+
+function hasUnresolvedValues(catalog: CraftCatalog, affix: CraftAffix): boolean {
+  const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
+  const values = mod ? readCatalogLineValues(mod.lines, affix.lines) : null
+  return values === null || values.flat().some((value) => value === null)
 }

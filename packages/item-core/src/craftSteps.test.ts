@@ -70,6 +70,67 @@ const state: CraftState = {
 }
 
 describe('统一制作步骤', () => {
+  it('已识别实例的移除和神圣步骤保留身份并严格核对类型', () => {
+    const initial: CraftState = {
+      ...state,
+      rarity: 'rare',
+      affixes: [
+        { modId: 'life', lines: ['15 life'], affixId: 'a1' },
+        { modId: 'mana', lines: ['16 mana'], affixId: 'a2' },
+      ],
+      nextAffixId: 3,
+    }
+    const snapshot = structuredClone(initial)
+    const rerolled = applyCraftStep(catalog, initial, {
+      currency: 'divine',
+      modIds: [],
+      rolls: [
+        { modId: 'mana', affixId: 'a2', values: [20] },
+        { modId: 'life', affixId: 'a1', values: [11] },
+      ],
+    })
+    expect(rerolled.ok).toBe(true)
+    if (!rerolled.ok) return
+    expect(rerolled.value.affixes).toEqual([
+      { modId: 'life', lines: ['11(10-20) life'], affixId: 'a1' },
+      { modId: 'mana', lines: ['20(10-20) mana'], affixId: 'a2' },
+    ])
+    const removed = applyCraftStep(catalog, rerolled.value, {
+      currency: 'annulment',
+      modIds: [],
+      removeModId: 'life',
+      removeAffixId: 'a1',
+    })
+    expect(removed.ok).toBe(true)
+    if (!removed.ok) return
+    expect(removed.value.affixes).toEqual([rerolled.value.affixes[1]])
+    expect(removed.value.nextAffixId).toBe(3)
+    expect(
+      applyCraftStep(catalog, initial, {
+        currency: 'annulment',
+        modIds: [],
+        removeModId: 'life',
+        removeAffixId: 'a2',
+      }).ok,
+    ).toBe(false)
+    expect(initial).toEqual(snapshot)
+  })
+
+  it.each<CraftStep>([
+    { kind: 'artificer' },
+    { kind: 'socket', socketIndex: 0, augmentId: 'fire' },
+    { kind: 'vaal', outcome: 'unchanged' },
+    { kind: 'essence', essenceId: 'unmigrated', values: [] },
+    { kind: 'alloy', alloyId: 'unmigrated', removeModId: 'life', values: [] },
+    { kind: 'liquid-emotion', emotionId: 'unmigrated', removeModId: 'life', values: [] },
+  ])('未迁移的 $kind 操作明确拒绝实例状态', (step) => {
+    const initial: CraftState = { ...state, nextAffixId: 1 }
+    const result = applyCraftStep(catalog, initial, step)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toContain('实例')
+    expect(initial).toEqual({ ...state, nextAffixId: 1 })
+  })
+
   it('胸甲连续打孔与镶嵌，每次仅追加一个空孔并完整保留属性', () => {
     const source = {
       ...catalog,
