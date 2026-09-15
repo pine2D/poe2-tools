@@ -159,7 +159,14 @@ export function applyBoneCraft(
   }
   const pending = current.pendingDesecration
   if (!pending) return { ok: false, error: '当前没有待揭示亵渎占位。' }
-  const candidates = desecrationCandidates(catalog, current)
+  const candidates = collectDesecrationCandidates(
+    catalog,
+    current,
+    (next) => createCraftState(catalog, next).ok,
+    step.kind === 'desecration-offer' || step.kind === 'desecration-reroll'
+      ? step.modIds
+      : [...(pending.options ?? []), ...(pending.rerollOptions ?? []), step.modId],
+  )
   if (step.kind === 'desecration-offer' || step.kind === 'desecration-reroll') {
     if (
       step.kind === 'desecration-reroll' &&

@@ -9,18 +9,29 @@ export function collectDesecrationCandidates(
   catalog: CraftCatalog,
   state: CraftState,
   validate: (next: CraftState) => boolean,
+  selectedIds?: readonly string[],
+  limit = Number.POSITIVE_INFINITY,
 ): CatalogMod[] {
   const pending = state.pendingDesecration
   if (!pending) return []
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return []
+  const selected = selectedIds === undefined ? null : new Set(selectedIds)
+  const family = (mod: CatalogMod) => JSON.stringify([mod.kind, mod.group])
+  // 固定选项只需验证相关族；同族未选档位仍参与最高档回退，不能先按ID删掉。
+  const selectedFamilies =
+    selected === null
+      ? null
+      : new Set(catalog.modifiers.filter((mod) => selected.has(mod.id)).map(family))
   const { pendingDesecration: _, ...ordinary } = state
   const existing = catalog.modifiers.filter((mod) =>
     state.affixes.some((affix) => affix.modId === mod.id),
   )
   const candidates = inspectModPool(
     base,
-    catalog.modifiers,
+    selectedFamilies === null
+      ? catalog.modifiers
+      : catalog.modifiers.filter((mod) => selectedFamilies.has(family(mod))),
     state.itemLevel,
     existing.map((mod) => mod.group),
     existing.flatMap((mod) => mod.addsTags),
@@ -32,23 +43,29 @@ export function collectDesecrationCandidates(
         mod.kind === pending.kind &&
         (!pending.lichOmen || matchesBoneLich(mod, pending.lichOmen)) &&
         !existing.some((other) => craftModsConflict(other, mod)) &&
-        inspectNumericLines(mod.lines).ok &&
-        validate({
-          ...ordinary,
-          affixes: [
-            ...ordinary.affixes,
-            { modId: mod.id, lines: [...mod.lines], desecrated: true },
-          ],
-        }),
+        inspectNumericLines(mod.lines).ok,
     )
     .map(({ mod }) => mod)
   const minimum = BONE_RULES[pending.boneId].minModLevel
-  // 与普通高级通货相同：当前合法候选中每个 kind/group 族保留最高档回退。
-  const family = (mod: CatalogMod) => JSON.stringify([mod.kind, mod.group])
+  // 先检查高档，只有通过真实状态校验的档位才能决定同族最低等级回退。
+  // 预兆只需证明至少三项，可在得到足够合法候选后结束；完整池保持目录顺序。
   const highest = new Map<string, number>()
-  for (const mod of candidates)
-    highest.set(family(mod), Math.max(highest.get(family(mod)) ?? 0, mod.level))
-  return candidates.filter((mod) => mod.level >= minimum || mod.level === highest.get(family(mod)))
+  const accepted = new Set<CatalogMod>()
+  for (const mod of [...candidates].sort((a, b) => b.level - a.level)) {
+    const key = family(mod)
+    if (mod.level < minimum && mod.level < (highest.get(key) ?? 0)) continue
+    if (
+      !validate({
+        ...ordinary,
+        affixes: [...ordinary.affixes, { modId: mod.id, lines: [...mod.lines], desecrated: true }],
+      })
+    )
+      continue
+    highest.set(key, Math.max(highest.get(key) ?? 0, mod.level))
+    if (selected === null || selected.has(mod.id)) accepted.add(mod)
+    if (accepted.size >= limit) break
+  }
+  return candidates.filter((mod) => accepted.has(mod))
 }
 
 export function pendingBoneOmenError(
@@ -65,7 +82,13 @@ export function pendingBoneOmenError(
   const error = boneOmenError(pending, pending.boneId, pending.kind)
   if (error) return error
   const lich = pending.lichOmen
-  const pool = collectDesecrationCandidates(catalog, state, validate)
+  const pool = collectDesecrationCandidates(
+    catalog,
+    state,
+    validate,
+    pending.options ? [...pending.options, ...(pending.rerollOptions ?? [])] : undefined,
+    pending.options ? Number.POSITIVE_INFINITY : 3,
+  )
   if (pool.length < 3)
     return lich ? '本工具暂不支持不足三项的巫妖候选情形。' : '本工具无法构成至少三项合法候选。'
   if (

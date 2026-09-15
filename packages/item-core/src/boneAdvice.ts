@@ -7,7 +7,7 @@ import {
   type BoneOmenConfig,
   matchesBoneLich,
 } from './boneOmens'
-import { BONE_RULES, type BoneCraftOperation, type CraftBone } from './boneRules'
+import { BONE_RULES, type BoneCraftOperation, boneBaseError, type CraftBone } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
@@ -188,6 +188,12 @@ export function analyzeBoneTargets(
     return { ok: true, value: result }
   }
   if (!missing.size || state.rarity !== 'rare') return { ok: true, value: [] }
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  const boneIds = base
+    ? (Object.keys(BONE_RULES) as CraftBone[]).filter(
+        (id) => boneBaseError(base, state.itemLevel, id) === null,
+      )
+    : []
   const targetMods = catalog.modifiers.filter((mod) => missing.has(mod.id))
   const directions = (Object.keys(BONE_DIRECTION_OMEN_RULES) as BoneDirectionOmen[]).filter(
     (omen) => targetMods.some((mod) => mod.kind === BONE_DIRECTION_OMEN_RULES[omen].kind),
@@ -204,7 +210,7 @@ export function analyzeBoneTargets(
     ),
   ]
   for (const config of configs) {
-    for (const boneId of Object.keys(BONE_RULES) as CraftBone[]) {
+    for (const boneId of boneIds) {
       const prepared = prepareDesecration(catalog, state, boneId, config)
       if (!prepared.ok) continue
       if (config.directionOmen) {
