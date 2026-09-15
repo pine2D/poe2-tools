@@ -1,5 +1,9 @@
 # 数据源登记表
 
+溶剂材料身份另核对 [Chilling Flux](https://poe2db.tw/us/Chilling_Flux)、[Crackling Flux](https://poe2db.tw/us/Crackling_Flux)、[Void Flux](https://poe2db.tw/us/Void_Flux) 的公开 metadata ID，均按 gray 人工机制参考。独立 `data/craft/fluxes.json` 的 15 行、60 个成员只保存既有词缀 ID、域和关系来源，绑定固定 `ModItem.lua`、`ModJewel.lua`、`ModVeiled.lua` 三份来源指纹；名称沿原 primary 表。普通生成资格不作为转换资格，原始装备文本也不能证明历史制作过程。
+
+抗性溶剂调研与关系核对（2026-09-15）：新增人工 gray 关系来源 [PoE2DB Blazing Flux](https://poe2db.tw/us/Blazing_Flux) 的 Mod Equivalencies 表及表内公开词缀详情链接（`cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/`）；用详情中的名称、冲突组、等级、生成侧别、域及完整范围唯一核对词缀 ID（一个单元格直接公开 ID），再按列关系连接已登记固定 MIT 属性目录，不采用经济数据或获取配方。若构建期读取，统一经 cache.ts 按日缓存、串行限速至少 1000ms，并使用标识性 User-Agent；独立表服从 DICT_ENABLE_POE2DB 总开关，可整体下线。完整网页、悬停响应与截图仅本地缓存，不随站发布。四种材料译名沿既有三服官方静态名称表，不做繁简转换。[玩家原帖](https://www.reddit.com/r/PathOfExile2/comments/1ufmd35/you_can_divine_single_resistance_on_items_using/)仅作人工机制参考：作者报告往返转换会重掷数值，多条抗性转换后仍占原有条数；不是 GGG 官方确认。破裂、工艺、亵渎身份及后续制作交互另行核实，不凭关系表授权执行。
+
 未揭示液态交错补充（2026-09-15）：沿下述已登记 Hax 原视频03:00–03:13的实际补悲哀（Melancholy）流程，可见补工艺后仍保留未揭示占位与超大半径。仅用于确认保留占位的指定结果；不外推占位移除、已固定候选后的交互或概率。液态身份、保证属性与容量仍使用已登记固定来源，无新增第三方数据表。
 
 珠宝亵渎扩展（2026-09-15）：沿已登记固定 MIT `ModVeiled.lua`（SHA-256 `95234097bcb70946ad451fbdb80b93cff3bd4a57abfdf29052305905fd32a632`），32 条普通珠宝和 12 条范围珠宝专属声明分别标记珠宝子域；范围的 nodeType=2 全文须与同条 tradeHashes 一致。既有 199 条装备三族独立保留，未声明类型的传奇记录继续排除，0/1 不作权重。人工流程参考新增 [Hax 原创视频](https://www.youtube.com/watch?v=qATcKacI83o)（元数据发布日期 2026-09-10）：02:45–03:08 可见 Preserved Cranium 的稀有珠宝说明，字幕描述定向亵渎及满前缀替换；03:41–05:18 描述回响揭示、光明预兆移除后重做。视频画面为 Forbidden Rites League，聚合页标注 Runes of Aldur 不作为版本证据。作者成本、概率、平均次数不采用；视频与字幕只在本地临时查看，不入库整段内容或装备。国服实际文本与各组合待真机验收；巫妖预兆不外推到珠宝。

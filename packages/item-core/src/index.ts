@@ -161,6 +161,14 @@ export type {
   ItemInspection,
 } from './export'
 export { createCoeUrl, inspectItem } from './export'
+export {
+  FLUXES,
+  type FluxCatalog,
+  type FluxElement,
+  type FluxInspection,
+  inspectFluxes,
+  parseFluxCatalog,
+} from './fluxes'
 export type { FractureCraftOperation, PreparedFracture } from './fracture'
 export { applyFracture, prepareFracture } from './fracture'
 export { validateCraftFractureTarget } from './fractureTargets'

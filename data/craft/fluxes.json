@@ -1,0 +1,403 @@
+{
+  "_meta": {
+    "schemaVersion": 1,
+    "tier": "gray",
+    "reviewedAt": "2026-09-15",
+    "sourceCommit": "ce566eac45ea8a86477f513c7ee65a1ebe60014e",
+    "modifierSources": [
+      {
+        "path": "src/Data/ModItem.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModItem.lua",
+        "sha256": "774257f577f8cee8ac59d7848df4bc7a109d266a615eb97c2a2c08ecb6b47cf4"
+      },
+      {
+        "path": "src/Data/ModJewel.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModJewel.lua",
+        "sha256": "44285abc35fa4c32b2b0ba169570c99b01fd97136d1a801462b9b1398db82e80"
+      },
+      {
+        "path": "src/Data/ModVeiled.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModVeiled.lua",
+        "sha256": "95234097bcb70946ad451fbdb80b93cff3bd4a57abfdf29052305905fd32a632"
+      }
+    ],
+    "source": "https://poe2db.tw/us/Blazing_Flux"
+  },
+  "rows": [
+    {
+      "id": "equivalence-1",
+      "members": {
+        "fire": {
+          "modId": "FireResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/64fa1c3e757e642a5cac9b01f54d56cdbd5fcc1fe21d2267c2da9ffb281f5dea"
+        },
+        "cold": {
+          "modId": "ColdResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/b0faf2de7818ba1fd088aa86341e0f84d7b4d16d4ed0433b44f039c2acfe90f3"
+        },
+        "lightning": {
+          "modId": "LightningResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/00f11750c6ce94d5a2dd5a79c077429125f9e99f7a223026f39b1f22d984037c"
+        },
+        "chaos": {
+          "modId": "ChaosResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/c24ebaa8eb33c590de021cd0550e6901d08d5aa0745289c40458bc5c6d8750cd"
+        }
+      }
+    },
+    {
+      "id": "equivalence-2",
+      "members": {
+        "fire": {
+          "modId": "FireResist2",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/3271ad70557da0c0194b46dc276ef5faf654432359baa3300a2dcbd0bfde51fa"
+        },
+        "cold": {
+          "modId": "ColdResist2",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/1be519f47f5be5d2720684dd538bfa2edc10842cd65c60bfa558d847f2299c6a"
+        },
+        "lightning": {
+          "modId": "LightningResist2",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/288218010a29a2d6238f42e8daf58e4893b4845bc7eacd0c2667f0f5798f83d2"
+        },
+        "chaos": {
+          "modId": "ChaosResist2",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/e7862b4d3e01f304ec3582cc7c732a12284ac5f44336464efaea1bcee6e057fe"
+        }
+      }
+    },
+    {
+      "id": "equivalence-3",
+      "members": {
+        "fire": {
+          "modId": "FireResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/6fcf6ee1af61dfd3d7b5e0cd3f245eafbfcca243c5f455e06d86442b6f43d79c"
+        },
+        "cold": {
+          "modId": "ColdResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/785bc7e76d96d4b375494935dda916afedb5f8b900884ba8abec85106a7ff6d3"
+        },
+        "lightning": {
+          "modId": "LightningResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/66f026e043c7848c2db72601a0ae309f9841b8fdcd8f838cb7fc8635f05e90ce"
+        },
+        "chaos": {
+          "modId": "ChaosResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/76a1eedd7035e2ac8b8258931cc132cd1c68644b2086438f4e9e7db8e0e61415"
+        }
+      }
+    },
+    {
+      "id": "equivalence-4",
+      "members": {
+        "fire": {
+          "modId": "FireResist4",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/939c078f3ea922223026b72f6a3d3412a31512ed5231d1371358448dad216d31"
+        },
+        "cold": {
+          "modId": "ColdResist4",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/aa0ae60d5862d44791f064d4faa92830c8afafe31893883679026b5b5724b55e"
+        },
+        "lightning": {
+          "modId": "LightningResist4",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/665007e60f70afcce38673d25c1d1ddca4508a12c3e2137598066a117296eb56"
+        },
+        "chaos": {
+          "modId": "ChaosResist4",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/3400b440ea7c24e701328c91d1434410f56b2e3820f494203f56ba6a749ff65c"
+        }
+      }
+    },
+    {
+      "id": "equivalence-5",
+      "members": {
+        "fire": {
+          "modId": "FireResist5",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/933c9208ddd40fc7c626cd376b7055fa9ad400d0201230ff933e57ecbe0344ac"
+        },
+        "cold": {
+          "modId": "ColdResist5",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/cbcec57171969514078d0eab7bb06fbf3eb95c27efa02b381e3987e12ee6727a"
+        },
+        "lightning": {
+          "modId": "LightningResist5",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/775248100a5a83e7af2769c8dd0163af61b5a44e73d70e5ac1f08fc7a726ecd0"
+        },
+        "chaos": {
+          "modId": "ChaosResist4",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/3400b440ea7c24e701328c91d1434410f56b2e3820f494203f56ba6a749ff65c"
+        }
+      }
+    },
+    {
+      "id": "equivalence-6",
+      "members": {
+        "fire": {
+          "modId": "FireResist6",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/ea55e7cce0cc67f887b713ecd9aa2b800ab888216eef3b5a13ee72ab5aa51709"
+        },
+        "cold": {
+          "modId": "ColdResist6",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/818f23f81654e3675382af55fc5c970e931bf948a3ba83a5747bc2dc1c2817ee"
+        },
+        "lightning": {
+          "modId": "LightningResist6",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/0bfe3cd6ea49c34d40c3daa751d6331553345b1108ceff311be4fe77d3291bdb"
+        },
+        "chaos": {
+          "modId": "ChaosResist5",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/af5ccc11617109cc9923a429fd177ef8d6054bf2290f72b0a4c86ba4efb2b2e3"
+        }
+      }
+    },
+    {
+      "id": "equivalence-7",
+      "members": {
+        "fire": {
+          "modId": "FireResist7",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/d0d158a1cd7c39f83c259cfadbdbb7740cdd24cc8775ae938dd6357460d44b67"
+        },
+        "cold": {
+          "modId": "ColdResist7",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/ce020e91d9401d1f64136f8d9d41c64c772bdb37368ece47b368668a55ce0e0c"
+        },
+        "lightning": {
+          "modId": "LightningResist7",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/8f87396ce5e1ae425d42943f6a72de9eaf735b524f931b4c75f572b802246070"
+        },
+        "chaos": {
+          "modId": "ChaosResist5",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/af5ccc11617109cc9923a429fd177ef8d6054bf2290f72b0a4c86ba4efb2b2e3"
+        }
+      }
+    },
+    {
+      "id": "equivalence-8",
+      "members": {
+        "fire": {
+          "modId": "FireResist8",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/06d9118a1f47eeb3eb93eb3ebee31ad80947d5f98a06afa49b6c355e0e59a916"
+        },
+        "cold": {
+          "modId": "ColdResist8",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/4aed6bb4829cb762403036729efe27d3ce0c7f850a1e2fe41907ac4683011d8e"
+        },
+        "lightning": {
+          "modId": "LightningResist8",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/ef0507c8677d36e238d874f750eb59e8afe0221d4e961b377a02a6da080090c1"
+        },
+        "chaos": {
+          "modId": "ChaosResist6",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/0d72e641fa39c3df5883680aa5e639fdc2843ea86b05d43e8598511618e58c0e"
+        }
+      }
+    },
+    {
+      "id": "equivalence-9",
+      "members": {
+        "fire": {
+          "modId": "AbyssModArmourJewelleryAmanamuSuffixFireChaosResistance",
+          "domain": "abyss",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/e46be375f155c40769653735b2c3b54578bb0c081590400554edc514a280e2e9"
+        },
+        "cold": {
+          "modId": "AbyssModArmourJewelleryKurgalSuffixColdChaosResistance",
+          "domain": "abyss",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/02ad23b7daa515a43a66e907286942c8698b6be8040be69fc72da865e0f2a498"
+        },
+        "lightning": {
+          "modId": "AbyssModArmourJewelleryUlamanSuffixLightningChaosResistance",
+          "domain": "abyss",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/5c83c2003dbc45fec1b652020006d560358b4c0c2f10f4814b76eca4573b8b76"
+        },
+        "chaos": {
+          "modId": "ChaosResist6",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/0d72e641fa39c3df5883680aa5e639fdc2843ea86b05d43e8598511618e58c0e"
+        }
+      }
+    },
+    {
+      "id": "equivalence-10",
+      "members": {
+        "fire": {
+          "modId": "MaximumFireResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/0ab2ed51bfbb228bc2bd952c9fc0ced579f2d6064f1a243e778d63e071faef33"
+        },
+        "cold": {
+          "modId": "MaximumColdResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/90501bfc9ed8752c78a8367b09d8bbeeda556be1dccfde6ecdd6c075893f6588"
+        },
+        "lightning": {
+          "modId": "MaximumLightningResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/3366d057fb5fb3db9677b5516ed73eaecabb740dfc30f420299fee51d6964358"
+        },
+        "chaos": {
+          "modId": "MaximumChaosResist1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/1c340e46c18855afff55b44c400c727b4442337959f2b9aef48b4c69f529a729"
+        }
+      }
+    },
+    {
+      "id": "equivalence-11",
+      "members": {
+        "fire": {
+          "modId": "MaximumFireResist2_",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/4f6010431857d8cc03c1732bfbcc3e98b33954e5be637eb82828a6fc07fb900d"
+        },
+        "cold": {
+          "modId": "MaximumColdResist2",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/3d123aad9ddd970a274e81af23222765ea6efaa0bbee62afaf961efbd8767312"
+        },
+        "lightning": {
+          "modId": "MaximumLightningResist2___",
+          "domain": "item",
+          "source": "https://poe2db.tw/us/Blazing_Flux?s=Data%5CMods%2FMaximumLightningResist2___"
+        },
+        "chaos": {
+          "modId": "MaximumChaosResist2_",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/888df425d4dc09ed76ffa331d479f20e65b5e64dff695d7a158b193d2b863f40"
+        }
+      }
+    },
+    {
+      "id": "equivalence-12",
+      "members": {
+        "fire": {
+          "modId": "MaximumFireResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/e4ebc9a04c0b10ae44ff43d14bddc766b51b94088839a5ee9956dd2c2e8292ab"
+        },
+        "cold": {
+          "modId": "MaximumColdResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/c996a318c7499ad44b601d48353023b9927f2f438edaca136127828f728af2c0"
+        },
+        "lightning": {
+          "modId": "MaximumLightningResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/463e20f92349469d83b63011f0f45c363172d3a8703d1feef32c124f8d6965d3"
+        },
+        "chaos": {
+          "modId": "MaximumChaosResist3",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/8a81d6de7784340a433ec154f0124030692791dd025e70769a5e925205a2617a"
+        }
+      }
+    },
+    {
+      "id": "equivalence-13",
+      "members": {
+        "fire": {
+          "modId": "SoulInfluenceFireAndChaosResistance",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/50626a081e552da9f306ddef5826267abaef66d2020d7f8f9960c70905448f10"
+        },
+        "cold": {
+          "modId": "SoulInfluenceColdAndChaosResistance",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/f18082e031d8fe1fe467bea05f91dd33b78e80298e6e483c70ac629139fbf66b"
+        },
+        "lightning": {
+          "modId": "SoulInfluenceLightningAndChaosResistance",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/fa7aab865852b9db5a33b797bf601bd22d999e9080945b880806559fea782ec7"
+        },
+        "chaos": {
+          "modId": "ConvertedSoulHybridResistance1",
+          "domain": "item",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/16f7e9ac59a58b146dd8a56b3cbb5ee674ca3dd40091bf05ff1cd90cc46c390d"
+        }
+      }
+    },
+    {
+      "id": "equivalence-14",
+      "members": {
+        "fire": {
+          "modId": "CraftedJewelRadiusFireResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/1c70f02a4ad9d2fe3c7e921cca75ed569fa1c3c0277259b6b695cc3f9f617580"
+        },
+        "cold": {
+          "modId": "CraftedJewelRadiusColdResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/d5512d41fd19754bfa76bfe2c3feddfeb17222885549f33708d9edce5f668d7a"
+        },
+        "lightning": {
+          "modId": "CraftedJewelRadiusLightningResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/6c43549aea33b251430e63950e8ef5e74ef3fb7d0cd05774406961a955f193a2"
+        },
+        "chaos": {
+          "modId": "CraftedJewelRadiusChaosResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/617eabf71a7fa23e598bfe11e6b73b5994e6d4b36823ba1b5fa92a1127095f75"
+        }
+      }
+    },
+    {
+      "id": "equivalence-15",
+      "members": {
+        "fire": {
+          "modId": "JewelMaximumFireResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/09428fedbf867d60ef4624b529773609e7ec68a349f3298c846d62ca06d9ad2f"
+        },
+        "cold": {
+          "modId": "JewelMaximumColdResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/71fbda8e37a1d3fa289040274b79a285dcb9a8de912cb551bf69d2d296d5cf9e"
+        },
+        "lightning": {
+          "modId": "JewelMaximumLightningResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/b05cdc64a9bc03e3a84586687cf1cd66fef795ecd20364b04148c8eb3bfa186d"
+        },
+        "chaos": {
+          "modId": "CraftedJewelMaximumChaosResistance",
+          "domain": "jewel",
+          "source": "https://cdn.poe2db.tw/cache2/us/Poe_Data_Mods_hover/d9c0facc0d9708fb37cbb5bcf729ceafcabd4d66ac2314dbd9592b5d010c07d5"
+        }
+      }
+    }
+  ]
+}

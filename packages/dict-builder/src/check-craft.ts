@@ -4,6 +4,7 @@ import {
   CORRUPTION_SOURCE,
   corruptionSourceHash,
   DESECRATION_SOURCE,
+  FLUXES,
   inspectModPool,
   JEWEL_SOURCE,
   jewelSourceHash,
@@ -11,6 +12,7 @@ import {
   liquidEmotionSourceHash,
   parseAlloyCatalog,
   parseCraftCatalog,
+  parseFluxCatalog,
   STAT_SCALABILITY_SOURCE,
   statScalabilitySourceHash,
 } from '@poe2-tools/item-core'
@@ -20,12 +22,15 @@ const catalog = parseCraftCatalog(
   JSON.parse(await readFile(resolve(REPO_ROOT, 'data/craft/catalog.json'), 'utf8')),
 )
 // 可整体移除的关系表不属于 primary 目录；存在时必须完整通过审计。
-let alloyText: string | undefined
-try {
-  alloyText = await readFile(resolve(REPO_ROOT, 'data/craft/alloys.json'), 'utf8')
-} catch (error) {
-  if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error
+async function readOptionalTable(file: string): Promise<string | undefined> {
+  try {
+    return await readFile(resolve(REPO_ROOT, 'data/craft', file), 'utf8')
+  } catch (error) {
+    if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error
+    return undefined
+  }
 }
+const alloyText = await readOptionalTable('alloys.json')
 if (alloyText !== undefined) {
   const table = parseAlloyCatalog(JSON.parse(alloyText), catalog)
   const mappings = table.alloys.flatMap((entry) => entry.mappings)
@@ -47,6 +52,22 @@ if (alloyText !== undefined) {
     '合金关系目录校验通过：gray 独立表；13 材料、132 对应、131 已解析、1 项缺失；不授权制作',
   )
 } else console.log('合金关系目录未提供；继续校验 primary 制作目录')
+const fluxText = await readOptionalTable('fluxes.json')
+if (fluxText !== undefined) {
+  const table = parseFluxCatalog(JSON.parse(fluxText), catalog)
+  const members = table.rows.flatMap((row) => Object.values(row.members))
+  if (
+    table.rows.length !== 15 ||
+    members.length !== 60 ||
+    members.some((member) => member.modId === null) ||
+    new Set(members.map((member) => member.modId)).size !== 57
+  )
+    throw new Error('溶剂关系审计不匹配：应有 15 行、60 个已解析成员、57 种词缀身份')
+  for (const locale of ['zh-CN', 'zh-TW'] as const)
+    if (FLUXES.some((flux) => !catalog.localizedNames?.[locale]?.[flux.name]?.trim()))
+      throw new Error(`${locale} 溶剂名称缺失`)
+  console.log('溶剂关系目录校验通过：gray 独立表；4 材料、15 行、60 个已解析成员；仅供查询')
+} else console.log('溶剂关系目录未提供；继续校验 primary 制作目录')
 if (
   statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
   Object.keys(catalog.scalability ?? {}).length !== 2988

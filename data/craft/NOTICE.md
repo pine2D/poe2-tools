@@ -1,5 +1,7 @@
 # 制作目录数据来源
 
+`fluxes.json` 是独立 **gray** 手工转换关系表：15 行、60 个成员，引用既有 primary 目录中的 57 种词缀身份。来源为 PoE2DB 公开 Mod Equivalencies 表及逐项详情，详见 `_meta.source`、成员 `source` 与 `docs/data-sources.md`。仅保存身份、域和关系；文本、数值继续读取固定 MIT 目录，不包含外站权重、价格、网页或实现。此表绑定 ModItem、ModJewel、ModVeiled 三份来源，可整体移除或用 `DICT_ENABLE_POE2DB=0` 禁止发布；不以本项目 MIT 许可声明第三方数据库的再分发权利。
+
 `alloys.json` 是独立 **gray** 手工关系表：13 种材料、132 个类别对应，只引用现有 primary 词缀 ID，保留适性合金权杖一项未对应。材料说明来源逐项记在 `source`，登记见 `docs/data-sources.md`。不含外站词缀数值、权重、价格或代码；不以本项目 MIT 许可声明第三方数据库的再分发权利。可删除此表或用 `DICT_ENABLE_POE2DB=0` 禁止发布，既有 primary 目录不依赖它。
 
 `catalog.json` 为自动生成数据，运行 `pnpm craft:build` 可重建；`--offline` 使用已有缓存。每个来源文件的固定提交、URL 和 SHA-256 写入 `_meta.sources`。

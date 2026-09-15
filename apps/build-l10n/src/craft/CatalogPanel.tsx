@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlloyCatalog } from './AlloyCatalog'
 import { CraftEntry } from './CraftEntry'
 import { EssenceCatalog } from './EssenceCatalog'
+import { FluxCatalog } from './FluxCatalog'
 import { LiquidEmotionCatalog } from './LiquidEmotionCatalog'
 import { ModStateBadges } from './ModStateBadges'
 import { ProjectControls } from './ProjectControls'
@@ -633,6 +634,13 @@ export function CatalogPanel({
               <AlloyCatalog
                 catalog={loadState.catalog}
                 resource={alloyResource}
+                base={selectedBase}
+                locale={locale}
+                translateLine={translateLine}
+                fetchImpl={fetchImpl}
+              />
+              <FluxCatalog
+                catalog={loadState.catalog}
                 base={selectedBase}
                 locale={locale}
                 translateLine={translateLine}
