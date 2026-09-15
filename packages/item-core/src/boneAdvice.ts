@@ -11,6 +11,7 @@ import { BONE_RULES, type BoneCraftOperation, boneBaseError, type CraftBone } fr
 import type { CraftCatalog } from './catalog'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
+import { lostCraftTargetIds } from './targetProgress'
 import {
   analyzeCraftTargets,
   type CraftTargetAlternative,
@@ -72,9 +73,10 @@ export function analyzeBoneTargets(
       .filter((target) => !target.matched)
       .flatMap((target) => (target.alternatives ?? [target]).map((member) => member.modId)),
   )
-  const present = state.affixes
-    .filter((affix) => accepted.has(affix.modId))
-    .map((affix) => affix.modId)
+  const groups = ids.map((id) => [
+    id,
+    ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? []),
+  ])
   const goal = (id: string) => values.find((value) => value.modId === id)
   let exhausted = false
   const apply = (current: CraftState, operation: BoneCraftOperation): CraftState | null => {
@@ -96,7 +98,15 @@ export function analyzeBoneTargets(
       operation,
       targetModIds: targets,
       atRiskTargetIds: risk,
-      lostTargetIds: present.filter((id) => !next.affixes.some((affix) => affix.modId === id)),
+      lostTargetIds: lostCraftTargetIds(
+        catalog,
+        state,
+        next,
+        ids,
+        groups,
+        values,
+        options.fracturedTargetId,
+      ),
       randomRemovalRisk: operation.kind === 'desecrate' && operation.removeModId !== undefined,
     })
   const reveal = (current: CraftState, id: string, useTarget: boolean) => {
@@ -225,25 +235,31 @@ export function analyzeBoneTargets(
           JSON.stringify([...withoutDirection.value.kinds].sort()) ===
             JSON.stringify([...prepared.value.kinds].sort()) &&
           JSON.stringify(
-            withoutDirection.value.removableAffixes.map((affix) => affix.modId).sort(),
-          ) === JSON.stringify(prepared.value.removableAffixes.map((affix) => affix.modId).sort())
+            withoutDirection.value.removableAffixes
+              .map((affix) => affix.affixId ?? affix.modId)
+              .sort(),
+          ) ===
+            JSON.stringify(
+              prepared.value.removableAffixes.map((affix) => affix.affixId ?? affix.modId).sort(),
+            )
         )
           continue
       }
       const removals = prepared.value.requiresRemoval
-        ? prepared.value.removableAffixes.map((affix) => affix.modId)
+        ? prepared.value.removableAffixes
         : [undefined]
       const risk = prepared.value.removableAffixes
         .filter((affix) => accepted.has(affix.modId))
         .map((affix) => affix.modId)
-      for (const removeModId of removals) {
+      for (const removed of removals) {
         for (const affixKind of prepared.value.kinds) {
           const operation: BoneCraftOperation = {
             kind: 'desecrate',
             ...config,
             boneId,
             affixKind,
-            ...(removeModId === undefined ? {} : { removeModId }),
+            ...(removed === undefined ? {} : { removeModId: removed.modId }),
+            ...(removed?.affixId === undefined ? {} : { removeAffixId: removed.affixId }),
           }
           const next = apply(state, operation)
           if (!next) continue

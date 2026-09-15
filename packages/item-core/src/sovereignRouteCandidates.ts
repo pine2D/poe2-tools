@@ -8,6 +8,7 @@ import {
 import { craftModsConflict } from './modConflicts'
 import { CRAFT_OMEN_RULES, type CraftOmen } from './omens'
 import {
+  addCraftAffix,
   type CraftState,
   craftCandidates,
   prepareCraftOperation,
@@ -51,10 +52,18 @@ export function sovereignRouteContext(
         group.some((id) => {
           const mod = targets.find((entry) => entry.id === id)
           if (!mod) return false
-          const affix = context.state.affixes.find((entry) => entry.modId === id)
-          if (affix?.fractured || id === support?.mod.id)
-            return !!affix && satisfied(context.state, mod, affix.lines)
-          return minimumCraftTargetRolls(catalog, context.state, mod, goal(id)) !== null
+          const affixes = context.state.affixes.filter((entry) => entry.modId === id)
+          if (affixes.length)
+            return affixes.some((affix) =>
+              affix.fractured || id === support?.mod.id
+                ? satisfied(context.state, mod, affix.lines)
+                : minimumCraftTargetRolls(catalog, context.state, mod, goal(id), affix.lines) !==
+                  null,
+            )
+          return (
+            id !== support?.mod.id &&
+            minimumCraftTargetRolls(catalog, context.state, mod, goal(id)) !== null
+          )
         }),
       )
       return (
@@ -94,11 +103,15 @@ export function sovereignRouteContext(
     let score = state.rarity === 'rare' ? 0.04 : state.rarity === 'magic' ? 0.02 : 0
     const contexts = futureContexts(state)
     for (const group of groups) {
-      const affix = state.affixes.find((entry) => group.includes(entry.modId))
-      const mod = affix && targets.find((entry) => entry.id === affix.modId)
-      if (!affix || !mod || goal(mod.id)?.basis !== 'effective') continue
-      if (!satisfied(state, mod, affix.lines))
-        score += contexts.some((context) => satisfied(context.state, mod, affix.lines)) ? 0.9 : 0.2
+      const scores = state.affixes
+        .filter((entry) => group.includes(entry.modId))
+        .map((affix) => {
+          const mod = targets.find((entry) => entry.id === affix.modId)
+          if (!mod || goal(mod.id)?.basis !== 'effective' || satisfied(state, mod, affix.lines))
+            return 0
+          return contexts.some((context) => satisfied(context.state, mod, affix.lines)) ? 0.9 : 0.2
+        })
+      if (scores.length) score += Math.max(...scores)
     }
     if (
       state.rarity === 'rare' &&
@@ -110,6 +123,7 @@ export function sovereignRouteContext(
   }
   function* candidates(
     state: CraftState,
+    consumeCandidate: () => boolean = () => true,
   ): Generator<{ operation: CraftStep; atRiskTargetIds: string[] }> {
     if (!enabled || state.pendingDesecration || state.corrupted) return
     const crafted = state.affixes.find((affix) => affix.crafted)
@@ -127,7 +141,11 @@ export function sovereignRouteContext(
           !plain.ok ||
           !pool.ok ||
           (omen && pool.value.length >= plain.value.length) ||
-          !pool.value.some((affix) => affix.modId === crafted.modId)
+          !pool.value.some((affix) =>
+            crafted.affixId === undefined
+              ? affix.modId === crafted.modId
+              : affix.affixId === crafted.affixId,
+          )
         )
           continue
         yield {
@@ -135,6 +153,7 @@ export function sovereignRouteContext(
             currency: 'annulment',
             modIds: [],
             removeModId: crafted.modId,
+            ...(crafted.affixId === undefined ? {} : { removeAffixId: crafted.affixId }),
             ...(omen ? { omen } : {}),
           },
           atRiskTargetIds:
@@ -149,11 +168,24 @@ export function sovereignRouteContext(
     const prepared = prepareCraftOperation(catalog, state, currency)
     if (!prepared.ok) return
     const pool = craftCandidates(catalog, prepared.value.state, currency)
+    const addedRoll = (mod: CatalogMod, numbers: number[]) => {
+      const added = addCraftAffix(catalog, prepared.value.state, mod.id, currency)
+      const affix = added.ok ? added.value.affixes.at(-1) : undefined
+      return affix
+        ? {
+            modId: mod.id,
+            values: numbers,
+            ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+          }
+        : null
+    }
     for (const mod of pool.filter((mod) => accepted.has(mod.id))) {
       const numbers = futureRolls(state, mod)
-      if (numbers !== null)
+      if (numbers !== null && !consumeCandidate()) return
+      const roll = numbers === null ? null : addedRoll(mod, numbers)
+      if (roll !== null)
         yield {
-          operation: { currency, modIds: [mod.id], rolls: [{ modId: mod.id, values: numbers }] },
+          operation: { currency, modIds: [mod.id], rolls: [roll] },
           atRiskTargetIds: [],
         }
     }
@@ -169,12 +201,14 @@ export function sovereignRouteContext(
       const mod = fillers[0]
       if (!mod) continue
       const numbers = minimumCraftTargetRolls(catalog, state, mod)
-      if (numbers !== null)
+      if (numbers !== null && !consumeCandidate()) return
+      const roll = numbers === null ? null : addedRoll(mod, numbers)
+      if (roll !== null)
         yield {
           operation: {
             currency,
             modIds: [mod.id],
-            rolls: numbers.length ? [{ modId: mod.id, values: numbers }] : [],
+            rolls: roll.values.length ? [roll] : [],
           },
           atRiskTargetIds: [],
         }

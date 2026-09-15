@@ -169,6 +169,10 @@ export function analyzeEssencePreparation(
           states.set(key, applied)
         }
         if (!applied.ok) continue
+        const added = applied.value.affixes.at(-1)
+        if (!added || added.modId !== mod.id) continue
+        if (added.affixId !== undefined)
+          operation.rolls = [{ modId: mod.id, affixId: added.affixId, values: rolls }]
         const found = search(applied.value, path)
         if (found !== null) return found
         if (result.truncated) return null

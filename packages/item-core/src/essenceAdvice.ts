@@ -6,6 +6,7 @@ import { prepareEssenceCraft } from './essenceCraft'
 import { ESSENCE_OMEN_RULES, type EssenceOmen } from './essenceOmens'
 import { essenceCategory } from './essences'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { lostCraftTargetIds } from './targetProgress'
 import {
   analyzeCraftTargets,
   type CraftTargetAlternative,
@@ -103,24 +104,34 @@ export function analyzeEssenceTargets(
         prepared.value.removableAffixes.length >= original.value.removableAffixes.length
       )
         continue
-      const removableIds = prepared.value.removableAffixes.map((affix) => affix.modId)
-      const atRiskTargetIds = present.filter((id) => removableIds.includes(id))
-      for (const removeModId of prepared.value.mode === 'upgrade' ? [undefined] : removableIds) {
+      const removable = prepared.value.removableAffixes
+      const atRiskTargetIds = present.filter((id) => removable.some((affix) => affix.modId === id))
+      for (const removed of prepared.value.mode === 'upgrade' ? [undefined] : removable) {
         const operation: EssenceCraftOperation = {
           kind: 'essence',
           essenceId: essence.id,
           values: [...numericValues],
           ...(omen === undefined ? {} : { omen }),
-          ...(removeModId === undefined ? {} : { removeModId }),
+          ...(removed === undefined ? {} : { removeModId: removed.modId }),
+          ...(removed?.affixId === undefined ? {} : { removeAffixId: removed.affixId }),
         }
         // 外层路线搜索共用预算；耗尽后立即停止整个候选遍历。
         if (options.consumeCandidate && !options.consumeCandidate())
           return { ok: true, value: steps }
-        if (!applyCraftStep(catalog, state, operation).ok) continue
+        const applied = applyCraftStep(catalog, state, operation)
+        if (!applied.ok) continue
         steps.push({
           operation,
           targetModId: modId,
-          lostTargetIds: present.filter((id) => id === removeModId),
+          lostTargetIds: lostCraftTargetIds(
+            catalog,
+            state,
+            applied.value,
+            ids,
+            groups,
+            values,
+            options.fracturedTargetId,
+          ),
           atRiskTargetIds: [...atRiskTargetIds],
         })
       }

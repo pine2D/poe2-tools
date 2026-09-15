@@ -5,7 +5,7 @@ import { type AlloyCraftOperation, applyCraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
 import { sovereignTargetSupport } from './sovereignTargetSupport'
-import { matchedCraftTargetIds } from './targetProgress'
+import { lostCraftTargetIds, matchedCraftTargetIds } from './targetProgress'
 import {
   analyzeCraftTargets,
   type CraftTargetAlternative,
@@ -94,16 +94,17 @@ export function analyzeAlloyTargets(
         : numbers === null
           ? []
           : [numbers]
-    const removableIds = prepared.value.removableAffixes.map((affix) => affix.modId)
-    const atRiskTargetIds = present.filter((id) => removableIds.includes(id))
-    for (const removeModId of removableIds) {
+    const removable = prepared.value.removableAffixes
+    const atRiskTargetIds = present.filter((id) => removable.some((affix) => affix.modId === id))
+    for (const removed of removable) {
       for (const numbers of outcomes) {
         if (options.consumeCandidate && !options.consumeCandidate())
           return { ok: true, value: steps }
         const operation: AlloyCraftOperation = {
           kind: 'alloy',
           alloyId: entry.alloy.id,
-          removeModId,
+          removeModId: removed.modId,
+          ...(removed.affixId === undefined ? {} : { removeAffixId: removed.affixId }),
           values: [...numbers],
         }
         const applied = applyCraftStep(catalog, state, operation)
@@ -124,19 +125,21 @@ export function analyzeAlloyTargets(
           !gainedTargetIds.length
         )
           continue
+        const lost = new Set(
+          lostCraftTargetIds(
+            catalog,
+            state,
+            applied.value,
+            ids,
+            groups,
+            values,
+            options.fracturedTargetId,
+          ),
+        )
         steps.push({
           operation,
           targetModId: entry.mod.id,
-          lostTargetIds: present.filter(
-            (id) =>
-              id === removeModId ||
-              groups.some(
-                (group, index) =>
-                  group.includes(id) &&
-                  beforeMatched.includes(ids[index] ?? '') &&
-                  !matchedTargetIds.includes(ids[index] ?? ''),
-              ),
-          ),
+          lostTargetIds: present.filter((id) => lost.has(id)),
           atRiskTargetIds: [...atRiskTargetIds],
           gainedTargetIds,
           matchedTargetIds,

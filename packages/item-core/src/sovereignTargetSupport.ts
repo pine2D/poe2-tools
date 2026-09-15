@@ -1,3 +1,4 @@
+import { appendCraftAffix } from './affixIdentity'
 import { isSovereignAffix } from './alloyEffects'
 import { inspectCraftAlloys } from './alloys'
 import type { CraftCatalog } from './catalog'
@@ -43,10 +44,12 @@ export function sovereignTargetSupport(
     if (!rendered.ok) return null
     const affix = { modId: mod.id, lines: rendered.value, crafted: true as const }
     if (!isSovereignAffix(catalog, state, affix, 'resistance')) return null
-    contexts.push({
-      value,
-      state: { ...state, affixes: [...state.affixes.filter((affix) => !affix.crafted), affix] },
-    })
+    const future = appendCraftAffix(
+      { ...state, affixes: state.affixes.filter((affix) => !affix.crafted) },
+      affix,
+    )
+    if (!future.ok) return null
+    contexts.push({ value, state: future.value })
   }
   return { alloyId: entry.alloy.id, mod, contexts }
 }

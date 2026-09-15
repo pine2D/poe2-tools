@@ -39,6 +39,7 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
+import { inspectCraftTargetInstances, lostCraftTargetIds } from './targetProgress'
 
 export interface CraftTargetBound {
   index: number
@@ -65,6 +66,7 @@ export interface CraftAdviceStep {
   omen?: CraftOmen
   currency: CraftCurrency
   removeModId?: string
+  removeAffixId?: string
   /** 本步骤分别可选的目标，不代表可以同时生成。 */
   targetModIds: string[]
   lostTargetIds: string[]
@@ -76,6 +78,7 @@ export interface CraftAdviceStep {
 }
 
 interface CraftTargetStatus {
+  matchedAffixId?: string
   fracture?: { required: true; matched: boolean }
   modId: string
   present: boolean
@@ -394,14 +397,20 @@ export function validateCraftTargetValues(
     if (value.basis === 'effective') {
       if (!state || state.baseId !== baseId)
         return { ok: false, error: '有效值目标需要当前装备状态。' }
-      const projection = projectCraftTargetValues(
-        catalog,
-        state,
-        mod,
-        { modId: mod.id, basis: 'effective', bounds: [] },
-        state.affixes.find((affix) => affix.modId === mod.id)?.lines,
+      const actuals = state.affixes
+        .filter((affix) => affix.modId === mod.id)
+        .map((affix) => affix.lines)
+      const projections = (actuals.length ? actuals : [undefined]).map((actual) =>
+        projectCraftTargetValues(
+          catalog,
+          state,
+          mod,
+          { modId: mod.id, basis: 'effective', bounds: [] },
+          actual,
+        ),
       )
-      if (!projection.ok) return projection
+      const projection = projections.find((entry) => entry.ok) ?? projections[0]
+      if (projection && !projection.ok) return projection
     }
     const indices = new Set<number>()
     const bounds: CraftTargetBound[] = []
@@ -528,7 +537,10 @@ export function analyzeCraftTargets(
     const present = existingIds.has(modId)
     const reasons: string[] = []
     const mod = byId.get(modId)
-    const affix = current.affixes.find((entry) => entry.modId === modId)
+    const goal = values.value.find((entry) => entry.modId === modId)
+    const instances = inspectCraftTargetInstances(catalog, current, modId, goal, fractureRequired)
+    const selected = instances.find((entry) => entry.matched) ?? instances[0]
+    const affix = selected?.affix
     const fractureReasons: string[] = []
     const fracture = fractureRequired
       ? { fracture: { required: true as const, matched: affix?.fractured === true } }
@@ -540,15 +552,9 @@ export function analyzeCraftTargets(
         fractureReasons.push('此普通目标当前带亵渎标记，当前状态不能破裂。')
       else fractureReasons.push('此目标要求破裂，当前尚未锁定。')
     }
-    const goal = values.value.find((entry) => entry.modId === modId)
     const bounds = goal?.bounds ?? []
-    const projected =
-      mod && bounds.length > 0
-        ? projectCraftTargetValues(catalog, current, mod, goal, affix?.lines)
-        : null
-    const actual = affix && projected?.ok ? projected.value.read(affix.lines) : null
     const numeric = bounds.map((bound) => {
-      const interval = actual?.ok ? actual.value[bound.index] : null
+      const interval = selected?.actual?.[bound.index] ?? null
       const value = interval && interval.min === interval.max ? interval.min : null
       const matched = present && matchesTargetInterval(interval, bound)
       if (present && !matched) {
@@ -651,10 +657,10 @@ export function analyzeCraftTargets(
     return {
       modId,
       present,
-      matched:
-        present &&
-        numeric.every((entry) => entry.matched) &&
-        (!fractureRequired || affix?.fractured === true),
+      matched: selected?.matched === true,
+      ...(selected?.matched && affix?.affixId !== undefined
+        ? { matchedAffixId: affix.affixId }
+        : {}),
       ...fracture,
       numeric,
       reasons: [...reasons, ...fractureReasons],
@@ -666,10 +672,12 @@ export function analyzeCraftTargets(
     const accepted = alternatives.find((entry) => entry.targetModId === modId)
     if (accepted === undefined) return primary
     const members = [primary, ...accepted.modIds.map((id) => inspectTarget(id, fractureRequired))]
+    const matchedAffixId = members.find((member) => member.matched)?.matchedAffixId
     return {
       ...primary,
       present: members.some((member) => member.present),
       matched: members.some((member) => member.matched),
+      ...(matchedAffixId === undefined ? {} : { matchedAffixId }),
       ...(fractureRequired
         ? {
             reasons: members.find((member) => member.present)?.reasons ?? primary.reasons,
@@ -715,7 +723,7 @@ export function analyzeCraftTargets(
   const numericTargets = presentTargets.filter(
     (target) =>
       target.numeric.length > 0 &&
-      !current.affixes.find((affix) => affix.modId === target.modId)?.fractured,
+      current.affixes.some((affix) => affix.modId === target.modId && !affix.fractured),
   )
   const unmetNumericIds = numericTargets
     .filter((target) => target.numeric.some((bound) => !bound.matched))
@@ -724,13 +732,18 @@ export function analyzeCraftTargets(
       const mod = byId.get(target.modId)
       return (
         mod !== undefined &&
-        minimumCraftTargetRolls(
-          catalog,
-          current,
-          mod,
-          values.value.find((value) => value.modId === target.modId),
-          current.affixes.find((affix) => affix.modId === target.modId)?.lines,
-        ) !== null
+        current.affixes.some(
+          (affix) =>
+            affix.modId === target.modId &&
+            !affix.fractured &&
+            minimumCraftTargetRolls(
+              catalog,
+              current,
+              mod,
+              values.value.find((value) => value.modId === target.modId),
+              affix.lines,
+            ) !== null,
+        )
       )
     })
     .map((target) => target.modId)
@@ -816,14 +829,16 @@ export function analyzeCraftTargets(
     const removable = randomRemovalRisk
       ? removableCraftAffixes(catalog, current, currency as RemovalCraftCurrency, omen)
       : null
-    const removals =
-      removable === null
-        ? [undefined]
-        : removable.ok
-          ? removable.value.map((affix) => affix.modId)
-          : []
-    for (const removeModId of removals) {
-      const prepared = prepareCraftOperation(catalog, current, currency, removeModId, omen)
+    const removals = removable === null ? [undefined] : removable.ok ? removable.value : []
+    for (const removed of removals) {
+      const selector =
+        removed === undefined
+          ? undefined
+          : {
+              modId: removed.modId,
+              ...(removed.affixId === undefined ? {} : { affixId: removed.affixId }),
+            }
+      const prepared = prepareCraftOperation(catalog, current, currency, selector, omen)
       if (!prepared.ok) continue
       let next = prepared.value.state
       if (currency === 'annulment') {
@@ -864,25 +879,22 @@ export function analyzeCraftTargets(
         )
       })
       if (targetModIds.length === 0) continue
-      const retained = new Set(prepared.value.state.affixes.map((affix) => affix.modId))
-      const lostTargetIds = presentIds.filter((id) => !retained.has(id))
+      const lost = new Set(
+        lostCraftTargetIds(
+          catalog,
+          current,
+          prepared.value.state,
+          validated.value,
+          validated.value.map((id) => [
+            id,
+            ...(alternatives.find((entry) => entry.targetModId === id)?.modIds ?? []),
+          ]),
+          values.value,
+          fracturedTargetId,
+        ),
+      )
+      const lostTargetIds = presentIds.filter((id) => lost.has(id))
       const qualityChanged = current.catalyst?.quality !== prepared.value.state.catalyst?.quality
-      if (qualityChanged) {
-        for (const target of presentTargets) {
-          if (!target.matched || !retained.has(target.modId)) continue
-          const goal = values.value.find((entry) => entry.modId === target.modId)
-          const mod = byId.get(target.modId)
-          const affix = next.affixes.find((entry) => entry.modId === target.modId)
-          if (!mod || !affix || goal?.basis !== 'effective') continue
-          const projection = projectCraftTargetValues(catalog, next, mod, goal, affix.lines)
-          const actual = projection.ok ? projection.value.read(affix.lines) : null
-          if (
-            !actual?.ok ||
-            goal.bounds.some((bound) => !matchesTargetInterval(actual.value[bound.index], bound))
-          )
-            lostTargetIds.push(target.modId)
-        }
-      }
       const afterImplicit = qualityChanged
         ? analyzeCraftImplicitTargets(catalog, next, implicitValues)
         : null
@@ -902,7 +914,8 @@ export function analyzeCraftTargets(
       steps.push({
         currency,
         ...(omen === undefined ? {} : { omen }),
-        ...(removeModId === undefined ? {} : { removeModId }),
+        ...(removed === undefined ? {} : { removeModId: removed.modId }),
+        ...(removed?.affixId === undefined ? {} : { removeAffixId: removed.affixId }),
         targetModIds,
         lostTargetIds,
         ...(lostImplicitLineIndexes.length > 0 ? { lostImplicitLineIndexes } : {}),

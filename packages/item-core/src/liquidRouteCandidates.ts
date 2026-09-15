@@ -1,3 +1,4 @@
+import { appendCraftAffix } from './affixIdentity'
 import { isSovereignAffix } from './alloyEffects'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import type { CatalogMod, CraftCatalog } from './catalog'
@@ -16,6 +17,7 @@ import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen } from './omens'
 import {
+  addCraftAffix,
   type CraftOperation,
   type CraftState,
   craftCandidates,
@@ -76,15 +78,12 @@ export function liquidRouteContext(
   const enabled = relevant.length > 0
   const withEffect = (state: CraftState, mod: CatalogMod, numbers: number[]): CraftState | null => {
     const rendered = renderNumericLines(mod.lines, numbers)
-    return rendered.ok
-      ? {
-          ...state,
-          affixes: [
-            ...state.affixes.filter((affix) => !affix.crafted),
-            { modId: mod.id, lines: rendered.value, crafted: true },
-          ],
-        }
-      : null
+    if (!rendered.ok) return null
+    const future = appendCraftAffix(
+      { ...state, affixes: state.affixes.filter((affix) => !affix.crafted) },
+      { modId: mod.id, lines: rendered.value, crafted: true },
+    )
+    return future.ok ? future.value : null
   }
   const effectRolls = (mod: CatalogMod): number[][] => {
     const ranges = inspectNumericLines(mod.lines)
@@ -106,7 +105,12 @@ export function liquidRouteContext(
   const futureRollCache = new Map<string, number[] | null>()
   const futureRolls = (state: CraftState, mod: CatalogMod): number[] | null => {
     if (goal(mod.id)?.basis !== 'effective') return null
-    const key = JSON.stringify([mod.id, state.catalyst])
+    // 临时增效也要分配实例；普通编号等价，耗尽游标的上下文不能复用成功结果。
+    const key = JSON.stringify([
+      mod.id,
+      state.catalyst,
+      state.nextAffixId !== Number.MAX_SAFE_INTEGER,
+    ])
     if (futureRollCache.has(key)) return futureRollCache.get(key) ?? null
     for (const entry of relevant)
       for (const effect of entry.wanted.filter(
@@ -155,7 +159,12 @@ export function liquidRouteContext(
     mod: CatalogMod,
     lines: readonly string[],
   ) => {
-    const key = JSON.stringify([mod.id, state.catalyst, lines])
+    const key = JSON.stringify([
+      mod.id,
+      state.catalyst,
+      lines,
+      state.nextAffixId !== Number.MAX_SAFE_INTEGER,
+    ])
     const cached = effectCompatibilityCache.get(key)
     if (cached !== undefined) return cached
     const compatible = finalEffects(mod).some((effect) =>
@@ -190,28 +199,37 @@ export function liquidRouteContext(
     if (!enabled) return 0
     let score = state.rarity === 'rare' ? 0.04 : state.rarity === 'magic' ? 0.02 : 0
     for (const group of groups) {
-      const affix = state.affixes.find((entry) => group.includes(entry.modId))
-      const mod = affix && byId.get(affix.modId)
-      if (affix && mod && goal(mod.id)?.bounds.length) {
-        const projection = projectCraftTargetValues(catalog, state, mod, goal(mod.id), affix.lines)
-        const actual = projection.ok ? projection.value.read(affix.lines) : null
-        if (
-          !actual?.ok ||
-          !(goal(mod.id)?.bounds ?? []).every((bound) =>
-            matchesTargetInterval(actual.value[bound.index], bound),
+      const scores = state.affixes
+        .filter((entry) => group.includes(entry.modId))
+        .map((affix) => {
+          const mod = byId.get(affix.modId)
+          if (!mod || !goal(mod.id)?.bounds.length) return 0
+          const projection = projectCraftTargetValues(
+            catalog,
+            state,
+            mod,
+            goal(mod.id),
+            affix.lines,
           )
-        )
-          score +=
-            goal(mod.id)?.basis === 'effective' &&
-            compatibleWithFinalEffect(state, mod, affix.lines)
+          const actual = projection.ok ? projection.value.read(affix.lines) : null
+          if (
+            !actual?.ok ||
+            !(goal(mod.id)?.bounds ?? []).every((bound) =>
+              matchesTargetInterval(actual.value[bound.index], bound),
+            )
+          )
+            return goal(mod.id)?.basis === 'effective' &&
+              compatibleWithFinalEffect(state, mod, affix.lines)
               ? 0.9
               : 0.5
-        else if (goal(mod.id)?.basis === 'effective') {
-          // 当前碰巧满足上限但终结工艺必然使其失配，不应压过已准备合法基础值的分支。
-          if (finalEffects(mod).length && !compatibleWithFinalEffect(state, mod, affix.lines))
-            score -= 0.75
-        }
-      }
+          else if (goal(mod.id)?.basis === 'effective') {
+            // 当前碰巧满足上限但终结工艺必然使其失配，不应压过已准备合法基础值的分支。
+            if (finalEffects(mod).length && !compatibleWithFinalEffect(state, mod, affix.lines))
+              return -0.75
+          }
+          return 0
+        })
+      if (scores.length) score += Math.max(...scores)
     }
     for (const side of ['prefix', 'suffix'] as const) {
       if (!needsCapacity(side)) continue
@@ -237,6 +255,7 @@ export function liquidRouteContext(
   }
   function* candidates(
     state: CraftState,
+    consumeCandidate: () => boolean = () => true,
   ): Generator<{ operation: CraftStep; atRiskTargetIds: string[] }> {
     if (!enabled || state.pendingDesecration?.options) return
     const present = state.affixes
@@ -277,6 +296,7 @@ export function liquidRouteContext(
                 emotionId: entry.emotion.id,
                 ...(entry.outcomes.length > 1 ? { resultKind: mod.kind } : {}),
                 removeModId: removed.modId,
+                ...(removed.affixId === undefined ? {} : { removeAffixId: removed.affixId }),
                 values,
               },
               atRiskTargetIds,
@@ -299,7 +319,11 @@ export function liquidRouteContext(
           !plain.ok ||
           !pool.ok ||
           (omen !== undefined && pool.value.length >= plain.value.length) ||
-          !pool.value.some((affix) => affix.modId === crafted.modId)
+          !pool.value.some((affix) =>
+            crafted.affixId === undefined
+              ? affix.modId === crafted.modId
+              : affix.affixId === crafted.affixId,
+          )
         )
           continue
         yield {
@@ -307,6 +331,7 @@ export function liquidRouteContext(
             currency: 'annulment',
             modIds: [],
             removeModId: crafted.modId,
+            ...(crafted.affixId === undefined ? {} : { removeAffixId: crafted.affixId }),
             ...(omen ? { omen } : {}),
           },
           atRiskTargetIds:
@@ -322,6 +347,17 @@ export function liquidRouteContext(
     const prepared = prepareCraftOperation(catalog, state, currency)
     if (!prepared.ok) return
     const pool = craftCandidates(catalog, prepared.value.state, currency)
+    const addedRoll = (mod: CatalogMod, numbers: number[]) => {
+      const added = addCraftAffix(catalog, prepared.value.state, mod.id, currency)
+      const affix = added.ok ? added.value.affixes.at(-1) : undefined
+      return affix
+        ? {
+            modId: mod.id,
+            values: numbers,
+            ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+          }
+        : null
+    }
     // 除当前无解外，精确上限也可能要求提前准备更低基础值。保留普通当前掷值路径，
     // 另列最终工艺的准备值，避免先达成后失配，使逐步重新规划可持续保护已达成目标。
     for (const mod of pool.filter(
@@ -332,15 +368,27 @@ export function liquidRouteContext(
           finalEffects(mod).length > 0),
     )) {
       const numbers = futureRolls(state, mod)
-      if (numbers !== null)
+      if (numbers !== null && !consumeCandidate()) return
+      const future = numbers === null ? null : addedRoll(mod, numbers)
+      if (future !== null)
         yield {
-          operation: { currency, modIds: [mod.id], rolls: [{ modId: mod.id, values: numbers }] },
+          operation: { currency, modIds: [mod.id], rolls: [future] },
           atRiskTargetIds: [],
         }
       const direct = minimumCraftTargetRolls(catalog, state, mod, goal(mod.id))
-      if (direct !== null && JSON.stringify(direct) !== JSON.stringify(numbers))
+      if (
+        direct !== null &&
+        JSON.stringify(direct) !== JSON.stringify(numbers) &&
+        !consumeCandidate()
+      )
+        return
+      const current =
+        direct !== null && JSON.stringify(direct) !== JSON.stringify(numbers)
+          ? addedRoll(mod, direct)
+          : null
+      if (current !== null)
         yield {
-          operation: { currency, modIds: [mod.id], rolls: [{ modId: mod.id, values: direct }] },
+          operation: { currency, modIds: [mod.id], rolls: [current] },
           atRiskTargetIds: [],
         }
     }
@@ -355,12 +403,14 @@ export function liquidRouteContext(
       const candidate = fillers[0]
       if (!candidate) continue
       const numbers = minimumCraftTargetRolls(catalog, state, candidate)
-      if (numbers !== null)
+      if (numbers !== null && !consumeCandidate()) return
+      const roll = numbers === null ? null : addedRoll(candidate, numbers)
+      if (roll !== null)
         yield {
           operation: {
             currency,
             modIds: [candidate.id],
-            rolls: numbers.length ? [{ modId: candidate.id, values: numbers }] : [],
+            rolls: roll.values.length ? [roll] : [],
           },
           atRiskTargetIds: [],
         }
@@ -379,7 +429,7 @@ export function* jointEffectDivineOperations(
   requiredIds: readonly string[],
 ): Generator<CraftOperation> {
   if (!values.length && !implicitValues.length) return
-  const effectAffix = state.affixes.find(
+  const effectIndex = state.affixes.findIndex(
     (affix) =>
       affix.crafted &&
       (catalog.modifiers.some(
@@ -387,8 +437,9 @@ export function* jointEffectDivineOperations(
       ) ||
         isSovereignAffix(catalog, state, affix, 'resistance')),
   )
+  const effectAffix = state.affixes[effectIndex]
   const effect = effectAffix && catalog.modifiers.find((mod) => mod.id === effectAffix.modId)
-  if (!effect || !prepareCraftOperation(catalog, state, 'divine').ok) return
+  if (!effect || !effectAffix || !prepareCraftOperation(catalog, state, 'divine').ok) return
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return
   const implicit = resolveCraftImplicitPatterns(base, state)
@@ -422,14 +473,20 @@ export function* jointEffectDivineOperations(
     if (!rendered.ok) continue
     const future = {
       ...state,
-      affixes: state.affixes.map((affix) =>
-        affix.modId === effect.id ? { ...affix, lines: rendered.value } : affix,
+      affixes: state.affixes.map((affix, index) =>
+        index === effectIndex ? { ...affix, lines: rendered.value } : affix,
       ),
     }
-    const rolls: NonNullable<CraftOperation['rolls']> = [{ modId: effect.id, values: [value] }]
+    const rolls: NonNullable<CraftOperation['rolls']> = [
+      {
+        modId: effect.id,
+        values: [value],
+        ...(effectAffix.affixId === undefined ? {} : { affixId: effectAffix.affixId }),
+      },
+    ]
     let valid = true
-    for (const affix of future.affixes) {
-      if (affix.fractured || affix.modId === effect.id) continue
+    for (const [index, affix] of future.affixes.entries()) {
+      if (affix.fractured || index === effectIndex) continue
       const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
       if (!mod) {
         valid = false
@@ -448,7 +505,12 @@ export function* jointEffectDivineOperations(
         valid = false
         break
       }
-      if (numbers.length) rolls.push({ modId: mod.id, values: numbers })
+      if (numbers.length)
+        rolls.push({
+          modId: mod.id,
+          values: numbers,
+          ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+        })
     }
     if (valid)
       yield {
