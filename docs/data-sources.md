@@ -384,6 +384,12 @@ v81 实现补充：逐条创建审计确认 483 条可见防具中 478 条属于
 ### 祝福预兆规则依据
 
 [Omen of the Blessed 英文条目](https://poe2db.tw/us/Omen_of_the_Blessed)、[国服说明](https://poe2db.tw/cn/Omen_of_the_Blessed)与[台服说明](https://poe2db.tw/tw/Omen_of_the_Blessed)一致说明下一次神圣石仅重掷固有属性，触发时消耗预兆。作为 gray 人工机制依据，不抓取其词缀、权重或价格。两服名称沿现有官方静态制作词典；未增加浏览器第三方请求。仅处理已核对的固有数值范围，保留显式、破裂与工艺词缀；授予技能、未知咒符位范围、腐化与传奇等既有限制保持不变。前后缀神圣预兆的检索结果属于玩家概念提案，不作为现存材料或规则接入。
+### 绑定符文扩展词缀池（2026-09-17 核对）
+
+人工阅读 PoE2DB 的 [Uhtred](https://poe2db.tw/us/Uhtreds_Sidereus)、[Kolr](https://poe2db.tw/us/Kolrs_Hunt)、[Vorana](https://poe2db.tw/us/Voranas_Carnage)、[Thrud](https://poe2db.tw/us/Thruds_Might)、[Medved](https://poe2db.tw/us/Medveds_Tending)、[Katla](https://poe2db.tw/us/Katlas_Gloom) 六个公开说明，按 gray 登记；只核对部位、空孔、绑定和独立 Bonded 条件，不复制数据库、权重或价格，不新增抓取适配器及浏览器第三方请求。身份、数值、词缀组和有序资格沿已登记固定 MIT PoB2 快照，六个名称对应七条类别记录与128条词缀。
+
+[GGG 0.5.1 Hotfix 6](https://www.pathofexile.com/forum/view-thread/3955250/filter-account-type/staff)为 primary 机制修正依据，确认 Chronomancy 复合词缀的减缓效力方向修复；不外推旧装备更新方式。不同绑定符文共存、特殊孔和增效交互未因本次登记取得执行支持。详见[绑定符文核对](influence-runes-research.md)；此阶段仅研究，尚未发布新能力。
+
 # 合金类别映射（2026-09-14）
 
 人工阅读 PoE2DB 的 13 个公开材料说明：[Runic](https://poe2db.tw/us/Runic_Alloy)、[Adaptive](https://poe2db.tw/us/Adaptive_Alloy)、[Protective](https://poe2db.tw/us/Protective_Alloy)、[Expansive](https://poe2db.tw/us/Expansive_Alloy)、[Swift](https://poe2db.tw/us/Swift_Alloy)、[Cyclonic](https://poe2db.tw/us/Cyclonic_Alloy)、[Prismatic](https://poe2db.tw/us/Prismatic_Alloy)、[Mystic](https://poe2db.tw/us/Mystic_Alloy)、[Sovereign](https://poe2db.tw/us/Sovereign_Alloy)、[Celestial](https://poe2db.tw/us/Celestial_Alloy)、[Transcendent](https://poe2db.tw/us/Transcendent_Alloy)、[Runebinder](https://poe2db.tw/us/The_Runebinders_Alloy)、[Runefather](https://poe2db.tw/us/The_Runefathers_Alloy)。手工建立材料与装备类别到既有 MIT PoB2 词缀 ID 的关系，单独保存于 `data/craft/alloys.json`，标记 gray；没有下载同行数据文件、复制实现、权重、价格、配方或词缀数值。网页数据库未明确授权，不能将页面底部仅适用于 Wiki 内容的许可当作整站数据库许可。
