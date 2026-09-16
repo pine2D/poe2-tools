@@ -199,7 +199,12 @@ export function applyCraftStep(
     return isArchitectCraftOperation(step)
       ? applyArchitect(catalog, state, step)
       : { ok: false, error: '建筑师结果步骤字段无效。' }
-  if (state.corrupted && (!('kind' in step) || step.kind !== 'socket'))
+  const putrefactionReveal =
+    state.pendingDesecration?.putrefaction &&
+    'kind' in step &&
+    typeof step.kind === 'string' &&
+    ['desecration-offer', 'desecration-reroll', 'desecration-reveal'].includes(step.kind)
+  if (state.corrupted && !putrefactionReveal && (!('kind' in step) || step.kind !== 'socket'))
     return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   if ('kind' in step && step.kind === 'vaal') {
     if (!isVaalCraftOperation(step)) return { ok: false, error: '瓦尔结果步骤字段无效。' }

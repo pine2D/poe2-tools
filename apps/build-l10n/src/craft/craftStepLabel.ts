@@ -36,6 +36,8 @@ export function craftStepLabel(
   if (step.kind === 'masterwork') return `符文升级（孔 ${step.socketIndex + 1}）`
   if (step.kind === 'runeforge') return '符文锻造'
   if (step.kind === 'fracture') return fractureLabel
+  if (step.kind === 'putrefy')
+    return `${translations['Omen of Putrefaction'] ?? catalog.localizedNames?.['zh-CN']?.['Omen of Putrefaction'] ?? 'Omen of Putrefaction'} + ${translations[BONE_RULES[step.boneId].name] ?? catalog.localizedNames?.['zh-CN']?.[BONE_RULES[step.boneId].name] ?? BONE_RULES[step.boneId].name}`
   if (step.kind === 'extraction') return '萃取石'
   if (step.kind === 'perfect-flux') return '完美溶剂'
   if (step.kind === 'flux') {

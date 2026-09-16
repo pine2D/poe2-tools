@@ -358,8 +358,21 @@ export function planCraftTargetContext(
       Math.min(4, current.affixes.length + Number(Boolean(current.pendingDesecration))) * 0.001
     )
   }
+  const remainingPutrefactionSteps = (current: CraftState) => {
+    const pending = current.pendingDesecration
+    return pending?.putrefaction
+      ? (pending.putrefaction.prefix + pending.putrefaction.suffix) * 2 -
+          Number(Boolean(pending.options))
+      : 0
+  }
   const bonePriority = (current: CraftState) =>
-    current.pendingDesecration ? (current.pendingDesecration.options ? 0.2 : 0.1) : 0
+    current.pendingDesecration?.putrefaction
+      ? 1 / (1 + remainingPutrefactionSteps(current))
+      : current.pendingDesecration
+        ? current.pendingDesecration.options
+          ? 0.2
+          : 0.1
+        : 0
   const protectedIds = options.preserveMatched === false ? [] : numericMatched(state)
   const matchedImplicit = (current: CraftState): number[] => {
     if (!implicitValues.length) return []
@@ -483,7 +496,11 @@ export function planCraftTargetContext(
         (best.depth === node.steps.length && best.risk < node.risk))
     )
       continue
-    if (node.steps.length >= maxDepth) {
+    // 腐烂占位必须逐槽固定和揭示；预算不足时不能把已达目标的半成品当终点。
+    if (
+      node.steps.length >= maxDepth ||
+      node.steps.length + remainingPutrefactionSteps(node.state) > maxDepth
+    ) {
       result.truncated = true
       continue
     }

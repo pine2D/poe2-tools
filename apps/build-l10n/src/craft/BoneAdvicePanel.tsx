@@ -6,6 +6,7 @@ import {
   type CraftState,
   type CraftTargetDefinitions,
   type DefinitionBoneAdviceStep,
+  preparePutrefaction,
   renderNumericLines,
   resolveCraftAffix,
 } from '@poe2-tools/item-core'
@@ -49,6 +50,24 @@ export function BoneOperationDetails({
           </p>
         ))}
       </div>
+    )
+  }
+  if (operation.kind === 'putrefy') {
+    const prepared = state ? preparePutrefaction(catalog, state, operation.boneId) : null
+    return (
+      <section aria-label="腐烂预兆替换结果">
+        <p>装备将被腐化；保留破裂词缀，替换其余显式词缀为隐藏槽位，随后逐条揭示。</p>
+        {prepared?.ok ? (
+          <>
+            <p>
+              保留破裂词缀：
+              {prepared.value.retainedAffixes.map((affix) => affix.modId).join('、') || '无'}。
+            </p>
+            <p>本次移除：</p>
+            {prepared.value.removedAffixes.map((affix) => modDetails(affix.modId))}
+          </>
+        ) : null}
+      </section>
     )
   }
   if (operation.kind === 'desecrate')
@@ -154,6 +173,12 @@ export function BoneAdvicePanel({
       )
     if (operation.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (operation.kind === 'desecration-reveal') return '完成亵渎揭示'
+    if (operation.kind === 'putrefy')
+      return (
+        translations['Omen of Putrefaction'] ??
+        catalog.localizedNames?.['zh-CN']?.['Omen of Putrefaction'] ??
+        'Omen of Putrefaction'
+      )
     const name = BONE_RULES[operation.boneId].name
     return [
       translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name,
@@ -164,7 +189,10 @@ export function BoneAdvicePanel({
     <section aria-label="骨骼目标建议">
       <h4>骨骼与揭示 · {steps.length} 种指定结果</h4>
       <p>
-        施加骨骼、固定候选、重选和揭示分别演练；骨骼及施加预兆在施加时计费，回响在固定首组时另计一份，重选与最终揭示免费。未揭示期间支持破裂，以及珠宝未固定候选时保留占位的液态工艺；其余交错结果待核对。
+        施加骨骼、固定候选、重选和揭示分别演练；骨骼及施加预兆在施加时计费，回响在固定首组时另计一份，重选与最终揭示免费。
+        {state.pendingDesecration?.putrefaction
+          ? '装备已腐化，请继续完成其余隐藏槽位。'
+          : '未揭示期间支持破裂，以及珠宝未固定候选时保留占位的液态工艺；其他操作按当前资格核对。'}
       </p>
       {(showAll ? steps : steps.slice(0, 3)).map((step) => (
         <article key={JSON.stringify(step.operation)}>

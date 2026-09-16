@@ -56,6 +56,10 @@ import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   requiresPerfectFluxProjectVersion,
 } from './perfectFluxProjectVersion'
+import {
+  PUTREFACTION_RULES_VERSION,
+  requiresPutrefactionProjectVersion,
+} from './putrefactionProjectVersion'
 import type { CraftResult, CraftState } from './rehearsal'
 import {
   RETAINED_CATALYST_RULES_VERSION,
@@ -101,6 +105,7 @@ export {
   MASTERWORK_CRAFT_RULES_VERSION,
   PENDING_EXALTATION_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
+  PUTREFACTION_RULES_VERSION,
   RETAINED_CATALYST_RULES_VERSION,
   RUNEFORGE_CRAFT_RULES_VERSION,
   RUNEFORGED_ARMOUR_RULES_VERSION,
@@ -144,6 +149,7 @@ export interface TargetCraftProject
     | typeof WARD_RUNE_RULES_VERSION
     | typeof RUNEFORGE_CRAFT_RULES_VERSION
     | typeof PENDING_EXALTATION_RULES_VERSION
+    | typeof PUTREFACTION_RULES_VERSION
   runeforgingCatalogSignature?: string
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
@@ -303,6 +309,7 @@ export function parseTargetCraftProject(
   }
   if (
     !record(original) ||
+    typeof original.rulesVersion !== 'string' ||
     ![
       TARGET_CRAFT_RULES_VERSION,
       FLUX_CRAFT_RULES_VERSION,
@@ -317,18 +324,23 @@ export function parseTargetCraftProject(
       EXTENDED_ARMOUR_RUNE_RULES_VERSION,
       ESSENCE_OUTCOMES_RULES_VERSION,
       PENDING_EXALTATION_RULES_VERSION,
+      PUTREFACTION_RULES_VERSION,
       SERLE_RULES_VERSION,
       CRAFTED_CAPACITY_RULES_VERSION,
       CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
       MASTERWORK_CRAFT_RULES_VERSION,
-    ].includes(String(original.rulesVersion))
+    ].includes(original.rulesVersion)
   )
     return {
       ok: false,
       error:
-        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89 或 v90 规则版本。',
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89、v90 或 v91 规则版本。',
     }
-  const pendingExaltation = original.rulesVersion === PENDING_EXALTATION_RULES_VERSION
+  const putrefaction = original.rulesVersion === PUTREFACTION_RULES_VERSION
+  if (!putrefaction && requiresPutrefactionProjectVersion(original))
+    return { ok: false, error: '腐烂预兆必须使用 v91 项目，包括起点及撤销位置之后的步骤。' }
+  const pendingExaltation =
+    putrefaction || original.rulesVersion === PENDING_EXALTATION_RULES_VERSION
   if (!pendingExaltation && requiresPendingExaltationProjectVersion(original))
     return {
       ok: false,
@@ -486,6 +498,7 @@ export function parseTargetCraftProject(
       serle,
       essenceOutcomes,
       pendingExaltation,
+      putrefaction,
     )
     if (!history.ok) return history
     capacityContext =
@@ -538,6 +551,7 @@ export function parseTargetCraftProject(
         serle,
         essenceOutcomes,
         pendingExaltation,
+        putrefaction,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -559,37 +573,39 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = pendingExaltation
-      ? PENDING_EXALTATION_RULES_VERSION
-      : essenceOutcomes
-        ? ESSENCE_OUTCOMES_RULES_VERSION
-        : serle
-          ? SERLE_RULES_VERSION
-          : craftedCapacity
-            ? CRAFTED_CAPACITY_RULES_VERSION
-            : conditionalRunes
-              ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-              : masterwork
-                ? MASTERWORK_CRAFT_RULES_VERSION
-                : extendedArmourRunes
-                  ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                  : wardRunes
-                    ? WARD_RUNE_RULES_VERSION
-                    : runeforge
-                      ? RUNEFORGE_CRAFT_RULES_VERSION
-                      : runeforgedArmour
-                        ? RUNEFORGED_ARMOUR_RULES_VERSION
-                        : combatArmourRunes
-                          ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-                          : retainedCatalyst
-                            ? RETAINED_CATALYST_RULES_VERSION
-                            : corruptionStrategy
-                              ? CORRUPTION_STRATEGY_RULES_VERSION
-                              : extraction
-                                ? EXTRACTION_CRAFT_RULES_VERSION
-                                : perfectFlux
-                                  ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                                  : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = putrefaction
+      ? PUTREFACTION_RULES_VERSION
+      : pendingExaltation
+        ? PENDING_EXALTATION_RULES_VERSION
+        : essenceOutcomes
+          ? ESSENCE_OUTCOMES_RULES_VERSION
+          : serle
+            ? SERLE_RULES_VERSION
+            : craftedCapacity
+              ? CRAFTED_CAPACITY_RULES_VERSION
+              : conditionalRunes
+                ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                : masterwork
+                  ? MASTERWORK_CRAFT_RULES_VERSION
+                  : extendedArmourRunes
+                    ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                    : wardRunes
+                      ? WARD_RUNE_RULES_VERSION
+                      : runeforge
+                        ? RUNEFORGE_CRAFT_RULES_VERSION
+                        : runeforgedArmour
+                          ? RUNEFORGED_ARMOUR_RULES_VERSION
+                          : combatArmourRunes
+                            ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+                            : retainedCatalyst
+                              ? RETAINED_CATALYST_RULES_VERSION
+                              : corruptionStrategy
+                                ? CORRUPTION_STRATEGY_RULES_VERSION
+                                : extraction
+                                  ? EXTRACTION_CRAFT_RULES_VERSION
+                                  : perfectFlux
+                                    ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                                    : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string

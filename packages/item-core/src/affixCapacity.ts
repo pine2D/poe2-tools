@@ -58,7 +58,10 @@ export function craftAffixSpace(
     const kind = catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind
     if (kind) counts[kind]++
   }
-  if (state.pendingDesecration) counts[state.pendingDesecration.kind]++
+  if (state.pendingDesecration?.putrefaction) {
+    counts.prefix += state.pendingDesecration.putrefaction.prefix
+    counts.suffix += state.pendingDesecration.putrefaction.suffix
+  } else if (state.pendingDesecration) counts[state.pendingDesecration.kind]++
   const totalLimit =
     (isBasicJewel(base) || isRadiusJewel(base)) && state.rarity === 'rare'
       ? 5

@@ -131,6 +131,11 @@ export function CraftComparisonPanel({
     pending
       ? [
           `待揭示亵渎${pending.kind === 'prefix' ? '前缀' : '后缀'}`,
+          ...(pending.putrefaction
+            ? [
+                `腐烂预兆剩余隐藏槽位：前缀 ${pending.putrefaction.prefix}，后缀 ${pending.putrefaction.suffix}`,
+              ]
+            : []),
           translations[BONE_RULES[pending.boneId].name] ?? BONE_RULES[pending.boneId].name,
           ...(boneOmenLabels(pending, catalog, translations).length
             ? [

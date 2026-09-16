@@ -18,6 +18,7 @@ import type { CatalogMod, CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { desecrationSourceHash } from './desecration'
 import { renderNumericLines } from './numeric'
+import { preparePutrefaction } from './putrefaction'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 
 function openKinds(catalog: CraftCatalog, state: CraftState): ('prefix' | 'suffix')[] {
@@ -131,6 +132,20 @@ export function applyBoneCraft(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   const current = checked.value
+  if (step.kind === 'putrefy') {
+    const prepared = preparePutrefaction(catalog, current, step.boneId)
+    if (!prepared.ok) return prepared
+    return createCraftState(catalog, {
+      ...current,
+      affixes: prepared.value.retainedAffixes,
+      corrupted: true,
+      pendingDesecration: {
+        boneId: step.boneId,
+        kind: prepared.value.slots.prefix > 0 ? 'prefix' : 'suffix',
+        putrefaction: prepared.value.slots,
+      },
+    })
+  }
   if (step.kind === 'desecrate') {
     const config: BoneOmenConfig = {
       ...(step.directionOmen ? { directionOmen: step.directionOmen } : {}),
@@ -224,7 +239,20 @@ export function applyBoneCraft(
   const appended = appendCraftAffix(revealed, {
     modId: mod.id,
     lines: rendered.value,
-    desecrated: true,
+    ...(pending.putrefaction ? {} : { desecrated: true as const }),
   })
-  return appended.ok ? createCraftState(catalog, appended.value) : appended
+  if (!appended.ok) return appended
+  if (pending.putrefaction) {
+    const slots = {
+      ...pending.putrefaction,
+      [pending.kind]: pending.putrefaction[pending.kind] - 1,
+    }
+    if (slots.prefix + slots.suffix > 0)
+      appended.value.pendingDesecration = {
+        boneId: pending.boneId,
+        kind: slots.prefix > 0 ? 'prefix' : 'suffix',
+        putrefaction: slots,
+      }
+  }
+  return createCraftState(catalog, appended.value)
 }

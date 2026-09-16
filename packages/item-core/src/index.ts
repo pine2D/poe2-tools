@@ -355,6 +355,11 @@ export {
   readCraftGrantedSkillLevel,
 } from './perfectFlux'
 export { reuseCraftPlan, reuseIdentityCraftPlan } from './projectPlan'
+export { PUTREFACTION_OMEN_NAME, preparePutrefaction } from './putrefaction'
+export {
+  PUTREFACTION_RULES_VERSION,
+  requiresPutrefactionProjectVersion,
+} from './putrefactionProjectVersion'
 export { readItemQuality, supportsItemQuality } from './quality'
 export type {
   BasicCraftCurrency,

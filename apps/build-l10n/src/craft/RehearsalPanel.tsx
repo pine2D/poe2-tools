@@ -66,6 +66,7 @@ import {
   PENDING_EXALTATION_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   type PerfectFluxCraftOperation,
+  PUTREFACTION_RULES_VERSION,
   pendingExaltationAllowed,
   prepareCraftOperation,
   prepareExtractionCraft,
@@ -92,6 +93,7 @@ import {
   requiresMasterworkProjectVersion,
   requiresPendingExaltationProjectVersion,
   requiresPerfectFluxProjectVersion,
+  requiresPutrefactionProjectVersion,
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
   requiresRuneforgeProjectVersion,
@@ -411,6 +413,9 @@ export function RehearsalPanel({
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
   const [pendingExaltationRules, setPendingExaltationRules] = useState(
     initialProject?.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION,
+  )
+  const [putrefactionRules, setPutrefactionRules] = useState(
+    initialProject?.project.rulesVersion === PUTREFACTION_RULES_VERSION,
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
@@ -838,6 +843,7 @@ export function RehearsalPanel({
         return
       }
       if (
+        operation.kind === 'putrefy' ||
         operation.kind === 'desecrate' ||
         operation.kind === 'desecration-offer' ||
         operation.kind === 'desecration-reroll' ||
@@ -1012,9 +1018,13 @@ export function RehearsalPanel({
     capacityRouteDraft.current = null
     if (
       'kind' in operation &&
-      ['desecrate', 'desecration-offer', 'desecration-reroll', 'desecration-reveal'].includes(
-        operation.kind,
-      )
+      [
+        'putrefy',
+        'desecrate',
+        'desecration-offer',
+        'desecration-reroll',
+        'desecration-reveal',
+      ].includes(operation.kind)
     )
       restoreBoneFocusRef.current = true
     if ('kind' in operation && operation.kind === 'fracture') restoreFractureFocusRef.current = true
@@ -1127,9 +1137,13 @@ export function RehearsalPanel({
       ({ operation }) =>
         operation &&
         'kind' in operation &&
-        ['desecrate', 'desecration-offer', 'desecration-reroll', 'desecration-reveal'].includes(
-          operation.kind,
-        ),
+        [
+          'putrefy',
+          'desecrate',
+          'desecration-offer',
+          'desecration-reroll',
+          'desecration-reveal',
+        ].includes(operation.kind),
     )
       ? desecrationSourceHash(catalog)
       : null
@@ -1241,6 +1255,8 @@ export function RehearsalPanel({
   const needsPendingExaltation =
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    putrefactionRules ||
+    requiresPutrefactionProjectVersion(projectConfig) ||
     needsPendingExaltation ||
     needsEssenceOutcomes ||
     needsSerle ||
@@ -1255,23 +1271,26 @@ export function RehearsalPanel({
           ...(requiresSerleProjectVersion(projectConfig, catalog) && augmentSourceHash
             ? { augmentSourceHash }
             : {}),
-          rulesVersion: needsPendingExaltation
-            ? PENDING_EXALTATION_RULES_VERSION
-            : needsEssenceOutcomes
-              ? ESSENCE_OUTCOMES_RULES_VERSION
-              : needsSerle
-                ? SERLE_RULES_VERSION
-                : needsCraftedCapacity
-                  ? CRAFTED_CAPACITY_RULES_VERSION
-                  : needsConditionalRunes
-                    ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                    : needsMasterwork
-                      ? MASTERWORK_CRAFT_RULES_VERSION
-                      : needsExtendedRunes
-                        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                        : needsWardRunes
-                          ? WARD_RUNE_RULES_VERSION
-                          : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion:
+            putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
+              ? PUTREFACTION_RULES_VERSION
+              : needsPendingExaltation
+                ? PENDING_EXALTATION_RULES_VERSION
+                : needsEssenceOutcomes
+                  ? ESSENCE_OUTCOMES_RULES_VERSION
+                  : needsSerle
+                    ? SERLE_RULES_VERSION
+                    : needsCraftedCapacity
+                      ? CRAFTED_CAPACITY_RULES_VERSION
+                      : needsConditionalRunes
+                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                        : needsMasterwork
+                          ? MASTERWORK_CRAFT_RULES_VERSION
+                          : needsExtendedRunes
+                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                            : needsWardRunes
+                              ? WARD_RUNE_RULES_VERSION
+                              : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1305,6 +1324,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setPutrefactionRules(restored.project.rulesVersion === PUTREFACTION_RULES_VERSION)
     setPendingExaltationRules(restored.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION)
     setEssenceOutcomesRules(restored.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION)
     setSerleRules(restored.project.rulesVersion === SERLE_RULES_VERSION)
@@ -1971,15 +1991,21 @@ export function RehearsalPanel({
           />
           {preview?.ok ? (
             <p>
-              {boneDraft.kind === 'desecrate'
-                ? '应用后消耗一份骨骼及各一份所选预兆，产生未知亵渎占位。'
-                : boneDraft.kind === 'desecration-offer'
-                  ? boneDraft.revealOmen
-                    ? '应用后固定首组三项并消耗一份深渊回响；即使不重选也不退还。'
-                    : '应用后固定三项候选，不额外计费。'
-                  : boneDraft.kind === 'desecration-reroll'
-                    ? '应用后固定第二组三项，保留首组，不额外计费。'
-                    : '应用后保留所选亵渎属性，恢复常规制作，不额外计费。'}
+              {boneDraft.kind === 'putrefy'
+                ? '应用后消耗一份骨骼和一份腐烂预兆，替换非破裂词缀并腐化装备。'
+                : boneDraft.kind === 'desecrate'
+                  ? '应用后消耗一份骨骼及各一份所选预兆，产生未知亵渎占位。'
+                  : boneDraft.kind === 'desecration-offer'
+                    ? boneDraft.revealOmen
+                      ? '应用后固定首组三项并消耗一份深渊回响；即使不重选也不退还。'
+                      : '应用后固定三项候选，不额外计费。'
+                    : boneDraft.kind === 'desecration-reroll'
+                      ? '应用后固定第二组三项，保留首组，不额外计费。'
+                      : current.pendingDesecration?.putrefaction
+                        ? preview.value.pendingDesecration
+                          ? '应用后保留所选属性并进入下一隐藏槽；下一槽需重新固定候选，不额外收取骨骼费用。'
+                          : '应用后完成最后一槽揭示；装备仍为腐化状态，不额外计费。'
+                        : '应用后保留所选亵渎属性，恢复常规制作，不额外计费。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>
@@ -2372,13 +2398,20 @@ export function RehearsalPanel({
       <div className="rehearsal-slots">
         <section>
           <h3>
-            前缀 {prefixes.length + (current.pendingDesecration?.kind === 'prefix' ? 1 : 0)}/
-            {capacities.prefix}
+            前缀{' '}
+            {prefixes.length +
+              (current.pendingDesecration?.putrefaction?.prefix ??
+                (current.pendingDesecration?.kind === 'prefix' ? 1 : 0))}
+            /{capacities.prefix}
           </h3>
           {prefixes.length > capacities.prefix ? (
             <p>已有前缀保留；当前已超过新增上限，不能再新增前缀。</p>
           ) : null}
-          {current.pendingDesecration?.kind === 'prefix' ? (
+          {current.pendingDesecration?.putrefaction?.prefix ? (
+            <p className="rehearsal-affix">
+              未揭示前缀 × {current.pendingDesecration.putrefaction.prefix}
+            </p>
+          ) : current.pendingDesecration?.kind === 'prefix' ? (
             <p className="rehearsal-affix">未揭示亵渎前缀</p>
           ) : null}
           {prefixes.map((affix) => (
@@ -2400,13 +2433,20 @@ export function RehearsalPanel({
         </section>
         <section>
           <h3>
-            后缀 {suffixes.length + (current.pendingDesecration?.kind === 'suffix' ? 1 : 0)}/
-            {capacities.suffix}
+            后缀{' '}
+            {suffixes.length +
+              (current.pendingDesecration?.putrefaction?.suffix ??
+                (current.pendingDesecration?.kind === 'suffix' ? 1 : 0))}
+            /{capacities.suffix}
           </h3>
           {suffixes.length > capacities.suffix ? (
             <p>已有后缀保留；当前已超过新增上限，不能再新增后缀。</p>
           ) : null}
-          {current.pendingDesecration?.kind === 'suffix' ? (
+          {current.pendingDesecration?.putrefaction?.suffix ? (
+            <p className="rehearsal-affix">
+              未揭示后缀 × {current.pendingDesecration.putrefaction.suffix}
+            </p>
+          ) : current.pendingDesecration?.kind === 'suffix' ? (
             <p className="rehearsal-affix">未揭示亵渎后缀</p>
           ) : null}
           {suffixes.map((affix) => (

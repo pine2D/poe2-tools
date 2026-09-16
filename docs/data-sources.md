@@ -36,9 +36,11 @@ Belton 的额外 2 后缀结果截图与容量下降讲解分别记录；没有�
 
 [GGG 0.5.0 公告](https://www.pathofexile.com/forum/view-thread/3932540)沿用 primary 官方来源。本轮 Web 对带 staff 过滤地址的提取没有返回注能器段落；通过 Exa 读取不带过滤地址的官方正文，重新核对四类材料和至少 20% 品质的说明。完整证据边界、统计复算及接入顺序见 [品质与注能器实验审计](quality-infuser-research.md)。没有改变应用规则、目录版本或国服真机验收状态。
 
-## 2026-09-16 腐败预兆与多隐藏属性核对
+## 2026-09-16 腐烂预兆与多隐藏属性核对
 
 [Vascor 0.5 原始实操](https://www.youtube.com/watch?v=TH17J_-8Ydw)（上传 2026-06-25）及 [PoE2DB 预兆文本](https://poe2db.tw/us/Omen_of_Putrefaction)作为 gray 人工机制参考，交叉核对既有 primary [GGG 0.5.0 公告](https://www.pathofexile.com/forum/view-thread/3932540)的常规一条亵渎上限。视频画面支持腐化稀有装备保留多个隐藏属性并逐次揭示；不据概述推定预兆被移除，也不据若干样本建立完整数量、侧别或候选算法。完整边界见 [多隐藏属性核对](putrefaction-research.md)。视频、帧图、字幕只留临时目录，不入库；不采集作者售价、利润、权重或装备数据，没有新增适配器或浏览器第三方请求。
+
+腐烂预兆补充核对：取得 [PoE2 Wiki 机制正文](https://www.poe2wiki.net/wiki/Omen_of_Putrefaction)的最大可用容量、破裂保留及排除专属池说明，按 gray 人工规则参考；结合 Vascor 连续揭示画面及 [Mirror Tier 原始实操](https://www.youtube.com/watch?v=N1JwMhKnJxk)核对逐槽处理，不复制其装备、利润或权重。[历史原始异常报告](https://www.pathofexile.com/forum/view-thread/3834236)仅支持远古组合不能直接推定，不能视为当前版本算法。三语材料名已存在于官方 static 生成的 localizedNames，无新增适配器或数据包。
 
 ## 2026-09-16 制作步骤清单与权重来源复查
 

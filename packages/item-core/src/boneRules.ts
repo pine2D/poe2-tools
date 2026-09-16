@@ -56,6 +56,7 @@ export interface PendingDesecration extends BoneOmenConfig {
   options?: string[]
   revealOmen?: BoneRevealOmen
   rerollOptions?: string[]
+  putrefaction?: { prefix: number; suffix: number }
 }
 export interface DesecrateCraftOperation extends BoneOmenConfig {
   kind: 'desecrate'
@@ -78,7 +79,12 @@ export interface RevealDesecrationOperation {
   modId: string
   values: number[]
 }
+export interface PutrefyCraftOperation {
+  kind: 'putrefy'
+  boneId: CraftBone
+}
 export type BoneCraftOperation =
+  | PutrefyCraftOperation
   | DesecrateCraftOperation
   | OfferDesecrationOperation
   | RerollDesecrationOperation
@@ -124,6 +130,23 @@ function three(value: unknown): value is string[] {
 export function isCraftBone(value: unknown): value is CraftBone {
   return typeof value === 'string' && Object.hasOwn(BONE_RULES, value)
 }
+function validPutrefaction(value: Record<string, unknown>): boolean {
+  const slots = value.putrefaction
+  return (
+    record(slots) &&
+    keys(slots, ['prefix', 'suffix']) &&
+    ['prefix', 'suffix'].every(
+      (kind) =>
+        Number.isInteger(slots[kind]) && Number(slots[kind]) >= 0 && Number(slots[kind]) <= 3,
+    ) &&
+    Number(slots.prefix) + Number(slots.suffix) > 0 &&
+    value.kind === (Number(slots.prefix) > 0 ? 'prefix' : 'suffix') &&
+    typeof value.boneId === 'string' &&
+    value.boneId.startsWith('preserved_') &&
+    !Object.hasOwn(value, 'directionOmen') &&
+    !Object.hasOwn(value, 'lichOmen')
+  )
+}
 export function isPendingDesecration(value: unknown): value is PendingDesecration {
   return (
     record(value) &&
@@ -135,7 +158,9 @@ export function isPendingDesecration(value: unknown): value is PendingDesecratio
       'lichOmen',
       'revealOmen',
       'rerollOptions',
+      'putrefaction',
     ]) &&
+    (!Object.hasOwn(value, 'putrefaction') || validPutrefaction(value)) &&
     hasValidBoneOmenFields(value) &&
     isCraftBone(value.boneId) &&
     (value.kind === 'prefix' || value.kind === 'suffix') &&
@@ -148,6 +173,7 @@ export function isPendingDesecration(value: unknown): value is PendingDesecratio
 }
 export function isBoneCraftOperation(value: unknown): value is BoneCraftOperation {
   if (!record(value)) return false
+  if (value.kind === 'putrefy') return keys(value, ['kind', 'boneId']) && isCraftBone(value.boneId)
   if (value.kind === 'desecrate')
     return (
       keys(value, [
@@ -184,6 +210,7 @@ export function isBoneCraftOperation(value: unknown): value is BoneCraftOperatio
 }
 export function isBoneOperationKind(value: unknown): boolean {
   return (
+    value === 'putrefy' ||
     value === 'desecrate' ||
     value === 'desecration-offer' ||
     value === 'desecration-reroll' ||
@@ -205,6 +232,7 @@ export function boneBaseError(
 export function clonePendingDesecration(pending: PendingDesecration): PendingDesecration {
   return {
     ...pending,
+    ...(pending.putrefaction ? { putrefaction: { ...pending.putrefaction } } : {}),
     ...(pending.options === undefined ? {} : { options: [...pending.options] }),
     ...(pending.rerollOptions === undefined ? {} : { rerollOptions: [...pending.rerollOptions] }),
   }

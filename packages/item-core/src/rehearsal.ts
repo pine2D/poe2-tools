@@ -52,6 +52,7 @@ import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
 import { pendingExaltationAllowed } from './pendingExaltation'
 import { grantedSkillLevelStateError } from './perfectFlux'
+import { putrefactionCapacityError } from './putrefaction'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { runeSourceStateError } from './runeImport'
 import { serleCapacity } from './serleRune'
@@ -293,7 +294,11 @@ export function createCraftState(
   const base = findBase(catalog, input.baseId)
   if (Object.hasOwn(input, 'corrupted') && input.corrupted !== true)
     return failure('腐化状态只能是明确的 true 或缺省。')
-  if (input.corrupted && Object.hasOwn(input, 'pendingDesecration'))
+  if (
+    input.corrupted &&
+    Object.hasOwn(input, 'pendingDesecration') &&
+    !input.pendingDesecration?.putrefaction
+  )
     return failure('腐化待揭示亵渎状态尚未支持。')
   if (base === null) return failure(`基底 ${input.baseId} 不在制作目录中。`)
   const unsupported = baseError(base)
@@ -349,6 +354,21 @@ export function createCraftState(
       desecrationSourceHash(catalog) === null
     )
       return failure('待揭示亵渎需要可信来源的稀有装备，且不能与已揭示亵渎共存。')
+    if (input.pendingDesecration.putrefaction) {
+      if (!input.corrupted) return failure('腐烂预兆待揭示状态必须已腐化。')
+      if (input.affixes.some((affix) => affix.crafted && !affix.fractured))
+        return failure('腐烂预兆不能保留未破裂工艺属性。')
+      const error = putrefactionCapacityError(catalog, input)
+      if (error) return failure(error)
+      const capacity = craftAffixCapacities(catalog, input)
+      for (const kind of ['prefix', 'suffix'] as const) {
+        const count = input.affixes.filter(
+          (affix) => catalog.modifiers.find((mod) => mod.id === affix.modId)?.kind === kind,
+        ).length
+        if (count + input.pendingDesecration.putrefaction[kind] !== capacity[kind])
+          return failure('腐烂预兆剩余槽位必须与已揭示词缀填满容量。')
+      }
+    }
     const boneError = boneBaseError(base, input.itemLevel, input.pendingDesecration.boneId)
     if (boneError) return failure(boneError)
   }
@@ -424,8 +444,12 @@ export function createCraftState(
   const flux = input.nextAffixId === undefined ? null : fluxEligibleModIds(catalog, base)
   const fluxMember = (mod: CatalogMod) => flux?.ordinary.has(mod.id) || flux?.desecrated.has(mod.id)
   const accepted: CatalogMod[] = []
-  let prefixes = input.pendingDesecration?.kind === 'prefix' ? 1 : 0
-  let suffixes = input.pendingDesecration?.kind === 'suffix' ? 1 : 0
+  let prefixes =
+    input.pendingDesecration?.putrefaction?.prefix ??
+    (input.pendingDesecration?.kind === 'prefix' ? 1 : 0)
+  let suffixes =
+    input.pendingDesecration?.putrefaction?.suffix ??
+    (input.pendingDesecration?.kind === 'suffix' ? 1 : 0)
   for (const { affix, mod } of resolved) {
     if (
       craftedCount > 1 &&

@@ -66,6 +66,7 @@ import { parseItem } from './parse'
 import { requiresPendingExaltationProjectVersion } from './pendingExaltationProjectVersion'
 import { isPerfectFluxCraftOperation } from './perfectFlux'
 import { requiresPerfectFluxProjectVersion } from './perfectFluxProjectVersion'
+import { requiresPutrefactionProjectVersion } from './putrefactionProjectVersion'
 import {
   CRAFT_CURRENCY_LABELS,
   type CraftCurrency,
@@ -673,6 +674,7 @@ export function readNativeTargetProjectProjection(
   serle = false,
   essenceOutcomes = false,
   pendingExaltation = false,
+  putrefaction = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -695,6 +697,7 @@ export function readNativeTargetProjectProjection(
     serle,
     essenceOutcomes,
     pendingExaltation,
+    putrefaction,
   )
 }
 
@@ -719,6 +722,7 @@ function readCraftProject(
   serle = false,
   essenceOutcomes = false,
   pendingExaltation = false,
+  putrefaction = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -737,6 +741,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!putrefaction && requiresPutrefactionProjectVersion(value))
+    return fail('腐烂预兆必须使用 v91 项目，包括起点及撤销位置之后的步骤。')
   if (!essenceOutcomes && requiresEssenceOutcomesProjectVersion(value))
     return fail('多结果精华必须使用 v89 项目，包括起点、目标、完整未来及未执行指引。')
   if (!pendingExaltation && requiresPendingExaltationProjectVersion(value))

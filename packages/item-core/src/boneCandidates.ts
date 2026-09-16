@@ -36,7 +36,7 @@ export function collectDesecrationCandidates(
     state.itemLevel,
     existing.map((mod) => mod.group),
     existing.flatMap((mod) => mod.addsTags),
-    'desecrated',
+    pending.putrefaction ? 'ordinary' : 'desecrated',
   )
     .filter(
       ({ mod, reasons }) =>
@@ -58,7 +58,7 @@ export function collectDesecrationCandidates(
     const appended = appendCraftAffix(ordinary, {
       modId: mod.id,
       lines: mod.lines,
-      desecrated: true,
+      ...(pending.putrefaction ? {} : { desecrated: true as const }),
     })
     if (!appended.ok || !validate(appended.value)) continue
     highest.set(key, Math.max(highest.get(key) ?? 0, mod.level))
@@ -74,7 +74,14 @@ export function pendingBoneOmenError(
   validate: (next: CraftState) => boolean,
 ): string | null {
   const pending = state.pendingDesecration
-  if (!pending || (!pending.directionOmen && !pending.lichOmen && !pending.revealOmen)) return null
+  if (
+    !pending ||
+    (!pending.directionOmen &&
+      !pending.lichOmen &&
+      !pending.revealOmen &&
+      !(pending.putrefaction && pending.options))
+  )
+    return null
   if (pending.revealOmen) {
     const revealError = boneRevealOmenError(pending, pending.revealOmen)
     if (revealError) return revealError

@@ -134,6 +134,10 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
     })
     if (!state.affixes.length) result.push('无显式词缀')
     const pending = state.pendingDesecration
+    if (pending?.putrefaction)
+      result.push(
+        `腐烂预兆剩余隐藏槽位：前缀 ${pending.putrefaction.prefix}，后缀 ${pending.putrefaction.suffix}；装备尚未完成揭示。`,
+      )
     if (pending) {
       result.push(
         `待揭示亵渎${pending.kind === 'prefix' ? '前缀' : '后缀'}：${name(BONE_RULES[pending.boneId].name)}`,

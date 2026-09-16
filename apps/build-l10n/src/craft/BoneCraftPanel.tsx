@@ -21,6 +21,7 @@ import {
   isCraftBone,
   matchesTargetInterval,
   prepareDesecration,
+  preparePutrefaction,
   projectCraftTargetValues,
   renderNumericLines,
   resolveCraftAffix,
@@ -72,6 +73,7 @@ function BoneCraftEditor({
     configuration?.directionOmen ?? null,
   )
   const [lichOmen, setLichOmen] = useState<BoneLichOmen | null>(configuration?.lichOmen ?? null)
+  const [putrefaction, setPutrefaction] = useState(false)
   const config: BoneOmenConfig = {
     ...(directionOmen ? { directionOmen } : {}),
     ...(lichOmen ? { lichOmen } : {}),
@@ -109,13 +111,17 @@ function BoneCraftEditor({
   )
   const prepared = useMemo(
     () =>
-      boneId
+      boneId && !putrefaction
         ? prepareDesecration(catalog, state, boneId, {
             ...(directionOmen ? { directionOmen } : {}),
             ...(lichOmen ? { lichOmen } : {}),
           })
         : undefined,
-    [catalog, state, boneId, directionOmen, lichOmen],
+    [catalog, state, boneId, directionOmen, lichOmen, putrefaction],
+  )
+  const putrefactionResult = useMemo(
+    () => (boneId && putrefaction ? preparePutrefaction(catalog, state, boneId) : null),
+    [catalog, state, boneId, putrefaction],
   )
   const selectedOmenLabels = boneOmenLabels(pending ?? config, catalog, translations)
   const resetResult = () => {
@@ -371,184 +377,242 @@ function BoneCraftEditor({
             </select>
           </label>
           <label>
-            骨骼方向预兆
-            <select
-              aria-label="骨骼方向预兆"
+            <input
+              type="checkbox"
+              aria-label="使用腐烂预兆"
+              checked={putrefaction}
               disabled={disabled || configuration !== undefined}
-              value={directionOmen ?? ''}
               onChange={(event) => {
-                setDirectionOmen(
-                  (Object.keys(BONE_DIRECTION_OMEN_RULES) as BoneDirectionOmen[]).find(
-                    (key) => key === event.target.value,
-                  ) ?? null,
-                )
+                setPutrefaction(event.target.checked)
                 resetResult()
+                setDirectionOmen(null)
+                setLichOmen(null)
               }}
-            >
-              <option value="">不使用方向预兆</option>
-              {Object.entries(BONE_DIRECTION_OMEN_RULES).map(([key, rule]) => (
-                <option key={key} value={key}>
-                  {localize(rule.name)} · 仅{rule.kind === 'prefix' ? '前缀' : '后缀'}
-                </option>
-              ))}
-            </select>
+            />
+            使用{localize('Omen of Putrefaction')}
           </label>
-          <label>
-            骨骼巫妖预兆
-            <select
-              aria-label="骨骼巫妖预兆"
-              disabled={disabled || configuration !== undefined}
-              value={lichOmen ?? ''}
-              onChange={(event) => {
-                setLichOmen(
-                  (Object.keys(BONE_LICH_OMEN_RULES) as BoneLichOmen[]).find(
-                    (key) => key === event.target.value,
-                  ) ?? null,
-                )
-                resetResult()
-              }}
-            >
-              <option value="">不使用巫妖预兆</option>
-              {Object.entries(BONE_LICH_OMEN_RULES).map(([key, rule]) => (
-                <option key={key} value={key}>
-                  {localize(rule.name)}
-                </option>
-              ))}
-            </select>
-          </label>
-          {lichOmen ? (
-            <p>
-              巫妖预兆仅用于武器与首饰。本工具只支持同一指定巫妖的三候选演练；不足三项的情形暂不支持，不会用普通或其他巫妖填充。
-            </p>
-          ) : null}
-          {boneId && prepared ? (
-            <p role="status">
-              {prepared.ok ? '当前骨骼与预兆配置可用于本工具演练。' : prepared.error}
-            </p>
-          ) : null}
-          {materials.every((entry) => !entry.result.ok) ? (
-            <p>{materials.flatMap(({ result }) => (result.ok ? [] : [result.error]))[0]}</p>
-          ) : null}
-          {boneId ? (
-            <p>
-              {BONE_RULES[boneId].minModLevel
-                ? '最低词缀等级 40；若一族将被完全排除，保留当前物等下该族最高合法档位。'
-                : '没有额外最低词缀等级限制。'}
-            </p>
-          ) : null}
-          {requiresRemoval && prepared?.ok ? (
+          {putrefaction ? (
             <>
-              <p>
-                词缀容量已满时游戏会随机移除一组词缀；这里指定结果用于演练，不能控制游戏中的移除。
-              </p>
-              {directionOmen || lichOmen ? (
-                <p>
-                  这里只列出本工具能够完成三候选演练的移除结果，不代表其他游戏结果不可能，也不保证目标受到保护。
+              <p>替换非破裂词缀并腐化装备，随后逐槽从普通候选中选择。请先完成品质与插槽准备。</p>
+              {putrefactionResult ? (
+                <p role="status">
+                  {putrefactionResult.ok
+                    ? `保留 ${putrefactionResult.value.retainedAffixes.length} 组破裂词缀，移除 ${putrefactionResult.value.removedAffixes.length} 组词缀；产生前缀 ${putrefactionResult.value.slots.prefix}、后缀 ${putrefactionResult.value.slots.suffix} 个隐藏槽位。`
+                    : putrefactionResult.error}
                 </p>
               ) : null}
-              {riskTargets.length ? (
-                <p>随机移除风险中的对应目标词缀：{riskTargets.join('、')}。</p>
-              ) : null}
-              <fieldset disabled={disabled}>
-                <legend>骨骼移除结果</legend>
-                {prepared.value.removableAffixes.map((affix) => {
-                  const mod = byId.get(affix.modId)
-                  return (
-                    <label className="essence-removal-option" key={affix.affixId ?? affix.modId}>
-                      <input
-                        type="radio"
-                        name={`${id}-remove`}
-                        value={affix.affixId ?? affix.modId}
-                        aria-label={`骨骼移除 ${affix.modId}`}
-                        checked={
-                          removal?.ok === true &&
-                          removal.value.affix.modId === affix.modId &&
-                          removal.value.affix.affixId === affix.affixId
-                        }
-                        onChange={() => {
-                          setRemoveSelector({
-                            modId: affix.modId,
-                            ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
-                          })
-                          setKind(mod?.kind ?? null)
-                        }}
-                      />
-                      <span>
-                        {mod?.kind === 'prefix' ? '前缀' : '后缀'} · {affix.modId} ·{' '}
-                        {mod ? (translations[mod.name] ?? mod.name) : ''}
-                      </span>
-                      <span>
-                        <ModStateBadges states={affix.crafted ? ['crafted'] : []} />
-                      </span>
-                      {affix.lines.map((line, index) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: 已有词缀允许重复静态行。
-                        <span className="essence-catalog-line" key={index}>
-                          {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
-                          <code>{line}</code>
-                        </span>
-                      ))}
-                    </label>
-                  )
-                })}
-              </fieldset>
-              {lostTargets.length ? (
-                <p>本次指定移除将移除对应目标词缀：{lostTargets.join('、')}；移除整组全部属性。</p>
-              ) : null}
+              <button
+                type="button"
+                disabled={disabled || !putrefactionResult?.ok}
+                onClick={() => {
+                  if (boneId && putrefactionResult?.ok) onPreview({ kind: 'putrefy', boneId })
+                }}
+              >
+                预览腐烂预兆结果
+              </button>
             </>
           ) : null}
-          {prepared?.ok ? (
-            <fieldset disabled={disabled}>
-              <legend>亵渎占位侧</legend>
-              {(['prefix', 'suffix'] as const).map((side) => (
-                <label key={side}>
-                  <input
-                    type="radio"
-                    name={`${id}-side`}
-                    aria-label={side === 'prefix' ? '占用前缀' : '占用后缀'}
-                    disabled={!kinds.includes(side)}
-                    checked={kind === side}
-                    onChange={() => setKind(side)}
-                  />
-                  {side === 'prefix' ? '占用前缀' : '占用后缀'}
-                  {!kinds.includes(side) ? '（当前配置不可用或须先选择移除）' : ''}
-                </label>
-              ))}
-            </fieldset>
+          {!putrefaction ? (
+            <>
+              <label>
+                骨骼方向预兆
+                <select
+                  aria-label="骨骼方向预兆"
+                  disabled={disabled || configuration !== undefined}
+                  value={directionOmen ?? ''}
+                  onChange={(event) => {
+                    setDirectionOmen(
+                      (Object.keys(BONE_DIRECTION_OMEN_RULES) as BoneDirectionOmen[]).find(
+                        (key) => key === event.target.value,
+                      ) ?? null,
+                    )
+                    resetResult()
+                  }}
+                >
+                  <option value="">不使用方向预兆</option>
+                  {Object.entries(BONE_DIRECTION_OMEN_RULES).map(([key, rule]) => (
+                    <option key={key} value={key}>
+                      {localize(rule.name)} · 仅{rule.kind === 'prefix' ? '前缀' : '后缀'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                骨骼巫妖预兆
+                <select
+                  aria-label="骨骼巫妖预兆"
+                  disabled={disabled || configuration !== undefined}
+                  value={lichOmen ?? ''}
+                  onChange={(event) => {
+                    setLichOmen(
+                      (Object.keys(BONE_LICH_OMEN_RULES) as BoneLichOmen[]).find(
+                        (key) => key === event.target.value,
+                      ) ?? null,
+                    )
+                    resetResult()
+                  }}
+                >
+                  <option value="">不使用巫妖预兆</option>
+                  {Object.entries(BONE_LICH_OMEN_RULES).map(([key, rule]) => (
+                    <option key={key} value={key}>
+                      {localize(rule.name)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {lichOmen ? (
+                <p>
+                  巫妖预兆仅用于武器与首饰。本工具只支持同一指定巫妖的三候选演练；不足三项的情形暂不支持，不会用普通或其他巫妖填充。
+                </p>
+              ) : null}
+              {boneId && prepared ? (
+                <p role="status">
+                  {prepared.ok ? '当前骨骼与预兆配置可用于本工具演练。' : prepared.error}
+                </p>
+              ) : null}
+              {materials.every((entry) => !entry.result.ok) ? (
+                <p>{materials.flatMap(({ result }) => (result.ok ? [] : [result.error]))[0]}</p>
+              ) : null}
+              {boneId ? (
+                <p>
+                  {BONE_RULES[boneId].minModLevel
+                    ? '最低词缀等级 40；若一族将被完全排除，保留当前物等下该族最高合法档位。'
+                    : '没有额外最低词缀等级限制。'}
+                </p>
+              ) : null}
+              {requiresRemoval && prepared?.ok ? (
+                <>
+                  <p>
+                    词缀容量已满时游戏会随机移除一组词缀；这里指定结果用于演练，不能控制游戏中的移除。
+                  </p>
+                  {directionOmen || lichOmen ? (
+                    <p>
+                      这里只列出本工具能够完成三候选演练的移除结果，不代表其他游戏结果不可能，也不保证目标受到保护。
+                    </p>
+                  ) : null}
+                  {riskTargets.length ? (
+                    <p>随机移除风险中的对应目标词缀：{riskTargets.join('、')}。</p>
+                  ) : null}
+                  <fieldset disabled={disabled}>
+                    <legend>骨骼移除结果</legend>
+                    {prepared.value.removableAffixes.map((affix) => {
+                      const mod = byId.get(affix.modId)
+                      return (
+                        <label
+                          className="essence-removal-option"
+                          key={affix.affixId ?? affix.modId}
+                        >
+                          <input
+                            type="radio"
+                            name={`${id}-remove`}
+                            value={affix.affixId ?? affix.modId}
+                            aria-label={`骨骼移除 ${affix.modId}`}
+                            checked={
+                              removal?.ok === true &&
+                              removal.value.affix.modId === affix.modId &&
+                              removal.value.affix.affixId === affix.affixId
+                            }
+                            onChange={() => {
+                              setRemoveSelector({
+                                modId: affix.modId,
+                                ...(affix.affixId === undefined ? {} : { affixId: affix.affixId }),
+                              })
+                              setKind(mod?.kind ?? null)
+                            }}
+                          />
+                          <span>
+                            {mod?.kind === 'prefix' ? '前缀' : '后缀'} · {affix.modId} ·{' '}
+                            {mod ? (translations[mod.name] ?? mod.name) : ''}
+                          </span>
+                          <span>
+                            <ModStateBadges states={affix.crafted ? ['crafted'] : []} />
+                          </span>
+                          {affix.lines.map((line, index) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: 已有词缀允许重复静态行。
+                            <span className="essence-catalog-line" key={index}>
+                              {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
+                              <code>{line}</code>
+                            </span>
+                          ))}
+                        </label>
+                      )
+                    })}
+                  </fieldset>
+                  {lostTargets.length ? (
+                    <p>
+                      本次指定移除将移除对应目标词缀：{lostTargets.join('、')}；移除整组全部属性。
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
+              {prepared?.ok ? (
+                <fieldset disabled={disabled}>
+                  <legend>亵渎占位侧</legend>
+                  {(['prefix', 'suffix'] as const).map((side) => (
+                    <label key={side}>
+                      <input
+                        type="radio"
+                        name={`${id}-side`}
+                        aria-label={side === 'prefix' ? '占用前缀' : '占用后缀'}
+                        disabled={!kinds.includes(side)}
+                        checked={kind === side}
+                        onChange={() => setKind(side)}
+                      />
+                      {side === 'prefix' ? '占用前缀' : '占用后缀'}
+                      {!kinds.includes(side) ? '（当前配置不可用或须先选择移除）' : ''}
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
+              <button
+                type="button"
+                disabled={
+                  disabled ||
+                  !prepared?.ok ||
+                  !boneId ||
+                  !kind ||
+                  !kinds.includes(kind) ||
+                  (requiresRemoval && !removal?.ok)
+                }
+                onClick={() => {
+                  if (boneId && kind)
+                    onPreview({
+                      kind: 'desecrate',
+                      ...config,
+                      boneId,
+                      affixKind: kind,
+                      ...(removal?.ok
+                        ? {
+                            removeModId: removal.value.affix.modId,
+                            ...(removal.value.affix.affixId === undefined
+                              ? {}
+                              : { removeAffixId: removal.value.affix.affixId }),
+                          }
+                        : {}),
+                    })
+                }}
+              >
+                预览骨骼结果
+              </button>
+            </>
           ) : null}
-          <button
-            type="button"
-            disabled={
-              disabled ||
-              !prepared?.ok ||
-              !boneId ||
-              !kind ||
-              !kinds.includes(kind) ||
-              (requiresRemoval && !removal?.ok)
-            }
-            onClick={() => {
-              if (boneId && kind)
-                onPreview({
-                  kind: 'desecrate',
-                  ...config,
-                  boneId,
-                  affixKind: kind,
-                  ...(removal?.ok
-                    ? {
-                        removeModId: removal.value.affix.modId,
-                        ...(removal.value.affix.affixId === undefined
-                          ? {}
-                          : { removeAffixId: removal.value.affix.affixId }),
-                      }
-                    : {}),
-                })
-            }}
-          >
-            预览骨骼结果
-          </button>
         </>
       ) : (
         <>
-          <p>待揭示期间可在破裂区演练锁定；其他制作请先完成揭示。</p>
+          {pending.putrefaction ? (
+            <>
+              <p>
+                剩余隐藏槽位：前缀 {pending.putrefaction.prefix}，后缀 {pending.putrefaction.suffix}
+                。
+              </p>
+              <p>
+                当前揭示{pending.kind === 'prefix' ? '前缀' : '后缀'}
+                ；每次只选择一条，下一槽重新固定候选。装备已腐化。
+              </p>
+            </>
+          ) : (
+            <p>待揭示期间可在破裂区演练锁定；其他制作请先完成揭示。</p>
+          )}
           <p>
             已固化骨骼预兆：
             {selectedOmenLabels.length

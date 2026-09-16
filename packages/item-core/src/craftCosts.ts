@@ -59,6 +59,7 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     { id: 'currency:vaal', name: 'Vaal Orb' },
     { id: 'currency:architect', name: "Architect's Orb" },
     { id: 'currency:fracture', name: 'Fracturing Orb' },
+    { id: 'omen:Omen of Putrefaction', name: 'Omen of Putrefaction' },
     { id: 'currency:perfect-flux', name: 'Perfect Flux' },
     { id: 'currency:extraction', name: 'Orb of Extraction' },
     ...(runeforgingCatalogSignature(catalog) !== null
@@ -144,6 +145,9 @@ export function collectCraftCosts(
     } else if (step.kind === 'essence') {
       add(`essence:${step.essenceId}`)
       if (step.omen) add(`omen:${ESSENCE_OMEN_RULES[step.omen].name}`)
+    } else if (step.kind === 'putrefy') {
+      add(`bone:${step.boneId}`)
+      add('omen:Omen of Putrefaction')
     } else if (step.kind === 'desecrate') {
       add(`bone:${step.boneId}`)
       if (step.directionOmen) add(`omen:${BONE_DIRECTION_OMEN_RULES[step.directionOmen].name}`)
