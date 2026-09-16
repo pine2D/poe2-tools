@@ -45,6 +45,80 @@ it('重做后材料和结果同步增加，回到起点不把已有状态计作�
   expect(zero).not.toContain('步骤 1：')
 })
 
+it('包含未来时独立列出计划材料，回放后续结果但不当作已消费', () => {
+  const before = structuredClone(input)
+  const text = must(
+    buildCraftRehearsalReport({
+      ...input,
+      includeFuture: true,
+      pricing: {
+        unit: 'divine',
+        baseCost: 3,
+        prices: {
+          'currency:transmutation': 2,
+          'currency:augmentation': 7,
+        },
+      },
+    }),
+  )
+  const summary = text.split('步骤 0：')[0] ?? ''
+  const consumed = summary.split('已应用材料合计：')[1]?.split('后续计划材料：')[0]
+  expect(consumed).toContain('蜕变石 × 1')
+  expect(consumed).toContain('总费用：5 神圣石')
+  expect(consumed).not.toContain('增幅石 × 1')
+  const planned = summary.split('后续计划材料：')[1]
+  expect(planned).toContain('增幅石 × 1')
+  expect(planned).toContain('总费用：7 神圣石')
+  expect(text).toContain('计划步骤 2（未执行）：增幅石')
+  expect(text).toContain('本步计划结果：')
+  expect(text).toContain('suffix1 10')
+  expect(text).toContain('执行至本步的预计累计费用（含起点）：\n已知小计：12 神圣石')
+  expect(text).not.toContain('PRIVATE PRICE NOTE')
+  expect(input).toEqual(before)
+})
+
+it('计划范围从实际游标分界，包含未来时拒绝无效未来而非导出半份计划', () => {
+  const text = must(buildCraftRehearsalReport({ ...input, cursor: 0, includeFuture: true }))
+  expect(text).toContain('尚未消耗材料')
+  expect(text).toContain('计划步骤 1（未执行）：蜕变石')
+  const first = operations[0]
+  if (!first) throw Error('缺少测试步骤')
+  const invalid = { ...input, includeFuture: true, operations: [first, first] }
+  expect(buildCraftRehearsalReport(invalid)).toMatchObject({ ok: false })
+  expect(buildCraftRehearsalReport({ ...invalid, includeFuture: false }).ok).toBe(true)
+  const done = must(buildCraftRehearsalReport({ ...input, cursor: 2, includeFuture: true }))
+  expect(done).not.toContain('计划步骤')
+  expect(done).not.toContain('后续计划材料：')
+})
+
+it('未来缺价不污染已消费报价，未来新增费用也不要求再次填写起点价格', () => {
+  const text = must(
+    buildCraftRehearsalReport({
+      ...input,
+      includeFuture: true,
+      pricing: { unit: 'divine', baseCost: 3, prices: { 'currency:transmutation': 0 } },
+    }),
+  )
+  const summary = text.split('步骤 0：')[0] ?? ''
+  expect(summary.split('后续计划材料：')[0]).toContain('总费用：3 神圣石')
+  expect(summary.split('后续计划材料：')[1]).toContain('总费用：未知')
+  expect(summary.split('后续计划材料：')[1]).toContain('缺价：增幅石')
+  const missingBase =
+    must(
+      buildCraftRehearsalReport({
+        ...input,
+        includeFuture: true,
+        pricing: {
+          unit: 'divine',
+          prices: { 'currency:transmutation': 0, 'currency:augmentation': 7 },
+        },
+      }),
+    ).split('步骤 0：')[0] ?? ''
+  expect(missingBase.split('后续计划材料：')[0]).toContain('起点成本：未填写')
+  expect(missingBase.split('后续计划材料：')[1]).toContain('总费用：7 神圣石')
+  expect(missingBase.split('后续计划材料：')[1]).not.toContain('起点成本：未填写')
+})
+
 it('缺价保留未知，零单价和起点成本正确计入', () => {
   const partial = must(
     buildCraftRehearsalReport({

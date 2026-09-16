@@ -37,3 +37,20 @@
   max-width: 100%;
   font: inherit;
 }
+
+.craft-item-text .craft-report-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.craft-report-scope input[type="checkbox"] {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 0;
+  padding: 0;
+}

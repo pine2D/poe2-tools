@@ -34,9 +34,10 @@ export interface CraftRehearsalReportInput {
   translations: Record<string, string>
   translateLine?: (line: string) => string | null
   pricing?: CraftPricing
+  includeFuture?: boolean
 }
 
-/** 只由起点与已应用操作回放生成；不读取原始剪贴板、草稿或未来结果。 */
+/** 从起点回放所选历史范围；未来仅作计划，不读取原始剪贴板或未应用草稿。 */
 export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): CraftResult<string> {
   const { catalog, initialState, operations, cursor, translations, translateLine, pricing } = input
   const fail = (error: string): CraftResult<never> => ({ ok: false, error })
@@ -190,16 +191,36 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
   if (!totalCosts.ok) return totalCosts
   const totalQuote = costLines(totalCosts.value, true)
   if (!totalQuote.ok) return totalQuote
+  const future = input.includeFuture ? operations.slice(cursor) : []
+  const futureSummary: string[] = []
+  if (future.length) {
+    const futureCosts = collectCraftCosts(catalog, future)
+    if (!futureCosts.ok) return futureCosts
+    const futureQuote = costLines(futureCosts.value, false)
+    if (!futureQuote.ok) return futureQuote
+    futureSummary.push(
+      '',
+      '后续计划材料：',
+      ...(futureCosts.value.length
+        ? futureCosts.value.map((cost) => `${materialName(cost)} × ${cost.count}`)
+        : ['后续计划无新增材料']),
+      '后续新增费用（不含起点与已应用步骤）：',
+      ...futureQuote.value,
+      '计划步骤尚未执行；材料与费用不计入已消费，选定结果不是随机命中承诺。',
+    )
+  }
   const body = [
     'PoE2 装备制作步骤清单',
     `基底：${name(base.name)}（${base.name}）；物品等级：${initialState.itemLevel}`,
     `游戏数据版本：${catalog._meta.gameVersion ?? '未核实'}；数据快照：${catalog._meta.sourceCommit}`,
-    `已应用 ${cursor} 步；可重做 ${operations.length - cursor} 步未计入。未应用草稿不计入。`,
+    future.length
+      ? `已应用 ${cursor} 步；后续 ${future.length} 步作为未执行计划列出。未应用草稿不计入。`
+      : `已应用 ${cursor} 步；可重做 ${operations.length - cursor} 步未计入。未应用草稿不计入。`,
     '以下为演练中选定的结果，不保证游戏中得到相同结果。每步核对实际装备，结果不符时回工作台重新判断后续操作。',
     '本清单用于阅读核对；继续演练请另存 .craft.json 项目，条件指引和完整历史以项目为准。',
     '属性保留基础值和范围；催化／增效后的有效值及面板请在工作台核对。',
     '',
-    '材料合计：',
+    '已应用材料合计：',
     ...(totalCosts.value.length
       ? totalCosts.value.map((cost) => `${materialName(cost)} × ${cost.count}`)
       : ['尚未消耗材料']),
@@ -207,6 +228,7 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
       ? [`起点成本：${pricing.baseCost} ${CRAFT_PRICE_UNITS[pricing.unit]}`]
       : []),
     ...totalQuote.value,
+    ...futureSummary,
     '报价由用户填写，代表这条选定路线的支出，不是市场报价或期望成本。',
     '',
     '步骤 0：起点（已有品质、词缀和镶嵌物不补计材料）',
@@ -214,7 +236,8 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
   ]
   let current = checked.value
   const cumulative = new Map<string, CraftMaterialCost>()
-  for (const [index, step] of selected.entries()) {
+  for (const [index, step] of [...selected, ...future].entries()) {
+    const planned = index >= cursor
     const next = applyCraftStep(catalog, current, step)
     if (!next.ok) return fail(`步骤 ${index + 1} 无法回放：${next.error}`)
     const costs = collectCraftCosts(catalog, [step])
@@ -227,10 +250,12 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
     if (!quote.ok) return quote
     body.push(
       '',
-      `步骤 ${index + 1}：${craftStepLabel(catalog, translations, step)}`,
+      `${planned ? '计划步骤' : '步骤'} ${index + 1}${planned ? '（未执行）' : ''}：${craftStepLabel(catalog, translations, step)}`,
       costs.value.length
-        ? `本步材料：${costs.value.map((cost) => `${materialName(cost)} × ${cost.count}`).join('、')}`
-        : '本步无新增材料消费。',
+        ? `${planned ? '本步计划材料' : '本步材料'}：${costs.value.map((cost) => `${materialName(cost)} × ${cost.count}`).join('、')}`
+        : planned
+          ? '本步计划无新增材料。'
+          : '本步无新增材料消费。',
     )
     const selection =
       'removeModId' in step && step.removeModId
@@ -268,14 +293,16 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
       const extraction = prepareExtractionCraft(catalog, current)
       if (!extraction.ok) return extraction
       body.push(
-        ...extraction.value.returns.map((entry) => `返还：${name(entry.name)} × ${entry.count}`),
+        ...extraction.value.returns.map(
+          (entry) => `${planned ? '计划返还' : '返还'}：${name(entry.name)} × ${entry.count}`,
+        ),
         '返还物不抵扣材料费用。',
       )
     }
     body.push(
-      '本步选定结果：',
+      planned ? '本步计划结果：' : '本步选定结果：',
       ...snapshot(next.value),
-      '截至本步累计费用（含起点）：',
+      planned ? '执行至本步的预计累计费用（含起点）：' : '截至本步累计费用（含起点）：',
       ...quote.value,
     )
     current = next.value

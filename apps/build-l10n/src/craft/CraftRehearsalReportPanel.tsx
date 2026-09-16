@@ -2,8 +2,9 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { buildCraftRehearsalReport, type CraftRehearsalReportInput } from './craftRehearsalReport'
 import './item-text.css'
 
-export function CraftRehearsalReportPanel(props: CraftRehearsalReportInput) {
+export function CraftRehearsalReportPanel(props: Omit<CraftRehearsalReportInput, 'includeFuture'>) {
   const [open, setOpen] = useState(false)
+  const [includeFuture, setIncludeFuture] = useState(false)
   const { catalog, initialState, operations, cursor, translations, translateLine, pricing } = props
   const result = useMemo(
     () =>
@@ -13,12 +14,23 @@ export function CraftRehearsalReportPanel(props: CraftRehearsalReportInput) {
             initialState,
             operations,
             cursor,
+            includeFuture,
             translations,
             ...(translateLine === undefined ? {} : { translateLine }),
             ...(pricing === undefined ? {} : { pricing }),
           })
         : null,
-    [open, catalog, initialState, operations, cursor, translations, translateLine, pricing],
+    [
+      open,
+      includeFuture,
+      catalog,
+      initialState,
+      operations,
+      cursor,
+      translations,
+      translateLine,
+      pricing,
+    ],
   )
   const [feedback, setFeedback] = useState<{ result: typeof result; message: string } | null>(null)
   const requestRef = useRef(0)
@@ -60,7 +72,10 @@ export function CraftRehearsalReportPanel(props: CraftRehearsalReportInput) {
     try {
       url = URL.createObjectURL(new Blob([result.value], { type: 'text/plain;charset=utf-8' }))
       anchor.href = url
-      anchor.download = 'poe2-craft-steps.zh-CN.txt'
+      anchor.download =
+        includeFuture && cursor < operations.length
+          ? 'poe2-craft-plan.zh-CN.txt'
+          : 'poe2-craft-steps.zh-CN.txt'
       document.body.append(anchor)
       anchor.click()
       setFeedback({ result, message: '已发起步骤清单下载。' })
@@ -87,6 +102,18 @@ export function CraftRehearsalReportPanel(props: CraftRehearsalReportInput) {
           <p>
             按当前历史位置生成材料与结果清单，可在游戏中逐步核对。随机结果不符时，请回工作台重新判断。
           </p>
+          {cursor < operations.length ? (
+            <p>
+              <label className="craft-report-scope">
+                <input
+                  type="checkbox"
+                  checked={includeFuture}
+                  onChange={(event) => setIncludeFuture(event.target.checked)}
+                />
+                包含未执行步骤计划
+              </label>
+            </p>
+          ) : null}
           {result?.ok ? (
             <>
               <label htmlFor={textId}>制作步骤清单文本</label>

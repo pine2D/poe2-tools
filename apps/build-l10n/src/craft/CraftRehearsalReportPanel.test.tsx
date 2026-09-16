@@ -30,6 +30,34 @@ it('展开才生成清单，游标改变后立即更新，收起恢复焦点', (
   expect(document.activeElement).toBe(screen.getByRole('button', { name: '导出制作步骤清单' }))
 })
 
+it('可选择未执行计划，复制等待期间切换范围不显示旧成功提示', async () => {
+  let resolve: () => void = () => {}
+  const writeText = vi.fn(
+    () =>
+      new Promise<void>((done) => {
+        resolve = done
+      }),
+  )
+  vi.stubGlobal('navigator', { clipboard: { writeText } })
+  const { rerender } = render(<CraftRehearsalReportPanel {...props} cursor={0} />)
+  fireEvent.click(screen.getByRole('button', { name: '导出制作步骤清单' }))
+  const checkbox = screen.getByRole('checkbox', { name: '包含未执行步骤计划' })
+  expect(report().value).not.toContain('计划步骤 1')
+  fireEvent.click(checkbox)
+  expect(report().value).toContain('计划步骤 1（未执行）：蜕变石')
+  const planned = report().value
+  fireEvent.click(screen.getByRole('button', { name: '复制步骤清单' }))
+  expect(writeText).toHaveBeenCalledWith(planned)
+  fireEvent.click(checkbox)
+  await act(async () => resolve())
+  expect(screen.queryByText('已复制步骤清单。')).toBeNull()
+  expect(report().value).not.toContain('计划步骤 1')
+  fireEvent.click(checkbox)
+  rerender(<CraftRehearsalReportPanel {...props} />)
+  expect(report().value).toContain('步骤 1：蜕变石')
+  expect(report().value).not.toContain('计划步骤')
+})
+
 it('剪贴板复制旧结果期间撤销，不显示过期成功消息', async () => {
   let resolve: () => void = () => {}
   const writeText = vi.fn(
@@ -77,6 +105,43 @@ it('回放失败时没有可复制或下载的半份清单', () => {
   fireEvent.click(screen.getByRole('button', { name: '导出制作步骤清单' }))
   expect(screen.getByRole('alert').textContent).toContain('历史位置')
   expect(screen.queryByRole('button', { name: '下载步骤清单' })).toBeNull()
+})
+
+it('未来回放失败可取消计划范围恢复已应用清单', () => {
+  const first = props.operations[0]
+  if (!first) throw Error('缺少测试步骤')
+  render(<CraftRehearsalReportPanel {...props} operations={[first, first]} />)
+  fireEvent.click(screen.getByRole('button', { name: '导出制作步骤清单' }))
+  const checkbox = screen.getByRole('checkbox', { name: '包含未执行步骤计划' })
+  fireEvent.click(checkbox)
+  expect(screen.getByRole('alert').textContent).toContain('步骤 2 无法回放')
+  expect(screen.queryByRole('button', { name: '下载步骤清单' })).toBeNull()
+  fireEvent.click(checkbox)
+  expect(report().value).toContain('步骤 1：蜕变石')
+})
+
+it('下载计划与预览一致，并使用计划文件名', async () => {
+  let blob: Blob | undefined
+  let filename = ''
+  vi.stubGlobal('URL', {
+    createObjectURL: (value: Blob) => {
+      blob = value
+      return 'blob:plan'
+    },
+    revokeObjectURL: vi.fn(),
+  })
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    filename = this.download
+  })
+  render(<CraftRehearsalReportPanel {...props} cursor={0} />)
+  fireEvent.click(screen.getByRole('button', { name: '导出制作步骤清单' }))
+  fireEvent.click(screen.getByRole('checkbox', { name: '包含未执行步骤计划' }))
+  fireEvent.click(screen.getByRole('button', { name: '下载步骤清单' }))
+  expect(await blob?.text()).toBe(report().value)
+  expect(report().value).toContain('计划步骤 1（未执行）')
+  expect(filename).toBe('poe2-craft-plan.zh-CN.txt')
 })
 
 it('父组件以相同报告输入重新渲染时，不重复回放和翻译历史', () => {
