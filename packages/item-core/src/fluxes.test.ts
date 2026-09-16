@@ -2,7 +2,13 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { CraftCatalog } from './catalog'
 import { inspectModPool } from './catalog'
-import { FLUXES, type FluxCatalog, inspectFluxes, parseFluxCatalog } from './fluxes'
+import {
+  FLUXES,
+  type FluxCatalog,
+  fluxEligibleModIds,
+  inspectFluxes,
+  parseFluxCatalog,
+} from './fluxes'
 
 const catalog: CraftCatalog = JSON.parse(readFileSync('data/craft/catalog.json', 'utf8'))
 const input = (): FluxCatalog => JSON.parse(readFileSync('data/craft/fluxes.json', 'utf8'))
@@ -162,6 +168,24 @@ describe('独立溶剂关系目录', () => {
     row.members.cold = required(value.rows[13]).members.cold
     value.rows = [row]
     expect(() => parseFluxCatalog(value, catalog)).toThrow()
+  })
+
+  it('资格查询每次重新核对原地修改的关系和属性，拒绝后仍可恢复', () => {
+    const current = structuredClone({ ...catalog, fluxes: input() })
+    const ring = base('Gold Ring')
+    const original = fluxEligibleModIds(current, ring)
+    expect(original.ordinary.has('FireResist1')).toBe(true)
+    const mod = required(current.modifiers.find((entry) => entry.id === 'FireResist1'))
+    current.modifiers.push({ ...mod })
+    expect(fluxEligibleModIds(current, ring).ordinary.size).toBe(0)
+    current.modifiers.pop()
+    expect(fluxEligibleModIds(current, ring)).toEqual(original)
+    const member = required(current.fluxes.rows[0]).members.fire
+    const previous = member.modId
+    member.modId = 'ColdResist1'
+    expect(fluxEligibleModIds(current, ring).ordinary.size).toBe(0)
+    member.modId = previous
+    expect(fluxEligibleModIds(current, ring)).toEqual(original)
   })
 
   it.each([0, 1, 2])('逐项验证主目录的来源 URL 和 SHA：%s', (index) => {

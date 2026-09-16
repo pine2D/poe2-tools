@@ -91,6 +91,14 @@ function validMemberSource(source: unknown, modId: unknown): boolean {
 
 /** 缺失必须显式声明；固定快照、域、元素及唯一来源身份在入口统一校验。 */
 export function parseFluxCatalog(value: unknown, catalog: CraftCatalog): FluxCatalog {
+  return resolveFluxCatalog(value, catalog).table
+}
+
+/** 每次调用重新核对可变目录；只索引关系涉及的属性，并供后续资格查询复用。 */
+function resolveFluxCatalog(
+  value: unknown,
+  catalog: CraftCatalog,
+): { table: FluxCatalog; mods: ReadonlyMap<string, CatalogMod> } {
   const invalid = (): never => {
     throw new Error('溶剂关系目录格式或属性来源不匹配。')
   }
@@ -135,9 +143,19 @@ export function parseFluxCatalog(value: unknown, catalog: CraftCatalog): FluxCat
     )
       return invalid()
   }
+  const referencedIds = new Set(
+    value.rows.flatMap((row: unknown) =>
+      record(row) && record(row.members)
+        ? Object.values(row.members).flatMap((member) =>
+            record(member) && typeof member.modId === 'string' ? [member.modId] : [],
+          )
+        : [],
+    ),
+  )
   const mods = new Map<string, CatalogMod>()
   const duplicateMods = new Set<string>()
   for (const mod of catalog.modifiers) {
+    if (!referencedIds.has(mod.id)) continue
     if (mods.has(mod.id)) duplicateMods.add(mod.id)
     mods.set(mod.id, mod)
   }
@@ -185,7 +203,7 @@ export function parseFluxCatalog(value: unknown, catalog: CraftCatalog): FluxCat
     }
     if (domains.size !== 1 || jewelKinds.size > 1) return invalid()
   }
-  return value as unknown as FluxCatalog
+  return { table: value as unknown as FluxCatalog, mods }
 }
 
 /** 这里只隔离结构域；基底生成资格不足时保留关系并说明，不能据此执行制作。 */
@@ -271,13 +289,13 @@ export function fluxEligibleModIds(
     (base.type === 'Jewel' && !isBasicJewel(base) && !isRadiusJewel(base))
   )
     return { ordinary, desecrated }
-  let table: FluxCatalog
+  let resolved: ReturnType<typeof resolveFluxCatalog>
   try {
-    table = parseFluxCatalog(catalog.fluxes, catalog)
+    resolved = resolveFluxCatalog(catalog.fluxes, catalog)
   } catch {
     return { ordinary, desecrated }
   }
-  const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
+  const { table, mods } = resolved
   for (const row of table.rows) {
     if ((row.members.fire.domain === 'jewel') !== (base.type === 'Jewel')) continue
     const members = ELEMENTS.flatMap((element) => {
