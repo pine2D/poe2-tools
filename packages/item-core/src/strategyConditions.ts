@@ -96,7 +96,7 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
     keys(value, ['kind', 'modIds', 'min', 'value']) &&
     Array.isArray(value.modIds) &&
     value.modIds.length >= 1 &&
-    value.modIds.length <= 6 &&
+    value.modIds.length <= 7 &&
     value.modIds.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 512) &&
     new Set(value.modIds).size === value.modIds.length &&
     integer(value.min, 1, value.modIds.length) &&

@@ -1,6 +1,7 @@
 import { isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
+import { isSerleRune } from './serleRune'
 
 const PROTECTION =
   /^Every 4 seconds, gain Guard equal to ([1-9]\d*)% of maximum Runic Ward for 2 seconds$/
@@ -36,7 +37,10 @@ export function socketLimitWarnings(catalog: CraftCatalog, state: CraftState) {
   const counts = new Map<string, number>()
   for (const id of state.sockets ?? []) {
     const augment = catalog.augments?.find((a) => a.id === id)
-    if (augment && (isConditionalArmourRune(augment) || isAstridRune(augment)))
+    if (
+      augment &&
+      (isConditionalArmourRune(augment) || isAstridRune(augment) || isSerleRune(augment))
+    )
       counts.set(augment.name, (counts.get(augment.name) ?? 0) + 1)
   }
   return [...counts].map(([name, count]) => ({ name, limit: 1, count, exceeded: count > 1 }))

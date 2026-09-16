@@ -4,7 +4,9 @@ import { analyzeAlloyTargets } from './alloyAdvice'
 import { alloyTestFixture } from './alloyTestFixture'
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep } from './craftSteps'
-import type { CraftResult, CraftState } from './rehearsal'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { validateStoredTargetDefinitions } from './targetDefinitions'
+import { validateCraftTargets } from './targets'
 
 const primary: CraftCatalog = JSON.parse(readFileSync('data/craft/catalog.json', 'utf8'))
 const catalog = { ...primary, alloys: alloyTestFixture() }
@@ -65,4 +67,74 @@ it('第二工艺建议不越过合法移除池、物等和Astrid来源校验', (
   const invalid = structuredClone(catalog)
   invalid._meta.sources = invalid._meta.sources.filter((s) => s.path !== 'src/Data/ModRunes.lua')
   expect(analyzeAlloyTargets(invalid, state, [target]).ok).toBe(false)
+})
+
+it.each([false, true])(
+  '君王镶嵌增效目标用合法代表值核对组合，不补写当前未知实际值（Serle=%s）',
+  (serle) => {
+    const state = oneCraft()
+    if (serle) state.sockets?.push('pob2:augment:["Serle\'s Triumph","caster"]')
+    const before = structuredClone(state)
+    const ids = ['AlloyEffectOfSocketedAugments1', 'SpellCriticalStrikeChance4']
+    expect(validateCraftTargets(catalog, state.baseId, ids, undefined, undefined, state).ok).toBe(
+      true,
+    )
+    expect(
+      validateStoredTargetDefinitions(
+        catalog,
+        state.baseId,
+        {
+          nextTargetId: 3,
+          targets: ids.map((modId, i) => ({ modId, targetId: `t${i + 1}` })),
+          alternatives: [],
+          values: [],
+        },
+        state,
+      ).ok,
+    ).toBe(true)
+    expect(
+      createCraftState(catalog, {
+        ...state,
+        affixes: [
+          {
+            modId: ids[0] as string,
+            lines: ['(20-30)% increased effect of Socketed Augment Items'],
+            crafted: true,
+          },
+        ],
+      }).ok,
+    ).toBe(false)
+    expect(state).toEqual(before)
+  },
+)
+
+it('Serle与恐惧的固定增效目标组合仍可同时核对', () => {
+  const state: CraftState = {
+    baseId: 'Adherent Cuffs',
+    rarity: 'rare',
+    itemLevel: 86,
+    sourceText: null,
+    affixes: [],
+    sockets: [
+      'pob2:augment:["Serle\'s Triumph","armour"]',
+      'pob2:augment:["Astrid\'s Creativity","armour"]',
+    ],
+  }
+  const ids = ['EssenceLocalRuneAndSoulCoreEffect1', 'IncreasedLife7']
+  expect(validateCraftTargets(catalog, state.baseId, ids, undefined, undefined, state).ok).toBe(
+    true,
+  )
+  expect(
+    validateStoredTargetDefinitions(
+      catalog,
+      state.baseId,
+      {
+        nextTargetId: 3,
+        targets: ids.map((modId, i) => ({ modId, targetId: `t${i + 1}` })),
+        alternatives: [],
+        values: [],
+      },
+      state,
+    ).ok,
+  ).toBe(true)
 })

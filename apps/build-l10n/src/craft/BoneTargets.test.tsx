@@ -252,7 +252,7 @@ it('满六建议展示本工具可演练移除池目标风险，指定安全结�
   addTarget('exclusive1')
   expect(screen.getAllByText(/本工具可演练移除池内的目标风险：prefix1/).length).toBeGreaterThan(0)
   expect(screen.getAllByText(/指定安全结果不代表随机安全/).length).toBeGreaterThan(0)
-  expect(screen.getAllByText(/满六组，本次指定移除/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/容量已满，本次指定移除/).length).toBeGreaterThan(0)
 })
 it('搜索重开起点清除未应用骨骼与旧路线目标', () => {
   const catalog = boneCatalog()

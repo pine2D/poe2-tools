@@ -44,13 +44,13 @@ export function StrategyTargetCondition({
               checked={selected}
               disabled={
                 (selected && condition.targetIds.length === 1) ||
-                (!selected && condition.targetIds.length >= 6)
+                (!selected && condition.targetIds.length >= 7)
               }
               onChange={(event) => {
                 const targetIds = event.target.checked
                   ? [...condition.targetIds, id]
                   : condition.targetIds.filter((entry) => entry !== id)
-                if (targetIds.length && targetIds.length <= 6)
+                if (targetIds.length && targetIds.length <= 7)
                   onChange({
                     ...condition,
                     targetIds,
@@ -66,7 +66,7 @@ export function StrategyTargetCondition({
         )
       })}
       <p>
-        选择一至六组；满六组时请先取消一组再选择新目标。要取消最后一组，请删除此条件或改为其他条件。实际数值未知时不计为满足。
+        选择一至七组；满七组时请先取消一组再选择新目标。要取消最后一组，请删除此条件或改为其他条件。实际数值未知时不计为满足。
       </p>
       <div className="strategy-toolbar">
         <label>
@@ -76,7 +76,7 @@ export function StrategyTargetCondition({
             value={condition.min}
             onChange={(event) => onChange({ ...condition, min: Number(event.target.value) })}
           >
-            {[1, 2, 3, 4, 5, 6].slice(0, condition.targetIds.length).map((count) => (
+            {[1, 2, 3, 4, 5, 6, 7].slice(0, condition.targetIds.length).map((count) => (
               <option key={count} value={count}>
                 {count}
               </option>

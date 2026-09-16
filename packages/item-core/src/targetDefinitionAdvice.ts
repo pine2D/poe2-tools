@@ -73,15 +73,16 @@ export function definitionTargetsSatisfied(advice: CraftDefinitionAdvice): boole
   )
 }
 
-/** 新入口先完整验证定义；共用引擎直接消费独立条件和匹配，实际候选仍遵守制作规则。 */
+/** 容量上下文须来自已核对历史；实际数值、候选与操作仍使用当前 state。 */
 export function analyzeTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   definitions: CraftTargetDefinitions,
   omen?: CraftOmen,
   implicitValues: readonly CraftImplicitTargetValues[] = [],
+  capacityContext?: CraftState,
 ): CraftResult<CraftDefinitionAdvice> {
-  const checked = validateTargetDefinitions(catalog, state, definitions)
+  const checked = validateTargetDefinitions(catalog, state, definitions, capacityContext)
   if (!checked.ok) return checked
   const config = checked.value
   const analyzed = analyzeCraftTargetContext(

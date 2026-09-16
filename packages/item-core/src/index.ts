@@ -392,6 +392,8 @@ export {
   type RuneforgingCatalog,
   runeforgingCatalogSignature,
 } from './runeforgingCatalog'
+export { requiresSerleProjectVersion, SERLE_RULES_VERSION } from './serleProjectVersion'
+export { isSerleRune, serleCapacity } from './serleRune'
 export {
   estimateSkillLevelContributions,
   type SkillLevelContribution,

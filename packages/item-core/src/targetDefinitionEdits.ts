@@ -88,6 +88,7 @@ export function editTargetDefinitions(
   state: CraftState,
   definitions: unknown,
   edit: unknown,
+  capacityContext = state,
 ): CraftResult<CraftTargetDefinitions> {
   try {
     if (!isPlainProjectJSON({ state, definitions, edit }))
@@ -97,7 +98,12 @@ export function editTargetDefinitions(
   }
   const current = createCraftState(catalog, state)
   if (!current.ok) return current
-  const checked = validateStoredTargetDefinitions(catalog, state.baseId, definitions)
+  const checked = validateStoredTargetDefinitions(
+    catalog,
+    capacityContext.baseId,
+    definitions,
+    capacityContext,
+  )
   if (!checked.ok) return checked
   const next = checked.value
   if (
@@ -215,10 +221,20 @@ export function editTargetDefinitions(
       if (edit.kind === 'replace') {
         if (!record(edit, ['kind', 'config']) || !legacyConfig(edit.config))
           return fail('完整替换需要有效旧目标配置，不能包含身份字段或显式缺省值。')
-        created = createStoredTargetDefinitions(catalog, state.baseId, edit.config)
+        created = createStoredTargetDefinitions(
+          catalog,
+          capacityContext.baseId,
+          edit.config,
+          capacityContext,
+        )
       } else {
         if (!record(edit, ['kind', 'definitions'])) return fail('完整替换需要有效独立目标定义。')
-        created = validateStoredTargetDefinitions(catalog, state.baseId, edit.definitions)
+        created = validateStoredTargetDefinitions(
+          catalog,
+          capacityContext.baseId,
+          edit.definitions,
+          capacityContext,
+        )
       }
       if (!created.ok) return created
       const replacement = created.value
@@ -230,28 +246,33 @@ export function editTargetDefinitions(
           `t${next.nextTargetId + index}`,
         ]),
       )
-      return validateStoredTargetDefinitions(catalog, state.baseId, {
-        ...replacement,
-        nextTargetId: cursor,
-        targets: replacement.targets.map((entry) => ({
-          ...entry,
-          targetId: ids.get(entry.targetId),
-        })),
-        alternatives: replacement.alternatives.map((entry) => ({
-          ...entry,
-          targetId: ids.get(entry.targetId),
-        })),
-        values: replacement.values.map((entry) => ({
-          ...entry,
-          targetId: ids.get(entry.targetId),
-        })),
-        ...(replacement.fracturedTargetId === undefined
-          ? {}
-          : { fracturedTargetId: ids.get(replacement.fracturedTargetId) }),
-      })
+      return validateStoredTargetDefinitions(
+        catalog,
+        capacityContext.baseId,
+        {
+          ...replacement,
+          nextTargetId: cursor,
+          targets: replacement.targets.map((entry) => ({
+            ...entry,
+            targetId: ids.get(entry.targetId),
+          })),
+          alternatives: replacement.alternatives.map((entry) => ({
+            ...entry,
+            targetId: ids.get(entry.targetId),
+          })),
+          values: replacement.values.map((entry) => ({
+            ...entry,
+            targetId: ids.get(entry.targetId),
+          })),
+          ...(replacement.fracturedTargetId === undefined
+            ? {}
+            : { fracturedTargetId: ids.get(replacement.fracturedTargetId) }),
+        },
+        capacityContext,
+      )
     }
     default:
       return fail('不支持的目标编辑动作。')
   }
-  return validateStoredTargetDefinitions(catalog, state.baseId, next)
+  return validateStoredTargetDefinitions(catalog, capacityContext.baseId, next, capacityContext)
 }

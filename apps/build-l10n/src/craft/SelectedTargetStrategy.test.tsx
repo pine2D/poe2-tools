@@ -100,17 +100,17 @@ it('改变子集条件取消旧草稿，未设置目标时不提供新建子集�
   )
 })
 
-it('满六组且有残留引用时，先移除旧组再加入新组，配置始终可保存', () => {
+it('满七组且有残留引用时，先移除旧组再加入新组，配置始终可保存', () => {
   let condition: Extract<DefinitionCraftStrategyCondition, { kind: 'selected-targets' }> = {
     kind: 'selected-targets',
-    targetIds: ['t1', 't2', 't3', 't4', 't5', 't6'],
+    targetIds: ['t1', 't2', 't3', 't4', 't5', 't6', 't7'],
     min: 2,
     value: true,
   }
   const props = {
     prefix: '测试条件',
     catalog: catalog(),
-    targets: ['p2', 'p3', 'p4', 's1', 's2', 's3'].map((modId, index) => ({
+    targets: ['p2', 'p3', 'p4', 's1', 's2', 's3', 'p1'].map((modId, index) => ({
       targetId: `t${index + 2}`,
       modId,
     })),
@@ -125,13 +125,13 @@ it('满六组且有残留引用时，先移除旧组再加入新组，配置始�
   const view = render(
     <StrategyTargetCondition {...props} condition={condition} onChange={changeCondition} />,
   )
-  expect((screen.getByLabelText('测试条件 目标 t7') as HTMLInputElement).disabled).toBe(true)
-  fireEvent.click(screen.getByLabelText('测试条件 目标 t7'))
-  expect(condition.targetIds).toHaveLength(6)
+  expect((screen.getByLabelText('测试条件 目标 t8') as HTMLInputElement).disabled).toBe(true)
+  fireEvent.click(screen.getByLabelText('测试条件 目标 t8'))
+  expect(condition.targetIds).toHaveLength(7)
   fireEvent.click(screen.getByLabelText('测试条件 目标 t1'))
-  expect((screen.getByLabelText('测试条件 目标 t7') as HTMLInputElement).disabled).toBe(false)
-  fireEvent.click(screen.getByLabelText('测试条件 目标 t7'))
-  expect(condition.targetIds).toEqual(['t2', 't3', 't4', 't5', 't6', 't7'])
+  expect((screen.getByLabelText('测试条件 目标 t8') as HTMLInputElement).disabled).toBe(false)
+  fireEvent.click(screen.getByLabelText('测试条件 目标 t8'))
+  expect(condition.targetIds).toEqual(['t2', 't3', 't4', 't5', 't6', 't7', 't8'])
   expect(
     readDefinitionCraftStrategy({
       maxSteps: 20,

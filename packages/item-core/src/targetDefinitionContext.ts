@@ -51,6 +51,7 @@ export function readTargetDefinitionContext(
   catalog: CraftCatalog,
   baseId: string,
   input: unknown,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetDefinitionContext> {
   if (
     !isPlainProjectJSON(input) ||
@@ -60,7 +61,12 @@ export function readTargetDefinitionContext(
     !Array.isArray(input.orphanedTargets)
   )
     return fail('目标上下文字段无效，不能包含未知字段或显式缺省值。')
-  const definitions = validateStoredTargetDefinitions(catalog, baseId, input.definitions)
+  const definitions = validateStoredTargetDefinitions(
+    catalog,
+    baseId,
+    input.definitions,
+    capacityContext,
+  )
   if (!definitions.ok) return definitions
   let strategy: DefinitionCraftStrategy | undefined
   if (Object.hasOwn(input, 'strategy')) {
@@ -114,6 +120,7 @@ function rebuild(
   previous: CraftTargetDefinitionContext,
   definitions: CraftTargetDefinitions,
   strategy: DefinitionCraftStrategy | undefined,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetDefinitionContext> {
   const metadata = new Map(
     [...previous.definitions.targets, ...previous.orphanedTargets].map((target) => [
@@ -129,11 +136,16 @@ function rebuild(
     if (!target) return fail('新策略引用缺少原目标元数据，不能凭空恢复已删除目标。')
     orphanedTargets.push({ ...target })
   }
-  return readTargetDefinitionContext(catalog, baseId, {
-    definitions,
-    orphanedTargets,
-    ...(strategy === undefined ? {} : { strategy }),
-  })
+  return readTargetDefinitionContext(
+    catalog,
+    baseId,
+    {
+      definitions,
+      orphanedTargets,
+      ...(strategy === undefined ? {} : { strategy }),
+    },
+    capacityContext,
+  )
 }
 
 export function editTargetDefinitionContext(
@@ -141,13 +153,32 @@ export function editTargetDefinitionContext(
   state: CraftState,
   context: unknown,
   edit: unknown,
+  capacityContext = state,
 ): CraftResult<CraftTargetDefinitionContext> {
   if (!isPlainProjectJSON(edit)) return fail('目标编辑必须是完整的普通 JSON 数据。')
-  const checked = readTargetDefinitionContext(catalog, state.baseId, context)
+  const checked = readTargetDefinitionContext(
+    catalog,
+    capacityContext.baseId,
+    context,
+    capacityContext,
+  )
   if (!checked.ok) return checked
-  const edited = editTargetDefinitions(catalog, state, checked.value.definitions, edit)
+  const edited = editTargetDefinitions(
+    catalog,
+    state,
+    checked.value.definitions,
+    edit,
+    capacityContext,
+  )
   return edited.ok
-    ? rebuild(catalog, state.baseId, checked.value, edited.value, checked.value.strategy)
+    ? rebuild(
+        catalog,
+        capacityContext.baseId,
+        checked.value,
+        edited.value,
+        checked.value.strategy,
+        capacityContext,
+      )
     : edited
 }
 
@@ -157,15 +188,30 @@ export function setTargetDefinitionStrategy(
   baseId: string,
   context: unknown,
   strategy?: DefinitionCraftStrategy,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetDefinitionContext> {
   if (strategy !== undefined && !isPlainProjectJSON(strategy))
     return fail('目标策略必须是完整的普通 JSON 数据。')
-  const checked = readTargetDefinitionContext(catalog, baseId, context)
+  const checked = readTargetDefinitionContext(catalog, baseId, context, capacityContext)
   if (!checked.ok) return checked
   if (strategy === undefined)
-    return rebuild(catalog, baseId, checked.value, checked.value.definitions, undefined)
+    return rebuild(
+      catalog,
+      baseId,
+      checked.value,
+      checked.value.definitions,
+      undefined,
+      capacityContext,
+    )
   const parsed = readDefinitionCraftStrategy(strategy)
   return parsed.ok
-    ? rebuild(catalog, baseId, checked.value, checked.value.definitions, parsed.value)
+    ? rebuild(
+        catalog,
+        baseId,
+        checked.value,
+        checked.value.definitions,
+        parsed.value,
+        capacityContext,
+      )
     : parsed
 }

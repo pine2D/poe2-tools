@@ -48,6 +48,7 @@ interface Props {
   translations?: Record<string, string>
   translateLine?: (line: string) => string | null
   state: CraftState
+  capacityContext?: CraftState
   strategy: DefinitionCraftStrategy | undefined
   goals: DefinitionCraftStrategyGoals
   orphanedTargets: readonly CraftTargetDefinition[]
@@ -67,6 +68,7 @@ export function CraftStrategyPanel({
   translations = {},
   translateLine,
   state,
+  capacityContext,
   strategy,
   goals,
   orphanedTargets,
@@ -98,9 +100,17 @@ export function CraftStrategyPanel({
   const evaluated = useMemo(
     () =>
       strategy
-        ? evaluateDefinitionCraftStrategy(catalog, state, strategy, appliedSteps, goals, stageId)
+        ? evaluateDefinitionCraftStrategy(
+            catalog,
+            state,
+            strategy,
+            appliedSteps,
+            goals,
+            stageId,
+            capacityContext,
+          )
         : null,
-    [catalog, state, strategy, appliedSteps, goals, stageId],
+    [catalog, state, strategy, appliedSteps, goals, stageId, capacityContext],
   )
   const decision = !stageError && evaluated?.ok ? evaluated.value : null
   const replaceRule = (index: number, rule: DefinitionCraftStrategyRule) => {

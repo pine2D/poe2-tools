@@ -71,7 +71,9 @@ export function SocketPanel({
   return (
     <section className="craft-sockets" aria-label="符文镶嵌">
       <h3>符文与魂核镶嵌</h3>
-      <p>按当前部位列出符文与基础魂核及其实际效果。覆盖不返还旧材料，镶嵌效果不占前后缀位置。</p>
+      <p>
+        按当前部位列出符文与基础魂核及其实际效果。普通覆盖不返还旧材料；绑定孔不能替换。镶嵌效果本身不占前后缀位置。
+      </p>
       {limits.length > 0 ? (
         <section aria-label="镶嵌限量提示">
           {limits.map((entry) => (
@@ -157,6 +159,7 @@ export function SocketPanel({
                       <code>{line}</code>
                     </div>
                   ))}
+                  {effect?.isSocketBound ? <p>绑定孔不能替换；萃取时不会返还此材料。</p> : null}
                   {effect ? <p>该镶嵌物穿戴需求：等级 {effect.levelReq}</p> : null}
                 </article>
               )
@@ -259,10 +262,17 @@ export function SocketPanel({
               ) : previous && isExtendedArmourRune(previous) && previous.localMod ? (
                 <p>替换后将失去这个孔的结界提高，请核对防御面板的下降值。</p>
               ) : null}
+              {selected.isSocketBound ? (
+                <p>镶入后该孔永久绑定，不能再替换，萃取也不返还此材料。</p>
+              ) : null}
               {selected.category === 'weapon' ? (
                 <p>本地伤害和攻速贡献可在武器面板查看预计变化，全局效果不计入该面板。</p>
               ) : null}
-              {previous ? <p>旧符文会被覆盖：{label(previous.name)}，不会返还。</p> : null}
+              {previous?.isSocketBound ? (
+                <p>所选孔已经绑定，不能覆盖。</p>
+              ) : previous ? (
+                <p>旧符文会被覆盖：{label(previous.name)}，不会返还。</p>
+              ) : null}
               <div className="socket-actions">
                 <button type="button" onClick={() => onPreview(null)}>
                   取消镶嵌

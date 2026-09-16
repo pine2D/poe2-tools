@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { isSerleRune } from './serleRune'
 
 export interface ExtractionCraftOperation {
   kind: 'extraction'
@@ -31,8 +32,11 @@ function inspectExtraction(
     if (augmentId === null) continue
     const augment = catalog.augments?.find((entry) => entry.id === augmentId)
     if (!augment) return fail('镶嵌材料身份不在当前目录中，不能确定返还。')
-    // 完整状态当前不接受绑定来源；这里也不能将其当作可返还材料。
-    if (augment.isSocketBound === true) return fail('绑定镶嵌物尚未支持完整演练，不能返还。')
+    // Serle 随整件销毁，只有非绑定材料进入返还清单。
+    if (augment.isSocketBound === true) {
+      if (isSerleRune(augment)) continue
+      return fail('该绑定镶嵌物的萃取交互尚未核实。')
+    }
     const existing = returns.get(augmentId)
     if (existing) {
       existing.count++
@@ -45,6 +49,7 @@ function inspectExtraction(
         socketIndices: [socketIndex],
       })
   }
+  if (returns.size === 0) return fail('全部镶嵌物已绑定；无可返还材料时的萃取消费尚未核实。')
   return { ok: true, value: { state: checked.value, returns: [...returns.values()] } }
 }
 

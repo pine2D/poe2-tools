@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 interface Props {
   catalog: CraftCatalog
   state: CraftState
+  capacityContext?: CraftState
   definitions: CraftTargetDefinitions
   targetId: string
   mod: CatalogMod
@@ -23,6 +24,7 @@ interface Props {
 export function TargetValueEditor({
   catalog,
   state,
+  capacityContext,
   definitions,
   targetId,
   mod,
@@ -114,7 +116,7 @@ export function TargetValueEditor({
         ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
       })
     const change: CraftTargetDefinitionEdit = { kind: 'values', targetId, values: next }
-    const checked = editTargetDefinitions(catalog, state, definitions, change)
+    const checked = editTargetDefinitions(catalog, state, definitions, change, capacityContext)
     if (!checked.ok) {
       setMessage(checked.error)
       return

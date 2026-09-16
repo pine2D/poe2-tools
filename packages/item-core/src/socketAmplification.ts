@@ -7,6 +7,7 @@ import { essenceSourceHash } from './essences'
 import { isRebirthArmourRune } from './extendedArmourRuneEffects'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
+import { isSerleRune, SERLE_LINE, serleFitsBase } from './serleRune'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
@@ -53,23 +54,25 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
-  if (isAstridRune(augment)) {
+  if (isAstridRune(augment) || isSerleRune(augment)) {
+    const serle = isSerleRune(augment)
+    const line = serle ? SERLE_LINE : ASTRID_LINE
     if (
-      !astridFitsBase(catalog, state, augment) ||
+      !(serle ? serleFitsBase(catalog, state, augment) : astridFitsBase(catalog, state, augment)) ||
       increase < 0 ||
       increase >= 100 ||
       statScalabilitySourceHash(catalog) === null
     )
       return null
-    const metadata = catalog.scalability?.[ASTRID_LINE]
+    const metadata = catalog.scalability?.[line]
     if (
       metadata?.length !== 1 ||
       metadata[0]?.scalable !== true ||
       metadata[0].formats.length !== 0
     )
       return null
-    const scaled = scaleStatLineByEffect(ASTRID_LINE, ASTRID_LINE, metadata, increase)
-    return scaled.ok && scaled.value === ASTRID_LINE ? { ...augment, lines: [scaled.value] } : null
+    const scaled = scaleStatLineByEffect(line, line, metadata, increase)
+    return scaled.ok && scaled.value === line ? { ...augment, lines: [scaled.value] } : null
   }
   if (increase === 0) return augment
   const base = catalog.bases.find((entry) => entry.id === state.baseId)

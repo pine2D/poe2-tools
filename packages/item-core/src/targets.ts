@@ -1,3 +1,4 @@
+import { craftAffixSpace } from './affixCapacity'
 import { inspectCraftAlloys } from './alloys'
 import { buildInitialBeltImplicitLines, isBeltCapacityBase } from './beltImplicits'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
@@ -21,7 +22,7 @@ import {
 } from './implicitTargets'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
-import { inspectNumericLines } from './numeric'
+import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   CRAFT_CURRENCY_LABELS,
@@ -187,6 +188,41 @@ export function targetImplicitLines(
   return initial.ok ? { implicitLines: initial.value } : {}
 }
 
+// 目标组合只继承已验证孔位，不复制当前词缀或放宽无来源容量。
+export function targetSocketContext(
+  catalog: CraftCatalog,
+  baseId: string,
+  state?: CraftState,
+): CraftResult<{ sockets?: (string | null)[]; corrupted?: true }> {
+  if (!state) return { ok: true, value: {} }
+  if (state.baseId !== baseId) return { ok: false, error: '目标容量来源与基底不一致。' }
+  // 无孔位容量来源时保留旧版逐实例目标分析；不要求该只读输入可直接演练。
+  if (state.sockets === undefined || (Array.isArray(state.sockets) && state.sockets.length === 0))
+    return { ok: true, value: {} }
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  return {
+    ok: true,
+    value: {
+      ...(checked.value.sockets === undefined ? {} : { sockets: [...checked.value.sockets] }),
+      ...(checked.value.corrupted ? { corrupted: true } : {}),
+    },
+  }
+}
+
+/** 仅供组合结构验证；已核对20–30区间不改变容量，代表值不写入装备或目标数值。 */
+export function targetCombinationLines(mod: CatalogMod): string[] {
+  if (
+    mod.id === 'AlloyEffectOfSocketedAugments1' &&
+    mod.lines.length === 1 &&
+    mod.lines[0] === '(20-30)% increased effect of Socketed Augment Items'
+  ) {
+    const rendered = renderNumericLines(mod.lines, [20])
+    if (rendered.ok) return rendered.value
+  }
+  return [...mod.lines]
+}
+
 /** 目标资格独立于普通通货生成池，精华只授权当前基底的精确已解析保证属性。 */
 export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): CatalogMod[] {
   const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(catalog, baseId)
@@ -225,10 +261,11 @@ export function validateCraftTargets(
   ids: readonly string[],
   minimumTargetCount?: number,
   requiredTargetId?: string,
+  capacityContext?: CraftState,
 ): CraftResult<string[]> {
   if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string'))
     return { ok: false, error: '制作目标必须是词缀 ID 字符串数组。' }
-  if (ids.length > 6) return { ok: false, error: '制作目标最多包含六组词缀。' }
+  if (ids.length > 7) return { ok: false, error: '制作目标最多包含七组词缀。' }
   if (new Set(ids).size !== ids.length) return { ok: false, error: '制作目标不能包含重复词缀 ID。' }
   if (
     minimumTargetCount !== undefined &&
@@ -254,11 +291,13 @@ export function validateCraftTargets(
       (essence.has(id) || liquid.has(id) || alloy.has(id))
     affixes.push({
       modId: mod.id,
-      lines: [...mod.lines],
+      lines: targetCombinationLines(mod),
       ...(crafted ? { crafted: true } : {}),
       ...(mod.desecratedOnly ? { desecrated: true } : {}),
     })
   }
+  const sockets = targetSocketContext(catalog, baseId, capacityContext)
+  if (!sockets.ok) return sockets
   // 目标按稀有装备容量校验；已有词缀校验不限制生成物等，适用于高物等目标。
   const check = (selected: CraftAffix[]) =>
     createCraftState(catalog, {
@@ -266,6 +305,7 @@ export function validateCraftTargets(
       itemLevel: 100,
       rarity: 'rare',
       affixes: selected,
+      ...sockets.value,
       sourceText: null,
       ...targetImplicitLines(catalog, baseId),
     })
@@ -314,11 +354,19 @@ export function validateCraftTargetAlternatives(
   ids: readonly string[],
   alternatives: unknown,
   minimumTargetCount?: number,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetAlternative[]> {
-  const targets = validateCraftTargets(catalog, baseId, ids, minimumTargetCount)
+  const targets = validateCraftTargets(
+    catalog,
+    baseId,
+    ids,
+    minimumTargetCount,
+    undefined,
+    capacityContext,
+  )
   if (!targets.ok) return targets
-  if (!Array.isArray(alternatives) || alternatives.length > 6)
-    return { ok: false, error: '替代档位必须是最多六组的数组。' }
+  if (!Array.isArray(alternatives) || alternatives.length > 7)
+    return { ok: false, error: '替代档位必须是最多七组的数组。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const seen = new Set<string>()
   const result: CraftTargetAlternative[] = []
@@ -349,6 +397,8 @@ export function validateCraftTargetAlternatives(
         baseId,
         ids.map((target) => (target === entry.targetModId ? id : target)),
         minimumTargetCount,
+        undefined,
+        capacityContext,
       )
       if (!checked.ok) return checked
     }
@@ -367,7 +417,16 @@ export function validateCraftTargetValues(
   state?: CraftState,
   minimumTargetCount?: number,
 ): CraftResult<CraftTargetValues[]> {
-  return readTargetValues(catalog, baseId, ids, values, alternatives, minimumTargetCount, { state })
+  return readTargetValues(
+    catalog,
+    baseId,
+    ids,
+    values,
+    alternatives,
+    minimumTargetCount,
+    { state },
+    state,
+  )
 }
 
 /** 只校验可持久化条件；实际品质、增效和属性行对应由运行时入口验证。 */
@@ -378,6 +437,7 @@ export function validateStoredCraftTargetValues(
   values: unknown,
   alternatives: readonly CraftTargetAlternative[] = [],
   minimumTargetCount?: number,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetValues[]> {
   try {
     if (!isPlainProjectJSON({ ids, values, alternatives }))
@@ -385,7 +445,16 @@ export function validateStoredCraftTargetValues(
   } catch {
     return { ok: false, error: '存储数值目标对象无法安全检查。' }
   }
-  return readTargetValues(catalog, baseId, ids, values, alternatives, minimumTargetCount)
+  return readTargetValues(
+    catalog,
+    baseId,
+    ids,
+    values,
+    alternatives,
+    minimumTargetCount,
+    undefined,
+    capacityContext,
+  )
 }
 
 function readTargetValues(
@@ -396,8 +465,16 @@ function readTargetValues(
   alternatives: readonly CraftTargetAlternative[],
   minimumTargetCount?: number,
   runtime?: { state: CraftState | undefined },
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetValues[]> {
-  const targets = validateCraftTargets(catalog, baseId, ids, minimumTargetCount)
+  const targets = validateCraftTargets(
+    catalog,
+    baseId,
+    ids,
+    minimumTargetCount,
+    undefined,
+    capacityContext,
+  )
   if (!targets.ok) return targets
   const accepted = validateCraftTargetAlternatives(
     catalog,
@@ -405,6 +482,7 @@ function readTargetValues(
     ids,
     alternatives,
     minimumTargetCount,
+    capacityContext,
   )
   if (!accepted.ok) return accepted
   const acceptedIds = new Set([
@@ -485,7 +563,7 @@ export function analyzeCraftTargetContext(
   if (!checked.ok) return checked
   const validated: CraftResult<string[]> = definitions
     ? { ok: true, value: definitions.targets.map((target) => target.modId) }
-    : validateCraftTargets(catalog, state.baseId, ids, minimumTargetCount, fracturedTargetId)
+    : validateCraftTargets(catalog, state.baseId, ids, minimumTargetCount, fracturedTargetId, state)
   if (!validated.ok) return validated
   const values: CraftResult<CraftTargetValues[]> = definitions
     ? { ok: true, value: definitions.values }
@@ -655,7 +733,7 @@ export function analyzeCraftTargetContext(
       if (mod.desecratedOnly) {
         reasons.push('此目标需要骨骼亵渎与揭示，普通通货不能生成。')
         if (current.rarity !== 'rare') reasons.push('请先将装备提升为稀有。')
-        if (existing.filter((entry) => entry.kind === mod.kind).length >= 3)
+        if (craftAffixSpace(catalog, current)[mod.kind] === 0)
           reasons.push('目标所在前后缀位置已满，需要通过移除腾出亵渎占位。')
         if (current.affixes.some((affix) => affix.desecrated))
           reasons.push('唯一亵渎位置已占用，需先移除已有亵渎词缀。')

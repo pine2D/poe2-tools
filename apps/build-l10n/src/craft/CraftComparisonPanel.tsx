@@ -22,6 +22,7 @@ interface CraftComparisonPanelProps {
   catalog: CraftCatalog
   definitions: CraftTargetDefinitions
   before: CraftState
+  capacityContext?: CraftState
   after: CraftState
   translations?: Record<string, string>
   translateLine?: (line: string) => string | null
@@ -34,6 +35,7 @@ export function CraftComparisonPanel({
   catalog,
   definitions,
   before,
+  capacityContext,
   after,
   translateLine,
   translations = {},
@@ -47,6 +49,7 @@ export function CraftComparisonPanel({
       definitions,
       undefined,
       targetImplicitValues,
+      capacityContext,
     )
     return analyzed.ok
       ? analyzed.value.progress.matches.some(

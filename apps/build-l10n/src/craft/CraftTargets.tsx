@@ -45,6 +45,7 @@ interface CraftTargetsProps {
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
   state: CraftState
+  capacityContext?: CraftState
   targetImplicitValues?: CraftImplicitTargetValues[]
   onImplicitValuesChange?: (values: CraftImplicitTargetValues[]) => void
   definitions: CraftTargetDefinitions
@@ -65,6 +66,7 @@ export function CraftTargets({
   spentSteps,
   catalog,
   state,
+  capacityContext,
   definitions,
   onEdit,
   targetImplicitValues = [],
@@ -156,8 +158,16 @@ export function CraftTargets({
     })
   }, [pool, query, translateLine])
   const advice = useMemo(
-    () => analyzeTargetDefinitions(catalog, state, definitions, omen, targetImplicitValues),
-    [catalog, state, definitions, omen, targetImplicitValues],
+    () =>
+      analyzeTargetDefinitions(
+        catalog,
+        state,
+        definitions,
+        omen,
+        targetImplicitValues,
+        capacityContext,
+      ),
+    [catalog, state, definitions, omen, targetImplicitValues, capacityContext],
   )
   const boneAdvice = useMemo(
     () => analyzeBoneTargetDefinitions(catalog, state, definitions),
@@ -179,7 +189,7 @@ export function CraftTargets({
   const essenceSteps = essenceAdvice.ok ? essenceAdvice.value : []
   const preparationRoutes = preparationAdvice.ok ? preparationAdvice.value.routes : []
   const edit = (change: CraftTargetDefinitionEdit) => {
-    const checked = editTargetDefinitions(catalog, state, definitions, change)
+    const checked = editTargetDefinitions(catalog, state, definitions, change, capacityContext)
     if (!checked.ok) {
       setMessage(checked.error)
       return
@@ -192,7 +202,13 @@ export function CraftTargets({
     )
   }
   const addTarget = (id: string) => {
-    const checked = editTargetDefinitions(catalog, state, definitions, { kind: 'add', modId: id })
+    const checked = editTargetDefinitions(
+      catalog,
+      state,
+      definitions,
+      { kind: 'add', modId: id },
+      capacityContext,
+    )
     const mod = modById.get(id)
     if (
       !checked.ok &&
@@ -356,8 +372,13 @@ export function CraftTargets({
               const exists = targetModIds.includes(mod.id)
               const canAdd =
                 !exists ||
-                editTargetDefinitions(catalog, state, definitions, { kind: 'add', modId: mod.id })
-                  .ok
+                editTargetDefinitions(
+                  catalog,
+                  state,
+                  definitions,
+                  { kind: 'add', modId: mod.id },
+                  capacityContext,
+                ).ok
               return (
                 <article key={mod.id}>
                   {properties(mod)}
@@ -458,6 +479,7 @@ export function CraftTargets({
                     ))}
                     {memberMod ? (
                       <TargetValueEditor
+                        {...(capacityContext ? { capacityContext } : {})}
                         catalog={catalog}
                         state={state}
                         definitions={definitions}

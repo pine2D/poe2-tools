@@ -5,6 +5,7 @@ import { astridFitsBase } from './craftedCapacity'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
+import { isSerleRune, serleFitsBase } from './serleRune'
 import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
@@ -86,6 +87,7 @@ function supportedAugment(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
   if (isAstridRune(augment)) return astridFitsBase(catalog, state, augment)
+  if (isSerleRune(augment)) return serleFitsBase(catalog, state, augment)
   if (isSupportedSoulCore(augment))
     return weapon
       ? weapon.category === 'weapon' && augment.category === 'weapon'

@@ -10,6 +10,7 @@ import {
   type CraftState,
   type CraftStep,
   collectCraftCosts,
+  craftAffixCapacities,
   craftedModifierCapacity,
   createCraftState,
   isConditionalArmourRune,
@@ -17,6 +18,7 @@ import {
   quoteCraftCosts,
   readCraftGrantedSkillLevel,
   resolveCraftAffix,
+  serleCapacity,
   socketEffects,
   socketLimitWarnings,
 } from '@poe2-tools/item-core'
@@ -73,6 +75,13 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
           ]
         : []),
     ]
+    const serle = serleCapacity(catalog, state)
+    if (serle.ok && serle.value > 0) {
+      const capacity = craftAffixCapacities(catalog, state)
+      result.push(
+        `当前词缀容量：前缀 ${capacity.prefix} / 后缀 ${capacity.suffix}，总计 ${capacity.prefix + capacity.suffix}；Serle 绑定孔不能替换或返还。`,
+      )
+    }
     const craftedCapacity = craftedModifierCapacity(catalog, state)
     result.push(
       craftedCapacity.ok

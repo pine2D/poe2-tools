@@ -8,8 +8,10 @@ import {
   type CraftTargetAlternative,
   type CraftTargetValues,
   craftTargetCandidates,
+  targetCombinationLines,
   targetImplicitLines,
   targetPools,
+  targetSocketContext,
   validateCraftTargetAlternatives,
   validateCraftTargets,
   validateCraftTargetValues,
@@ -80,6 +82,7 @@ function readLegacyConfig(
   baseId: string,
   input: unknown,
   state?: CraftState,
+  capacityContext = state,
 ): CraftResult<ValidatedLegacyConfig> {
   if (
     !record(input, [
@@ -96,7 +99,14 @@ function readLegacyConfig(
     return fail('旧目标配置字段无效；不能混入独立目标身份或缺省值。')
   const minimum = input.minimumTargetCount as number | undefined
   const fractured = input.targetFracturedModId as string | undefined
-  const ids = validateCraftTargets(catalog, baseId, input.targetModIds, minimum, fractured)
+  const ids = validateCraftTargets(
+    catalog,
+    baseId,
+    input.targetModIds,
+    minimum,
+    fractured,
+    capacityContext,
+  )
   if (!ids.ok) return ids
   const alternatives = validateCraftTargetAlternatives(
     catalog,
@@ -104,6 +114,7 @@ function readLegacyConfig(
     ids.value,
     Object.hasOwn(input, 'targetAlternatives') ? input.targetAlternatives : [],
     minimum,
+    capacityContext,
   )
   if (!alternatives.ok) return alternatives
   if (fractured !== undefined) {
@@ -128,6 +139,7 @@ function readLegacyConfig(
         inputValues,
         alternatives.value,
         minimum,
+        capacityContext,
       )
   if (!values.ok) return values
   return {
@@ -193,6 +205,7 @@ export function createStoredTargetDefinitions(
   catalog: CraftCatalog,
   baseId: string,
   legacyConfig: LegacyCraftTargetConfig,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetDefinitions> {
   try {
     if (!isPlainProjectJSON(legacyConfig))
@@ -200,7 +213,7 @@ export function createStoredTargetDefinitions(
   } catch {
     return fail('存储目标配置对象无法安全检查。')
   }
-  const checked = readLegacyConfig(catalog, baseId, legacyConfig)
+  const checked = readLegacyConfig(catalog, baseId, legacyConfig, undefined, capacityContext)
   if (!checked.ok) return checked
   const targets = checked.value.targetModIds.map((modId, index) => ({
     targetId: `t${index + 1}`,
@@ -220,8 +233,9 @@ export function validateTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   input: unknown,
+  capacityContext = state,
 ): CraftResult<CraftTargetDefinitions> {
-  return readTargetDefinitions(catalog, state.baseId, input, state)
+  return readTargetDefinitions(catalog, state.baseId, input, state, capacityContext)
 }
 
 /** 保存完整关联与稳定身份；当前数值行投影失败不影响条件持久化。 */
@@ -229,13 +243,14 @@ export function validateStoredTargetDefinitions(
   catalog: CraftCatalog,
   baseId: string,
   input: unknown,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetDefinitions> {
   try {
     if (!isPlainProjectJSON(input)) return fail('存储目标定义必须只包含自有、可枚举的数据字段。')
   } catch {
     return fail('存储目标定义对象无法安全检查。')
   }
-  return readTargetDefinitions(catalog, baseId, input)
+  return readTargetDefinitions(catalog, baseId, input, undefined, capacityContext)
 }
 
 function validateDefinitionCombination(
@@ -244,6 +259,7 @@ function validateDefinitionCombination(
   targets: readonly CraftTargetDefinition[],
   minimum?: number,
   fractured?: string,
+  capacityContext?: CraftState,
 ): CraftResult<true> {
   if (
     minimum !== undefined &&
@@ -277,11 +293,13 @@ function validateDefinitionCombination(
     mods.push(mod)
     affixes.push({
       modId: mod.id,
-      lines: [...mod.lines],
+      lines: targetCombinationLines(mod),
       ...(crafted ? { crafted: true } : {}),
       ...(mod.desecratedOnly ? { desecrated: true } : {}),
     })
   }
+  const sockets = targetSocketContext(catalog, baseId, capacityContext)
+  if (!sockets.ok) return sockets
   const check = (indices: number[]) =>
     createCraftState(catalog, {
       baseId,
@@ -289,6 +307,7 @@ function validateDefinitionCombination(
       rarity: 'rare',
       sourceText: null,
       ...targetImplicitLines(catalog, baseId),
+      ...sockets.value,
       nextAffixId: indices.length + 1,
       affixes: indices.flatMap((index, position) => {
         const affix = affixes[index]
@@ -345,6 +364,7 @@ function readTargetDefinitions(
   baseId: string,
   input: unknown,
   state?: CraftState,
+  capacityContext = state,
 ): CraftResult<CraftTargetDefinitions> {
   if (
     !record(input, [
@@ -359,9 +379,9 @@ function readTargetDefinitions(
     !Number.isSafeInteger(input.nextTargetId) ||
     input.nextTargetId < 1 ||
     !Array.isArray(input.targets) ||
-    input.targets.length > 6 ||
+    input.targets.length > 7 ||
     !Array.isArray(input.alternatives) ||
-    input.alternatives.length > 6 ||
+    input.alternatives.length > 7 ||
     !Array.isArray(input.values) ||
     input.values.length > 192 ||
     (Object.hasOwn(input, 'minimumTargetCount') && typeof input.minimumTargetCount !== 'number')
@@ -397,7 +417,14 @@ function readTargetDefinitions(
   }
   const ids = targets.map((target) => target.modId)
   // 共存资格仍遵守已核对规则；目标关联本身不再经旧格式往返。
-  const primary = validateDefinitionCombination(catalog, baseId, targets, minimum, fractured)
+  const primary = validateDefinitionCombination(
+    catalog,
+    capacityContext?.baseId ?? baseId,
+    targets,
+    minimum,
+    fractured,
+    capacityContext,
+  )
   if (!primary.ok) return primary
   const alternatives: CraftTargetDefinitionAlternative[] = []
   const seenAlternatives = new Set<string>()
@@ -425,7 +452,14 @@ function readTargetDefinitions(
       const replaced = targets.map((target, position) =>
         position === index ? { ...target, modId: id } : target,
       )
-      const checked = validateDefinitionCombination(catalog, baseId, replaced, minimum)
+      const checked = validateDefinitionCombination(
+        catalog,
+        capacityContext?.baseId ?? baseId,
+        replaced,
+        minimum,
+        undefined,
+        capacityContext,
+      )
       if (!checked.ok) return checked
     }
     seenAlternatives.add(entry.targetId)

@@ -12,6 +12,7 @@ import {
   type RuneEffectTotals,
   sumRuneEffects,
 } from './runeEffects'
+import { serleSourceMatches } from './serleRune'
 import { effectiveSocketAugment } from './socketAmplification'
 import type { ItemDocument } from './types'
 import {
@@ -78,12 +79,16 @@ export function runeSocketContributionError(
     augments.push(effective)
   }
   if (
+    !serleSourceMatches(
+      state.runeSourceLines,
+      augments.flatMap((a) => a.lines),
+    ) ||
     !astridSourceMatches(
       state.runeSourceLines,
       augments.flatMap((a) => a.lines),
     )
   )
-    return '工艺容量符文效果与孔位声明不一致。'
+    return '容量符文效果与孔位声明不一致。'
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
   if (weapon) {

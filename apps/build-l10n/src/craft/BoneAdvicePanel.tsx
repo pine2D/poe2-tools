@@ -56,9 +56,7 @@ export function BoneOperationDetails({
       <div>
         <p>
           指定{operation.affixKind === 'prefix' ? '前缀' : '后缀'}亵渎占位。
-          {operation.removeModId
-            ? `${operation.boneId === 'preserved_cranium' ? '容量已满' : '满六组'}，本次指定移除：${operation.removeModId}。`
-            : ''}
+          {operation.removeModId ? `容量已满，本次指定移除：${operation.removeModId}。` : ''}
         </p>
         {removal?.ok ? (
           <section aria-label="本次骨骼移除词缀">

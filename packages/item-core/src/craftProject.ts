@@ -79,6 +79,7 @@ import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } fro
 import { isRuneforgeCraftOperation } from './runeforge'
 import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
 import { requiresRuneforgeProjectVersion } from './runeforgeProjectVersion'
+import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
@@ -219,7 +220,7 @@ function readState(value: unknown, native = false): CraftState | null {
       value.quality > 30)
   )
     return null
-  if (!Array.isArray(value.affixes) || value.affixes.length > 6) return null
+  if (!Array.isArray(value.affixes) || value.affixes.length > 7) return null
   if (
     Object.hasOwn(value, 'sockets') &&
     (!Array.isArray(value.sockets) ||
@@ -386,7 +387,7 @@ function readOperation(value: unknown): CraftStep | null {
   if (Object.hasOwn(value, 'removeModId') && !nonempty(value.removeModId)) return null
   const rolls: NonNullable<CraftOperation['rolls']> = []
   if (Object.hasOwn(value, 'rolls')) {
-    if (!Array.isArray(value.rolls) || value.rolls.length > 6) return null
+    if (!Array.isArray(value.rolls) || value.rolls.length > 7) return null
     for (const roll of value.rolls) {
       if (
         !record(roll) ||
@@ -658,6 +659,7 @@ export function readNativeTargetProjectProjection(
   masterwork = false,
   conditionalRunes = false,
   craftedCapacity = false,
+  serle = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -677,6 +679,7 @@ export function readNativeTargetProjectProjection(
     masterwork,
     conditionalRunes,
     craftedCapacity,
+    serle,
   )
 }
 
@@ -698,6 +701,7 @@ function readCraftProject(
   masterwork = false,
   conditionalRunes = false,
   craftedCapacity = false,
+  serle = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -716,6 +720,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!serle && requiresSerleProjectVersion(value, catalog))
+    return fail('Serle 后缀容量必须使用 v88 项目，包括起点、声明、完整未来、指引及报价。')
   if (!craftedCapacity && requiresCraftedCapacityProjectVersion(value, catalog))
     return fail('多工艺容量必须使用 v87 项目，包括起点、声明、完整未来、指引及报价。')
   if (!conditionalRunes && requiresConditionalArmourRuneProjectVersion(value, catalog))

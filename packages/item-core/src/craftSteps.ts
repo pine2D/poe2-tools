@@ -57,6 +57,7 @@ import {
   isRuneforgeCraftOperation,
   type RuneforgeCraftOperation,
 } from './runeforge'
+import { isSerleRune } from './serleRune'
 import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
 
 export interface ArtificerCraftOperation {
@@ -360,6 +361,16 @@ export function applyCraftStep(
     const sockets = checked.value.sockets
     if (sockets === undefined || step.socketIndex < 0 || step.socketIndex >= sockets.length)
       return { ok: false, error: '必须选择一个已明确存在的孔位。' }
+    const oldId = sockets[step.socketIndex]
+    const oldAugment = catalog.augments?.find((entry) => entry.id === oldId)
+    if (oldAugment?.isSocketBound === true)
+      return { ok: false, error: '当前孔内物已绑定，不能覆盖或重复镶入。' }
+    const nextAugment = catalog.augments?.find((entry) => entry.id === step.augmentId)
+    if (nextAugment && isSerleRune(nextAugment)) {
+      if (state.corrupted) return { ok: false, error: 'Serle 不能新镶入腐化装备。' }
+      if (sockets[step.socketIndex] !== null)
+        return { ok: false, error: '用 Serle 覆盖已有镶嵌物的交互尚未核实，请选择明确空孔。' }
+    }
     if (!socketCandidates(catalog, checked.value).some((entry) => entry.id === step.augmentId))
       return { ok: false, error: '该符文当前不可镶嵌。' }
     const limitError = conditionalRuneSocketError(

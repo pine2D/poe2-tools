@@ -89,15 +89,18 @@ import {
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
   requiresRuneforgeProjectVersion,
+  requiresSerleProjectVersion,
   requiresWardRuneProjectVersion,
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
   runeforgingCatalogSignature,
+  SERLE_RULES_VERSION,
   type SocketCraftOperation,
   serializeCraftProject,
   serializeIdentityCraftProject,
   serializeTargetCraftProject,
+  serleCapacity,
   setTargetDefinitionStrategy,
   statScalabilitySourceHash,
   TARGET_CRAFT_RULES_VERSION,
@@ -223,7 +226,6 @@ const RARITIES: Record<CraftState['rarity'], string> = {
   rare: '稀有',
 }
 const CANDIDATE_LIMIT = 60
-const SLOT_NUMBERS = [1, 2, 3]
 
 function AffixCard({
   mod,
@@ -394,6 +396,9 @@ export function RehearsalPanel({
     initialProject?.project.strategyStartStep,
   )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
+  const [serleRules, setSerleRules] = useState(
+    initialProject?.project.rulesVersion === SERLE_RULES_VERSION,
+  )
   const [craftedCapacityRules, setCraftedCapacityRules] = useState(
     initialProject?.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION,
   )
@@ -547,6 +552,15 @@ export function RehearsalPanel({
     [history],
   )
   const current = history[cursor]?.state
+  const targetCapacityContext = useMemo(() => {
+    for (let index = history.length - 1; index >= 0; index--) {
+      const state = history[index]?.state
+      if (!state || state.destroyed) continue
+      const capacity = serleCapacity(catalog, state)
+      if (capacity.ok && capacity.value > 0) return state
+    }
+    return current
+  }, [catalog, history, current])
   const corruptionContextRef = useRef({ catalog, current })
   useEffect(() => {
     const previous = corruptionContextRef.current
@@ -1146,7 +1160,9 @@ export function RehearsalPanel({
     conditionalRules || requiresConditionalArmourRuneProjectVersion(projectConfig, catalog)
   const needsCraftedCapacity =
     craftedCapacityRules || requiresCraftedCapacityProjectVersion(projectConfig, catalog)
+  const needsSerle = serleRules || requiresSerleProjectVersion(projectConfig, catalog)
   const project: TargetCraftProject =
+    needsSerle ||
     needsCraftedCapacity ||
     needsConditionalRunes ||
     needsMasterwork ||
@@ -1155,17 +1171,22 @@ export function RehearsalPanel({
     needsRuneforge
       ? {
           ...projectConfig,
-          rulesVersion: needsCraftedCapacity
-            ? CRAFTED_CAPACITY_RULES_VERSION
-            : needsConditionalRunes
-              ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-              : needsMasterwork
-                ? MASTERWORK_CRAFT_RULES_VERSION
-                : needsExtendedRunes
-                  ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                  : needsWardRunes
-                    ? WARD_RUNE_RULES_VERSION
-                    : RUNEFORGE_CRAFT_RULES_VERSION,
+          ...(requiresSerleProjectVersion(projectConfig, catalog) && augmentSourceHash
+            ? { augmentSourceHash }
+            : {}),
+          rulesVersion: needsSerle
+            ? SERLE_RULES_VERSION
+            : needsCraftedCapacity
+              ? CRAFTED_CAPACITY_RULES_VERSION
+              : needsConditionalRunes
+                ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                : needsMasterwork
+                  ? MASTERWORK_CRAFT_RULES_VERSION
+                  : needsExtendedRunes
+                    ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                    : needsWardRunes
+                      ? WARD_RUNE_RULES_VERSION
+                      : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1199,6 +1220,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setSerleRules(restored.project.rulesVersion === SERLE_RULES_VERSION)
     setCraftedCapacityRules(restored.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION)
     setConditionalRules(restored.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION)
     setPricing(restored.project.pricing)
@@ -1446,6 +1468,7 @@ export function RehearsalPanel({
       {pricingControls}
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftStrategyPanel
+        {...(targetCapacityContext ? { capacityContext: targetCapacityContext } : {})}
         key={`strategy:${targetSession}`}
         {...(stageResult?.ok && stageResult.value ? { stageId: stageResult.value } : {})}
         {...(stageResult && !stageResult.ok ? { stageError: stageResult.error } : {})}
@@ -1464,7 +1487,13 @@ export function RehearsalPanel({
         )}
         omenLabel={omenLabel}
         onChange={(value) => {
-          const changed = setTargetDefinitionStrategy(catalog, current.baseId, targetContext, value)
+          const changed = setTargetDefinitionStrategy(
+            catalog,
+            targetCapacityContext?.baseId ?? current.baseId,
+            targetContext,
+            value,
+            targetCapacityContext,
+          )
           if (!changed.ok) {
             setMessage(changed.error)
             return
@@ -1525,11 +1554,18 @@ export function RehearsalPanel({
         />
       ) : null}
       <CraftTargets
+        {...(targetCapacityContext ? { capacityContext: targetCapacityContext } : {})}
         onExtract={(targets) => {
-          const changed = editTargetDefinitionContext(catalog, current, targetContext, {
-            kind: 'replace-definitions',
-            definitions: targets,
-          })
+          const changed = editTargetDefinitionContext(
+            catalog,
+            current,
+            targetContext,
+            {
+              kind: 'replace-definitions',
+              definitions: targets,
+            },
+            targetCapacityContext,
+          )
           if (!changed.ok) {
             setMessage(changed.error)
             return
@@ -1542,7 +1578,13 @@ export function RehearsalPanel({
         state={current}
         definitions={definitions}
         onEdit={(edit) => {
-          const changed = editTargetDefinitionContext(catalog, current, targetContext, edit)
+          const changed = editTargetDefinitionContext(
+            catalog,
+            current,
+            targetContext,
+            edit,
+            targetCapacityContext,
+          )
           if (!changed.ok) {
             setMessage(changed.error)
             return
@@ -1732,6 +1774,7 @@ export function RehearsalPanel({
           </button>
           {comparisonOpen ? (
             <CraftComparisonPanel
+              {...(targetCapacityContext ? { capacityContext: targetCapacityContext } : {})}
               catalog={catalog}
               translations={translations}
               targetImplicitValues={targetImplicitValues}
@@ -2254,7 +2297,7 @@ export function RehearsalPanel({
               translateLine={translateLine}
             />
           ))}
-          {SLOT_NUMBERS.slice(0, space.prefix).map((slot) => (
+          {Array.from({ length: space.prefix }, (_, index) => index + 1).map((slot) => (
             <p className="rehearsal-empty-slot" key={`prefix-${slot}`}>
               空前缀
             </p>
@@ -2282,7 +2325,7 @@ export function RehearsalPanel({
               translateLine={translateLine}
             />
           ))}
-          {SLOT_NUMBERS.slice(0, space.suffix).map((slot) => (
+          {Array.from({ length: space.suffix }, (_, index) => index + 1).map((slot) => (
             <p className="rehearsal-empty-slot" key={`suffix-${slot}`}>
               空后缀
             </p>

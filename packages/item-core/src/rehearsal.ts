@@ -1,4 +1,4 @@
-import { craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+import { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
 import {
   appendCraftAffix,
   type CraftAffixSelector,
@@ -41,7 +41,7 @@ import { isEssenceMappedMod } from './essences'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { jewelEffectModKind } from './jewelEffectRules'
-import { craftAffixLimit, isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
+import { isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
 import {
   isLiquidEmotionMappedMod,
   jewelCapacityModKind,
@@ -53,6 +53,7 @@ import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
 import { grantedSkillLevelStateError } from './perfectFlux'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { runeSourceStateError } from './runeImport'
+import { serleCapacity } from './serleRune'
 import { hasSpecialSocketRules, socketStateError } from './sockets'
 
 export type CraftRarity = 'normal' | 'magic' | 'rare'
@@ -268,11 +269,6 @@ function baseError(base: CatalogBase): string | null {
   return null
 }
 
-function limits(base: CatalogBase, rarity: CraftRarity): { prefix: number; suffix: number } {
-  const limit = craftAffixLimit(base, rarity)
-  return { prefix: limit, suffix: limit }
-}
-
 function eligible(base: CatalogBase, mod: CatalogMod, addedTags: readonly string[]): boolean {
   return hasCraftModEligibility(base, mod, addedTags)
 }
@@ -467,7 +463,9 @@ export function createCraftState(
   const historicalJewel = (isBasicJewel(base) || isRadiusJewel(base)) && input.rarity === 'rare'
   if (usesJewelCapacity(catalog, input) && liquidEmotionSourceHash(catalog) === null)
     return failure('超过固有 2/2 容量或含增容工艺的珠宝需要可信液态情感来源指纹。')
-  const capacity = historicalJewel ? { prefix: 3, suffix: 3 } : limits(base, input.rarity)
+  const serle = serleCapacity(catalog, input)
+  if (!serle.ok) return serle
+  const capacity = historicalJewel ? { prefix: 3, suffix: 3 } : craftAffixCapacities(catalog, input)
   if (historicalJewel && prefixes + suffixes > 5)
     return failure('稀有珠宝已有词缀最多每侧 3 组、总计 5 组。')
   if (prefixes > capacity.prefix || suffixes > capacity.suffix) {
@@ -797,7 +795,7 @@ export function applyCraftOperation(
   if (
     operation.rolls !== undefined &&
     (!Array.isArray(operation.rolls) ||
-      operation.rolls.length > 6 ||
+      operation.rolls.length > 7 ||
       !operation.rolls.every(
         (roll) =>
           roll !== null &&

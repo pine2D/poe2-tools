@@ -47,7 +47,7 @@ import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   requiresPerfectFluxProjectVersion,
 } from './perfectFluxProjectVersion'
-import type { CraftResult } from './rehearsal'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import {
   RETAINED_CATALYST_RULES_VERSION,
   requiresRetainedCatalystProjectVersion,
@@ -61,6 +61,12 @@ import {
   requiresRuneforgeProjectVersion,
 } from './runeforgeProjectVersion'
 import { runeforgingCatalogSignature } from './runeforgingCatalog'
+import {
+  requiresSerleProjectVersion,
+  SERLE_RULES_VERSION,
+  serleProjectCapabilityError,
+} from './serleProjectVersion'
+import { serleCapacity } from './serleRune'
 import type { CraftStrategyCondition } from './strategyConditions'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
 import {
@@ -119,6 +125,7 @@ export interface TargetCraftProject
     | typeof RETAINED_CATALYST_RULES_VERSION
     | typeof COMBAT_ARMOUR_RUNE_RULES_VERSION
     | typeof RUNEFORGED_ARMOUR_RULES_VERSION
+    | typeof SERLE_RULES_VERSION
     | typeof CRAFTED_CAPACITY_RULES_VERSION
     | typeof CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
     | typeof MASTERWORK_CRAFT_RULES_VERSION
@@ -296,6 +303,7 @@ export function parseTargetCraftProject(
       RUNEFORGE_CRAFT_RULES_VERSION,
       WARD_RUNE_RULES_VERSION,
       EXTENDED_ARMOUR_RUNE_RULES_VERSION,
+      SERLE_RULES_VERSION,
       CRAFTED_CAPACITY_RULES_VERSION,
       CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
       MASTERWORK_CRAFT_RULES_VERSION,
@@ -304,9 +312,17 @@ export function parseTargetCraftProject(
     return {
       ok: false,
       error:
-        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86 或 v87 规则版本。',
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87 或 v88 规则版本。',
     }
-  const craftedCapacity = original.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION
+  const serle = original.rulesVersion === SERLE_RULES_VERSION
+  if (!serle && requiresSerleProjectVersion(original, catalog))
+    return {
+      ok: false,
+      error: 'Serle 后缀容量必须使用 v88 项目，包括起点、声明、完整未来、指引及报价。',
+    }
+  const serleError = serle ? serleProjectCapabilityError(original, catalog) : null
+  if (serleError) return { ok: false, error: serleError }
+  const craftedCapacity = serle || original.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION
   if (!craftedCapacity && requiresCraftedCapacityProjectVersion(original, catalog))
     return {
       ok: false,
@@ -399,12 +415,6 @@ export function parseTargetCraftProject(
     return { ok: false, error: 'v74 项目不能混入旧目标字段。' }
   if (!record(original.initialState) || typeof original.initialState.baseId !== 'string')
     return { ok: false, error: '目标项目缺少有效初始装备。' }
-  const context = readTargetDefinitionContext(catalog, original.initialState.baseId, {
-    definitions: original.targetDefinitions,
-    orphanedTargets: original.orphanedTargets,
-    ...(Object.hasOwn(original, 'strategy') ? { strategy: original.strategy } : {}),
-  })
-  if (!context.ok) return context
   const {
     runeforgingCatalogSignature: _runeforgingSignature,
     fluxCatalogSignature: _fluxSignature,
@@ -413,6 +423,58 @@ export function parseTargetCraftProject(
     strategy: _strategy,
     ...rest
   } = original
+  let capacityContext: CraftState | undefined
+  if (serle) {
+    // 先回放真实装备历史，再授权超额目标；未执行指引和伪造孔位不能提供容量。
+    const { strategyStartStep: _strategyStartStep, ...stateProjection } = rest
+    let historyProjection: string
+    try {
+      historyProjection = JSON.stringify({
+        ...stateProjection,
+        rulesVersion: 'basic-2026-09-12-v72',
+      })
+    } catch {
+      return { ok: false, error: '目标项目结构过深，无法建立可验证的来源投影。' }
+    }
+    const history = readNativeTargetProjectProjection(
+      historyProjection,
+      catalog,
+      dictionary,
+      perfectFlux,
+      extraction,
+      corruptionStrategy,
+      retainedCatalyst,
+      combatArmourRunes,
+      runeforgedArmour,
+      runeforge,
+      wardRunes,
+      extendedArmourRunes,
+      masterwork,
+      conditionalRunes,
+      craftedCapacity,
+      serle,
+    )
+    if (!history.ok) return history
+    capacityContext = history.value.states[0]
+    for (const state of history.value.states) {
+      if (state.destroyed) continue
+      const checked = createCraftState(catalog, state)
+      if (!checked.ok) continue
+      const capacity = serleCapacity(catalog, checked.value)
+      if (capacity.ok && capacity.value === 1) capacityContext = checked.value
+    }
+  }
+  const context = readTargetDefinitionContext(
+    catalog,
+    capacityContext?.baseId ?? original.initialState.baseId,
+    {
+      definitions: original.targetDefinitions,
+      orphanedTargets: original.orphanedTargets,
+      ...(Object.hasOwn(original, 'strategy') ? { strategy: original.strategy } : {}),
+    },
+    capacityContext,
+  )
+  if (!context.ok) return context
   const strategy = sourceStrategy(context.value)
   let projection: string
   try {
@@ -445,6 +507,7 @@ export function parseTargetCraftProject(
         masterwork,
         conditionalRunes,
         craftedCapacity,
+        serle,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -466,31 +529,33 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = craftedCapacity
-      ? CRAFTED_CAPACITY_RULES_VERSION
-      : conditionalRunes
-        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-        : masterwork
-          ? MASTERWORK_CRAFT_RULES_VERSION
-          : extendedArmourRunes
-            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-            : wardRunes
-              ? WARD_RUNE_RULES_VERSION
-              : runeforge
-                ? RUNEFORGE_CRAFT_RULES_VERSION
-                : runeforgedArmour
-                  ? RUNEFORGED_ARMOUR_RULES_VERSION
-                  : combatArmourRunes
-                    ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-                    : retainedCatalyst
-                      ? RETAINED_CATALYST_RULES_VERSION
-                      : corruptionStrategy
-                        ? CORRUPTION_STRATEGY_RULES_VERSION
-                        : extraction
-                          ? EXTRACTION_CRAFT_RULES_VERSION
-                          : perfectFlux
-                            ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                            : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = serle
+      ? SERLE_RULES_VERSION
+      : craftedCapacity
+        ? CRAFTED_CAPACITY_RULES_VERSION
+        : conditionalRunes
+          ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+          : masterwork
+            ? MASTERWORK_CRAFT_RULES_VERSION
+            : extendedArmourRunes
+              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+              : wardRunes
+                ? WARD_RUNE_RULES_VERSION
+                : runeforge
+                  ? RUNEFORGE_CRAFT_RULES_VERSION
+                  : runeforgedArmour
+                    ? RUNEFORGED_ARMOUR_RULES_VERSION
+                    : combatArmourRunes
+                      ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+                      : retainedCatalyst
+                        ? RETAINED_CATALYST_RULES_VERSION
+                        : corruptionStrategy
+                          ? CORRUPTION_STRATEGY_RULES_VERSION
+                          : extraction
+                            ? EXTRACTION_CRAFT_RULES_VERSION
+                            : perfectFlux
+                              ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                              : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string

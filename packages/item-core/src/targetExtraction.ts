@@ -22,8 +22,8 @@ export function extractCraftTargets(
 ): CraftResult<ExtractedCraftTargets> {
   const checkedState = createCraftState(catalog, state)
   if (!checkedState.ok) return checkedState
-  if (!Array.isArray(selections) || selections.length > 6)
-    return { ok: false, error: '请选择至多六组当前装备上的词缀。' }
+  if (!Array.isArray(selections) || selections.length > 7)
+    return { ok: false, error: '请选择至多七组当前装备上的词缀。' }
   const affixes: CraftState['affixes'] = []
   for (const selection of selections) {
     const selector = typeof selection === 'string' ? { modId: selection } : selection
@@ -39,7 +39,14 @@ export function extractCraftTargets(
     affixes.push(resolved.value.affix)
   }
   const ids = affixes.map((affix) => affix.modId)
-  const checkedIds = validateCraftTargets(catalog, checkedState.value.baseId, ids)
+  const checkedIds = validateCraftTargets(
+    catalog,
+    checkedState.value.baseId,
+    ids,
+    undefined,
+    undefined,
+    checkedState.value,
+  )
   if (!checkedIds.ok) return checkedIds
   if (ids.length === 0) return { ok: false, error: '请至少选择一组当前装备上的词缀。' }
   const values: CraftTargetValues[] = []
@@ -64,7 +71,7 @@ export function extractCraftTargets(
     }
     if (copyFracture && affix.fractured) fractured = id
   }
-  const checkedValues = validateCraftTargetValues(catalog, state.baseId, ids, values)
+  const checkedValues = validateCraftTargetValues(catalog, state.baseId, ids, values, [], state)
   if (!checkedValues.ok) return checkedValues
   if (fractured !== undefined) {
     const checked = validateCraftFractureTarget(catalog, ids, [], fractured)
@@ -90,8 +97,8 @@ export function extractTargetDefinitions(
 ): CraftResult<CraftTargetDefinitions> {
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  if (!Array.isArray(selections) || selections.length < 1 || selections.length > 6)
-    return { ok: false, error: '请选择一至六组当前装备上的词缀。' }
+  if (!Array.isArray(selections) || selections.length < 1 || selections.length > 7)
+    return { ok: false, error: '请选择一至七组当前装备上的词缀。' }
   const definitions: CraftTargetDefinitions = {
     nextTargetId: selections.length + 1,
     targets: [],

@@ -1,6 +1,6 @@
 import type { CraftCatalog } from './catalog'
-import { isPlainProjectJSON } from './craftProjectJSON'
-import type { CraftStep } from './craftSteps'
+import { equivalentProjectJSON, isPlainProjectJSON } from './craftProjectJSON'
+import { applyCraftStep, type CraftStep } from './craftSteps'
 import {
   type CraftStrategy,
   type CraftStrategyDecision,
@@ -9,7 +9,9 @@ import {
   readCraftStrategy,
 } from './craftStrategy'
 import { analyzeCraftImplicitTargets, type CraftImplicitTargetValues } from './implicitTargets'
-import type { CraftResult, CraftState } from './rehearsal'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { requiresSerleProjectVersion } from './serleProjectVersion'
+import { serleCapacity } from './serleRune'
 import type { CraftStrategyLeafCondition } from './strategyConditions'
 import { replayStrategyStages } from './strategyStages'
 import {
@@ -78,7 +80,12 @@ export function readDefinitionCraftStrategy(input: unknown): CraftResult<Definit
   }
 }
 
-function readGoals(catalog: CraftCatalog, state: CraftState, input: DefinitionCraftStrategyGoals) {
+function readGoals(
+  catalog: CraftCatalog,
+  state: CraftState,
+  input: DefinitionCraftStrategyGoals,
+  capacityContext?: CraftState,
+) {
   if (
     !input ||
     typeof input !== 'object' ||
@@ -90,13 +97,14 @@ function readGoals(catalog: CraftCatalog, state: CraftState, input: DefinitionCr
     )
   )
     return fail('独立目标指引配置无效，不能混用旧目标字段。')
-  const definitions = validateTargetDefinitions(catalog, state, input.definitions)
+  const definitions = validateTargetDefinitions(catalog, state, input.definitions, capacityContext)
   if (!definitions.ok) return definitions
   const implicit = analyzeCraftImplicitTargets(catalog, state, input.targetImplicitValues ?? [])
   if (!implicit.ok) return implicit
   return { ok: true as const, value: { definitions: definitions.value, implicit: implicit.value } }
 }
 
+/** capacityContext 仅接收调用方已核对历史中的真实状态；当前数值与操作仍使用 state。 */
 export function evaluateDefinitionCraftStrategy(
   catalog: CraftCatalog,
   state: CraftState,
@@ -104,10 +112,11 @@ export function evaluateDefinitionCraftStrategy(
   appliedSteps: number,
   goals: DefinitionCraftStrategyGoals,
   stageId = strategy.flow?.entryStageId,
+  capacityContext?: CraftState,
 ): CraftResult<CraftStrategyDecision> {
   const parsed = readDefinitionCraftStrategy(strategy)
   if (!parsed.ok) return parsed
-  const checked = readGoals(catalog, state, goals)
+  const checked = readGoals(catalog, state, goals, capacityContext)
   if (!checked.ok) return checked
   const { definitions, implicit } = checked.value
   return evaluateCraftStrategyWithTargets(
@@ -138,6 +147,36 @@ export function evaluateDefinitionCraftStrategy(
   )
 }
 
+/** 外来未来快照不能授权容量；按实际操作完整重放，并逐态核对。 */
+function verifiedSerleHistoryContext(
+  catalog: CraftCatalog,
+  states: readonly CraftState[],
+  operations: readonly CraftStep[],
+): CraftResult<CraftState | undefined> {
+  if (!states[0] || states.length !== operations.length + 1 || operations.length > 1000)
+    return fail('容量来源历史的状态与操作数量不一致。')
+  const initial = createCraftState(catalog, states[0])
+  if (!initial.ok) return initial
+  let current = initial.value
+  let capacityContext: CraftState | undefined
+  for (let index = 0; index < states.length; index++) {
+    if (!equivalentProjectJSON(current, states[index]))
+      return fail('容量来源历史与实际制作回放不一致。')
+    if (!current.destroyed) {
+      const capacity = serleCapacity(catalog, current)
+      if (!capacity.ok) return capacity
+      if (capacity.value === 1) capacityContext = current
+    }
+    const operation = operations[index]
+    if (operation) {
+      const next = applyCraftStep(catalog, current, operation)
+      if (!next.ok) return next
+      current = next.value
+    }
+  }
+  return { ok: true, value: capacityContext }
+}
+
 export function definitionStrategyStageAt(
   catalog: CraftCatalog,
   states: readonly CraftState[],
@@ -163,7 +202,19 @@ export function definitionStrategyStageAt(
     return fail('摧毁终点缺少紧邻的建筑师摧毁或萃取步骤。')
   const context = current.destroyed ? states[cursor - 1] : current
   if (!context) return fail('阶段回放缺少实际操作前状态。')
-  const checked = readGoals(catalog, context, goals)
+  let capacityContext: CraftState | undefined
+  if (
+    goals &&
+    requiresSerleProjectVersion(
+      { baseId: context.baseId, affixes: goals.definitions?.targets },
+      catalog,
+    )
+  ) {
+    const history = verifiedSerleHistoryContext(catalog, states, operations)
+    if (!history.ok) return history
+    capacityContext = history.value
+  }
+  const checked = readGoals(catalog, context, goals, capacityContext)
   if (!checked.ok) return checked
   return replayStrategyStages(
     states,
@@ -172,6 +223,14 @@ export function definitionStrategyStageAt(
     startStep,
     cursor,
     (state, index, stageId) =>
-      evaluateDefinitionCraftStrategy(catalog, state, parsed.value, index, goals, stageId),
+      evaluateDefinitionCraftStrategy(
+        catalog,
+        state,
+        parsed.value,
+        index,
+        goals,
+        stageId,
+        capacityContext,
+      ),
   )
 }
