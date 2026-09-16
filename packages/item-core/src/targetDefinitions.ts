@@ -268,7 +268,7 @@ function validateDefinitionCombination(
     return fail('至少达成数量必须是 1 至已选显式目标组数的整数。')
   const base = catalog.bases.find((entry) => entry.id === baseId)
   if (!base) return fail('当前基底不在制作目录中。')
-  const pools = targetPools(catalog, baseId)
+  const pools = targetPools(catalog, baseId, capacityContext)
   const mods = []
   const affixes: CraftState['affixes'] = []
   for (const target of targets) {
@@ -281,7 +281,14 @@ function validateDefinitionCombination(
       mod.desecratedOnly ? { desecrated: true } : undefined,
     )
     if (!flux) {
-      const single = validateCraftTargets(catalog, baseId, [mod.id])
+      const single = validateCraftTargets(
+        catalog,
+        baseId,
+        [mod.id],
+        undefined,
+        undefined,
+        capacityContext,
+      )
       if (!single.ok) return single
     }
     const crafted =
@@ -346,8 +353,11 @@ function validateDefinitionCombination(
 export function craftTargetDefinitionCandidates(
   catalog: CraftCatalog,
   baseId: string,
+  capacityContext?: CraftState,
 ): CatalogMod[] {
-  const ordinary = new Set(craftTargetCandidates(catalog, baseId).map((mod) => mod.id))
+  const ordinary = new Set(
+    craftTargetCandidates(catalog, baseId, capacityContext).map((mod) => mod.id),
+  )
   const base = catalog.bases.find((base) => base.id === baseId)
   if (!base) return []
   const flux = fluxEligibleModIds(catalog, base)

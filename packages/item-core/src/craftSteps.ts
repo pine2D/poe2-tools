@@ -32,6 +32,7 @@ import {
 } from './extraction'
 import { applyFluxCraft, type FluxCraftOperation, isFluxCraftOperation } from './fluxCraft'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
+import { isInfluenceRune } from './influenceRunes'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import {
   applyMasterworkCraft,
@@ -385,6 +386,12 @@ export function applyCraftStep(
     if (oldAugment?.isSocketBound === true)
       return { ok: false, error: '当前孔内物已绑定，不能覆盖或重复镶入。' }
     const nextAugment = catalog.augments?.find((entry) => entry.id === step.augmentId)
+    if (nextAugment && isInfluenceRune(nextAugment)) {
+      if (state.corrupted)
+        return { ok: false, error: '扩展词缀池符文新镶入腐化装备的交互尚未核实。' }
+      if (sockets[step.socketIndex] !== null)
+        return { ok: false, error: '绑定符文只能镶入明确空孔。' }
+    }
     if (nextAugment && isSerleRune(nextAugment)) {
       if (state.corrupted) return { ok: false, error: 'Serle 不能新镶入腐化装备。' }
       if (sockets[step.socketIndex] !== null)

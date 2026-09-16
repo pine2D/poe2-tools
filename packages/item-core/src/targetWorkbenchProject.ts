@@ -44,6 +44,10 @@ import {
   requiresExtendedArmourRuneProjectVersion,
 } from './extendedArmourRuneProjectVersion'
 import {
+  INFLUENCE_RUNE_RULES_VERSION,
+  requiresInfluenceRuneProjectVersion,
+} from './influenceRuneProjectVersion'
+import {
   MASTERWORK_CRAFT_RULES_VERSION,
   requiresMasterworkProjectVersion,
 } from './masterworkProjectVersion'
@@ -99,6 +103,7 @@ export function loadTargetWorkbenchProject(
       value.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
       value.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
       value.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
+      value.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
       value.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
       value.rulesVersion === PUTREFACTION_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
@@ -135,6 +140,7 @@ export function reuseTargetCraftPlan(
   const next = structuredClone(current.value.project)
   if (source.fluxCatalogSignature !== undefined) {
     if (
+      next.rulesVersion !== INFLUENCE_RUNE_RULES_VERSION &&
       next.rulesVersion !== DESECRATION_COUNT_RULES_VERSION &&
       next.rulesVersion !== PUTREFACTION_RULES_VERSION &&
       next.rulesVersion !== PENDING_EXALTATION_RULES_VERSION &&
@@ -166,6 +172,8 @@ export function reuseTargetCraftPlan(
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
   if (
+    next.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
+    requiresInfluenceRuneProjectVersion(next) ||
     next.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
     requiresDesecrationCountProjectVersion(next) ||
     next.rulesVersion === PUTREFACTION_RULES_VERSION ||
@@ -190,37 +198,47 @@ export function reuseTargetCraftPlan(
     requiresRuneforgeProjectVersion(next)
   ) {
     next.rulesVersion =
-      next.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
-      requiresDesecrationCountProjectVersion(next)
-        ? DESECRATION_COUNT_RULES_VERSION
-        : next.rulesVersion === PUTREFACTION_RULES_VERSION ||
-            requiresPutrefactionProjectVersion(next)
-          ? PUTREFACTION_RULES_VERSION
-          : next.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
-              requiresPendingExaltationProjectVersion(next)
-            ? PENDING_EXALTATION_RULES_VERSION
-            : next.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION ||
-                requiresEssenceOutcomesProjectVersion(next)
-              ? ESSENCE_OUTCOMES_RULES_VERSION
-              : next.rulesVersion === SERLE_RULES_VERSION ||
-                  requiresSerleProjectVersion(next, catalog)
-                ? SERLE_RULES_VERSION
-                : next.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
-                    requiresCraftedCapacityProjectVersion(next, catalog)
-                  ? CRAFTED_CAPACITY_RULES_VERSION
-                  : next.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
-                      requiresConditionalArmourRuneProjectVersion(next, catalog)
-                    ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                    : next.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION ||
-                        requiresMasterworkProjectVersion(next)
-                      ? MASTERWORK_CRAFT_RULES_VERSION
-                      : next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
-                          requiresExtendedArmourRuneProjectVersion(next, catalog)
-                        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                        : next.rulesVersion === WARD_RUNE_RULES_VERSION ||
-                            requiresWardRuneProjectVersion(next, catalog)
-                          ? WARD_RUNE_RULES_VERSION
-                          : RUNEFORGE_CRAFT_RULES_VERSION
+      next.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
+      requiresInfluenceRuneProjectVersion(next)
+        ? INFLUENCE_RUNE_RULES_VERSION
+        : next.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
+            requiresDesecrationCountProjectVersion(next)
+          ? DESECRATION_COUNT_RULES_VERSION
+          : next.rulesVersion === PUTREFACTION_RULES_VERSION ||
+              requiresPutrefactionProjectVersion(next)
+            ? PUTREFACTION_RULES_VERSION
+            : next.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
+                requiresPendingExaltationProjectVersion(next)
+              ? PENDING_EXALTATION_RULES_VERSION
+              : next.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION ||
+                  requiresEssenceOutcomesProjectVersion(next)
+                ? ESSENCE_OUTCOMES_RULES_VERSION
+                : next.rulesVersion === SERLE_RULES_VERSION ||
+                    requiresSerleProjectVersion(next, catalog)
+                  ? SERLE_RULES_VERSION
+                  : next.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
+                      requiresCraftedCapacityProjectVersion(next, catalog)
+                    ? CRAFTED_CAPACITY_RULES_VERSION
+                    : next.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
+                        requiresConditionalArmourRuneProjectVersion(next, catalog)
+                      ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                      : next.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION ||
+                          requiresMasterworkProjectVersion(next)
+                        ? MASTERWORK_CRAFT_RULES_VERSION
+                        : next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
+                            requiresExtendedArmourRuneProjectVersion(next, catalog)
+                          ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                          : next.rulesVersion === WARD_RUNE_RULES_VERSION ||
+                              requiresWardRuneProjectVersion(next, catalog)
+                            ? WARD_RUNE_RULES_VERSION
+                            : RUNEFORGE_CRAFT_RULES_VERSION
+    if (requiresInfluenceRuneProjectVersion(next)) {
+      const hash = catalog._meta.sources.find(
+        (source) => source.path === 'src/Data/ModRunes.lua',
+      )?.sha256
+      if (!hash) return { ok: false, error: '沿用符文指引需要相同镶嵌目录。' }
+      next.augmentSourceHash = hash
+    }
     if (requiresRuneforgeProjectVersion(next)) {
       const signature = runeforgingCatalogSignature(catalog)
       if (signature === null) return { ok: false, error: '沿用锻造指引需要相同锻造配方目录。' }
@@ -231,6 +249,7 @@ export function reuseTargetCraftPlan(
   else if (requiresCombatArmourRuneProjectVersion(next, catalog))
     next.rulesVersion = COMBAT_ARMOUR_RUNE_RULES_VERSION
   if (
+    next.rulesVersion !== INFLUENCE_RUNE_RULES_VERSION &&
     next.rulesVersion !== DESECRATION_COUNT_RULES_VERSION &&
     next.rulesVersion !== PUTREFACTION_RULES_VERSION &&
     next.rulesVersion !== PENDING_EXALTATION_RULES_VERSION &&
@@ -250,6 +269,7 @@ export function reuseTargetCraftPlan(
   if (
     next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
     next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION &&
+    next.rulesVersion !== INFLUENCE_RUNE_RULES_VERSION &&
     next.rulesVersion !== DESECRATION_COUNT_RULES_VERSION &&
     next.rulesVersion !== PUTREFACTION_RULES_VERSION &&
     next.rulesVersion !== PENDING_EXALTATION_RULES_VERSION &&

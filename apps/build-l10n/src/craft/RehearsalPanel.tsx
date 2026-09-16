@@ -53,6 +53,7 @@ import {
   fluxCatalogSignature,
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentifiedCraftState,
+  INFLUENCE_RUNE_RULES_VERSION,
   type ItemDictionary,
   inspectNumericLines,
   isBasicJewel,
@@ -92,6 +93,7 @@ import {
   requiresEssenceOutcomesProjectVersion,
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
+  requiresInfluenceRuneProjectVersion,
   requiresMasterworkProjectVersion,
   requiresPendingExaltationProjectVersion,
   requiresPerfectFluxProjectVersion,
@@ -424,6 +426,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [influenceRules, setInfluenceRules] = useState(
+    initialProject?.project.rulesVersion === INFLUENCE_RUNE_RULES_VERSION,
   )
   const [serleRules, setSerleRules] = useState(
     initialProject?.project.rulesVersion === SERLE_RULES_VERSION,
@@ -1261,7 +1266,9 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsInfluence ||
     needsDesecrationCount ||
     putrefactionRules ||
     requiresPutrefactionProjectVersion(projectConfig) ||
@@ -1276,30 +1283,33 @@ export function RehearsalPanel({
     needsRuneforge
       ? {
           ...projectConfig,
-          ...(requiresSerleProjectVersion(projectConfig, catalog) && augmentSourceHash
+          ...((requiresSerleProjectVersion(projectConfig, catalog) || needsInfluence) &&
+          augmentSourceHash
             ? { augmentSourceHash }
             : {}),
-          rulesVersion: needsDesecrationCount
-            ? DESECRATION_COUNT_RULES_VERSION
-            : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
-              ? PUTREFACTION_RULES_VERSION
-              : needsPendingExaltation
-                ? PENDING_EXALTATION_RULES_VERSION
-                : needsEssenceOutcomes
-                  ? ESSENCE_OUTCOMES_RULES_VERSION
-                  : needsSerle
-                    ? SERLE_RULES_VERSION
-                    : needsCraftedCapacity
-                      ? CRAFTED_CAPACITY_RULES_VERSION
-                      : needsConditionalRunes
-                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                        : needsMasterwork
-                          ? MASTERWORK_CRAFT_RULES_VERSION
-                          : needsExtendedRunes
-                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                            : needsWardRunes
-                              ? WARD_RUNE_RULES_VERSION
-                              : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsInfluence
+            ? INFLUENCE_RUNE_RULES_VERSION
+            : needsDesecrationCount
+              ? DESECRATION_COUNT_RULES_VERSION
+              : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
+                ? PUTREFACTION_RULES_VERSION
+                : needsPendingExaltation
+                  ? PENDING_EXALTATION_RULES_VERSION
+                  : needsEssenceOutcomes
+                    ? ESSENCE_OUTCOMES_RULES_VERSION
+                    : needsSerle
+                      ? SERLE_RULES_VERSION
+                      : needsCraftedCapacity
+                        ? CRAFTED_CAPACITY_RULES_VERSION
+                        : needsConditionalRunes
+                          ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                          : needsMasterwork
+                            ? MASTERWORK_CRAFT_RULES_VERSION
+                            : needsExtendedRunes
+                              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                              : needsWardRunes
+                                ? WARD_RUNE_RULES_VERSION
+                                : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1337,6 +1347,7 @@ export function RehearsalPanel({
     setPutrefactionRules(restored.project.rulesVersion === PUTREFACTION_RULES_VERSION)
     setPendingExaltationRules(restored.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION)
     setEssenceOutcomesRules(restored.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION)
+    setInfluenceRules(restored.project.rulesVersion === INFLUENCE_RUNE_RULES_VERSION)
     setSerleRules(restored.project.rulesVersion === SERLE_RULES_VERSION)
     setCraftedCapacityRules(restored.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION)
     setConditionalRules(restored.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION)

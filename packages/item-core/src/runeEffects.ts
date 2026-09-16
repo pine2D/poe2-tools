@@ -7,6 +7,7 @@ import {
 } from './combatArmourRuneEffects'
 import { conditionalArmourRuneKind, isConditionalArmourRune } from './conditionalArmourRunes'
 import { isExtendedArmourRune, readExtendedArmourRuneLine } from './extendedArmourRuneEffects'
+import { isInfluenceRune, isInfluenceRuneLine } from './influenceRunes'
 import { isSerleRune, SERLE_LINE } from './serleRune'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
 import { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
@@ -118,7 +119,13 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
   const totals = emptyTotals()
   for (const line of lines) {
     // 条件效果另行核对完整语义，不属于可加的本地防御或角色数值。
-    if (conditionalArmourRuneKind(line) || line === ASTRID_LINE || line === SERLE_LINE) continue
+    if (
+      conditionalArmourRuneKind(line) ||
+      isInfluenceRuneLine(line) ||
+      line === ASTRID_LINE ||
+      line === SERLE_LINE
+    )
+      continue
     const combat =
       readCombatArmourRuneLine(line) ?? readWardRuneLine(line) ?? readExtendedArmourRuneLine(line)
     if (combat) {
@@ -165,6 +172,7 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
 
 /** 身份、类别、本地标志和完整效果语义必须一致。 */
 export function isSupportedArmourRune(augment: CatalogAugment): boolean {
+  if (isInfluenceRune(augment)) return true
   if (isAstridRune(augment) && augment.category === 'armour') return true
   if (isSerleRune(augment) && augment.category === 'armour') return true
   if (

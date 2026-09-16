@@ -20,6 +20,7 @@ import {
   craftImplicitTargetCandidates,
   implicitTargetRolls,
 } from './implicitTargets'
+import { influenceRuneTags } from './influenceRunes'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
@@ -125,10 +126,14 @@ export function craftTargetsSatisfied(
   )
 }
 
-export function targetPools(catalog: CraftCatalog, baseId: string) {
+export function targetPools(catalog: CraftCatalog, baseId: string, state?: CraftState) {
+  const influence = state?.baseId === baseId ? influenceRuneTags(catalog, state) : null
+  const tags = influence?.ok ? influence.value : []
   const base = catalog.bases.find((entry) => entry.id === baseId)
   const ordinary = new Set(
-    base === undefined ? [] : inspectModPool(base, catalog.modifiers, 100).map(({ mod }) => mod.id),
+    base === undefined
+      ? []
+      : inspectModPool(base, catalog.modifiers, 100, [], tags).map(({ mod }) => mod.id),
   )
   const essence = new Set(
     base === undefined || essenceSourceHash(catalog) === null
@@ -225,8 +230,18 @@ export function targetCombinationLines(mod: CatalogMod): string[] {
 }
 
 /** 目标资格独立于普通通货生成池，精华只授权当前基底的精确已解析保证属性。 */
-export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): CatalogMod[] {
-  const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(catalog, baseId)
+export function craftTargetCandidates(
+  catalog: CraftCatalog,
+  baseId: string,
+  state?: CraftState,
+): CatalogMod[] {
+  const sockets = targetSocketContext(catalog, baseId, state)
+  if (!sockets.ok) return []
+  const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(
+    catalog,
+    baseId,
+    state,
+  )
   return catalog.modifiers.filter(
     (mod) =>
       (ordinary.has(mod.id) ||
@@ -241,6 +256,7 @@ export function craftTargetCandidates(catalog: CraftCatalog, baseId: string): Ca
         rarity: 'rare',
         sourceText: null,
         ...targetImplicitLines(catalog, baseId),
+        ...sockets.value,
         affixes: [
           {
             modId: mod.id,
@@ -278,7 +294,11 @@ export function validateCraftTargets(
   if (requiredTargetId !== undefined && !ids.includes(requiredTargetId))
     return { ok: false, error: '必选破裂组必须是已选显式目标。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
-  const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(catalog, baseId)
+  const { ordinary, essence, liquid, alloy, desecrated, genesis } = targetPools(
+    catalog,
+    baseId,
+    capacityContext,
+  )
   const affixes: CraftAffix[] = []
   for (const id of ids) {
     const mod = byId.get(id)
@@ -600,17 +620,16 @@ export function analyzeCraftTargetContext(
   })
   const existingIds = new Set(existing.map((mod) => mod.id))
   const groups = existing.map((mod) => mod.group)
+  const influence = influenceRuneTags(catalog, current)
+  if (!influence.ok) return influence
   const pool = new Set(
-    inspectModPool(
-      base,
-      catalog.modifiers,
-      current.itemLevel,
-      groups,
-      existing.flatMap((mod) => mod.addsTags),
-    ).map(({ mod }) => mod.id),
+    inspectModPool(base, catalog.modifiers, current.itemLevel, groups, [
+      ...existing.flatMap((mod) => mod.addsTags),
+      ...influence.value,
+    ]).map(({ mod }) => mod.id),
   )
   const candidates = new Set(craftCandidates(catalog, current).map((mod) => mod.id))
-  const staticPools = targetPools(catalog, state.baseId)
+  const staticPools = targetPools(catalog, state.baseId, state)
   const progress = definitions
     ? evaluateTargetDefinitions(catalog, current, definitions)
     : undefined

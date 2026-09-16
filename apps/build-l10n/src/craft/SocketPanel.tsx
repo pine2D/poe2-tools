@@ -6,6 +6,7 @@ import {
   type CraftState,
   isConditionalArmourRune,
   isExtendedArmourRune,
+  isInfluenceRune,
   isRebirthArmourRune,
   isWardArmourRune,
   type SocketCraftOperation,
@@ -264,6 +265,12 @@ export function SocketPanel({
               ) : null}
               {selected.isSocketBound ? (
                 <p>镶入后该孔永久绑定，不能再替换，萃取也不返还此材料。</p>
+              ) : null}
+              {isInfluenceRune(selected) ? (
+                <p>
+                  只能镶入空孔；镶入后开放专属词缀池，仍受物等和词缀冲突限制。Bonded
+                  加成不计入默认效果；与其他扩展词缀池、特殊容量符文及骨骼揭示的组合尚未核实。
+                </p>
               ) : null}
               {selected.category === 'weapon' ? (
                 <p>本地伤害和攻速贡献可在武器面板查看预计变化，全局效果不计入该面板。</p>

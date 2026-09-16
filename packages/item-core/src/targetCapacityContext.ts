@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { craftedModifierCapacity } from './craftedCapacity'
+import { influenceRuneTags } from './influenceRunes'
 import { type CraftState, createCraftState } from './rehearsal'
 import { serleCapacity } from './serleRune'
 import { validateStoredTargetDefinitions } from './targetDefinitions'
@@ -15,13 +16,20 @@ export function findTargetCapacityContext(
     if (state.destroyed) continue
     const crafted = craftedModifierCapacity(catalog, state)
     const suffix = serleCapacity(catalog, state)
-    if (!crafted.ok || !suffix.ok || (crafted.value === 1 && suffix.value === 0)) continue
+    const influence = influenceRuneTags(catalog, state)
+    if (
+      !crafted.ok ||
+      !suffix.ok ||
+      !influence.ok ||
+      (crafted.value === 1 && suffix.value === 0 && influence.value.length === 0)
+    )
+      continue
     const checked = createCraftState(catalog, state)
     if (!checked.ok) continue
     candidates.push({
       state: checked.value,
       // 同时具备两种容量优先；仅双工艺时也保留实际工艺占用所需的来源。
-      score: (crafted.value - 1) * 2 + suffix.value,
+      score: (crafted.value - 1) * 2 + suffix.value + influence.value.length,
       fits: validateStoredTargetDefinitions(catalog, state.baseId, definitions, checked.value).ok,
     })
   }

@@ -388,7 +388,7 @@ v81 实现补充：逐条创建审计确认 483 条可见防具中 478 条属于
 
 人工阅读 PoE2DB 的 [Uhtred](https://poe2db.tw/us/Uhtreds_Sidereus)、[Kolr](https://poe2db.tw/us/Kolrs_Hunt)、[Vorana](https://poe2db.tw/us/Voranas_Carnage)、[Thrud](https://poe2db.tw/us/Thruds_Might)、[Medved](https://poe2db.tw/us/Medveds_Tending)、[Katla](https://poe2db.tw/us/Katlas_Gloom) 六个公开说明，按 gray 登记；只核对部位、空孔、绑定和独立 Bonded 条件，不复制数据库、权重或价格，不新增抓取适配器及浏览器第三方请求。身份、数值、词缀组和有序资格沿已登记固定 MIT PoB2 快照，六个名称对应七条类别记录与128条词缀。
 
-[GGG 0.5.1 Hotfix 6](https://www.pathofexile.com/forum/view-thread/3955250/filter-account-type/staff)为 primary 机制修正依据，确认 Chronomancy 复合词缀的减缓效力方向修复；不外推旧装备更新方式。不同绑定符文共存、特殊孔和增效交互未因本次登记取得执行支持。详见[绑定符文核对](influence-runes-research.md)；此阶段仅研究，尚未发布新能力。
+[GGG 0.5.1 Hotfix 6](https://www.pathofexile.com/forum/view-thread/3955250/filter-account-type/staff)为 primary 机制修正依据，确认 Chronomancy 复合词缀的减缓效力方向修复；不外推旧装备更新方式。不同绑定符文共存、特殊孔和增效交互未因本次登记取得执行支持。v93 沿固定 MIT 身份接入除 Thrud 外五类单枚来源，实际词缀继续使用有序资格；没有新增数据表或来源抓取。详见[绑定符文核对](influence-runes-research.md)。
 
 # 合金类别映射（2026-09-14）
 

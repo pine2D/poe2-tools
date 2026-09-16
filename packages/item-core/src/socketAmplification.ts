@@ -5,6 +5,7 @@ import { isConditionalArmourRune } from './conditionalArmourRunes'
 import { astridFitsBase } from './craftedCapacity'
 import { essenceSourceHash } from './essences'
 import { isRebirthArmourRune } from './extendedArmourRuneEffects'
+import { influenceRuneFitsBase, isInfluenceRune } from './influenceRunes'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { isSerleRune, SERLE_LINE, serleFitsBase } from './serleRune'
@@ -54,6 +55,14 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
+  if (isInfluenceRune(augment)) {
+    const line = augment.lines[0] as string
+    return influenceRuneFitsBase(catalog, state, augment) &&
+      statScalabilitySourceHash(catalog) !== null &&
+      catalog.scalability?.[line]?.length === 0
+      ? { ...augment, lines: [line] }
+      : null
+  }
   if (isAstridRune(augment) || isSerleRune(augment)) {
     const serle = isSerleRune(augment)
     const line = serle ? SERLE_LINE : ASTRID_LINE

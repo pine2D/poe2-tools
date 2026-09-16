@@ -24,6 +24,7 @@ import {
   editTargetDefinitions,
   hasCraftModEligibility,
   hasGenesisModEligibility,
+  influenceRuneTags,
   inspectCraftAlloys,
   inspectEssences,
   validateCraftFractureTarget,
@@ -96,9 +97,13 @@ export function CraftTargets({
     () => new Map(catalog.modifiers.map((mod) => [mod.id, mod])),
     [catalog.modifiers],
   )
+  const source = capacityContext ?? state
+  const influence = influenceRuneTags(catalog, source)
+  // 无影响来源时沿用静态搜索，不因普通词缀数值和历史游标变化重建全目录候选。
+  const poolContext = !influence.ok || influence.value.length > 0 ? source : undefined
   const pool = useMemo(
-    () => craftTargetDefinitionCandidates(catalog, state.baseId),
-    [catalog, state.baseId],
+    () => craftTargetDefinitionCandidates(catalog, state.baseId, poolContext),
+    [catalog, state.baseId, poolContext],
   )
   const genesisOnly = useMemo(() => {
     const base = catalog.bases.find((entry) => entry.id === state.baseId)

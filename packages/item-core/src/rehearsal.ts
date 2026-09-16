@@ -40,6 +40,7 @@ import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
+import { influenceBoneError, influenceRuneTags } from './influenceRunes'
 import { jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
 import {
@@ -347,6 +348,8 @@ export function createCraftState(
     return failure('固有属性与所选基底不一致。')
 
   if (Object.hasOwn(input, 'pendingDesecration')) {
+    const influenceError = influenceBoneError(catalog, input)
+    if (influenceError) return failure(influenceError)
     if (!isPendingDesecration(input.pendingDesecration)) return failure('待揭示亵渎字段无效。')
     if (
       input.rarity !== 'rare' ||
@@ -443,6 +446,8 @@ export function createCraftState(
   if (catalystError) return failure(catalystError)
   const flux = input.nextAffixId === undefined ? null : fluxEligibleModIds(catalog, base)
   const fluxMember = (mod: CatalogMod) => flux?.ordinary.has(mod.id) || flux?.desecrated.has(mod.id)
+  const influence = influenceRuneTags(catalog, input)
+  if (!influence.ok) return influence
   const accepted: CatalogMod[] = []
   let prefixes =
     input.pendingDesecration?.putrefaction?.prefix ??
@@ -474,7 +479,10 @@ export function createCraftState(
     const validSource =
       (isBasicJewel(base) || isRadiusJewel(base)) && affix.crafted
         ? isLiquidEmotionMappedMod(catalog, base, mod.id)
-        : (affix.desecrated ? eligible(base, mod, []) : hasExistingModEligibility(base, mod)) ||
+        : (affix.desecrated
+            ? eligible(base, mod, [])
+            : hasExistingModEligibility(base, mod) ||
+              (!affix.crafted && eligible(base, mod, influence.value))) ||
           (affix.crafted === true &&
             (isEssenceMappedMod(catalog, base, mod.id) || isAlloyMappedMod(catalog, base, mod.id)))
     const convertedSource =
@@ -542,7 +550,9 @@ export function craftCandidates(
     return mod === undefined ? [] : [mod]
   })
   const occupiedGroups = existing.map((mod) => mod.group)
-  const addedTags = existing.flatMap((mod) => mod.addsTags)
+  const influence = influenceRuneTags(catalog, checked.value)
+  if (!influence.ok) return []
+  const addedTags = [...existing.flatMap((mod) => mod.addsTags), ...influence.value]
   const space = craftAffixSpace(catalog, state)
   const candidates = inspectModPool(
     base,

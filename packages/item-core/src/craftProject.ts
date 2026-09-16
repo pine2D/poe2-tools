@@ -52,6 +52,7 @@ import {
   validateCraftImplicitTargets,
   validateStoredCraftImplicitTargets,
 } from './implicitTargets'
+import { requiresInfluenceRuneProjectVersion } from './influenceRuneProjectVersion'
 import { JEWEL_EFFECT_EMOTION_ID } from './jewelEffectRules'
 import { usesJewelEffect } from './jewelEffects'
 import { isRadiusJewel, jewelSourceHash as readJewelSourceHash } from './jewels'
@@ -677,6 +678,7 @@ export function readNativeTargetProjectProjection(
   pendingExaltation = false,
   putrefaction = false,
   desecrationCount = false,
+  influenceRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -701,6 +703,7 @@ export function readNativeTargetProjectProjection(
     pendingExaltation,
     putrefaction,
     desecrationCount,
+    influenceRunes,
   )
 }
 
@@ -727,6 +730,7 @@ function readCraftProject(
   pendingExaltation = false,
   putrefaction = false,
   desecrationCount = false,
+  influenceRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -745,6 +749,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!influenceRunes && requiresInfluenceRuneProjectVersion(value))
+    return fail('扩展词缀池符文必须使用 v93 项目，包括起点、目标、声明、完整未来、指引及报价。')
   if (!desecrationCount && requiresDesecrationCountProjectVersion(value))
     return fail('亵渎数量条件必须使用 v92 项目，包括未执行和嵌套指引。')
   if (!putrefaction && requiresPutrefactionProjectVersion(value))

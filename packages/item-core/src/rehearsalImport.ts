@@ -1,5 +1,5 @@
 import { inspectCraftAlloys } from './alloys'
-import { readHeaderStates, stripModifierStateAnnotations } from './annotations'
+import { RUNE_SUFFIX, readHeaderStates, stripModifierStateAnnotations } from './annotations'
 import {
   canonicalBeltSlot,
   isBeltCapacityBase,
@@ -13,6 +13,7 @@ import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essenc
 import { type ItemInspection, knownExplicitHeader } from './export'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
+import { influenceRuneTags } from './influenceRunes'
 import { normalizeJewelFixedImportLine } from './jewelEffectImport'
 import { usesJewelEffect } from './jewelEffects'
 import { importedJewelRadiusError, JEWEL_RADIUS_HEADER } from './jewelRadius'
@@ -420,6 +421,26 @@ function readCraftImport(
     if (entry.reason === null) for (const mod of entry.outcomes) mappedIds.add(mod.id)
   for (const entry of inspectCraftAlloys(catalog, base)) if (entry.mod) mappedIds.add(entry.mod.id)
   const fluxEligible = native ? fluxEligibleModIds(catalog, base) : null
+  const influence = influenceRuneTags(catalog, {
+    baseId,
+    ...(importedSockets === undefined ? {} : { sockets: [...importedSockets] }),
+  })
+  if (!influence.ok) return influence
+  if (influence.value.length > 0) {
+    if (JSON.stringify(originalFlags.item) !== JSON.stringify(item))
+      return fail('扩展词缀池来源必须与完整装备原文一致。')
+    for (const rune of inspection.runes ?? []) {
+      const raw = rune.source.raw.replace(RUNE_SUFFIX, '').trim()
+      const english = rune.resolution.english ?? raw
+      if (
+        english !== raw &&
+        !resolveStat(raw, skillEntries ?? []).candidates.some(
+          (candidate) => candidate.english === english,
+        )
+      )
+        return fail('扩展词缀池符文翻译缺少原文词典依据。')
+    }
+  }
   const matches = explicit.map((source, sourceIndex) => {
     // 工艺组只使用精华、液态和合金的精确映射；临时匹配视图不改变原目录生成资格。
     let modifiers: CraftCatalog['modifiers'] = source.mod.states?.includes('crafted')
@@ -461,7 +482,14 @@ function readCraftImport(
           })),
         }
       : source
-    const match = matchCatalogMods(base, modifiers, [matchingSource])[0]
+    const match = matchCatalogMods(
+      base,
+      modifiers,
+      [matchingSource],
+      source.mod.states?.some((state) => state === 'crafted' || state === 'desecrated')
+        ? []
+        : influence.value,
+    )[0]
     if (!match) throw new Error('词缀匹配结果缺失')
     return { ...match, sourceIndex }
   })

@@ -9,6 +9,8 @@ import {
   readCraftStrategy,
 } from './craftStrategy'
 import { analyzeCraftImplicitTargets, type CraftImplicitTargetValues } from './implicitTargets'
+import { requiresInfluenceRuneProjectVersion } from './influenceRuneProjectVersion'
+import { influenceRuneTags } from './influenceRunes'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { serleCapacity } from './serleRune'
@@ -148,7 +150,7 @@ export function evaluateDefinitionCraftStrategy(
 }
 
 /** 外来未来快照不能授权容量；按实际操作完整重放，并逐态核对。 */
-function verifiedSerleHistoryContext(
+function verifiedTargetSourceHistoryContext(
   catalog: CraftCatalog,
   states: readonly CraftState[],
   operations: readonly CraftStep[],
@@ -165,7 +167,9 @@ function verifiedSerleHistoryContext(
     if (!current.destroyed) {
       const capacity = serleCapacity(catalog, current)
       if (!capacity.ok) return capacity
-      if (capacity.value === 1) capacityContext = current
+      const influence = influenceRuneTags(catalog, current)
+      if (!influence.ok) return influence
+      if (capacity.value === 1 || influence.value.length > 0) capacityContext = current
     }
     const operation = operations[index]
     if (operation) {
@@ -205,12 +209,13 @@ export function definitionStrategyStageAt(
   let capacityContext: CraftState | undefined
   if (
     goals &&
-    requiresSerleProjectVersion(
-      { baseId: context.baseId, affixes: goals.definitions?.targets },
-      catalog,
-    )
+    (requiresInfluenceRuneProjectVersion(goals) ||
+      requiresSerleProjectVersion(
+        { baseId: context.baseId, affixes: goals.definitions?.targets },
+        catalog,
+      ))
   ) {
-    const history = verifiedSerleHistoryContext(catalog, states, operations)
+    const history = verifiedTargetSourceHistoryContext(catalog, states, operations)
     if (!history.ok) return history
     capacityContext = history.value
   }

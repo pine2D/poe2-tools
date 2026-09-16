@@ -3,6 +3,7 @@ import { astridSourceMatches } from './astridRune'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
+import { influenceRuneSourceMatches } from './influenceRunes'
 import { parseItem } from './parse'
 import type { CraftResult, CraftState } from './rehearsal'
 import {
@@ -78,6 +79,13 @@ export function runeSocketContributionError(
     if (effective === null) return '孔内符文增效暂不支持，不能核对。'
     augments.push(effective)
   }
+  if (
+    !influenceRuneSourceMatches(
+      state.runeSourceLines,
+      augments.flatMap((a) => a.lines),
+    )
+  )
+    return '扩展词缀池符文效果与孔位声明不一致。'
   if (
     !serleSourceMatches(
       state.runeSourceLines,

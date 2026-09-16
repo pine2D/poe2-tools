@@ -2,6 +2,7 @@ import { isSovereignAffix } from './alloyEffects'
 import { isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { astridFitsBase } from './craftedCapacity'
+import { influenceRuneFitsBase, influenceRuneTags, isInfluenceRune } from './influenceRunes'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
@@ -86,6 +87,7 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
+  if (isInfluenceRune(augment)) return influenceRuneFitsBase(catalog, state, augment)
   if (isAstridRune(augment)) return astridFitsBase(catalog, state, augment)
   if (isSerleRune(augment)) return serleFitsBase(catalog, state, augment)
   if (isSupportedSoulCore(augment))
@@ -97,6 +99,8 @@ function supportedAugment(
 
 /** 缺省未建模；空数组明确零孔；null 仅表示已知空孔。 */
 export function socketStateError(catalog: CraftCatalog, state: CraftState): string | null {
+  const influence = influenceRuneTags(catalog, state)
+  if (!influence.ok) return influence.error
   if (state.sockets === undefined) return null
   if (!Array.isArray(state.sockets)) return '孔位列表无效。'
   for (const socket of state.sockets) {

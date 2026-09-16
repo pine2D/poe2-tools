@@ -292,6 +292,11 @@ export {
   validateCraftImplicitTargets,
   validateStoredCraftImplicitTargets,
 } from './implicitTargets'
+export {
+  INFLUENCE_RUNE_RULES_VERSION,
+  requiresInfluenceRuneProjectVersion,
+} from './influenceRuneProjectVersion'
+export { influenceRuneTags, isInfluenceRune } from './influenceRunes'
 export type { CraftProperty } from './itemProperties'
 export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
 export { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
