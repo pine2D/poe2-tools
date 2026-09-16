@@ -134,7 +134,7 @@ export function estimateDefences(
     Armour: { flat: 0, increased: 0 },
     Evasion: { flat: 0, increased: 0 },
     EnergyShield: { flat: 0, increased: 0 },
-    Ward: { flat: implicitWard.value ?? 0, increased: 0 },
+    Ward: { flat: (implicitWard.value ?? 0) + runeTotals.Ward, increased: 0 },
   }
   for (const { attribute: affix, mod, layer } of modifierLayers(catalog, state)) {
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
@@ -173,7 +173,11 @@ export function estimateDefences(
     ['Armour', base.properties.Armour],
     ['Evasion', base.properties.Evasion],
     ['EnergyShield', base.properties.EnergyShield],
-    ['Ward', base.properties.Ward ?? (implicitWard.value === null ? undefined : 0)],
+    [
+      'Ward',
+      base.properties.Ward ??
+        (implicitWard.value === null && runeTotals.Ward === 0 ? undefined : 0),
+    ],
   ]
   return {
     ok: true,

@@ -378,3 +378,5 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 [PoE2DB Verisium 公开页](https://poe2db.tw/us/Verisium)与[Runeforging 公开页](https://poe2db.tw/us/Runeforging)展示输入基底、输出基底和材料数量。本次按 gray 研究来源登记，只将公开 HTML 暂存于本地临时目录作关系审计，不复制同行数据文件、权重或实现，不引入浏览器第三方请求。数据库页没有明确授权，Wiki 文章许可不扩展到数据库。任何后续入库配方必须独立表、可关闭并登记版本和来源哈希；本次登记不代表已启用转换操作。
 
 后续目录接入：`data/craft/runeforging.json` 为独立 gray 关系表，仅收录经当前目录唯一身份核对的普通防具候选关系、Verisium 数量和固有模板变化标志，不含外站属性数值、价格或概率。普通区409行逐行记账，未解析行保留序号和原因；固定来源页哈希、六类 MIT 基底来源及提交共同约束解释。游戏版本尚不能完整确认，明确记 null。可整体移除此表；`DICT_ENABLE_POE2DB=0` 时不发布且清除旧产物。表存在不直接授权转换；装备当前状态、固有掷值和特殊交互仍由后续动作核对。
+
+2026-09-16 结界符文人工核对沿用固定 MIT ModRunes.lua（SHA-256 `d3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a`）、Item.lua 与 ModParser.lua；无新增抓取表。四档 Ward Rune 为本地平值，四档 Charging Rune 为全局再生提高；普通效果不包含 Bonded。[Ward Rune](https://poe2db.tw/us/Ward_Rune)、[Charging Rune](https://poe2db.tw/us/Charging_Rune) 仅 gray 公开说明人工参考，不采数据或权重。公式、取整与实机限制见 [结界符文核对](ward-runes-research.md)。

@@ -94,7 +94,7 @@ export function runeSocketContributionError(
       .filter((key) => totals[key] > 0)
       .map(
         (key) =>
-          `${RUNE_EFFECT_LABELS[key]} ${totals[key]}${['Life', 'Mana', 'StunThreshold', 'Strength', 'Dexterity', 'Intelligence', 'PhysicalThornsMin', 'PhysicalThornsMax', 'LightningThornsMin', 'LightningThornsMax'].includes(key) ? '' : '%'}`,
+          `${RUNE_EFFECT_LABELS[key]} ${totals[key]}${['Ward', 'Life', 'Mana', 'StunThreshold', 'Strength', 'Dexterity', 'Intelligence', 'PhysicalThornsMin', 'PhysicalThornsMax', 'LightningThornsMin', 'LightningThornsMax'].includes(key) ? '' : '%'}`,
       )
       .join('、') || '无'
   return `符文效果与孔位声明不一致：原文 ${describe(expected)}；所选符文 ${describe(actual)}。`

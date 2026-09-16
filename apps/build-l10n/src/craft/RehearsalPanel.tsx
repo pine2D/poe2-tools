@@ -79,6 +79,7 @@ import {
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
   requiresRuneforgeProjectVersion,
+  requiresWardRuneProjectVersion,
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
@@ -96,6 +97,7 @@ import {
   usesJewelCapacity,
   usesJewelEffect,
   type VaalCraftOperation,
+  WARD_RUNE_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlloyCraftPanel } from './AlloyCraftPanel'
@@ -1111,25 +1113,30 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const project: TargetCraftProject = requiresRuneforgeProjectVersion(projectConfig)
-    ? {
-        ...projectConfig,
-        rulesVersion: RUNEFORGE_CRAFT_RULES_VERSION,
-        runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '',
-      }
-    : requiresRuneforgedArmourProjectVersion(projectConfig, catalog)
-      ? { ...projectConfig, rulesVersion: RUNEFORGED_ARMOUR_RULES_VERSION }
-      : requiresCombatArmourRuneProjectVersion(projectConfig, catalog)
-        ? { ...projectConfig, rulesVersion: COMBAT_ARMOUR_RUNE_RULES_VERSION }
-        : retainedCatalystHistory
-          ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
-          : requiresCorruptionStrategyProjectVersion(projectConfig)
-            ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
-            : requiresExtractionProjectVersion(projectConfig)
-              ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
-              : requiresPerfectFluxProjectVersion(projectConfig)
-                ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
-                : projectConfig
+  const needsRuneforge = requiresRuneforgeProjectVersion(projectConfig)
+  const needsWardRunes = requiresWardRuneProjectVersion(projectConfig, catalog)
+  const project: TargetCraftProject =
+    needsWardRunes || needsRuneforge
+      ? {
+          ...projectConfig,
+          rulesVersion: needsWardRunes ? WARD_RUNE_RULES_VERSION : RUNEFORGE_CRAFT_RULES_VERSION,
+          ...(needsRuneforge
+            ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
+            : {}),
+        }
+      : requiresRuneforgedArmourProjectVersion(projectConfig, catalog)
+        ? { ...projectConfig, rulesVersion: RUNEFORGED_ARMOUR_RULES_VERSION }
+        : requiresCombatArmourRuneProjectVersion(projectConfig, catalog)
+          ? { ...projectConfig, rulesVersion: COMBAT_ARMOUR_RUNE_RULES_VERSION }
+          : retainedCatalystHistory
+            ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
+            : requiresCorruptionStrategyProjectVersion(projectConfig)
+              ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
+              : requiresExtractionProjectVersion(projectConfig)
+                ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
+                : requiresPerfectFluxProjectVersion(projectConfig)
+                  ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+                  : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
         runeforge: '锻造',

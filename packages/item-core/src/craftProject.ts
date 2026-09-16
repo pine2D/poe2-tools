@@ -88,6 +88,7 @@ import {
   validateCraftTargetValues,
   validateStoredCraftTargetValues,
 } from './targets'
+import { requiresWardRuneProjectVersion } from './wardRuneProjectVersion'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 
 export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v72'
@@ -644,6 +645,7 @@ export function readNativeTargetProjectProjection(
   combatArmourRunes = false,
   runeforgedArmour = false,
   runeforge = false,
+  wardRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -658,6 +660,7 @@ export function readNativeTargetProjectProjection(
     combatArmourRunes,
     runeforgedArmour,
     runeforge,
+    wardRunes,
   )
 }
 
@@ -674,6 +677,7 @@ function readCraftProject(
   combatArmourRunes = false,
   runeforgedArmour = false,
   runeforge = false,
+  wardRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -692,6 +696,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!wardRunes && requiresWardRuneProjectVersion(value, catalog))
+    return fail('结界与再生符文必须使用 v83 项目，包括起点、导入声明、未来历史、指引及报价。')
   if (!runeforge && requiresRuneforgeProjectVersion(value))
     return fail('锻造操作、指引及 Verisium 报价必须使用 v82 项目，包括完整未来历史。')
   if (!runeforgedArmour && requiresRuneforgedArmourProjectVersion(value, catalog))

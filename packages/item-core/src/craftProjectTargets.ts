@@ -57,6 +57,7 @@ import {
   projectTargetDefinitions,
 } from './targetDefinitions'
 import { targetProjectSourceHashes } from './targetProjectSources'
+import { requiresWardRuneProjectVersion, WARD_RUNE_RULES_VERSION } from './wardRuneProjectVersion'
 import { loadWorkbenchProject } from './workbenchProject'
 
 export const TARGET_CRAFT_RULES_VERSION = 'basic-2026-09-12-v74'
@@ -76,6 +77,8 @@ export {
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
   requiresRuneforgeProjectVersion,
+  requiresWardRuneProjectVersion,
+  WARD_RUNE_RULES_VERSION,
 }
 
 export interface TargetCraftProject
@@ -98,6 +101,7 @@ export interface TargetCraftProject
     | typeof RETAINED_CATALYST_RULES_VERSION
     | typeof COMBAT_ARMOUR_RUNE_RULES_VERSION
     | typeof RUNEFORGED_ARMOUR_RULES_VERSION
+    | typeof WARD_RUNE_RULES_VERSION
     | typeof RUNEFORGE_CRAFT_RULES_VERSION
   runeforgingCatalogSignature?: string
   fluxCatalogSignature?: string
@@ -268,13 +272,21 @@ export function parseTargetCraftProject(
       COMBAT_ARMOUR_RUNE_RULES_VERSION,
       RUNEFORGED_ARMOUR_RULES_VERSION,
       RUNEFORGE_CRAFT_RULES_VERSION,
+      WARD_RUNE_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
     return {
       ok: false,
-      error: '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81 或 v82 规则版本。',
+      error:
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81 、v82 或 v83 规则版本。',
     }
-  const runeforge = original.rulesVersion === RUNEFORGE_CRAFT_RULES_VERSION
+  const wardRunes = original.rulesVersion === WARD_RUNE_RULES_VERSION
+  if (!wardRunes && requiresWardRuneProjectVersion(original, catalog))
+    return {
+      ok: false,
+      error: '结界与再生符文必须使用 v83 项目，包括起点、导入声明、未来历史、指引及报价。',
+    }
+  const runeforge = wardRunes || original.rulesVersion === RUNEFORGE_CRAFT_RULES_VERSION
   const needsRuneforging =
     requiresRuneforgeProjectVersion(original) ||
     Object.hasOwn(original, 'runeforgingCatalogSignature')
@@ -379,6 +391,7 @@ export function parseTargetCraftProject(
         combatArmourRunes,
         runeforgedArmour,
         runeforge,
+        wardRunes,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -400,21 +413,23 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = runeforge
-      ? RUNEFORGE_CRAFT_RULES_VERSION
-      : runeforgedArmour
-        ? RUNEFORGED_ARMOUR_RULES_VERSION
-        : combatArmourRunes
-          ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-          : retainedCatalyst
-            ? RETAINED_CATALYST_RULES_VERSION
-            : corruptionStrategy
-              ? CORRUPTION_STRATEGY_RULES_VERSION
-              : extraction
-                ? EXTRACTION_CRAFT_RULES_VERSION
-                : perfectFlux
-                  ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                  : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = wardRunes
+      ? WARD_RUNE_RULES_VERSION
+      : runeforge
+        ? RUNEFORGE_CRAFT_RULES_VERSION
+        : runeforgedArmour
+          ? RUNEFORGED_ARMOUR_RULES_VERSION
+          : combatArmourRunes
+            ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+            : retainedCatalyst
+              ? RETAINED_CATALYST_RULES_VERSION
+              : corruptionStrategy
+                ? CORRUPTION_STRATEGY_RULES_VERSION
+                : extraction
+                  ? EXTRACTION_CRAFT_RULES_VERSION
+                  : perfectFlux
+                    ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                    : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string

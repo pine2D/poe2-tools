@@ -5,6 +5,7 @@ import {
   readCombatArmourRuneLine,
 } from './combatArmourRuneEffects'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
+import { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
 
 export type RuneEffectKey =
   | keyof typeof COMBAT_ARMOUR_TOTALS
@@ -21,6 +22,8 @@ export type RuneEffectKey =
   | 'Strength'
   | 'Dexterity'
   | 'Intelligence'
+  | 'Ward'
+  | 'WardRegeneration'
 export type RuneEffectTotals = Record<RuneEffectKey, number>
 
 const RESISTANCE = /^\+([1-9]\d*)% to (Fire|Cold|Lightning) Resistance$/
@@ -38,6 +41,8 @@ const FLAT_KEYS = {
   Intelligence: 'Intelligence',
 } as const
 export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
+  Ward: '符文结界',
+  WardRegeneration: '结界再生提高',
   PhysicalThornsMin: '物理荆棘伤害下限',
   PhysicalThornsMax: '物理荆棘伤害上限',
   LightningThornsMin: '闪电荆棘伤害下限',
@@ -65,6 +70,8 @@ export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
   Intelligence: '智慧',
 }
 const emptyTotals = (): RuneEffectTotals => ({
+  Ward: 0,
+  WardRegeneration: 0,
   ...COMBAT_ARMOUR_TOTALS,
   ...ARMOUR_SOUL_TOTALS,
   Fire: 0,
@@ -100,7 +107,7 @@ const FAMILIES = {
 export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotals | null {
   const totals = emptyTotals()
   for (const line of lines) {
-    const combat = readCombatArmourRuneLine(line)
+    const combat = readCombatArmourRuneLine(line) ?? readWardRuneLine(line)
     if (combat) {
       for (const [key, value] of Object.entries(combat)) {
         const total = totals[key as RuneEffectKey] + value
@@ -145,7 +152,7 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
 
 /** 身份、类别、本地标志和完整效果语义必须一致。 */
 export function isSupportedArmourRune(augment: CatalogAugment): boolean {
-  if (isCombatArmourRune(augment)) return true
+  if (isCombatArmourRune(augment) || isWardArmourRune(augment)) return true
   const family = Object.entries(FAMILIES).find(([name]) =>
     TIERS.some((tier) => augment.name === `${tier}${name}`),
   )?.[1]

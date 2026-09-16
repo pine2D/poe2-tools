@@ -4,6 +4,7 @@ import {
   type CatalogAugment,
   type CraftCatalog,
   type CraftState,
+  isWardArmourRune,
   type SocketCraftOperation,
   socketCandidates,
   socketCapacity,
@@ -25,8 +26,13 @@ interface SocketPanelProps {
   onApply: () => void
 }
 
-const isDefenceRune = (augment: CatalogAugment | undefined) =>
-  augment?.type === 'Rune' && augment.category === 'armour' && augment.localMod
+const isIronRune = (augment: CatalogAugment | undefined) =>
+  augment?.type === 'Rune' &&
+  augment.category === 'armour' &&
+  augment.localMod &&
+  /^(?:Lesser |Greater |Perfect )?Iron Rune$/.test(augment.name)
+const isWardRune = (augment: CatalogAugment | undefined) =>
+  augment !== undefined && isWardArmourRune(augment) && augment.localMod
 
 export function SocketPanel({
   catalog,
@@ -205,10 +211,15 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
-              {isDefenceRune(selected) ? (
+              {isIronRune(selected) ? (
                 <p>钢铁符文与普通本地防御提高相加，品质单独提供倍率；可在防御面板查看预计变化。</p>
-              ) : isDefenceRune(previous) ? (
+              ) : isIronRune(previous) ? (
                 <p>替换后将失去这个孔的钢铁符文防御提高，请核对防御面板的下降值。</p>
+              ) : null}
+              {isWardRune(selected) ? (
+                <p>结界符文提供本地平值，再按本地结界提高和品质计算；可在防御面板查看预计变化。</p>
+              ) : isWardRune(previous) ? (
+                <p>替换后将失去这个孔的结界符文平值，请核对防御面板的下降值。</p>
               ) : null}
               {selected.category === 'weapon' ? (
                 <p>本地伤害和攻速贡献可在武器面板查看预计变化，全局效果不计入该面板。</p>

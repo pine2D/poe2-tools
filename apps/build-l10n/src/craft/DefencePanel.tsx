@@ -30,19 +30,12 @@ export function DefencePanel({
   const next = after ? estimateDefences(catalog, after) : null
   const delta =
     previous?.ok && next?.ok
-      ? next.value
-          .map((entry) => {
-            const old = previous.value.find((candidate) => candidate.stat === entry.stat)
-            return old
-              ? {
-                  stat: entry.stat,
-                  before: old.value,
-                  after: entry.value,
-                  change: entry.value - old.value,
-                }
-              : null
-          })
-          .filter((entry) => entry !== null)
+      ? [...new Set([...previous.value, ...next.value].map((entry) => entry.stat))].map((stat) => {
+          // 两端均已成功估算时，缺少此防御项代表没有该项；失败仍保留未知。
+          const old = previous.value.find((entry) => entry.stat === stat)?.value ?? 0
+          const value = next.value.find((entry) => entry.stat === stat)?.value ?? 0
+          return { stat, before: old, after: value, change: value - old }
+        })
       : []
   return (
     <section className="defence-panel" aria-label="防御面板估算">
