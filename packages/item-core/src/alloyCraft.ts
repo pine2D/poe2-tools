@@ -3,6 +3,7 @@ import { alloyCatalogSignature, inspectCraftAlloys } from './alloys'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
+import { craftedModifierCapacity } from './craftedCapacity'
 import { guaranteedReplacementCandidates } from './guaranteedReplacement'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
 
@@ -23,8 +24,10 @@ export function prepareAlloyCraft(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   if (checked.value.rarity !== 'rare') return fail('合金只能用于稀有装备。')
-  if (checked.value.affixes.some((affix) => affix.crafted))
-    return fail('装备已有工艺词缀，最多允许一组。')
+  const capacity = craftedModifierCapacity(catalog, checked.value)
+  if (!capacity.ok) return capacity
+  if (checked.value.affixes.filter((affix) => affix.crafted).length >= capacity.value)
+    return fail('当前工艺容量已用满。')
   if (alloyCatalogSignature(catalog) === null) return fail('合金关系目录未加载或来源无效。')
   const base = catalog.bases.find((entry) => entry.id === checked.value.baseId)
   if (!base) return fail('基底不在当前目录中。')

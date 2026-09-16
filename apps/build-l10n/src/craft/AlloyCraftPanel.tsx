@@ -113,7 +113,7 @@ export function AlloyCraftPanel({
     <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
       <summary ref={entryRef}>合金制作</summary>
       <p>
-        用于稀有装备：游戏随机移除一整组词缀，加入合金保证的工艺属性。这里选择一种可能结果进行演练；最多保留一组工艺。数值与移除对象仍随机。
+        用于稀有装备：游戏随机移除一整组词缀，加入合金保证的工艺属性。这里选择一种可能结果进行演练；工艺数量受当前容量限制，仍需满足前后缀空位与冲突组规则。数值与移除对象仍随机。
       </p>
       <label>
         搜索合金材料

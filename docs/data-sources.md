@@ -2,9 +2,11 @@
 
 ## 特殊容量符文（2026-09-16，实施前审计）
 
+v87 实施补充：Astrid 三分支复用上述固定 MIT 目录及已登记三服官方名称，不新增抓取或生产数据。普通单枚双工艺先行接通；合金仍经可整体关闭的 gray 关系表核对。第二组不取消来源、部位、冲突与移除池检查；未确认的双工艺覆盖后保留明确不执行。萃取沿已登记独立摧毁／返还语义，不以存活装备的容量下降解释。没有使用作者概率、费用或同行实现。
+
 沿用固定 MIT PoB2 镶嵌及缩放目录和现有 gray 合金关系表；[GGG 0.5.4](https://www.pathofexile.com/forum/view-thread/3975218/filter-account-type/staff)作为 primary 操作前置证据，禁止向腐化／净化装备新镶列举的特殊符文。[PaintMaster 作者攻略](https://mobalytics.gg/poe-2/profile/paintmaster/guides/recoup-chronomancer-gear-crafting-guide)、[Belton 原视频](https://www.youtube.com/watch?v=Tt7DBsX36dc)、[Fubgun 原视频](https://www.youtube.com/watch?v=xu5UpEE8UP8)按 gray 人工机制参考登记，没有再分发许可，不建立抓取适配器。仅登记链接与自行撰写的证据边界，字幕、视频、图片和装备只作临时核对，不入库。
 
-Belton 的额外 2 后缀结果截图与容量下降讲解分别记录；没有连续移除实录，不能作为本项目真机验收。Fubgun 本轮仅读取自动字幕。官方论坛 [Astrid 提问](https://www.pathofexile.com/forum/view-thread/3952578)与[制作失败报告](https://www.pathofexile.com/forum/view-thread/3966330)也是 gray 玩家陈述，不能反推通用规则。CoE 更新说明仅参考公开流程，不取实现或权重。部位映射、更换后的已有属性、新增容量与绑定孔处理详见 [特殊容量符文核对](special-capacity-runes-research.md)。本轮仅研究，不变更应用版本或已支持操作。
+Belton 的额外 2 后缀结果截图与容量下降讲解分别记录；没有连续移除实录，不能作为本项目真机验收。Fubgun 本轮仅读取自动字幕。官方论坛 [Astrid 提问](https://www.pathofexile.com/forum/view-thread/3952578)与[制作失败报告](https://www.pathofexile.com/forum/view-thread/3966330)也是 gray 玩家陈述，不能反推通用规则。CoE 更新说明仅参考公开流程，不取实现或权重。部位映射、更换后的已有属性、新增容量与绑定孔处理详见 [特殊容量符文核对](special-capacity-runes-research.md)。原审计阶段仅研究；后续实施范围以上述 v87 补充及演练规则为准。
 
 ## 防具荆棘与减益符文（2026-09-16，实施前登记）
 

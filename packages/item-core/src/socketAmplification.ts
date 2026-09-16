@@ -1,6 +1,8 @@
 import { sovereignEffect } from './alloyEffects'
+import { ASTRID_LINE, isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { isConditionalArmourRune } from './conditionalArmourRunes'
+import { astridFitsBase } from './craftedCapacity'
 import { essenceSourceHash } from './essences'
 import { isRebirthArmourRune } from './extendedArmourRuneEffects'
 import type { CraftAffix, CraftState } from './rehearsal'
@@ -51,6 +53,24 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
+  if (isAstridRune(augment)) {
+    if (
+      !astridFitsBase(catalog, state, augment) ||
+      increase < 0 ||
+      increase >= 100 ||
+      statScalabilitySourceHash(catalog) === null
+    )
+      return null
+    const metadata = catalog.scalability?.[ASTRID_LINE]
+    if (
+      metadata?.length !== 1 ||
+      metadata[0]?.scalable !== true ||
+      metadata[0].formats.length !== 0
+    )
+      return null
+    const scaled = scaleStatLineByEffect(ASTRID_LINE, ASTRID_LINE, metadata, increase)
+    return scaled.ok && scaled.value === ASTRID_LINE ? { ...augment, lines: [scaled.value] } : null
+  }
   if (increase === 0) return augment
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)

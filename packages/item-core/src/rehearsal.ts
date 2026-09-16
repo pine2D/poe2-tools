@@ -35,6 +35,7 @@ import { matchCatalogLineOrder, matchesCatalogLines, readCatalogLineValues } fro
 import { catalystStateError } from './catalystQuality'
 import { corruptionStateError } from './corruptionEnchantments'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
+import { craftedModifierCapacity } from './craftedCapacity'
 import { desecrationSourceHash } from './desecration'
 import { isEssenceMappedMod } from './essences'
 import { fluxEligibleModIds } from './fluxes'
@@ -355,8 +356,10 @@ export function createCraftState(
     if (boneError) return failure(boneError)
   }
   const resolved: { affix: CraftAffix; mod: CatalogMod }[] = []
-  if (input.affixes.filter((affix) => affix?.crafted === true).length > 1)
-    return failure('装备最多允许一组工艺词缀。')
+  const craftedCapacity = craftedModifierCapacity(catalog, input)
+  if (!craftedCapacity.ok) return craftedCapacity
+  const craftedCount = input.affixes.filter((affix) => affix?.crafted === true).length
+  if (craftedCount > craftedCapacity.value) return failure('工艺词缀超过当前已核对容量。')
   const fracturedCount = input.affixes.filter((affix) => affix?.fractured === true).length
   if (fracturedCount > 1 || (fracturedCount > 0 && input.rarity !== 'rare'))
     return failure('目前只支持稀有装备的一组破裂词缀；破裂魔法装备仅供对比。')
@@ -427,6 +430,13 @@ export function createCraftState(
   let prefixes = input.pendingDesecration?.kind === 'prefix' ? 1 : 0
   let suffixes = input.pendingDesecration?.kind === 'suffix' ? 1 : 0
   for (const { affix, mod } of resolved) {
+    if (
+      craftedCount > 1 &&
+      affix.crafted &&
+      !isEssenceMappedMod(catalog, base, mod.id) &&
+      !isAlloyMappedMod(catalog, base, mod.id)
+    )
+      return failure('双工艺的每组属性都需要当前基底对应的精华或合金来源。')
     if (
       accepted.some(
         (existing) =>

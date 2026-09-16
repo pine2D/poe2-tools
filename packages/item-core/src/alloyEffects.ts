@@ -1,6 +1,7 @@
 import { inspectCraftAlloys } from './alloys'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
+import { craftedModifierCapacity } from './craftedCapacity'
 import type { CraftAffix, CraftResult, CraftState } from './rehearsal'
 
 const RULES = {
@@ -58,11 +59,13 @@ export function sovereignEffect(
 ): CraftResult<number> {
   const affixes = state.affixes.filter((affix) => affix.modId === RULES[effect].id)
   if (affixes.length === 0) return { ok: true, value: 0 }
+  const capacity = craftedModifierCapacity(catalog, state)
   const affix = affixes[0]
   if (
     affixes.length !== 1 ||
     !affix ||
-    state.affixes.filter((entry) => entry.crafted).length !== 1 ||
+    !capacity.ok ||
+    state.affixes.filter((entry) => entry.crafted).length > capacity.value ||
     !isSovereignAffix(catalog, state, affix, effect)
   )
     return { ok: false, error: '君王合金增效身份或来源无效。' }

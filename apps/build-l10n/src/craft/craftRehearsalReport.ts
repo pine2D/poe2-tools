@@ -10,6 +10,7 @@ import {
   type CraftState,
   type CraftStep,
   collectCraftCosts,
+  craftedModifierCapacity,
   createCraftState,
   isConditionalArmourRune,
   prepareExtractionCraft,
@@ -72,6 +73,14 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
           ]
         : []),
     ]
+    const craftedCapacity = craftedModifierCapacity(catalog, state)
+    result.push(
+      craftedCapacity.ok
+        ? `工艺占用 ${state.affixes.filter((affix) => affix.crafted).length} / 当前容量 ${craftedCapacity.value}`
+        : craftedCapacity.error,
+    )
+    if (craftedCapacity.ok && craftedCapacity.value > 1)
+      result.push('当前额外工艺容量来自已核对的镶嵌物；失去容量来源后的多工艺保留行为尚未核实。')
     const skill = readCraftGrantedSkillLevel(catalog, state)
     if (skill.ok)
       result.push(`装备技能最高等级：${skill.value.level ?? '未知'}；${name(skill.value.name)}`)

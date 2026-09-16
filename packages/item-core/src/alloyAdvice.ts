@@ -1,6 +1,7 @@
 import { prepareAlloyCraft } from './alloyCraft'
 import { inspectCraftAlloys } from './alloys'
 import type { CraftCatalog } from './catalog'
+import { craftedModifierCapacity } from './craftedCapacity'
 import { type AlloyCraftOperation, applyCraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import type { CraftResult, CraftState } from './rehearsal'
@@ -40,13 +41,11 @@ export function analyzeAlloyTargetContext(
   definitions?: CraftTargetDefinitions,
 ): CraftResult<AlloyAdviceStep[]> {
   const native = definitions ? specialTargetContext(catalog, state, definitions) : undefined
-  if (
-    !catalog.alloys ||
-    state.rarity !== 'rare' ||
-    state.corrupted ||
-    state.pendingDesecration ||
-    state.affixes.some((affix) => affix.crafted)
-  )
+  if (!catalog.alloys || state.rarity !== 'rare' || state.corrupted || state.pendingDesecration)
+    return { ok: true, value: [] }
+  const capacity = craftedModifierCapacity(catalog, state)
+  if (!capacity.ok) return capacity
+  if (state.affixes.filter((affix) => affix.crafted).length >= capacity.value)
     return { ok: true, value: [] }
   const progress = analyzeCraftTargetContext(
     catalog,

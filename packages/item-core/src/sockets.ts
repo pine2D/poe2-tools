@@ -1,5 +1,7 @@
 import { isSovereignAffix } from './alloyEffects'
+import { isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
+import { astridFitsBase } from './craftedCapacity'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
@@ -83,6 +85,7 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
+  if (isAstridRune(augment)) return astridFitsBase(catalog, state, augment)
   if (isSupportedSoulCore(augment))
     return weapon
       ? weapon.category === 'weapon' && augment.category === 'weapon'

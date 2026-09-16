@@ -2,6 +2,7 @@ import { appendCraftAffix } from './affixIdentity'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
+import { craftedModifierCapacity } from './craftedCapacity'
 import { ESSENCE_OMEN_RULES, type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import { essenceCategory, essenceCraftMode, essenceSourceHash } from './essences'
 import { craftModsConflict } from './modConflicts'
@@ -37,7 +38,10 @@ export function prepareEssenceCraft(
   if (omen !== undefined && mode !== 'replace') return fail('结晶预兆只能搭配完美或腐化精华。')
   const essence = catalog.essences?.find((entry) => entry.id === essenceId)
   if (!essence) return fail('精华不在当前目录中。')
-  if (state.affixes.some((affix) => affix.crafted)) return fail('装备已有工艺词缀，最多允许一组。')
+  const capacity = craftedModifierCapacity(catalog, checked.value)
+  if (!capacity.ok) return capacity
+  if (checked.value.affixes.filter((affix) => affix.crafted).length >= capacity.value)
+    return fail('当前工艺容量已用满。')
   if (state.rarity !== (mode === 'upgrade' ? 'magic' : 'rare'))
     return fail(
       mode === 'upgrade' ? '前三档精华只能用于魔法装备。' : '完美与腐化精华只能用于稀有装备。',

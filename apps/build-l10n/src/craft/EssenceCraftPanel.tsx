@@ -3,6 +3,7 @@ import {
   type CraftCatalog,
   type CraftState,
   type CraftTargetDefinitions,
+  craftedModifierCapacity,
   definitionTargetIdsForMods,
   ESSENCE_OMEN_RULES,
   type EssenceCraftOperation,
@@ -43,6 +44,7 @@ export function EssenceCraftPanel({
   disabled,
   onPreview,
 }: EssenceCraftPanelProps) {
+  const capacity = craftedModifierCapacity(catalog, state)
   const [query, setQuery] = useState('')
   const [freeOmen, setOmen] = useState<EssenceOmen | undefined>()
   const omen = configuration === undefined ? freeOmen : configuration.omen
@@ -135,7 +137,10 @@ export function EssenceCraftPanel({
       aria-label="精华制作"
     >
       <h3>精华制作</h3>
-      <p>工艺词缀 {state.affixes.filter((affix) => affix.crafted).length}/1</p>
+      <p>
+        工艺词缀 {state.affixes.filter((affix) => affix.crafted).length}/
+        {capacity.ok ? capacity.value : '待核对'}
+      </p>
       <p>
         前三档精华将魔法装备升级为稀有；完美与腐化精华在稀有装备上移除一组，再加入保证工艺词缀。每次应用消耗一份精华，启用预兆时另消耗一份预兆。
       </p>

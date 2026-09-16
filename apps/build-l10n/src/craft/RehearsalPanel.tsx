@@ -15,6 +15,7 @@ import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
   CRAFT_OMEN_RULES,
+  CRAFTED_CAPACITY_RULES_VERSION,
   type CraftAdviceStep,
   type CraftAffixSelector,
   type CraftCatalog,
@@ -32,6 +33,7 @@ import {
   craftAffixCapacities,
   craftAffixSpace,
   craftCandidates,
+  craftedModifierCapacity,
   craftOmenDescription,
   craftOmenMaterials,
   definitionStrategyStageAt,
@@ -79,6 +81,7 @@ import {
   requiresCombatArmourRuneProjectVersion,
   requiresConditionalArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
+  requiresCraftedCapacityProjectVersion,
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
   requiresMasterworkProjectVersion,
@@ -391,6 +394,9 @@ export function RehearsalPanel({
     initialProject?.project.strategyStartStep,
   )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
+  const [craftedCapacityRules, setCraftedCapacityRules] = useState(
+    initialProject?.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION,
+  )
   const [conditionalRules, setConditionalRules] = useState(
     initialProject?.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
   )
@@ -1138,7 +1144,10 @@ export function RehearsalPanel({
   const needsMasterwork = requiresMasterworkProjectVersion(projectConfig)
   const needsConditionalRunes =
     conditionalRules || requiresConditionalArmourRuneProjectVersion(projectConfig, catalog)
+  const needsCraftedCapacity =
+    craftedCapacityRules || requiresCraftedCapacityProjectVersion(projectConfig, catalog)
   const project: TargetCraftProject =
+    needsCraftedCapacity ||
     needsConditionalRunes ||
     needsMasterwork ||
     needsExtendedRunes ||
@@ -1146,15 +1155,17 @@ export function RehearsalPanel({
     needsRuneforge
       ? {
           ...projectConfig,
-          rulesVersion: needsConditionalRunes
-            ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-            : needsMasterwork
-              ? MASTERWORK_CRAFT_RULES_VERSION
-              : needsExtendedRunes
-                ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                : needsWardRunes
-                  ? WARD_RUNE_RULES_VERSION
-                  : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsCraftedCapacity
+            ? CRAFTED_CAPACITY_RULES_VERSION
+            : needsConditionalRunes
+              ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+              : needsMasterwork
+                ? MASTERWORK_CRAFT_RULES_VERSION
+                : needsExtendedRunes
+                  ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                  : needsWardRunes
+                    ? WARD_RUNE_RULES_VERSION
+                    : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1184,9 +1195,11 @@ export function RehearsalPanel({
         extraction: '萃取石',
       }[guaranteedDraft.kind]
     : ''
+  const craftedCapacity = craftedModifierCapacity(catalog, current)
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setCraftedCapacityRules(restored.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION)
     setConditionalRules(restored.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION)
     setPricing(restored.project.pricing)
     setTargetContext({
@@ -1375,6 +1388,11 @@ export function RehearsalPanel({
         <div>
           <strong>{translations[base.name] ?? base.name}</strong>
           <span>{RARITIES[current.rarity]}</span>
+          <span role="status" aria-label="当前工艺容量">
+            {craftedCapacity.ok
+              ? `工艺占用 ${current.affixes.filter((affix) => affix.crafted).length} / 当前容量 ${craftedCapacity.value}`
+              : craftedCapacity.error}
+          </span>
         </div>
       </header>
 

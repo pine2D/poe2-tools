@@ -111,7 +111,6 @@ function readCraftImport(
       original.item.mods.some((mod) =>
         mod.states?.some((state) => !['crafted', 'desecrated', 'fractured'].includes(state)),
       ) ||
-      original.item.mods.filter((mod) => mod.states?.includes('crafted')).length > 1 ||
       original.item.mods.filter((mod) => mod.states?.includes('desecrated')).length > 1 ||
       original.item.mods.filter((mod) => mod.states?.includes('fractured')).length > 1 ||
       (original.item.fractured &&

@@ -20,6 +20,7 @@ export {
   parseAlloyCatalog,
 } from './alloys'
 export type { ArchitectCraftOperation } from './architect'
+export { isAstridRune } from './astridRune'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
 export {
   analyzeBoneTargets,
@@ -122,6 +123,11 @@ export {
   quoteCraftCosts,
 } from './craftCosts'
 export { createCraftItemDictionary } from './craftDictionary'
+export { craftedModifierCapacity } from './craftedCapacity'
+export {
+  CRAFTED_CAPACITY_RULES_VERSION,
+  requiresCraftedCapacityProjectVersion,
+} from './craftedCapacityProjectVersion'
 export {
   type CraftItemTextExport,
   type CraftItemTextOptions,

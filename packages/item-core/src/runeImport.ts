@@ -1,4 +1,5 @@
 import { RUNE_SUFFIX } from './annotations'
+import { astridSourceMatches } from './astridRune'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
@@ -76,6 +77,13 @@ export function runeSocketContributionError(
     if (effective === null) return '孔内符文增效暂不支持，不能核对。'
     augments.push(effective)
   }
+  if (
+    !astridSourceMatches(
+      state.runeSourceLines,
+      augments.flatMap((a) => a.lines),
+    )
+  )
+    return '工艺容量符文效果与孔位声明不一致。'
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
   if (weapon) {

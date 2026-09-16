@@ -229,6 +229,9 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
+              {selected.limit && !isConditionalArmourRune(selected) ? (
+                <p>该镶嵌物限量 {selected.limit}；其他装备与角色孔尚未核对。</p>
+              ) : null}
               {isConditionalArmourRune(selected) ? (
                 <p>
                   该符文限量

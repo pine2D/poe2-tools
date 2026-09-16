@@ -22,6 +22,7 @@ import {
   isVaalCraftOperation,
   type VaalCraftOperation,
 } from './corruptionRules'
+import { astridSocketError } from './craftedCapacity'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
 import {
@@ -368,6 +369,13 @@ export function applyCraftStep(
       step.augmentId,
     )
     if (limitError) return { ok: false, error: limitError }
+    const capacityError = astridSocketError(
+      catalog,
+      checked.value,
+      step.socketIndex,
+      step.augmentId,
+    )
+    if (capacityError) return { ok: false, error: capacityError }
     sockets[step.socketIndex] = step.augmentId
     return createCraftState(catalog, checked.value)
   }

@@ -1,3 +1,4 @@
+import { ASTRID_LINE, isAstridRune } from './astridRune'
 import type { CatalogAugment, CatalogBase } from './catalog'
 import { isSupportedSoulCore, readSoulCoreLine, WEAPON_SOUL_TOTALS } from './soulCoreEffects'
 
@@ -94,6 +95,7 @@ export function parseWeaponRuneEffectTotals(
   const totals = emptyTotals()
   let branch: Branch | undefined
   for (const line of lines) {
+    if (line === ASTRID_LINE) continue
     const soul = readSoulCoreLine(line, 'weapon')
     const added = /^Adds ([1-9]\d*) to ([1-9]\d*) (Physical|Fire|Cold|Lightning) Damage$/.exec(line)
     const extra = /^Gain ([1-9]\d*)% of Damage as Extra (Fire|Cold|Lightning) Damage$/.exec(line)
@@ -166,6 +168,8 @@ export function isSupportedWeaponRune(
   augment: CatalogAugment,
   category: WeaponRuneCategory,
 ): boolean {
+  if (isAstridRune(augment))
+    return augment.category === (category === 'weapon' ? 'weapon' : 'caster')
   const family =
     /^(?:Lesser |Greater |Perfect )?(Desert|Glacial|Storm|Iron|Body|Mind|Rebirth|Inspiration|Stone|Vision|Robust|Adept|Resolve|Tempered) Rune$/.exec(
       augment.name,
