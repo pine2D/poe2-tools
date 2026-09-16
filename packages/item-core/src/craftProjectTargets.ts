@@ -47,7 +47,7 @@ import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   requiresPerfectFluxProjectVersion,
 } from './perfectFluxProjectVersion'
-import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import type { CraftResult, CraftState } from './rehearsal'
 import {
   RETAINED_CATALYST_RULES_VERSION,
   requiresRetainedCatalystProjectVersion,
@@ -66,8 +66,8 @@ import {
   SERLE_RULES_VERSION,
   serleProjectCapabilityError,
 } from './serleProjectVersion'
-import { serleCapacity } from './serleRune'
 import type { CraftStrategyCondition } from './strategyConditions'
+import { findTargetCapacityContext } from './targetCapacityContext'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
 import {
   type CraftTargetDefinitionContext,
@@ -424,7 +424,7 @@ export function parseTargetCraftProject(
     ...rest
   } = original
   let capacityContext: CraftState | undefined
-  if (serle) {
+  if (craftedCapacity) {
     // 先回放真实装备历史，再授权超额目标；未执行指引和伪造孔位不能提供容量。
     const { strategyStartStep: _strategyStartStep, ...stateProjection } = rest
     let historyProjection: string
@@ -455,14 +455,9 @@ export function parseTargetCraftProject(
       serle,
     )
     if (!history.ok) return history
-    capacityContext = history.value.states[0]
-    for (const state of history.value.states) {
-      if (state.destroyed) continue
-      const checked = createCraftState(catalog, state)
-      if (!checked.ok) continue
-      const capacity = serleCapacity(catalog, checked.value)
-      if (capacity.ok && capacity.value === 1) capacityContext = checked.value
-    }
+    capacityContext =
+      findTargetCapacityContext(catalog, history.value.states, original.targetDefinitions) ??
+      history.value.states[0]
   }
   const context = readTargetDefinitionContext(
     catalog,

@@ -316,3 +316,71 @@ it('能力扫描不执行访问器且支持循环结构', () => {
   input.self = input
   expect(requiresCraftedCapacityProjectVersion(input, catalog)).toBe(false)
 })
+
+import { alloyCatalogSignature } from './alloys'
+import { alloyTestFixture } from './alloyTestFixture'
+
+const targetCatalog = { ...catalog, alloys: alloyTestFixture() }
+const casterAstrid = 'pob2:augment:["Astrid\'s Creativity","caster"]'
+function futureCraftTargetsProject() {
+  return {
+    ...project(),
+    augmentSourceHash,
+    alloyCatalogSignature: alloyCatalogSignature(targetCatalog),
+    initialState: {
+      ...project().initialState,
+      baseId: 'Volatile Wand',
+      sockets: [null],
+      quality: 20,
+    },
+    operations: [{ kind: 'socket', socketIndex: 0, augmentId: casterAstrid }],
+    targetDefinitions: {
+      nextTargetId: 3,
+      targets: [
+        'AlloyEffectOfSocketedAugments1',
+        'AlloyCastSpeedDamageAsExtraColdHybridOneHand1',
+      ].map((modId, i) => ({ targetId: `t${i + 1}`, modId })),
+      alternatives: [],
+      values: [],
+    },
+  }
+}
+it.each([version, 'basic-2026-09-16-v88'])(
+  '%s纯Astrid未来镶嵌可核对双工艺目标并完整保存',
+  (rulesVersion) => {
+    for (const cursor of [0, 1]) {
+      const input = { ...futureCraftTargetsProject(), rulesVersion, cursor }
+      const restored = must(parseTargetCraftProject(JSON.stringify(input), targetCatalog))
+      expect(restored.project).toEqual(input)
+      expect(
+        JSON.parse(must(serializeTargetCraftProject(restored.project, targetCatalog))),
+      ).toEqual(input)
+    }
+  },
+)
+it('未执行指引、报价或伪造未来孔位不能授权双工艺目标', () => {
+  const input = futureCraftTargetsProject()
+  for (const invalid of [
+    { ...input, operations: [] },
+    {
+      ...input,
+      operations: [],
+      pricing: { unit: 'divine', prices: { "augment:Astrid's Creativity": 1 } },
+    },
+    { ...input, operations: [{ kind: 'socket', socketIndex: 2, augmentId: casterAstrid }] },
+    {
+      ...input,
+      operations: [],
+      strategy: {
+        maxSteps: 4,
+        rules: [
+          {
+            conditions: [{ kind: 'always' }],
+            action: { kind: 'socket', socketIndex: 'first-empty', augmentId: casterAstrid },
+          },
+        ],
+      },
+    },
+  ])
+    expect(parseTargetCraftProject(JSON.stringify(invalid), targetCatalog).ok).toBe(false)
+})

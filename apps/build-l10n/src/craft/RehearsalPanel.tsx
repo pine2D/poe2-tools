@@ -47,6 +47,7 @@ import {
   FLUX_CRAFT_RULES_VERSION,
   type FluxCraftOperation,
   type FractureCraftOperation,
+  findTargetCapacityContext,
   fluxCatalogSignature,
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentifiedCraftState,
@@ -100,7 +101,6 @@ import {
   serializeCraftProject,
   serializeIdentityCraftProject,
   serializeTargetCraftProject,
-  serleCapacity,
   setTargetDefinitionStrategy,
   statScalabilitySourceHash,
   TARGET_CRAFT_RULES_VERSION,
@@ -565,15 +565,11 @@ export function RehearsalPanel({
     [history],
   )
   const current = history[cursor]?.state
-  const targetCapacityContext = useMemo(() => {
-    for (let index = history.length - 1; index >= 0; index--) {
-      const state = history[index]?.state
-      if (!state || state.destroyed) continue
-      const capacity = serleCapacity(catalog, state)
-      if (capacity.ok && capacity.value > 0) return state
-    }
-    return current
-  }, [catalog, history, current])
+  const targetCapacityHistory = useMemo(() => history.map((entry) => entry.state), [history])
+  const targetCapacityContext = useMemo(
+    () => findTargetCapacityContext(catalog, targetCapacityHistory, definitions) ?? current,
+    [catalog, targetCapacityHistory, definitions, current],
+  )
   const corruptionContextRef = useRef({ catalog, current })
   useEffect(() => {
     const previous = corruptionContextRef.current
@@ -1605,6 +1601,7 @@ export function RehearsalPanel({
         />
       ) : null}
       <CraftTargets
+        capacityHistory={targetCapacityHistory}
         {...(targetCapacityContext ? { capacityContext: targetCapacityContext } : {})}
         onExtract={(targets) => {
           const changed = editTargetDefinitionContext(
@@ -1616,6 +1613,7 @@ export function RehearsalPanel({
               definitions: targets,
             },
             targetCapacityContext,
+            targetCapacityHistory,
           )
           if (!changed.ok) {
             setMessage(changed.error)
@@ -1635,6 +1633,7 @@ export function RehearsalPanel({
             targetContext,
             edit,
             targetCapacityContext,
+            targetCapacityHistory,
           )
           if (!changed.ok) {
             setMessage(changed.error)

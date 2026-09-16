@@ -423,6 +423,7 @@ export {
   strategyStageAt,
   validStrategyStartStep,
 } from './strategyStages'
+export { findTargetCapacityContext } from './targetCapacityContext'
 export type { CraftDefinitionAdvice, CraftDefinitionAdviceStep } from './targetDefinitionAdvice'
 export {
   analyzeTargetDefinitions,

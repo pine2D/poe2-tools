@@ -6,6 +6,7 @@ import {
   readDefinitionCraftStrategy,
 } from './definitionStrategy'
 import type { CraftResult, CraftState } from './rehearsal'
+import { findTargetCapacityContext } from './targetCapacityContext'
 import { editTargetDefinitions } from './targetDefinitionEdits'
 import type { CraftTargetDefinitionContext } from './targetDefinitionMigration'
 import {
@@ -154,6 +155,7 @@ export function editTargetDefinitionContext(
   context: unknown,
   edit: unknown,
   capacityContext = state,
+  capacityHistory?: readonly CraftState[],
 ): CraftResult<CraftTargetDefinitionContext> {
   if (!isPlainProjectJSON(edit)) return fail('目标编辑必须是完整的普通 JSON 数据。')
   const checked = readTargetDefinitionContext(
@@ -169,17 +171,20 @@ export function editTargetDefinitionContext(
     checked.value.definitions,
     edit,
     capacityContext,
+    capacityHistory,
   )
-  return edited.ok
-    ? rebuild(
-        catalog,
-        capacityContext.baseId,
-        checked.value,
-        edited.value,
-        checked.value.strategy,
-        capacityContext,
-      )
-    : edited
+  if (!edited.ok) return edited
+  const nextCapacity =
+    (capacityHistory && findTargetCapacityContext(catalog, capacityHistory, edited.value)) ??
+    capacityContext
+  return rebuild(
+    catalog,
+    nextCapacity.baseId,
+    checked.value,
+    edited.value,
+    checked.value.strategy,
+    nextCapacity,
+  )
 }
 
 /** 不传策略即明确关闭；清理不再引用的失联元数据，但从不回退目标分配游标。 */

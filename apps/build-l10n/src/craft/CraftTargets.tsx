@@ -46,6 +46,7 @@ interface CraftTargetsProps {
   catalog: CraftCatalog
   state: CraftState
   capacityContext?: CraftState
+  capacityHistory?: readonly CraftState[]
   targetImplicitValues?: CraftImplicitTargetValues[]
   onImplicitValuesChange?: (values: CraftImplicitTargetValues[]) => void
   definitions: CraftTargetDefinitions
@@ -67,6 +68,7 @@ export function CraftTargets({
   catalog,
   state,
   capacityContext,
+  capacityHistory,
   definitions,
   onEdit,
   targetImplicitValues = [],
@@ -189,7 +191,14 @@ export function CraftTargets({
   const essenceSteps = essenceAdvice.ok ? essenceAdvice.value : []
   const preparationRoutes = preparationAdvice.ok ? preparationAdvice.value.routes : []
   const edit = (change: CraftTargetDefinitionEdit) => {
-    const checked = editTargetDefinitions(catalog, state, definitions, change, capacityContext)
+    const checked = editTargetDefinitions(
+      catalog,
+      state,
+      definitions,
+      change,
+      capacityContext,
+      capacityHistory,
+    )
     if (!checked.ok) {
       setMessage(checked.error)
       return
@@ -208,6 +217,7 @@ export function CraftTargets({
       definitions,
       { kind: 'add', modId: id },
       capacityContext,
+      capacityHistory,
     )
     const mod = modById.get(id)
     if (
@@ -379,6 +389,7 @@ export function CraftTargets({
                   definitions,
                   { kind: 'add', modId: mod.id },
                   capacityContext,
+                  capacityHistory,
                 ).ok
               return (
                 <article key={mod.id}>
