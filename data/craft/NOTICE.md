@@ -37,3 +37,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+`runeforging.json` 是独立 gray 配方关系表，由已登记公开 HTML 的普通配方区核对生成，不复制其他工具的数据文件或代码。只保存376条固定基底身份对应、Verisium数量和固有模板变化，33条未解析行保留序号及原因；来源提交、六类基底哈希与页面哈希见 `_meta`。游戏版本未完整核验，记为 null。关闭 `DICT_ENABLE_POE2DB` 或移除此表可下线，不影响 primary 目录；此表不等于所有状态都能执行转换。网页数据库没有明确再分发许可，MIT仅覆盖本仓库自有代码。

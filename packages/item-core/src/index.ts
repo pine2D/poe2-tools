@@ -345,6 +345,7 @@ export {
   RUNEFORGED_ARMOUR_RULES_VERSION,
   requiresRuneforgedArmourProjectVersion,
 } from './runeforgedProjectVersion'
+export { parseRuneforgingCatalog, type RuneforgingCatalog } from './runeforgingCatalog'
 export {
   estimateSkillLevelContributions,
   type SkillLevelContribution,

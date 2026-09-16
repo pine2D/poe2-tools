@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { expect, it } from 'vitest'
 
-it.each(['alloys.json', 'fluxes.json'])(
+it.each(['alloys.json', 'fluxes.json', 'runeforging.json'])(
   '发布同步在关闭 gray 和移除 %s 后清掉旧产物，主目录始终可用',
   (file) => {
     const root = mkdtempSync(join(tmpdir(), 'poe2-alloy-sync-'))

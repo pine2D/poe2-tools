@@ -13,9 +13,11 @@ import {
   parseAlloyCatalog,
   parseCraftCatalog,
   parseFluxCatalog,
+  parseRuneforgingCatalog,
   STAT_SCALABILITY_SOURCE,
   statScalabilitySourceHash,
 } from '@poe2-tools/item-core'
+import { checkRuneforgingSnapshot } from './check-runeforging'
 import { REPO_ROOT } from './config'
 
 const catalog = parseCraftCatalog(
@@ -30,6 +32,28 @@ async function readOptionalTable(file: string): Promise<string | undefined> {
     return undefined
   }
 }
+const runeforgingText = await readOptionalTable('runeforging.json')
+if (runeforgingText !== undefined) {
+  const table = parseRuneforgingCatalog(JSON.parse(runeforgingText), catalog)
+  checkRuneforgingSnapshot(table)
+  const replacements = table.recipes.filter((recipe) => recipe.implicit === 'replace')
+  const reasons = table.unresolved.map((entry) => entry.reason)
+  if (
+    table._meta.sourceRowCount !== 409 ||
+    table.recipes.length !== 376 ||
+    table.unresolved.length !== 33 ||
+    replacements.length !== 1 ||
+    replacements[0]?.fromBaseId !== 'Flowing Raiment' ||
+    reasons.filter((reason) => reason === 'ambiguous-base').length !== 15 ||
+    reasons.filter((reason) => reason === 'unknown-base').length !== 11 ||
+    reasons.filter((reason) => reason === 'unsupported-recipe').length !== 7
+  )
+    throw new Error('锻造配方审计不匹配：应有376关系、1固有替换和33未解析行')
+  for (const locale of ['zh-CN', 'zh-TW'] as const)
+    if (!catalog.localizedNames?.[locale]?.Verisium?.trim())
+      throw new Error(`${locale} Verisium 名称缺失`)
+  console.log('锻造配方目录校验通过：gray独立表；376关系、33未解析；转换动作另行核对')
+} else console.log('锻造配方目录未提供；继续校验 primary 制作目录')
 const alloyText = await readOptionalTable('alloys.json')
 if (alloyText !== undefined) {
   const table = parseAlloyCatalog(JSON.parse(alloyText), catalog)

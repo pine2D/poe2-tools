@@ -1,0 +1,2814 @@
+{
+  "_meta": {
+    "schemaVersion": 1,
+    "tier": "gray",
+    "reviewedAt": "2026-09-16",
+    "gameVersion": null,
+    "sourceCommit": "ce566eac45ea8a86477f513c7ee65a1ebe60014e",
+    "baseSources": [
+      {
+        "path": "src/Data/Bases/body.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/Bases/body.lua",
+        "sha256": "0d3156d893bcfca1eb8c9b299f2a28c62a1d4c9f1d3a39f3a087cac18d23e9cd"
+      },
+      {
+        "path": "src/Data/Bases/boots.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/Bases/boots.lua",
+        "sha256": "a164dcfa8ad0af668ea2000a9ea918c0ef3f40755bfca3c3609bb11d0d3c81b8"
+      },
+      {
+        "path": "src/Data/Bases/focus.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/Bases/focus.lua",
+        "sha256": "b5a315245cc0f9f11657f7fdab751e5ed5306166df54c2c19ef83295b876820e"
+      },
+      {
+        "path": "src/Data/Bases/gloves.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/Bases/gloves.lua",
+        "sha256": "05b91c71f9292f120482355447566db285cb513f6b506e349e9a29efa0b329f2"
+      },
+      {
+        "path": "src/Data/Bases/helmet.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/Bases/helmet.lua",
+        "sha256": "8fe41aa01c7e0e3b505eebf41db80bb0451b1719c6b7b4a156a7aed2262605e8"
+      },
+      {
+        "path": "src/Data/Bases/shield.lua",
+        "url": "https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/Bases/shield.lua",
+        "sha256": "d4628eed0450bdeaeec8ea10b4960aa0e5e5705829b6c53500069ebfcef478ef"
+      }
+    ],
+    "recipeSource": {
+      "url": "https://poe2db.tw/us/Runeforging",
+      "sha256": "ea9b7564ae111fe0f957d1d35c689ff8b40e54e1e6a8eda6f2515c9551510f23"
+    },
+    "sourceRowCount": 409
+  },
+  "recipes": [
+    {
+      "sourceRow": 1,
+      "fromBaseId": "Rusted Cuirass",
+      "toBaseId": "Runeforged Rusted Cuirass",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 2,
+      "fromBaseId": "Fur Plate",
+      "toBaseId": "pob2:base:v1:70744a1ce473b1df23f882cf9fbf6437356eec8ee4ebe2dae6f4189b43bd0f41",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 3,
+      "fromBaseId": "Iron Cuirass",
+      "toBaseId": "Runeforged Iron Cuirass",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 4,
+      "fromBaseId": "Raider Plate",
+      "toBaseId": "Runeforged Raider Plate",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 5,
+      "fromBaseId": "Maraketh Cuirass",
+      "toBaseId": "Runeforged Maraketh Cuirass",
+      "verisium": 50,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 6,
+      "fromBaseId": "Steel Plate",
+      "toBaseId": "Runeforged Steel Plate",
+      "verisium": 75,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 7,
+      "fromBaseId": "Full Plate",
+      "toBaseId": "Runeforged Full Plate",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 8,
+      "fromBaseId": "Vaal Cuirass",
+      "toBaseId": "Runeforged Vaal Cuirass",
+      "verisium": 130,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 9,
+      "fromBaseId": "Juggernaut Plate",
+      "toBaseId": "Runeforged Juggernaut Plate",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 10,
+      "fromBaseId": "Chieftain Cuirass",
+      "toBaseId": "Runeforged Chieftain Cuirass",
+      "verisium": 220,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 11,
+      "fromBaseId": "Leather Vest",
+      "toBaseId": "Runeforged Leather Vest",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 12,
+      "fromBaseId": "Quilted Vest",
+      "toBaseId": "Runeforged Quilted Vest",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 13,
+      "fromBaseId": "Pathfinder Coat",
+      "toBaseId": "Runeforged Pathfinder Coat",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 14,
+      "fromBaseId": "Shrouded Vest",
+      "toBaseId": "Runeforged Shrouded Vest",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 15,
+      "fromBaseId": "Rhoahide Coat",
+      "toBaseId": "Runeforged Rhoahide Coat",
+      "verisium": 50,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 16,
+      "fromBaseId": "Studded Vest",
+      "toBaseId": "Runeforged Studded Vest",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 17,
+      "fromBaseId": "Scout's Vest",
+      "toBaseId": "Runeforged Scout's Vest",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 18,
+      "fromBaseId": "Serpentscale Coat",
+      "toBaseId": "Runeforged Serpentscale Coat",
+      "verisium": 120,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 19,
+      "fromBaseId": "Corsair Vest",
+      "toBaseId": "Runeforged Corsair Vest",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 20,
+      "fromBaseId": "Smuggler Coat",
+      "toBaseId": "Runeforged Smuggler Coat",
+      "verisium": 230,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 21,
+      "fromBaseId": "Tattered Robe",
+      "toBaseId": "Runeforged Tattered Robe",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 22,
+      "fromBaseId": "Feathered Robe",
+      "toBaseId": "Runeforged Feathered Robe",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 23,
+      "fromBaseId": "Hexer's Robe",
+      "toBaseId": "Runeforged Hexer's Robe",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 24,
+      "fromBaseId": "Bone Raiment",
+      "toBaseId": "Runeforged Bone Raiment",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 25,
+      "fromBaseId": "Silk Robe",
+      "toBaseId": "Runeforged Silk Robe",
+      "verisium": 50,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 26,
+      "fromBaseId": "Keth Raiment",
+      "toBaseId": "Runeforged Keth Raiment",
+      "verisium": 80,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 27,
+      "fromBaseId": "Votive Raiment",
+      "toBaseId": "Runeforged Votive Raiment",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 28,
+      "fromBaseId": "Altar Robe",
+      "toBaseId": "Runeforged Altar Robe",
+      "verisium": 145,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 29,
+      "fromBaseId": "Elementalist Robe",
+      "toBaseId": "Runeforged Elementalist Robe",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 30,
+      "fromBaseId": "Mystic Raiment",
+      "toBaseId": "Runeforged Mystic Raiment",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 31,
+      "fromBaseId": "Chain Mail",
+      "toBaseId": "Runeforged Chain Mail",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 32,
+      "fromBaseId": "Rogue Armour",
+      "toBaseId": "Runeforged Rogue Armour",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 33,
+      "fromBaseId": "Vagabond Armour",
+      "toBaseId": "Runeforged Vagabond Armour",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 34,
+      "fromBaseId": "Cloaked Mail",
+      "toBaseId": "Runeforged Cloaked Mail",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 35,
+      "fromBaseId": "Explorer Armour",
+      "toBaseId": "Runeforged Explorer Armour",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 36,
+      "fromBaseId": "Scale Mail",
+      "toBaseId": "Runeforged Scale Mail",
+      "verisium": 130,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 37,
+      "fromBaseId": "Knight Armour",
+      "toBaseId": "Runeforged Knight Armour",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 38,
+      "fromBaseId": "Ancestral Mail",
+      "toBaseId": "Runeforged Ancestral Mail",
+      "verisium": 220,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 39,
+      "fromBaseId": "Pilgrim Vestments",
+      "toBaseId": "Runeforged Pilgrim Vestments",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 40,
+      "fromBaseId": "Pelt Mantle",
+      "toBaseId": "Runeforged Pelt Mantle",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 41,
+      "fromBaseId": "Mail Vestments",
+      "toBaseId": "Runeforged Mail Vestments",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 42,
+      "fromBaseId": "Shaman Mantle",
+      "toBaseId": "Runeforged Shaman Mantle",
+      "verisium": 80,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 43,
+      "fromBaseId": "Ironclad Vestments",
+      "toBaseId": "Runeforged Ironclad Vestments",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 44,
+      "fromBaseId": "Sacrificial Mantle",
+      "toBaseId": "Runeforged Sacrificial Mantle",
+      "verisium": 120,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 45,
+      "fromBaseId": "Cleric Vestments",
+      "toBaseId": "Runeforged Cleric Vestments",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 46,
+      "fromBaseId": "Tideseer Mantle",
+      "toBaseId": "Runeforged Tideseer Mantle",
+      "verisium": 230,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 47,
+      "fromBaseId": "Hermit Garb",
+      "toBaseId": "Runeforged Hermit Garb",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 48,
+      "fromBaseId": "Waxed Jacket",
+      "toBaseId": "Runeforged Waxed Jacket",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 49,
+      "fromBaseId": "Marabout Garb",
+      "toBaseId": "Runeforged Marabout Garb",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 50,
+      "fromBaseId": "Wayfarer Jacket",
+      "toBaseId": "Runeforged Wayfarer Jacket",
+      "verisium": 80,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 51,
+      "fromBaseId": "Anchorite Garb",
+      "toBaseId": "Runeforged Anchorite Garb",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 52,
+      "fromBaseId": "Scalper's Jacket",
+      "toBaseId": "Runeforged Scalper's Jacket",
+      "verisium": 140,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 53,
+      "fromBaseId": "Scoundrel Jacket",
+      "toBaseId": "Runeforged Scoundrel Jacket",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 55,
+      "fromBaseId": "Elegant Plate",
+      "toBaseId": "Runeforged Elegant Plate",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 56,
+      "fromBaseId": "Heavy Plate",
+      "toBaseId": "Runeforged Heavy Plate",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 57,
+      "fromBaseId": "Stone Cuirass",
+      "toBaseId": "Runeforged Stone Cuirass",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 58,
+      "fromBaseId": "Layered Vest",
+      "toBaseId": "Runeforged Layered Vest",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 59,
+      "fromBaseId": "Runner Vest",
+      "toBaseId": "Runeforged Runner Vest",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 60,
+      "fromBaseId": "Lizardscale Coat",
+      "toBaseId": "Runeforged Lizardscale Coat",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 61,
+      "fromBaseId": "River Raiment",
+      "toBaseId": "Runeforged River Raiment",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 62,
+      "fromBaseId": "Adherent's Raiment",
+      "toBaseId": "Runeforged Adherent's Raiment",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 63,
+      "fromBaseId": "Ceremonial Robe",
+      "toBaseId": "Runeforged Ceremonial Robe",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 64,
+      "fromBaseId": "Mantled Mail",
+      "toBaseId": "Runeforged Mantled Mail",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 65,
+      "fromBaseId": "Trailblazer Armour",
+      "toBaseId": "Runeforged Trailblazer Armour",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 66,
+      "fromBaseId": "Golden Mail",
+      "toBaseId": "Runeforged Golden Mail",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 67,
+      "fromBaseId": "Occultist Mantle",
+      "toBaseId": "Runeforged Occultist Mantle",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 68,
+      "fromBaseId": "Plated Vestments",
+      "toBaseId": "Runeforged Plated Vestments",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 69,
+      "fromBaseId": "Heartcarver Mantle",
+      "toBaseId": "Runeforged Heartcarver Mantle",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 70,
+      "fromBaseId": "Itinerant Jacket",
+      "toBaseId": "Runeforged Itinerant Jacket",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 71,
+      "fromBaseId": "Hatungo Garb",
+      "toBaseId": "Runeforged Hatungo Garb",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 72,
+      "fromBaseId": "Hawker's Jacket",
+      "toBaseId": "Runeforged Hawker's Jacket",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 73,
+      "fromBaseId": "Rusted Greathelm",
+      "toBaseId": "Runeforged Rusted Greathelm",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 74,
+      "fromBaseId": "Soldier Greathelm",
+      "toBaseId": "Runeforged Soldier Greathelm",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 75,
+      "fromBaseId": "Wrapped Greathelm",
+      "toBaseId": "Runeforged Wrapped Greathelm",
+      "verisium": 35,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 76,
+      "fromBaseId": "Spired Greathelm",
+      "toBaseId": "Runeforged Spired Greathelm",
+      "verisium": 65,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 77,
+      "fromBaseId": "Elite Greathelm",
+      "toBaseId": "Runeforged Elite Greathelm",
+      "verisium": 90,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 78,
+      "fromBaseId": "Warrior Greathelm",
+      "toBaseId": "Runeforged Warrior Greathelm",
+      "verisium": 100,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 79,
+      "fromBaseId": "Commander Greathelm",
+      "toBaseId": "Runeforged Commander Greathelm",
+      "verisium": 150,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 80,
+      "fromBaseId": "Fierce Greathelm",
+      "toBaseId": "Runeforged Fierce Greathelm",
+      "verisium": 195,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 81,
+      "fromBaseId": "Shabby Hood",
+      "toBaseId": "Runeforged Shabby Hood",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 82,
+      "fromBaseId": "Felt Cap",
+      "toBaseId": "Runeforged Felt Cap",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 83,
+      "fromBaseId": "Lace Hood",
+      "toBaseId": "pob2:base:v1:49aeceb26ec3034c6dd77ff0b1790d0b41e86c4064cd841603059ec065d1b991",
+      "verisium": 35,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 84,
+      "fromBaseId": "Swathed Cap",
+      "toBaseId": "Runeforged Swathed Cap",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 85,
+      "fromBaseId": "Hunter Hood",
+      "toBaseId": "Runeforged Hunter Hood",
+      "verisium": 90,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 86,
+      "fromBaseId": "Viper Cap",
+      "toBaseId": "Runeforged Viper Cap",
+      "verisium": 115,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 87,
+      "fromBaseId": "Corsair Cap",
+      "toBaseId": "Runeforged Corsair Cap",
+      "verisium": 150,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 88,
+      "fromBaseId": "Leatherbound Hood",
+      "toBaseId": "Runeforged Leatherbound Hood",
+      "verisium": 185,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 89,
+      "fromBaseId": "Twig Circlet",
+      "toBaseId": "Runeforged Twig Circlet",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 90,
+      "fromBaseId": "Wicker Tiara",
+      "toBaseId": "Runeforged Wicker Tiara",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 91,
+      "fromBaseId": "Beaded Circlet",
+      "toBaseId": "Runeforged Beaded Circlet",
+      "verisium": 35,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 92,
+      "fromBaseId": "Chain Tiara",
+      "toBaseId": "Runeforged Chain Tiara",
+      "verisium": 55,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 93,
+      "fromBaseId": "Feathered Tiara",
+      "toBaseId": "Runeforged Feathered Tiara",
+      "verisium": 90,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 94,
+      "fromBaseId": "Gold Circlet",
+      "toBaseId": "Runeforged Gold Circlet",
+      "verisium": 125,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 95,
+      "fromBaseId": "Vermeil Circlet",
+      "toBaseId": "Runeforged Vermeil Circlet",
+      "verisium": 155,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 96,
+      "fromBaseId": "Jade Tiara",
+      "toBaseId": "Runeforged Jade Tiara",
+      "verisium": 190,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 97,
+      "fromBaseId": "Brimmed Helm",
+      "toBaseId": "Runeforged Brimmed Helm",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 98,
+      "fromBaseId": "Guarded Helm",
+      "toBaseId": "Runeforged Guarded Helm",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 99,
+      "fromBaseId": "Visored Helm",
+      "toBaseId": "Runeforged Visored Helm",
+      "verisium": 35,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 100,
+      "fromBaseId": "Cowled Helm",
+      "toBaseId": "Runeforged Cowled Helm",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 101,
+      "fromBaseId": "Shielded Helm",
+      "toBaseId": "Runeforged Shielded Helm",
+      "verisium": 90,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 102,
+      "fromBaseId": "Closed Helm",
+      "toBaseId": "Runeforged Closed Helm",
+      "verisium": 155,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 103,
+      "fromBaseId": "Iron Crown",
+      "toBaseId": "Runeforged Iron Crown",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 104,
+      "fromBaseId": "Horned Crown",
+      "toBaseId": "Runeforged Horned Crown",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 105,
+      "fromBaseId": "Cultist Crown",
+      "toBaseId": "Runeforged Cultist Crown",
+      "verisium": 35,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 106,
+      "fromBaseId": "Martyr Crown",
+      "toBaseId": "Runeforged Martyr Crown",
+      "verisium": 65,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 107,
+      "fromBaseId": "Heavy Crown",
+      "toBaseId": "Runeforged Heavy Crown",
+      "verisium": 85,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 108,
+      "fromBaseId": "Spiritbone Crown",
+      "toBaseId": "Runeforged Spiritbone Crown",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 109,
+      "fromBaseId": "Hewn Mask",
+      "toBaseId": "Runeforged Hewn Mask",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 110,
+      "fromBaseId": "Face Mask",
+      "toBaseId": "Runeforged Face Mask",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 111,
+      "fromBaseId": "Hooded Mask",
+      "toBaseId": "Runeforged Hooded Mask",
+      "verisium": 35,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 112,
+      "fromBaseId": "Veiled Mask",
+      "toBaseId": "Runeforged Veiled Mask",
+      "verisium": 65,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 113,
+      "fromBaseId": "Tribal Mask",
+      "toBaseId": "Runeforged Tribal Mask",
+      "verisium": 90,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 114,
+      "fromBaseId": "Solid Mask",
+      "toBaseId": "Runeforged Solid Mask",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 115,
+      "fromBaseId": "Elegant Greathelm",
+      "toBaseId": "Runeforged Elegant Greathelm",
+      "verisium": 220,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 116,
+      "fromBaseId": "Noble Greathelm",
+      "toBaseId": "Runeforged Noble Greathelm",
+      "verisium": 245,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 117,
+      "fromBaseId": "Wrapped Cap",
+      "toBaseId": "Runeforged Wrapped Cap",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 118,
+      "fromBaseId": "Deerstalker Hood",
+      "toBaseId": "Runeforged Deerstalker Hood",
+      "verisium": 260,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 119,
+      "fromBaseId": "Sandsworn Tiara",
+      "toBaseId": "Runeforged Sandsworn Tiara",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 120,
+      "fromBaseId": "Jungle Tiara",
+      "toBaseId": "Runeforged Jungle Tiara",
+      "verisium": 250,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 121,
+      "fromBaseId": "Cabalist Helm",
+      "toBaseId": "Runeforged Cabalist Helm",
+      "verisium": 220,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 123,
+      "fromBaseId": "Hallowed Crown",
+      "toBaseId": "Runeforged Hallowed Crown",
+      "verisium": 205,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 124,
+      "fromBaseId": "Inquisitor Crown",
+      "toBaseId": "Runeforged Inquisitor Crown",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 125,
+      "fromBaseId": "Pariah Mask",
+      "toBaseId": "Runeforged Pariah Mask",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 126,
+      "fromBaseId": "Avian Mask",
+      "toBaseId": "Runeforged Avian Mask",
+      "verisium": 245,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 127,
+      "fromBaseId": "Stocky Mitts",
+      "toBaseId": "Runeforged Stocky Mitts",
+      "verisium": 10,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 128,
+      "fromBaseId": "Riveted Mitts",
+      "toBaseId": "Runeforged Riveted Mitts",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 129,
+      "fromBaseId": "Tempered Mitts",
+      "toBaseId": "Runeforged Tempered Mitts",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 130,
+      "fromBaseId": "Bolstered Mitts",
+      "toBaseId": "Runeforged Bolstered Mitts",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 131,
+      "fromBaseId": "Moulded Mitts",
+      "toBaseId": "Runeforged Moulded Mitts",
+      "verisium": 55,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 132,
+      "fromBaseId": "Detailed Mitts",
+      "toBaseId": "Runeforged Detailed Mitts",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 133,
+      "fromBaseId": "Suede Bracers",
+      "toBaseId": "Runeforged Suede Bracers",
+      "verisium": 10,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 134,
+      "fromBaseId": "Firm Bracers",
+      "toBaseId": "Runeforged Firm Bracers",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 135,
+      "fromBaseId": "Bound Bracers",
+      "toBaseId": "Runeforged Bound Bracers",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 136,
+      "fromBaseId": "Sectioned Bracers",
+      "toBaseId": "Runeforged Sectioned Bracers",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 137,
+      "fromBaseId": "Spined Bracers",
+      "toBaseId": "Runeforged Spined Bracers",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 138,
+      "fromBaseId": "Fine Bracers",
+      "toBaseId": "Runeforged Fine Bracers",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 139,
+      "fromBaseId": "Torn Gloves",
+      "toBaseId": "Runeforged Torn Gloves",
+      "verisium": 10,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 140,
+      "fromBaseId": "Sombre Gloves",
+      "toBaseId": "Runeforged Sombre Gloves",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 141,
+      "fromBaseId": "Stitched Gloves",
+      "toBaseId": "Runeforged Stitched Gloves",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 142,
+      "fromBaseId": "Jewelled Gloves",
+      "toBaseId": "Runeforged Jewelled Gloves",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 143,
+      "fromBaseId": "Intricate Gloves",
+      "toBaseId": "Runeforged Intricate Gloves",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 144,
+      "fromBaseId": "Pauascale Gloves",
+      "toBaseId": "Runeforged Pauascale Gloves",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 145,
+      "fromBaseId": "Ringmail Gauntlets",
+      "toBaseId": "Runeforged Ringmail Gauntlets",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 146,
+      "fromBaseId": "Layered Gauntlets",
+      "toBaseId": "Runeforged Layered Gauntlets",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 147,
+      "fromBaseId": "Doubled Gauntlets",
+      "toBaseId": "Runeforged Doubled Gauntlets",
+      "verisium": 55,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 148,
+      "fromBaseId": "Plate Gauntlets",
+      "toBaseId": "Runeforged Plate Gauntlets",
+      "verisium": 100,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 149,
+      "fromBaseId": "Rope Cuffs",
+      "toBaseId": "Runeforged Rope Cuffs",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 150,
+      "fromBaseId": "Aged Cuffs",
+      "toBaseId": "Runeforged Aged Cuffs",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 151,
+      "fromBaseId": "Goldcast Cuffs",
+      "toBaseId": "Runeforged Goldcast Cuffs",
+      "verisium": 55,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 152,
+      "fromBaseId": "Kalguuran Cuffs",
+      "toBaseId": "Runeforged Kalguuran Cuffs",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 153,
+      "fromBaseId": "Gauze Wraps",
+      "toBaseId": "Runeforged Gauze Wraps",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 154,
+      "fromBaseId": "Linen Wraps",
+      "toBaseId": "Runeforged Linen Wraps",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 155,
+      "fromBaseId": "Spiral Wraps",
+      "toBaseId": "Runeforged Spiral Wraps",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 156,
+      "fromBaseId": "Buckled Wraps",
+      "toBaseId": "Runeforged Buckled Wraps",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 157,
+      "fromBaseId": "Ancient Mitts",
+      "toBaseId": "Runeforged Ancient Mitts",
+      "verisium": 140,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 158,
+      "fromBaseId": "Feathered Mitts",
+      "toBaseId": "Runeforged Feathered Mitts",
+      "verisium": 170,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 159,
+      "fromBaseId": "Refined Bracers",
+      "toBaseId": "Runeforged Refined Bracers",
+      "verisium": 145,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 160,
+      "fromBaseId": "Spiked Bracers",
+      "toBaseId": "Runeforged Spiked Bracers",
+      "verisium": 155,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 161,
+      "fromBaseId": "Baroque Gloves",
+      "toBaseId": "Runeforged Baroque Gloves",
+      "verisium": 135,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 162,
+      "fromBaseId": "Gold Gloves",
+      "toBaseId": "Runeforged Gold Gloves",
+      "verisium": 165,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 163,
+      "fromBaseId": "Zealot Gauntlets",
+      "toBaseId": "Runeforged Zealot Gauntlets",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 164,
+      "fromBaseId": "Ornate Cuffs",
+      "toBaseId": "Runeforged Ornate Cuffs",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 165,
+      "fromBaseId": "Adorned Wraps",
+      "toBaseId": "Runeforged Adorned Wraps",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 166,
+      "fromBaseId": "Rough Greaves",
+      "toBaseId": "Runeforged Rough Greaves",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 167,
+      "fromBaseId": "Iron Greaves",
+      "toBaseId": "Runeforged Iron Greaves",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 168,
+      "fromBaseId": "Bronze Greaves",
+      "toBaseId": "Runeforged Bronze Greaves",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 169,
+      "fromBaseId": "Trimmed Greaves",
+      "toBaseId": "Runeforged Trimmed Greaves",
+      "verisium": 50,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 170,
+      "fromBaseId": "Stone Greaves",
+      "toBaseId": "Runeforged Stone Greaves",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 171,
+      "fromBaseId": "Reefsteel Greaves",
+      "toBaseId": "Runeforged Reefsteel Greaves",
+      "verisium": 135,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 172,
+      "fromBaseId": "Rawhide Boots",
+      "toBaseId": "Runeforged Rawhide Boots",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 173,
+      "fromBaseId": "Laced Boots",
+      "toBaseId": "Runeforged Laced Boots",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 174,
+      "fromBaseId": "Embossed Boots",
+      "toBaseId": "Runeforged Embossed Boots",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 175,
+      "fromBaseId": "Steeltoe Boots",
+      "toBaseId": "Runeforged Steeltoe Boots",
+      "verisium": 55,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 176,
+      "fromBaseId": "Lizardscale Boots",
+      "toBaseId": "Runeforged Lizardscale Boots",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 177,
+      "fromBaseId": "Flared Boots",
+      "toBaseId": "Runeforged Flared Boots",
+      "verisium": 125,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 178,
+      "fromBaseId": "Straw Sandals",
+      "toBaseId": "Runeforged Straw Sandals",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 179,
+      "fromBaseId": "Wrapped Sandals",
+      "toBaseId": "Runeforged Wrapped Sandals",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 180,
+      "fromBaseId": "Lattice Sandals",
+      "toBaseId": "Runeforged Lattice Sandals",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 181,
+      "fromBaseId": "Silk Slippers",
+      "toBaseId": "Runeforged Silk Slippers",
+      "verisium": 50,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 182,
+      "fromBaseId": "Feathered Sandals",
+      "toBaseId": "Runeforged Feathered Sandals",
+      "verisium": 75,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 183,
+      "fromBaseId": "Flax Sandals",
+      "toBaseId": "Runeforged Flax Sandals",
+      "verisium": 125,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 184,
+      "fromBaseId": "Mail Sabatons",
+      "toBaseId": "Runeforged Mail Sabatons",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 185,
+      "fromBaseId": "Braced Sabatons",
+      "toBaseId": "Runeforged Braced Sabatons",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 186,
+      "fromBaseId": "Stacked Sabatons",
+      "toBaseId": "Runeforged Stacked Sabatons",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 187,
+      "fromBaseId": "Covered Sabatons",
+      "toBaseId": "Runeforged Covered Sabatons",
+      "verisium": 130,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 188,
+      "fromBaseId": "Padded Leggings",
+      "toBaseId": "Runeforged Padded Leggings",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 189,
+      "fromBaseId": "Secured Leggings",
+      "toBaseId": "Runeforged Secured Leggings",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 190,
+      "fromBaseId": "Pelt Leggings",
+      "toBaseId": "Runeforged Pelt Leggings",
+      "verisium": 75,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 191,
+      "fromBaseId": "Weaver Leggings",
+      "toBaseId": "Runeforged Weaver Leggings",
+      "verisium": 125,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 192,
+      "fromBaseId": "Frayed Shoes",
+      "toBaseId": "Runeforged Frayed Shoes",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 193,
+      "fromBaseId": "Threaded Shoes",
+      "toBaseId": "Runeforged Threaded Shoes",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 194,
+      "fromBaseId": "Hunting Shoes",
+      "toBaseId": "Runeforged Hunting Shoes",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 195,
+      "fromBaseId": "Steelpoint Shoes",
+      "toBaseId": "Runeforged Steelpoint Shoes",
+      "verisium": 130,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 196,
+      "fromBaseId": "Elegant Greaves",
+      "toBaseId": "Runeforged Elegant Greaves",
+      "verisium": 170,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 197,
+      "fromBaseId": "Carved Greaves",
+      "toBaseId": "Runeforged Carved Greaves",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 198,
+      "fromBaseId": "Studded Boots",
+      "toBaseId": "Runeforged Studded Boots",
+      "verisium": 175,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 199,
+      "fromBaseId": "Serpentscale Boots",
+      "toBaseId": "Runeforged Serpentscale Boots",
+      "verisium": 200,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 200,
+      "fromBaseId": "Elegant Slippers",
+      "toBaseId": "Runeforged Elegant Slippers",
+      "verisium": 180,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 201,
+      "fromBaseId": "Dunerunner Sandals",
+      "toBaseId": "Runeforged Dunerunner Sandals",
+      "verisium": 210,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 202,
+      "fromBaseId": "Bastion Sabatons",
+      "toBaseId": "Runeforged Bastion Sabatons",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 203,
+      "fromBaseId": "Shamanistic Leggings",
+      "toBaseId": "Runeforged Shamanistic Leggings",
+      "verisium": 200,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 204,
+      "fromBaseId": "Treerunner Shoes",
+      "toBaseId": "Runeforged Treerunner Shoes",
+      "verisium": 205,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 205,
+      "fromBaseId": "Splintered Tower Shield",
+      "toBaseId": "Runeforged Splintered Tower Shield",
+      "verisium": 15,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 206,
+      "fromBaseId": "Painted Tower Shield",
+      "toBaseId": "Runeforged Painted Tower Shield",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 207,
+      "fromBaseId": "Braced Tower Shield",
+      "toBaseId": "Runeforged Braced Tower Shield",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 208,
+      "fromBaseId": "Barricade Tower Shield",
+      "toBaseId": "Runeforged Barricade Tower Shield",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 209,
+      "fromBaseId": "Effigial Tower Shield",
+      "toBaseId": "Runeforged Effigial Tower Shield",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 210,
+      "fromBaseId": "Rampart Tower Shield",
+      "toBaseId": "Runeforged Rampart Tower Shield",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 211,
+      "fromBaseId": "Heraldric Tower Shield",
+      "toBaseId": "Runeforged Heraldric Tower Shield",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 212,
+      "fromBaseId": "Stone Tower Shield",
+      "toBaseId": "Runeforged Stone Tower Shield",
+      "verisium": 110,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 213,
+      "fromBaseId": "Crucible Tower Shield",
+      "toBaseId": "Runeforged Crucible Tower Shield",
+      "verisium": 155,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 214,
+      "fromBaseId": "Ancestor Tower Shield",
+      "toBaseId": "Runeforged Ancestor Tower Shield",
+      "verisium": 195,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 215,
+      "fromBaseId": "Hardwood Targe",
+      "toBaseId": "Runeforged Hardwood Targe",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 216,
+      "fromBaseId": "Pelage Targe",
+      "toBaseId": "Runeforged Pelage Targe",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 217,
+      "fromBaseId": "Studded Targe",
+      "toBaseId": "Runeforged Studded Targe",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 218,
+      "fromBaseId": "Crescent Targe",
+      "toBaseId": "Runeforged Crescent Targe",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 219,
+      "fromBaseId": "Chiseled Targe",
+      "toBaseId": "Runeforged Chiseled Targe",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 220,
+      "fromBaseId": "Feathered Targe",
+      "toBaseId": "Runeforged Feathered Targe",
+      "verisium": 120,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 221,
+      "fromBaseId": "Stratified Targe",
+      "toBaseId": "Runeforged Stratified Targe",
+      "verisium": 170,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 222,
+      "fromBaseId": "Carved Targe",
+      "toBaseId": "Runeforged Carved Targe",
+      "verisium": 200,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 223,
+      "fromBaseId": "Blazon Crest Shield",
+      "toBaseId": "Runeforged Blazon Crest Shield",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 224,
+      "fromBaseId": "Sigil Crest Shield",
+      "toBaseId": "Runeforged Sigil Crest Shield",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 225,
+      "fromBaseId": "Emblem Crest Shield",
+      "toBaseId": "Runeforged Emblem Crest Shield",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 226,
+      "fromBaseId": "Jingling Crest Shield",
+      "toBaseId": "Runeforged Jingling Crest Shield",
+      "verisium": 70,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 227,
+      "fromBaseId": "Sectarian Crest Shield",
+      "toBaseId": "Runeforged Sectarian Crest Shield",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 228,
+      "fromBaseId": "Omen Crest Shield",
+      "toBaseId": "Runeforged Omen Crest Shield",
+      "verisium": 105,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 229,
+      "fromBaseId": "Wayward Crest Shield",
+      "toBaseId": "Runeforged Wayward Crest Shield",
+      "verisium": 155,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 230,
+      "fromBaseId": "Seer Crest Shield",
+      "toBaseId": "Runeforged Seer Crest Shield",
+      "verisium": 190,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 231,
+      "fromBaseId": "Leather Buckler",
+      "toBaseId": "Runeforged Leather Buckler",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 232,
+      "fromBaseId": "Wooden Buckler",
+      "toBaseId": "Runeforged Wooden Buckler",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 233,
+      "fromBaseId": "Plated Buckler",
+      "toBaseId": "Runeforged Plated Buckler",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 234,
+      "fromBaseId": "Iron Buckler",
+      "toBaseId": "Runeforged Iron Buckler",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 235,
+      "fromBaseId": "Ridged Buckler",
+      "toBaseId": "Runeforged Ridged Buckler",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 236,
+      "fromBaseId": "Spiked Buckler",
+      "toBaseId": "Runeforged Spiked Buckler",
+      "verisium": 65,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 237,
+      "fromBaseId": "Ringed Buckler",
+      "toBaseId": "Runeforged Ringed Buckler",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 238,
+      "fromBaseId": "Edged Buckler",
+      "toBaseId": "Runeforged Edged Buckler",
+      "verisium": 125,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 239,
+      "fromBaseId": "Laminate Buckler",
+      "toBaseId": "Runeforged Laminate Buckler",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 240,
+      "fromBaseId": "Pearl Buckler",
+      "toBaseId": "Runeforged Pearl Buckler",
+      "verisium": 195,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 241,
+      "fromBaseId": "Bulwark Tower Shield",
+      "toBaseId": "Runeforged Bulwark Tower Shield",
+      "verisium": 230,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 242,
+      "fromBaseId": "Noble Tower Shield",
+      "toBaseId": "Runeforged Noble Tower Shield",
+      "verisium": 270,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 243,
+      "fromBaseId": "Goldworked Tower Shield",
+      "toBaseId": "Runeforged Goldworked Tower Shield",
+      "verisium": 280,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 244,
+      "fromBaseId": "Polished Targe",
+      "toBaseId": "Runeforged Polished Targe",
+      "verisium": 225,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 245,
+      "fromBaseId": "Stone Targe",
+      "toBaseId": "Runeforged Stone Targe",
+      "verisium": 265,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 246,
+      "fromBaseId": "Avian Targe",
+      "toBaseId": "Runeforged Avian Targe",
+      "verisium": 305,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 247,
+      "fromBaseId": "Dekharan Crest Shield",
+      "toBaseId": "Runeforged Dekharan Crest Shield",
+      "verisium": 230,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 248,
+      "fromBaseId": "Quartered Crest Shield",
+      "toBaseId": "Runeforged Quartered Crest Shield",
+      "verisium": 275,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 249,
+      "fromBaseId": "Glowering Crest Shield",
+      "toBaseId": "Runeforged Glowering Crest Shield",
+      "verisium": 285,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 250,
+      "fromBaseId": "Spikeward Buckler",
+      "toBaseId": "Runeforged Spikeward Buckler",
+      "verisium": 230,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 251,
+      "fromBaseId": "Jingling Buckler",
+      "toBaseId": "Runeforged Jingling Buckler",
+      "verisium": 275,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 252,
+      "fromBaseId": "Bladeguard Buckler",
+      "toBaseId": "Runeforged Bladeguard Buckler",
+      "verisium": 285,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 253,
+      "fromBaseId": "Twig Focus",
+      "toBaseId": "Runeforged Twig Focus",
+      "verisium": 20,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 254,
+      "fromBaseId": "Woven Focus",
+      "toBaseId": "Runeforged Woven Focus",
+      "verisium": 25,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 255,
+      "fromBaseId": "Antler Focus",
+      "toBaseId": "Runeforged Antler Focus",
+      "verisium": 30,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 256,
+      "fromBaseId": "Engraved Focus",
+      "toBaseId": "Runeforged Engraved Focus",
+      "verisium": 40,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 257,
+      "fromBaseId": "Tonal Focus",
+      "toBaseId": "Runeforged Tonal Focus",
+      "verisium": 45,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 258,
+      "fromBaseId": "Crystal Focus",
+      "toBaseId": "Runeforged Crystal Focus",
+      "verisium": 60,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 259,
+      "fromBaseId": "Voodoo Focus",
+      "toBaseId": "Runeforged Voodoo Focus",
+      "verisium": 95,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 260,
+      "fromBaseId": "Plumed Focus",
+      "toBaseId": "Runeforged Plumed Focus",
+      "verisium": 115,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 261,
+      "fromBaseId": "Runed Focus",
+      "toBaseId": "Runeforged Runed Focus",
+      "verisium": 160,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 262,
+      "fromBaseId": "Whorl Focus",
+      "toBaseId": "Runeforged Whorl Focus",
+      "verisium": 210,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 263,
+      "fromBaseId": "Arrayed Focus",
+      "toBaseId": "Runeforged Arrayed Focus",
+      "verisium": 235,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 264,
+      "fromBaseId": "Cultist Focus",
+      "toBaseId": "Runeforged Cultist Focus",
+      "verisium": 265,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 265,
+      "fromBaseId": "Hallowed Focus",
+      "toBaseId": "Runeforged Hallowed Focus",
+      "verisium": 290,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 266,
+      "fromBaseId": "Soldier Cuirass",
+      "toBaseId": "Runeforged Soldier Cuirass",
+      "verisium": 405,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 267,
+      "fromBaseId": "Ornate Plate",
+      "toBaseId": "Runeforged Ornate Plate",
+      "verisium": 480,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 268,
+      "fromBaseId": "Utzaal Cuirass",
+      "toBaseId": "Runeforged Utzaal Cuirass",
+      "verisium": 460,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 269,
+      "fromBaseId": "Warlord Cuirass",
+      "toBaseId": "Runeforged Warlord Cuirass",
+      "verisium": 465,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 270,
+      "fromBaseId": "Swiftstalker Coat",
+      "toBaseId": "Runeforged Swiftstalker Coat",
+      "verisium": 405,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 271,
+      "fromBaseId": "Slipstrike Vest",
+      "toBaseId": "Runeforged Slipstrike Vest",
+      "verisium": 475,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 272,
+      "fromBaseId": "Wyrmscale Coat",
+      "toBaseId": "Runeforged Wyrmscale Coat",
+      "verisium": 485,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 273,
+      "fromBaseId": "Corsair Coat",
+      "toBaseId": "Runeforged Corsair Coat",
+      "verisium": 470,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 274,
+      "fromBaseId": "Vile Robe",
+      "toBaseId": "Runeforged Vile Robe",
+      "verisium": 390,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 275,
+      "fromBaseId": "Flowing Raiment",
+      "toBaseId": "Runeforged Flowing Raiment",
+      "verisium": 490,
+      "implicit": "replace"
+    },
+    {
+      "sourceRow": 276,
+      "fromBaseId": "Sacramental Robe",
+      "toBaseId": "Runeforged Sacramental Robe",
+      "verisium": 485,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 277,
+      "fromBaseId": "Feathered Raiment",
+      "toBaseId": "Runeforged Feathered Raiment",
+      "verisium": 480,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 278,
+      "fromBaseId": "Dastard Armour",
+      "toBaseId": "Runeforged Dastard Armour",
+      "verisium": 390,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 282,
+      "fromBaseId": "Death Mail",
+      "toBaseId": "Runeforged Death Mail",
+      "verisium": 485,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 283,
+      "fromBaseId": "Thane Mail",
+      "toBaseId": "Runeforged Thane Mail",
+      "verisium": 475,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 284,
+      "fromBaseId": "Wolfskin Mantle",
+      "toBaseId": "Runeforged Wolfskin Mantle",
+      "verisium": 390,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 285,
+      "fromBaseId": "Conjurer Mantle",
+      "toBaseId": "Runeforged Conjurer Mantle",
+      "verisium": 475,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 286,
+      "fromBaseId": "Death Mantle",
+      "toBaseId": "Runeforged Death Mantle",
+      "verisium": 465,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 287,
+      "fromBaseId": "Seastorm Mantle",
+      "toBaseId": "Runeforged Seastorm Mantle",
+      "verisium": 470,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 288,
+      "fromBaseId": "Sleek Jacket",
+      "toBaseId": "Runeforged Sleek Jacket",
+      "verisium": 390,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 289,
+      "fromBaseId": "Rambler Jacket",
+      "toBaseId": "Runeforged Rambler Jacket",
+      "verisium": 470,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 290,
+      "fromBaseId": "Falconer's Jacket",
+      "toBaseId": "Runeforged Falconer's Jacket",
+      "verisium": 475,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 291,
+      "fromBaseId": "Austere Garb",
+      "toBaseId": "Runeforged Austere Garb",
+      "verisium": 470,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 292,
+      "fromBaseId": "Warmonger Greathelm",
+      "toBaseId": "Runeforged Warmonger Greathelm",
+      "verisium": 315,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 293,
+      "fromBaseId": "Masked Greathelm",
+      "toBaseId": "Runeforged Masked Greathelm",
+      "verisium": 380,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 294,
+      "fromBaseId": "Paragon Greathelm",
+      "toBaseId": "Runeforged Paragon Greathelm",
+      "verisium": 420,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 295,
+      "fromBaseId": "Imperial Greathelm",
+      "toBaseId": "Runeforged Imperial Greathelm",
+      "verisium": 460,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 296,
+      "fromBaseId": "Woven Cap",
+      "toBaseId": "Runeforged Woven Cap",
+      "verisium": 290,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 297,
+      "fromBaseId": "Desert Cap",
+      "toBaseId": "Runeforged Desert Cap",
+      "verisium": 375,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 298,
+      "fromBaseId": "Trapper Hood",
+      "toBaseId": "Runeforged Trapper Hood",
+      "verisium": 410,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 299,
+      "fromBaseId": "Freebooter Cap",
+      "toBaseId": "Runeforged Freebooter Cap",
+      "verisium": 470,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 300,
+      "fromBaseId": "Skycrown Tiara",
+      "toBaseId": "Runeforged Skycrown Tiara",
+      "verisium": 300,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 301,
+      "fromBaseId": "Sorcerous Tiara",
+      "toBaseId": "Runeforged Sorcerous Tiara",
+      "verisium": 375,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 302,
+      "fromBaseId": "Kamasan Tiara",
+      "toBaseId": "Runeforged Kamasan Tiara",
+      "verisium": 410,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 303,
+      "fromBaseId": "Ancestral Tiara",
+      "toBaseId": "Runeforged Ancestral Tiara",
+      "verisium": 495,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 304,
+      "fromBaseId": "Warded Helm",
+      "toBaseId": "Runeforged Warded Helm",
+      "verisium": 295,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 305,
+      "fromBaseId": "Cryptic Helm",
+      "toBaseId": "Runeforged Cryptic Helm",
+      "verisium": 365,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 306,
+      "fromBaseId": "Champion Helm",
+      "toBaseId": "Runeforged Champion Helm",
+      "verisium": 415,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 308,
+      "fromBaseId": "Druidic Crown",
+      "toBaseId": "Runeforged Druidic Crown",
+      "verisium": 295,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 309,
+      "fromBaseId": "Saintly Crown",
+      "toBaseId": "Runeforged Saintly Crown",
+      "verisium": 380,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 310,
+      "fromBaseId": "Divine Crown",
+      "toBaseId": "Runeforged Divine Crown",
+      "verisium": 415,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 311,
+      "fromBaseId": "Cryptic Crown",
+      "toBaseId": "Runeforged Cryptic Crown",
+      "verisium": 465,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 312,
+      "fromBaseId": "Brigand Mask",
+      "toBaseId": "Runeforged Brigand Mask",
+      "verisium": 305,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 313,
+      "fromBaseId": "Faridun Mask",
+      "toBaseId": "Runeforged Faridun Mask",
+      "verisium": 380,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 314,
+      "fromBaseId": "Soaring Mask",
+      "toBaseId": "Runeforged Soaring Mask",
+      "verisium": 425,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 315,
+      "fromBaseId": "Grinning Mask",
+      "toBaseId": "Runeforged Grinning Mask",
+      "verisium": 480,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 316,
+      "fromBaseId": "Knightly Mitts",
+      "toBaseId": "Runeforged Knightly Mitts",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 317,
+      "fromBaseId": "Ornate Mitts",
+      "toBaseId": "Runeforged Ornate Mitts",
+      "verisium": 250,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 318,
+      "fromBaseId": "Vaal Mitts",
+      "toBaseId": "Runeforged Vaal Mitts",
+      "verisium": 290,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 319,
+      "fromBaseId": "Massive Mitts",
+      "toBaseId": "Runeforged Massive Mitts",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 320,
+      "fromBaseId": "Stalking Bracers",
+      "toBaseId": "Runeforged Stalking Bracers",
+      "verisium": 220,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 321,
+      "fromBaseId": "Grand Bracers",
+      "toBaseId": "Runeforged Grand Bracers",
+      "verisium": 275,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 322,
+      "fromBaseId": "Barbed Bracers",
+      "toBaseId": "Runeforged Barbed Bracers",
+      "verisium": 295,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 323,
+      "fromBaseId": "Polished Bracers",
+      "toBaseId": "Runeforged Polished Bracers",
+      "verisium": 335,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 324,
+      "fromBaseId": "Grim Gloves",
+      "toBaseId": "Runeforged Grim Gloves",
+      "verisium": 225,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 325,
+      "fromBaseId": "Opulent Gloves",
+      "toBaseId": "Runeforged Opulent Gloves",
+      "verisium": 265,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 326,
+      "fromBaseId": "Vaal Gloves",
+      "toBaseId": "Runeforged Vaal Gloves",
+      "verisium": 305,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 327,
+      "fromBaseId": "Sirenscale Gloves",
+      "toBaseId": "Runeforged Sirenscale Gloves",
+      "verisium": 335,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 328,
+      "fromBaseId": "Steelmail Gauntlets",
+      "toBaseId": "Runeforged Steelmail Gauntlets",
+      "verisium": 205,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 329,
+      "fromBaseId": "Commander Gauntlets",
+      "toBaseId": "Runeforged Commander Gauntlets",
+      "verisium": 280,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 330,
+      "fromBaseId": "Cultist Gauntlets",
+      "toBaseId": "Runeforged Cultist Gauntlets",
+      "verisium": 295,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 331,
+      "fromBaseId": "Blacksteel Gauntlets",
+      "toBaseId": "Runeforged Blacksteel Gauntlets",
+      "verisium": 355,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 332,
+      "fromBaseId": "Bound Cuffs",
+      "toBaseId": "Runeforged Bound Cuffs",
+      "verisium": 215,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 333,
+      "fromBaseId": "Ancient Cuffs",
+      "toBaseId": "Runeforged Ancient Cuffs",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 334,
+      "fromBaseId": "Gleaming Cuffs",
+      "toBaseId": "Runeforged Gleaming Cuffs",
+      "verisium": 295,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 335,
+      "fromBaseId": "Adherent Cuffs",
+      "toBaseId": "Runeforged Adherent Cuffs",
+      "verisium": 350,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 336,
+      "fromBaseId": "War Wraps",
+      "toBaseId": "Runeforged War Wraps",
+      "verisium": 210,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 337,
+      "fromBaseId": "Elegant Wraps",
+      "toBaseId": "Runeforged Elegant Wraps",
+      "verisium": 275,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 338,
+      "fromBaseId": "Vaal Wraps",
+      "toBaseId": "Runeforged Vaal Wraps",
+      "verisium": 310,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 339,
+      "fromBaseId": "Secured Wraps",
+      "toBaseId": "Runeforged Secured Wraps",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 340,
+      "fromBaseId": "Bulwark Greaves",
+      "toBaseId": "Runeforged Bulwark Greaves",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 341,
+      "fromBaseId": "Ornate Greaves",
+      "toBaseId": "Runeforged Ornate Greaves",
+      "verisium": 325,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 342,
+      "fromBaseId": "Vaal Greaves",
+      "toBaseId": "Runeforged Vaal Greaves",
+      "verisium": 365,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 343,
+      "fromBaseId": "Tasalian Greaves",
+      "toBaseId": "Runeforged Tasalian Greaves",
+      "verisium": 430,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 344,
+      "fromBaseId": "Cinched Boots",
+      "toBaseId": "Runeforged Cinched Boots",
+      "verisium": 270,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 345,
+      "fromBaseId": "Cavalry Boots",
+      "toBaseId": "Runeforged Cavalry Boots",
+      "verisium": 335,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 346,
+      "fromBaseId": "Dragonscale Boots",
+      "toBaseId": "Runeforged Dragonscale Boots",
+      "verisium": 375,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 347,
+      "fromBaseId": "Drakeskin Boots",
+      "toBaseId": "Runeforged Drakeskin Boots",
+      "verisium": 415,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 348,
+      "fromBaseId": "Bound Sandals",
+      "toBaseId": "Runeforged Bound Sandals",
+      "verisium": 265,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 349,
+      "fromBaseId": "Luxurious Slippers",
+      "toBaseId": "Runeforged Luxurious Slippers",
+      "verisium": 325,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 350,
+      "fromBaseId": "Sandsworn Sandals",
+      "toBaseId": "Runeforged Sandsworn Sandals",
+      "verisium": 390,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 351,
+      "fromBaseId": "Sekhema Sandals",
+      "toBaseId": "Runeforged Sekhema Sandals",
+      "verisium": 430,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 352,
+      "fromBaseId": "Veteran Sabatons",
+      "toBaseId": "Runeforged Veteran Sabatons",
+      "verisium": 265,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 353,
+      "fromBaseId": "Noble Sabatons",
+      "toBaseId": "Runeforged Noble Sabatons",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 354,
+      "fromBaseId": "Fortress Sabatons",
+      "toBaseId": "Runeforged Fortress Sabatons",
+      "verisium": 370,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 355,
+      "fromBaseId": "Blacksteel Sabatons",
+      "toBaseId": "Runeforged Blacksteel Sabatons",
+      "verisium": 405,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 356,
+      "fromBaseId": "Faithful Leggings",
+      "toBaseId": "Runeforged Faithful Leggings",
+      "verisium": 280,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 357,
+      "fromBaseId": "Apostle Leggings",
+      "toBaseId": "Runeforged Apostle Leggings",
+      "verisium": 315,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 358,
+      "fromBaseId": "Warlock Leggings",
+      "toBaseId": "Runeforged Warlock Leggings",
+      "verisium": 385,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 359,
+      "fromBaseId": "Cryptic Leggings",
+      "toBaseId": "Runeforged Cryptic Leggings",
+      "verisium": 405,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 360,
+      "fromBaseId": "Wanderer Shoes",
+      "toBaseId": "Runeforged Wanderer Shoes",
+      "verisium": 255,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 361,
+      "fromBaseId": "Charmed Shoes",
+      "toBaseId": "Runeforged Charmed Shoes",
+      "verisium": 325,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 362,
+      "fromBaseId": "Quickslip Shoes",
+      "toBaseId": "Runeforged Quickslip Shoes",
+      "verisium": 365,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 363,
+      "fromBaseId": "Daggerfoot Shoes",
+      "toBaseId": "Runeforged Daggerfoot Shoes",
+      "verisium": 435,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 364,
+      "fromBaseId": "Royal Tower Shield",
+      "toBaseId": "Runeforged Royal Tower Shield",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 365,
+      "fromBaseId": "Fortress Tower Shield",
+      "toBaseId": "Runeforged Fortress Tower Shield",
+      "verisium": 365,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 366,
+      "fromBaseId": "Vaal Tower Shield",
+      "toBaseId": "Runeforged Vaal Tower Shield",
+      "verisium": 435,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 367,
+      "fromBaseId": "Tawhoan Tower Shield",
+      "toBaseId": "Runeforged Tawhoan Tower Shield",
+      "verisium": 465,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 368,
+      "fromBaseId": "Mammoth Targe",
+      "toBaseId": "Runeforged Mammoth Targe",
+      "verisium": 330,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 369,
+      "fromBaseId": "Baroque Targe",
+      "toBaseId": "Runeforged Baroque Targe",
+      "verisium": 360,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 370,
+      "fromBaseId": "Soaring Targe",
+      "toBaseId": "Runeforged Soaring Targe",
+      "verisium": 425,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 371,
+      "fromBaseId": "Golden Targe",
+      "toBaseId": "Runeforged Golden Targe",
+      "verisium": 480,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 372,
+      "fromBaseId": "Intricate Crest Shield",
+      "toBaseId": "Runeforged Intricate Crest Shield",
+      "verisium": 335,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 373,
+      "fromBaseId": "Sekheman Crest Shield",
+      "toBaseId": "Runeforged Sekheman Crest Shield",
+      "verisium": 355,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 374,
+      "fromBaseId": "Vaal Crest Shield",
+      "toBaseId": "Runeforged Vaal Crest Shield",
+      "verisium": 420,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 375,
+      "fromBaseId": "Blacksteel Crest Shield",
+      "toBaseId": "Runeforged Blacksteel Crest Shield",
+      "verisium": 475,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 377,
+      "fromBaseId": "Gutspike Buckler",
+      "toBaseId": "Runeforged Gutspike Buckler",
+      "verisium": 380,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 378,
+      "fromBaseId": "Ancient Buckler",
+      "toBaseId": "Runeforged Ancient Buckler",
+      "verisium": 415,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 379,
+      "fromBaseId": "Desert Buckler",
+      "toBaseId": "Runeforged Desert Buckler",
+      "verisium": 490,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 380,
+      "fromBaseId": "Druidic Focus",
+      "toBaseId": "Runeforged Druidic Focus",
+      "verisium": 335,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 381,
+      "fromBaseId": "Leyline Focus",
+      "toBaseId": "Runeforged Leyline Focus",
+      "verisium": 360,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 382,
+      "fromBaseId": "Sacred Focus",
+      "toBaseId": "Runeforged Sacred Focus",
+      "verisium": 410,
+      "implicit": "preserve"
+    },
+    {
+      "sourceRow": 383,
+      "fromBaseId": "Tasalian Focus",
+      "toBaseId": "Runeforged Tasalian Focus",
+      "verisium": 475,
+      "implicit": "preserve"
+    }
+  ],
+  "unresolved": [
+    {
+      "sourceRow": 54,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 122,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 279,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 280,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 281,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 307,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 376,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 384,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 385,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 386,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 387,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 388,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 389,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 390,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 391,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 392,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 393,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 394,
+      "reason": "unsupported-recipe"
+    },
+    {
+      "sourceRow": 395,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 396,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 397,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 398,
+      "reason": "ambiguous-base"
+    },
+    {
+      "sourceRow": 399,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 400,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 401,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 402,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 403,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 404,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 405,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 406,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 407,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 408,
+      "reason": "unknown-base"
+    },
+    {
+      "sourceRow": 409,
+      "reason": "unknown-base"
+    }
+  ]
+}

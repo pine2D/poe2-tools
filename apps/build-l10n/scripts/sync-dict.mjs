@@ -55,7 +55,7 @@ for (const file of ['catalog.json', 'NOTICE.md']) {
   await copyFile(join(craftSource, file), join(craftTarget, file))
 }
 // 独立灰区关系表关闭或源文件删除后不能遗留旧发布产物。
-for (const file of ['alloys.json', 'fluxes.json']) {
+for (const file of ['alloys.json', 'fluxes.json', 'runeforging.json']) {
   const optionalTarget = join(craftTarget, file)
   await rm(optionalTarget, { force: true })
   if (!skipGray) {
