@@ -431,3 +431,7 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 [Diztoh 0.5 铁匠注能器实操](https://www.youtube.com/watch?v=KRrvAvt7Azo)（2026-06-10）作为 gray 人工机制参考，核对材料身份、单颗消耗、品质变化与腐化同次发生。只记录机制观察，不入库作者装备、完整文本、视频、截图、字幕、价格或概率。另读 [旧 Vaal Infuser Wiki 正文](https://www.poe2wiki.net/wiki/Vaal_Infuser)及其引用，明确旧名称和统计推论不能直接授权当前四分类材料。与 [CoE 更新说明](https://beta.craftofexile.com/changelog)核对品质导入和条件衔接，只读公开文字。没有新增适配器、执行参数或浏览器外站请求；详细范围见 [品质实验审计](quality-infuser-research.md)。
 
 [Jazzarus 2026-05-16 原始讲解与演示](https://www.youtube.com/watch?v=n2qmCCamtis)只用于旧通用注能器的画面／转录交叉核对。公开转录出现“21% 已腐化”字样，但逐帧画面显示无腐化标记，且继续用下一颗到 22%；不以该转录授权“腐化后仍能注能”。同属 gray 人工参考，临时片段不入库。
+
+## 2026-09-17 注能器公开逐次工作表
+
+[vaal infuser data](https://docs.google.com/spreadsheets/d/1kw0zuThQeKG6k2NfLbVf9JMcV6Rp6rbOLL_WB_K6FU4/edit)为已登记 Wiki 引用的作者公开实验工作表，属于 gray 人工研究资料。读取可公开访问的版本分页、字段和逐次记录，用于核对操作前后品质、物等、腐化及截断口径；不是 GGG 官方概率或四类材料共享规则。无明确再分发许可，原始表格只临时存于本机，不入库、不增加运行时请求或数据适配器；只提交自写审计及来源链接。分页名本身不足以确认客户端版本或材料类别，须与记录内容分开核对。
