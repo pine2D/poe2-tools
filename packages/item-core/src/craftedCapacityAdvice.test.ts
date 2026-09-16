@@ -5,6 +5,7 @@ import { alloyTestFixture } from './alloyTestFixture'
 import type { CraftCatalog } from './catalog'
 import { applyCraftStep } from './craftSteps'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { planTargetDefinitionRoutes } from './targetDefinitionRoutes'
 import { validateStoredTargetDefinitions } from './targetDefinitions'
 import { validateCraftTargets } from './targets'
 
@@ -137,4 +138,48 @@ it('Serle与恐惧的固定增效目标组合仍可同时核对', () => {
       state,
     ).ok,
   ).toBe(true)
+})
+
+it('第二工艺目标路线先恢复Astrid容量再制作合金，不能借用未来容量直接执行', () => {
+  const context = oneCraft()
+  const state = { ...context, sockets: [null] }
+  const definitions = must(
+    validateStoredTargetDefinitions(
+      catalog,
+      state.baseId,
+      {
+        nextTargetId: 3,
+        targets: [
+          { targetId: 't1', modId: 'SpellCriticalStrikeChance4' },
+          { targetId: 't2', modId: 'AlloyEffectOfSocketedAugments1' },
+        ],
+        alternatives: [],
+        values: [],
+      },
+      context,
+    ),
+  )
+  const planned = must(
+    planTargetDefinitionRoutes(
+      catalog,
+      state,
+      definitions,
+      { maxDepth: 3, maxStates: 16 },
+      [],
+      context,
+    ),
+  )
+  expect(planned.routes.length).toBeGreaterThan(0)
+  for (const route of planned.routes) {
+    expect(route.steps[0]?.operation).toMatchObject({
+      kind: 'socket',
+      augmentId: context.sockets?.[0],
+    })
+    let current: CraftState = state
+    for (const step of route.steps) {
+      current = must(applyCraftStep(catalog, current, step.operation))
+      expect(current).toEqual(step.state)
+    }
+    expect(current.affixes.filter((a) => a.crafted)).toHaveLength(2)
+  }
 })

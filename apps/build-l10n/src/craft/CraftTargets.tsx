@@ -53,7 +53,7 @@ interface CraftTargetsProps {
   onStart: (step: CraftDefinitionAdviceStep) => void
   onStartEssence: (step: DefinitionEssenceAdviceStep) => void
   onStartPreparation: (operation: CraftOperation) => void
-  onPreviewRoute: (operation: CraftStep) => void
+  onPreviewRoute: (operation: CraftStep, continuation?: CraftStep[]) => void
   translations: Record<string, string>
   omen?: CraftOmen
   busy: boolean
@@ -170,20 +170,20 @@ export function CraftTargets({
     [catalog, state, definitions, omen, targetImplicitValues, capacityContext],
   )
   const boneAdvice = useMemo(
-    () => analyzeBoneTargetDefinitions(catalog, state, definitions),
-    [catalog, state, definitions],
+    () => analyzeBoneTargetDefinitions(catalog, state, definitions, capacityContext),
+    [catalog, state, definitions, capacityContext],
   )
   const essenceAdvice = useMemo(
-    () => analyzeEssenceTargetDefinitions(catalog, state, definitions),
-    [catalog, state, definitions],
+    () => analyzeEssenceTargetDefinitions(catalog, state, definitions, capacityContext),
+    [catalog, state, definitions, capacityContext],
   )
   const alloyAdvice = useMemo(
-    () => analyzeAlloyTargetDefinitions(catalog, state, definitions),
-    [catalog, state, definitions],
+    () => analyzeAlloyTargetDefinitions(catalog, state, definitions, capacityContext),
+    [catalog, state, definitions, capacityContext],
   )
   const preparationAdvice = useMemo(
-    () => analyzeEssencePreparationDefinitions(catalog, state, definitions),
-    [catalog, state, definitions],
+    () => analyzeEssencePreparationDefinitions(catalog, state, definitions, capacityContext),
+    [catalog, state, definitions, capacityContext],
   )
   const boneSteps = boneAdvice.ok ? boneAdvice.value : []
   const essenceSteps = essenceAdvice.ok ? essenceAdvice.value : []
@@ -341,6 +341,7 @@ export function CraftTargets({
         />
       ) : null}
       <TargetRoutesPanel
+        {...(capacityContext ? { capacityContext } : {})}
         {...(pricing ? { pricing } : {})}
         {...(spentSteps ? { spentSteps } : {})}
         catalog={catalog}

@@ -203,6 +203,14 @@ function draftOperation(draft: Draft): CraftOperation {
   }
 }
 
+function routeOperationKey(operation: CraftStep): string {
+  return JSON.stringify(operation, (_key, value: unknown) =>
+    value !== null && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)))
+      : value,
+  )
+}
+
 function initialValues(patterns: string[], actual = patterns) {
   const ranges = inspectNumericLines(patterns)
   if (!ranges.ok) return ranges
@@ -547,6 +555,11 @@ export function RehearsalPanel({
   const [currencyTier, setCurrencyTier] = useState<CraftCurrencyTier>('basic')
   const [query, setQuery] = useState('')
   const [message, setMessage] = useState(initial.ok ? '' : initial.error)
+  const capacityRouteDraft = useRef<{ first: CraftStep; continuation: CraftStep[] } | null>(null)
+  useEffect(() => {
+    if (!socketDraft && !draft && !guaranteedDraft && !boneDraft && !fractureDraft)
+      capacityRouteDraft.current = null
+  }, [socketDraft, draft, guaranteedDraft, boneDraft, fractureDraft])
   const reportOperations = useMemo(
     () => history.slice(1).flatMap((entry) => (entry.operation ? [entry.operation] : [])),
     [history],
@@ -766,11 +779,25 @@ export function RehearsalPanel({
       startOperation(step.currency, step.omen)
     }
   }
-  const startRoute = (operation: CraftStep) => {
+  const startRoute = (operation: CraftStep, continuation?: CraftStep[]) => {
     if (draft || removalCurrency || socketDraft || guaranteedDraft || boneDraft || fractureDraft)
       return
+    const rememberCapacityRoute = () => {
+      capacityRouteDraft.current =
+        continuation?.some((step) => 'kind' in step && step.kind === 'socket') ||
+        (continuation &&
+          'kind' in operation &&
+          (operation.kind === 'socket' || operation.kind === 'artificer'))
+          ? { first: structuredClone(operation), continuation: structuredClone(continuation ?? []) }
+          : null
+    }
     if ('kind' in operation) {
-      if (operation.kind === 'vaal' || operation.kind === 'architect') {
+      if (
+        operation.kind === 'vaal' ||
+        operation.kind === 'architect' ||
+        operation.kind === 'socket' ||
+        operation.kind === 'artificer'
+      ) {
         const checked = applyCraftStep(catalog, current, operation)
         if (!checked.ok) {
           setMessage(checked.error)
@@ -778,11 +805,13 @@ export function RehearsalPanel({
         }
         setOmen(undefined)
         setSocketDraft(operation)
+        rememberCapacityRoute()
         setMessage('')
         return
       }
       if (operation.kind === 'fracture') {
         startFracture(operation)
+        rememberCapacityRoute()
         return
       }
       if (
@@ -792,6 +821,7 @@ export function RehearsalPanel({
         operation.kind === 'desecration-reveal'
       ) {
         startBone(operation)
+        rememberCapacityRoute()
         return
       }
       if (
@@ -806,6 +836,7 @@ export function RehearsalPanel({
       ) {
         setOmen(undefined)
         startGuaranteed(operation)
+        rememberCapacityRoute()
       }
       return
     }
@@ -839,6 +870,7 @@ export function RehearsalPanel({
         : {}),
     })
     setCurrencyTier(CRAFT_CURRENCY_RULES[operation.currency].tier)
+    rememberCapacityRoute()
     setOmen(operation.omen)
     setQuery('')
     setMessage('')
@@ -919,6 +951,11 @@ export function RehearsalPanel({
     setMessage('')
   }
   const applyStep = (operation: CraftStep) => {
+    const planned = capacityRouteDraft.current
+    if (planned && routeOperationKey(planned.first) !== routeOperationKey(operation)) {
+      setMessage('路线首步已修改，请取消并重新生成路线。')
+      return
+    }
     const applied = applyCraftStep(catalog, current, operation)
     if (!applied.ok) {
       setMessage(applied.error)
@@ -936,6 +973,20 @@ export function RehearsalPanel({
         operation,
       },
     ]
+    // 容量准备后的目标仍依赖尚未镶入的符文，保留选定路线作为可恢复的未来历史。
+    if (planned) {
+      let state = applied.value
+      for (const step of planned.continuation) {
+        const result = applyCraftStep(catalog, state, step)
+        if (!result.ok || !isIdentifiedCraftState(result.value)) {
+          setMessage('后续路线已不适用，请取消并重新生成路线。')
+          return
+        }
+        state = result.value
+        next.push({ id: (next.at(-1)?.id ?? 0) + 1, state, operation: step })
+      }
+    }
+    capacityRouteDraft.current = null
     if (
       'kind' in operation &&
       ['desecrate', 'desecration-offer', 'desecration-reroll', 'desecration-reveal'].includes(
@@ -946,7 +997,7 @@ export function RehearsalPanel({
     if ('kind' in operation && operation.kind === 'fracture') restoreFractureFocusRef.current = true
     setHistory(next)
     if (strategy?.flow) setStrategyStartStep(Math.min(strategyStartStep ?? 0, cursor))
-    setCursor(next.length - 1)
+    setCursor(cursor + 1)
     if (!('kind' in operation)) setOmen(undefined)
     setStrategyResultAction(null)
     setDraft(null)

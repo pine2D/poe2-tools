@@ -16,7 +16,21 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, expect, it, vi } from 'vitest'
 import { RehearsalPanel } from './RehearsalPanel'
 
-vi.mock('./targetRoutesWorkerClient', () => ({ requestTargetRoutes: () => () => {} }))
+// 真实目录的路线搜索与多次项目回放比模拟 Worker 的组件测试更耗时。
+vi.setConfig({ testTimeout: 15_000 })
+
+vi.mock('./targetRoutesWorkerClient', async () => {
+  const { planTargetDefinitionRoutes } = await import('@poe2-tools/item-core')
+  return {
+    requestTargetRoutes: (
+      args: Parameters<typeof planTargetDefinitionRoutes>,
+      callback: (result: ReturnType<typeof planTargetDefinitionRoutes>) => void,
+    ) => {
+      callback(planTargetDefinitionRoutes(...args))
+      return () => {}
+    },
+  }
+})
 const catalog: CraftCatalog = JSON.parse(readFileSync('data/craft/catalog.json', 'utf8'))
 const serle = 'pob2:augment:["Serle\u0027s Triumph","armour"]'
 const dictionary = createCraftItemDictionary(catalog)
@@ -104,7 +118,7 @@ it('绑定覆盖草稿不宣称可覆盖旧符文且不改变历史', () => {
   expect(save()).toEqual(before)
 })
 
-function renderFutureSerleProject() {
+function renderFutureSerleProject(affixCount = 1, needsSocket = false, magic = false) {
   let state: CraftState = { ...initial, sockets: [serle] }
   for (const kind of [
     'prefix',
@@ -119,7 +133,15 @@ function renderFutureSerleProject() {
     if (!mod) throw Error('候选缺失')
     state = must(addCraftAffix(catalog, state, mod.id))
   }
-  const first = imported({ ...initial, affixes: state.affixes.slice(0, 1), sockets: [null] })
+  const sockets = needsSocket ? [] : [null]
+  const first = imported({
+    ...initial,
+    rarity: magic ? 'magic' : 'rare',
+    affixes: magic
+      ? state.affixes.filter((_, i) => i === 0 || i === 3)
+      : state.affixes.slice(0, affixCount),
+    sockets,
+  })
   const project = must(
     parseTargetCraftProject(
       JSON.stringify({
@@ -129,8 +151,12 @@ function renderFutureSerleProject() {
         augmentSourceHash: catalog._meta.sources.find((s) => s.path === 'src/Data/ModRunes.lua')
           ?.sha256,
         initialState: first,
-        importedSockets: [null],
-        operations: [{ kind: 'socket', socketIndex: 0, augmentId: serle }],
+        importedSockets: sockets,
+        operations: [
+          ...(needsSocket ? [{ kind: 'artificer' }] : []),
+          ...(magic ? [{ currency: 'regal', modIds: [state.affixes[1]?.modId] }] : []),
+          { kind: 'socket', socketIndex: 0, augmentId: serle },
+        ],
         cursor: 0,
         targetDefinitions: {
           nextTargetId: 8,
@@ -221,4 +247,77 @@ it('没有孔位的仅Serle报价也保存v88及镶嵌来源', () => {
     catalog._meta.sources.find((s) => s.path === 'src/Data/ModRunes.lua')?.sha256,
   )
   expect(saved.operations).toHaveLength(0)
+})
+
+it.each([false, true])('容量路线第一步能预览、取消及应用（需打孔=%s）', (needsSocket) => {
+  renderFutureSerleProject(6, needsSocket)
+  click('生成多步示例路线')
+  const preview = () => {
+    const button = screen.getAllByRole('button', { name: '预览路线第一步' })[0]
+    if (!button) throw Error('缺少路线第一步')
+    fireEvent.click(button)
+  }
+  const before = save()
+  preview()
+  click(needsSocket ? '取消打孔' : '取消镶嵌')
+  expect(save()).toEqual(before)
+  preview()
+  click(needsSocket ? '应用打孔' : '应用镶嵌')
+  const after = save()
+  expect(after.cursor).toBe(1)
+  expect(after.operations[0]).toMatchObject({ kind: needsSocket ? 'artificer' : 'socket' })
+})
+
+it.each([false, true])('先升稀有的容量路线保存未来镶嵌，取消不写入历史（取消=%s）', (cancel) => {
+  renderFutureSerleProject(2, false, true)
+  click('生成多步示例路线')
+  const preview = () => {
+    const button = screen.getAllByRole('button', { name: '预览路线第一步' })[0]
+    if (!button) throw Error('缺少路线第一步')
+    fireEvent.click(button)
+  }
+  const before = cancel ? save() : null
+  preview()
+  if (cancel) {
+    click('取消本次结果')
+    expect(save()).toEqual(before)
+    return
+  }
+  click('应用本次结果')
+  const after = save()
+  expect(after.cursor).toBe(1)
+  expect(after.operations[0]).toMatchObject({ currency: 'regal' })
+  expect(after.operations.slice(1).some((step) => 'kind' in step && step.kind === 'socket')).toBe(
+    true,
+  )
+  click('恢复本机演练')
+  expect(save()).toEqual(after)
+  click('生成多步示例路线')
+  preview()
+  click('应用本次结果')
+  const withOmen = save()
+  expect(withOmen.cursor).toBe(2)
+  expect(withOmen.operations[1]).toMatchObject({ currency: 'exalted', omen: 'greater_exaltation' })
+  expect(
+    withOmen.operations.slice(2).some((step) => 'kind' in step && step.kind === 'socket'),
+  ).toBe(true)
+})
+
+it('修改容量路线首步数值后不能静默丢弃未来历史', () => {
+  renderFutureSerleProject(2, false, true)
+  click('生成多步示例路线')
+  const before = save()
+  const preview = screen.getAllByRole('button', { name: '预览路线第一步' })[0]
+  if (!preview) throw Error('缺少路线第一步')
+  fireEvent.click(preview)
+  const input = [...document.querySelectorAll<HTMLInputElement>('.numeric-controls input')].find(
+    (entry) => Number(entry.min) < Number(entry.max),
+  )
+  if (!input) throw Error('缺少可修改的路线数值')
+  fireEvent.change(input, {
+    target: { value: input.value === input.min ? input.max : input.min },
+  })
+  click('应用本次结果')
+  expect(screen.getByText('路线首步已修改，请取消并重新生成路线。')).toBeTruthy()
+  expect(save()).toEqual(before)
 })

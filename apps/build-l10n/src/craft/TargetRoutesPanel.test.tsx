@@ -439,3 +439,17 @@ it('随机移除风险保留实际接受档位，目标失配说明独立使用�
   expect(screen.getByText(/整个合法随机移除池内的目标风险：Strong/)).toBeDefined()
   expect(screen.getByText(/指定结果丢失目标身份或数值条件：Sturdy/)).toBeDefined()
 })
+
+it('容量上下文传入路线任务，来源变化终止旧任务且丢弃迟到结果', () => {
+  const capacityContext = { ...props.state, sockets: [null] }
+  const view = render(<TargetRoutesPanel {...props} capacityContext={capacityContext} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  const first = pending.calls.at(-1)
+  expect(first?.args[5]).toEqual(capacityContext)
+  view.rerender(
+    <TargetRoutesPanel {...props} capacityContext={{ ...capacityContext, sockets: [] }} />,
+  )
+  expect(first?.cancel).toHaveBeenCalledTimes(1)
+  act(() => first?.callback(result))
+  expect(screen.queryByText(/找到 .*条全部目标达成/)).toBeNull()
+})

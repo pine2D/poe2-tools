@@ -98,8 +98,9 @@ function analyzeSteps<T extends SpecialStep>(
   input: CraftTargetDefinitions,
   analyze: (legacy: ReturnType<typeof projectTargetDefinitions>) => CraftResult<T[]>,
   targetMods: (step: T) => string[],
+  capacityContext?: CraftState,
 ): CraftResult<(T & DefinitionSpecialAdviceProgress)[]> {
-  const checked = validateTargetDefinitions(catalog, state, input)
+  const checked = validateTargetDefinitions(catalog, state, input, capacityContext)
   if (!checked.ok) return checked
   const result = analyze(projectTargetDefinitions(checked.value))
   if (!result.ok) return result
@@ -116,6 +117,7 @@ export function analyzeBoneTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   definitions: CraftTargetDefinitions,
+  capacityContext?: CraftState,
 ): CraftResult<DefinitionBoneAdviceStep[]> {
   return analyzeSteps(
     catalog,
@@ -132,6 +134,7 @@ export function analyzeBoneTargetDefinitions(
         definitions,
       ),
     (step) => step.targetModIds,
+    capacityContext,
   )
 }
 
@@ -139,6 +142,7 @@ export function analyzeEssenceTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   definitions: CraftTargetDefinitions,
+  capacityContext?: CraftState,
 ): CraftResult<DefinitionEssenceAdviceStep[]> {
   return analyzeSteps(
     catalog,
@@ -155,6 +159,7 @@ export function analyzeEssenceTargetDefinitions(
         definitions,
       ),
     (step) => [step.targetModId],
+    capacityContext,
   )
 }
 
@@ -162,6 +167,7 @@ export function analyzeAlloyTargetDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   definitions: CraftTargetDefinitions,
+  capacityContext?: CraftState,
 ): CraftResult<DefinitionAlloyAdviceStep[]> {
   return analyzeSteps(
     catalog,
@@ -178,6 +184,7 @@ export function analyzeAlloyTargetDefinitions(
         definitions,
       ),
     (step) => [step.targetModId],
+    capacityContext,
   )
 }
 
@@ -185,8 +192,9 @@ export function analyzeEssencePreparationDefinitions(
   catalog: CraftCatalog,
   state: CraftState,
   definitions: CraftTargetDefinitions,
+  capacityContext?: CraftState,
 ): CraftResult<DefinitionEssencePreparationAdvice> {
-  const checked = validateTargetDefinitions(catalog, state, definitions)
+  const checked = validateTargetDefinitions(catalog, state, definitions, capacityContext)
   if (!checked.ok) return checked
   const config = checked.value
   const legacy = projectTargetDefinitions(config)

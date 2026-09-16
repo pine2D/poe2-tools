@@ -46,6 +46,7 @@ export function planTargetDefinitionRoutes(
   definitions: CraftTargetDefinitions,
   options: CraftDefinitionRouteOptions = {},
   implicitValues: readonly CraftImplicitTargetValues[] = [],
+  capacityContext?: CraftState,
 ): CraftResult<CraftDefinitionRoutes> {
   if (
     !options ||
@@ -54,7 +55,7 @@ export function planTargetDefinitionRoutes(
     Object.hasOwn(options, 'minimumTargetCount')
   )
     return { ok: false, error: '路线配置无效；所需目标数量只能来自完整目标定义。' }
-  const checked = validateTargetDefinitions(catalog, state, definitions)
+  const checked = validateTargetDefinitions(catalog, state, definitions, capacityContext)
   if (!checked.ok) return checked
   const config = checked.value
   const result = planCraftTargetContext(
@@ -72,6 +73,7 @@ export function planTargetDefinitionRoutes(
     implicitValues,
     config.fracturedTargetId,
     config,
+    capacityContext,
   )
   if (!result.ok) return result
   const completed = (current: CraftState): CraftResult<boolean> => {

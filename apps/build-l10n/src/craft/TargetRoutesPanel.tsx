@@ -30,11 +30,12 @@ interface Props {
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
   state: CraftState
+  capacityContext?: CraftState
   definitions: CraftTargetDefinitions
   implicitValues?: CraftImplicitTargetValues[]
   busy: boolean
   translations: Record<string, string>
-  onPreview: (operation: CraftStep) => void
+  onPreview: (operation: CraftStep, continuation?: CraftStep[]) => void
   translateLine?: (line: string) => string | null
 }
 
@@ -51,6 +52,7 @@ export function TargetRoutesPanel(props: Props) {
       key={JSON.stringify([
         props.catalog._meta,
         props.state,
+        props.capacityContext,
         props.definitions,
         props.implicitValues,
         preserveMatched,
@@ -69,6 +71,7 @@ function RouteSearch({
   spentSteps = [],
   catalog,
   state,
+  capacityContext,
   definitions,
   implicitValues = [],
   busy,
@@ -128,7 +131,9 @@ function RouteSearch({
       )
     if (step.kind === 'desecration-reroll') return '重选第二组三项候选'
     if (step.kind === 'desecration-reveal') return '完成亵渎揭示'
-    return step.kind === 'socket' ? '符文' : '巧匠石'
+    return step.kind === 'socket'
+      ? localize(catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文')
+      : '巧匠石'
   }
   const omenNames = (step: CraftStep): string[] =>
     'omen' in step && step.omen
@@ -162,6 +167,7 @@ function RouteSearch({
       <p>
         只搜索已支持操作的目标推进与准备选择，未涵盖所有游戏路径；示例不代表最优、成功率或实际游戏结果。咒符与传奇仅用于对比。
         珠宝包含对应液态保证词缀与临时增容的准备步骤，普通珠宝另含词缀增效。
+        已核对历史中的容量符文可作为打孔、镶嵌准备步骤，不覆盖已有孔内物。
       </p>
       <label>
         <input
@@ -221,6 +227,7 @@ function RouteSearch({
                   ...(costSearch && pricing ? { pricing } : {}),
                 },
                 implicitValues,
+                capacityContext,
               ],
               (next) => {
                 if (requestId.current !== id) return
@@ -460,13 +467,25 @@ function RouteSearch({
                 </ol>
                 <p>
                   预览将切换本次通货与预兆配置为路线第一步所选配置（未选预兆即不使用）；取消后可重新选择。
+                  容量准备步骤应用后，将所选后续步骤保留为未执行历史，便于继续规划和恢复。
                 </p>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => {
                     const first = route.steps[0]
-                    if (first && !busy) onPreview(first.operation)
+                    if (first && !busy) {
+                      if (
+                        route.steps.some(
+                          (step) => 'kind' in step.operation && step.operation.kind === 'socket',
+                        )
+                      )
+                        onPreview(
+                          first.operation,
+                          route.steps.slice(1).map((step) => step.operation),
+                        )
+                      else onPreview(first.operation)
+                    }
                   }}
                 >
                   预览路线第一步

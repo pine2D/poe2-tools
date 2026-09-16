@@ -3,6 +3,7 @@ import { usesSovereignResistance } from './alloyEffects'
 import { inspectCraftAlloys } from './alloys'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import { analyzeBoneTargetContext } from './boneAdvice'
+import { capacityRuneRouteContext } from './capacityRuneRoutes'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import {
   type CraftPricing,
@@ -161,6 +162,7 @@ export function planCraftTargetContext(
   implicitValues: readonly CraftImplicitTargetValues[] = [],
   fracturedTargetId?: string,
   definitions?: CraftTargetDefinitions,
+  capacityContext?: CraftState,
 ): CraftResult<CraftTargetRoutes> {
   if (
     !options ||
@@ -180,6 +182,7 @@ export function planCraftTargetContext(
     : null
   if (parsedPricing && !parsedPricing.ok) return parsedPricing
   const pricing = parsedPricing?.ok ? parsedPricing.value : undefined
+  const capacityRunes = capacityRuneRouteContext(catalog, capacityContext)
   const operationCosts = new Map<string, number | null>()
   const operationCost = (operation: CraftStep): number | null => {
     if (!pricing) return 0
@@ -409,7 +412,8 @@ export function planCraftTargetContext(
         bonePriority(state) +
         fracturePriority(state) +
         liquid.priority(state) +
-        sovereign.priority(state),
+        sovereign.priority(state) +
+        capacityRunes.priority(state),
       risk: 0,
       boneOmens: 0,
       cost: 0,
@@ -665,7 +669,8 @@ export function planCraftTargetContext(
             bonePriority(applied.value) +
             fracturePriority(applied.value) +
             liquid.priority(applied.value) +
-            sovereign.priority(applied.value),
+            sovereign.priority(applied.value) +
+            capacityRunes.priority(applied.value),
           risk,
           cost,
           boneOmens:
@@ -683,6 +688,7 @@ export function planCraftTargetContext(
       if (entries.length > count) omitted()
       return entries.slice(0, count)
     }
+    for (const operation of capacityRunes.operations(node.state)) offer(operation)
     if (definitions) {
       for (const flux of FLUXES) {
         const prepared = prepareFluxCraft(catalog, node.state, flux.id)
