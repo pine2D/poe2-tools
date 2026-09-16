@@ -1,4 +1,4 @@
-import type { CatalogBase, CatalogEssence, CraftCatalog } from './catalog'
+import type { CatalogBase, CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
 
 const perfectInfiniteId = 'Metadata/Items/Currency/CurrencyPerfectEssenceAttribute'
 const resultIdentity = [
@@ -19,12 +19,37 @@ export function essenceResultModIds(
   base: CatalogBase,
   essence: CatalogEssence,
 ): string[] {
+  return resolveEssenceResults(catalog, base, essence)
+}
+
+/** 索引仅供同一次查询复用，不跨调用缓存可变目录或已核对来源。 */
+export function createEssenceResultResolver(catalog: CraftCatalog) {
+  const modifiers = new Map<string, CatalogMod[]>()
+  for (const mod of catalog.modifiers) {
+    const id = mod.id
+    const matches = modifiers.get(id)
+    if (matches) matches.push(mod)
+    else modifiers.set(id, [mod])
+  }
+  return (base: CatalogBase, essence: CatalogEssence): string[] =>
+    resolveEssenceResults(catalog, base, essence, (id) => modifiers.get(id) ?? [])
+}
+
+function resolveEssenceResults(
+  catalog: CraftCatalog,
+  base: CatalogBase,
+  essence: CatalogEssence,
+  modifiers?: (id: string) => readonly CatalogMod[],
+): string[] {
   const category = essenceCategory(base)
   const declared = Object.hasOwn(essence.mods, category) ? essence.mods[category] : undefined
   if (declared === undefined) return []
   const resultIds = resultIdentity.map(([attribute]) => `EssencePercent${attribute}1`)
   if (essence.id !== perfectInfiniteId)
-    return !resultIds.includes(declared) && catalog.modifiers.some((mod) => mod.id === declared)
+    return !resultIds.includes(declared) &&
+      (modifiers
+        ? modifiers(declared).length > 0
+        : catalog.modifiers.some((mod) => mod.id === declared))
       ? [declared]
       : []
   if (
@@ -51,7 +76,8 @@ export function essenceResultModIds(
       return []
   }
   for (const [attribute, hash, order] of resultIdentity) {
-    const mods = catalog.modifiers.filter((mod) => mod.id === `EssencePercent${attribute}1`)
+    const id = `EssencePercent${attribute}1`
+    const mods = modifiers ? modifiers(id) : catalog.modifiers.filter((mod) => mod.id === id)
     const mod = mods[0]
     const line = `(7-10)% increased ${attribute}`
     if (

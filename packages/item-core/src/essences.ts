@@ -1,5 +1,5 @@
 import type { CatalogBase, CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
-import { essenceCategory, essenceResultModIds } from './essenceOutcomes'
+import { createEssenceResultResolver, essenceCategory } from './essenceOutcomes'
 
 export { essenceCategory } from './essenceOutcomes'
 
@@ -14,12 +14,13 @@ export interface EssenceInspection {
 /** 只连接来源声明，不从普通生成资格推断精华的使用规则。 */
 export function inspectEssences(catalog: CraftCatalog, base: CatalogBase): EssenceInspection[] {
   const category = essenceCategory(base)
+  const resolve = createEssenceResultResolver(catalog)
   const mods = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   return (catalog.essences ?? []).flatMap((essence) => {
     if (!Object.hasOwn(essence.mods, category)) return []
     const modId = essence.mods[category]
     if (modId === undefined) return []
-    const results = essenceResultModIds(catalog, base, essence)
+    const results = resolve(base, essence)
     if (results.length === 0) return [{ essence, category, modId, mod: null }]
     return results.map((id) => ({
       essence,
@@ -64,10 +65,9 @@ export function isEssenceMappedMod(
   base: CatalogBase,
   modId: string,
 ): boolean {
-  return (
-    essenceSourceHash(catalog) !== null &&
-    inspectEssences(catalog, base).some(
-      (entry) => supportedEssenceId(entry.essence.id) && entry.mod?.id === modId,
-    )
+  if (essenceSourceHash(catalog) === null) return false
+  const resolve = createEssenceResultResolver(catalog)
+  return (catalog.essences ?? []).some(
+    (essence) => supportedEssenceId(essence.id) && resolve(base, essence).includes(modId),
   )
 }

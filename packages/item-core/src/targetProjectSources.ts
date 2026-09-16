@@ -41,6 +41,8 @@ export function targetProjectSourceUsage(
   baseId: unknown,
   targetIds: readonly string[],
 ): { essence: boolean; desecration: boolean; liquid: boolean; jewel: boolean } {
+  if (targetIds.length === 0)
+    return { essence: false, desecration: false, liquid: false, jewel: false }
   const base = catalog.bases.find((entry) => entry.id === baseId)
   const referenced = new Set(targetIds)
   const mods = catalog.modifiers.filter((mod) => referenced.has(mod.id))
