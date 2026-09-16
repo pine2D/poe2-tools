@@ -104,7 +104,7 @@ it('绑定覆盖草稿不宣称可覆盖旧符文且不改变历史', () => {
   expect(save()).toEqual(before)
 })
 
-it('七目标项目退到未来Serle前仍能执行首步指引并恢复', () => {
+function renderFutureSerleProject() {
   let state: CraftState = { ...initial, sockets: [serle] }
   for (const kind of [
     'prefix',
@@ -161,6 +161,11 @@ it('七目标项目退到未来Serle前仍能执行首步指引并恢复', () =>
       dictionary={dictionary}
     />,
   )
+  return state
+}
+
+it('七目标项目退到未来Serle前仍能执行首步指引并恢复', () => {
+  renderFutureSerleProject()
   expect(save().targetDefinitions.targets).toHaveLength(7)
   click('开始指引步骤')
   expect(screen.getByRole('button', { name: '应用镶嵌' }).hasAttribute('disabled')).toBe(false)
@@ -169,7 +174,10 @@ it('七目标项目退到未来Serle前仍能执行首步指引并恢复', () =>
   click('撤销')
   click('恢复本机演练')
   expect(save().targetDefinitions.targets).toHaveLength(7)
-  click('撤销')
+})
+
+it('未来Serle容量允许在当前未镶入时编辑目标数量和数值', () => {
+  const state = renderFutureSerleProject()
   change('显式目标达成条件', '6')
   expect(save().targetDefinitions.minimumTargetCount).toBe(6)
   change('显式目标达成条件', 'all')
@@ -179,6 +187,10 @@ it('七目标项目退到未来Serle前仍能执行首步指引并恢复', () =>
   fireEvent.change(minimum, { target: { value: minimum.min } })
   click(`保存数值条件 ${modId}`)
   expect(save().targetDefinitions.values).toHaveLength(1)
+})
+
+it('未来Serle容量允许在当前未镶入时删除和重新提取目标', () => {
+  const state = renderFutureSerleProject()
   click(`移除目标 ${state.affixes[1]?.modId}`)
   expect(save().targetDefinitions.targets).toHaveLength(6)
   click('从当前装备提取目标')
