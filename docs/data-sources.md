@@ -261,7 +261,9 @@ v17 左旋/右旋结晶预兆参考 [PoE2DB Omen公开说明](https://poe2db.tw/
 
 ### 符文锻造模型依据（2026-09-16）
 
-符文锻造补充核对（2026-09-16）：沿用相同 MIT 固定提交的 `Item.lua:2561–2595` 和 `ModParser.lua`，用于结界、品质与本地修正的模型设计，不新增抓取适配器或提交第三方实现。[GGG 0.5.1 Hotfix 2](https://www.pathofexile.com/forum/view-thread/3949984) 提供保留破裂身份的直接依据；[GGG 0.5.2](https://www.pathofexile.com/forum/view-thread/3960375) 提供锻造预览镶嵌效果修复，[GGG 0.5.3](https://www.pathofexile.com/forum/view-thread/3968601) 提供高级非传奇防御损失调整及孔内珠宝保留修复。只人工引用官方说明；逐件转换、消费与其他交互仍需核对。范围、目录审计和验收算例见 [符文锻造调研](runeforging-research.md)。当前未启用锻造基底制作或转换操作。
+v81 实现补充：逐条创建审计确认 483 条可见防具中 478 条属于已支持普通规则，另 5 条 Grasping Mail 声明（含 4 个同名变体）具有跨戒指词缀池和催化规则；不能只按英文名称排除一条。固定 `ModParser.lua:257–258` 区分三项防御枚举与通用 Defences，已登记 ModRunes 的钢铁符文属于前者，不增加结界。本次复用已有全部数据快照，无新增抓取、数据包、依赖或第三方运行时请求；已有状态制作已接入，Verisium 转换仍未接入。
+
+符文锻造补充核对（2026-09-16）：沿用相同 MIT 固定提交的 `Item.lua:2561–2595` 和 `ModParser.lua`，用于结界、品质与本地修正的模型设计，不新增抓取适配器或提交第三方实现。[GGG 0.5.1 Hotfix 2](https://www.pathofexile.com/forum/view-thread/3949984) 提供保留破裂身份的直接依据；[GGG 0.5.2](https://www.pathofexile.com/forum/view-thread/3960375) 提供锻造预览镶嵌效果修复，[GGG 0.5.3](https://www.pathofexile.com/forum/view-thread/3968601) 提供高级非传奇防御损失调整及孔内珠宝保留修复。只人工引用官方说明；逐件转换、消费与其他交互仍需核对。范围、目录审计和验收算例见 [符文锻造调研](runeforging-research.md)。初始研究阶段未启用锻造基底制作或转换；后续 v81 已有状态支持见上一段。
 
 ### 武器面板公式参考（2026-09-13）
 

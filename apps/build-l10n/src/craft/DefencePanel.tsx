@@ -5,7 +5,7 @@ import {
   supportsItemQuality,
 } from '@poe2-tools/item-core'
 
-const LABELS = { Armour: '护甲', Evasion: '闪避', EnergyShield: '能量护盾' }
+const LABELS = { Armour: '护甲', Evasion: '闪避', EnergyShield: '能量护盾', Ward: '符文结界' }
 
 /** 面板只读派生；不将估算反写来源面板或历史状态。 */
 export function DefencePanel({
@@ -48,7 +48,8 @@ export function DefencePanel({
     <section className="defence-panel" aria-label="防御面板估算">
       <h3>防御面板估算</h3>
       <p className="rehearsal-scope-note">
-        按当前 PoB 目录快照估算护甲、闪避、能量护盾；游戏取整待真机验收，原文面板仍作为独立对照。
+        按当前 PoB
+        目录快照估算护甲、闪避、能量护盾及符文结界；游戏取整待真机验收，原文面板仍作为独立对照。
       </p>
       <p>
         {current.quality === undefined

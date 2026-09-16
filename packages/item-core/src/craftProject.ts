@@ -71,6 +71,7 @@ import { importCraftState, importIdentifiedCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
 import { requiresRetainedCatalystProjectVersion } from './retainedCatalystProjectVersion'
 import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
+import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
@@ -636,6 +637,7 @@ export function readNativeTargetProjectProjection(
   corruptionStrategy = false,
   retainedCatalyst = false,
   combatArmourRunes = false,
+  runeforgedArmour = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -648,6 +650,7 @@ export function readNativeTargetProjectProjection(
     corruptionStrategy,
     retainedCatalyst,
     combatArmourRunes,
+    runeforgedArmour,
   )
 }
 
@@ -662,6 +665,7 @@ function readCraftProject(
   corruptionStrategy = false,
   retainedCatalyst = false,
   combatArmourRunes = false,
+  runeforgedArmour = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -680,6 +684,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!runeforgedArmour && requiresRuneforgedArmourProjectVersion(value, catalog))
+    return fail('符文锻造基底与结界条件必须使用 v81 项目，包括完整历史及未执行指引。')
   if (!combatArmourRunes && requiresCombatArmourRuneProjectVersion(value, catalog))
     return fail('防具荆棘与减益符文必须使用 v80 项目，包括起点、导入声明、未来操作和指引。')
   if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(value, catalog))

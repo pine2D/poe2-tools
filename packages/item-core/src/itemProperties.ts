@@ -14,6 +14,7 @@ export const CRAFT_PROPERTY_LABELS = {
   Armour: '护甲',
   Evasion: '闪避',
   EnergyShield: '能量护盾',
+  Ward: '符文结界',
   ...RESISTANCE_LABELS,
 } as const
 export type CraftProperty = keyof typeof CRAFT_PROPERTY_LABELS
@@ -27,7 +28,12 @@ export function readCraftProperty(
   if (state.pendingDesecration) return { ok: false, error: '请先完成亵渎揭示，再判断装备面板。' }
   if (Object.hasOwn(RESISTANCE_LABELS, property))
     return estimateResistances(catalog, state)[property as ResistanceProperty]
-  if (property === 'Armour' || property === 'Evasion' || property === 'EnergyShield') {
+  if (
+    property === 'Armour' ||
+    property === 'Evasion' ||
+    property === 'EnergyShield' ||
+    property === 'Ward'
+  ) {
     const result = estimateDefences(catalog, state)
     if (!result.ok) return result
     const entry = result.value.find((entry) => entry.stat === property)

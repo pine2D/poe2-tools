@@ -6,8 +6,9 @@ import { type CraftResult, type CraftState, createCraftState } from './rehearsal
 import { sumRuneEffects } from './runeEffects'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { socketEffects } from './sockets'
+import { isKnownWardImplicit, readImplicitWard, wardModifierKind } from './wardDefences'
 
-export type DefenceStat = 'Armour' | 'Evasion' | 'EnergyShield'
+export type DefenceStat = 'Armour' | 'Evasion' | 'EnergyShield' | 'Ward'
 export interface DefenceEstimate {
   stat: DefenceStat
   base: number
@@ -18,7 +19,7 @@ export interface DefenceEstimate {
   value: number
 }
 
-const DEFENCE_TEXT = /\b(?:Armour|Evasion(?: Rating)?|Energy Shield|Defences?)\b/i
+const DEFENCE_TEXT = /\b(?:Armour|Evasion(?: Rating)?|Energy Shield|Runic Ward|Defences?)\b/i
 const SPECIAL_TEXT =
   /\b(?:per (?:player )?level|Ward|Runic Ward|converted?|overrides?|applies|alternate quality|Quality has|sockets?|socketed|augments?|runes?|bonded)\b/i
 const SPECIAL_MODEL_TEXT =
@@ -38,6 +39,7 @@ const DIRECT_LOCAL_GROUPS = new Set([
   'LocalArmourAndEnergyShield',
   'LocalEvasionAndEnergyShield',
   'LocalArmourAndEvasionAndEnergyShield',
+  'LocalRunicWardIncreasePercent',
 ])
 const DEFENCE_COMBO =
   '(?:Armour|Evasion|EnergyShield|ArmourAndEvasion|ArmourAndEnergyShield|EvasionAndEnergyShield)'
@@ -51,6 +53,7 @@ const FLAT: [RegExp, DefenceStat][] = [
   [/^\+\([^)]+\) to maximum Energy Shield$/, 'EnergyShield'],
 ]
 const INCREASED: [RegExp, DefenceStat[]][] = [
+  [/^\([^)]+\)% increased Runic Ward$/, ['Ward']],
   [/^\([^)]+\)% increased Armour$/, ['Armour']],
   [/^\([^)]+\)% increased Evasion Rating$/, ['Evasion']],
   [/^\([^)]+\)% increased (?:maximum )?Energy Shield$/, ['EnergyShield']],
@@ -85,6 +88,7 @@ function knownLocalGroup(group: string): boolean {
 }
 
 function implicitAffectsDefence(line: string): boolean {
+  if (isKnownWardImplicit(line)) return false
   const number = String.raw`[+-]?(?:\d+(?:\.\d+)?(?:\([^)]+\))?|\([^)]+\))`
   return (
     new RegExp(`^${number}(?:%?\\s+)to (?:Armour|Evasion Rating|maximum Energy Shield)$`, 'i').test(
@@ -97,7 +101,7 @@ function implicitAffectsDefence(line: string): boolean {
   )
 }
 
-/** 按固定 PoB 快照公式估算普通防具的三类基础防御。 */
+/** 按固定 PoB 快照公式估算防具的四类基础防御。 */
 export function estimateDefences(
   catalog: CraftCatalog,
   state: CraftState,
@@ -105,8 +109,8 @@ export function estimateDefences(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail(`基底 ${state.baseId} 不在制作目录中。`)
   if (!supportsItemQuality(base)) return fail('该基底类别或特殊品质规则暂不支持防御估算。')
-  if (Object.keys(base.properties).some((key) => /Ward/i.test(key)))
-    return fail('该基底使用尚未支持的 Ward 防御规则。')
+  if (Object.keys(base.properties).some((key) => /Ward/i.test(key) && key !== 'Ward'))
+    return fail('该基底使用尚未支持的特殊 Ward 防御规则。')
   if (base.implicit?.split('\n').some(implicitAffectsDefence))
     return fail('该基底的固有属性会影响防御，暂不支持估算。')
   if (state.sourceText !== null && state.sockets === undefined)
@@ -116,6 +120,8 @@ export function estimateDefences(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return fail(`当前制作状态无法估算：${checked.error}`)
   state = checked.value
+  const implicitWard = readImplicitWard(base, state)
+  if (!implicitWard.ok) return implicitWard
   const runeAugments = socketEffects(catalog, state).map(({ augment }) => augment)
   const runeTotals = sumRuneEffects(runeAugments)
   if (runeTotals === null) return fail('孔内包含尚未支持的符文效果，不能估算防御。')
@@ -128,18 +134,22 @@ export function estimateDefences(
     Armour: { flat: 0, increased: 0 },
     Evasion: { flat: 0, increased: 0 },
     EnergyShield: { flat: 0, increased: 0 },
+    Ward: { flat: implicitWard.value ?? 0, increased: 0 },
   }
   for (const { attribute: affix, mod, layer } of modifierLayers(catalog, state)) {
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
     if (layer === 'explicit' && isHorrorSocketAffix(catalog, state, affix)) continue
+    const wardKind = wardModifierKind(mod)
+    if (wardKind === 'unrelated') continue
     if (
-      SPECIAL_MODEL_TEXT.test(mod.group) ||
-      mod.lines.some((line) => SPECIAL_MODEL_TEXT.test(line))
+      wardKind === null &&
+      (SPECIAL_MODEL_TEXT.test(mod.group) ||
+        mod.lines.some((line) => SPECIAL_MODEL_TEXT.test(line)))
     )
       return fail(`词缀 ${mod.id} 使用尚未支持的特殊品质、Ward 或镶嵌增幅规则。`)
     if (!relevantLocal(mod)) continue
     if (!knownLocalGroup(mod.group)) return fail(`词缀 ${mod.id} 的本地防御组语义尚未支持。`)
-    if (mod.lines.some((line) => SPECIAL_TEXT.test(line)))
+    if (wardKind === null && mod.lines.some((line) => SPECIAL_TEXT.test(line)))
       return fail(`词缀 ${mod.id} 包含尚未支持的本地防御效果。`)
     const values = readNumericValues(mod.lines, affix.lines)
     if (!values.ok) return fail(`词缀 ${mod.id} 的防御数值无法读取：${values.error}`)
@@ -163,6 +173,7 @@ export function estimateDefences(
     ['Armour', base.properties.Armour],
     ['Evasion', base.properties.Evasion],
     ['EnergyShield', base.properties.EnergyShield],
+    ['Ward', base.properties.Ward ?? (implicitWard.value === null ? undefined : 0)],
   ]
   return {
     ok: true,
@@ -174,12 +185,12 @@ export function estimateDefences(
               stat,
               base: baseValue,
               flat: totals[stat].flat,
-              increased: totals[stat].increased + runeIncreased,
-              runeIncreased,
+              increased: totals[stat].increased + (stat === 'Ward' ? 0 : runeIncreased),
+              runeIncreased: stat === 'Ward' ? 0 : runeIncreased,
               quality,
               value: Math.floor(
                 (baseValue + totals[stat].flat) *
-                  (1 + (totals[stat].increased + runeIncreased) / 100) *
+                  (1 + (totals[stat].increased + (stat === 'Ward' ? 0 : runeIncreased)) / 100) *
                   (1 + quality / 100) +
                   0.5,
               ),

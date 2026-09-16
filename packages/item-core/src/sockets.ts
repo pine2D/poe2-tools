@@ -2,6 +2,7 @@ import { isSovereignAffix } from './alloyEffects'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
+import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
@@ -39,7 +40,7 @@ function supportedSocketBase(catalog: CraftCatalog, state: CraftState) {
   if (
     base === undefined ||
     base.hidden ||
-    base.runeforged ||
+    (base.runeforged && !isRuneforgedArmourBase(base)) ||
     base.variantList !== undefined ||
     hasSpecialSocketRules(catalog, state)
   )

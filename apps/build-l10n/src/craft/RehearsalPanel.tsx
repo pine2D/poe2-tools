@@ -66,6 +66,7 @@ import {
   type RestoredCraftProject,
   type RestoredIdentityCraftProject,
   type RestoredTargetCraftProject,
+  RUNEFORGED_ARMOUR_RULES_VERSION,
   readCraftGrantedSkillLevel,
   readNumericValues,
   removableCraftAffixes,
@@ -74,6 +75,7 @@ import {
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   requiresRetainedCatalystProjectVersion,
+  requiresRuneforgedArmourProjectVersion,
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
@@ -1087,17 +1089,19 @@ export function RehearsalPanel({
     ...(socketDeclaration === undefined ? {} : { importedSockets: [...socketDeclaration] }),
     ...(qualityDeclaration === undefined ? {} : { importedQuality: qualityDeclaration }),
   }
-  const project: TargetCraftProject = requiresCombatArmourRuneProjectVersion(projectConfig, catalog)
-    ? { ...projectConfig, rulesVersion: COMBAT_ARMOUR_RUNE_RULES_VERSION }
-    : retainedCatalystHistory
-      ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
-      : requiresCorruptionStrategyProjectVersion(projectConfig)
-        ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
-        : requiresExtractionProjectVersion(projectConfig)
-          ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
-          : requiresPerfectFluxProjectVersion(projectConfig)
-            ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
-            : projectConfig
+  const project: TargetCraftProject = requiresRuneforgedArmourProjectVersion(projectConfig, catalog)
+    ? { ...projectConfig, rulesVersion: RUNEFORGED_ARMOUR_RULES_VERSION }
+    : requiresCombatArmourRuneProjectVersion(projectConfig, catalog)
+      ? { ...projectConfig, rulesVersion: COMBAT_ARMOUR_RUNE_RULES_VERSION }
+      : retainedCatalystHistory
+        ? { ...projectConfig, rulesVersion: RETAINED_CATALYST_RULES_VERSION }
+        : requiresCorruptionStrategyProjectVersion(projectConfig)
+          ? { ...projectConfig, rulesVersion: CORRUPTION_STRATEGY_RULES_VERSION }
+          : requiresExtractionProjectVersion(projectConfig)
+            ? { ...projectConfig, rulesVersion: EXTRACTION_CRAFT_RULES_VERSION }
+            : requiresPerfectFluxProjectVersion(projectConfig)
+              ? { ...projectConfig, rulesVersion: PERFECT_FLUX_CRAFT_RULES_VERSION }
+              : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
         essence: '精华',
@@ -1292,7 +1296,7 @@ export function RehearsalPanel({
             </p>
           ) : null}
           <p className="rehearsal-scope-note">
-            支持普通攻击武器本地面板与三项防御估算；普通品质保留，催化品质按步骤更新，角色技能等级与角色面板尚未计算。
+            支持普通攻击武器本地面板与含符文结界的防御估算；普通品质保留，催化品质按步骤更新，角色技能等级与角色面板尚未计算。
           </p>
         </div>
         <div>

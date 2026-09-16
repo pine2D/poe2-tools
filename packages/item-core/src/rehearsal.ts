@@ -50,6 +50,7 @@ import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
 import { grantedSkillLevelStateError } from './perfectFlux'
+import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { runeSourceStateError } from './runeImport'
 import { hasSpecialSocketRules, socketStateError } from './sockets'
 
@@ -246,7 +247,7 @@ function baseError(base: CatalogBase): string | null {
     return '特殊珠宝暂不支持制作演练。'
   if (base.hidden) return '隐藏基底暂不支持制作演练。'
   if (base.variantList !== undefined) return '带内部变体的基底暂不支持制作演练。'
-  if (base.runeforged) return '符文锻造基底暂不支持制作演练。'
+  if (base.runeforged && !isRuneforgedArmourBase(base)) return '符文锻造基底暂不支持制作演练。'
   const beltError = beltBaseError(base)
   if (beltError) return beltError
   if (

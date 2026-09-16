@@ -1,5 +1,6 @@
 import type { CatalogBase } from './catalog'
 import type { CraftResult } from './rehearsal'
+import { isRuneforgedArmourBase } from './runeforgedArmour'
 import type { ItemDocument } from './types'
 
 const QUALITY_LABEL = /^(?:Quality|品质|品質)\s*[:：]/i
@@ -19,7 +20,7 @@ export function supportsItemQuality(base: CatalogBase): boolean {
   return (
     QUALITY_TYPES.has(base.type) &&
     !base.hidden &&
-    !base.runeforged &&
+    (!base.runeforged || isRuneforgedArmourBase(base)) &&
     base.variantList === undefined &&
     !/\bquality\b/i.test(base.implicit ?? '')
   )

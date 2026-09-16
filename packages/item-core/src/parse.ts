@@ -101,7 +101,7 @@ function isKnownProperty(text: string, itemClass: string): boolean {
   if (WEAPON_PROPERTIES.some((pattern) => pattern.test(text))) return true
   const numericValue = String.raw`[+-]?\d+(?:\.\d+)?(?:\([+-]?\d+(?:\.\d+)?-[+-]?\d+(?:\.\d+)?\))?`
   const standardProperty = new RegExp(
-    String.raw`^(?:品质|品質|Quality|护甲|護甲|Armour|闪避值|閃避值|Evasion Rating|能量护盾|能量護盾|精魂|护盾|護盾|Energy Shield|Spirit)\s*[:：]\s*${numericValue}%?(?:\s+\(augmented\))?$`,
+    String.raw`^(?:品质|品質|Quality|护甲|護甲|Armour|闪避值|閃避值|Evasion Rating|能量护盾|能量護盾|精魂|护盾|護盾|Energy Shield|Spirit|Runic Ward|Ward|符文结界|符文結界)\s*[:：]\s*${numericValue}%?(?:\s+\(augmented\))?$`,
     'i',
   )
   if (standardProperty.test(text)) return true

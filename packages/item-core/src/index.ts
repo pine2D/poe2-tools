@@ -342,6 +342,10 @@ export { estimateResistances, RESISTANCE_LABELS } from './resistances'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
 export { createStatResolver, resolveBase, resolveStat } from './resolve'
 export {
+  RUNEFORGED_ARMOUR_RULES_VERSION,
+  requiresRuneforgedArmourProjectVersion,
+} from './runeforgedProjectVersion'
+export {
   estimateSkillLevelContributions,
   type SkillLevelContribution,
 } from './skillLevelContributions'

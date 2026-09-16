@@ -707,7 +707,9 @@ describe('RehearsalPanel', () => {
     renderPanel()
     expect(screen.getByRole('heading', { name: /通货演练 · 指定结果演练/ })).toBeDefined()
     expect(
-      screen.getByText(/支持普通攻击武器本地面板与三项防御估算；普通品质保留，催化品质按步骤更新/),
+      screen.getByText(
+        /支持普通攻击武器本地面板与含符文结界的防御估算；普通品质保留，催化品质按步骤更新/,
+      ),
     ).toBeDefined()
     prepare('蜕变石')
     choose('ArmourA')
