@@ -390,6 +390,8 @@ v81 实现补充：逐条创建审计确认 483 条可见防具中 478 条属于
 
 [GGG 0.5.1 Hotfix 6](https://www.pathofexile.com/forum/view-thread/3955250/filter-account-type/staff)为 primary 机制修正依据，确认 Chronomancy 复合词缀的减缓效力方向修复；不外推旧装备更新方式。不同绑定符文共存、特殊孔和增效交互未因本次登记取得执行支持。v93 沿固定 MIT 身份接入除 Thrud 外五类单枚来源，实际词缀继续使用有序资格；没有新增数据表或来源抓取。详见[绑定符文核对](influence-runes-research.md)。
 
+2026-09-17 补查同一固定 MIT `src/Classes/Item.lua` 的 Destruction 标签交集、增效相加和不可缩放边界，继续作为计算模型参考。[玩家 Aldur 交互报告](https://www.pathofexile.com/forum/view-thread/3973611)按 gray 原始经验线索登记：虽发布于官方论坛，作者非官方，录像未核对；只引用链接和自写摘要，不导入玩家装备或授权新制作行为。
+
 # 合金类别映射（2026-09-14）
 
 人工阅读 PoE2DB 的 13 个公开材料说明：[Runic](https://poe2db.tw/us/Runic_Alloy)、[Adaptive](https://poe2db.tw/us/Adaptive_Alloy)、[Protective](https://poe2db.tw/us/Protective_Alloy)、[Expansive](https://poe2db.tw/us/Expansive_Alloy)、[Swift](https://poe2db.tw/us/Swift_Alloy)、[Cyclonic](https://poe2db.tw/us/Cyclonic_Alloy)、[Prismatic](https://poe2db.tw/us/Prismatic_Alloy)、[Mystic](https://poe2db.tw/us/Mystic_Alloy)、[Sovereign](https://poe2db.tw/us/Sovereign_Alloy)、[Celestial](https://poe2db.tw/us/Celestial_Alloy)、[Transcendent](https://poe2db.tw/us/Transcendent_Alloy)、[Runebinder](https://poe2db.tw/us/The_Runebinders_Alloy)、[Runefather](https://poe2db.tw/us/The_Runefathers_Alloy)。手工建立材料与装备类别到既有 MIT PoB2 词缀 ID 的关系，单独保存于 `data/craft/alloys.json`，标记 gray；没有下载同行数据文件、复制实现、权重、价格、配方或词缀数值。网页数据库未明确授权，不能将页面底部仅适用于 Wiki 内容的许可当作整站数据库许可。
