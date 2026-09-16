@@ -1,7 +1,7 @@
 import { type CraftCatalog, hasExistingModEligibility } from './catalog'
 import type { CraftProject } from './craftProject'
 import { desecrationSourceHash } from './desecration'
-import { essenceSourceHash, supportedEssenceId } from './essences'
+import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { fluxEligibleModIds } from './fluxes'
 import { jewelSourceHash } from './jewels'
 import { liquidEmotionSourceHash } from './liquidEmotions'
@@ -44,11 +44,17 @@ export function targetProjectSourceUsage(
   const base = catalog.bases.find((entry) => entry.id === baseId)
   const referenced = new Set(targetIds)
   const mods = catalog.modifiers.filter((mod) => referenced.has(mod.id))
-  const essenceIds = new Set(
-    (catalog.essences ?? [])
+  const amulet = catalog.bases.find((entry) => entry.type === 'Amulet')
+  const essenceIds = new Set([
+    ...(catalog.essences ?? [])
       .filter((entry) => supportedEssenceId(entry.id))
       .flatMap((entry) => Object.values(entry.mods)),
-  )
+    ...(amulet
+      ? inspectEssences(catalog, amulet)
+          .filter((entry) => supportedEssenceId(entry.essence.id) && entry.mod !== null)
+          .map((entry) => entry.modId)
+      : []),
+  ])
   const flux = base ? fluxEligibleModIds(catalog, base) : null
   return {
     essence:

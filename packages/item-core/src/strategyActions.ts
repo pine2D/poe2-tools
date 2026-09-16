@@ -7,7 +7,7 @@ import { isPlainProjectJSON } from './craftProjectJSON'
 import { applyCraftStep } from './craftSteps'
 import { prepareEssenceCraft } from './essenceCraft'
 import { type EssenceOmen, isEssenceOmen } from './essenceOmens'
-import { essenceCraftMode } from './essences'
+import { essenceCraftMode, inspectEssences } from './essences'
 import {
   type ExtractionCraftOperation,
   isExtractionCraftOperation,
@@ -226,6 +226,16 @@ export function checkCraftStrategyAction(
     return result.ok ? ok : result
   }
   if (action.kind === 'essence') {
+    const base = catalog.bases.find((entry) => entry.id === state.baseId)
+    if (base) {
+      for (const entry of inspectEssences(catalog, base)) {
+        if (
+          entry.essence.id === action.essenceId &&
+          prepareEssenceCraft(catalog, state, action.essenceId, action.omen, entry.resultModId).ok
+        )
+          return ok
+      }
+    }
     const result = prepareEssenceCraft(catalog, state, action.essenceId, action.omen)
     return result.ok ? ok : result
   }

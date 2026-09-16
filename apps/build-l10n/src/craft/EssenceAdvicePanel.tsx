@@ -34,7 +34,13 @@ export function EssenceResultDetails({
       ? prepareAlloyCraft(catalog, state, operation.alloyId)
       : operation.kind === 'liquid-emotion'
         ? prepareLiquidEmotionCraft(catalog, state, operation.emotionId, operation.resultKind)
-        : prepareEssenceCraft(catalog, state, operation.essenceId, operation.omen)
+        : prepareEssenceCraft(
+            catalog,
+            state,
+            operation.essenceId,
+            operation.omen,
+            operation.resultModId,
+          )
   if (!prepared.ok) return <p role="alert">{prepared.error}</p>
   const rendered = renderNumericLines(prepared.value.mod.lines, operation.values)
   const resolved =
@@ -121,7 +127,7 @@ export function EssenceAdvicePanel({
         const omenName = operation.omen ? ESSENCE_OMEN_RULES[operation.omen].name : null
         return (
           <article
-            key={`${operation.essenceId}:${operation.omen ?? ''}:${operation.removeAffixId ?? operation.removeModId ?? ''}`}
+            key={`${operation.essenceId}:${operation.resultModId ?? ''}:${operation.omen ?? ''}:${operation.removeAffixId ?? operation.removeModId ?? ''}`}
           >
             <h4>
               {localized}

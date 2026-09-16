@@ -15,7 +15,7 @@ import { craftStateSemanticKey } from './craftStateSemanticKey'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import { analyzeEssenceTargetContext } from './essenceAdvice'
-import { essenceCategory } from './essences'
+import { inspectEssences } from './essences'
 import { prepareFluxCraft } from './fluxCraft'
 import { FLUXES } from './fluxes'
 import { prepareFracture } from './fracture'
@@ -322,12 +322,12 @@ export function planCraftTargetContext(
     rolls: (current: CraftState, mod: CatalogMod) => sovereigns[0]?.rolls(current, mod) ?? null,
   }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  const category = base ? essenceCategory(base) : ''
   const essenceIds = new Set(
-    (catalog.essences ?? []).flatMap((essence) => {
-      const id = essence.mods[category]
-      return id && accepted.has(id) ? [id] : []
-    }),
+    base
+      ? inspectEssences(catalog, base).flatMap(({ mod, modId }) =>
+          mod && accepted.has(modId) ? [modId] : [],
+        )
+      : [],
   )
   if (base)
     for (const entry of inspectCraftAlloys(catalog, base))

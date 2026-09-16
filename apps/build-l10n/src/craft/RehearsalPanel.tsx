@@ -38,6 +38,7 @@ import {
   craftOmenMaterials,
   definitionStrategyStageAt,
   desecrationSourceHash,
+  ESSENCE_OUTCOMES_RULES_VERSION,
   type EssenceCraftOperation,
   EXTENDED_ARMOUR_RUNE_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
@@ -83,6 +84,7 @@ import {
   requiresConditionalArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresCraftedCapacityProjectVersion,
+  requiresEssenceOutcomesProjectVersion,
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
   requiresMasterworkProjectVersion,
@@ -404,6 +406,9 @@ export function RehearsalPanel({
     initialProject?.project.strategyStartStep,
   )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
+  const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
+    initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
   const [serleRules, setSerleRules] = useState(
     initialProject?.project.rulesVersion === SERLE_RULES_VERSION,
   )
@@ -1086,6 +1091,7 @@ export function RehearsalPanel({
   )?.sha256
   const retainedCatalystHistory = requiresRetainedCatalystProjectVersion({ history }, catalog)
   const hasEssenceHistory =
+    requiresEssenceOutcomesProjectVersion({ history }) ||
     strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
     history.some(
       ({ operation }) => operation && 'kind' in operation && operation.kind === 'essence',
@@ -1208,7 +1214,10 @@ export function RehearsalPanel({
   const needsCraftedCapacity =
     craftedCapacityRules || requiresCraftedCapacityProjectVersion(projectConfig, catalog)
   const needsSerle = serleRules || requiresSerleProjectVersion(projectConfig, catalog)
+  const needsEssenceOutcomes =
+    essenceOutcomesRules || requiresEssenceOutcomesProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsEssenceOutcomes ||
     needsSerle ||
     needsCraftedCapacity ||
     needsConditionalRunes ||
@@ -1221,19 +1230,21 @@ export function RehearsalPanel({
           ...(requiresSerleProjectVersion(projectConfig, catalog) && augmentSourceHash
             ? { augmentSourceHash }
             : {}),
-          rulesVersion: needsSerle
-            ? SERLE_RULES_VERSION
-            : needsCraftedCapacity
-              ? CRAFTED_CAPACITY_RULES_VERSION
-              : needsConditionalRunes
-                ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                : needsMasterwork
-                  ? MASTERWORK_CRAFT_RULES_VERSION
-                  : needsExtendedRunes
-                    ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                    : needsWardRunes
-                      ? WARD_RUNE_RULES_VERSION
-                      : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsEssenceOutcomes
+            ? ESSENCE_OUTCOMES_RULES_VERSION
+            : needsSerle
+              ? SERLE_RULES_VERSION
+              : needsCraftedCapacity
+                ? CRAFTED_CAPACITY_RULES_VERSION
+                : needsConditionalRunes
+                  ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                  : needsMasterwork
+                    ? MASTERWORK_CRAFT_RULES_VERSION
+                    : needsExtendedRunes
+                      ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                      : needsWardRunes
+                        ? WARD_RUNE_RULES_VERSION
+                        : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1267,6 +1278,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setEssenceOutcomesRules(restored.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION)
     setSerleRules(restored.project.rulesVersion === SERLE_RULES_VERSION)
     setCraftedCapacityRules(restored.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION)
     setConditionalRules(restored.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION)

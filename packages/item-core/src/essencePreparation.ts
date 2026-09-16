@@ -2,7 +2,7 @@ import type { CraftCatalog } from './catalog'
 import { applyCraftStep } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import { analyzeEssenceTargetContext, type EssenceAdviceStep } from './essenceAdvice'
-import { essenceCategory, essenceCraftMode, essenceSourceHash } from './essences'
+import { essenceCraftMode, essenceSourceHash, inspectEssences } from './essences'
 import { craftModsConflict } from './modConflicts'
 import {
   type CraftOperation,
@@ -98,7 +98,7 @@ export function analyzeEssencePreparationContext(
     new Set(groups.filter((group) => !group.some((id) => present.has(id))).flat())
   const directIds = new Set(direct.value.map((step) => step.targetModId))
   const accepted = new Set(groups.flat())
-  const category = essenceCategory(base)
+  const essences = inspectEssences(catalog, base)
   const targets = [...missing]
     .filter((id) => {
       const mod = byId.get(id)
@@ -118,11 +118,9 @@ export function analyzeEssencePreparationContext(
               mod,
               values.find((entry) => entry.modId === id),
             ) !== null) &&
-        (catalog.essences ?? []).some(
-          (essence) =>
-            Object.hasOwn(essence.mods, category) &&
-            essence.mods[category] === id &&
-            essenceCraftMode(essence.id) !== null,
+        essences.some(
+          ({ essence, modId, mod }) =>
+            mod !== null && modId === id && essenceCraftMode(essence.id) !== null,
         )
       )
     })
@@ -133,11 +131,9 @@ export function analyzeEssencePreparationContext(
     const target = byId.get(targetId)
     if (target === undefined) continue
     const modes = new Set(
-      (catalog.essences ?? [])
-        .filter(
-          (essence) => Object.hasOwn(essence.mods, category) && essence.mods[category] === targetId,
-        )
-        .map((essence) => essenceCraftMode(essence.id)),
+      essences
+        .filter(({ modId, mod }) => mod !== null && modId === targetId)
+        .map(({ essence }) => essenceCraftMode(essence.id)),
     )
     const search = (
       current: CraftState,

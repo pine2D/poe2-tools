@@ -64,7 +64,13 @@ export function EssenceCraftPanel({
     return base
       ? inspectEssences(catalog, base).map((inspection) => ({
           ...inspection,
-          prepared: prepareEssenceCraft(catalog, state, inspection.essence.id, omen),
+          prepared: prepareEssenceCraft(
+            catalog,
+            state,
+            inspection.essence.id,
+            omen,
+            inspection.resultModId,
+          ),
         }))
       : []
   }, [catalog, state, omen])
@@ -81,7 +87,10 @@ export function EssenceCraftPanel({
       ].some((text) => text?.toLowerCase().includes(needle)),
     )
   const selected = selection
-    ? entries.find(({ essence }) => essence.id === selection.essenceId)
+    ? entries.find(
+        ({ essence, resultModId }) =>
+          essence.id === selection.essenceId && resultModId === selection.resultModId,
+      )
     : undefined
   const prepared = selected?.prepared
   const mod = prepared?.ok ? prepared.value.mod : undefined
@@ -144,6 +153,7 @@ export function EssenceCraftPanel({
       <p>
         前三档精华将魔法装备升级为稀有；完美与腐化精华在稀有装备上移除一组，再加入保证工艺词缀。每次应用消耗一份精华，启用预兆时另消耗一份预兆。
       </p>
+      <p>多结果精华需分别选择本次演练结果；游戏中的结果随机，本工具不提供未经确认的概率。</p>
       <label>
         精华预兆
         <select
@@ -185,10 +195,10 @@ export function EssenceCraftPanel({
       {catalog.essences?.length && matches.length === 0 ? <p>没有匹配的精华或保证属性。</p> : null}
       {/* biome-ignore lint/a11y/noNoninteractiveTabindex: 滚动区需要键盘焦点，确保内部操作全部禁用时仍能使用方向键滚动。 */}
       <section className="essence-catalog-list" aria-label="当前基底精华列表" tabIndex={0}>
-        {matches.map(({ essence, prepared, mod, modId }) => {
+        {matches.map(({ essence, prepared, mod, modId, resultModId }) => {
           const label = translations[essence.name] ?? essence.name
           return (
-            <article key={essence.id}>
+            <article key={`${essence.id}:${modId}`}>
               <header>
                 <strong>{label}</strong>
                 {label !== essence.name ? <span lang="en">{essence.name}</span> : null}
@@ -211,7 +221,7 @@ export function EssenceCraftPanel({
               {!prepared.ok ? <p>{prepared.error}</p> : null}
               <button
                 type="button"
-                aria-label={`选择精华 ${label}`}
+                aria-label={`选择精华 ${label}${resultModId ? ` · ${mod?.lines.map((line) => translateLine?.(line) ?? line).join('；')}` : ''}`}
                 disabled={disabled || !prepared.ok}
                 onClick={() => {
                   if (!prepared.ok) return
@@ -220,6 +230,7 @@ export function EssenceCraftPanel({
                     setSelection({
                       kind: 'essence',
                       essenceId: essence.id,
+                      ...(resultModId === undefined ? {} : { resultModId }),
                       ...(omen === undefined ? {} : { omen }),
                       values: ranges.value.map((range) => range.min),
                     })

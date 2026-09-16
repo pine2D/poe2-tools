@@ -26,6 +26,7 @@ import { applyCraftStep, type CraftStep, isAlloyCraftOperation } from './craftSt
 import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
 import { isEssenceOmen } from './essenceOmens'
+import { requiresEssenceOutcomesProjectVersion } from './essenceOutcomesProjectVersion'
 import {
   essenceCraftMode,
   isEssenceMappedMod,
@@ -329,14 +330,23 @@ function readOperation(value: unknown): CraftStep | null {
           }
         : null
     if (value.kind === 'essence')
-      return exactKeys(value, ['kind', 'essenceId', 'values', 'removeModId', 'omen']) &&
+      return exactKeys(value, [
+        'kind',
+        'essenceId',
+        'values',
+        'removeModId',
+        'omen',
+        'resultModId',
+      ]) &&
         (!Object.hasOwn(value, 'omen') || isEssenceOmen(value.omen)) &&
         nonempty(value.essenceId) &&
+        (!Object.hasOwn(value, 'resultModId') || nonempty(value.resultModId)) &&
         numericValues(value.values) &&
         (!Object.hasOwn(value, 'removeModId') || nonempty(value.removeModId))
         ? {
             kind: 'essence',
             essenceId: value.essenceId,
+            ...(typeof value.resultModId === 'string' ? { resultModId: value.resultModId } : {}),
             ...(isEssenceOmen(value.omen) ? { omen: value.omen } : {}),
             values: [...value.values],
             ...(typeof value.removeModId === 'string' ? { removeModId: value.removeModId } : {}),
@@ -660,6 +670,7 @@ export function readNativeTargetProjectProjection(
   conditionalRunes = false,
   craftedCapacity = false,
   serle = false,
+  essenceOutcomes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -680,6 +691,7 @@ export function readNativeTargetProjectProjection(
     conditionalRunes,
     craftedCapacity,
     serle,
+    essenceOutcomes,
   )
 }
 
@@ -702,6 +714,7 @@ function readCraftProject(
   conditionalRunes = false,
   craftedCapacity = false,
   serle = false,
+  essenceOutcomes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -720,6 +733,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!essenceOutcomes && requiresEssenceOutcomesProjectVersion(value))
+    return fail('多结果精华必须使用 v89 项目，包括起点、目标、完整未来及未执行指引。')
   if (!serle && requiresSerleProjectVersion(value, catalog))
     return fail('Serle 后缀容量必须使用 v88 项目，包括起点、声明、完整未来、指引及报价。')
   if (!craftedCapacity && requiresCraftedCapacityProjectVersion(value, catalog))

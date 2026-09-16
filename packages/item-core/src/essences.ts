@@ -1,16 +1,14 @@
 import type { CatalogBase, CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
+import { essenceCategory, essenceResultModIds } from './essenceOutcomes'
+
+export { essenceCategory } from './essenceOutcomes'
 
 export interface EssenceInspection {
   essence: CatalogEssence
   category: string
   modId: string
+  resultModId?: string
   mod: CatalogMod | null
-}
-
-export function essenceCategory(base: CatalogBase): string {
-  if (base.type === 'Staff' && base.subType === 'Warstaff') return 'Warstaff'
-  if (base.type === 'Shield' && base.tags.includes('buckler')) return 'Buckler'
-  return base.type
 }
 
 /** 只连接来源声明，不从普通生成资格推断精华的使用规则。 */
@@ -21,7 +19,15 @@ export function inspectEssences(catalog: CraftCatalog, base: CatalogBase): Essen
     if (!Object.hasOwn(essence.mods, category)) return []
     const modId = essence.mods[category]
     if (modId === undefined) return []
-    return [{ essence, category, modId, mod: mods.get(modId) ?? null }]
+    const results = essenceResultModIds(catalog, base, essence)
+    if (results.length === 0) return [{ essence, category, modId, mod: null }]
+    return results.map((id) => ({
+      essence,
+      category,
+      modId: id,
+      mod: mods.get(id) ?? null,
+      ...(results.length > 1 ? { resultModId: id } : {}),
+    }))
   })
 }
 

@@ -73,6 +73,7 @@ export interface SocketCraftOperation {
 export interface EssenceCraftOperation {
   kind: 'essence'
   essenceId: string
+  resultModId?: string
   omen?: EssenceOmen
   removeModId?: string
   removeAffixId?: string
@@ -300,8 +301,18 @@ export function applyCraftStep(
     }
     if (step.kind === 'essence') {
       if (
-        !onlyKeys(step, ['kind', 'essenceId', 'values', 'removeModId', 'removeAffixId', 'omen']) ||
+        !onlyKeys(step, [
+          'kind',
+          'essenceId',
+          'resultModId',
+          'values',
+          'removeModId',
+          'removeAffixId',
+          'omen',
+        ]) ||
         (Object.hasOwn(step, 'omen') && !isEssenceOmen(step.omen)) ||
+        (Object.hasOwn(step, 'resultModId') &&
+          (typeof step.resultModId !== 'string' || step.resultModId.length === 0)) ||
         typeof step.essenceId !== 'string' ||
         !Array.isArray(step.values) ||
         step.values.length > 32 ||
@@ -313,6 +324,7 @@ export function applyCraftStep(
         state,
         step.essenceId,
         isEssenceOmen(step.omen) ? step.omen : undefined,
+        typeof step.resultModId === 'string' ? step.resultModId : undefined,
       )
       if (!prepared.ok) return prepared
       if (

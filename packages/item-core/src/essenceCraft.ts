@@ -4,6 +4,7 @@ import type { CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { craftedModifierCapacity } from './craftedCapacity'
 import { ESSENCE_OMEN_RULES, type EssenceOmen, isEssenceOmen } from './essenceOmens'
+import { essenceResultModIds } from './essenceOutcomes'
 import { essenceCategory, essenceCraftMode, essenceSourceHash } from './essences'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
@@ -21,6 +22,7 @@ export function prepareEssenceCraft(
   state: CraftState,
   essenceId: string,
   omen?: EssenceOmen,
+  resultModId?: string,
 ): CraftResult<PreparedEssenceCraft> {
   const fail = (error: string): CraftResult<PreparedEssenceCraft> => ({
     ok: false,
@@ -52,7 +54,14 @@ export function prepareEssenceCraft(
   const category = essenceCategory(base)
   const modId = Object.hasOwn(essence.mods, category) ? essence.mods[category] : undefined
   if (modId === undefined) return fail('该精华没有当前基底类别的保证属性。')
-  const mod = catalog.modifiers.find((entry) => entry.id === modId)
+  const results = essenceResultModIds(catalog, base, essence)
+  if (results.length === 0) return fail('精华保证属性尚未解析，暂不支持。')
+  if (results.length > 1 && resultModId === undefined)
+    return fail('该精华有多种结果，请明确选择本次结果。')
+  const selectedId = resultModId ?? results[0]
+  if (selectedId === undefined || !results.includes(selectedId))
+    return fail('所选结果不属于当前精华与基底。')
+  const mod = catalog.modifiers.find((entry) => entry.id === selectedId)
   if (!mod) return fail('精华保证属性尚未解析，暂不支持。')
   if (state.itemLevel < mod.level) return fail('低物等交互尚未验证，暂不支持。')
   if (

@@ -212,6 +212,11 @@ export type { PreparedEssenceCraft } from './essenceCraft'
 export { prepareEssenceCraft } from './essenceCraft'
 export type { EssenceOmen } from './essenceOmens'
 export { ESSENCE_OMEN_RULES, isEssenceOmen } from './essenceOmens'
+export { essenceResultModIds } from './essenceOutcomes'
+export {
+  ESSENCE_OUTCOMES_RULES_VERSION,
+  requiresEssenceOutcomesProjectVersion,
+} from './essenceOutcomesProjectVersion'
 export type { EssencePreparationAdvice, EssencePreparationRoute } from './essencePreparation'
 export { analyzeEssencePreparation } from './essencePreparation'
 export type { EssenceInspection } from './essences'

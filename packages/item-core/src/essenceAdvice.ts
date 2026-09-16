@@ -4,7 +4,7 @@ import { applyCraftStep, type EssenceCraftOperation } from './craftSteps'
 import { minimumCraftTargetRolls } from './effectiveTargetValues'
 import { prepareEssenceCraft } from './essenceCraft'
 import { ESSENCE_OMEN_RULES, type EssenceOmen } from './essenceOmens'
-import { essenceCategory } from './essences'
+import { inspectEssences } from './essences'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { specialTargetContext } from './targetDefinitionSpecialContext'
 import type { CraftTargetDefinitions } from './targetDefinitions'
@@ -90,14 +90,12 @@ export function analyzeEssenceTargetContext(
   const present = groups.flat().filter((id) => existing.has(id))
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (base === undefined) return { ok: false, error: '当前基底不在制作目录中。' }
-  const category = essenceCategory(base)
   const steps: EssenceAdviceStep[] = []
   const losses = new Map<EssenceCraftOperation, number>()
   const risks = new Map<EssenceCraftOperation, number>()
-  for (const essence of catalog.essences ?? []) {
-    const modId = Object.hasOwn(essence.mods, category) ? essence.mods[category] : undefined
-    if (modId === undefined || !missing.has(modId)) continue
-    const original = prepareEssenceCraft(catalog, state, essence.id)
+  for (const { essence, modId, resultModId } of inspectEssences(catalog, base)) {
+    if (!missing.has(modId)) continue
+    const original = prepareEssenceCraft(catalog, state, essence.id, undefined, resultModId)
     if (!original.ok) continue
     const defaultNumbers = native
       ? null
@@ -119,7 +117,9 @@ export function analyzeEssenceTargetContext(
           : [undefined, ...(Object.keys(ESSENCE_OMEN_RULES) as EssenceOmen[])]
       for (const omen of omens) {
         const prepared =
-          omen === undefined ? original : prepareEssenceCraft(catalog, state, essence.id, omen)
+          omen === undefined
+            ? original
+            : prepareEssenceCraft(catalog, state, essence.id, omen, resultModId)
         if (!prepared.ok) continue
         // 定向池是原池的子集；同池配置只增加材料，没有收窄结果。
         if (
@@ -135,6 +135,7 @@ export function analyzeEssenceTargetContext(
           const operation: EssenceCraftOperation = {
             kind: 'essence',
             essenceId: essence.id,
+            ...(resultModId === undefined ? {} : { resultModId }),
             values: [...numericValues],
             ...(omen === undefined ? {} : { omen }),
             ...(removed === undefined ? {} : { removeModId: removed.modId }),

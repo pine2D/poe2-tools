@@ -63,14 +63,14 @@ export function EssenceCatalog({
             />
           </label>
           <p className="essence-catalog-count" role="status">
-            匹配 {matches.length} / {entries.length} 种精华
+            匹配 {matches.length} / {entries.length} 项精华结果
           </p>
           {matches.length === 0 ? (
             <p>没有匹配的精华或保证属性。</p>
           ) : (
             <div className="essence-catalog-list">
               {matches.map(({ essence, localizedName, category, modId, mod, lines }) => (
-                <article key={essence.id}>
+                <article key={`${essence.id}:${modId}`}>
                   <header>
                     {localizedName ? <strong>{localizedName}</strong> : null}
                     <span>{essence.name}</span>

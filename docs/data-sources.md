@@ -1,5 +1,13 @@
 # 数据源登记表
 
+## 多结果精华（2026-09-16，实施前核对）
+
+沿用 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 `Essence.lua`、`ModItem.lua`。本轮另读同提交 [ItemsTab.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/ItemsTab.lua) 的精华列表逻辑，临时文件 SHA-256 为 `3539d5c720b11d869b8e8755ad4e66771c9fae6a746d6a7adaab41d726b249c2`；只核对语义，不将第三方代码入库。该界面跳过没有实际描述的映射，不能作为完整游戏制作结果表。
+
+PoE2DB 的三档 [Enhancement](https://poe2db.tw/us/Greater_Essence_of_Enhancement)、三档 [Infinite](https://poe2db.tw/us/Greater_Essence_of_the_Infinite) 及 [Perfect Infinite](https://poe2db.tw/us/Perfect_Essence_of_the_Infinite) 物品说明按既有 gray 人工机制参考使用；实际读取的七个地址见 [多结果精华核对](essence-outcomes-research.md)。未新增适配器、下载词缀权重或提交原始网页。公开页的需求等级不替换固定目录的生成等级。
+
+[Carnarius 0.5 项链制作原视频](https://www.youtube.com/watch?v=QmyNWhUQ2Ko)（2026-06-07）按 gray 作者第一手讲解登记。本轮读取 Exa 提取的完整转录及章节信息，未逐帧验收；用于核对完美无限精华三种结果及结晶预兆的流程，不采用作者的等概率、价格、催化比例或平均成本估计。字幕、装备及视频不入库。CoE 公开 changelog 仅作为错误反馈、工艺标记与条件流程的参考，不读取实现或数据。
+
 v88 实施补充（2026-09-16）：Serle 使用既有 MIT PoB2 固定目录与官方三服名称，无新增生产数据。可见 trade hash `718638445` 与空文本隐藏总量 hash `1950607759` 同时核对。官方0.5.4补丁继续限制腐化／净化新镶；仅调研重读 CoE changelog、[官方论坛预告讨论](https://www.pathofexile.com/forum/view-thread/3932540/page/116)、[魂核故障帖](https://www.pathofexile.com/forum/view-thread/3962264)及[Game8摘要](https://game8.co/games/Path-of-Exile-2/archives/603444)以排除冲突说法，后几项均不进入目录或操作权重。普通／魔法、全绑定萃取及容量下降保留未获可靠证据，明确保留未核实状态。
 
 ## 特殊容量符文（2026-09-16，实施前审计）
