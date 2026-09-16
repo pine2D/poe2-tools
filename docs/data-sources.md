@@ -406,3 +406,10 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 符文升级机制补充（2026-09-16）：沿用固定 MIT ModRunes 的 Masterwork 材料身份和高级／完美档效果；原孔升级关系参考 [PoE2DB 材料说明](https://poe2db.tw/us/Masterwork_Rune)（gray，仅人工核对，不复制表）及 [GGG 论坛玩家第一手使用记录](https://www.pathofexile.com/forum/view-thread/3944462)（community，不等同官方规则）。[角色特殊孔问题报告](https://www.pathofexile.com/forum/view-thread/3979498)与固定目录的 Chakra 标志存在适用差异，不能仅按目录标志开放角色孔。当前只建模15基础家族高级→完美的普通装备原孔操作，腐化、低档和特殊孔仍待核实；不新增抓取适配器或生产依赖。
 
 限量镶嵌物补充（2026-09-16）：只读核对同一固定 MIT 提交的 `CalcSetup.lua`（SHA-256 `049cfc52435f20c607c4517533f33a4ac9bb8d0c26755790bd6be4c810bce396`），其角色孔／装备计数按 `limitId` 或名称跨部位累计并产生警告。[GGG 0.4.0 官方说明](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff)证明非法孔可使已有装备无法使用；[跨武器套复现](https://www.pathofexile.com/forum/view-thread/3897395)和[同件重复旧装备案例](https://www.pathofexile.com/forum/view-thread/3899544)是 community 第一手记录，不能当作当前全部游戏规则。Protection／Nourishment 的效果与逐数值增效沿用已登记 ModRunes／ModScalability，无新表、无同行代码或浏览器请求。后续 v86 已接入两项普通防具分支及已有超限修复，其他限量族尚未开放；范围与验收见 [限量镶嵌物核对](limited-augments-research.md)。
+
+### 防御精华后续核对（2026-09-16）
+
+- GGG 0.3.0c 官方公告：https://www.pathofexile.com/forum/view-thread/3851277 ，primary 人工规则参考；确认法器／小圆盾的历史类别错误已修复，不导出游戏数据。
+- 原始错误报告：https://www.pathofexile.com/forum/view-thread/3835288 ，玩家公开报告，仅用于比对修复时间，不能代表当前规则。
+- SaVeQ 原视频：https://www.youtube.com/watch?v=ppH5TmZTsCQ ，作者公开操作讲解，人工辅助参考；仅保存自写判断和链接，不复制视频、字幕、权重或价格。尚未逐帧验收。
+- PoE2DB 的 Body_Armours_str_dex／Helmets_dex 页面沿用现有 gray 人工参考登记，仅交叉核对公开展示；不新增抓取器或复制同行数据。审计矩阵完全来自仓库已有 MIT 目录。
