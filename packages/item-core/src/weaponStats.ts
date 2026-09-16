@@ -1,9 +1,14 @@
 import { isSovereignAffix } from './alloyEffects'
+import { readStatAnnotations } from './annotations'
 import type { CatalogBase, CraftCatalog } from './catalog'
+import { matchCatalogLineOrder } from './catalogMatch'
+import { isDestructionAffix } from './destructionEffects'
+import { explicitModEffect } from './jewelEffects'
 import { modifierLayers } from './modifierLayers'
 import { readNumericValues } from './numeric'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { socketEffects } from './sockets'
+import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 import { sumWeaponRuneEffects, weaponSocketKind } from './weaponRuneEffects'
 
 export type WeaponDamageType = 'Physical' | 'Fire' | 'Cold' | 'Lightning' | 'Chaos'
@@ -197,7 +202,11 @@ export function estimateWeaponStats(
   let exactPhysicalInc = decimal(runes.Physical)
   for (const { attribute: affix, mod, layer } of modifierLayers(catalog, state)) {
     if (!mod) return fail(`词缀 ${affix.modId} 不在制作目录中。`)
-    if (layer === 'explicit' && isSovereignAffix(catalog, state, affix, 'socket')) continue
+    if (
+      layer === 'explicit' &&
+      (isSovereignAffix(catalog, state, affix, 'socket') || isDestructionAffix(catalog, affix))
+    )
+      continue
     if (!GROUPS.has(mod.group)) {
       if (
         (mod.group.startsWith('Local') &&
@@ -212,7 +221,7 @@ export function estimateWeaponStats(
     if (!values.ok) return fail(`词缀 ${mod.id} 数值无法读取：${values.error}`)
     let index = 0
     let unresolved = false
-    const lines = mod.lines.map((line) =>
+    let lines = mod.lines.map((line) =>
       line.replace(/\([+-]?\d+(?:\.\d+)?[-–—][+-]?\d+(?:\.\d+)?\)/g, () => {
         const value = values.value[index++]
         if (value === null || value === undefined) {
@@ -224,6 +233,34 @@ export function estimateWeaponStats(
     )
     // 混合组的完整语义一并验证；准确度无需参与计算。
     if (unresolved) return fail(`词缀 ${mod.id} 的范围尚未掷定。`)
+    if (layer === 'explicit') {
+      const effect = explicitModEffect(catalog, state, mod)
+      if (!effect.ok || effect.value !== 0) {
+        const order = matchCatalogLineOrder(mod.lines, affix.lines)
+        if (!order) return fail('词缀原始属性行无法唯一对应目录。')
+        const projected: string[] = []
+        for (const [lineIndex, pattern] of mod.lines.entries()) {
+          const actual = lines[lineIndex]
+          const original = affix.lines[order[lineIndex] ?? -1]
+          if (actual === undefined || original === undefined)
+            return fail('词缀原始属性行无法唯一对应目录。')
+          // 尾注属于原始行身份；目录顺序和显示顺序不一定一致。
+          if (readStatAnnotations(original).unscalable) {
+            projected.push(actual)
+            continue
+          }
+          if (!effect.ok) return fail(effect.error)
+          const metadata = catalog.scalability?.[pattern]
+          if (!metadata || statScalabilitySourceHash(catalog) === null)
+            return fail('缺少可核验的属性缩放资料。')
+          const scaled = scaleStatLineByEffect(pattern, actual, metadata, effect.value)
+          if (!scaled.ok) return fail(`词缀 ${mod.id} 增效数值未知：${scaled.error}`)
+          projected.push(scaled.value)
+        }
+        // 投影已核对基础范围，之后仅解析有效值，不能再次套用未放大的目录范围。
+        lines = projected
+      }
+    }
     const line = lines[0] ?? ''
     const num = '(\\d+(?:\\.\\d+)?)'
     const flat = new RegExp(

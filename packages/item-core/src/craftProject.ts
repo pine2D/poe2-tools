@@ -26,6 +26,7 @@ import { applyCraftStep, type CraftStep, isAlloyCraftOperation } from './craftSt
 import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
 import { requiresDesecrationCountProjectVersion } from './desecrationCountProjectVersion'
+import { requiresDestructionRuneProjectVersion } from './destructionRuneProjectVersion'
 import { isEssenceOmen } from './essenceOmens'
 import { requiresEssenceOutcomesProjectVersion } from './essenceOutcomesProjectVersion'
 import {
@@ -679,6 +680,7 @@ export function readNativeTargetProjectProjection(
   putrefaction = false,
   desecrationCount = false,
   influenceRunes = false,
+  destructionRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -704,6 +706,7 @@ export function readNativeTargetProjectProjection(
     putrefaction,
     desecrationCount,
     influenceRunes,
+    destructionRunes,
   )
 }
 
@@ -731,6 +734,7 @@ function readCraftProject(
   putrefaction = false,
   desecrationCount = false,
   influenceRunes = false,
+  destructionRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -749,6 +753,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!destructionRunes && requiresDestructionRuneProjectVersion(value))
+    return fail('毁灭符文必须使用 v94 项目，包括起点、目标、声明、完整未来、指引及报价。')
   if (!influenceRunes && requiresInfluenceRuneProjectVersion(value))
     return fail('扩展词缀池符文必须使用 v93 项目，包括起点、目标、声明、完整未来、指引及报价。')
   if (!desecrationCount && requiresDesecrationCountProjectVersion(value))

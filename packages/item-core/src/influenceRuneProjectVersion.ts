@@ -5,10 +5,11 @@ import { hasProjectCapability } from './projectCapability'
 import { statScalabilitySourceHash } from './statScalability'
 
 export const INFLUENCE_RUNE_RULES_VERSION = 'basic-2026-09-17-v93'
+const legacyRunes = INFLUENCE_RUNES.filter((rule) => rule.tag !== 'destruction')
 const ids = new Set(
-  INFLUENCE_RUNES.map((rule) => `pob2:augment:${JSON.stringify([rule.name, rule.category])}`),
+  legacyRunes.map((rule) => `pob2:augment:${JSON.stringify([rule.name, rule.category])}`),
 )
-const lines = new Set(INFLUENCE_RUNES.map((rule) => `Can roll ${rule.label} modifiers`))
+const lines = new Set(legacyRunes.map((rule) => `Can roll ${rule.label} modifiers`))
 const modifierId = /^(?:Time|Marksman|Berserk|Soul|Decay)Influence\w+$/
 
 /** 固定身份识别不依赖可变目录；数组、未来、嵌套指引与报价均检查自有数据属性。 */
@@ -16,7 +17,7 @@ export function requiresInfluenceRuneProjectVersion(input: unknown): boolean {
   return hasProjectCapability(
     input,
     (properties) =>
-      INFLUENCE_RUNES.some((rule) => Object.hasOwn(properties, `augment:${rule.name}`)) ||
+      legacyRunes.some((rule) => Object.hasOwn(properties, `augment:${rule.name}`)) ||
       Object.values(properties).some(
         (property) =>
           typeof property.value === 'string' &&

@@ -172,7 +172,7 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
 
 /** 身份、类别、本地标志和完整效果语义必须一致。 */
 export function isSupportedArmourRune(augment: CatalogAugment): boolean {
-  if (isInfluenceRune(augment)) return true
+  if (isInfluenceRune(augment) && !['weapon', 'caster'].includes(augment.category)) return true
   if (isAstridRune(augment) && augment.category === 'armour') return true
   if (isSerleRune(augment) && augment.category === 'armour') return true
   if (

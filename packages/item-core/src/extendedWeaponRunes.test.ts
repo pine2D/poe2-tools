@@ -25,7 +25,10 @@ it('固定目录135条武器分支可镶入，精确类别、本地标志与空�
   ] as const) {
     const initial = state(baseId)
     const all = socketCandidates(catalog, initial).filter((a) => a.type === 'Rune')
-    expect(all).toHaveLength(count + 2)
+    expect(all).toHaveLength(count + 3)
+    expect(all.filter((a) => a.name === "Thrud's Might").map((a) => a.category)).toEqual([
+      category === 'weapon' ? 'weapon' : 'caster',
+    ])
     const choices = all.filter((a) => a.limit === undefined)
     expect(choices).toHaveLength(count)
     for (const augment of choices) {

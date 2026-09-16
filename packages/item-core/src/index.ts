@@ -209,6 +209,10 @@ export {
   DESECRATION_COUNT_RULES_VERSION,
   requiresDesecrationCountProjectVersion,
 } from './desecrationCountProjectVersion'
+export {
+  DESTRUCTION_RUNE_RULES_VERSION,
+  requiresDestructionRuneProjectVersion,
+} from './destructionRuneProjectVersion'
 export { matchesTargetInterval, projectCraftTargetValues } from './effectiveTargetValues'
 export type { EssenceAdviceStep } from './essenceAdvice'
 export { analyzeEssenceTargets } from './essenceAdvice'

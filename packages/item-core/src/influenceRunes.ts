@@ -1,9 +1,22 @@
 import { astridSourceValid } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftResult, CraftState } from './rehearsal'
+import { weaponSocketKind } from './weaponRuneEffects'
 
-/** 固定快照的声明身份；Destruction 须先接入显式增效，暂不列为可执行来源。 */
+/** 固定快照的声明身份；同名符文的部位记录不改变单枚限制。 */
 export const INFLUENCE_RUNES = [
+  ...(['weapon', 'caster'] as const).map(
+    (category) =>
+      ({
+        name: "Thrud's Might",
+        category,
+        baseType: 'Weapon',
+        tag: 'destruction',
+        label: 'Destruction',
+        stat: 10539,
+        hash: '1676950499',
+      }) as const,
+  ),
   {
     name: "Uhtred's Sidereus",
     category: 'boots',
@@ -56,7 +69,9 @@ export function isInfluenceRuneLine(line: string): boolean {
 }
 
 export function isInfluenceRune(augment: CatalogAugment): boolean {
-  const rule = INFLUENCE_RUNES.find((rule) => rule.name === augment.name)
+  const rule = INFLUENCE_RUNES.find(
+    (rule) => rule.name === augment.name && rule.category === augment.category,
+  )
   if (!rule) return false
   const line = `Can roll ${rule.label} modifiers`
   return (
@@ -84,13 +99,19 @@ export function influenceRuneFitsBase(
   state: Pick<CraftState, 'baseId'>,
   augment: CatalogAugment,
 ): boolean {
-  const rule = INFLUENCE_RUNES.find((rule) => rule.name === augment.name)
+  const rule = INFLUENCE_RUNES.find(
+    (rule) => rule.name === augment.name && rule.category === augment.category,
+  )
+  const base = catalog.bases.find((base) => base.id === state.baseId)
+  const weapon = base && weaponSocketKind(base)
   return (
     !!rule &&
     isInfluenceRune(augment) &&
     astridSourceValid(catalog) &&
     catalog.augments?.filter((a) => a.id === augment.id).length === 1 &&
-    catalog.bases.find((base) => base.id === state.baseId)?.type === rule.baseType
+    (rule.tag === 'destruction'
+      ? !!weapon && augment.category === (weapon.category === 'weapon' ? 'weapon' : 'caster')
+      : base?.type === rule.baseType)
   )
 }
 

@@ -37,6 +37,7 @@ import { corruptionStateError } from './corruptionEnchantments'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { craftedModifierCapacity } from './craftedCapacity'
 import { desecrationSourceHash } from './desecration'
+import { isDestructionAffix } from './destructionEffects'
 import { isEssenceMappedMod } from './essences'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
@@ -421,6 +422,7 @@ export function createCraftState(
       return failure(`词缀 ${affix.modId} 包含未支持的容量或跨类别规则。`)
     if (
       mod.lines.some((line) => /modifier magnitudes|effect of (?:prefix|suffix)/i.test(line)) &&
+      !isDestructionAffix(catalog, affix) &&
       !isSovereignAffix(catalog, input, affix, 'resistance') &&
       !(
         isBasicJewel(base) &&
