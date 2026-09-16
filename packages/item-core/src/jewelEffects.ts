@@ -3,6 +3,7 @@ import { readStatAnnotations } from './annotations'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { destructionModifierEffect, usesDestructionEffect } from './destructionEffects'
 import { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
@@ -56,7 +57,7 @@ export function jewelEffectForKind(
   return { ok: true, value }
 }
 
-/** 显式词缀共享投影：珠宝侧别与君王抗性互斥于唯一工艺。 */
+/** 显式词缀共享投影；来源百分数相加，数值行只缩放一次。 */
 export function explicitModEffect(
   catalog: CraftCatalog,
   state: CraftState,
@@ -65,14 +66,22 @@ export function explicitModEffect(
   const jewel = jewelEffectForKind(catalog, state, mod.kind)
   if (!jewel.ok) return jewel
   const sovereign = sovereignResistanceEffect(catalog, state, mod)
-  return sovereign.ok ? { ok: true, value: jewel.value + sovereign.value } : sovereign
+  if (!sovereign.ok) return sovereign
+  const destruction = destructionModifierEffect(catalog, state, mod)
+  return destruction.ok
+    ? { ok: true, value: jewel.value + sovereign.value + destruction.value }
+    : destruction
 }
 
 export function usesExplicitModEffect(
   catalog: CraftCatalog,
   state: Pick<CraftState, 'affixes'>,
 ): boolean {
-  return usesJewelEffect(catalog, state) || usesSovereignResistance(state)
+  return (
+    usesJewelEffect(catalog, state) ||
+    usesSovereignResistance(state) ||
+    usesDestructionEffect(state)
+  )
 }
 
 export interface CraftAffixEffectGroup {
