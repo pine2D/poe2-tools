@@ -20,6 +20,8 @@ Belton 的额外 2 后缀结果截图与容量下降讲解分别记录；没有�
 
 ## 2026-09-16 品质逐颗实验与注能器统计
 
+同日补充读取PoE2DB的四分类注能器物品页与[Quality关键词](https://poe2db.tw/us/Quality)，按既有gray人工机制参考使用；名称与本仓库官方静态词典核对。区分相对当前最大品质的门槛和固定20%说明，记录普通30%／催化60%存储边界的后续影响；未新增抓取适配器、原始数据或执行概率。PoE2 Wiki正文403，Reddit连接器无可用登录后端，未据摘要补齐缺失公式。
+
 [Krydax 原始实验](https://www.reddit.com/r/PathOfExile2/comments/1r4snoi/i_applied_1734_vaal_infusers_to_314_items_so_you/)和 [SpecialistAd670 原始实验](https://www.reddit.com/r/PathOfExile2/comments/1s80jza/i_tracked_750_vaal_infuser_attempts_here_is_what/)按 gray 人工机制参考登记。作者公开的有限汇总用于自写统计核对；玩家实验不是 GGG 保证，也没有证明当前四种注能器共用概率。没有下载或入库原始表格、图片、装备样本、同行实现或权重；未取得完整数据再分发许可，不建立数据适配器。
 
 [2026-08-10 催化种类误用报告](https://www.reddit.com/r/PathOfExile2/comments/1vk8bk4/misclicked_a_neural_catalyst_onto_my_40_caster/)仅作为 gray 第一手自述，记录已有高品质在换种类时被替换的案例。物等与完整逐次记录缺失，不能据单次 2% 结果建立通用材料增量。报告中的求助方案、评论概率与经济建议不作为执行规则。
