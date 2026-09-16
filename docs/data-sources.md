@@ -443,3 +443,8 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 ## 2026-09-17 注能器公开逐次工作表
 
 [vaal infuser data](https://docs.google.com/spreadsheets/d/1kw0zuThQeKG6k2NfLbVf9JMcV6Rp6rbOLL_WB_K6FU4/edit)为已登记 Wiki 引用的作者公开实验工作表，属于 gray 人工研究资料。读取可公开访问的版本分页、字段和逐次记录，用于核对操作前后品质、物等、腐化及截断口径；不是 GGG 官方概率或四类材料共享规则。无明确再分发许可，原始表格只临时存于本机，不入库、不增加运行时请求或数据适配器；只提交自写审计及来源链接。分页名本身不足以确认客户端版本或材料类别，须与记录内容分开核对。
+
+
+### 影响符文与骨骼交互的原始经验线索（2026-09-17）
+
+人工阅读 [Chronomancy 亵渎回答](https://www.reddit.com/r/PathOfExile2/comments/1ua53i8/can_you_desecrate_a_destruction_modifier/)与[作者 Thrud 长杖制作记录](https://www.reddit.com/r/PoECrafting/comments/1ue6fxh/did_l_scam_these_buyers/)。归为 gray 玩家第一手经验，不是官方规则；仅保存链接与自写机制摘要，不复制装备、图片、价格、统计或词缀表。前者自述鞋子曾通过亵渎获得移速／减缓效力复合词缀；后者明确在已有 Thrud 后施加骨骼、追加前缀再揭示，但未列骨骼档位和揭示三候选。不能据此推定六族全覆盖、巫妖／回响／腐烂组合、完整池或概率；详见绑定符文核对文档。没有新增网络适配器。
