@@ -1,5 +1,11 @@
 # 数据源登记表
 
+## 特殊容量符文（2026-09-16，实施前审计）
+
+沿用固定 MIT PoB2 镶嵌及缩放目录和现有 gray 合金关系表；[GGG 0.5.4](https://www.pathofexile.com/forum/view-thread/3975218/filter-account-type/staff)作为 primary 操作前置证据，禁止向腐化／净化装备新镶列举的特殊符文。[PaintMaster 作者攻略](https://mobalytics.gg/poe-2/profile/paintmaster/guides/recoup-chronomancer-gear-crafting-guide)、[Belton 原视频](https://www.youtube.com/watch?v=Tt7DBsX36dc)、[Fubgun 原视频](https://www.youtube.com/watch?v=xu5UpEE8UP8)按 gray 人工机制参考登记，没有再分发许可，不建立抓取适配器。仅登记链接与自行撰写的证据边界，字幕、视频、图片和装备只作临时核对，不入库。
+
+Belton 的额外 2 后缀结果截图与容量下降讲解分别记录；没有连续移除实录，不能作为本项目真机验收。Fubgun 本轮仅读取自动字幕。官方论坛 [Astrid 提问](https://www.pathofexile.com/forum/view-thread/3952578)与[制作失败报告](https://www.pathofexile.com/forum/view-thread/3966330)也是 gray 玩家陈述，不能反推通用规则。CoE 更新说明仅参考公开流程，不取实现或权重。部位映射、更换后的已有属性、新增容量与绑定孔处理详见 [特殊容量符文核对](special-capacity-runes-research.md)。本轮仅研究，不变更应用版本或已支持操作。
+
 ## 防具荆棘与减益符文（2026-09-16，实施前登记）
 
 沿用已登记 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 [ModRunes.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModRunes.lua)。本轮重新核对缓存 SHA-256 `d3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a` 与目录来源一致：三档 Tempered Rune、Greater Rune of Tithing／Leadership／Alacrity／Nobility 的 armour 分支均为单行、非本地效果、无数量限制声明。采用既有目录普通效果，`bonded` 保留为来源信息，不施加其附加能力；穿戴需求不解释为物等门槛。
