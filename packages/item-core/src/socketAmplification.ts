@@ -1,5 +1,6 @@
 import { sovereignEffect } from './alloyEffects'
 import type { CatalogAugment, CraftCatalog } from './catalog'
+import { isConditionalArmourRune } from './conditionalArmourRunes'
 import { essenceSourceHash } from './essences'
 import { isRebirthArmourRune } from './extendedArmourRuneEffects'
 import type { CraftAffix, CraftState } from './rehearsal'
@@ -62,6 +63,21 @@ export function effectiveSocketAugment(
       : isSupportedArmourRune(augment) || (base && armourSoulCoreFitsBase(augment, base)))
   )
     return null
+  if (isConditionalArmourRune(augment)) {
+    if (statScalabilitySourceHash(catalog) === null) return null
+    const source = catalog.augments?.find((entry) => entry.id === augment.id)
+    if (!source || source.name !== augment.name || !isConditionalArmourRune(source)) return null
+    const pattern = source.lines[0] as string
+    const metadata = catalog.scalability?.[pattern]
+    const expected = augment.name === 'Warding Rune of Protection' ? [false, true, false] : [true]
+    if (
+      metadata?.length !== expected.length ||
+      metadata.some((scalar, i) => scalar.scalable !== expected[i] || scalar.formats.length !== 0)
+    )
+      return null
+    const scaled = scaleStatLineByEffect(pattern, augment.lines[0] as string, metadata, increase)
+    return scaled.ok ? { ...augment, lines: [scaled.value] } : null
+  }
   if (isRebirthArmourRune(augment)) {
     if (statScalabilitySourceHash(catalog) === null) return null
     const source = catalog.augments?.find((entry) => entry.id === augment.id)

@@ -14,6 +14,7 @@ import {
   PENDING_DESECRATION_MESSAGE,
 } from './boneRules'
 import type { CraftCatalog } from './catalog'
+import { conditionalRuneSocketError } from './conditionalArmourRunes'
 import { corruptionCandidates } from './corruptionEnchantments'
 import { replayVaalReplacements } from './corruptionReroll'
 import {
@@ -360,6 +361,13 @@ export function applyCraftStep(
       return { ok: false, error: '必须选择一个已明确存在的孔位。' }
     if (!socketCandidates(catalog, checked.value).some((entry) => entry.id === step.augmentId))
       return { ok: false, error: '该符文当前不可镶嵌。' }
+    const limitError = conditionalRuneSocketError(
+      catalog,
+      checked.value,
+      step.socketIndex,
+      step.augmentId,
+    )
+    if (limitError) return { ok: false, error: limitError }
     sockets[step.socketIndex] = step.augmentId
     return createCraftState(catalog, checked.value)
   }

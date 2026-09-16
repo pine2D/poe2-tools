@@ -95,6 +95,11 @@ export type {
 } from './comparison'
 export { compareCraftStates } from './comparison'
 export {
+  CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
+  requiresConditionalArmourRuneProjectVersion,
+} from './conditionalArmourRuneProjectVersion'
+export { isConditionalArmourRune, socketLimitWarnings } from './conditionalArmourRunes'
+export {
   architectCandidates,
   type CraftCorruption,
   corruptionCandidates,

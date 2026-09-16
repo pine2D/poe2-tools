@@ -10,6 +10,7 @@ import {
   type BoneCraftOperation,
   type CatalogMod,
   COMBAT_ARMOUR_RUNE_RULES_VERSION,
+  CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
   CORRUPTION_STRATEGY_RULES_VERSION,
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
@@ -76,6 +77,7 @@ import {
   readNumericValues,
   removableCraftAffixes,
   requiresCombatArmourRuneProjectVersion,
+  requiresConditionalArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
@@ -389,6 +391,9 @@ export function RehearsalPanel({
     initialProject?.project.strategyStartStep,
   )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
+  const [conditionalRules, setConditionalRules] = useState(
+    initialProject?.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
+  )
   const [cursor, setCursor] = useState(initialProject?.project.cursor ?? 0)
   const [socketDeclaration, setSocketDeclaration] = useState(
     initialProject ? initialProject.project.importedSockets : importedSockets,
@@ -1131,17 +1136,25 @@ export function RehearsalPanel({
   const needsWardRunes = requiresWardRuneProjectVersion(projectConfig, catalog)
   const needsExtendedRunes = requiresExtendedArmourRuneProjectVersion(projectConfig, catalog)
   const needsMasterwork = requiresMasterworkProjectVersion(projectConfig)
+  const needsConditionalRunes =
+    conditionalRules || requiresConditionalArmourRuneProjectVersion(projectConfig, catalog)
   const project: TargetCraftProject =
-    needsMasterwork || needsExtendedRunes || needsWardRunes || needsRuneforge
+    needsConditionalRunes ||
+    needsMasterwork ||
+    needsExtendedRunes ||
+    needsWardRunes ||
+    needsRuneforge
       ? {
           ...projectConfig,
-          rulesVersion: needsMasterwork
-            ? MASTERWORK_CRAFT_RULES_VERSION
-            : needsExtendedRunes
-              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-              : needsWardRunes
-                ? WARD_RUNE_RULES_VERSION
-                : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsConditionalRunes
+            ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+            : needsMasterwork
+              ? MASTERWORK_CRAFT_RULES_VERSION
+              : needsExtendedRunes
+                ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                : needsWardRunes
+                  ? WARD_RUNE_RULES_VERSION
+                  : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1174,6 +1187,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setConditionalRules(restored.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION)
     setPricing(restored.project.pricing)
     setTargetContext({
       definitions: restored.project.targetDefinitions,

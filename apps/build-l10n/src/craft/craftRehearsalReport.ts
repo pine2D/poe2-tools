@@ -11,10 +11,13 @@ import {
   type CraftStep,
   collectCraftCosts,
   createCraftState,
+  isConditionalArmourRune,
   prepareExtractionCraft,
   quoteCraftCosts,
   readCraftGrantedSkillLevel,
   resolveCraftAffix,
+  socketEffects,
+  socketLimitWarnings,
 } from '@poe2-tools/item-core'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { craftMaterialLabels } from './craftMaterialLabels'
@@ -81,6 +84,23 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
       const augment = catalog.augments?.find((entry) => entry.id === id)
       result.push(`孔 ${index + 1}：${id === null ? '空孔' : name(augment?.name ?? id)}`)
     })
+    const limits = socketLimitWarnings(catalog, state)
+    if (limits.length > 0) {
+      result.push(
+        '其他装备与角色孔尚未核对，本件未超限不代表角色可穿戴；以下条件效果不推算角色防卫或药剂回复。',
+      )
+      for (const entry of limits)
+        result.push(
+          name(entry.name) +
+            '：本件 ' +
+            entry.count +
+            '/限量 ' +
+            entry.limit +
+            (entry.exceeded ? '；本件已超限，可替换重复孔位修复。' : '。'),
+        )
+      for (const effect of socketEffects(catalog, state))
+        if (isConditionalArmourRune(effect.augment)) result.push(...effect.augment.lines.map(line))
+    }
     state.affixes.forEach((affix, index) => {
       const mod = modById.get(affix.modId)
       const flags = [

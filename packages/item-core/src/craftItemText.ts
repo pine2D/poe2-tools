@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { matchesCatalogLines } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
+import { socketLimitWarnings } from './conditionalArmourRunes'
 import { corruptionEntries } from './corruptionEnchantments'
 import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
@@ -184,6 +185,22 @@ export function exportCraftItemText(
     `这是演练${locale === 'en' ? '英文' : '中文'}文本，未写入推算攻击/防御面板、穿戴需求或目录未提供的 Tier；不保证游戏或 CoE 全类别兼容。`,
     '文本不保存完整孔位身份、孔序和演练历史；S 只表示孔数，再导入须核对孔位，完整恢复请使用 .craft.json 项目。',
   ]
+  const limits = socketLimitWarnings(catalog, current)
+  if (limits.length > 0) {
+    warnings.push(
+      '其他装备与角色孔尚未核对，不能据本件孔位判断角色可穿戴；条件效果不推算角色防卫或药剂回复。',
+    )
+    for (const entry of limits)
+      if (entry.exceeded)
+        warnings.push(
+          entry.name +
+            '：本件已超限（' +
+            entry.count +
+            '/' +
+            entry.limit +
+            '），请替换重复孔位修复。',
+        )
+  }
   if (locale !== 'en')
     warnings.push('类别值、词缀名称和标签保留目录英文；缺失、多义或不可逆译文保留原文并逐行说明。')
   const localize = createItemTextLocalization(locale, options.dictionary, warnings)

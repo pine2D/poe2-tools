@@ -4,6 +4,7 @@ import {
   type CatalogAugment,
   type CraftCatalog,
   type CraftState,
+  isConditionalArmourRune,
   isExtendedArmourRune,
   isRebirthArmourRune,
   isWardArmourRune,
@@ -12,6 +13,7 @@ import {
   socketCapacity,
   socketEffectIncrease,
   socketEffects,
+  socketLimitWarnings,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
 import './sockets.css'
@@ -55,6 +57,7 @@ export function SocketPanel({
   const selectedIndex = draft?.kind === 'socket' ? draft.socketIndex : socketIndex
   const candidates = socketCandidates(catalog, state)
   const effects = socketEffects(catalog, state)
+  const limits = socketLimitWarnings(catalog, state)
   const selected = candidates.find(
     (entry) => entry.id === (draft?.kind === 'socket' ? draft.augmentId : undefined),
   )
@@ -69,10 +72,23 @@ export function SocketPanel({
     <section className="craft-sockets" aria-label="符文镶嵌">
       <h3>符文与魂核镶嵌</h3>
       <p>按当前部位列出符文与基础魂核及其实际效果。覆盖不返还旧材料，镶嵌效果不占前后缀位置。</p>
+      {limits.length > 0 ? (
+        <section aria-label="镶嵌限量提示">
+          {limits.map((entry) => (
+            <p key={entry.name}>
+              {label(entry.name)}：本件 {entry.count} / 限量 {entry.limit}
+              {entry.exceeded ? '；本件已超限，不能据此视为可穿戴；可替换重复孔位修复。' : '。'}
+            </p>
+          ))}
+          <p>
+            其他装备与角色孔尚未核对，本件未超限不代表角色可穿戴。条件效果逐孔展示，不推算角色防卫或药剂回复。
+          </p>
+        </section>
+      ) : null}
       {amplification !== null && amplification > 0 ? (
         <p>
           已计入工艺词缀的 {amplification}% 镶嵌物增效；按固定 PoB
-          快照逐枚向下取整后合计，游戏真机待验收。移除该词缀会同步降低符文效果。
+          快照逐枚计算，只缩放允许增效的数值，游戏真机待验收。移除该词缀会同步降低符文效果。
         </p>
       ) : null}
       {state.sockets !== undefined && limit > 0 ? (
@@ -213,6 +229,12 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
+              {isConditionalArmourRune(selected) ? (
+                <p>
+                  该符文限量
+                  1；其他装备与角色孔尚未核对。比例依赖角色结界或药剂回复，不增加本件最大结界；增效不改变触发间隔或持续时间。
+                </p>
+              ) : null}
               {isIronRune(selected) ? (
                 <p>钢铁符文与普通本地防御提高相加，品质单独提供倍率；可在防御面板查看预计变化。</p>
               ) : isIronRune(previous) ? (

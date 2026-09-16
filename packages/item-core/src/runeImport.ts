@@ -1,5 +1,6 @@
 import { RUNE_SUFFIX } from './annotations'
 import type { CraftCatalog } from './catalog'
+import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
 import { parseItem } from './parse'
 import type { CraftResult, CraftState } from './rehearsal'
@@ -88,6 +89,13 @@ export function runeSocketContributionError(
   const expected = parseRuneEffectTotals(state.runeSourceLines)
   const actual = sumRuneEffects(augments)
   if (expected === null || actual === null) return '原文或目录包含尚未支持的符文效果，不能核对。'
+  if (
+    !conditionalRuneSourceMatches(
+      state.runeSourceLines,
+      augments.flatMap((a) => a.lines),
+    )
+  )
+    return '条件符文效果与孔位声明不一致：请核对完整触发周期、持续时间、比例及重复行。'
   if (JSON.stringify(expected) === JSON.stringify(actual)) return null
   const describe = (totals: RuneEffectTotals) =>
     (Object.keys(totals) as RuneEffectKey[])

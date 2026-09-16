@@ -4,6 +4,7 @@ import {
   isCombatArmourRune,
   readCombatArmourRuneLine,
 } from './combatArmourRuneEffects'
+import { conditionalArmourRuneKind, isConditionalArmourRune } from './conditionalArmourRunes'
 import { isExtendedArmourRune, readExtendedArmourRuneLine } from './extendedArmourRuneEffects'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
 import { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
@@ -114,6 +115,8 @@ const FAMILIES = {
 export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotals | null {
   const totals = emptyTotals()
   for (const line of lines) {
+    // 条件效果另行核对完整语义，不属于可加的本地防御或角色数值。
+    if (conditionalArmourRuneKind(line)) continue
     const combat =
       readCombatArmourRuneLine(line) ?? readWardRuneLine(line) ?? readExtendedArmourRuneLine(line)
     if (combat) {
@@ -160,7 +163,12 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
 
 /** 身份、类别、本地标志和完整效果语义必须一致。 */
 export function isSupportedArmourRune(augment: CatalogAugment): boolean {
-  if (isCombatArmourRune(augment) || isWardArmourRune(augment) || isExtendedArmourRune(augment))
+  if (
+    isConditionalArmourRune(augment) ||
+    isCombatArmourRune(augment) ||
+    isWardArmourRune(augment) ||
+    isExtendedArmourRune(augment)
+  )
     return true
   const family = Object.entries(FAMILIES).find(([name]) =>
     TIERS.some((tier) => augment.name === `${tier}${name}`),

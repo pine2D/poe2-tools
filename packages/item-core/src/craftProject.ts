@@ -15,6 +15,7 @@ import {
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
 import { isCatalystQuality } from './catalystQuality'
 import { requiresCombatArmourRuneProjectVersion } from './combatArmourRuneProjectVersion'
+import { requiresConditionalArmourRuneProjectVersion } from './conditionalArmourRuneProjectVersion'
 import { isVaalCraftOperation } from './corruptionRules'
 import { requiresCorruptionStrategyProjectVersion } from './corruptionStrategyProjectVersion'
 import { type CraftPricing, parseCraftPricing } from './craftCosts'
@@ -654,6 +655,7 @@ export function readNativeTargetProjectProjection(
   wardRunes = false,
   extendedArmourRunes = false,
   masterwork = false,
+  conditionalRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -671,6 +673,7 @@ export function readNativeTargetProjectProjection(
     wardRunes,
     extendedArmourRunes,
     masterwork,
+    conditionalRunes,
   )
 }
 
@@ -690,6 +693,7 @@ function readCraftProject(
   wardRunes = false,
   extendedArmourRunes = false,
   masterwork = false,
+  conditionalRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -708,6 +712,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!conditionalRunes && requiresConditionalArmourRuneProjectVersion(value, catalog))
+    return fail('条件限量符文必须使用 v86 项目，包括起点、声明、完整未来、指引及报价。')
   if (!masterwork && requiresMasterworkProjectVersion(value))
     return fail('符文升级必须使用 v85 项目，包括完整未来、指引及报价。')
   if (!extendedArmourRunes && requiresExtendedArmourRuneProjectVersion(value, catalog))
