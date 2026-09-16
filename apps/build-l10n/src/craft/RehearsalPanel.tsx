@@ -56,6 +56,8 @@ import {
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
   loadTargetWorkbenchProject,
+  MASTERWORK_CRAFT_RULES_VERSION,
+  type MasterworkCraftOperation,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   type PerfectFluxCraftOperation,
   prepareCraftOperation,
@@ -77,6 +79,7 @@ import {
   requiresCorruptionStrategyProjectVersion,
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
+  requiresMasterworkProjectVersion,
   requiresPerfectFluxProjectVersion,
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
@@ -111,6 +114,7 @@ import { craftMaterialLabels } from './craftMaterialLabels'
 import { craftStepLabel } from './craftStepLabel'
 import { ExtractionPanel, ExtractionReturns } from './ExtractionPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
+import { MasterworkPanel } from './MasterworkPanel'
 import { PerfectFluxPanel } from './PerfectFluxPanel'
 import { RuneforgePanel } from './RuneforgePanel'
 import './rehearsal.css'
@@ -410,6 +414,7 @@ export function RehearsalPanel({
     | EssenceCraftOperation
     | LiquidEmotionCraftOperation
     | AlloyCraftOperation
+    | MasterworkCraftOperation
     | RuneforgeCraftOperation
     | FluxCraftOperation
     | PerfectFluxCraftOperation
@@ -444,6 +449,7 @@ export function RehearsalPanel({
   const guaranteedDraftRef = useRef<HTMLElement>(null)
   const essenceTriggerRef = useRef<HTMLElement | null>(null)
   const restoreEssenceFocusRef = useRef(false)
+  const masterworkEntryRef = useRef<HTMLElement>(null)
   const runeforgeEntryRef = useRef<HTMLElement>(null)
   const fluxEntryRef = useRef<HTMLElement>(null)
   const perfectFluxEntryRef = useRef<HTMLElement>(null)
@@ -468,6 +474,7 @@ export function RehearsalPanel({
       | 'flux'
       | 'perfect-flux'
       | 'extraction'
+      | 'masterwork'
       | 'runeforge'
     strategy: boolean
   } | null>(null)
@@ -479,19 +486,21 @@ export function RehearsalPanel({
         const origin = guaranteedOriginRef.current
         const fallback = origin?.strategy
           ? strategyTriggerRef.current
-          : origin?.kind === 'runeforge'
-            ? runeforgeEntryRef.current
-            : origin?.kind === 'extraction'
-              ? extractionEntryRef.current
-              : origin?.kind === 'perfect-flux'
-                ? perfectFluxEntryRef.current
-                : origin?.kind === 'flux'
-                  ? fluxEntryRef.current
-                  : origin?.kind === 'alloy'
-                    ? alloyEntryRef.current
-                    : origin?.kind === 'liquid-emotion'
-                      ? emotionEntryRef.current
-                      : essenceEntryRef.current
+          : origin?.kind === 'masterwork'
+            ? masterworkEntryRef.current
+            : origin?.kind === 'runeforge'
+              ? runeforgeEntryRef.current
+              : origin?.kind === 'extraction'
+                ? extractionEntryRef.current
+                : origin?.kind === 'perfect-flux'
+                  ? perfectFluxEntryRef.current
+                  : origin?.kind === 'flux'
+                    ? fluxEntryRef.current
+                    : origin?.kind === 'alloy'
+                      ? alloyEntryRef.current
+                      : origin?.kind === 'liquid-emotion'
+                        ? emotionEntryRef.current
+                        : essenceEntryRef.current
         const trigger = essenceTriggerRef.current?.isConnected
           ? essenceTriggerRef.current
           : fallback
@@ -763,6 +772,7 @@ export function RehearsalPanel({
       if (
         operation.kind === 'essence' ||
         operation.kind === 'liquid-emotion' ||
+        operation.kind === 'masterwork' ||
         operation.kind === 'runeforge' ||
         operation.kind === 'alloy' ||
         operation.kind === 'flux' ||
@@ -822,6 +832,7 @@ export function RehearsalPanel({
       | EssenceCraftOperation
       | LiquidEmotionCraftOperation
       | AlloyCraftOperation
+      | MasterworkCraftOperation
       | RuneforgeCraftOperation
       | FluxCraftOperation
       | PerfectFluxCraftOperation
@@ -1106,7 +1117,8 @@ export function RehearsalPanel({
         (rule) =>
           rule.action.kind === 'socket' ||
           rule.action.kind === 'artificer' ||
-          rule.action.kind === 'extraction',
+          rule.action.kind === 'extraction' ||
+          rule.action.kind === 'masterwork',
       )) &&
     augmentSourceHash
       ? { augmentSourceHash }
@@ -1118,15 +1130,18 @@ export function RehearsalPanel({
   const needsRuneforge = requiresRuneforgeProjectVersion(projectConfig)
   const needsWardRunes = requiresWardRuneProjectVersion(projectConfig, catalog)
   const needsExtendedRunes = requiresExtendedArmourRuneProjectVersion(projectConfig, catalog)
+  const needsMasterwork = requiresMasterworkProjectVersion(projectConfig)
   const project: TargetCraftProject =
-    needsExtendedRunes || needsWardRunes || needsRuneforge
+    needsMasterwork || needsExtendedRunes || needsWardRunes || needsRuneforge
       ? {
           ...projectConfig,
-          rulesVersion: needsExtendedRunes
-            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-            : needsWardRunes
-              ? WARD_RUNE_RULES_VERSION
-              : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsMasterwork
+            ? MASTERWORK_CRAFT_RULES_VERSION
+            : needsExtendedRunes
+              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+              : needsWardRunes
+                ? WARD_RUNE_RULES_VERSION
+                : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1146,6 +1161,7 @@ export function RehearsalPanel({
                   : projectConfig
   const guaranteedLabel = guaranteedDraft
     ? {
+        masterwork: '符文升级',
         runeforge: '锻造',
         essence: '精华',
         'liquid-emotion': '液态情感',
@@ -1956,6 +1972,24 @@ export function RehearsalPanel({
           onPreview={startGuaranteed}
         />
       ) : null}
+      {!strategyResultAction ? (
+        <MasterworkPanel
+          key={`masterwork:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          entryRef={masterworkEntryRef}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft,
+          )}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
       {guaranteedDraft ? (
         <section
           ref={guaranteedDraftRef}
@@ -1975,6 +2009,11 @@ export function RehearsalPanel({
                 />
               ) : null}
             </>
+          ) : guaranteedDraft.kind === 'masterwork' ? (
+            <p>
+              孔 {guaranteedDraft.socketIndex + 1}{' '}
+              的高级符文将升级为完美档，其他孔位与装备属性保留。
+            </p>
           ) : guaranteedDraft.kind === 'runeforge' ? (
             <p>
               {baseLabel(guaranteedDraft.fromBaseId)} → {baseLabel(guaranteedDraft.toBaseId)}
@@ -2001,19 +2040,21 @@ export function RehearsalPanel({
             <p>
               {guaranteedDraft.kind === 'extraction'
                 ? '应用后消耗 1 颗萃取石；返还物只列数量，不抵扣已消耗材料与起点成本。'
-                : guaranteedDraft.kind === 'runeforge'
-                  ? '应用后按配方计入 Verisium 材料；词缀、品质与孔位保持原状。'
-                  : guaranteedDraft.kind === 'perfect-flux'
-                    ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
-                    : guaranteedDraft.kind === 'flux'
-                      ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
-                      : guaranteedDraft.kind === 'alloy'
-                        ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
-                        : guaranteedDraft.kind === 'liquid-emotion'
-                          ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
-                          : guaranteedDraft.removeModId
-                            ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                            : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+                : guaranteedDraft.kind === 'masterwork'
+                  ? '应用后计入一枚符文升级材料；取消不计费。'
+                  : guaranteedDraft.kind === 'runeforge'
+                    ? '应用后按配方计入 Verisium 材料；词缀、品质与孔位保持原状。'
+                    : guaranteedDraft.kind === 'perfect-flux'
+                      ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
+                      : guaranteedDraft.kind === 'flux'
+                        ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
+                        : guaranteedDraft.kind === 'alloy'
+                          ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
+                          : guaranteedDraft.kind === 'liquid-emotion'
+                            ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                            : guaranteedDraft.removeModId
+                              ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                              : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>

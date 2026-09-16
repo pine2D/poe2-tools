@@ -56,6 +56,8 @@ import {
   supportedBasicLiquidEmotionId,
   supportedRadiusLiquidEmotionId,
 } from './liquidEmotions'
+import { isMasterworkCraftOperation } from './masterwork'
+import { requiresMasterworkProjectVersion } from './masterworkProjectVersion'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
 import { isPerfectFluxCraftOperation } from './perfectFlux'
@@ -411,7 +413,10 @@ function readNativeOperation(
   perfectFlux: boolean,
   extraction: boolean,
   runeforge: boolean,
+  masterwork: boolean,
 ): CraftStep | null {
+  if (record(input) && input.kind === 'masterwork')
+    return masterwork && isMasterworkCraftOperation(input) ? input : null
   if (record(input) && input.kind === 'runeforge')
     return runeforge && isRuneforgeCraftOperation(input) ? input : null
   if (record(input) && input.kind === 'extraction')
@@ -648,6 +653,7 @@ export function readNativeTargetProjectProjection(
   runeforge = false,
   wardRunes = false,
   extendedArmourRunes = false,
+  masterwork = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -664,6 +670,7 @@ export function readNativeTargetProjectProjection(
     runeforge,
     wardRunes,
     extendedArmourRunes,
+    masterwork,
   )
 }
 
@@ -682,6 +689,7 @@ function readCraftProject(
   runeforge = false,
   wardRunes = false,
   extendedArmourRunes = false,
+  masterwork = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -700,6 +708,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!masterwork && requiresMasterworkProjectVersion(value))
+    return fail('符文升级必须使用 v85 项目，包括完整未来、指引及报价。')
   if (!extendedArmourRunes && requiresExtendedArmourRuneProjectVersion(value, catalog))
     return fail('重生与结界提高符文必须使用 v84 项目，包括完整未来历史、指引及报价。')
   if (!wardRunes && requiresWardRuneProjectVersion(value, catalog))
@@ -1649,14 +1659,18 @@ function readCraftProject(
       (rule) =>
         rule.action.kind === 'socket' ||
         rule.action.kind === 'artificer' ||
-        rule.action.kind === 'extraction',
+        rule.action.kind === 'extraction' ||
+        rule.action.kind === 'masterwork',
     ) ||
     importedSockets !== undefined ||
     initialInput.sockets !== undefined ||
     value.operations.some(
       (step) =>
         record(step) &&
-        (step.kind === 'socket' || step.kind === 'artificer' || step.kind === 'extraction'),
+        (step.kind === 'socket' ||
+          step.kind === 'artificer' ||
+          step.kind === 'extraction' ||
+          step.kind === 'masterwork'),
     )
   const augmentSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/ModRunes.lua',
@@ -1926,7 +1940,7 @@ function readCraftProject(
       return fail('旧版项目不能包含新数值操作。')
     // applyCraftStep 自身严格检查每种操作的字段及实例断言；旧入口仍只接受旧结构。
     const operation = native
-      ? readNativeOperation(input, perfectFlux, extraction, runeforge)
+      ? readNativeOperation(input, perfectFlux, extraction, runeforge, masterwork)
       : readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     if (

@@ -382,3 +382,5 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 2026-09-16 结界符文人工核对沿用固定 MIT ModRunes.lua（SHA-256 `d3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a`）、Item.lua 与 ModParser.lua；无新增抓取表。四档 Ward Rune 为本地平值，四档 Charging Rune 为全局再生提高；普通效果不包含 Bonded。[Ward Rune](https://poe2db.tw/us/Ward_Rune)、[Charging Rune](https://poe2db.tw/us/Charging_Rune) 仅 gray 公开说明人工参考，不采数据或权重。公式、取整与实机限制见 [结界符文核对](ward-runes-research.md)。
 
 普通镶嵌物缩放补充（2026-09-16）：同一固定 MIT ModScalability 快照的匹配范围纳入 augments 普通效果行，不纳入 Bonded。新增 492 条声明，原 2988 条保持不变；17 条新增缺失保留未知。Rebirth 的 `per_minute_to_per_second_2dp_if_required` 使用已登记 ItemTools.lua 与 Common.lua 的内部 60 分母及显示两位小数规则；固定源哈希和四档声明进入目录校验。参见 [扩展防具符文核对](extended-armour-runes-research.md)，无新数据源或浏览器外部请求。
+
+符文升级机制补充（2026-09-16）：沿用固定 MIT ModRunes 的 Masterwork 材料身份和高级／完美档效果；原孔升级关系参考 [PoE2DB 材料说明](https://poe2db.tw/us/Masterwork_Rune)（gray，仅人工核对，不复制表）及 [GGG 论坛玩家第一手使用记录](https://www.pathofexile.com/forum/view-thread/3944462)（community，不等同官方规则）。[角色特殊孔问题报告](https://www.pathofexile.com/forum/view-thread/3979498)与固定目录的 Chakra 标志存在适用差异，不能仅按目录标志开放角色孔。当前只建模15基础家族高级→完美的普通装备原孔操作，腐化、低档和特殊孔仍待核实；不新增抓取适配器或生产依赖。

@@ -107,7 +107,9 @@ export function collectCraftCosts(
       if (step.omen) for (const name of craftOmenMaterials(step.omen)) add(`omen:${name}`)
       continue
     }
-    if (step.kind === 'runeforge') {
+    if (step.kind === 'masterwork') {
+      add('augment:Masterwork Rune')
+    } else if (step.kind === 'runeforge') {
       if (!isRuneforgeCraftOperation(step)) return fail('锻造步骤字段无效，不能计费。')
       const recipe = catalog.runeforging?.recipes.find(
         (r) =>

@@ -27,6 +27,10 @@ import {
   EXTENDED_ARMOUR_RUNE_RULES_VERSION,
   requiresExtendedArmourRuneProjectVersion,
 } from './extendedArmourRuneProjectVersion'
+import {
+  MASTERWORK_CRAFT_RULES_VERSION,
+  requiresMasterworkProjectVersion,
+} from './masterworkProjectVersion'
 import type { CraftResult } from './rehearsal'
 import { runeforgingCatalogSignature } from './runeforgingCatalog'
 import { targetProjectSourceHashes, targetProjectSourceUsage } from './targetProjectSources'
@@ -63,7 +67,8 @@ export function loadTargetWorkbenchProject(
       value.rulesVersion === RUNEFORGED_ARMOUR_RULES_VERSION ||
       value.rulesVersion === RUNEFORGE_CRAFT_RULES_VERSION ||
       value.rulesVersion === WARD_RUNE_RULES_VERSION ||
-      value.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION)
+      value.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
+      value.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION)
     ? parseTargetCraftProject(text, catalog, dictionary)
     : upgradeTargetCraftProject(text, catalog, dictionary)
 }
@@ -98,6 +103,7 @@ export function reuseTargetCraftPlan(
   const next = structuredClone(current.value.project)
   if (source.fluxCatalogSignature !== undefined) {
     if (
+      next.rulesVersion !== MASTERWORK_CRAFT_RULES_VERSION &&
       next.rulesVersion !== EXTENDED_ARMOUR_RUNE_RULES_VERSION &&
       next.rulesVersion !== WARD_RUNE_RULES_VERSION &&
       next.rulesVersion !== RUNEFORGE_CRAFT_RULES_VERSION &&
@@ -121,6 +127,8 @@ export function reuseTargetCraftPlan(
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
   if (
+    next.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION ||
+    requiresMasterworkProjectVersion(next) ||
     next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
     requiresExtendedArmourRuneProjectVersion(next, catalog) ||
     next.rulesVersion === WARD_RUNE_RULES_VERSION ||
@@ -129,13 +137,15 @@ export function reuseTargetCraftPlan(
     requiresRuneforgeProjectVersion(next)
   ) {
     next.rulesVersion =
-      next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
-      requiresExtendedArmourRuneProjectVersion(next, catalog)
-        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-        : next.rulesVersion === WARD_RUNE_RULES_VERSION ||
-            requiresWardRuneProjectVersion(next, catalog)
-          ? WARD_RUNE_RULES_VERSION
-          : RUNEFORGE_CRAFT_RULES_VERSION
+      next.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION || requiresMasterworkProjectVersion(next)
+        ? MASTERWORK_CRAFT_RULES_VERSION
+        : next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
+            requiresExtendedArmourRuneProjectVersion(next, catalog)
+          ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+          : next.rulesVersion === WARD_RUNE_RULES_VERSION ||
+              requiresWardRuneProjectVersion(next, catalog)
+            ? WARD_RUNE_RULES_VERSION
+            : RUNEFORGE_CRAFT_RULES_VERSION
     if (requiresRuneforgeProjectVersion(next)) {
       const signature = runeforgingCatalogSignature(catalog)
       if (signature === null) return { ok: false, error: '沿用锻造指引需要相同锻造配方目录。' }
@@ -146,6 +156,7 @@ export function reuseTargetCraftPlan(
   else if (requiresCombatArmourRuneProjectVersion(next, catalog))
     next.rulesVersion = COMBAT_ARMOUR_RUNE_RULES_VERSION
   if (
+    next.rulesVersion !== MASTERWORK_CRAFT_RULES_VERSION &&
     next.rulesVersion !== EXTENDED_ARMOUR_RUNE_RULES_VERSION &&
     next.rulesVersion !== WARD_RUNE_RULES_VERSION &&
     next.rulesVersion !== RUNEFORGE_CRAFT_RULES_VERSION &&
@@ -157,6 +168,7 @@ export function reuseTargetCraftPlan(
   if (
     next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
     next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION &&
+    next.rulesVersion !== MASTERWORK_CRAFT_RULES_VERSION &&
     next.rulesVersion !== EXTENDED_ARMOUR_RUNE_RULES_VERSION &&
     next.rulesVersion !== WARD_RUNE_RULES_VERSION &&
     next.rulesVersion !== RUNEFORGE_CRAFT_RULES_VERSION &&

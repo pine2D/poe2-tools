@@ -302,6 +302,17 @@ export {
   supportedBasicLiquidEmotionId,
   supportedLiquidEmotionId,
 } from './liquidEmotions'
+export {
+  applyMasterworkCraft,
+  isMasterworkCraftOperation,
+  type MasterworkCraftOperation,
+  type PreparedMasterworkCraft,
+  prepareMasterworkCraft,
+} from './masterwork'
+export {
+  MASTERWORK_CRAFT_RULES_VERSION,
+  requiresMasterworkProjectVersion,
+} from './masterworkProjectVersion'
 export type { NumericRange } from './numeric'
 export {
   inspectNumericLines,

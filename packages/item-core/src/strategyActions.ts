@@ -18,6 +18,7 @@ import { FLUXES } from './fluxes'
 import { applyFracture, prepareFracture } from './fracture'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import { supportedLiquidEmotionId } from './liquidEmotions'
+import { prepareMasterworkCraft } from './masterwork'
 import { type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import {
   isPerfectFluxCraftOperation,
@@ -38,6 +39,7 @@ import { prepareRuneforgeCraft } from './runeforge'
 import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
 export type CraftStrategyAction =
+  | { kind: 'masterwork'; socketIndex: number }
   | { kind: 'runeforge' }
   | ExtractionCraftOperation
   | PerfectFluxCraftOperation
@@ -69,6 +71,15 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
   } catch {
     return null
   }
+  if (
+    keys(value, ['kind', 'socketIndex']) &&
+    value.kind === 'masterwork' &&
+    typeof value.socketIndex === 'number' &&
+    Number.isSafeInteger(value.socketIndex) &&
+    value.socketIndex >= 0 &&
+    value.socketIndex < 16
+  )
+    return { kind: 'masterwork', socketIndex: value.socketIndex }
   if (isExtractionCraftOperation(value)) return { ...value }
   if (isPerfectFluxCraftOperation(value)) return { ...value }
   if (
@@ -189,6 +200,11 @@ export function checkCraftStrategyAction(
         ? { kind: 'vaal', outcome: 'unchanged' }
         : { kind: 'architect', outcome: 'destroy' },
     )
+    return result.ok ? ok : result
+  }
+  if (action.kind === 'masterwork') {
+    if (!readCraftStrategyAction(action)) return { ok: false, error: '符文升级指引孔位无效。' }
+    const result = prepareMasterworkCraft(catalog, state, action.socketIndex)
     return result.ok ? ok : result
   }
   if (action.kind === 'runeforge') {

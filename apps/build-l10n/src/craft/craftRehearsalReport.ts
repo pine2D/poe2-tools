@@ -211,6 +211,12 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
         ...selectedAffix.value.affix.lines.map(line),
       )
     }
+    if ('kind' in step && step.kind === 'masterwork') {
+      const from = catalog.augments?.find((entry) => entry.id === step.fromAugmentId)
+      const to = catalog.augments?.find((entry) => entry.id === step.toAugmentId)
+      if (!from || !to) return fail('升级步骤缺少符文身份。')
+      body.push(`孔 ${step.socketIndex + 1} 升级：${name(from.name)} → ${name(to.name)}`)
+    }
     if ('kind' in step && step.kind === 'runeforge') {
       const from = catalog.bases.find((entry) => entry.id === current.baseId)
       const to = catalog.bases.find((entry) => entry.id === next.value.baseId)

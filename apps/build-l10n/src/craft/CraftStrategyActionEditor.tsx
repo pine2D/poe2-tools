@@ -36,6 +36,7 @@ export function strategyActionLabel(
 ): string {
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+  if (action.kind === 'masterwork') return `符文升级（孔 ${action.socketIndex + 1}）`
   if (action.kind === 'runeforge') return '防具锻造'
   if (action.kind === 'perfect-flux')
     return `${local('Perfect Flux')}（操作前最高等级 ${action.previousMaxLevel} → 20）`
@@ -140,6 +141,10 @@ export function CraftStrategyActionEditor({
           onChange={(event) => {
             const value = event.target.value
             setDeclarationDraft(null)
+            if (value === 'masterwork') {
+              onChange({ kind: 'masterwork', socketIndex: 0 })
+              return
+            }
             if (value === 'perfect-flux') {
               if (inspectedPerfect.ok && inspectedPerfect.value.previousMaxLevel !== null) {
                 onChange({
@@ -212,12 +217,34 @@ export function CraftStrategyActionEditor({
           </option>
           <option value="reveal">继续亵渎揭示</option>
           <option value="fracture">破裂制作</option>
+          <option value="masterwork">符文升级：高级到完美</option>
           <option value="artificer">巧匠石打孔</option>
           <option value="socket" disabled={!augments.length}>
             符文镶嵌
           </option>
         </select>
       </label>
+      {action.kind === 'masterwork' ? (
+        <label>
+          升级孔位
+          <select
+            aria-label={`规则 ${number} 符文升级孔位`}
+            value={action.socketIndex}
+            onChange={(event) =>
+              onChange({ kind: 'masterwork', socketIndex: Number(event.target.value) })
+            }
+          >
+            {Array.from(
+              { length: Math.max(state.sockets?.length ?? 0, action.socketIndex + 1, 1) },
+              (_, index) => index,
+            ).map((i) => (
+              <option key={i} value={i}>
+                孔 {i + 1}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       {runeforge ? (
         <p>
           {runeforge.ok

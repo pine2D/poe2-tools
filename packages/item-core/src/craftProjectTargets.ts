@@ -32,6 +32,10 @@ import {
 } from './extractionProjectVersion'
 import { fluxCatalogSignature } from './fluxes'
 import {
+  MASTERWORK_CRAFT_RULES_VERSION,
+  requiresMasterworkProjectVersion,
+} from './masterworkProjectVersion'
+import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   requiresPerfectFluxProjectVersion,
 } from './perfectFluxProjectVersion'
@@ -71,6 +75,7 @@ export {
   CORRUPTION_STRATEGY_RULES_VERSION,
   EXTENDED_ARMOUR_RUNE_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
+  MASTERWORK_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   RETAINED_CATALYST_RULES_VERSION,
   RUNEFORGE_CRAFT_RULES_VERSION,
@@ -106,6 +111,7 @@ export interface TargetCraftProject
     | typeof RETAINED_CATALYST_RULES_VERSION
     | typeof COMBAT_ARMOUR_RUNE_RULES_VERSION
     | typeof RUNEFORGED_ARMOUR_RULES_VERSION
+    | typeof MASTERWORK_CRAFT_RULES_VERSION
     | typeof EXTENDED_ARMOUR_RUNE_RULES_VERSION
     | typeof WARD_RUNE_RULES_VERSION
     | typeof RUNEFORGE_CRAFT_RULES_VERSION
@@ -280,14 +286,19 @@ export function parseTargetCraftProject(
       RUNEFORGE_CRAFT_RULES_VERSION,
       WARD_RUNE_RULES_VERSION,
       EXTENDED_ARMOUR_RUNE_RULES_VERSION,
+      MASTERWORK_CRAFT_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
     return {
       ok: false,
       error:
-        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83 或 v84 规则版本。',
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84 或 v85 规则版本。',
     }
-  const extendedArmourRunes = original.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION
+  const masterwork = original.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION
+  if (!masterwork && requiresMasterworkProjectVersion(original))
+    return { ok: false, error: '符文升级必须使用 v85 项目，包括完整未来、指引及报价。' }
+  const extendedArmourRunes =
+    masterwork || original.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION
   if (!extendedArmourRunes && requiresExtendedArmourRuneProjectVersion(original, catalog))
     return {
       ok: false,
@@ -406,6 +417,7 @@ export function parseTargetCraftProject(
         runeforge,
         wardRunes,
         extendedArmourRunes,
+        masterwork,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -427,25 +439,27 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = extendedArmourRunes
-      ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-      : wardRunes
-        ? WARD_RUNE_RULES_VERSION
-        : runeforge
-          ? RUNEFORGE_CRAFT_RULES_VERSION
-          : runeforgedArmour
-            ? RUNEFORGED_ARMOUR_RULES_VERSION
-            : combatArmourRunes
-              ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-              : retainedCatalyst
-                ? RETAINED_CATALYST_RULES_VERSION
-                : corruptionStrategy
-                  ? CORRUPTION_STRATEGY_RULES_VERSION
-                  : extraction
-                    ? EXTRACTION_CRAFT_RULES_VERSION
-                    : perfectFlux
-                      ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                      : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = masterwork
+      ? MASTERWORK_CRAFT_RULES_VERSION
+      : extendedArmourRunes
+        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+        : wardRunes
+          ? WARD_RUNE_RULES_VERSION
+          : runeforge
+            ? RUNEFORGE_CRAFT_RULES_VERSION
+            : runeforgedArmour
+              ? RUNEFORGED_ARMOUR_RULES_VERSION
+              : combatArmourRunes
+                ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+                : retainedCatalyst
+                  ? RETAINED_CATALYST_RULES_VERSION
+                  : corruptionStrategy
+                    ? CORRUPTION_STRATEGY_RULES_VERSION
+                    : extraction
+                      ? EXTRACTION_CRAFT_RULES_VERSION
+                      : perfectFlux
+                        ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                        : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string

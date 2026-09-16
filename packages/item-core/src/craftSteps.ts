@@ -31,6 +31,11 @@ import {
 import { applyFluxCraft, type FluxCraftOperation, isFluxCraftOperation } from './fluxCraft'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
+import {
+  applyMasterworkCraft,
+  isMasterworkCraftOperation,
+  type MasterworkCraftOperation,
+} from './masterwork'
 import { renderNumericLines } from './numeric'
 import {
   applyPerfectFluxCraft,
@@ -106,6 +111,7 @@ export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperat
 }
 
 export type CraftStep =
+  | MasterworkCraftOperation
   | RuneforgeCraftOperation
   | ExtractionCraftOperation
   | PerfectFluxCraftOperation
@@ -164,6 +170,10 @@ export function applyCraftStep(
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
+  if ('kind' in step && step.kind === 'masterwork')
+    return isMasterworkCraftOperation(step)
+      ? applyMasterworkCraft(catalog, state, step)
+      : { ok: false, error: '符文升级步骤字段无效。' }
   if ('kind' in step && step.kind === 'runeforge')
     return isRuneforgeCraftOperation(step)
       ? applyRuneforgeCraft(catalog, state, step)

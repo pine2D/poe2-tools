@@ -15,6 +15,7 @@ import { ExtractionPanel } from './ExtractionPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
 import { FracturePanel } from './FracturePanel'
 import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
+import { MasterworkPanel } from './MasterworkPanel'
 import { PerfectFluxPanel } from './PerfectFluxPanel'
 import { RuneforgePanel } from './RuneforgePanel'
 export type SpecialStrategyAction = Exclude<
@@ -71,6 +72,9 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       ) : null}
       {action.kind === 'essence' ? (
         <EssenceCraftPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'masterwork' ? (
+        <MasterworkPanel {...props} configuration={action} disabled={false} />
       ) : null}
       {action.kind === 'runeforge' ? <RuneforgePanel {...props} disabled={false} /> : null}
       {action.kind === 'extraction' ? (
