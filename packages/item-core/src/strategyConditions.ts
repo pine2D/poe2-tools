@@ -3,6 +3,9 @@ import { isPlainProjectJSON } from './craftProjectJSON'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
 
+/** 已有额外孔再经腐化加孔时，当前已支持的最大孔数。 */
+export const CRAFT_STRATEGY_SOCKET_LIMIT = 4
+
 /** 已支持制作容量的条件上界；条件匹配仍取装备当时的实际容量。 */
 export const CRAFT_STRATEGY_AFFIX_LIMITS = {
   'affix-count': 7,
@@ -119,8 +122,8 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
   if (
     (value.kind === 'socket-count' || value.kind === 'open-sockets') &&
     keys(value, ['kind', 'min', 'max']) &&
-    integer(value.min, 0, 3) &&
-    integer(value.max, 0, 3) &&
+    integer(value.min, 0, CRAFT_STRATEGY_SOCKET_LIMIT) &&
+    integer(value.max, 0, CRAFT_STRATEGY_SOCKET_LIMIT) &&
     value.min <= value.max
   )
     return { kind: value.kind, min: value.min, max: value.max }

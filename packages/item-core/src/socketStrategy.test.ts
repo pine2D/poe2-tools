@@ -89,7 +89,7 @@ it('孔位规则严格校验闭区间及动作字段', () => {
   expect(readCraftStrategy(strategy).ok).toBe(true)
   for (const condition of [
     { kind: 'socket-count', min: 2, max: 1 },
-    { kind: 'open-sockets', min: 0, max: 4 },
+    { kind: 'open-sockets', min: 0, max: 5 },
     { kind: 'socket-count', min: 0.5, max: 2 },
     { kind: 'socket-count', min: 0 },
   ])
@@ -101,7 +101,7 @@ it('孔位规则严格校验闭区间及动作字段', () => {
     ).toBe(false)
   for (const action of [
     { kind: 'artificer', socketIndex: 0 },
-    { kind: 'socket', augmentId: 'fire', socketIndex: 3 },
+    { kind: 'socket', augmentId: 'fire', socketIndex: 4 },
     { kind: 'socket', augmentId: '', socketIndex: 0 },
     { kind: 'socket', augmentId: 'fire' },
     { kind: 'socket', augmentId: 'fire', socketIndex: 0, omen: undefined },

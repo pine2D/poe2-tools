@@ -175,6 +175,19 @@ describe('v78 腐化条件指引项目', () => {
       const input = legacyProject(n)
       expect(parser(n)(JSON.stringify(input), catalog).ok, `v${n} baseline`).toBe(true)
       for (const rules of [
+        [{ conditions: [{ kind: 'socket-count', min: 0, max: 4 }], action: { kind: 'stop' } }],
+        [
+          {
+            conditions: [{ kind: 'not', condition: { kind: 'open-sockets', min: 4, max: 4 } }],
+            action: { kind: 'stop' },
+          },
+        ],
+        [
+          {
+            conditions: [{ kind: 'always' }],
+            action: { kind: 'socket', socketIndex: 3, augmentId: 'fire' },
+          },
+        ],
         [{ conditions: [{ kind: 'always' }], action: { kind: 'vaal' } }],
         [
           {
@@ -201,6 +214,57 @@ describe('v78 腐化条件指引项目', () => {
           `v${n}`,
         ).toMatchObject({ ok: false, error: expect.stringContaining('v78') })
     }
+  })
+
+  it('四孔指引及第四孔动作保留全部未来历史并校验镶嵌来源', () => {
+    const augmentId = 'pob2:augment:["Desert Rune","weapon"]'
+    const input = {
+      ...project(),
+      augmentSourceHash: catalog._meta.sources.find((s) => s.path === 'src/Data/ModRunes.lua')
+        ?.sha256,
+      initialState: { ...project().initialState, baseId: 'Crude Bow', sockets: [null, null, null] },
+      operations: [
+        { kind: 'vaal', outcome: 'socket' },
+        { kind: 'socket', socketIndex: 3, augmentId },
+      ],
+      strategy: {
+        maxSteps: 5,
+        rules: [
+          {
+            conditions: [
+              {
+                kind: 'all',
+                conditions: [
+                  { kind: 'socket-count', min: 4, max: 4 },
+                  { kind: 'open-sockets', min: 4, max: 4 },
+                ],
+              },
+            ],
+            action: { kind: 'socket', socketIndex: 3, augmentId },
+          },
+        ],
+      },
+    }
+    for (const cursor of [0, 1, 2]) {
+      const restored = must(read({ ...input, cursor }))
+      expect(restored.states[2]?.sockets).toEqual([null, null, null, augmentId])
+      expect(
+        JSON.parse(must(serializeTargetCraftProject(restored.project, catalog))).strategy,
+      ).toEqual(input.strategy)
+    }
+    expect(read({ ...input, augmentSourceHash: 'wrong' }).ok).toBe(false)
+    expect(
+      read({
+        ...input,
+        operations: [],
+        strategy: {
+          maxSteps: 5,
+          rules: [
+            { conditions: [{ kind: 'socket-count', min: 0, max: 5 }], action: { kind: 'stop' } },
+          ],
+        },
+      }).ok,
+    ).toBe(false)
   })
 
   it('沿用腐化指引升级版本但不搬源强化或消费，当前未来历史保留', () => {

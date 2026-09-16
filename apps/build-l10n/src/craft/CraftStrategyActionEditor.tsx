@@ -6,6 +6,7 @@ import {
   type BoneLichOmen,
   CRAFT_CURRENCY_LABELS,
   CRAFT_OMEN_RULES,
+  CRAFT_STRATEGY_SOCKET_LIMIT,
   type CraftBone,
   type CraftCatalog,
   type CraftCurrency,
@@ -323,11 +324,13 @@ export function CraftStrategyActionEditor({
               }
             >
               <option value="first-empty">第一空孔（不覆盖）</option>
-              {[0, 1, 2].map((index) => (
-                <option key={index} value={index}>
-                  孔位 {index + 1}（可覆盖）
-                </option>
-              ))}
+              {Array.from({ length: CRAFT_STRATEGY_SOCKET_LIMIT }, (_, index) => index).map(
+                (index) => (
+                  <option key={index} value={index}>
+                    孔位 {index + 1}（可覆盖）
+                  </option>
+                ),
+              )}
             </select>
           </label>
           <p>指定孔位会覆盖旧符文且不返还；第一空孔只填已确认的空孔。请设置停止条件或步骤上限。</p>

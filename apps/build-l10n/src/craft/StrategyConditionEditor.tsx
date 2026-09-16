@@ -7,6 +7,7 @@ import type {
 import {
   CRAFT_PROPERTY_LABELS,
   CRAFT_STRATEGY_AFFIX_LIMITS,
+  CRAFT_STRATEGY_SOCKET_LIMIT,
   type CraftProperty,
 } from '@poe2-tools/item-core'
 import { StrategyDesecrationCountCondition } from './StrategyDesecrationCountCondition'
@@ -310,7 +311,7 @@ export function StrategyConditionEditor({
                 })
               }
             >
-              {[0, 1, 2, 3].map((n) => (
+              {Array.from({ length: CRAFT_STRATEGY_SOCKET_LIMIT + 1 }, (_, n) => n).map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
@@ -330,7 +331,7 @@ export function StrategyConditionEditor({
                 })
               }
             >
-              {[0, 1, 2, 3].map((n) => (
+              {Array.from({ length: CRAFT_STRATEGY_SOCKET_LIMIT + 1 }, (_, n) => n).map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>

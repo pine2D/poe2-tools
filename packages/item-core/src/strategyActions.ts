@@ -36,6 +36,7 @@ import {
   removableCraftAffixes,
 } from './rehearsal'
 import { prepareRuneforgeCraft } from './runeforge'
+import { CRAFT_STRATEGY_SOCKET_LIMIT } from './strategyConditions'
 import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
 export type CraftStrategyAction =
@@ -121,7 +122,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
       (typeof value.socketIndex === 'number' &&
         Number.isInteger(value.socketIndex) &&
         value.socketIndex >= 0 &&
-        value.socketIndex <= 2))
+        value.socketIndex < CRAFT_STRATEGY_SOCKET_LIMIT))
   )
     return { kind: 'socket', augmentId: value.augmentId, socketIndex: value.socketIndex }
   if (
