@@ -25,6 +25,7 @@ import { equivalentProjectJSON } from './craftProjectJSON'
 import { applyCraftStep, type CraftStep, isAlloyCraftOperation } from './craftSteps'
 import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
+import { requiresDesecrationCountProjectVersion } from './desecrationCountProjectVersion'
 import { isEssenceOmen } from './essenceOmens'
 import { requiresEssenceOutcomesProjectVersion } from './essenceOutcomesProjectVersion'
 import {
@@ -675,6 +676,7 @@ export function readNativeTargetProjectProjection(
   essenceOutcomes = false,
   pendingExaltation = false,
   putrefaction = false,
+  desecrationCount = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -698,6 +700,7 @@ export function readNativeTargetProjectProjection(
     essenceOutcomes,
     pendingExaltation,
     putrefaction,
+    desecrationCount,
   )
 }
 
@@ -723,6 +726,7 @@ function readCraftProject(
   essenceOutcomes = false,
   pendingExaltation = false,
   putrefaction = false,
+  desecrationCount = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -741,6 +745,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!desecrationCount && requiresDesecrationCountProjectVersion(value))
+    return fail('亵渎数量条件必须使用 v92 项目，包括未执行和嵌套指引。')
   if (!putrefaction && requiresPutrefactionProjectVersion(value))
     return fail('腐烂预兆必须使用 v91 项目，包括起点及撤销位置之后的步骤。')
   if (!essenceOutcomes && requiresEssenceOutcomesProjectVersion(value))

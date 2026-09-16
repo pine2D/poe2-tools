@@ -11,6 +11,7 @@ export const CRAFT_STRATEGY_AFFIX_LIMITS = {
 } as const
 
 export type CraftStrategyLeafCondition =
+  | { kind: 'desecrated-count'; source: 'unrevealed' | 'revealed'; min: number; max: number }
   | { kind: 'corruption-state'; value: 'none' | 'once' | 'twice' }
   | { kind: 'granted-skill-level'; min: number; max?: number }
   | {
@@ -123,6 +124,15 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
     value.min <= value.max
   )
     return { kind: value.kind, min: value.min, max: value.max }
+  if (
+    value.kind === 'desecrated-count' &&
+    keys(value, ['kind', 'source', 'min', 'max']) &&
+    (value.source === 'unrevealed' || value.source === 'revealed') &&
+    integer(value.min, 0, CRAFT_STRATEGY_AFFIX_LIMITS['affix-count']) &&
+    integer(value.max, 0, CRAFT_STRATEGY_AFFIX_LIMITS['affix-count']) &&
+    value.min <= value.max
+  )
+    return { kind: value.kind, source: value.source, min: value.min, max: value.max }
   if (
     value.kind === 'affix-count' &&
     keys(value, ['kind', 'min']) &&

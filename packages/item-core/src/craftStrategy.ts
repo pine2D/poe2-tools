@@ -328,6 +328,16 @@ export function evaluateCraftStrategyWithTargets(
           : state.sockets.filter((id) => id === null).length
       return count >= condition.min && count <= condition.max
     }
+    if (condition.kind === 'desecrated-count') {
+      const pending = state.pendingDesecration
+      const count =
+        condition.source === 'revealed'
+          ? state.affixes.filter((affix) => affix.desecrated).length
+          : pending?.putrefaction
+            ? pending.putrefaction.prefix + pending.putrefaction.suffix
+            : Number(Boolean(pending))
+      return count >= condition.min && count <= condition.max
+    }
     if (condition.kind === 'affix-count') {
       const pending = state.pendingDesecration
       const hidden = pending?.putrefaction

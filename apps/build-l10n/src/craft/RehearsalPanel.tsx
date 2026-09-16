@@ -36,6 +36,7 @@ import {
   craftedModifierCapacity,
   craftOmenDescription,
   craftOmenMaterials,
+  DESECRATION_COUNT_RULES_VERSION,
   definitionStrategyStageAt,
   desecrationSourceHash,
   ESSENCE_OUTCOMES_RULES_VERSION,
@@ -87,6 +88,7 @@ import {
   requiresConditionalArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
   requiresCraftedCapacityProjectVersion,
+  requiresDesecrationCountProjectVersion,
   requiresEssenceOutcomesProjectVersion,
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
@@ -413,6 +415,9 @@ export function RehearsalPanel({
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
   const [pendingExaltationRules, setPendingExaltationRules] = useState(
     initialProject?.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION,
+  )
+  const [desecrationCountRules, setDesecrationCountRules] = useState(
+    initialProject?.project.rulesVersion === DESECRATION_COUNT_RULES_VERSION,
   )
   const [putrefactionRules, setPutrefactionRules] = useState(
     initialProject?.project.rulesVersion === PUTREFACTION_RULES_VERSION,
@@ -1254,7 +1259,10 @@ export function RehearsalPanel({
     essenceOutcomesRules || requiresEssenceOutcomesProjectVersion(projectConfig)
   const needsPendingExaltation =
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
+  const needsDesecrationCount =
+    desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsDesecrationCount ||
     putrefactionRules ||
     requiresPutrefactionProjectVersion(projectConfig) ||
     needsPendingExaltation ||
@@ -1271,8 +1279,9 @@ export function RehearsalPanel({
           ...(requiresSerleProjectVersion(projectConfig, catalog) && augmentSourceHash
             ? { augmentSourceHash }
             : {}),
-          rulesVersion:
-            putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
+          rulesVersion: needsDesecrationCount
+            ? DESECRATION_COUNT_RULES_VERSION
+            : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
               ? PUTREFACTION_RULES_VERSION
               : needsPendingExaltation
                 ? PENDING_EXALTATION_RULES_VERSION
@@ -1324,6 +1333,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setDesecrationCountRules(restored.project.rulesVersion === DESECRATION_COUNT_RULES_VERSION)
     setPutrefactionRules(restored.project.rulesVersion === PUTREFACTION_RULES_VERSION)
     setPendingExaltationRules(restored.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION)
     setEssenceOutcomesRules(restored.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION)

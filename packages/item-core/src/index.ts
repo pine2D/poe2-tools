@@ -205,6 +205,10 @@ export {
   desecratedModDomain,
   desecrationSourceHash,
 } from './desecration'
+export {
+  DESECRATION_COUNT_RULES_VERSION,
+  requiresDesecrationCountProjectVersion,
+} from './desecrationCountProjectVersion'
 export { matchesTargetInterval, projectCraftTargetValues } from './effectiveTargetValues'
 export type { EssenceAdviceStep } from './essenceAdvice'
 export { analyzeEssenceTargets } from './essenceAdvice'

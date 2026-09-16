@@ -9,11 +9,13 @@ import {
   CRAFT_STRATEGY_AFFIX_LIMITS,
   type CraftProperty,
 } from '@poe2-tools/item-core'
+import { StrategyDesecrationCountCondition } from './StrategyDesecrationCountCondition'
 import { StrategyPropertyCondition } from './StrategyPropertyCondition'
 import { StrategyQualityCondition } from './StrategyQualityCondition'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
 
 export const CONDITION_LABELS = {
+  'desecrated-count': '亵渎词缀数量范围',
   quality: '品质类型与范围',
   'corruption-state': '腐化状态',
   'granted-skill-level': '装备固有技能最高等级',
@@ -33,6 +35,7 @@ export function defaultCondition(
   kind: DefinitionCraftStrategyLeafCondition['kind'],
   targetIds: readonly string[] = [],
 ): DefinitionCraftStrategyLeafCondition | null {
+  if (kind === 'desecrated-count') return { kind, source: 'unrevealed', min: 1, max: 6 }
   if (kind === 'corruption-state') return { kind, value: 'none' }
   if (kind === 'quality') return { kind, source: 'ordinary', min: 0 }
   if (kind === 'item-property') return { kind, property: 'physicalDps', min: 0 }
@@ -164,6 +167,13 @@ export function StrategyConditionEditor({
           </label>
           <p>只判断装备固有技能的最高等级；原文未确认最高等级时为未知，角色当前使用等级未计算。</p>
         </>
+      ) : null}
+      {condition.kind === 'desecrated-count' ? (
+        <StrategyDesecrationCountCondition
+          condition={condition}
+          prefix={valuePrefix}
+          onChange={onChange}
+        />
       ) : null}
       {condition.kind === 'quality' ? (
         <StrategyQualityCondition
