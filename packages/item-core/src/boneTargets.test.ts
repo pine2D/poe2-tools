@@ -58,7 +58,7 @@ it('专属入口可信源与正资格严格，单亵渎槽及数值/替代档位
     }).ok,
   ).toBe(false)
 })
-it('pending报告实际达成和未达成原因，普通步骤为空', () => {
+it('pending报告实际达成和未达成原因，亵渎专属目标不能由普通崇高生成', () => {
   const catalog = boneCatalog()
   const state = {
     ...boneState(['prefix1']),
@@ -75,7 +75,9 @@ it('pending报告实际达成和未达成原因，普通步骤为空', () => {
       ],
     },
   })
-  expect(craftCandidates(catalog, state)).toEqual([])
+  const candidates = craftCandidates(catalog, state)
+  expect(candidates.length).toBeGreaterThan(0)
+  expect(candidates.some((mod) => mod.id === 'exclusive1')).toBe(false)
   const normal = analyzeCraftTargets(catalog, { ...boneState(), rarity: 'normal' }, ['exclusive1'])
   if (normal.ok) expect(normal.value.targets[0]?.reasons.join('')).not.toContain('动态标签')
 })

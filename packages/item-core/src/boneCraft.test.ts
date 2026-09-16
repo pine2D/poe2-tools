@@ -10,6 +10,7 @@ import { prepareEssenceCraft } from './essenceCraft'
 import {
   addCraftAffix,
   applyCraftOperation,
+  CRAFT_CURRENCY_RULES,
   type CraftState,
   craftCandidates,
   createCraftState,
@@ -21,7 +22,7 @@ import { planCraftTargetRoutes } from './targetRoutes'
 import { analyzeCraftTargets } from './targets'
 
 describe('骨骼与固定三候选揭示', () => {
-  it('空位骨骼→pending占位→固定三项→选择来源数值，普通/精华入口阻止隐藏加工', () => {
+  it('空位骨骼→pending占位→崇高→固定三项→选择来源数值，其他入口仍关闭', () => {
     const catalog = boneCatalog()
     const start = boneState()
     const applied = applyCraftStep(catalog, start, {
@@ -38,7 +39,10 @@ describe('骨骼与固定三候选揭示', () => {
     expect(start).not.toHaveProperty('pendingDesecration')
     expect(
       applyCraftOperation(catalog, applied.value, { currency: 'exalted', modIds: ['prefix1'] }),
-    ).toMatchObject({ ok: false, error: expect.stringContaining('请先完成亵渎揭示') })
+    ).toMatchObject({
+      ok: true,
+      value: { pendingDesecration: { boneId: 'preserved_rib', kind: 'suffix' } },
+    })
     expect(prepareEssenceCraft(catalog, applied.value, 'missing')).toMatchObject({
       ok: false,
       error: expect.stringContaining('请先完成亵渎揭示'),
@@ -327,13 +331,16 @@ describe('骨骼规则与拒绝边界', () => {
       }).ok,
     ).toBe(false)
   })
-  it('所有直接加工入口与指导在pending期间关闭，容量和已有字段不被清空', () => {
+  it('pending只开放崇高普通候选，其他直接加工入口仍关闭且字段不被清空', () => {
     const catalog = boneCatalog()
     const state = pending()
-    expect(craftCandidates(catalog, state)).toEqual([])
+    expect(craftCandidates(catalog, state).map((mod) => mod.id)).toContain('prefix1')
+    expect(addCraftAffix(catalog, state, 'prefix1')).toMatchObject({
+      ok: true,
+      value: { pendingDesecration: { boneId: 'preserved_rib', kind: 'suffix' } },
+    })
     expect(socketCandidates(catalog, state)).toEqual([])
     for (const result of [
-      addCraftAffix(catalog, state, 'prefix1'),
       prepareCraftOperation(catalog, state, 'alchemy'),
       removableCraftAffixes(catalog, state, 'annulment'),
       applyCraftStep(catalog, state, { kind: 'socket', socketIndex: 0, augmentId: 'fake' }),
@@ -343,10 +350,16 @@ describe('骨骼规则与拒绝边界', () => {
         ok: false,
         error: expect.stringContaining('请先完成亵渎揭示'),
       })
-    expect(analyzeCraftTargets(catalog, state, ['suffix1'])).toMatchObject({
-      ok: true,
-      value: { steps: [] },
-    })
+    const advice = analyzeCraftTargets(catalog, state, ['suffix1'])
+    expect(advice.ok).toBe(true)
+    if (advice.ok) {
+      expect(advice.value.steps.length).toBeGreaterThan(0)
+      expect(
+        advice.value.steps.every(
+          (step) => 'currency' in step && CRAFT_CURRENCY_RULES[step.currency]?.base === 'exalted',
+        ),
+      ).toBe(true)
+    }
     expect(planCraftTargetRoutes(catalog, state, ['suffix1']).ok).toBe(true)
     const offered = {
       ...state,
@@ -355,6 +368,11 @@ describe('骨骼规则与拒绝边界', () => {
         options: ['suffix1', 'suffix2', 'suffix3'],
       },
     } satisfies CraftState
+    expect(craftCandidates(catalog, offered)).toEqual([])
+    expect(addCraftAffix(catalog, offered, 'prefix1', 'exalted')).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('请先完成亵渎揭示'),
+    })
     const diff = compareCraftStates(catalog, state, offered)
     expect(diff).toMatchObject({
       ok: true,

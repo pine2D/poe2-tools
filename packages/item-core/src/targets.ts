@@ -24,6 +24,7 @@ import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError, isCraftOmen } from './omens'
+import { pendingExaltationAllowed } from './pendingExaltation'
 import {
   CRAFT_CURRENCY_LABELS,
   CRAFT_CURRENCY_RULES,
@@ -742,8 +743,10 @@ export function analyzeCraftTargetContext(
         current.pendingDesecration &&
         !current.pendingDesecration.options &&
         staticPools.liquid.has(modId)
-      if (current.pendingDesecration && !pendingLiquid) reasons.push(PENDING_DESECRATION_MESSAGE)
-      if (pendingLiquid && !liquidOnly)
+      const pendingExalt = current.pendingDesecration && candidates.has(modId)
+      if (current.pendingDesecration && !pendingLiquid && !pendingExalt)
+        reasons.push(PENDING_DESECRATION_MESSAGE)
+      if (pendingLiquid && !pendingExalt && !liquidOnly)
         reasons.push('未揭示阶段的此目标使用对应液态情感演练，普通通货仍需先揭示。')
       else if (liquidOnly) reasons.push('此目标需要对应液态情感的保证属性，普通通货不能生成。')
       else if (essenceOnly) reasons.push('此目标需要对应精华的保证属性，普通通货不能生成。')
@@ -833,7 +836,7 @@ export function analyzeCraftTargetContext(
       delete target.matchedAffixId
       if (match?.affixId !== undefined) target.matchedAffixId = match.affixId
     }
-  if (current.pendingDesecration)
+  if (current.pendingDesecration && !pendingExaltationAllowed(catalog, current))
     return { ok: true, value: { targets, steps: [], ...implicitFields } }
   if (
     progress

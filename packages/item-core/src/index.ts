@@ -339,6 +339,11 @@ export {
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'
+export { pendingExaltationAllowed } from './pendingExaltation'
+export {
+  PENDING_EXALTATION_RULES_VERSION,
+  requiresPendingExaltationProjectVersion,
+} from './pendingExaltationProjectVersion'
 export {
   applyPerfectFluxCraft,
   type InspectedPerfectFluxCraft,

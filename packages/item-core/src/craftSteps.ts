@@ -39,6 +39,7 @@ import {
   type MasterworkCraftOperation,
 } from './masterwork'
 import { renderNumericLines } from './numeric'
+import { pendingExaltationAllowed } from './pendingExaltation'
 import {
   applyPerfectFluxCraft,
   isPerfectFluxCraftOperation,
@@ -242,7 +243,8 @@ export function applyCraftStep(
       : { ok: false, error: '破裂操作字段无效。' }
   if (
     Object.hasOwn(state, 'pendingDesecration') &&
-    !('kind' in step && step.kind === 'liquid-emotion')
+    !('kind' in step && step.kind === 'liquid-emotion') &&
+    !(!('kind' in step) && pendingExaltationAllowed(catalog, state, step.currency, step.omen))
   )
     return { ok: false, error: PENDING_DESECRATION_MESSAGE }
   if ('kind' in step) {

@@ -63,8 +63,10 @@ import {
   loadTargetWorkbenchProject,
   MASTERWORK_CRAFT_RULES_VERSION,
   type MasterworkCraftOperation,
+  PENDING_EXALTATION_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   type PerfectFluxCraftOperation,
+  pendingExaltationAllowed,
   prepareCraftOperation,
   prepareExtractionCraft,
   prepareStrategySocket,
@@ -88,6 +90,7 @@ import {
   requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
   requiresMasterworkProjectVersion,
+  requiresPendingExaltationProjectVersion,
   requiresPerfectFluxProjectVersion,
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
@@ -406,6 +409,9 @@ export function RehearsalPanel({
     initialProject?.project.strategyStartStep,
   )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
+  const [pendingExaltationRules, setPendingExaltationRules] = useState(
+    initialProject?.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION,
+  )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
   )
@@ -570,6 +576,22 @@ export function RehearsalPanel({
     [history],
   )
   const current = history[cursor]?.state
+  const pendingExaltationEditable = useMemo(
+    () => Boolean(current?.pendingDesecration && pendingExaltationAllowed(catalog, current)),
+    [catalog, current],
+  )
+  const pendingCurrencyAvailability = useMemo(
+    () =>
+      current?.pendingDesecration
+        ? Object.fromEntries(
+            CURRENCIES.filter((id) => CRAFT_CURRENCY_RULES[id].tier === currencyTier).map((id) => [
+              id,
+              prepareCraftOperation(catalog, current, id, undefined, omen).ok,
+            ]),
+          )
+        : null,
+    [catalog, current, currencyTier, omen],
+  )
   const targetCapacityHistory = useMemo(() => history.map((entry) => entry.state), [history])
   const targetCapacityContext = useMemo(
     () => findTargetCapacityContext(catalog, targetCapacityHistory, definitions) ?? current,
@@ -649,7 +671,7 @@ export function RehearsalPanel({
   }
 
   const startOperation = (currency: CraftCurrency, operationOmen: CraftOmen | undefined) => {
-    if (fractureDraft || boneDraft || current.pendingDesecration) return
+    if (fractureDraft || boneDraft) return
     setCurrencyTier(CRAFT_CURRENCY_RULES[currency].tier)
     if (isRemovalCurrency(currency)) {
       const removable = removableCraftAffixes(catalog, current, currency, operationOmen)
@@ -1216,7 +1238,10 @@ export function RehearsalPanel({
   const needsSerle = serleRules || requiresSerleProjectVersion(projectConfig, catalog)
   const needsEssenceOutcomes =
     essenceOutcomesRules || requiresEssenceOutcomesProjectVersion(projectConfig)
+  const needsPendingExaltation =
+    pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsPendingExaltation ||
     needsEssenceOutcomes ||
     needsSerle ||
     needsCraftedCapacity ||
@@ -1230,21 +1255,23 @@ export function RehearsalPanel({
           ...(requiresSerleProjectVersion(projectConfig, catalog) && augmentSourceHash
             ? { augmentSourceHash }
             : {}),
-          rulesVersion: needsEssenceOutcomes
-            ? ESSENCE_OUTCOMES_RULES_VERSION
-            : needsSerle
-              ? SERLE_RULES_VERSION
-              : needsCraftedCapacity
-                ? CRAFTED_CAPACITY_RULES_VERSION
-                : needsConditionalRunes
-                  ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                  : needsMasterwork
-                    ? MASTERWORK_CRAFT_RULES_VERSION
-                    : needsExtendedRunes
-                      ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                      : needsWardRunes
-                        ? WARD_RUNE_RULES_VERSION
-                        : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsPendingExaltation
+            ? PENDING_EXALTATION_RULES_VERSION
+            : needsEssenceOutcomes
+              ? ESSENCE_OUTCOMES_RULES_VERSION
+              : needsSerle
+                ? SERLE_RULES_VERSION
+                : needsCraftedCapacity
+                  ? CRAFTED_CAPACITY_RULES_VERSION
+                  : needsConditionalRunes
+                    ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                    : needsMasterwork
+                      ? MASTERWORK_CRAFT_RULES_VERSION
+                      : needsExtendedRunes
+                        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                        : needsWardRunes
+                          ? WARD_RUNE_RULES_VERSION
+                          : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1278,6 +1305,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setPendingExaltationRules(restored.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION)
     setEssenceOutcomesRules(restored.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION)
     setSerleRules(restored.project.rulesVersion === SERLE_RULES_VERSION)
     setCraftedCapacityRules(restored.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION)
@@ -1691,7 +1719,7 @@ export function RehearsalPanel({
               guaranteedDraft !== null ||
               boneDraft !== null ||
               fractureDraft !== null ||
-              current.pendingDesecration !== undefined ||
+              (current.pendingDesecration !== undefined && !pendingExaltationEditable) ||
               current.corrupted === true
             }
             onChange={(event) => {
@@ -1731,7 +1759,7 @@ export function RehearsalPanel({
             guaranteedDraft !== null ||
             boneDraft !== null ||
             fractureDraft !== null ||
-            current.pendingDesecration !== undefined ||
+            (current.pendingDesecration !== undefined && !pendingExaltationEditable) ||
             current.corrupted === true
           }
           onChange={(event) => setCurrencyTier(event.target.value as CraftCurrencyTier)}
@@ -1744,6 +1772,11 @@ export function RehearsalPanel({
       {currencyTier !== 'basic' ? (
         <p>
           最低词缀等级限制新增档位；若某类词缀将被完全排除，仍保留该物等下最高可用档位。装备物等必须达到通货门槛。
+        </p>
+      ) : null}
+      {pendingExaltationEditable ? (
+        <p>
+          亵渎占位已计入词缀数。固定揭示候选前，可用崇高填补其余合法空位；本工具要求追加后仍有至少三项可揭示候选。
         </p>
       ) : null}
       <nav className="rehearsal-currencies" aria-label="选择通货">
@@ -1763,7 +1796,7 @@ export function RehearsalPanel({
               guaranteedDraft !== null ||
               boneDraft !== null ||
               fractureDraft !== null ||
-              current.pendingDesecration !== undefined ||
+              (pendingCurrencyAvailability !== null && !pendingCurrencyAvailability[id]) ||
               current.corrupted === true
             }
             onClick={() => startOperation(id, omen)}

@@ -29,6 +29,7 @@ import { jointEffectDivineOperations, liquidRouteContext } from './liquidRouteCa
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenMaterials } from './omens'
+import { pendingExaltationAllowed } from './pendingExaltation'
 import {
   addCraftAffix,
   CRAFT_CURRENCY_RULES,
@@ -750,7 +751,12 @@ export function planCraftTargetContext(
         offer(candidate.operation, candidate.atRiskTargetIds)
       }
     }
-    if (node.state.pendingDesecration) continue
+    if (
+      node.state.pendingDesecration &&
+      // 未固定候选时，追加后至少还需固定三项和揭示；终点不能留下隐藏占位。
+      (node.steps.length + 3 > maxDepth || !pendingExaltationAllowed(catalog, node.state))
+    )
+      continue
     if (sovereign.enabled) {
       for (const candidate of sovereign.candidates(node.state, spend)) {
         if (result.candidateApplications >= 4096) break

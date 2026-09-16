@@ -15,7 +15,7 @@ import {
   resolveCraftImplicitPatterns,
   UNKNOWN_CHARM_RANGE,
 } from './beltImplicits'
-import { pendingBoneOmenError } from './boneCandidates'
+import { collectDesecrationCandidates, pendingBoneOmenError } from './boneCandidates'
 import {
   boneBaseError,
   clonePendingDesecration,
@@ -50,6 +50,7 @@ import {
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError } from './omens'
+import { pendingExaltationAllowed } from './pendingExaltation'
 import { grantedSkillLevelStateError } from './perfectFlux'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { runeSourceStateError } from './runeImport'
@@ -502,7 +503,8 @@ export function craftCandidates(
   omen?: CraftOmen,
 ): CatalogMod[] {
   if (state.corrupted) return []
-  if (Object.hasOwn(state, 'pendingDesecration')) return []
+  const pendingExaltation = Object.hasOwn(state, 'pendingDesecration')
+  if (pendingExaltation && !pendingExaltationAllowed(catalog, state, currency, omen)) return []
   if (craftOmenError(omen, currency) !== null) return []
   const omenRule = omen === undefined ? undefined : CRAFT_OMEN_RULES[omen]
   if (currency !== undefined && currencyLevelError(state, currency) !== null) return []
@@ -534,15 +536,49 @@ export function craftCandidates(
     })
     .map(({ mod }) => mod)
   const minimum = currency === undefined ? 0 : (currencyRule(currency)?.minModLevel ?? 0)
-  if (minimum === 0) return candidates
+  const revealWitnesses = pendingExaltation
+    ? collectDesecrationCandidates(
+        catalog,
+        checked.value,
+        (candidate) => createCraftState(catalog, candidate).ok,
+        undefined,
+        3,
+      )
+    : []
+  const preservesRevealPool = (mod: CatalogMod) => {
+    if (!pendingExaltation) return true
+    const appended = appendCraftAffix(checked.value, { modId: mod.id, lines: mod.lines })
+    if (!appended.ok) return false
+    const { pendingDesecration: _, ...ordinary } = appended.value
+    if (!createCraftState(catalog, ordinary).ok) return false
+    if (
+      mod.addsTags.length === 0 &&
+      revealWitnesses.length >= 3 &&
+      revealWitnesses.every((witness) => !craftModsConflict(mod, witness))
+    )
+      return true
+    return (
+      collectDesecrationCandidates(
+        catalog,
+        appended.value,
+        (candidate) => createCraftState(catalog, candidate).ok,
+        undefined,
+        3,
+      ).length >= 3
+    )
+  }
+  const validCandidates = candidates.filter(preservesRevealPool)
+  if (minimum === 0) return validCandidates
   // 最低等级不能排除整个词缀族；仅用当前物等、资格与空位允许的档位计算回退。
   const highest = new Map<string, number>()
   const family = (mod: CatalogMod) => JSON.stringify([mod.kind, mod.group])
-  for (const mod of candidates) {
+  for (const mod of validCandidates) {
     const key = family(mod)
     highest.set(key, Math.max(highest.get(key) ?? 0, mod.level))
   }
-  return candidates.filter((mod) => mod.level >= minimum || mod.level === highest.get(family(mod)))
+  return validCandidates.filter(
+    (mod) => mod.level >= minimum || mod.level === highest.get(family(mod)),
+  )
 }
 
 export function addCraftAffix(
@@ -553,7 +589,11 @@ export function addCraftAffix(
   omen?: CraftOmen,
 ): CraftResult<CraftState> {
   if (state.corrupted) return failure(CORRUPTED_CRAFT_MESSAGE)
-  if (Object.hasOwn(state, 'pendingDesecration')) return failure(PENDING_DESECRATION_MESSAGE)
+  if (
+    Object.hasOwn(state, 'pendingDesecration') &&
+    !pendingExaltationAllowed(catalog, state, currency, omen)
+  )
+    return failure(PENDING_DESECRATION_MESSAGE)
   const omenError = craftOmenError(omen, currency)
   if (omenError !== null) return failure(omenError)
   const checked = createCraftState(catalog, state)
@@ -616,7 +656,11 @@ export function prepareCraftOperation(
   omen?: CraftOmen,
 ): CraftResult<{ state: CraftState; count: number }> {
   if (state.corrupted) return failure(CORRUPTED_CRAFT_MESSAGE)
-  if (Object.hasOwn(state, 'pendingDesecration')) return failure(PENDING_DESECRATION_MESSAGE)
+  if (
+    Object.hasOwn(state, 'pendingDesecration') &&
+    !pendingExaltationAllowed(catalog, state, currency, omen)
+  )
+    return failure(PENDING_DESECRATION_MESSAGE)
   const omenError = craftOmenError(omen, currency)
   if (omenError !== null) return failure(omenError)
   const checked = createCraftState(catalog, state)

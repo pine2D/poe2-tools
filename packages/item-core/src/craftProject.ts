@@ -63,6 +63,7 @@ import { isMasterworkCraftOperation } from './masterwork'
 import { requiresMasterworkProjectVersion } from './masterworkProjectVersion'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
+import { requiresPendingExaltationProjectVersion } from './pendingExaltationProjectVersion'
 import { isPerfectFluxCraftOperation } from './perfectFlux'
 import { requiresPerfectFluxProjectVersion } from './perfectFluxProjectVersion'
 import {
@@ -671,6 +672,7 @@ export function readNativeTargetProjectProjection(
   craftedCapacity = false,
   serle = false,
   essenceOutcomes = false,
+  pendingExaltation = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -692,6 +694,7 @@ export function readNativeTargetProjectProjection(
     craftedCapacity,
     serle,
     essenceOutcomes,
+    pendingExaltation,
   )
 }
 
@@ -715,6 +718,7 @@ function readCraftProject(
   craftedCapacity = false,
   serle = false,
   essenceOutcomes = false,
+  pendingExaltation = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -735,6 +739,8 @@ function readCraftProject(
   }
   if (!essenceOutcomes && requiresEssenceOutcomesProjectVersion(value))
     return fail('多结果精华必须使用 v89 项目，包括起点、目标、完整未来及未执行指引。')
+  if (!pendingExaltation && requiresPendingExaltationProjectVersion(value))
+    return fail('未揭示期间的崇高操作必须使用 v90 项目，包括撤销位置之后的步骤。')
   if (!serle && requiresSerleProjectVersion(value, catalog))
     return fail('Serle 后缀容量必须使用 v88 项目，包括起点、声明、完整未来、指引及报价。')
   if (!craftedCapacity && requiresCraftedCapacityProjectVersion(value, catalog))

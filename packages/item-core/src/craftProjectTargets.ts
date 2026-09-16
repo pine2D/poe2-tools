@@ -49,6 +49,10 @@ import {
   requiresMasterworkProjectVersion,
 } from './masterworkProjectVersion'
 import {
+  PENDING_EXALTATION_RULES_VERSION,
+  requiresPendingExaltationProjectVersion,
+} from './pendingExaltationProjectVersion'
+import {
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   requiresPerfectFluxProjectVersion,
 } from './perfectFluxProjectVersion'
@@ -95,6 +99,7 @@ export {
   EXTENDED_ARMOUR_RUNE_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   MASTERWORK_CRAFT_RULES_VERSION,
+  PENDING_EXALTATION_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   RETAINED_CATALYST_RULES_VERSION,
   RUNEFORGE_CRAFT_RULES_VERSION,
@@ -138,6 +143,7 @@ export interface TargetCraftProject
     | typeof EXTENDED_ARMOUR_RUNE_RULES_VERSION
     | typeof WARD_RUNE_RULES_VERSION
     | typeof RUNEFORGE_CRAFT_RULES_VERSION
+    | typeof PENDING_EXALTATION_RULES_VERSION
   runeforgingCatalogSignature?: string
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
@@ -310,6 +316,7 @@ export function parseTargetCraftProject(
       WARD_RUNE_RULES_VERSION,
       EXTENDED_ARMOUR_RUNE_RULES_VERSION,
       ESSENCE_OUTCOMES_RULES_VERSION,
+      PENDING_EXALTATION_RULES_VERSION,
       SERLE_RULES_VERSION,
       CRAFTED_CAPACITY_RULES_VERSION,
       CONDITIONAL_ARMOUR_RUNE_RULES_VERSION,
@@ -319,9 +326,16 @@ export function parseTargetCraftProject(
     return {
       ok: false,
       error:
-        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88 或 v89 规则版本。',
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89 或 v90 规则版本。',
     }
-  const essenceOutcomes = original.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION
+  const pendingExaltation = original.rulesVersion === PENDING_EXALTATION_RULES_VERSION
+  if (!pendingExaltation && requiresPendingExaltationProjectVersion(original))
+    return {
+      ok: false,
+      error: '未揭示期间的崇高操作必须使用 v90 项目，包括撤销位置之后的步骤。',
+    }
+  const essenceOutcomes =
+    pendingExaltation || original.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION
   if (!essenceOutcomes && requiresEssenceOutcomesProjectVersion(original))
     return {
       ok: false,
@@ -471,6 +485,7 @@ export function parseTargetCraftProject(
       craftedCapacity,
       serle,
       essenceOutcomes,
+      pendingExaltation,
     )
     if (!history.ok) return history
     capacityContext =
@@ -522,6 +537,7 @@ export function parseTargetCraftProject(
         craftedCapacity,
         serle,
         essenceOutcomes,
+        pendingExaltation,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -543,35 +559,37 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = essenceOutcomes
-      ? ESSENCE_OUTCOMES_RULES_VERSION
-      : serle
-        ? SERLE_RULES_VERSION
-        : craftedCapacity
-          ? CRAFTED_CAPACITY_RULES_VERSION
-          : conditionalRunes
-            ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-            : masterwork
-              ? MASTERWORK_CRAFT_RULES_VERSION
-              : extendedArmourRunes
-                ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                : wardRunes
-                  ? WARD_RUNE_RULES_VERSION
-                  : runeforge
-                    ? RUNEFORGE_CRAFT_RULES_VERSION
-                    : runeforgedArmour
-                      ? RUNEFORGED_ARMOUR_RULES_VERSION
-                      : combatArmourRunes
-                        ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-                        : retainedCatalyst
-                          ? RETAINED_CATALYST_RULES_VERSION
-                          : corruptionStrategy
-                            ? CORRUPTION_STRATEGY_RULES_VERSION
-                            : extraction
-                              ? EXTRACTION_CRAFT_RULES_VERSION
-                              : perfectFlux
-                                ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                                : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = pendingExaltation
+      ? PENDING_EXALTATION_RULES_VERSION
+      : essenceOutcomes
+        ? ESSENCE_OUTCOMES_RULES_VERSION
+        : serle
+          ? SERLE_RULES_VERSION
+          : craftedCapacity
+            ? CRAFTED_CAPACITY_RULES_VERSION
+            : conditionalRunes
+              ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+              : masterwork
+                ? MASTERWORK_CRAFT_RULES_VERSION
+                : extendedArmourRunes
+                  ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                  : wardRunes
+                    ? WARD_RUNE_RULES_VERSION
+                    : runeforge
+                      ? RUNEFORGE_CRAFT_RULES_VERSION
+                      : runeforgedArmour
+                        ? RUNEFORGED_ARMOUR_RULES_VERSION
+                        : combatArmourRunes
+                          ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+                          : retainedCatalyst
+                            ? RETAINED_CATALYST_RULES_VERSION
+                            : corruptionStrategy
+                              ? CORRUPTION_STRATEGY_RULES_VERSION
+                              : extraction
+                                ? EXTRACTION_CRAFT_RULES_VERSION
+                                : perfectFlux
+                                  ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                                  : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
