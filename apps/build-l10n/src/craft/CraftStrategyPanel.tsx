@@ -247,6 +247,7 @@ export function CraftStrategyPanel({
           <details ref={ruleDetails}>
             <summary>编辑条件规则（{strategy.rules.length} 条）</summary>
             <p>每条规则最多 32 个条件节点、4 层嵌套，每组最多 4 项。未知孔位取反后仍不算满足。</p>
+            <p>复制规则会将副本插在原规则之后。修改副本条件后可用于另一分支；仍从上到下匹配。</p>
             {strategy.rules.map((rule, index) => {
               const number = index + 1
               const validConditions = (conditions: DefinitionCraftStrategyCondition[]) =>
@@ -397,6 +398,21 @@ export function CraftStrategyPanel({
                       onClick={() => move(index, 1)}
                     >
                       下移
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`复制规则 ${number}`}
+                      disabled={strategy.rules.length >= 12}
+                      onClick={() => {
+                        const rules = [...strategy.rules]
+                        rules.splice(index + 1, 0, structuredClone(rule))
+                        const copied = { ...strategy, rules }
+                        if (!readDefinitionCraftStrategy(copied).ok) return
+                        onChange(copied)
+                        setEditRequest(index + 1)
+                      }}
+                    >
+                      复制规则
                     </button>
                     <button
                       type="button"
