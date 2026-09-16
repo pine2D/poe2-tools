@@ -3,6 +3,13 @@ import { isPlainProjectJSON } from './craftProjectJSON'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
 
+/** 已支持制作容量的条件上界；条件匹配仍取装备当时的实际容量。 */
+export const CRAFT_STRATEGY_AFFIX_LIMITS = {
+  'affix-count': 7,
+  'open-prefix': 3,
+  'open-suffix': 4,
+} as const
+
 export type CraftStrategyLeafCondition =
   | { kind: 'corruption-state'; value: 'none' | 'once' | 'twice' }
   | { kind: 'granted-skill-level'; min: number; max?: number }
@@ -116,7 +123,11 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
     value.min <= value.max
   )
     return { kind: value.kind, min: value.min, max: value.max }
-  if (value.kind === 'affix-count' && keys(value, ['kind', 'min']) && integer(value.min, 0, 6))
+  if (
+    value.kind === 'affix-count' &&
+    keys(value, ['kind', 'min']) &&
+    integer(value.min, 0, CRAFT_STRATEGY_AFFIX_LIMITS['affix-count'])
+  )
     return { kind: 'affix-count', min: value.min }
   if (
     value.kind === 'desecration-stage' &&
@@ -146,7 +157,7 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
   if (
     (value.kind === 'open-prefix' || value.kind === 'open-suffix') &&
     keys(value, ['kind', 'min']) &&
-    integer(value.min, 1, 3)
+    integer(value.min, 1, CRAFT_STRATEGY_AFFIX_LIMITS[value.kind])
   )
     return { kind: value.kind, min: value.min }
   return null

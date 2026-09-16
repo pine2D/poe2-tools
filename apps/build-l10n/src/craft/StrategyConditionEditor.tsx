@@ -4,7 +4,11 @@ import type {
   CraftTargetDefinition,
   DefinitionCraftStrategyLeafCondition,
 } from '@poe2-tools/item-core'
-import { CRAFT_PROPERTY_LABELS, type CraftProperty } from '@poe2-tools/item-core'
+import {
+  CRAFT_PROPERTY_LABELS,
+  CRAFT_STRATEGY_AFFIX_LIMITS,
+  type CraftProperty,
+} from '@poe2-tools/item-core'
 import { StrategyPropertyCondition } from './StrategyPropertyCondition'
 import { StrategyQualityCondition } from './StrategyQualityCondition'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
@@ -270,7 +274,10 @@ export function StrategyConditionEditor({
               })
             }
           >
-            {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+            {Array.from(
+              { length: CRAFT_STRATEGY_AFFIX_LIMITS['affix-count'] + 1 },
+              (_, n) => n,
+            ).map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
@@ -336,7 +343,10 @@ export function StrategyConditionEditor({
               })
             }
           >
-            {[1, 2, 3].map((n) => (
+            {Array.from(
+              { length: CRAFT_STRATEGY_AFFIX_LIMITS[condition.kind] },
+              (_, n) => n + 1,
+            ).map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>

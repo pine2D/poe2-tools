@@ -40,6 +40,12 @@ export function requiresSerleProjectVersion(input: unknown, catalog: CraftCatalo
         (value) => typeof value === 'string' && ids.has(value),
       ) ||
       Object.hasOwn(properties, `augment:${SERLE_NAME}`) ||
+      (properties.kind?.value === 'affix-count' &&
+        typeof properties.min?.value === 'number' &&
+        properties.min.value > 6) ||
+      (properties.kind?.value === 'open-suffix' &&
+        typeof properties.min?.value === 'number' &&
+        properties.min.value > 3) ||
       values(properties.targets?.value).length > 6 ||
       values(properties.targetModIds?.value).length > 6 ||
       values(properties.alternatives?.value).length > 6 ||

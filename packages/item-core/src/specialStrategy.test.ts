@@ -138,7 +138,7 @@ it('无候选、未知材料、非法结构不能开始特殊步骤', () => {
 it('新增阶段与计数条件拒绝未知状态、多余字段和越界值', () => {
   for (const condition of [
     { kind: 'affix-count', min: -1 },
-    { kind: 'affix-count', min: 7 },
+    { kind: 'affix-count', min: 8 },
     { kind: 'affix-count', min: 1.5 },
     { kind: 'desecration-stage', value: 'revealed' },
     { kind: 'desecration-stage', value: 'none', min: 1 },

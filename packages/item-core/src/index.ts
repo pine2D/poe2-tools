@@ -430,7 +430,7 @@ export {
   splitStatScalars,
   statScalabilitySourceHash,
 } from './statScalability'
-export { craftStrategyLeaves } from './strategyConditions'
+export { CRAFT_STRATEGY_AFFIX_LIMITS, craftStrategyLeaves } from './strategyConditions'
 export type { SocketStrategyAction } from './strategySockets'
 export { prepareStrategySocket } from './strategySockets'
 export {

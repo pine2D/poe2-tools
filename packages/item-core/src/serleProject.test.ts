@@ -70,6 +70,15 @@ it('v2–v87 均拒绝未来 Serle 容量符文、未执行嵌套指引和仅报
         },
       },
       { pricing: { unit: 'divine', prices: { "augment:Serle's Triumph": 1 } } },
+      ...[
+        { kind: 'affix-count', min: 7 },
+        { kind: 'open-suffix', min: 4 },
+      ].map((condition) => ({
+        strategy: {
+          maxSteps: 10,
+          rules: [{ conditions: [{ kind: 'not', condition }], action: { kind: 'stop' } }],
+        },
+      })),
     ])
       expect(read(JSON.stringify({ ...input, ...extra }), real), `v${n}`).toMatchObject({
         ok: false,
