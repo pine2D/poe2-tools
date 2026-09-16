@@ -29,6 +29,7 @@ import { ProjectControls } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
 import { useAlloyCatalog } from './useAlloyCatalog'
 import { useFluxCatalog } from './useFluxCatalog'
+import { useRuneforgingCatalog } from './useRuneforgingCatalog'
 import './catalog.css'
 
 export interface CatalogPanelProps {
@@ -333,19 +334,22 @@ export function CatalogPanel({
   const primaryCatalog = loadState.status === 'ready' ? loadState.catalog : undefined
   const alloyResource = useAlloyCatalog(primaryCatalog, fetchImpl, true)
   const alloyTable = alloyResource.table
+  const runeforgingResource = useRuneforgingCatalog(primaryCatalog, fetchImpl, true)
+  const runeforgingTable = runeforgingResource.table
   const [fluxRequested, setFluxRequested] = useState(false)
   const fluxResource = useFluxCatalog(primaryCatalog, fetchImpl, fluxRequested)
   const fluxTable = fluxResource.table
   const catalog = useMemo(
     () =>
-      primaryCatalog && (alloyTable || fluxTable)
+      primaryCatalog && (alloyTable || fluxTable || runeforgingTable)
         ? {
             ...primaryCatalog,
             ...(alloyTable ? { alloys: alloyTable } : {}),
             ...(fluxTable ? { fluxes: fluxTable } : {}),
+            ...(runeforgingTable ? { runeforging: runeforgingTable } : {}),
           }
         : primaryCatalog,
-    [primaryCatalog, alloyTable, fluxTable],
+    [primaryCatalog, alloyTable, fluxTable, runeforgingTable],
   )
   useEffect(() => {
     if (catalog) onCatalogReady?.(catalog)
@@ -470,6 +474,17 @@ export function CatalogPanel({
           加载溶剂关系
         </button>
       )}
+      {runeforgingResource.loading ? (
+        <p role="status">正在加载可选锻造关系，其他制作可继续使用。</p>
+      ) : null}
+      {runeforgingResource.error ? (
+        <p role="status">
+          {runeforgingResource.error}{' '}
+          <button type="button" onClick={runeforgingResource.retry}>
+            重载锻造关系
+          </button>
+        </p>
+      ) : null}
       {alloyResource.loading ? (
         <p role="status">正在加载可选合金关系，普通制作可继续使用。</p>
       ) : null}

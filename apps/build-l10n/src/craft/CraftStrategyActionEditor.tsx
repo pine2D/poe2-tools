@@ -22,6 +22,8 @@ import {
   inspectLiquidEmotions,
   inspectPerfectFluxCraft,
   preparePerfectFluxCraft,
+  prepareRuneforgeCraft,
+  runeforgingCatalogSignature,
   socketCandidates,
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
@@ -34,6 +36,7 @@ export function strategyActionLabel(
 ): string {
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
+  if (action.kind === 'runeforge') return '防具锻造'
   if (action.kind === 'perfect-flux')
     return `${local('Perfect Flux')}（操作前最高等级 ${action.previousMaxLevel} → 20）`
   if (action.kind === 'vaal') return local('Vaal Orb')
@@ -101,6 +104,7 @@ export function CraftStrategyActionEditor({
     value: string
   } | null>(null)
   const declaration = declarationDraft?.context === declarationContext ? declarationDraft : null
+  const runeforge = action.kind === 'runeforge' ? prepareRuneforgeCraft(catalog, state) : null
   const inspectedPerfect = inspectPerfectFluxCraft(catalog, state)
   const essences = (catalog.essences ?? []).filter((e) => essenceCraftMode(e.id) !== null)
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
@@ -148,6 +152,7 @@ export function CraftStrategyActionEditor({
               return
             }
             if (
+              value === 'runeforge' ||
               value === 'jump' ||
               value === 'stop' ||
               value === 'fracture' ||
@@ -194,6 +199,9 @@ export function CraftStrategyActionEditor({
           <option value="flux" disabled={fluxCatalogSignature(catalog) === null}>
             溶剂转换
           </option>
+          <option value="runeforge" disabled={runeforgingCatalogSignature(catalog) === null}>
+            防具锻造
+          </option>
           <option value="perfect-flux">完美溶剂：装备技能升至 20</option>
           <option value="vaal">瓦尔石：选择本次腐化结果</option>
           <option value="architect">建筑师宝珠：选择二重腐化结果</option>
@@ -210,6 +218,13 @@ export function CraftStrategyActionEditor({
           </option>
         </select>
       </label>
+      {runeforge ? (
+        <p>
+          {runeforge.ok
+            ? `${local(runeforge.value.fromBase.name)} → ${local(runeforge.value.toBase.name)}；Verisium × ${runeforge.value.recipe.verisium}`
+            : runeforge.error}
+        </p>
+      ) : null}
       {action.kind === 'perfect-flux' || declaration ? (
         <label>
           操作前装备技能最高等级

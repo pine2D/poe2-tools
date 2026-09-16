@@ -175,6 +175,7 @@ describe('CatalogPanel', () => {
     expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
       '/craft-data/catalog.json',
       '/craft-data/alloys.json',
+      '/craft-data/runeforging.json',
     ])
     expect(onCatalogReady).toHaveBeenCalledTimes(1)
   })

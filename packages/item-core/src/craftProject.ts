@@ -71,7 +71,9 @@ import { importCraftState, importIdentifiedCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
 import { requiresRetainedCatalystProjectVersion } from './retainedCatalystProjectVersion'
 import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
+import { isRuneforgeCraftOperation } from './runeforge'
 import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
+import { requiresRuneforgeProjectVersion } from './runeforgeProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
@@ -406,7 +408,10 @@ function readNativeOperation(
   input: unknown,
   perfectFlux: boolean,
   extraction: boolean,
+  runeforge: boolean,
 ): CraftStep | null {
+  if (record(input) && input.kind === 'runeforge')
+    return runeforge && isRuneforgeCraftOperation(input) ? input : null
   if (record(input) && input.kind === 'extraction')
     return extraction && isExtractionCraftOperation(input) ? input : null
   if (!record(input)) return null
@@ -638,6 +643,7 @@ export function readNativeTargetProjectProjection(
   retainedCatalyst = false,
   combatArmourRunes = false,
   runeforgedArmour = false,
+  runeforge = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -651,6 +657,7 @@ export function readNativeTargetProjectProjection(
     retainedCatalyst,
     combatArmourRunes,
     runeforgedArmour,
+    runeforge,
   )
 }
 
@@ -666,6 +673,7 @@ function readCraftProject(
   retainedCatalyst = false,
   combatArmourRunes = false,
   runeforgedArmour = false,
+  runeforge = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -684,6 +692,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!runeforge && requiresRuneforgeProjectVersion(value))
+    return fail('锻造操作、指引及 Verisium 报价必须使用 v82 项目，包括完整未来历史。')
   if (!runeforgedArmour && requiresRuneforgedArmourProjectVersion(value, catalog))
     return fail('符文锻造基底与结界条件必须使用 v81 项目，包括完整历史及未执行指引。')
   if (!combatArmourRunes && requiresCombatArmourRuneProjectVersion(value, catalog))
@@ -1904,7 +1914,7 @@ function readCraftProject(
       return fail('旧版项目不能包含新数值操作。')
     // applyCraftStep 自身严格检查每种操作的字段及实例断言；旧入口仍只接受旧结构。
     const operation = native
-      ? readNativeOperation(input, perfectFlux, extraction)
+      ? readNativeOperation(input, perfectFlux, extraction, runeforge)
       : readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     if (
@@ -1985,6 +1995,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresRuneforgeProjectVersion(project))
+    throw new Error('锻造操作、指引及 Verisium 报价必须使用 v82 项目。')
   if (requiresCorruptionStrategyProjectVersion(project))
     throw new Error('腐化材料指引及腐化状态条件必须使用 v78 项目。')
   if (requiresExtractionProjectVersion(project))

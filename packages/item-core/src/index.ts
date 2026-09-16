@@ -342,10 +342,25 @@ export { estimateResistances, RESISTANCE_LABELS } from './resistances'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
 export { createStatResolver, resolveBase, resolveStat } from './resolve'
 export {
+  applyRuneforgeCraft,
+  isRuneforgeCraftOperation,
+  type PreparedRuneforgeCraft,
+  prepareRuneforgeCraft,
+  type RuneforgeCraftOperation,
+} from './runeforge'
+export {
   RUNEFORGED_ARMOUR_RULES_VERSION,
   requiresRuneforgedArmourProjectVersion,
 } from './runeforgedProjectVersion'
-export { parseRuneforgingCatalog, type RuneforgingCatalog } from './runeforgingCatalog'
+export {
+  RUNEFORGE_CRAFT_RULES_VERSION,
+  requiresRuneforgeProjectVersion,
+} from './runeforgeProjectVersion'
+export {
+  parseRuneforgingCatalog,
+  type RuneforgingCatalog,
+  runeforgingCatalogSignature,
+} from './runeforgingCatalog'
 export {
   estimateSkillLevelContributions,
   type SkillLevelContribution,

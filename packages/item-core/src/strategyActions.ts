@@ -34,9 +34,11 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
+import { prepareRuneforgeCraft } from './runeforge'
 import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
 export type CraftStrategyAction =
+  | { kind: 'runeforge' }
   | ExtractionCraftOperation
   | PerfectFluxCraftOperation
   | SocketStrategyAction
@@ -87,7 +89,8 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
   )
     return null
   if (
-    (value.kind === 'stop' ||
+    (value.kind === 'runeforge' ||
+      value.kind === 'stop' ||
       value.kind === 'jump' ||
       value.kind === 'reveal' ||
       value.kind === 'fracture' ||
@@ -186,6 +189,11 @@ export function checkCraftStrategyAction(
         ? { kind: 'vaal', outcome: 'unchanged' }
         : { kind: 'architect', outcome: 'destroy' },
     )
+    return result.ok ? ok : result
+  }
+  if (action.kind === 'runeforge') {
+    if (!readCraftStrategyAction(action)) return { ok: false, error: '锻造策略动作只能包含 kind。' }
+    const result = prepareRuneforgeCraft(catalog, state)
     return result.ok ? ok : result
   }
   if (action.kind === 'extraction') {

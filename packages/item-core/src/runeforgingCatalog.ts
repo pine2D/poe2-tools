@@ -156,3 +156,31 @@ export function parseRuneforgingCatalog(value: unknown, catalog: CraftCatalog): 
   }
   return value as unknown as RuneforgingCatalog
 }
+
+/** 完整关系与来源签名；数组规范排序，属性顺序不影响身份。 */
+export function runeforgingCatalogSignature(catalog: CraftCatalog): string | null {
+  try {
+    const table = parseRuneforgingCatalog(catalog.runeforging, catalog)
+    const meta = table._meta
+    return JSON.stringify([
+      meta.schemaVersion,
+      meta.tier,
+      meta.reviewedAt,
+      meta.gameVersion,
+      meta.sourceCommit,
+      meta.baseSources
+        .map((s) => [s.path, s.url, s.sha256])
+        .sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'en')),
+      [meta.recipeSource.url, meta.recipeSource.sha256],
+      meta.sourceRowCount,
+      [...table.recipes]
+        .sort((a, b) => a.sourceRow - b.sourceRow)
+        .map((r) => [r.sourceRow, r.fromBaseId, r.toBaseId, r.verisium, r.implicit]),
+      [...table.unresolved]
+        .sort((a, b) => a.sourceRow - b.sourceRow)
+        .map((r) => [r.sourceRow, r.reason]),
+    ])
+  } catch {
+    return null
+  }
+}

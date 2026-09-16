@@ -12,6 +12,8 @@ import { FLUXES, fluxCatalogSignature } from './fluxes'
 import { supportedLiquidEmotionId } from './liquidEmotions'
 import { CRAFT_OMEN_RULES, craftOmenMaterials } from './omens'
 import { CRAFT_CURRENCY_LABELS, type CraftResult } from './rehearsal'
+import { isRuneforgeCraftOperation } from './runeforge'
+import { runeforgingCatalogSignature } from './runeforgingCatalog'
 
 export interface CraftMaterial {
   id: string
@@ -59,6 +61,9 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     { id: 'currency:fracture', name: 'Fracturing Orb' },
     { id: 'currency:perfect-flux', name: 'Perfect Flux' },
     { id: 'currency:extraction', name: 'Orb of Extraction' },
+    ...(runeforgingCatalogSignature(catalog) !== null
+      ? [{ id: 'currency:verisium', name: 'Verisium' }]
+      : []),
     ...Object.entries(BONE_RULES).map(([id, rule]) => ({ id: `bone:${id}`, name: rule.name })),
     ...(catalog.essences ?? []).map((e) => ({ id: `essence:${e.id}`, name: e.name })),
     ...(alloyCatalogSignature(catalog) !== null ? (catalog.alloys?.alloys ?? []) : []).map(
@@ -95,14 +100,25 @@ export function collectCraftCosts(
   if (steps.length > 1000) return fail('计费步骤超过 1000 步。真实材料未被截断。')
   const materials = new Map(craftMaterials(catalog).map((m) => [m.id, m]))
   const counts = new Map<string, number>()
-  const add = (id: string) => counts.set(id, (counts.get(id) ?? 0) + 1)
+  const add = (id: string, count = 1) => counts.set(id, (counts.get(id) ?? 0) + count)
   for (const step of steps) {
     if ('currency' in step) {
       add(`currency:${step.currency}`)
       if (step.omen) for (const name of craftOmenMaterials(step.omen)) add(`omen:${name}`)
       continue
     }
-    if (
+    if (step.kind === 'runeforge') {
+      if (!isRuneforgeCraftOperation(step)) return fail('锻造步骤字段无效，不能计费。')
+      const recipe = catalog.runeforging?.recipes.find(
+        (r) =>
+          r.fromBaseId === step.fromBaseId &&
+          r.toBaseId === step.toBaseId &&
+          r.implicit === 'preserve',
+      )
+      if (!recipe || !materials.has('currency:verisium'))
+        return fail('缺少已核实锻造配方，不能计费。')
+      add('currency:verisium', recipe.verisium)
+    } else if (
       step.kind === 'extraction' ||
       step.kind === 'perfect-flux' ||
       step.kind === 'fracture' ||

@@ -45,6 +45,11 @@ import {
   type CraftState,
   createCraftState,
 } from './rehearsal'
+import {
+  applyRuneforgeCraft,
+  isRuneforgeCraftOperation,
+  type RuneforgeCraftOperation,
+} from './runeforge'
 import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
 
 export interface ArtificerCraftOperation {
@@ -101,6 +106,7 @@ export function isAlloyCraftOperation(value: unknown): value is AlloyCraftOperat
 }
 
 export type CraftStep =
+  | RuneforgeCraftOperation
   | ExtractionCraftOperation
   | PerfectFluxCraftOperation
   | FluxCraftOperation
@@ -158,6 +164,10 @@ export function applyCraftStep(
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }
+  if ('kind' in step && step.kind === 'runeforge')
+    return isRuneforgeCraftOperation(step)
+      ? applyRuneforgeCraft(catalog, state, step)
+      : { ok: false, error: '锻造步骤字段无效。' }
   if ('kind' in step && step.kind === 'extraction')
     return isExtractionCraftOperation(step)
       ? applyExtractionCraft(catalog, state, step)

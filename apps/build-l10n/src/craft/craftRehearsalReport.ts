@@ -56,7 +56,11 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
   const rarity = { normal: '普通', magic: '魔法', rare: '稀有' }
   const snapshot = (state: CraftState): string[] => {
     if (state.destroyed) return ['装备已摧毁；没有可继续使用的装备。']
+    const currentBase = catalog.bases.find((entry) => entry.id === state.baseId)
     const result = [
+      ...(state.baseId !== initialState.baseId
+        ? [`当前基底：${name(currentBase?.name ?? state.baseId)}`]
+        : []),
       `稀有度：${rarity[state.rarity]}；${state.twiceCorrupted ? '二重腐化' : state.corrupted ? '已腐化' : '未腐化'}`,
       `普通品质：${state.quality === undefined ? '未核对' : `${state.quality}%`}`,
       ...(state.catalyst
@@ -70,7 +74,7 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
       result.push(`装备技能最高等级：${skill.value.level ?? '未知'}；${name(skill.value.name)}`)
     if (state.grantedSkillLevel !== undefined)
       result.push('原固有技能行为起点观察；上方为升级后的装备最高等级，角色当前等级未计算。')
-    const implicits = state.implicitLines ?? base.implicit?.split('\n') ?? []
+    const implicits = state.implicitLines ?? currentBase?.implicit?.split('\n') ?? []
     if (implicits.length) result.push('固有属性／技能：', ...implicits.map(line))
     result.push(state.sockets === undefined ? '孔位：未核对' : `孔位：${state.sockets.length}`)
     state.sockets?.forEach((id, index) => {
@@ -206,6 +210,12 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
         `${selection.label}：原词缀 ${selectedAffix.value.index + 1}`,
         ...selectedAffix.value.affix.lines.map(line),
       )
+    }
+    if ('kind' in step && step.kind === 'runeforge') {
+      const from = catalog.bases.find((entry) => entry.id === current.baseId)
+      const to = catalog.bases.find((entry) => entry.id === next.value.baseId)
+      if (!from || !to) return fail('锻造步骤缺少输入或输出基底。')
+      body.push(`基底转换：${name(from.name)} → ${name(to.name)}`)
     }
     if ('kind' in step && step.kind === 'socket') body.push(`操作孔位：孔 ${step.socketIndex + 1}`)
     if ('kind' in step && step.kind === 'perfect-flux')

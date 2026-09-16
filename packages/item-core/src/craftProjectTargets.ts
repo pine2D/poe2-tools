@@ -40,6 +40,11 @@ import {
   RUNEFORGED_ARMOUR_RULES_VERSION,
   requiresRuneforgedArmourProjectVersion,
 } from './runeforgedProjectVersion'
+import {
+  RUNEFORGE_CRAFT_RULES_VERSION,
+  requiresRuneforgeProjectVersion,
+} from './runeforgeProjectVersion'
+import { runeforgingCatalogSignature } from './runeforgingCatalog'
 import type { CraftStrategyCondition } from './strategyConditions'
 import { readTargetDefinitionContext } from './targetDefinitionContext'
 import {
@@ -62,6 +67,7 @@ export {
   EXTRACTION_CRAFT_RULES_VERSION,
   PERFECT_FLUX_CRAFT_RULES_VERSION,
   RETAINED_CATALYST_RULES_VERSION,
+  RUNEFORGE_CRAFT_RULES_VERSION,
   RUNEFORGED_ARMOUR_RULES_VERSION,
   requiresCombatArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
@@ -69,6 +75,7 @@ export {
   requiresPerfectFluxProjectVersion,
   requiresRetainedCatalystProjectVersion,
   requiresRuneforgedArmourProjectVersion,
+  requiresRuneforgeProjectVersion,
 }
 
 export interface TargetCraftProject
@@ -91,6 +98,8 @@ export interface TargetCraftProject
     | typeof RETAINED_CATALYST_RULES_VERSION
     | typeof COMBAT_ARMOUR_RUNE_RULES_VERSION
     | typeof RUNEFORGED_ARMOUR_RULES_VERSION
+    | typeof RUNEFORGE_CRAFT_RULES_VERSION
+  runeforgingCatalogSignature?: string
   fluxCatalogSignature?: string
   targetDefinitions: CraftTargetDefinitions
   orphanedTargets: CraftTargetDefinition[]
@@ -258,13 +267,31 @@ export function parseTargetCraftProject(
       RETAINED_CATALYST_RULES_VERSION,
       COMBAT_ARMOUR_RUNE_RULES_VERSION,
       RUNEFORGED_ARMOUR_RULES_VERSION,
+      RUNEFORGE_CRAFT_RULES_VERSION,
     ].includes(String(original.rulesVersion))
   )
     return {
       ok: false,
-      error: '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80 或 v81 规则版本。',
+      error: '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81 或 v82 规则版本。',
     }
-  const runeforgedArmour = original.rulesVersion === RUNEFORGED_ARMOUR_RULES_VERSION
+  const runeforge = original.rulesVersion === RUNEFORGE_CRAFT_RULES_VERSION
+  const needsRuneforging =
+    requiresRuneforgeProjectVersion(original) ||
+    Object.hasOwn(original, 'runeforgingCatalogSignature')
+  if (!runeforge && needsRuneforging)
+    return {
+      ok: false,
+      error: '锻造操作、指引及 Verisium 报价必须使用 v82 项目，包括完整未来历史。',
+    }
+  if (needsRuneforging) {
+    const signature = runeforgingCatalogSignature(catalog)
+    if (signature === null || original.runeforgingCatalogSignature !== signature)
+      return {
+        ok: false,
+        error: '项目锻造关系签名缺失或与当前目录不同，请先加载相同锻造配方目录。',
+      }
+  }
+  const runeforgedArmour = runeforge || original.rulesVersion === RUNEFORGED_ARMOUR_RULES_VERSION
   if (!runeforgedArmour && requiresRuneforgedArmourProjectVersion(original, catalog))
     return {
       ok: false,
@@ -318,6 +345,7 @@ export function parseTargetCraftProject(
   })
   if (!context.ok) return context
   const {
+    runeforgingCatalogSignature: _runeforgingSignature,
     fluxCatalogSignature: _fluxSignature,
     targetDefinitions: _definitions,
     orphanedTargets: _orphaned,
@@ -350,6 +378,7 @@ export function parseTargetCraftProject(
         retainedCatalyst,
         combatArmourRunes,
         runeforgedArmour,
+        runeforge,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -371,19 +400,23 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = runeforgedArmour
-      ? RUNEFORGED_ARMOUR_RULES_VERSION
-      : combatArmourRunes
-        ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-        : retainedCatalyst
-          ? RETAINED_CATALYST_RULES_VERSION
-          : corruptionStrategy
-            ? CORRUPTION_STRATEGY_RULES_VERSION
-            : extraction
-              ? EXTRACTION_CRAFT_RULES_VERSION
-              : perfectFlux
-                ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = runeforge
+      ? RUNEFORGE_CRAFT_RULES_VERSION
+      : runeforgedArmour
+        ? RUNEFORGED_ARMOUR_RULES_VERSION
+        : combatArmourRunes
+          ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+          : retainedCatalyst
+            ? RETAINED_CATALYST_RULES_VERSION
+            : corruptionStrategy
+              ? CORRUPTION_STRATEGY_RULES_VERSION
+              : extraction
+                ? EXTRACTION_CRAFT_RULES_VERSION
+                : perfectFlux
+                  ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                  : FLUX_CRAFT_RULES_VERSION
+    if (needsRuneforging)
+      project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string
   }
   if (!equivalentProjectJSON(original, project))

@@ -146,6 +146,7 @@ describe('CraftApp', () => {
       expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
         '/craft-data/catalog.json',
         '/craft-data/alloys.json',
+        '/craft-data/runeforging.json',
       ])
       fireEvent.click(start)
       fireEvent.click(screen.getByRole('button', { name: '蜕变石' }))
@@ -159,6 +160,7 @@ describe('CraftApp', () => {
       expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
         '/craft-data/catalog.json',
         '/craft-data/alloys.json',
+        '/craft-data/runeforging.json',
       ])
       fireEvent.change(screen.getByLabelText('粘贴装备文本'), {
         target: { value: text.replace('70', '71') },
@@ -171,6 +173,7 @@ describe('CraftApp', () => {
       expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
         '/craft-data/catalog.json',
         '/craft-data/alloys.json',
+        '/craft-data/runeforging.json',
       ])
     },
   )

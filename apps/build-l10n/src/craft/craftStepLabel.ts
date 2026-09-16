@@ -33,6 +33,7 @@ export function craftStepLabel(
 
   if (!('kind' in step))
     return CRAFT_CURRENCY_LABELS[step.currency] + (step.omen ? ` + ${omenLabel(step.omen)}` : '')
+  if (step.kind === 'runeforge') return '符文锻造'
   if (step.kind === 'fracture') return fractureLabel
   if (step.kind === 'extraction') return '萃取石'
   if (step.kind === 'perfect-flux') return '完美溶剂'
