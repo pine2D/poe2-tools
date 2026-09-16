@@ -23,7 +23,7 @@ const state = (baseId = 'Rusted Greathelm'): CraftState => ({
 it('八族四档防具符文可镶入与覆盖，物等不冒充穿戴需求', () => {
   const initial = state()
   const choices = socketCandidates(catalog, initial).filter((a) => a.type === 'Rune')
-  expect(choices).toHaveLength(63)
+  expect(choices).toHaveLength(68)
   for (const family of families)
     for (const tier of tiers) {
       const augmentId = id(`${tier}${family} Rune`)
@@ -77,7 +77,7 @@ it('完整整数效果按独立语义求和，生命和属性不被误计为本�
     '+0 to maximum Life',
     '+1.5 to maximum Life',
     '+9007199254740992 to Strength',
-    'Regenerate 0.4% of maximum Life per second',
+    'Regenerate 0.004% of maximum Life per second',
   ])
     expect(parseRuneEffectTotals([line])).toBeNull()
 })

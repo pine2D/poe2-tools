@@ -380,3 +380,5 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 后续目录接入：`data/craft/runeforging.json` 为独立 gray 关系表，仅收录经当前目录唯一身份核对的普通防具候选关系、Verisium 数量和固有模板变化标志，不含外站属性数值、价格或概率。普通区409行逐行记账，未解析行保留序号和原因；固定来源页哈希、六类 MIT 基底来源及提交共同约束解释。游戏版本尚不能完整确认，明确记 null。可整体移除此表；`DICT_ENABLE_POE2DB=0` 时不发布且清除旧产物。表存在不直接授权转换；装备当前状态、固有掷值和特殊交互仍由后续动作核对。
 
 2026-09-16 结界符文人工核对沿用固定 MIT ModRunes.lua（SHA-256 `d3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a`）、Item.lua 与 ModParser.lua；无新增抓取表。四档 Ward Rune 为本地平值，四档 Charging Rune 为全局再生提高；普通效果不包含 Bonded。[Ward Rune](https://poe2db.tw/us/Ward_Rune)、[Charging Rune](https://poe2db.tw/us/Charging_Rune) 仅 gray 公开说明人工参考，不采数据或权重。公式、取整与实机限制见 [结界符文核对](ward-runes-research.md)。
+
+普通镶嵌物缩放补充（2026-09-16）：同一固定 MIT ModScalability 快照的匹配范围纳入 augments 普通效果行，不纳入 Bonded。新增 492 条声明，原 2988 条保持不变；17 条新增缺失保留未知。Rebirth 的 `per_minute_to_per_second_2dp_if_required` 使用已登记 ItemTools.lua 与 Common.lua 的内部 60 分母及显示两位小数规则；固定源哈希和四档声明进入目录校验。参见 [扩展防具符文核对](extended-armour-runes-research.md)，无新数据源或浏览器外部请求。

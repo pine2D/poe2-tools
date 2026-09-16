@@ -83,7 +83,7 @@ it('最大结界与再生分别求和，单位分开且拒绝不完整语义', (
     '+0 to maximum Runic Ward',
     '+1.5 to maximum Runic Ward',
     '+9007199254740992 to maximum Runic Ward',
-    '8% increased Runic Ward',
+    '8.5% increased Runic Ward',
     'Regenerate 10 Runic Ward per second',
   ])
     expect(parseRuneEffectTotals([line])).toBeNull()

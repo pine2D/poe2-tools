@@ -1,9 +1,11 @@
 import { sovereignEffect } from './alloyEffects'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { essenceSourceHash } from './essences'
+import { isRebirthArmourRune } from './extendedArmourRuneEffects'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
+import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 const HORROR_MOD = 'EssenceLocalRuneAndSoulCoreEffect1'
@@ -60,6 +62,22 @@ export function effectiveSocketAugment(
       : isSupportedArmourRune(augment) || (base && armourSoulCoreFitsBase(augment, base)))
   )
     return null
+  if (isRebirthArmourRune(augment)) {
+    if (statScalabilitySourceHash(catalog) === null) return null
+    const source = catalog.augments?.find((entry) => entry.id === augment.id)
+    if (!source || source.name !== augment.name || !isRebirthArmourRune(source)) return null
+    const pattern = source.lines[0] as string
+    const metadata = catalog.scalability?.[pattern]
+    if (
+      metadata?.length !== 1 ||
+      metadata[0]?.scalable !== true ||
+      metadata[0].formats.length !== 1 ||
+      metadata[0].formats[0] !== 'per_minute_to_per_second_2dp_if_required'
+    )
+      return null
+    const scaled = scaleStatLineByEffect(pattern, augment.lines[0] as string, metadata, increase)
+    return scaled.ok ? { ...augment, lines: [scaled.value] } : null
+  }
   let valid = true
   // 已完整核对为正整数效果，逐枚逐值增效后向下取整，再由调用方合计。
   const lines = augment.lines.map((line) =>

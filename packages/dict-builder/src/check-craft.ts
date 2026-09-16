@@ -14,9 +14,8 @@ import {
   parseCraftCatalog,
   parseFluxCatalog,
   parseRuneforgingCatalog,
-  STAT_SCALABILITY_SOURCE,
-  statScalabilitySourceHash,
 } from '@poe2-tools/item-core'
+import { checkCraftScalability } from './check-craft-scalability'
 import { checkRuneforgingSnapshot } from './check-runeforging'
 import { REPO_ROOT } from './config'
 
@@ -92,12 +91,10 @@ if (fluxText !== undefined) {
       throw new Error(`${locale} 溶剂名称缺失`)
   console.log('溶剂关系目录校验通过：gray 独立表；4 材料、15 行、60 个已解析成员；仅供查询')
 } else console.log('溶剂关系目录未提供；继续校验 primary 制作目录')
-if (
-  statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
-  Object.keys(catalog.scalability ?? {}).length !== 2988
+const scalarAudit = checkCraftScalability(catalog)
+console.log(
+  `属性缩放目录校验通过：${scalarAudit.matched} 条文本；${scalarAudit.missing} 条未对应保留缺失，不推断内部精度；四档重生精度声明完整`,
 )
-  throw new Error('缩放目录缺少固定来源或 2988 条当前属性文本对应')
-console.log('属性缩放目录校验通过：2988 条文本；271 条未对应保留缺失，不推断内部精度')
 if (
   corruptionSourceHash(catalog) !== CORRUPTION_SOURCE.sha256 ||
   catalog.corruptions?.length !== 127 ||

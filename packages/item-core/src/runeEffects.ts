@@ -4,6 +4,7 @@ import {
   isCombatArmourRune,
   readCombatArmourRuneLine,
 } from './combatArmourRuneEffects'
+import { isExtendedArmourRune, readExtendedArmourRuneLine } from './extendedArmourRuneEffects'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
 import { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
 
@@ -24,6 +25,8 @@ export type RuneEffectKey =
   | 'Intelligence'
   | 'Ward'
   | 'WardRegeneration'
+  | 'LifeRegeneration'
+  | 'WardIncreased'
 export type RuneEffectTotals = Record<RuneEffectKey, number>
 
 const RESISTANCE = /^\+([1-9]\d*)% to (Fire|Cold|Lightning) Resistance$/
@@ -41,6 +44,8 @@ const FLAT_KEYS = {
   Intelligence: 'Intelligence',
 } as const
 export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
+  LifeRegeneration: '每秒生命再生',
+  WardIncreased: '结界提高',
   Ward: '符文结界',
   WardRegeneration: '结界再生提高',
   PhysicalThornsMin: '物理荆棘伤害下限',
@@ -70,6 +75,8 @@ export const RUNE_EFFECT_LABELS: Record<RuneEffectKey, string> = {
   Intelligence: '智慧',
 }
 const emptyTotals = (): RuneEffectTotals => ({
+  LifeRegeneration: 0,
+  WardIncreased: 0,
   Ward: 0,
   WardRegeneration: 0,
   ...COMBAT_ARMOUR_TOTALS,
@@ -107,11 +114,12 @@ const FAMILIES = {
 export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotals | null {
   const totals = emptyTotals()
   for (const line of lines) {
-    const combat = readCombatArmourRuneLine(line) ?? readWardRuneLine(line)
+    const combat =
+      readCombatArmourRuneLine(line) ?? readWardRuneLine(line) ?? readExtendedArmourRuneLine(line)
     if (combat) {
       for (const [key, value] of Object.entries(combat)) {
-        const total = totals[key as RuneEffectKey] + value
-        if (!Number.isSafeInteger(total)) return null
+        const total = addRuneEffect(key as RuneEffectKey, totals[key as RuneEffectKey], value)
+        if (total === null) return null
         totals[key as RuneEffectKey] = total
       }
       continue
@@ -152,7 +160,8 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
 
 /** 身份、类别、本地标志和完整效果语义必须一致。 */
 export function isSupportedArmourRune(augment: CatalogAugment): boolean {
-  if (isCombatArmourRune(augment) || isWardArmourRune(augment)) return true
+  if (isCombatArmourRune(augment) || isWardArmourRune(augment) || isExtendedArmourRune(augment))
+    return true
   const family = Object.entries(FAMILIES).find(([name]) =>
     TIERS.some((tier) => augment.name === `${tier}${name}`),
   )?.[1]
@@ -184,8 +193,8 @@ export function sumRuneEffects(augments: readonly CatalogAugment[]): RuneEffectT
     const contribution = parseRuneEffectTotals(augment.lines)
     if (contribution === null) return null
     for (const key of Object.keys(totals) as RuneEffectKey[]) {
-      const total = totals[key] + contribution[key]
-      if (!Number.isSafeInteger(total)) return null
+      const total = addRuneEffect(key, totals[key], contribution[key])
+      if (total === null) return null
       totals[key] = total
     }
   }
@@ -200,4 +209,19 @@ export function isUtilityArmourRune(augment: CatalogAugment): boolean {
       TIERS.some((tier) => augment.name === `${tier}${name}`),
     )
   )
+}
+
+/** 生命再生先回到百分之一整数网格再求和，其他效果保持整数约束。 */
+function addRuneEffect(key: RuneEffectKey, left: number, right: number): number | null {
+  const scale = key === 'LifeRegeneration' ? 100 : 1
+  const a = Math.round(left * scale)
+  const b = Math.round(right * scale)
+  const total = a + b
+  return Number.isSafeInteger(a) &&
+    Number.isSafeInteger(b) &&
+    a / scale === left &&
+    b / scale === right &&
+    Number.isSafeInteger(total)
+    ? total / scale
+    : null
 }

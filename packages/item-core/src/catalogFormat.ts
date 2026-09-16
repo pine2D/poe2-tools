@@ -518,6 +518,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     const patterns = new Set([
       ...catalog.modifiers.flatMap((mod) => mod.lines),
       ...(catalog.corruptions ?? []).flatMap((mod) => mod.lines),
+      ...(catalog.augments ?? []).flatMap((augment) => augment.lines),
       ...catalog.bases.flatMap((base) => base.implicit?.split('\n') ?? []),
     ])
     for (const [line, scalars] of Object.entries(value.scalability)) {

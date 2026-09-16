@@ -104,6 +104,29 @@ describe('液态情感目录边界', () => {
   })
 })
 
+it('普通镶嵌行允许精确缩放声明，Bonded 与无关文本不进入范围', () => {
+  const line = 'Regenerate 0.35% of maximum Life per second'
+  const valid = {
+    ...catalog,
+    _meta: {
+      ...catalog._meta,
+      sourceCommit: STAT_SCALABILITY_SOURCE.commit,
+      sources: [STAT_SCALABILITY_SOURCE],
+    },
+    augments: [
+      { ...augment, lines: [line], bonded: { lines: ['+20 to maximum Life'], statOrder: [1] } },
+    ],
+    scalability: {
+      [line]: [{ scalable: true, formats: ['per_minute_to_per_second_2dp_if_required'] }],
+    },
+  }
+  expect(parseCraftCatalog(valid)).toBe(valid)
+  for (const other of ['+20 to maximum Life', '+999 to maximum Mana'])
+    expect(() =>
+      parseCraftCatalog({ ...valid, scalability: { [other]: [{ scalable: true, formats: [] }] } }),
+    ).toThrow()
+})
+
 it('缩放表核对固定来源、完整数字声明及当前目录归属', () => {
   const line = '+(10-19) Life'
   const valid = {

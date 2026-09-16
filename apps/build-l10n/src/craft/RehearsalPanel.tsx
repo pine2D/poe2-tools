@@ -36,6 +36,7 @@ import {
   definitionStrategyStageAt,
   desecrationSourceHash,
   type EssenceCraftOperation,
+  EXTENDED_ARMOUR_RUNE_RULES_VERSION,
   EXTRACTION_CRAFT_RULES_VERSION,
   type ExtractionCraftOperation,
   editTargetDefinitionContext,
@@ -74,6 +75,7 @@ import {
   removableCraftAffixes,
   requiresCombatArmourRuneProjectVersion,
   requiresCorruptionStrategyProjectVersion,
+  requiresExtendedArmourRuneProjectVersion,
   requiresExtractionProjectVersion,
   requiresPerfectFluxProjectVersion,
   requiresRetainedCatalystProjectVersion,
@@ -1115,11 +1117,16 @@ export function RehearsalPanel({
   }
   const needsRuneforge = requiresRuneforgeProjectVersion(projectConfig)
   const needsWardRunes = requiresWardRuneProjectVersion(projectConfig, catalog)
+  const needsExtendedRunes = requiresExtendedArmourRuneProjectVersion(projectConfig, catalog)
   const project: TargetCraftProject =
-    needsWardRunes || needsRuneforge
+    needsExtendedRunes || needsWardRunes || needsRuneforge
       ? {
           ...projectConfig,
-          rulesVersion: needsWardRunes ? WARD_RUNE_RULES_VERSION : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsExtendedRunes
+            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+            : needsWardRunes
+              ? WARD_RUNE_RULES_VERSION
+              : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),

@@ -189,12 +189,17 @@ export function estimateDefences(
               stat,
               base: baseValue,
               flat: totals[stat].flat,
-              increased: totals[stat].increased + (stat === 'Ward' ? 0 : runeIncreased),
-              runeIncreased: stat === 'Ward' ? 0 : runeIncreased,
+              increased:
+                totals[stat].increased +
+                (stat === 'Ward' ? runeTotals.WardIncreased : runeIncreased),
+              runeIncreased: stat === 'Ward' ? runeTotals.WardIncreased : runeIncreased,
               quality,
               value: Math.floor(
                 (baseValue + totals[stat].flat) *
-                  (1 + (totals[stat].increased + (stat === 'Ward' ? 0 : runeIncreased)) / 100) *
+                  (1 +
+                    (totals[stat].increased +
+                      (stat === 'Ward' ? runeTotals.WardIncreased : runeIncreased)) /
+                      100) *
                   (1 + quality / 100) +
                   0.5,
               ),

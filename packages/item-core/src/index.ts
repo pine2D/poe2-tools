@@ -214,6 +214,15 @@ export type {
 } from './export'
 export { createCoeUrl, inspectItem } from './export'
 export {
+  isExtendedArmourRune,
+  isRebirthArmourRune,
+  readExtendedArmourRuneLine,
+} from './extendedArmourRuneEffects'
+export {
+  EXTENDED_ARMOUR_RUNE_RULES_VERSION,
+  requiresExtendedArmourRuneProjectVersion,
+} from './extendedArmourRuneProjectVersion'
+export {
   applyExtractionCraft,
   type ExtractionCraftOperation,
   type ExtractionReturn,

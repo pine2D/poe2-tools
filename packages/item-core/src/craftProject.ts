@@ -30,6 +30,7 @@ import {
   essenceSourceHash as readEssenceSourceHash,
 } from './essences'
 import { type ItemDictionary, inspectItem } from './export'
+import { requiresExtendedArmourRuneProjectVersion } from './extendedArmourRuneProjectVersion'
 import { isExtractionCraftOperation } from './extraction'
 import { requiresExtractionProjectVersion } from './extractionProjectVersion'
 import { isFluxCraftOperation } from './fluxCraft'
@@ -646,6 +647,7 @@ export function readNativeTargetProjectProjection(
   runeforgedArmour = false,
   runeforge = false,
   wardRunes = false,
+  extendedArmourRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -661,6 +663,7 @@ export function readNativeTargetProjectProjection(
     runeforgedArmour,
     runeforge,
     wardRunes,
+    extendedArmourRunes,
   )
 }
 
@@ -678,6 +681,7 @@ function readCraftProject(
   runeforgedArmour = false,
   runeforge = false,
   wardRunes = false,
+  extendedArmourRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -696,6 +700,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!extendedArmourRunes && requiresExtendedArmourRuneProjectVersion(value, catalog))
+    return fail('重生与结界提高符文必须使用 v84 项目，包括完整未来历史、指引及报价。')
   if (!wardRunes && requiresWardRuneProjectVersion(value, catalog))
     return fail('结界与再生符文必须使用 v83 项目，包括起点、导入声明、未来历史、指引及报价。')
   if (!runeforge && requiresRuneforgeProjectVersion(value))

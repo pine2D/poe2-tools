@@ -181,6 +181,7 @@ const scalability = normalizeCraftScalability(
   [
     ...modifiers.flatMap((mod) => mod.lines),
     ...corruptions.flatMap((mod) => mod.lines),
+    ...augments.flatMap((augment) => augment.lines),
     ...bases.flatMap((base) => base.implicit?.split('\n') ?? []),
   ],
 )

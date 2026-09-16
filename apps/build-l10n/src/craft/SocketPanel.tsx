@@ -4,6 +4,8 @@ import {
   type CatalogAugment,
   type CraftCatalog,
   type CraftState,
+  isExtendedArmourRune,
+  isRebirthArmourRune,
   isWardArmourRune,
   type SocketCraftOperation,
   socketCandidates,
@@ -220,6 +222,17 @@ export function SocketPanel({
                 <p>结界符文提供本地平值，再按本地结界提高和品质计算；可在防御面板查看预计变化。</p>
               ) : isWardRune(previous) ? (
                 <p>替换后将失去这个孔的结界符文平值，请核对防御面板的下降值。</p>
+              ) : null}
+              {isRebirthArmourRune(selected) ? (
+                <p>
+                  重生符文按来源内部精度增效，逐枚计算后合计；这里只显示本件再生比例，不推算角色每秒生命回复。
+                </p>
+              ) : isExtendedArmourRune(selected) ? (
+                <p>
+                  结界提高符文与本地结界提高相加，品质单独提供倍率；没有结界平值时不会凭空增加结界。
+                </p>
+              ) : previous && isExtendedArmourRune(previous) && previous.localMod ? (
+                <p>替换后将失去这个孔的结界提高，请核对防御面板的下降值。</p>
               ) : null}
               {selected.category === 'weapon' ? (
                 <p>本地伤害和攻速贡献可在武器面板查看预计变化，全局效果不计入该面板。</p>

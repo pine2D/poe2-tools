@@ -50,7 +50,7 @@ export function readRuneSourceLines(
     if (resolved === null || !supportedSource([resolved]))
       return {
         ok: false,
-        error: '镶嵌效果仍有歧义或不受支持，目前仅核对已支持的正整数符文与基础魂核效果。',
+        error: '镶嵌效果仍有歧义或不受支持，目前仅核对已支持的符文与基础魂核效果。',
       }
     if (supportedSource([raw]) && raw !== resolved)
       return { ok: false, error: '符文英文原文与确认译法矛盾。' }
