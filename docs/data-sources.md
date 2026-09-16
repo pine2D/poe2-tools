@@ -36,6 +36,10 @@ Belton 的额外 2 后缀结果截图与容量下降讲解分别记录；没有�
 
 [GGG 0.5.0 公告](https://www.pathofexile.com/forum/view-thread/3932540)沿用 primary 官方来源。本轮 Web 对带 staff 过滤地址的提取没有返回注能器段落；通过 Exa 读取不带过滤地址的官方正文，重新核对四类材料和至少 20% 品质的说明。完整证据边界、统计复算及接入顺序见 [品质与注能器实验审计](quality-infuser-research.md)。没有改变应用规则、目录版本或国服真机验收状态。
 
+## 2026-09-16 腐败预兆与多隐藏属性核对
+
+[Vascor 0.5 原始实操](https://www.youtube.com/watch?v=TH17J_-8Ydw)（上传 2026-06-25）及 [PoE2DB 预兆文本](https://poe2db.tw/us/Omen_of_Putrefaction)作为 gray 人工机制参考，交叉核对既有 primary [GGG 0.5.0 公告](https://www.pathofexile.com/forum/view-thread/3932540)的常规一条亵渎上限。视频画面支持腐化稀有装备保留多个隐藏属性并逐次揭示；不据概述推定预兆被移除，也不据若干样本建立完整数量、侧别或候选算法。完整边界见 [多隐藏属性核对](putrefaction-research.md)。视频、帧图、字幕只留临时目录，不入库；不采集作者售价、利润、权重或装备数据，没有新增适配器或浏览器第三方请求。
+
 ## 2026-09-16 制作步骤清单与权重来源复查
 
 [CoE 路线图](https://beta.craftofexile.com/roadmap)中公开的操作历史、变化、费用明细及模拟导出仅作流程参考。新增清单由本项目已有回放、材料计费、已登记目录及独立简体中文译名生成，没有抓取或复制同行代码、权重或数据，没有新增构建适配器与浏览器外站请求。
