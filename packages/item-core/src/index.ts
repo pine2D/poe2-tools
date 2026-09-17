@@ -203,6 +203,10 @@ export type {
   CraftStrategyWorkAction,
 } from './craftStrategy'
 export { evaluateCraftStrategy, readCraftStrategy } from './craftStrategy'
+export {
+  DEFENCE_ESSENCE_RULES_VERSION,
+  requiresDefenceEssenceProjectVersion,
+} from './defenceEssenceProjectVersion'
 export type { DefenceEstimate } from './defences'
 export { estimateDefences } from './defences'
 export type {

@@ -28,6 +28,8 @@ import { requiresCraftedCapacityProjectVersion } from './craftedCapacityProjectV
 import { equivalentProjectJSON } from './craftProjectJSON'
 import { applyCraftStep, type CraftStep, isAlloyCraftOperation } from './craftSteps'
 import { type CraftStrategy, readCraftStrategy } from './craftStrategy'
+import { requiresDefenceEssenceProjectVersion } from './defenceEssenceProjectVersion'
+import { withoutDefenceEssences } from './defenceEssences'
 import { desecrationSourceHash as readDesecrationSourceHash } from './desecration'
 import { requiresDesecrationCountProjectVersion } from './desecrationCountProjectVersion'
 import { requiresDestructionRuneProjectVersion } from './destructionRuneProjectVersion'
@@ -742,6 +744,7 @@ export function readNativeTargetProjectProjection(
   helmetBootIdols = false,
   bodyIdols = false,
   offhandIdols = false,
+  defenceEssences = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -787,6 +790,7 @@ export function readNativeTargetProjectProjection(
     helmetBootIdols,
     bodyIdols,
     offhandIdols,
+    defenceEssences,
   )
 }
 
@@ -834,8 +838,10 @@ function readCraftProject(
   helmetBootIdols = false,
   bodyIdols = false,
   offhandIdols = false,
+  defenceEssences = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
+  if (!defenceEssences) catalog = withoutDefenceEssences(catalog)
   if (!native && catalog.fluxes) {
     const { fluxes: _fluxes, ...legacyCatalog } = catalog
     catalog = legacyCatalog
@@ -858,6 +864,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!defenceEssences && requiresDefenceEssenceProjectVersion(value))
+    return fail('防御精华操作和指引必须使用 v115 项目。')
   if (requiresPanelGoalProjectVersion(value)) return fail('面板目标必须使用 v114 项目。')
   const usesOffhandIdols = requiresOffhandIdolProjectVersion(value)
   if (!offhandIdols && usesOffhandIdols)
@@ -2279,6 +2287,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresDefenceEssenceProjectVersion(project))
+    throw new Error('防御精华操作和指引必须使用 v115 项目。')
   if (requiresPanelGoalProjectVersion(project)) throw new Error('面板目标必须使用 v114 项目。')
   if (requiresOffhandIdolProjectVersion(project))
     throw new Error('副手雕像必须使用 v113 项目，包括起点、导入声明、完整未来和未执行指引。')

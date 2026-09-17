@@ -124,13 +124,14 @@ describe('完美无限精华真实结果', () => {
       ).ok,
     ).toBe(false)
   })
-  it('保留其余103个未解析映射', () => {
+  it('防御精华接入后，其余82个类别映射继续保留未解析状态', () => {
     const seen = new Set<string>()
     for (const currentBase of catalog.bases)
       for (const entry of inspectEssences(catalog, currentBase)) {
-        if (!entry.mod) seen.add(`${entry.essence.id}:${entry.category}`)
+        if (!entry.mod && !entry.essence.id.endsWith('EssenceDefences'))
+          seen.add(`${entry.essence.id}:${entry.category}`)
       }
-    expect(seen.size).toBe(103)
+    expect(seen.size).toBe(82)
   })
   it('单结果继续无需新字段，并拒绝伪造结果字段与越界数值', () => {
     const essence = required(

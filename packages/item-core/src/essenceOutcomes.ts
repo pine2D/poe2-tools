@@ -1,4 +1,5 @@
 import type { CatalogBase, CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
+import { defenceEssenceResult, isDefenceEssenceId } from './defenceEssences'
 
 const perfectInfiniteId = 'Metadata/Items/Currency/CurrencyPerfectEssenceAttribute'
 const resultIdentity = [
@@ -44,6 +45,13 @@ function resolveEssenceResults(
   const category = essenceCategory(base)
   const declared = Object.hasOwn(essence.mods, category) ? essence.mods[category] : undefined
   if (declared === undefined) return []
+  if (isDefenceEssenceId(essence.id))
+    return defenceEssenceResult(
+      catalog,
+      base,
+      essence,
+      modifiers ?? ((id) => catalog.modifiers.filter((mod) => mod.id === id)),
+    )
   const resultIds = resultIdentity.map(([attribute]) => `EssencePercent${attribute}1`)
   if (essence.id !== perfectInfiniteId)
     return !resultIds.includes(declared) &&

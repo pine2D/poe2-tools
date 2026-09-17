@@ -61,6 +61,48 @@ afterEach(() => {
   cleanup()
   localStorage.clear()
 })
+it.each(['Ancestral Tiara', 'Sleek Jacket'])(
+  '防御精华 %s 预览、应用及撤销后的完整未来恢复',
+  (baseId) => {
+    const initial: CraftState = {
+      baseId,
+      rarity: 'normal',
+      itemLevel: 86,
+      affixes: [],
+      sourceText: null,
+    }
+    const magic = must(
+      applyCraftStep(catalog, initial, { currency: 'transmutation', modIds: ['IncreasedLife1'] }),
+    )
+    render(
+      <RehearsalPanel
+        catalog={catalog}
+        translations={{}}
+        initialState={imported(magic)}
+        dictionary={dictionary}
+      />,
+    )
+    fireEvent.change(screen.getByRole('searchbox', { name: '搜索可演练精华' }), {
+      target: { value: 'Greater Essence of Enhancement' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /选择精华 Greater Essence of Enhancement/ }))
+    click('预览精华结果')
+    click('应用精华结果')
+    let project = save()
+    expect(project.rulesVersion).toBe('basic-2026-09-18-v115')
+    expect(project.operations[0]).toMatchObject({
+      kind: 'essence',
+      essenceId: 'Metadata/Items/Currency/CurrencyGreaterEssenceDefences',
+    })
+    click('撤销')
+    project = save()
+    expect(project.cursor).toBe(0)
+    expect(project.operations).toHaveLength(1)
+    click('恢复本机演练')
+    click('重做')
+    expect(save().cursor).toBe(1)
+  },
+)
 it('网页三结果预览应用、撤销保存完整未来及恢复重做', () => {
   render(
     <RehearsalPanel
