@@ -502,6 +502,11 @@ export {
   socketStateError,
 } from './sockets'
 export {
+  requiresSpecialMartialRuneProjectVersion,
+  SPECIAL_MARTIAL_RUNE_RULES_VERSION,
+} from './specialMartialRuneProjectVersion'
+export { isSpecialMartialRune } from './specialMartialRunes'
+export {
   STAT_SCALABILITY_SOURCE,
   scaleStatLine,
   scaleStatLineByEffect,

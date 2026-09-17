@@ -66,6 +66,7 @@ import {
   type SkillSocketsCraftOperation,
 } from './skillSockets'
 import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
+import { specialMartialSocketError } from './specialMartialRunes'
 
 export interface ArtificerCraftOperation {
   kind: 'artificer'
@@ -421,6 +422,13 @@ export function applyCraftStep(
       step.augmentId,
     )
     if (limitError) return { ok: false, error: limitError }
+    const specialLimitError = specialMartialSocketError(
+      catalog,
+      checked.value,
+      step.socketIndex,
+      step.augmentId,
+    )
+    if (specialLimitError) return { ok: false, error: specialLimitError }
     const capacityError = astridSocketError(
       catalog,
       checked.value,

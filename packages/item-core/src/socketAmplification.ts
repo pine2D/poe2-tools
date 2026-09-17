@@ -10,6 +10,11 @@ import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { isSerleRune, SERLE_LINE, serleFitsBase } from './serleRune'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
+import {
+  isSpecialMartialRuneId,
+  scaleSpecialMartialRune,
+  specialMartialRuneFits,
+} from './specialMartialRunes'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
@@ -55,6 +60,10 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
+  if (isSpecialMartialRuneId(augment.id))
+    return specialMartialRuneFits(catalog, state, augment)
+      ? scaleSpecialMartialRune(catalog, augment, increase)
+      : null
   if (isInfluenceRune(augment)) {
     const line = augment.lines[0] as string
     return influenceRuneFitsBase(catalog, state, augment) &&

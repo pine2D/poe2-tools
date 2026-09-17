@@ -15,6 +15,7 @@ import {
 } from './runeEffects'
 import { serleSourceMatches } from './serleRune'
 import { effectiveSocketAugment } from './socketAmplification'
+import { specialMartialSourceMatches } from './specialMartialRunes'
 import type { ItemDocument } from './types'
 import {
   parseWeaponRuneEffectTotals,
@@ -100,6 +101,13 @@ export function runeSocketContributionError(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
   if (weapon) {
+    if (
+      !specialMartialSourceMatches(
+        state.runeSourceLines,
+        augments.flatMap((a) => a.lines),
+      )
+    )
+      return '专属符文的条件或费用行与孔位声明不完整对应，请核对数值与重复行。'
     const expected = parseWeaponRuneEffectTotals(state.runeSourceLines, weapon.category)
     const actual = sumWeaponRuneEffects(augments, weapon.category)
     if (!expected || !actual) return '原文或目录包含尚未支持的符文效果，不能核对。'

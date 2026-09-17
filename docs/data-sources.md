@@ -1,5 +1,12 @@
 # 数据源登记表
 
+## 专属攻击武器符文（2026-09-17，v108实施前登记）
+
+沿用固定 MIT PoB2 ce566eac45ea8a86477f513c7ee65a1ebe60014e 的 ModRunes.lua、Item.lua、ItemsTab.lua 及数值缩放元数据；新增人工解析依据 [ModParser.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ModParser.lua)，SHA-256 c31136162c8987f0b77bc523d63818b5accf4d2ee849224e64b2c9ad82f65d26。仅临时读取代码并自写规则，不新增抓取适配器或来源数据文件。固定解析链将 Vital Flame 第一行映射为无条件 FireMin/Max，由 Item 本地武器计算消费；第二行为 HybridManaAndLifeCost_Life，保持技能费用效果。未运行 PoB 或真机，不把静态源码结论写成客户端实测。
+
+PoE2DB 的 [Vital Flame](https://poe2db.tw/us/Rune_of_Vital_Flame)、[Animosity](https://poe2db.tw/us/Ancient_Rune_of_Animosity)、[Amor Mandragora](https://poe2db.tw/us/Legacy_of_Amor_Mandragora)、[Spiteful Floret](https://poe2db.tw/us/Legacy_of_Spiteful_Floret)按既有 gray 人工机制来源读取完整效果与限量说明。四个魔符分支、Vital Flame 两个锤分支及两个 Legacy 共享 Aldur 限量均来自既有固定声明；不采用页面配方、行情或权重。宽泛 canSocket 标志不扩展到角色孔、首饰、传奇或圣化。CoE 公开路线图的效果变化、费用、完整历史与导入导出用于交互参考，不取其代码或数据。
+
+
 ## 普通魔符（2026-09-17，v107实施前登记）
 
 [GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495)确认 Talisman 是用于变形攻击的双手攻击武器，形态可切换；[GGG 0.4.0b](https://www.pathofexile.com/forum/view-thread/3890041)确认重组相关修复。普通基底及材料映射沿用已登记固定 MIT PoB2 提交 ce566eac45ea8a86477f513c7ee65a1ebe60014e；Bases/talisman.lua 的 SHA-256 为 4e721181ba512ab359a9b1b5e5afa4a8c6666332dbbad1d2f3432243fe8d8191。没有新数据包。

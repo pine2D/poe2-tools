@@ -9,6 +9,7 @@ import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { isSerleRune, serleFitsBase } from './serleRune'
 import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
+import { isSpecialMartialRuneId, specialMartialRuneFits } from './specialMartialRunes'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 /** 只列已占用孔；augment.lines 是当前效果，bonded 仅保留来源信息。 */
@@ -87,6 +88,7 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
+  if (isSpecialMartialRuneId(augment.id)) return specialMartialRuneFits(catalog, state, augment)
   if (isInfluenceRune(augment)) return influenceRuneFitsBase(catalog, state, augment)
   if (isAstridRune(augment)) return astridFitsBase(catalog, state, augment)
   if (isSerleRune(augment)) return serleFitsBase(catalog, state, augment)

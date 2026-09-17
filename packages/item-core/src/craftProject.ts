@@ -97,6 +97,7 @@ import { requiresSkillSocketTargetProjectVersion } from './skillSocketTargetProj
 import { requiresSkillVariantAmuletProjectVersion } from './skillVariantAmuletProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
+import { requiresSpecialMartialRuneProjectVersion } from './specialMartialRuneProjectVersion'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
@@ -729,6 +730,7 @@ export function readNativeTargetProjectProjection(
   amuletCatalyst = false,
   flasks = false,
   talismans = false,
+  specialMartialRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -768,6 +770,7 @@ export function readNativeTargetProjectProjection(
     amuletCatalyst,
     flasks,
     talismans,
+    specialMartialRunes,
   )
 }
 
@@ -809,6 +812,7 @@ function readCraftProject(
   amuletCatalyst = false,
   flasks = false,
   talismans = false,
+  specialMartialRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -833,6 +837,9 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  const usesSpecialMartialRunes = requiresSpecialMartialRuneProjectVersion(value)
+  if (!specialMartialRunes && usesSpecialMartialRunes)
+    return fail('专属攻击武器符文必须使用 v108 项目，包括起点、导入声明、完整未来、指引和报价。')
   if (!talismans && requiresTalismanProjectVersion(value, catalog))
     return fail('普通魔符制作必须使用 v107 项目，包括起点、目标、完整未来和未执行指引。')
   const usesFlask = requiresFlaskProjectVersion(value, catalog)
@@ -1777,6 +1784,7 @@ function readCraftProject(
     (initialInput.catalyst !== undefined ||
       usesJewelEffects ||
       usesSovereignEffects ||
+      usesSpecialMartialRunes ||
       usesEffectiveTargets ||
       Object.hasOwn(value, 'scalabilitySourceHash')) &&
     (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
@@ -1860,7 +1868,7 @@ function readCraftProject(
   const augmentSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/ModRunes.lua',
   )?.sha256
-  if (usesSockets || Object.hasOwn(value, 'augmentSourceHash')) {
+  if (usesSockets || usesSpecialMartialRunes || Object.hasOwn(value, 'augmentSourceHash')) {
     if (
       typeof augmentSourceHash !== 'string' ||
       !/^[a-f0-9]{64}$/.test(augmentSourceHash) ||
@@ -2158,6 +2166,7 @@ function readCraftProject(
         ...((initialInput.catalyst !== undefined ||
           usesJewelEffects ||
           usesSovereignEffects ||
+          usesSpecialMartialRunes ||
           usesEffectiveTargets ||
           Object.hasOwn(value, 'scalabilitySourceHash')) &&
         scalabilitySourceHash
@@ -2168,7 +2177,7 @@ function readCraftProject(
         cursor: value.cursor,
         ...(importedSockets === undefined ? {} : { importedSockets }),
         ...(importedQuality === undefined ? {} : { importedQuality }),
-        ...((usesSockets || Object.hasOwn(value, 'augmentSourceHash')) &&
+        ...((usesSockets || usesSpecialMartialRunes || Object.hasOwn(value, 'augmentSourceHash')) &&
         augmentSourceHash !== undefined
           ? { augmentSourceHash }
           : {}),
@@ -2207,6 +2216,10 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresSpecialMartialRuneProjectVersion(project))
+    throw new Error(
+      '专属攻击武器符文必须使用 v108 项目，包括起点、导入声明、完整未来、指引和报价。',
+    )
   if (requiresTalismanProjectVersion(project))
     throw new Error('普通魔符制作必须使用 v107 项目，包括起点、目标和完整未来。')
   if (requiresFlaskProjectVersion(project))

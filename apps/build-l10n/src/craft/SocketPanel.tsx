@@ -8,6 +8,7 @@ import {
   isExtendedArmourRune,
   isInfluenceRune,
   isRebirthArmourRune,
+  isSpecialMartialRune,
   isWardArmourRune,
   type SocketCraftOperation,
   socketCandidates,
@@ -38,6 +39,12 @@ const isIronRune = (augment: CatalogAugment | undefined) =>
   /^(?:Lesser |Greater |Perfect )?Iron Rune$/.test(augment.name)
 const isWardRune = (augment: CatalogAugment | undefined) =>
   augment !== undefined && isWardArmourRune(augment) && augment.localMod
+
+function specialRuneNote(augment: CatalogAugment): string {
+  return augment.name === 'Rune of Vital Flame'
+    ? '火焰点伤计入本件武器；技能费用转换单独生效，不作为伤害倍率。'
+    : '保留触发条件与怒火阈值，不推算角色最终收益；增效不会改变怒火消耗阈值。'
+}
 
 export function SocketPanel({
   catalog,
@@ -79,12 +86,14 @@ export function SocketPanel({
         <section aria-label="镶嵌限量提示">
           {limits.map((entry) => (
             <p key={entry.name}>
-              {label(entry.name)}：本件 {entry.count} / 限量 {entry.limit}
+              {label(entry.name)}
+              {entry.name === "Aldur's Legacy" ? '（共享限量）' : ''}：本件 {entry.count} / 限量{' '}
+              {entry.limit}
               {entry.exceeded ? '；本件已超限，不能据此视为可穿戴；可替换重复孔位修复。' : '。'}
             </p>
           ))}
           <p>
-            其他装备与角色孔尚未核对，本件未超限不代表角色可穿戴。条件效果逐孔展示，不推算角色防卫或药剂回复。
+            其他装备与角色孔尚未核对，本件未超限不代表角色可穿戴。条件效果逐孔展示，不推算角色最终收益。
           </p>
         </section>
       ) : null}
@@ -162,6 +171,9 @@ export function SocketPanel({
                   ))}
                   {effect?.isSocketBound ? <p>绑定孔不能替换；萃取时不会返还此材料。</p> : null}
                   {effect ? <p>该镶嵌物穿戴需求：等级 {effect.levelReq}</p> : null}
+                  {effect && isSpecialMartialRune(effect, true) ? (
+                    <p>{specialRuneNote(effect)}</p>
+                  ) : null}
                 </article>
               )
             })}
@@ -233,6 +245,14 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
+              {isSpecialMartialRune(selected, true) ? (
+                <p>
+                  {specialRuneNote(selected)}
+                  {selected.limitId === 'AldursLegacyLimit1'
+                    ? ' 两种传承共用一枚限量，同孔替换会先移除旧材料再核对数量。'
+                    : ''}
+                </p>
+              ) : null}
               {selected.limit && !isConditionalArmourRune(selected) ? (
                 <p>该镶嵌物限量 {selected.limit}；其他装备与角色孔尚未核对。</p>
               ) : null}

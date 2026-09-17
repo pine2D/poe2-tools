@@ -111,7 +111,7 @@ it.each(['Ashbark Talisman', 'Cinderbark Talisman', 'Thunder Talisman', 'Voltfan
   },
 )
 
-it('双手巧匠2已有3腐化4；支持普通武器符文，四种专属非本地增幅保持拒绝', () => {
+it('双手巧匠2已有3腐化4；普通符文与已核对四种专属增幅可用于普通魔符', () => {
   const state = { ...start(), sockets: [] }
   expect(artificerSocketLimit(catalog, state)).toBe(2)
   expect(socketCapacity(catalog, state)).toBe(3)
@@ -125,8 +125,8 @@ it('双手巧匠2已有3腐化4；支持普通武器符文，四种专属非本�
   expect(specialized).toHaveLength(4)
   for (const augment of specialized) {
     expect(augment.localMod).toBe(false)
-    expect(candidates.some((a) => a.id === augment.id)).toBe(false)
-    expect(createCraftState(catalog, { ...socketed, sockets: [augment.id] }).ok).toBe(false)
+    expect(candidates.some((a) => a.id === augment.id)).toBe(true)
+    expect(createCraftState(catalog, { ...socketed, sockets: [augment.id] }).ok).toBe(true)
   }
 })
 
