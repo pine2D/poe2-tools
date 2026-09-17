@@ -14,6 +14,7 @@ import { StrategyDesecrationCountCondition } from './StrategyDesecrationCountCon
 import { StrategyPropertyCondition } from './StrategyPropertyCondition'
 import { StrategyQualityCondition } from './StrategyQualityCondition'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
+import { StrategyWeightedPropertyCondition } from './StrategyWeightedPropertyCondition'
 
 export const CONDITION_LABELS = {
   'desecrated-count': '亵渎词缀数量范围',
@@ -21,6 +22,7 @@ export const CONDITION_LABELS = {
   'corruption-state': '腐化状态',
   'granted-skill-level': '装备固有技能最高等级',
   'item-property': '装备面板范围',
+  'weighted-properties': '装备面板加权合计',
   always: '任何状态',
   rarity: '稀有度',
   'targets-met': '制作目标',
@@ -39,6 +41,8 @@ export function defaultCondition(
   if (kind === 'desecrated-count') return { kind, source: 'unrevealed', min: 1, max: 6 }
   if (kind === 'corruption-state') return { kind, value: 'none' }
   if (kind === 'quality') return { kind, source: 'ordinary', min: 0 }
+  if (kind === 'weighted-properties')
+    return { kind, terms: [{ property: 'physicalDps', weight: 1 }], min: 0 }
   if (kind === 'item-property') return { kind, property: 'physicalDps', min: 0 }
   if (kind === 'selected-targets')
     return targetIds[0] ? { kind, targetIds: [targetIds[0]], min: 1, value: true } : null
@@ -110,6 +114,17 @@ export function StrategyConditionEditor({
           )}
         </select>
       </label>
+      {condition.kind === 'weighted-properties' ? (
+        <StrategyWeightedPropertyCondition
+          key={JSON.stringify(condition)}
+          condition={condition}
+          prefix={prefix}
+          catalog={catalog}
+          state={state}
+          canChange={canChange}
+          onChange={onChange}
+        />
+      ) : null}
       {condition.kind === 'item-property' ? (
         <StrategyPropertyCondition
           key={JSON.stringify(condition)}

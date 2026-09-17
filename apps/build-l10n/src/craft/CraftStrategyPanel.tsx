@@ -269,6 +269,7 @@ export function CraftStrategyPanel({
                   'socket-count',
                   'open-sockets',
                   'item-property',
+                  'weighted-properties',
                   'quality',
                   'granted-skill-level',
                   'always',

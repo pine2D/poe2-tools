@@ -1,5 +1,7 @@
 # 数据源登记表
 
+2026-09-17 v98 面板加权合计只组合既有 `readCraftProperty` 估算与用户自填系数，无新游戏数据源。CoE 公开路线图中的 weighted sum support 仅用于产品流程参照，不读取同行执行参数、权重或代码。缺失面板数据继续传播未知，系数不能用于出现概率或期望费用。
+
 ## 多结果精华（2026-09-16，实施前核对）
 
 沿用 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 `Essence.lua`、`ModItem.lua`。本轮另读同提交 [ItemsTab.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/ItemsTab.lua) 的精华列表逻辑，临时文件 SHA-256 为 `3539d5c720b11d869b8e8755ad4e66771c9fae6a746d6a7adaab41d726b249c2`；只核对语义，不将第三方代码入库。该界面跳过没有实际描述的映射，不能作为完整游戏制作结果表。

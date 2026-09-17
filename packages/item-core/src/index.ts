@@ -567,4 +567,15 @@ export { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
 export { requiresWardRuneProjectVersion, WARD_RUNE_RULES_VERSION } from './wardRuneProjectVersion'
 export type { WeaponDamageEstimate, WeaponDamageType, WeaponEstimate } from './weaponStats'
 export { estimateWeaponStats, supportsWeaponQuality } from './weaponStats'
+export {
+  readWeightedProperties,
+  readWeightedPropertiesCondition,
+  type WeightedPropertiesCondition,
+  type WeightedPropertyTerm,
+} from './weightedProperties'
+
+export {
+  requiresWeightedPropertyProjectVersion,
+  WEIGHTED_PROPERTY_RULES_VERSION,
+} from './weightedPropertyProjectVersion'
 export { loadWorkbenchProject } from './workbenchProject'

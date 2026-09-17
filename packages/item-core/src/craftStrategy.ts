@@ -11,6 +11,7 @@ import {
   checkCraftStrategyAction,
   readCraftStrategyAction,
 } from './strategyActions'
+import { readWeightedProperties } from './weightedProperties'
 
 export type { CraftStrategyAction, CraftStrategyWorkAction } from './strategyActions'
 
@@ -275,6 +276,13 @@ export function evaluateCraftStrategyWithTargets(
   }
   const propertyValues = new Map<CraftProperty, number | null>()
   const matches = (condition: CraftStrategyCondition): boolean | null => {
+    if (condition.kind === 'weighted-properties') {
+      const result = readWeightedProperties(catalog, checked.value, condition.terms)
+      return result.ok
+        ? result.value >= condition.min &&
+            (condition.max === undefined || result.value <= condition.max)
+        : null
+    }
     if (condition.kind === 'corruption-state')
       return (
         (checked.value.twiceCorrupted ? 'twice' : checked.value.corrupted ? 'once' : 'none') ===

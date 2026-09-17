@@ -105,6 +105,7 @@ import {
 } from './targets'
 import { requiresWardRuneProjectVersion } from './wardRuneProjectVersion'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
+import { requiresWeightedPropertyProjectVersion } from './weightedPropertyProjectVersion'
 
 export const CRAFT_RULES_VERSION = 'basic-2026-09-12-v72'
 const JEWEL_CAPACITY_EMOTION_ID = 'Metadata/Items/Currency/EndgameDistilledEmotion3'
@@ -687,6 +688,7 @@ export function readNativeTargetProjectProjection(
   influenceBones = false,
   extendedInfluenceBones = false,
   grantedSkillTargets = false,
+  weightedProperties = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -716,6 +718,7 @@ export function readNativeTargetProjectProjection(
     influenceBones,
     extendedInfluenceBones,
     grantedSkillTargets,
+    weightedProperties,
   )
 }
 
@@ -747,6 +750,7 @@ function readCraftProject(
   influenceBones = false,
   extendedInfluenceBones = false,
   grantedSkillTargets = false,
+  weightedProperties = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -765,6 +769,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!weightedProperties && requiresWeightedPropertyProjectVersion(value))
+    return fail('面板加权合计条件必须使用 v98 项目，包括完整未来和嵌套未执行指引。')
   if (!grantedSkillTargets && requiresGrantedSkillTargetProjectVersion(value))
     return fail('装备固有技能目标必须使用 v97 项目，包括起点、目标、完整未来和未执行指引。')
   if (!extendedInfluenceBones && requiresExtendedInfluenceBoneProjectVersion(value))
@@ -2102,6 +2108,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresWeightedPropertyProjectVersion(project))
+    throw new Error('面板加权合计条件必须使用 v98 项目，包括完整未来和嵌套未执行指引。')
   if (requiresGrantedSkillTargetProjectVersion(project))
     throw new Error('装备固有技能目标必须使用 v97 项目，包括起点、目标、完整未来和未执行指引。')
   if (requiresRuneforgeProjectVersion(project))

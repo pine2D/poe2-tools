@@ -2,6 +2,10 @@ import { CATALYSTS } from './catalystQuality'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
+import {
+  readWeightedPropertiesCondition,
+  type WeightedPropertiesCondition,
+} from './weightedProperties'
 
 /** 已有额外孔再经腐化加孔时，当前已支持的最大孔数。 */
 export const CRAFT_STRATEGY_SOCKET_LIMIT = 4
@@ -14,6 +18,7 @@ export const CRAFT_STRATEGY_AFFIX_LIMITS = {
 } as const
 
 export type CraftStrategyLeafCondition =
+  | WeightedPropertiesCondition
   | { kind: 'desecrated-count'; source: 'unrevealed' | 'revealed'; min: number; max: number }
   | { kind: 'corruption-state'; value: 'none' | 'once' | 'twice' }
   | { kind: 'granted-skill-level'; min: number; max?: number }
@@ -51,6 +56,8 @@ function integer(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 }
 function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
+  if (keys(value, ['kind', 'terms', 'min', 'max']) && value.kind === 'weighted-properties')
+    return readWeightedPropertiesCondition(value)
   if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property', 'source', 'catalystId']))
     return null
   if (value.kind === 'granted-skill-level') {
@@ -200,6 +207,7 @@ export function readStrategyConditions(value: unknown): CraftStrategyCondition[]
         'property',
         'source',
         'catalystId',
+        'terms',
       ])
     )
       return null
