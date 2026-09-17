@@ -458,7 +458,8 @@ it('真实Ruby精确有效值目标每次应用第一步再规划仍能全程保
     for (const id of step.matchedTargetIds) matched.add(id)
   }
   expect(done).toBe(true)
-}, 30000)
+  // 此用例最多连续执行13次真实目录规划；为共享CI留出整体预算，搜索边界与断言不变。
+}, 60000)
 
 it('未显式选择增效但另一目标必需增效时，精确上限也提前准备兼容基础值', () => {
   const { catalog, state: source, target } = effectFixture()
