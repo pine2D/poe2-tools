@@ -13,9 +13,9 @@ import {
   serializeTargetCraftProject,
   type TargetCraftProject,
 } from '@poe2-tools/item-core'
-import { useEffect, useRef, useState } from 'react'
-
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProjectLibrary } from './ProjectLibrary'
+import { ProjectRecovery } from './ProjectRecovery'
 
 export const REHEARSAL_PROJECT_KEY = 'poe2-tools:craft-rehearsal:v1'
 export interface ProjectControlsProps {
@@ -26,6 +26,7 @@ export interface ProjectControlsProps {
 }
 
 export function ProjectControls({ catalog, dictionary, project, onRestore }: ProjectControlsProps) {
+  const recoveryContext = useMemo(() => ({ catalog, dictionary }), [catalog, dictionary])
   const [message, setMessage] = useState('')
   const requestRef = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -187,6 +188,12 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
 
   return (
     <section className="project-controls" aria-label="演练项目">
+      <ProjectRecovery
+        project={project}
+        context={recoveryContext}
+        getText={validatedText}
+        onRestoreText={(text) => restoreText(text, ++requestRef.current)}
+      />
       {project && (
         <>
           <button type="button" onClick={saveLocal}>
