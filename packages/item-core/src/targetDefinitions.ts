@@ -1,3 +1,4 @@
+import { craftTargetRarity } from './affixCapacity'
 import type { CatalogMod, CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { fluxEligibleModIds, fluxModsCanCoexist, hasFluxModEligibility } from './fluxes'
@@ -311,7 +312,7 @@ function validateDefinitionCombination(
     createCraftState(catalog, {
       baseId,
       itemLevel: 100,
-      rarity: 'rare',
+      rarity: craftTargetRarity(catalog, baseId),
       sourceText: null,
       ...targetImplicitLines(catalog, baseId, capacityContext),
       ...sockets.value,

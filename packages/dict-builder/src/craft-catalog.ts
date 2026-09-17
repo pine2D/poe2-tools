@@ -4,6 +4,7 @@ import {
   CORRUPTION_SOURCE,
   type CraftCatalog,
   DESECRATION_SOURCE,
+  FLASK_SOURCE,
   JEWEL_SOURCE,
   LIQUID_EMOTION_SOURCE,
   parseCraftCatalog,
@@ -15,6 +16,7 @@ import { normalizeMod } from './adapters/craftCatalog'
 import { normalizeCorruptions } from './adapters/craftCorruptions'
 import { normalizeDesecratedMods } from './adapters/craftDesecrated'
 import { normalizeEssences } from './adapters/craftEssences'
+import { normalizeFlaskMods } from './adapters/craftFlasks'
 import { normalizeJewelMods } from './adapters/craftJewels'
 import { auditLiquidEmotionMappings } from './adapters/craftLiquidEmotionAudit'
 import { normalizeLiquidEmotions } from './adapters/craftLiquidEmotions'
@@ -91,6 +93,12 @@ const modifiers = Object.entries(rawMods).map(([id, raw]) => {
   if (raw === null || typeof raw !== 'object') throw new Error(`词缀 ${id} 不是表`)
   return normalizeMod(id, raw)
 })
+const rawFlaskMods = parsePobModFile(await source('ModFlask', FLASK_SOURCE.sha256))
+const flasks = normalizeFlaskMods(rawFlaskMods)
+modifiers.push(...flasks.modifiers)
+console.log(
+  `药剂目录：${Object.keys(rawFlaskMods).length} 条声明，${flasks.modifiers.length} 条可生成，${flasks.excluded.length} 条全零禁用；二元资格不是概率权重`,
+)
 const rawJewelMods = parsePobModFile(await source('ModJewel', JEWEL_SOURCE.sha256))
 const liquidEmotions = normalizeLiquidEmotions(
   parsePobModFile(await source('LiquidEmotions', LIQUID_EMOTION_SOURCE.sha256)),
@@ -117,7 +125,7 @@ const desecrated = normalizeDesecratedMods(
 )
 modifiers.push(...desecrated.modifiers)
 if (new Set(modifiers.map((entry) => entry.id)).size !== modifiers.length)
-  throw new Error('普通与亵渎目录词缀 ID 重复')
+  throw new Error('独立来源目录词缀 ID 重复')
 const modifierIds = new Set(modifiers.map((entry) => entry.id))
 const essenceMappings = essences.flatMap((entry) => Object.values(entry.mods))
 console.log(
@@ -203,6 +211,7 @@ const catalog: CraftCatalog = {
     excludedBases,
     excludedDesecratedMods: desecrated.excluded,
     excludedJewelMods: jewels.excluded,
+    excludedFlaskMods: flasks.excluded,
   },
   bases,
   modifiers,

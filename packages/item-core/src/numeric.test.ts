@@ -126,9 +126,9 @@ describe('目录数值显示模型', () => {
         })
       }
     }
-    expect(catalog.modifiers.filter((mod) => !mod.desecratedOnly && !mod.jewelOnly)).toHaveLength(
-      2550,
-    )
+    expect(
+      catalog.modifiers.filter((mod) => !mod.desecratedOnly && !mod.jewelOnly && !mod.flaskOnly),
+    ).toHaveLength(2550)
     expect(
       catalog.modifiers.filter(
         (mod) => mod.jewelOnly && !mod.craftedOnly && !mod.desecratedOnly && !mod.radiusJewelOnly,
@@ -141,7 +141,7 @@ describe('目录数值显示模型', () => {
     ).toHaveLength(160)
     expect(catalog.modifiers.filter((mod) => mod.jewelOnly && mod.craftedOnly)).toHaveLength(16)
     expect(catalog.modifiers.filter((mod) => mod.desecratedOnly)).toHaveLength(243)
-    expect(catalog.modifiers).toHaveLength(3129)
+    expect(catalog.modifiers).toHaveLength(3196)
     expect(catalog.bases).toHaveLength(1827)
     expect(unsupported).toBe(52)
   })

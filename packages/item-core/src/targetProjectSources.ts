@@ -2,6 +2,7 @@ import { type CraftCatalog, hasExistingModEligibility } from './catalog'
 import type { CraftProject } from './craftProject'
 import { desecrationSourceHash } from './desecration'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
+import { flaskSourceHash } from './flaskSource'
 import { fluxEligibleModIds } from './fluxes'
 import { jewelSourceHash } from './jewels'
 import { liquidEmotionSourceHash } from './liquidEmotions'
@@ -10,7 +11,11 @@ import type { CraftResult } from './rehearsal'
 type TargetSourceHashes = Partial<
   Pick<
     CraftProject,
-    'essenceSourceHash' | 'desecrationSourceHash' | 'jewelSourceHash' | 'liquidEmotionSourceHash'
+    | 'flaskSourceHash'
+    | 'essenceSourceHash'
+    | 'desecrationSourceHash'
+    | 'jewelSourceHash'
+    | 'liquidEmotionSourceHash'
   >
 >
 
@@ -27,6 +32,7 @@ export function targetProjectSourceHashes(
     [usage.desecration, 'desecrationSourceHash', desecrationSourceHash(catalog)],
     [usage.liquid, 'liquidEmotionSourceHash', liquidEmotionSourceHash(catalog)],
     [usage.jewel, 'jewelSourceHash', jewelSourceHash(catalog)],
+    [usage.flask, 'flaskSourceHash', flaskSourceHash(catalog)],
   ] as const) {
     if (!required) continue
     if (hash === null) return { ok: false, error: `目标项目缺少 ${key} 对应目录来源。` }
@@ -40,10 +46,16 @@ export function targetProjectSourceUsage(
   catalog: CraftCatalog,
   baseId: unknown,
   targetIds: readonly string[],
-): { essence: boolean; desecration: boolean; liquid: boolean; jewel: boolean } {
-  if (targetIds.length === 0)
-    return { essence: false, desecration: false, liquid: false, jewel: false }
+): { essence: boolean; desecration: boolean; liquid: boolean; jewel: boolean; flask: boolean } {
   const base = catalog.bases.find((entry) => entry.id === baseId)
+  if (targetIds.length === 0)
+    return {
+      essence: false,
+      desecration: false,
+      liquid: false,
+      jewel: false,
+      flask: base?.type === 'Flask',
+    }
   const referenced = new Set(targetIds)
   const mods = catalog.modifiers.filter((mod) => referenced.has(mod.id))
   const amulet = catalog.bases.find((entry) => entry.type === 'Amulet')
@@ -65,5 +77,6 @@ export function targetProjectSourceUsage(
     desecration: mods.some((mod) => mod.desecratedOnly),
     liquid: mods.some((mod) => mod.jewelOnly && mod.craftedOnly && !flux?.ordinary.has(mod.id)),
     jewel: mods.some((mod) => mod.jewelOnly),
+    flask: base?.type === 'Flask' || mods.some((mod) => mod.flaskOnly),
   }
 }

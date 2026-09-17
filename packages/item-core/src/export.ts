@@ -1,5 +1,6 @@
 import { RUNE_SUFFIX } from './annotations'
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
+import { flaskTextType } from './flaskText'
 import { resolveGrantedSkill } from './grantedSkills'
 import { hasSpecialModifierSource } from './modifierSource'
 import { createStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
@@ -153,7 +154,8 @@ export function inspectItem(
     ),
     selections[item.nameLines.at(-1)?.line ?? -1],
   )
-  const className = CLASSES[item.itemClass] ?? item.itemClass
+  const flaskType = flaskTextType(item.itemClass)
+  const className = flaskType ? `${flaskType} Flasks` : (CLASSES[item.itemClass] ?? item.itemClass)
   const comparisonReason =
     item.rarity === 'unique'
       ? '传奇装备仅供解析与中英对照，不开放制作。'

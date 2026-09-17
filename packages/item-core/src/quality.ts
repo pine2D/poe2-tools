@@ -27,7 +27,10 @@ export function supportsItemQuality(base: CatalogBase): boolean {
 }
 
 /** 只读取属性区中明确声明的品质，不从面板数值或缺行推断。 */
-export function readItemQuality(item: ItemDocument): CraftResult<number | undefined> {
+export function readItemQuality(
+  item: ItemDocument,
+  maxQuality: 20 | 30 = 30,
+): CraftResult<number | undefined> {
   const lines = item.blocks
     .filter((block) => block.kind === 'properties')
     .flatMap((block) => block.lines)
@@ -37,7 +40,7 @@ export function readItemQuality(item: ItemDocument): CraftResult<number | undefi
   const match = lines[0]?.raw.trim().match(QUALITY_LINE)
   if (!match?.[1]) return { ok: false, error: '原文品质属性格式无效。' }
   const quality = Number(match[1])
-  return Number.isInteger(quality) && quality >= 0 && quality <= 30
+  return Number.isInteger(quality) && quality >= 0 && quality <= maxQuality
     ? { ok: true, value: quality }
-    : { ok: false, error: '原文品质必须是 0–30 的整数。' }
+    : { ok: false, error: `原文品质必须是 0–${maxQuality} 的整数。` }
 }

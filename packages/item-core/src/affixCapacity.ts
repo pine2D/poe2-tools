@@ -31,6 +31,10 @@ export function craftAffixCapacities(
 ): { prefix: number; suffix: number } {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return { prefix: 0, suffix: 0 }
+  if (base.type === 'Flask') {
+    const limit = state.rarity === 'magic' ? 1 : 0
+    return { prefix: limit, suffix: limit }
+  }
   const limit = craftAffixLimit(base, state.rarity)
   const capacity = { prefix: limit, suffix: limit }
   if (isSkillVariantAmulet(base) && state.rarity !== 'normal') {
@@ -75,4 +79,9 @@ export function craftAffixSpace(
   const prefix = Math.min(remaining, Math.max(0, capacity.prefix - counts.prefix))
   const suffix = Math.min(remaining, Math.max(0, capacity.suffix - counts.suffix))
   return { prefix, suffix, total: Math.min(remaining, prefix + suffix) }
+}
+
+/** 目标组合按类别能达到的稀有度校验，药剂不能借假想稀有状态扩大容量。 */
+export function craftTargetRarity(catalog: CraftCatalog, baseId: string): 'magic' | 'rare' {
+  return catalog.bases.find((base) => base.id === baseId)?.type === 'Flask' ? 'magic' : 'rare'
 }

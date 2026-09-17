@@ -179,6 +179,11 @@ export function applyCraftStep(
   step: CraftStep,
 ): CraftResult<CraftState> {
   if (!record(step)) return { ok: false, error: '制作步骤必须是对象。' }
+  if (
+    'kind' in step &&
+    catalog.bases.some((base) => base.id === state.baseId && base.type === 'Flask')
+  )
+    return { ok: false, error: '药剂特殊制作步骤尚未支持；请使用已核对的常规通货。' }
   const identityError = craftAffixIdentityError(state)
   if (identityError) return { ok: false, error: identityError }
   if (Object.hasOwn(state, 'destroyed')) return { ok: false, error: DESTROYED_ITEM_MESSAGE }

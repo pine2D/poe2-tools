@@ -14,6 +14,7 @@ import {
   type ItemDictionary,
   importCraftState,
   importIdentifiedCraftState,
+  isBasicFlaskBase,
   isSkillVariantAmulet,
   type RestoredTargetCraftProject,
   readBaseGrantedSkills,
@@ -148,7 +149,9 @@ export function CraftEntry({
           },
         }
       : {}),
-    ...(supportsItemQuality(base) || supportsWeaponQuality(base) ? { quality: blankQuality } : {}),
+    ...(isBasicFlaskBase(base) || supportsItemQuality(base) || supportsWeaponQuality(base)
+      ? { quality: blankQuality }
+      : {}),
   }
   const capacity =
     catalog.augments !== undefined &&
@@ -371,7 +374,8 @@ export function CraftEntry({
           ))}
         </section>
       ) : null}
-      {(supportsItemQuality(base) || supportsWeaponQuality(base)) && !readOnlyImport ? (
+      {(isBasicFlaskBase(base) || supportsItemQuality(base) || supportsWeaponQuality(base)) &&
+      !readOnlyImport ? (
         <label>
           起点已有品质
           <select
@@ -379,7 +383,7 @@ export function CraftEntry({
             value={blankQuality}
             onChange={(event) => setBlankQuality(Number(event.target.value))}
           >
-            {Array.from({ length: 31 }, (_, value) => (
+            {Array.from({ length: isBasicFlaskBase(base) ? 21 : 31 }, (_, value) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: 数值即固定选项身份。
               <option key={`quality-${value}`} value={value}>
                 {value}%
@@ -396,7 +400,7 @@ export function CraftEntry({
           <p>{qualityFromText.error}</p>
         ) : qualityFromText.value !== undefined ? (
           <p>原文品质：{qualityFromText.value}%。</p>
-        ) : supportsItemQuality(base) || supportsWeaponQuality(base) ? (
+        ) : isBasicFlaskBase(base) || supportsItemQuality(base) || supportsWeaponQuality(base) ? (
           <label>
             导入装备品质
             <select
@@ -405,7 +409,7 @@ export function CraftEntry({
               onChange={(event) => setQualityDeclaration(event.target.value)}
             >
               <option value="">尚未核对</option>
-              {Array.from({ length: 31 }, (_, value) => (
+              {Array.from({ length: isBasicFlaskBase(base) ? 21 : 31 }, (_, value) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: 数值即固定选项身份。
                 <option key={`quality-${value}`} value={value}>
                   {value}%

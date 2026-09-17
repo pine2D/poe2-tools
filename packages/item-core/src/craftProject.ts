@@ -42,6 +42,8 @@ import { requiresExtendedArmourRuneProjectVersion } from './extendedArmourRunePr
 import { requiresExtendedInfluenceBoneProjectVersion } from './extendedInfluenceBoneProjectVersion'
 import { isExtractionCraftOperation } from './extraction'
 import { requiresExtractionProjectVersion } from './extractionProjectVersion'
+import { requiresFlaskProjectVersion } from './flaskProjectVersion'
+import { flaskSourceHash as readFlaskSourceHash } from './flaskSource'
 import { isFluxCraftOperation } from './fluxCraft'
 import { fluxEligibleModIds } from './fluxes'
 import { isFractureCraftOperation } from './fracture'
@@ -124,7 +126,7 @@ const ORIGINAL_CURRENCIES = new Set([
   'divine',
 ])
 export const MAX_CRAFT_PROJECT_BYTES = 2_000_000
-const MAX_OPERATIONS = 1000
+export const MAX_CRAFT_PROJECT_OPERATIONS = 1000
 
 export interface CraftProject {
   strategyStartStep?: number
@@ -144,6 +146,7 @@ export interface CraftProject {
   targetImplicitValues?: CraftImplicitTargetValues[]
   targetAlternatives?: CraftTargetAlternative[]
   desecrationSourceHash?: string
+  flaskSourceHash?: string
   jewelSourceHash?: string
   essenceSourceHash?: string
   liquidEmotionSourceHash?: string
@@ -723,6 +726,7 @@ export function readNativeTargetProjectProjection(
   amuletSkillSockets = false,
   amuletSkillLevel = false,
   amuletCatalyst = false,
+  flasks = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -760,6 +764,7 @@ export function readNativeTargetProjectProjection(
     amuletSkillSockets,
     amuletSkillLevel,
     amuletCatalyst,
+    flasks,
   )
 }
 
@@ -799,6 +804,7 @@ function readCraftProject(
   amuletSkillSockets = false,
   amuletSkillLevel = false,
   amuletCatalyst = false,
+  flasks = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -817,6 +823,15 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (
+    record(value) &&
+    Array.isArray(value.operations) &&
+    value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
+  )
+    return fail('演练操作列表无效或超过 1000 步。')
+  const usesFlask = requiresFlaskProjectVersion(value, catalog)
+  if (!flasks && usesFlask)
+    return fail('药剂制作必须使用 v106 项目，包括起点、目标、完整未来和未执行指引。')
   if (!amuletCatalyst && requiresAmuletCatalystProjectVersion(value))
     return fail('技能项链催化品质必须使用 v105 项目，包括起点、完整未来和嵌套未执行状态。')
   if (!amuletSkillLevel && requiresAmuletSkillLevelProjectVersion(value))
@@ -915,6 +930,7 @@ function readCraftProject(
       'alloyCatalogSignature',
       'desecrationSourceHash',
       'jewelSourceHash',
+      'flaskSourceHash',
       'scalabilitySourceHash',
       'pricing',
       'importedSockets',
@@ -1312,7 +1328,7 @@ function readCraftProject(
   )
   const storedTargetSources = storedTargets
     ? targetProjectSourceUsage(catalog, initialBaseId, targetIds)
-    : { essence: false, desecration: false, liquid: false, jewel: false }
+    : { essence: false, desecration: false, liquid: false, jewel: false, flask: false }
   const targetUsesCraftedJewel =
     storedTargetSources.liquid ||
     (Array.isArray(value.targetModIds) &&
@@ -1439,6 +1455,9 @@ function readCraftProject(
     return fail('项目液态情感来源指纹缺失或与当前目录不同，不能恢复。')
   if (rulesVersion < 32 && (usesJewel || Object.hasOwn(value, 'jewelSourceHash')))
     return fail('v2–v31 旧版项目不能包含珠宝制作起点或来源。')
+  const flaskSourceHash = readFlaskSourceHash(catalog)
+  if (usesFlask && (flaskSourceHash === null || value.flaskSourceHash !== flaskSourceHash))
+    return fail('项目药剂来源指纹缺失或与当前目录不同，不能恢复。')
   const jewelSourceHash = readJewelSourceHash(catalog)
   if (
     (usesJewel ||
@@ -1605,7 +1624,7 @@ function readCraftProject(
       (record(value.initialState) && Object.hasOwn(value.initialState, 'sockets')))
   )
     return fail('旧版项目不能包含镶嵌状态或来源。')
-  if (!Array.isArray(value.operations) || value.operations.length > MAX_OPERATIONS)
+  if (!Array.isArray(value.operations) || value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS)
     return fail('演练操作列表无效或超过 1000 步。')
   if (
     !validStrategyStartStep(strategy, value.strategyStartStep, value.operations.length) ||
@@ -2159,6 +2178,7 @@ function readCraftProject(
         ...(minimumTargetCount === undefined ? {} : { minimumTargetCount }),
         ...(strategy === undefined ? {} : { strategy }),
         ...(strategy?.flow ? { strategyStartStep: value.strategyStartStep as number } : {}),
+        ...(usesFlask && flaskSourceHash !== null ? { flaskSourceHash } : {}),
         ...((usesJewel || storedTargetSources.jewel) && jewelSourceHash !== null
           ? { jewelSourceHash }
           : {}),
@@ -2181,6 +2201,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresFlaskProjectVersion(project))
+    throw new Error('药剂制作必须使用 v106 项目，包括起点、目标和完整未来。')
   if (requiresAmuletCatalystProjectVersion(project))
     throw new Error('技能项链催化品质必须使用 v105 项目，包括起点、完整未来和嵌套未执行状态。')
   if (requiresAmuletSkillLevelProjectVersion(project))

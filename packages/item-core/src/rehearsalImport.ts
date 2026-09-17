@@ -11,6 +11,8 @@ import { importCatalystQuality } from './catalystImport'
 import { importCorruption, knownCorruptionHeader } from './corruptionEnchantments'
 import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essences'
 import { type ItemInspection, knownExplicitHeader } from './export'
+import { isBasicFlaskBase } from './flasks'
+import { flaskTextType } from './flaskText'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
 import { influenceRuneTags, supportsInfluenceDesecration } from './influenceRunes'
@@ -102,6 +104,12 @@ function readCraftImport(
   declaredCatalystId?: string,
 ): CraftResult<CraftState> {
   const fail = (error: string): CraftResult<CraftState> => ({ ok: false, error })
+  const flaskBase = catalog.bases.find((entry) => entry.id === baseId && entry.type === 'Flask')
+  if (
+    flaskBase &&
+    (!isBasicFlaskBase(flaskBase) || flaskTextType(item.itemClass) !== flaskBase.subType)
+  )
+    return fail('药剂类别必须与当前已核对的生命或魔力基底一致。')
   if (inspection.comparisonOnly || item.rarity === 'unique')
     return fail('咒符和传奇装备仅供对比，不开放制作。')
   if (hasSpecialModifierSource(item)) {
@@ -212,7 +220,7 @@ function readCraftImport(
     (!Number.isInteger(importedQuality) || importedQuality < 0 || importedQuality > 30)
   )
     return fail('导入品质声明必须是 0–30 的整数。')
-  const sourceQuality = readItemQuality(item)
+  const sourceQuality = readItemQuality(item, flaskBase ? 20 : 30)
   if (!sourceQuality.ok) return sourceQuality
   if (
     sourceQuality.value !== undefined &&

@@ -1,6 +1,7 @@
 import type { CatalogModifierData, CraftCatalog } from './catalog'
 import { corruptionSourceHash } from './corruptionSource'
 import { DESECRATION_SOURCE, desecratedModDomain } from './desecration'
+import { FLASK_SOURCE } from './flaskSource'
 import { JEWEL_SOURCE } from './jewels'
 import { LIQUID_EMOTION_SOURCE, liquidEmotionSourceHash } from './liquidEmotions'
 import { splitStatScalars, statScalabilitySourceHash } from './statScalability'
@@ -387,6 +388,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
           ...MODIFIER_FIELDS,
           'desecratedOnly',
           'jewelOnly',
+          'flaskOnly',
           'radiusJewelOnly',
           'craftedOnly',
         ].includes(key),
@@ -396,6 +398,15 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
       !['prefix', 'suffix'].includes(String(mod.kind)) ||
       (Object.hasOwn(mod, 'desecratedOnly') && mod.desecratedOnly !== true) ||
       (Object.hasOwn(mod, 'jewelOnly') && mod.jewelOnly !== true) ||
+      (Object.hasOwn(mod, 'flaskOnly') && mod.flaskOnly !== true) ||
+      (mod.flaskOnly === true &&
+        (mod.jewelOnly === true ||
+          mod.desecratedOnly === true ||
+          !mod.eligibility.some((rule) => rule.value === 1) ||
+          mod.eligibility.at(-1)?.tag !== 'default' ||
+          mod.eligibility.some(
+            (rule) => !['life_flask', 'mana_flask', 'default'].includes(rule.tag),
+          ))) ||
       (Object.hasOwn(mod, 'radiusJewelOnly') && mod.radiusJewelOnly !== true) ||
       (mod.radiusJewelOnly === true && mod.jewelOnly !== true) ||
       (Object.hasOwn(mod, 'craftedOnly') && mod.craftedOnly !== true) ||
@@ -447,6 +458,34 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
   }
   const desecratedSources = meta.sources.filter((source) => source.path === DESECRATION_SOURCE.path)
   const jewelSources = meta.sources.filter((source) => source.path === JEWEL_SOURCE.path)
+  const flaskSources = meta.sources.filter((source) => source.path === FLASK_SOURCE.path)
+  if (
+    flaskSources.length ||
+    Object.hasOwn(meta, 'excludedFlaskMods') ||
+    value.modifiers.some((mod) => mod.flaskOnly)
+  ) {
+    const source = flaskSources[0]
+    if (
+      flaskSources.length !== 1 ||
+      source.url !== FLASK_SOURCE.url ||
+      source.sha256 !== FLASK_SOURCE.sha256 ||
+      meta.sourceCommit !== FLASK_SOURCE.commit ||
+      !Array.isArray(meta.excludedFlaskMods)
+    )
+      return invalid()
+    for (const excluded of meta.excludedFlaskMods) {
+      if (
+        !record(excluded) ||
+        !Object.keys(excluded).every((key) => key === 'id' || key === 'reason') ||
+        !nonempty(excluded.id) ||
+        !nonempty(excluded.reason) ||
+        ids.has(excluded.id)
+      )
+        return invalid()
+      ids.add(excluded.id)
+    }
+  }
+
   if (
     jewelSources.length ||
     Object.hasOwn(meta, 'excludedJewelMods') ||

@@ -1,4 +1,4 @@
-import { craftAffixSpace } from './affixCapacity'
+import { craftAffixSpace, craftTargetRarity } from './affixCapacity'
 import { inspectCraftAlloys } from './alloys'
 import { buildInitialBeltImplicitLines, isBeltCapacityBase } from './beltImplicits'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
@@ -264,7 +264,7 @@ export function craftTargetCandidates(
       createCraftState(catalog, {
         baseId,
         itemLevel: 100,
-        rarity: 'rare',
+        rarity: craftTargetRarity(catalog, baseId),
         sourceText: null,
         ...targetImplicitLines(catalog, baseId, state),
         ...sockets.value,
@@ -330,12 +330,12 @@ export function validateCraftTargets(
   }
   const sockets = targetSocketContext(catalog, baseId, capacityContext)
   if (!sockets.ok) return sockets
-  // 目标按稀有装备容量校验；已有词缀校验不限制生成物等，适用于高物等目标。
+  // 目标按该类别可达稀有度容量校验；已有词缀校验不限制生成物等，适用于高物等目标。
   const check = (selected: CraftAffix[]) =>
     createCraftState(catalog, {
       baseId,
       itemLevel: 100,
-      rarity: 'rare',
+      rarity: craftTargetRarity(catalog, baseId),
       affixes: selected,
       ...sockets.value,
       sourceText: null,

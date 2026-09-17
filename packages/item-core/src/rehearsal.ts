@@ -39,6 +39,7 @@ import { craftedModifierCapacity } from './craftedCapacity'
 import { desecrationSourceHash } from './desecration'
 import { isDestructionAffix } from './destructionEffects'
 import { isEssenceMappedMod } from './essences'
+import { flaskOperationError, flaskStateError, isBasicFlaskBase } from './flasks'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import {
@@ -270,7 +271,7 @@ function baseError(base: CatalogBase): string | null {
   if (beltError) return beltError
   if (
     (base.charmLimit !== undefined && !isBeltCapacityBase(base)) ||
-    base.flask !== undefined ||
+    (base.flask !== undefined && !isBasicFlaskBase(base)) ||
     base.charm !== undefined ||
     (base.grantedSkillsHaveNoReservation !== undefined && !isSkillVariantAmulet(base))
   )
@@ -281,7 +282,12 @@ function baseError(base: CatalogBase): string | null {
     /(?:[+-]\d+\s+(?:Prefix|Suffix) Modifier allowed|Can roll .+ Modifiers)/i.test(base.implicit)
   )
     return '该基底的固有属性会改变词缀容量或类别规则，暂不支持制作演练。'
-  if (!SUPPORTED_TYPES.has(base.type) && !isBasicJewel(base) && !isRadiusJewel(base))
+  if (
+    !SUPPORTED_TYPES.has(base.type) &&
+    !isBasicJewel(base) &&
+    !isRadiusJewel(base) &&
+    !isBasicFlaskBase(base)
+  )
     return '该基底类别暂不支持制作演练。'
   return null
 }
@@ -318,6 +324,8 @@ export function createCraftState(
   if (base === null) return failure(`基底 ${input.baseId} 不在制作目录中。`)
   const unsupported = baseError(base)
   if (unsupported !== null) return failure(unsupported)
+  const flaskError = flaskStateError(catalog, base, input)
+  if (flaskError !== null) return failure(flaskError)
   if (isBasicJewel(base) || isRadiusJewel(base)) {
     if (jewelSourceHash(catalog) === null) return failure('缺少可信的珠宝词缀来源指纹。')
     if (input.quality !== undefined)
@@ -565,7 +573,7 @@ export function craftCandidates(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return []
   const base = findBase(catalog, state.baseId)
-  if (base === null) return []
+  if (base === null || flaskOperationError(base, currency, omen) !== null) return []
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const existing = state.affixes.flatMap((affix) => {
     const mod = byId.get(affix.modId)
@@ -674,6 +682,9 @@ export function removableCraftAffixes(
   if (omenError !== null) return failure(omenError)
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
+  const base = findBase(catalog, checked.value.baseId)
+  const flaskError = base ? flaskOperationError(base, currency, omen) : null
+  if (flaskError !== null) return failure(flaskError)
   const rule = currencyRule(currency)
   if (rule === null || (rule.base !== 'chaos' && rule.base !== 'annulment'))
     return failure('不支持的移除通货。')
@@ -722,6 +733,9 @@ export function prepareCraftOperation(
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   const current = checked.value
+  const operationBase = findBase(catalog, current.baseId)
+  const flaskError = operationBase ? flaskOperationError(operationBase, currency, omen) : null
+  if (flaskError !== null) return failure(flaskError)
   const rule = currencyRule(currency)
   if (rule === null) return failure('不支持的通货。')
   const levelError = currencyLevelError(current, currency)

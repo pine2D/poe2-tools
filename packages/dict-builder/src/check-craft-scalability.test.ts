@@ -6,7 +6,7 @@ import { checkCraftScalability } from './check-craft-scalability'
 const input = (): CraftCatalog => JSON.parse(readFileSync('data/craft/catalog.json', 'utf8'))
 
 it('审计真实目录普通镶嵌效果的对应和缺失数量', () => {
-  expect(checkCraftScalability(input())).toEqual({ matched: 3480, missing: 288 })
+  expect(checkCraftScalability(input())).toEqual({ matched: 3550, missing: 288 })
 })
 
 it.each(['0.35', '0.4', '0.45', '0.5'])('重生 %s 精度声明即使总数不变也必须完整', (value) => {

@@ -51,10 +51,13 @@ import {
   type ExtractionCraftOperation,
   editTargetDefinitionContext,
   enableCraftAffixIdentity,
+  FLASK_CRAFT_RULES_VERSION,
   FLUX_CRAFT_RULES_VERSION,
   type FluxCraftOperation,
   type FractureCraftOperation,
   findTargetCapacityContext,
+  flaskOperationError,
+  flaskSourceHash,
   fluxCatalogSignature,
   GRANTED_SKILL_TARGET_RULES_VERSION,
   type IdentifiedCraftState,
@@ -103,6 +106,7 @@ import {
   requiresExtendedArmourRuneProjectVersion,
   requiresExtendedInfluenceBoneProjectVersion,
   requiresExtractionProjectVersion,
+  requiresFlaskProjectVersion,
   requiresGrantedSkillTargetProjectVersion,
   requiresInfluenceBoneProjectVersion,
   requiresInfluenceRuneProjectVersion,
@@ -154,6 +158,7 @@ import { CraftRehearsalReportPanel } from './CraftRehearsalReportPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
 import { craftStepLabel } from './craftStepLabel'
 import { ExtractionPanel, ExtractionReturns } from './ExtractionPanel'
+import { FlaskPanel } from './FlaskPanel'
 import { FluxCraftPanel } from './FluxCraftPanel'
 import { MasterworkPanel } from './MasterworkPanel'
 import { PerfectFluxPanel } from './PerfectFluxPanel'
@@ -439,6 +444,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [flaskRules, setFlaskRules] = useState(
+    initialProject?.project.rulesVersion === FLASK_CRAFT_RULES_VERSION,
   )
   const [amuletCatalystRules, setAmuletCatalystRules] = useState(
     initialProject?.project.rulesVersion === AMULET_CATALYST_RULES_VERSION,
@@ -1283,6 +1291,9 @@ export function RehearsalPanel({
     ...(history.some((entry) => entry.state.corruption) && corruptionSourceHash(catalog)
       ? { corruptionSourceHash: corruptionSourceHash(catalog) as string }
       : {}),
+    ...(targetSources.flask && flaskSourceHash(catalog)
+      ? { flaskSourceHash: flaskSourceHash(catalog) as string }
+      : {}),
     ...((base.type === 'Jewel' || targetSources.jewel) && jewelSourceHash(catalog)
       ? { jewelSourceHash: jewelSourceHash(catalog) as string }
       : {}),
@@ -1322,6 +1333,7 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsFlasks = flaskRules || requiresFlaskProjectVersion(projectConfig, catalog)
   const needsAmuletCatalyst =
     amuletCatalystRules || requiresAmuletCatalystProjectVersion(projectConfig)
   const needsAmuletSkillLevel =
@@ -1346,6 +1358,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsFlasks ||
     needsAmuletCatalyst ||
     needsAmuletSkillLevel ||
     needsAmuletSkillSockets ||
@@ -1387,54 +1400,56 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsAmuletCatalyst
-            ? AMULET_CATALYST_RULES_VERSION
-            : needsAmuletSkillLevel
-              ? AMULET_SKILL_LEVEL_RULES_VERSION
-              : needsAmuletSkillSockets
-                ? AMULET_SKILL_SOCKETS_RULES_VERSION
-                : needsSkillVariantAmulet
-                  ? SKILL_VARIANT_AMULET_RULES_VERSION
-                  : needsSkillLevelDeclaration
-                    ? SKILL_LEVEL_DECLARATION_RULES_VERSION
-                    : needsSkillSocketTargets
-                      ? SKILL_SOCKET_TARGET_RULES_VERSION
-                      : needsSkillSockets
-                        ? SKILL_SOCKETS_RULES_VERSION
-                        : needsWeightedProperties
-                          ? WEIGHTED_PROPERTY_RULES_VERSION
-                          : needsGrantedSkillTargets
-                            ? GRANTED_SKILL_TARGET_RULES_VERSION
-                            : needsExtendedInfluenceBone
-                              ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                              : needsInfluenceBone
-                                ? INFLUENCE_BONE_RULES_VERSION
-                                : needsDestruction
-                                  ? DESTRUCTION_RUNE_RULES_VERSION
-                                  : needsInfluence
-                                    ? INFLUENCE_RUNE_RULES_VERSION
-                                    : needsDesecrationCount
-                                      ? DESECRATION_COUNT_RULES_VERSION
-                                      : putrefactionRules ||
-                                          requiresPutrefactionProjectVersion(projectConfig)
-                                        ? PUTREFACTION_RULES_VERSION
-                                        : needsPendingExaltation
-                                          ? PENDING_EXALTATION_RULES_VERSION
-                                          : needsEssenceOutcomes
-                                            ? ESSENCE_OUTCOMES_RULES_VERSION
-                                            : needsSerle
-                                              ? SERLE_RULES_VERSION
-                                              : needsCraftedCapacity
-                                                ? CRAFTED_CAPACITY_RULES_VERSION
-                                                : needsConditionalRunes
-                                                  ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                                  : needsMasterwork
-                                                    ? MASTERWORK_CRAFT_RULES_VERSION
-                                                    : needsExtendedRunes
-                                                      ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                                      : needsWardRunes
-                                                        ? WARD_RUNE_RULES_VERSION
-                                                        : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsFlasks
+            ? FLASK_CRAFT_RULES_VERSION
+            : needsAmuletCatalyst
+              ? AMULET_CATALYST_RULES_VERSION
+              : needsAmuletSkillLevel
+                ? AMULET_SKILL_LEVEL_RULES_VERSION
+                : needsAmuletSkillSockets
+                  ? AMULET_SKILL_SOCKETS_RULES_VERSION
+                  : needsSkillVariantAmulet
+                    ? SKILL_VARIANT_AMULET_RULES_VERSION
+                    : needsSkillLevelDeclaration
+                      ? SKILL_LEVEL_DECLARATION_RULES_VERSION
+                      : needsSkillSocketTargets
+                        ? SKILL_SOCKET_TARGET_RULES_VERSION
+                        : needsSkillSockets
+                          ? SKILL_SOCKETS_RULES_VERSION
+                          : needsWeightedProperties
+                            ? WEIGHTED_PROPERTY_RULES_VERSION
+                            : needsGrantedSkillTargets
+                              ? GRANTED_SKILL_TARGET_RULES_VERSION
+                              : needsExtendedInfluenceBone
+                                ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                                : needsInfluenceBone
+                                  ? INFLUENCE_BONE_RULES_VERSION
+                                  : needsDestruction
+                                    ? DESTRUCTION_RUNE_RULES_VERSION
+                                    : needsInfluence
+                                      ? INFLUENCE_RUNE_RULES_VERSION
+                                      : needsDesecrationCount
+                                        ? DESECRATION_COUNT_RULES_VERSION
+                                        : putrefactionRules ||
+                                            requiresPutrefactionProjectVersion(projectConfig)
+                                          ? PUTREFACTION_RULES_VERSION
+                                          : needsPendingExaltation
+                                            ? PENDING_EXALTATION_RULES_VERSION
+                                            : needsEssenceOutcomes
+                                              ? ESSENCE_OUTCOMES_RULES_VERSION
+                                              : needsSerle
+                                                ? SERLE_RULES_VERSION
+                                                : needsCraftedCapacity
+                                                  ? CRAFTED_CAPACITY_RULES_VERSION
+                                                  : needsConditionalRunes
+                                                    ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                                    : needsMasterwork
+                                                      ? MASTERWORK_CRAFT_RULES_VERSION
+                                                      : needsExtendedRunes
+                                                        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                                        : needsWardRunes
+                                                          ? WARD_RUNE_RULES_VERSION
+                                                          : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1469,6 +1484,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setFlaskRules(restored.project.rulesVersion === FLASK_CRAFT_RULES_VERSION)
     setAmuletCatalystRules(restored.project.rulesVersion === AMULET_CATALYST_RULES_VERSION)
     setAmuletSkillLevelRules(restored.project.rulesVersion === AMULET_SKILL_LEVEL_RULES_VERSION)
     setAmuletSkillSocketRules(restored.project.rulesVersion === AMULET_SKILL_SOCKETS_RULES_VERSION)
@@ -1655,9 +1671,11 @@ export function RehearsalPanel({
       </section>
     )
   const ItemPanel =
-    base.tags.includes('weapon') || ['Wand', 'Staff', 'Sceptre'].includes(base.type)
-      ? WeaponPanel
-      : DefencePanel
+    base.type === 'Flask'
+      ? FlaskPanel
+      : base.tags.includes('weapon') || ['Wand', 'Staff', 'Sceptre'].includes(base.type)
+        ? WeaponPanel
+        : DefencePanel
   return (
     <section className="rehearsal-panel" aria-label="通货演练">
       <header className="rehearsal-heading">
@@ -1968,6 +1986,7 @@ export function RehearsalPanel({
             type="button"
             key={id}
             disabled={
+              flaskOperationError(base, id, omen) !== null ||
               (id === 'divine' &&
                 implicit?.ok &&
                 implicit.value.charm !== null &&
@@ -1982,6 +2001,7 @@ export function RehearsalPanel({
               (pendingCurrencyAvailability !== null && !pendingCurrencyAvailability[id]) ||
               current.corrupted === true
             }
+            title={flaskOperationError(base, id, omen) ?? undefined}
             onClick={() => startOperation(id, omen)}
           >
             {CRAFT_CURRENCY_LABELS[id]}

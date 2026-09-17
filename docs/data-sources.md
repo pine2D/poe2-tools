@@ -1,5 +1,12 @@
 # 数据源登记表
 
+## 药剂独立来源（2026-09-17，v106实施前登记）
+
+沿用MIT PoB2固定提交ce566eac45ea8a86477f513c7ee65a1ebe60014e，新增[ModFlask.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModFlask.lua)，SHA-256 d50d074c1b7e0a57c164b7c49add1670d90ba806a25d946467e4ca7af9feb350。78条声明先验证，67条有生成资格，11条全零禁用保留排除审计；default=1仅在药剂来源域内解释为资格，不是概率。已有Bases/flask、Item.lua、ItemsTab.lua同提交用于基底、魔法1前1后/禁止rare以及本件恢复/充能估算，不采用sourceQuality默认值作为用户品质。
+
+[Flask Wiki](https://www.poe2wiki.net/wiki/Flask)与[Dreamcore药剂指南](https://mobalytics.gg/poe-2/guides/flasks)（2025-09-25）经Exa读取，按gray人工机制参考交叉核对类别与条件效果，不复制全文或第三方装备。已登记PoE2DB的Perfect Transmutation、Greater Augmentation、Annulment、Divine、Glassblower物品说明再次读取；只用材料资格文字，不使用行情、概率或配方权重。CoE公开Life Flasks界面用于交互参考，未读取代码/数据；其中Vaal入口与PoB模型字段不能单独解决游戏腐化行为。逐颗品质、腐化、条件角色收益及国服原生格式仍待核实，无浏览器外站请求或客户端解包。
+
+
 ## 技能项链已有催化品质（2026-09-17，v105）
 
 沿用已登记 [Vaal Catalysing Infuser](https://poe2db.tw/us/Vaal_Catalysing_Infuser) 的 gray 材料说明，以及下文两位原作者的项链流程。Exa 本轮提取仍明确戒指／项链可超过最大品质至多10；网页阅读正文只取得元数据，不能将其写成完整提示框已核验。原作者记录了裂隙品质前缀、40%催化、注能至50%后继续制作；不采用费用、概率或单颗增量。

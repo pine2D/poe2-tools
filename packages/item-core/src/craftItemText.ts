@@ -5,6 +5,7 @@ import { socketLimitWarnings } from './conditionalArmourRunes'
 import { corruptionEntries } from './corruptionEnchantments'
 import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
+import { isBasicFlaskBase } from './flasks'
 import { readUnlevelledSkillName } from './grantedSkills'
 import { explicitModEffect, usesExplicitModEffect } from './jewelEffects'
 import { estimateJewelRadius } from './jewelRadius'
@@ -243,8 +244,17 @@ export function exportCraftItemText(
     warnings.push(
       '授予技能等级未明确，已原样保留；当前回读不支持此技能核验，完整状态请使用项目保存。',
     )
+  const itemClass = isBasicFlaskBase(base)
+    ? locale === 'en'
+      ? `${base.subType} Flasks`
+      : locale === 'zh-CN'
+        ? `${base.subType === 'Life' ? '生命' : '魔力'}药剂`
+        : `${base.subType === 'Life' ? '生命' : '魔力'}藥劑`
+    : (CLASSES[base.type] ?? base.type)
+  if (isBasicFlaskBase(base))
+    warnings.push('药剂文本不输出推算回复面板或旧当前充能；原文观察与完整历史请保存制作项目。')
   const output = [
-    `${labels.itemClass}: ${CLASSES[base.type] ?? base.type}`,
+    `${labels.itemClass}: ${itemClass}`,
     `${labels.rarity}: ${labels.rarities[current.rarity]}`,
     ...(current.rarity === 'rare' ? [labels.simulation] : []),
     localize.base(base.name, current.rarity),

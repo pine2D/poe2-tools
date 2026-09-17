@@ -273,6 +273,10 @@ export {
   type PreparedExtractionCraft,
   prepareExtractionCraft,
 } from './extraction'
+export { FLASK_CRAFT_RULES_VERSION, requiresFlaskProjectVersion } from './flaskProjectVersion'
+export { FLASK_SOURCE, flaskSourceHash } from './flaskSource'
+export { estimateFlaskProperties, type FlaskEstimate } from './flaskStats'
+export { flaskOperationError, isBasicFlaskBase } from './flasks'
 export {
   applyFluxCraft,
   type FluxCraftOperation,

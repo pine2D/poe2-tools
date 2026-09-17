@@ -17,10 +17,10 @@ export function checkCraftScalability(catalog: CraftCatalog): { matched: number;
   const missing = [...patterns].filter((line) => !Object.hasOwn(declarations, line)).length
   if (
     statScalabilitySourceHash(catalog) !== STAT_SCALABILITY_SOURCE.sha256 ||
-    matched !== 3480 ||
+    matched !== 3550 ||
     missing !== 288
   )
-    throw new Error('缩放目录缺少固定来源或 3480 条对应／288 条未对应审计不匹配')
+    throw new Error('缩放目录缺少固定来源或 3550 条对应／288 条未对应审计不匹配')
   for (const value of ['0.35', '0.4', '0.45', '0.5']) {
     const scalars = declarations[`Regenerate ${value}% of maximum Life per second`]
     if (

@@ -1,4 +1,5 @@
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
+import { isFlaskProperty, isFlaskUsage } from './flaskText'
 import { JEWEL_RADIUS_HEADER } from './jewelRadius'
 import type {
   ItemBlock,
@@ -99,6 +100,7 @@ function isKnownProperty(text: string, itemClass: string): boolean {
   )
     return true
   if (WEAPON_PROPERTIES.some((pattern) => pattern.test(text))) return true
+  if (isFlaskProperty(text, itemClass)) return true
   const numericValue = String.raw`[+-]?\d+(?:\.\d+)?(?:\([+-]?\d+(?:\.\d+)?-[+-]?\d+(?:\.\d+)?\))?`
   const standardProperty = new RegExp(
     String.raw`^(?:品质|品質|Quality|护甲|護甲|Armour|闪避值|閃避值|Evasion Rating|能量护盾|能量護盾|精魂|护盾|護盾|Energy Shield|Spirit|Runic Ward|Ward|符文结界|符文結界)\s*[:：]\s*${numericValue}%?(?:\s+\(augmented\))?$`,
@@ -407,6 +409,11 @@ export function parseItem(text: string): ParseItemResult {
       ['Jewel', 'Jewels', '珠宝', '珠寶'].includes(classMatch[1]) &&
       JEWEL_USAGE_LINES.has(trimmed)
     ) {
+      appendBlock(blocks, 'description', line)
+      continue
+    }
+
+    if (currentMod === null && currentSection === null && isFlaskUsage(trimmed, classMatch[1])) {
       appendBlock(blocks, 'description', line)
       continue
     }

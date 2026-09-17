@@ -47,6 +47,7 @@ it('没有目标时不读取任何词缀身份或可选目录', () => {
     desecration: false,
     liquid: false,
     jewel: false,
+    flask: false,
   })
   expect(reads()).toBe(0)
 })

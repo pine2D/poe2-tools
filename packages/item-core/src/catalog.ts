@@ -44,6 +44,7 @@ export interface CatalogModifierData {
 }
 
 export interface CatalogMod extends CatalogModifierData {
+  flaskOnly?: true
   jewelOnly?: true
   radiusJewelOnly?: true
   craftedOnly?: true
@@ -128,6 +129,7 @@ export interface CraftCatalog {
     }[]
     excludedDesecratedMods?: { id: string; reason: string }[]
     excludedJewelMods?: { id: string; reason: string }[]
+    excludedFlaskMods?: { id: string; reason: string }[]
     excludedBases: { id: string; reason: string }[]
   }
   bases: CatalogBase[]
@@ -183,7 +185,8 @@ export function hasCraftModEligibility(
   addedTags: readonly string[] = [],
 ): boolean {
   if (mod.craftedOnly) return false
-  // 珠宝与装备采用不同来源域，动态标签不能跨域注入候选。
+  // 药剂、珠宝与装备采用不同来源域，动态标签不能跨域注入候选。
+  if ((base.type === 'Flask') !== (mod.flaskOnly === true)) return false
   if ((base.type === 'Jewel') !== (mod.jewelOnly === true)) return false
   if (base.type === 'Jewel' && !(mod.radiusJewelOnly ? isRadiusJewel(base) : isBasicJewel(base)))
     return false
@@ -200,7 +203,14 @@ export function hasCraftModEligibility(
 
 /** 已有 Genesis 身份只认首饰基底自身的源标签，不接受动态生成标签注入。 */
 export function hasGenesisModEligibility(base: CatalogBase, mod: CatalogMod): boolean {
-  if (mod.craftedOnly || mod.desecratedOnly || !['Ring', 'Belt'].includes(base.type)) return false
+  if (
+    mod.craftedOnly ||
+    mod.desecratedOnly ||
+    mod.flaskOnly ||
+    mod.jewelOnly ||
+    !['Ring', 'Belt'].includes(base.type)
+  )
+    return false
   const rule = mod.eligibility.find((entry) => base.tags.includes(entry.tag))
   return (
     rule?.value === 1 && (rule.tag === 'genesis_tree_caster' || rule.tag === 'genesis_tree_minion')

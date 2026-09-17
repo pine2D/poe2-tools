@@ -4,7 +4,9 @@ import {
   CORRUPTION_SOURCE,
   corruptionSourceHash,
   DESECRATION_SOURCE,
+  FLASK_SOURCE,
   FLUXES,
+  flaskSourceHash,
   inspectModPool,
   JEWEL_SOURCE,
   jewelSourceHash,
@@ -120,7 +122,8 @@ const desecratedSource = catalog._meta.sources.filter(
   (source) => source.path === DESECRATION_SOURCE.path,
 )
 if (
-  catalog.modifiers.filter((mod) => !mod.desecratedOnly && !mod.jewelOnly).length !== 2550 ||
+  catalog.modifiers.filter((mod) => !mod.desecratedOnly && !mod.jewelOnly && !mod.flaskOnly)
+    .length !== 2550 ||
   catalog.modifiers.filter((mod) => mod.desecratedOnly && !mod.jewelOnly).length !== 199 ||
   catalog.modifiers.filter((mod) => mod.desecratedOnly && mod.jewelOnly && !mod.radiusJewelOnly)
     .length !== 32 ||
@@ -144,13 +147,32 @@ if (
 )
   throw new Error('珠宝目录固定来源或 160 普通 / 160 范围 / 16 工艺专属 / 41 排除计数不匹配')
 console.log('珠宝目录校验通过：160 普通 / 160 范围 / 16 工艺专属 / 41 排除')
+const flaskMods = catalog.modifiers.filter((mod) => mod.flaskOnly)
+if (
+  flaskSourceHash(catalog) !== FLASK_SOURCE.sha256 ||
+  flaskMods.length !== 67 ||
+  flaskMods.filter((mod) => mod.kind === 'prefix').length !== 43 ||
+  flaskMods.filter((mod) => mod.kind === 'suffix').length !== 24 ||
+  flaskMods.filter((mod) =>
+    mod.eligibility.some((rule) => rule.tag === 'default' && rule.value === 1),
+  ).length !== 24 ||
+  catalog._meta.excludedFlaskMods?.length !== 11
+)
+  throw new Error('药剂固定来源或43前缀/24后缀/11禁用及24条default1计数不匹配')
+console.log(
+  '药剂目录校验通过：78条声明，67可生成（43前缀/24后缀），11全零禁用；24条default1仅药剂域内资格',
+)
+
 for (const base of catalog.bases) {
   if (
     inspectModPool(base, catalog.modifiers, 100).some(
-      ({ mod }) => mod.desecratedOnly || mod.craftedOnly,
+      ({ mod }) =>
+        mod.desecratedOnly ||
+        mod.craftedOnly ||
+        (base.type === 'Flask') !== (mod.flaskOnly === true),
     )
   )
-    throw new Error('亵渎或工艺专属词缀泄漏到普通生成池')
+    throw new Error('专属来源词缀泄漏到错误生成域')
 }
 const augmentSources = catalog._meta.sources.filter(
   (source) => source.path === 'src/Data/ModRunes.lua',
