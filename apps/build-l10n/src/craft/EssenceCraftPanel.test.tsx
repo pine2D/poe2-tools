@@ -92,6 +92,38 @@ const state: CraftState = {
   sourceText: null,
 }
 const translations = { 'Lesser Essence of Life': '低阶生命精华' }
+
+it('属性精华未解析时解释候选缺口，仍不可选择或消耗', () => {
+  const onPreview = vi.fn()
+  render(
+    <EssenceCraftPanel
+      catalog={{
+        ...catalog,
+        essences: [
+          {
+            id: 'Metadata/Items/Currency/CurrencyGreaterEssenceAttribute',
+            name: 'Greater Essence of the Infinite',
+            type: 'Attribute',
+            tierLevel: 60,
+            mods: { Helmet: 'EssenceDisplayAttributes3' },
+          },
+        ],
+      }}
+      state={state}
+      definitions={emptyDefinitions}
+      translations={{}}
+      disabled={false}
+      onPreview={onPreview}
+    />,
+  )
+  expect(screen.getByText(/属性候选/).textContent).toContain('当前目录')
+  const button = screen.getByRole('button', {
+    name: '选择精华 Greater Essence of the Infinite',
+  }) as HTMLButtonElement
+  expect(button.disabled).toBe(true)
+  fireEvent.click(button)
+  expect(onPreview).not.toHaveBeenCalled()
+})
 const perfectEssenceId = 'Metadata/Items/Currency/CurrencyPerfectEssenceLife'
 const replacementState: CraftState = {
   ...state,

@@ -18,6 +18,7 @@ import {
   targetDefinitionChanges,
 } from '@poe2-tools/item-core'
 import { type Ref, useMemo, useState } from 'react'
+import { essenceUnavailableMessage } from './essenceUnavailableMessage'
 import { NumericControls } from './NumericControls'
 import './essence-catalog.css'
 
@@ -217,7 +218,7 @@ export function EssenceCraftPanel({
                   ))}
                 </>
               ) : (
-                <p>此效果尚未解析：{modId}</p>
+                <p>{essenceUnavailableMessage(modId)}</p>
               )}
               {!prepared.ok ? <p>{prepared.error}</p> : null}
               <button

@@ -70,6 +70,30 @@ const translateLine = (line: string) =>
 
 afterEach(cleanup)
 
+it.each([
+  ['EssenceDisplayAttributes3', '属性候选'],
+  ['EssenceDisplayDefences3', '防御结果'],
+  ['EssenceGrantedPassive', '随机核心天赋'],
+])('未解析的 %s 给出具体工具限制，仍可按来源编号检索', (modId, reason) => {
+  const unresolvedCatalog = {
+    ...catalog,
+    essences: [
+      {
+        id: 'test-unresolved',
+        name: 'Test unresolved',
+        type: 'Test',
+        tierLevel: 1,
+        mods: { Focus: modId },
+      },
+    ],
+  }
+  render(<EssenceCatalog catalog={unresolvedCatalog} base={base} />)
+  fireEvent.change(screen.getByLabelText('搜索精华与保证属性'), { target: { value: modId } })
+  expect(screen.getByText(new RegExp(reason)).textContent).toContain('当前目录')
+  expect(screen.getByText(modId)).toBeDefined()
+  expect(screen.queryByRole('button')).toBeNull()
+})
+
 it('默认折叠，展示中文和英文映射，不把来源等级显示为操作门槛', () => {
   render(<EssenceCatalog catalog={catalog} base={base} translateLine={translateLine} />)
   expect(screen.getByText('精华与保证属性').closest('details')?.open).toBe(false)

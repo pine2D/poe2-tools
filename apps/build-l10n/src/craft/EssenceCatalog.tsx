@@ -1,5 +1,6 @@
 import { type CatalogBase, type CraftCatalog, inspectEssences } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
+import { essenceUnavailableMessage } from './essenceUnavailableMessage'
 import './essence-catalog.css'
 
 export interface EssenceCatalogProps {
@@ -91,7 +92,7 @@ export function EssenceCatalog({
                       ))}
                     </>
                   ) : (
-                    <p className="essence-catalog-unresolved">此效果尚未解析，不能据此模拟。</p>
+                    <p className="essence-catalog-unresolved">{essenceUnavailableMessage(modId)}</p>
                   )}
                   <code className="essence-catalog-id">{modId}</code>
                 </article>
