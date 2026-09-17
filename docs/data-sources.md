@@ -6,8 +6,10 @@
 
 PoE2DB [英文魔符](https://poe2db.tw/us/Talismans)、[简中魔符](https://poe2db.tw/cn/Talismans)、[繁中魔符](https://poe2db.tw/tw/Talismans)、[首领魔符](https://poe2db.tw/cn/Alpha_Talisman)、[巧匠石](https://poe2db.tw/us/Artificers_Orb)及[远古颚骨](https://poe2db.tw/us/Ancient_Jawbone)仅作已登记 gray 人工机制参考。三服形态描述存在差异，不互相补齐，不从物品类别推定形态或技能。双手孔位上限沿现有通则映射，属于规则推断，国服真机待验收；不使用页面行情或权重。
 
-CoE 公开 Two-Handed Weapon → Talismans 页面显示基底、物等、词缀查询及通货／精华／亵渎／镶嵌分组，仅参考交互。未读取同行执行代码、数据文件或概率。25 普通基底与六种隐藏／锻造身份分开；三档 Infinite 精华缺失结果声明，魔符专属非本地符文、形态技能及符文锻造继续不推定。
+CoE 公开 Two-Handed Weapon → Talismans 页面显示基底、物等、词缀查询及通货／精华／亵渎／镶嵌分组，仅参考交互。未读取同行执行代码、数据文件或概率。25 普通基底与六种隐藏／锻造身份分开；三档 Infinite 精华缺失结果声明，魔符专属符文、形态技能及符文锻造继续不推定。
 
+
+魔符专属增幅的后续审计发现：固定提交 Item.lua:2178–2201、2762–2807 将各条符文文本解析并加入通用词缀列表，2514–2516 再按本地标志计算火焰平值；Item.lua 不读取 `localMod`。因此该字段不能证明 Rune of Vital Flame 的火点伤属于全局效果。当前尚未开放这四种专属增幅，执行范围不变；进一步的逐条语义确认留待下一节点。
 
 ## 药剂独立来源（2026-09-17，v106实施前登记）
 
