@@ -1,4 +1,5 @@
 import { RUNE_SUFFIX } from './annotations'
+import { BONDED_PREFIX } from './bodyIdols'
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
 import { flaskTextType } from './flaskText'
 import { resolveGrantedSkill } from './grantedSkills'
@@ -193,10 +194,16 @@ export function inspectItem(
     .filter((block) => block.kind === 'runes')
     .flatMap((block) => block.lines)
     .map((source) => {
-      const resolution = choose(
-        translate(source.raw.replace(RUNE_SUFFIX, '')),
+      const raw = source.raw.replace(RUNE_SUFFIX, '').trim()
+      const bonded = raw.startsWith(BONDED_PREFIX)
+      const selected = choose(
+        translate(bonded ? raw.slice(BONDED_PREFIX.length) : raw),
         selections[source.line],
       )
+      const resolution =
+        bonded && selected.english !== null
+          ? { ...selected, english: BONDED_PREFIX + selected.english }
+          : selected
       if (resolution.english !== null) englishByLine[source.line] = `${resolution.english} (rune)`
       return { source, resolution }
     })

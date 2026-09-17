@@ -1,6 +1,7 @@
 import { isSovereignAffix } from './alloyEffects'
 import { armourIdolFits, isArmourIdolId } from './armourIdols'
 import { isAstridRune } from './astridRune'
+import { bodyIdolBondedActive, bodyIdolBondedLines } from './bodyIdols'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { astridFitsBase } from './craftedCapacity'
 import { influenceRuneFitsBase, influenceRuneTags, isInfluenceRune } from './influenceRunes'
@@ -9,14 +10,20 @@ import { isSupportedArmourRune } from './runeEffects'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { isSceptreAugmentId, isSupportedSceptreBase, sceptreAugmentFits } from './sceptreAugments'
 import { isSerleRune, serleFitsBase } from './serleRune'
-import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
+import {
+  effectiveSocketAugment,
+  isHorrorSocketAffix,
+  socketEffectIncrease,
+} from './socketAmplification'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import { isSpecialMartialRuneId, specialMartialRuneFits } from './specialMartialRunes'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
-/** 只列已占用孔；augment.lines 是当前效果，bonded 仅保留来源信息。 */
+/** 只列已占用孔；augment.lines 是当前效果，bonded 保留来源，激活效果显式分列。 */
 export interface SocketEffect {
   socketIndex: number
+  bondedActive: boolean
+  activeBondedLines: string[]
   augment: CatalogAugment
 }
 
@@ -154,6 +161,13 @@ export function socketEffects(catalog: CraftCatalog, state: CraftState): SocketE
   return (state.sockets ?? []).flatMap((id, socketIndex) => {
     const augment = catalog.augments?.find((entry) => entry.id === id)
     const effective = augment && effectiveSocketAugment(catalog, state, augment)
-    return effective ? [{ socketIndex, augment: effective }] : []
+    if (!effective || !augment) return []
+    const bondedActive = bodyIdolBondedActive(catalog, state, augment)
+    const activeBondedLines = bondedActive
+      ? bodyIdolBondedLines(catalog, augment, socketEffectIncrease(catalog, state) ?? 0)
+      : []
+    return activeBondedLines
+      ? [{ socketIndex, augment: effective, bondedActive, activeBondedLines }]
+      : []
   })
 }

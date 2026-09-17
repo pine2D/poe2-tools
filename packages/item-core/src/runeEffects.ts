@@ -1,4 +1,4 @@
-import { isArmourIdol, isArmourIdolEffectLine } from './armourIdols'
+import { armourIdolSourceLines, isArmourIdol, isArmourIdolEffectLine } from './armourIdols'
 import { ASTRID_LINE, isAstridRune } from './astridRune'
 import type { CatalogAugment } from './catalog'
 import {
@@ -118,7 +118,7 @@ const FAMILIES = {
 /** 解析普通防具符文的完整效果；任一未知行都会拒绝，Bonded 不在输入范围内。 */
 export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotals | null {
   const totals = emptyTotals()
-  for (const line of lines) {
+  for (const line of armourIdolSourceLines(lines)) {
     // 条件效果另行核对完整语义，不属于可加的本地防御或角色数值。
     if (
       isArmourIdolEffectLine(line) ||

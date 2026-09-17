@@ -4,6 +4,16 @@ import { normalizeCraftScalability } from './craftScalability'
 import { parsePobModFile } from './restrictedLua'
 
 describe('固定源属性缩放声明适配', () => {
+  it('真实胸甲 Cunning 保留完整多行条件及 Bonded 声明，不制造半句声明', () => {
+    const augment = catalog.augments.find(
+      (entry) => entry.name === 'Carved Cunning' && entry.category === 'body armour',
+    )
+    if (!augment?.bonded?.lines[0] || !augment.lines[0]) throw new Error('缺少 Cunning 样本')
+    const declarations = catalog.scalability as Record<string, unknown>
+    expect(declarations[augment.lines.join('\n')]).toEqual([{ scalable: true, formats: [] }])
+    expect(declarations[augment.bonded.lines[0]]).toEqual([{ scalable: true, formats: [] }])
+    expect(declarations[augment.lines[0]]).toBeUndefined()
+  })
   it.each(['0.35', '0.4', '0.45', '0.5'])('真实目录保留重生符文 %s 的源精度声明', (value) => {
     expect(
       (catalog.scalability as Record<string, unknown>)[

@@ -32,11 +32,12 @@ export {
   requiresAmuletSkillSocketsProjectVersion,
 } from './amuletSkillSocketsProjectVersion'
 export type { ArchitectCraftOperation } from './architect'
-export { isArmourIdol, isHelmetBootIdolId } from './armourIdols'
+export { isArmourIdol, isBodyIdolId, isHelmetBootIdolId } from './armourIdols'
 export { isAstridRune } from './astridRune'
 export type { BaseSkillVariants } from './baseSkillVariants'
 export { readBaseSkillVariants } from './baseSkillVariants'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
+export { BODY_IDOL_RULES_VERSION, requiresBodyIdolProjectVersion } from './bodyIdolProjectVersion'
 export {
   analyzeBoneTargets,
   type CraftBoneAdviceOptions,
@@ -181,6 +182,7 @@ export {
   TARGET_CRAFT_RULES_VERSION,
   upgradeTargetCraftProject,
 } from './craftProjectTargets'
+export { craftScalabilityPatterns } from './craftScalabilityPatterns'
 export type {
   ArtificerCraftOperation,
   CraftStep,

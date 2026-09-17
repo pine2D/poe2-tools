@@ -1,3 +1,7 @@
+# 2026-09-17 胸甲雕像与绑定核对（实施前登记）
+
+沿既有 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 ModRunes、ModScalability 与同提交 [Classes/Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua) 核对本件 Idol 绑定激活、独立绑定显示及增效；新增提取已有源中的镶嵌绑定和完整换行缩放声明，不新增网络数据适配器。PoE2DB 的 [Fox Idol](https://poe2db.tw/us/Fox_Idol) 与 [Carved Cunning](https://poe2db.tw/us/Carved_Cunning) 仅人工交叉核对（gray），不复制同行实现或整表。国服原生绑定标题与客户端行为待真机验收。
+
 # 2026-09-17 头盔与鞋部雕像核对（实施前登记）
 沿用已登记固定 MIT PoB2 ModRunes／ModScalability 与普通、已核对锻造防具目录。16条独立分支为头盔10、鞋6；公开 [Carved Mischief](https://poe2db.tw/us/Carved_Mischief)、[Carved Tenacity](https://poe2db.tw/us/Carved_Tenacity)、[Carved Cunning](https://poe2db.tw/us/Carved_Cunning)、[Egrin](https://poe2db.tw/us/Idol_of_Egrin)、[Stag](https://poe2db.tw/us/Stag_Idol)、[Grold](https://poe2db.tw/us/Idol_of_Grold)、[Yeena](https://poe2db.tw/us/Idol_of_Yeena)、[Oak](https://poe2db.tw/us/Idol_of_Oak) 仅人工交叉核对，不引入其数据文件或价格。固定 ModScalability 的鞋部 Cunning 持续时间未声明毫秒格式，沿该快照整数缩放模型；不借手套 Majesty 的毫秒精度补值，游戏实际显示仍待验收。Grold通用使用提示与Boots效果标题不一致，按固定目录及效果标题核对部位，不据通用提示扩大权限。胸甲Bonded激活、断行缺元数据与副手空记录另行核对。
 

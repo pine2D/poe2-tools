@@ -1,3 +1,5 @@
+import { isBodyIdolId } from './armourIdols'
+import { BONDED_PREFIX } from './bodyIdols'
 import type { CraftCatalog } from './catalog'
 import { matchesCatalogLines } from './catalogMatch'
 import { CATALYSTS } from './catalystQuality'
@@ -292,10 +294,23 @@ export function exportCraftItemText(
   if (ordinary.length)
     block([`{ ${labels.implicit} }`, ...ordinary.map((line) => localize.line(line))])
   block(implicit.filter((line) => /^Grants Skill\s*:/i.test(line)).map(localize.skill))
+  const showBonded = runes.some((rune) => isBodyIdolId(rune.id))
+  if (showBonded && locale !== 'en')
+    warnings.push('Bonded 标题保留英文，表示绑定来源而非激活状态；中文客户端原生标题待真机验收。')
   block(
-    runes.flatMap((rune) =>
-      rune.lines.map((line) => `${localize.line(line, Object.keys(rune.tradeHashes))} (rune)`),
-    ),
+    runes.flatMap((rune) => {
+      const groups = isBodyIdolId(rune.id) ? [rune.lines.join('\n')] : rune.lines
+      const main = groups.flatMap((line) =>
+        localize
+          .line(line, Object.keys(rune.tradeHashes), true)
+          .split('\n')
+          .map((part) => `${part} (rune)`),
+      )
+      const bonded = showBonded
+        ? (rune.bonded?.lines ?? []).map((line) => `${BONDED_PREFIX}${localize.line(line)} (rune)`)
+        : []
+      return [...main, ...bonded]
+    }),
   )
   for (const { affix, mod } of modifiers) {
     if (!mod) return { ok: false, error: '当前词缀不在制作目录中。' }

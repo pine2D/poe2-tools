@@ -44,11 +44,15 @@ export function createItemTextLocalization(
         ? translated
         : fallback(name, '基底译名不能唯一反查')
     },
-    line(line: string, hashes?: readonly string[]): string {
+    line(line: string, hashes?: readonly string[], multiline = false): string {
       if (locale === 'en') return line
       const translated = index?.translate(line, hashes)
       if (translated == null) return fallback(line, '属性缺少译文或存在多义译文')
-      if (unsafe(translated) || isItemStructureLine(translated))
+      if (
+        multiline
+          ? translated.split(/\r?\n/).some((part) => unsafe(part) || isItemStructureLine(part))
+          : unsafe(translated) || isItemStructureLine(translated)
+      )
         return fallback(line, '属性译文包含不支持的文本结构')
       const reversed = index?.resolve(translated).english
       return reversed != null && normalize(reversed) === normalize(line)

@@ -104,7 +104,7 @@ describe('液态情感目录边界', () => {
   })
 })
 
-it('普通镶嵌行允许精确缩放声明，Bonded 与无关文本不进入范围', () => {
+it('普通镶嵌与 Bonded 行允许精确缩放声明，无关文本不进入范围', () => {
   const line = 'Regenerate 0.35% of maximum Life per second'
   const valid = {
     ...catalog,
@@ -121,10 +121,18 @@ it('普通镶嵌行允许精确缩放声明，Bonded 与无关文本不进入范
     },
   }
   expect(parseCraftCatalog(valid)).toBe(valid)
-  for (const other of ['+20 to maximum Life', '+999 to maximum Mana'])
-    expect(() =>
-      parseCraftCatalog({ ...valid, scalability: { [other]: [{ scalable: true, formats: [] }] } }),
-    ).toThrow()
+  expect(() =>
+    parseCraftCatalog({
+      ...valid,
+      scalability: { '+20 to maximum Life': [{ scalable: true, formats: [] }] },
+    }),
+  ).not.toThrow()
+  expect(() =>
+    parseCraftCatalog({
+      ...valid,
+      scalability: { '+999 to maximum Mana': [{ scalable: true, formats: [] }] },
+    }),
+  ).toThrow()
 })
 
 it('缩放表核对固定来源、完整数字声明及当前目录归属', () => {

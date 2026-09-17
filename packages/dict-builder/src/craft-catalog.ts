@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import {
   CORRUPTION_SOURCE,
   type CraftCatalog,
+  craftScalabilityPatterns,
   DESECRATION_SOURCE,
   FLASK_SOURCE,
   JEWEL_SOURCE,
@@ -186,12 +187,7 @@ for (const locale of ['en', 'zh-CN', 'zh-TW'] as const) {
 const { localizedNames, audit: nameAudit } = buildCraftNames(staticTables)
 const scalability = normalizeCraftScalability(
   parsePobModFile(await source('ModScalability', STAT_SCALABILITY_SOURCE.sha256)),
-  [
-    ...modifiers.flatMap((mod) => mod.lines),
-    ...corruptions.flatMap((mod) => mod.lines),
-    ...augments.flatMap((augment) => augment.lines),
-    ...bases.flatMap((base) => base.implicit?.split('\n') ?? []),
-  ],
+  craftScalabilityPatterns({ modifiers, corruptions, augments, bases }),
 )
 console.log(
   `属性缩放资料：${Object.keys(scalability.lines).length} 条目录文本已对应，${scalability.missing.length} 条缺少对应：${scalability.missing.join('；')}`,

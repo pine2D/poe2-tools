@@ -26,7 +26,7 @@ export function ResistancePanel({
     <section className="defence-panel" aria-label="装备抗性合计">
       <h3>装备抗性合计</h3>
       <p className="rehearsal-scope-note">
-        统计本件固有属性、词缀与当前符文提供的无条件抗性，计入已核对的催化品质。元素合计为火、冰、雷之和，全元素抗性计入三项。不包含角色其他来源、抗性上限、穿透、友军或条件效果。
+        统计本件固有属性、词缀与当前镶嵌物提供的无条件抗性，包含已激活的绑定抗性，计入已核对的催化品质。元素合计为火、冰、雷之和，全元素抗性计入三项。不包含角色其他来源、抗性上限、穿透、友军或条件效果。
       </p>
       <div className="defence-values">
         {(Object.keys(RESISTANCE_LABELS) as ResistanceProperty[]).map((property) => {

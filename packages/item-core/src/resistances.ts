@@ -218,12 +218,12 @@ export function estimateResistances(
           true,
         )
   }
-  for (const { augment } of socketEffects(catalog, state))
-    for (const line of augment.lines)
+  for (const { augment, activeBondedLines } of socketEffects(catalog, state))
+    for (const line of [...augment.lines, ...activeBondedLines])
       addLine(
         line,
-        augment.lines,
-        augment.lines.map(() => []),
+        [...augment.lines, ...activeBondedLines],
+        [...augment.lines, ...activeBondedLines].map(() => []),
         false,
       )
   return finish()

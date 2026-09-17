@@ -5,6 +5,7 @@ import {
   type CraftCatalog,
   type CraftState,
   isArmourIdol,
+  isBodyIdolId,
   isConditionalArmourRune,
   isExtendedArmourRune,
   isInfluenceRune,
@@ -46,6 +47,18 @@ function specialRuneNote(augment: CatalogAugment): string {
     ? '火焰点伤计入本件武器；技能费用转换单独生效，不作为伤害倍率。'
     : '保留触发条件与怒火阈值，不推算角色最终收益；增效不会改变怒火消耗阈值。'
 }
+
+function bodyIdolNote(augment: CatalogAugment): string | null {
+  if (!isBodyIdolId(augment.id)) return null
+  if (augment.name === 'Idol of Maxarius')
+    return '此效果提供角色额外咒符位；腰带基底的咒符位仍单独核对。'
+  if (augment.name === 'Carved Majesty')
+    return '按全身已镶嵌雕像数量计算；这里只显示每枚效果，全身数量未知时不推算总精魂。'
+  return null
+}
+
+const displayLines = (augment: CatalogAugment) =>
+  isBodyIdolId(augment.id) ? [augment.lines.join('\n')] : augment.lines
 
 export function SocketPanel({
   catalog,
@@ -167,7 +180,8 @@ export function SocketPanel({
         <>
           <section aria-label="当前镶嵌效果" className="socket-current">
             {state.sockets.map((id, index) => {
-              const effect = effects.find((entry) => entry.socketIndex === index)?.augment
+              const socketEffect = effects.find((entry) => entry.socketIndex === index)
+              const effect = socketEffect?.augment
               return (
                 // biome-ignore lint/suspicious/noArrayIndexKey: 孔位序号即稳定身份，操作不会改变孔数。
                 <article key={index}>
@@ -175,19 +189,46 @@ export function SocketPanel({
                     孔位 {index + 1} ·{' '}
                     {id === null ? '空孔' : label(effect?.name ?? '未识别镶嵌物')}
                   </h4>
-                  {effect?.lines.map((line) => (
-                    <div key={line}>
-                      {translateLine?.(line, Object.keys(effect.tradeHashes)) ? (
-                        <span>{translateLine(line, Object.keys(effect.tradeHashes))}</span>
-                      ) : null}
-                      <code>{line}</code>
-                    </div>
-                  ))}
+                  {effect
+                    ? displayLines(effect).map((line) => (
+                        <div key={line}>
+                          {translateLine?.(line, Object.keys(effect.tradeHashes)) ? (
+                            <span>{translateLine(line, Object.keys(effect.tradeHashes))}</span>
+                          ) : null}
+                          <code>{line}</code>
+                        </div>
+                      ))
+                    : null}
+                  {effect && isBodyIdolId(effect.id) && effect.bonded ? (
+                    <section aria-label={`孔位 ${index + 1} 绑定效果`}>
+                      <p>
+                        <strong>
+                          绑定属性 · {socketEffect?.bondedActive ? '已激活' : '未激活'}
+                        </strong>
+                      </p>
+                      {(socketEffect?.bondedActive
+                        ? socketEffect.activeBondedLines
+                        : effect.bonded.lines
+                      ).map((line) => (
+                        <div key={line}>
+                          {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
+                          <code>{line}</code>
+                        </div>
+                      ))}
+                      <p>
+                        {socketEffect?.bondedActive
+                          ? `由本件 ${label('Fox Idol')} 激活，仅作用于本件雕像。`
+                          : `本件镶入 ${label('Fox Idol')} 后生效。`}
+                        绑定状态按已核对孔位推导，不由原文是否显示绑定行决定。
+                      </p>
+                    </section>
+                  ) : null}
                   {effect?.isSocketBound ? <p>绑定孔不能替换；萃取时不会返还此材料。</p> : null}
                   {effect ? <p>该镶嵌物穿戴需求：等级 {effect.levelReq}</p> : null}
                   {effect && isSpecialMartialRune(effect, true) ? (
                     <p>{specialRuneNote(effect)}</p>
                   ) : null}
+                  {effect && bodyIdolNote(effect) ? <p>{bodyIdolNote(effect)}</p> : null}
                 </article>
               )
             })}
@@ -236,8 +277,10 @@ export function SocketPanel({
                 {candidates.map((entry) => (
                   <option key={entry.id} value={entry.id}>
                     {label(entry.name)} ·{' '}
-                    {translateLine?.(entry.lines[0] ?? '', Object.keys(entry.tradeHashes)) ??
-                      entry.lines[0]}
+                    {translateLine?.(
+                      displayLines(entry)[0] ?? '',
+                      Object.keys(entry.tradeHashes),
+                    ) ?? displayLines(entry)[0]}
                   </option>
                 ))}
               </select>
@@ -252,7 +295,7 @@ export function SocketPanel({
               aria-label="镶嵌草稿"
             >
               <h4>待镶入：{label(selected.name)}</h4>
-              {selected.lines.map((line) => (
+              {displayLines(selected).map((line) => (
                 <div key={line}>
                   {translateLine?.(line, Object.keys(selected.tradeHashes)) ? (
                     <span>{translateLine(line, Object.keys(selected.tradeHashes))}</span>
@@ -263,11 +306,32 @@ export function SocketPanel({
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
               {isArmourIdol(selected, true) ? (
                 <p>
-                  保留触发条件与作用对象，不计为本件防御或无条件角色收益；持续时间按各条规则分别增效。
+                  主效果保留触发条件与作用对象，不计为本件防御或无条件角色收益；持续时间按各条规则分别增效。
                   {selected.limitId === 'AncientAugment'
                     ? ' 远古增幅物共用一枚限量，同孔替换会先移除旧材料再核对数量。'
                     : ''}
                 </p>
+              ) : null}
+              {isBodyIdolId(selected.id) ? (
+                <>
+                  {bodyIdolNote(selected) ? <p>{bodyIdolNote(selected)}</p> : null}
+                  <p>
+                    {selected.name === 'Fox Idol'
+                      ? '应用后激活本件所有雕像的绑定属性，包括本枚；普通符文与魂核不受影响。'
+                      : `绑定属性只有在本件镶有 ${label('Fox Idol')} 时生效；角色其他来源尚未核对。`}
+                  </p>
+                  <p>可确认的已激活无条件抗性计入装备合计；其他绑定收益按各条条件单独显示。</p>
+                  {selected.bonded?.lines.map((line) => (
+                    <div key={line}>
+                      <span>绑定属性：</span>
+                      {translateLine?.(line) ? <span>{translateLine(line)}</span> : null}
+                      <code>{line}</code>
+                    </div>
+                  ))}
+                </>
+              ) : null}
+              {previous && isBodyIdolId(previous.id) && previous.name === 'Fox Idol' ? (
+                <p>此孔提供绑定激活；覆盖后会按剩余孔位重新核对本件雕像的绑定效果。</p>
               ) : null}
               {isSpecialMartialRune(selected, true) ? (
                 <p>

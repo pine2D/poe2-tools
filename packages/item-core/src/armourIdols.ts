@@ -1,4 +1,5 @@
 import { astridSourceValid } from './astridRune'
+import { BODY_IDOL_RECORDS, BODY_IDOL_SCALABILITY } from './bodyIdolData'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { GLOVE_IDOL_RECORDS, GLOVE_IDOL_SCALABILITY } from './gloveIdolData'
 import { HELMET_BOOT_IDOL_RECORDS, HELMET_BOOT_IDOL_SCALABILITY } from './helmetBootIdolData'
@@ -6,8 +7,19 @@ import type { CraftState } from './rehearsal'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
 
-const ARMOUR_IDOL_RECORDS = [...GLOVE_IDOL_RECORDS, ...HELMET_BOOT_IDOL_RECORDS]
-const ARMOUR_IDOL_SCALABILITY = { ...GLOVE_IDOL_SCALABILITY, ...HELMET_BOOT_IDOL_SCALABILITY }
+const ARMOUR_IDOL_RECORDS = [
+  ...GLOVE_IDOL_RECORDS,
+  ...HELMET_BOOT_IDOL_RECORDS,
+  ...BODY_IDOL_RECORDS,
+]
+const ARMOUR_IDOL_SCALABILITY = {
+  ...GLOVE_IDOL_SCALABILITY,
+  ...HELMET_BOOT_IDOL_SCALABILITY,
+  ...BODY_IDOL_SCALABILITY,
+}
+export function isBodyIdolId(id: unknown): boolean {
+  return BODY_IDOL_RECORDS.some((a) => a.id === id)
+}
 export function isHelmetBootIdolId(id: unknown): boolean {
   return HELMET_BOOT_IDOL_RECORDS.some((a) => a.id === id)
 }
@@ -34,7 +46,7 @@ function sameData(a: unknown, b: unknown): boolean {
 }
 function scaledLines(source: CatalogAugment, increase: number): string[] | null {
   const lines: string[] = []
-  for (const line of source.lines) {
+  for (const line of isBodyIdolId(source.id) ? [source.lines.join('\n')] : source.lines) {
     // 手套 Majesty 的固定原值为 4000 毫秒，不从显示秒数反推未知掷值区间。
     if (source.category === 'gloves' && source.name === 'Carved Majesty') {
       const milliseconds = Math.trunc((4000 * (100 + increase)) / 100)
@@ -45,7 +57,7 @@ function scaledLines(source: CatalogAugment, increase: number): string[] | null 
     if (!metadata) return null
     const result = scaleStatLineByEffect(line, line, metadata, increase)
     if (!result.ok) return null
-    lines.push(result.value)
+    lines.push(...result.value.split('\n'))
   }
   return lines
 }
@@ -74,9 +86,14 @@ export function armourIdolFits(
   return (
     !!base &&
     base.type ===
-      ({ gloves: 'Gloves', helmet: 'Helmet', boots: 'Boots' } as Record<string, string>)[
-        augment.category
-      ] &&
+      (
+        {
+          gloves: 'Gloves',
+          helmet: 'Helmet',
+          boots: 'Boots',
+          'body armour': 'Body Armour',
+        } as Record<string, string>
+      )[augment.category] &&
     !base.hidden &&
     (!base.runeforged || isRuneforgedArmourBase(base)) &&
     base.variantList === undefined &&
@@ -98,9 +115,11 @@ export function scaleArmourIdol(
     !Number.isInteger(increase) ||
     increase < 0 ||
     increase > 100 ||
-    !augment.lines.every((line) =>
-      sameData(catalog.scalability?.[line], ARMOUR_IDOL_SCALABILITY[line]),
-    )
+    !(
+      isBodyIdolId(augment.id)
+        ? [augment.lines.join('\n'), ...(augment.bonded?.lines ?? [])]
+        : augment.lines
+    ).every((line) => sameData(catalog.scalability?.[line], ARMOUR_IDOL_SCALABILITY[line]))
   )
     return null
   const lines = scaledLines(augment, increase)
@@ -109,6 +128,19 @@ export function scaleArmourIdol(
 const numbers = /[+-]?\d+(?:\.\d+)?/g
 const template = (line: string) =>
   line.replace(numbers, (n) => (n.startsWith('+') ? '+#' : n.startsWith('-') ? '-#' : '#'))
+/** 只还原完整固定多行模板；绝不凭半句补出条件。 */
+export function armourIdolSourceLines(lines: readonly string[]): string[] {
+  return lines.flatMap((line) => {
+    const group = ARMOUR_IDOL_RECORDS.find(
+      (a) =>
+        a.lines.length > 1 && template(a.lines.join(' ')) === template(line.replace(/\s+/g, ' ')),
+    )
+    if (!group) return [line]
+    const values = line.match(numbers) ?? []
+    let index = 0
+    return group.lines.map((part) => part.replace(numbers, () => values[index++] ?? ''))
+  })
+}
 export function isArmourIdolEffectLine(line: string): boolean {
   return (
     ARMOUR_IDOL_RECORDS.some((a) => a.lines.some((p) => template(p) === template(line))) &&
@@ -127,7 +159,7 @@ export function armourIdolSourceMatches(
   const normalize = (lines: readonly string[]) => {
     const sums = new Map<string, number>(),
       exact: string[] = []
-    for (const line of lines.filter(isArmourIdolEffectLine)) {
+    for (const line of armourIdolSourceLines(lines).filter(isArmourIdolEffectLine)) {
       const key = template(line)
       if (
         ARMOUR_IDOL_RECORDS.some(

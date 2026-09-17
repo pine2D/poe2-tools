@@ -1,6 +1,7 @@
 import { RUNE_SUFFIX } from './annotations'
-import { armourIdolSourceMatches } from './armourIdols'
+import { armourIdolSourceMatches, isBodyIdolId } from './armourIdols'
 import { astridSourceMatches } from './astridRune'
+import { BONDED_PREFIX } from './bodyIdols'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
@@ -30,6 +31,14 @@ import {
 } from './weaponRuneEffects'
 
 function supportedSource(lines: readonly string[]): boolean {
+  const main = lines.filter((line) => !line.startsWith(BONDED_PREFIX))
+  if (main.length !== lines.length)
+    return (
+      lines
+        .filter((line) => line.startsWith(BONDED_PREFIX))
+        .every((line) => line.length > BONDED_PREFIX.length && !/\p{Script=Han}/u.test(line)) &&
+      (main.length === 0 || supportedSource(main))
+    )
   return (
     lines.every(isSceptreEffectLine) ||
     parseRuneEffectTotals(lines) !== null ||
@@ -90,20 +99,31 @@ export function runeSocketContributionError(
     if (effective === null) return '孔内符文增效暂不支持，不能核对。'
     augments.push(effective)
   }
+  const observedBonded = state.runeSourceLines
+    .filter((line) => line.startsWith(BONDED_PREFIX))
+    .map((line) => line.slice(BONDED_PREFIX.length))
+  if (observedBonded.length > 0) {
+    if (!augments.some((a) => isBodyIdolId(a.id)))
+      return '绑定来源观察当前仅支持含胸甲雕像的完整孔位声明。'
+    const expectedBonded = augments.flatMap((a) => a.bonded?.lines ?? [])
+    if (JSON.stringify([...observedBonded].sort()) !== JSON.stringify([...expectedBonded].sort()))
+      return '绑定来源与孔位声明不一致：请核对全部绑定效果、条件、数值和重复行。'
+  }
+  const mainSource = state.runeSourceLines.filter((line) => !line.startsWith(BONDED_PREFIX))
   if (
     !influenceRuneSourceMatches(
-      state.runeSourceLines,
+      mainSource,
       augments.flatMap((a) => a.lines),
     )
   )
     return '扩展词缀池符文效果与孔位声明不一致。'
   if (
     !serleSourceMatches(
-      state.runeSourceLines,
+      mainSource,
       augments.flatMap((a) => a.lines),
     ) ||
     !astridSourceMatches(
-      state.runeSourceLines,
+      mainSource,
       augments.flatMap((a) => a.lines),
     )
   )
@@ -111,7 +131,7 @@ export function runeSocketContributionError(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (base && isSupportedSceptreBase(base))
     return sceptreSourceMatches(
-      state.runeSourceLines,
+      mainSource,
       augments.flatMap((a) => a.lines),
     )
       ? null
@@ -120,12 +140,12 @@ export function runeSocketContributionError(
   if (weapon) {
     if (
       !specialMartialSourceMatches(
-        state.runeSourceLines,
+        mainSource,
         augments.flatMap((a) => a.lines),
       )
     )
       return '专属符文的条件或费用行与孔位声明不完整对应，请核对数值与重复行。'
-    const expected = parseWeaponRuneEffectTotals(state.runeSourceLines, weapon.category)
+    const expected = parseWeaponRuneEffectTotals(mainSource, weapon.category)
     const actual = sumWeaponRuneEffects(augments, weapon.category)
     if (!expected || !actual) return '原文或目录包含尚未支持的符文效果，不能核对。'
     return JSON.stringify(expected) === JSON.stringify(actual)
@@ -134,17 +154,17 @@ export function runeSocketContributionError(
   }
   if (
     !armourIdolSourceMatches(
-      state.runeSourceLines,
+      mainSource,
       augments.flatMap((a) => a.lines),
     )
   )
     return '防具雕像效果与孔位声明不一致：请核对完整作用对象、条件、数值和重复行。'
-  const expected = parseRuneEffectTotals(state.runeSourceLines)
+  const expected = parseRuneEffectTotals(mainSource)
   const actual = sumRuneEffects(augments)
   if (expected === null || actual === null) return '原文或目录包含尚未支持的符文效果，不能核对。'
   if (
     !conditionalRuneSourceMatches(
-      state.runeSourceLines,
+      mainSource,
       augments.flatMap((a) => a.lines),
     )
   )

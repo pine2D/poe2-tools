@@ -1,5 +1,6 @@
 import type { CatalogModifierData, CraftCatalog } from './catalog'
 import { corruptionSourceHash } from './corruptionSource'
+import { craftScalabilityPatterns } from './craftScalabilityPatterns'
 import { DESECRATION_SOURCE, desecratedModDomain } from './desecration'
 import { FLASK_SOURCE } from './flaskSource'
 import { JEWEL_SOURCE } from './jewels'
@@ -554,12 +555,7 @@ export function parseCraftCatalog(value: unknown): CraftCatalog {
     )
       return invalid()
     const catalog = value as unknown as CraftCatalog
-    const patterns = new Set([
-      ...catalog.modifiers.flatMap((mod) => mod.lines),
-      ...(catalog.corruptions ?? []).flatMap((mod) => mod.lines),
-      ...(catalog.augments ?? []).flatMap((augment) => augment.lines),
-      ...catalog.bases.flatMap((base) => base.implicit?.split('\n') ?? []),
-    ])
+    const patterns = new Set(craftScalabilityPatterns(catalog))
     for (const [line, scalars] of Object.entries(value.scalability)) {
       if (
         !patterns.has(line) ||
