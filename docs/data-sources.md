@@ -1,5 +1,11 @@
 # 数据源登记表
 
+## 圣化与装备技能辅助孔（2026-09-17，实施前核对）
+
+[GGG 0.2.0](https://www.pathofexile.com/forum/view-thread/3740562/filter-account-type/staff)、[0.5.0](https://www.pathofexile.com/forum/view-thread/3932540)与已登记的[0.5.4](https://www.pathofexile.com/forum/view-thread/3975218/filter-account-type/staff)按 primary 公告核对直接设定辅助孔、装备多技能作用范围、按当前数值圣化及特殊镶嵌限制；仅自写摘要，不复制公告全文。
+
+[Lesser](https://poe2db.tw/us/Lesser_Jewellers_Orb)、[Greater](https://poe2db.tw/us/Greater_Jewellers_Orb)经 Exa 核对物品说明，按 gray 人工机制参考，不建立数据适配器。[Perfect](https://poe2db.tw/us/Perfect_Jewellers_Orb)本轮仅取得元数据，五孔结果依据官方 0.2.0 示例。[PoE2 Wiki 预兆条目](https://www.poe2wiki.net/wiki/Omen_of_Sanctification)的倍率和取整仅列为检索线索，未用于数值实现。无明确再分发许可的页面只保留链接和自写观察，不复制数据或权重；详细边界见[制作收尾与辅助孔核对](finishing-and-skill-sockets-research.md)。应用仍为 v98，没有新增运行时请求。
+
 2026-09-17 v98 面板加权合计只组合既有 `readCraftProperty` 估算与用户自填系数，无新游戏数据源。CoE 公开路线图中的 weighted sum support 仅用于产品流程参照，不读取同行执行参数、权重或代码。缺失面板数据继续传播未知，系数不能用于出现概率或期望费用。
 
 ## 多结果精华（2026-09-16，实施前核对）
