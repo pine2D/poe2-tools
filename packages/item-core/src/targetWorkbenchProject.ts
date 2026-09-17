@@ -48,6 +48,10 @@ import {
   requiresExtendedArmourRuneProjectVersion,
 } from './extendedArmourRuneProjectVersion'
 import {
+  INFLUENCE_BONE_RULES_VERSION,
+  requiresInfluenceBoneProjectVersion,
+} from './influenceBoneProjectVersion'
+import {
   INFLUENCE_RUNE_RULES_VERSION,
   requiresInfluenceRuneProjectVersion,
 } from './influenceRuneProjectVersion'
@@ -107,6 +111,7 @@ export function loadTargetWorkbenchProject(
       value.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
       value.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
       value.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
+      value.rulesVersion === INFLUENCE_BONE_RULES_VERSION ||
       value.rulesVersion === DESTRUCTION_RUNE_RULES_VERSION ||
       value.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
       value.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
@@ -145,6 +150,7 @@ export function reuseTargetCraftPlan(
   const next = structuredClone(current.value.project)
   if (source.fluxCatalogSignature !== undefined) {
     if (
+      next.rulesVersion !== INFLUENCE_BONE_RULES_VERSION &&
       next.rulesVersion !== DESTRUCTION_RUNE_RULES_VERSION &&
       next.rulesVersion !== INFLUENCE_RUNE_RULES_VERSION &&
       next.rulesVersion !== DESECRATION_COUNT_RULES_VERSION &&
@@ -178,6 +184,8 @@ export function reuseTargetCraftPlan(
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
   if (
+    next.rulesVersion === INFLUENCE_BONE_RULES_VERSION ||
+    requiresInfluenceBoneProjectVersion(next) ||
     next.rulesVersion === DESTRUCTION_RUNE_RULES_VERSION ||
     requiresDestructionRuneProjectVersion(next) ||
     next.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
@@ -206,43 +214,46 @@ export function reuseTargetCraftPlan(
     requiresRuneforgeProjectVersion(next)
   ) {
     next.rulesVersion =
-      next.rulesVersion === DESTRUCTION_RUNE_RULES_VERSION ||
-      requiresDestructionRuneProjectVersion(next)
-        ? DESTRUCTION_RUNE_RULES_VERSION
-        : next.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
-            requiresInfluenceRuneProjectVersion(next)
-          ? INFLUENCE_RUNE_RULES_VERSION
-          : next.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
-              requiresDesecrationCountProjectVersion(next)
-            ? DESECRATION_COUNT_RULES_VERSION
-            : next.rulesVersion === PUTREFACTION_RULES_VERSION ||
-                requiresPutrefactionProjectVersion(next)
-              ? PUTREFACTION_RULES_VERSION
-              : next.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
-                  requiresPendingExaltationProjectVersion(next)
-                ? PENDING_EXALTATION_RULES_VERSION
-                : next.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION ||
-                    requiresEssenceOutcomesProjectVersion(next)
-                  ? ESSENCE_OUTCOMES_RULES_VERSION
-                  : next.rulesVersion === SERLE_RULES_VERSION ||
-                      requiresSerleProjectVersion(next, catalog)
-                    ? SERLE_RULES_VERSION
-                    : next.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
-                        requiresCraftedCapacityProjectVersion(next, catalog)
-                      ? CRAFTED_CAPACITY_RULES_VERSION
-                      : next.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
-                          requiresConditionalArmourRuneProjectVersion(next, catalog)
-                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                        : next.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION ||
-                            requiresMasterworkProjectVersion(next)
-                          ? MASTERWORK_CRAFT_RULES_VERSION
-                          : next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
-                              requiresExtendedArmourRuneProjectVersion(next, catalog)
-                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                            : next.rulesVersion === WARD_RUNE_RULES_VERSION ||
-                                requiresWardRuneProjectVersion(next, catalog)
-                              ? WARD_RUNE_RULES_VERSION
-                              : RUNEFORGE_CRAFT_RULES_VERSION
+      next.rulesVersion === INFLUENCE_BONE_RULES_VERSION ||
+      requiresInfluenceBoneProjectVersion(next)
+        ? INFLUENCE_BONE_RULES_VERSION
+        : next.rulesVersion === DESTRUCTION_RUNE_RULES_VERSION ||
+            requiresDestructionRuneProjectVersion(next)
+          ? DESTRUCTION_RUNE_RULES_VERSION
+          : next.rulesVersion === INFLUENCE_RUNE_RULES_VERSION ||
+              requiresInfluenceRuneProjectVersion(next)
+            ? INFLUENCE_RUNE_RULES_VERSION
+            : next.rulesVersion === DESECRATION_COUNT_RULES_VERSION ||
+                requiresDesecrationCountProjectVersion(next)
+              ? DESECRATION_COUNT_RULES_VERSION
+              : next.rulesVersion === PUTREFACTION_RULES_VERSION ||
+                  requiresPutrefactionProjectVersion(next)
+                ? PUTREFACTION_RULES_VERSION
+                : next.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
+                    requiresPendingExaltationProjectVersion(next)
+                  ? PENDING_EXALTATION_RULES_VERSION
+                  : next.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION ||
+                      requiresEssenceOutcomesProjectVersion(next)
+                    ? ESSENCE_OUTCOMES_RULES_VERSION
+                    : next.rulesVersion === SERLE_RULES_VERSION ||
+                        requiresSerleProjectVersion(next, catalog)
+                      ? SERLE_RULES_VERSION
+                      : next.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
+                          requiresCraftedCapacityProjectVersion(next, catalog)
+                        ? CRAFTED_CAPACITY_RULES_VERSION
+                        : next.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
+                            requiresConditionalArmourRuneProjectVersion(next, catalog)
+                          ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                          : next.rulesVersion === MASTERWORK_CRAFT_RULES_VERSION ||
+                              requiresMasterworkProjectVersion(next)
+                            ? MASTERWORK_CRAFT_RULES_VERSION
+                            : next.rulesVersion === EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
+                                requiresExtendedArmourRuneProjectVersion(next, catalog)
+                              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                              : next.rulesVersion === WARD_RUNE_RULES_VERSION ||
+                                  requiresWardRuneProjectVersion(next, catalog)
+                                ? WARD_RUNE_RULES_VERSION
+                                : RUNEFORGE_CRAFT_RULES_VERSION
     if (requiresDestructionRuneProjectVersion(next) || requiresInfluenceRuneProjectVersion(next)) {
       const hash = catalog._meta.sources.find(
         (source) => source.path === 'src/Data/ModRunes.lua',
@@ -260,6 +271,7 @@ export function reuseTargetCraftPlan(
   else if (requiresCombatArmourRuneProjectVersion(next, catalog))
     next.rulesVersion = COMBAT_ARMOUR_RUNE_RULES_VERSION
   if (
+    next.rulesVersion !== INFLUENCE_BONE_RULES_VERSION &&
     next.rulesVersion !== DESTRUCTION_RUNE_RULES_VERSION &&
     next.rulesVersion !== INFLUENCE_RUNE_RULES_VERSION &&
     next.rulesVersion !== DESECRATION_COUNT_RULES_VERSION &&
@@ -281,6 +293,7 @@ export function reuseTargetCraftPlan(
   if (
     next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
     next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION &&
+    next.rulesVersion !== INFLUENCE_BONE_RULES_VERSION &&
     next.rulesVersion !== DESTRUCTION_RUNE_RULES_VERSION &&
     next.rulesVersion !== INFLUENCE_RUNE_RULES_VERSION &&
     next.rulesVersion !== DESECRATION_COUNT_RULES_VERSION &&

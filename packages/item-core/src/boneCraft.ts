@@ -36,7 +36,7 @@ export function prepareDesecration(
   removableAffixes: CraftAffix[]
   requiresRemoval: boolean
 }> {
-  const influenceError = influenceBoneError(catalog, state)
+  const influenceError = influenceBoneError(catalog, state, config)
   if (influenceError) return { ok: false, error: influenceError }
   if (!isBoneOmenConfig(config)) return { ok: false, error: '骨骼预兆配置无效。' }
   if (state.corrupted) return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }

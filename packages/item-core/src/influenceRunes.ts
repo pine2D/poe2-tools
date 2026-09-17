@@ -158,14 +158,24 @@ export function influenceRuneSourceMatches(
 }
 
 /** 不输出未经核对的部分候选池；准备入口和待揭示状态共用此边界。 */
+export function supportsInfluenceDesecration(tags: readonly string[]): boolean {
+  return tags.length === 1 && ['chronomancy', 'marksman', 'destruction'].includes(tags[0] ?? '')
+}
+
 export function influenceBoneError(
   catalog: CraftCatalog,
   state: Pick<CraftState, 'baseId' | 'sockets'>,
+  context?: { lichOmen?: unknown; revealOmen?: unknown; putrefaction?: unknown },
 ): string | null {
   const source = influenceRuneTags(catalog, state)
   return !source.ok
     ? source.error
-    : source.value.length > 0
+    : source.value.length > 0 &&
+        (!context ||
+          !supportsInfluenceDesecration(source.value) ||
+          context.lichOmen !== undefined ||
+          context.revealOmen !== undefined ||
+          context.putrefaction !== undefined)
       ? '扩展词缀池符文与骨骼揭示的交互尚未核实。'
       : null
 }

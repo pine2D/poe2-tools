@@ -448,3 +448,5 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 ### 影响符文与骨骼交互的原始经验线索（2026-09-17）
 
 人工阅读 [Chronomancy 亵渎回答](https://www.reddit.com/r/PathOfExile2/comments/1ua53i8/can_you_desecrate_a_destruction_modifier/)与[作者 Thrud 长杖制作记录](https://www.reddit.com/r/PoECrafting/comments/1ue6fxh/did_l_scam_these_buyers/)。归为 gray 玩家第一手经验，不是官方规则；仅保存链接与自写机制摘要，不复制装备、图片、价格、统计或词缀表。前者自述鞋子曾通过亵渎获得移速／减缓效力复合词缀；后者明确在已有 Thrud 后施加骨骼、追加前缀再揭示，但未列骨骼档位和揭示三候选。不能据此推定六族全覆盖、巫妖／回响／腐烂组合、完整池或概率；详见绑定符文核对文档。没有新增网络适配器。
+
+[Kolr 手套制作者原帖](https://www.reddit.com/r/PathOfExile2/comments/1u6sljr/finished_my_glove_craft_for_my_bow_martial_artist/)同属 gray 人工机制参考。2026-09-17 从搜索索引取得作者正文，直连全文读取失败；作者描述镶入 Kolr 后亵渎取得地形连锁，不满意则使用光明预兆重试。只登记链接与自写摘要，不保存装备、成本或图片。此证据支持普通骨骼交互方向，不能证明当前版所有候选、材料档位或概率；模拟候选继续来自已登记 MIT 快照，并明确区分规则推导与实测。

@@ -69,8 +69,7 @@ const equal = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.s
 /** 只验证属性身份；孔位、基底、容量和物等由制作状态入口统一核对。 */
 export function isDestructionAffix(catalog: CraftCatalog, affix: CraftAffix): boolean {
   const rule = declarations.find((entry) => entry.id === affix.modId)
-  if (!rule || affix.crafted || affix.desecrated || statScalabilitySourceHash(catalog) === null)
-    return false
+  if (!rule || affix.crafted || statScalabilitySourceHash(catalog) === null) return false
   const sources = catalog._meta.sources.filter((s) => s.path === 'src/Data/ModItem.lua')
   if (
     sources.length !== 1 ||

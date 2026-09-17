@@ -297,6 +297,10 @@ export {
   validateStoredCraftImplicitTargets,
 } from './implicitTargets'
 export {
+  INFLUENCE_BONE_RULES_VERSION,
+  requiresInfluenceBoneProjectVersion,
+} from './influenceBoneProjectVersion'
+export {
   INFLUENCE_RUNE_RULES_VERSION,
   requiresInfluenceRuneProjectVersion,
 } from './influenceRuneProjectVersion'

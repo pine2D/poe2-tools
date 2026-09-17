@@ -41,7 +41,11 @@ import { isDestructionAffix } from './destructionEffects'
 import { isEssenceMappedMod } from './essences'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
-import { influenceBoneError, influenceRuneTags } from './influenceRunes'
+import {
+  influenceBoneError,
+  influenceRuneTags,
+  supportsInfluenceDesecration,
+} from './influenceRunes'
 import { jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel, isRadiusJewel, jewelSourceHash } from './jewels'
 import {
@@ -349,9 +353,9 @@ export function createCraftState(
     return failure('固有属性与所选基底不一致。')
 
   if (Object.hasOwn(input, 'pendingDesecration')) {
-    const influenceError = influenceBoneError(catalog, input)
-    if (influenceError) return failure(influenceError)
     if (!isPendingDesecration(input.pendingDesecration)) return failure('待揭示亵渎字段无效。')
+    const influenceError = influenceBoneError(catalog, input, input.pendingDesecration)
+    if (influenceError) return failure(influenceError)
     if (
       input.rarity !== 'rare' ||
       input.affixes.some((affix) => affix?.desecrated) ||
@@ -482,7 +486,11 @@ export function createCraftState(
       (isBasicJewel(base) || isRadiusJewel(base)) && affix.crafted
         ? isLiquidEmotionMappedMod(catalog, base, mod.id)
         : (affix.desecrated
-            ? eligible(base, mod, [])
+            ? eligible(
+                base,
+                mod,
+                supportsInfluenceDesecration(influence.value) ? influence.value : [],
+              )
             : hasExistingModEligibility(base, mod) ||
               (!affix.crafted && eligible(base, mod, influence.value))) ||
           (affix.crafted === true &&

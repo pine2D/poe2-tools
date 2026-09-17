@@ -2,6 +2,7 @@ import { appendCraftAffix } from './affixIdentity'
 import { boneOmenError, boneRevealOmenError, matchesBoneLich } from './boneOmens'
 import { BONE_RULES } from './boneRules'
 import { type CatalogMod, type CraftCatalog, inspectModPool } from './catalog'
+import { influenceRuneTags } from './influenceRunes'
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import type { CraftState } from './rehearsal'
@@ -17,6 +18,8 @@ export function collectDesecrationCandidates(
   if (!pending) return []
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return []
+  const influence = influenceRuneTags(catalog, state)
+  if (!influence.ok) return []
   const selected = selectedIds === undefined ? null : new Set(selectedIds)
   const family = (mod: CatalogMod) => JSON.stringify([mod.kind, mod.group])
   // 固定选项只需验证相关族；同族未选档位仍参与最高档回退，不能先按ID删掉。
@@ -35,7 +38,7 @@ export function collectDesecrationCandidates(
       : catalog.modifiers.filter((mod) => selectedFamilies.has(family(mod))),
     state.itemLevel,
     existing.map((mod) => mod.group),
-    existing.flatMap((mod) => mod.addsTags),
+    [...existing.flatMap((mod) => mod.addsTags), ...influence.value],
     pending.putrefaction ? 'ordinary' : 'desecrated',
   )
     .filter(

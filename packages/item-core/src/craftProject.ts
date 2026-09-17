@@ -53,6 +53,7 @@ import {
   validateCraftImplicitTargets,
   validateStoredCraftImplicitTargets,
 } from './implicitTargets'
+import { requiresInfluenceBoneProjectVersion } from './influenceBoneProjectVersion'
 import { requiresInfluenceRuneProjectVersion } from './influenceRuneProjectVersion'
 import { JEWEL_EFFECT_EMOTION_ID } from './jewelEffectRules'
 import { usesJewelEffect } from './jewelEffects'
@@ -681,6 +682,7 @@ export function readNativeTargetProjectProjection(
   desecrationCount = false,
   influenceRunes = false,
   destructionRunes = false,
+  influenceBones = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -707,6 +709,7 @@ export function readNativeTargetProjectProjection(
     desecrationCount,
     influenceRunes,
     destructionRunes,
+    influenceBones,
   )
 }
 
@@ -735,6 +738,7 @@ function readCraftProject(
   desecrationCount = false,
   influenceRunes = false,
   destructionRunes = false,
+  influenceBones = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -753,6 +757,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!influenceBones && requiresInfluenceBoneProjectVersion(value))
+    return fail('符文骨骼必须使用 v95 项目，包括起点、完整未来和未执行指引。')
   if (!destructionRunes && requiresDestructionRuneProjectVersion(value))
     return fail('毁灭符文必须使用 v94 项目，包括起点、目标、声明、完整未来、指引及报价。')
   if (!influenceRunes && requiresInfluenceRuneProjectVersion(value))

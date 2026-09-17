@@ -17,6 +17,7 @@ import {
   craftAffixSpace,
   definitionTargetIdsForMods,
   desecrationCandidates,
+  influenceRuneTags,
   inspectNumericLines,
   isCraftBone,
   matchesTargetInterval,
@@ -68,6 +69,7 @@ function BoneCraftEditor({
   onPreview,
 }: BoneCraftPanelProps) {
   const id = useId()
+  const influence = influenceRuneTags(catalog, state)
   const [boneId, setBoneId] = useState<CraftBone | null>(configuration?.boneId ?? null)
   const [directionOmen, setDirectionOmen] = useState<BoneDirectionOmen | null>(
     configuration?.directionOmen ?? null,
@@ -341,6 +343,12 @@ function BoneCraftEditor({
       <p>
         指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份施加预兆；回响在固定首组时另计一份，重选与最终揭示不重复计费。
       </p>
+      {influence.ok && influence.value.length > 0 ? (
+        <p>
+          影响符文的骨骼候选按目录与规则推导，尚未逐项游戏实测；目前仅开放 Uhtred、Kolr、Thrud
+          的普通骨骼组合，巫妖、回响及腐烂交互待核实。
+        </p>
+      ) : null}
       {disabled ? <p>请先应用或取消当前草稿。</p> : null}
       {!pending ? (
         <>

@@ -114,7 +114,8 @@ it('未知来源实际掷值仅使匹配目标未知，范围外和小数不被�
     expect(isDestructionAffix(catalog, source('Fire', value))).toBe(false)
   expect(isDestructionAffix(catalog, { ...source('Fire', 20), fractured: true })).toBe(true)
   expect(isDestructionAffix(catalog, { ...source('Fire', 20), crafted: true })).toBe(false)
-  expect(isDestructionAffix(catalog, { ...source('Fire', 20), desecrated: true })).toBe(false)
+  // 属性身份不等于制作授权；亵渎来源的符文与部位由整件状态入口核对。
+  expect(isDestructionAffix(catalog, { ...source('Fire', 20), desecrated: true })).toBe(true)
 })
 
 it('来源身份、元数据、重复条目和重复来源不能被文字匹配绕过', () => {

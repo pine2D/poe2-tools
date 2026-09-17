@@ -13,7 +13,7 @@ import { essenceSourceHash, inspectEssences, supportedEssenceId } from './essenc
 import { type ItemInspection, knownExplicitHeader } from './export'
 import { fluxEligibleModIds } from './fluxes'
 import { matchesGrantedSkillImplicitLines, resolveGrantedSkill } from './grantedSkills'
-import { influenceRuneTags } from './influenceRunes'
+import { influenceRuneTags, supportsInfluenceDesecration } from './influenceRunes'
 import { normalizeJewelFixedImportLine } from './jewelEffectImport'
 import { usesJewelEffect } from './jewelEffects'
 import { importedJewelRadiusError, JEWEL_RADIUS_HEADER } from './jewelRadius'
@@ -486,7 +486,9 @@ function readCraftImport(
       base,
       modifiers,
       [matchingSource],
-      source.mod.states?.some((state) => state === 'crafted' || state === 'desecrated')
+      source.mod.states?.includes('crafted') ||
+        (source.mod.states?.includes('desecrated') &&
+          !supportsInfluenceDesecration(influence.value))
         ? []
         : influence.value,
     )[0]
