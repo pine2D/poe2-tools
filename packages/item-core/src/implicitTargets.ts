@@ -1,3 +1,4 @@
+import { readBaseSkillVariants } from './baseSkillVariants'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
 import type { CatalogBase, CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
@@ -24,6 +25,7 @@ import {
   inspectSkillSocketsCraft,
   prepareSkillSocketsCraft,
   readCraftGrantedSkillSockets,
+  readSingleGrantedSkillForSockets,
   SKILL_SOCKET_TIERS,
   type SkillSocketsCraftOperation,
   type SkillSocketTier,
@@ -69,7 +71,19 @@ const fail = (error: string): { ok: false; error: string } => ({ ok: false, erro
 function descriptors(
   base: CatalogBase,
 ): Pick<CraftImplicitTargetCandidate, 'lineIndex' | 'line' | 'ranges' | 'kind' | 'skillName'>[] {
-  if (isSkillVariantAmulet(base)) return []
+  if (isSkillVariantAmulet(base)) {
+    const variants = readBaseSkillVariants(base)
+    return variants
+      ? [
+          {
+            kind: 'granted-skill-sockets',
+            lineIndex: variants.commonLines.length,
+            line: '装备授予技能辅助孔',
+            ranges: [{ index: 0, lineIndex: 0, min: 2, max: 5, step: 1 }],
+          },
+        ]
+      : []
+  }
   const skills = readBaseGrantedSkills(base)
   const skill =
     skills.length === 1 &&
@@ -256,8 +270,12 @@ function mapped(catalog: CraftCatalog, state: CraftState) {
   if (!base) return fail('固有目标基底不存在。')
   const effective = resolveCraftImplicitPatterns(base, checked.value)
   if (!effective.ok) return effective
-  const original = isSkillVariantAmulet(base)
-    ? effective.value.patterns
+  const variants = isSkillVariantAmulet(base) ? readBaseSkillVariants(base) : null
+  const original = variants
+    ? [
+        ...variants.commonLines,
+        ...effective.value.patterns.filter((line) => /^Grants Skill:/.test(line)),
+      ]
     : (base.implicit?.split('\n') ?? [])
   const actual = checked.value.implicitLines ?? original
   const charm = effective.value.charm
@@ -271,8 +289,8 @@ function mapped(catalog: CraftCatalog, state: CraftState) {
   )
   const mapping = uniqueMapping(edges)
   if (!mapping) return fail('固有属性目录行存在重复或歧义，不能确定目标身份。')
-  // 腰带有效模板跟随实际行序，非腰带沿用目录顺序；两种操作顺序都与核心一致。
-  const patternPositions = mapping.map((position, index) => (charm ? position : index))
+  // 腰带和选定变体模板跟随实际行序，其他基底沿用目录顺序。
+  const patternPositions = mapping.map((position, index) => (charm || variants ? position : index))
   return {
     ok: true as const,
     value: { base, mapping, patternPositions, patterns: effective.value.patterns, actual, charm },
@@ -312,11 +330,13 @@ export function craftImplicitTargetCandidates(
     ok: true,
     value: descriptors(base).map((entry) => {
       if (entry.kind === 'granted-skill-sockets') {
+        const skill = readSingleGrantedSkillForSockets(catalog, state)
         const read = readCraftGrantedSkillSockets(catalog, state)
         const inspected = inspectSkillSocketsCraft(catalog, state)
         const sockets = read.ok ? read.value.sockets : null
         return {
           ...entry,
+          ...(skill.ok ? { skillName: skill.value.skillName, line: skill.value.observedLine } : {}),
           actual: [sockets],
           rerollable: false,
           reasons: [

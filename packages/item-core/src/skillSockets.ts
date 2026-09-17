@@ -1,10 +1,14 @@
 import { DESTROYED_ITEM_MESSAGE } from './architect'
+import { readBaseSkillVariants } from './baseSkillVariants'
 import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { isPlainProjectJSON } from './craftProjectJSON'
+import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { readSingleGrantedSkill } from './perfectFlux'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { isSkillVariantAmulet, resolveSkillVariantImplicitPatterns } from './skillVariantAmulets'
+import { socketEffects } from './sockets'
 
 export const SKILL_SOCKET_TIERS = {
   lesser: { count: 3, name: "Lesser Jeweller's Orb" },
@@ -18,6 +22,51 @@ export interface SkillSocketsCraftOperation {
   previousSockets: 2 | 3 | 4
 }
 const fail = (error: string): CraftResult<never> => ({ ok: false, error })
+
+/** 辅助孔专用只读资格；不扩展完美溶剂或最高等级声明。 */
+export function readSingleGrantedSkillForSockets(
+  catalog: CraftCatalog,
+  state: CraftState,
+): CraftResult<{ skillName: string; lineIndex: number; observedLine: string }> {
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (!base || !isSkillVariantAmulet(base)) {
+    const skill = readSingleGrantedSkill(catalog, state)
+    if (!skill.ok) return skill
+    const lineIndex = base ? readBaseGrantedSkills(base)[0]?.lineIndex : undefined
+    return lineIndex === undefined
+      ? fail('缺少授予技能目录槽位。')
+      : {
+          ok: true,
+          value: {
+            skillName: skill.value.skillName,
+            observedLine: skill.value.observedLine,
+            lineIndex,
+          },
+        }
+  }
+  const parsed = readBaseSkillVariants(base)
+  const lines = state.implicitLines ?? []
+  const resolved = resolveSkillVariantImplicitPatterns(base, lines)
+  if (!resolved.ok) return resolved
+  const skill = parsed?.variants.find((entry) =>
+    matchesGrantedSkillImplicitLines([...parsed.commonLines, entry.line], lines),
+  )
+  const observedLine = lines.find((line) => /^Grants Skill:/.test(line))
+  if (!parsed || !skill || observedLine === undefined)
+    return fail('辅助孔需要唯一选定且完整对应的项链技能。')
+  const additional = [
+    ...state.affixes.flatMap((affix) => affix.lines),
+    ...(state.corruption?.lines ?? []),
+    ...(state.secondCorruption?.lines ?? []),
+    ...socketEffects(catalog, state).flatMap(({ augment }) => augment.lines),
+  ]
+  if (additional.some((line) => /\bGrants?\b.*\bSkills?\b/i.test(line)))
+    return fail('装备包含额外授予技能，当前作用范围尚未支持。')
+  return {
+    ok: true,
+    value: { skillName: skill.name, lineIndex: parsed.commonLines.length, observedLine },
+  }
+}
 
 /** 声明和结果均须对应唯一装备技能，不从符文孔或等级推断。 */
 export function grantedSkillSocketsStateError(
@@ -43,7 +92,7 @@ export function grantedSkillSocketsStateError(
     state.grantedSkillSockets < state.declaredSkillSockets
   )
     return '装备技能辅助孔操作结果不能低于起点声明。'
-  const skill = readSingleGrantedSkill(catalog, state)
+  const skill = readSingleGrantedSkillForSockets(catalog, state)
   return skill.ok ? null : skill.error
 }
 
@@ -127,7 +176,7 @@ export function readCraftGrantedSkillSockets(
 ): CraftResult<{ name: string; sockets: number | null }> {
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  const skill = readSingleGrantedSkill(catalog, checked.value)
+  const skill = readSingleGrantedSkillForSockets(catalog, checked.value)
   return skill.ok
     ? {
         ok: true,

@@ -147,7 +147,7 @@ it('中文导入由原文确定唯一技能，空白技能草稿不能覆盖它'
   expect(saved.operations).toEqual([])
   expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
   expect(screen.queryByLabelText('起点装备最高技能等级')).toBeNull()
-  expect(screen.queryByLabelText('起点技能辅助孔数')).toBeNull()
+  expect(screen.getByLabelText('起点技能辅助孔数')).toBeTruthy()
 })
 
 it('选定技能后可搜索显式目标并保留目标配置，候选不会丢失起点技能', () => {
@@ -163,4 +163,52 @@ it('选定技能后可搜索显式目标并保留目标配置，候选不会丢�
   )
   expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
   expect(screen.getByRole('button', { name: '生成多步示例路线' })).toBeTruthy()
+})
+
+it('项链辅助孔独立声明并沿目标建议制作，v103保存撤销后的未来', () => {
+  setup()
+  fireEvent.change(screen.getByLabelText('空白起点授予技能'), { target: { value: '2' } })
+  fireEvent.change(screen.getByLabelText('起点技能辅助孔数'), { target: { value: '3' } })
+  expect(screen.queryByLabelText('起点装备最高技能等级')).toBeNull()
+  click('从空白基底开始')
+  expect(save().rulesVersion).toBe('basic-2026-09-17-v103')
+  expect(save().initialState.declaredSkillSockets).toBe(3)
+  expect(save().operations).toEqual([])
+  fireEvent.change(screen.getByLabelText('技能辅助孔 3 · 数值 1 下限'), {
+    target: { value: '5' },
+  })
+  click('保存技能辅助孔 3 条件')
+  click('预览建议：完美工匠石')
+  click('取消辅助孔结果')
+  expect(save().operations).toEqual([])
+  click('预览建议：完美工匠石')
+  click('应用辅助孔结果')
+  expect(screen.getByText('已达成 1 / 1')).toBeTruthy()
+  click('撤销')
+  const saved = save()
+  expect(saved.cursor).toBe(0)
+  expect(saved.operations).toEqual([{ kind: 'skill-sockets', tier: 'perfect', previousSockets: 3 }])
+  expect(saved.initialState.implicitLines.at(-1)).toBe(
+    'Grants Skill: Level (1-20) Cast on Critical',
+  )
+  expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
+  click('恢复本机演练')
+  click('重做')
+  expect(screen.getByText('已达成 1 / 1')).toBeTruthy()
+})
+
+it('中文项链无需先选择空白技能即可声明已有辅助孔，原文仍独立保存', () => {
+  setup(raw)
+  expect((screen.getByLabelText('空白起点授予技能') as HTMLSelectElement).value).toBe('')
+  fireEvent.change(screen.getByLabelText('起点技能辅助孔数'), { target: { value: '4' } })
+  click('从当前装备开始')
+  const saved = save()
+  expect(saved.rulesVersion).toBe('basic-2026-09-17-v103')
+  expect(saved.initialState.sourceText).toBe(raw)
+  expect(saved.initialState.declaredSkillSockets).toBe(4)
+  expect(saved.initialState.declaredSkillLevel).toBeUndefined()
+  expect(saved.initialState.implicitLines.at(-1)).toBe(
+    'Grants Skill: Level 8 Cast on Critical (Max Level 12)',
+  )
+  expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
 })

@@ -1,5 +1,10 @@
 # 数据源登记表
 
+## 技能项链辅助孔（2026-09-17，v103）
+
+沿用下文 primary [GGG 0.5.0](https://www.pathofexile.com/forum/view-thread/3932540)（Item Changes，装备授予技能及全部技能作用范围）、[0.2.0](https://www.pathofexile.com/forum/view-thread/3740562/filter-account-type/staff)（直接设定孔数），以及固定 MIT 基底目录。三种项链的 variantList 是互斥候选，实际装备只选择一项；不将该列表视为同时授予多个技能。
+
+重新读取 [CoE 公开更新日志](https://beta.craftofexile.com/changelog)，其中手动修改装备孔数的说明没有在所读文字中证明是技能辅助孔，故不用于本规则推导。仅作 gray 产品体验对照，不读取代码、目录或权重。检索命中的第三方攻略存在仍要求逐档升孔的旧说法，不采纳。无新增适配器、运行时外站请求或数据快照；只保留自写结论。
 ## 技能变体项链（2026-09-17，v102）
 
 沿用固定 MIT PoB2 提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 `Bases/amulet.lua` 及已登记 [Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L1750)。前者提供三种基底的候选技能与容量修正，后者用于核对魔法和稀有品质的容量计算；临时文件 SHA-256 为 `0ca39961256eefc960da7b30b4e5cb6eb45d08037aa72bc751201cc0630af2a4`，不复制第三方实现入库。

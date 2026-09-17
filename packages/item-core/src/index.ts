@@ -19,6 +19,10 @@ export {
   isAlloyMappedMod,
   parseAlloyCatalog,
 } from './alloys'
+export {
+  AMULET_SKILL_SOCKETS_RULES_VERSION,
+  requiresAmuletSkillSocketsProjectVersion,
+} from './amuletSkillSocketsProjectVersion'
 export type { ArchitectCraftOperation } from './architect'
 export { isAstridRune } from './astridRune'
 export type { BaseSkillVariants } from './baseSkillVariants'

@@ -180,6 +180,9 @@ export function CraftEntry({
   const knownImportedMaximum =
     matchingImport && imported.skills?.length === 1 ? (imported.skills[0]?.maxLevel ?? null) : null
   const canDeclareSkillLevel = blank.ok && readCraftGrantedSkillLevel(catalog, blank.value).ok
+  const canDeclareSkillSockets =
+    (blank.ok && readCraftGrantedSkillSockets(catalog, blank.value).ok) ||
+    (fromImport?.ok && readCraftGrantedSkillSockets(catalog, fromImport.value).ok)
   function begin(state: CraftState, importedSockets?: (string | null)[], importedQuality?: number) {
     if (
       skillLevelDeclaration !== '' &&
@@ -459,7 +462,7 @@ export function CraftEntry({
           </label>
         </>
       ) : null}
-      {blank.ok && readCraftGrantedSkillSockets(catalog, blank.value).ok && !readOnlyImport ? (
+      {canDeclareSkillSockets && !readOnlyImport ? (
         <label>
           起点技能辅助孔数
           <select

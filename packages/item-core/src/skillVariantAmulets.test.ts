@@ -208,7 +208,10 @@ it.each(['Lament', 'Portent', 'Absent'])('%s 点金/崇高到实际容量上限�
 })
 
 it('技能变体没有通用固有数值目标，但查询仍有效', () => {
-  expect(craftImplicitTargetCandidates(catalog, state('Lament'))).toEqual({ ok: true, value: [] })
+  expect(craftImplicitTargetCandidates(catalog, state('Lament'))).toMatchObject({
+    ok: true,
+    value: [{ kind: 'granted-skill-sockets', lineIndex: 1, actual: [null] }],
+  })
 })
 
 it('Absent 显式目标建议保留零词缀蜕变准备步', () => {
@@ -265,7 +268,7 @@ it.each(['Lament', 'Portent', 'Absent'])(
     })
     expect(catalystQualityLimit(base(name))).toBeNull()
     expect(inspectPerfectFluxCraft(catalog, initial).ok).toBe(false)
-    expect(inspectSkillSocketsCraft(catalog, initial).ok).toBe(false)
+    expect(inspectSkillSocketsCraft(catalog, initial).ok).toBe(true)
     expect(socketCapacity(catalog, initial)).toBe(0)
   },
 )
