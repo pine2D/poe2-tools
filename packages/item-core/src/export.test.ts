@@ -35,6 +35,45 @@ function inspect(text = focus) {
 }
 
 describe('装备对照与受控 CoE 转接', () => {
+  it.each(['Crystal Focus', 'Twig Focus', 'Wreath Focus'])(
+    '已验收的普通法器 %s 支持魔法与稀有转接',
+    (name) => {
+      const expanded = {
+        ...dictionary,
+        items: { bases: { [name]: '测试法器' }, uniques: {} },
+      }
+      for (const magic of [false, true]) {
+        const text = focus.replace('符文法器', '测试法器')
+        const parsed = parseItem(
+          magic ? text.replace('稀有度: 稀有\n试验 星光', '稀有度: 魔法') : text,
+        )
+        if (!parsed.ok) throw new Error(parsed.error)
+        const result = inspectItem(parsed.item, expanded)
+        expect(result.bridgeReasons).toEqual([])
+        expect(result.bridgeText).toContain(name)
+        expect(result.bridgeText).toContain(`Rarity: ${magic ? 'Magic' : 'Rare'}`)
+        expect(result.bridgeText).toContain('+38(36-41) to maximum Energy Shield')
+        expect(result.bridgeText).toContain('+17(16-20)% to Lightning Resistance')
+      }
+    },
+  )
+
+  it('魔法转接拒绝超过一前一后，锻造与未知法器不借普通名单放行', () => {
+    const magic = focus.replace('稀有度: 稀有\n试验 星光', '稀有度: 魔法')
+    const tooMany = inspect(`${magic}\n{ 前缀属性 "重复的" (等阶：6) }\n+38(36-41) 能量护盾上限`)
+    expect(tooMany.bridgeText).toBeNull()
+    expect(tooMany.bridgeReasons).toContain('前后缀数量超出魔法法器的一前一后限制。')
+    for (const name of ['Runeforged Runed Focus', 'Future Focus']) {
+      const parsed = parseItem(focus)
+      if (!parsed.ok) throw new Error(parsed.error)
+      const result = inspectItem(parsed.item, {
+        ...dictionary,
+        items: { bases: { [name]: '符文法器' }, uniques: {} },
+      })
+      expect(result.bridgeText).toBeNull()
+    }
+  })
+
   it('符文行去标记反查后恢复标记，独立于普通后缀并可选择真实歧义候选', () => {
     const text = `${focus}\n--------\n闪电抗性 +20% (rune)\n未知效果 (rune)`
     const parsed = parseItem(text)

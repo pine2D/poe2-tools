@@ -60,7 +60,32 @@ const CLASSES: Record<string, string> = {
 }
 const RARITIES = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' }
 
-// 首批黑盒验收：Runed Focus 的六类常规词缀。逐项扩展必须附 CoE 保真验证。
+// 普通法器的六类常规词缀；基底与稀有度扩展见 docs/coe-focus-bridge-research.md。
+const VERIFIED_FOCI = new Set([
+  'Antler Focus',
+  'Arrayed Focus',
+  'Attuned Focus',
+  'Crystal Focus',
+  'Cultist Focus',
+  'Druidic Focus',
+  'Elegant Focus',
+  'Engraved Focus',
+  'Hallowed Focus',
+  'Jingling Focus',
+  'Leyline Focus',
+  'Magus Focus',
+  'Plumed Focus',
+  'Runed Focus',
+  'Sacred Focus',
+  'Staghorn Focus',
+  'Tasalian Focus',
+  'Tonal Focus',
+  'Twig Focus',
+  'Voodoo Focus',
+  'Whorl Focus',
+  'Woven Focus',
+  'Wreath Focus',
+])
 const VERIFIED_STATS = new Set([
   'explicit.stat_4052037485',
   'explicit.stat_3291658075',
@@ -208,7 +233,7 @@ export function inspectItem(
       return { source, resolution }
     })
   if (hasSpecialModifierSource(item))
-    bridgeReasons.push('已识别特殊词缀来源或破裂物品，特殊制作尚未开放，CoE 转接尚未验证。')
+    bridgeReasons.push('已识别特殊词缀来源或破裂物品，其 CoE 转接尚未验证。')
   if (
     item.mods.some((mod) => mod.magnitude !== undefined) ||
     item.blocks.some(
@@ -221,8 +246,13 @@ export function inspectItem(
   if (runes.length > 0) bridgeReasons.push('符文效果的 CoE 转接尚未验证。')
   if (comparisonReason !== null) bridgeReasons.push(comparisonReason)
   if (base.english === null) bridgeReasons.push('基底未唯一识别，不能完整转接。')
-  if (base.english !== 'Runed Focus' || className !== 'Foci' || item.rarity !== 'rare') {
-    bridgeReasons.push('首批转接仅验证符文法器的常规稀有装备，其他基底与稀有度暂供对照。')
+  if (
+    base.english === null ||
+    !VERIFIED_FOCI.has(base.english) ||
+    className !== 'Foci' ||
+    !['magic', 'rare'].includes(item.rarity)
+  ) {
+    bridgeReasons.push('转接仅验证23种普通法器的魔法或稀有装备，其他基底与稀有度暂供对照。')
   }
   if (item.corrupted || item.mirrored || item.unidentified)
     bridgeReasons.push('当前特殊状态尚未完成 CoE 转接验证。')
@@ -250,9 +280,16 @@ export function inspectItem(
     }
   }
   if (
-    ['prefix', 'suffix'].some((kind) => item.mods.filter((mod) => mod.kind === kind).length > 3)
+    ['prefix', 'suffix'].some(
+      (kind) =>
+        item.mods.filter((mod) => mod.kind === kind).length > (item.rarity === 'magic' ? 1 : 3),
+    )
   ) {
-    bridgeReasons.push('前后缀数量超出已验证的普通法器范围。')
+    bridgeReasons.push(
+      item.rarity === 'magic'
+        ? '前后缀数量超出魔法法器的一前一后限制。'
+        : '前后缀数量超出已验证的普通法器范围。',
+    )
   }
   const name = item.nameLines[0]?.raw ?? ''
   const unique =

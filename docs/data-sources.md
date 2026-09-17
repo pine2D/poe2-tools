@@ -309,7 +309,7 @@ v76 执行范围补充：仅使用本节材料升级至 20 的确定性说明和
 | `data/fixtures/synthetic/*.build` | 合成语料（覆盖率度量），只含公开的英文词缀模板与基底名 |
 | `packages/dict-builder/fixtures/*` | 手写的迷你测试数据（非抓取产物）；只含极少量真实名称用于 join 用例，不作为词典来源 |
 | `packages/item-core/src/*test.ts`、`apps/build-l10n/src/craft/*test.ts` | 自造装备文本测试，验证分组、范围、逆向模板和导出门禁；真实用户样本仅保存在 `data/fixtures/local/`，不入库 |
-| `packages/item-core/src/export.ts` 中的类别标题对照和首批转接白名单 | 手工适配装备剪贴板标题；白名单来自公开 CoE 界面中的合成法器黑盒验收，仅作兼容范围标记，不含第三方 mod 数据或权重 |
+| `packages/item-core/src/export.ts` 中的类别标题对照和转接白名单 | 手工适配装备剪贴板标题；白名单来自公开 CoE 界面中的合成法器黑盒验收，2026-09-18 扩展至固定 MIT 目录的23种普通法器、魔法与稀有输入，仅作兼容范围标记，不含第三方 mod 数据或权重；见[转接核对](coe-focus-bridge-research.md) |
 | `packages/dict-builder/src/craft-catalog.ts` 中的声明排除规则 | 固定 PoB2 提交内 Runeforged Sturdy Crossbow 的武器表重复定义两个不同 LightningMax；按名称和完整声明 SHA-256 隔离，不猜数值。重复名称声明按完整归一化内容生成自有变体 ID（不是游戏官方 ID），仅 hidden 差异可以合并，但保留全部声明位置及隐藏标记；不同固有属性、基础属性、需求与标签分别保留 |
 
 ## 更新节奏
