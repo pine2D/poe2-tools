@@ -129,7 +129,11 @@ export function SkillSocketsPanel({
   onPreview: (operation: SkillSocketsCraftOperation) => void
 }) {
   return (
-    <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
+    <details
+      data-craft-tool="skill-sockets"
+      className="essence-catalog essence-craft"
+      open={configuration ? true : undefined}
+    >
       <summary ref={entryRef}>装备技能辅助孔</summary>
       <SkillSocketsForm
         {...props}

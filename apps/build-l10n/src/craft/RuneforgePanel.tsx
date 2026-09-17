@@ -25,7 +25,7 @@ export function RuneforgePanel({
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   return (
-    <details className="essence-catalog essence-craft">
+    <details data-craft-tool="runeforge" className="essence-catalog essence-craft">
       <summary ref={entryRef}>防具锻造</summary>
       {prepared.ok ? (
         <>

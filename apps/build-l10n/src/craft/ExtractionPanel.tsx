@@ -58,7 +58,11 @@ export function ExtractionPanel({
 }: Props) {
   const prepared = prepareExtractionCraft(catalog, state)
   return (
-    <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
+    <details
+      data-craft-tool="extraction"
+      className="essence-catalog essence-craft"
+      open={configuration ? true : undefined}
+    >
       <summary ref={entryRef}>萃取石制作</summary>
       <p>消耗 1 颗萃取石，摧毁装备并返还已核对的非绑定镶嵌物；可用于腐化装备。</p>
       <p>只支持已完整核对的孔位和镶嵌物。未知孔位、全空孔及当前不支持的绑定镶嵌物不能萃取。</p>

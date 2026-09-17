@@ -1,0 +1,57 @@
+.craft-step-navigation {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+.craft-step-navigation header,
+.craft-step-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.craft-step-navigation header {
+  justify-content: space-between;
+}
+.craft-step-navigation h3,
+.craft-step-navigation h4 {
+  margin: 0;
+}
+.craft-step-navigation nav > div {
+  margin-block: 0.75rem;
+}
+.craft-step-navigation h4 {
+  margin-bottom: 0.4rem;
+}
+.craft-step-navigation label {
+  display: grid;
+  gap: 0.4rem;
+}
+.craft-step-navigation input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.craft-step-navigation button,
+.craft-step-navigation p,
+.craft-currency-checks article {
+  overflow-wrap: anywhere;
+}
+.craft-step-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.craft-step-pending button {
+  margin-inline-start: 0.5rem;
+}
+.craft-currency-checks article {
+  display: grid;
+  gap: 0.25rem;
+  margin-block: 0.65rem;
+}
+[data-craft-tool]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

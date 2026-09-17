@@ -77,7 +77,7 @@ export function ArchitectPanel({
   if (!state.corrupted || state.destroyed || state.twiceCorrupted) return null
   const result = applyCraftStep(catalog, state, { kind: 'architect', outcome: 'destroy' })
   return (
-    <section className="craft-sockets" aria-label="建筑师结果预演">
+    <section className="craft-sockets" aria-label="建筑师结果预演" data-craft-tool="architect">
       <h3>建筑师宝珠：指定结果预演</h3>
       <p>
         指定“追加强化”或“摧毁”比较路线，每次计一颗建筑师宝珠。成功后标记二重腐化，保留原属性、品质与孔内物。
@@ -119,7 +119,13 @@ export function ArchitectPanel({
       </button>
       {!result.ok ? <p>{result.error}</p> : null}
       {draft ? (
-        <section ref={preview} tabIndex={-1} className="socket-preview" aria-label="建筑师结果草稿">
+        <section
+          ref={preview}
+          tabIndex={-1}
+          className="socket-preview"
+          aria-label="建筑师结果草稿"
+          data-craft-pending
+        >
           <h4>{draft.outcome === 'destroy' ? '摧毁当前装备' : '追加腐化强化'}</h4>
           <p>尚未消耗材料。应用后记录一颗建筑师宝珠。</p>
           {draft.outcome === 'destroy' ? (

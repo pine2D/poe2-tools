@@ -64,7 +64,7 @@ export function CatalystPreviewPanel({
   const unchanged = result.ok ? result.value.groups.length - groups.length : 0
   const text = (line: string) => translateLine?.(line) ?? line
   return (
-    <section className="catalyst-panel" aria-label="催化剂效果预览">
+    <section className="catalyst-panel" aria-label="催化剂效果预览" data-craft-tool="catalyst">
       {state.catalyst ? (
         <section aria-label="当前催化品质">
           <h4>

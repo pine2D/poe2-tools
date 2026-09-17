@@ -86,7 +86,7 @@ export function CorruptionPanel({
   const jewel = catalog.bases.find((base) => base.id === state.baseId)?.type === 'Jewel'
   if (state.corrupted)
     return (
-      <section className="craft-sockets" aria-label="腐化状态">
+      <section className="craft-sockets" aria-label="腐化状态" data-craft-tool="vaal">
         <h3 ref={corruptedHeading} tabIndex={-1}>
           {state.twiceCorrupted ? '已二重腐化' : '已腐化'}
         </h3>
@@ -117,7 +117,7 @@ export function CorruptionPanel({
   const unchanged = applyCraftStep(catalog, state, { kind: 'vaal', outcome: 'unchanged' })
   const socket = applyCraftStep(catalog, state, { kind: 'vaal', outcome: 'socket' })
   return (
-    <section className="craft-sockets" aria-label="瓦尔结果预演">
+    <section className="craft-sockets" aria-label="瓦尔结果预演" data-craft-tool="vaal">
       <h3>瓦尔石：指定结果预演</h3>
       <p>
         手选“属性不变”{!jewel ? '“增加一孔”' : ''}
@@ -185,7 +185,13 @@ export function CorruptionPanel({
         translateLine={translateLine}
       />
       {draft ? (
-        <section ref={preview} tabIndex={-1} className="socket-preview" aria-label="腐化结果草稿">
+        <section
+          ref={preview}
+          tabIndex={-1}
+          className="socket-preview"
+          aria-label="腐化结果草稿"
+          data-craft-pending
+        >
           <h4>
             {draft.outcome === 'socket'
               ? '腐化增加一孔'

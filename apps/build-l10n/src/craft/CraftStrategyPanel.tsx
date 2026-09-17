@@ -131,7 +131,7 @@ export function CraftStrategyPanel({
     onChange({ ...strategy, rules })
   }
   return (
-    <section className="craft-strategy" aria-label="条件制作指引">
+    <section className="craft-strategy" aria-label="条件制作指引" data-craft-tool="strategy">
       <h3>条件制作指引</h3>
       <p>
         从上到下匹配第一条规则，同条顶层条件需全部满足，可在条件内嵌套全部、任一或取反。每次应用、撤销或恢复后重新判断。

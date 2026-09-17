@@ -144,6 +144,7 @@ export function EssenceCraftPanel({
       tabIndex={-1}
       className="essence-catalog essence-craft"
       aria-label="精华制作"
+      data-craft-tool="essence"
     >
       <h3>精华制作</h3>
       <p>

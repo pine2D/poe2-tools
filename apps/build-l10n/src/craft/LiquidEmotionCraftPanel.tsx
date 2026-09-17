@@ -120,7 +120,11 @@ export function LiquidEmotionCraftPanel({
   if (!entries.length || catalog.bases.find((base) => base.id === state.baseId)?.type !== 'Jewel')
     return null
   return (
-    <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
+    <details
+      data-craft-tool="emotion"
+      className="essence-catalog essence-craft"
+      open={configuration ? true : undefined}
+    >
       <summary ref={entryRef}>液态情感制作</summary>
       <p>
         游戏随机移除一组词缀，加入材料对应的工艺属性。这里选择一种可能结果进行演练；已有工艺最多一组。双侧材料的结果选择仅用于演练。

@@ -28,7 +28,11 @@ export function MasterworkPanel({
   const local = (name: string) =>
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   return (
-    <details className="essence-catalog essence-craft" open={configuration !== undefined}>
+    <details
+      data-craft-tool="masterwork"
+      className="essence-catalog essence-craft"
+      open={configuration !== undefined}
+    >
       <summary ref={entryRef}>符文升级</summary>
       <p>
         {local('Masterwork Rune')}{' '}

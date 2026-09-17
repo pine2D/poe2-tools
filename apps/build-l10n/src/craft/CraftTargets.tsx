@@ -301,7 +301,7 @@ export function CraftTargets({
   )
 
   return (
-    <section className="craft-targets" aria-label="制作目标与下一步">
+    <section className="craft-targets" aria-label="制作目标与下一步" data-craft-tool="targets">
       <header>
         <h3>制作目标</h3>
         {advice.ok && totalTargets > 0 ? (

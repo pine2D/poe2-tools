@@ -33,7 +33,7 @@ export function FracturePanel({
 }: FracturePanelProps) {
   const prepared = useMemo(() => prepareFracture(catalog, state), [catalog, state])
   return (
-    <section className="rehearsal-fracture" aria-label="破裂制作">
+    <section className="rehearsal-fracture" aria-label="破裂制作" data-craft-tool="fracture">
       <h3>{label} · 破裂制作</h3>
       <p>破裂会锁定一组词缀及其数值，后续神圣和普通移除跳过该组；已有工艺状态继续保留。</p>
       {!prepared.ok ? (

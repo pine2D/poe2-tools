@@ -1068,3 +1068,132 @@ it('整组数值未变时仍展示亵渎来源变化', () => {
   expect(screen.getByText('来源变化')).toBeDefined()
   expect(screen.getByText('亵渎来源：亵渎 → 普通')).toBeDefined()
 })
+
+describe('当前步骤导航', () => {
+  it('只定位现有制作面板并展开详情，不生成操作或费用', () => {
+    renderPanel()
+    const navigation = screen.getByRole('region', { name: '当前步骤' })
+    expect(within(navigation).getByText('已应用 0 步')).toBeTruthy()
+    const history = screen.getByLabelText('演练历史').textContent
+    fireEvent.click(within(navigation).getByRole('button', { name: '前往防具锻造' }))
+    const summary = screen.getByText('防具锻造', { selector: 'summary' })
+    expect(document.activeElement).toBe(summary)
+    expect(summary.closest('details')?.open).toBe(true)
+    expect(screen.getByLabelText('演练历史').textContent).toBe(history)
+    expect(screen.queryByRole('button', { name: '应用防具锻造结果' })).toBeNull()
+  })
+
+  it('按用途查找工具，空结果可恢复；不会显示未挂载的合金面板', () => {
+    renderPanel()
+    const navigation = screen.getByRole('region', { name: '当前步骤' })
+    expect(within(navigation).queryByRole('button', { name: '前往合金制作' })).toBeNull()
+    const search = within(navigation).getByRole('searchbox', { name: '查找制作工具' })
+    fireEvent.change(search, { target: { value: '打孔' } })
+    expect(within(navigation).getByRole('button', { name: '前往符文镶嵌与打孔' })).toBeTruthy()
+    expect(within(navigation).queryByRole('button', { name: '前往防具锻造' })).toBeNull()
+    fireEvent.change(search, { target: { value: '不存在的操作' } })
+    expect(within(navigation).getByText('没有匹配的制作工具。')).toBeTruthy()
+    fireEvent.change(search, { target: { value: '' } })
+    expect(within(navigation).getByRole('button', { name: '前往防具锻造' })).toBeTruthy()
+  })
+
+  it('待选择结果时优先定位草稿；应用与撤销后步骤状态随真实历史更新', () => {
+    renderPanel()
+    prepare('蜕变石')
+    const navigation = screen.getByRole('region', { name: '当前步骤' })
+    fireEvent.click(within(navigation).getByRole('button', { name: '继续处理当前结果' }))
+    expect(document.activeElement).toBe(screen.getByLabelText('本次指定结果'))
+    expect(within(navigation).getByText(/尚未计入已应用步骤/)).toBeTruthy()
+    choose('ArmourA')
+    apply()
+    expect(within(navigation).queryByRole('button', { name: '继续处理当前结果' })).toBeNull()
+    expect(within(navigation).getByText('已应用 1 步')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '撤销' }))
+    expect(within(navigation).getByText('已应用 0 步')).toBeTruthy()
+  })
+
+  it('通货核对复用实际门禁，区分可选移除对象与不可用通货', () => {
+    renderPanel(state('rare', [{ modId: 'Life', lines: ['+12 to maximum Life'] }]))
+    const navigation = screen.getByRole('region', { name: '当前步骤' })
+    fireEvent.click(within(navigation).getByRole('button', { name: '核对本档通货' }))
+    const check = within(navigation).getByRole('region', { name: '本档通货核对' })
+    expect(within(check).getByText('蜕变石只能用于普通装备。')).toBeTruthy()
+    const annulment = within(check).getByRole('article', { name: '剥离石' })
+    expect(annulment.textContent).toContain('可选择移除对象')
+    expect(annulment.textContent).not.toContain('必须指定一个当前词缀')
+    const history = screen.getByLabelText('演练历史').textContent
+    fireEvent.click(within(navigation).getByRole('button', { name: '前往基础通货与预兆' }))
+    expect(screen.getByLabelText('演练历史').textContent).toBe(history)
+  })
+
+  it('腐化状态提示不把专用面板统称为不可制作', () => {
+    renderPanel({
+      ...state('rare', [{ modId: 'Life', lines: ['+12 to maximum Life'] }]),
+      corrupted: true,
+    })
+    const navigation = screen.getByRole('region', { name: '当前步骤' })
+    expect(within(navigation).getByText(/装备已腐化.*各工具/)).toBeTruthy()
+    expect(within(navigation).getByRole('button', { name: '前往萃取石制作' })).toBeTruthy()
+    fireEvent.click(within(navigation).getByRole('button', { name: '核对本档通货' }))
+    expect(within(navigation).queryByText('可选择结果')).toBeNull()
+  })
+})
+
+it('步骤入口定位移除选择和打孔草稿，取消后不保留过期跳转', () => {
+  renderPanel({
+    ...state('rare', [{ modId: 'Life', lines: ['+12 to maximum Life'] }]),
+    sockets: [],
+  })
+  const navigation = screen.getByRole('region', { name: '当前步骤' })
+  prepare('剥离石')
+  fireEvent.click(within(navigation).getByRole('button', { name: '继续处理当前结果' }))
+  expect(document.activeElement).toBe(screen.getByLabelText('选择要移除的词缀'))
+  fireEvent.click(screen.getByRole('button', { name: '取消选择' }))
+  prepare('巧匠石：添加一个孔')
+  fireEvent.click(within(navigation).getByRole('button', { name: '继续处理当前结果' }))
+  expect(document.activeElement).toBe(screen.getByLabelText('打孔草稿'))
+  prepare('取消打孔')
+  expect(within(navigation).queryByRole('button', { name: '继续处理当前结果' })).toBeNull()
+  expect(within(navigation).getByText('已应用 0 步')).toBeTruthy()
+})
+
+it('通货核对跟随层级、预兆及草稿状态，取消后恢复当前配置', () => {
+  renderPanel()
+  const navigation = screen.getByRole('region', { name: '当前步骤' })
+  fireEvent.click(within(navigation).getByRole('button', { name: '核对本档通货' }))
+  const checks = within(navigation).getByRole('region', { name: '本档通货核对' })
+  fireEvent.change(screen.getByLabelText('通货层级'), { target: { value: 'greater' } })
+  expect(within(checks).queryByRole('article', { name: '蜕变石' })).toBeNull()
+  expect(within(checks).getByRole('article', { name: '高级蜕变石' })).toBeTruthy()
+  fireEvent.change(screen.getByLabelText('通货层级'), { target: { value: 'basic' } })
+  fireEvent.change(screen.getByLabelText('本次搭配预兆'), {
+    target: { value: 'sinistral_exaltation' },
+  })
+  expect(within(checks).getByRole('article', { name: '蜕变石' }).textContent).toContain(
+    '该预兆只能搭配对应的基础通货。',
+  )
+  fireEvent.change(screen.getByLabelText('本次搭配预兆'), { target: { value: '' } })
+  prepare('蜕变石')
+  expect(within(checks).queryByRole('article')).toBeNull()
+  expect(within(checks).getByText('请先应用或取消当前结果，再核对通货。')).toBeTruthy()
+  prepare('取消本次结果')
+  expect(within(checks).getByRole('article', { name: '蜕变石' }).textContent).toContain(
+    '可选择结果',
+  )
+})
+
+it('两个演练实例的工具定位互不串台', () => {
+  renderPanel()
+  renderPanel()
+  const panels = screen.getAllByRole('region', { name: '通货演练' })
+  const second = panels[1]
+  if (!second) throw new Error('第二个演练实例未渲染')
+  const navigation = within(second).getByRole('region', { name: '当前步骤' })
+  fireEvent.click(within(navigation).getByRole('button', { name: '前往防具锻造' }))
+  const summaries = panels.map((panel) =>
+    within(panel).getByText('防具锻造', { selector: 'summary' }),
+  )
+  expect(document.activeElement).toBe(summaries[1])
+  expect(summaries[0]?.closest('details')?.open).toBe(false)
+  expect(summaries[1]?.closest('details')?.open).toBe(true)
+})

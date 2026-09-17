@@ -40,7 +40,11 @@ export function PerfectFluxPanel({
   const prepared =
     previousMaxLevel === null ? null : preparePerfectFluxCraft(catalog, state, previousMaxLevel)
   return (
-    <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
+    <details
+      data-craft-tool="perfect-flux"
+      className="essence-catalog essence-craft"
+      open={configuration ? true : undefined}
+    >
       <summary ref={entryRef}>完美溶剂制作</summary>
       <p>消耗 1 颗完美溶剂，将装备固有技能的最高等级升至 20；角色当前使用等级未计算。</p>
       {inspected.ok ? (

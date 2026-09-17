@@ -57,7 +57,11 @@ export function FluxCraftPanel({
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const text = (line: string) => translateLine?.(line) ?? line
   return (
-    <details className="essence-catalog essence-craft" open={configuration ? true : undefined}>
+    <details
+      data-craft-tool="flux"
+      className="essence-catalog essence-craft"
+      open={configuration ? true : undefined}
+    >
       <summary ref={entryRef}>溶剂制作</summary>
       <p>
         一次转换全部适用抗性，每条分别选择基础数值。混沌抗性不能反向转换；这里只指定结果，不计算游戏概率。

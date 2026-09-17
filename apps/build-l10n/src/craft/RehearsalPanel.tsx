@@ -184,6 +184,7 @@ import { BoneCraftPanel } from './BoneCraftPanel'
 import { CatalystPreviewPanel } from './CatalystPreviewPanel'
 import { CraftComparisonPanel } from './CraftComparisonPanel'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
+import { CraftStepNavigator } from './CraftStepNavigator'
 import { CraftStrategyPanel } from './CraftStrategyPanel'
 import { CraftStrategyResults, type SpecialStrategyAction } from './CraftStrategyResults'
 import { CraftTargets } from './CraftTargets'
@@ -566,6 +567,7 @@ export function RehearsalPanel({
   >(null)
   const [boneDraft, setBoneDraft] = useState<BoneCraftOperation | null>(null)
   const [fractureDraft, setFractureDraft] = useState<FractureCraftOperation | null>(null)
+  const workbenchRef = useRef<HTMLElement>(null)
   const fractureDraftRef = useRef<HTMLElement>(null)
   const fracturePanelRef = useRef<HTMLDivElement>(null)
   const restoreFractureFocusRef = useRef(false)
@@ -1764,7 +1766,7 @@ export function RehearsalPanel({
         ? WeaponPanel
         : DefencePanel
   return (
-    <section className="rehearsal-panel" aria-label="通货演练">
+    <section ref={workbenchRef} className="rehearsal-panel" aria-label="通货演练">
       <header className="rehearsal-heading">
         <div>
           <h2>通货演练 · 指定结果演练</h2>
@@ -1793,6 +1795,23 @@ export function RehearsalPanel({
         </div>
       </header>
 
+      <CraftStepNavigator
+        scope={workbenchRef}
+        catalog={catalog}
+        state={current}
+        tier={currencyTier}
+        omen={omen}
+        appliedSteps={cursor}
+        pending={Boolean(
+          draft ||
+            removalCurrency ||
+            socketDraft ||
+            guaranteedDraft ||
+            boneDraft ||
+            fractureDraft ||
+            strategyResultAction,
+        )}
+      />
       {projectControls}
       <p className="rehearsal-project-identity">
         当前演练项目：{translations[base.name] ?? base.name} · 物品等级 {current.itemLevel}
@@ -1908,25 +1927,27 @@ export function RehearsalPanel({
         }}
       />
       {strategyResultAction ? (
-        <CraftStrategyResults
-          action={strategyResultAction}
-          catalog={catalog}
-          state={current}
-          translations={translations}
-          definitions={definitions}
-          {...(translateLine ? { translateLine } : {})}
-          fractureLabel={fractureLabel}
-          onPreview={(operation) => {
-            corruptionStrategyRef.current =
-              'kind' in operation && (operation.kind === 'vaal' || operation.kind === 'architect')
-            setStrategyResultAction(null)
-            startRoute(operation)
-          }}
-          onCancel={() => {
-            setStrategyResultAction(null)
-            strategyTriggerRef.current?.focus()
-          }}
-        />
+        <div data-craft-pending tabIndex={-1}>
+          <CraftStrategyResults
+            action={strategyResultAction}
+            catalog={catalog}
+            state={current}
+            translations={translations}
+            definitions={definitions}
+            {...(translateLine ? { translateLine } : {})}
+            fractureLabel={fractureLabel}
+            onPreview={(operation) => {
+              corruptionStrategyRef.current =
+                'kind' in operation && (operation.kind === 'vaal' || operation.kind === 'architect')
+              setStrategyResultAction(null)
+              startRoute(operation)
+            }}
+            onCancel={() => {
+              setStrategyResultAction(null)
+              strategyTriggerRef.current?.focus()
+            }}
+          />
+        </div>
       ) : null}
       <CraftTargets
         capacityHistory={targetCapacityHistory}
@@ -1994,7 +2015,7 @@ export function RehearsalPanel({
         {...(translateLine === undefined ? {} : { translateLine })}
       />
 
-      <div className="rehearsal-omen">
+      <div className="rehearsal-omen" data-craft-tool="currency" tabIndex={-1}>
         <label>
           本次搭配预兆
           <select
@@ -2096,7 +2117,12 @@ export function RehearsalPanel({
         ))}
       </nav>
       {removalCurrency && (
-        <section className="rehearsal-removal" aria-label="选择要移除的词缀">
+        <section
+          className="rehearsal-removal"
+          aria-label="选择要移除的词缀"
+          data-craft-pending
+          tabIndex={-1}
+        >
           <h3>{CRAFT_CURRENCY_LABELS[removalCurrency]}：先指定移除结果</h3>
           <p>请选择一个完整词缀组。该选择是演练指定结果，不代表游戏中的随机概率。</p>
           {omen ? <p>{craftOmenDescription(omen)}</p> : null}
@@ -2197,6 +2223,7 @@ export function RehearsalPanel({
           tabIndex={-1}
           className="rehearsal-draft"
           aria-label="破裂待应用结果"
+          data-craft-pending
         >
           <h3>{fractureLabel} · 待应用</h3>
           <p>
@@ -2250,6 +2277,7 @@ export function RehearsalPanel({
           tabIndex={-1}
           className="rehearsal-draft"
           aria-label="骨骼待应用结果"
+          data-craft-pending
         >
           <h3>{stepLabel(boneDraft)}</h3>
           <BoneOperationDetails
@@ -2480,6 +2508,7 @@ export function RehearsalPanel({
           tabIndex={-1}
           className="rehearsal-draft"
           aria-label={`${guaranteedLabel}待应用结果`}
+          data-craft-pending
         >
           <h3>{stepLabel(guaranteedDraft)}</h3>
           {guaranteedDraft.kind === 'extraction' ? (
@@ -2831,7 +2860,13 @@ export function RehearsalPanel({
       ) : null}
 
       {draft && (
-        <section className="rehearsal-draft" aria-label="本次指定结果" ref={draftRef} tabIndex={-1}>
+        <section
+          className="rehearsal-draft"
+          aria-label="本次指定结果"
+          data-craft-pending
+          ref={draftRef}
+          tabIndex={-1}
+        >
           <header>
             <div>
               <h3>{stepLabel(draftOperation(draft))}</h3>

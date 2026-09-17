@@ -104,7 +104,7 @@ export function SocketPanel({
     name === 'AncientAugment' ? '远古增幅物' : (translations[name] ?? name)
   if (socketCapacity(catalog, state) === 0 && state.sockets === undefined) return null
   return (
-    <section className="craft-sockets" aria-label="符文镶嵌">
+    <section className="craft-sockets" aria-label="符文镶嵌" data-craft-tool="socket">
       <h3>{hasIdols ? '雕像、符文与魂核镶嵌' : '符文与魂核镶嵌'}</h3>
       <p>
         按当前部位列出可用镶嵌物及其实际效果。普通覆盖不返还旧材料；绑定孔不能替换。镶嵌效果本身不占前后缀位置。
@@ -157,7 +157,13 @@ export function SocketPanel({
         </div>
       ) : null}
       {artificerDraft ? (
-        <section ref={previewRef} tabIndex={-1} className="socket-preview" aria-label="打孔草稿">
+        <section
+          ref={previewRef}
+          tabIndex={-1}
+          className="socket-preview"
+          aria-label="打孔草稿"
+          data-craft-pending
+        >
           <h4>巧匠石</h4>
           <p>
             孔数 {state.sockets?.length ?? 0} → {(state.sockets?.length ?? 0) + 1}
@@ -306,6 +312,7 @@ export function SocketPanel({
               tabIndex={-1}
               className="socket-preview"
               aria-label="镶嵌草稿"
+              data-craft-pending
             >
               <h4>待镶入：{label(selected.name)}</h4>
               {displayLines(selected).map((line) => (

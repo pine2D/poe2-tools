@@ -352,7 +352,11 @@ function BoneCraftEditor({
     </section>
   )
   return (
-    <section className="essence-catalog essence-craft" aria-label="骨骼与揭示">
+    <section
+      className="essence-catalog essence-craft"
+      aria-label="骨骼与揭示"
+      data-craft-tool="bone"
+    >
       <h3>骨骼与揭示</h3>
       <p>
         指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份施加预兆；回响在固定首组时另计一份，重选与最终揭示不重复计费。
