@@ -174,7 +174,9 @@ describe('独立普通符文层', () => {
 
   it('保留 Bonded 来源但生效条目只返回当前孔位的普通效果', () => {
     const effects = socketEffects(catalog, { ...state, sockets: [null, 'fire'] })
-    expect(effects).toEqual([{ socketIndex: 1, augment: rune }])
+    expect(effects).toEqual([
+      { socketIndex: 1, augment: rune, bondedActive: false, activeBondedLines: [] },
+    ])
     expect(effects.flatMap((effect) => effect.augment.lines)).toEqual(['+22% to Fire Resistance'])
     expect(socketEffects(catalog, { ...state, sockets: ['unknown'] })).toEqual([])
   })
