@@ -442,7 +442,11 @@ describe('CatalogPanel', () => {
     )
     await screen.findByRole('heading', { name: /符文法器/ })
     expect(screen.queryByRole('button', { name: '从当前装备开始' })).toBeNull()
-    expect(screen.getByText('咒符和传奇装备仅供对比，不开放制作。')).toBeDefined()
+    expect(
+      within(screen.getByRole('region', { name: '制作起点核对' })).getByText(
+        '核心校验：咒符和传奇装备仅供对比，不开放制作。',
+      ),
+    ).toBeDefined()
   })
 
   it('按中文名称搜索且不向普通目录暴露隐藏基底', async () => {

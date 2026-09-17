@@ -142,6 +142,8 @@ describe('CraftApp', () => {
       if (!details) throw new Error('缺少目录入口')
       expect(details.open).toBe(true)
       const start = await screen.findByRole('button', { name: '从当前装备开始' })
+      fireEvent.click(screen.getByRole('button', { name: '前往制作起点核对' }))
+      expect(document.activeElement).toBe(screen.getByRole('region', { name: '进入通货演练' }))
       expect(within(baseSection).getByText('Known English Name')).toBeDefined()
       expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
         '/craft-data/catalog.json',
@@ -220,6 +222,9 @@ describe('CraftApp', () => {
     const panel = screen.getByRole('region', { name: '授予技能对照' })
     expect(within(panel).getByText('获得技能: 等级 12 试验守卫（最高等级 13）')).toBeDefined()
     const choice = within(panel).getByRole('combobox') as HTMLSelectElement
+    const readiness = screen.getByRole('region', { name: '文本核对' })
+    fireEvent.click(within(readiness).getByRole('button', { name: '选择第 20 行候选' }))
+    expect(document.activeElement).toBe(choice)
     fireEvent.change(choice, { target: { value: 'skill.test_guard' } })
     expect((screen.getByLabelText('英文对照文本') as HTMLTextAreaElement).value).toMatch(
       /Grants Skill: Level 12 Test Guard.*13/,
@@ -247,6 +252,10 @@ describe('CraftApp', () => {
     const region = screen.getByRole('region', { name: '符文效果对照' })
     const selection = within(region).getByRole('combobox') as HTMLSelectElement
     expect(selection.value).toBe('')
+    const readiness = screen.getByRole('region', { name: '文本核对' })
+    const runeLine = text.split('\n').length
+    fireEvent.click(within(readiness).getByRole('button', { name: `选择第 ${runeLine} 行候选` }))
+    expect(document.activeElement).toBe(selection)
     fireEvent.change(selection, { target: { value: 'test-rune-cold' } })
     expect((screen.getByLabelText('英文对照文本') as HTMLTextAreaElement).value).toContain(
       '+20% to Cold Resistance (rune)',
@@ -527,4 +536,89 @@ it.each([
   if (!notice) throw new Error('缺少只读提示')
   expect(within(notice).getByText(reason)).toBeDefined()
   expect(screen.queryByRole('button', { name: '从当前装备开始' })).toBeNull()
+})
+
+describe('文本核对导航', () => {
+  it('合并未知区块诊断并定位 CRLF 原文，不修改内容；重新解析后清单更新', async () => {
+    await renderReady()
+    const text = `${bridgeSample}\n--------\n合成未知区块`.replace(/\n/g, '\r\n')
+    parse(text)
+    const panel = screen.getByRole('region', { name: '文本核对' })
+    const input = screen.getByLabelText('粘贴装备文本') as HTMLTextAreaElement
+    const original = input.value
+    const line = original.split(/\r?\n/).length
+    const actions = within(panel).getAllByRole('button', { name: `定位第 ${line} 行原文` })
+    expect(actions).toHaveLength(1)
+    fireEvent.click(within(panel).getByRole('button', { name: `定位第 ${line} 行原文` }))
+    expect(document.activeElement).toBe(input)
+    expect(input.value.slice(input.selectionStart, input.selectionEnd)).toBe('合成未知区块')
+    expect(input.value).toBe(original)
+    fireEvent.change(input, { target: { value: bridgeSample } })
+    expect(within(panel).queryByRole('button', { name: /定位第/ })).toBeNull()
+    fireEvent.click(within(panel).getByRole('button', { name: '重新解析装备' }))
+    expect(within(panel).getByText(/文本识别已完成/)).toBeDefined()
+    const catalog = screen.getByText('搜索基底、词缀与通货演练').closest('details')
+    if (!catalog) throw new Error('缺少目录入口')
+    catalog.open = false
+    fireEvent.click(within(panel).getByRole('button', { name: '前往制作起点核对' }))
+    expect(catalog.open).toBe(true)
+    expect(document.activeElement).toBe(catalog.querySelector('summary'))
+  })
+
+  it('未知基底及词缀按原文行定位，候选只定位已有下拉控件', async () => {
+    const bundle = {
+      ...craftBundle,
+      items: {
+        ...craftBundle.items,
+        bases: { ...craftBundle.items.bases, 'Alternate Focus': '符文法器' },
+      },
+    }
+    render(<CraftApp fetchImpl={fakeDictFetch(bundle)} />)
+    await screen.findByText('英文词典就绪')
+    parse(bridgeSample)
+    const panel = screen.getByRole('region', { name: '文本核对' })
+    fireEvent.click(within(panel).getByRole('button', { name: '选择第 4 行候选' }))
+    const choice = screen.getByLabelText('基底英文候选')
+    expect(document.activeElement).toBe(choice)
+    fireEvent.change(choice, { target: { value: 'Runed Focus' } })
+    expect(within(panel).queryByRole('button', { name: '选择第 4 行候选' })).toBeNull()
+    parse(
+      bridgeSample
+        .replace('符文法器', '合成未知基底')
+        .replace('闪电抗性 +17(16-20)%', '合成未知词缀'),
+    )
+    expect(within(panel).getByText(/基底未识别/)).toBeDefined()
+    expect(within(panel).getByText(/词缀未识别/)).toBeDefined()
+  })
+
+  it.each(['loading', 'error'])('词典 %s 不把词条误报为未识别', async (state) => {
+    render(
+      <CraftApp
+        fetchImpl={
+          state === 'loading'
+            ? () => new Promise(() => {})
+            : async () => ({ ok: false, status: 500, json: async () => null })
+        }
+      />,
+    )
+    if (state === 'error') await screen.findByText('英文词典加载失败')
+    parse(bridgeSample)
+    const panel = screen.getByRole('region', { name: '文本核对' })
+    expect(within(panel).getByText(/词典.*(?:加载中|加载失败)/)).toBeDefined()
+    expect(within(panel).queryByText(/基底未识别|词缀未识别|文本识别已完成/)).toBeNull()
+  })
+
+  it('英文符文与技能留待目录核对，且只读装备不提供制作入口', async () => {
+    await renderReady()
+    parse(
+      'Item Class: Foci\nRarity: Normal\nRuned Focus\n--------\nItem Level: 46\n--------\nSynthetic Rune Effect (rune)\n--------\nGrants Skill: Synthetic Guard',
+    )
+    const panel = screen.getByRole('region', { name: '文本核对' })
+    expect(within(panel).getByText(/英文符文原文.*目录核对/)).toBeDefined()
+    expect(within(panel).getByText(/英文技能原文.*目录核对/)).toBeDefined()
+    expect(within(panel).queryByText(/符文未识别|技能未识别/)).toBeNull()
+    parse(bridgeSample.replace('稀有度: 稀有', '稀有度: 传奇'))
+    expect(within(panel).queryByRole('button', { name: '前往制作起点核对' })).toBeNull()
+    expect(within(panel).getByText(/^此装备仅供对照/)).toBeDefined()
+  })
 })

@@ -28,9 +28,9 @@ import {
   supportsItemQuality,
   supportsWeaponQuality,
 } from '@poe2-tools/item-core'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CatalogPanelProps } from './CatalogPanel'
-import { ImportSocketSetup } from './ImportSocketSetup'
+import { ImportSocketSetup, type ImportSocketStatus } from './ImportSocketSetup'
 import { ProjectControls } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
 
@@ -60,6 +60,15 @@ export function CraftEntry({
     importedSockets?: (string | null)[]
     importedQuality?: number
   } | null>(null)
+  const [socketStatus, setSocketStatus] = useState<ImportSocketStatus>({
+    status: 'pending',
+    error: null,
+  })
+  const socketRef = useRef<HTMLElement>(null)
+  const qualityRef = useRef<HTMLSelectElement>(null)
+  const catalystRef = useRef<HTMLSelectElement>(null)
+  const skillLevelRef = useRef<HTMLSelectElement>(null)
+  const skillSocketsRef = useRef<HTMLSelectElement>(null)
   const [blankCatalyst, setBlankCatalyst] = useState('')
   const [blankCatalystQuality, setBlankCatalystQuality] = useState('20')
   const [catalystDeclaration, setCatalystDeclaration] = useState('')
@@ -188,6 +197,20 @@ export function CraftEntry({
   const canDeclareSkillSockets =
     (blank.ok && readCraftGrantedSkillSockets(catalog, blank.value).ok) ||
     (fromImport?.ok && readCraftGrantedSkillSockets(catalog, fromImport.value).ok)
+  const hasSocketPath = Boolean(
+    matchingImport &&
+      imported.item &&
+      importCapacity > 0 &&
+      !readOnlyImport &&
+      imported.item.itemLevel === itemLevel,
+  )
+  const currentImportError =
+    hasSocketPath && socketStatus.status !== 'pending'
+      ? socketStatus.error
+      : fromImport && !fromImport.ok
+        ? fromImport.error
+        : null
+  const importReady = fromImport?.ok || (hasSocketPath && socketStatus.status === 'success')
   function begin(state: CraftState, importedSockets?: (string | null)[], importedQuality?: number) {
     if (
       skillLevelDeclaration !== '' &&
@@ -217,11 +240,75 @@ export function CraftEntry({
     }))
   }
   return (
-    <section className="catalog-craft-entry" aria-label="进入通货演练">
+    <section className="catalog-craft-entry" tabIndex={-1} aria-label="进入通货演练">
       <h4>制作起点</h4>
       <p>
         新建普通基底，或保留当前装备的已知词缀开始演练。改变基底、物等或导入文本会结束当前演练。
       </p>
+      <section className="entry-readiness" aria-label="制作起点核对">
+        <h4>制作起点核对</h4>
+        {session ? (
+          <p>
+            演练已开始。下方补充信息仅影响下一次起点；再次点击开始会重新开始演练，替换当前历史。
+          </p>
+        ) : readOnlyImport ? (
+          <>
+            <p>当前装备仅供对照，不能作为制作起点。</p>
+            {fromImport && !fromImport.ok ? <p>核心校验：{fromImport.error}</p> : null}
+          </>
+        ) : matchingImport ? (
+          <>
+            {imported.item?.itemLevel !== itemLevel ? (
+              <p>物等已改变；要从当前装备开始，请恢复原物等 {imported.item?.itemLevel}。</p>
+            ) : fromImport?.ok && hasSocketPath && socketStatus.status === 'error' ? (
+              <p>原文可作为孔位未知的起点；补充孔位尚未通过校验。</p>
+            ) : importReady ? (
+              <p>当前装备已通过起点校验，可开始演练。</p>
+            ) : hasSocketPath && socketStatus.status === 'pending' ? (
+              <p>仍需核对导入孔位；完整核对后由核心校验是否可以开始。</p>
+            ) : null}
+            {currentImportError ? <p>核心校验：{currentImportError}</p> : null}
+          </>
+        ) : (
+          <p>当前为搜索起点，请使用下方空白基底设置。</p>
+        )}
+        {matchingImport && !readOnlyImport ? (
+          <div className="catalog-craft-actions">
+            {hasSocketPath ? (
+              <button type="button" onClick={() => socketRef.current?.focus()}>
+                定位导入孔位
+              </button>
+            ) : null}
+            {qualityFromText?.ok &&
+            qualityFromText.value === undefined &&
+            (isBasicFlaskBase(base) || supportsItemQuality(base) || supportsWeaponQuality(base)) ? (
+              <>
+                <p>品质为可选补充；未核对时保留未知，不代表已经确认零品质。</p>
+                <button type="button" onClick={() => qualityRef.current?.focus()}>
+                  定位导入品质
+                </button>
+              </>
+            ) : null}
+            {catalystFromText?.ok &&
+            catalystFromText.value?.id === null &&
+            catalystLimit !== null ? (
+              <button type="button" onClick={() => catalystRef.current?.focus()}>
+                定位催化品质类型
+              </button>
+            ) : null}
+            {canDeclareSkillLevel && knownImportedMaximum === null ? (
+              <button type="button" onClick={() => skillLevelRef.current?.focus()}>
+                定位装备最高技能等级
+              </button>
+            ) : null}
+            {canDeclareSkillSockets ? (
+              <button type="button" onClick={() => skillSocketsRef.current?.focus()}>
+                定位技能辅助孔数
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
       {!matchingImport && !readOnlyImport && catalystLimit !== null ? (
         <section aria-label="起点已有催化品质">
           <div className="catalyst-fields">
@@ -270,6 +357,7 @@ export function CraftEntry({
             核对催化品质类型
             <select
               aria-label="核对催化品质类型"
+              ref={catalystRef}
               value={catalystDeclaration}
               onChange={(event) => {
                 setCatalystDeclaration(event.target.value)
@@ -405,6 +493,7 @@ export function CraftEntry({
             导入装备品质
             <select
               aria-label="导入装备品质"
+              ref={qualityRef}
               value={qualityDeclaration}
               onChange={(event) => setQualityDeclaration(event.target.value)}
             >
@@ -449,6 +538,7 @@ export function CraftEntry({
               aria-label={
                 knownImportedMaximum !== null ? '空白起点装备最高技能等级' : '起点装备最高技能等级'
               }
+              ref={skillLevelRef}
               value={skillLevelDeclaration}
               onChange={(event) => setSkillLevelDeclaration(event.target.value)}
             >
@@ -473,6 +563,7 @@ export function CraftEntry({
           起点技能辅助孔数
           <select
             aria-label="起点技能辅助孔数"
+            ref={skillSocketsRef}
             value={skillSocketDeclaration}
             onChange={(event) => setSkillSocketDeclaration(event.target.value)}
           >
@@ -503,16 +594,10 @@ export function CraftEntry({
           </button>
         )}
       </div>
-      {fromImport && !fromImport.ok && <p>{fromImport.error}</p>}
-      {fromImport?.ok && imported?.item?.itemLevel !== itemLevel && (
-        <p>物等已改变；要从当前装备开始，请恢复原物等 {imported?.item?.itemLevel}。</p>
-      )}
-      {matchingImport &&
-      imported.item &&
-      importCapacity > 0 &&
-      !readOnlyImport &&
-      imported.item.itemLevel === itemLevel ? (
+      {hasSocketPath && matchingImport && imported.item ? (
         <ImportSocketSetup
+          sectionRef={socketRef}
+          onStatusChange={setSocketStatus}
           skillEntries={dictionary?.stats?.entries}
           catalog={catalog}
           state={importSocketState}

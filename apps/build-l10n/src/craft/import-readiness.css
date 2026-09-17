@@ -1,0 +1,43 @@
+.import-readiness,
+.entry-readiness {
+  margin-block: 20px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  overflow-wrap: anywhere;
+}
+
+.import-readiness h3,
+.entry-readiness h4 {
+  margin-top: 0;
+}
+
+.import-readiness ul {
+  display: grid;
+  gap: 12px;
+  padding-left: 20px;
+}
+
+.import-readiness li > span {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.import-readiness button,
+.entry-readiness button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: start;
+}
+
+.catalog-craft-entry:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
+@media (max-width: 480px) {
+  .import-readiness,
+  .entry-readiness {
+    padding: 12px;
+  }
+}

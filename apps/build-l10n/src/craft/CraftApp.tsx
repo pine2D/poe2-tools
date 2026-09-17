@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createDictLoader, type FetchJson, type LoadedDict } from '../dict/loadDict'
 import { useTheme } from '../theme/useTheme'
 import { CatalogPanel } from './CatalogPanel'
+import { ImportReadinessPanel } from './ImportReadinessPanel'
 import { ModStateBadges } from './ModStateBadges'
 import { RuneSourcePanel, SkillSourcePanel } from './RuneSourcePanel'
 
@@ -128,6 +129,8 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [catalog, setCatalog] = useState<CraftCatalog | null>(null)
   const catalogRef = useRef<HTMLDetailsElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
   const revealedItemRef = useRef<ItemDocument | null>(null)
   const previewRef = useRef<HTMLTextAreaElement>(null)
   const requestRef = useRef(0)
@@ -220,6 +223,39 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
       setMessage('复制失败，已选中文本，请手动复制')
     }
   }, [])
+
+  const locateSource = (line: number | null, candidate: boolean) => {
+    if (dirty) return
+    const choice =
+      candidate && line !== null
+        ? resultsRef.current?.querySelector<HTMLSelectElement>(`select[data-source-line="${line}"]`)
+        : null
+    if (choice) {
+      choice.focus()
+      return
+    }
+    const input = inputRef.current
+    if (!input) return
+    input.focus()
+    if (line === null) return
+    // 使用 textarea 当前值计算位置，兼容浏览器将 CRLF 规范化为 LF。
+    const lines = [...input.value.matchAll(/[^\r\n]*(?:\r\n|\n|\r|$)/g)]
+    const source = lines[line - 1]
+    if (!source) return
+    const start = source.index
+    input.setSelectionRange(start, start + source[0].replace(/[\r\n]+$/, '').length)
+  }
+
+  const openEntry = () => {
+    setCatalogOpen(true)
+    if (catalogRef.current) {
+      catalogRef.current.open = true
+      const target =
+        catalogRef.current.querySelector<HTMLElement>('.catalog-craft-entry') ??
+        catalogRef.current.querySelector('summary')
+      target?.focus()
+    }
+  }
 
   const save = () => {
     try {
@@ -359,6 +395,7 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
             </span>
           </div>
           <textarea
+            ref={inputRef}
             aria-label="粘贴装备文本"
             maxLength={MAX_INPUT_LENGTH}
             value={rawText}
@@ -391,6 +428,19 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
               恢复本机项目
             </button>
           </div>
+          {item && inspection && (
+            <ImportReadinessPanel
+              item={item}
+              inspection={inspection}
+              dirty={dirty}
+              dictionaryState={
+                activeDict ? 'ready' : dictState.kind === 'error' ? 'error' : 'loading'
+              }
+              onParse={() => parse()}
+              onLocate={locateSource}
+              onOpenEntry={openEntry}
+            />
+          )}
           {dirty && <p className="gate gate-warn">输入已修改，请重新解析</p>}
           <p className="craft-message" role="status" aria-live="polite">
             {message}
@@ -398,7 +448,7 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
         </section>
 
         {item !== null && inspection !== null && (
-          <div className="craft-results" aria-disabled={dirty || undefined}>
+          <div ref={resultsRef} className="craft-results" aria-disabled={dirty || undefined}>
             <section className="item-card" aria-labelledby="item-title">
               <div className="item-heading">
                 <div>
@@ -426,6 +476,7 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
                     基底英文候选
                     <select
                       aria-label="基底英文候选"
+                      data-source-line={item.nameLines.at(-1)?.line}
                       disabled={dirty}
                       value={selections[item.nameLines.at(-1)?.line ?? -1] ?? ''}
                       onChange={(event) => {
@@ -469,6 +520,7 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
                               <label>
                                 英文候选
                                 <select
+                                  data-source-line={source.line}
                                   disabled={dirty}
                                   value={selections[source.line] ?? ''}
                                   onChange={(event) =>

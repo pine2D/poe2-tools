@@ -10,7 +10,12 @@ import {
   type StatTemplate,
   socketCandidates,
 } from '@poe2-tools/item-core'
-import { useState } from 'react'
+import { type Ref, useEffect, useState } from 'react'
+
+export type ImportSocketStatus = {
+  status: 'pending' | 'success' | 'error'
+  error: string | null
+}
 
 /** 补充信息独立于原文与历史；每个空孔也需要显式选择。 */
 export function ImportSocketSetup({
@@ -24,6 +29,8 @@ export function ImportSocketSetup({
   onBegin,
   importedQuality,
   skillEntries,
+  onStatusChange,
+  sectionRef,
 }: {
   catalog: CraftCatalog
   state: CraftState
@@ -35,6 +42,8 @@ export function ImportSocketSetup({
   translateLine: ((line: string, statHashes?: readonly string[]) => string | null) | undefined
   skillEntries?: readonly StatTemplate[] | undefined
   importedQuality?: number
+  sectionRef?: Ref<HTMLElement>
+  onStatusChange?: (status: ImportSocketStatus) => void
   onBegin: (state: CraftState, sockets: (string | null)[], quality?: number) => void
 }) {
   const countFromText = importSocketCount(item)
@@ -60,10 +69,27 @@ export function ImportSocketSetup({
           importedQuality,
           skillEntries,
         )
+  const error = !countFromText.ok
+    ? countFromText.error
+    : sourceCount !== null && sourceCount > capacity
+      ? '孔数超过当前支持范围，暂时只能对照。'
+      : checked && !checked.ok
+        ? checked.error
+        : null
+  const status = error ? 'error' : checked?.ok ? 'success' : 'pending'
+  // 只依赖标量；父级重渲染所创建的新核心结果不会触发回调循环。
+  useEffect(() => {
+    onStatusChange?.({ status, error })
+  }, [onStatusChange, status, error])
   const candidates = socketCandidates(catalog, { ...state, sockets: [null] })
 
   return (
-    <section className="import-socket-setup" aria-label="核对导入孔位">
+    <section
+      ref={sectionRef}
+      tabIndex={-1}
+      className="import-socket-setup"
+      aria-label="核对导入孔位"
+    >
       <h4>核对导入孔位</h4>
       <p>
         对照游戏中的装备，确认孔数和每个孔的内容。补充信息单独保存，起点已有符文不计入制作花费。

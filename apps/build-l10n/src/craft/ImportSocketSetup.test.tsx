@@ -2,6 +2,7 @@ import { type CraftCatalog, inspectItem, parseItem } from '@poe2-tools/item-core
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { CraftEntry } from './CraftEntry'
+import { ImportSocketSetup } from './ImportSocketSetup'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
 
 afterEach(() => {
@@ -51,14 +52,14 @@ const catalog: CraftCatalog = {
     ],
   },
 }
-function setup(extra = '', rarity = 'Normal') {
+function setup(extra = '', rarity = 'Normal', selectedCatalog = catalog) {
   const text = `Item Class: Helmets\nRarity: ${rarity}\nTest Helmet\n--------\nItem Level: 12${extra}`
   const parsed = parseItem(text)
   if (!parsed.ok) throw new Error(parsed.error)
   const inspection = inspectItem(parsed.item, {})
   return render(
     <CraftEntry
-      catalog={catalog}
+      catalog={selectedCatalog}
       base={base}
       itemLevel={12}
       imported={{
@@ -124,6 +125,9 @@ it('缺行默认未知，明确零孔后可打孔并保存声明，普通起点�
   expect(saved.importedSockets).toEqual([])
   expect(saved.initialState.sockets).toEqual([])
   expect(saved.operations).toEqual([{ kind: 'artificer' }])
+  expect(saved.initialState.sourceText).toBe(
+    'Item Class: Helmets\nRarity: Normal\nTest Helmet\n--------\nItem Level: 12',
+  )
   fireEvent.click(screen.getByRole('button', { name: '从空白基底开始' }))
   expect(screen.queryByText(/孔位由用户核对/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
@@ -171,6 +175,89 @@ it('传奇不能显示孔位核对入口，未知结构也不能通过手工声�
   first.unmount()
   setup('\n--------\nSockets: S\n--------\nUnmodelled effect')
   fireEvent.change(screen.getByLabelText('核对孔位 1'), { target: { value: 'empty' } })
+  expect(
+    (screen.getByRole('button', { name: '按已核对孔位开始' }) as HTMLButtonElement).disabled,
+  ).toBe(true)
+})
+
+it('起点核对跟随完整孔位校验，成功后不再显示默认缺孔错误', () => {
+  setup('\n--------\nSockets: S')
+  const summary = within(screen.getByRole('region', { name: '制作起点核对' }))
+  expect(summary.getByText(/仍需核对导入孔位/)).toBeDefined()
+  fireEvent.click(summary.getByRole('button', { name: '定位导入孔位' }))
+  expect(document.activeElement).toBe(screen.getByRole('region', { name: '核对导入孔位' }))
+  expect(summary.queryByText('当前装备已通过起点校验，可开始演练。')).toBeNull()
+  fireEvent.change(screen.getByLabelText('核对孔位 1'), { target: { value: 'empty' } })
+  expect(summary.getByText('当前装备已通过起点校验，可开始演练。')).toBeDefined()
+  expect(summary.queryByText(/仍需核对导入孔位/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '按已核对孔位开始' }))
+  expect(summary.getByText(/演练已开始/)).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '重置孔位核对' }))
+  expect(summary.queryByText(/仍需核对导入孔位/)).toBeNull()
+})
+
+it('导入品质只作为可选补充并定位导入控件', () => {
+  setup()
+  const summary = within(screen.getByRole('region', { name: '制作起点核对' }))
+  expect(summary.getByText(/品质为可选补充/)).toBeDefined()
+  fireEvent.click(summary.getByRole('button', { name: '定位导入品质' }))
+  expect(document.activeElement).toBe(screen.getByLabelText('导入装备品质'))
+})
+
+it('孔位选择齐全也保留核心对未知效果的拒绝', () => {
+  setup('\n--------\nSockets: S\n--------\nUnmodelled effect')
+  fireEvent.change(screen.getByLabelText('核对孔位 1'), { target: { value: 'empty' } })
+  const summary = within(screen.getByRole('region', { name: '制作起点核对' }))
+  expect(summary.queryByText('当前装备已通过起点校验，可开始演练。')).toBeNull()
+  expect(summary.getByText(/核心校验/)).toBeDefined()
+})
+
+it('孔位状态只在状态或错误变化时回报，父层新对象不触发循环', () => {
+  const parsed = parseItem(
+    'Item Class: Helmets\nRarity: Normal\nTest Helmet\n--------\nItem Level: 12',
+  )
+  if (!parsed.ok) throw new Error(parsed.error)
+  const onStatusChange = vi.fn()
+  const props = {
+    catalog,
+    state: {
+      baseId: base.id,
+      itemLevel: 12,
+      rarity: 'normal' as const,
+      affixes: [],
+      sourceText: null,
+    },
+    item: parsed.item,
+    inspection: { ...inspectItem(parsed.item, {}), base: { english: base.id, candidates: [] } },
+    capacity: 2,
+    translations: {},
+    translateLine: undefined,
+    onBegin: vi.fn(),
+    onStatusChange,
+  }
+  const view = render(<ImportSocketSetup {...props} />)
+  expect(onStatusChange).toHaveBeenLastCalledWith({ status: 'pending', error: null })
+  fireEvent.change(screen.getByLabelText('导入装备孔数'), { target: { value: '0' } })
+  expect(onStatusChange).toHaveBeenLastCalledWith({ status: 'success', error: null })
+  const calls = onStatusChange.mock.calls.length
+  view.rerender(
+    <ImportSocketSetup
+      {...props}
+      inspection={{ ...props.inspection }}
+      state={{ ...props.state }}
+    />,
+  )
+  expect(onStatusChange).toHaveBeenCalledTimes(calls)
+})
+
+it('默认原文路径可用而孔位声明失败时分别说明，不宣称声明已通过', () => {
+  setup('', 'Normal', { ...catalog, augments: [] })
+  fireEvent.change(screen.getByLabelText('导入装备孔数'), { target: { value: '0' } })
+  const summary = within(screen.getByRole('region', { name: '制作起点核对' }))
+  expect(summary.getByText('原文可作为孔位未知的起点；补充孔位尚未通过校验。')).toBeDefined()
+  expect(summary.queryByText('当前装备已通过起点校验，可开始演练。')).toBeNull()
+  expect(summary.getByText(/核心校验：/)).toBeDefined()
+  expect(screen.getByRole('button', { name: '从当前装备开始' })).toBeDefined()
   expect(
     (screen.getByRole('button', { name: '按已核对孔位开始' }) as HTMLButtonElement).disabled,
   ).toBe(true)

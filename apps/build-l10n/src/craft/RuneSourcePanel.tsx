@@ -46,6 +46,7 @@ function SourceEffectPanel({
             <label>
               {label}英文候选
               <select
+                data-source-line={source.line}
                 aria-label={`第 ${source.line} 行${label}英文候选`}
                 disabled={disabled}
                 value={selections[source.line] ?? ''}
