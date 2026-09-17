@@ -32,7 +32,7 @@ import { jointEffectDivineOperations, liquidRouteContext } from './liquidRouteCa
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenMaterials } from './omens'
-import { evaluateCraftPanelGoals } from './panelGoals'
+import { craftPanelGoalConflict, evaluateCraftPanelGoals } from './panelGoals'
 import { panelRouteCandidates } from './panelRouteCandidates'
 import { pendingExaltationAllowed } from './pendingExaltation'
 import {
@@ -239,6 +239,8 @@ export function planCraftTargetContext(
   )
     return { ok: false, error: '展开状态预算须为 1–512 的整数，深度须为 1–16 的整数。' }
   const panelGoals = definitions?.panelGoals ?? []
+  const panelConflict = craftPanelGoalConflict(panelGoals)
+  if (panelConflict) return { ok: false, error: panelConflict }
   const panel = (current: CraftState) => evaluateCraftPanelGoals(catalog, current, panelGoals)
   if (panelGoals.length) {
     // 待揭示本身允许推进；品质、孔位等其他未知仍须明确返回原因。

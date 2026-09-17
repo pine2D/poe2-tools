@@ -111,6 +111,24 @@ it('未知品质不会显示面板目标已达成或用零值代替', () => {
   expect(within(region).queryByText('已达成')).toBeNull()
 })
 
+it('指出已应用目标的范围冲突，草稿修改不提前消除警告', () => {
+  setup(0)
+  click('添加面板目标')
+  change('面板目标 1 面板指标', 'physicalDps')
+  change('面板目标 1 面板下限', '20')
+  click('应用面板目标 1面板范围')
+  click('添加面板目标')
+  change('面板目标 2 面板指标', 'physicalDps')
+  change('面板目标 2 面板上限', '10')
+  click('应用面板目标 2面板范围')
+  const region = screen.getByRole('region', { name: '面板目标' })
+  expect(within(region).getByRole('alert').textContent).toMatch(/面板目标 1 与面板目标 2.*没有交集/)
+  change('面板目标 2 面板上限', '30')
+  expect(within(region).getByRole('alert')).toBeTruthy()
+  click('应用面板目标 2面板范围')
+  expect(within(region).queryByRole('alert')).toBeNull()
+})
+
 it('从装备提取显式目标保留已应用的面板条件', () => {
   setup(0, true)
   click('添加面板目标')

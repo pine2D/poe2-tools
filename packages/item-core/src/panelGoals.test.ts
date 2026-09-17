@@ -22,6 +22,43 @@ const definitions = (): CraftTargetDefinitions => ({
   panelGoals: [goal],
 })
 
+it('定位同一面板的互斥范围，包含端点与不同指标不误报', () => {
+  expect(api.craftPanelGoalConflict([goal, { ...goal, min: 0, max: 39 }])).toMatch(
+    /面板目标 1 与面板目标 2.*没有交集/,
+  )
+  expect(api.craftPanelGoalConflict([goal, { ...goal, min: 0, max: 40 }])).toBeNull()
+  expect(
+    api.craftPanelGoalConflict([goal, { ...goal, property: 'Evasion', min: 0, max: 1 }]),
+  ).toBeNull()
+  expect(api.craftPanelGoalConflict([])).toBeNull()
+})
+
+it('相同加权公式可定位冲突，不把不同系数或不同求和顺序视作同一公式', () => {
+  const weighted: api.CraftPanelGoal = {
+    kind: 'weighted-properties',
+    terms: [
+      { property: 'Armour', weight: 2 },
+      { property: 'Evasion', weight: -1 },
+    ],
+    min: 10,
+  }
+  expect(api.craftPanelGoalConflict([goal, weighted, { ...weighted, min: 0, max: 9 }])).toMatch(
+    /面板目标 2 与面板目标 3/,
+  )
+  expect(
+    api.craftPanelGoalConflict([
+      weighted,
+      { ...weighted, terms: [{ property: 'Armour', weight: 1 }], min: 0, max: 9 },
+    ]),
+  ).toBeNull()
+  expect(
+    api.craftPanelGoalConflict([
+      weighted,
+      { ...weighted, terms: [...weighted.terms].reverse(), min: 0, max: 9 },
+    ]),
+  ).toBeNull()
+})
+
 describe('面板目标接入完整定义', () => {
   it('纯面板目标参与合取，显式计数和旧返回形状不改变', () => {
     expect(evaluateTargetDefinitions(data(), item(), definitions())).toEqual({

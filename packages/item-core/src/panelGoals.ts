@@ -16,6 +16,26 @@ export interface CraftPanelGoalStatus {
   matched: boolean
 }
 
+/** 只比较完全相同的指标；保留加权求和顺序，避免浮点重排改变边界语义。 */
+export function craftPanelGoalConflict(goals: readonly CraftPanelGoal[]): string | null {
+  const keys = goals.map((goal) =>
+    JSON.stringify(
+      goal.kind === 'item-property'
+        ? [goal.kind, goal.property]
+        : [goal.kind, goal.terms.map(({ property, weight }) => [property, weight])],
+    ),
+  )
+  for (const [index, goal] of goals.entries()) {
+    for (let previous = 0; previous < index; previous++) {
+      const other = goals[previous]
+      if (!other || keys[previous] !== keys[index]) continue
+      if (goal.min > (other.max ?? Infinity) || other.min > (goal.max ?? Infinity))
+        return `面板目标 ${previous + 1} 与面板目标 ${index + 1} 的范围没有交集，无法同时达成；请调整或移除其中一项。`
+    }
+  }
+  return null
+}
+
 /** 仅允许既有面板叶子条件；先检查 JSON，再逐项借用条件解析器构造副本。 */
 export function readCraftPanelGoals(input: unknown): CraftResult<CraftPanelGoal[]> {
   const fail = (): CraftResult<never> => ({

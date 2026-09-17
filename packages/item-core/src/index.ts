@@ -408,6 +408,7 @@ export {
 export {
   type CraftPanelGoal,
   type CraftPanelGoalStatus,
+  craftPanelGoalConflict,
   evaluateCraftPanelGoals,
   readCraftPanelGoals,
 } from './panelGoals'

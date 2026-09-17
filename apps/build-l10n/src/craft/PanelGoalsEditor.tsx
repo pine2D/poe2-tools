@@ -4,6 +4,7 @@ import {
   type CraftPanelGoal,
   type CraftProperty,
   type CraftState,
+  craftPanelGoalConflict,
   evaluateCraftPanelGoals,
   readCraftPanelGoals,
   readCraftProperty,
@@ -22,6 +23,7 @@ interface Props {
 
 export function PanelGoalsEditor({ catalog, state, goals, busy, onChange }: Props) {
   const progress = evaluateCraftPanelGoals(catalog, state, goals)
+  const conflict = craftPanelGoalConflict(goals)
   const properties = Object.keys(CRAFT_PROPERTY_LABELS) as CraftProperty[]
   const defaultProperty =
     properties.find((property) => readCraftProperty(catalog, state, property).ok) ?? 'Armour'
@@ -39,6 +41,7 @@ export function PanelGoalsEditor({ catalog, state, goals, busy, onChange }: Prop
       </p>
       <fieldset disabled={busy}>
         <legend>编辑面板条件</legend>
+        {conflict ? <p role="alert">{conflict}</p> : null}
         <div className="panel-goal-actions">
           <button
             type="button"

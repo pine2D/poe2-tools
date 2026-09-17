@@ -26,6 +26,16 @@ const data = () =>
 const item = () => ({ ...state('normal'), quality: 0, sockets: [] })
 
 describe('面板目标路线', () => {
+  it('互斥的面板范围直接说明冲突，即使起点数值未知也不盲目搜索', () => {
+    const config = goals()
+    config.panelGoals?.push({ kind: 'item-property', property: 'Armour', min: 0, max: 30 })
+    const { quality: _, ...unknown } = item()
+    const result = planTargetDefinitionRoutes(data(), unknown, config)
+    expect(result).toMatchObject({
+      ok: false,
+      error: expect.stringMatching(/面板目标 1 与面板目标 2.*没有交集/),
+    })
+  })
   it('纯护甲目标生成真实可回放步骤，不要求显式词缀目标', () => {
     const result = planTargetDefinitionRoutes(data(), item(), goals())
     expect(result.ok).toBe(true)
