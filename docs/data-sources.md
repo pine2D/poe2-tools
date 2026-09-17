@@ -499,6 +499,10 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 
 限量镶嵌物补充（2026-09-16）：只读核对同一固定 MIT 提交的 `CalcSetup.lua`（SHA-256 `049cfc52435f20c607c4517533f33a4ac9bb8d0c26755790bd6be4c810bce396`），其角色孔／装备计数按 `limitId` 或名称跨部位累计并产生警告。[GGG 0.4.0 官方说明](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff)证明非法孔可使已有装备无法使用；[跨武器套复现](https://www.pathofexile.com/forum/view-thread/3897395)和[同件重复旧装备案例](https://www.pathofexile.com/forum/view-thread/3899544)是 community 第一手记录，不能当作当前全部游戏规则。Protection／Nourishment 的效果与逐数值增效沿用已登记 ModRunes／ModScalability，无新表、无同行代码或浏览器请求。后续 v86 已接入两项普通防具分支及已有超限修复，其他限量族尚未开放；范围与验收见 [限量镶嵌物核对](limited-augments-research.md)。
 
+### 防御精华原始画面核对（2026-09-18）
+
+新增人工机制依据：[ronarray 防具制作原视频](https://www.youtube.com/watch?v=rQ0kydfdesI)，2026-06-07 发布。按 gray 作者第一手演示处理，不是 GGG 官方算法；通过字幕定位后检查 03:05–03:45 和 13:15–13:55 游戏画面，确认高级防御精华在纯护盾头盔及闪避／护盾胸甲上的实际工艺行。仅提交自写观察、时间点和与既有 MIT 目录的对应推断，片段、字幕、截图及真实装备数据不入库，不新增适配器或浏览器第三方请求。详见 [防御精华具体结果核对](defence-essence-research.md)。其余防御类别、其他档位、属性精华及权重不视为视频已证明。
+
 ### 防御精华后续核对（2026-09-16）
 
 - GGG 0.3.0c 官方公告：https://www.pathofexile.com/forum/view-thread/3851277 ，primary 人工规则参考；确认法器／小圆盾的历史类别错误已修复，不导出游戏数据。
