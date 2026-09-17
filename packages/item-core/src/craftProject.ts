@@ -71,6 +71,7 @@ import {
 } from './liquidEmotions'
 import { isMasterworkCraftOperation } from './masterwork'
 import { requiresMasterworkProjectVersion } from './masterworkProjectVersion'
+import { requiresOffhandIdolProjectVersion } from './offhandIdolProjectVersion'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
 import { parseItem } from './parse'
 import { requiresPendingExaltationProjectVersion } from './pendingExaltationProjectVersion'
@@ -739,6 +740,7 @@ export function readNativeTargetProjectProjection(
   gloveIdols = false,
   helmetBootIdols = false,
   bodyIdols = false,
+  offhandIdols = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -783,6 +785,7 @@ export function readNativeTargetProjectProjection(
     gloveIdols,
     helmetBootIdols,
     bodyIdols,
+    offhandIdols,
   )
 }
 
@@ -829,6 +832,7 @@ function readCraftProject(
   gloveIdols = false,
   helmetBootIdols = false,
   bodyIdols = false,
+  offhandIdols = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -853,6 +857,9 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  const usesOffhandIdols = requiresOffhandIdolProjectVersion(value)
+  if (!offhandIdols && usesOffhandIdols)
+    return fail('副手雕像必须使用 v113 项目，包括起点、导入声明、完整未来和未执行指引。')
   const usesBodyIdols = requiresBodyIdolProjectVersion(value)
   if (!bodyIdols && usesBodyIdols)
     return fail('胸甲雕像必须使用 v112 项目，包括起点、导入声明、完整未来和未执行指引。')
@@ -1813,6 +1820,7 @@ function readCraftProject(
       usesJewelEffects ||
       usesSovereignEffects ||
       usesSpecialMartialRunes ||
+      usesOffhandIdols ||
       usesBodyIdols ||
       usesHelmetBootIdols ||
       usesGloveIdols ||
@@ -1903,6 +1911,7 @@ function readCraftProject(
   if (
     usesSockets ||
     usesSpecialMartialRunes ||
+    usesOffhandIdols ||
     usesBodyIdols ||
     usesHelmetBootIdols ||
     usesGloveIdols ||
@@ -2207,6 +2216,7 @@ function readCraftProject(
           usesJewelEffects ||
           usesSovereignEffects ||
           usesSpecialMartialRunes ||
+          usesOffhandIdols ||
           usesBodyIdols ||
           usesHelmetBootIdols ||
           usesGloveIdols ||
@@ -2223,6 +2233,7 @@ function readCraftProject(
         ...(importedQuality === undefined ? {} : { importedQuality }),
         ...((usesSockets ||
           usesSpecialMartialRunes ||
+          usesOffhandIdols ||
           usesBodyIdols ||
           usesHelmetBootIdols ||
           usesGloveIdols ||
@@ -2266,6 +2277,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresOffhandIdolProjectVersion(project))
+    throw new Error('副手雕像必须使用 v113 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresBodyIdolProjectVersion(project))
     throw new Error('胸甲雕像必须使用 v112 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresHelmetBootIdolProjectVersion(project))

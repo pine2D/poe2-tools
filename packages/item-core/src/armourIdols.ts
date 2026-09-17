@@ -3,6 +3,7 @@ import { BODY_IDOL_RECORDS, BODY_IDOL_SCALABILITY } from './bodyIdolData'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { GLOVE_IDOL_RECORDS, GLOVE_IDOL_SCALABILITY } from './gloveIdolData'
 import { HELMET_BOOT_IDOL_RECORDS, HELMET_BOOT_IDOL_SCALABILITY } from './helmetBootIdolData'
+import { OFFHAND_IDOL_RECORDS, OFFHAND_IDOL_SCALABILITY } from './offhandIdolData'
 import type { CraftState } from './rehearsal'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
@@ -11,11 +12,16 @@ const ARMOUR_IDOL_RECORDS = [
   ...GLOVE_IDOL_RECORDS,
   ...HELMET_BOOT_IDOL_RECORDS,
   ...BODY_IDOL_RECORDS,
+  ...OFFHAND_IDOL_RECORDS,
 ]
 const ARMOUR_IDOL_SCALABILITY = {
   ...GLOVE_IDOL_SCALABILITY,
   ...HELMET_BOOT_IDOL_SCALABILITY,
   ...BODY_IDOL_SCALABILITY,
+  ...OFFHAND_IDOL_SCALABILITY,
+}
+export function isOffhandIdolId(id: unknown): boolean {
+  return OFFHAND_IDOL_RECORDS.some((a) => a.id === id)
 }
 export function isBodyIdolId(id: unknown): boolean {
   return BODY_IDOL_RECORDS.some((a) => a.id === id)
@@ -88,12 +94,17 @@ export function armourIdolFits(
     base.type ===
       (
         {
+          focus: 'Focus',
+          shield: 'Shield',
+          buckler: 'Shield',
           gloves: 'Gloves',
           helmet: 'Helmet',
           boots: 'Boots',
           'body armour': 'Body Armour',
         } as Record<string, string>
       )[augment.category] &&
+    (!['shield', 'buckler'].includes(augment.category) ||
+      base.tags.includes('buckler') === (augment.category === 'buckler')) &&
     !base.hidden &&
     (!base.runeforged || isRuneforgedArmourBase(base)) &&
     base.variantList === undefined &&

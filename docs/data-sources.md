@@ -1,3 +1,9 @@
+# 2026-09-18 副手雕像与格挡核对（实施前登记）
+
+沿已登记 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 ModRunes、ModItem、ModScalability、Bases，以及同提交 [Classes/Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L2597) 核对副手本件格挡。只阅读规则并独立实现，不引入源代码或新数据包；本件格挡使用本地加值与提高之和，最后向下取整，品质不参与。Ox 的 shield/buckler 本地标记与显式本地格挡一致；Silk shield 保留伙伴条件，不计入无条件本件格挡。固定源 Silk buckler 正常显示行缺失，继续不开放，不能用绑定文本替代。真机面板取整待验收。
+
+再次只读 [Craft of Exile PoE2](https://beta.craftofexile.com/?game=poe2) 的演练、条件步骤、库存和自填价格设计说明；仅作功能参考，不获取同行代码、数据、权重或价格。
+
 # 2026-09-17 胸甲雕像与绑定核对（实施前登记）
 
 沿既有 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 ModRunes、ModScalability 与同提交 [Classes/Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua) 核对本件 Idol 绑定激活、独立绑定显示及增效；新增提取已有源中的镶嵌绑定和完整换行缩放声明，不新增网络数据适配器。PoE2DB 的 [Fox Idol](https://poe2db.tw/us/Fox_Idol) 与 [Carved Cunning](https://poe2db.tw/us/Carved_Cunning) 仅人工交叉核对（gray），不复制同行实现或整表。国服原生绑定标题与客户端行为待真机验收。

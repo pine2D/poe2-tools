@@ -32,11 +32,12 @@ export {
   requiresAmuletSkillSocketsProjectVersion,
 } from './amuletSkillSocketsProjectVersion'
 export type { ArchitectCraftOperation } from './architect'
-export { isArmourIdol, isBodyIdolId, isHelmetBootIdolId } from './armourIdols'
+export { isArmourIdol, isBodyIdolId, isHelmetBootIdolId, isOffhandIdolId } from './armourIdols'
 export { isAstridRune } from './astridRune'
 export type { BaseSkillVariants } from './baseSkillVariants'
 export { readBaseSkillVariants } from './baseSkillVariants'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
+export { type BlockChanceEstimate, estimateBlockChance } from './blockChance'
 export { BODY_IDOL_RULES_VERSION, requiresBodyIdolProjectVersion } from './bodyIdolProjectVersion'
 export {
   analyzeBoneTargets,
@@ -394,6 +395,10 @@ export {
   renderNumericLines,
   sampleNumericValues,
 } from './numeric'
+export {
+  OFFHAND_IDOL_RULES_VERSION,
+  requiresOffhandIdolProjectVersion,
+} from './offhandIdolProjectVersion'
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export { parseItem } from './parse.js'

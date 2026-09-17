@@ -9,6 +9,7 @@ import {
   isConditionalArmourRune,
   isExtendedArmourRune,
   isInfluenceRune,
+  isOffhandIdolId,
   isRebirthArmourRune,
   isSpecialMartialRune,
   isWardArmourRune,
@@ -55,6 +56,15 @@ function bodyIdolNote(augment: CatalogAugment): string | null {
   if (augment.name === 'Carved Majesty')
     return '按全身已镶嵌雕像数量计算；这里只显示每枚效果，全身数量未知时不推算总精魂。'
   return null
+}
+
+function offhandIdolNote(augment: CatalogAugment): string | null {
+  if (!isOffhandIdolId(augment.id)) return null
+  if (augment.name === 'Ox Idol') return '计入本件格挡率，与本地格挡词缀相加；品质不参与。'
+  if (augment.name === 'Idol of Silk') return '伙伴条件效果，不计入本件无条件格挡率。'
+  if (augment.name === 'Idol of Greust')
+    return '保留角色护甲适用范围或偏转效果，不以本件护甲、闪避推算角色总收益。'
+  return '冷却回复为角色效果，不改变本件能量护盾。'
 }
 
 const displayLines = (augment: CatalogAugment) =>
@@ -223,6 +233,9 @@ export function SocketPanel({
                       </p>
                     </section>
                   ) : null}
+                  {effect && offhandIdolNote(effect) ? (
+                    <p>{offhandIdolNote(effect)}绑定效果尚未激活。</p>
+                  ) : null}
                   {effect?.isSocketBound ? <p>绑定孔不能替换；萃取时不会返还此材料。</p> : null}
                   {effect ? <p>该镶嵌物穿戴需求：等级 {effect.levelReq}</p> : null}
                   {effect && isSpecialMartialRune(effect, true) ? (
@@ -304,7 +317,10 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
-              {isArmourIdol(selected, true) ? (
+              {offhandIdolNote(selected) ? (
+                <p>{offhandIdolNote(selected)}绑定效果尚未激活。</p>
+              ) : null}
+              {isArmourIdol(selected, true) && !isOffhandIdolId(selected.id) ? (
                 <p>
                   主效果保留触发条件与作用对象，不计为本件防御或无条件角色收益；持续时间按各条规则分别增效。
                   {selected.limitId === 'AncientAugment'
