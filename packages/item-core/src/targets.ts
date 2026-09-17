@@ -18,8 +18,10 @@ import {
   type CraftImplicitTargetStatus,
   type CraftImplicitTargetValues,
   craftImplicitTargetCandidates,
+  craftImplicitTargetKey,
   implicitTargetRolls,
   perfectFluxTargetOperation,
+  skillSocketsTargetOperations,
 } from './implicitTargets'
 import { influenceRuneTags } from './influenceRunes'
 import { inspectLiquidEmotions } from './liquidEmotions'
@@ -101,6 +103,7 @@ interface CraftTargetStatus {
 }
 
 export interface CraftAdvice {
+  skillSocketsOperations?: import('./skillSockets').SkillSocketsCraftOperation[]
   perfectFluxOperation?: import('./perfectFlux').PerfectFluxCraftOperation
   implicitTargets?: CraftImplicitTargetStatus[]
   targets: (CraftTargetStatus & { alternatives?: CraftTargetStatus[] })[]
@@ -613,9 +616,11 @@ export function analyzeCraftTargetContext(
   const implicitAnalysis = analyzeCraftImplicitTargets(catalog, current, implicitValues)
   if (!implicitAnalysis.ok) return implicitAnalysis
   const perfectFluxOperation = perfectFluxTargetOperation(catalog, current, implicitValues)
+  const skillSocketsOperations = skillSocketsTargetOperations(catalog, current, implicitValues)
   const implicitFields = {
     ...(implicitValues.length ? { implicitTargets: implicitAnalysis.value } : {}),
     ...(perfectFluxOperation ? { perfectFluxOperation } : {}),
+    ...(skillSocketsOperations.length ? { skillSocketsOperations } : {}),
   }
   const base = catalog.bases.find((entry) => entry.id === current.baseId)
   if (base === undefined) return { ok: false, error: '当前基底不在制作目录中。' }
@@ -930,13 +935,7 @@ export function analyzeCraftTargetContext(
     })
     .map((target) => target.modId)
   const unmetImplicit = implicitAnalysis.value
-    .filter(
-      (target) =>
-        !target.matched &&
-        !implicitValues.some(
-          (goal) => goal.lineIndex === target.lineIndex && goal.kind === 'granted-skill',
-        ),
-    )
+    .filter((target) => !target.matched && target.kind === undefined)
     .map((target) => target.lineIndex)
   const implicitRolls = implicitValues.length
     ? implicitTargetRolls(catalog, current, implicitValues)
@@ -954,7 +953,8 @@ export function analyzeCraftTargetContext(
         current,
         implicitValues.filter((value) =>
           implicitAnalysis.value.some(
-            (target) => target.lineIndex === value.lineIndex && target.matched,
+            (target) =>
+              craftImplicitTargetKey(target) === craftImplicitTargetKey(value) && target.matched,
           ),
         ),
       ).ok)
@@ -1003,7 +1003,9 @@ export function analyzeCraftTargetContext(
                 (target) =>
                   implicitCandidates?.ok &&
                   implicitCandidates.value.some(
-                    (candidate) => candidate.lineIndex === target.lineIndex && candidate.rerollable,
+                    (candidate) =>
+                      craftImplicitTargetKey(candidate) === craftImplicitTargetKey(target) &&
+                      candidate.rerollable,
                   ),
               )
               .map((target) => target.lineIndex),
@@ -1100,7 +1102,9 @@ export function analyzeCraftTargetContext(
                   target.matched &&
                   (!afterImplicit?.ok ||
                     !afterImplicit.value.some(
-                      (entry) => entry.lineIndex === target.lineIndex && entry.matched,
+                      (entry) =>
+                        craftImplicitTargetKey(entry) === craftImplicitTargetKey(target) &&
+                        entry.matched,
                     )),
               )
               .map((target) => target.lineIndex)

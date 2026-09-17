@@ -20,17 +20,25 @@ import {
   createCraftState,
   prepareCraftOperation,
 } from './rehearsal'
+import {
+  inspectSkillSocketsCraft,
+  prepareSkillSocketsCraft,
+  readCraftGrantedSkillSockets,
+  SKILL_SOCKET_TIERS,
+  type SkillSocketsCraftOperation,
+  type SkillSocketTier,
+} from './skillSockets'
 import { minimumTargetRolls, targetRollsPreservingValues } from './targetRolls'
 import type { CraftTargetBound } from './targets'
 
 export interface CraftImplicitTargetValues {
-  kind?: 'granted-skill'
+  kind?: 'granted-skill' | 'granted-skill-sockets'
   basis?: 'effective'
   lineIndex: number
   bounds: CraftTargetBound[]
 }
 export interface CraftImplicitTargetCandidate {
-  kind?: 'granted-skill'
+  kind?: 'granted-skill' | 'granted-skill-sockets'
   skillName?: string
   lineIndex: number
   line: string
@@ -40,6 +48,7 @@ export interface CraftImplicitTargetCandidate {
   reasons: string[]
 }
 export interface CraftImplicitTargetStatus {
+  kind?: 'granted-skill' | 'granted-skill-sockets'
   lineIndex: number
   matched: boolean
   numeric: (CraftTargetBound & {
@@ -48,6 +57,12 @@ export interface CraftImplicitTargetStatus {
     matched: boolean
   })[]
   reasons: string[]
+}
+/** 同一目录技能行的等级和辅助孔条件分别拥有身份。 */
+export function craftImplicitTargetKey(
+  value: Pick<CraftImplicitTargetValues, 'lineIndex' | 'kind'>,
+): string {
+  return `${value.lineIndex}:${value.kind ?? 'implicit'}`
 }
 const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
 function descriptors(
@@ -75,6 +90,13 @@ function descriptors(
               ranges: [
                 { index: 0, lineIndex: 0, min: skill.minLevel, max: skill.maxLevel, step: 1 },
               ],
+            },
+            {
+              lineIndex,
+              line,
+              kind: 'granted-skill-sockets' as const,
+              skillName: skill.name,
+              ranges: [{ index: 0, lineIndex: 0, min: 2, max: 5, step: 1 }],
             },
           ]
         : []
@@ -149,25 +171,29 @@ export function readCraftImplicitTargets(
   }
   if (!Array.isArray(values) || values.length > 32)
     return fail('固有目标必须是最多32行条件的数组。')
-  const seen = new Set<number>()
+  const seen = new Set<string>()
   const result: CraftImplicitTargetValues[] = []
   let count = 0
   for (const value of values) {
     if (
       !keys(value, ['lineIndex', 'bounds', 'basis', 'kind']) ||
-      (Object.hasOwn(value, 'kind') && value.kind !== 'granted-skill') ||
-      (value.kind === 'granted-skill' && Object.hasOwn(value, 'basis')) ||
+      (Object.hasOwn(value, 'kind') &&
+        value.kind !== 'granted-skill' &&
+        value.kind !== 'granted-skill-sockets') ||
+      (value.kind !== undefined && Object.hasOwn(value, 'basis')) ||
       (Object.hasOwn(value, 'basis') && value.basis !== 'effective') ||
       !Number.isSafeInteger(value.lineIndex) ||
       typeof value.lineIndex !== 'number' ||
       value.lineIndex < 0 ||
-      seen.has(value.lineIndex) ||
+      seen.has(craftImplicitTargetKey(value as unknown as CraftImplicitTargetValues)) ||
       !Array.isArray(value.bounds) ||
       value.bounds.length < 1 ||
       value.bounds.length > 32
     )
       return fail('固有目标必须关联唯一目录行，并包含1–32个条件。')
-    const candidate = candidates?.find((entry) => entry.lineIndex === value.lineIndex)
+    const candidate = candidates?.find(
+      (entry) => entry.lineIndex === value.lineIndex && entry.kind === value.kind,
+    )
     if (candidates && (!candidate || candidate.kind !== value.kind))
       return fail('该目录行的固有目标语义不受支持或不匹配。')
     const indexes = new Set<number>()
@@ -179,7 +205,7 @@ export function readCraftImplicitTargets(
         !Number.isInteger(bound.index) ||
         bound.index < 0 ||
         bound.index >= 32 ||
-        (value.kind === 'granted-skill' && bound.index !== 0) ||
+        (value.kind !== undefined && bound.index !== 0) ||
         indexes.has(bound.index)
       )
         return fail('固有条件必须使用唯一的行内范围索引。')
@@ -194,6 +220,8 @@ export function readCraftImplicitTargets(
           typeof n !== 'number' ||
           !Number.isFinite(n) ||
           (value.kind === 'granted-skill' && (!Number.isSafeInteger(n) || n < 1 || n > 20)) ||
+          (value.kind === 'granted-skill-sockets' &&
+            (!Number.isSafeInteger(n) || n < 2 || n > 5)) ||
           (value.basis !== 'effective' && range && (n < range.min || n > range.max))
         )
           return fail('固有条件必须是目录范围内的有限数值。')
@@ -206,11 +234,13 @@ export function readCraftImplicitTargets(
     }
     count += bounds.length
     if (count > 32) return fail('固有目标整体最多32个范围条件。')
-    seen.add(value.lineIndex)
+    seen.add(craftImplicitTargetKey(value as unknown as CraftImplicitTargetValues))
     result.push({
       lineIndex: value.lineIndex,
       bounds,
-      ...(value.kind === 'granted-skill' ? { kind: 'granted-skill' as const } : {}),
+      ...(value.kind === 'granted-skill' || value.kind === 'granted-skill-sockets'
+        ? { kind: value.kind }
+        : {}),
       ...(value.basis === 'effective' ? { basis: 'effective' as const } : {}),
     })
   }
@@ -277,6 +307,21 @@ export function craftImplicitTargetCandidates(
   return {
     ok: true,
     value: descriptors(base).map((entry) => {
+      if (entry.kind === 'granted-skill-sockets') {
+        const read = readCraftGrantedSkillSockets(catalog, state)
+        const inspected = inspectSkillSocketsCraft(catalog, state)
+        const sockets = read.ok ? read.value.sockets : null
+        return {
+          ...entry,
+          actual: [sockets],
+          rerollable: false,
+          reasons: [
+            ...(read.ok ? [] : [read.error]),
+            ...(sockets === null ? ['当前辅助孔数未知；请核对起点，不能自动假定为二孔。'] : []),
+            ...(inspected.ok ? [] : [inspected.error]),
+          ],
+        }
+      }
       if (entry.kind === 'granted-skill') {
         const level = readCraftGrantedSkillLevel(catalog, state)
         const inspected = inspectPerfectFluxCraft(catalog, state)
@@ -337,7 +382,9 @@ export function analyzeCraftImplicitTargets(
   return {
     ok: true,
     value: validated.value.map((goal) => {
-      const candidate = candidates.value.find((entry) => entry.lineIndex === goal.lineIndex)
+      const candidate = candidates.value.find(
+        (entry) => craftImplicitTargetKey(entry) === craftImplicitTargetKey(goal),
+      )
       const projection =
         goal.basis === 'effective'
           ? projectImplicitTargetValues(catalog, state, goal.lineIndex)
@@ -370,7 +417,7 @@ export function analyzeCraftImplicitTargets(
         if (!goal.bounds.every((bound) => matchesTargetInterval({ min: 20, max: 20 }, bound)))
           reasons.push('完美溶剂的唯一结果20级不能满足目标上下限。')
       }
-      if (!matched && goal.kind !== 'granted-skill') {
+      if (!matched && goal.kind === undefined) {
         const position = resolved.value.patternPositions[goal.lineIndex] ?? -1
         const baseBounds = projection?.ok ? projection.value.baseBounds(goal.bounds) : null
         const bounds =
@@ -384,7 +431,13 @@ export function analyzeCraftImplicitTargets(
           if (!entry.matched)
             reasons.push(`第${entry.index + 1}个固有数值${entry.actual ?? '未知'}未满足条件。`)
       }
-      return { lineIndex: goal.lineIndex, matched, numeric, reasons }
+      return {
+        lineIndex: goal.lineIndex,
+        ...(goal.kind ? { kind: goal.kind } : {}),
+        matched,
+        numeric,
+        reasons,
+      }
     }),
   }
 }
@@ -406,7 +459,7 @@ export function implicitTargetRolls(
   for (const [position, pattern] of patterns.entries()) {
     const directoryIndex = patternPositions.indexOf(position)
     const goal = checked.value.find(
-      (entry) => entry.lineIndex === directoryIndex && entry.kind !== 'granted-skill',
+      (entry) => entry.lineIndex === directoryIndex && entry.kind === undefined,
     )
     if (charm?.fixed && charm.lineIndex === position) continue
     let selected: number[] | null
@@ -448,4 +501,34 @@ export function perfectFluxTargetOperation(
   return inspected.ok && inspected.value.previousMaxLevel !== null
     ? { kind: 'perfect-flux', previousMaxLevel: inspected.value.previousMaxLevel }
     : null
+}
+
+/** 只依据明确起点，返回全部合法直达区间的材料；不生成逐级浪费步骤。 */
+export function skillSocketsTargetOperations(
+  catalog: CraftCatalog,
+  state: CraftState,
+  values: readonly CraftImplicitTargetValues[],
+): SkillSocketsCraftOperation[] {
+  const checked = validateCraftImplicitTargets(catalog, state.baseId, values, state)
+  if (!checked.ok) return []
+  const goals = checked.value.filter((goal) => goal.kind === 'granted-skill-sockets')
+  if (!goals.length) return []
+  const analyzed = analyzeCraftImplicitTargets(catalog, state, goals)
+  if (!analyzed.ok || analyzed.value.every((goal) => goal.matched)) return []
+  const inspected = inspectSkillSocketsCraft(catalog, state)
+  if (!inspected.ok || inspected.value.previousSockets === null) return []
+  const previousSockets = inspected.value.previousSockets
+  return (Object.keys(SKILL_SOCKET_TIERS) as SkillSocketTier[]).flatMap((tier) => {
+    const count = SKILL_SOCKET_TIERS[tier].count
+    if (
+      !goals.every((goal) =>
+        goal.bounds.every((bound) => matchesTargetInterval({ min: count, max: count }, bound)),
+      )
+    )
+      return []
+    const prepared = prepareSkillSocketsCraft(catalog, state, tier, previousSockets)
+    return prepared.ok
+      ? [{ kind: 'skill-sockets' as const, tier, previousSockets: prepared.value.previousSockets }]
+      : []
+  })
 }

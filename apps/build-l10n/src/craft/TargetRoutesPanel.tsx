@@ -12,9 +12,11 @@ import {
   type CraftTargetDefinitions,
   collectCraftCosts,
   compareCraftStates,
+  craftImplicitTargetKey,
   craftOmenDescription,
   craftOmenMaterials,
   ESSENCE_OMEN_RULES,
+  SKILL_SOCKET_TIERS,
   usesExplicitModEffect,
 } from '@poe2-tools/item-core'
 import { useEffect, useRef, useState } from 'react'
@@ -110,6 +112,7 @@ function RouteSearch({
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const label = (step: CraftStep) => {
     if ('currency' in step) return CRAFT_CURRENCY_LABELS[step.currency]
+    if (step.kind === 'skill-sockets') return localize(SKILL_SOCKET_TIERS[step.tier].name)
     if (step.kind === 'perfect-flux') return localize('Perfect Flux')
     if (step.kind === 'fracture') return localize('Fracturing Orb')
     if (step.kind === 'alloy')
@@ -156,6 +159,12 @@ function RouteSearch({
   const targetLabel = (targetId: string) => {
     const target = definitions.targets.find((target) => target.targetId === targetId)
     return target ? modLabel(target.modId) : '已失联目标'
+  }
+  const implicitKeyLabel = (key: string) => {
+    const value = implicitValues.find((entry) => craftImplicitTargetKey(entry) === key)
+    return value
+      ? `${value.kind === 'granted-skill-sockets' ? '技能辅助孔' : '固有属性'} ${value.lineIndex + 1}`
+      : key
   }
   const implicitLabel = (index: number) => {
     const line =
@@ -367,7 +376,9 @@ function RouteSearch({
                           <p>
                             已达成{' '}
                             {step.matchedTargetIds.length +
-                              (step.matchedImplicitLineIndexes?.length ?? 0)}{' '}
+                              (step.matchedImplicitTargetKeys?.length ??
+                                step.matchedImplicitLineIndexes?.length ??
+                                0)}{' '}
                             / {definitions.targets.length + implicitValues.length}
                           </p>
                         ) : (
@@ -376,16 +387,24 @@ function RouteSearch({
                         {step.state.pendingDesecration ? (
                           <p>此步仍有未揭示亵渎，路线尚未完成。</p>
                         ) : null}
-                        {step.gainedImplicitLineIndexes?.length ? (
+                        {(step.gainedImplicitTargetKeys?.length ??
+                        step.gainedImplicitLineIndexes?.length) ? (
                           <p>
                             达成固有目标：
-                            {step.gainedImplicitLineIndexes.map(implicitLabel).join('；')}
+                            {(
+                              step.gainedImplicitTargetKeys?.map(implicitKeyLabel) ??
+                              step.gainedImplicitLineIndexes?.map(implicitLabel)
+                            )?.join('；')}
                           </p>
                         ) : null}
-                        {step.lostImplicitLineIndexes?.length ? (
+                        {(step.lostImplicitTargetKeys?.length ??
+                        step.lostImplicitLineIndexes?.length) ? (
                           <p className="target-warning">
                             失去固有目标：
-                            {step.lostImplicitLineIndexes.map(implicitLabel).join('；')}
+                            {(
+                              step.lostImplicitTargetKeys?.map(implicitKeyLabel) ??
+                              step.lostImplicitLineIndexes?.map(implicitLabel)
+                            )?.join('；')}
                           </p>
                         ) : null}
                         {!comparison.ok ? (

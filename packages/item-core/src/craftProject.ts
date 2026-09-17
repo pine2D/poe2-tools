@@ -91,6 +91,7 @@ import { requiresRuneforgeProjectVersion } from './runeforgeProjectVersion'
 import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { isSkillSocketsCraftOperation } from './skillSockets'
 import { requiresSkillSocketsProjectVersion } from './skillSocketsProjectVersion'
+import { requiresSkillSocketTargetProjectVersion } from './skillSocketTargetProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
@@ -175,11 +176,12 @@ function readRulesVersion(value: unknown): number | null {
   return String(version) === match[1] && version >= 2 && version <= 72 ? version : null
 }
 
-function readState(value: unknown, native = false): CraftState | null {
+function readState(value: unknown, native = false, skillSocketTargets = false): CraftState | null {
   if (
     !record(value) ||
     !exactKeys(value, [
       ...(native ? ['nextAffixId'] : []),
+      ...(skillSocketTargets ? ['declaredSkillSockets'] : []),
       'baseId',
       'itemLevel',
       'rarity',
@@ -286,6 +288,9 @@ function readState(value: unknown, native = false): CraftState | null {
       ? { pendingDesecration: clonePendingDesecration(value.pendingDesecration) }
       : {}),
     ...(native ? { nextAffixId: value.nextAffixId as number } : {}),
+    ...(Object.hasOwn(value, 'declaredSkillSockets')
+      ? { declaredSkillSockets: value.declaredSkillSockets as 2 | 3 | 4 | 5 }
+      : {}),
     baseId: value.baseId,
     itemLevel: value.itemLevel,
     rarity: value.rarity as CraftState['rarity'],
@@ -630,7 +635,12 @@ function validateInitial(
   )
     return { ok: false, error: '项目催化品质与来源原文或类型声明不一致。' }
   // 旧版项目没有保存固有行时，以重新核对的原文恢复，不能用目录范围覆盖实值。
-  return restored
+  return state.declaredSkillSockets !== undefined
+    ? createCraftState(catalog, {
+        ...restored.value,
+        declaredSkillSockets: state.declaredSkillSockets,
+      })
+    : restored
 }
 
 /** 保存格式只包含起点和操作；恢复时回放所有步骤，不能信任外来派生快照。 */
@@ -695,6 +705,7 @@ export function readNativeTargetProjectProjection(
   grantedSkillTargets = false,
   weightedProperties = false,
   skillSockets = false,
+  skillSocketTargets = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -726,6 +737,7 @@ export function readNativeTargetProjectProjection(
     grantedSkillTargets,
     weightedProperties,
     skillSockets,
+    skillSocketTargets,
   )
 }
 
@@ -759,6 +771,7 @@ function readCraftProject(
   grantedSkillTargets = false,
   weightedProperties = false,
   skillSockets = false,
+  skillSocketTargets = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -777,6 +790,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!skillSocketTargets && requiresSkillSocketTargetProjectVersion(value))
+    return fail('装备技能辅助孔起点声明与目标必须使用 v100 项目。')
   if (!skillSockets && requiresSkillSocketsProjectVersion(value))
     return fail('装备技能辅助孔必须使用 v99 项目，包括起点、完整未来、嵌套未执行指引及报价。')
   if (!weightedProperties && requiresWeightedPropertyProjectVersion(value))
@@ -1567,7 +1582,7 @@ function readCraftProject(
     value.cursor > value.operations.length
   )
     return fail('演练历史游标无效。')
-  const initialInput = readState(value.initialState, native)
+  const initialInput = readState(value.initialState, native, skillSocketTargets)
   if (!initialInput) return fail('演练起点结构无效。')
   const initialEffectError = validateEffectState(initialInput)
   if (initialEffectError) return fail(initialEffectError)
@@ -2124,6 +2139,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresSkillSocketTargetProjectVersion(project))
+    throw new Error('装备技能辅助孔起点声明与目标必须使用 v100 项目。')
   if (requiresSkillSocketsProjectVersion(project))
     throw new Error('装备技能辅助孔必须使用 v99 项目，包括起点、完整未来、嵌套未执行指引及报价。')
   if (requiresWeightedPropertyProjectVersion(project))

@@ -91,9 +91,9 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
     )
     if (craftedCapacity.ok && craftedCapacity.value > 1)
       result.push('当前额外工艺容量来自已核对的镶嵌物；失去容量来源后的多工艺保留行为尚未核实。')
-    if (state.grantedSkillSockets !== undefined)
+    if ((state.grantedSkillSockets ?? state.declaredSkillSockets) !== undefined)
       result.push(
-        `装备技能辅助孔：${state.grantedSkillSockets}（演练结果，独立于符文孔与技能等级）`,
+        `装备技能辅助孔：${state.grantedSkillSockets ?? state.declaredSkillSockets}（${state.grantedSkillSockets === undefined ? '起点声明' : '演练结果'}，独立于符文孔与技能等级）`,
       )
     const skill = readCraftGrantedSkillLevel(catalog, state)
     if (skill.ok)

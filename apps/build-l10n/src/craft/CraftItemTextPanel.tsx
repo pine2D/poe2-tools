@@ -37,6 +37,7 @@ export function CraftItemTextPanel({
     open &&
     state.grantedSkillLevel !== 20 &&
     state.grantedSkillSockets === undefined &&
+    state.declaredSkillSockets === undefined &&
     locale !== 'en' &&
     dictionaryResult === null
   useEffect(() => {
@@ -44,7 +45,8 @@ export function CraftItemTextPanel({
       !context.open ||
       context.locale === 'en' ||
       context.state.grantedSkillLevel === 20 ||
-      context.state.grantedSkillSockets !== undefined
+      context.state.grantedSkillSockets !== undefined ||
+      context.state.declaredSkillSockets !== undefined
     )
       return
     let active = true
@@ -61,7 +63,8 @@ export function CraftItemTextPanel({
         ? null
         : locale === 'en' ||
             state.grantedSkillLevel === 20 ||
-            state.grantedSkillSockets !== undefined
+            state.grantedSkillSockets !== undefined ||
+            state.declaredSkillSockets !== undefined
           ? exportCraftItemText(catalog, state)
           : dictionaryResult?.ok
             ? exportCraftItemText(catalog, state, {

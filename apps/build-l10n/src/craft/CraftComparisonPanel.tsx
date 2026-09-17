@@ -9,6 +9,7 @@ import {
   type CraftState,
   type CraftTargetDefinitions,
   compareCraftStates,
+  craftImplicitTargetKey,
   type PendingDesecration,
   readCraftGrantedSkillLevel,
 } from '@poe2-tools/item-core'
@@ -166,11 +167,12 @@ export function CraftComparisonPanel({
   return (
     <section className="craft-comparison" aria-label="操作前后变化">
       <h3>操作前后变化</h3>
-      {before.grantedSkillSockets !== after.grantedSkillSockets ? (
+      {(before.grantedSkillSockets ?? before.declaredSkillSockets) !==
+      (after.grantedSkillSockets ?? after.declaredSkillSockets) ? (
         <section aria-label="装备技能辅助孔变化">
           <p>
-            技能辅助孔：{before.grantedSkillSockets ?? '未知'} →{' '}
-            {after.grantedSkillSockets ?? '未知'}
+            技能辅助孔：{before.grantedSkillSockets ?? before.declaredSkillSockets ?? '未知'} →{' '}
+            {after.grantedSkillSockets ?? after.declaredSkillSockets ?? '未知'}
           </p>
           <p>孔数独立于符文孔及装备技能等级。</p>
         </section>
@@ -213,15 +215,16 @@ export function CraftComparisonPanel({
           ) : (
             implicitAfter.value.map((target) => {
               const previous = implicitBefore.value.find(
-                (value) => value.lineIndex === target.lineIndex,
+                (value) => craftImplicitTargetKey(value) === craftImplicitTargetKey(target),
               )
               const line =
                 catalog.bases.find((base) => base.id === after.baseId)?.implicit?.split('\n')[
                   target.lineIndex
                 ] ?? ''
               return (
-                <p key={target.lineIndex}>
-                  固有属性 {target.lineIndex + 1} · {translateLine?.(line) ?? line}：
+                <p key={craftImplicitTargetKey(target)}>
+                  {target.kind === 'granted-skill-sockets' ? '技能辅助孔' : '固有属性'}{' '}
+                  {target.lineIndex + 1} · {translateLine?.(line) ?? line}：
                   {previous?.matched ? '已达成' : '未达成'} → {target.matched ? '已达成' : '未达成'}
                   {previous?.matched && !target.matched
                     ? '（失去固有目标）'

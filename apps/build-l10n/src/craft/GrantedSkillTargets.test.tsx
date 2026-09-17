@@ -44,7 +44,7 @@ const catalog: CraftCatalog = {
     sources: [],
   },
 }
-function setup(known = true) {
+function setup(known = true, declaredSkillSockets?: 2 | 3 | 4 | 5) {
   const state: CraftState = {
     baseId: base.id,
     itemLevel: 53,
@@ -52,6 +52,7 @@ function setup(known = true) {
     affixes: [],
     implicitLines: [`Grants Skill: Level 12 Test Minion${known ? ' (Max Level 13)' : ''}`],
     sourceText: null,
+    ...(declaredSkillSockets === undefined ? {} : { declaredSkillSockets }),
   }
   render(
     <RehearsalPanel
@@ -127,4 +128,52 @@ it('原最高等级未知不拿显示的12级作声明，非整数条件拒绝�
   target('19.5')
   expect(screen.getByRole('alert')).toBeDefined()
   expect(saved().targetImplicitValues[0].bounds[0].min).toBe(20)
+})
+
+it('已有孔数零消耗保存，等级与孔目标独立编辑', () => {
+  setup(true, 3)
+  expect(saved().initialState.declaredSkillSockets).toBe(3)
+  expect(saved().operations).toEqual([])
+  expect(saved().rulesVersion).toBe('basic-2026-09-17-v100')
+  target()
+  fireEvent.change(screen.getByLabelText('技能辅助孔 1 · 数值 1 下限'), { target: { value: '4' } })
+  click('保存技能辅助孔 1 条件')
+  expect(saved().targetImplicitValues).toHaveLength(2)
+  expect(screen.getByText('已达成 0 / 2')).toBeDefined()
+  expect(screen.getByRole('button', { name: "预览建议：Greater Jeweller's Orb" })).toBeDefined()
+  expect(screen.getByRole('button', { name: "预览建议：Perfect Jeweller's Orb" })).toBeDefined()
+  click('清空固有属性 1 条件')
+  expect(saved().targetImplicitValues).toEqual([
+    { kind: 'granted-skill-sockets', lineIndex: 0, bounds: [{ index: 0, min: 4 }] },
+  ])
+})
+
+it('双目标路线展示独立达成并保留起点声明、撤销未来与恢复', () => {
+  setup(true, 3)
+  target()
+  fireEvent.change(screen.getByLabelText('技能辅助孔 1 · 数值 1 下限'), { target: { value: '4' } })
+  fireEvent.change(screen.getByLabelText('技能辅助孔 1 · 数值 1 上限'), { target: { value: '4' } })
+  click('保存技能辅助孔 1 条件')
+  click("预览建议：Greater Jeweller's Orb")
+  click('展开前后变化')
+  expect(screen.getByLabelText('装备技能辅助孔变化').textContent).toContain('3 → 4')
+  click('取消辅助孔结果')
+  expect(saved().operations).toEqual([])
+  click('生成多步示例路线')
+  const routes = within(screen.getByLabelText('多步示例路线'))
+  expect(routes.getAllByText(/Greater Jeweller's Orb/).length).toBeGreaterThan(0)
+  expect(routes.getAllByText('已达成 2 / 2').length).toBeGreaterThan(0)
+  click("预览建议：Greater Jeweller's Orb")
+  click('应用辅助孔结果')
+  expect(screen.getByText('已达成 1 / 2')).toBeDefined()
+  click('预览建议：完美溶剂')
+  click('应用完美溶剂结果')
+  expect(screen.getByText('已达成 2 / 2')).toBeDefined()
+  click('撤销')
+  expect(saved().operations).toHaveLength(2)
+  expect(saved().cursor).toBe(1)
+  click('恢复本机演练')
+  click('重做')
+  expect(screen.getByText('已达成 2 / 2')).toBeDefined()
+  expect(saved().initialState.declaredSkillSockets).toBe(3)
 })

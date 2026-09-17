@@ -25,7 +25,10 @@ const goal = [{ kind: 'granted-skill' as const, lineIndex: 0, bounds: [{ index: 
 it('技能目标读取装备最高13，提供20唯一结果和真实原最高等级路线', () => {
   expect(craftImplicitTargetCandidates(catalog, state)).toMatchObject({
     ok: true,
-    value: [{ kind: 'granted-skill', actual: [13] }],
+    value: [
+      { kind: 'granted-skill', actual: [13] },
+      { kind: 'granted-skill-sockets', actual: [null] },
+    ],
   })
   expect(analyzeCraftImplicitTargets(catalog, state, goal)).toMatchObject({
     ok: true,

@@ -128,6 +128,7 @@ export interface CraftState {
   /** 完美溶剂产生的装备技能结果；原固有行仍为起点观察，不推导角色当前等级。 */
   grantedSkillLevel?: 20
   /** 工匠石产生的技能辅助孔结果；缺省表示未知，与符文孔独立。 */
+  declaredSkillSockets?: 2 | 3 | 4 | 5
   grantedSkillSockets?: 3 | 4 | 5
   nextAffixId?: number
   /** 仅由摧毁操作产生的终止快照；不能作为存活装备使用。 */

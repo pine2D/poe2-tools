@@ -27,6 +27,7 @@ import {
   influenceRuneTags,
   inspectCraftAlloys,
   inspectEssences,
+  SKILL_SOCKET_TIERS,
   validateCraftFractureTarget,
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
@@ -586,7 +587,8 @@ export function CraftTargets({
               essenceSteps.length +
               preparationRoutes.length +
               boneSteps.length +
-              Number(Boolean(advice.value.perfectFluxOperation))}{' '}
+              Number(Boolean(advice.value.perfectFluxOperation)) +
+              (advice.value.skillSocketsOperations?.length ?? 0)}{' '}
             种指定结果
           </summary>
           <p>
@@ -607,6 +609,7 @@ export function CraftTargets({
           {!allMatched &&
           advice.value.steps.length === 0 &&
           !advice.value.perfectFluxOperation &&
+          !advice.value.skillSocketsOperations?.length &&
           essenceSteps.length === 0 &&
           preparationRoutes.length === 0 &&
           boneSteps.length === 0 ? (
@@ -633,6 +636,23 @@ export function CraftTargets({
               </button>
             </div>
           ) : null}
+          {advice.value.skillSocketsOperations?.map((operation) => {
+            const material = SKILL_SOCKET_TIERS[operation.tier]
+            const name =
+              translations[material.name] ??
+              catalog.localizedNames?.['zh-CN']?.[material.name] ??
+              material.name
+            return (
+              <div className="target-step" key={operation.tier}>
+                <p>
+                  {name}：技能辅助孔 {operation.previousSockets} → {material.count}；消耗1枚。
+                </p>
+                <button type="button" disabled={busy} onClick={() => onPreviewRoute(operation)}>
+                  预览建议：{name}
+                </button>
+              </div>
+            )
+          })}
           <BoneAdvicePanel
             definitions={definitions}
             catalog={catalog}

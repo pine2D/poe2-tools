@@ -5,6 +5,7 @@ import {
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
+import { CraftEntry } from './CraftEntry'
 import { CraftItemTextPanel } from './CraftItemTextPanel'
 import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
@@ -199,4 +200,39 @@ it('无效孔数不可预览，装备变更清空声明且已知孔数不能被�
     (screen.getByRole('button', { name: '预览辅助孔结果' }) as HTMLButtonElement).disabled,
   ).toBe(true)
   expect(onPreview).not.toHaveBeenCalled()
+})
+
+it('起点五孔零费用，修改草稿要重新开始才生效，未知仍保持未知', () => {
+  const base = catalog.bases[0]
+  if (!base) throw Error('missing base')
+  render(
+    <CraftEntry
+      catalog={catalog}
+      base={base}
+      itemLevel={53}
+      imported={undefined}
+      translations={translations}
+      translateLine={undefined}
+      dictionary={undefined}
+      onRestore={vi.fn()}
+    />,
+  )
+  expect((screen.getByLabelText('起点技能辅助孔数') as HTMLSelectElement).value).toBe('')
+  change('起点技能辅助孔数', '5')
+  click('从空白基底开始')
+  expect(screen.getByLabelText('当前装备技能辅助孔').textContent).toContain(
+    '5 个辅助孔（起点声明）',
+  )
+  expect(save().initialState.declaredSkillSockets).toBe(5)
+  expect(save().operations).toEqual([])
+  expect(save().rulesVersion).toBe('basic-2026-09-17-v100')
+  change('起点技能辅助孔数', '3')
+  expect(save().initialState.declaredSkillSockets).toBe(5)
+  click('从空白基底开始')
+  expect(save().initialState.declaredSkillSockets).toBe(3)
+  expect((screen.getByLabelText('操作前技能辅助孔数') as HTMLInputElement).value).toBe('3')
+  change('起点技能辅助孔数', '')
+  click('从空白基底开始')
+  expect(save().initialState.declaredSkillSockets).toBeUndefined()
+  expect((screen.getByLabelText('操作前技能辅助孔数') as HTMLInputElement).value).toBe('')
 })

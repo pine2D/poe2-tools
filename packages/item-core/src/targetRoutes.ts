@@ -23,8 +23,10 @@ import {
   analyzeCraftImplicitTargets,
   type CraftImplicitTargetValues,
   craftImplicitTargetCandidates,
+  craftImplicitTargetKey,
   implicitTargetRolls,
   perfectFluxTargetOperation,
+  skillSocketsTargetOperations,
 } from './implicitTargets'
 import { jointEffectDivineOperations, liquidRouteContext } from './liquidRouteCandidates'
 import { craftModsConflict } from './modConflicts'
@@ -85,6 +87,9 @@ export interface CraftTargetRouteStep {
   /** 原生搜索风险按tN计数；实际受影响档位单列，旧路线省略此字段。 */
   affectedModIds?: string[]
   fractureCandidateModIds?: string[]
+  matchedImplicitTargetKeys?: string[]
+  gainedImplicitTargetKeys?: string[]
+  lostImplicitTargetKeys?: string[]
   matchedImplicitLineIndexes?: number[]
   gainedImplicitLineIndexes?: number[]
   lostImplicitLineIndexes?: number[]
@@ -375,11 +380,11 @@ export function planCraftTargetContext(
           : 0.1
         : 0
   const protectedIds = options.preserveMatched === false ? [] : numericMatched(state)
-  const matchedImplicit = (current: CraftState): number[] => {
+  const matchedImplicit = (current: CraftState): string[] => {
     if (!implicitValues.length) return []
     const analyzed = analyzeCraftImplicitTargets(catalog, current, implicitValues)
     return analyzed.ok
-      ? analyzed.value.filter((target) => target.matched).map((target) => target.lineIndex)
+      ? analyzed.value.filter((target) => target.matched).map(craftImplicitTargetKey)
       : []
   }
   const protectedImplicit = options.preserveMatched === false ? [] : matchedImplicit(state)
@@ -540,7 +545,9 @@ export function planCraftTargetContext(
             .filter(
               (candidate) =>
                 candidate.rerollable &&
-                implicitValues.some((goal) => goal.lineIndex === candidate.lineIndex),
+                implicitValues.some(
+                  (goal) => craftImplicitTargetKey(goal) === craftImplicitTargetKey(candidate),
+                ),
             )
             .map((candidate) => candidate.lineIndex)
         : []
@@ -563,7 +570,7 @@ export function planCraftTargetContext(
           lostTargetIds,
           atRiskTargetIds,
           rerolledTargetIds,
-          lostImplicitLineIndexes: lostImplicit,
+          lostImplicitLineIndexes: lostImplicit.map((key) => Number(key.split(':')[0])),
           rerolledImplicitLineIndexes: rerolledImplicit,
         })
       const stateKey = key(applied.value)
@@ -606,11 +613,16 @@ export function planCraftTargetContext(
         rerolledTargetIds,
         ...(implicitValues.length
           ? {
-              matchedImplicitLineIndexes: afterImplicit,
-              gainedImplicitLineIndexes: afterImplicit.filter(
-                (index) => !beforeImplicit.includes(index),
+              matchedImplicitTargetKeys: afterImplicit,
+              gainedImplicitTargetKeys: afterImplicit.filter(
+                (key) => !beforeImplicit.includes(key),
               ),
-              lostImplicitLineIndexes: lostImplicit,
+              lostImplicitTargetKeys: lostImplicit,
+              matchedImplicitLineIndexes: afterImplicit.map((key) => Number(key.split(':')[0])),
+              gainedImplicitLineIndexes: afterImplicit
+                .filter((index) => !beforeImplicit.includes(index))
+                .map((key) => Number(key.split(':')[0])),
+              lostImplicitLineIndexes: lostImplicit.map((key) => Number(key.split(':')[0])),
               rerolledImplicitLineIndexes: rerolledImplicit,
             }
           : {}),
@@ -709,6 +721,8 @@ export function planCraftTargetContext(
     }
     const perfectFlux = perfectFluxTargetOperation(catalog, node.state, implicitValues)
     if (perfectFlux) offer(perfectFlux)
+    for (const operation of skillSocketsTargetOperations(catalog, node.state, implicitValues))
+      offer(operation)
     for (const operation of capacityRunes.operations(node.state)) offer(operation)
     if (definitions) {
       for (const flux of FLUXES) {

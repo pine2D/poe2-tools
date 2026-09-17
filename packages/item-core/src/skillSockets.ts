@@ -19,21 +19,48 @@ export interface SkillSocketsCraftOperation {
 }
 const fail = (error: string): CraftResult<never> => ({ ok: false, error })
 
-/** 孔数仅为操作结果；不从符文孔或技能等级推断。 */
+/** 声明和结果均须对应唯一装备技能，不从符文孔或等级推断。 */
 export function grantedSkillSocketsStateError(
   catalog: CraftCatalog,
   state: CraftState,
 ): string | null {
-  if (!('grantedSkillSockets' in state)) return null
-  const descriptor = Object.getOwnPropertyDescriptor(state, 'grantedSkillSockets')
+  let present = false
+  for (const key of ['declaredSkillSockets', 'grantedSkillSockets'] as const) {
+    if (!(key in state)) continue
+    present = true
+    const descriptor = Object.getOwnPropertyDescriptor(state, key)
+    if (
+      !descriptor?.enumerable ||
+      !Object.hasOwn(descriptor, 'value') ||
+      !(key === 'declaredSkillSockets' ? [2, 3, 4, 5] : [3, 4, 5]).includes(descriptor.value)
+    )
+      return '装备技能辅助孔声明或结果必须是自有可枚举数据字段中的合法整数。'
+  }
+  if (!present) return null
   if (
-    !descriptor?.enumerable ||
-    !Object.hasOwn(descriptor, 'value') ||
-    ![3, 4, 5].includes(descriptor.value)
+    state.declaredSkillSockets !== undefined &&
+    state.grantedSkillSockets !== undefined &&
+    state.grantedSkillSockets < state.declaredSkillSockets
   )
-    return '装备技能辅助孔结果只能是自有数据字段中的 3、4、5 或缺省。'
+    return '装备技能辅助孔操作结果不能低于起点声明。'
   const skill = readSingleGrantedSkill(catalog, state)
   return skill.ok ? null : skill.error
+}
+
+/** 仅为新演练起点记录用户观察；不生成制作步骤或原生装备文本。 */
+export function declareInitialSkillSockets(
+  catalog: CraftCatalog,
+  state: CraftState,
+  count: number,
+): CraftResult<CraftState> {
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  if (Object.hasOwn(checked.value, 'grantedSkillSockets'))
+    return fail('已有辅助孔操作结果不能改写起点声明，请重新开始演练。')
+  return createCraftState(catalog, {
+    ...checked.value,
+    declaredSkillSockets: count as 2 | 3 | 4 | 5,
+  })
 }
 
 export function inspectSkillSocketsCraft(
@@ -104,7 +131,10 @@ export function readCraftGrantedSkillSockets(
   return skill.ok
     ? {
         ok: true,
-        value: { name: skill.value.skillName, sockets: checked.value.grantedSkillSockets ?? null },
+        value: {
+          name: skill.value.skillName,
+          sockets: checked.value.grantedSkillSockets ?? checked.value.declaredSkillSockets ?? null,
+        },
       }
     : skill
 }

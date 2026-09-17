@@ -116,7 +116,10 @@ export function exportCraftItemText(
     return { ok: false, error: '待揭示亵渎不能导出装备文本，请保存项目以保留隐藏状态。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  if (checked.value.grantedSkillSockets !== undefined)
+  if (
+    checked.value.grantedSkillSockets !== undefined ||
+    checked.value.declaredSkillSockets !== undefined
+  )
     return {
       ok: false,
       error: '装备技能辅助孔尚无已确认的原生文本格式，请保存制作项目或步骤清单。',

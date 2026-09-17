@@ -301,7 +301,9 @@ export type {
 export {
   analyzeCraftImplicitTargets,
   craftImplicitTargetCandidates,
+  craftImplicitTargetKey,
   projectImplicitTargetValues,
+  skillSocketsTargetOperations,
   validateCraftImplicitTargets,
   validateStoredCraftImplicitTargets,
 } from './implicitTargets'
@@ -441,6 +443,7 @@ export {
 } from './skillLevelContributions'
 export {
   applySkillSocketsCraft,
+  declareInitialSkillSockets,
   inspectSkillSocketsCraft,
   isSkillSocketsCraftOperation,
   prepareSkillSocketsCraft,
@@ -453,6 +456,10 @@ export {
   requiresSkillSocketsProjectVersion,
   SKILL_SOCKETS_RULES_VERSION,
 } from './skillSocketsProjectVersion'
+export {
+  requiresSkillSocketTargetProjectVersion,
+  SKILL_SOCKET_TARGET_RULES_VERSION,
+} from './skillSocketTargetProjectVersion'
 export { socketEffectIncrease } from './socketAmplification'
 export type { SocketEffect } from './sockets'
 export {

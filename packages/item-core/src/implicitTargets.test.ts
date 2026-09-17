@@ -100,6 +100,7 @@ it('带技能的其他普通行仍可跟踪，但全件神圣门禁保持', () =
     ok: true,
     value: [
       { lineIndex: 0, kind: 'granted-skill', actual: [null], rerollable: false },
+      { lineIndex: 0, kind: 'granted-skill-sockets', actual: [null], rerollable: false },
       { lineIndex: 1, actual: [15], rerollable: false },
     ],
   })

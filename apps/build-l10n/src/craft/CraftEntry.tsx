@@ -7,6 +7,7 @@ import {
   type CraftState,
   catalystStoredQualityLimit,
   createCraftState,
+  declareInitialSkillSockets,
   fluxCatalogSignature,
   type ItemDictionary,
   importCraftState,
@@ -14,6 +15,7 @@ import {
   type RestoredTargetCraftProject,
   readBaseGrantedSkills,
   readCatalystQuality,
+  readCraftGrantedSkillSockets,
   readItemQuality,
   resolveCraftImplicitPatterns,
   socketCapacity,
@@ -61,6 +63,8 @@ export function CraftEntry({
   const [blankQuality, setBlankQuality] = useState(0)
   const [qualityDeclaration, setQualityDeclaration] = useState('')
   const [skillLevels, setSkillLevels] = useState<Record<number, string>>({})
+  const [skillSocketDeclaration, setSkillSocketDeclaration] = useState('')
+  const [beginError, setBeginError] = useState('')
   const [charmSlots, setCharmSlots] = useState(1)
   const beltChoices = [1, 2, 3].filter(
     (slots) => buildInitialBeltImplicitLines(base, itemLevel, slots).ok,
@@ -159,6 +163,15 @@ export function CraftEntry({
   const readOnlyImport =
     matchingImport && (imported.comparisonOnly || imported.item?.rarity === 'unique')
   function begin(state: CraftState, importedSockets?: (string | null)[], importedQuality?: number) {
+    if (skillSocketDeclaration !== '') {
+      const declared = declareInitialSkillSockets(catalog, state, Number(skillSocketDeclaration))
+      if (!declared.ok) {
+        setBeginError(declared.error)
+        return
+      }
+      state = declared.value
+    }
+    setBeginError('')
     setSession((previous) => ({
       state,
       id: (previous?.id ?? 0) + 1,
@@ -366,6 +379,27 @@ export function CraftEntry({
           <small>仅用于新建普通基底；声明已有空孔，不消耗通货打孔，也不修改导入装备。</small>
         </label>
       ) : null}
+      {blank.ok && readCraftGrantedSkillSockets(catalog, blank.value).ok && !readOnlyImport ? (
+        <label>
+          起点技能辅助孔数
+          <select
+            aria-label="起点技能辅助孔数"
+            value={skillSocketDeclaration}
+            onChange={(event) => setSkillSocketDeclaration(event.target.value)}
+          >
+            <option value="">尚未核对</option>
+            {[2, 3, 4, 5].map((count) => (
+              <option key={count} value={count}>
+                {count} 个辅助孔
+              </option>
+            ))}
+          </select>
+          <small>
+            核对已有技能的辅助孔数，独立于符文孔和技能等级。声明不计材料费用；修改后需重新开始才生效。
+          </small>
+        </label>
+      ) : null}
+      {beginError ? <p role="alert">{beginError}</p> : null}
       <div className="catalog-craft-actions">
         {blank.ok && !readOnlyImport ? (
           <button type="button" onClick={() => begin(blank.value)}>

@@ -109,6 +109,7 @@ import {
   requiresRuneforgeProjectVersion,
   requiresSerleProjectVersion,
   requiresSkillSocketsProjectVersion,
+  requiresSkillSocketTargetProjectVersion,
   requiresWardRuneProjectVersion,
   requiresWeightedPropertyProjectVersion,
   resolveCraftAffix,
@@ -117,6 +118,7 @@ import {
   restoreTargetWorkbenchProject,
   runeforgingCatalogSignature,
   SERLE_RULES_VERSION,
+  SKILL_SOCKET_TARGET_RULES_VERSION,
   SKILL_SOCKET_TIERS,
   SKILL_SOCKETS_RULES_VERSION,
   type SkillSocketsCraftOperation,
@@ -427,6 +429,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [skillSocketTargetRules, setSkillSocketTargetRules] = useState(
+    initialProject?.project.rulesVersion === SKILL_SOCKET_TARGET_RULES_VERSION,
   )
   const [skillSocketsRules, setSkillSocketsRules] = useState(
     initialProject?.project.rulesVersion === SKILL_SOCKETS_RULES_VERSION,
@@ -1292,6 +1297,8 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsSkillSocketTargets =
+    skillSocketTargetRules || requiresSkillSocketTargetProjectVersion(projectConfig)
   const needsSkillSockets = skillSocketsRules || requiresSkillSocketsProjectVersion(projectConfig)
   const needsWeightedProperties =
     weightedPropertyRules || requiresWeightedPropertyProjectVersion(projectConfig)
@@ -1304,6 +1311,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsSkillSocketTargets ||
     needsSkillSockets ||
     needsWeightedProperties ||
     needsGrantedSkillTargets ||
@@ -1339,41 +1347,43 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsSkillSockets
-            ? SKILL_SOCKETS_RULES_VERSION
-            : needsWeightedProperties
-              ? WEIGHTED_PROPERTY_RULES_VERSION
-              : needsGrantedSkillTargets
-                ? GRANTED_SKILL_TARGET_RULES_VERSION
-                : needsExtendedInfluenceBone
-                  ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                  : needsInfluenceBone
-                    ? INFLUENCE_BONE_RULES_VERSION
-                    : needsDestruction
-                      ? DESTRUCTION_RUNE_RULES_VERSION
-                      : needsInfluence
-                        ? INFLUENCE_RUNE_RULES_VERSION
-                        : needsDesecrationCount
-                          ? DESECRATION_COUNT_RULES_VERSION
-                          : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
-                            ? PUTREFACTION_RULES_VERSION
-                            : needsPendingExaltation
-                              ? PENDING_EXALTATION_RULES_VERSION
-                              : needsEssenceOutcomes
-                                ? ESSENCE_OUTCOMES_RULES_VERSION
-                                : needsSerle
-                                  ? SERLE_RULES_VERSION
-                                  : needsCraftedCapacity
-                                    ? CRAFTED_CAPACITY_RULES_VERSION
-                                    : needsConditionalRunes
-                                      ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                      : needsMasterwork
-                                        ? MASTERWORK_CRAFT_RULES_VERSION
-                                        : needsExtendedRunes
-                                          ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                          : needsWardRunes
-                                            ? WARD_RUNE_RULES_VERSION
-                                            : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsSkillSocketTargets
+            ? SKILL_SOCKET_TARGET_RULES_VERSION
+            : needsSkillSockets
+              ? SKILL_SOCKETS_RULES_VERSION
+              : needsWeightedProperties
+                ? WEIGHTED_PROPERTY_RULES_VERSION
+                : needsGrantedSkillTargets
+                  ? GRANTED_SKILL_TARGET_RULES_VERSION
+                  : needsExtendedInfluenceBone
+                    ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                    : needsInfluenceBone
+                      ? INFLUENCE_BONE_RULES_VERSION
+                      : needsDestruction
+                        ? DESTRUCTION_RUNE_RULES_VERSION
+                        : needsInfluence
+                          ? INFLUENCE_RUNE_RULES_VERSION
+                          : needsDesecrationCount
+                            ? DESECRATION_COUNT_RULES_VERSION
+                            : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
+                              ? PUTREFACTION_RULES_VERSION
+                              : needsPendingExaltation
+                                ? PENDING_EXALTATION_RULES_VERSION
+                                : needsEssenceOutcomes
+                                  ? ESSENCE_OUTCOMES_RULES_VERSION
+                                  : needsSerle
+                                    ? SERLE_RULES_VERSION
+                                    : needsCraftedCapacity
+                                      ? CRAFTED_CAPACITY_RULES_VERSION
+                                      : needsConditionalRunes
+                                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                        : needsMasterwork
+                                          ? MASTERWORK_CRAFT_RULES_VERSION
+                                          : needsExtendedRunes
+                                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                            : needsWardRunes
+                                              ? WARD_RUNE_RULES_VERSION
+                                              : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1408,6 +1418,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setSkillSocketTargetRules(restored.project.rulesVersion === SKILL_SOCKET_TARGET_RULES_VERSION)
     setSkillSocketsRules(restored.project.rulesVersion === SKILL_SOCKETS_RULES_VERSION)
     setWeightedPropertyRules(restored.project.rulesVersion === WEIGHTED_PROPERTY_RULES_VERSION)
     setGrantedSkillTargetRules(restored.project.rulesVersion === GRANTED_SKILL_TARGET_RULES_VERSION)
@@ -2588,10 +2599,13 @@ export function RehearsalPanel({
         </section>
       </div>
 
-      {current.grantedSkillSockets !== undefined ? (
+      {(current.grantedSkillSockets ?? current.declaredSkillSockets) !== undefined ? (
         <section aria-label="当前装备技能辅助孔" className="rehearsal-implicit">
           <h3>装备技能辅助孔</h3>
-          <p>当前 {current.grantedSkillSockets} 个辅助孔（演练结果）。</p>
+          <p>
+            当前 {current.grantedSkillSockets ?? current.declaredSkillSockets} 个辅助孔（
+            {current.grantedSkillSockets === undefined ? '起点声明' : '演练结果'}）。
+          </p>
           <p>辅助孔不表示已装入辅助宝石；技能等级与符文孔单独记录。</p>
         </section>
       ) : null}
