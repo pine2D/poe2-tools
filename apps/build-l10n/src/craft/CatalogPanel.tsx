@@ -20,6 +20,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AlloyCatalog } from './AlloyCatalog'
+import { BaseImplicitPreview } from './BaseImplicitPreview'
 import { CraftEntry } from './CraftEntry'
 import { EssenceCatalog } from './EssenceCatalog'
 import { FluxCatalog } from './FluxCatalog'
@@ -631,16 +632,11 @@ export function CatalogPanel({
               <div className="catalog-base-facts">
                 <PropertyList title="基础属性" values={selectedBase.properties} />
                 <PropertyList title="需求" values={selectedBase.requirements} />
-                {selectedBase.implicit && (
-                  <section className="catalog-facts">
-                    <h4>固有属性</h4>
-                    {selectedBase.implicit.split('\n').map((line) => {
-                      const translated = translateLine?.(line)
-                      return translated ? <span key={line}>{translated}</span> : null
-                    })}
-                    <code>{selectedBase.implicit}</code>
-                  </section>
-                )}
+                <BaseImplicitPreview
+                  key={JSON.stringify([selectedBase.id, selectedBase.implicit])}
+                  base={selectedBase}
+                  translateLine={translateLine}
+                />
                 {selectedBase.socketLimit !== null && (
                   <section className="catalog-facts">
                     <h4>来源插槽容量</h4>

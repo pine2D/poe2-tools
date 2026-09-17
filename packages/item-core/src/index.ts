@@ -21,6 +21,8 @@ export {
 } from './alloys'
 export type { ArchitectCraftOperation } from './architect'
 export { isAstridRune } from './astridRune'
+export type { BaseSkillVariants } from './baseSkillVariants'
+export { readBaseSkillVariants } from './baseSkillVariants'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
 export {
   analyzeBoneTargets,
