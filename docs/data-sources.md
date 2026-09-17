@@ -520,3 +520,6 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 - [Vorana 制作者实验自述](https://www.reddit.com/r/pathofexile2builds/comments/1typtkt/very_nice_new_helmet_affix_for_rampage_bear_with/)报告腐烂尝试中出现怒火消耗效率；最终展示装备是购入，不冒称其制作成果。其次数不能作为权重。普通揭示候选属于既有普通池与来源标签的规则组合推导；[战吼头盔求助回复](https://www.reddit.com/r/PoECrafting/comments/1wfbr3z/warcry_gemling_helmet_craft_help/)只是拟议普通骨骼路线，不当作实测。
 
 这些记录不足以证明全部预兆组合、材料档位、版本一致性或真实概率。候选仍来自固定 MIT ModItem/ModRunes，腐烂占位规则沿用已登记规则；没有新增抓取适配器或第三方数据包。
+# 2026-09-17 权杖镶嵌核对（实施前登记）
+
+沿用已登记 MIT PoB2 固定提交的 `Bases/sceptre.lua`、`ModRunes.lua` 与 `ModScalability.lua`，不新增数据包。[GGG 0.2.0f](https://www.pathofexile.com/forum/view-thread/3762929)直接确认权杖可有孔；[制作者原始流程](https://www.reddit.com/r/Poe2BudgetCraftGuide/comments/1qg0g6p/how_to_craft_multiple_over_300_div_sceptres_with/)第六步记载加孔，帖子明确属于0.4，仅作 gray 操作说明参考，不采纳其重组、概率或利润。[权杖](https://poe2db.tw/us/Sceptres)、[蛇神像](https://poe2db.tw/us/Snake_Idol)、[野猪神像](https://poe2db.tw/us/Boar_Idol)及[巧匠石](https://poe2db.tw/us/Artificers_Orb)按既有 gray 人工机制参考读取。巧匠石页面未直接列权杖；普通单手孔位规则与固定目录上限的映射须标为建模推断，真机待验收。效果区分玩家、友军、召唤生物和伙伴，绑定效果不默认激活；不抓取同行代码、数据或真实装备样本。

@@ -13,6 +13,11 @@ import {
   type RuneEffectTotals,
   sumRuneEffects,
 } from './runeEffects'
+import {
+  isSceptreEffectLine,
+  isSupportedSceptreBase,
+  sceptreSourceMatches,
+} from './sceptreAugments'
 import { serleSourceMatches } from './serleRune'
 import { effectiveSocketAugment } from './socketAmplification'
 import { specialMartialSourceMatches } from './specialMartialRunes'
@@ -24,7 +29,11 @@ import {
 } from './weaponRuneEffects'
 
 function supportedSource(lines: readonly string[]): boolean {
-  return parseRuneEffectTotals(lines) !== null || parseWeaponRuneEffectTotals(lines) !== null
+  return (
+    lines.every(isSceptreEffectLine) ||
+    parseRuneEffectTotals(lines) !== null ||
+    parseWeaponRuneEffectTotals(lines) !== null
+  )
 }
 
 export function readRuneSourceLines(
@@ -99,6 +108,13 @@ export function runeSocketContributionError(
   )
     return '容量符文效果与孔位声明不一致。'
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (base && isSupportedSceptreBase(base))
+    return sceptreSourceMatches(
+      state.runeSourceLines,
+      augments.flatMap((a) => a.lines),
+    )
+      ? null
+      : '权杖镶嵌效果与孔位声明不一致：请核对完整作用对象、条件、数值和重复行。'
   const weapon = base && weaponSocketKind(base)
   if (weapon) {
     if (

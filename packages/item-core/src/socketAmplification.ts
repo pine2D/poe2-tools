@@ -8,6 +8,7 @@ import { isRebirthArmourRune } from './extendedArmourRuneEffects'
 import { influenceRuneFitsBase, isInfluenceRune } from './influenceRunes'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
+import { isSceptreAugmentId, scaleSceptreAugment, sceptreAugmentFits } from './sceptreAugments'
 import { isSerleRune, SERLE_LINE, serleFitsBase } from './serleRune'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import {
@@ -60,6 +61,10 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
+  if (isSceptreAugmentId(augment.id))
+    return sceptreAugmentFits(catalog, state, augment)
+      ? scaleSceptreAugment(catalog, augment, increase)
+      : null
   if (isSpecialMartialRuneId(augment.id))
     return specialMartialRuneFits(catalog, state, augment)
       ? scaleSpecialMartialRune(catalog, augment, increase)

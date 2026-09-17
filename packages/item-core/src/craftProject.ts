@@ -89,6 +89,7 @@ import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } fro
 import { isRuneforgeCraftOperation } from './runeforge'
 import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
 import { requiresRuneforgeProjectVersion } from './runeforgeProjectVersion'
+import { requiresSceptreAugmentProjectVersion } from './sceptreAugmentProjectVersion'
 import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { requiresSkillLevelDeclarationProjectVersion } from './skillLevelDeclarationProjectVersion'
 import { isSkillSocketsCraftOperation } from './skillSockets'
@@ -731,6 +732,7 @@ export function readNativeTargetProjectProjection(
   flasks = false,
   talismans = false,
   specialMartialRunes = false,
+  sceptreAugments = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -771,6 +773,7 @@ export function readNativeTargetProjectProjection(
     flasks,
     talismans,
     specialMartialRunes,
+    sceptreAugments,
   )
 }
 
@@ -813,6 +816,7 @@ function readCraftProject(
   flasks = false,
   talismans = false,
   specialMartialRunes = false,
+  sceptreAugments = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -837,6 +841,9 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  const usesSceptreAugments = requiresSceptreAugmentProjectVersion(value)
+  if (!sceptreAugments && usesSceptreAugments)
+    return fail('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
   const usesSpecialMartialRunes = requiresSpecialMartialRuneProjectVersion(value)
   if (!specialMartialRunes && usesSpecialMartialRunes)
     return fail('专属攻击武器符文必须使用 v108 项目，包括起点、导入声明、完整未来、指引和报价。')
@@ -1785,6 +1792,7 @@ function readCraftProject(
       usesJewelEffects ||
       usesSovereignEffects ||
       usesSpecialMartialRunes ||
+      usesSceptreAugments ||
       usesEffectiveTargets ||
       Object.hasOwn(value, 'scalabilitySourceHash')) &&
     (scalabilitySourceHash === null || value.scalabilitySourceHash !== scalabilitySourceHash)
@@ -1868,7 +1876,12 @@ function readCraftProject(
   const augmentSourceHash = catalog._meta.sources.find(
     (source) => source.path === 'src/Data/ModRunes.lua',
   )?.sha256
-  if (usesSockets || usesSpecialMartialRunes || Object.hasOwn(value, 'augmentSourceHash')) {
+  if (
+    usesSockets ||
+    usesSpecialMartialRunes ||
+    usesSceptreAugments ||
+    Object.hasOwn(value, 'augmentSourceHash')
+  ) {
     if (
       typeof augmentSourceHash !== 'string' ||
       !/^[a-f0-9]{64}$/.test(augmentSourceHash) ||
@@ -2167,6 +2180,7 @@ function readCraftProject(
           usesJewelEffects ||
           usesSovereignEffects ||
           usesSpecialMartialRunes ||
+          usesSceptreAugments ||
           usesEffectiveTargets ||
           Object.hasOwn(value, 'scalabilitySourceHash')) &&
         scalabilitySourceHash
@@ -2177,7 +2191,10 @@ function readCraftProject(
         cursor: value.cursor,
         ...(importedSockets === undefined ? {} : { importedSockets }),
         ...(importedQuality === undefined ? {} : { importedQuality }),
-        ...((usesSockets || usesSpecialMartialRunes || Object.hasOwn(value, 'augmentSourceHash')) &&
+        ...((usesSockets ||
+          usesSpecialMartialRunes ||
+          usesSceptreAugments ||
+          Object.hasOwn(value, 'augmentSourceHash')) &&
         augmentSourceHash !== undefined
           ? { augmentSourceHash }
           : {}),
@@ -2216,6 +2233,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresSceptreAugmentProjectVersion(project))
+    throw new Error('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
   if (requiresSpecialMartialRuneProjectVersion(project))
     throw new Error(
       '专属攻击武器符文必须使用 v108 项目，包括起点、导入声明、完整未来、指引和报价。',

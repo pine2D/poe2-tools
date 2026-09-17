@@ -72,16 +72,25 @@ export function SocketPanel({
   const artificerDraft = draft?.kind === 'artificer'
   const amplification = socketEffectIncrease(catalog, state)
   const limit = artificerSocketLimit(catalog, state)
+  const sceptre = catalog.bases.find((base) => base.id === state.baseId)?.type === 'Sceptre'
   const canAddSocket = state.sockets !== undefined && state.sockets.length < limit
   const previous = catalog.augments?.find((entry) => entry.id === state.sockets?.[selectedIndex])
   const label = (name: string) => translations[name] ?? name
   if (socketCapacity(catalog, state) === 0 && state.sockets === undefined) return null
   return (
     <section className="craft-sockets" aria-label="符文镶嵌">
-      <h3>符文与魂核镶嵌</h3>
+      <h3>{sceptre ? '神像、符文与魂核镶嵌' : '符文与魂核镶嵌'}</h3>
       <p>
-        按当前部位列出符文与基础魂核及其实际效果。普通覆盖不返还旧材料；绑定孔不能替换。镶嵌效果本身不占前后缀位置。
+        按当前部位列出可用镶嵌物及其实际效果。普通覆盖不返还旧材料；绑定孔不能替换。镶嵌效果本身不占前后缀位置。
       </p>
+      {sceptre ? (
+        <>
+          <p>
+            权杖没有本地攻击面板。各行按注明的作用对象生效；在场友军、召唤生物和伙伴效果分别保留，不推算玩家自身收益。
+          </p>
+          <p>权杖打孔与腐化加孔尚待游戏内复核。</p>
+        </>
+      ) : null}
       {limits.length > 0 ? (
         <section aria-label="镶嵌限量提示">
           {limits.map((entry) => (
@@ -216,7 +225,9 @@ export function SocketPanel({
                   )
                 }
               >
-                <option value="">选择符文或魂核查看结果</option>
+                <option value="">
+                  {sceptre ? '选择神像、符文或魂核查看结果' : '选择符文或魂核查看结果'}
+                </option>
                 {candidates.map((entry) => (
                   <option key={entry.id} value={entry.id}>
                     {label(entry.name)} ·{' '}

@@ -59,6 +59,7 @@ import {
   isRuneforgeCraftOperation,
   type RuneforgeCraftOperation,
 } from './runeforge'
+import { sceptreSocketError } from './sceptreAugments'
 import { isSerleRune } from './serleRune'
 import {
   applySkillSocketsCraft,
@@ -415,6 +416,13 @@ export function applyCraftStep(
     }
     if (!socketCandidates(catalog, checked.value).some((entry) => entry.id === step.augmentId))
       return { ok: false, error: '该符文当前不可镶嵌。' }
+    const sceptreError = sceptreSocketError(
+      catalog,
+      checked.value,
+      step.socketIndex,
+      step.augmentId,
+    )
+    if (sceptreError) return { ok: false, error: sceptreError }
     const limitError = conditionalRuneSocketError(
       catalog,
       checked.value,

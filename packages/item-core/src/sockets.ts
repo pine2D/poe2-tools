@@ -6,6 +6,7 @@ import { influenceRuneFitsBase, influenceRuneTags, isInfluenceRune } from './inf
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
+import { isSceptreAugmentId, isSupportedSceptreBase, sceptreAugmentFits } from './sceptreAugments'
 import { isSerleRune, serleFitsBase } from './serleRune'
 import { effectiveSocketAugment, isHorrorSocketAffix } from './socketAmplification'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
@@ -63,6 +64,7 @@ export function artificerSocketLimit(catalog: CraftCatalog, state: CraftState): 
   const base = supportedSocketBase(catalog, state)
   if (base === undefined) return 0
   const weapon = weaponSocketKind(base)
+  if (isSupportedSceptreBase(base)) return 1
   if (weapon) return weapon.limit
   if (base.type === 'Body Armour') return 2
   return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type) ? 1 : 0
@@ -74,6 +76,7 @@ export function socketCapacity(catalog: CraftCatalog, state: CraftState): number
   if (base === undefined) return 0
   const weapon = weaponSocketKind(base)
   const extra = state.corrupted ? 1 : 0
+  if (isSupportedSceptreBase(base)) return 2 + extra
   if (weapon) return weapon.limit + 1 + extra
   if (base.type === 'Body Armour') return 3 + extra
   return ['Helmet', 'Gloves', 'Boots'].includes(base.type) || isSupportedOffhand(base.type)
@@ -88,6 +91,8 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
+  if (isSceptreAugmentId(augment.id)) return sceptreAugmentFits(catalog, state, augment)
+  if (base?.type === 'Sceptre') return false
   if (isSpecialMartialRuneId(augment.id)) return specialMartialRuneFits(catalog, state, augment)
   if (isInfluenceRune(augment)) return influenceRuneFitsBase(catalog, state, augment)
   if (isAstridRune(augment)) return astridFitsBase(catalog, state, augment)

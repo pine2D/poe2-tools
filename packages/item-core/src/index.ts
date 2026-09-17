@@ -454,6 +454,11 @@ export {
   type RuneforgingCatalog,
   runeforgingCatalogSignature,
 } from './runeforgingCatalog'
+export {
+  requiresSceptreAugmentProjectVersion,
+  SCEPTRE_AUGMENT_RULES_VERSION,
+} from './sceptreAugmentProjectVersion'
+export { isSceptreAugment, isSupportedSceptreBase, SCEPTRE_AUGMENT_NAMES } from './sceptreAugments'
 export { requiresSerleProjectVersion, SERLE_RULES_VERSION } from './serleProjectVersion'
 export { isSerleRune, serleCapacity } from './serleRune'
 export {
