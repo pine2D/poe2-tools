@@ -549,3 +549,8 @@ v115 接入采用的规则推导：以原作者单防御／双防御实际产物
 # 2026-09-17 权杖镶嵌核对（实施前登记）
 
 沿用已登记 MIT PoB2 固定提交的 `Bases/sceptre.lua`、`ModRunes.lua` 与 `ModScalability.lua`，不新增数据包。[GGG 0.2.0f](https://www.pathofexile.com/forum/view-thread/3762929)直接确认权杖可有孔；[制作者原始流程](https://www.reddit.com/r/Poe2BudgetCraftGuide/comments/1qg0g6p/how_to_craft_multiple_over_300_div_sceptres_with/)第六步记载加孔，帖子明确属于0.4，仅作 gray 操作说明参考，不采纳其重组、概率或利润。[权杖](https://poe2db.tw/us/Sceptres)、[蛇神像](https://poe2db.tw/us/Snake_Idol)、[野猪神像](https://poe2db.tw/us/Boar_Idol)及[巧匠石](https://poe2db.tw/us/Artificers_Orb)按既有 gray 人工机制参考读取。巧匠石页面未直接列权杖；普通单手孔位规则与固定目录上限的映射须标为建模推断，真机待验收。效果区分玩家、友军、召唤生物和伙伴，绑定效果不默认激活；不抓取同行代码、数据或真实装备样本。
+
+
+### 珠宝瓦尔增删词缀的原创说明（2026-09-18）
+
+人工规则参考，gray：[sirgog 原创视频](https://www.youtube.com/watch?v=YVDDZ6xVpCI)，YouTube 元数据发布日为 2025-01-24。20:39–21:56 是珠宝章节；21:30–21:41 明确描述随机增加或移除一个词缀，以及新增可突破普通四词缀、两前两后的限制。它与上文已登记的同作者 Mobalytics 文章属于同源说明，不能算两份独立实验证据。仅人工记录结论，不转载字幕或视频、不导入权重；2025 年概率和其他类别结论不作为 0.5 规则。详细证据边界和实现影响见 [珠宝瓦尔增删核对](jewel-vaal-affix-research.md)。
