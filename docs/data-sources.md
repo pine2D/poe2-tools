@@ -2,6 +2,8 @@
 
 ## 药剂独立来源（2026-09-17，v106实施前登记）
 
+药剂使用说明补充核对：PoE2DB [简中](https://poe2db.tw/cn/Ultimate_Life_Flask)、[繁中](https://poe2db.tw/tw/Ultimate_Life_Flask)、[英文](https://poe2db.tw/us/Ultimate_Life_Flask)页面的水井充能提示（gray，2026-09-17读取）。只将准确说明分类为描述，不从网页面板推算导入品质；客户端高级复制格式仍待真机验收。
+
 沿用MIT PoB2固定提交ce566eac45ea8a86477f513c7ee65a1ebe60014e，新增[ModFlask.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Data/ModFlask.lua)，SHA-256 d50d074c1b7e0a57c164b7c49add1670d90ba806a25d946467e4ca7af9feb350。78条声明先验证，67条有生成资格，11条全零禁用保留排除审计；default=1仅在药剂来源域内解释为资格，不是概率。已有Bases/flask、Item.lua、ItemsTab.lua同提交用于基底、魔法1前1后/禁止rare以及本件恢复/充能估算，不采用sourceQuality默认值作为用户品质。
 
 [Flask Wiki](https://www.poe2wiki.net/wiki/Flask)与[Dreamcore药剂指南](https://mobalytics.gg/poe-2/guides/flasks)（2025-09-25）经Exa读取，按gray人工机制参考交叉核对类别与条件效果，不复制全文或第三方装备。已登记PoE2DB的Perfect Transmutation、Greater Augmentation、Annulment、Divine、Glassblower物品说明再次读取；只用材料资格文字，不使用行情、概率或配方权重。CoE公开Life Flasks界面用于交互参考，未读取代码/数据；其中Vaal入口与PoB模型字段不能单独解决游戏腐化行为。逐颗品质、腐化、条件角色收益及国服原生格式仍待核实，无浏览器外站请求或客户端解包。

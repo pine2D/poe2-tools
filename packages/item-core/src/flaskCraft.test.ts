@@ -272,3 +272,33 @@ it.each([
     `Item Class: ${resource} Flasks`,
   )
 })
+
+it.each([
+  [
+    'Life Flasks',
+    'Right click to drink. Can only hold charges while in belt. Refill at Wells or by killing monsters.',
+  ],
+  ['生命药剂', '点击右键以喝下药剂。只有装备于腰带上时才会充能。可通过水井或击败怪物补充。'],
+  ['生命藥劑', '右鍵點擊以喝下藥劑。只有裝備於腰帶上時才會充能。在水井或殺死怪物可回復充能次數。'],
+])('公开数据当前%s水井使用说明不误判为未知制作属性', (itemClass, usage) => {
+  for (const resource of ['Life', 'Mana']) {
+    const name = itemClass
+      .replace('Life', resource)
+      .replace('生命', resource === 'Life' ? '生命' : '魔力')
+    const raw = `Item Class: ${name}\nRarity: Normal\nUltimate ${resource} Flask\n--------\nItem Level: 86\n--------\n${usage}`
+    const parsed = parseItem(raw)
+    if (!parsed.ok) throw Error(parsed.error)
+    const result = importCraftState(
+      catalog,
+      `Ultimate ${resource} Flask`,
+      parsed.item,
+      inspectItem(parsed.item, dictionary),
+    )
+    expect(result.ok, result.ok ? '' : result.error).toBe(true)
+    expect(
+      parsed.item.blocks
+        .filter((block) => block.kind === 'description')
+        .flatMap((block) => block.lines.map((line) => line.raw)),
+    ).toContain(usage)
+  }
+})

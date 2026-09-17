@@ -25,8 +25,11 @@ const PROPERTIES = [
   new RegExp(String.raw`^每次使用[会會][从從]\s*${NUMBER}\s*充能次[数數]中消耗\s*${NUMBER}\s*次$`),
   new RegExp(String.raw`^目前有\s*${NUMBER}\s*充能次[数數]$`),
 ]
-// 中文为工具支持的精确合成语法，客户端原生措辞仍待真机核对。
+// 水井说明来自已登记的三语公开页面；保留旧合成语法兼容，客户端高级复制仍待真机核对。
 const USAGE = new Set([
+  'Right click to drink. Can only hold charges while in belt. Refill at Wells or by killing monsters.',
+  '点击右键以喝下药剂。只有装备于腰带上时才会充能。可通过水井或击败怪物补充。',
+  '右鍵點擊以喝下藥劑。只有裝備於腰帶上時才會充能。在水井或殺死怪物可回復充能次數。',
   'Right click to drink. Can only hold charges while in belt. Refills as you kill monsters.',
   '右键点击饮用。只能在腰带中持有充能。击败怪物时会补充充能。',
   '右鍵點擊飲用。只能在腰帶中持有充能。擊敗怪物時會補充充能。',
