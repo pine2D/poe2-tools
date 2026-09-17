@@ -549,7 +549,11 @@ export {
   validateCraftTargets,
   validateCraftTargetValues,
 } from './targets'
-export { loadTargetWorkbenchProject, reuseTargetCraftPlan } from './targetWorkbenchProject'
+export {
+  loadTargetWorkbenchProject,
+  restoreTargetWorkbenchProject,
+  reuseTargetCraftPlan,
+} from './targetWorkbenchProject'
 export type {
   ItemBlock,
   ItemDiagnostic,

@@ -54,7 +54,6 @@ import {
   findTargetCapacityContext,
   fluxCatalogSignature,
   GRANTED_SKILL_TARGET_RULES_VERSION,
-  IDENTITY_CRAFT_RULES_VERSION,
   type IdentifiedCraftState,
   INFLUENCE_BONE_RULES_VERSION,
   INFLUENCE_RUNE_RULES_VERSION,
@@ -66,7 +65,6 @@ import {
   jewelSourceHash,
   type LiquidEmotionCraftOperation,
   liquidEmotionSourceHash,
-  loadTargetWorkbenchProject,
   MASTERWORK_CRAFT_RULES_VERSION,
   type MasterworkCraftOperation,
   PENDING_EXALTATION_RULES_VERSION,
@@ -115,12 +113,10 @@ import {
   resolveCraftAffix,
   resolveCraftImplicitPatterns,
   resolveGrantedSkill,
+  restoreTargetWorkbenchProject,
   runeforgingCatalogSignature,
   SERLE_RULES_VERSION,
   type SocketCraftOperation,
-  serializeCraftProject,
-  serializeIdentityCraftProject,
-  serializeTargetCraftProject,
   setTargetDefinitionStrategy,
   statScalabilitySourceHash,
   TARGET_CRAFT_RULES_VERSION,
@@ -368,17 +364,7 @@ export function RehearsalPanel({
   const fluxSignature = useMemo(() => fluxCatalogSignature(catalog), [catalog])
   const restored = useMemo(() => {
     if (!providedProject) return null
-    try {
-      const saved =
-        'targetDefinitions' in providedProject.project
-          ? serializeTargetCraftProject(providedProject.project, catalog, dictionary)
-          : providedProject.project.rulesVersion === IDENTITY_CRAFT_RULES_VERSION
-            ? serializeIdentityCraftProject(providedProject.project, catalog, dictionary)
-            : { ok: true as const, value: serializeCraftProject(providedProject.project) }
-      return saved.ok ? loadTargetWorkbenchProject(saved.value, catalog, dictionary) : saved
-    } catch {
-      return { ok: false as const, error: '演练项目无法读取。' }
-    }
+    return restoreTargetWorkbenchProject(providedProject, catalog, dictionary)
   }, [providedProject, catalog, dictionary])
   const initialProject = restored?.ok ? restored.value : undefined
   const initial = useMemo(

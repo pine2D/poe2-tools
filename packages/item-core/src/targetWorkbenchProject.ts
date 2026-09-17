@@ -8,6 +8,7 @@ import {
   requiresCraftedCapacityProjectVersion,
 } from './craftedCapacityProjectVersion'
 import { MAX_CRAFT_PROJECT_BYTES } from './craftProject'
+import { isPlainProjectJSON } from './craftProjectJSON'
 import {
   COMBAT_ARMOUR_RUNE_RULES_VERSION,
   CORRUPTION_STRATEGY_RULES_VERSION,
@@ -84,6 +85,26 @@ import {
   requiresWeightedPropertyProjectVersion,
   WEIGHTED_PROPERTY_RULES_VERSION,
 } from './weightedPropertyProjectVersion'
+
+/** 挂载外部项目时仅重验原始项目一次；外部 states 不读取、不参与恢复。 */
+export function restoreTargetWorkbenchProject(
+  input: unknown,
+  catalog: CraftCatalog,
+  dictionary?: ItemDictionary,
+): CraftResult<RestoredTargetCraftProject> {
+  let text: string
+  try {
+    if (input === null || typeof input !== 'object' || Array.isArray(input))
+      return { ok: false, error: '演练项目无法读取。' }
+    const descriptor = Object.getOwnPropertyDescriptor(input, 'project')
+    if (!descriptor || !Object.hasOwn(descriptor, 'value') || !isPlainProjectJSON(descriptor.value))
+      return { ok: false, error: '目标项目包含不能无损保存的 JSON 字段。' }
+    text = JSON.stringify(descriptor.value)
+  } catch {
+    return { ok: false, error: '演练项目无法读取。' }
+  }
+  return loadTargetWorkbenchProject(text, catalog, dictionary)
+}
 
 /** v74 严格读取；其余原文交给独立旧版本升级入口，不降级重试或递归分派。 */
 export function loadTargetWorkbenchProject(
