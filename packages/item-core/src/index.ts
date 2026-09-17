@@ -401,6 +401,16 @@ export {
 } from './offhandIdolProjectVersion'
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
+export {
+  PANEL_GOAL_RULES_VERSION,
+  requiresPanelGoalProjectVersion,
+} from './panelGoalProjectVersion'
+export {
+  type CraftPanelGoal,
+  type CraftPanelGoalStatus,
+  evaluateCraftPanelGoals,
+  readCraftPanelGoals,
+} from './panelGoals'
 export { parseItem } from './parse.js'
 export { pendingExaltationAllowed } from './pendingExaltation'
 export {

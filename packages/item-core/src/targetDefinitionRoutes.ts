@@ -98,7 +98,11 @@ export function planTargetDefinitionRoutes(
     ok: true,
     value: {
       ...result.value,
-      alreadyMatched: (config.targets.length > 0 || implicitValues.length > 0) && initial.value,
+      alreadyMatched:
+        (config.targets.length > 0 ||
+          implicitValues.length > 0 ||
+          Boolean(config.panelGoals?.length)) &&
+        initial.value,
       routes: result.value.routes.map((route) => {
         let before = state
         const steps = route.steps.map((step): CraftDefinitionRouteStep => {

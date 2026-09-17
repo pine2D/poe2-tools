@@ -22,6 +22,7 @@ import {
   type DefinitionEssenceAdviceStep,
   definitionTargetsSatisfied,
   editTargetDefinitions,
+  evaluateCraftPanelGoals,
   hasCraftModEligibility,
   hasGenesisModEligibility,
   influenceRuneTags,
@@ -38,6 +39,7 @@ import { BoneAdvicePanel } from './BoneAdvicePanel'
 import { EssenceAdvicePanel } from './EssenceAdvicePanel'
 import { EssencePreparationPanel } from './EssencePreparationPanel'
 import { ImplicitTargetEditor } from './ImplicitTargetEditor'
+import { PanelGoalsEditor } from './PanelGoalsEditor'
 import { TargetExtractionPanel } from './TargetExtractionPanel'
 import { TargetRoutesPanel } from './TargetRoutesPanel'
 import { TargetValueEditor } from './TargetValueEditor'
@@ -252,10 +254,13 @@ export function CraftTargets({
       return true
     })
   }, [advice, showAllSteps])
-  const totalTargets = targetModIds.length + targetImplicitValues.length
+  const panelProgress = evaluateCraftPanelGoals(catalog, state, definitions.panelGoals ?? [])
+  const totalTargets =
+    targetModIds.length + targetImplicitValues.length + panelProgress.statuses.length
   const matchedTargets = advice.ok
     ? advice.value.targets.filter((t) => t.matched).length +
-      (advice.value.implicitTargets?.filter((t) => t.matched).length ?? 0)
+      (advice.value.implicitTargets?.filter((t) => t.matched).length ?? 0) +
+      panelProgress.statuses.filter((goal) => goal.matched).length
     : 0
   const allMatched =
     !state.pendingDesecration &&
@@ -310,6 +315,13 @@ export function CraftTargets({
           </strong>
         ) : null}
       </header>
+      <PanelGoalsEditor
+        catalog={catalog}
+        state={state}
+        goals={definitions.panelGoals ?? []}
+        busy={busy}
+        onChange={(goals) => edit({ kind: 'panel-goals', goals })}
+      />
       {onExtract ? (
         <TargetExtractionPanel
           catalog={catalog}
@@ -604,11 +616,13 @@ export function CraftTargets({
           ) : null}
           {allMatched ? (
             <p>
-              {minimumTargetCount !== undefined
-                ? '数量条件及必选目标均已达成，可停止当前路线。'
-                : targetImplicitValues.length
-                  ? '所有目标组及固有条件均已达成，可停止当前路线。'
-                  : '所有目标组均已达成，可停止当前路线。'}
+              {definitions.panelGoals?.length
+                ? '所有面板条件与所需词缀、固有目标均已达成，可停止当前路线。'
+                : minimumTargetCount !== undefined
+                  ? '数量条件及必选目标均已达成，可停止当前路线。'
+                  : targetImplicitValues.length
+                    ? '所有目标组及固有条件均已达成，可停止当前路线。'
+                    : '所有目标组均已达成，可停止当前路线。'}
             </p>
           ) : null}
           {!allMatched &&
@@ -619,7 +633,9 @@ export function CraftTargets({
           preparationRoutes.length === 0 &&
           boneSteps.length === 0 ? (
             <p>
-              当前没有可直接推进目标的受支持通货、精华或骨骼提示。请检查物等、冲突和目标条件；这不代表所有游戏制作路线都不可行。
+              {panelProgress.statuses.length
+                ? '请生成多步示例路线，查找满足面板条件的词缀组合与准备步骤。'
+                : '当前没有可直接推进目标的受支持通货、精华或骨骼提示。请检查物等、冲突和目标条件；这不代表所有游戏制作路线都不可行。'}
             </p>
           ) : null}
           {!boneAdvice.ok ? <p role="status">{boneAdvice.error}</p> : null}

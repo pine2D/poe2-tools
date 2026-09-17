@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { matchesTargetInterval, projectCraftTargetValues } from './effectiveTargetValues'
+import { evaluateCraftPanelGoals } from './panelGoals'
 import type { CraftAffix, CraftState } from './rehearsal'
 import type { StatValueBounds } from './statScalability'
 import { assignCraftTargets } from './targetAssignment'
@@ -76,7 +77,7 @@ export function lostCraftTargetIds(
 /** 已校验目标的计算视图，不包含持久编辑游标。 */
 type CraftTargetConditions = Pick<
   CraftTargetDefinitions,
-  'targets' | 'alternatives' | 'values' | 'fracturedTargetId' | 'minimumTargetCount'
+  'targets' | 'alternatives' | 'values' | 'fracturedTargetId' | 'minimumTargetCount' | 'panelGoals'
 >
 
 export interface CraftTargetDefinitionProgress {
@@ -133,7 +134,8 @@ export function evaluateTargetDefinitions(
       required >= 0 &&
       required <= definitions.targets.length &&
       assigned.matches.length >= required &&
-      assigned.requiredMatched,
+      assigned.requiredMatched &&
+      evaluateCraftPanelGoals(catalog, state, definitions.panelGoals ?? []).satisfied,
   }
 }
 

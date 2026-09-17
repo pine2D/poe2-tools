@@ -215,9 +215,11 @@ export function evaluateCraftStrategy(
 export interface StrategyTargetView {
   targetIds: readonly string[]
   missingMessage?: (missing: string[]) => string
-  inspect: (
-    state: CraftState,
-  ) => CraftResult<{ matchedTargetIds: readonly string[]; targetsMet: boolean }>
+  inspect: (state: CraftState) => CraftResult<{
+    matchedTargetIds: readonly string[]
+    targetsMet: boolean | null
+    targetsMetUnknownReason?: string
+  }>
 }
 
 /** 新旧入口分别校验目标引用及计算达成；共享其他条件、动作预检和阶段控制流。 */
@@ -261,7 +263,8 @@ export function evaluateCraftStrategyWithTargets(
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail('当前基底不在制作目录中。')
   const space = craftAffixSpace(catalog, state)
-  let targetsMet = false
+  let targetsMet: boolean | null = false
+  let targetsMetUnknownReason: string | undefined
   const matchedTargets = new Set<string>()
   if (
     strategy.rules.some((rule) =>
@@ -274,9 +277,12 @@ export function evaluateCraftStrategyWithTargets(
     if (!progress.ok) return progress
     for (const id of progress.value.matchedTargetIds) matchedTargets.add(id)
     targetsMet = progress.value.targetsMet
+    targetsMetUnknownReason = progress.value.targetsMetUnknownReason
   }
   const propertyValues = new Map<CraftProperty, number | null>()
-  const matches = (condition: CraftStrategyCondition): boolean | null => {
+  // 保留未知来源，使未被逻辑短路消解的完整目标条件明确阻塞。
+  const unknownTargets = Symbol('unknown-targets')
+  const matches = (condition: CraftStrategyCondition): boolean | null | typeof unknownTargets => {
     if (condition.kind === 'weighted-properties') {
       const result = readWeightedProperties(catalog, checked.value, condition.terms)
       return result.ok
@@ -323,13 +329,25 @@ export function evaluateCraftStrategyWithTargets(
     }
     if (condition.kind === 'not') {
       const matched = matches(condition.condition)
-      return matched === null ? null : !matched
+      return typeof matched === 'boolean' ? !matched : matched
     }
     if (condition.kind === 'all' || condition.kind === 'any') {
       const values = condition.conditions.map(matches)
       if (condition.kind === 'all')
-        return values.includes(false) ? false : values.includes(null) ? null : true
-      return values.includes(true) ? true : values.includes(null) ? null : false
+        return values.includes(false)
+          ? false
+          : values.includes(unknownTargets)
+            ? unknownTargets
+            : values.includes(null)
+              ? null
+              : true
+      return values.includes(true)
+        ? true
+        : values.includes(unknownTargets)
+          ? unknownTargets
+          : values.includes(null)
+            ? null
+            : false
     }
     if (condition.kind === 'selected-targets')
       return (
@@ -371,7 +389,8 @@ export function evaluateCraftStrategyWithTargets(
       )
     if (condition.kind === 'always') return true
     if (condition.kind === 'rarity') return state.rarity === condition.value
-    if (condition.kind === 'targets-met') return targetsMet === condition.value
+    if (condition.kind === 'targets-met')
+      return targetsMet === null ? unknownTargets : targetsMet === condition.value
     const side = condition.kind === 'open-prefix' ? 'prefix' : 'suffix'
     return space[side] >= condition.min
   }
@@ -379,11 +398,21 @@ export function evaluateCraftStrategyWithTargets(
   const visited = new Set<string>()
   while (true) {
     if (currentStage) visited.add(currentStage)
-    const ruleIndex = strategy.rules.findIndex(
-      (rule) =>
-        (!strategy.flow || rule.stageId === currentStage) &&
-        rule.conditions.every((condition) => matches(condition) === true),
-    )
+    let ruleIndex = -1
+    for (const [index, candidate] of strategy.rules.entries()) {
+      if (strategy.flow && candidate.stageId !== currentStage) continue
+      const matched = matches({ kind: 'all', conditions: candidate.conditions })
+      if (matched === unknownTargets)
+        return result({
+          kind: 'blocked',
+          ruleIndex: index,
+          message: targetsMetUnknownReason ?? '完整目标的面板数值未知，无法判断是否达成。',
+        })
+      if (matched === true) {
+        ruleIndex = index
+        break
+      }
+    }
     const rule = strategy.rules[ruleIndex]
     if (!rule) return result({ kind: 'unmatched' })
     if (rule.action.kind === 'stop') return result({ kind: 'stop', reason: 'rule', ruleIndex })

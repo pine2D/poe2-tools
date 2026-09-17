@@ -32,6 +32,8 @@ import { jointEffectDivineOperations, liquidRouteContext } from './liquidRouteCa
 import { craftModsConflict } from './modConflicts'
 import { inspectNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenMaterials } from './omens'
+import { evaluateCraftPanelGoals } from './panelGoals'
+import { panelRouteCandidates } from './panelRouteCandidates'
 import { pendingExaltationAllowed } from './pendingExaltation'
 import {
   addCraftAffix,
@@ -236,6 +238,17 @@ export function planCraftTargetContext(
     maxDepth > 16
   )
     return { ok: false, error: '展开状态预算须为 1–512 的整数，深度须为 1–16 的整数。' }
+  const panelGoals = definitions?.panelGoals ?? []
+  const panel = (current: CraftState) => evaluateCraftPanelGoals(catalog, current, panelGoals)
+  if (panelGoals.length) {
+    // 待揭示本身允许推进；品质、孔位等其他未知仍须明确返回原因。
+    const { pendingDesecration: _, ...revealed } = state
+    const unknown = panel(state.pendingDesecration ? revealed : state).statuses.find(
+      (status) => !status.actual.ok,
+    )
+    if (unknown && !unknown.actual.ok)
+      return { ok: false, error: `面板目标暂无法判断：${unknown.actual.error}` }
+  }
   const initial = analyzeCraftTargetContext(
     catalog,
     state,
@@ -256,13 +269,16 @@ export function planCraftTargetContext(
     truncated: false,
     alreadyMatched:
       !state.pendingDesecration &&
-      (ids.length > 0 || implicitValues.length > 0) &&
+      (ids.length > 0 || implicitValues.length > 0 || panelGoals.length > 0) &&
       (definitions
         ? evaluateTargetDefinitions(catalog, state, definitions).satisfied &&
           (initial.value.implicitTargets ?? []).every((target) => target.matched)
         : craftTargetsSatisfied(initial.value, options.minimumTargetCount, fracturedTargetId)),
   }
-  if ((!ids.length && !implicitValues.length && !state.pendingDesecration) || result.alreadyMatched)
+  if (
+    (!ids.length && !implicitValues.length && !panelGoals.length && !state.pendingDesecration) ||
+    result.alreadyMatched
+  )
     return { ok: true, value: result }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const groups = definitions
@@ -433,7 +449,8 @@ export function planCraftTargetContext(
         fracturePriority(state) +
         liquid.priority(state) +
         sovereign.priority(state) +
-        capacityRunes.priority(state),
+        capacityRunes.priority(state) +
+        panel(state).score,
       risk: 0,
       boneOmens: 0,
       cost: 0,
@@ -518,6 +535,10 @@ export function planCraftTargetContext(
       (liquid.enabled || sovereign.enabled) && options.preserveMatched !== false
         ? beforeNumeric
         : protectedIds
+    const protectedPanels =
+      options.preserveMatched === false
+        ? []
+        : panel(node.state).statuses.flatMap((status, index) => (status.matched ? [index] : []))
     const beforeImplicit = matchedImplicit(node.state)
     const present = [
       ...new Set(node.state.affixes.filter((a) => accepted.has(a.modId)).map((a) => a.modId)),
@@ -530,6 +551,8 @@ export function planCraftTargetContext(
       if (!spend()) return
       const applied = applyCraftStep(catalog, node.state, operation)
       if (!applied.ok) return
+      const afterPanel = panel(applied.value)
+      if (protectedPanels.some((index) => !afterPanel.statuses[index]?.matched)) return
       const afterNumeric = numericMatched(applied.value)
       const afterMatched = matched(applied.value)
       if (stepProtectedIds.some((id) => !afterNumeric.includes(id))) return
@@ -630,6 +653,7 @@ export function planCraftTargetContext(
       const steps = [...node.steps, step]
       if (
         !applied.value.pendingDesecration &&
+        afterPanel.satisfied &&
         afterMatched.length >= (options.minimumTargetCount ?? ids.length) &&
         afterImplicit.length === implicitValues.length &&
         (fracturedTargetId === undefined || afterMatched.includes(fracturedTargetId))
@@ -701,7 +725,8 @@ export function planCraftTargetContext(
             fracturePriority(applied.value) +
             liquid.priority(applied.value) +
             sovereign.priority(applied.value) +
-            capacityRunes.priority(applied.value),
+            capacityRunes.priority(applied.value) +
+            afterPanel.score,
           risk,
           cost,
           boneOmens:
@@ -718,6 +743,33 @@ export function planCraftTargetContext(
     const limit = <T>(entries: T[], count: number): T[] => {
       if (entries.length > count) omitted()
       return entries.slice(0, count)
+    }
+    if (panelGoals.length) {
+      const panelStart = result.candidateApplications
+      const panelSpend = () => {
+        if (result.candidateApplications - panelStart >= 512) {
+          omitted()
+          return false
+        }
+        return spend()
+      }
+      for (const candidate of panelRouteCandidates(
+        catalog,
+        node.state,
+        panelGoals,
+        panelSpend,
+        omitted,
+      )) {
+        if (result.candidateApplications - panelStart >= 512) {
+          omitted()
+          break
+        }
+        if (result.candidateApplications >= 4096) break
+        offer(
+          candidate.operation,
+          candidate.atRiskModIds.filter((id) => accepted.has(id)),
+        )
+      }
     }
     const perfectFlux = perfectFluxTargetOperation(catalog, node.state, implicitValues)
     if (perfectFlux) offer(perfectFlux)

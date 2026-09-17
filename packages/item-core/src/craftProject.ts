@@ -73,6 +73,7 @@ import { isMasterworkCraftOperation } from './masterwork'
 import { requiresMasterworkProjectVersion } from './masterworkProjectVersion'
 import { requiresOffhandIdolProjectVersion } from './offhandIdolProjectVersion'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
+import { requiresPanelGoalProjectVersion } from './panelGoalProjectVersion'
 import { parseItem } from './parse'
 import { requiresPendingExaltationProjectVersion } from './pendingExaltationProjectVersion'
 import { isPerfectFluxCraftOperation } from './perfectFlux'
@@ -857,6 +858,7 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (requiresPanelGoalProjectVersion(value)) return fail('面板目标必须使用 v114 项目。')
   const usesOffhandIdols = requiresOffhandIdolProjectVersion(value)
   if (!offhandIdols && usesOffhandIdols)
     return fail('副手雕像必须使用 v113 项目，包括起点、导入声明、完整未来和未执行指引。')
@@ -2277,6 +2279,7 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresPanelGoalProjectVersion(project)) throw new Error('面板目标必须使用 v114 项目。')
   if (requiresOffhandIdolProjectVersion(project))
     throw new Error('副手雕像必须使用 v113 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresBodyIdolProjectVersion(project))

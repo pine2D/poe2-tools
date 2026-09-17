@@ -2,6 +2,7 @@ import {
   BONE_RULES,
   CRAFT_CURRENCY_LABELS,
   CRAFT_OMEN_RULES,
+  CRAFT_PROPERTY_LABELS,
   type CraftCatalog,
   type CraftDefinitionRoutes,
   type CraftImplicitTargetValues,
@@ -16,6 +17,7 @@ import {
   craftOmenDescription,
   craftOmenMaterials,
   ESSENCE_OMEN_RULES,
+  evaluateCraftPanelGoals,
   SKILL_SOCKET_TIERS,
   usesExplicitModEffect,
 } from '@poe2-tools/item-core'
@@ -24,6 +26,7 @@ import { BoneOperationDetails } from './BoneAdvicePanel'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 import { CraftCostSummary } from './CraftPricingPanel'
 import { craftMaterialLabels } from './craftMaterialLabels'
+import { craftStepLabel } from './craftStepLabel'
 import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
@@ -112,6 +115,8 @@ function RouteSearch({
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const label = (step: CraftStep) => {
     if ('currency' in step) return CRAFT_CURRENCY_LABELS[step.currency]
+    if (step.kind === 'runeforge' || step.kind === 'flux')
+      return craftStepLabel(catalog, translations, step)
     if (step.kind === 'skill-sockets') return localize(SKILL_SOCKET_TIERS[step.tier].name)
     if (step.kind === 'perfect-flux') return localize('Perfect Flux')
     if (step.kind === 'fracture') return localize('Fracturing Orb')
@@ -219,7 +224,11 @@ function RouteSearch({
         disabled={
           busy ||
           running ||
-          (definitions.targets.length + implicitValues.length === 0 && !state.pendingDesecration)
+          (definitions.targets.length +
+            implicitValues.length +
+            (definitions.panelGoals?.length ?? 0) ===
+            0 &&
+            !state.pendingDesecration)
         }
         onClick={() => {
           stop()
@@ -270,13 +279,17 @@ function RouteSearch({
         <>
           <p role="status">
             {result.value.alreadyMatched
-              ? definitions.minimumTargetCount === undefined
-                ? '全部目标已达成，无需新增路线。'
-                : '数量条件及必选目标已达成，无需新增路线。'
+              ? definitions.panelGoals?.length
+                ? '面板条件与其他目标均已达成，无需新增路线。'
+                : definitions.minimumTargetCount === undefined
+                  ? '全部目标已达成，无需新增路线。'
+                  : '数量条件及必选目标已达成，无需新增路线。'
               : result.value.routes.length
-                ? definitions.minimumTargetCount === undefined
-                  ? `找到 ${result.value.routes.length} 条全部目标达成的示例路线。`
-                  : `找到 ${result.value.routes.length} 条满足数量及必选条件的示例路线。`
+                ? definitions.panelGoals?.length
+                  ? `找到 ${result.value.routes.length} 条满足面板条件与其他目标的示例路线。`
+                  : definitions.minimumTargetCount === undefined
+                    ? `找到 ${result.value.routes.length} 条全部目标达成的示例路线。`
+                    : `找到 ${result.value.routes.length} 条满足数量及必选条件的示例路线。`
                 : '本次有限搜索未找到完整路线，不能证明目标不可达。'}
           </p>
           <p>
@@ -328,6 +341,11 @@ function RouteSearch({
                     const changes = comparison.ok ? comparison.value.affixes : []
                     const removed = changes.filter((change) => change.kind === 'removed')
                     const gained = changes.filter((change) => change.kind !== 'removed')
+                    const panelProgress = evaluateCraftPanelGoals(
+                      catalog,
+                      step.state,
+                      definitions.panelGoals ?? [],
+                    )
                     return (
                       <li key={JSON.stringify([step.operation, step.state])}>
                         <strong>
@@ -381,9 +399,20 @@ function RouteSearch({
                                 0)}{' '}
                             / {definitions.targets.length + implicitValues.length}
                           </p>
-                        ) : (
+                        ) : !panelProgress.statuses.length ? (
                           <p>未设置制作目标；本路线用于完成揭示。</p>
-                        )}
+                        ) : null}
+                        {panelProgress.statuses.map((status, goalIndex) => (
+                          <p key={JSON.stringify([goalIndex, status.goal])}>
+                            面板条件 {goalIndex + 1} ·{' '}
+                            {status.goal.kind === 'item-property'
+                              ? CRAFT_PROPERTY_LABELS[status.goal.property]
+                              : '加权合计'}
+                            ：{status.actual.ok ? status.actual.value : status.actual.error}
+                            {' · '}
+                            {status.matched ? '已达成' : '未达成'}
+                          </p>
+                        ))}
                         {step.state.pendingDesecration ? (
                           <p>此步仍有未揭示亵渎，路线尚未完成。</p>
                         ) : null}

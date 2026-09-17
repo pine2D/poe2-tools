@@ -3,6 +3,7 @@ import type { CatalogMod, CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { fluxEligibleModIds, fluxModsCanCoexist, hasFluxModEligibility } from './fluxes'
 import { validateCraftFractureTarget } from './fractureTargets'
+import { type CraftPanelGoal, readCraftPanelGoals } from './panelGoals'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { readTargetDefinitionValues } from './targetDefinitionValues'
 import {
@@ -40,6 +41,7 @@ export interface CraftTargetDefinitions {
   values: CraftTargetDefinitionValues[]
   fracturedTargetId?: string
   minimumTargetCount?: number
+  panelGoals?: CraftPanelGoal[]
 }
 
 export interface LegacyCraftTargetConfig {
@@ -377,8 +379,14 @@ function readTargetDefinitions(
   state?: CraftState,
   capacityContext = state,
 ): CraftResult<CraftTargetDefinitions> {
+  try {
+    if (!isPlainProjectJSON(input)) return fail('目标定义必须只包含普通 JSON 数据字段。')
+  } catch {
+    return fail('目标定义对象无法安全检查。')
+  }
   if (
     !record(input, [
+      'panelGoals',
       'nextTargetId',
       'targets',
       'alternatives',
@@ -398,6 +406,10 @@ function readTargetDefinitions(
     (Object.hasOwn(input, 'minimumTargetCount') && typeof input.minimumTargetCount !== 'number')
   )
     return fail('独立目标定义字段或分配游标无效。')
+  const panelGoals = Object.hasOwn(input, 'panelGoals')
+    ? readCraftPanelGoals(input.panelGoals)
+    : undefined
+  if (panelGoals && !panelGoals.ok) return panelGoals
   const targets: CraftTargetDefinition[] = []
   const byId = new Map<string, string>()
   for (const entry of input.targets) {
@@ -500,6 +512,7 @@ function readTargetDefinitions(
     ok: true,
     value: {
       nextTargetId: input.nextTargetId,
+      ...(panelGoals?.ok ? { panelGoals: panelGoals.value } : {}),
       targets,
       alternatives,
       values: values.value,

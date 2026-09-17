@@ -1,0 +1,26 @@
+.panel-goals {
+  margin-block: 1rem;
+  overflow-wrap: anywhere;
+}
+.panel-goals fieldset {
+  min-width: 0;
+}
+.panel-goals article {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.panel-goals article > header,
+.panel-goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.panel-goals article > header {
+  justify-content: space-between;
+}
+.panel-goals input,
+.panel-goals select,
+.panel-goals button {
+  max-width: 100%;
+}

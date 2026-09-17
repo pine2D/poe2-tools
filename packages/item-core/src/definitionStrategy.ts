@@ -11,6 +11,7 @@ import {
 import { analyzeCraftImplicitTargets, type CraftImplicitTargetValues } from './implicitTargets'
 import { requiresInfluenceRuneProjectVersion } from './influenceRuneProjectVersion'
 import { influenceRuneTags } from './influenceRunes'
+import { evaluateCraftPanelGoals } from './panelGoals'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { serleCapacity } from './serleRune'
@@ -132,15 +133,22 @@ export function evaluateDefinitionCraftStrategy(
         `规则引用的目标已移除：${ids.join('、')}。请编辑该条件，重新选择目标。`,
       inspect: () => {
         const progress = evaluateTargetDefinitions(catalog, state, definitions)
+        const panel = evaluateCraftPanelGoals(catalog, state, definitions.panelGoals ?? [])
+        const unknown = panel.statuses.find((status) => !status.actual.ok)?.actual
         return {
           ok: true,
           value: {
             matchedTargetIds: progress.matches.map((match) => match.targetId),
-            targetsMet:
-              !state.pendingDesecration &&
-              definitions.targets.length + implicit.length > 0 &&
-              progress.satisfied &&
-              implicit.every((target) => target.matched),
+            ...(unknown && !unknown.ok ? { targetsMetUnknownReason: unknown.error } : {}),
+            targetsMet: unknown
+              ? null
+              : !state.pendingDesecration &&
+                definitions.targets.length +
+                  implicit.length +
+                  (definitions.panelGoals?.length ?? 0) >
+                  0 &&
+                progress.satisfied &&
+                implicit.every((target) => target.matched),
           },
         }
       },

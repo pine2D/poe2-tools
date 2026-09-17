@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { isPlainProjectJSON } from './craftProjectJSON'
+import { type CraftPanelGoal, readCraftPanelGoals } from './panelGoals'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
 import { findTargetCapacityContext } from './targetCapacityContext'
 import {
@@ -11,6 +12,7 @@ import {
 import type { CraftTargetValues } from './targets'
 
 export type CraftTargetDefinitionEdit =
+  | { kind: 'panel-goals'; goals: CraftPanelGoal[] }
   | { kind: 'add'; modId: string }
   | { kind: 'remove'; targetId: string }
   | { kind: 'reorder'; targetIds: string[] }
@@ -116,6 +118,7 @@ export function editTargetDefinitions(
   const next = checked.value
   if (
     !record(edit, [
+      'goals',
       'kind',
       'modId',
       'targetId',
@@ -129,6 +132,14 @@ export function editTargetDefinitions(
   )
     return fail('目标编辑字段无效，不能包含未知字段或显式缺省值。')
   switch (edit.kind) {
+    case 'panel-goals': {
+      if (!record(edit, ['kind', 'goals'])) return fail('面板目标编辑字段无效。')
+      const goals = readCraftPanelGoals(edit.goals)
+      if (!goals.ok) return goals
+      if (goals.value.length) next.panelGoals = goals.value
+      else delete next.panelGoals
+      break
+    }
     case 'add': {
       if (!record(edit, ['kind', 'modId']) || typeof edit.modId !== 'string')
         return fail('新增目标需要有效的词缀类型。')

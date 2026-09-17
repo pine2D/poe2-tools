@@ -9,6 +9,7 @@ import {
   applyCraftStep,
   BONE_RULES,
   enableCraftAffixIdentity,
+  FLUXES,
   planTargetDefinitionRoutes,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -234,6 +235,30 @@ const props = {
   onPreview: vi.fn(),
 }
 afterEach(cleanup)
+it('面板路线中的防具锻造显示实际操作名称', () => {
+  const forged = structuredClone(result)
+  if (!forged.ok || !forged.value.routes[0]?.steps[0]) throw Error('缺少路线')
+  forged.value.routes[0].steps[0].operation = {
+    kind: 'runeforge',
+    fromBaseId: base.id,
+    toBaseId: 'Forged Helmet',
+  }
+  render(<TargetRoutesPanel {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  act(() => pending.calls[0]?.callback(forged))
+  expect(screen.getByText('符文锻造')).toBeTruthy()
+})
+it('面板路线中的溶剂使用材料译名', () => {
+  const flux = FLUXES[0]
+  if (!flux) throw Error('缺少溶剂')
+  const converted = structuredClone(result)
+  if (!converted.ok || !converted.value.routes[0]?.steps[0]) throw Error('缺少路线')
+  converted.value.routes[0].steps[0].operation = { kind: 'flux', fluxId: flux.id, rolls: [] }
+  render(<TargetRoutesPanel {...props} translations={{ [flux.name]: '测试溶剂译名' }} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  act(() => pending.calls[0]?.callback(converted))
+  expect(screen.getByText('测试溶剂译名')).toBeTruthy()
+})
 it('祝福路线说明保留显式数值，不显示普通神圣的显式重掷风险', () => {
   const blessed = structuredClone(result)
   if (!blessed.ok) throw new Error('缺少路线')
@@ -249,6 +274,38 @@ it('祝福路线说明保留显式数值，不显示普通神圣的显式重掷�
 beforeEach(() => {
   pending.calls.length = 0
   props.onPreview.mockClear()
+})
+it('纯面板路线传递完整条件并展示逐步数值，编辑条件后丢弃迟到结果', () => {
+  const goals: CraftTargetDefinitions = {
+    ...definitions([]),
+    panelGoals: [{ kind: 'item-property', property: 'Armour', min: 18 }],
+  }
+  const start = { ...state(), quality: 0, sockets: [] }
+  const view = render(<TargetRoutesPanel {...props} state={start} definitions={goals} />)
+  fireEvent.click(screen.getByRole('button', { name: '生成多步示例路线' }))
+  const first = pending.calls[0]
+  expect(first?.args[2]).toEqual(goals)
+  const panelResult = structuredClone(result)
+  if (!panelResult.ok) throw Error('缺少路线')
+  const route = panelResult.value.routes[0]
+  if (!route?.steps[0]) throw Error('缺少步骤')
+  route.steps[0].state = { ...route.steps[0].state, quality: 0, sockets: [] }
+  act(() => first?.callback(panelResult))
+  expect(screen.getByText('找到 1 条满足面板条件与其他目标的示例路线。')).toBeTruthy()
+  expect(screen.getByText(/面板条件 1 · 护甲：18 · 已达成/)).toBeTruthy()
+  expect(screen.queryByText('未设置制作目标；本路线用于完成揭示。')).toBeNull()
+  view.rerender(
+    <TargetRoutesPanel
+      {...props}
+      state={start}
+      definitions={{
+        ...goals,
+        panelGoals: [{ kind: 'item-property', property: 'Armour', min: 100 }],
+      }}
+    />,
+  )
+  act(() => first?.callback(panelResult))
+  expect(screen.queryByRole('button', { name: '预览路线第一步' })).toBeNull()
 })
 describe('路线按需计算生命周期', () => {
   it('输入改变取消旧请求，迟到结果不显示；卸载也取消', () => {
