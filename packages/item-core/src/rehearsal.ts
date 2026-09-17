@@ -63,6 +63,7 @@ import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { runeSourceStateError } from './runeImport'
 import { serleCapacity } from './serleRune'
 import { grantedSkillSocketsStateError } from './skillSockets'
+import { isSkillVariantAmulet } from './skillVariantAmulets'
 import { hasSpecialSocketRules, socketStateError } from './sockets'
 
 export type CraftRarity = 'normal' | 'magic' | 'rare'
@@ -262,7 +263,8 @@ function baseError(base: CatalogBase): string | null {
   if (base.type === 'Jewel' && !isBasicJewel(base) && !isRadiusJewel(base))
     return '特殊珠宝暂不支持制作演练。'
   if (base.hidden) return '隐藏基底暂不支持制作演练。'
-  if (base.variantList !== undefined) return '带内部变体的基底暂不支持制作演练。'
+  if (base.variantList !== undefined && !isSkillVariantAmulet(base))
+    return '带内部变体的基底暂不支持制作演练。'
   if (base.runeforged && !isRuneforgedArmourBase(base)) return '符文锻造基底暂不支持制作演练。'
   const beltError = beltBaseError(base)
   if (beltError) return beltError
@@ -270,10 +272,11 @@ function baseError(base: CatalogBase): string | null {
     (base.charmLimit !== undefined && !isBeltCapacityBase(base)) ||
     base.flask !== undefined ||
     base.charm !== undefined ||
-    base.grantedSkillsHaveNoReservation !== undefined
+    (base.grantedSkillsHaveNoReservation !== undefined && !isSkillVariantAmulet(base))
   )
     return '带特殊容量或跨类别规则的基底暂不支持制作演练。'
   if (
+    !isSkillVariantAmulet(base) &&
     base.implicit !== null &&
     /(?:[+-]\d+\s+(?:Prefix|Suffix) Modifier allowed|Can roll .+ Modifiers)/i.test(base.implicit)
   )
@@ -354,7 +357,7 @@ export function createCraftState(
     input.implicitLines !== undefined &&
     (!Array.isArray(input.implicitLines) ||
       !input.implicitLines.every((line) => typeof line === 'string') ||
-      !matchesGrantedSkillImplicitLines(base.implicit?.split('\n') ?? [], input.implicitLines))
+      !matchesGrantedSkillImplicitLines(implicit.value.patterns, input.implicitLines))
   )
     return failure('固有属性与所选基底不一致。')
 
@@ -519,7 +522,8 @@ export function createCraftState(
     return failure('稀有珠宝已有词缀最多每侧 3 组、总计 5 组。')
   if (prefixes > capacity.prefix || suffixes > capacity.suffix) {
     if (input.rarity === 'normal') return failure('普通装备不能带有显式词缀。')
-    if (input.rarity === 'magic') return failure('魔法装备最多有 1 条前缀和 1 条后缀。')
+    if (input.rarity === 'magic')
+      return failure(`魔法装备最多有 ${capacity.prefix} 条前缀和 ${capacity.suffix} 条后缀。`)
     return failure(`稀有装备最多有 ${capacity.prefix} 条前缀和 ${capacity.suffix} 条后缀。`)
   }
   if (input.pendingDesecration) {
@@ -774,7 +778,7 @@ export function prepareCraftOperation(
     return failure(`${CRAFT_CURRENCY_LABELS[currency]}不接受移除词缀参数。`)
   } else if (baseCurrency === 'divine') {
     const base = findBase(catalog, current.baseId)
-    if (base && readBaseGrantedSkills(base).length > 0)
+    if (base && (isSkillVariantAmulet(base) || readBaseGrantedSkills(base).length > 0))
       return failure('装备授予技能的等级范围是否参与神圣石重掷尚待真机验收。')
     if (!base) return failure('基底不存在。')
     const implicit = resolveCraftImplicitPatterns(base, current)
@@ -797,7 +801,12 @@ export function prepareCraftOperation(
     if (current.rarity !== 'normal')
       return failure(`${CRAFT_CURRENCY_LABELS[currency]}只能用于普通装备。`)
     draft = { ...current, rarity: 'magic' }
-    count = 1
+    const base = findBase(catalog, current.baseId)
+    const emptyVariant =
+      base && isSkillVariantAmulet(base) && craftAffixSpace(catalog, draft).total === 0
+    if (emptyVariant && currency !== 'transmutation')
+      return failure('零容量技能项链的高级或完美蜕变行为尚未核实。')
+    count = emptyVariant ? 0 : 1
   } else if (baseCurrency === 'augmentation') {
     if (current.rarity !== 'magic')
       return failure(`${CRAFT_CURRENCY_LABELS[currency]}只能用于魔法装备。`)

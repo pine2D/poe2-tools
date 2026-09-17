@@ -44,7 +44,9 @@ export function BaseImplicitPreview({
               <code>{skill.line}</code>
             </div>
           )}
-          <small>此处仅查看技能候选，不改变导入装备或制作起点。特殊制作规则仍待核对。</small>
+          <small>
+            此处仅查看技能候选，不改变导入装备或制作起点；新建装备时请在制作起点选择实际技能。
+          </small>
           <details>
             <summary>查看完整来源原文</summary>
             <code className="catalog-implicit-source">{base.implicit}</code>

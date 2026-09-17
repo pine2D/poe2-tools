@@ -1,6 +1,7 @@
 import {
   buildInitialBeltImplicitLines,
   buildInitialSkillLines,
+  buildInitialSkillVariantLines,
   CATALYSTS,
   type CatalogBase,
   type CraftCatalog,
@@ -13,8 +14,10 @@ import {
   type ItemDictionary,
   importCraftState,
   importIdentifiedCraftState,
+  isSkillVariantAmulet,
   type RestoredTargetCraftProject,
   readBaseGrantedSkills,
+  readBaseSkillVariants,
   readCatalystQuality,
   readCraftGrantedSkillLevel,
   readCraftGrantedSkillSockets,
@@ -65,6 +68,7 @@ export function CraftEntry({
   const [blankQuality, setBlankQuality] = useState(0)
   const [qualityDeclaration, setQualityDeclaration] = useState('')
   const [skillLevels, setSkillLevels] = useState<Record<number, string>>({})
+  const [skillVariantIndex, setSkillVariantIndex] = useState('')
   const [skillLevelDeclaration, setSkillLevelDeclaration] = useState('')
   const [skillSocketDeclaration, setSkillSocketDeclaration] = useState('')
   const [beginError, setBeginError] = useState('')
@@ -77,16 +81,24 @@ export function CraftEntry({
     base.type === 'Belt' && base.charmLimit !== undefined
       ? buildInitialBeltImplicitLines(base, itemLevel, selectedCharmSlots)
       : null
-  const baseSkills = readBaseGrantedSkills(base)
-  const skillStart = buildInitialSkillLines(
-    base,
-    Object.entries(skillLevels)
-      .filter(([, value]) => value !== '')
-      .map(([lineIndex, displayedLevel]) => ({
-        lineIndex: Number(lineIndex),
-        displayedLevel: Number(displayedLevel),
-      })),
-  )
+  const skillVariants = isSkillVariantAmulet(base) ? readBaseSkillVariants(base) : null
+  const variantStart = skillVariants
+    ? buildInitialSkillVariantLines(base, Number(skillVariantIndex))
+    : null
+  const skillBase = variantStart?.ok ? { ...base, implicit: variantStart.value.join('\n') } : base
+  const baseSkills = readBaseGrantedSkills(skillBase)
+  const skillStart =
+    variantStart && !variantStart.ok
+      ? variantStart
+      : buildInitialSkillLines(
+          skillBase,
+          Object.entries(skillLevels)
+            .filter(([, value]) => value !== '')
+            .map(([lineIndex, displayedLevel]) => ({
+              lineIndex: Number(lineIndex),
+              displayedLevel: Number(displayedLevel),
+            })),
+        )
   const matchingImport = imported && (imported.baseId === base.name || imported.baseId === base.id)
   const qualityFromText = matchingImport && imported.item ? readItemQuality(imported.item) : null
   const importedQuality =
@@ -297,6 +309,27 @@ export function CraftEntry({
             </small>
           </label>
         )
+      ) : null}
+      {skillVariants && !readOnlyImport ? (
+        <label>
+          空白起点授予技能
+          <select
+            aria-label="空白起点授予技能"
+            value={skillVariantIndex}
+            onChange={(event) => {
+              setSkillVariantIndex(event.target.value)
+              setSkillLevels({})
+            }}
+          >
+            <option value="">选择实际授予的一项技能</option>
+            {skillVariants.variants.map((entry) => (
+              <option key={entry.index} value={entry.index}>
+                {translateLine?.(entry.line) ?? entry.name}
+              </option>
+            ))}
+          </select>
+          <small>仅用于新建空白起点；导入装备按原文确定技能，修改草稿不改变已开始的演练。</small>
+        </label>
       ) : null}
       {baseSkills.length > 0 && !readOnlyImport ? (
         <section aria-label="起点授予技能">

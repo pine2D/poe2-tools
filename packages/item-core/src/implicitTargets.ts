@@ -28,6 +28,7 @@ import {
   type SkillSocketsCraftOperation,
   type SkillSocketTier,
 } from './skillSockets'
+import { isSkillVariantAmulet } from './skillVariantAmulets'
 import { minimumTargetRolls, targetRollsPreservingValues } from './targetRolls'
 import type { CraftTargetBound } from './targets'
 
@@ -68,6 +69,7 @@ const fail = (error: string): { ok: false; error: string } => ({ ok: false, erro
 function descriptors(
   base: CatalogBase,
 ): Pick<CraftImplicitTargetCandidate, 'lineIndex' | 'line' | 'ranges' | 'kind' | 'skillName'>[] {
+  if (isSkillVariantAmulet(base)) return []
   const skills = readBaseGrantedSkills(base)
   const skill =
     skills.length === 1 &&
@@ -254,7 +256,9 @@ function mapped(catalog: CraftCatalog, state: CraftState) {
   if (!base) return fail('固有目标基底不存在。')
   const effective = resolveCraftImplicitPatterns(base, checked.value)
   if (!effective.ok) return effective
-  const original = base.implicit?.split('\n') ?? []
+  const original = isSkillVariantAmulet(base)
+    ? effective.value.patterns
+    : (base.implicit?.split('\n') ?? [])
   const actual = checked.value.implicitLines ?? original
   const charm = effective.value.charm
   const edges = original.map((line) =>

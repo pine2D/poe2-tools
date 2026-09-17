@@ -313,7 +313,7 @@ function validateDefinitionCombination(
       itemLevel: 100,
       rarity: 'rare',
       sourceText: null,
-      ...targetImplicitLines(catalog, baseId),
+      ...targetImplicitLines(catalog, baseId, capacityContext),
       ...sockets.value,
       nextAffixId: indices.length + 1,
       affixes: indices.flatMap((index, position) => {

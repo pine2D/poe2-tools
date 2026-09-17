@@ -3,6 +3,7 @@ import { craftAffixLimit, isBasicJewel, isRadiusJewel } from './jewels'
 import { isLiquidEmotionMappedMod, jewelCapacityModKind } from './liquidEmotions'
 import type { CraftState } from './rehearsal'
 import { serleCapacity } from './serleRune'
+import { isSkillVariantAmulet } from './skillVariantAmulets'
 
 /** 已有增容状态用于来源与版本门禁；来源损坏也不能绕开门禁。 */
 export function usesJewelCapacity(catalog: CraftCatalog, state: CraftState): boolean {
@@ -32,6 +33,10 @@ export function craftAffixCapacities(
   if (!base) return { prefix: 0, suffix: 0 }
   const limit = craftAffixLimit(base, state.rarity)
   const capacity = { prefix: limit, suffix: limit }
+  if (isSkillVariantAmulet(base) && state.rarity !== 'normal') {
+    if (base.id !== 'Portent Amulet') capacity.prefix = Math.max(0, capacity.prefix - 1)
+    if (base.id !== 'Lament Amulet') capacity.suffix = Math.max(0, capacity.suffix - 1)
+  }
   const serle = serleCapacity(catalog, state)
   if (serle.ok) capacity.suffix += serle.value
   if ((!isBasicJewel(base) && !isRadiusJewel(base)) || state.rarity !== 'rare') return capacity

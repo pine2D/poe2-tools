@@ -1,6 +1,7 @@
 import type { CatalogBase } from './catalog'
 import { matchesGrantedSkillImplicitLines } from './grantedSkills'
 import type { CraftResult, CraftState } from './rehearsal'
+import { isSkillVariantAmulet, resolveSkillVariantImplicitPatterns } from './skillVariantAmulets'
 
 type Maximum = 1 | 2 | 3
 interface ImplicitPatterns {
@@ -80,6 +81,12 @@ export function resolveCraftImplicitPatterns(
   base: CatalogBase,
   state: Pick<CraftState, 'itemLevel' | 'implicitLines' | 'sourceText'>,
 ): CraftResult<ImplicitPatterns> {
+  if (isSkillVariantAmulet(base)) {
+    const projected = resolveSkillVariantImplicitPatterns(base, state.implicitLines ?? [])
+    return projected.ok
+      ? { ok: true, value: { patterns: projected.value, charm: null } }
+      : projected
+  }
   const original = base.implicit?.split('\n') ?? []
   if (!isBeltCapacityBase(base)) return { ok: true, value: { patterns: original, charm: null } }
   const fail = (): CraftResult<ImplicitPatterns> => ({ ok: false, error: ERROR })

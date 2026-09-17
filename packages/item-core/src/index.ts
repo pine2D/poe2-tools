@@ -467,6 +467,15 @@ export {
   requiresSkillSocketTargetProjectVersion,
   SKILL_SOCKET_TARGET_RULES_VERSION,
 } from './skillSocketTargetProjectVersion'
+export {
+  requiresSkillVariantAmuletProjectVersion,
+  SKILL_VARIANT_AMULET_RULES_VERSION,
+} from './skillVariantAmuletProjectVersion'
+export {
+  buildInitialSkillVariantLines,
+  isSkillVariantAmulet,
+  resolveSkillVariantImplicitPatterns,
+} from './skillVariantAmulets'
 export { socketEffectIncrease } from './socketAmplification'
 export type { SocketEffect } from './sockets'
 export {

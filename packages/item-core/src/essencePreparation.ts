@@ -162,7 +162,24 @@ export function analyzeEssencePreparationContext(
         return null
       const currency = current.rarity === 'normal' ? 'transmutation' : 'regal'
       const prepared = prepareCraftOperation(catalog, current, currency)
-      if (!prepared.ok || prepared.value.count !== 1) return null
+      if (!prepared.ok) return null
+      if (prepared.value.count === 0 && currency === 'transmutation') {
+        const operation: CraftOperation = { currency, modIds: [] }
+        const path = [...preparations, operation]
+        const key = JSON.stringify(path)
+        let applied = states.get(key)
+        if (applied === undefined) {
+          if (result.examinedStates >= 128) {
+            result.truncated = true
+            return null
+          }
+          result.examinedStates += 1
+          applied = applyCraftStep(catalog, current, operation)
+          states.set(key, applied)
+        }
+        return applied.ok ? search(applied.value, path) : null
+      }
+      if (prepared.value.count !== 1) return null
       const candidates = craftCandidates(catalog, prepared.value.state, currency)
         .filter((mod) => !craftModsConflict(mod, target))
         .sort(

@@ -1,5 +1,11 @@
 # 数据源登记表
 
+## 技能变体项链（2026-09-17，v102）
+
+沿用固定 MIT PoB2 提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 `Bases/amulet.lua` 及已登记 [Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L1750)。前者提供三种基底的候选技能与容量修正，后者用于核对魔法和稀有品质的容量计算；临时文件 SHA-256 为 `0ca39961256eefc960da7b30b4e5cb6eb45d08037aa72bc751201cc0630af2a4`，不复制第三方实现入库。
+
+[Craft of Exile beta](https://beta.craftofexile.com/) 按既有 gray 人工体验参考核对公开模拟交互：蜕变、增幅、富豪、点金与满容量崇高的结果组数及动作次数。只保留自行撰写的观察；不读取代码或数据文件，不采用随机词缀、权重、概率或价格。该交叉检查属于工具模型证据，非游戏真机验收。没有新增抓取适配器、生成数据或浏览器外站请求，来源边界见[技能变体项链核对](skill-variant-amulets-research.md)。
+
 ## 圣化与装备技能辅助孔（2026-09-17，实施前核对）
 
 v99 实施补充：三档工匠石的直接设孔沿下列已登记官方规则；仅开放现有普通 Wand／Staff／Sceptre 单一带等级固有技能。玩家[普通魔杖尝试](https://www.reddit.com/r/PathOfExile2/comments/1vddoig/talisman_skills_jewellers_orb_not_working/)、[20级仍为四辅助孔](https://www.reddit.com/r/PathOfExile2/comments/1v1mdg1/5_linked_granted_skills_from_items/)与[购入腐化／圣化装备的补孔失败](https://www.reddit.com/r/PathOfExile2/comments/1uezfar/sockets_before_purchase_on_items_skills/)按 gray 原作者经历登记，非官方结论、非本项目真机验收；用于交叉核对孔数独立性及收尾限制，不复制装备、图片或评论全文。辅助孔起点由用户明确声明，缺省未知；不发明原生复制语法，不引入随机权重或浏览器外站请求。

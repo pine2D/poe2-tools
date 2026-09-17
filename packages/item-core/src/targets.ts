@@ -42,6 +42,7 @@ import {
   type RemovalCraftCurrency,
   removableCraftAffixes,
 } from './rehearsal'
+import { isSkillVariantAmulet } from './skillVariantAmulets'
 import { definitionFluxSourceModIds, definitionModRollOptions } from './targetDefinitionRolls'
 import { specialTargetContext } from './targetDefinitionSpecialContext'
 import type { CraftTargetDefinitions } from './targetDefinitions'
@@ -188,12 +189,17 @@ export function targetPools(catalog: CraftCatalog, baseId: string, state?: Craft
   return { ordinary, essence, liquid, alloy, desecrated, genesis }
 }
 
-/** 目标资格使用既有物等100假想状态；腰带也必须构造合法完整固有行。 */
+/** 目标资格使用物等100假想状态；技能项链沿用已选技能，腰带构造完整固有行。 */
 export function targetImplicitLines(
   catalog: CraftCatalog,
   baseId: string,
+  state?: CraftState,
 ): { implicitLines?: string[] } {
   const base = catalog.bases.find((entry) => entry.id === baseId)
+  if (base && isSkillVariantAmulet(base))
+    return state?.baseId === baseId && state.implicitLines
+      ? { implicitLines: [...state.implicitLines] }
+      : {}
   if (!base || !isBeltCapacityBase(base)) return {}
   const initial = buildInitialBeltImplicitLines(base, 100, 1)
   return initial.ok ? { implicitLines: initial.value } : {}
@@ -260,7 +266,7 @@ export function craftTargetCandidates(
         itemLevel: 100,
         rarity: 'rare',
         sourceText: null,
-        ...targetImplicitLines(catalog, baseId),
+        ...targetImplicitLines(catalog, baseId, state),
         ...sockets.value,
         affixes: [
           {
@@ -333,7 +339,7 @@ export function validateCraftTargets(
       affixes: selected,
       ...sockets.value,
       sourceText: null,
-      ...targetImplicitLines(catalog, baseId),
+      ...targetImplicitLines(catalog, baseId, capacityContext),
     })
   if (minimumTargetCount !== undefined && minimumTargetCount < ids.length) {
     const groups = affixes.map((affix) => byId.get(affix.modId)?.group)
@@ -1043,15 +1049,19 @@ export function analyzeCraftTargetContext(
         if (!followup.ok) continue
         next = followup.value.state
       }
+      const zeroPreparation = currency === 'transmutation' && prepared.value.count === 0
+      const availableState = zeroPreparation ? prepareCraftOperation(catalog, next, 'regal') : null
       const available = new Set(
         craftCandidates(
           catalog,
-          next,
-          currency === 'annulment'
-            ? next.rarity === 'magic'
-              ? 'augmentation'
-              : 'exalted'
-            : currency,
+          availableState?.ok ? availableState.value.state : next,
+          zeroPreparation
+            ? 'regal'
+            : currency === 'annulment'
+              ? next.rarity === 'magic'
+                ? 'augmentation'
+                : 'exalted'
+              : currency,
           currency === 'annulment' ? undefined : omen,
         ).map((mod) => mod.id),
       )

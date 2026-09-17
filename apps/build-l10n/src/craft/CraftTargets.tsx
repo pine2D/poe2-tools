@@ -27,6 +27,7 @@ import {
   influenceRuneTags,
   inspectCraftAlloys,
   inspectEssences,
+  isSkillVariantAmulet,
   SKILL_SOCKET_TIERS,
   validateCraftFractureTarget,
 } from '@poe2-tools/item-core'
@@ -100,8 +101,12 @@ export function CraftTargets({
   )
   const source = capacityContext ?? state
   const influence = influenceRuneTags(catalog, source)
-  // 无影响来源时沿用静态搜索，不因普通词缀数值和历史游标变化重建全目录候选。
-  const poolContext = !influence.ok || influence.value.length > 0 ? source : undefined
+  const base = catalog.bases.find((entry) => entry.id === source.baseId)
+  // 技能变体身份依赖固有行；其余无影响来源的普通基底沿用静态搜索。
+  const poolContext =
+    !influence.ok || influence.value.length > 0 || (base && isSkillVariantAmulet(base))
+      ? source
+      : undefined
   const pool = useMemo(
     () => craftTargetDefinitionCandidates(catalog, state.baseId, poolContext),
     [catalog, state.baseId, poolContext],

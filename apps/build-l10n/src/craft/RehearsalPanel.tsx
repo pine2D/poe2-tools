@@ -111,6 +111,7 @@ import {
   requiresSkillLevelDeclarationProjectVersion,
   requiresSkillSocketsProjectVersion,
   requiresSkillSocketTargetProjectVersion,
+  requiresSkillVariantAmuletProjectVersion,
   requiresWardRuneProjectVersion,
   requiresWeightedPropertyProjectVersion,
   resolveCraftAffix,
@@ -123,6 +124,7 @@ import {
   SKILL_SOCKET_TARGET_RULES_VERSION,
   SKILL_SOCKET_TIERS,
   SKILL_SOCKETS_RULES_VERSION,
+  SKILL_VARIANT_AMULET_RULES_VERSION,
   type SkillSocketsCraftOperation,
   type SocketCraftOperation,
   setTargetDefinitionStrategy,
@@ -431,6 +433,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [skillVariantAmuletRules, setSkillVariantAmuletRules] = useState(
+    initialProject?.project.rulesVersion === SKILL_VARIANT_AMULET_RULES_VERSION,
   )
   const [skillLevelDeclarationRules, setSkillLevelDeclarationRules] = useState(
     initialProject?.project.rulesVersion === SKILL_LEVEL_DECLARATION_RULES_VERSION,
@@ -1302,6 +1307,8 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsSkillVariantAmulet =
+    skillVariantAmuletRules || requiresSkillVariantAmuletProjectVersion(projectConfig)
   const needsSkillLevelDeclaration =
     skillLevelDeclarationRules || requiresSkillLevelDeclarationProjectVersion(projectConfig)
   const needsSkillSocketTargets =
@@ -1318,6 +1325,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsSkillVariantAmulet ||
     needsSkillLevelDeclaration ||
     needsSkillSocketTargets ||
     needsSkillSockets ||
@@ -1355,46 +1363,48 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsSkillLevelDeclaration
-            ? SKILL_LEVEL_DECLARATION_RULES_VERSION
-            : needsSkillSocketTargets
-              ? SKILL_SOCKET_TARGET_RULES_VERSION
-              : needsSkillSockets
-                ? SKILL_SOCKETS_RULES_VERSION
-                : needsWeightedProperties
-                  ? WEIGHTED_PROPERTY_RULES_VERSION
-                  : needsGrantedSkillTargets
-                    ? GRANTED_SKILL_TARGET_RULES_VERSION
-                    : needsExtendedInfluenceBone
-                      ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                      : needsInfluenceBone
-                        ? INFLUENCE_BONE_RULES_VERSION
-                        : needsDestruction
-                          ? DESTRUCTION_RUNE_RULES_VERSION
-                          : needsInfluence
-                            ? INFLUENCE_RUNE_RULES_VERSION
-                            : needsDesecrationCount
-                              ? DESECRATION_COUNT_RULES_VERSION
-                              : putrefactionRules ||
-                                  requiresPutrefactionProjectVersion(projectConfig)
-                                ? PUTREFACTION_RULES_VERSION
-                                : needsPendingExaltation
-                                  ? PENDING_EXALTATION_RULES_VERSION
-                                  : needsEssenceOutcomes
-                                    ? ESSENCE_OUTCOMES_RULES_VERSION
-                                    : needsSerle
-                                      ? SERLE_RULES_VERSION
-                                      : needsCraftedCapacity
-                                        ? CRAFTED_CAPACITY_RULES_VERSION
-                                        : needsConditionalRunes
-                                          ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                          : needsMasterwork
-                                            ? MASTERWORK_CRAFT_RULES_VERSION
-                                            : needsExtendedRunes
-                                              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                              : needsWardRunes
-                                                ? WARD_RUNE_RULES_VERSION
-                                                : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsSkillVariantAmulet
+            ? SKILL_VARIANT_AMULET_RULES_VERSION
+            : needsSkillLevelDeclaration
+              ? SKILL_LEVEL_DECLARATION_RULES_VERSION
+              : needsSkillSocketTargets
+                ? SKILL_SOCKET_TARGET_RULES_VERSION
+                : needsSkillSockets
+                  ? SKILL_SOCKETS_RULES_VERSION
+                  : needsWeightedProperties
+                    ? WEIGHTED_PROPERTY_RULES_VERSION
+                    : needsGrantedSkillTargets
+                      ? GRANTED_SKILL_TARGET_RULES_VERSION
+                      : needsExtendedInfluenceBone
+                        ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                        : needsInfluenceBone
+                          ? INFLUENCE_BONE_RULES_VERSION
+                          : needsDestruction
+                            ? DESTRUCTION_RUNE_RULES_VERSION
+                            : needsInfluence
+                              ? INFLUENCE_RUNE_RULES_VERSION
+                              : needsDesecrationCount
+                                ? DESECRATION_COUNT_RULES_VERSION
+                                : putrefactionRules ||
+                                    requiresPutrefactionProjectVersion(projectConfig)
+                                  ? PUTREFACTION_RULES_VERSION
+                                  : needsPendingExaltation
+                                    ? PENDING_EXALTATION_RULES_VERSION
+                                    : needsEssenceOutcomes
+                                      ? ESSENCE_OUTCOMES_RULES_VERSION
+                                      : needsSerle
+                                        ? SERLE_RULES_VERSION
+                                        : needsCraftedCapacity
+                                          ? CRAFTED_CAPACITY_RULES_VERSION
+                                          : needsConditionalRunes
+                                            ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                            : needsMasterwork
+                                              ? MASTERWORK_CRAFT_RULES_VERSION
+                                              : needsExtendedRunes
+                                                ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                                : needsWardRunes
+                                                  ? WARD_RUNE_RULES_VERSION
+                                                  : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1429,6 +1439,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setSkillVariantAmuletRules(restored.project.rulesVersion === SKILL_VARIANT_AMULET_RULES_VERSION)
     setSkillLevelDeclarationRules(
       restored.project.rulesVersion === SKILL_LEVEL_DECLARATION_RULES_VERSION,
     )

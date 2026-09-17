@@ -43,11 +43,7 @@ import { isFluxCraftOperation } from './fluxCraft'
 import { fluxEligibleModIds } from './fluxes'
 import { isFractureCraftOperation } from './fracture'
 import { validateCraftFractureTarget } from './fractureTargets'
-import {
-  matchesGrantedSkillImplicitLines,
-  readBaseGrantedSkills,
-  readUnlevelledSkillName,
-} from './grantedSkills'
+import { matchesGrantedSkillImplicitLines, readUnlevelledSkillName } from './grantedSkills'
 import { requiresGrantedSkillTargetProjectVersion } from './grantedSkillTargetProjectVersion'
 import {
   type CraftImplicitTargetValues,
@@ -93,6 +89,7 @@ import { requiresSkillLevelDeclarationProjectVersion } from './skillLevelDeclara
 import { isSkillSocketsCraftOperation } from './skillSockets'
 import { requiresSkillSocketsProjectVersion } from './skillSocketsProjectVersion'
 import { requiresSkillSocketTargetProjectVersion } from './skillSocketTargetProjectVersion'
+import { requiresSkillVariantAmuletProjectVersion } from './skillVariantAmuletProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
@@ -529,16 +526,13 @@ function validateInitial(
       return { ok: false, error: '导入品质声明必须关联来源原文，不能用于空白起点。' }
     if (state.sockets?.some((id) => id !== null))
       return { ok: false, error: '空白项目起点只能设定已有空孔，不能预设镶嵌物。' }
-    const patterns =
-      catalog.bases.find((base) => base.id === state.baseId)?.implicit?.split('\n') ?? []
     if (state.implicitLines !== undefined) {
       const blankBase = catalog.bases.find((base) => base.id === state.baseId)
       if (blankBase === undefined) return { ok: false, error: '空白项目基底不存在。' }
-      const skillIndexes = new Set(readBaseGrantedSkills(blankBase).map((skill) => skill.lineIndex))
       const implicit = resolveCraftImplicitPatterns(blankBase, state)
       if (!implicit.ok) return implicit
       const belt = implicit.value.charm
-      const initialPatterns = belt ? implicit.value.patterns : patterns
+      const initialPatterns = implicit.value.patterns
       if (
         state.implicitLines.length !== initialPatterns.length ||
         initialPatterns.some((pattern, index) => {
@@ -546,7 +540,7 @@ function validateInitial(
           if (belt?.lineIndex === index) return false
           return (
             actual === undefined ||
-            (skillIndexes.has(index)
+            (pattern.startsWith('Grants Skill:')
               ? !matchesGrantedSkillImplicitLines([pattern], [actual])
               : actual !== pattern)
           )
@@ -722,6 +716,7 @@ export function readNativeTargetProjectProjection(
   skillSockets = false,
   skillSocketTargets = false,
   skillLevelDeclarations = false,
+  skillVariantAmulets = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -755,6 +750,7 @@ export function readNativeTargetProjectProjection(
     skillSockets,
     skillSocketTargets,
     skillLevelDeclarations,
+    skillVariantAmulets,
   )
 }
 
@@ -790,6 +786,7 @@ function readCraftProject(
   skillSockets = false,
   skillSocketTargets = false,
   skillLevelDeclarations = false,
+  skillVariantAmulets = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -808,6 +805,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!skillVariantAmulets && requiresSkillVariantAmuletProjectVersion(value))
+    return fail('技能变体项链必须使用 v102 项目，包括起点、完整未来和嵌套未执行结构。')
   if (!skillLevelDeclarations && requiresSkillLevelDeclarationProjectVersion(value))
     return fail('装备最高技能等级起点声明必须使用 v101 项目，包括完整未来和未执行指引。')
   if (!skillSocketTargets && requiresSkillSocketTargetProjectVersion(value))
@@ -2164,6 +2163,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresSkillVariantAmuletProjectVersion(project))
+    throw new Error('技能变体项链必须使用 v102 项目，包括起点、完整未来和嵌套未执行结构。')
   if (requiresSkillLevelDeclarationProjectVersion(project))
     throw new Error('装备最高技能等级起点声明必须使用 v101 项目，包括完整未来和嵌套未执行结构。')
   if (requiresSkillSocketTargetProjectVersion(project))
