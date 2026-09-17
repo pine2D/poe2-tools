@@ -237,7 +237,8 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
           </p>
           <p>
             显式目标 {planPreview.restored.project.targetDefinitions.targets.length} 组，固有目标{' '}
-            {planPreview.restored.project.targetImplicitValues?.length ?? 0} 行。
+            {planPreview.restored.project.targetImplicitValues?.length ?? 0} 行，面板目标{' '}
+            {planPreview.restored.project.targetDefinitions.panelGoals?.length ?? 0} 项。
           </p>
           {planPreview.restored.project.strategy ? (
             <p>

@@ -2,6 +2,7 @@ import {
   CRAFT_RULES_VERSION,
   type CraftCatalog,
   type CraftProject,
+  PANEL_GOAL_RULES_VERSION,
   TARGET_CRAFT_RULES_VERSION,
 } from '@poe2-tools/item-core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -283,4 +284,41 @@ it('方案预览使迟到文件失效，无目标收藏不能沿用，没有当�
   expect(screen.getByRole('status').textContent).toContain('没有制作目标或条件指引')
   rerender(<ProjectControls catalog={catalog} onRestore={onRestore} />)
   expect(screen.queryByRole('button', { name: '沿用收藏方案 可用' })).toBeNull()
+})
+
+it('纯面板目标收藏在沿用预览中显示数量，应用后完整保留条件', async () => {
+  const panelGoals = [
+    { kind: 'item-property', property: 'Armour', min: 100 },
+    {
+      kind: 'weighted-properties',
+      terms: [
+        { property: 'Armour', weight: 1 },
+        { property: 'Evasion', weight: 2 },
+      ],
+      min: 300,
+    },
+  ]
+  const plan = {
+    ...project,
+    rulesVersion: PANEL_GOAL_RULES_VERSION,
+    initialState: { ...initialState, nextAffixId: 1 },
+    orphanedTargets: [],
+    targetDefinitions: {
+      nextTargetId: 1,
+      targets: [],
+      alternatives: [],
+      values: [],
+      panelGoals,
+    },
+  }
+  await addLibraryEntry(localStorage, '防御面板', JSON.stringify(plan))
+  const onRestore = vi.fn()
+  render(<ProjectControls catalog={catalog} project={project} onRestore={onRestore} />)
+  fireEvent.click(screen.getByText('演练收藏'))
+  fireEvent.click(screen.getByRole('button', { name: '沿用收藏方案 防御面板' }))
+  const preview = screen.getByRole('region', { name: '沿用方案预览' })
+  expect(preview.textContent).toContain('面板目标 2 项')
+  expect(onRestore).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '应用收藏方案' }))
+  expect(onRestore.mock.calls[0]?.[0].project.targetDefinitions.panelGoals).toEqual(panelGoals)
 })
