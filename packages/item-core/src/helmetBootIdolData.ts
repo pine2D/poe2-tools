@@ -1,0 +1,442 @@
+import type { CatalogAugment, CatalogStatScalar } from './catalog'
+
+// 固定 MIT PoB2 ModRunes 快照；完整元数据仅作为身份核对，不扩大装备资格。
+export const HELMET_BOOT_IDOL_RECORDS: readonly CatalogAugment[] = [
+  {
+    id: 'pob2:augment:["Idol of Grold","boots"]',
+    name: 'Idol of Grold',
+    category: 'boots',
+    type: 'Idol',
+    localMod: false,
+    lines: ['50% increased total Power counted by Warcries'],
+    statOrder: [10519],
+    tradeHashes: {
+      '2663359259': ['50% increased total Power counted by Warcries'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['30% increased Glory generation'],
+      statOrder: [6912],
+    },
+  },
+  {
+    id: 'pob2:augment:["Idol of Eeshta","helmet"]',
+    name: 'Idol of Eeshta',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['15% increased Cost Efficiency'],
+    statOrder: [4742],
+    tradeHashes: {
+      '263495202': ['15% increased Cost Efficiency'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Meta Skills have 15% increased Reservation Efficiency'],
+      statOrder: [9768],
+    },
+  },
+  {
+    id: 'pob2:augment:["Idol of Egrin","helmet"]',
+    name: 'Idol of Egrin',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Enemies you Curse take 6% increased Damage'],
+    statOrder: [3433],
+    tradeHashes: {
+      '1984310483': ['Enemies you Curse take 6% increased Damage'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['20% increased Area of Effect of Curses'],
+      statOrder: [1950],
+    },
+  },
+  {
+    id: 'pob2:augment:["Idol of Ralakesh","helmet"]',
+    name: 'Idol of Ralakesh',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['8% increased Reservation Efficiency of Minion Skills'],
+    statOrder: [9769],
+    tradeHashes: {
+      '1805633363': ['8% increased Reservation Efficiency of Minion Skills'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Minions Revive 8% faster'],
+      statOrder: [9085],
+    },
+  },
+  {
+    id: 'pob2:augment:["Primate Idol","helmet"]',
+    name: 'Primate Idol',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Minions have 15% increased maximum Life'],
+    statOrder: [1026],
+    tradeHashes: {
+      '770672621': ['Minions have 15% increased maximum Life'],
+    },
+    levelReq: 0,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Remnants can be collected from 30% further away'],
+      statOrder: [9740],
+    },
+  },
+  {
+    id: 'pob2:augment:["Stag Idol","helmet"]',
+    name: 'Stag Idol',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Projectiles have 15% chance to Fork'],
+    statOrder: [9546],
+    tradeHashes: {
+      '1549287843': ['Projectiles have 15% chance to Fork'],
+    },
+    levelReq: 0,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Projectiles have 25% chance for an additional Projectile when Forking'],
+      statOrder: [5512],
+    },
+  },
+  {
+    id: 'pob2:augment:["Bear Idol","helmet"]',
+    name: 'Bear Idol',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['10% increased Area of Effect'],
+    statOrder: [1630],
+    tradeHashes: {
+      '280731498': ['10% increased Area of Effect'],
+    },
+    levelReq: 0,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['12% increased Reservation Efficiency of Companion Skills'],
+      statOrder: [9766],
+    },
+  },
+  {
+    id: 'pob2:augment:["Idol of Yeena","boots"]',
+    name: 'Idol of Yeena',
+    category: 'boots',
+    type: 'Idol',
+    localMod: false,
+    lines: ['30% increased Skill Effect Duration with Plant Skills'],
+    statOrder: [9488],
+    tradeHashes: {
+      '4065951768': ['30% increased Skill Effect Duration with Plant Skills'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: [
+        'Plants have a 25% chance to immediately Overgrow when they enter your Presence for the first time',
+      ],
+      statOrder: [5362],
+    },
+  },
+  {
+    id: 'pob2:augment:["Idol of Oak","boots"]',
+    name: 'Idol of Oak',
+    category: 'boots',
+    type: 'Idol',
+    localMod: false,
+    lines: ['15% chance when you gain an Endurance Charge to gain an additional Endurance Charge'],
+    statOrder: [5516],
+    tradeHashes: {
+      '1228682002': [
+        '15% chance when you gain an Endurance Charge to gain an additional Endurance Charge',
+      ],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['+1 to Maximum Endurance Charges'],
+      statOrder: [1559],
+    },
+  },
+  {
+    id: 'pob2:augment:["Idol of Alira","helmet"]',
+    name: 'Idol of Alira',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['15% chance when you gain a Power Charge to gain an additional Power Charge'],
+    statOrder: [5518],
+    tradeHashes: {
+      '3537994888': ['15% chance when you gain a Power Charge to gain an additional Power Charge'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['+1 to Maximum Power Charges'],
+      statOrder: [1569],
+    },
+  },
+  {
+    id: 'pob2:augment:["Carved Cunning","helmet"]',
+    name: 'Carved Cunning',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Enemies which are on Full Life cannot Evade your Hits'],
+    statOrder: [5302],
+    tradeHashes: {
+      '4111745607': ['Enemies which are on Full Life cannot Evade your Hits'],
+    },
+    levelReq: 60,
+    limit: 1,
+    limitId: 'AncientAugment',
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['30% increased Accuracy Rating'],
+      statOrder: [1332],
+    },
+  },
+  {
+    id: 'pob2:augment:["Carved Cunning","boots"]',
+    name: 'Carved Cunning',
+    category: 'boots',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Gain Onslaught for 4 seconds when your Marks Activate'],
+    statOrder: [6823],
+    tradeHashes: {
+      '1811977226': ['Gain Onslaught for 4 seconds when your Marks Activate'],
+    },
+    levelReq: 60,
+    limit: 1,
+    limitId: 'AncientAugment',
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Buffs on you expire 10% slower'],
+      statOrder: [5237],
+    },
+  },
+  {
+    id: 'pob2:augment:["Carved Majesty","boots"]',
+    name: 'Carved Majesty',
+    category: 'boots',
+    type: 'Idol',
+    localMod: false,
+    lines: ['1% increased Movement Speed while Sprinting per Persistent Minion'],
+    statOrder: [10074],
+    tradeHashes: {
+      '3639405795': ['1% increased Movement Speed while Sprinting per Persistent Minion'],
+    },
+    levelReq: 60,
+    limit: 1,
+    limitId: 'AncientAugment',
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Minions have 12% increased maximum Life'],
+      statOrder: [1026],
+    },
+  },
+  {
+    id: 'pob2:augment:["Carved Mischief","helmet"]',
+    name: 'Carved Mischief',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Gain Guard equal to 10% of maximum Life for 4 seconds on taking Savage Hit'],
+    statOrder: [6801],
+    tradeHashes: {
+      '3863682550': ['Gain Guard equal to 10% of maximum Life for 4 seconds on taking Savage Hit'],
+    },
+    levelReq: 60,
+    limit: 1,
+    limitId: 'AncientAugment',
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Buffs on you expire 10% slower'],
+      statOrder: [5237],
+    },
+  },
+  {
+    id: 'pob2:augment:["Carved Tenacity","helmet"]',
+    name: 'Carved Tenacity',
+    category: 'helmet',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Enemies have no Critical Damage Bonus for 4 seconds after you Blind them'],
+    statOrder: [6385],
+    tradeHashes: {
+      '25786091': ['Enemies have no Critical Damage Bonus for 4 seconds after you Blind them'],
+    },
+    levelReq: 60,
+    limit: 1,
+    limitId: 'AncientAugment',
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['20% increased Blind Effect'],
+      statOrder: [4926],
+    },
+  },
+  {
+    id: 'pob2:augment:["Carved Tenacity","boots"]',
+    name: 'Carved Tenacity',
+    category: 'boots',
+    type: 'Idol',
+    localMod: false,
+    lines: ['Your speed is Unaffected by Slows while Sprinting'],
+    statOrder: [9942],
+    tradeHashes: {
+      '3128773415': ['Your speed is Unaffected by Slows while Sprinting'],
+    },
+    levelReq: 60,
+    limit: 1,
+    limitId: 'AncientAugment',
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['8% increased Movement Speed while Sprinting'],
+      statOrder: [10073],
+    },
+  },
+]
+export const HELMET_BOOT_IDOL_SCALABILITY: Readonly<Record<string, readonly CatalogStatScalar[]>> =
+  {
+    '50% increased total Power counted by Warcries': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '15% increased Cost Efficiency': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    'Enemies you Curse take 6% increased Damage': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '8% increased Reservation Efficiency of Minion Skills': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    'Minions have 15% increased maximum Life': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    'Projectiles have 15% chance to Fork': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '10% increased Area of Effect': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '30% increased Skill Effect Duration with Plant Skills': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '15% chance when you gain an Endurance Charge to gain an additional Endurance Charge': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '15% chance when you gain a Power Charge to gain an additional Power Charge': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    'Enemies which are on Full Life cannot Evade your Hits': [],
+    'Gain Onslaught for 4 seconds when your Marks Activate': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    '1% increased Movement Speed while Sprinting per Persistent Minion': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    'Gain Guard equal to 10% of maximum Life for 4 seconds on taking Savage Hit': [
+      {
+        scalable: true,
+        formats: [],
+      },
+      {
+        scalable: false,
+        formats: [],
+      },
+    ],
+    'Enemies have no Critical Damage Bonus for 4 seconds after you Blind them': [
+      {
+        scalable: true,
+        formats: [],
+      },
+    ],
+    'Your speed is Unaffected by Slows while Sprinting': [],
+  }

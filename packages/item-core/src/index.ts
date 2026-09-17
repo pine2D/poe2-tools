@@ -32,6 +32,7 @@ export {
   requiresAmuletSkillSocketsProjectVersion,
 } from './amuletSkillSocketsProjectVersion'
 export type { ArchitectCraftOperation } from './architect'
+export { isArmourIdol, isHelmetBootIdolId } from './armourIdols'
 export { isAstridRune } from './astridRune'
 export type { BaseSkillVariants } from './baseSkillVariants'
 export { readBaseSkillVariants } from './baseSkillVariants'
@@ -316,6 +317,10 @@ export {
   GRANTED_SKILL_TARGET_RULES_VERSION,
   requiresGrantedSkillTargetProjectVersion,
 } from './grantedSkillTargetProjectVersion'
+export {
+  HELMET_BOOT_IDOL_RULES_VERSION,
+  requiresHelmetBootIdolProjectVersion,
+} from './helmetBootIdolProjectVersion'
 export type {
   CraftImplicitTargetCandidate,
   CraftImplicitTargetStatus,

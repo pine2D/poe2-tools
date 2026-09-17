@@ -1,3 +1,6 @@
+# 2026-09-17 头盔与鞋部雕像核对（实施前登记）
+沿用已登记固定 MIT PoB2 ModRunes／ModScalability 与普通、已核对锻造防具目录。16条独立分支为头盔10、鞋6；公开 [Carved Mischief](https://poe2db.tw/us/Carved_Mischief)、[Carved Tenacity](https://poe2db.tw/us/Carved_Tenacity)、[Carved Cunning](https://poe2db.tw/us/Carved_Cunning)、[Egrin](https://poe2db.tw/us/Idol_of_Egrin)、[Stag](https://poe2db.tw/us/Stag_Idol)、[Grold](https://poe2db.tw/us/Idol_of_Grold)、[Yeena](https://poe2db.tw/us/Idol_of_Yeena)、[Oak](https://poe2db.tw/us/Idol_of_Oak) 仅人工交叉核对，不引入其数据文件或价格。固定 ModScalability 的鞋部 Cunning 持续时间未声明毫秒格式，沿该快照整数缩放模型；不借手套 Majesty 的毫秒精度补值，游戏实际显示仍待验收。Grold通用使用提示与Boots效果标题不一致，按固定目录及效果标题核对部位，不据通用提示扩大权限。胸甲Bonded激活、断行缺元数据与副手空记录另行核对。
+
 # 2026-09-17 手套雕像核对（实施前登记）
 沿用已登记固定 MIT PoB2 `ModRunes.lua` / `ModScalability.lua` 及普通手套目录，不新增抓取适配器或第三方数据文件。人工核对 PoE2DB 的 [Carved Majesty](https://poe2db.tw/us/Carved_Majesty)、[Carved Mischief](https://poe2db.tw/us/Carved_Mischief)、[Carved Tenacity](https://poe2db.tw/us/Carved_Tenacity)、[Snake Idol](https://poe2db.tw/us/Snake_Idol)、[Sirrius](https://poe2db.tw/us/Idol_of_Sirrius)、[Kraityn](https://poe2db.tw/us/Idol_of_Kraityn) 公开说明，只作 gray 交叉证据；9个手套分支保持独立，三种 Carved 共用 AncientAugment 限量1。持续时间是否增效按既有逐占位来源，不以文本中出现数字推断。CoE 公开路线图用于流程参考，不使用其实现、数据或权重；国服原生文本和精度仍待游戏验收。
 

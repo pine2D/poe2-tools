@@ -4,9 +4,9 @@ import {
   type CatalogAugment,
   type CraftCatalog,
   type CraftState,
+  isArmourIdol,
   isConditionalArmourRune,
   isExtendedArmourRune,
-  isGloveIdol,
   isInfluenceRune,
   isRebirthArmourRune,
   isSpecialMartialRune,
@@ -74,7 +74,7 @@ export function SocketPanel({
   const amplification = socketEffectIncrease(catalog, state)
   const limit = artificerSocketLimit(catalog, state)
   const sceptre = catalog.bases.find((base) => base.id === state.baseId)?.type === 'Sceptre'
-  const hasIdols = sceptre || candidates.some((augment) => isGloveIdol(augment, true))
+  const hasIdols = sceptre || candidates.some((augment) => isArmourIdol(augment, true))
   const canAddSocket = state.sockets !== undefined && state.sockets.length < limit
   const previous = catalog.augments?.find((entry) => entry.id === state.sockets?.[selectedIndex])
   const label = (name: string) =>
@@ -261,7 +261,7 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
-              {isGloveIdol(selected, true) ? (
+              {isArmourIdol(selected, true) ? (
                 <p>
                   保留触发条件与作用对象，不计为本件防御或无条件角色收益；持续时间按各条规则分别增效。
                   {selected.limitId === 'AncientAugment'

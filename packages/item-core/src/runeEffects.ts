@@ -1,3 +1,4 @@
+import { isArmourIdol, isArmourIdolEffectLine } from './armourIdols'
 import { ASTRID_LINE, isAstridRune } from './astridRune'
 import type { CatalogAugment } from './catalog'
 import {
@@ -7,7 +8,6 @@ import {
 } from './combatArmourRuneEffects'
 import { conditionalArmourRuneKind, isConditionalArmourRune } from './conditionalArmourRunes'
 import { isExtendedArmourRune, readExtendedArmourRuneLine } from './extendedArmourRuneEffects'
-import { isGloveIdol, isGloveIdolEffectLine } from './gloveIdols'
 import { isInfluenceRune, isInfluenceRuneLine } from './influenceRunes'
 import { isSerleRune, SERLE_LINE } from './serleRune'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
@@ -121,7 +121,7 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
   for (const line of lines) {
     // 条件效果另行核对完整语义，不属于可加的本地防御或角色数值。
     if (
-      isGloveIdolEffectLine(line) ||
+      isArmourIdolEffectLine(line) ||
       conditionalArmourRuneKind(line) ||
       isInfluenceRuneLine(line) ||
       line === ASTRID_LINE ||
@@ -208,7 +208,7 @@ export function sumRuneEffects(augments: readonly CatalogAugment[]): RuneEffectT
   const totals = emptyTotals()
   for (const augment of augments) {
     if (
-      !isGloveIdol(augment, true) &&
+      !isArmourIdol(augment, true) &&
       !isSupportedArmourRune(augment) &&
       !(isSupportedSoulCore(augment) && augment.category !== 'weapon')
     )

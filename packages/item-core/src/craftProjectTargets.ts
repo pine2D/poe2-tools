@@ -84,6 +84,10 @@ import {
   requiresGrantedSkillTargetProjectVersion,
 } from './grantedSkillTargetProjectVersion'
 import {
+  HELMET_BOOT_IDOL_RULES_VERSION,
+  requiresHelmetBootIdolProjectVersion,
+} from './helmetBootIdolProjectVersion'
+import {
   INFLUENCE_BONE_RULES_VERSION,
   influenceBoneProjectCapabilityError,
   requiresInfluenceBoneProjectVersion,
@@ -230,6 +234,7 @@ export interface TargetCraftProject
     | typeof WARD_RUNE_RULES_VERSION
     | typeof RUNEFORGE_CRAFT_RULES_VERSION
     | typeof PENDING_EXALTATION_RULES_VERSION
+    | typeof HELMET_BOOT_IDOL_RULES_VERSION
     | typeof GLOVE_IDOL_RULES_VERSION
     | typeof SCEPTRE_AUGMENT_RULES_VERSION
     | typeof SPECIAL_MARTIAL_RUNE_RULES_VERSION
@@ -431,6 +436,7 @@ export function parseTargetCraftProject(
       EXTENDED_ARMOUR_RUNE_RULES_VERSION,
       ESSENCE_OUTCOMES_RULES_VERSION,
       PENDING_EXALTATION_RULES_VERSION,
+      HELMET_BOOT_IDOL_RULES_VERSION,
       GLOVE_IDOL_RULES_VERSION,
       SCEPTRE_AUGMENT_RULES_VERSION,
       SPECIAL_MARTIAL_RUNE_RULES_VERSION,
@@ -460,9 +466,15 @@ export function parseTargetCraftProject(
     return {
       ok: false,
       error:
-        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89、v90、v91、v92、v93、v94、v95、v96、v97、v98、v99、v100、v101、v102、v103、v104、v105、v106、v107、v108、v109 或 v110 规则版本。',
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89、v90、v91、v92、v93、v94、v95、v96、v97、v98、v99、v100、v101、v102、v103、v104、v105、v106、v107、v108、v109、v110 或 v111 规则版本。',
     }
-  const gloveIdols = original.rulesVersion === GLOVE_IDOL_RULES_VERSION
+  const helmetBootIdols = original.rulesVersion === HELMET_BOOT_IDOL_RULES_VERSION
+  if (!helmetBootIdols && requiresHelmetBootIdolProjectVersion(original))
+    return {
+      ok: false,
+      error: '头盔和鞋部雕像必须使用 v111 项目，包括起点、导入声明、完整未来和未执行指引。',
+    }
+  const gloveIdols = helmetBootIdols || original.rulesVersion === GLOVE_IDOL_RULES_VERSION
   if (!gloveIdols && requiresGloveIdolProjectVersion(original))
     return {
       ok: false,
@@ -768,6 +780,7 @@ export function parseTargetCraftProject(
       specialMartialRunes,
       sceptreAugments,
       gloveIdols,
+      helmetBootIdols,
     )
     if (!history.ok) return history
     capacityContext =
@@ -840,6 +853,7 @@ export function parseTargetCraftProject(
         specialMartialRunes,
         sceptreAugments,
         gloveIdols,
+        helmetBootIdols,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -861,77 +875,79 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = gloveIdols
-      ? GLOVE_IDOL_RULES_VERSION
-      : sceptreAugments
-        ? SCEPTRE_AUGMENT_RULES_VERSION
-        : specialMartialRunes
-          ? SPECIAL_MARTIAL_RUNE_RULES_VERSION
-          : talismans
-            ? TALISMAN_CRAFT_RULES_VERSION
-            : flasks
-              ? FLASK_CRAFT_RULES_VERSION
-              : amuletCatalyst
-                ? AMULET_CATALYST_RULES_VERSION
-                : amuletSkillLevel
-                  ? AMULET_SKILL_LEVEL_RULES_VERSION
-                  : amuletSkillSockets
-                    ? AMULET_SKILL_SOCKETS_RULES_VERSION
-                    : skillVariantAmulets
-                      ? SKILL_VARIANT_AMULET_RULES_VERSION
-                      : skillLevelDeclarations
-                        ? SKILL_LEVEL_DECLARATION_RULES_VERSION
-                        : skillSocketTargets
-                          ? SKILL_SOCKET_TARGET_RULES_VERSION
-                          : skillSockets
-                            ? SKILL_SOCKETS_RULES_VERSION
-                            : weightedProperties
-                              ? WEIGHTED_PROPERTY_RULES_VERSION
-                              : grantedSkillTargets
-                                ? GRANTED_SKILL_TARGET_RULES_VERSION
-                                : extendedInfluenceBones
-                                  ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                                  : influenceBones
-                                    ? INFLUENCE_BONE_RULES_VERSION
-                                    : destructionRunes
-                                      ? DESTRUCTION_RUNE_RULES_VERSION
-                                      : influenceRunes
-                                        ? INFLUENCE_RUNE_RULES_VERSION
-                                        : desecrationCount
-                                          ? DESECRATION_COUNT_RULES_VERSION
-                                          : putrefaction
-                                            ? PUTREFACTION_RULES_VERSION
-                                            : pendingExaltation
-                                              ? PENDING_EXALTATION_RULES_VERSION
-                                              : essenceOutcomes
-                                                ? ESSENCE_OUTCOMES_RULES_VERSION
-                                                : serle
-                                                  ? SERLE_RULES_VERSION
-                                                  : craftedCapacity
-                                                    ? CRAFTED_CAPACITY_RULES_VERSION
-                                                    : conditionalRunes
-                                                      ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                                      : masterwork
-                                                        ? MASTERWORK_CRAFT_RULES_VERSION
-                                                        : extendedArmourRunes
-                                                          ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                                          : wardRunes
-                                                            ? WARD_RUNE_RULES_VERSION
-                                                            : runeforge
-                                                              ? RUNEFORGE_CRAFT_RULES_VERSION
-                                                              : runeforgedArmour
-                                                                ? RUNEFORGED_ARMOUR_RULES_VERSION
-                                                                : combatArmourRunes
-                                                                  ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-                                                                  : retainedCatalyst
-                                                                    ? RETAINED_CATALYST_RULES_VERSION
-                                                                    : corruptionStrategy
-                                                                      ? CORRUPTION_STRATEGY_RULES_VERSION
-                                                                      : extraction
-                                                                        ? EXTRACTION_CRAFT_RULES_VERSION
-                                                                        : perfectFlux
-                                                                          ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                                                                          : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = helmetBootIdols
+      ? HELMET_BOOT_IDOL_RULES_VERSION
+      : gloveIdols
+        ? GLOVE_IDOL_RULES_VERSION
+        : sceptreAugments
+          ? SCEPTRE_AUGMENT_RULES_VERSION
+          : specialMartialRunes
+            ? SPECIAL_MARTIAL_RUNE_RULES_VERSION
+            : talismans
+              ? TALISMAN_CRAFT_RULES_VERSION
+              : flasks
+                ? FLASK_CRAFT_RULES_VERSION
+                : amuletCatalyst
+                  ? AMULET_CATALYST_RULES_VERSION
+                  : amuletSkillLevel
+                    ? AMULET_SKILL_LEVEL_RULES_VERSION
+                    : amuletSkillSockets
+                      ? AMULET_SKILL_SOCKETS_RULES_VERSION
+                      : skillVariantAmulets
+                        ? SKILL_VARIANT_AMULET_RULES_VERSION
+                        : skillLevelDeclarations
+                          ? SKILL_LEVEL_DECLARATION_RULES_VERSION
+                          : skillSocketTargets
+                            ? SKILL_SOCKET_TARGET_RULES_VERSION
+                            : skillSockets
+                              ? SKILL_SOCKETS_RULES_VERSION
+                              : weightedProperties
+                                ? WEIGHTED_PROPERTY_RULES_VERSION
+                                : grantedSkillTargets
+                                  ? GRANTED_SKILL_TARGET_RULES_VERSION
+                                  : extendedInfluenceBones
+                                    ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                                    : influenceBones
+                                      ? INFLUENCE_BONE_RULES_VERSION
+                                      : destructionRunes
+                                        ? DESTRUCTION_RUNE_RULES_VERSION
+                                        : influenceRunes
+                                          ? INFLUENCE_RUNE_RULES_VERSION
+                                          : desecrationCount
+                                            ? DESECRATION_COUNT_RULES_VERSION
+                                            : putrefaction
+                                              ? PUTREFACTION_RULES_VERSION
+                                              : pendingExaltation
+                                                ? PENDING_EXALTATION_RULES_VERSION
+                                                : essenceOutcomes
+                                                  ? ESSENCE_OUTCOMES_RULES_VERSION
+                                                  : serle
+                                                    ? SERLE_RULES_VERSION
+                                                    : craftedCapacity
+                                                      ? CRAFTED_CAPACITY_RULES_VERSION
+                                                      : conditionalRunes
+                                                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                                        : masterwork
+                                                          ? MASTERWORK_CRAFT_RULES_VERSION
+                                                          : extendedArmourRunes
+                                                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                                            : wardRunes
+                                                              ? WARD_RUNE_RULES_VERSION
+                                                              : runeforge
+                                                                ? RUNEFORGE_CRAFT_RULES_VERSION
+                                                                : runeforgedArmour
+                                                                  ? RUNEFORGED_ARMOUR_RULES_VERSION
+                                                                  : combatArmourRunes
+                                                                    ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+                                                                    : retainedCatalyst
+                                                                      ? RETAINED_CATALYST_RULES_VERSION
+                                                                      : corruptionStrategy
+                                                                        ? CORRUPTION_STRATEGY_RULES_VERSION
+                                                                        : extraction
+                                                                          ? EXTRACTION_CRAFT_RULES_VERSION
+                                                                          : perfectFlux
+                                                                            ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                                                                            : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string

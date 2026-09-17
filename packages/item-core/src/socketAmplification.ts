@@ -1,11 +1,11 @@
 import { sovereignEffect } from './alloyEffects'
+import { armourIdolFits, isArmourIdolId, scaleArmourIdol } from './armourIdols'
 import { ASTRID_LINE, isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { isConditionalArmourRune } from './conditionalArmourRunes'
 import { astridFitsBase } from './craftedCapacity'
 import { essenceSourceHash } from './essences'
 import { isRebirthArmourRune } from './extendedArmourRuneEffects'
-import { gloveIdolFits, isGloveIdolId, scaleGloveIdol } from './gloveIdols'
 import { influenceRuneFitsBase, isInfluenceRune } from './influenceRunes'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
@@ -62,9 +62,9 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
-  if (isGloveIdolId(augment.id))
-    return gloveIdolFits(catalog, state, augment)
-      ? scaleGloveIdol(catalog, augment, increase)
+  if (isArmourIdolId(augment.id))
+    return armourIdolFits(catalog, state, augment)
+      ? scaleArmourIdol(catalog, augment, increase)
       : null
   if (isSceptreAugmentId(augment.id))
     return sceptreAugmentFits(catalog, state, augment)

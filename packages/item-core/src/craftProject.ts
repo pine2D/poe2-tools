@@ -51,6 +51,7 @@ import { validateCraftFractureTarget } from './fractureTargets'
 import { requiresGloveIdolProjectVersion } from './gloveIdolProjectVersion'
 import { matchesGrantedSkillImplicitLines, readUnlevelledSkillName } from './grantedSkills'
 import { requiresGrantedSkillTargetProjectVersion } from './grantedSkillTargetProjectVersion'
+import { requiresHelmetBootIdolProjectVersion } from './helmetBootIdolProjectVersion'
 import {
   type CraftImplicitTargetValues,
   readCraftImplicitTargets,
@@ -735,6 +736,7 @@ export function readNativeTargetProjectProjection(
   specialMartialRunes = false,
   sceptreAugments = false,
   gloveIdols = false,
+  helmetBootIdols = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -777,6 +779,7 @@ export function readNativeTargetProjectProjection(
     specialMartialRunes,
     sceptreAugments,
     gloveIdols,
+    helmetBootIdols,
   )
 }
 
@@ -821,6 +824,7 @@ function readCraftProject(
   specialMartialRunes = false,
   sceptreAugments = false,
   gloveIdols = false,
+  helmetBootIdols = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -845,6 +849,9 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  const usesHelmetBootIdols = requiresHelmetBootIdolProjectVersion(value)
+  if (!helmetBootIdols && usesHelmetBootIdols)
+    return fail('头盔和鞋部雕像必须使用 v111 项目，包括起点、导入声明、完整未来和未执行指引。')
   const usesGloveIdols = requiresGloveIdolProjectVersion(value)
   if (!gloveIdols && usesGloveIdols)
     return fail('手套雕像必须使用 v110 项目，包括起点、导入声明、完整未来和未执行指引。')
@@ -1799,6 +1806,7 @@ function readCraftProject(
       usesJewelEffects ||
       usesSovereignEffects ||
       usesSpecialMartialRunes ||
+      usesHelmetBootIdols ||
       usesGloveIdols ||
       usesSceptreAugments ||
       usesEffectiveTargets ||
@@ -1887,6 +1895,7 @@ function readCraftProject(
   if (
     usesSockets ||
     usesSpecialMartialRunes ||
+    usesHelmetBootIdols ||
     usesGloveIdols ||
     usesSceptreAugments ||
     Object.hasOwn(value, 'augmentSourceHash')
@@ -2189,6 +2198,7 @@ function readCraftProject(
           usesJewelEffects ||
           usesSovereignEffects ||
           usesSpecialMartialRunes ||
+          usesHelmetBootIdols ||
           usesGloveIdols ||
           usesSceptreAugments ||
           usesEffectiveTargets ||
@@ -2203,6 +2213,7 @@ function readCraftProject(
         ...(importedQuality === undefined ? {} : { importedQuality }),
         ...((usesSockets ||
           usesSpecialMartialRunes ||
+          usesHelmetBootIdols ||
           usesGloveIdols ||
           usesSceptreAugments ||
           Object.hasOwn(value, 'augmentSourceHash')) &&
@@ -2244,6 +2255,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresHelmetBootIdolProjectVersion(project))
+    throw new Error('头盔和鞋部雕像必须使用 v111 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresGloveIdolProjectVersion(project))
     throw new Error('手套雕像必须使用 v110 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresSceptreAugmentProjectVersion(project))
