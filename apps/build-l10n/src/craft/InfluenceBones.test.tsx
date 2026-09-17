@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import {
   type CraftCatalog,
   type CraftState,
+  type CraftStep,
   loadTargetWorkbenchProject,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -30,33 +31,62 @@ function save() {
   if (!result.ok) throw Error(result.error)
   return result.value
 }
-it('毁灭符文普通骨骼三阶段与完整未来保存恢复共用 v95', () => {
-  const initial: CraftState = {
-    baseId: 'Crude Bow',
-    itemLevel: 86,
-    rarity: 'normal',
-    affixes: [],
-    sourceText: null,
-    sockets: [null],
-    nextAffixId: 1,
-  }
-  render(<RehearsalPanel catalog={catalog} initialState={initial} translations={{}} />)
-  change('选择镶嵌符文', rune)
-  click('应用镶嵌')
-  for (const [currency, id] of [
-    ['蜕变石', 'LocalAddedFireDamage1'],
-    ['富豪石', 'LocalAddedColdDamage1'],
-  ] as const) {
-    click(currency)
-    change('搜索合法词缀', id)
-    const candidate = screen
-      .getAllByText(id)
-      .map((node) => node.closest('button.rehearsal-candidate'))
-      .find(Boolean)
-    if (!candidate) throw Error('缺少普通候选')
-    fireEvent.click(candidate)
-    click('应用本次结果')
-  }
+const initial: CraftState = {
+  baseId: 'Crude Bow',
+  itemLevel: 86,
+  rarity: 'normal',
+  affixes: [],
+  sourceText: null,
+  sockets: [null],
+  nextAffixId: 1,
+}
+const operations: CraftStep[] = [
+  { kind: 'socket', socketIndex: 0, augmentId: rune },
+  { currency: 'transmutation', modIds: ['LocalAddedFireDamage1'] },
+  { currency: 'regal', modIds: ['LocalAddedColdDamage1'] },
+  { kind: 'desecrate', boneId: 'preserved_jawbone', affixKind: 'suffix' },
+  {
+    kind: 'desecration-offer',
+    modIds: [
+      target,
+      'DestructionInfluenceColdModifierEffect',
+      'DestructionInfluenceChaosModifierEffect',
+    ],
+  },
+  { kind: 'desecration-reveal', modId: target, values: [20] },
+]
+// 镶嵌与升稀有已有独立界面覆盖；使用真实可回放历史准备骨骼入口，减少重复渲染。
+function prepared(count: number) {
+  const source = (path: string) =>
+    catalog._meta.sources.find((s) => s.path === `src/Data/${path}.lua`)?.sha256
+  const result = loadTargetWorkbenchProject(
+    JSON.stringify({
+      schemaVersion: 1,
+      sourceCommit: catalog._meta.sourceCommit,
+      rulesVersion: 'basic-2026-09-17-v95',
+      initialState: initial,
+      operations: operations.slice(0, count),
+      cursor: count,
+      augmentSourceHash: source('ModRunes'),
+      desecrationSourceHash: source('ModVeiled'),
+      scalabilitySourceHash: source('ModScalability'),
+      targetDefinitions: { nextTargetId: 1, targets: [], alternatives: [], values: [] },
+      orphanedTargets: [],
+    }),
+    catalog,
+  )
+  if (!result.ok) throw Error(result.error)
+  return result.value
+}
+it('毁灭符文普通骨骼三阶段保存 v95 与三份来源', () => {
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={initial}
+      initialProject={prepared(3)}
+      translations={{}}
+    />,
+  )
   change('骨骼材料', 'preserved_jawbone')
   fireEvent.click(screen.getByLabelText('占用后缀'))
   click('预览骨骼结果')
@@ -85,6 +115,17 @@ it('毁灭符文普通骨骼三阶段与完整未来保存恢复共用 v95', () 
       catalog._meta.sources.find((s) => s.path === `src/Data/${path}.lua`)?.sha256,
     )
   expect(current.states[6]?.affixes[2]).toMatchObject({ modId: target, desecrated: true })
+})
+it('v95 撤销后保存恢复仍可重做完整未来', () => {
+  const current = prepared(6)
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={initial}
+      initialProject={current}
+      translations={{}}
+    />,
+  )
   click('回到起点')
   expect(save().project.cursor).toBe(0)
   click('恢复本机演练')
