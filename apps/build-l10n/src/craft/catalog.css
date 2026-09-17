@@ -185,6 +185,12 @@
   margin-top: 6px;
   overflow-wrap: anywhere;
 }
+.catalog-implicit-translation {
+  display: block;
+}
+.catalog-implicit-source {
+  white-space: pre-wrap;
+}
 .catalog-pool {
   margin-top: 20px;
 }

@@ -19,9 +19,13 @@ export function BaseImplicitPreview({
       <h4>固有属性</h4>
       {lines.map((line) => {
         const translated = translateLine?.(line)
-        return translated ? <span key={line}>{translated}</span> : null
+        return translated ? (
+          <span className="catalog-implicit-translation" key={line}>
+            {translated}
+          </span>
+        ) : null
       })}
-      {lines.length > 0 && <code>{lines.join('\n')}</code>}
+      {lines.length > 0 && <code className="catalog-implicit-source">{lines.join('\n')}</code>}
       {choices && (
         <>
           <p>该基底只授予其中一项技能，共有 {choices.variants.length} 项候选。</p>
@@ -43,7 +47,7 @@ export function BaseImplicitPreview({
           <small>此处仅查看技能候选，不改变导入装备或制作起点。特殊制作规则仍待核对。</small>
           <details>
             <summary>查看完整来源原文</summary>
-            <code>{base.implicit}</code>
+            <code className="catalog-implicit-source">{base.implicit}</code>
           </details>
         </>
       )}
