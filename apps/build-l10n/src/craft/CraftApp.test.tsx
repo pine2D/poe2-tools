@@ -58,6 +58,7 @@ const bridgeSample = sample
 
 beforeEach(() => {
   localStorage.clear()
+  vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('测试未提供制作目录'))
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: { writeText: vi.fn().mockResolvedValue(undefined) },
@@ -131,16 +132,15 @@ describe('CraftApp', () => {
         .mockResolvedValue({ ok: true, json: async () => catalog } as Response)
       render(<CraftApp fetchImpl={fakeDictFetch(craftBundle, { omit: ['items'] })} />)
       await screen.findByText('英文词典就绪')
+      expect(catalogFetch).not.toHaveBeenCalled()
       const text = `物品类别: Spears\n稀有度: 普通\nKnown English Name\n--------\n物品等级: 70${withSkill ? '\n--------\nGrants Skill: Spear Throw' : ''}`
       parse(text)
       const baseSection = screen.getByRole('heading', { name: '基底英文' }).closest('section')
       if (!baseSection) throw new Error('缺少身份区块')
       expect(within(baseSection).getByText('未识别')).toBeDefined()
-      expect(catalogFetch).not.toHaveBeenCalled()
       const details = screen.getByText('搜索基底、词缀与通货演练').closest('details')
       if (!details) throw new Error('缺少目录入口')
-      details.open = true
-      fireEvent(details, new Event('toggle'))
+      expect(details.open).toBe(true)
       const start = await screen.findByRole('button', { name: '从当前装备开始' })
       expect(within(baseSection).getByText('Known English Name')).toBeDefined()
       expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
@@ -155,7 +155,13 @@ describe('CraftApp', () => {
       )
       fireEvent.click(screen.getByRole('button', { name: '应用本次结果' }))
       const history = screen.getByLabelText('演练历史').textContent
+      details.open = false
+      fireEvent(details, new Event('toggle'))
       fireEvent.click(screen.getByRole('button', { name: '保存到本机' }))
+      expect(details.open).toBe(false)
+      expect(screen.getByLabelText('演练历史').textContent).toBe(history)
+      details.open = true
+      fireEvent(details, new Event('toggle'))
       expect(screen.getByLabelText('演练历史').textContent).toBe(history)
       expect(catalogFetch.mock.calls.map(([url]) => url)).toEqual([
         '/craft-data/catalog.json',
@@ -177,6 +183,17 @@ describe('CraftApp', () => {
       ])
     },
   )
+  it.each([
+    '不是装备文本',
+    '物品类别: 法杖\n稀有度: 传奇\n试作传奇\n试作法杖\n--------\n物品等级: 86',
+    '物品类别: 咒符\n稀有度: 魔法\n试作咒符\n--------\n物品等级: 39',
+  ])('无效或仅供对照的输入不自动打开工坊：%s', async (text) => {
+    const fetchCatalog = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('不应加载'))
+    await renderReady()
+    parse(text)
+    expect(screen.getByText('搜索基底、词缀与通货演练').closest('details')?.open).toBe(false)
+    expect(fetchCatalog).not.toHaveBeenCalled()
+  })
   it('技能原文与最高等级有独立对照，歧义只允许选择已有词典候选', async () => {
     const bundle = {
       ...craftBundle,

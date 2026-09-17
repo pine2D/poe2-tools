@@ -127,6 +127,8 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
   const [message, setMessage] = useState('')
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [catalog, setCatalog] = useState<CraftCatalog | null>(null)
+  const catalogRef = useRef<HTMLDetailsElement>(null)
+  const revealedItemRef = useRef<ItemDocument | null>(null)
   const previewRef = useRef<HTMLTextAreaElement>(null)
   const requestRef = useRef(0)
   const mountedRef = useRef(true)
@@ -169,6 +171,14 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
     )
   }, [activeDict, item, selections, catalog])
   const dirty = item !== null && parsedText !== rawText
+  useEffect(() => {
+    if (!item || !inspection || revealedItemRef.current === item) return
+    revealedItemRef.current = item
+    if (inspection.comparisonOnly) return
+    // 每次解析只展开一次；词典补全和其他重绘不覆盖用户手动收起的选择。
+    setCatalogOpen(true)
+    if (catalogRef.current) catalogRef.current.open = true
+  }, [item, inspection])
   const catalogTranslator = useMemo(
     () =>
       createCatalogTranslator(
@@ -292,6 +302,7 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
         </section>
 
         <details
+          ref={catalogRef}
           className="catalog-entry"
           onToggle={(event) => {
             if (event.currentTarget.open) setCatalogOpen(true)
