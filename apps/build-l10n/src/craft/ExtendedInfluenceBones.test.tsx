@@ -10,6 +10,7 @@ import {
   inspectNumericLines,
   loadTargetWorkbenchProject,
   prepareCraftOperation,
+  type RestoredTargetCraftProject,
 } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeAll, expect, it, vi } from 'vitest'
@@ -81,10 +82,15 @@ function fixture(vorana = true) {
   }
   return data
 }
-function project(data: ReturnType<typeof fixture>) {
+const projectFixtures = new Map<string, RestoredTargetCraftProject>()
+const projectKey = (data: HistoryFixture) => JSON.stringify([data.initial, data.operations])
+function project(data: HistoryFixture): RestoredTargetCraftProject {
+  const key = projectKey(data)
+  const cached = projectFixtures.get(key)
+  if (cached) return structuredClone(cached)
   const source = (path: string) =>
     catalog._meta.sources.find((entry) => entry.path === `src/Data/${path}.lua`)?.sha256
-  return must(
+  const result = must(
     loadTargetWorkbenchProject(
       JSON.stringify({
         schemaVersion: 1,
@@ -95,13 +101,14 @@ function project(data: ReturnType<typeof fixture>) {
         cursor: data.operations.length,
         augmentSourceHash: source('ModRunes'),
         desecrationSourceHash: source('ModVeiled'),
-        scalabilitySourceHash: source('ModScalability'),
         targetDefinitions: { nextTargetId: 1, targets: [], alternatives: [], values: [] },
         orphanedTargets: [],
       }),
       catalog,
     ),
   )
+  projectFixtures.set(key, result)
+  return structuredClone(result)
 }
 function mount(data: ReturnType<typeof fixture>) {
   render(
@@ -153,9 +160,21 @@ function preparedSlots(count: number): HistoryFixture {
   return data.fork()
 }
 beforeAll(() => {
-  preparedSlots(6)
+  const data = preparedSlots(6)
+  const complete = project(data)
+  // 完整历史已经真实回放，复用其合法前缀；每次挂载仍独立克隆并接受界面自身的信任校验。
+  for (let count = 0; count <= data.operations.length; count++) {
+    const operations = data.operations.slice(0, count)
+    const state = complete.states[count]
+    if (!state) throw Error('缺少已回放的历史状态')
+    projectFixtures.set(projectKey(history(data.initial, operations, state)), {
+      ...complete,
+      project: { ...complete.project, operations, cursor: count },
+      states: complete.states.slice(0, count + 1),
+    })
+  }
 })
-function revealInUi(state: CraftState, preferred?: string) {
+function offerInUi(state: CraftState, preferred?: string) {
   const candidates = options(state, preferred)
   for (const candidate of candidates) {
     change('搜索揭示候选', candidate.id)
@@ -163,7 +182,11 @@ function revealInUi(state: CraftState, preferred?: string) {
   }
   click('预览三项候选')
   click('应用骨骼步骤')
-  click(`选择揭示 ${candidates[0]?.id}`)
+  return candidates.map((candidate) => candidate.id)
+}
+function revealInUi(state: CraftState, preferred?: string) {
+  const candidates = offerInUi(state, preferred)
+  click(`选择揭示 ${candidates[0]}`)
   click('预览揭示结果')
   click('应用骨骼步骤')
 }
@@ -231,11 +254,38 @@ it('Vorana 已勾选腐烂后切换远古肋骨，仍可取消腐烂', () => {
   expect(screen.getByLabelText('骨骼方向预兆')).toBeDefined()
 })
 
-it.each([0, 1, 2, 3, 4, 5])('Vorana 腐烂第 %i 槽按前缀后缀顺序揭示且不重复计费', (slot) => {
+it.each([0, 1, 2, 3, 4, 5])('Vorana 腐烂第 %i 槽固定三项候选，不推进槽位或重复计费', (slot) => {
   const data = preparedSlots(slot)
   mount(data)
   expect(data.current().pendingDesecration?.kind).toBe(slot < 3 ? 'prefix' : 'suffix')
-  revealInUi(data.current())
+  const candidates = offerInUi(data.current())
+  expect(screen.getByRole('heading', { name: '已固定三项候选' })).toBeDefined()
+  for (const id of candidates)
+    expect(screen.getByRole('button', { name: `选择揭示 ${id}` })).toBeDefined()
+  expect(
+    screen.getByText(
+      `剩余隐藏槽位：前缀 ${Math.max(0, 3 - slot)}，后缀 ${slot < 3 ? 3 : 6 - slot}。`,
+    ),
+  ).toBeDefined()
+  expect(screen.getByText('保存完好的肋骨 × 1')).toBeDefined()
+  expect(screen.getByText('腐烂预兆 × 1')).toBeDefined()
+})
+
+it.each([0, 1, 2, 3, 4, 5])('Vorana 腐烂第 %i 槽按前缀后缀顺序揭示且不重复计费', (slot) => {
+  const complete = project(preparedSlots(6))
+  const count = 5 + slot * 2
+  const state = complete.states[count]
+  if (!state) throw Error('缺少已固定三项候选的状态')
+  const data = history(
+    complete.project.initialState,
+    complete.project.operations.slice(0, count),
+    state,
+  )
+  mount(data)
+  expect(state.pendingDesecration?.kind).toBe(slot < 3 ? 'prefix' : 'suffix')
+  click(`选择揭示 ${state.pendingDesecration?.options?.[0]}`)
+  click('预览揭示结果')
+  click('应用骨骼步骤')
   if (slot === 5) {
     expect(screen.queryByText(/^剩余隐藏槽位/)).toBeNull()
   } else {
@@ -251,15 +301,19 @@ it.each([0, 1, 2, 3, 4, 5])('Vorana 腐烂第 %i 槽按前缀后缀顺序揭示�
 
 it('Vorana 完整揭示历史撤销后保存 v96，保留完整未来', () => {
   const data = preparedSlots(6)
+  const expected = project(data)
   mount(data)
   click('撤销')
-  const future = save()
-  expect(future.project.rulesVersion).toBe('basic-2026-09-17-v96')
-  expect(future.project.cursor).toBe(data.operations.length - 1)
-  expect(future.project.operations).toEqual(data.operations)
-  expect(future.states.at(-1)).toEqual(data.current())
-  expect(future.states.at(-1)?.affixes).toHaveLength(6)
-  expect(future.states.at(-1)?.affixes.every((affix) => !affix.desecrated)).toBe(true)
+  click('保存演练到本机')
+  const future = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(future.rulesVersion).toBe('basic-2026-09-17-v96')
+  expect(future.cursor).toBe(data.operations.length - 1)
+  expect(future.operations).toEqual(data.operations)
+  // 保存结果须与已通过真实读取器验证的完整项目相等，仅改变游标；恢复行为另有独立界面用例。
+  expect(future).toEqual({ ...expected.project, cursor: data.operations.length - 1 })
+  expect(expected.states.at(-1)).toEqual(data.current())
+  expect(expected.states.at(-1)?.affixes).toHaveLength(6)
+  expect(expected.states.at(-1)?.affixes.every((affix) => !affix.desecrated)).toBe(true)
 })
 
 it('Vorana 恢复撤销后的完整历史，可以重做至第六槽完成', () => {
