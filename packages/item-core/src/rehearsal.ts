@@ -62,6 +62,7 @@ import { putrefactionCapacityError } from './putrefaction'
 import { isRuneforgedArmourBase } from './runeforgedArmour'
 import { runeSourceStateError } from './runeImport'
 import { serleCapacity } from './serleRune'
+import { grantedSkillSocketsStateError } from './skillSockets'
 import { hasSpecialSocketRules, socketStateError } from './sockets'
 
 export type CraftRarity = 'normal' | 'magic' | 'rare'
@@ -126,6 +127,8 @@ export interface CraftAffix {
 export interface CraftState {
   /** 完美溶剂产生的装备技能结果；原固有行仍为起点观察，不推导角色当前等级。 */
   grantedSkillLevel?: 20
+  /** 工匠石产生的技能辅助孔结果；缺省表示未知，与符文孔独立。 */
+  grantedSkillSockets?: 3 | 4 | 5
   nextAffixId?: number
   /** 仅由摧毁操作产生的终止快照；不能作为存活装备使用。 */
   destroyed?: true
@@ -533,6 +536,8 @@ export function createCraftState(
     (next) => createCraftState(catalog, next).ok,
   )
   if (pendingError) return failure(pendingError)
+  const skillSocketsError = grantedSkillSocketsStateError(catalog, input)
+  if (skillSocketsError !== null) return failure(skillSocketsError)
   const grantedSkillError = grantedSkillLevelStateError(catalog, input)
   if (grantedSkillError !== null) return failure(grantedSkillError)
   return { ok: true, value: cloneState(input) }

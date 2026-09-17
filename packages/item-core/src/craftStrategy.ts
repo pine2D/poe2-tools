@@ -5,6 +5,7 @@ import type { CraftImplicitTargetValues } from './implicitTargets'
 import { type CraftProperty, readCraftProperty } from './itemProperties'
 import { readCraftGrantedSkillLevel } from './perfectFlux'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { readCraftGrantedSkillSockets } from './skillSockets'
 import {
   type CraftStrategyAction,
   type CraftStrategyWorkAction,
@@ -288,6 +289,13 @@ export function evaluateCraftStrategyWithTargets(
         (checked.value.twiceCorrupted ? 'twice' : checked.value.corrupted ? 'once' : 'none') ===
         condition.value
       )
+    if (condition.kind === 'granted-skill-sockets') {
+      const skill = readCraftGrantedSkillSockets(catalog, checked.value)
+      const count = skill.ok ? skill.value.sockets : null
+      return count === null
+        ? null
+        : count >= condition.min && (condition.max === undefined || count <= condition.max)
+    }
     if (condition.kind === 'granted-skill-level') {
       const skill = readCraftGrantedSkillLevel(catalog, checked.value)
       const level = skill.ok ? skill.value.level : null

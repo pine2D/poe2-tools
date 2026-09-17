@@ -439,6 +439,20 @@ export {
   estimateSkillLevelContributions,
   type SkillLevelContribution,
 } from './skillLevelContributions'
+export {
+  applySkillSocketsCraft,
+  inspectSkillSocketsCraft,
+  isSkillSocketsCraftOperation,
+  prepareSkillSocketsCraft,
+  readCraftGrantedSkillSockets,
+  SKILL_SOCKET_TIERS,
+  type SkillSocketsCraftOperation,
+  type SkillSocketTier,
+} from './skillSockets'
+export {
+  requiresSkillSocketsProjectVersion,
+  SKILL_SOCKETS_RULES_VERSION,
+} from './skillSocketsProjectVersion'
 export { socketEffectIncrease } from './socketAmplification'
 export type { SocketEffect } from './sockets'
 export {
@@ -577,7 +591,6 @@ export {
   type WeightedPropertiesCondition,
   type WeightedPropertyTerm,
 } from './weightedProperties'
-
 export {
   requiresWeightedPropertyProjectVersion,
   WEIGHTED_PROPERTY_RULES_VERSION,

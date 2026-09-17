@@ -89,6 +89,8 @@ import { isRuneforgeCraftOperation } from './runeforge'
 import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
 import { requiresRuneforgeProjectVersion } from './runeforgeProjectVersion'
 import { requiresSerleProjectVersion } from './serleProjectVersion'
+import { isSkillSocketsCraftOperation } from './skillSockets'
+import { requiresSkillSocketsProjectVersion } from './skillSocketsProjectVersion'
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
@@ -436,6 +438,7 @@ function readNativeOperation(
   extraction: boolean,
   runeforge: boolean,
   masterwork: boolean,
+  skillSockets: boolean,
 ): CraftStep | null {
   if (record(input) && input.kind === 'masterwork')
     return masterwork && isMasterworkCraftOperation(input) ? input : null
@@ -444,6 +447,8 @@ function readNativeOperation(
   if (record(input) && input.kind === 'extraction')
     return extraction && isExtractionCraftOperation(input) ? input : null
   if (!record(input)) return null
+  if (input.kind === 'skill-sockets')
+    return skillSockets && isSkillSocketsCraftOperation(input) ? input : null
   if (input.kind === 'perfect-flux')
     return perfectFlux && isPerfectFluxCraftOperation(input) ? input : null
   if (input.kind === 'flux') return isFluxCraftOperation(input) ? input : null
@@ -689,6 +694,7 @@ export function readNativeTargetProjectProjection(
   extendedInfluenceBones = false,
   grantedSkillTargets = false,
   weightedProperties = false,
+  skillSockets = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -719,6 +725,7 @@ export function readNativeTargetProjectProjection(
     extendedInfluenceBones,
     grantedSkillTargets,
     weightedProperties,
+    skillSockets,
   )
 }
 
@@ -751,6 +758,7 @@ function readCraftProject(
   extendedInfluenceBones = false,
   grantedSkillTargets = false,
   weightedProperties = false,
+  skillSockets = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -769,6 +777,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!skillSockets && requiresSkillSocketsProjectVersion(value))
+    return fail('装备技能辅助孔必须使用 v99 项目，包括起点、完整未来、嵌套未执行指引及报价。')
   if (!weightedProperties && requiresWeightedPropertyProjectVersion(value))
     return fail('面板加权合计条件必须使用 v98 项目，包括完整未来和嵌套未执行指引。')
   if (!grantedSkillTargets && requiresGrantedSkillTargetProjectVersion(value))
@@ -821,6 +831,12 @@ function readCraftProject(
     Object.hasOwn(value.initialState, 'grantedSkillLevel')
   )
     return fail('项目起点不能预装装备技能升级结果；必须回放完美溶剂操作。')
+  if (
+    record(value) &&
+    record(value.initialState) &&
+    Object.hasOwn(value.initialState, 'grantedSkillSockets')
+  )
+    return fail('项目起点不能预装装备技能辅助孔结果；必须回放工匠石操作。')
   if (!native && hasAffixIdentityFields(value))
     return fail('v2–v72 项目尚不支持词缀实例字段，不能恢复此状态或历史。')
   if (
@@ -2027,7 +2043,7 @@ function readCraftProject(
       return fail('旧版项目不能包含新数值操作。')
     // applyCraftStep 自身严格检查每种操作的字段及实例断言；旧入口仍只接受旧结构。
     const operation = native
-      ? readNativeOperation(input, perfectFlux, extraction, runeforge, masterwork)
+      ? readNativeOperation(input, perfectFlux, extraction, runeforge, masterwork, skillSockets)
       : readOperation(input)
     if (!operation) return fail(`第 ${index + 1} 步操作结构无效。`)
     if (
@@ -2108,6 +2124,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresSkillSocketsProjectVersion(project))
+    throw new Error('装备技能辅助孔必须使用 v99 项目，包括起点、完整未来、嵌套未执行指引及报价。')
   if (requiresWeightedPropertyProjectVersion(project))
     throw new Error('面板加权合计条件必须使用 v98 项目，包括完整未来和嵌套未执行指引。')
   if (requiresGrantedSkillTargetProjectVersion(project))

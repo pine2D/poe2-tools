@@ -8,6 +8,7 @@ import {
   ESSENCE_OMEN_RULES,
   type EssenceOmen,
   FLUXES,
+  SKILL_SOCKET_TIERS,
 } from '@poe2-tools/item-core'
 import { boneOmenLabels, boneRevealOmenLabel } from './boneOmenLabels'
 
@@ -39,6 +40,10 @@ export function craftStepLabel(
   if (step.kind === 'putrefy')
     return `${translations['Omen of Putrefaction'] ?? catalog.localizedNames?.['zh-CN']?.['Omen of Putrefaction'] ?? 'Omen of Putrefaction'} + ${translations[BONE_RULES[step.boneId].name] ?? catalog.localizedNames?.['zh-CN']?.[BONE_RULES[step.boneId].name] ?? BONE_RULES[step.boneId].name}`
   if (step.kind === 'extraction') return '萃取石'
+  if (step.kind === 'skill-sockets') {
+    const entry = SKILL_SOCKET_TIERS[step.tier]
+    return `${translations[entry.name] ?? catalog.localizedNames?.['zh-CN']?.[entry.name] ?? entry.name}（辅助孔 ${step.previousSockets} → ${entry.count}）`
+  }
   if (step.kind === 'perfect-flux') return '完美溶剂'
   if (step.kind === 'flux') {
     const name = FLUXES.find((f) => f.id === step.fluxId)?.name ?? step.fluxId

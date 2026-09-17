@@ -14,6 +14,7 @@ import { CRAFT_OMEN_RULES, craftOmenMaterials } from './omens'
 import { CRAFT_CURRENCY_LABELS, type CraftResult } from './rehearsal'
 import { isRuneforgeCraftOperation } from './runeforge'
 import { runeforgingCatalogSignature } from './runeforgingCatalog'
+import { isSkillSocketsCraftOperation, SKILL_SOCKET_TIERS } from './skillSockets'
 
 export interface CraftMaterial {
   id: string
@@ -61,6 +62,10 @@ export function craftMaterials(catalog: CraftCatalog): CraftMaterial[] {
     { id: 'currency:fracture', name: 'Fracturing Orb' },
     { id: 'omen:Omen of Putrefaction', name: 'Omen of Putrefaction' },
     { id: 'currency:perfect-flux', name: 'Perfect Flux' },
+    ...Object.entries(SKILL_SOCKET_TIERS).map(([tier, entry]) => ({
+      id: `currency:${tier}-jewellers`,
+      name: entry.name,
+    })),
     { id: 'currency:extraction', name: 'Orb of Extraction' },
     ...(runeforgingCatalogSignature(catalog) !== null
       ? [{ id: 'currency:verisium', name: 'Verisium' }]
@@ -108,7 +113,10 @@ export function collectCraftCosts(
       if (step.omen) for (const name of craftOmenMaterials(step.omen)) add(`omen:${name}`)
       continue
     }
-    if (step.kind === 'masterwork') {
+    if (step.kind === 'skill-sockets') {
+      if (!isSkillSocketsCraftOperation(step)) return fail('辅助孔步骤字段无效，不能计费。')
+      add(`currency:${step.tier}-jewellers`)
+    } else if (step.kind === 'masterwork') {
       add('augment:Masterwork Rune')
     } else if (step.kind === 'runeforge') {
       if (!isRuneforgeCraftOperation(step)) return fail('锻造步骤字段无效，不能计费。')

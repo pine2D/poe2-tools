@@ -1,0 +1,134 @@
+import { DESTROYED_ITEM_MESSAGE } from './architect'
+import { PENDING_DESECRATION_MESSAGE } from './boneRules'
+import type { CraftCatalog } from './catalog'
+import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
+import { isPlainProjectJSON } from './craftProjectJSON'
+import { readSingleGrantedSkill } from './perfectFlux'
+import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
+
+export const SKILL_SOCKET_TIERS = {
+  lesser: { count: 3, name: "Lesser Jeweller's Orb" },
+  greater: { count: 4, name: "Greater Jeweller's Orb" },
+  perfect: { count: 5, name: "Perfect Jeweller's Orb" },
+} as const
+export type SkillSocketTier = keyof typeof SKILL_SOCKET_TIERS
+export interface SkillSocketsCraftOperation {
+  kind: 'skill-sockets'
+  tier: SkillSocketTier
+  previousSockets: 2 | 3 | 4
+}
+const fail = (error: string): CraftResult<never> => ({ ok: false, error })
+
+/** 孔数仅为操作结果；不从符文孔或技能等级推断。 */
+export function grantedSkillSocketsStateError(
+  catalog: CraftCatalog,
+  state: CraftState,
+): string | null {
+  if (!('grantedSkillSockets' in state)) return null
+  const descriptor = Object.getOwnPropertyDescriptor(state, 'grantedSkillSockets')
+  if (
+    !descriptor?.enumerable ||
+    !Object.hasOwn(descriptor, 'value') ||
+    ![3, 4, 5].includes(descriptor.value)
+  )
+    return '装备技能辅助孔结果只能是自有数据字段中的 3、4、5 或缺省。'
+  const skill = readSingleGrantedSkill(catalog, state)
+  return skill.ok ? null : skill.error
+}
+
+export function inspectSkillSocketsCraft(
+  catalog: CraftCatalog,
+  state: CraftState,
+): CraftResult<{ skillName: string; previousSockets: number | null }> {
+  if (Object.hasOwn(state, 'destroyed')) return fail(DESTROYED_ITEM_MESSAGE)
+  if (state.corrupted) return fail(CORRUPTED_CRAFT_MESSAGE)
+  if (state.pendingDesecration) return fail(PENDING_DESECRATION_MESSAGE)
+  if (state.sourceText?.split(/\r?\n/).some((line) => line.trim() === 'Sanctified'))
+    return fail('Sanctified 装备的辅助孔制作资格尚未支持。')
+  const read = readCraftGrantedSkillSockets(catalog, state)
+  if (read.ok && read.value.sockets === 5)
+    return fail('装备技能已有五个辅助孔，不能再次消费工匠石。')
+  return read.ok
+    ? { ok: true, value: { skillName: read.value.name, previousSockets: read.value.sockets } }
+    : read
+}
+
+export function prepareSkillSocketsCraft(
+  catalog: CraftCatalog,
+  state: CraftState,
+  tier: SkillSocketTier,
+  previousSockets: number,
+): CraftResult<{ skillName: string; previousSockets: 2 | 3 | 4 }> {
+  if (!isSkillSocketsCraftOperation({ kind: 'skill-sockets', tier, previousSockets }))
+    return fail('请明确声明操作前辅助孔数（2–4），且须低于材料设定的孔数。')
+  const inspected = inspectSkillSocketsCraft(catalog, state)
+  if (!inspected.ok) return inspected
+  if (
+    inspected.value.previousSockets !== null &&
+    inspected.value.previousSockets !== previousSockets
+  )
+    return fail('操作前辅助孔声明必须与当前已知孔数一致。')
+  return {
+    ok: true,
+    value: { skillName: inspected.value.skillName, previousSockets: previousSockets as 2 | 3 | 4 },
+  }
+}
+
+export function applySkillSocketsCraft(
+  catalog: CraftCatalog,
+  state: CraftState,
+  operation: SkillSocketsCraftOperation,
+): CraftResult<CraftState> {
+  if (!isSkillSocketsCraftOperation(operation)) return fail('辅助孔步骤字段无效。')
+  const prepared = prepareSkillSocketsCraft(
+    catalog,
+    state,
+    operation.tier,
+    operation.previousSockets,
+  )
+  return prepared.ok
+    ? createCraftState(catalog, {
+        ...state,
+        grantedSkillSockets: SKILL_SOCKET_TIERS[operation.tier].count,
+      })
+    : prepared
+}
+
+export function readCraftGrantedSkillSockets(
+  catalog: CraftCatalog,
+  state: CraftState,
+): CraftResult<{ name: string; sockets: number | null }> {
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  const skill = readSingleGrantedSkill(catalog, checked.value)
+  return skill.ok
+    ? {
+        ok: true,
+        value: { name: skill.value.skillName, sockets: checked.value.grantedSkillSockets ?? null },
+      }
+    : skill
+}
+
+export function isSkillSocketsCraftOperation(value: unknown): value is SkillSocketsCraftOperation {
+  try {
+    if (!isPlainProjectJSON(value)) return false
+  } catch {
+    return false
+  }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
+  const entry = value as Record<string, unknown>
+  return (
+    Object.keys(entry).length === 3 &&
+    Object.hasOwn(entry, 'kind') &&
+    Object.hasOwn(entry, 'tier') &&
+    Object.hasOwn(entry, 'previousSockets') &&
+    entry.kind === 'skill-sockets' &&
+    typeof entry.tier === 'string' &&
+    Object.hasOwn(SKILL_SOCKET_TIERS, entry.tier) &&
+    typeof entry.previousSockets === 'number' &&
+    Number.isInteger(entry.previousSockets) &&
+    entry.previousSockets >= 2 &&
+    entry.previousSockets <= 4 &&
+    entry.previousSockets < SKILL_SOCKET_TIERS[entry.tier as SkillSocketTier].count
+  )
+}

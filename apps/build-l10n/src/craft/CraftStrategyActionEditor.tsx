@@ -25,9 +25,11 @@ import {
   preparePerfectFluxCraft,
   prepareRuneforgeCraft,
   runeforgingCatalogSignature,
+  SKILL_SOCKET_TIERS,
   socketCandidates,
 } from '@poe2-tools/item-core'
 import { useMemo, useState } from 'react'
+import { SkillSocketsForm } from './SkillSocketsPanel'
 
 export function strategyActionLabel(
   action: CraftStrategyAction,
@@ -39,6 +41,8 @@ export function strategyActionLabel(
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   if (action.kind === 'masterwork') return `符文升级（孔 ${action.socketIndex + 1}）`
   if (action.kind === 'runeforge') return '防具锻造'
+  if (action.kind === 'skill-sockets')
+    return `${local(SKILL_SOCKET_TIERS[action.tier].name)}（辅助孔 ${action.previousSockets} → ${SKILL_SOCKET_TIERS[action.tier].count}）`
   if (action.kind === 'perfect-flux')
     return `${local('Perfect Flux')}（操作前最高等级 ${action.previousMaxLevel} → 20）`
   if (action.kind === 'vaal') return local('Vaal Orb')
@@ -105,6 +109,11 @@ export function CraftStrategyActionEditor({
     context: typeof declarationContext
     value: string
   } | null>(null)
+  const [socketDraftContext, setSocketDraftContext] = useState<typeof declarationContext | null>(
+    null,
+  )
+  const editingSockets =
+    action.kind === 'skill-sockets' || socketDraftContext === declarationContext
   const declaration = declarationDraft?.context === declarationContext ? declarationDraft : null
   const runeforge = action.kind === 'runeforge' ? prepareRuneforgeCraft(catalog, state) : null
   const inspectedPerfect = inspectPerfectFluxCraft(catalog, state)
@@ -138,10 +147,21 @@ export function CraftStrategyActionEditor({
         动作
         <select
           aria-label={`规则 ${number} 动作`}
-          value={action.kind === 'currency' ? action.currency : action.kind}
+          value={
+            editingSockets
+              ? 'skill-sockets'
+              : action.kind === 'currency'
+                ? action.currency
+                : action.kind
+          }
           onChange={(event) => {
             const value = event.target.value
             setDeclarationDraft(null)
+            setSocketDraftContext(null)
+            if (value === 'skill-sockets') {
+              setSocketDraftContext(declarationContext)
+              return
+            }
             if (value === 'masterwork') {
               onChange({ kind: 'masterwork', socketIndex: 0 })
               return
@@ -208,6 +228,7 @@ export function CraftStrategyActionEditor({
           <option value="runeforge" disabled={runeforgingCatalogSignature(catalog) === null}>
             防具锻造
           </option>
+          <option value="skill-sockets">工匠石：装备技能辅助孔</option>
           <option value="perfect-flux">完美溶剂：装备技能升至 20</option>
           <option value="vaal">瓦尔石：选择本次腐化结果</option>
           <option value="architect">建筑师宝珠：选择二重腐化结果</option>
@@ -252,6 +273,21 @@ export function CraftStrategyActionEditor({
             ? `${local(runeforge.value.fromBase.name)} → ${local(runeforge.value.toBase.name)}；Verisium × ${runeforge.value.recipe.verisium}`
             : runeforge.error}
         </p>
+      ) : null}
+      {editingSockets ? (
+        <SkillSocketsForm
+          catalog={catalog}
+          state={state}
+          translations={translations}
+          disabled={false}
+          prefix={`规则 ${number}`}
+          buttonLabel={`应用规则 ${number} 辅助孔配置`}
+          {...(action.kind === 'skill-sockets' ? { initialOperation: action } : {})}
+          onApply={(operation) => {
+            setSocketDraftContext(null)
+            onChange(operation)
+          }}
+        />
       ) : null}
       {action.kind === 'perfect-flux' || declaration ? (
         <label>

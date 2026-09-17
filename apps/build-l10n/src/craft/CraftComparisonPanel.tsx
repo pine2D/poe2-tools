@@ -166,6 +166,15 @@ export function CraftComparisonPanel({
   return (
     <section className="craft-comparison" aria-label="操作前后变化">
       <h3>操作前后变化</h3>
+      {before.grantedSkillSockets !== after.grantedSkillSockets ? (
+        <section aria-label="装备技能辅助孔变化">
+          <p>
+            技能辅助孔：{before.grantedSkillSockets ?? '未知'} →{' '}
+            {after.grantedSkillSockets ?? '未知'}
+          </p>
+          <p>孔数独立于符文孔及装备技能等级。</p>
+        </section>
+      ) : null}
       {skillChanged ? (
         <section aria-label="装备技能最高等级变化">
           <p>

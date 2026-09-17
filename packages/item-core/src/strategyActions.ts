@@ -36,6 +36,11 @@ import {
   removableCraftAffixes,
 } from './rehearsal'
 import { prepareRuneforgeCraft } from './runeforge'
+import {
+  isSkillSocketsCraftOperation,
+  prepareSkillSocketsCraft,
+  type SkillSocketsCraftOperation,
+} from './skillSockets'
 import { CRAFT_STRATEGY_SOCKET_LIMIT } from './strategyConditions'
 import { prepareStrategySocket, type SocketStrategyAction } from './strategySockets'
 
@@ -44,6 +49,7 @@ export type CraftStrategyAction =
   | { kind: 'runeforge' }
   | ExtractionCraftOperation
   | PerfectFluxCraftOperation
+  | SkillSocketsCraftOperation
   | SocketStrategyAction
   | { kind: 'stop' }
   | { kind: 'jump' }
@@ -82,6 +88,7 @@ export function readCraftStrategyAction(value: unknown): CraftStrategyAction | n
   )
     return { kind: 'masterwork', socketIndex: value.socketIndex }
   if (isExtractionCraftOperation(value)) return { ...value }
+  if (isSkillSocketsCraftOperation(value)) return { ...value }
   if (isPerfectFluxCraftOperation(value)) return { ...value }
   if (
     !keys(value, [
@@ -216,6 +223,11 @@ export function checkCraftStrategyAction(
   if (action.kind === 'extraction') {
     if (!isExtractionCraftOperation(action)) return { ok: false, error: '萃取石动作字段无效。' }
     const result = prepareExtractionCraft(catalog, state)
+    return result.ok ? ok : result
+  }
+  if (action.kind === 'skill-sockets') {
+    if (!isSkillSocketsCraftOperation(action)) return { ok: false, error: '辅助孔动作字段无效。' }
+    const result = prepareSkillSocketsCraft(catalog, state, action.tier, action.previousSockets)
     return result.ok ? ok : result
   }
   if (action.kind === 'perfect-flux') {

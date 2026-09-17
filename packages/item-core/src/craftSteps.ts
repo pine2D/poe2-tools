@@ -60,6 +60,11 @@ import {
   type RuneforgeCraftOperation,
 } from './runeforge'
 import { isSerleRune } from './serleRune'
+import {
+  applySkillSocketsCraft,
+  isSkillSocketsCraftOperation,
+  type SkillSocketsCraftOperation,
+} from './skillSockets'
 import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
 
 export interface ArtificerCraftOperation {
@@ -121,6 +126,7 @@ export type CraftStep =
   | RuneforgeCraftOperation
   | ExtractionCraftOperation
   | PerfectFluxCraftOperation
+  | SkillSocketsCraftOperation
   | FluxCraftOperation
   | AlloyCraftOperation
   | ArchitectCraftOperation
@@ -188,6 +194,10 @@ export function applyCraftStep(
     return isExtractionCraftOperation(step)
       ? applyExtractionCraft(catalog, state, step)
       : { ok: false, error: '萃取石步骤字段无效。' }
+  if ('kind' in step && step.kind === 'skill-sockets')
+    return isSkillSocketsCraftOperation(step)
+      ? applySkillSocketsCraft(catalog, state, step)
+      : { ok: false, error: '辅助孔步骤字段无效。' }
   if ('kind' in step && step.kind === 'perfect-flux')
     return isPerfectFluxCraftOperation(step)
       ? applyPerfectFluxCraft(catalog, state, step)

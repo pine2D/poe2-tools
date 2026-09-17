@@ -272,6 +272,7 @@ export function CraftStrategyPanel({
                   'weighted-properties',
                   'quality',
                   'granted-skill-level',
+                  'granted-skill-sockets',
                   'always',
                 ] as const
               ).find(

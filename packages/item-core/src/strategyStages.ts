@@ -21,6 +21,12 @@ export function operationMatchesStrategyAction(
   if (!('kind' in step)) return false
   if (action.kind === 'masterwork')
     return step.kind === 'masterwork' && action.socketIndex === step.socketIndex
+  if (action.kind === 'skill-sockets')
+    return (
+      step.kind === 'skill-sockets' &&
+      action.tier === step.tier &&
+      action.previousSockets === step.previousSockets
+    )
   if (action.kind === 'perfect-flux')
     return step.kind === 'perfect-flux' && action.previousMaxLevel === step.previousMaxLevel
   if (action.kind === 'reveal') return step.kind === 'desecration-reveal'

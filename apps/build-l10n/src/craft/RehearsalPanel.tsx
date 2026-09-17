@@ -108,6 +108,7 @@ import {
   requiresRuneforgedArmourProjectVersion,
   requiresRuneforgeProjectVersion,
   requiresSerleProjectVersion,
+  requiresSkillSocketsProjectVersion,
   requiresWardRuneProjectVersion,
   requiresWeightedPropertyProjectVersion,
   resolveCraftAffix,
@@ -116,6 +117,9 @@ import {
   restoreTargetWorkbenchProject,
   runeforgingCatalogSignature,
   SERLE_RULES_VERSION,
+  SKILL_SOCKET_TIERS,
+  SKILL_SOCKETS_RULES_VERSION,
+  type SkillSocketsCraftOperation,
   type SocketCraftOperation,
   setTargetDefinitionStrategy,
   statScalabilitySourceHash,
@@ -142,6 +146,7 @@ import { FluxCraftPanel } from './FluxCraftPanel'
 import { MasterworkPanel } from './MasterworkPanel'
 import { PerfectFluxPanel } from './PerfectFluxPanel'
 import { RuneforgePanel } from './RuneforgePanel'
+import { SkillSocketsPanel } from './SkillSocketsPanel'
 import './rehearsal.css'
 import { BoneOperationDetails } from './BoneAdvicePanel'
 import { BoneCraftPanel } from './BoneCraftPanel'
@@ -423,6 +428,9 @@ export function RehearsalPanel({
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
   )
+  const [skillSocketsRules, setSkillSocketsRules] = useState(
+    initialProject?.project.rulesVersion === SKILL_SOCKETS_RULES_VERSION,
+  )
   const [weightedPropertyRules, setWeightedPropertyRules] = useState(
     initialProject?.project.rulesVersion === WEIGHTED_PROPERTY_RULES_VERSION,
   )
@@ -478,6 +486,7 @@ export function RehearsalPanel({
     | MasterworkCraftOperation
     | RuneforgeCraftOperation
     | FluxCraftOperation
+    | SkillSocketsCraftOperation
     | PerfectFluxCraftOperation
     | ExtractionCraftOperation
     | null
@@ -513,6 +522,7 @@ export function RehearsalPanel({
   const masterworkEntryRef = useRef<HTMLElement>(null)
   const runeforgeEntryRef = useRef<HTMLElement>(null)
   const fluxEntryRef = useRef<HTMLElement>(null)
+  const skillSocketsEntryRef = useRef<HTMLElement>(null)
   const perfectFluxEntryRef = useRef<HTMLElement>(null)
   const extractionEntryRef = useRef<HTMLElement>(null)
   const alloyEntryRef = useRef<HTMLElement>(null)
@@ -533,6 +543,7 @@ export function RehearsalPanel({
       | 'liquid-emotion'
       | 'alloy'
       | 'flux'
+      | 'skill-sockets'
       | 'perfect-flux'
       | 'extraction'
       | 'masterwork'
@@ -553,15 +564,17 @@ export function RehearsalPanel({
               ? runeforgeEntryRef.current
               : origin?.kind === 'extraction'
                 ? extractionEntryRef.current
-                : origin?.kind === 'perfect-flux'
-                  ? perfectFluxEntryRef.current
-                  : origin?.kind === 'flux'
-                    ? fluxEntryRef.current
-                    : origin?.kind === 'alloy'
-                      ? alloyEntryRef.current
-                      : origin?.kind === 'liquid-emotion'
-                        ? emotionEntryRef.current
-                        : essenceEntryRef.current
+                : origin?.kind === 'skill-sockets'
+                  ? skillSocketsEntryRef.current
+                  : origin?.kind === 'perfect-flux'
+                    ? perfectFluxEntryRef.current
+                    : origin?.kind === 'flux'
+                      ? fluxEntryRef.current
+                      : origin?.kind === 'alloy'
+                        ? alloyEntryRef.current
+                        : origin?.kind === 'liquid-emotion'
+                          ? emotionEntryRef.current
+                          : essenceEntryRef.current
         const trigger = essenceTriggerRef.current?.isConnected
           ? essenceTriggerRef.current
           : fallback
@@ -881,6 +894,7 @@ export function RehearsalPanel({
         operation.kind === 'runeforge' ||
         operation.kind === 'alloy' ||
         operation.kind === 'flux' ||
+        operation.kind === 'skill-sockets' ||
         operation.kind === 'perfect-flux' ||
         operation.kind === 'extraction'
       ) {
@@ -942,6 +956,7 @@ export function RehearsalPanel({
       | MasterworkCraftOperation
       | RuneforgeCraftOperation
       | FluxCraftOperation
+      | SkillSocketsCraftOperation
       | PerfectFluxCraftOperation
       | ExtractionCraftOperation,
   ) => {
@@ -1277,6 +1292,7 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsSkillSockets = skillSocketsRules || requiresSkillSocketsProjectVersion(projectConfig)
   const needsWeightedProperties =
     weightedPropertyRules || requiresWeightedPropertyProjectVersion(projectConfig)
   const needsGrantedSkillTargets =
@@ -1288,6 +1304,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsSkillSockets ||
     needsWeightedProperties ||
     needsGrantedSkillTargets ||
     needsExtendedInfluenceBone ||
@@ -1322,39 +1339,41 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsWeightedProperties
-            ? WEIGHTED_PROPERTY_RULES_VERSION
-            : needsGrantedSkillTargets
-              ? GRANTED_SKILL_TARGET_RULES_VERSION
-              : needsExtendedInfluenceBone
-                ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                : needsInfluenceBone
-                  ? INFLUENCE_BONE_RULES_VERSION
-                  : needsDestruction
-                    ? DESTRUCTION_RUNE_RULES_VERSION
-                    : needsInfluence
-                      ? INFLUENCE_RUNE_RULES_VERSION
-                      : needsDesecrationCount
-                        ? DESECRATION_COUNT_RULES_VERSION
-                        : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
-                          ? PUTREFACTION_RULES_VERSION
-                          : needsPendingExaltation
-                            ? PENDING_EXALTATION_RULES_VERSION
-                            : needsEssenceOutcomes
-                              ? ESSENCE_OUTCOMES_RULES_VERSION
-                              : needsSerle
-                                ? SERLE_RULES_VERSION
-                                : needsCraftedCapacity
-                                  ? CRAFTED_CAPACITY_RULES_VERSION
-                                  : needsConditionalRunes
-                                    ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                    : needsMasterwork
-                                      ? MASTERWORK_CRAFT_RULES_VERSION
-                                      : needsExtendedRunes
-                                        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                        : needsWardRunes
-                                          ? WARD_RUNE_RULES_VERSION
-                                          : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsSkillSockets
+            ? SKILL_SOCKETS_RULES_VERSION
+            : needsWeightedProperties
+              ? WEIGHTED_PROPERTY_RULES_VERSION
+              : needsGrantedSkillTargets
+                ? GRANTED_SKILL_TARGET_RULES_VERSION
+                : needsExtendedInfluenceBone
+                  ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                  : needsInfluenceBone
+                    ? INFLUENCE_BONE_RULES_VERSION
+                    : needsDestruction
+                      ? DESTRUCTION_RUNE_RULES_VERSION
+                      : needsInfluence
+                        ? INFLUENCE_RUNE_RULES_VERSION
+                        : needsDesecrationCount
+                          ? DESECRATION_COUNT_RULES_VERSION
+                          : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
+                            ? PUTREFACTION_RULES_VERSION
+                            : needsPendingExaltation
+                              ? PENDING_EXALTATION_RULES_VERSION
+                              : needsEssenceOutcomes
+                                ? ESSENCE_OUTCOMES_RULES_VERSION
+                                : needsSerle
+                                  ? SERLE_RULES_VERSION
+                                  : needsCraftedCapacity
+                                    ? CRAFTED_CAPACITY_RULES_VERSION
+                                    : needsConditionalRunes
+                                      ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                      : needsMasterwork
+                                        ? MASTERWORK_CRAFT_RULES_VERSION
+                                        : needsExtendedRunes
+                                          ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                          : needsWardRunes
+                                            ? WARD_RUNE_RULES_VERSION
+                                            : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1380,6 +1399,7 @@ export function RehearsalPanel({
         'liquid-emotion': '液态情感',
         alloy: '合金',
         flux: '溶剂',
+        'skill-sockets': '辅助孔',
         'perfect-flux': '完美溶剂',
         extraction: '萃取石',
       }[guaranteedDraft.kind]
@@ -1388,6 +1408,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setSkillSocketsRules(restored.project.rulesVersion === SKILL_SOCKETS_RULES_VERSION)
     setWeightedPropertyRules(restored.project.rulesVersion === WEIGHTED_PROPERTY_RULES_VERSION)
     setGrantedSkillTargetRules(restored.project.rulesVersion === GRANTED_SKILL_TARGET_RULES_VERSION)
     setDesecrationCountRules(restored.project.rulesVersion === DESECRATION_COUNT_RULES_VERSION)
@@ -2206,6 +2227,24 @@ export function RehearsalPanel({
         />
       ) : null}
       {!strategyResultAction ? (
+        <SkillSocketsPanel
+          key={`skill-sockets:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
+          entryRef={skillSocketsEntryRef}
+          catalog={catalog}
+          state={current}
+          translations={translations}
+          disabled={Boolean(
+            draft ||
+              removalCurrency ||
+              socketDraft ||
+              guaranteedDraft ||
+              boneDraft ||
+              fractureDraft,
+          )}
+          onPreview={startGuaranteed}
+        />
+      ) : null}
+      {!strategyResultAction ? (
         <PerfectFluxPanel
           key={`perfect-flux:${targetSession}:${cursor}:${history[cursor]?.id}:${essenceSession}`}
           entryRef={perfectFluxEntryRef}
@@ -2288,6 +2327,12 @@ export function RehearsalPanel({
               {baseLabel(guaranteedDraft.fromBaseId)} → {baseLabel(guaranteedDraft.toBaseId)}
               ；下方对照显示锻造前后防御及差值。
             </p>
+          ) : guaranteedDraft.kind === 'skill-sockets' ? (
+            <p>
+              技能辅助孔：{guaranteedDraft.previousSockets} →{' '}
+              {SKILL_SOCKET_TIERS[guaranteedDraft.tier].count}
+              ；操作前孔数为本步声明，符文孔及技能等级保持独立。
+            </p>
           ) : guaranteedDraft.kind === 'perfect-flux' ? (
             <p>
               装备技能最高等级：{guaranteedDraft.previousMaxLevel} → 20；角色当前使用等级未计算。
@@ -2313,17 +2358,19 @@ export function RehearsalPanel({
                   ? '应用后计入一枚符文升级材料；取消不计费。'
                   : guaranteedDraft.kind === 'runeforge'
                     ? '应用后按配方计入 Verisium 材料；词缀、品质与孔位保持原状。'
-                    : guaranteedDraft.kind === 'perfect-flux'
-                      ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
-                      : guaranteedDraft.kind === 'flux'
-                        ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
-                        : guaranteedDraft.kind === 'alloy'
-                          ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
-                          : guaranteedDraft.kind === 'liquid-emotion'
-                            ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
-                            : guaranteedDraft.removeModId
-                              ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
-                              : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
+                    : guaranteedDraft.kind === 'skill-sockets'
+                      ? '应用后消费一颗所选工匠石；结果请保存演练项目或制作步骤清单。'
+                      : guaranteedDraft.kind === 'perfect-flux'
+                        ? '应用后消耗 1 颗完美溶剂；起点观察保留，完整结果请保存演练项目。'
+                        : guaranteedDraft.kind === 'flux'
+                          ? '一次转换所有适用抗性；应用后计入一份溶剂材料。'
+                          : guaranteedDraft.kind === 'alloy'
+                            ? '将移除指定整组并加入合金保证工艺，应用后计入一份合金材料。'
+                            : guaranteedDraft.kind === 'liquid-emotion'
+                              ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份液态情感材料。'
+                              : guaranteedDraft.removeModId
+                                ? '将移除指定整组词缀并加入一组工艺词缀，稀有度不变；应用后计入一份精华费用。'
+                                : '将升级为稀有装备，加入一组工艺词缀；应用后计入一份精华费用。'}
             </p>
           ) : (
             <p role="alert">{preview?.error}</p>
@@ -2541,6 +2588,13 @@ export function RehearsalPanel({
         </section>
       </div>
 
+      {current.grantedSkillSockets !== undefined ? (
+        <section aria-label="当前装备技能辅助孔" className="rehearsal-implicit">
+          <h3>装备技能辅助孔</h3>
+          <p>当前 {current.grantedSkillSockets} 个辅助孔（演练结果）。</p>
+          <p>辅助孔不表示已装入辅助宝石；技能等级与符文孔单独记录。</p>
+        </section>
+      ) : null}
       {current.grantedSkillLevel === 20 && grantedSkill.ok ? (
         <section aria-label="当前装备技能结果" className="rehearsal-implicit">
           <h3>当前装备技能结果</h3>

@@ -18,6 +18,7 @@ import { LiquidEmotionCraftPanel } from './LiquidEmotionCraftPanel'
 import { MasterworkPanel } from './MasterworkPanel'
 import { PerfectFluxPanel } from './PerfectFluxPanel'
 import { RuneforgePanel } from './RuneforgePanel'
+import { SkillSocketsPanel } from './SkillSocketsPanel'
 export type SpecialStrategyAction = Exclude<
   CraftStrategyWorkAction,
   { kind: 'currency' | 'socket' | 'artificer' }
@@ -79,6 +80,9 @@ export function CraftStrategyResults({ action, fractureLabel, onCancel, ...props
       {action.kind === 'runeforge' ? <RuneforgePanel {...props} disabled={false} /> : null}
       {action.kind === 'extraction' ? (
         <ExtractionPanel {...props} disabled={false} configuration={action} />
+      ) : null}
+      {action.kind === 'skill-sockets' ? (
+        <SkillSocketsPanel {...props} disabled={false} configuration={action} />
       ) : null}
       {action.kind === 'perfect-flux' ? (
         <PerfectFluxPanel {...props} disabled={false} configuration={action} />

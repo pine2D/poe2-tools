@@ -2,9 +2,11 @@
 
 ## 圣化与装备技能辅助孔（2026-09-17，实施前核对）
 
+v99 实施补充：三档工匠石的直接设孔沿下列已登记官方规则；仅开放现有普通 Wand／Staff／Sceptre 单一带等级固有技能。玩家[普通魔杖尝试](https://www.reddit.com/r/PathOfExile2/comments/1vddoig/talisman_skills_jewellers_orb_not_working/)、[20级仍为四辅助孔](https://www.reddit.com/r/PathOfExile2/comments/1v1mdg1/5_linked_granted_skills_from_items/)与[购入腐化／圣化装备的补孔失败](https://www.reddit.com/r/PathOfExile2/comments/1uezfar/sockets_before_purchase_on_items_skills/)按 gray 原作者经历登记，非官方结论、非本项目真机验收；用于交叉核对孔数独立性及收尾限制，不复制装备、图片或评论全文。辅助孔起点由用户明确声明，缺省未知；不发明原生复制语法，不引入随机权重或浏览器外站请求。
+
 [GGG 0.2.0](https://www.pathofexile.com/forum/view-thread/3740562/filter-account-type/staff)、[0.5.0](https://www.pathofexile.com/forum/view-thread/3932540)与已登记的[0.5.4](https://www.pathofexile.com/forum/view-thread/3975218/filter-account-type/staff)按 primary 公告核对直接设定辅助孔、装备多技能作用范围、按当前数值圣化及特殊镶嵌限制；仅自写摘要，不复制公告全文。
 
-[Lesser](https://poe2db.tw/us/Lesser_Jewellers_Orb)、[Greater](https://poe2db.tw/us/Greater_Jewellers_Orb)经 Exa 核对物品说明，按 gray 人工机制参考，不建立数据适配器。[Perfect](https://poe2db.tw/us/Perfect_Jewellers_Orb)本轮仅取得元数据，五孔结果依据官方 0.2.0 示例。[PoE2 Wiki 预兆条目](https://www.poe2wiki.net/wiki/Omen_of_Sanctification)的倍率和取整仅列为检索线索，未用于数值实现。无明确再分发许可的页面只保留链接和自写观察，不复制数据或权重；详细边界见[制作收尾与辅助孔核对](finishing-and-skill-sockets-research.md)。应用仍为 v98，没有新增运行时请求。
+[Lesser](https://poe2db.tw/us/Lesser_Jewellers_Orb)、[Greater](https://poe2db.tw/us/Greater_Jewellers_Orb)经 Exa 核对物品说明，按 gray 人工机制参考，不建立数据适配器。[Perfect](https://poe2db.tw/us/Perfect_Jewellers_Orb)本轮仅取得元数据，五孔结果依据官方 0.2.0 示例。[PoE2 Wiki 预兆条目](https://www.poe2wiki.net/wiki/Omen_of_Sanctification)的倍率和取整仅列为检索线索，未用于数值实现。无明确再分发许可的页面只保留链接和自写观察，不复制数据或权重；详细边界见[制作收尾与辅助孔核对](finishing-and-skill-sockets-research.md)。首次研究时应用为 v98；后续 v99 实施范围见本节补充，没有新增运行时请求。
 
 2026-09-17 v98 面板加权合计只组合既有 `readCraftProperty` 估算与用户自填系数，无新游戏数据源。CoE 公开路线图中的 weighted sum support 仅用于产品流程参照，不读取同行执行参数、权重或代码。缺失面板数据继续传播未知，系数不能用于出现概率或期望费用。
 

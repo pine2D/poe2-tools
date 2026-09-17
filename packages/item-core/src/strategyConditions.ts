@@ -21,6 +21,7 @@ export type CraftStrategyLeafCondition =
   | WeightedPropertiesCondition
   | { kind: 'desecrated-count'; source: 'unrevealed' | 'revealed'; min: number; max: number }
   | { kind: 'corruption-state'; value: 'none' | 'once' | 'twice' }
+  | { kind: 'granted-skill-sockets'; min: number; max?: number }
   | { kind: 'granted-skill-level'; min: number; max?: number }
   | {
       kind: 'quality'
@@ -60,15 +61,17 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
     return readWeightedPropertiesCondition(value)
   if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property', 'source', 'catalystId']))
     return null
-  if (value.kind === 'granted-skill-level') {
+  if (value.kind === 'granted-skill-level' || value.kind === 'granted-skill-sockets') {
+    const lower = value.kind === 'granted-skill-sockets' ? 2 : 1
+    const upper = value.kind === 'granted-skill-sockets' ? 5 : 20
     if (
       !keys(value, ['kind', 'min', 'max']) ||
-      !integer(value.min, 1, 20) ||
-      (Object.hasOwn(value, 'max') && (!integer(value.max, 1, 20) || value.max < value.min))
+      !integer(value.min, lower, upper) ||
+      (Object.hasOwn(value, 'max') && (!integer(value.max, lower, upper) || value.max < value.min))
     )
       return null
     return {
-      kind: 'granted-skill-level',
+      kind: value.kind,
       min: value.min,
       ...(typeof value.max === 'number' ? { max: value.max } : {}),
     }

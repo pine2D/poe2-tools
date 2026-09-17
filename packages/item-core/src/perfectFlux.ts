@@ -27,32 +27,32 @@ export type PreparedPerfectFluxCraft = Omit<InspectedPerfectFluxCraft, 'previous
 const fail = (error: string): CraftResult<never> => ({ ok: false, error })
 
 /** 只核对技能形态；供状态校验复用，不递归调用状态工厂或施用资格。 */
-function readSkill(
+export function readSingleGrantedSkill(
   catalog: CraftCatalog,
   state: CraftState,
 ): CraftResult<InspectedPerfectFluxCraft> {
   const base = catalog.bases.find((base) => base.id === state.baseId)
   if (!base || !['Wand', 'Staff', 'Sceptre'].includes(base.type))
-    return fail('完美溶剂目前只支持普通 Wand / Staff / Sceptre 的单一带等级固有技能。')
+    return fail('装备技能制作目前只支持普通 Wand / Staff / Sceptre 的单一带等级固有技能。')
   const patterns = base.implicit?.split('\n') ?? []
   const skills = readBaseGrantedSkills(base)
   const skill = skills[0]
   const grantsSkill = (line: string) => /\bGrants?\b.*\bSkills?\b/i.test(line)
   if (skills.length !== 1 || !skill || patterns.filter(grantsSkill).length !== 1)
-    return fail('完美溶剂需要唯一的带等级固有技能；无等级或额外授予技能暂不支持。')
+    return fail('装备技能制作需要唯一的带等级固有技能；无等级或额外授予技能暂不支持。')
   if (skill.maxLevel !== 20 || !Number.isSafeInteger(skill.minLevel) || skill.minLevel < 1)
-    return fail('完美溶剂要求技能目录范围的上限为 20 级。')
+    return fail('装备技能制作要求技能目录范围的上限为 20 级。')
   const lines = state.implicitLines ?? patterns
   const observed = lines.filter(grantsSkill)
   if (observed.length !== 1 || !matchesGrantedSkillImplicitLines(patterns, lines))
-    return fail('授予技能观察行与基底未完整对应，不能升级。')
+    return fail('授予技能观察行与基底未完整对应，不能制作。')
   const additional = [
     ...state.affixes.flatMap((affix) => affix.lines),
     ...(state.corruption?.lines ?? []),
     ...(state.secondCorruption?.lines ?? []),
     ...socketEffects(catalog, state).flatMap(({ augment }) => augment.lines),
   ]
-  if (additional.some(grantsSkill)) return fail('装备包含额外授予技能，完美溶剂作用范围尚未支持。')
+  if (additional.some(grantsSkill)) return fail('装备包含额外授予技能，当前作用范围尚未支持。')
   const observedLine = observed[0]
   if (observedLine === undefined) return fail('缺少授予技能观察行。')
   const parsed = resolveGrantedSkill(observedLine, [], 'en')
@@ -76,7 +76,7 @@ export function grantedSkillLevelStateError(
   const descriptor = Object.getOwnPropertyDescriptor(state, 'grantedSkillLevel')
   if (!descriptor?.enumerable || !Object.hasOwn(descriptor, 'value') || descriptor.value !== 20)
     return '装备技能升级结果只能是自有数据字段中的明确 20 或缺省。'
-  const skill = readSkill(catalog, state)
+  const skill = readSingleGrantedSkill(catalog, state)
   return skill.ok ? null : skill.error
 }
 
@@ -89,7 +89,7 @@ export function inspectPerfectFluxCraft(
   if (state.pendingDesecration) return fail(PENDING_DESECRATION_MESSAGE)
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  const result = readSkill(catalog, checked.value)
+  const result = readSingleGrantedSkill(catalog, checked.value)
   if (!result.ok) return result
   if (
     state.grantedSkillLevel === 20 ||
@@ -137,7 +137,7 @@ export function readCraftGrantedSkillLevel(
 ): CraftResult<{ name: string; level: number | null }> {
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  const skill = readSkill(catalog, checked.value)
+  const skill = readSingleGrantedSkill(catalog, checked.value)
   return skill.ok
     ? {
         ok: true,

@@ -20,6 +20,7 @@ export const CONDITION_LABELS = {
   'desecrated-count': '亵渎词缀数量范围',
   quality: '品质类型与范围',
   'corruption-state': '腐化状态',
+  'granted-skill-sockets': '装备技能辅助孔范围',
   'granted-skill-level': '装备固有技能最高等级',
   'item-property': '装备面板范围',
   'weighted-properties': '装备面板加权合计',
@@ -40,6 +41,7 @@ export function defaultCondition(
 ): DefinitionCraftStrategyLeafCondition | null {
   if (kind === 'desecrated-count') return { kind, source: 'unrevealed', min: 1, max: 6 }
   if (kind === 'corruption-state') return { kind, value: 'none' }
+  if (kind === 'granted-skill-sockets') return { kind, min: 5 }
   if (kind === 'quality') return { kind, source: 'ordinary', min: 0 }
   if (kind === 'weighted-properties')
     return { kind, terms: [{ property: 'physicalDps', weight: 1 }], min: 0 }
@@ -135,6 +137,54 @@ export function StrategyConditionEditor({
           canChange={canChange}
           onChange={onChange}
         />
+      ) : null}
+      {condition.kind === 'granted-skill-sockets' ? (
+        <>
+          <label>
+            辅助孔下限
+            <select
+              aria-label={`${prefix} 辅助孔下限`}
+              value={condition.min}
+              onChange={(event) => {
+                const min = Number(event.target.value)
+                onChange({
+                  ...condition,
+                  min,
+                  ...(condition.max === undefined ? {} : { max: Math.max(min, condition.max) }),
+                })
+              }}
+            >
+              {[2, 3, 4, 5].map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            辅助孔上限
+            <select
+              aria-label={`${prefix} 辅助孔上限`}
+              value={condition.max ?? ''}
+              onChange={(event) => {
+                const max = event.target.value === '' ? undefined : Number(event.target.value)
+                onChange({
+                  kind: 'granted-skill-sockets',
+                  min: max === undefined ? condition.min : Math.min(condition.min, max),
+                  ...(max === undefined ? {} : { max }),
+                })
+              }}
+            >
+              <option value="">不限</option>
+              {[2, 3, 4, 5].map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>仅检查装备技能辅助孔；起点未确认时为未知，不能按二孔或符文孔数判断。</p>
+        </>
       ) : null}
       {condition.kind === 'granted-skill-level' ? (
         <>
