@@ -1,5 +1,6 @@
 import { isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
+import { gloveIdolLimitKey } from './gloveIdols'
 import type { CraftState } from './rehearsal'
 import { sceptreLimitKey } from './sceptreAugments'
 import { isSerleRune } from './serleRune'
@@ -39,7 +40,9 @@ export function socketLimitWarnings(catalog: CraftCatalog, state: CraftState) {
   const counts = new Map<string, number>()
   for (const id of state.sockets ?? []) {
     const augment = catalog.augments?.find((a) => a.id === id)
-    const special = augment && (specialMartialLimitKey(augment) ?? sceptreLimitKey(augment))
+    const special =
+      augment &&
+      (specialMartialLimitKey(augment) ?? sceptreLimitKey(augment) ?? gloveIdolLimitKey(augment))
     if (special) {
       const name = special === 'AldursLegacyLimit1' ? "Aldur's Legacy" : special
       counts.set(name, (counts.get(name) ?? 0) + 1)

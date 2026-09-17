@@ -32,6 +32,7 @@ import {
 } from './extraction'
 import { applyFluxCraft, type FluxCraftOperation, isFluxCraftOperation } from './fluxCraft'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
+import { gloveIdolSocketError } from './gloveIdols'
 import { isInfluenceRune } from './influenceRunes'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import {
@@ -416,6 +417,13 @@ export function applyCraftStep(
     }
     if (!socketCandidates(catalog, checked.value).some((entry) => entry.id === step.augmentId))
       return { ok: false, error: '该符文当前不可镶嵌。' }
+    const gloveError = gloveIdolSocketError(
+      catalog,
+      checked.value,
+      step.socketIndex,
+      step.augmentId,
+    )
+    if (gloveError) return { ok: false, error: gloveError }
     const sceptreError = sceptreSocketError(
       catalog,
       checked.value,

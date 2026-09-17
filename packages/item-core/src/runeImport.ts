@@ -3,6 +3,7 @@ import { astridSourceMatches } from './astridRune'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
+import { gloveIdolSourceMatches } from './gloveIdols'
 import { influenceRuneSourceMatches } from './influenceRunes'
 import { parseItem } from './parse'
 import type { CraftResult, CraftState } from './rehearsal'
@@ -131,6 +132,13 @@ export function runeSocketContributionError(
       ? null
       : `符文效果与孔位声明不一致：请核对伤害两端、百分数与基础属性；原文 ${state.runeSourceLines.join('；')}；所选 ${augments.flatMap((augment) => augment.lines).join('；') || '无'}。`
   }
+  if (
+    !gloveIdolSourceMatches(
+      state.runeSourceLines,
+      augments.flatMap((a) => a.lines),
+    )
+  )
+    return '手套雕像效果与孔位声明不一致：请核对完整作用对象、条件、数值和重复行。'
   const expected = parseRuneEffectTotals(state.runeSourceLines)
   const actual = sumRuneEffects(augments)
   if (expected === null || actual === null) return '原文或目录包含尚未支持的符文效果，不能核对。'

@@ -1,9 +1,15 @@
 import { readUnlevelledSkillName, translateUnlevelledSkill } from './grantedSkills'
-import { createStatResolver, type StatTemplate } from './resolve'
+import {
+  canonicalStatTemplates,
+  createStatResolver,
+  reducedStatFallbacks,
+  type StatTemplate,
+} from './resolve'
 
 export function createCatalogTranslator(
   entries: readonly StatTemplate[],
 ): (text: string, statHashes?: readonly string[]) => string | null {
+  entries = canonicalStatTemplates(entries)
   const reverse = (source: readonly StatTemplate[]) =>
     source.flatMap((entry) => {
       if (
@@ -24,7 +30,10 @@ export function createCatalogTranslator(
         },
       ]
     })
-  const translate = createStatResolver(reverse(entries))
+  // 在交换翻译方向前派生相同的安全配对，并继续作为低优先级回退。
+  const resolverFor = (source: readonly StatTemplate[]) =>
+    createStatResolver(reverse(source), reverse(reducedStatFallbacks(source)))
+  const translate = resolverFor(entries)
   const contextual = new Map<string, ReturnType<typeof createStatResolver> | null>()
   return (text, statHashes) => {
     if (readUnlevelledSkillName(text, 'en') !== null) return translateUnlevelledSkill(text, entries)
@@ -35,7 +44,7 @@ export function createCatalogTranslator(
       const selected = entries.filter((entry) =>
         hashes.some((hash) => entry.id.endsWith(`stat_${hash}`)),
       )
-      contextual.set(key, selected.length === 0 ? null : createStatResolver(reverse(selected)))
+      contextual.set(key, selected.length === 0 ? null : resolverFor(selected))
     }
     const resolver = contextual.get(key)
     // 没有任何词典身份命中时沿用通用翻译；身份已命中则不得混入其他命名空间。

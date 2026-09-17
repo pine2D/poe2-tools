@@ -53,3 +53,50 @@ it('按trade hash消歧同英文模板并缓存上下文，错误身份不借其
   )
   expect(translate('+(10-20) to maximum Life', ['missing'])).toBe('+(10-20) 生命上限')
 })
+
+import { readFileSync } from 'node:fs'
+import { createStatResolver, type StatTemplate } from './resolve'
+
+it.each(['zh-CN', 'zh-TW'] as const)('%s 真实雕像词典翻译并反查6.4秒和160/4条件', (locale) => {
+  const entries: StatTemplate[] = JSON.parse(
+    readFileSync(new URL(`../../../data/dict/${locale}/stats.json`, import.meta.url), 'utf8'),
+  ).entries
+  const translate = createCatalogTranslator(entries),
+    resolve = createStatResolver(entries)
+  for (const [hash, line] of [
+    [
+      '3370077792',
+      'Enemies you Critically Hit get 160% reduced Life Regeneration Rate for 4 seconds',
+    ],
+    ['226999623', 'Companions gain Onslaught for 6.4 seconds on Hitting your Marked targets'],
+  ] as const) {
+    const local = translate(line, [hash])
+    expect(local).not.toBeNull()
+    expect(local).toMatch(/[\u4e00-\u9fff]/)
+    expect(resolve(local as string).english).toBe(line)
+  }
+})
+it('方向派生保留直接模板优先、歧义不猜测，单复数仅核对固定身份', () => {
+  const direct = { id: 'rune.stat_1', en: '#% reduced Damage', text: '伤害下降 #%' }
+  const increased = { id: 'rune.stat_1', en: '#% increased Damage', text: '伤害提高 #%' }
+  expect(createCatalogTranslator([increased, direct])('10% reduced Damage', ['1'])).toBe(
+    '伤害下降 10%',
+  )
+  expect(
+    createCatalogTranslator([increased, { ...increased, text: '伤害数值提高 #%' }])(
+      '10% reduced Damage',
+    ),
+  ).toBeNull()
+  expect(
+    createCatalogTranslator([
+      {
+        id: 'wrong',
+        en: 'Companions gain Onslaught for # second on Hitting your Marked targets',
+        text: '持续 # 秒',
+      },
+    ])('Companions gain Onslaught for 6.4 seconds on Hitting your Marked targets'),
+  ).toBeNull()
+  expect(
+    createCatalogTranslator([{ ...increased, en: '#% more Damage' }])('10% less Damage'),
+  ).toBeNull()
+})

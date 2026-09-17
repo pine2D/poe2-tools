@@ -1,3 +1,6 @@
+# 2026-09-17 手套雕像核对（实施前登记）
+沿用已登记固定 MIT PoB2 `ModRunes.lua` / `ModScalability.lua` 及普通手套目录，不新增抓取适配器或第三方数据文件。人工核对 PoE2DB 的 [Carved Majesty](https://poe2db.tw/us/Carved_Majesty)、[Carved Mischief](https://poe2db.tw/us/Carved_Mischief)、[Carved Tenacity](https://poe2db.tw/us/Carved_Tenacity)、[Snake Idol](https://poe2db.tw/us/Snake_Idol)、[Sirrius](https://poe2db.tw/us/Idol_of_Sirrius)、[Kraityn](https://poe2db.tw/us/Idol_of_Kraityn) 公开说明，只作 gray 交叉证据；9个手套分支保持独立，三种 Carved 共用 AncientAugment 限量1。持续时间是否增效按既有逐占位来源，不以文本中出现数字推断。CoE 公开路线图用于流程参考，不使用其实现、数据或权重；国服原生文本和精度仍待游戏验收。
+
 # 数据源登记表
 
 ## 专属攻击武器符文（2026-09-17，v108实施前登记）

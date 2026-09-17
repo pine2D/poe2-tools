@@ -296,6 +296,11 @@ export {
 export type { FractureCraftOperation, PreparedFracture } from './fracture'
 export { applyFracture, prepareFracture } from './fracture'
 export { validateCraftFractureTarget } from './fractureTargets'
+export {
+  GLOVE_IDOL_RULES_VERSION,
+  requiresGloveIdolProjectVersion,
+} from './gloveIdolProjectVersion'
+export { GLOVE_IDOL_NAMES, isGloveIdol, isGloveIdolId } from './gloveIdols'
 export type {
   BaseGrantedSkill,
   InitialSkillDeclaration,

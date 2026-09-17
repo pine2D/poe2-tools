@@ -35,18 +35,18 @@ const NUMBER = '[+-]?\\d+(?:\\.\\d+)?'
 const RANGE = `\\(${NUMBER}[-–—]${NUMBER}\\)`
 const TOKEN = `(${NUMBER}(?:${RANGE}|\\(${NUMBER}\\))?|[+-]?${RANGE})`
 
-// 模板字面数字不替换；每个捕获组是一个 roll，括号范围始终跟着实际数值。
-export function createStatResolver(entries: readonly StatTemplate[]) {
-  // 国服实物文本使用“咒符位”；仅为已核对的固有属性模板派生别名，精确词典仍优先。
-  const aliases = entries.flatMap((entry) =>
-    entry.id === 'implicit.stat_1416292992' &&
-    entry.en === 'Has # Charm Slot' &&
-    entry.text === '具有 # 个咒符栏'
-      ? [{ ...entry, text: '具有 # 个咒符位' }]
-      : [],
+// 仅规范已核对的雕像词典身份；不对任意 second/seconds 做模糊匹配。
+export function canonicalStatTemplates(entries: readonly StatTemplate[]): StatTemplate[] {
+  return entries.map((entry) =>
+    entry.id === 'rune.stat_226999623' &&
+    entry.en === 'Companions gain Onslaught for # second on Hitting your Marked targets'
+      ? { ...entry, en: 'Companions gain Onslaught for # seconds on Hitting your Marked targets' }
+      : entry,
   )
+}
+export function reducedStatFallbacks(entries: readonly StatTemplate[]): StatTemplate[] {
   // 与 Build 翻译已有的提高/降低规则对称；仅唯一配对时生成回退，不推断 more/less。
-  const fallbacks = entries.flatMap((entry) => {
+  return entries.flatMap((entry) => {
     if (entry.en.split('increased').length !== 2 || entry.en.includes('reduced')) return []
     return [
       ['提高', '降低'],
@@ -68,7 +68,28 @@ export function createStatResolver(entries: readonly StatTemplate[]) {
       ]
     })
   })
-  const patterns = [...entries, ...aliases, ...fallbacks].flatMap((entry, entryIndex) => {
+}
+
+// 模板字面数字不替换；每个捕获组是一个 roll，括号范围始终跟着实际数值。
+export function createStatResolver(
+  entries: readonly StatTemplate[],
+  additionalFallbacks: readonly StatTemplate[] = [],
+) {
+  entries = canonicalStatTemplates(entries)
+  // 国服实物文本使用“咒符位”；仅为已核对的固有属性模板派生别名，精确词典仍优先。
+  const aliases = entries.flatMap((entry) =>
+    entry.id === 'implicit.stat_1416292992' &&
+    entry.en === 'Has # Charm Slot' &&
+    entry.text === '具有 # 个咒符栏'
+      ? [{ ...entry, text: '具有 # 个咒符位' }]
+      : [],
+  )
+  const patterns = [
+    ...entries,
+    ...aliases,
+    ...reducedStatFallbacks(entries),
+    ...additionalFallbacks,
+  ].flatMap((entry, entryIndex) => {
     const count = entry.text.split('#').length - 1
     const order = entry.order ?? Array.from({ length: count }, (_, i) => i)
     if (

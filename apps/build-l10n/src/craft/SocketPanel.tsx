@@ -6,6 +6,7 @@ import {
   type CraftState,
   isConditionalArmourRune,
   isExtendedArmourRune,
+  isGloveIdol,
   isInfluenceRune,
   isRebirthArmourRune,
   isSpecialMartialRune,
@@ -73,13 +74,15 @@ export function SocketPanel({
   const amplification = socketEffectIncrease(catalog, state)
   const limit = artificerSocketLimit(catalog, state)
   const sceptre = catalog.bases.find((base) => base.id === state.baseId)?.type === 'Sceptre'
+  const hasIdols = sceptre || candidates.some((augment) => isGloveIdol(augment, true))
   const canAddSocket = state.sockets !== undefined && state.sockets.length < limit
   const previous = catalog.augments?.find((entry) => entry.id === state.sockets?.[selectedIndex])
-  const label = (name: string) => translations[name] ?? name
+  const label = (name: string) =>
+    name === 'AncientAugment' ? '远古增幅物' : (translations[name] ?? name)
   if (socketCapacity(catalog, state) === 0 && state.sockets === undefined) return null
   return (
     <section className="craft-sockets" aria-label="符文镶嵌">
-      <h3>{sceptre ? '神像、符文与魂核镶嵌' : '符文与魂核镶嵌'}</h3>
+      <h3>{hasIdols ? '雕像、符文与魂核镶嵌' : '符文与魂核镶嵌'}</h3>
       <p>
         按当前部位列出可用镶嵌物及其实际效果。普通覆盖不返还旧材料；绑定孔不能替换。镶嵌效果本身不占前后缀位置。
       </p>
@@ -96,8 +99,10 @@ export function SocketPanel({
           {limits.map((entry) => (
             <p key={entry.name}>
               {label(entry.name)}
-              {entry.name === "Aldur's Legacy" ? '（共享限量）' : ''}：本件 {entry.count} / 限量{' '}
-              {entry.limit}
+              {entry.name === "Aldur's Legacy" || entry.name === 'AncientAugment'
+                ? '（共享限量）'
+                : ''}
+              ：本件 {entry.count} / 限量 {entry.limit}
               {entry.exceeded ? '；本件已超限，不能据此视为可穿戴；可替换重复孔位修复。' : '。'}
             </p>
           ))}
@@ -226,7 +231,7 @@ export function SocketPanel({
                 }
               >
                 <option value="">
-                  {sceptre ? '选择神像、符文或魂核查看结果' : '选择符文或魂核查看结果'}
+                  {hasIdols ? '选择雕像、符文或魂核查看结果' : '选择符文或魂核查看结果'}
                 </option>
                 {candidates.map((entry) => (
                   <option key={entry.id} value={entry.id}>
@@ -256,6 +261,14 @@ export function SocketPanel({
                 </div>
               ))}
               <p>该镶嵌物穿戴需求：等级 {selected.levelReq}，与装备物等无关。</p>
+              {isGloveIdol(selected, true) ? (
+                <p>
+                  保留触发条件与作用对象，不计为本件防御或无条件角色收益；持续时间按各条规则分别增效。
+                  {selected.limitId === 'AncientAugment'
+                    ? ' 远古增幅物共用一枚限量，同孔替换会先移除旧材料再核对数量。'
+                    : ''}
+                </p>
+              ) : null}
               {isSpecialMartialRune(selected, true) ? (
                 <p>
                   {specialRuneNote(selected)}

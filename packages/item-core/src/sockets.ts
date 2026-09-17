@@ -2,6 +2,7 @@ import { isSovereignAffix } from './alloyEffects'
 import { isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { astridFitsBase } from './craftedCapacity'
+import { gloveIdolFits, isGloveIdolId } from './gloveIdols'
 import { influenceRuneFitsBase, influenceRuneTags, isInfluenceRune } from './influenceRunes'
 import type { CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
@@ -91,6 +92,7 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
+  if (isGloveIdolId(augment.id)) return gloveIdolFits(catalog, state, augment)
   if (isSceptreAugmentId(augment.id)) return sceptreAugmentFits(catalog, state, augment)
   if (base?.type === 'Sceptre') return false
   if (isSpecialMartialRuneId(augment.id)) return specialMartialRuneFits(catalog, state, augment)
