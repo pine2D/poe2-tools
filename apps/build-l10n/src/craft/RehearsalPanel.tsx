@@ -53,6 +53,7 @@ import {
   type FractureCraftOperation,
   findTargetCapacityContext,
   fluxCatalogSignature,
+  GRANTED_SKILL_TARGET_RULES_VERSION,
   IDENTITY_CRAFT_RULES_VERSION,
   type IdentifiedCraftState,
   INFLUENCE_BONE_RULES_VERSION,
@@ -98,6 +99,7 @@ import {
   requiresExtendedArmourRuneProjectVersion,
   requiresExtendedInfluenceBoneProjectVersion,
   requiresExtractionProjectVersion,
+  requiresGrantedSkillTargetProjectVersion,
   requiresInfluenceBoneProjectVersion,
   requiresInfluenceRuneProjectVersion,
   requiresMasterworkProjectVersion,
@@ -432,6 +434,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [grantedSkillTargetRules, setGrantedSkillTargetRules] = useState(
+    initialProject?.project.rulesVersion === GRANTED_SKILL_TARGET_RULES_VERSION,
   )
   const [extendedInfluenceBoneRules, setExtendedInfluenceBoneRules] = useState(
     initialProject?.project.rulesVersion === EXTENDED_INFLUENCE_BONE_RULES_VERSION,
@@ -1281,6 +1286,8 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsGrantedSkillTargets =
+    grantedSkillTargetRules || requiresGrantedSkillTargetProjectVersion(projectConfig)
   const needsExtendedInfluenceBone =
     extendedInfluenceBoneRules || requiresExtendedInfluenceBoneProjectVersion(projectConfig)
   const needsInfluenceBone =
@@ -1288,6 +1295,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsGrantedSkillTargets ||
     needsExtendedInfluenceBone ||
     needsInfluenceBone ||
     needsDestruction ||
@@ -1320,35 +1328,37 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsExtendedInfluenceBone
-            ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-            : needsInfluenceBone
-              ? INFLUENCE_BONE_RULES_VERSION
-              : needsDestruction
-                ? DESTRUCTION_RUNE_RULES_VERSION
-                : needsInfluence
-                  ? INFLUENCE_RUNE_RULES_VERSION
-                  : needsDesecrationCount
-                    ? DESECRATION_COUNT_RULES_VERSION
-                    : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
-                      ? PUTREFACTION_RULES_VERSION
-                      : needsPendingExaltation
-                        ? PENDING_EXALTATION_RULES_VERSION
-                        : needsEssenceOutcomes
-                          ? ESSENCE_OUTCOMES_RULES_VERSION
-                          : needsSerle
-                            ? SERLE_RULES_VERSION
-                            : needsCraftedCapacity
-                              ? CRAFTED_CAPACITY_RULES_VERSION
-                              : needsConditionalRunes
-                                ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                : needsMasterwork
-                                  ? MASTERWORK_CRAFT_RULES_VERSION
-                                  : needsExtendedRunes
-                                    ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                    : needsWardRunes
-                                      ? WARD_RUNE_RULES_VERSION
-                                      : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsGrantedSkillTargets
+            ? GRANTED_SKILL_TARGET_RULES_VERSION
+            : needsExtendedInfluenceBone
+              ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+              : needsInfluenceBone
+                ? INFLUENCE_BONE_RULES_VERSION
+                : needsDestruction
+                  ? DESTRUCTION_RUNE_RULES_VERSION
+                  : needsInfluence
+                    ? INFLUENCE_RUNE_RULES_VERSION
+                    : needsDesecrationCount
+                      ? DESECRATION_COUNT_RULES_VERSION
+                      : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
+                        ? PUTREFACTION_RULES_VERSION
+                        : needsPendingExaltation
+                          ? PENDING_EXALTATION_RULES_VERSION
+                          : needsEssenceOutcomes
+                            ? ESSENCE_OUTCOMES_RULES_VERSION
+                            : needsSerle
+                              ? SERLE_RULES_VERSION
+                              : needsCraftedCapacity
+                                ? CRAFTED_CAPACITY_RULES_VERSION
+                                : needsConditionalRunes
+                                  ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                  : needsMasterwork
+                                    ? MASTERWORK_CRAFT_RULES_VERSION
+                                    : needsExtendedRunes
+                                      ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                      : needsWardRunes
+                                        ? WARD_RUNE_RULES_VERSION
+                                        : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1382,6 +1392,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setGrantedSkillTargetRules(restored.project.rulesVersion === GRANTED_SKILL_TARGET_RULES_VERSION)
     setDesecrationCountRules(restored.project.rulesVersion === DESECRATION_COUNT_RULES_VERSION)
     setPutrefactionRules(restored.project.rulesVersion === PUTREFACTION_RULES_VERSION)
     setPendingExaltationRules(restored.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION)

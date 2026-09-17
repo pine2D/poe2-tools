@@ -19,6 +19,7 @@ import {
   type CraftImplicitTargetValues,
   craftImplicitTargetCandidates,
   implicitTargetRolls,
+  perfectFluxTargetOperation,
 } from './implicitTargets'
 import { influenceRuneTags } from './influenceRunes'
 import { inspectLiquidEmotions } from './liquidEmotions'
@@ -100,6 +101,7 @@ interface CraftTargetStatus {
 }
 
 export interface CraftAdvice {
+  perfectFluxOperation?: import('./perfectFlux').PerfectFluxCraftOperation
   implicitTargets?: CraftImplicitTargetStatus[]
   targets: (CraftTargetStatus & { alternatives?: CraftTargetStatus[] })[]
   steps: CraftAdviceStep[]
@@ -610,7 +612,11 @@ export function analyzeCraftTargetContext(
   const current = checked.value
   const implicitAnalysis = analyzeCraftImplicitTargets(catalog, current, implicitValues)
   if (!implicitAnalysis.ok) return implicitAnalysis
-  const implicitFields = implicitValues.length ? { implicitTargets: implicitAnalysis.value } : {}
+  const perfectFluxOperation = perfectFluxTargetOperation(catalog, current, implicitValues)
+  const implicitFields = {
+    ...(implicitValues.length ? { implicitTargets: implicitAnalysis.value } : {}),
+    ...(perfectFluxOperation ? { perfectFluxOperation } : {}),
+  }
   const base = catalog.bases.find((entry) => entry.id === current.baseId)
   if (base === undefined) return { ok: false, error: '当前基底不在制作目录中。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
@@ -924,7 +930,13 @@ export function analyzeCraftTargetContext(
     })
     .map((target) => target.modId)
   const unmetImplicit = implicitAnalysis.value
-    .filter((target) => !target.matched)
+    .filter(
+      (target) =>
+        !target.matched &&
+        !implicitValues.some(
+          (goal) => goal.lineIndex === target.lineIndex && goal.kind === 'granted-skill',
+        ),
+    )
     .map((target) => target.lineIndex)
   const implicitRolls = implicitValues.length
     ? implicitTargetRolls(catalog, current, implicitValues)

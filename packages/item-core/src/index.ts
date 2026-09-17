@@ -289,6 +289,10 @@ export {
   readBaseGrantedSkills,
   resolveGrantedSkill,
 } from './grantedSkills'
+export {
+  GRANTED_SKILL_TARGET_RULES_VERSION,
+  requiresGrantedSkillTargetProjectVersion,
+} from './grantedSkillTargetProjectVersion'
 export type {
   CraftImplicitTargetCandidate,
   CraftImplicitTargetStatus,

@@ -28,7 +28,7 @@ export function ImplicitTargetEditor(props: Props) {
     () => analyzeCraftImplicitTargets(props.catalog, props.state, props.values),
     [props.catalog, props.state, props.values],
   )
-  const visible = candidates.ok
+  const visible: CraftImplicitTargetCandidate[] = candidates.ok
     ? candidates.value
     : props.values.flatMap((value) => {
         const line = props.catalog.bases
@@ -39,6 +39,7 @@ export function ImplicitTargetEditor(props: Props) {
         if (!ranges.ok) return []
         return [
           {
+            ...(value.kind ? { kind: value.kind } : {}),
             lineIndex: value.lineIndex,
             line,
             ranges: ranges.value,
@@ -52,7 +53,7 @@ export function ImplicitTargetEditor(props: Props) {
   return (
     <section className="target-list" aria-label="固有属性目标">
       <h4>固有属性条件</h4>
-      <p>目录范围用于设置条件，当前可重掷范围以各行说明为准。空白表示不限；保存条件不消耗材料。</p>
+      <p>目录范围用于设置条件，实际可用操作以各行说明为准。空白表示不限；保存条件不消耗材料。</p>
       {visible.map((candidate) => (
         <article key={candidate.lineIndex}>
           <h5>固有属性 {candidate.lineIndex + 1}</h5>
@@ -60,10 +61,19 @@ export function ImplicitTargetEditor(props: Props) {
             <p>{props.translateLine(candidate.line)}</p>
           ) : null}
           <code>{candidate.line}</code>
-          <p>
-            当前基础数值：{candidate.actual.map((value) => value ?? '未知').join('、')}；
-            {candidate.rerollable ? '当前可重掷' : '当前不可重掷'}
-          </p>
+          {candidate.kind === 'granted-skill' ? (
+            <>
+              <p>装备固有技能最高等级：{candidate.actual[0] ?? '未知'}</p>
+              <p>
+                目标判断装备自身最高等级，不使用角色当前显示等级。完美溶剂升级至20级，神圣石不会升级该技能。
+              </p>
+            </>
+          ) : (
+            <p>
+              当前基础数值：{candidate.actual.map((value) => value ?? '未知').join('、')}；
+              {candidate.rerollable ? '当前可重掷' : '当前不可重掷'}
+            </p>
+          )}
           {candidate.reasons.map((reason) => (
             <p key={reason}>{reason}</p>
           ))}
@@ -75,10 +85,12 @@ export function ImplicitTargetEditor(props: Props) {
                   <p>{target.matched ? '固有目标已达成' : '固有目标未达成'}</p>
                   {target.numeric.map((bound) => (
                     <p key={bound.index}>
-                      {props.values.find((entry) => entry.lineIndex === target.lineIndex)?.basis ===
-                      'effective'
-                        ? '品质后'
-                        : '基础'}
+                      {candidate.kind === 'granted-skill'
+                        ? '装备技能最高等级'
+                        : props.values.find((entry) => entry.lineIndex === target.lineIndex)
+                              ?.basis === 'effective'
+                          ? '品质后'
+                          : '基础'}
                       数值 {bound.index + 1}： 当前{' '}
                       {bound.actualRange
                         ? `${bound.actualRange.min}–${bound.actualRange.max}`
@@ -174,6 +186,7 @@ function RowEditor({
     const next = values.filter((value) => value.lineIndex !== candidate.lineIndex)
     if (bounds.length)
       next.push({
+        ...(candidate.kind ? { kind: candidate.kind } : {}),
         lineIndex: candidate.lineIndex,
         bounds,
         ...(basis === 'effective' ? { basis: 'effective' as const } : {}),
@@ -188,21 +201,23 @@ function RowEditor({
   }
   return (
     <div className="target-value-editor" ref={root}>
-      <label>
-        条件口径
-        <select
-          aria-label={`固有属性 ${candidate.lineIndex + 1} · 条件口径`}
-          value={basis}
-          onChange={(event) => {
-            setBasis(event.target.value)
-            setInputs({})
-            setMessage('')
-          }}
-        >
-          <option value="base">基础值</option>
-          <option value="effective">品质后有效值</option>
-        </select>
-      </label>
+      {candidate.kind !== 'granted-skill' ? (
+        <label>
+          条件口径
+          <select
+            aria-label={`固有属性 ${candidate.lineIndex + 1} · 条件口径`}
+            value={basis}
+            onChange={(event) => {
+              setBasis(event.target.value)
+              setInputs({})
+              setMessage('')
+            }}
+          >
+            <option value="base">基础值</option>
+            <option value="effective">品质后有效值</option>
+          </select>
+        </label>
+      ) : null}
       {basis === 'effective' ? (
         <p>按当前品质判断所有可能结果；切换口径后重新输入，品质变化保留原阈值。</p>
       ) : null}
@@ -218,7 +233,7 @@ function RowEditor({
                 {side === 'min' ? '下限' : '上限'}
                 <input
                   type="number"
-                  step="any"
+                  step={candidate.kind === 'granted-skill' ? '1' : 'any'}
                   min={basis === 'effective' ? undefined : range.min}
                   max={basis === 'effective' ? undefined : range.max}
                   aria-label={`固有属性 ${candidate.lineIndex + 1} · 数值 ${range.index + 1} ${side === 'min' ? '下限' : '上限'}`}

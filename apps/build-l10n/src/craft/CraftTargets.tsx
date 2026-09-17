@@ -585,7 +585,8 @@ export function CraftTargets({
             {advice.value.steps.length +
               essenceSteps.length +
               preparationRoutes.length +
-              boneSteps.length}{' '}
+              boneSteps.length +
+              Number(Boolean(advice.value.perfectFluxOperation))}{' '}
             种指定结果
           </summary>
           <p>
@@ -605,6 +606,7 @@ export function CraftTargets({
           ) : null}
           {!allMatched &&
           advice.value.steps.length === 0 &&
+          !advice.value.perfectFluxOperation &&
           essenceSteps.length === 0 &&
           preparationRoutes.length === 0 &&
           boneSteps.length === 0 ? (
@@ -613,6 +615,24 @@ export function CraftTargets({
             </p>
           ) : null}
           {!boneAdvice.ok ? <p role="status">{boneAdvice.error}</p> : null}
+          {advice.value.perfectFluxOperation ? (
+            <div className="target-step">
+              <p>
+                完美溶剂：装备固有技能最高等级 {advice.value.perfectFluxOperation.previousMaxLevel}{' '}
+                → 20；消耗1枚。
+              </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  if (advice.value.perfectFluxOperation)
+                    onPreviewRoute(advice.value.perfectFluxOperation)
+                }}
+              >
+                预览建议：完美溶剂
+              </button>
+            </div>
+          ) : null}
           <BoneAdvicePanel
             definitions={definitions}
             catalog={catalog}

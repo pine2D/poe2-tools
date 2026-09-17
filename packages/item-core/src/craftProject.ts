@@ -48,6 +48,7 @@ import {
   readBaseGrantedSkills,
   readUnlevelledSkillName,
 } from './grantedSkills'
+import { requiresGrantedSkillTargetProjectVersion } from './grantedSkillTargetProjectVersion'
 import {
   type CraftImplicitTargetValues,
   readCraftImplicitTargets,
@@ -685,6 +686,7 @@ export function readNativeTargetProjectProjection(
   destructionRunes = false,
   influenceBones = false,
   extendedInfluenceBones = false,
+  grantedSkillTargets = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -713,6 +715,7 @@ export function readNativeTargetProjectProjection(
     destructionRunes,
     influenceBones,
     extendedInfluenceBones,
+    grantedSkillTargets,
   )
 }
 
@@ -743,6 +746,7 @@ function readCraftProject(
   destructionRunes = false,
   influenceBones = false,
   extendedInfluenceBones = false,
+  grantedSkillTargets = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -761,6 +765,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!grantedSkillTargets && requiresGrantedSkillTargetProjectVersion(value))
+    return fail('装备固有技能目标必须使用 v97 项目，包括起点、目标、完整未来和未执行指引。')
   if (!extendedInfluenceBones && requiresExtendedInfluenceBoneProjectVersion(value))
     return fail('扩展符文骨骼必须使用 v96 项目，包括起点、完整未来和未执行指引。')
   if (!influenceBones && requiresInfluenceBoneProjectVersion(value))
@@ -2096,6 +2102,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresGrantedSkillTargetProjectVersion(project))
+    throw new Error('装备固有技能目标必须使用 v97 项目，包括起点、目标、完整未来和未执行指引。')
   if (requiresRuneforgeProjectVersion(project))
     throw new Error('锻造操作、指引及 Verisium 报价必须使用 v82 项目。')
   if (requiresCorruptionStrategyProjectVersion(project))

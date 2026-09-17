@@ -6,9 +6,14 @@ import {
   projectedTargetRolls,
   projectTargetValues,
 } from './effectiveTargetValues'
-import { matchesGrantedSkillImplicitLines } from './grantedSkills'
+import { matchesGrantedSkillImplicitLines, readBaseGrantedSkills } from './grantedSkills'
 import { uniqueMapping } from './lineMapping'
 import { inspectNumericLines, type NumericRange, readNumericValues } from './numeric'
+import {
+  inspectPerfectFluxCraft,
+  type PerfectFluxCraftOperation,
+  readCraftGrantedSkillLevel,
+} from './perfectFlux'
 import {
   type CraftResult,
   type CraftState,
@@ -19,11 +24,14 @@ import { minimumTargetRolls, targetRollsPreservingValues } from './targetRolls'
 import type { CraftTargetBound } from './targets'
 
 export interface CraftImplicitTargetValues {
+  kind?: 'granted-skill'
   basis?: 'effective'
   lineIndex: number
   bounds: CraftTargetBound[]
 }
 export interface CraftImplicitTargetCandidate {
+  kind?: 'granted-skill'
+  skillName?: string
   lineIndex: number
   line: string
   ranges: NumericRange[]
@@ -42,9 +50,34 @@ export interface CraftImplicitTargetStatus {
   reasons: string[]
 }
 const fail = (error: string): { ok: false; error: string } => ({ ok: false, error })
-function descriptors(base: CatalogBase) {
+function descriptors(
+  base: CatalogBase,
+): Pick<CraftImplicitTargetCandidate, 'lineIndex' | 'line' | 'ranges' | 'kind' | 'skillName'>[] {
+  const skills = readBaseGrantedSkills(base)
+  const skill =
+    skills.length === 1 &&
+    ['Wand', 'Staff', 'Sceptre'].includes(base.type) &&
+    base.implicit?.split('\n').filter((line) => /\bGrants?\b.*\bSkills?\b/i.test(line)).length === 1
+      ? skills[0]
+      : undefined
   return (base.implicit?.split('\n') ?? []).flatMap((line, lineIndex) => {
-    if (/^Grants Skill:/i.test(line)) return []
+    if (/^Grants Skill:/i.test(line))
+      return skill?.lineIndex === lineIndex &&
+        skill.maxLevel === 20 &&
+        Number.isSafeInteger(skill.minLevel) &&
+        skill.minLevel >= 1
+        ? [
+            {
+              lineIndex,
+              line,
+              kind: 'granted-skill' as const,
+              skillName: skill.name,
+              ranges: [
+                { index: 0, lineIndex: 0, min: skill.minLevel, max: skill.maxLevel, step: 1 },
+              ],
+            },
+          ]
+        : []
     const numeric = inspectNumericLines([line])
     const fixedCharm = base.type === 'Belt' && base.charmLimit === 0 && line === 'Has 1 Charm Slot'
     const ranges = fixedCharm
@@ -109,6 +142,11 @@ export function readCraftImplicitTargets(
   values: unknown,
   candidates?: ReturnType<typeof descriptors>,
 ): CraftResult<CraftImplicitTargetValues[]> {
+  try {
+    if (!isPlainProjectJSON(values)) return fail('固有目标必须只包含自有数据字段。')
+  } catch {
+    return fail('固有目标对象无法安全检查。')
+  }
   if (!Array.isArray(values) || values.length > 32)
     return fail('固有目标必须是最多32行条件的数组。')
   const seen = new Set<number>()
@@ -116,7 +154,9 @@ export function readCraftImplicitTargets(
   let count = 0
   for (const value of values) {
     if (
-      !keys(value, ['lineIndex', 'bounds', 'basis']) ||
+      !keys(value, ['lineIndex', 'bounds', 'basis', 'kind']) ||
+      (Object.hasOwn(value, 'kind') && value.kind !== 'granted-skill') ||
+      (value.kind === 'granted-skill' && Object.hasOwn(value, 'basis')) ||
       (Object.hasOwn(value, 'basis') && value.basis !== 'effective') ||
       !Number.isSafeInteger(value.lineIndex) ||
       typeof value.lineIndex !== 'number' ||
@@ -128,7 +168,8 @@ export function readCraftImplicitTargets(
     )
       return fail('固有目标必须关联唯一目录行，并包含1–32个条件。')
     const candidate = candidates?.find((entry) => entry.lineIndex === value.lineIndex)
-    if (candidates && !candidate) return fail('该目录行不是可支持的普通数值固有目标。')
+    if (candidates && (!candidate || candidate.kind !== value.kind))
+      return fail('该目录行的固有目标语义不受支持或不匹配。')
     const indexes = new Set<number>()
     const bounds: CraftTargetBound[] = []
     for (const bound of value.bounds) {
@@ -138,6 +179,7 @@ export function readCraftImplicitTargets(
         !Number.isInteger(bound.index) ||
         bound.index < 0 ||
         bound.index >= 32 ||
+        (value.kind === 'granted-skill' && bound.index !== 0) ||
         indexes.has(bound.index)
       )
         return fail('固有条件必须使用唯一的行内范围索引。')
@@ -151,6 +193,7 @@ export function readCraftImplicitTargets(
         if (
           typeof n !== 'number' ||
           !Number.isFinite(n) ||
+          (value.kind === 'granted-skill' && (!Number.isSafeInteger(n) || n < 1 || n > 20)) ||
           (value.basis !== 'effective' && range && (n < range.min || n > range.max))
         )
           return fail('固有条件必须是目录范围内的有限数值。')
@@ -167,6 +210,7 @@ export function readCraftImplicitTargets(
     result.push({
       lineIndex: value.lineIndex,
       bounds,
+      ...(value.kind === 'granted-skill' ? { kind: 'granted-skill' as const } : {}),
       ...(value.basis === 'effective' ? { basis: 'effective' as const } : {}),
     })
   }
@@ -233,6 +277,25 @@ export function craftImplicitTargetCandidates(
   return {
     ok: true,
     value: descriptors(base).map((entry) => {
+      if (entry.kind === 'granted-skill') {
+        const level = readCraftGrantedSkillLevel(catalog, state)
+        const inspected = inspectPerfectFluxCraft(catalog, state)
+        const actual = level.ok ? level.value.level : null
+        return {
+          ...entry,
+          actual: [actual],
+          rerollable: false,
+          reasons: [
+            ...(level.ok ? [] : [level.error]),
+            ...(actual === null
+              ? ['装备最高等级未知；不能从角色显示等级推定，也不能自动规划完美溶剂。']
+              : []),
+            ...(inspected.ok
+              ? ['完美溶剂仅能将装备最高等级提升至20；普通神圣不会改变技能等级。']
+              : [inspected.error]),
+          ],
+        }
+      }
       const position = mapping[entry.lineIndex] ?? -1
       const slot = charm?.lineIndex === position ? charm : null
       const numbers = readNumericValues([entry.line], [actual[position] ?? ''])
@@ -303,7 +366,11 @@ export function analyzeCraftImplicitTargets(
       })
       const matched = numeric.every((entry) => entry.matched)
       const reasons = [...(candidate?.reasons ?? [])]
-      if (!matched) {
+      if (!matched && goal.kind === 'granted-skill') {
+        if (!goal.bounds.every((bound) => matchesTargetInterval({ min: 20, max: 20 }, bound)))
+          reasons.push('完美溶剂的唯一结果20级不能满足目标上下限。')
+      }
+      if (!matched && goal.kind !== 'granted-skill') {
         const position = resolved.value.patternPositions[goal.lineIndex] ?? -1
         const baseBounds = projection?.ok ? projection.value.baseBounds(goal.bounds) : null
         const bounds =
@@ -338,7 +405,9 @@ export function implicitTargetRolls(
   const result: number[] = []
   for (const [position, pattern] of patterns.entries()) {
     const directoryIndex = patternPositions.indexOf(position)
-    const goal = checked.value.find((entry) => entry.lineIndex === directoryIndex)
+    const goal = checked.value.find(
+      (entry) => entry.lineIndex === directoryIndex && entry.kind !== 'granted-skill',
+    )
     if (charm?.fixed && charm.lineIndex === position) continue
     let selected: number[] | null
     if (goal?.basis === 'effective') {
@@ -357,4 +426,26 @@ export function implicitTargetRolls(
     result.push(...selected)
   }
   return { ok: true, value: result }
+}
+
+/** 只用原文确知的最高等级生成既有操作；20必须满足全部技能条件。 */
+export function perfectFluxTargetOperation(
+  catalog: CraftCatalog,
+  state: CraftState,
+  values: readonly CraftImplicitTargetValues[],
+): PerfectFluxCraftOperation | null {
+  const skills = values.filter((goal) => goal.kind === 'granted-skill')
+  if (!skills.length) return null
+  const analyzed = analyzeCraftImplicitTargets(catalog, state, skills)
+  if (!analyzed.ok || analyzed.value.every((goal) => goal.matched)) return null
+  if (
+    !skills.every((goal) =>
+      goal.bounds.every((bound) => matchesTargetInterval({ min: 20, max: 20 }, bound)),
+    )
+  )
+    return null
+  const inspected = inspectPerfectFluxCraft(catalog, state)
+  return inspected.ok && inspected.value.previousMaxLevel !== null
+    ? { kind: 'perfect-flux', previousMaxLevel: inspected.value.previousMaxLevel }
+    : null
 }

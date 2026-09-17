@@ -110,6 +110,7 @@ function RouteSearch({
     translations[name] ?? catalog.localizedNames?.['zh-CN']?.[name] ?? name
   const label = (step: CraftStep) => {
     if ('currency' in step) return CRAFT_CURRENCY_LABELS[step.currency]
+    if (step.kind === 'perfect-flux') return localize('Perfect Flux')
     if (step.kind === 'fracture') return localize('Fracturing Orb')
     if (step.kind === 'alloy')
       return localize(

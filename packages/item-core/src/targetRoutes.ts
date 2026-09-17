@@ -24,6 +24,7 @@ import {
   type CraftImplicitTargetValues,
   craftImplicitTargetCandidates,
   implicitTargetRolls,
+  perfectFluxTargetOperation,
 } from './implicitTargets'
 import { jointEffectDivineOperations, liquidRouteContext } from './liquidRouteCandidates'
 import { craftModsConflict } from './modConflicts'
@@ -706,6 +707,8 @@ export function planCraftTargetContext(
       if (entries.length > count) omitted()
       return entries.slice(0, count)
     }
+    const perfectFlux = perfectFluxTargetOperation(catalog, node.state, implicitValues)
+    if (perfectFlux) offer(perfectFlux)
     for (const operation of capacityRunes.operations(node.state)) offer(operation)
     if (definitions) {
       for (const flux of FLUXES) {
