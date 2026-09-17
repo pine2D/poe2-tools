@@ -1,11 +1,13 @@
+import { isBodyIdolId } from './armourIdols'
 import { resolveCraftImplicitPatterns } from './beltImplicits'
+import { BONDED_PREFIX } from './bodyIdols'
 import { clonePendingDesecration, type PendingDesecration } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
 import type { CraftCorruption } from './corruptionEnchantments'
 import { readNumericValues } from './numeric'
 import { type CraftRarity, type CraftResult, type CraftState, createCraftState } from './rehearsal'
-import { socketEffects } from './sockets'
+import { type SocketEffect, socketEffects } from './sockets'
 
 export interface CraftNumericChange {
   index: number
@@ -51,6 +53,14 @@ export interface CraftComparison {
     beforeLines: string[] | null
     afterLines: string[] | null
   }[]
+}
+
+/** 比较当前生效语义，完整主效果组与已激活绑定分列。 */
+function socketComparisonLines({ augment, activeBondedLines }: SocketEffect): string[] {
+  return [
+    ...(isBodyIdolId(augment.id) ? [augment.lines.join('\n')] : augment.lines),
+    ...activeBondedLines.map((line) => BONDED_PREFIX + line),
+  ]
 }
 
 function samePendingDesecration(
@@ -238,10 +248,16 @@ export function compareCraftStates(
       ? { before: before.sockets.length, after: after.sockets.length }
       : undefined
   const previousEffects = new Map(
-    socketEffects(catalog, before).map(({ socketIndex, augment }) => [socketIndex, augment.lines]),
+    socketEffects(catalog, before).map((effect) => [
+      effect.socketIndex,
+      socketComparisonLines(effect),
+    ]),
   )
   const nextEffects = new Map(
-    socketEffects(catalog, after).map(({ socketIndex, augment }) => [socketIndex, augment.lines]),
+    socketEffects(catalog, after).map((effect) => [
+      effect.socketIndex,
+      socketComparisonLines(effect),
+    ]),
   )
   const sockets = (before.sockets ?? []).flatMap((beforeId, socketIndex) => {
     // 仅比较两侧真实存在的共同孔；新增或移除孔由 socketCount 表示。

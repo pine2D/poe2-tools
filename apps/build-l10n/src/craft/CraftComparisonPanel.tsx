@@ -93,10 +93,12 @@ export function CraftComparisonPanel({
         <p className="comparison-muted">无此词缀</p>
       ) : (
         lines.map((line, index) => {
-          const translated = translateLine?.(line)
+          const bonded = line.startsWith('Bonded: ')
+          const translated = translateLine?.(bonded ? line.slice('Bonded: '.length) : line)
           return (
             // biome-ignore lint/suspicious/noArrayIndexKey: 原文允许重复行；静态文本节点不含局部状态。
             <div className="comparison-line" key={`${index}:${line}`}>
+              {bonded ? <span>绑定（已激活）</span> : null}
               {translated ? <span lang="zh-Hans">{translated}</span> : null}
               <code lang="en">{line}</code>
             </div>

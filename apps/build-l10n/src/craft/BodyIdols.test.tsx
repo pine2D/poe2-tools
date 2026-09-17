@@ -77,6 +77,12 @@ it('胸甲雕像绑定由Fox开启和移除，普通符文不激活，取消与�
   expect(screen.getByLabelText('孔位 1 绑定效果').textContent).toContain('已激活')
   expect(screen.getByLabelText('孔位 2 绑定效果').textContent).toContain('已激活')
   expect(resistance('混沌抗性')).toBe('8%')
+  click('展开前后变化')
+  expect(screen.getByLabelText('孔位 1 · 操作前').textContent).not.toContain('Bonded:')
+  expect(screen.getByLabelText('孔位 1 · 操作后').textContent).toContain(
+    'Bonded: +8% to Chaos Resistance',
+  )
+  expect(screen.getByLabelText('孔位 1 · 操作后').textContent).toContain('绑定（已激活）')
   change('目标孔位', '2')
   change('选择镶嵌符文', id('Desert Rune', 'armour'))
   click('应用镶嵌')
@@ -86,6 +92,10 @@ it('胸甲雕像绑定由Fox开启和移除，普通符文不激活，取消与�
   change('选择镶嵌符文', id('Rabbit Idol'))
   click('应用镶嵌')
   expect(resistance('混沌抗性')).toBe('0%')
+  expect(screen.getByLabelText('孔位 1 · 操作前').textContent).toContain(
+    'Bonded: +8% to Chaos Resistance',
+  )
+  expect(screen.getByLabelText('孔位 1 · 操作后').textContent).not.toContain('Bonded:')
   expect(screen.getByLabelText('孔位 1 绑定效果').textContent).toContain('未激活')
   click('撤销')
   const project = save()
@@ -138,6 +148,12 @@ it('中文多行条件与绑定观察导入后可替换，原文不随后续Fox�
   change('选择镶嵌符文', id('Stoat Idol'))
   click('应用镶嵌')
   expect(screen.getByLabelText('孔位 1 绑定效果').textContent).toContain('未激活')
+  click('展开前后变化')
+  const before = screen.getByLabelText('孔位 1 · 操作前').textContent
+  expect(before).toContain('若你近期没有偏转击中，避免 +5% 的偏转击中伤害')
+  expect(before).toContain('绑定（已激活）')
+  expect(before).toContain('偏转值提高 8%')
+  expect(screen.getByLabelText('孔位 1 · 操作后').textContent).not.toContain('Bonded:')
   const saved = save()
   expect(saved.initialState.sourceText).toBe(exported.text)
   expect(saved.initialState.runeSourceLines).toEqual(imported.runeSourceLines)

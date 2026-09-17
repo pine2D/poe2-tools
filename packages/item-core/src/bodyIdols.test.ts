@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
 import { isBodyIdolId, isHelmetBootIdolId } from './armourIdols'
 import { catalog } from './catalystTestFixture'
+import { compareCraftStates } from './comparison'
 import { createCraftItemDictionary } from './craftDictionary'
 import { exportCraftItemText } from './craftItemText'
 import { applyCraftStep } from './craftSteps'
@@ -364,4 +365,35 @@ it('完整绑定观察与无绑定观察导入得到相同本件Fox贡献，历�
     })
     expect(replaced.value.runeSourceLines).toEqual(imported.value.runeSourceLines)
   }
+})
+
+it('Fox加入移除对比列出未换孔雕像绑定变化，普通Rune不多报且不改源数据', () => {
+  const before = state(['Panther Idol', 'Desert Rune', 'Iron Rune'])
+  const after = state(['Panther Idol', 'Desert Rune', 'Fox Idol'])
+  const original = JSON.stringify({ before, after, idols })
+  for (const [left, right, activated] of [
+    [before, after, true],
+    [after, before, false],
+  ] as const) {
+    const compared = compareCraftStates(catalog, left, right)
+    if (!compared.ok) throw Error(compared.error)
+    expect(compared.value.sockets?.map((change) => change.socketIndex)).toEqual([0, 2])
+    const panther = required(compared.value.sockets?.find((change) => change.socketIndex === 0))
+    expect(panther.beforeId).toBe(panther.afterId)
+    const main = required(idols.find((a) => a.name === 'Panther Idol')).lines
+    const active = [...main, 'Bonded: +8% to Chaos Resistance']
+    expect(panther.beforeLines).toEqual(activated ? main : active)
+    expect(panther.afterLines).toEqual(activated ? active : main)
+  }
+  expect(JSON.stringify({ before, after, idols })).toBe(original)
+})
+it('胸甲比较保留完整多行主效果，仅列已激活绑定效果', () => {
+  const before = state(['Carved Cunning', 'Iron Rune'])
+  const after = state(['Carved Cunning', 'Fox Idol'])
+  const compared = compareCraftStates(catalog, before, after)
+  if (!compared.ok) throw Error(compared.error)
+  const cunning = required(compared.value.sockets?.find((change) => change.socketIndex === 0))
+  const main = required(idols.find((a) => a.name === 'Carved Cunning')).lines.join('\n')
+  expect(cunning.beforeLines).toEqual([main])
+  expect(cunning.afterLines).toEqual([main, 'Bonded: 8% increased Deflection Rating'])
 })
