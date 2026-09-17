@@ -116,6 +116,11 @@ export function exportCraftItemText(
     return { ok: false, error: '待揭示亵渎不能导出装备文本，请保存项目以保留隐藏状态。' }
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
+  if (checked.value.declaredSkillLevel !== undefined)
+    return {
+      ok: false,
+      error: '起点最高技能等级是独立核对的声明，不能写成原生观察行；请保存制作项目或步骤清单。',
+    }
   if (
     checked.value.grantedSkillSockets !== undefined ||
     checked.value.declaredSkillSockets !== undefined

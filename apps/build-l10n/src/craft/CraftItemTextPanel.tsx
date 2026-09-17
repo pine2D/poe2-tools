@@ -36,6 +36,7 @@ export function CraftItemTextPanel({
   const loading =
     open &&
     state.grantedSkillLevel !== 20 &&
+    state.declaredSkillLevel === undefined &&
     state.grantedSkillSockets === undefined &&
     state.declaredSkillSockets === undefined &&
     locale !== 'en' &&
@@ -45,6 +46,7 @@ export function CraftItemTextPanel({
       !context.open ||
       context.locale === 'en' ||
       context.state.grantedSkillLevel === 20 ||
+      context.state.declaredSkillLevel !== undefined ||
       context.state.grantedSkillSockets !== undefined ||
       context.state.declaredSkillSockets !== undefined
     )
@@ -63,6 +65,7 @@ export function CraftItemTextPanel({
         ? null
         : locale === 'en' ||
             state.grantedSkillLevel === 20 ||
+            state.declaredSkillLevel !== undefined ||
             state.grantedSkillSockets !== undefined ||
             state.declaredSkillSockets !== undefined
           ? exportCraftItemText(catalog, state)

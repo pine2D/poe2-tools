@@ -7,6 +7,7 @@ import {
   type CraftState,
   catalystStoredQualityLimit,
   createCraftState,
+  declareInitialSkillLevel,
   declareInitialSkillSockets,
   fluxCatalogSignature,
   type ItemDictionary,
@@ -15,6 +16,7 @@ import {
   type RestoredTargetCraftProject,
   readBaseGrantedSkills,
   readCatalystQuality,
+  readCraftGrantedSkillLevel,
   readCraftGrantedSkillSockets,
   readItemQuality,
   resolveCraftImplicitPatterns,
@@ -63,6 +65,7 @@ export function CraftEntry({
   const [blankQuality, setBlankQuality] = useState(0)
   const [qualityDeclaration, setQualityDeclaration] = useState('')
   const [skillLevels, setSkillLevels] = useState<Record<number, string>>({})
+  const [skillLevelDeclaration, setSkillLevelDeclaration] = useState('')
   const [skillSocketDeclaration, setSkillSocketDeclaration] = useState('')
   const [beginError, setBeginError] = useState('')
   const [charmSlots, setCharmSlots] = useState(1)
@@ -162,7 +165,21 @@ export function CraftEntry({
   const startCharm = blankImplicit?.ok ? blankImplicit.value.charm : null
   const readOnlyImport =
     matchingImport && (imported.comparisonOnly || imported.item?.rarity === 'unique')
+  const knownImportedMaximum =
+    matchingImport && imported.skills?.length === 1 ? (imported.skills[0]?.maxLevel ?? null) : null
+  const canDeclareSkillLevel = blank.ok && readCraftGrantedSkillLevel(catalog, blank.value).ok
   function begin(state: CraftState, importedSockets?: (string | null)[], importedQuality?: number) {
+    if (
+      skillLevelDeclaration !== '' &&
+      (state.sourceText === null || knownImportedMaximum === null)
+    ) {
+      const declared = declareInitialSkillLevel(catalog, state, Number(skillLevelDeclaration))
+      if (!declared.ok) {
+        setBeginError(declared.error)
+        return
+      }
+      state = declared.value
+    }
     if (skillSocketDeclaration !== '') {
       const declared = declareInitialSkillSockets(catalog, state, Number(skillSocketDeclaration))
       if (!declared.ok) {
@@ -378,6 +395,36 @@ export function CraftEntry({
           </select>
           <small>仅用于新建普通基底；声明已有空孔，不消耗通货打孔，也不修改导入装备。</small>
         </label>
+      ) : null}
+      {canDeclareSkillLevel && !readOnlyImport ? (
+        <>
+          {knownImportedMaximum !== null ? (
+            <p>原文装备最高技能等级：{knownImportedMaximum}</p>
+          ) : null}
+          <label>
+            {knownImportedMaximum !== null ? '空白起点装备最高技能等级' : '起点装备最高技能等级'}
+            <select
+              aria-label={
+                knownImportedMaximum !== null ? '空白起点装备最高技能等级' : '起点装备最高技能等级'
+              }
+              value={skillLevelDeclaration}
+              onChange={(event) => setSkillLevelDeclaration(event.target.value)}
+            >
+              <option value="">尚未核对</option>
+              {Array.from({ length: 20 }, (_, index) => index + 1).map((level) => (
+                <option key={level} value={level}>
+                  {level} 级
+                </option>
+              ))}
+            </select>
+            <small>
+              {knownImportedMaximum !== null
+                ? '此声明仅用于从空白基底开始；当前导入装备继续使用原文最高等级。'
+                : '单独核对装备技能最高等级，不能用角色显示等级替代。'}
+              声明不计材料费用；修改后需重新开始才生效。
+            </small>
+          </label>
+        </>
       ) : null}
       {blank.ok && readCraftGrantedSkillSockets(catalog, blank.value).ok && !readOnlyImport ? (
         <label>

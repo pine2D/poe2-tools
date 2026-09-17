@@ -108,6 +108,7 @@ import {
   requiresRuneforgedArmourProjectVersion,
   requiresRuneforgeProjectVersion,
   requiresSerleProjectVersion,
+  requiresSkillLevelDeclarationProjectVersion,
   requiresSkillSocketsProjectVersion,
   requiresSkillSocketTargetProjectVersion,
   requiresWardRuneProjectVersion,
@@ -118,6 +119,7 @@ import {
   restoreTargetWorkbenchProject,
   runeforgingCatalogSignature,
   SERLE_RULES_VERSION,
+  SKILL_LEVEL_DECLARATION_RULES_VERSION,
   SKILL_SOCKET_TARGET_RULES_VERSION,
   SKILL_SOCKET_TIERS,
   SKILL_SOCKETS_RULES_VERSION,
@@ -429,6 +431,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [skillLevelDeclarationRules, setSkillLevelDeclarationRules] = useState(
+    initialProject?.project.rulesVersion === SKILL_LEVEL_DECLARATION_RULES_VERSION,
   )
   const [skillSocketTargetRules, setSkillSocketTargetRules] = useState(
     initialProject?.project.rulesVersion === SKILL_SOCKET_TARGET_RULES_VERSION,
@@ -1297,6 +1302,8 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const needsSkillLevelDeclaration =
+    skillLevelDeclarationRules || requiresSkillLevelDeclarationProjectVersion(projectConfig)
   const needsSkillSocketTargets =
     skillSocketTargetRules || requiresSkillSocketTargetProjectVersion(projectConfig)
   const needsSkillSockets = skillSocketsRules || requiresSkillSocketsProjectVersion(projectConfig)
@@ -1311,6 +1318,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsSkillLevelDeclaration ||
     needsSkillSocketTargets ||
     needsSkillSockets ||
     needsWeightedProperties ||
@@ -1347,43 +1355,46 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsSkillSocketTargets
-            ? SKILL_SOCKET_TARGET_RULES_VERSION
-            : needsSkillSockets
-              ? SKILL_SOCKETS_RULES_VERSION
-              : needsWeightedProperties
-                ? WEIGHTED_PROPERTY_RULES_VERSION
-                : needsGrantedSkillTargets
-                  ? GRANTED_SKILL_TARGET_RULES_VERSION
-                  : needsExtendedInfluenceBone
-                    ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                    : needsInfluenceBone
-                      ? INFLUENCE_BONE_RULES_VERSION
-                      : needsDestruction
-                        ? DESTRUCTION_RUNE_RULES_VERSION
-                        : needsInfluence
-                          ? INFLUENCE_RUNE_RULES_VERSION
-                          : needsDesecrationCount
-                            ? DESECRATION_COUNT_RULES_VERSION
-                            : putrefactionRules || requiresPutrefactionProjectVersion(projectConfig)
-                              ? PUTREFACTION_RULES_VERSION
-                              : needsPendingExaltation
-                                ? PENDING_EXALTATION_RULES_VERSION
-                                : needsEssenceOutcomes
-                                  ? ESSENCE_OUTCOMES_RULES_VERSION
-                                  : needsSerle
-                                    ? SERLE_RULES_VERSION
-                                    : needsCraftedCapacity
-                                      ? CRAFTED_CAPACITY_RULES_VERSION
-                                      : needsConditionalRunes
-                                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                        : needsMasterwork
-                                          ? MASTERWORK_CRAFT_RULES_VERSION
-                                          : needsExtendedRunes
-                                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                            : needsWardRunes
-                                              ? WARD_RUNE_RULES_VERSION
-                                              : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsSkillLevelDeclaration
+            ? SKILL_LEVEL_DECLARATION_RULES_VERSION
+            : needsSkillSocketTargets
+              ? SKILL_SOCKET_TARGET_RULES_VERSION
+              : needsSkillSockets
+                ? SKILL_SOCKETS_RULES_VERSION
+                : needsWeightedProperties
+                  ? WEIGHTED_PROPERTY_RULES_VERSION
+                  : needsGrantedSkillTargets
+                    ? GRANTED_SKILL_TARGET_RULES_VERSION
+                    : needsExtendedInfluenceBone
+                      ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                      : needsInfluenceBone
+                        ? INFLUENCE_BONE_RULES_VERSION
+                        : needsDestruction
+                          ? DESTRUCTION_RUNE_RULES_VERSION
+                          : needsInfluence
+                            ? INFLUENCE_RUNE_RULES_VERSION
+                            : needsDesecrationCount
+                              ? DESECRATION_COUNT_RULES_VERSION
+                              : putrefactionRules ||
+                                  requiresPutrefactionProjectVersion(projectConfig)
+                                ? PUTREFACTION_RULES_VERSION
+                                : needsPendingExaltation
+                                  ? PENDING_EXALTATION_RULES_VERSION
+                                  : needsEssenceOutcomes
+                                    ? ESSENCE_OUTCOMES_RULES_VERSION
+                                    : needsSerle
+                                      ? SERLE_RULES_VERSION
+                                      : needsCraftedCapacity
+                                        ? CRAFTED_CAPACITY_RULES_VERSION
+                                        : needsConditionalRunes
+                                          ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                          : needsMasterwork
+                                            ? MASTERWORK_CRAFT_RULES_VERSION
+                                            : needsExtendedRunes
+                                              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                              : needsWardRunes
+                                                ? WARD_RUNE_RULES_VERSION
+                                                : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1418,6 +1429,9 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setSkillLevelDeclarationRules(
+      restored.project.rulesVersion === SKILL_LEVEL_DECLARATION_RULES_VERSION,
+    )
     setSkillSocketTargetRules(restored.project.rulesVersion === SKILL_SOCKET_TARGET_RULES_VERSION)
     setSkillSocketsRules(restored.project.rulesVersion === SKILL_SOCKETS_RULES_VERSION)
     setWeightedPropertyRules(restored.project.rulesVersion === WEIGHTED_PROPERTY_RULES_VERSION)
@@ -2609,13 +2623,20 @@ export function RehearsalPanel({
           <p>辅助孔不表示已装入辅助宝石；技能等级与符文孔单独记录。</p>
         </section>
       ) : null}
-      {current.grantedSkillLevel === 20 && grantedSkill.ok ? (
+      {grantedSkill.ok && grantedSkill.value.level !== null ? (
         <section aria-label="当前装备技能结果" className="rehearsal-implicit">
           <h3>当前装备技能结果</h3>
           <p>
-            {translateLine?.(`Grants Skill: Level 20 ${grantedSkill.value.name}`) ??
-              grantedSkill.value.name}{' '}
-            · 装备技能最高等级 20
+            {translateLine?.(
+              `Grants Skill: Level ${grantedSkill.value.level} ${grantedSkill.value.name}`,
+            ) ?? grantedSkill.value.name}{' '}
+            · 装备技能最高等级 {grantedSkill.value.level}（
+            {current.grantedSkillLevel === 20
+              ? '演练结果'
+              : current.declaredSkillLevel !== undefined
+                ? '起点声明'
+                : '原文'}
+            ）
           </p>
           <p>角色当前使用等级未计算。</p>
         </section>

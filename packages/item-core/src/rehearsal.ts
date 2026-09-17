@@ -125,6 +125,8 @@ export interface CraftAffix {
 }
 
 export interface CraftState {
+  /** 起点核对的装备最高技能等级；独立于角色显示级和制作结果。 */
+  declaredSkillLevel?: number
   /** 完美溶剂产生的装备技能结果；原固有行仍为起点观察，不推导角色当前等级。 */
   grantedSkillLevel?: 20
   /** 工匠石产生的技能辅助孔结果；缺省表示未知，与符文孔独立。 */

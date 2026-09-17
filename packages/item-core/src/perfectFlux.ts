@@ -72,12 +72,50 @@ export function grantedSkillLevelStateError(
   catalog: CraftCatalog,
   state: CraftState,
 ): string | null {
-  if (!('grantedSkillLevel' in state)) return null
-  const descriptor = Object.getOwnPropertyDescriptor(state, 'grantedSkillLevel')
-  if (!descriptor?.enumerable || !Object.hasOwn(descriptor, 'value') || descriptor.value !== 20)
-    return '装备技能升级结果只能是自有数据字段中的明确 20 或缺省。'
+  const hasResult = 'grantedSkillLevel' in state
+  const hasDeclaration = 'declaredSkillLevel' in state
+  if (!hasResult && !hasDeclaration) return null
+  if (hasResult) {
+    const descriptor = Object.getOwnPropertyDescriptor(state, 'grantedSkillLevel')
+    if (!descriptor?.enumerable || !Object.hasOwn(descriptor, 'value') || descriptor.value !== 20)
+      return '装备技能升级结果只能是自有数据字段中的明确 20 或缺省。'
+  }
+  if (hasDeclaration) {
+    const descriptor = Object.getOwnPropertyDescriptor(state, 'declaredSkillLevel')
+    if (
+      !descriptor?.enumerable ||
+      !Object.hasOwn(descriptor, 'value') ||
+      !Number.isSafeInteger(descriptor.value) ||
+      descriptor.value < 1 ||
+      descriptor.value > 20
+    )
+      return '装备最高技能等级声明只能是自有数据字段中的 1–20 整数或缺省。'
+  }
   const skill = readSingleGrantedSkill(catalog, state)
-  return skill.ok ? null : skill.error
+  if (!skill.ok) return skill.error
+  if (state.declaredSkillLevel !== undefined) {
+    if (state.declaredSkillLevel < skill.value.minimumPreviousMaxLevel)
+      return '装备最高技能等级声明不能低于原文显示等级或目录下限。'
+    if (
+      skill.value.previousMaxLevel !== null &&
+      state.declaredSkillLevel !== skill.value.previousMaxLevel
+    )
+      return '装备最高技能等级声明必须与原文的最高等级一致。'
+  }
+  return null
+}
+
+/** 只核对起点，不施用材料，也不改写角色观察行。 */
+export function declareInitialSkillLevel(
+  catalog: CraftCatalog,
+  state: CraftState,
+  level: number,
+): CraftResult<CraftState> {
+  const checked = createCraftState(catalog, state)
+  if (!checked.ok) return checked
+  if (checked.value.grantedSkillLevel !== undefined)
+    return fail('已有技能升级结果，请从原始装备重新开始后声明起点最高技能等级。')
+  return createCraftState(catalog, { ...checked.value, declaredSkillLevel: level })
 }
 
 export function inspectPerfectFluxCraft(
@@ -93,11 +131,18 @@ export function inspectPerfectFluxCraft(
   if (!result.ok) return result
   if (
     state.grantedSkillLevel === 20 ||
+    state.declaredSkillLevel === 20 ||
     result.value.previousMaxLevel === 20 ||
     result.value.minimumPreviousMaxLevel >= 20
   )
     return fail('装备技能已升级或已观察到 20 级，不能再次消费完美溶剂。')
-  return result
+  return {
+    ok: true,
+    value: {
+      ...result.value,
+      previousMaxLevel: state.declaredSkillLevel ?? result.value.previousMaxLevel,
+    },
+  }
 }
 
 export function preparePerfectFluxCraft(
@@ -116,7 +161,7 @@ export function preparePerfectFluxCraft(
       `请声明操作前装备最高等级，须为 ${result.value.minimumPreviousMaxLevel}–19 的整数。`,
     )
   if (result.value.previousMaxLevel !== null && result.value.previousMaxLevel !== previousMaxLevel)
-    return fail('操作前最高等级声明必须与原文的最高等级一致。')
+    return fail('操作前最高等级必须与当前已知最高等级一致。')
   return { ok: true, value: { ...result.value, previousMaxLevel } }
 }
 
@@ -143,7 +188,8 @@ export function readCraftGrantedSkillLevel(
         ok: true,
         value: {
           name: skill.value.skillName,
-          level: state.grantedSkillLevel ?? skill.value.previousMaxLevel,
+          level:
+            state.grantedSkillLevel ?? state.declaredSkillLevel ?? skill.value.previousMaxLevel,
         },
       }
     : skill

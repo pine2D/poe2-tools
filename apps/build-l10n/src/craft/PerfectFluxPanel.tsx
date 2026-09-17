@@ -51,7 +51,12 @@ export function PerfectFluxPanel({
           {configuredLevel !== undefined || knownLevel !== null ? (
             <p>
               操作前装备技能最高等级：{previousMaxLevel}（
-              {configuredLevel !== undefined ? '指引声明' : '原文已确认'}）
+              {configuredLevel !== undefined
+                ? '指引声明'
+                : state.declaredSkillLevel !== undefined
+                  ? '起点声明'
+                  : '原文已确认'}
+              ）
             </p>
           ) : (
             <label>

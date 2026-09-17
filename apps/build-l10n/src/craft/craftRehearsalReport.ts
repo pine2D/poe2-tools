@@ -97,7 +97,9 @@ export function buildCraftRehearsalReport(input: CraftRehearsalReportInput): Cra
       )
     const skill = readCraftGrantedSkillLevel(catalog, state)
     if (skill.ok)
-      result.push(`装备技能最高等级：${skill.value.level ?? '未知'}；${name(skill.value.name)}`)
+      result.push(
+        `装备技能最高等级：${skill.value.level ?? '未知'}${state.grantedSkillLevel === 20 ? '（演练结果）' : state.declaredSkillLevel !== undefined ? '（起点声明）' : ''}；${name(skill.value.name)}`,
+      )
     if (state.grantedSkillLevel !== undefined)
       result.push('原固有技能行为起点观察；上方为升级后的装备最高等级，角色当前等级未计算。')
     const implicits = state.implicitLines ?? currentBase?.implicit?.split('\n') ?? []

@@ -374,6 +374,7 @@ export {
 } from './pendingExaltationProjectVersion'
 export {
   applyPerfectFluxCraft,
+  declareInitialSkillLevel,
   type InspectedPerfectFluxCraft,
   inspectPerfectFluxCraft,
   isPerfectFluxCraftOperation,
@@ -441,6 +442,10 @@ export {
   estimateSkillLevelContributions,
   type SkillLevelContribution,
 } from './skillLevelContributions'
+export {
+  requiresSkillLevelDeclarationProjectVersion,
+  SKILL_LEVEL_DECLARATION_RULES_VERSION,
+} from './skillLevelDeclarationProjectVersion'
 export {
   applySkillSocketsCraft,
   declareInitialSkillSockets,
