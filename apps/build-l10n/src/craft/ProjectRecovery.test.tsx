@@ -175,3 +175,18 @@ it('目录或词典上下文变化使等待锁的旧序列化结果失效', asyn
   expect(localStorage.getItem(RECOVERY_KEY)).toBeNull()
   expect(screen.getByText('新目录校验失败')).toBeDefined()
 })
+
+it('连续编辑不提前回放完整历史，仅稳定后的保存校验一次', async () => {
+  const serialize = vi.fn(getText)
+  const props = { getText: serialize, onRestoreText: vi.fn() }
+  const view = render(<ProjectRecovery {...props} project={{}} />)
+  view.rerender(<ProjectRecovery {...props} project={{}} />)
+  view.rerender(<ProjectRecovery {...props} project={{}} />)
+  expect(serialize).not.toHaveBeenCalled()
+  await advance()
+  expect(serialize).toHaveBeenCalledTimes(1)
+  view.rerender(<ProjectRecovery {...props} project={{}} />)
+  expect(serialize).toHaveBeenCalledTimes(1)
+  await advance()
+  expect(serialize).toHaveBeenCalledTimes(2)
+})

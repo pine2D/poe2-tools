@@ -13,8 +13,8 @@ export function ProjectRecovery({ project, context, getText, onRestoreText }: Pr
   const [raw, setRaw] = useState<string | null>(null)
   const [mode, setMode] = useState<'loading' | 'ready' | 'paused'>('loading')
   const [message, setMessage] = useState('正在读取自动恢复记录。新更改约半秒后保存。')
-  const current = useRef({ project, context, getText, onRestoreText })
-  current.current = { project, context, getText, onRestoreText }
+  const current = useRef({ project, context, getText, onRestoreText, mode })
+  current.current = { project, context, getText, onRestoreText, mode }
   const observed = useRef<string | null>(null)
   const generation = useRef(0)
   const writing = useRef<number | null>(null)
@@ -103,10 +103,11 @@ export function ProjectRecovery({ project, context, getText, onRestoreText }: Pr
   useEffect(() => {
     // 校验目录或词典变化时重新核对相同项目。
     void context
-    if (project === undefined) return
-    const checked = current.current.getText()
+    if (project === undefined || current.current.mode === 'ready') return
     const saved = readRecovery(observed.current)
-    if (checked.ok && saved && sameRecoveryProject(saved.text, checked.value)) setMode('ready')
+    if (!saved) return
+    const checked = current.current.getText()
+    if (checked.ok && sameRecoveryProject(saved.text, checked.value)) setMode('ready')
   }, [project, context])
 
   useEffect(() => {
