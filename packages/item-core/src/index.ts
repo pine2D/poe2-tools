@@ -247,6 +247,11 @@ export {
   requiresExtendedArmourRuneProjectVersion,
 } from './extendedArmourRuneProjectVersion'
 export {
+  EXTENDED_INFLUENCE_BONE_RULES_VERSION,
+  extendedInfluenceBoneProjectCapabilityError,
+  requiresExtendedInfluenceBoneProjectVersion,
+} from './extendedInfluenceBoneProjectVersion'
+export {
   applyExtractionCraft,
   type ExtractionCraftOperation,
   type ExtractionReturn,

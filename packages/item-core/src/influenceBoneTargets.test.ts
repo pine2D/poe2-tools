@@ -22,6 +22,21 @@ import { planCraftTargetRoutes } from './targetRoutes'
 const catalog: CraftCatalog = JSON.parse(readFileSync('data/craft/catalog.json', 'utf8'))
 const cases = [
   [
+    'Vile Robe',
+    "Medved's Tending",
+    'body armour',
+    'SoulInfluenceManaDefencesHybridEnergyShield',
+    'preserved_rib',
+  ],
+  ['Adherent Cuffs', "Katla's Gloom", 'gloves', 'DecayInfluenceFasterLeech1', 'preserved_rib'],
+  [
+    'Wicker Tiara',
+    "Vorana's Carnage",
+    'helmet',
+    'BerserkInfluenceRageCostEfficiency2',
+    'preserved_rib',
+  ],
+  [
     'Wrapped Sandals',
     "Uhtred's Sidereus",
     'boots',

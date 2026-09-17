@@ -450,3 +450,11 @@ GGG 0.5.0 的“替换已有词缀并加入工艺词缀”仍为 primary 流程�
 人工阅读 [Chronomancy 亵渎回答](https://www.reddit.com/r/PathOfExile2/comments/1ua53i8/can_you_desecrate_a_destruction_modifier/)与[作者 Thrud 长杖制作记录](https://www.reddit.com/r/PoECrafting/comments/1ue6fxh/did_l_scam_these_buyers/)。归为 gray 玩家第一手经验，不是官方规则；仅保存链接与自写机制摘要，不复制装备、图片、价格、统计或词缀表。前者自述鞋子曾通过亵渎获得移速／减缓效力复合词缀；后者明确在已有 Thrud 后施加骨骼、追加前缀再揭示，但未列骨骼档位和揭示三候选。不能据此推定六族全覆盖、巫妖／回响／腐烂组合、完整池或概率；详见绑定符文核对文档。没有新增网络适配器。
 
 [Kolr 手套制作者原帖](https://www.reddit.com/r/PathOfExile2/comments/1u6sljr/finished_my_glove_craft_for_my_bow_martial_artist/)同属 gray 人工机制参考。2026-09-17 从搜索索引取得作者正文，直连全文读取失败；作者描述镶入 Kolr 后亵渎取得地形连锁，不满意则使用光明预兆重试。只登记链接与自写摘要，不保存装备、成本或图片。此证据支持普通骨骼交互方向，不能证明当前版所有候选、材料档位或概率；模拟候选继续来自已登记 MIT 快照，并明确区分规则推导与实测。
+
+2026-09-17 补充以下 gray 原始玩家记录，已读取公开正文，只保留链接及自写摘要，不复制装备、图片、价格、概率或候选数据：
+
+- [Soul 胸甲制作记录](https://www.reddit.com/r/PathOfExile2/comments/1ubg1cp/non_eb_mana_stacker_chest_with_the_new_soul/)明确在 Medved 来源存在时，先用普通属性占位，再光明剥离并揭示能量护盾／魔力混合词缀。
+- [Decay 手套制作记录](https://www.reddit.com/r/PathOfExile2/comments/1v7rnik/expected_a_warrior_buyer_but_a_monk_showed_up_for/)在最终后缀亵渎步骤列出生命偷取等 Decay 候选；[另一作者](https://www.reddit.com/r/PathOfExile2/comments/1uatel8/way_of_the_stonefist_glove_craft/)描述先镶 Decay 符文，再揭示普通奥术增强并剥离重试。
+- [Vorana 制作者实验自述](https://www.reddit.com/r/pathofexile2builds/comments/1typtkt/very_nice_new_helmet_affix_for_rampage_bear_with/)报告腐烂尝试中出现怒火消耗效率；最终展示装备是购入，不冒称其制作成果。其次数不能作为权重。普通揭示候选属于既有普通池与来源标签的规则组合推导；[战吼头盔求助回复](https://www.reddit.com/r/PoECrafting/comments/1wfbr3z/warcry_gemling_helmet_craft_help/)只是拟议普通骨骼路线，不当作实测。
+
+这些记录不足以证明全部预兆组合、材料档位、版本一致性或真实概率。候选仍来自固定 MIT ModItem/ModRunes，腐烂占位规则沿用已登记规则；没有新增抓取适配器或第三方数据包。

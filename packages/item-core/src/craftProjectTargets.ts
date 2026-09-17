@@ -49,6 +49,11 @@ import {
   requiresExtendedArmourRuneProjectVersion,
 } from './extendedArmourRuneProjectVersion'
 import {
+  EXTENDED_INFLUENCE_BONE_RULES_VERSION,
+  extendedInfluenceBoneProjectCapabilityError,
+  requiresExtendedInfluenceBoneProjectVersion,
+} from './extendedInfluenceBoneProjectVersion'
+import {
   EXTRACTION_CRAFT_RULES_VERSION,
   requiresExtractionProjectVersion,
 } from './extractionProjectVersion'
@@ -168,6 +173,7 @@ export interface TargetCraftProject
     | typeof WARD_RUNE_RULES_VERSION
     | typeof RUNEFORGE_CRAFT_RULES_VERSION
     | typeof PENDING_EXALTATION_RULES_VERSION
+    | typeof EXTENDED_INFLUENCE_BONE_RULES_VERSION
     | typeof INFLUENCE_BONE_RULES_VERSION
     | typeof DESTRUCTION_RUNE_RULES_VERSION
     | typeof INFLUENCE_RUNE_RULES_VERSION
@@ -347,6 +353,7 @@ export function parseTargetCraftProject(
       EXTENDED_ARMOUR_RUNE_RULES_VERSION,
       ESSENCE_OUTCOMES_RULES_VERSION,
       PENDING_EXALTATION_RULES_VERSION,
+      EXTENDED_INFLUENCE_BONE_RULES_VERSION,
       INFLUENCE_BONE_RULES_VERSION,
       DESTRUCTION_RUNE_RULES_VERSION,
       INFLUENCE_RUNE_RULES_VERSION,
@@ -361,9 +368,17 @@ export function parseTargetCraftProject(
     return {
       ok: false,
       error:
-        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89、v90、v91、v92、v93、v94 或 v95 规则版本。',
+        '目标项目必须使用精确的 v74、v75、v76、v77、v78、v79、v80、v81、v82、v83、v84、v85、v86、v87、v88、v89、v90、v91、v92、v93、v94、v95 或 v96 规则版本。',
     }
-  const influenceBones = original.rulesVersion === INFLUENCE_BONE_RULES_VERSION
+  const extendedInfluenceBones = original.rulesVersion === EXTENDED_INFLUENCE_BONE_RULES_VERSION
+  if (!extendedInfluenceBones && requiresExtendedInfluenceBoneProjectVersion(original))
+    return { ok: false, error: '扩展符文骨骼必须使用 v96 项目，包括起点、完整未来和未执行指引。' }
+  const extendedBoneError = extendedInfluenceBones
+    ? extendedInfluenceBoneProjectCapabilityError(original, catalog)
+    : null
+  if (extendedBoneError) return { ok: false, error: extendedBoneError }
+  const influenceBones =
+    extendedInfluenceBones || original.rulesVersion === INFLUENCE_BONE_RULES_VERSION
   if (!influenceBones && requiresInfluenceBoneProjectVersion(original))
     return { ok: false, error: '符文骨骼必须使用 v95 项目，包括起点、完整未来和未执行指引。' }
   const influenceBoneError = influenceBones
@@ -562,6 +577,7 @@ export function parseTargetCraftProject(
       influenceRunes,
       destructionRunes,
       influenceBones,
+      extendedInfluenceBones,
     )
     if (!history.ok) return history
     capacityContext =
@@ -619,6 +635,7 @@ export function parseTargetCraftProject(
         influenceRunes,
         destructionRunes,
         influenceBones,
+        extendedInfluenceBones,
       )
     : null
   if (replay && !replay.ok) return replay
@@ -640,47 +657,49 @@ export function parseTargetCraftProject(
   if (!checked.ok) return checked
   const project = withTargetContext(checked.value.project, context.value)
   if (native) {
-    project.rulesVersion = influenceBones
-      ? INFLUENCE_BONE_RULES_VERSION
-      : destructionRunes
-        ? DESTRUCTION_RUNE_RULES_VERSION
-        : influenceRunes
-          ? INFLUENCE_RUNE_RULES_VERSION
-          : desecrationCount
-            ? DESECRATION_COUNT_RULES_VERSION
-            : putrefaction
-              ? PUTREFACTION_RULES_VERSION
-              : pendingExaltation
-                ? PENDING_EXALTATION_RULES_VERSION
-                : essenceOutcomes
-                  ? ESSENCE_OUTCOMES_RULES_VERSION
-                  : serle
-                    ? SERLE_RULES_VERSION
-                    : craftedCapacity
-                      ? CRAFTED_CAPACITY_RULES_VERSION
-                      : conditionalRunes
-                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                        : masterwork
-                          ? MASTERWORK_CRAFT_RULES_VERSION
-                          : extendedArmourRunes
-                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                            : wardRunes
-                              ? WARD_RUNE_RULES_VERSION
-                              : runeforge
-                                ? RUNEFORGE_CRAFT_RULES_VERSION
-                                : runeforgedArmour
-                                  ? RUNEFORGED_ARMOUR_RULES_VERSION
-                                  : combatArmourRunes
-                                    ? COMBAT_ARMOUR_RUNE_RULES_VERSION
-                                    : retainedCatalyst
-                                      ? RETAINED_CATALYST_RULES_VERSION
-                                      : corruptionStrategy
-                                        ? CORRUPTION_STRATEGY_RULES_VERSION
-                                        : extraction
-                                          ? EXTRACTION_CRAFT_RULES_VERSION
-                                          : perfectFlux
-                                            ? PERFECT_FLUX_CRAFT_RULES_VERSION
-                                            : FLUX_CRAFT_RULES_VERSION
+    project.rulesVersion = extendedInfluenceBones
+      ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+      : influenceBones
+        ? INFLUENCE_BONE_RULES_VERSION
+        : destructionRunes
+          ? DESTRUCTION_RUNE_RULES_VERSION
+          : influenceRunes
+            ? INFLUENCE_RUNE_RULES_VERSION
+            : desecrationCount
+              ? DESECRATION_COUNT_RULES_VERSION
+              : putrefaction
+                ? PUTREFACTION_RULES_VERSION
+                : pendingExaltation
+                  ? PENDING_EXALTATION_RULES_VERSION
+                  : essenceOutcomes
+                    ? ESSENCE_OUTCOMES_RULES_VERSION
+                    : serle
+                      ? SERLE_RULES_VERSION
+                      : craftedCapacity
+                        ? CRAFTED_CAPACITY_RULES_VERSION
+                        : conditionalRunes
+                          ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                          : masterwork
+                            ? MASTERWORK_CRAFT_RULES_VERSION
+                            : extendedArmourRunes
+                              ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                              : wardRunes
+                                ? WARD_RUNE_RULES_VERSION
+                                : runeforge
+                                  ? RUNEFORGE_CRAFT_RULES_VERSION
+                                  : runeforgedArmour
+                                    ? RUNEFORGED_ARMOUR_RULES_VERSION
+                                    : combatArmourRunes
+                                      ? COMBAT_ARMOUR_RUNE_RULES_VERSION
+                                      : retainedCatalyst
+                                        ? RETAINED_CATALYST_RULES_VERSION
+                                        : corruptionStrategy
+                                          ? CORRUPTION_STRATEGY_RULES_VERSION
+                                          : extraction
+                                            ? EXTRACTION_CRAFT_RULES_VERSION
+                                            : perfectFlux
+                                              ? PERFECT_FLUX_CRAFT_RULES_VERSION
+                                              : FLUX_CRAFT_RULES_VERSION
     if (needsRuneforging)
       project.runeforgingCatalogSignature = original.runeforgingCatalogSignature as string
     if (requiresFlux) project.fluxCatalogSignature = original.fluxCatalogSignature as string

@@ -70,6 +70,7 @@ function BoneCraftEditor({
 }: BoneCraftPanelProps) {
   const id = useId()
   const influence = influenceRuneTags(catalog, state)
+  const hasInfluence = influence.ok && influence.value.length > 0
   const [boneId, setBoneId] = useState<CraftBone | null>(configuration?.boneId ?? null)
   const [directionOmen, setDirectionOmen] = useState<BoneDirectionOmen | null>(
     configuration?.directionOmen ?? null,
@@ -92,7 +93,11 @@ function BoneCraftEditor({
     group: 'first' | 'second'
   } | null>(null)
   const pending = state.pendingDesecration
-  const echoesError = pending ? boneRevealOmenError(pending, 'abyssal_echoes') : null
+  const echoesError = hasInfluence
+    ? '影响符文与深渊回响的交互待核实，暂不支持此组合。'
+    : pending
+      ? boneRevealOmenError(pending, 'abyssal_echoes')
+      : null
   const echoesLabel = boneRevealOmenLabel('abyssal_echoes', catalog, translations)
   const materials = useMemo(
     () =>
@@ -125,6 +130,15 @@ function BoneCraftEditor({
     () => (boneId && putrefaction ? preparePutrefaction(catalog, state, boneId) : null),
     [catalog, state, boneId, putrefaction],
   )
+  const influencePutrefaction = useMemo(
+    () =>
+      hasInfluence && !pending
+        ? preparePutrefaction(catalog, state, boneId ?? 'preserved_rib')
+        : null,
+    [catalog, state, boneId, hasInfluence, pending],
+  )
+  const putrefactionError =
+    influencePutrefaction && !influencePutrefaction.ok ? influencePutrefaction.error : null
   const selectedOmenLabels = boneOmenLabels(pending ?? config, catalog, translations)
   const resetResult = () => {
     setKind(null)
@@ -343,10 +357,11 @@ function BoneCraftEditor({
       <p>
         指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份施加预兆；回响在固定首组时另计一份，重选与最终揭示不重复计费。
       </p>
-      {influence.ok && influence.value.length > 0 ? (
+      {hasInfluence ? (
         <p>
-          影响符文的骨骼候选按目录与规则推导，尚未逐项游戏实测；目前仅开放 Uhtred、Kolr、Thrud
-          的普通骨骼组合，巫妖、回响及腐烂交互待核实。
+          影响符文的骨骼候选按目录与规则推导，尚未逐项游戏实测；Uhtred、Kolr、Thrud、Medved、Katla、Vorana
+          均支持普通骨骼，Vorana
+          另支持保存完好的肋骨与腐烂预兆。影响符文的巫妖、回响及其他腐烂组合待核实。
         </p>
       ) : null}
       {disabled ? <p>请先应用或取消当前草稿。</p> : null}
@@ -389,7 +404,11 @@ function BoneCraftEditor({
               type="checkbox"
               aria-label="使用腐烂预兆"
               checked={putrefaction}
-              disabled={disabled || configuration !== undefined}
+              disabled={
+                disabled ||
+                configuration !== undefined ||
+                (!putrefaction && Boolean(putrefactionError))
+              }
               onChange={(event) => {
                 setPutrefaction(event.target.checked)
                 resetResult()
@@ -399,6 +418,7 @@ function BoneCraftEditor({
             />
             使用{localize('Omen of Putrefaction')}
           </label>
+          {putrefactionError ? <p role="status">{putrefactionError}</p> : null}
           {putrefaction ? (
             <>
               <p>替换非破裂词缀并腐化装备，随后逐槽从普通候选中选择。请先完成品质与插槽准备。</p>
@@ -449,7 +469,7 @@ function BoneCraftEditor({
                 骨骼巫妖预兆
                 <select
                   aria-label="骨骼巫妖预兆"
-                  disabled={disabled || configuration !== undefined}
+                  disabled={disabled || configuration !== undefined || hasInfluence}
                   value={lichOmen ?? ''}
                   onChange={(event) => {
                     setLichOmen(

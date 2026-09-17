@@ -159,7 +159,7 @@ export function influenceRuneSourceMatches(
 
 /** 不输出未经核对的部分候选池；准备入口和待揭示状态共用此边界。 */
 export function supportsInfluenceDesecration(tags: readonly string[]): boolean {
-  return tags.length === 1 && ['chronomancy', 'marksman', 'destruction'].includes(tags[0] ?? '')
+  return tags.length === 1 && INFLUENCE_RUNES.some((rule) => rule.tag === tags[0])
 }
 
 export function influenceBoneError(
@@ -175,7 +175,7 @@ export function influenceBoneError(
           !supportsInfluenceDesecration(source.value) ||
           context.lichOmen !== undefined ||
           context.revealOmen !== undefined ||
-          context.putrefaction !== undefined)
+          (context.putrefaction !== undefined && source.value[0] !== 'berserking'))
       ? '扩展词缀池符文与骨骼揭示的交互尚未核实。'
       : null
 }

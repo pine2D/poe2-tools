@@ -132,8 +132,11 @@ it.each([
   ["Medved's Tending", 'body armour', "Adherent's Raiment"],
   ["Vorana's Carnage", 'helmet', 'Wicker Tiara'],
   ["Katla's Gloom", 'gloves', 'Adherent Cuffs'],
-])('未核实的 %s 骨骼交互仍不开放', (name, category, baseId) => {
+])('%s 普通骨骼开放但巫妖交互仍受限制', (name, category, baseId) => {
   const initial = state(name, category, baseId)
   expect(createCraftState(catalog, initial).ok).toBe(true)
-  expect(prepareDesecration(catalog, initial, 'preserved_rib').ok).toBe(false)
+  expect(prepareDesecration(catalog, initial, 'preserved_rib').ok).toBe(true)
+  expect(prepareDesecration(catalog, initial, 'preserved_rib', { lichOmen: 'liege' }).ok).toBe(
+    false,
+  )
 })

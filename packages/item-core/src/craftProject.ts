@@ -36,6 +36,7 @@ import {
 } from './essences'
 import { type ItemDictionary, inspectItem } from './export'
 import { requiresExtendedArmourRuneProjectVersion } from './extendedArmourRuneProjectVersion'
+import { requiresExtendedInfluenceBoneProjectVersion } from './extendedInfluenceBoneProjectVersion'
 import { isExtractionCraftOperation } from './extraction'
 import { requiresExtractionProjectVersion } from './extractionProjectVersion'
 import { isFluxCraftOperation } from './fluxCraft'
@@ -683,6 +684,7 @@ export function readNativeTargetProjectProjection(
   influenceRunes = false,
   destructionRunes = false,
   influenceBones = false,
+  extendedInfluenceBones = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -710,6 +712,7 @@ export function readNativeTargetProjectProjection(
     influenceRunes,
     destructionRunes,
     influenceBones,
+    extendedInfluenceBones,
   )
 }
 
@@ -739,6 +742,7 @@ function readCraftProject(
   influenceRunes = false,
   destructionRunes = false,
   influenceBones = false,
+  extendedInfluenceBones = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -757,6 +761,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!extendedInfluenceBones && requiresExtendedInfluenceBoneProjectVersion(value))
+    return fail('扩展符文骨骼必须使用 v96 项目，包括起点、完整未来和未执行指引。')
   if (!influenceBones && requiresInfluenceBoneProjectVersion(value))
     return fail('符文骨骼必须使用 v95 项目，包括起点、完整未来和未执行指引。')
   if (!destructionRunes && requiresDestructionRuneProjectVersion(value))

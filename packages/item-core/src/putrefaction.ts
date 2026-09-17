@@ -11,7 +11,7 @@ import { type CraftAffix, type CraftResult, type CraftState, createCraftState } 
 
 /** 暂只开放有直接依据的固有容量，避免推定增容或特殊工艺组合。 */
 export function putrefactionCapacityError(catalog: CraftCatalog, state: CraftState): string | null {
-  const influenceError = influenceBoneError(catalog, state)
+  const influenceError = influenceBoneError(catalog, state, { putrefaction: true })
   if (influenceError) return influenceError
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return '基底不在目录中。'

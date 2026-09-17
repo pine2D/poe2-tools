@@ -203,7 +203,7 @@ it.each(['en', 'zh-CN', 'zh-TW'] as const)(
   },
 )
 
-it('破裂保留普通影响来源，工艺与亵渎标记不能取得同一资格', () => {
+it('破裂与亵渎保留影响来源，工艺不能取得同一资格', () => {
   const start = socket("Medved's Tending", 'body armour', "Adherent's Raiment")
   const affix = {
     modId: 'SoulInfluenceIncreasedLifeAndMana',
@@ -216,10 +216,12 @@ it('破裂保留普通影响来源，工艺与亵渎标记不能取得同一资�
     affixes: [{ ...affix, fractured: true as const }],
     nextAffixId: 2,
   }
-  for (const source of [{ crafted: true as const }, { desecrated: true as const }])
-    expect(createCraftState(catalog, { ...state, affixes: [{ ...affix, ...source }] }).ok).toBe(
-      false,
-    )
+  expect(createCraftState(catalog, { ...state, affixes: [{ ...affix, crafted: true }] }).ok).toBe(
+    false,
+  )
+  expect(
+    createCraftState(catalog, { ...state, affixes: [{ ...affix, desecrated: true }] }).ok,
+  ).toBe(true)
   const dictionary = createCraftItemDictionary(catalog)
   const text = must(exportCraftItemText(catalog, state, { locale: 'en', dictionary })).text
   const parsed = parseItem(text)
@@ -236,7 +238,7 @@ it('破裂保留普通影响来源，工艺与亵渎标记不能取得同一资�
   expect(read.affixes[0]?.fractured).toBe(true)
 })
 
-it('特殊容量共存与骨骼词缀池交互未核实，准备与已有状态均明确拒绝', () => {
+it('特殊容量共存与 Soul 腐烂仍拒绝，普通骨骼准备和状态允许', () => {
   const state = {
     ...socket("Medved's Tending", 'body armour', "Adherent's Raiment"),
     rarity: 'rare' as const,
@@ -262,16 +264,13 @@ it('特殊容量共存与骨骼词缀池交互未核实，准备与已有状态�
     ok: false,
     error: expect.stringContaining('尚未核实'),
   })
-  expect(prepareDesecration(catalog, state, 'preserved_rib')).toMatchObject({
-    ok: false,
-    error: expect.stringContaining('尚未核实'),
-  })
+  expect(prepareDesecration(catalog, state, 'preserved_rib').ok).toBe(true)
   expect(
     createCraftState(catalog, {
       ...state,
       pendingDesecration: { boneId: 'preserved_rib', kind: 'prefix' },
     }).ok,
-  ).toBe(false)
+  ).toBe(true)
 })
 
 it('不能把无关符文原文的检查结果伪造成开放词缀池声明', () => {
