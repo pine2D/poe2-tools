@@ -210,7 +210,10 @@ it.each(['Lament', 'Portent', 'Absent'])('%s 点金/崇高到实际容量上限�
 it('技能变体没有通用固有数值目标，但查询仍有效', () => {
   expect(craftImplicitTargetCandidates(catalog, state('Lament'))).toMatchObject({
     ok: true,
-    value: [{ kind: 'granted-skill-sockets', lineIndex: 1, actual: [null] }],
+    value: [
+      { kind: 'granted-skill', lineIndex: 1, actual: [null] },
+      { kind: 'granted-skill-sockets', lineIndex: 1, actual: [null] },
+    ],
   })
 })
 
@@ -267,7 +270,7 @@ it.each(['Lament', 'Portent', 'Absent'])(
       value: { implicitLines: initial.implicitLines, pendingDesecration: { kind: 'prefix' } },
     })
     expect(catalystQualityLimit(base(name))).toBeNull()
-    expect(inspectPerfectFluxCraft(catalog, initial).ok).toBe(false)
+    expect(inspectPerfectFluxCraft(catalog, initial).ok).toBe(true)
     expect(inspectSkillSocketsCraft(catalog, initial).ok).toBe(true)
     expect(socketCapacity(catalog, initial)).toBe(0)
   },

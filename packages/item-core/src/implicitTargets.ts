@@ -76,6 +76,12 @@ function descriptors(
     return variants
       ? [
           {
+            kind: 'granted-skill',
+            lineIndex: variants.commonLines.length,
+            line: '装备授予技能最高等级',
+            ranges: [{ index: 0, lineIndex: 0, min: 1, max: 20, step: 1 }],
+          },
+          {
             kind: 'granted-skill-sockets',
             lineIndex: variants.commonLines.length,
             line: '装备授予技能辅助孔',
@@ -347,11 +353,13 @@ export function craftImplicitTargetCandidates(
         }
       }
       if (entry.kind === 'granted-skill') {
+        const skill = readSingleGrantedSkillForSockets(catalog, state)
         const level = readCraftGrantedSkillLevel(catalog, state)
         const inspected = inspectPerfectFluxCraft(catalog, state)
         const actual = level.ok ? level.value.level : null
         return {
           ...entry,
+          ...(skill.ok ? { skillName: skill.value.skillName, line: skill.value.observedLine } : {}),
           actual: [actual],
           rerollable: false,
           reasons: [

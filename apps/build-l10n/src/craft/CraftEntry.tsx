@@ -179,7 +179,9 @@ export function CraftEntry({
     matchingImport && (imported.comparisonOnly || imported.item?.rarity === 'unique')
   const knownImportedMaximum =
     matchingImport && imported.skills?.length === 1 ? (imported.skills[0]?.maxLevel ?? null) : null
-  const canDeclareSkillLevel = blank.ok && readCraftGrantedSkillLevel(catalog, blank.value).ok
+  const canDeclareSkillLevel =
+    (blank.ok && readCraftGrantedSkillLevel(catalog, blank.value).ok) ||
+    (fromImport?.ok && readCraftGrantedSkillLevel(catalog, fromImport.value).ok)
   const canDeclareSkillSockets =
     (blank.ok && readCraftGrantedSkillSockets(catalog, blank.value).ok) ||
     (fromImport?.ok && readCraftGrantedSkillSockets(catalog, fromImport.value).ok)

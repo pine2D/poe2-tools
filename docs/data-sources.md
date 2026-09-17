@@ -1,5 +1,11 @@
 # 数据源登记表
 
+## 技能项链等级制作（2026-09-17，v104）
+
+沿用已登记 Perfect Flux 材料身份和说明。新增 gray 第一手人工规则参考：[Nabeezy 的失神项链流程](https://www.reddit.com/r/PathOfExile2/comments/1uhj7sf/only_one_thing_left_to_do/)（2026-06-28，步骤1/16）与 [aspirineilia 的 CoC 项链流程](https://www.reddit.com/r/PathOfExile2/comments/1uch6gj/finally_got_6_all_spell_coc_amulet/)（2026-06-22，步骤4及作者回复）。本轮直接读取原帖正文，作者分别记录完美溶剂升级20级和工匠石设五孔；未逐帧验证实际施用，不替代游戏真机验收。
+
+只据此交叉核对单技能项链适用与等级/辅助孔独立；不采纳费用、概率、催化增量或其他制作步骤推断。不提交玩家装备、图片、评论全文或第三方数据；没有新抓取适配器或运行时外站请求。
+
 ## 技能项链辅助孔（2026-09-17，v103）
 
 沿用下文 primary [GGG 0.5.0](https://www.pathofexile.com/forum/view-thread/3932540)（Item Changes，装备授予技能及全部技能作用范围）、[0.2.0](https://www.pathofexile.com/forum/view-thread/3740562/filter-account-type/staff)（直接设定孔数），以及固定 MIT 基底目录。三种项链的 variantList 是互斥候选，实际装备只选择一项；不将该列表视为同时授予多个技能。

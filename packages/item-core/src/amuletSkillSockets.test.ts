@@ -67,9 +67,9 @@ it.each(['Lament', 'Portent', 'Absent'])(
       )
       expect(next).toEqual({ ...declared, grantedSkillSockets: count })
     }
-    expect(inspectPerfectFluxCraft(catalog, declared).ok).toBe(false)
-    expect(createCraftState(catalog, { ...declared, declaredSkillLevel: 13 }).ok).toBe(false)
-    expect(createCraftState(catalog, { ...declared, grantedSkillLevel: 20 }).ok).toBe(false)
+    expect(inspectPerfectFluxCraft(catalog, declared).ok).toBe(true)
+    expect(createCraftState(catalog, { ...declared, declaredSkillLevel: 13 }).ok).toBe(true)
+    expect(createCraftState(catalog, { ...declared, grantedSkillLevel: 20 }).ok).toBe(true)
   },
 )
 it.each(['Lament', 'Portent', 'Absent'])(
@@ -78,13 +78,13 @@ it.each(['Lament', 'Portent', 'Absent'])(
     for (const index of [1, 2]) {
       const { state, goal, skillName } = setup(name, index)
       expect(must(craftImplicitTargetCandidates(catalog, state))).toMatchObject([
+        { kind: 'granted-skill', lineIndex: goal.lineIndex, skillName, actual: [null] },
         { kind: 'granted-skill-sockets', lineIndex: goal.lineIndex, skillName, actual: [null] },
       ])
-      expect(must(craftImplicitTargetCandidates(catalog, state))).toHaveLength(1)
+      expect(must(craftImplicitTargetCandidates(catalog, state))).toHaveLength(2)
       expect(validateStoredCraftImplicitTargets(catalog, state.baseId, [goal]).ok).toBe(true)
       for (const invalid of [
         { ...goal, lineIndex: 0 },
-        { ...goal, kind: 'granted-skill' },
         { lineIndex: 0, bounds: [{ index: 0, min: -1 }] },
         { ...goal, basis: 'effective' },
       ])

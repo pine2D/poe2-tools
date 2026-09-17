@@ -3,13 +3,8 @@ import { PENDING_DESECRATION_MESSAGE } from './boneRules'
 import type { CraftCatalog } from './catalog'
 import { CORRUPTED_CRAFT_MESSAGE } from './corruptionRules'
 import { isPlainProjectJSON } from './craftProjectJSON'
-import {
-  matchesGrantedSkillImplicitLines,
-  readBaseGrantedSkills,
-  resolveGrantedSkill,
-} from './grantedSkills'
 import { type CraftResult, type CraftState, createCraftState } from './rehearsal'
-import { socketEffects } from './sockets'
+import { readSingleGrantedSkillIdentity } from './singleGrantedSkill'
 
 export interface PerfectFluxCraftOperation {
   kind: 'perfect-flux'
@@ -26,45 +21,15 @@ export type PreparedPerfectFluxCraft = Omit<InspectedPerfectFluxCraft, 'previous
 }
 const fail = (error: string): CraftResult<never> => ({ ok: false, error })
 
-/** 只核对技能形态；供状态校验复用，不递归调用状态工厂或施用资格。 */
+/** 只读共享身份；状态校验不递归进入状态工厂。 */
 export function readSingleGrantedSkill(
   catalog: CraftCatalog,
   state: CraftState,
 ): CraftResult<InspectedPerfectFluxCraft> {
-  const base = catalog.bases.find((base) => base.id === state.baseId)
-  if (!base || !['Wand', 'Staff', 'Sceptre'].includes(base.type))
-    return fail('装备技能制作目前只支持普通 Wand / Staff / Sceptre 的单一带等级固有技能。')
-  const patterns = base.implicit?.split('\n') ?? []
-  const skills = readBaseGrantedSkills(base)
-  const skill = skills[0]
-  const grantsSkill = (line: string) => /\bGrants?\b.*\bSkills?\b/i.test(line)
-  if (skills.length !== 1 || !skill || patterns.filter(grantsSkill).length !== 1)
-    return fail('装备技能制作需要唯一的带等级固有技能；无等级或额外授予技能暂不支持。')
-  if (skill.maxLevel !== 20 || !Number.isSafeInteger(skill.minLevel) || skill.minLevel < 1)
-    return fail('装备技能制作要求技能目录范围的上限为 20 级。')
-  const lines = state.implicitLines ?? patterns
-  const observed = lines.filter(grantsSkill)
-  if (observed.length !== 1 || !matchesGrantedSkillImplicitLines(patterns, lines))
-    return fail('授予技能观察行与基底未完整对应，不能制作。')
-  const additional = [
-    ...state.affixes.flatMap((affix) => affix.lines),
-    ...(state.corruption?.lines ?? []),
-    ...(state.secondCorruption?.lines ?? []),
-    ...socketEffects(catalog, state).flatMap(({ augment }) => augment.lines),
-  ]
-  if (additional.some(grantsSkill)) return fail('装备包含额外授予技能，当前作用范围尚未支持。')
-  const observedLine = observed[0]
-  if (observedLine === undefined) return fail('缺少授予技能观察行。')
-  const parsed = resolveGrantedSkill(observedLine, [], 'en')
-  return {
-    ok: true,
-    value: {
-      skillName: skill.name,
-      observedLine,
-      minimumPreviousMaxLevel: Math.max(skill.minLevel, parsed.displayedLevel ?? skill.minLevel),
-      previousMaxLevel: parsed.maxLevel,
-    },
-  }
+  const skill = readSingleGrantedSkillIdentity(catalog, state)
+  if (!skill.ok) return skill
+  const { lineIndex: _lineIndex, ...value } = skill.value
+  return { ok: true, value }
 }
 
 /** 结果字段属于装备状态，不意味着当前还能再次施用材料。 */
@@ -125,6 +90,8 @@ export function inspectPerfectFluxCraft(
   if (Object.hasOwn(state, 'destroyed')) return fail(DESTROYED_ITEM_MESSAGE)
   if (state.corrupted) return fail(CORRUPTED_CRAFT_MESSAGE)
   if (state.pendingDesecration) return fail(PENDING_DESECRATION_MESSAGE)
+  if (state.sourceText?.split(/\r?\n/).some((line) => line.trim() === 'Sanctified'))
+    return fail('Sanctified 装备的技能等级制作资格尚未支持。')
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
   const result = readSingleGrantedSkill(catalog, checked.value)
