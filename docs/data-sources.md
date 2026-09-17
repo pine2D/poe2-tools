@@ -1,5 +1,11 @@
 # 数据源登记表
 
+## 技能项链已有催化品质（2026-09-17，v105）
+
+沿用已登记 [Vaal Catalysing Infuser](https://poe2db.tw/us/Vaal_Catalysing_Infuser) 的 gray 材料说明，以及下文两位原作者的项链流程。Exa 本轮提取仍明确戒指／项链可超过最大品质至多10；网页阅读正文只取得元数据，不能将其写成完整提示框已核验。原作者记录了裂隙品质前缀、40%催化、注能至50%后继续制作；不采用费用、概率或单颗增量。
+
+三种严格技能项链的已有量上界由普通20、可信裂隙规则20和注能超出10共同限定；这是材料规则与直接案例的结合推导，不冒充三种基底全部真机实测。当前可提升上限仍按实际词缀单独判断。没有新增品质材料动作、来源抓取适配器、玩家样本或运行时外站请求。
+
 ## 技能项链等级制作（2026-09-17，v104）
 
 沿用已登记 Perfect Flux 材料身份和说明。新增 gray 第一手人工规则参考：[Nabeezy 的失神项链流程](https://www.reddit.com/r/PathOfExile2/comments/1uhj7sf/only_one_thing_left_to_do/)（2026-06-28，步骤1/16）与 [aspirineilia 的 CoC 项链流程](https://www.reddit.com/r/PathOfExile2/comments/1uch6gj/finally_got_6_all_spell_coc_amulet/)（2026-06-22，步骤4及作者回复）。本轮直接读取原帖正文，作者分别记录完美溶剂升级20级和工匠石设五孔；未逐帧验证实际施用，不替代游戏真机验收。

@@ -1,6 +1,7 @@
 import type { CraftCatalog } from './catalog'
 import { catalystQualityLimit } from './catalystQuality'
 import { hasProjectCapability } from './projectCapability'
+import { isSkillVariantAmulet } from './skillVariantAmulets'
 
 export const RETAINED_CATALYST_RULES_VERSION = 'basic-2026-09-16-v79'
 
@@ -23,7 +24,15 @@ export function requiresRetainedCatalystProjectVersion(
     const quality = data(catalyst, 'quality')
     const base = catalog.bases.find((entry) => entry.id === baseId)
     const limit = base ? catalystQualityLimit(base) : null
-    if (typeof quality === 'number' && limit !== null && quality > limit) return true
+    // 技能项链已有注能品质允许额外10；超出此量才依赖裂隙精华来源。
+    const sourceIndependentLimit =
+      limit === null ? null : limit + (base && isSkillVariantAmulet(base) ? 10 : 0)
+    if (
+      typeof quality === 'number' &&
+      sourceIndependentLimit !== null &&
+      quality > sourceIndependentLimit
+    )
+      return true
     const affixes = properties.affixes?.value
     return (
       Array.isArray(affixes) &&

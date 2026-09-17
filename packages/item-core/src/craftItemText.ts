@@ -293,13 +293,14 @@ export function exportCraftItemText(
     let magnitude = ''
     const outputLines: string[] = []
     for (const line of affix.lines) {
-      const complete = hasExplicitEffect
-        ? completeBaseRanges(mod.lines, line)
-        : { ok: true as const, value: line }
+      const complete =
+        hasExplicitEffect || current.catalyst
+          ? completeBaseRanges(mod.lines, line)
+          : { ok: true as const, value: line }
       if (!complete.ok) return complete
       outputLines.push(complete.value)
     }
-    if (hasExplicitEffect) {
+    if (hasExplicitEffect || current.catalyst) {
       const effect = explicitModEffect(catalog, current, mod)
       if (!effect.ok) return effect
       const definition = CATALYSTS.find((entry) => entry.id === current.catalyst?.id)

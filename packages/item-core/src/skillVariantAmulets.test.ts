@@ -269,7 +269,7 @@ it.each(['Lament', 'Portent', 'Absent'])(
       ok: true,
       value: { implicitLines: initial.implicitLines, pendingDesecration: { kind: 'prefix' } },
     })
-    expect(catalystQualityLimit(base(name))).toBeNull()
+    expect(catalystQualityLimit(base(name))).toBe(20)
     expect(inspectPerfectFluxCraft(catalog, initial).ok).toBe(true)
     expect(inspectSkillSocketsCraft(catalog, initial).ok).toBe(true)
     expect(socketCapacity(catalog, initial)).toBe(0)

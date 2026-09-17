@@ -20,6 +20,10 @@ export {
   parseAlloyCatalog,
 } from './alloys'
 export {
+  AMULET_CATALYST_RULES_VERSION,
+  requiresAmuletCatalystProjectVersion,
+} from './amuletCatalystProjectVersion'
+export {
   AMULET_SKILL_LEVEL_RULES_VERSION,
   requiresAmuletSkillLevelProjectVersion,
 } from './amuletSkillLevelProjectVersion'

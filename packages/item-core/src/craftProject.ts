@@ -3,6 +3,7 @@ import { isIdentifiedCraftState } from './affixIdentity'
 import { usesSovereignResistance } from './alloyEffects'
 import { alloyProjectUsage } from './alloyProjectUsage'
 import { alloyCatalogSignature as readAlloyCatalogSignature } from './alloys'
+import { requiresAmuletCatalystProjectVersion } from './amuletCatalystProjectVersion'
 import { requiresAmuletSkillLevelProjectVersion } from './amuletSkillLevelProjectVersion'
 import { requiresAmuletSkillSocketsProjectVersion } from './amuletSkillSocketsProjectVersion'
 import { readStatAnnotations } from './annotations'
@@ -721,6 +722,7 @@ export function readNativeTargetProjectProjection(
   skillVariantAmulets = false,
   amuletSkillSockets = false,
   amuletSkillLevel = false,
+  amuletCatalyst = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -757,6 +759,7 @@ export function readNativeTargetProjectProjection(
     skillVariantAmulets,
     amuletSkillSockets,
     amuletSkillLevel,
+    amuletCatalyst,
   )
 }
 
@@ -795,6 +798,7 @@ function readCraftProject(
   skillVariantAmulets = false,
   amuletSkillSockets = false,
   amuletSkillLevel = false,
+  amuletCatalyst = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -813,6 +817,8 @@ function readCraftProject(
   } catch {
     return fail('演练项目不是有效 JSON。')
   }
+  if (!amuletCatalyst && requiresAmuletCatalystProjectVersion(value))
+    return fail('技能项链催化品质必须使用 v105 项目，包括起点、完整未来和嵌套未执行状态。')
   if (!amuletSkillLevel && requiresAmuletSkillLevelProjectVersion(value))
     return fail('技能项链等级制作必须使用 v104 项目，包括起点、完整未来、目标和未执行指引。')
   if (!amuletSkillSockets && requiresAmuletSkillSocketsProjectVersion(value))
@@ -2175,6 +2181,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresAmuletCatalystProjectVersion(project))
+    throw new Error('技能项链催化品质必须使用 v105 项目，包括起点、完整未来和嵌套未执行状态。')
   if (requiresAmuletSkillLevelProjectVersion(project))
     throw new Error('技能项链等级制作必须使用 v104 项目，包括起点、完整未来、目标和未执行指引。')
   if (requiresAmuletSkillSocketsProjectVersion(project))

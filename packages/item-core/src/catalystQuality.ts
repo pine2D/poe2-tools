@@ -5,6 +5,7 @@ import { jewelEffectModKind } from './jewelEffectRules'
 import { isBasicJewel, isRadiusJewel } from './jewels'
 import { isLiquidEmotionMappedMod } from './liquidEmotions'
 import { type CraftAffix, type CraftResult, type CraftState, createCraftState } from './rehearsal'
+import { isSkillVariantAmulet } from './skillVariantAmulets'
 import { statScalabilitySourceHash } from './statScalability'
 import type { ItemDocument } from './types'
 
@@ -91,7 +92,7 @@ export function catalystQualityLimit(base: CatalogBase): number | null {
   if (
     base.hidden ||
     base.runeforged ||
-    base.variantList !== undefined ||
+    (base.variantList !== undefined && !isSkillVariantAmulet(base)) ||
     (base.sourceQuality !== null && base.sourceQuality !== 0)
   )
     return null
@@ -167,13 +168,15 @@ function isBreachQualityAffix(
   )
 }
 
-/** 移除最大品质工艺后仍可保留的已有量；不是施加催化剂的资格。 */
+/** 已有量可保留移除工艺前的上限；严格技能项链另容纳注能的10，不授权再次施加。 */
 export function catalystStoredQualityLimit(
   catalog: CraftCatalog,
   base: CatalogBase,
 ): number | null {
   const limit = catalystQualityLimit(base)
-  return limit === null ? null : limit + (hasBreachQualityRule(catalog, base) ? 20 : 0)
+  return limit === null
+    ? null
+    : limit + (hasBreachQualityRule(catalog, base) ? 20 : 0) + (isSkillVariantAmulet(base) ? 10 : 0)
 }
 
 /** 完整状态验证后读取当前施加上限，不能把已有超限量当成新的施加能力。 */

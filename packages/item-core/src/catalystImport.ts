@@ -1,5 +1,6 @@
 import type { CraftCatalog } from './catalog'
 import { matchesCatalogLines } from './catalogMatch'
+import { catalystImplicitPatterns } from './catalystImplicits'
 import { CATALYSTS, type CatalystQuality, readCatalystQuality } from './catalystQuality'
 import { corruptionEntries } from './corruptionEnchantments'
 import type { InspectedMod } from './export'
@@ -63,6 +64,8 @@ export function importCatalystQuality(
     return fail('催化品质类型尚未识别，请先核对类型与高级文本基础值。')
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   if (!base) return fail('催化品质基底不存在。')
+  const implicit = catalystImplicitPatterns(base, state)
+  if (!implicit.ok) return implicit
   let explicitIndex = 0
   let enchantIndex = 0
   const corruptions = corruptionEntries(state)
@@ -93,8 +96,7 @@ export function importCatalystQuality(
           ? explicitModEffect(catalog, state, catalogMod as import('./catalog').CatalogMod)
           : { ok: false as const, error: '显式词缀目录缺失。' }
     if (!effect.ok) return effect
-    const patterns =
-      mod.kind === 'implicit' ? (base.implicit?.split('\n') ?? []) : catalogMod?.lines
+    const patterns = mod.kind === 'implicit' ? implicit.value.patterns : catalogMod?.lines
     const originalLines = stats.map(({ source, resolution }) => resolution.english ?? source.raw)
     const lines = hasExplicitEffect
       ? originalLines.map(normalizeJewelFixedImportLine)
@@ -118,8 +120,8 @@ export function importCatalystQuality(
     const tags =
       catalogMod?.tags ??
       matchedPatterns.flatMap((pattern) => {
-        const position = (base.implicit?.split('\n') ?? []).indexOf(pattern)
-        return base.implicitTags[position] ?? []
+        const position = implicit.value.patterns.indexOf(pattern)
+        return implicit.value.tags[position] ?? []
       })
     const matched =
       definition && tags.some((tag) => (definition.tags as readonly string[]).includes(tag))

@@ -1,6 +1,7 @@
 import { readStatAnnotations } from './annotations'
 import type { CraftCatalog } from './catalog'
 import { readCatalogLineValues } from './catalogMatch'
+import { catalystImplicitPatterns } from './catalystImplicits'
 import { CATALYSTS, catalystActiveQualityLimit } from './catalystQuality'
 import { corruptionEntries } from './corruptionEnchantments'
 import { explicitModEffect } from './jewelEffects'
@@ -163,22 +164,32 @@ export function estimateCatalystEffects(
   )
     return { ok: false, error: `预览品质必须是 0–${options.value.maxQuality} 的整数。` }
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
-  const patterns = base?.implicit?.split('\n') ?? []
+  if (!base) return { ok: false, error: '催化品质基底不存在。' }
+  const implicit = catalystImplicitPatterns(base, state)
+  if (!implicit.ok) return implicit
+  const { patterns, tags, fixed } = implicit.value
   const matches = (tags: readonly string[]) => tags.some((tag) => choice.tags.includes(tag))
   const groups: CatalystEffectGroup[] = (state.implicitLines ?? patterns).map((line, index) => {
     const candidates = patterns.flatMap((pattern, position) =>
       readCatalogLineValues([pattern], [line]) === null ? [] : [position],
     )
     const position = candidates.length === 1 ? candidates[0] : undefined
-    const matched = position !== undefined && matches(base?.implicitTags[position] ?? [])
+    const matched = position !== undefined && matches(tags[position] ?? [])
     return {
       id: `implicit:${index}`,
       kind: 'implicit',
       matched,
       lines: [
-        position === undefined
-          ? { before: line, after: null, status: 'unknown', reason: '固有属性标签无法唯一对应。' }
-          : estimateLine(catalog, patterns, line, matched, quality),
+        fixed
+          ? {
+              before: line,
+              after: null,
+              status: 'unaffected',
+              reason: '固定容量与授予技能不受催化品质缩放。',
+            }
+          : position === undefined
+            ? { before: line, after: null, status: 'unknown', reason: '固有属性标签无法唯一对应。' }
+            : estimateLine(catalog, patterns, line, matched, quality),
       ],
     }
   })

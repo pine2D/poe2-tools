@@ -17,19 +17,26 @@ const catalog: CraftCatalog = {
   bases: source.bases.filter((base) =>
     ['Absent Amulet', 'Lament Amulet', 'Portent Amulet'].includes(base.id),
   ),
-  modifiers: ['Life', 'Mana', 'Strength', 'Dexterity'].map((name, index) => ({
-    id: name,
-    name,
-    group: name,
-    kind: index < 2 ? 'prefix' : 'suffix',
-    level: 1,
-    lines: [`+(10-20) to ${index < 2 ? 'maximum ' : ''}${name}`],
-    statOrder: [1],
-    tags: [],
-    addsTags: [],
-    eligibility: [{ tag: 'default', value: 1 }],
-    tradeHashes: {},
-  })),
+  modifiers: [
+    ...source.modifiers.filter((mod) =>
+      ['EssenceBreach', 'CastSpeedJewellery1', 'SpellDamage1'].includes(mod.id),
+    ),
+    ...['Life', 'Mana', 'Strength', 'Dexterity'].map<CraftCatalog['modifiers'][number]>(
+      (name, index) => ({
+        id: name,
+        name,
+        group: name,
+        kind: index < 2 ? 'prefix' : 'suffix',
+        level: 1,
+        lines: [`+(10-20) to ${index < 2 ? 'maximum ' : ''}${name}`],
+        statOrder: [1],
+        tags: [],
+        addsTags: [],
+        eligibility: [{ tag: 'default', value: 1 }],
+        tradeHashes: {},
+      }),
+    ),
+  ],
 }
 const dictionary = {
   items: {
@@ -38,6 +45,7 @@ const dictionary = {
   },
   stats: {
     entries: [
+      { id: 'explicit.cast-speed', en: '#% increased Cast Speed', text: '施法速度提高 #%' },
       { id: 'implicit.prefix', en: '# Prefix Modifier allowed', text: '允许的前缀 #' },
       { id: 'implicit.suffix', en: '# Suffix Modifier allowed', text: '允许的后缀 #' },
       {
@@ -273,4 +281,67 @@ it('中文项链无最高尾注可直接声明装备最高级，已知最高值�
   expect(saved.initialState.sourceText).toBe(raw)
   expect(screen.getByLabelText('当前装备技能结果').textContent).toContain('12')
   expect(parseTargetCraftProject(JSON.stringify(saved), catalog, dictionary).ok).toBe(true)
+})
+
+it('技能项链已有50%催化与等级辅助孔独立保存到v105', () => {
+  setup()
+  const change = (name: string, value: string) =>
+    fireEvent.change(screen.getByLabelText(name), { target: { value } })
+  change('空白起点授予技能', '2')
+  change('起点催化品质类型', 'Sibilant')
+  change('起点催化品质（%）', '50')
+  change('起点装备最高技能等级', '13')
+  change('起点技能辅助孔数', '3')
+  click('从空白基底开始')
+  const initial = save()
+  expect(initial.rulesVersion).toBe('basic-2026-09-17-v105')
+  expect(initial.initialState.catalyst).toEqual({ id: 'Sibilant', quality: 50, declared: true })
+  expect(initial.initialState.declaredSkillLevel).toBe(13)
+  expect(initial.initialState.declaredSkillSockets).toBe(3)
+  expect(initial.operations).toEqual([])
+  click('蜕变石')
+  click('应用本次结果')
+  click('撤销')
+  expect(save().operations).toHaveLength(1)
+  click('恢复本机演练')
+  click('重做')
+  expect(screen.getByLabelText('当前催化品质').textContent).toContain('50%')
+  expect(parseTargetCraftProject(JSON.stringify(save()), catalog, dictionary).ok).toBe(true)
+})
+
+it('中文未知催化类型须核对，50%基础范围只缩放一次且消费未来可恢复', () => {
+  const qualityRaw =
+    raw
+      .replace('稀有度: 魔法', '稀有度: 稀有\n测试项链')
+      .replace('物品等级: 80', '品质（待核对施法类型）: +50%\n--------\n物品等级: 80') +
+    '\n--------\n{ 后缀属性 "of Talent" — 施法, 速度 — 50% Increased }\n施法速度提高 12(9-12)%'
+  setup(qualityRaw)
+  expect(screen.queryByRole('button', { name: '从当前装备开始' })).toBeNull()
+  fireEvent.change(screen.getByLabelText('核对催化品质类型'), { target: { value: 'Sibilant' } })
+  fireEvent.click(screen.getByLabelText('已核对类型，且原文数值为高级基础值'))
+  click('从当前装备开始')
+  expect(save().rulesVersion).toBe('basic-2026-09-17-v105')
+  expect(screen.getByLabelText('催化剂效果预览').textContent).toContain('施法速度提高 18%')
+  fireEvent.change(screen.getByLabelText('本次搭配预兆'), {
+    target: { value: 'catalysing_exaltation' },
+  })
+  const preview = () => {
+    click('崇高石')
+    fireEvent.change(screen.getByLabelText('搜索合法词缀'), { target: { value: 'SpellDamage1' } })
+    fireEvent.click(document.querySelector('.rehearsal-candidates button') as HTMLButtonElement)
+  }
+  preview()
+  click('取消本次结果')
+  expect(save().operations).toEqual([])
+  expect(screen.getByLabelText('当前催化品质').textContent).toContain('50%')
+  preview()
+  click('应用本次结果')
+  expect(screen.getByLabelText('当前催化品质').textContent).toContain('0%')
+  expect(screen.getByLabelText('催化剂效果预览').textContent).toContain('施法速度提高 12%')
+  click('撤销')
+  expect(save().operations).toHaveLength(1)
+  expect(parseTargetCraftProject(JSON.stringify(save()), catalog, dictionary).ok).toBe(true)
+  click('恢复本机演练')
+  click('重做')
+  expect(screen.getByLabelText('当前催化品质').textContent).toContain('0%')
 })
