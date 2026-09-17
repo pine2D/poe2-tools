@@ -3,6 +3,7 @@ import type { CatalogAugment, CatalogBase } from './catalog'
 import { isInfluenceRune } from './influenceRunes'
 import { isSerleRune, SERLE_LINE } from './serleRune'
 import { isSupportedSoulCore, readSoulCoreLine, WEAPON_SOUL_TOTALS } from './soulCoreEffects'
+import { isBasicTalismanBase } from './talismans'
 
 export type WeaponRuneCategory = 'weapon' | 'wand' | 'staff'
 
@@ -10,6 +11,8 @@ export type WeaponRuneCategory = 'weapon' | 'wand' | 'staff'
 export function weaponSocketKind(
   base: CatalogBase,
 ): { category: WeaponRuneCategory; limit: number } | null {
+  if (base.type === 'Talisman')
+    return isBasicTalismanBase(base) ? { category: 'weapon', limit: 2 } : null
   const has = (tag: string) => base.tags.includes(tag)
   if (has('onehand') === has('twohand')) return null
   const limit = has('onehand') ? 1 : 2

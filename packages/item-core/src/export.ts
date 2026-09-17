@@ -43,6 +43,7 @@ export interface ItemInspection {
 }
 
 const CLASSES: Record<string, string> = {
+  魔符: 'Talismans',
   珠宝: 'Jewels',
   珠寶: 'Jewels',
   法器: 'Foci',

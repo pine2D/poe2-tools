@@ -66,6 +66,7 @@ import { serleCapacity } from './serleRune'
 import { grantedSkillSocketsStateError } from './skillSockets'
 import { isSkillVariantAmulet } from './skillVariantAmulets'
 import { hasSpecialSocketRules, socketStateError } from './sockets'
+import { isBasicTalismanBase } from './talismans'
 
 export type CraftRarity = 'normal' | 'magic' | 'rare'
 export type BasicCraftCurrency =
@@ -261,6 +262,8 @@ function findBase(catalog: CraftCatalog, id: string): CatalogBase | null {
 }
 
 function baseError(base: CatalogBase): string | null {
+  if (base.type === 'Talisman' && !isBasicTalismanBase(base))
+    return '仅支持已核对的25种普通魔符基底。'
   if (base.type === 'Jewel' && !isBasicJewel(base) && !isRadiusJewel(base))
     return '特殊珠宝暂不支持制作演练。'
   if (base.hidden) return '隐藏基底暂不支持制作演练。'
@@ -286,7 +289,8 @@ function baseError(base: CatalogBase): string | null {
     !SUPPORTED_TYPES.has(base.type) &&
     !isBasicJewel(base) &&
     !isRadiusJewel(base) &&
-    !isBasicFlaskBase(base)
+    !isBasicFlaskBase(base) &&
+    !isBasicTalismanBase(base)
   )
     return '该基底类别暂不支持制作演练。'
   return null

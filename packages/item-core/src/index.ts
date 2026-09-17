@@ -521,6 +521,10 @@ export {
   strategyStageAt,
   validStrategyStartStep,
 } from './strategyStages'
+export {
+  requiresTalismanProjectVersion,
+  TALISMAN_CRAFT_RULES_VERSION,
+} from './talismanProjectVersion'
 export { findTargetCapacityContext } from './targetCapacityContext'
 export type { CraftDefinitionAdvice, CraftDefinitionAdviceStep } from './targetDefinitionAdvice'
 export {

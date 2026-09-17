@@ -1,5 +1,14 @@
 # 数据源登记表
 
+## 普通魔符（2026-09-17，v107实施前登记）
+
+[GGG 0.4.0](https://www.pathofexile.com/forum/view-thread/3883495)确认 Talisman 是用于变形攻击的双手攻击武器，形态可切换；[GGG 0.4.0b](https://www.pathofexile.com/forum/view-thread/3890041)确认重组相关修复。普通基底及材料映射沿用已登记固定 MIT PoB2 提交 ce566eac45ea8a86477f513c7ee65a1ebe60014e；Bases/talisman.lua 的 SHA-256 为 4e721181ba512ab359a9b1b5e5afa4a8c6666332dbbad1d2f3432243fe8d8191。没有新数据包。
+
+PoE2DB [英文魔符](https://poe2db.tw/us/Talismans)、[简中魔符](https://poe2db.tw/cn/Talismans)、[繁中魔符](https://poe2db.tw/tw/Talismans)、[首领魔符](https://poe2db.tw/cn/Alpha_Talisman)、[巧匠石](https://poe2db.tw/us/Artificers_Orb)及[远古颚骨](https://poe2db.tw/us/Ancient_Jawbone)仅作已登记 gray 人工机制参考。三服形态描述存在差异，不互相补齐，不从物品类别推定形态或技能。双手孔位上限沿现有通则映射，属于规则推断，国服真机待验收；不使用页面行情或权重。
+
+CoE 公开 Two-Handed Weapon → Talismans 页面显示基底、物等、词缀查询及通货／精华／亵渎／镶嵌分组，仅参考交互。未读取同行执行代码、数据文件或概率。25 普通基底与六种隐藏／锻造身份分开；三档 Infinite 精华缺失结果声明，魔符专属非本地符文、形态技能及符文锻造继续不推定。
+
+
 ## 药剂独立来源（2026-09-17，v106实施前登记）
 
 药剂使用说明补充核对：PoE2DB [简中](https://poe2db.tw/cn/Ultimate_Life_Flask)、[繁中](https://poe2db.tw/tw/Ultimate_Life_Flask)、[英文](https://poe2db.tw/us/Ultimate_Life_Flask)页面的水井充能提示（gray，2026-09-17读取）。只将准确说明分类为描述，不从网页面板推算导入品质；客户端高级复制格式仍待真机验收。

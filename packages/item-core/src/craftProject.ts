@@ -100,6 +100,7 @@ import { isSupportedSoulCore } from './soulCoreEffects'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
+import { requiresTalismanProjectVersion } from './talismanProjectVersion'
 import { targetProjectSourceUsage } from './targetProjectSources'
 import {
   type CraftTargetAlternative,
@@ -727,6 +728,7 @@ export function readNativeTargetProjectProjection(
   amuletSkillLevel = false,
   amuletCatalyst = false,
   flasks = false,
+  talismans = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -765,6 +767,7 @@ export function readNativeTargetProjectProjection(
     amuletSkillLevel,
     amuletCatalyst,
     flasks,
+    talismans,
   )
 }
 
@@ -805,6 +808,7 @@ function readCraftProject(
   amuletSkillLevel = false,
   amuletCatalyst = false,
   flasks = false,
+  talismans = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!native && catalog.fluxes) {
@@ -829,6 +833,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!talismans && requiresTalismanProjectVersion(value, catalog))
+    return fail('普通魔符制作必须使用 v107 项目，包括起点、目标、完整未来和未执行指引。')
   const usesFlask = requiresFlaskProjectVersion(value, catalog)
   if (!flasks && usesFlask)
     return fail('药剂制作必须使用 v106 项目，包括起点、目标、完整未来和未执行指引。')
@@ -2201,6 +2207,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresTalismanProjectVersion(project))
+    throw new Error('普通魔符制作必须使用 v107 项目，包括起点、目标和完整未来。')
   if (requiresFlaskProjectVersion(project))
     throw new Error('药剂制作必须使用 v106 项目，包括起点、目标和完整未来。')
   if (requiresAmuletCatalystProjectVersion(project))

@@ -27,6 +27,7 @@ export interface CraftItemTextOptions {
 }
 
 const CLASSES: Readonly<Record<string, string>> = {
+  Talisman: 'Talismans',
   Jewel: 'Jewels',
   Focus: 'Foci',
   Sceptre: 'Sceptres',

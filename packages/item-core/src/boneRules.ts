@@ -5,6 +5,7 @@ import {
   isBoneRevealOmen,
 } from './boneOmens'
 import type { CatalogBase } from './catalog'
+import { isBasicTalismanBase } from './talismans'
 
 export const BONE_RULES = {
   preserved_cranium: {
@@ -223,7 +224,11 @@ export function boneBaseError(
   boneId: CraftBone,
 ): string | null {
   const rule = BONE_RULES[boneId]
-  if (!TYPES[rule.category].includes(base.type)) return '骨骼不适用于当前基底类别。'
+  if (
+    !TYPES[rule.category].includes(base.type) &&
+    !(rule.category === 'weapon' && isBasicTalismanBase(base))
+  )
+    return '骨骼不适用于当前基底类别。'
   if (rule.maxItemLevel !== null && itemLevel > rule.maxItemLevel)
     return '啃噬骨骼只适用于物等不高于 64 的装备。'
   if (itemLevel < rule.minModLevel) return '远古骨骼要求物品等级至少 40。'

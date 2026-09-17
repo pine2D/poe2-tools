@@ -45,6 +45,11 @@ export function WeaponPanel({
         装备本地估算，未计技能、命中、暴击期望和全局额外伤害；游戏取整待真机验收。弩的 DPS
         未计装填循环。
       </p>
+      {catalog.bases.find((base) => base.id === current.baseId)?.type === 'Talisman' ? (
+        <p className="rehearsal-scope-note">
+          魔符形态与技能由角色选择，此处只估算武器本件伤害，不代表变形攻击的最终伤害。
+        </p>
+      ) : null}
       {importedQuality !== undefined ? (
         <p>品质来源：用户核对导入装备，起点已有 {importedQuality}%。</p>
       ) : null}
