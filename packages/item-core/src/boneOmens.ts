@@ -56,10 +56,18 @@ export function isBoneRevealOmen(value: unknown): value is BoneRevealOmen {
   return typeof value === 'string' && Object.hasOwn(BONE_REVEAL_OMEN_RULES, value)
 }
 export function boneRevealOmenError(
-  pending: { boneId: CraftBone; lichOmen?: BoneLichOmen },
+  pending: { boneId: CraftBone; lichOmen?: BoneLichOmen; kind?: 'prefix' | 'suffix' },
   omen: BoneRevealOmen,
+  baseType?: string,
 ): string | null {
   if (!isBoneRevealOmen(omen)) return '未知揭示预兆。'
+  if (
+    pending.boneId === 'preserved_collarbone' &&
+    pending.lichOmen === 'blackblooded' &&
+    pending.kind === 'suffix' &&
+    baseType === 'Amulet'
+  )
+    return null
   if (
     (pending.boneId.startsWith('ancient_') && pending.boneId !== 'ancient_rib') ||
     pending.lichOmen

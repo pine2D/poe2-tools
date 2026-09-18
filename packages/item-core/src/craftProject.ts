@@ -10,6 +10,7 @@ import { requiresAncientRibEchoesProjectVersion } from './ancientRibEchoesProjec
 import { readStatAnnotations } from './annotations'
 import { isArchitectCraftOperation } from './architect'
 import { isBeltCapacityBase, resolveCraftImplicitPatterns } from './beltImplicits'
+import { requiresBlackbloodedEchoesProjectVersion } from './blackbloodedEchoesProjectVersion'
 import { requiresBodyIdolProjectVersion } from './bodyIdolProjectVersion'
 import {
   clonePendingDesecration,
@@ -754,6 +755,7 @@ export function readNativeTargetProjectProjection(
   jewelVaal = false,
   ordinaryAttributeEssences = false,
   ancientRibEchoes = false,
+  blackbloodedEchoes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -803,6 +805,7 @@ export function readNativeTargetProjectProjection(
     jewelVaal,
     ordinaryAttributeEssences,
     ancientRibEchoes,
+    blackbloodedEchoes,
   )
 }
 
@@ -854,6 +857,7 @@ function readCraftProject(
   jewelVaal = false,
   ordinaryAttributeEssences = false,
   ancientRibEchoes = false,
+  blackbloodedEchoes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -880,6 +884,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!blackbloodedEchoes && requiresBlackbloodedEchoesProjectVersion(value))
+    return fail('黑血项链回响必须使用 v119 项目。')
   if (!ancientRibEchoes && requiresAncientRibEchoesProjectVersion(value))
     return fail('远古肋骨与回响组合必须使用 v118 项目。')
   if (!ordinaryAttributeEssences && requiresOrdinaryAttributeEssenceProjectVersion(value))
@@ -2310,6 +2316,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresBlackbloodedEchoesProjectVersion(project))
+    throw new Error('黑血项链回响必须使用 v119 项目。')
   if (requiresAncientRibEchoesProjectVersion(project))
     throw new Error('远古肋骨与回响组合必须使用 v118 项目。')
   if (requiresOrdinaryAttributeEssenceProjectVersion(project))

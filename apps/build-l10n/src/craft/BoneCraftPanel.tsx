@@ -96,7 +96,11 @@ function BoneCraftEditor({
   const echoesError = hasInfluence
     ? '影响符文与深渊回响的交互待核实，暂不支持此组合。'
     : pending
-      ? boneRevealOmenError(pending, 'abyssal_echoes')
+      ? boneRevealOmenError(
+          pending,
+          'abyssal_echoes',
+          catalog.bases.find((base) => base.id === state.baseId)?.type,
+        )
       : null
   const echoesLabel = boneRevealOmenLabel('abyssal_echoes', catalog, translations)
   const materials = useMemo(
@@ -364,6 +368,13 @@ function BoneCraftEditor({
       {pending?.boneId === 'ancient_rib' ? (
         <p>
           远古肋骨与回响已有胸甲实操依据；两组沿用最低词缀等级和方向约束属于规则推导，完整组合仍待游戏核验。
+        </p>
+      ) : null}
+      {pending?.boneId === 'preserved_collarbone' &&
+      pending.lichOmen === 'blackblooded' &&
+      !echoesError ? (
+        <p>
+          黑血项链后缀支持回响；两组均限定 Kurgal 词缀，组间可以重复同一身份。其他巫妖组合仍待核实。
         </p>
       ) : null}
       {hasInfluence ? (

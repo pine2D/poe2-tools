@@ -53,11 +53,16 @@ vi.mock('./targetRoutesWorkerClient', async () => {
   }
 })
 const apply = () => fireEvent.click(screen.getByRole('button', { name: '应用骨骼步骤' }))
-function normalPending(boneId: 'preserved_rib' | 'ancient_rib' = 'preserved_rib') {
+function normalPending(boneId: 'preserved_rib' | 'ancient_rib' | 'blackblooded' = 'preserved_rib') {
+  const catalog = boneCatalog(boneId === 'blackblooded' ? 'Amulet' : 'Helmet')
+  if (boneId === 'blackblooded')
+    for (const mod of catalog.modifiers) {
+      if (mod.desecratedOnly) mod.tags = ['unveiled_mod', 'kurgal_mod']
+    }
   const { sockets: _, ...initial } = boneState()
   render(
     <RehearsalPanel
-      catalog={boneCatalog()}
+      catalog={catalog}
       initialState={{ ...initial, rarity: 'normal' }}
       translations={translations}
     />,
@@ -70,7 +75,11 @@ function normalPending(boneId: 'preserved_rib' | 'ancient_rib' = 'preserved_rib'
       }),
     )
   fireEvent.click(screen.getByRole('button', { name: '应用本次结果' }))
-  fireEvent.change(screen.getByLabelText('骨骼材料'), { target: { value: boneId } })
+  fireEvent.change(screen.getByLabelText('骨骼材料'), {
+    target: { value: boneId === 'blackblooded' ? 'preserved_collarbone' : boneId },
+  })
+  if (boneId === 'blackblooded')
+    fireEvent.change(screen.getByLabelText('骨骼巫妖预兆'), { target: { value: 'blackblooded' } })
   fireEvent.click(screen.getByLabelText('占用后缀'))
   fireEvent.click(screen.getByRole('button', { name: '预览骨骼结果' }))
   apply()
@@ -270,4 +279,34 @@ it('比较明确保留首组并追加第二组及已购买机会', () => {
   expect(screen.getByText('首组三项候选')).toBeDefined()
   expect(screen.getByText('第二组三项候选')).toBeDefined()
   expect(screen.getAllByText(/已购买一次重选机会/)).toHaveLength(2)
+})
+
+it('黑血项链网页计费一次，撤销保存完整第二组未来并恢复v119', () => {
+  normalPending('blackblooded')
+  fireEvent.click(screen.getByLabelText('首次揭示使用深渊回响'))
+  for (const id of ['exclusive1', 'exclusive2', 'exclusive3'])
+    fireEvent.click(screen.getByLabelText(`候选 ${id}`))
+  fireEvent.click(screen.getByRole('button', { name: '预览三项候选' }))
+  apply()
+  fireEvent.click(screen.getByRole('button', { name: '指定第二组三项' }))
+  for (const id of ['exclusive1', 'exclusive2', 'exclusive3'])
+    fireEvent.click(screen.getByLabelText(`第二组候选 ${id}`))
+  fireEvent.click(screen.getByRole('button', { name: '预览第二组三项' }))
+  apply()
+  expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '撤销' }))
+  fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
+  const future = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+  expect(future.rulesVersion).toBe('basic-2026-09-18-v119')
+  expect(future.cursor).toBe(3)
+  expect(future.operations[1].lichOmen).toBe('blackblooded')
+  expect(future.operations[3].kind).toBe('desecration-reroll')
+  fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
+  fireEvent.click(screen.getByRole('button', { name: '重做' }))
+  expect(screen.getByRole('button', { name: '第二组：选择揭示 exclusive3' })).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: '首组：选择揭示 exclusive2' }))
+  fireEvent.click(screen.getByRole('button', { name: '预览揭示结果' }))
+  apply()
+  expect(screen.getByText('亵渎词缀 1/1')).toBeDefined()
+  expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
 })

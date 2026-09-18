@@ -46,6 +46,10 @@ export { isAstridRune } from './astridRune'
 export type { BaseSkillVariants } from './baseSkillVariants'
 export { readBaseSkillVariants } from './baseSkillVariants'
 export { buildInitialBeltImplicitLines, resolveCraftImplicitPatterns } from './beltImplicits'
+export {
+  BLACKBLOODED_ECHOES_RULES_VERSION,
+  requiresBlackbloodedEchoesProjectVersion,
+} from './blackbloodedEchoesProjectVersion'
 export { type BlockChanceEstimate, estimateBlockChance } from './blockChance'
 export { BODY_IDOL_RULES_VERSION, requiresBodyIdolProjectVersion } from './bodyIdolProjectVersion'
 export {

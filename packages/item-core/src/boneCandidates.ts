@@ -86,7 +86,11 @@ export function pendingBoneOmenError(
   )
     return null
   if (pending.revealOmen) {
-    const revealError = boneRevealOmenError(pending, pending.revealOmen)
+    const revealError = boneRevealOmenError(
+      pending,
+      pending.revealOmen,
+      catalog.bases.find((base) => base.id === state.baseId)?.type,
+    )
     if (revealError) return revealError
   }
   const error = boneOmenError(pending, pending.boneId, pending.kind)
