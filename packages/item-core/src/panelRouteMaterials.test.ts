@@ -8,6 +8,73 @@ import type { CraftState } from './rehearsal'
 import { socketStrategyCatalog, socketStrategyState } from './socketStrategyFixture'
 import { planTargetDefinitionRoutes } from './targetDefinitionRoutes'
 
+it.each([
+  [1, 100, ['masterwork', 'masterwork', 'masterwork']],
+  [100, 1, ['socket']],
+] as const)(
+  '面板目标按实际报价比较原孔升级与直接替换（%s/%s）',
+  (upgradePrice, perfectPrice, expected) => {
+    const catalog = {
+      ...primary,
+      modifiers: [],
+      essences: [],
+      augments: (primary.augments ?? []).filter(
+        (a) =>
+          a.category === 'armour' &&
+          (a.name.endsWith('Desert Rune') || a.name === 'Masterwork Rune'),
+      ),
+    }
+    const id = (name: string) => `pob2:augment:${JSON.stringify([name, 'armour'])}`
+    const state: CraftState = {
+      baseId: 'Adherent Cuffs',
+      itemLevel: 86,
+      rarity: 'normal',
+      affixes: [],
+      sourceText: null,
+      quality: 0,
+      sockets: [id('Lesser Desert Rune')],
+    }
+    const definitions = {
+      nextTargetId: 1,
+      targets: [],
+      alternatives: [],
+      values: [],
+      panelGoals: [
+        { kind: 'item-property' as const, property: 'fireResistance' as const, min: 22 },
+      ],
+    }
+    const result = planTargetDefinitionRoutes(catalog, state, definitions, {
+      maxDepth: 3,
+      maxStates: 32,
+      pricing: {
+        unit: 'divine',
+        baseCost: 0,
+        prices: {
+          'augment:Masterwork Rune': upgradePrice,
+          'augment:Perfect Desert Rune': perfectPrice,
+          'augment:Desert Rune': 100,
+          'augment:Greater Desert Rune': 100,
+        },
+      },
+    })
+    if (!result.ok) throw Error(result.error)
+    const route = result.value.routes[0]
+    expect(
+      route?.steps.map(({ operation }) =>
+        'kind' in operation ? operation.kind : operation.currency,
+      ),
+    ).toEqual(expected)
+    let current = state
+    for (const step of route?.steps ?? []) {
+      const applied = applyCraftStep(catalog, current, step.operation)
+      if (!applied.ok) throw Error(applied.error)
+      current = applied.value
+    }
+    expect(current.sockets).toEqual([id('Perfect Desert Rune')])
+    expect(evaluateCraftPanelGoals(catalog, current, definitions.panelGoals).satisfied).toBe(true)
+  },
+)
+
 it('纯面板保留先打孔再镶嵌的准备步骤', () => {
   const catalog = socketStrategyCatalog()
   catalog.modifiers = []

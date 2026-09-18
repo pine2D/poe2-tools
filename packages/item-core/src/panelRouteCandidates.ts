@@ -7,6 +7,7 @@ import { essenceResultModIds } from './essenceOutcomes'
 import { prepareFluxCraft } from './fluxCraft'
 import { FLUXES } from './fluxes'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
+import { prepareMasterworkCraft } from './masterwork'
 import { inspectNumericLines } from './numeric'
 import { type CraftPanelGoal, evaluateCraftPanelGoals } from './panelGoals'
 import {
@@ -196,6 +197,10 @@ export function* panelRouteCandidates(
     }
   if (state.sockets !== undefined && state.sockets.length < artificerSocketLimit(catalog, state))
     yield { operation: { kind: 'artificer' }, atRiskModIds: [] }
+  for (const [socketIndex] of (state.sockets ?? []).entries()) {
+    const upgrade = prepareMasterworkCraft(catalog, state, socketIndex)
+    if (upgrade.ok) yield { operation: upgrade.value.operation, atRiskModIds: [] }
+  }
   const augments = limit(
     socketCandidates(catalog, state).sort(
       (a, b) => relevance(b.lines) - relevance(a.lines) || a.id.localeCompare(b.id),
