@@ -124,14 +124,18 @@ describe('完美无限精华真实结果', () => {
       ).ok,
     ).toBe(false)
   })
-  it('防御精华接入后，其余82个类别映射继续保留未解析状态', () => {
+  it('普通无限精华仍保留跨资格类别的未解析状态', () => {
     const seen = new Set<string>()
     for (const currentBase of catalog.bases)
       for (const entry of inspectEssences(catalog, currentBase)) {
         if (!entry.mod && !entry.essence.id.endsWith('EssenceDefences'))
           seen.add(`${entry.essence.id}:${entry.category}`)
       }
-    expect(seen.size).toBe(82)
+    for (const prefix of ['LesserEssence', 'Essence', 'GreaterEssence']) {
+      expect(seen.has(`Metadata/Items/Currency/Currency${prefix}Attribute:Belt`)).toBe(true)
+      expect(seen.has(`Metadata/Items/Currency/Currency${prefix}Attribute:Focus`)).toBe(true)
+    }
+    expect([...seen].every((key) => /EssenceAttribute:|EssenceDelirium:/.test(key))).toBe(true)
   })
   it('单结果继续无需新字段，并拒绝伪造结果字段与越界数值', () => {
     const essence = required(

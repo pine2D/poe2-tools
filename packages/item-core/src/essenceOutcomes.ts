@@ -1,5 +1,9 @@
 import type { CatalogBase, CatalogEssence, CatalogMod, CraftCatalog } from './catalog'
 import { defenceEssenceResult, isDefenceEssenceId } from './defenceEssences'
+import {
+  isOrdinaryAttributeEssenceId,
+  ordinaryAttributeEssenceResults,
+} from './ordinaryAttributeEssences'
 
 const perfectInfiniteId = 'Metadata/Items/Currency/CurrencyPerfectEssenceAttribute'
 const resultIdentity = [
@@ -45,6 +49,14 @@ function resolveEssenceResults(
   const category = essenceCategory(base)
   const declared = Object.hasOwn(essence.mods, category) ? essence.mods[category] : undefined
   if (declared === undefined) return []
+  if (isOrdinaryAttributeEssenceId(essence.id))
+    return ordinaryAttributeEssenceResults(
+      catalog,
+      base,
+      essence,
+      declared,
+      modifiers ?? ((id) => catalog.modifiers.filter((mod) => mod.id === id)),
+    )
   if (isDefenceEssenceId(essence.id))
     return defenceEssenceResult(
       catalog,

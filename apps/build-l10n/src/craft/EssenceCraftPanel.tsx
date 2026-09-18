@@ -10,6 +10,7 @@ import {
   type EssenceOmen,
   inspectEssences,
   inspectNumericLines,
+  isOrdinaryAttributeEssenceId,
   matchesTargetInterval,
   prepareEssenceCraft,
   projectCraftTargetValues,
@@ -156,6 +157,11 @@ export function EssenceCraftPanel({
         前三档精华将魔法装备升级为稀有；完美与腐化精华在稀有装备上移除一组，再加入保证工艺词缀。每次应用消耗一份精华，启用预兆时另消耗一份预兆。
       </p>
       <p>多结果精华需分别选择本次演练结果；游戏中的结果随机，本工具不提供未经确认的概率。</p>
+      {matches.some(({ essence }) => isOrdinaryAttributeEssenceId(essence.id)) ? (
+        <p>
+          普通三档无限精华目前支持能自然生成力量、敏捷和智慧的基底；其他基底的完整结果范围仍待核实。候选依据公开说明与目录推导，尚未真机验收。
+        </p>
+      ) : null}
       <label>
         精华预兆
         <select

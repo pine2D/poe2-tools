@@ -27,6 +27,15 @@ it('整批枚举只做线性身份查询，不能为每种材料重新遍历整�
   if (!base) throw Error('缺少基底')
   const result = inspectEssences(catalog, base)
   expect(result.filter((e) => e.resultModId).map((e) => e.modId)).toEqual([
+    'Strength2',
+    'Dexterity2',
+    'Intelligence2',
+    'Strength4',
+    'Dexterity4',
+    'Intelligence4',
+    'Strength6',
+    'Dexterity6',
+    'Intelligence6',
     'EssencePercentStrength1',
     'EssencePercentDexterity1',
     'EssencePercentIntelligence1',

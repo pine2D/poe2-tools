@@ -416,6 +416,11 @@ export {
 export type { CraftOmen } from './omens'
 export { CRAFT_OMEN_RULES, craftOmenDescription, craftOmenError, craftOmenMaterials } from './omens'
 export {
+  ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION,
+  requiresOrdinaryAttributeEssenceProjectVersion,
+} from './ordinaryAttributeEssenceProjectVersion'
+export { isOrdinaryAttributeEssenceId } from './ordinaryAttributeEssences'
+export {
   PANEL_GOAL_RULES_VERSION,
   requiresPanelGoalProjectVersion,
 } from './panelGoalProjectVersion'

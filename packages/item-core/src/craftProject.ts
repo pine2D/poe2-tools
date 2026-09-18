@@ -76,6 +76,10 @@ import { isMasterworkCraftOperation } from './masterwork'
 import { requiresMasterworkProjectVersion } from './masterworkProjectVersion'
 import { requiresOffhandIdolProjectVersion } from './offhandIdolProjectVersion'
 import { CRAFT_OMEN_RULES, type CraftOmen, isCraftOmen } from './omens'
+import {
+  requiresOrdinaryAttributeEssenceProjectVersion,
+  withoutOrdinaryAttributeEssences,
+} from './ordinaryAttributeEssenceProjectVersion'
 import { requiresPanelGoalProjectVersion } from './panelGoalProjectVersion'
 import { parseItem } from './parse'
 import { requiresPendingExaltationProjectVersion } from './pendingExaltationProjectVersion'
@@ -747,6 +751,7 @@ export function readNativeTargetProjectProjection(
   offhandIdols = false,
   defenceEssences = false,
   jewelVaal = false,
+  ordinaryAttributeEssences = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -794,6 +799,7 @@ export function readNativeTargetProjectProjection(
     offhandIdols,
     defenceEssences,
     jewelVaal,
+    ordinaryAttributeEssences,
   )
 }
 
@@ -843,8 +849,10 @@ function readCraftProject(
   offhandIdols = false,
   defenceEssences = false,
   jewelVaal = false,
+  ordinaryAttributeEssences = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
+  if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
   if (!defenceEssences) catalog = withoutDefenceEssences(catalog)
   if (!native && catalog.fluxes) {
     const { fluxes: _fluxes, ...legacyCatalog } = catalog
@@ -868,6 +876,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!ordinaryAttributeEssences && requiresOrdinaryAttributeEssenceProjectVersion(value))
+    return fail('普通属性精华操作和指引必须使用 v117 项目。')
   if (!jewelVaal && requiresJewelVaalProjectVersion(value))
     return fail('珠宝瓦尔增删词缀必须使用 v116 项目。')
   if (!defenceEssences && requiresDefenceEssenceProjectVersion(value))
@@ -2294,6 +2304,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresOrdinaryAttributeEssenceProjectVersion(project))
+    throw new Error('普通属性精华操作和指引必须使用 v117 项目。')
   if (requiresJewelVaalProjectVersion(project))
     throw new Error('珠宝瓦尔增删词缀必须使用 v116 项目。')
   if (requiresDefenceEssenceProjectVersion(project))

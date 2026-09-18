@@ -183,3 +183,51 @@ it('恢复没有新能力的v89也保持原规则版本', () => {
   )
   expect(save().rulesVersion).toBe('basic-2026-09-16-v89')
 })
+it.each([
+  ['Lesser Essence of the Infinite', 'Strength2'],
+  ['Essence of the Infinite', 'Dexterity4'],
+  ['Greater Essence of the Infinite', 'Intelligence6'],
+])('普通属性精华 %s 保存v117完整未来并恢复重做', (name, resultModId) => {
+  const initial: CraftState = {
+    baseId: 'Amber Amulet',
+    rarity: 'magic',
+    itemLevel: 86,
+    sourceText: null,
+    affixes: [{ modId: 'IncreasedLife1', lines: ['+15 to maximum Life'] }],
+  }
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{}}
+      initialState={imported(initial)}
+      dictionary={dictionary}
+    />,
+  )
+  fireEvent.change(screen.getByRole('searchbox', { name: '搜索可演练精华' }), {
+    target: { value: name },
+  })
+  const attribute = resultModId.replace(/\d+$/, '')
+  const button = screen
+    .getAllByRole('button', { name: /^选择精华 / })
+    .find(
+      (b) =>
+        b.getAttribute('aria-label')?.startsWith(`选择精华 ${name} · `) &&
+        b.getAttribute('aria-label')?.includes(attribute),
+    )
+  if (!button) throw Error('缺少指定属性结果')
+  fireEvent.click(button)
+  click('预览精华结果')
+  click('应用精华结果')
+  const applied = save()
+  expect(applied.rulesVersion).toBe('basic-2026-09-18-v117')
+  expect(applied.operations[0]).toMatchObject({ kind: 'essence', resultModId })
+  click('撤销')
+  expect(save()).toMatchObject({
+    rulesVersion: 'basic-2026-09-18-v117',
+    cursor: 0,
+    operations: applied.operations,
+  })
+  click('恢复本机演练')
+  click('重做')
+  expect(save()).toEqual(applied)
+})
