@@ -510,7 +510,7 @@ export function CatalogPanel({
             </dd>
           </div>
           <div>
-            <dt>游戏版本</dt>
+            <dt>数据快照版本</dt>
             <dd>{readyCatalog._meta.gameVersion ?? '未核对'}</dd>
           </div>
         </dl>

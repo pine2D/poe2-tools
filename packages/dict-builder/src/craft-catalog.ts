@@ -31,6 +31,8 @@ import { sha256 } from './util/json'
 
 // 固定源提交；升级要复核字段、计数与游戏版本，不跟随 dev 漂移。
 const COMMIT = 'ce566eac45ea8a86477f513c7ee65a1ebe60014e'
+// 上游 49e9392 明确导出 0.5.5；本快照引用的 37 个源文件此后无变化，见数据来源登记。
+const GAME_VERSION = '0.5.5'
 const BASE_FILES = [
   'amulet',
   'axe',
@@ -199,7 +201,7 @@ const catalog: CraftCatalog = {
     schemaVersion: 2,
     tier: 'primary',
     sourceCommit: COMMIT,
-    gameVersion: null,
+    gameVersion: GAME_VERSION,
     generatedAt: fetchedTimes.sort().at(-1) ?? '',
     weightStatus: 'unknown',
     sources,
