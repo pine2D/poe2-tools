@@ -12,6 +12,7 @@ import {
   isOffhandIdolId,
   isRebirthArmourRune,
   isSpecialMartialRune,
+  isWandRune,
   isWardArmourRune,
   type SocketCraftOperation,
   socketCandidates,
@@ -34,6 +35,9 @@ interface SocketPanelProps {
   onPreview: (operation: SocketCraftOperation | ArtificerCraftOperation | null) => void
   onApply: () => void
 }
+
+const wandRuneNote =
+  '显示本件符文主效果，保留触发条件与负作用；绑定附加效果和角色最终收益尚未计算。遗产符文共用一枚限量。'
 
 const isIronRune = (augment: CatalogAugment | undefined) =>
   augment?.type === 'Rune' &&
@@ -247,6 +251,7 @@ export function SocketPanel({
                   {effect && isSpecialMartialRune(effect, true) ? (
                     <p>{specialRuneNote(effect)}</p>
                   ) : null}
+                  {effect && isWandRune(effect, true) ? <p>{wandRuneNote}</p> : null}
                   {effect && bodyIdolNote(effect) ? <p>{bodyIdolNote(effect)}</p> : null}
                 </article>
               )
@@ -327,6 +332,7 @@ export function SocketPanel({
               {offhandIdolNote(selected) ? (
                 <p>{offhandIdolNote(selected)}绑定效果尚未激活。</p>
               ) : null}
+              {isWandRune(selected, true) ? <p>{wandRuneNote}</p> : null}
               {isArmourIdol(selected, true) && !isOffhandIdolId(selected.id) ? (
                 <p>
                   主效果保留触发条件与作用对象，不计为本件防御或无条件角色收益；持续时间按各条规则分别增效。

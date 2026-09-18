@@ -24,6 +24,7 @@ import { serleSourceMatches } from './serleRune'
 import { effectiveSocketAugment } from './socketAmplification'
 import { specialMartialSourceMatches } from './specialMartialRunes'
 import type { ItemDocument } from './types'
+import { wandRuneSourceMatches } from './wandRunes'
 import {
   parseWeaponRuneEffectTotals,
   sumWeaponRuneEffects,
@@ -138,6 +139,13 @@ export function runeSocketContributionError(
       : '权杖镶嵌效果与孔位声明不一致：请核对完整作用对象、条件、数值和重复行。'
   const weapon = base && weaponSocketKind(base)
   if (weapon) {
+    if (
+      !wandRuneSourceMatches(
+        mainSource,
+        augments.flatMap((a) => a.lines),
+      )
+    )
+      return '法杖专属符文效果与孔位声明不一致，请核对完整条件、数值与重复行。'
     if (
       !specialMartialSourceMatches(
         mainSource,

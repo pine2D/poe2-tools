@@ -18,6 +18,7 @@ import {
   specialMartialRuneFits,
 } from './specialMartialRunes'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
+import { isWandRuneId, scaleWandRune, wandRuneFits } from './wandRunes'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 const HORROR_MOD = 'EssenceLocalRuneAndSoulCoreEffect1'
@@ -62,6 +63,8 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state)
   if (increase === null) return null
+  if (isWandRuneId(augment.id))
+    return wandRuneFits(catalog, state, augment) ? scaleWandRune(catalog, augment, increase) : null
   if (isArmourIdolId(augment.id))
     return armourIdolFits(catalog, state, augment)
       ? scaleArmourIdol(catalog, augment, increase)

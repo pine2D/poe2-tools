@@ -1,0 +1,332 @@
+import type { CatalogAugment } from './catalog'
+
+// 固定 MIT ModRunes 与 ModScalability 的已核对法杖分支，不包含符文间增效来源。
+export const WAND_RUNES: readonly CatalogAugment[] = [
+  {
+    id: 'pob2:augment:["Hedgewitch Assandra\'s Rune of Wisdom","wand"]',
+    name: "Hedgewitch Assandra's Rune of Wisdom",
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['+1 to Level of all Spell Skills'],
+    statOrder: [950],
+    tradeHashes: {
+      '124131830': ['+1 to Level of all Spell Skills'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Archon recovery period expires 30% faster'],
+      statOrder: [4343],
+    },
+  },
+  {
+    id: 'pob2:augment:["Saqawal\'s Rune of the Sky","wand"]',
+    name: "Saqawal's Rune of the Sky",
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['Gain 5% of Damage as Extra Damage of all Elements'],
+    statOrder: [9264],
+    tradeHashes: {
+      '731403740': ['Gain 5% of Damage as Extra Damage of all Elements'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: [
+        '12% chance when collecting an Elemental Infusion to gain an',
+        'additional Elemental Infusion of the same type',
+      ],
+      statOrder: [4193, 4193.1],
+    },
+  },
+  {
+    id: 'pob2:augment:["Fenumus\' Rune of Agony","wand"]',
+    name: "Fenumus' Rune of Agony",
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['Gain 13% of Damage as Extra Chaos Damage'],
+    statOrder: [1672],
+    tradeHashes: {
+      '3398787959': ['Gain 13% of Damage as Extra Chaos Damage'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Gain 8% of Damage as Extra Physical Damage'],
+      statOrder: [1671],
+    },
+  },
+  {
+    id: 'pob2:augment:["Thane Girt\'s Rune of Wildness","wand"]',
+    name: "Thane Girt's Rune of Wildness",
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['25% chance for Spell Skills to fire 2 additional Projectiles'],
+    statOrder: [10037],
+    tradeHashes: {
+      '2910761524': ['25% chance for Spell Skills to fire 2 additional Projectiles'],
+    },
+    levelReq: 50,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Every Rage also grants 1% increased Spell Damage'],
+      statOrder: [10011],
+    },
+  },
+  {
+    id: 'pob2:augment:["Warding Rune of Desperation","wand"]',
+    name: 'Warding Rune of Desperation',
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['Spell damage Penetrates 25% of enemy Elemental Resistances while on Low Runic Ward'],
+    statOrder: [10045],
+    tradeHashes: {
+      '267552601': [
+        'Spell damage Penetrates 25% of enemy Elemental Resistances while on Low Runic Ward',
+      ],
+    },
+    levelReq: 15,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['12% increased Elemental Damage'],
+      statOrder: [1726],
+    },
+  },
+  {
+    id: 'pob2:augment:["Warding Rune of Obsession","wand"]',
+    name: 'Warding Rune of Obsession',
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['All damage taken bypasses Runic Ward', 'Runic Ward Regeneration Rate is doubled'],
+    statOrder: [5961, 10533],
+    tradeHashes: {
+      '2579974553': ['Runic Ward Regeneration Rate is doubled'],
+      '3814102597': ['All damage taken bypasses Runic Ward'],
+    },
+    levelReq: 45,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['12% increased maximum Runic Ward'],
+      statOrder: [891],
+    },
+  },
+  {
+    id: 'pob2:augment:["Ancient Rune of Decay","wand"]',
+    name: 'Ancient Rune of Decay',
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['25% increased Withered Magnitude'],
+    statOrder: [10565],
+    tradeHashes: {
+      '3973629633': ['25% increased Withered Magnitude'],
+    },
+    levelReq: 30,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: [
+        '15% chance that when Volatility on you explodes, you regain an equivalent amount of Volatility',
+      ],
+      statOrder: [10492],
+    },
+  },
+  {
+    id: 'pob2:augment:["Rune of Reach","wand"]',
+    name: 'Rune of Reach',
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: [
+      'Remnants you create have 25% reduced effect',
+      'Remnants can be collected from 50% further away',
+    ],
+    statOrder: [9738, 9740],
+    tradeHashes: {
+      '1999910726': ['Remnants you create have 25% reduced effect'],
+      '3482326075': ['Remnants can be collected from 50% further away'],
+    },
+    levelReq: 15,
+    limit: 1,
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInJewellery: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['20% increased Exposure Effect'],
+      statOrder: [6530],
+    },
+  },
+  {
+    id: 'pob2:augment:["Legacy of Lifesprig","wand"]',
+    name: 'Legacy of Lifesprig',
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['+2 to Level of all Spell Skills'],
+    statOrder: [950],
+    tradeHashes: {
+      '124131830': ['+2 to Level of all Spell Skills'],
+    },
+    levelReq: 65,
+    limit: 1,
+    limitId: 'AldursLegacyLimit1',
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['Leeches 1% of maximum Life when you Cast a Spell'],
+      statOrder: [7460],
+    },
+  },
+  {
+    id: 'pob2:augment:["Legacy of Adonia\'s Ego","wand"]',
+    name: "Legacy of Adonia's Ego",
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['+1 to Maximum Power Charges'],
+    statOrder: [1569],
+    tradeHashes: {
+      '227523295': ['+1 to Maximum Power Charges'],
+    },
+    levelReq: 65,
+    limit: 1,
+    limitId: 'AldursLegacyLimit1',
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['+65 to maximum Mana'],
+      statOrder: [892],
+    },
+  },
+  {
+    id: 'pob2:augment:["Legacy of Cursecarver","wand"]',
+    name: 'Legacy of Cursecarver',
+    category: 'wand',
+    type: 'Rune',
+    localMod: false,
+    lines: ['+3 to Level of all Curse Skills'],
+    statOrder: [971],
+    tradeHashes: {
+      '805298720': ['+3 to Level of all Curse Skills'],
+    },
+    levelReq: 65,
+    limit: 1,
+    limitId: 'AldursLegacyLimit1',
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['35% increased Mana Regeneration Rate'],
+      statOrder: [1043],
+    },
+  },
+]
+export const WAND_RUNE_SCALABILITY = {
+  '+1 to Level of all Spell Skills': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  'Gain 5% of Damage as Extra Damage of all Elements': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  'Gain 13% of Damage as Extra Chaos Damage': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  '25% chance for Spell Skills to fire 2 additional Projectiles': [
+    {
+      scalable: true,
+      formats: [],
+    },
+    {
+      scalable: false,
+      formats: [],
+    },
+  ],
+  'Spell damage Penetrates 25% of enemy Elemental Resistances while on Low Runic Ward': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  'All damage taken bypasses Runic Ward': [],
+  'Runic Ward Regeneration Rate is doubled': [],
+  '25% increased Withered Magnitude': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  'Remnants you create have 25% reduced effect': [
+    {
+      scalable: true,
+      formats: ['negate'],
+    },
+  ],
+  'Remnants can be collected from 50% further away': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  '+2 to Level of all Spell Skills': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  '+1 to Maximum Power Charges': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+  '+3 to Level of all Curse Skills': [
+    {
+      scalable: true,
+      formats: [],
+    },
+  ],
+}

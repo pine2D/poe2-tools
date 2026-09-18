@@ -5,6 +5,7 @@ import { isSerleRune, SERLE_LINE } from './serleRune'
 import { isSupportedSoulCore, readSoulCoreLine, WEAPON_SOUL_TOTALS } from './soulCoreEffects'
 import { isSpecialMartialConditionLine, isSpecialMartialRune } from './specialMartialRunes'
 import { isBasicTalismanBase } from './talismans'
+import { isWandRune, isWandRuneLine } from './wandRunes'
 
 export type WeaponRuneCategory = 'weapon' | 'wand' | 'staff'
 
@@ -101,6 +102,10 @@ export function parseWeaponRuneEffectTotals(
   const totals = emptyTotals()
   let branch: Branch | undefined
   for (const line of lines) {
+    if (isWandRuneLine(line)) {
+      if (category && category !== 'wand') return null
+      continue
+    }
     if (isSpecialMartialConditionLine(line)) continue
     if (line === ASTRID_LINE || line === SERLE_LINE || line === 'Can roll Destruction modifiers')
       continue
@@ -232,6 +237,7 @@ export function sumWeaponRuneEffects(
     !augments.every(
       (augment) =>
         isSupportedWeaponRune(augment, category) ||
+        (category === 'wand' && isWandRune(augment, true)) ||
         (category === 'weapon' && isSpecialMartialRune(augment, true)) ||
         (category === 'weapon' && augment.category === 'weapon' && isSupportedSoulCore(augment)),
     )

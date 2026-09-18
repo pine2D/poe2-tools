@@ -70,6 +70,7 @@ import {
 } from './skillSockets'
 import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
 import { specialMartialSocketError } from './specialMartialRunes'
+import { wandRuneSocketError } from './wandRunes'
 
 export interface ArtificerCraftOperation {
   kind: 'artificer'
@@ -443,6 +444,13 @@ export function applyCraftStep(
       step.augmentId,
     )
     if (limitError) return { ok: false, error: limitError }
+    const wandLimitError = wandRuneSocketError(
+      catalog,
+      checked.value,
+      step.socketIndex,
+      step.augmentId,
+    )
+    if (wandLimitError) return { ok: false, error: wandLimitError }
     const specialLimitError = specialMartialSocketError(
       catalog,
       checked.value,

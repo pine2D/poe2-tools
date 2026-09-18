@@ -175,6 +175,7 @@ import {
   requiresTieredMasterworkProjectVersion,
   TIERED_MASTERWORK_RULES_VERSION,
 } from './tieredMasterworkProjectVersion'
+import { requiresWandRuneProjectVersion, WAND_RUNE_RULES_VERSION } from './wandRuneProjectVersion'
 import { requiresWardRuneProjectVersion, WARD_RUNE_RULES_VERSION } from './wardRuneProjectVersion'
 import {
   requiresWeightedPropertyProjectVersion,
@@ -239,6 +240,7 @@ export function loadTargetWorkbenchProject(
       value.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION ||
       value.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
       value.rulesVersion === PENDING_EXALTATION_RULES_VERSION ||
+      value.rulesVersion === WAND_RUNE_RULES_VERSION ||
       value.rulesVersion === RING_LICH_ECHOES_RULES_VERSION ||
       value.rulesVersion === SPENDING_STRATEGY_RULES_VERSION ||
       value.rulesVersion === TIERED_MASTERWORK_RULES_VERSION ||
@@ -307,6 +309,7 @@ export function reuseTargetCraftPlan(
   const next = structuredClone(current.value.project)
   if (source.fluxCatalogSignature !== undefined) {
     if (
+      next.rulesVersion !== WAND_RUNE_RULES_VERSION &&
       next.rulesVersion !== RING_LICH_ECHOES_RULES_VERSION &&
       next.rulesVersion !== SPENDING_STRATEGY_RULES_VERSION &&
       next.rulesVersion !== TIERED_MASTERWORK_RULES_VERSION &&
@@ -369,6 +372,8 @@ export function reuseTargetCraftPlan(
   if (source.targetImplicitValues)
     next.targetImplicitValues = structuredClone(source.targetImplicitValues)
   if (
+    next.rulesVersion === WAND_RUNE_RULES_VERSION ||
+    requiresWandRuneProjectVersion(next) ||
     next.rulesVersion === RING_LICH_ECHOES_RULES_VERSION ||
     requiresRingLichEchoesProjectVersion(next, catalog) ||
     next.rulesVersion === SPENDING_STRATEGY_RULES_VERSION ||
@@ -455,193 +460,195 @@ export function reuseTargetCraftPlan(
     requiresRuneforgeProjectVersion(next)
   ) {
     next.rulesVersion =
-      next.rulesVersion === RING_LICH_ECHOES_RULES_VERSION ||
-      requiresRingLichEchoesProjectVersion(next, catalog)
-        ? RING_LICH_ECHOES_RULES_VERSION
-        : next.rulesVersion === SPENDING_STRATEGY_RULES_VERSION ||
-            requiresSpendingProjectVersion(next)
-          ? SPENDING_STRATEGY_RULES_VERSION
-          : next.rulesVersion === TIERED_MASTERWORK_RULES_VERSION ||
-              requiresTieredMasterworkProjectVersion(next, catalog)
-            ? TIERED_MASTERWORK_RULES_VERSION
-            : next.rulesVersion === INFUSED_CATALYST_RULES_VERSION ||
-                requiresInfusedCatalystProjectVersion(next, catalog)
-              ? INFUSED_CATALYST_RULES_VERSION
-              : next.rulesVersion === BLACKBLOODED_ECHOES_RULES_VERSION ||
-                  requiresBlackbloodedEchoesProjectVersion(next)
-                ? BLACKBLOODED_ECHOES_RULES_VERSION
-                : next.rulesVersion === ANCIENT_RIB_ECHOES_RULES_VERSION ||
-                    requiresAncientRibEchoesProjectVersion(next)
-                  ? ANCIENT_RIB_ECHOES_RULES_VERSION
-                  : next.rulesVersion === ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION ||
-                      requiresOrdinaryAttributeEssenceProjectVersion(next)
-                    ? ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION
-                    : next.rulesVersion === JEWEL_VAAL_RULES_VERSION ||
-                        requiresJewelVaalProjectVersion(next)
-                      ? JEWEL_VAAL_RULES_VERSION
-                      : next.rulesVersion === DEFENCE_ESSENCE_RULES_VERSION ||
-                          requiresDefenceEssenceProjectVersion(next)
-                        ? DEFENCE_ESSENCE_RULES_VERSION
-                        : next.rulesVersion === PANEL_GOAL_RULES_VERSION ||
-                            requiresPanelGoalProjectVersion(next)
-                          ? PANEL_GOAL_RULES_VERSION
-                          : next.rulesVersion === OFFHAND_IDOL_RULES_VERSION ||
-                              requiresOffhandIdolProjectVersion(next)
-                            ? OFFHAND_IDOL_RULES_VERSION
-                            : next.rulesVersion === BODY_IDOL_RULES_VERSION ||
-                                requiresBodyIdolProjectVersion(next)
-                              ? BODY_IDOL_RULES_VERSION
-                              : next.rulesVersion === HELMET_BOOT_IDOL_RULES_VERSION ||
-                                  requiresHelmetBootIdolProjectVersion(next)
-                                ? HELMET_BOOT_IDOL_RULES_VERSION
-                                : next.rulesVersion === GLOVE_IDOL_RULES_VERSION ||
-                                    requiresGloveIdolProjectVersion(next)
-                                  ? GLOVE_IDOL_RULES_VERSION
-                                  : next.rulesVersion === SCEPTRE_AUGMENT_RULES_VERSION ||
-                                      requiresSceptreAugmentProjectVersion(next)
-                                    ? SCEPTRE_AUGMENT_RULES_VERSION
-                                    : next.rulesVersion === SPECIAL_MARTIAL_RUNE_RULES_VERSION ||
-                                        requiresSpecialMartialRuneProjectVersion(next)
-                                      ? SPECIAL_MARTIAL_RUNE_RULES_VERSION
-                                      : next.rulesVersion === TALISMAN_CRAFT_RULES_VERSION ||
-                                          requiresTalismanProjectVersion(next, catalog)
-                                        ? TALISMAN_CRAFT_RULES_VERSION
-                                        : next.rulesVersion === FLASK_CRAFT_RULES_VERSION ||
-                                            requiresFlaskProjectVersion(next, catalog)
-                                          ? FLASK_CRAFT_RULES_VERSION
-                                          : next.rulesVersion === AMULET_CATALYST_RULES_VERSION ||
-                                              requiresAmuletCatalystProjectVersion(next)
-                                            ? AMULET_CATALYST_RULES_VERSION
-                                            : next.rulesVersion ===
-                                                  AMULET_SKILL_LEVEL_RULES_VERSION ||
-                                                requiresAmuletSkillLevelProjectVersion(next)
-                                              ? AMULET_SKILL_LEVEL_RULES_VERSION
+      next.rulesVersion === WAND_RUNE_RULES_VERSION || requiresWandRuneProjectVersion(next)
+        ? WAND_RUNE_RULES_VERSION
+        : next.rulesVersion === RING_LICH_ECHOES_RULES_VERSION ||
+            requiresRingLichEchoesProjectVersion(next, catalog)
+          ? RING_LICH_ECHOES_RULES_VERSION
+          : next.rulesVersion === SPENDING_STRATEGY_RULES_VERSION ||
+              requiresSpendingProjectVersion(next)
+            ? SPENDING_STRATEGY_RULES_VERSION
+            : next.rulesVersion === TIERED_MASTERWORK_RULES_VERSION ||
+                requiresTieredMasterworkProjectVersion(next, catalog)
+              ? TIERED_MASTERWORK_RULES_VERSION
+              : next.rulesVersion === INFUSED_CATALYST_RULES_VERSION ||
+                  requiresInfusedCatalystProjectVersion(next, catalog)
+                ? INFUSED_CATALYST_RULES_VERSION
+                : next.rulesVersion === BLACKBLOODED_ECHOES_RULES_VERSION ||
+                    requiresBlackbloodedEchoesProjectVersion(next)
+                  ? BLACKBLOODED_ECHOES_RULES_VERSION
+                  : next.rulesVersion === ANCIENT_RIB_ECHOES_RULES_VERSION ||
+                      requiresAncientRibEchoesProjectVersion(next)
+                    ? ANCIENT_RIB_ECHOES_RULES_VERSION
+                    : next.rulesVersion === ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION ||
+                        requiresOrdinaryAttributeEssenceProjectVersion(next)
+                      ? ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION
+                      : next.rulesVersion === JEWEL_VAAL_RULES_VERSION ||
+                          requiresJewelVaalProjectVersion(next)
+                        ? JEWEL_VAAL_RULES_VERSION
+                        : next.rulesVersion === DEFENCE_ESSENCE_RULES_VERSION ||
+                            requiresDefenceEssenceProjectVersion(next)
+                          ? DEFENCE_ESSENCE_RULES_VERSION
+                          : next.rulesVersion === PANEL_GOAL_RULES_VERSION ||
+                              requiresPanelGoalProjectVersion(next)
+                            ? PANEL_GOAL_RULES_VERSION
+                            : next.rulesVersion === OFFHAND_IDOL_RULES_VERSION ||
+                                requiresOffhandIdolProjectVersion(next)
+                              ? OFFHAND_IDOL_RULES_VERSION
+                              : next.rulesVersion === BODY_IDOL_RULES_VERSION ||
+                                  requiresBodyIdolProjectVersion(next)
+                                ? BODY_IDOL_RULES_VERSION
+                                : next.rulesVersion === HELMET_BOOT_IDOL_RULES_VERSION ||
+                                    requiresHelmetBootIdolProjectVersion(next)
+                                  ? HELMET_BOOT_IDOL_RULES_VERSION
+                                  : next.rulesVersion === GLOVE_IDOL_RULES_VERSION ||
+                                      requiresGloveIdolProjectVersion(next)
+                                    ? GLOVE_IDOL_RULES_VERSION
+                                    : next.rulesVersion === SCEPTRE_AUGMENT_RULES_VERSION ||
+                                        requiresSceptreAugmentProjectVersion(next)
+                                      ? SCEPTRE_AUGMENT_RULES_VERSION
+                                      : next.rulesVersion === SPECIAL_MARTIAL_RUNE_RULES_VERSION ||
+                                          requiresSpecialMartialRuneProjectVersion(next)
+                                        ? SPECIAL_MARTIAL_RUNE_RULES_VERSION
+                                        : next.rulesVersion === TALISMAN_CRAFT_RULES_VERSION ||
+                                            requiresTalismanProjectVersion(next, catalog)
+                                          ? TALISMAN_CRAFT_RULES_VERSION
+                                          : next.rulesVersion === FLASK_CRAFT_RULES_VERSION ||
+                                              requiresFlaskProjectVersion(next, catalog)
+                                            ? FLASK_CRAFT_RULES_VERSION
+                                            : next.rulesVersion === AMULET_CATALYST_RULES_VERSION ||
+                                                requiresAmuletCatalystProjectVersion(next)
+                                              ? AMULET_CATALYST_RULES_VERSION
                                               : next.rulesVersion ===
-                                                    AMULET_SKILL_SOCKETS_RULES_VERSION ||
-                                                  requiresAmuletSkillSocketsProjectVersion(next)
-                                                ? AMULET_SKILL_SOCKETS_RULES_VERSION
+                                                    AMULET_SKILL_LEVEL_RULES_VERSION ||
+                                                  requiresAmuletSkillLevelProjectVersion(next)
+                                                ? AMULET_SKILL_LEVEL_RULES_VERSION
                                                 : next.rulesVersion ===
-                                                      SKILL_VARIANT_AMULET_RULES_VERSION ||
-                                                    requiresSkillVariantAmuletProjectVersion(next)
-                                                  ? SKILL_VARIANT_AMULET_RULES_VERSION
+                                                      AMULET_SKILL_SOCKETS_RULES_VERSION ||
+                                                    requiresAmuletSkillSocketsProjectVersion(next)
+                                                  ? AMULET_SKILL_SOCKETS_RULES_VERSION
                                                   : next.rulesVersion ===
-                                                        SKILL_LEVEL_DECLARATION_RULES_VERSION ||
-                                                      requiresSkillLevelDeclarationProjectVersion(
-                                                        next,
-                                                      )
-                                                    ? SKILL_LEVEL_DECLARATION_RULES_VERSION
+                                                        SKILL_VARIANT_AMULET_RULES_VERSION ||
+                                                      requiresSkillVariantAmuletProjectVersion(next)
+                                                    ? SKILL_VARIANT_AMULET_RULES_VERSION
                                                     : next.rulesVersion ===
-                                                          SKILL_SOCKET_TARGET_RULES_VERSION ||
-                                                        requiresSkillSocketTargetProjectVersion(
+                                                          SKILL_LEVEL_DECLARATION_RULES_VERSION ||
+                                                        requiresSkillLevelDeclarationProjectVersion(
                                                           next,
                                                         )
-                                                      ? SKILL_SOCKET_TARGET_RULES_VERSION
+                                                      ? SKILL_LEVEL_DECLARATION_RULES_VERSION
                                                       : next.rulesVersion ===
-                                                            SKILL_SOCKETS_RULES_VERSION ||
-                                                          requiresSkillSocketsProjectVersion(next)
-                                                        ? SKILL_SOCKETS_RULES_VERSION
+                                                            SKILL_SOCKET_TARGET_RULES_VERSION ||
+                                                          requiresSkillSocketTargetProjectVersion(
+                                                            next,
+                                                          )
+                                                        ? SKILL_SOCKET_TARGET_RULES_VERSION
                                                         : next.rulesVersion ===
-                                                              WEIGHTED_PROPERTY_RULES_VERSION ||
-                                                            requiresWeightedPropertyProjectVersion(
-                                                              next,
-                                                            )
-                                                          ? WEIGHTED_PROPERTY_RULES_VERSION
+                                                              SKILL_SOCKETS_RULES_VERSION ||
+                                                            requiresSkillSocketsProjectVersion(next)
+                                                          ? SKILL_SOCKETS_RULES_VERSION
                                                           : next.rulesVersion ===
-                                                                GRANTED_SKILL_TARGET_RULES_VERSION ||
-                                                              requiresGrantedSkillTargetProjectVersion(
+                                                                WEIGHTED_PROPERTY_RULES_VERSION ||
+                                                              requiresWeightedPropertyProjectVersion(
                                                                 next,
                                                               )
-                                                            ? GRANTED_SKILL_TARGET_RULES_VERSION
+                                                            ? WEIGHTED_PROPERTY_RULES_VERSION
                                                             : next.rulesVersion ===
-                                                                  EXTENDED_INFLUENCE_BONE_RULES_VERSION ||
-                                                                requiresExtendedInfluenceBoneProjectVersion(
+                                                                  GRANTED_SKILL_TARGET_RULES_VERSION ||
+                                                                requiresGrantedSkillTargetProjectVersion(
                                                                   next,
                                                                 )
-                                                              ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                                                              ? GRANTED_SKILL_TARGET_RULES_VERSION
                                                               : next.rulesVersion ===
-                                                                    INFLUENCE_BONE_RULES_VERSION ||
-                                                                  requiresInfluenceBoneProjectVersion(
+                                                                    EXTENDED_INFLUENCE_BONE_RULES_VERSION ||
+                                                                  requiresExtendedInfluenceBoneProjectVersion(
                                                                     next,
                                                                   )
-                                                                ? INFLUENCE_BONE_RULES_VERSION
+                                                                ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
                                                                 : next.rulesVersion ===
-                                                                      DESTRUCTION_RUNE_RULES_VERSION ||
-                                                                    requiresDestructionRuneProjectVersion(
+                                                                      INFLUENCE_BONE_RULES_VERSION ||
+                                                                    requiresInfluenceBoneProjectVersion(
                                                                       next,
                                                                     )
-                                                                  ? DESTRUCTION_RUNE_RULES_VERSION
+                                                                  ? INFLUENCE_BONE_RULES_VERSION
                                                                   : next.rulesVersion ===
-                                                                        INFLUENCE_RUNE_RULES_VERSION ||
-                                                                      requiresInfluenceRuneProjectVersion(
+                                                                        DESTRUCTION_RUNE_RULES_VERSION ||
+                                                                      requiresDestructionRuneProjectVersion(
                                                                         next,
                                                                       )
-                                                                    ? INFLUENCE_RUNE_RULES_VERSION
+                                                                    ? DESTRUCTION_RUNE_RULES_VERSION
                                                                     : next.rulesVersion ===
-                                                                          DESECRATION_COUNT_RULES_VERSION ||
-                                                                        requiresDesecrationCountProjectVersion(
+                                                                          INFLUENCE_RUNE_RULES_VERSION ||
+                                                                        requiresInfluenceRuneProjectVersion(
                                                                           next,
                                                                         )
-                                                                      ? DESECRATION_COUNT_RULES_VERSION
+                                                                      ? INFLUENCE_RUNE_RULES_VERSION
                                                                       : next.rulesVersion ===
-                                                                            PUTREFACTION_RULES_VERSION ||
-                                                                          requiresPutrefactionProjectVersion(
+                                                                            DESECRATION_COUNT_RULES_VERSION ||
+                                                                          requiresDesecrationCountProjectVersion(
                                                                             next,
                                                                           )
-                                                                        ? PUTREFACTION_RULES_VERSION
+                                                                        ? DESECRATION_COUNT_RULES_VERSION
                                                                         : next.rulesVersion ===
-                                                                              PENDING_EXALTATION_RULES_VERSION ||
-                                                                            requiresPendingExaltationProjectVersion(
+                                                                              PUTREFACTION_RULES_VERSION ||
+                                                                            requiresPutrefactionProjectVersion(
                                                                               next,
                                                                             )
-                                                                          ? PENDING_EXALTATION_RULES_VERSION
+                                                                          ? PUTREFACTION_RULES_VERSION
                                                                           : next.rulesVersion ===
-                                                                                ESSENCE_OUTCOMES_RULES_VERSION ||
-                                                                              requiresEssenceOutcomesProjectVersion(
+                                                                                PENDING_EXALTATION_RULES_VERSION ||
+                                                                              requiresPendingExaltationProjectVersion(
                                                                                 next,
                                                                               )
-                                                                            ? ESSENCE_OUTCOMES_RULES_VERSION
+                                                                            ? PENDING_EXALTATION_RULES_VERSION
                                                                             : next.rulesVersion ===
-                                                                                  SERLE_RULES_VERSION ||
-                                                                                requiresSerleProjectVersion(
+                                                                                  ESSENCE_OUTCOMES_RULES_VERSION ||
+                                                                                requiresEssenceOutcomesProjectVersion(
                                                                                   next,
-                                                                                  catalog,
                                                                                 )
-                                                                              ? SERLE_RULES_VERSION
+                                                                              ? ESSENCE_OUTCOMES_RULES_VERSION
                                                                               : next.rulesVersion ===
-                                                                                    CRAFTED_CAPACITY_RULES_VERSION ||
-                                                                                  requiresCraftedCapacityProjectVersion(
+                                                                                    SERLE_RULES_VERSION ||
+                                                                                  requiresSerleProjectVersion(
                                                                                     next,
                                                                                     catalog,
                                                                                   )
-                                                                                ? CRAFTED_CAPACITY_RULES_VERSION
+                                                                                ? SERLE_RULES_VERSION
                                                                                 : next.rulesVersion ===
-                                                                                      CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
-                                                                                    requiresConditionalArmourRuneProjectVersion(
+                                                                                      CRAFTED_CAPACITY_RULES_VERSION ||
+                                                                                    requiresCraftedCapacityProjectVersion(
                                                                                       next,
                                                                                       catalog,
                                                                                     )
-                                                                                  ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                                                                  ? CRAFTED_CAPACITY_RULES_VERSION
                                                                                   : next.rulesVersion ===
-                                                                                        MASTERWORK_CRAFT_RULES_VERSION ||
-                                                                                      requiresMasterworkProjectVersion(
+                                                                                        CONDITIONAL_ARMOUR_RUNE_RULES_VERSION ||
+                                                                                      requiresConditionalArmourRuneProjectVersion(
                                                                                         next,
+                                                                                        catalog,
                                                                                       )
-                                                                                    ? MASTERWORK_CRAFT_RULES_VERSION
+                                                                                    ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
                                                                                     : next.rulesVersion ===
-                                                                                          EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
-                                                                                        requiresExtendedArmourRuneProjectVersion(
+                                                                                          MASTERWORK_CRAFT_RULES_VERSION ||
+                                                                                        requiresMasterworkProjectVersion(
                                                                                           next,
-                                                                                          catalog,
                                                                                         )
-                                                                                      ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                                                                      ? MASTERWORK_CRAFT_RULES_VERSION
                                                                                       : next.rulesVersion ===
-                                                                                            WARD_RUNE_RULES_VERSION ||
-                                                                                          requiresWardRuneProjectVersion(
+                                                                                            EXTENDED_ARMOUR_RUNE_RULES_VERSION ||
+                                                                                          requiresExtendedArmourRuneProjectVersion(
                                                                                             next,
                                                                                             catalog,
                                                                                           )
-                                                                                        ? WARD_RUNE_RULES_VERSION
-                                                                                        : RUNEFORGE_CRAFT_RULES_VERSION
+                                                                                        ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                                                                        : next.rulesVersion ===
+                                                                                              WARD_RUNE_RULES_VERSION ||
+                                                                                            requiresWardRuneProjectVersion(
+                                                                                              next,
+                                                                                              catalog,
+                                                                                            )
+                                                                                          ? WARD_RUNE_RULES_VERSION
+                                                                                          : RUNEFORGE_CRAFT_RULES_VERSION
     if (requiresDestructionRuneProjectVersion(next) || requiresInfluenceRuneProjectVersion(next)) {
       const hash = catalog._meta.sources.find(
         (source) => source.path === 'src/Data/ModRunes.lua',
@@ -659,6 +666,7 @@ export function reuseTargetCraftPlan(
   else if (requiresCombatArmourRuneProjectVersion(next, catalog))
     next.rulesVersion = COMBAT_ARMOUR_RUNE_RULES_VERSION
   if (
+    next.rulesVersion !== WAND_RUNE_RULES_VERSION &&
     next.rulesVersion !== RING_LICH_ECHOES_RULES_VERSION &&
     next.rulesVersion !== SPENDING_STRATEGY_RULES_VERSION &&
     next.rulesVersion !== TIERED_MASTERWORK_RULES_VERSION &&
@@ -706,7 +714,8 @@ export function reuseTargetCraftPlan(
     requiresRetainedCatalystProjectVersion(
       current.value.states,
       catalog,
-      current.value.project.rulesVersion === RING_LICH_ECHOES_RULES_VERSION ||
+      current.value.project.rulesVersion === WAND_RUNE_RULES_VERSION ||
+        current.value.project.rulesVersion === RING_LICH_ECHOES_RULES_VERSION ||
         current.value.project.rulesVersion === SPENDING_STRATEGY_RULES_VERSION ||
         current.value.project.rulesVersion === TIERED_MASTERWORK_RULES_VERSION ||
         current.value.project.rulesVersion === INFUSED_CATALYST_RULES_VERSION,
@@ -716,6 +725,7 @@ export function reuseTargetCraftPlan(
   if (
     next.rulesVersion !== CORRUPTION_STRATEGY_RULES_VERSION &&
     next.rulesVersion !== RETAINED_CATALYST_RULES_VERSION &&
+    next.rulesVersion !== WAND_RUNE_RULES_VERSION &&
     next.rulesVersion !== RING_LICH_ECHOES_RULES_VERSION &&
     next.rulesVersion !== SPENDING_STRATEGY_RULES_VERSION &&
     next.rulesVersion !== TIERED_MASTERWORK_RULES_VERSION &&

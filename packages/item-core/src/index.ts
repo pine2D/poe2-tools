@@ -708,6 +708,8 @@ export type {
   Roll,
   SourceLine,
 } from './types.js'
+export { requiresWandRuneProjectVersion, WAND_RUNE_RULES_VERSION } from './wandRuneProjectVersion'
+export { isWandRune } from './wandRunes'
 export { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
 export { requiresWardRuneProjectVersion, WARD_RUNE_RULES_VERSION } from './wardRuneProjectVersion'
 export type { WeaponDamageEstimate, WeaponDamageType, WeaponEstimate } from './weaponStats'

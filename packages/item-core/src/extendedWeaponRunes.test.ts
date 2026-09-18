@@ -24,7 +24,7 @@ it('固定目录135条武器分支可镶入，精确类别、本地标志与空�
     ['Ashen Staff', 'staff', 40],
   ] as const) {
     const initial = state(baseId)
-    const all = socketCandidates(catalog, initial).filter((a) => a.type === 'Rune')
+    const all = socketCandidates(catalog, initial).filter((a) => isSupportedWeaponRune(a, category))
     expect(all).toHaveLength(count + 3)
     expect(all.filter((a) => a.name === "Thrud's Might").map((a) => a.category)).toEqual([
       category === 'weapon' ? 'weapon' : 'caster',

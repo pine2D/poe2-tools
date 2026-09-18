@@ -152,6 +152,7 @@ import {
   requiresSpendingProjectVersion,
   requiresTalismanProjectVersion,
   requiresTieredMasterworkProjectVersion,
+  requiresWandRuneProjectVersion,
   requiresWardRuneProjectVersion,
   requiresWeightedPropertyProjectVersion,
   resolveCraftAffix,
@@ -181,6 +182,7 @@ import {
   usesJewelCapacity,
   usesJewelEffect,
   type VaalCraftOperation,
+  WAND_RUNE_RULES_VERSION,
   WARD_RUNE_RULES_VERSION,
   WEIGHTED_PROPERTY_RULES_VERSION,
 } from '@poe2-tools/item-core'
@@ -481,6 +483,9 @@ export function RehearsalPanel({
   )
   const [essenceOutcomesRules, setEssenceOutcomesRules] = useState(
     initialProject?.project.rulesVersion === ESSENCE_OUTCOMES_RULES_VERSION,
+  )
+  const [wandRuneRules, setWandRuneRules] = useState(
+    initialProject?.project.rulesVersion === WAND_RUNE_RULES_VERSION,
   )
   const [ringLichEchoesRules, setRingLichEchoesRules] = useState(
     initialProject?.project.rulesVersion === RING_LICH_ECHOES_RULES_VERSION,
@@ -1445,6 +1450,8 @@ export function RehearsalPanel({
     pendingExaltationRules || requiresPendingExaltationProjectVersion(projectConfig)
   const needsDesecrationCount =
     desecrationCountRules || requiresDesecrationCountProjectVersion(projectConfig)
+  const usesWandRunes = requiresWandRuneProjectVersion(projectConfig)
+  const needsWandRunes = wandRuneRules || usesWandRunes
   const needsRingLichEchoes =
     ringLichEchoesRules || requiresRingLichEchoesProjectVersion(projectConfig, catalog)
   const needsSpending = spendingRules || requiresSpendingProjectVersion(projectConfig)
@@ -1513,6 +1520,7 @@ export function RehearsalPanel({
   const needsDestruction = destructionRules || requiresDestructionRuneProjectVersion(projectConfig)
   const needsInfluence = influenceRules || requiresInfluenceRuneProjectVersion(projectConfig)
   const project: TargetCraftProject =
+    needsWandRunes ||
     needsRingLichEchoes ||
     needsSpending ||
     needsTieredMasterwork ||
@@ -1558,7 +1566,8 @@ export function RehearsalPanel({
     needsRuneforge
       ? {
           ...projectConfig,
-          ...((requiresOffhandIdolProjectVersion(projectConfig) ||
+          ...((usesWandRunes ||
+            requiresOffhandIdolProjectVersion(projectConfig) ||
             requiresBodyIdolProjectVersion(projectConfig) ||
             requiresHelmetBootIdolProjectVersion(projectConfig) ||
             requiresGloveIdolProjectVersion(projectConfig) ||
@@ -1584,92 +1593,94 @@ export function RehearsalPanel({
           augmentSourceHash
             ? { augmentSourceHash, desecrationSourceHash: desecrationSourceHash(catalog) as string }
             : {}),
-          rulesVersion: needsRingLichEchoes
-            ? RING_LICH_ECHOES_RULES_VERSION
-            : needsSpending
-              ? SPENDING_STRATEGY_RULES_VERSION
-              : needsTieredMasterwork
-                ? TIERED_MASTERWORK_RULES_VERSION
-                : needsInfusedCatalyst
-                  ? INFUSED_CATALYST_RULES_VERSION
-                  : needsBlackbloodedEchoes
-                    ? BLACKBLOODED_ECHOES_RULES_VERSION
-                    : needsAncientRibEchoes
-                      ? ANCIENT_RIB_ECHOES_RULES_VERSION
-                      : needsOrdinaryAttributeEssences
-                        ? ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION
-                        : needsJewelVaal
-                          ? JEWEL_VAAL_RULES_VERSION
-                          : needsDefenceEssences
-                            ? DEFENCE_ESSENCE_RULES_VERSION
-                            : needsPanelGoals
-                              ? PANEL_GOAL_RULES_VERSION
-                              : needsOffhandIdols
-                                ? OFFHAND_IDOL_RULES_VERSION
-                                : needsBodyIdols
-                                  ? BODY_IDOL_RULES_VERSION
-                                  : needsHelmetBootIdols
-                                    ? HELMET_BOOT_IDOL_RULES_VERSION
-                                    : needsGloveIdols
-                                      ? GLOVE_IDOL_RULES_VERSION
-                                      : needsSceptreAugments
-                                        ? SCEPTRE_AUGMENT_RULES_VERSION
-                                        : needsSpecialMartialRunes
-                                          ? SPECIAL_MARTIAL_RUNE_RULES_VERSION
-                                          : needsTalismans
-                                            ? TALISMAN_CRAFT_RULES_VERSION
-                                            : needsFlasks
-                                              ? FLASK_CRAFT_RULES_VERSION
-                                              : needsAmuletCatalyst
-                                                ? AMULET_CATALYST_RULES_VERSION
-                                                : needsAmuletSkillLevel
-                                                  ? AMULET_SKILL_LEVEL_RULES_VERSION
-                                                  : needsAmuletSkillSockets
-                                                    ? AMULET_SKILL_SOCKETS_RULES_VERSION
-                                                    : needsSkillVariantAmulet
-                                                      ? SKILL_VARIANT_AMULET_RULES_VERSION
-                                                      : needsSkillLevelDeclaration
-                                                        ? SKILL_LEVEL_DECLARATION_RULES_VERSION
-                                                        : needsSkillSocketTargets
-                                                          ? SKILL_SOCKET_TARGET_RULES_VERSION
-                                                          : needsSkillSockets
-                                                            ? SKILL_SOCKETS_RULES_VERSION
-                                                            : needsWeightedProperties
-                                                              ? WEIGHTED_PROPERTY_RULES_VERSION
-                                                              : needsGrantedSkillTargets
-                                                                ? GRANTED_SKILL_TARGET_RULES_VERSION
-                                                                : needsExtendedInfluenceBone
-                                                                  ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
-                                                                  : needsInfluenceBone
-                                                                    ? INFLUENCE_BONE_RULES_VERSION
-                                                                    : needsDestruction
-                                                                      ? DESTRUCTION_RUNE_RULES_VERSION
-                                                                      : needsInfluence
-                                                                        ? INFLUENCE_RUNE_RULES_VERSION
-                                                                        : needsDesecrationCount
-                                                                          ? DESECRATION_COUNT_RULES_VERSION
-                                                                          : putrefactionRules ||
-                                                                              requiresPutrefactionProjectVersion(
-                                                                                projectConfig,
-                                                                              )
-                                                                            ? PUTREFACTION_RULES_VERSION
-                                                                            : needsPendingExaltation
-                                                                              ? PENDING_EXALTATION_RULES_VERSION
-                                                                              : needsEssenceOutcomes
-                                                                                ? ESSENCE_OUTCOMES_RULES_VERSION
-                                                                                : needsSerle
-                                                                                  ? SERLE_RULES_VERSION
-                                                                                  : needsCraftedCapacity
-                                                                                    ? CRAFTED_CAPACITY_RULES_VERSION
-                                                                                    : needsConditionalRunes
-                                                                                      ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
-                                                                                      : needsMasterwork
-                                                                                        ? MASTERWORK_CRAFT_RULES_VERSION
-                                                                                        : needsExtendedRunes
-                                                                                          ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
-                                                                                          : needsWardRunes
-                                                                                            ? WARD_RUNE_RULES_VERSION
-                                                                                            : RUNEFORGE_CRAFT_RULES_VERSION,
+          rulesVersion: needsWandRunes
+            ? WAND_RUNE_RULES_VERSION
+            : needsRingLichEchoes
+              ? RING_LICH_ECHOES_RULES_VERSION
+              : needsSpending
+                ? SPENDING_STRATEGY_RULES_VERSION
+                : needsTieredMasterwork
+                  ? TIERED_MASTERWORK_RULES_VERSION
+                  : needsInfusedCatalyst
+                    ? INFUSED_CATALYST_RULES_VERSION
+                    : needsBlackbloodedEchoes
+                      ? BLACKBLOODED_ECHOES_RULES_VERSION
+                      : needsAncientRibEchoes
+                        ? ANCIENT_RIB_ECHOES_RULES_VERSION
+                        : needsOrdinaryAttributeEssences
+                          ? ORDINARY_ATTRIBUTE_ESSENCE_RULES_VERSION
+                          : needsJewelVaal
+                            ? JEWEL_VAAL_RULES_VERSION
+                            : needsDefenceEssences
+                              ? DEFENCE_ESSENCE_RULES_VERSION
+                              : needsPanelGoals
+                                ? PANEL_GOAL_RULES_VERSION
+                                : needsOffhandIdols
+                                  ? OFFHAND_IDOL_RULES_VERSION
+                                  : needsBodyIdols
+                                    ? BODY_IDOL_RULES_VERSION
+                                    : needsHelmetBootIdols
+                                      ? HELMET_BOOT_IDOL_RULES_VERSION
+                                      : needsGloveIdols
+                                        ? GLOVE_IDOL_RULES_VERSION
+                                        : needsSceptreAugments
+                                          ? SCEPTRE_AUGMENT_RULES_VERSION
+                                          : needsSpecialMartialRunes
+                                            ? SPECIAL_MARTIAL_RUNE_RULES_VERSION
+                                            : needsTalismans
+                                              ? TALISMAN_CRAFT_RULES_VERSION
+                                              : needsFlasks
+                                                ? FLASK_CRAFT_RULES_VERSION
+                                                : needsAmuletCatalyst
+                                                  ? AMULET_CATALYST_RULES_VERSION
+                                                  : needsAmuletSkillLevel
+                                                    ? AMULET_SKILL_LEVEL_RULES_VERSION
+                                                    : needsAmuletSkillSockets
+                                                      ? AMULET_SKILL_SOCKETS_RULES_VERSION
+                                                      : needsSkillVariantAmulet
+                                                        ? SKILL_VARIANT_AMULET_RULES_VERSION
+                                                        : needsSkillLevelDeclaration
+                                                          ? SKILL_LEVEL_DECLARATION_RULES_VERSION
+                                                          : needsSkillSocketTargets
+                                                            ? SKILL_SOCKET_TARGET_RULES_VERSION
+                                                            : needsSkillSockets
+                                                              ? SKILL_SOCKETS_RULES_VERSION
+                                                              : needsWeightedProperties
+                                                                ? WEIGHTED_PROPERTY_RULES_VERSION
+                                                                : needsGrantedSkillTargets
+                                                                  ? GRANTED_SKILL_TARGET_RULES_VERSION
+                                                                  : needsExtendedInfluenceBone
+                                                                    ? EXTENDED_INFLUENCE_BONE_RULES_VERSION
+                                                                    : needsInfluenceBone
+                                                                      ? INFLUENCE_BONE_RULES_VERSION
+                                                                      : needsDestruction
+                                                                        ? DESTRUCTION_RUNE_RULES_VERSION
+                                                                        : needsInfluence
+                                                                          ? INFLUENCE_RUNE_RULES_VERSION
+                                                                          : needsDesecrationCount
+                                                                            ? DESECRATION_COUNT_RULES_VERSION
+                                                                            : putrefactionRules ||
+                                                                                requiresPutrefactionProjectVersion(
+                                                                                  projectConfig,
+                                                                                )
+                                                                              ? PUTREFACTION_RULES_VERSION
+                                                                              : needsPendingExaltation
+                                                                                ? PENDING_EXALTATION_RULES_VERSION
+                                                                                : needsEssenceOutcomes
+                                                                                  ? ESSENCE_OUTCOMES_RULES_VERSION
+                                                                                  : needsSerle
+                                                                                    ? SERLE_RULES_VERSION
+                                                                                    : needsCraftedCapacity
+                                                                                      ? CRAFTED_CAPACITY_RULES_VERSION
+                                                                                      : needsConditionalRunes
+                                                                                        ? CONDITIONAL_ARMOUR_RUNE_RULES_VERSION
+                                                                                        : needsMasterwork
+                                                                                          ? MASTERWORK_CRAFT_RULES_VERSION
+                                                                                          : needsExtendedRunes
+                                                                                            ? EXTENDED_ARMOUR_RUNE_RULES_VERSION
+                                                                                            : needsWardRunes
+                                                                                              ? WARD_RUNE_RULES_VERSION
+                                                                                              : RUNEFORGE_CRAFT_RULES_VERSION,
           ...(needsRuneforge
             ? { runeforgingCatalogSignature: runeforgingCatalogSignature(catalog) ?? '' }
             : {}),
@@ -1704,6 +1715,7 @@ export function RehearsalPanel({
   const grantedSkill = readCraftGrantedSkillLevel(catalog, current)
 
   const restoreProject = (restored: RestoredTargetCraftProject) => {
+    setWandRuneRules(restored.project.rulesVersion === WAND_RUNE_RULES_VERSION)
     setRingLichEchoesRules(restored.project.rulesVersion === RING_LICH_ECHOES_RULES_VERSION)
     setSpendingRules(restored.project.rulesVersion === SPENDING_STRATEGY_RULES_VERSION)
     setTieredMasterworkRules(restored.project.rulesVersion === TIERED_MASTERWORK_RULES_VERSION)

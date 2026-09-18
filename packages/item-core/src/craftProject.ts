@@ -131,6 +131,7 @@ import {
   validateStoredCraftTargetValues,
 } from './targets'
 import { requiresTieredMasterworkProjectVersion } from './tieredMasterworkProjectVersion'
+import { requiresWandRuneProjectVersion } from './wandRuneProjectVersion'
 import { requiresWardRuneProjectVersion } from './wardRuneProjectVersion'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 import { requiresWeightedPropertyProjectVersion } from './weightedPropertyProjectVersion'
@@ -765,6 +766,7 @@ export function readNativeTargetProjectProjection(
   tieredMasterwork = false,
   spendingStrategy = false,
   ringLichEchoes = false,
+  wandRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -819,6 +821,7 @@ export function readNativeTargetProjectProjection(
     tieredMasterwork,
     spendingStrategy,
     ringLichEchoes,
+    wandRunes,
   )
 }
 
@@ -875,6 +878,7 @@ function readCraftProject(
   tieredMasterwork = false,
   spendingStrategy = false,
   ringLichEchoes = false,
+  wandRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -935,6 +939,8 @@ function readCraftProject(
   const usesSceptreAugments = requiresSceptreAugmentProjectVersion(value)
   if (!sceptreAugments && usesSceptreAugments)
     return fail('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  const usesWandRunes = requiresWandRuneProjectVersion(value)
+  if (!wandRunes && usesWandRunes) return fail('法杖专属符文必须使用 v124 项目。')
   const usesSpecialMartialRunes = requiresSpecialMartialRuneProjectVersion(value)
   if (!specialMartialRunes && usesSpecialMartialRunes)
     return fail('专属攻击武器符文必须使用 v108 项目，包括起点、导入声明、完整未来、指引和报价。')
@@ -1883,6 +1889,7 @@ function readCraftProject(
     (initialInput.catalyst !== undefined ||
       usesJewelEffects ||
       usesSovereignEffects ||
+      usesWandRunes ||
       usesSpecialMartialRunes ||
       usesOffhandIdols ||
       usesBodyIdols ||
@@ -1974,6 +1981,7 @@ function readCraftProject(
   )?.sha256
   if (
     usesSockets ||
+    usesWandRunes ||
     usesSpecialMartialRunes ||
     usesOffhandIdols ||
     usesBodyIdols ||
@@ -2279,6 +2287,7 @@ function readCraftProject(
         ...((initialInput.catalyst !== undefined ||
           usesJewelEffects ||
           usesSovereignEffects ||
+          usesWandRunes ||
           usesSpecialMartialRunes ||
           usesOffhandIdols ||
           usesBodyIdols ||
@@ -2296,6 +2305,7 @@ function readCraftProject(
         ...(importedSockets === undefined ? {} : { importedSockets }),
         ...(importedQuality === undefined ? {} : { importedQuality }),
         ...((usesSockets ||
+          usesWandRunes ||
           usesSpecialMartialRunes ||
           usesOffhandIdols ||
           usesBodyIdols ||
@@ -2369,6 +2379,8 @@ export function serializeCraftProject(project: CraftProject): string {
     throw new Error('手套雕像必须使用 v110 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresSceptreAugmentProjectVersion(project))
     throw new Error('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  if (requiresWandRuneProjectVersion(project))
+    throw new Error('法杖专属符文必须使用 v124 目标项目。')
   if (requiresSpecialMartialRuneProjectVersion(project))
     throw new Error(
       '专属攻击武器符文必须使用 v108 项目，包括起点、导入声明、完整未来、指引和报价。',
