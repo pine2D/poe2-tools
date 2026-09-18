@@ -15,6 +15,7 @@ function data(value: unknown, key: string): unknown {
 export function requiresRetainedCatalystProjectVersion(
   input: unknown,
   catalog: CraftCatalog,
+  infusedCatalyst = false,
 ): boolean {
   return hasProjectCapability(input, (properties) => {
     const baseId = properties.baseId?.value
@@ -24,9 +25,16 @@ export function requiresRetainedCatalystProjectVersion(
     const quality = data(catalyst, 'quality')
     const base = catalog.bases.find((entry) => entry.id === baseId)
     const limit = base ? catalystQualityLimit(base) : null
-    // 技能项链已有注能品质允许额外10；超出此量才依赖裂隙精华来源。
+    // 首饰已有注能品质允许额外10；超出此量才依赖裂隙精华来源。
     const sourceIndependentLimit =
-      limit === null ? null : limit + (base && isSkillVariantAmulet(base) ? 10 : 0)
+      limit === null
+        ? null
+        : limit +
+          (base &&
+          (isSkillVariantAmulet(base) ||
+            (infusedCatalyst && ['Ring', 'Amulet'].includes(base.type)))
+            ? 10
+            : 0)
     if (
       typeof quality === 'number' &&
       sourceIndependentLimit !== null &&

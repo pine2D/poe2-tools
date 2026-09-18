@@ -65,6 +65,7 @@ import {
 } from './implicitTargets'
 import { requiresInfluenceBoneProjectVersion } from './influenceBoneProjectVersion'
 import { requiresInfluenceRuneProjectVersion } from './influenceRuneProjectVersion'
+import { requiresInfusedCatalystProjectVersion } from './infusedCatalystProjectVersion'
 import { JEWEL_EFFECT_EMOTION_ID } from './jewelEffectRules'
 import { usesJewelEffect } from './jewelEffects'
 import { isRadiusJewel, jewelSourceHash as readJewelSourceHash } from './jewels'
@@ -756,6 +757,7 @@ export function readNativeTargetProjectProjection(
   ordinaryAttributeEssences = false,
   ancientRibEchoes = false,
   blackbloodedEchoes = false,
+  infusedCatalyst = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -806,6 +808,7 @@ export function readNativeTargetProjectProjection(
     ordinaryAttributeEssences,
     ancientRibEchoes,
     blackbloodedEchoes,
+    infusedCatalyst,
   )
 }
 
@@ -858,6 +861,7 @@ function readCraftProject(
   ordinaryAttributeEssences = false,
   ancientRibEchoes = false,
   blackbloodedEchoes = false,
+  infusedCatalyst = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -884,6 +888,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!infusedCatalyst && requiresInfusedCatalystProjectVersion(value, catalog))
+    return { ok: false, error: '首饰已有注能品质必须使用 v120 项目。' }
   if (!blackbloodedEchoes && requiresBlackbloodedEchoesProjectVersion(value))
     return fail('黑血项链回响必须使用 v119 项目。')
   if (!ancientRibEchoes && requiresAncientRibEchoesProjectVersion(value))
@@ -970,7 +976,7 @@ function readCraftProject(
     return fail('符文锻造基底与结界条件必须使用 v81 项目，包括完整历史及未执行指引。')
   if (!combatArmourRunes && requiresCombatArmourRuneProjectVersion(value, catalog))
     return fail('防具荆棘与减益符文必须使用 v80 项目，包括起点、导入声明、未来操作和指引。')
-  if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(value, catalog))
+  if (!retainedCatalyst && requiresRetainedCatalystProjectVersion(value, catalog, infusedCatalyst))
     return fail('已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。')
   if (!corruptionStrategy && requiresCorruptionStrategyProjectVersion(value))
     return fail('腐化材料指引及腐化状态条件必须使用 v78 项目，包括未执行阶段。')
@@ -1481,7 +1487,7 @@ function readCraftProject(
   const liquidEmotionSourceHash = readLiquidEmotionSourceHash(catalog)
   const scalabilitySourceHash = statScalabilitySourceHash(catalog)
   const validateEffectState = (state: CraftState): string | null => {
-    if (requiresRetainedCatalystProjectVersion(state, catalog)) {
+    if (requiresRetainedCatalystProjectVersion(state, catalog, infusedCatalyst)) {
       if (!retainedCatalyst)
         return '已有扩展催化品质及裂隙精华共存必须使用 v79 项目，包括未来历史。'
       const sourceHash = readEssenceSourceHash(catalog)
@@ -1965,7 +1971,7 @@ function readCraftProject(
       return fail('项目镶嵌物来源指纹缺失或与当前目录不同，不能恢复。')
   }
   const usesEssences =
-    requiresRetainedCatalystProjectVersion(initialInput, catalog) ||
+    requiresRetainedCatalystProjectVersion(initialInput, catalog, infusedCatalyst) ||
     storedTargetSources.essence ||
     strategy?.rules.some((rule) => rule.action.kind === 'essence') ||
     value.operations.some((step) => record(step) && step.kind === 'essence')

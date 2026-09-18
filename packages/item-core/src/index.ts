@@ -364,6 +364,10 @@ export {
   requiresInfluenceRuneProjectVersion,
 } from './influenceRuneProjectVersion'
 export { influenceRuneTags, isInfluenceRune } from './influenceRunes'
+export {
+  INFUSED_CATALYST_RULES_VERSION,
+  requiresInfusedCatalystProjectVersion,
+} from './infusedCatalystProjectVersion'
 export type { CraftProperty } from './itemProperties'
 export { CRAFT_PROPERTY_LABELS, readCraftProperty } from './itemProperties'
 export { JEWEL_EFFECT_EMOTION_ID, jewelEffectModKind } from './jewelEffectRules'

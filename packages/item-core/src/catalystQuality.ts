@@ -63,8 +63,8 @@ export function readCatalystQuality(item: ItemDocument): CraftResult<
     /^(?:Quality|品质|品質)\s*(?:\(([^()（）]+)\)|（([^()（）]+)）)\s*[:：]\s*\+?(\d+)%\s*(?:\(augmented\))?$/i,
   )
   const quality = Number(match?.[3])
-  if (!match || !Number.isInteger(quality) || quality < 0 || quality > 60)
-    return { ok: false, error: '催化品质格式无效，数值应为 0–60 的整数。' }
+  if (!match || !Number.isInteger(quality) || quality < 0 || quality > 70)
+    return { ok: false, error: '催化品质格式无效，数值应为 0–70 的整数。' }
   const descriptor = (match[1] ?? match[2] ?? '').trim()
   const definition = CATALYSTS.find(
     (entry) => `${entry.descriptor} Modifiers`.toLowerCase() === descriptor.toLowerCase(),
@@ -81,7 +81,7 @@ export function isCatalystQuality(value: unknown): value is CatalystQuality {
     typeof record.quality === 'number' &&
     Number.isInteger(record.quality) &&
     record.quality >= 0 &&
-    record.quality <= 60 &&
+    record.quality <= 70 &&
     (!Object.hasOwn(record, 'declared') || record.declared === true)
   )
 }
@@ -168,7 +168,7 @@ function isBreachQualityAffix(
   )
 }
 
-/** 已有量可保留移除工艺前的上限；严格技能项链另容纳注能的10，不授权再次施加。 */
+/** 已有量可保留移除工艺前的上限；首饰另容纳注能的10，不授权再次施加。 */
 export function catalystStoredQualityLimit(
   catalog: CraftCatalog,
   base: CatalogBase,
@@ -176,7 +176,9 @@ export function catalystStoredQualityLimit(
   const limit = catalystQualityLimit(base)
   return limit === null
     ? null
-    : limit + (hasBreachQualityRule(catalog, base) ? 20 : 0) + (isSkillVariantAmulet(base) ? 10 : 0)
+    : limit +
+        (hasBreachQualityRule(catalog, base) ? 20 : 0) +
+        (['Ring', 'Amulet'].includes(base.type) ? 10 : 0)
 }
 
 /** 完整状态验证后读取当前施加上限，不能把已有超限量当成新的施加能力。 */

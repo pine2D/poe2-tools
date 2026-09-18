@@ -119,14 +119,14 @@ describe('裂隙精华制作后的催化预览', () => {
         affixes: state.affixes.map(({ modId, lines }) => ({ modId, lines })),
       }).ok,
     ).toBe(false)
-    for (const quality of [20, 40])
+    for (const quality of [20, 40, 41, 50])
       expect(
         catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality } }),
       ).toMatchObject({
         ok: true,
         value: { maxQuality: 40 },
       })
-    expect(catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality: 41 } }).ok).toBe(
+    expect(catalystChoices(catalog, { ...state, catalyst: { id: 'Flesh', quality: 51 } }).ok).toBe(
       false,
     )
   })

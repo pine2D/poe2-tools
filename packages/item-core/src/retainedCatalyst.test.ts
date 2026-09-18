@@ -59,7 +59,7 @@ describe('已保留的裂隙精华催化品质', () => {
       const base = catalog.bases.find((b) => b.id === baseId)
       if (!base) throw Error('fixture')
       expect(catalystQualityLimit(base)).toBe(regular)
-      expect(catalystStoredQualityLimit(catalog, base)).toBe(quality)
+      expect(catalystStoredQualityLimit(catalog, base)).toBe(quality + 10)
       expect(catalystActiveQualityLimit(catalog, state)).toEqual({ ok: true, value: quality })
       const after = removed(state)
       expect(after.catalyst).toEqual({ id: 'Flesh', quality, declared: true })
@@ -260,7 +260,7 @@ describe('已保留的裂隙精华催化品质', () => {
         createCraftState(source, { ...plain, catalyst: { id: 'Flesh', quality: 20 } }).ok,
       ).toBe(true)
     }
-    for (const quality of [-1, 40.5, 41, 60, 61, NaN])
+    for (const quality of [-1, 40.5, 51, 60, 61, NaN])
       expect(createCraftState(catalog, { ...plain, catalyst: { id: 'Flesh', quality } }).ok).toBe(
         false,
       )
@@ -286,7 +286,7 @@ describe('已保留的裂隙精华催化品质', () => {
       createCraftState(catalog, { ...state, rarity: 'unique' } as unknown as CraftState).ok,
     ).toBe(false)
     const bad = parseItem(
-      'Item Class: Rings\nRarity: Rare\nBad\nBreach Ring\n--------\nQuality (Life Modifiers): +61%\n--------\nItem Level: 86',
+      'Item Class: Rings\nRarity: Rare\nBad\nBreach Ring\n--------\nQuality (Life Modifiers): +71%\n--------\nItem Level: 86',
     )
     if (!bad.ok) throw Error(bad.error)
     expect(readCatalystQuality(bad.item).ok).toBe(false)

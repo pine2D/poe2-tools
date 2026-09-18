@@ -112,7 +112,7 @@ describe('已有催化品质的高级文本', () => {
     expect(createCraftState(catalog, state).ok).toBe(true)
     for (const catalyst of [
       { id: 'Bogus', quality: 20 },
-      { id: 'Flesh', quality: 41 },
+      { id: 'Flesh', quality: 51 },
       { id: 'Flesh', quality: 20, declared: false },
       { id: 'Flesh', quality: 20, extra: 1 },
     ]) {
@@ -135,7 +135,7 @@ describe('已有催化品质的高级文本', () => {
       createCraftState(catalog, {
         ...state,
         baseId: 'Breach Ring',
-        catalyst: { id: 'Flesh', quality: 61, declared: true },
+        catalyst: { id: 'Flesh', quality: 71, declared: true },
       }).ok,
     ).toBe(false)
     expect(createCraftState(catalog, { ...state, baseId: 'Ruby' }).ok).toBe(true)
