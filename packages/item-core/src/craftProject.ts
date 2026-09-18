@@ -1,4 +1,4 @@
-import { usesJewelCapacity } from './affixCapacity'
+import { isOrdinaryCorruptedJewelCapacity, usesJewelCapacity } from './affixCapacity'
 import { isIdentifiedCraftState } from './affixIdentity'
 import { usesSovereignResistance } from './alloyEffects'
 import { alloyProjectUsage } from './alloyProjectUsage'
@@ -66,6 +66,7 @@ import { requiresInfluenceRuneProjectVersion } from './influenceRuneProjectVersi
 import { JEWEL_EFFECT_EMOTION_ID } from './jewelEffectRules'
 import { usesJewelEffect } from './jewelEffects'
 import { isRadiusJewel, jewelSourceHash as readJewelSourceHash } from './jewels'
+import { requiresJewelVaalProjectVersion } from './jewelVaalProjectVersion'
 import {
   liquidEmotionSourceHash as readLiquidEmotionSourceHash,
   supportedBasicLiquidEmotionId,
@@ -399,7 +400,7 @@ function readOperation(value: unknown): CraftStep | null {
         : null
     if (value.kind === 'vaal')
       return isVaalCraftOperation(value)
-        ? value.outcome === 'enchant'
+        ? value.outcome === 'enchant' || value.outcome === 'add'
           ? { ...value, values: [...value.values] }
           : value.outcome === 'reroll'
             ? {
@@ -745,6 +746,7 @@ export function readNativeTargetProjectProjection(
   bodyIdols = false,
   offhandIdols = false,
   defenceEssences = false,
+  jewelVaal = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -791,6 +793,7 @@ export function readNativeTargetProjectProjection(
     bodyIdols,
     offhandIdols,
     defenceEssences,
+    jewelVaal,
   )
 }
 
@@ -839,6 +842,7 @@ function readCraftProject(
   bodyIdols = false,
   offhandIdols = false,
   defenceEssences = false,
+  jewelVaal = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!defenceEssences) catalog = withoutDefenceEssences(catalog)
@@ -864,6 +868,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!jewelVaal && requiresJewelVaalProjectVersion(value))
+    return fail('珠宝瓦尔增删词缀必须使用 v116 项目。')
   if (!defenceEssences && requiresDefenceEssenceProjectVersion(value))
     return fail('防御精华操作和指引必须使用 v115 项目。')
   if (requiresPanelGoalProjectVersion(value)) return fail('面板目标必须使用 v114 项目。')
@@ -1498,6 +1504,7 @@ function readCraftProject(
     )
       return 'v2–v67 旧版项目不能包含范围工艺或超固有容量状态。'
     if (!usesJewelCapacity(catalog, state)) return null
+    if (jewelVaal && isOrdinaryCorruptedJewelCapacity(catalog, state)) return null
     if (rulesVersion < 52) return 'v2–v51 旧版项目不能包含珠宝增容或超固有容量状态。'
     if (
       liquidEmotionSourceHash === null ||
@@ -2287,6 +2294,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresJewelVaalProjectVersion(project))
+    throw new Error('珠宝瓦尔增删词缀必须使用 v116 项目。')
   if (requiresDefenceEssenceProjectVersion(project))
     throw new Error('防御精华操作和指引必须使用 v115 项目。')
   if (requiresPanelGoalProjectVersion(project)) throw new Error('面板目标必须使用 v114 项目。')

@@ -5,6 +5,24 @@ import type { CraftState } from './rehearsal'
 import { serleCapacity } from './serleRune'
 import { isSkillVariantAmulet } from './skillVariantAmulets'
 
+/** 只识别普通腐化珠宝可容纳的最终状态，不推断第五条的历史来源。 */
+export function isOrdinaryCorruptedJewelCapacity(
+  catalog: CraftCatalog,
+  state: CraftState,
+): boolean {
+  const base = catalog.bases.find((entry) => entry.id === state.baseId)
+  if (!base || !isBasicJewel(base) || state.rarity !== 'rare' || state.corrupted !== true)
+    return false
+  if (state.pendingDesecration || state.affixes.length > 5) return false
+  const counts = { prefix: 0, suffix: 0 }
+  for (const affix of state.affixes) {
+    if (affix.fractured || affix.crafted || affix.desecrated) return false
+    const mod = catalog.modifiers.find((entry) => entry.id === affix.modId)
+    if (!mod || mod.craftedOnly || mod.desecratedOnly || ++counts[mod.kind] > 3) return false
+  }
+  return counts.prefix > 2 || counts.suffix > 2
+}
+
 /** 已有增容状态用于来源与版本门禁；来源损坏也不能绕开门禁。 */
 export function usesJewelCapacity(catalog: CraftCatalog, state: CraftState): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)

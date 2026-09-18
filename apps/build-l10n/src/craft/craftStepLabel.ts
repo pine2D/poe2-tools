@@ -79,7 +79,7 @@ export function craftStepLabel(
   if (step.kind === 'architect')
     return step.outcome === 'destroy' ? '建筑师宝珠：摧毁物品' : '建筑师宝珠：新增腐化强化'
   if (step.kind === 'vaal')
-    return `瓦尔石：${step.outcome === 'socket' ? '腐化增加一孔' : step.outcome === 'enchant' ? '新增腐化强化' : step.outcome === 'reroll' ? `重选词缀（${step.replacements.length} 次替换）` : '腐化但属性不变'}`
+    return `瓦尔石：${step.outcome === 'add' ? '新增一条词缀' : step.outcome === 'remove' ? '移除一条词缀' : step.outcome === 'socket' ? '腐化增加一孔' : step.outcome === 'enchant' ? '新增腐化强化' : step.outcome === 'reroll' ? `重选词缀（${step.replacements.length} 次替换）` : '腐化但属性不变'}`
   if (step.kind === 'artificer') return translations["Artificer's Orb"] ?? '巧匠石'
   const name = catalog.augments?.find((entry) => entry.id === step.augmentId)?.name ?? '符文镶嵌'
   return translations[name] ?? name

@@ -34,6 +34,7 @@ import {
 import { applyFluxCraft, type FluxCraftOperation, isFluxCraftOperation } from './fluxCraft'
 import { applyFracture, type FractureCraftOperation, isFractureCraftOperation } from './fracture'
 import { isInfluenceRune } from './influenceRunes'
+import { applyVaalJewelAffixChange } from './jewelVaalAffixes'
 import { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 import {
   applyMasterworkCraft,
@@ -227,6 +228,10 @@ export function applyCraftStep(
     return { ok: false, error: CORRUPTED_CRAFT_MESSAGE }
   if ('kind' in step && step.kind === 'vaal') {
     if (!isVaalCraftOperation(step)) return { ok: false, error: '瓦尔结果步骤字段无效。' }
+    if (step.outcome === 'add' || step.outcome === 'remove') {
+      const { kind: _, ...change } = step
+      return applyVaalJewelAffixChange(catalog, state, change)
+    }
     const checked = createCraftState(catalog, state)
     if (!checked.ok) return checked
     if (state.pendingDesecration) return { ok: false, error: '待揭示亵渎的腐化结果尚未支持。' }

@@ -1,3 +1,4 @@
+import { isVaalJewelAffixChange } from './jewelVaalAffixRules'
 /** 普通制作的限制不适用于已有孔的镶嵌；其他腐化专用机制另行接入。 */
 export const CORRUPTED_CRAFT_MESSAGE =
   '装备已腐化，不能使用该普通制作操作；仍可在已有孔内镶嵌或覆盖已支持的符文与魂核。'
@@ -23,7 +24,24 @@ interface VaalRerollOperation {
   outcome: 'reroll'
   replacements: VaalReplacement[]
 }
-export type VaalCraftOperation = VaalSimpleOperation | VaalEnchantOperation | VaalRerollOperation
+interface VaalAddOperation {
+  kind: 'vaal'
+  outcome: 'add'
+  modId: string
+  values: number[]
+}
+interface VaalRemoveOperation {
+  kind: 'vaal'
+  outcome: 'remove'
+  removeModId: string
+  removeAffixId?: string
+}
+export type VaalCraftOperation =
+  | VaalSimpleOperation
+  | VaalEnchantOperation
+  | VaalRerollOperation
+  | VaalAddOperation
+  | VaalRemoveOperation
 
 export function isVaalReplacement(value: unknown): value is VaalReplacement {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
@@ -47,6 +65,10 @@ export function isVaalReplacement(value: unknown): value is VaalReplacement {
 export function isVaalCraftOperation(value: unknown): value is VaalCraftOperation {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
   const step = value as Record<string, unknown>
+  if (step.kind === 'vaal' && (step.outcome === 'add' || step.outcome === 'remove')) {
+    const { kind: _, ...change } = step
+    return isVaalJewelAffixChange(change)
+  }
   if (step.kind === 'vaal' && step.outcome === 'reroll')
     return (
       Object.keys(step).every((key) => ['kind', 'outcome', 'replacements'].includes(key)) &&

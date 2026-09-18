@@ -35,7 +35,7 @@ it('搜索珠宝可预演强化，撤销消费、保存恢复并继续建筑师�
   )
   const panel = screen.getByRole('region', { name: '瓦尔结果预演' })
   expect(within(panel).queryByRole('button', { name: '预演腐化：增加一孔' })).toBeNull()
-  expect(panel.textContent).toContain('随机增加或移除词缀尚未接入')
+  expect(panel.textContent).toContain('瓦尔增删词缀目前仅支持普通稀有珠宝。')
   fireEvent.change(screen.getByLabelText('选择腐化强化'), {
     target: { value: 'CorruptionJewelStrength1' },
   })

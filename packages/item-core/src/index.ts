@@ -1,4 +1,9 @@
-export { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+export {
+  craftAffixCapacities,
+  craftAffixSpace,
+  isOrdinaryCorruptedJewelCapacity,
+  usesJewelCapacity,
+} from './affixCapacity'
 export {
   type CraftAffixSelector,
   enableCraftAffixIdentity,
@@ -370,6 +375,11 @@ export {
   JEWEL_SOURCE,
   jewelSourceHash,
 } from './jewels'
+export { vaalJewelAffixCandidates } from './jewelVaalAffixes'
+export {
+  JEWEL_VAAL_RULES_VERSION,
+  requiresJewelVaalProjectVersion,
+} from './jewelVaalProjectVersion'
 export type { PreparedLiquidEmotionCraft } from './liquidEmotionCraft'
 export { prepareLiquidEmotionCraft } from './liquidEmotionCraft'
 export {

@@ -11,6 +11,7 @@ import {
 } from '@poe2-tools/item-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NumericControls } from './NumericControls'
+import { VaalJewelAffixChoice } from './VaalJewelAffixChoice'
 import { VaalRerollChoice } from './VaalRerollChoice'
 
 interface Props {
@@ -125,7 +126,7 @@ export function CorruptionPanel({
       </p>
       <p>
         {jewel
-          ? '珠宝随机增加或移除词缀尚未接入，包括突破容量的结果。'
+          ? '普通稀有珠宝支持手选新增或移除一条词缀；实际随机概率未知。'
           : '预兆和特殊魂核尚未接入。'}
         腐化强化独立于固有属性及前后缀，不占显式词缀名额。
       </p>
@@ -177,6 +178,15 @@ export function CorruptionPanel({
           translateLine={translateLine}
         />
       ) : null}
+      {jewel ? (
+        <VaalJewelAffixChoice
+          catalog={catalog}
+          state={state}
+          disabled={busy || draft !== null || !unchanged.ok}
+          onPreview={onPreview}
+          translateLine={translateLine}
+        />
+      ) : null}
       <VaalRerollChoice
         catalog={catalog}
         state={state}
@@ -193,13 +203,17 @@ export function CorruptionPanel({
           data-craft-pending
         >
           <h4>
-            {draft.outcome === 'socket'
-              ? '腐化增加一孔'
-              : draft.outcome === 'enchant'
-                ? '新增腐化强化'
-                : draft.outcome === 'reroll'
-                  ? `重选词缀（${draft.replacements.length} 次替换）`
-                  : '腐化但属性不变'}
+            {draft.outcome === 'add'
+              ? '新增一条词缀'
+              : draft.outcome === 'remove'
+                ? '移除一条词缀'
+                : draft.outcome === 'socket'
+                  ? '腐化增加一孔'
+                  : draft.outcome === 'enchant'
+                    ? '新增腐化强化'
+                    : draft.outcome === 'reroll'
+                      ? `重选词缀（${draft.replacements.length} 次替换）`
+                      : '腐化但属性不变'}
           </h4>
           {draft.outcome === 'enchant' ? (
             <p>强化属性及面板变化见上方预览，应用后保留全部显式词缀与固有属性。</p>

@@ -1,4 +1,9 @@
-import { craftAffixCapacities, craftAffixSpace, usesJewelCapacity } from './affixCapacity'
+import {
+  craftAffixCapacities,
+  craftAffixSpace,
+  isOrdinaryCorruptedJewelCapacity,
+  usesJewelCapacity,
+} from './affixCapacity'
 import {
   appendCraftAffix,
   type CraftAffixSelector,
@@ -525,7 +530,11 @@ export function createCraftState(
   }
 
   const historicalJewel = (isBasicJewel(base) || isRadiusJewel(base)) && input.rarity === 'rare'
-  if (usesJewelCapacity(catalog, input) && liquidEmotionSourceHash(catalog) === null)
+  if (
+    usesJewelCapacity(catalog, input) &&
+    !isOrdinaryCorruptedJewelCapacity(catalog, input) &&
+    liquidEmotionSourceHash(catalog) === null
+  )
     return failure('超过固有 2/2 容量或含增容工艺的珠宝需要可信液态情感来源指纹。')
   const serle = serleCapacity(catalog, input)
   if (!serle.ok) return serle
