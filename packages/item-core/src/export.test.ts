@@ -228,3 +228,14 @@ it.each([
   if (!parsed.ok) throw new Error(parsed.error)
   expect(parsed.item.mods[0]?.tier).toBe(6)
 })
+
+it.each([
+  ['物品类别: 法杖\n稀有度: 普通\n国服测试基底', 'Staves'],
+  ['物品種類: 法杖\n稀有度: 普通\n台服測試基底', 'Wands'],
+  ['物品種類: 長杖\n稀有度: 普通\n台服測試基底', 'Staves'],
+  ['物品类别: 腰带\n稀有度: 普通\n国服测试基底', 'Belts'],
+])('类别按原文语言反查，避免同名跨服串类：%s', (text, expected) => {
+  const parsed = parseItem(text)
+  if (!parsed.ok) throw Error(parsed.error)
+  expect(inspectItem(parsed.item, {}).exportText.split('\n')[0]).toBe(`Item Class: ${expected}`)
+})

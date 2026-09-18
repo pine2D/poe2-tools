@@ -611,3 +611,7 @@ B站原作者风残耶视频BV1NQeT6nEvw及流放老瓦匠视频BV1ByPceiE8j，�
 [CoE公开更新说明](https://beta.craftofexile.com/changelog)中的符文子类别与导入修正只作流程对照：同名材料的 wand / staff 分支不能混用，导入起点与后续模拟必须共同校验。搜索命中的其他工具物品页不作为实现数据源。绑定角色效果与 Legacy of Runeseeker's Call 的符文间增效未据此开放。
 
 v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；staffRuneData.ts 的完整记录与现有目录逐项一致，绑定元数据参与身份核对而不声明角色收益。没有新增上游文件、网络适配器或运行时请求。逐数字缩放、资格隔离与验证边界见[长杖符文研究](staff-runes-research.md)；CoE 对照明确使用 `?game=poe2`，不将其更新说明当作机制实测。
+
+## 装备类别跨服同形词（2026-09-18）
+
+沿用用户国服高级文本的类别观察，以及已登记 poe2db 台服 [Wands](https://poe2db.tw/tw/Wands)、[Staves](https://poe2db.tw/tw/Staves)、[Foci](https://poe2db.tw/tw/Foci)、[Sceptres](https://poe2db.tw/tw/Sceptres)、[Belts](https://poe2db.tw/tw/Belts) 列表页。后者只核对既有缓存中的类别标题，按 gray 人工术语证据处理，不视作台服剪贴板实测；未新增网络适配器或复制页面。国服“法杖”与台服“法杖”含义不同；cn 列表标题不得覆盖用户国服原生观察。映射范围及未确认项见[文本格式](item-text-format.md)。

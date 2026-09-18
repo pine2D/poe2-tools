@@ -9,6 +9,7 @@ import { createItemTextLocalization } from './craftItemTextLocalization'
 import type { ItemDictionary } from './export'
 import { isBasicFlaskBase } from './flasks'
 import { readUnlevelledSkillName } from './grantedSkills'
+import { itemClassLabel } from './itemClasses'
 import { explicitModEffect, usesExplicitModEffect } from './jewelEffects'
 import { estimateJewelRadius } from './jewelRadius'
 import { inspectNumericLines } from './numeric'
@@ -28,13 +29,6 @@ export interface CraftItemTextOptions {
   dictionary?: ItemDictionary
 }
 
-const CLASSES: Readonly<Record<string, string>> = {
-  Talisman: 'Talismans',
-  Jewel: 'Jewels',
-  Focus: 'Foci',
-  Sceptre: 'Sceptres',
-  Staff: 'Staves',
-}
 const RARITIES = { normal: 'Normal', magic: 'Magic', rare: 'Rare' }
 const NOTE =
   'Note: Simulated item from PoE2 Tools. Use the .craft.json project to restore the full crafting state.'
@@ -253,7 +247,7 @@ export function exportCraftItemText(
       : locale === 'zh-CN'
         ? `${base.subType === 'Life' ? '生命' : '魔力'}药剂`
         : `${base.subType === 'Life' ? '生命' : '魔力'}藥劑`
-    : (CLASSES[base.type] ?? base.type)
+    : itemClassLabel(base.type, locale)
   if (isBasicFlaskBase(base))
     warnings.push('药剂文本不输出推算回复面板或旧当前充能；原文观察与完整历史请保存制作项目。')
   const output = [

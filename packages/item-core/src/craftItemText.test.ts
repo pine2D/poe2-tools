@@ -43,7 +43,7 @@ it.each(['zh-CN', 'zh-TW'] as const)(
     const before = JSON.stringify({ data, input, dict })
     const result = exportCraftItemText(data, input, { locale, dictionary: dict })
     if (!result.ok) throw new Error(result.error)
-    expect(result.value.text).toContain(traditional ? '物品種類: Foci' : '物品类别: Foci')
+    expect(result.value.text).toContain(traditional ? '物品種類: 法器' : '物品类别: 法器')
     expect(result.value.text).toContain(
       traditional ? '稀有度: 稀有\n製作演練' : '稀有度: 稀有\n制作演练',
     )

@@ -3,6 +3,7 @@ import { BONDED_PREFIX } from './bodyIdols'
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
 import { flaskTextType } from './flaskText'
 import { resolveGrantedSkill } from './grantedSkills'
+import { canonicalItemClass } from './itemClasses'
 import { hasSpecialModifierSource } from './modifierSource'
 import { createStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
 import type { ItemDocument, ItemMod, ItemStat, SourceLine } from './types'
@@ -43,21 +44,6 @@ export interface ItemInspection {
   bridgeReasons: string[]
 }
 
-const CLASSES: Record<string, string> = {
-  魔符: 'Talismans',
-  珠宝: 'Jewels',
-  珠寶: 'Jewels',
-  法器: 'Foci',
-  咒符: 'Charms',
-  護符: 'Charms',
-  权杖: 'Sceptres',
-  權杖: 'Sceptres',
-  法杖: 'Staves',
-  長杖: 'Staves',
-  戒指: 'Rings',
-  靴子: 'Boots',
-  短杖: 'Wands',
-}
 const RARITIES = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' }
 
 // 普通法器的六类常规词缀；基底与稀有度扩展见 docs/coe-focus-bridge-research.md。
@@ -182,7 +168,9 @@ export function inspectItem(
     selections[item.nameLines.at(-1)?.line ?? -1],
   )
   const flaskType = flaskTextType(item.itemClass)
-  const className = flaskType ? `${flaskType} Flasks` : (CLASSES[item.itemClass] ?? item.itemClass)
+  const className = flaskType
+    ? `${flaskType} Flasks`
+    : canonicalItemClass(item.itemClass, item.locale)
   const comparisonReason =
     item.rarity === 'unique'
       ? '传奇装备仅供解析与中英对照，不开放制作。'
