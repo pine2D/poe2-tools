@@ -30,7 +30,20 @@ const FAMILIES = [
   'Resolve',
   'Ward',
   'Charging',
+  'Tempered',
 ]
+const upgrades = new Map(
+  FAMILIES.flatMap((family) => {
+    const tiers = ['Lesser ', '', 'Greater ', ...(family === 'Tempered' ? [] : ['Perfect '])].map(
+      (prefix) => `${prefix}${family} Rune`,
+    )
+    return tiers.slice(0, -1).map((name, index) => [name, tiers[index + 1] as string] as const)
+  }),
+)
+/** 固定家族的相邻档关系；是否有该类别结果仍由镶嵌候选核对。 */
+export function masterworkUpgradeName(name: string): string | null {
+  return upgrades.get(name) ?? null
+}
 const SOURCE_HASH = 'd3dac48143209d7d9a02a8c03bd86f21604a0961a8ced49290d6a1d243f8223a'
 const fail = (error: string): CraftResult<never> => ({ ok: false, error })
 
@@ -55,7 +68,7 @@ export function isMasterworkCraftOperation(value: unknown): value is MasterworkC
   )
 }
 
-/** 仅授权已核对家族的高级到完美关系；不把名称相似当作通用升级规则。 */
+/** 仅授权已核对家族的相邻档；不把名称相似当作通用升级规则。 */
 export function prepareMasterworkCraft(
   catalog: CraftCatalog,
   state: CraftState,
@@ -81,9 +94,9 @@ export function prepareMasterworkCraft(
   const from = socketEffects(catalog, checked.value).find(
     (entry) => entry.socketIndex === socketIndex,
   )?.augment
-  const family = FAMILIES.find((name) => from?.name === `Greater ${name} Rune`)
-  if (!from || !family || from.type !== 'Rune')
-    return fail('当前仅支持已核对家族的高级符文升级为完美符文。')
+  const toName = from ? masterworkUpgradeName(from.name) : null
+  if (!from || !toName || from.type !== 'Rune')
+    return fail('此孔没有可升级的已核对阶级符文，或已达到该家族最高档。')
   const materialCategory = ['wand', 'staff'].includes(from.category) ? 'caster' : from.category
   const material = catalog.augments?.find(
     (entry) => entry.name === 'Masterwork Rune' && entry.category === materialCategory,
@@ -96,12 +109,9 @@ export function prepareMasterworkCraft(
   )
     return fail('缺少对应类别的 Masterwork Rune 材料声明。')
   const to = socketCandidates(catalog, checked.value).find(
-    (entry) =>
-      entry.category === from.category &&
-      entry.name === `Perfect ${family} Rune` &&
-      entry.type === 'Rune',
+    (entry) => entry.category === from.category && entry.name === toName && entry.type === 'Rune',
   )
-  if (!to) return fail('当前装备没有已支持的完美档符文结果。')
+  if (!to) return fail('当前装备没有已支持的下一档符文结果。')
   return {
     ok: true,
     value: {

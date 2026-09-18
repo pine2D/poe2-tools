@@ -36,7 +36,8 @@ export function MasterworkPanel({
       <summary ref={entryRef}>符文升级</summary>
       <p>
         {local('Masterwork Rune')}{' '}
-        将已镶嵌的高级符文升级为对应完美档，应用后只计一枚升级材料。当前不支持低档升级、腐化装备及特殊孔位。
+        将已镶嵌的阶级符文提升一档，每次应用消耗一枚升级材料。低级→普通→高级→完美；Tempered
+        家族最高为高级。腐化装备及特殊孔位仍未支持。
       </p>
       <label>
         升级孔位

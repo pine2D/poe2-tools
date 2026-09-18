@@ -72,13 +72,11 @@ it('恐惧增效升级仍按原符文身份，保留品质及原文观察', () =
   expect(r.value.sourceText).toBe(input.sourceText)
   expect(r.value.quality).toBe(20)
 })
-it('未知空孔、无完美档、已完美、低档、非符文与过期身份拒绝', () => {
+it('未知空孔、无下一档、已完美、非符文与过期身份拒绝', () => {
   for (const input of [
     { ...state(), sockets: undefined },
     { ...state(), sockets: [null] },
     state('Perfect Rebirth Rune'),
-    state('Rebirth Rune'),
-    state('Lesser Rebirth Rune'),
     state('Greater Tempered Rune'),
     state('Soul Core of Tacati'),
   ])

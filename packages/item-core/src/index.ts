@@ -680,6 +680,10 @@ export {
   restoreTargetWorkbenchProject,
   reuseTargetCraftPlan,
 } from './targetWorkbenchProject'
+export {
+  requiresTieredMasterworkProjectVersion,
+  TIERED_MASTERWORK_RULES_VERSION,
+} from './tieredMasterworkProjectVersion'
 export type {
   ItemBlock,
   ItemDiagnostic,

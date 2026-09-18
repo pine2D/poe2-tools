@@ -23,6 +23,88 @@ afterEach(() => {
   cleanup()
   localStorage.clear()
 })
+it('v121空项目保存恢复保持版本，不依赖尚未发生的升级操作', () => {
+  const input = {
+    schemaVersion: 1,
+    rulesVersion: 'basic-2026-09-18-v121',
+    sourceCommit: catalog._meta.sourceCommit,
+    initialState: {
+      baseId: 'Adherent Cuffs',
+      itemLevel: 86,
+      rarity: 'normal',
+      affixes: [],
+      sourceText: null,
+      sockets: [null],
+      nextAffixId: 1,
+    },
+    operations: [],
+    cursor: 0,
+    augmentSourceHash: catalog._meta.sources.find((s) => s.path === 'src/Data/ModRunes.lua')
+      ?.sha256,
+    targetDefinitions: { nextTargetId: 1, targets: [], alternatives: [], values: [] },
+    orphanedTargets: [],
+  }
+  const restored = parseTargetCraftProject(JSON.stringify(input), catalog)
+  if (!restored.ok) throw Error(restored.error)
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{}}
+      initialState={restored.value.project.initialState}
+      initialProject={restored.value}
+    />,
+  )
+  expect(save().rulesVersion).toBe(input.rulesVersion)
+  click('恢复本机演练')
+  expect(save().rulesVersion).toBe(input.rulesVersion)
+  expect(save().operations).toEqual([])
+})
+it('低级符文三步升级、取消不消费、撤销保存未来后恢复重做', () => {
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{}}
+      initialState={{
+        baseId: 'Adherent Cuffs',
+        itemLevel: 86,
+        rarity: 'normal',
+        affixes: [],
+        sourceText: null,
+        sockets: [null],
+        quality: 20,
+      }}
+    />,
+  )
+  change('选择镶嵌符文', id('Lesser Rebirth Rune'))
+  click('应用镶嵌')
+  click('预览符文升级结果')
+  click('取消符文升级结果')
+  expect(save().operations).toHaveLength(1)
+  click('启用条件指引示例')
+  change('规则 1 条件 1', 'always')
+  change('规则 1 动作', 'masterwork')
+  expect(save().rulesVersion).toBe('basic-2026-09-18-v121')
+  for (const name of ['Rebirth Rune', 'Greater Rebirth Rune', 'Perfect Rebirth Rune']) {
+    click('开始指引步骤')
+    click('预览符文升级结果')
+    click('应用符文升级结果')
+    expect(save().operations.at(-1)).toMatchObject({ kind: 'masterwork', toAugmentId: id(name) })
+  }
+  expect(
+    within(screen.getByRole('region', { name: '已消耗材料' })).getByText(
+      `${catalog.localizedNames?.['zh-CN']?.['Masterwork Rune']} × 3`,
+    ),
+  ).toBeTruthy()
+  click('撤销')
+  const future = save()
+  expect(future.cursor).toBe(3)
+  expect(future.operations).toHaveLength(4)
+  click('重做')
+  click('恢复本机演练')
+  expect(save()).toEqual(future)
+  click('重做')
+  expect(save().operations).toEqual(future.operations)
+}, 15_000)
 it('原孔升级预览取消不计费，应用后v85完整未来恢复，指引固定孔位', () => {
   render(
     <RehearsalPanel

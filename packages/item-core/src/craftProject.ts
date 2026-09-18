@@ -127,6 +127,7 @@ import {
   validateCraftTargetValues,
   validateStoredCraftTargetValues,
 } from './targets'
+import { requiresTieredMasterworkProjectVersion } from './tieredMasterworkProjectVersion'
 import { requiresWardRuneProjectVersion } from './wardRuneProjectVersion'
 import { isExtendedWeaponRune } from './weaponRuneEffects'
 import { requiresWeightedPropertyProjectVersion } from './weightedPropertyProjectVersion'
@@ -758,6 +759,7 @@ export function readNativeTargetProjectProjection(
   ancientRibEchoes = false,
   blackbloodedEchoes = false,
   infusedCatalyst = false,
+  tieredMasterwork = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -809,6 +811,7 @@ export function readNativeTargetProjectProjection(
     ancientRibEchoes,
     blackbloodedEchoes,
     infusedCatalyst,
+    tieredMasterwork,
   )
 }
 
@@ -862,6 +865,7 @@ function readCraftProject(
   ancientRibEchoes = false,
   blackbloodedEchoes = false,
   infusedCatalyst = false,
+  tieredMasterwork = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -888,6 +892,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!tieredMasterwork && requiresTieredMasterworkProjectVersion(value, catalog))
+    return fail('低阶符文升级及对应指引必须使用 v121 项目。')
   if (!infusedCatalyst && requiresInfusedCatalystProjectVersion(value, catalog))
     return { ok: false, error: '首饰已有注能品质必须使用 v120 项目。' }
   if (!blackbloodedEchoes && requiresBlackbloodedEchoesProjectVersion(value))
