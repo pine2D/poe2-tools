@@ -86,13 +86,16 @@ export function CraftPricingPanel({
   const materialLabel = craftMaterialLabels(catalog, translations)
   const editor = useRef<HTMLDetailsElement>(null)
   useEffect(() => {
-    if (!requestedMaterialIds?.length || !editor.current) return
+    if (requestedMaterialIds === undefined || !editor.current) return
     editor.current.open = true
     const inputs = [...editor.current.querySelectorAll<HTMLInputElement>('input[data-material-id]')]
     const requested = inputs.filter((input) =>
       requestedMaterialIds.includes(input.dataset.materialId ?? ''),
     )
-    const input = requested.find((input) => input.value.trim() === '') ?? requested[0]
+    const input =
+      requested.find((input) => input.value.trim() === '') ??
+      requested[0] ??
+      editor.current.querySelector<HTMLSelectElement>('select[aria-label="计价单位"]')
     input?.focus()
     input?.scrollIntoView?.({ block: 'center', behavior: 'auto' })
   }, [requestedMaterialIds])

@@ -2014,6 +2014,7 @@ export function RehearsalPanel({
       {pricingControls}
       {!costResult.ok ? <p role="alert">{costResult.error}</p> : null}
       <CraftStrategyPanel
+        onRequestPricing={() => setRequestedPricing(costMaterials.map((material) => material.id))}
         spending={{ operations: appliedOperations, ...(pricing ? { pricing } : {}) }}
         {...(targetCapacityContext ? { capacityContext: targetCapacityContext } : {})}
         key={`strategy:${targetSession}`}

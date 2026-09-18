@@ -38,6 +38,15 @@ it('费用指引缺价暂停，明确应用范围与报价后停止；撤销、�
   click('启用条件指引示例')
   change('规则 1 条件 1', 'spent-cost')
   expect(screen.getByText(/请先应用制作报价/)).toBeTruthy()
+  const beforePricing = saved()
+  click('核对制作报价')
+  const priceInput = screen.getByLabelText('次级沙漠符文单价')
+  expect(document.activeElement).toBe(priceInput)
+  expect(priceInput.closest('details')?.open).toBe(true)
+  change('次级沙漠符文单价', '2')
+  click('核对制作报价')
+  expect((screen.getByLabelText('次级沙漠符文单价') as HTMLInputElement).value).toBe('2')
+  expect(saved()).toEqual(beforePricing)
   change('规则 1 条件 1 费用下限', '3')
   expect(saved().strategy?.rules[0]?.conditions).toEqual([
     { kind: 'spent-cost', unit: 'divine', min: 0 },
@@ -66,6 +75,20 @@ it('费用指引缺价暂停，明确应用范围与报价后停止；撤销、�
   change('规则 1 条件 1', 'always')
   expect(saved().rulesVersion).toBe('basic-2026-09-18-v122')
 }, 15000)
+it('尚未消耗材料时费用条件也能打开报价区，明确应用后解除暂停', () => {
+  render(<RehearsalPanel catalog={catalog} translations={{}} initialState={initialState} />)
+  click('启用条件指引示例')
+  change('规则 1 条件 1', 'spent-cost')
+  click('核对制作报价')
+  const unit = screen.getByLabelText('计价单位')
+  expect(unit.closest('details')?.open).toBe(true)
+  expect(document.activeElement).toBe(unit)
+  expect(saved().pricing).toBeUndefined()
+  click('应用报价')
+  expect(screen.getByText('命中规则 1：停止。')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: '核对制作报价' })).toBeNull()
+  expect(saved().operations).toEqual([])
+})
 it('空v122项目不因缺少费用条件降版', () => {
   const restored = parseTargetCraftProject(
     JSON.stringify({

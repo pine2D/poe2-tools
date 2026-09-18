@@ -41,6 +41,7 @@ function example(): DefinitionCraftStrategy {
 }
 
 interface Props {
+  onRequestPricing?: () => void
   spending?: CraftStrategySpending
   stageId?: string
   startStep?: number
@@ -62,6 +63,7 @@ interface Props {
 }
 
 export function CraftStrategyPanel({
+  onRequestPricing,
   spending,
   stageId,
   startStep = 0,
@@ -239,12 +241,19 @@ export function CraftStrategyPanel({
             ) : null}
             {decision?.kind === 'unmatched' ? <p>没有规则匹配当前装备。</p> : null}
             {decision?.kind === 'blocked' ? (
-              <p>
-                {decision.ruleIndex === undefined
-                  ? '指引暂不可用'
-                  : `规则 ${decision.ruleIndex + 1} 无法开始`}
-                ：{decision.message}
-              </p>
+              <div>
+                <p>
+                  {decision.ruleIndex === undefined
+                    ? '指引暂不可用'
+                    : `规则 ${decision.ruleIndex + 1} 无法开始`}
+                  ：{decision.message}
+                </p>
+                {decision.unresolvedCondition === 'spent-cost' && onRequestPricing ? (
+                  <button type="button" onClick={onRequestPricing}>
+                    核对制作报价
+                  </button>
+                ) : null}
+              </div>
             ) : null}
             {pending ? <p>有未应用步骤，请先应用、取消，或编辑规则重新判断。</p> : null}
           </div>
