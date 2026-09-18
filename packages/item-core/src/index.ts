@@ -163,6 +163,7 @@ export {
   type CraftItemTextOptions,
   exportCraftItemText,
 } from './craftItemText'
+export { craftMaterialLabels } from './craftMaterialLabels'
 export type { CraftProject, RestoredCraftProject } from './craftProject'
 export {
   CRAFT_RULES_VERSION,

@@ -5,6 +5,7 @@ import {
   collectCraftCosts,
   quoteCraftCosts,
 } from './craftCosts'
+import { craftMaterialLabels } from './craftMaterialLabels'
 import type { CraftStep } from './craftSteps'
 import type { CraftResult } from './rehearsal'
 
@@ -35,7 +36,12 @@ export function readStrategySpending(
   if (!costs.ok) return costs
   const quote = quoteCraftCosts(costs.value, context.pricing)
   if (!quote.ok) return quote
-  if (quote.value.total === null)
-    return fail(`已用材料缺少报价：${quote.value.missing.join('、')}；无法判断费用条件。`)
+  if (quote.value.total === null) {
+    const label = craftMaterialLabels(catalog)
+    const names = new Map(costs.value.map((material) => [material.id, label(material)]))
+    return fail(
+      `已用材料缺少报价：${quote.value.missing.map((id) => names.get(id) ?? id).join('、')}；无法判断费用条件。`,
+    )
+  }
   return { ok: true, value: quote.value.total }
 }

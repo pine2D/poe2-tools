@@ -47,6 +47,9 @@ it('费用指引缺价暂停，明确应用范围与报价后停止；撤销、�
   click('核对制作报价')
   expect((screen.getByLabelText('次级沙漠符文单价') as HTMLInputElement).value).toBe('2')
   expect(saved()).toEqual(beforePricing)
+  change('次级沙漠符文单价', '')
+  click('应用报价')
+  expect(screen.getByText(/已用材料缺少报价：次级沙漠符文；/)).toBeTruthy()
   change('规则 1 条件 1 费用下限', '3')
   expect(saved().strategy?.rules[0]?.conditions).toEqual([
     { kind: 'spent-cost', unit: 'divine', min: 0 },
