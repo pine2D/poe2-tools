@@ -9,7 +9,7 @@ import {
   parseCraftPricing,
   quoteCraftCosts,
 } from '@poe2-tools/item-core'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './pricing.css'
 import { craftMaterialLabels } from './craftMaterialLabels'
 
@@ -67,6 +67,7 @@ export function CraftCostSummary({
 }
 
 export function CraftPricingPanel({
+  requestedMaterialIds,
   catalog,
   pricing,
   costs,
@@ -74,6 +75,7 @@ export function CraftPricingPanel({
   onChange,
   translations,
 }: {
+  requestedMaterialIds?: string[]
   catalog: CraftCatalog
   pricing: CraftPricing | undefined
   costs: CraftResult<CraftMaterialCost[]>
@@ -82,6 +84,18 @@ export function CraftPricingPanel({
   translations: Record<string, string>
 }) {
   const materialLabel = craftMaterialLabels(catalog, translations)
+  const editor = useRef<HTMLDetailsElement>(null)
+  useEffect(() => {
+    if (!requestedMaterialIds?.length || !editor.current) return
+    editor.current.open = true
+    const inputs = [...editor.current.querySelectorAll<HTMLInputElement>('input[data-material-id]')]
+    const requested = inputs.filter((input) =>
+      requestedMaterialIds.includes(input.dataset.materialId ?? ''),
+    )
+    const input = requested.find((input) => input.value.trim() === '') ?? requested[0]
+    input?.focus()
+    input?.scrollIntoView?.({ block: 'center', behavior: 'auto' })
+  }, [requestedMaterialIds])
   return (
     <section className="craft-pricing" aria-label="制作报价">
       <h3>制作报价</h3>
@@ -92,13 +106,13 @@ export function CraftPricingPanel({
         includeBase
         materialLabel={materialLabel}
       />
-      <details>
+      <details ref={editor}>
         <summary>{pricing ? '编辑材料单价与起点成本' : '填写材料单价与起点成本'}</summary>
         <PricingForm
           key={JSON.stringify(pricing)}
           catalog={catalog}
           pricing={pricing}
-          materialIds={materialIds}
+          materialIds={[...new Set([...materialIds, ...(requestedMaterialIds ?? [])])]}
           onChange={onChange}
           materialLabel={materialLabel}
         />
@@ -230,6 +244,7 @@ function PricingForm({
               {materialLabel(m)}
               <input
                 aria-label={`${materialLabel(m)}单价`}
+                data-material-id={id}
                 inputMode="decimal"
                 value={fields[id] ?? ''}
                 placeholder="未知"

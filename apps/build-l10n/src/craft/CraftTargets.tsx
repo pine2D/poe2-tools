@@ -45,6 +45,7 @@ import { TargetRoutesPanel } from './TargetRoutesPanel'
 import { TargetValueEditor } from './TargetValueEditor'
 
 interface CraftTargetsProps {
+  onRequestPricing?: (materialIds: string[]) => void
   onExtract?: (targets: CraftTargetDefinitions) => void
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
@@ -67,6 +68,7 @@ interface CraftTargetsProps {
 }
 
 export function CraftTargets({
+  onRequestPricing,
   onExtract,
   pricing,
   spentSteps,
@@ -374,6 +376,7 @@ export function CraftTargets({
         />
       ) : null}
       <TargetRoutesPanel
+        {...(onRequestPricing ? { onRequestPricing } : {})}
         {...(capacityContext ? { capacityContext } : {})}
         {...(pricing ? { pricing } : {})}
         {...(spentSteps ? { spentSteps } : {})}

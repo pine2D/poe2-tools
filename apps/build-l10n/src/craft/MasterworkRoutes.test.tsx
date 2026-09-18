@@ -107,3 +107,47 @@ it('真实面板路线逐次升级：预览取消不消费，应用清除旧路�
   click('重做')
   expect(save()).toEqual(complete)
 }, 15_000)
+
+it('路线带出报价材料并定位已有表单，保留未应用草稿且不提前修改报价或历史', () => {
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      translations={{}}
+      initialState={{
+        baseId: 'Adherent Cuffs',
+        itemLevel: 86,
+        rarity: 'normal',
+        affixes: [],
+        sourceText: null,
+        quality: 0,
+        sockets: [null],
+      }}
+    />,
+  )
+  change('选择镶嵌符文', id('Lesser Desert Rune'))
+  click('应用镶嵌')
+  change('次级沙漠符文单价', '7')
+  click('添加面板目标')
+  change('面板目标 1 面板指标', 'fireResistance')
+  change('面板目标 1 面板下限', '22')
+  click('应用面板目标 1面板范围')
+  click('生成多步示例路线')
+  const button = screen.getAllByRole('button', { name: '填写本路线报价' })[0]
+  if (!button) throw Error('缺少路线报价入口')
+  fireEvent.click(button)
+  const perfect = screen.getByLabelText('完美沙漠符文单价') as HTMLInputElement
+  expect(document.activeElement).toBe(perfect)
+  expect(perfect.closest('details')?.open).toBe(true)
+  expect(perfect.value).toBe('')
+  expect((screen.getByLabelText('次级沙漠符文单价') as HTMLInputElement).value).toBe('7')
+  expect(save().pricing).toBeUndefined()
+  expect(save().operations).toHaveLength(1)
+  change('完美沙漠符文单价', '3')
+  click('应用报价')
+  expect(save().pricing?.prices).toMatchObject({
+    'augment:Lesser Desert Rune': 7,
+    'augment:Perfect Desert Rune': 3,
+  })
+  expect(screen.getByText('路线新增成本：3 神圣石')).toBeTruthy()
+  expect(save().operations).toHaveLength(1)
+})

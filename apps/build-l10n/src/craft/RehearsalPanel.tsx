@@ -465,6 +465,7 @@ export function RehearsalPanel({
     initialProject?.project.strategyStartStep,
   )
   const [pricing, setPricing] = useState<CraftPricing | undefined>(initialProject?.project.pricing)
+  const [requestedPricing, setRequestedPricing] = useState<string[]>()
   const [pendingExaltationRules, setPendingExaltationRules] = useState(
     initialProject?.project.rulesVersion === PENDING_EXALTATION_RULES_VERSION,
   )
@@ -1715,6 +1716,7 @@ export function RehearsalPanel({
     setCraftedCapacityRules(restored.project.rulesVersion === CRAFTED_CAPACITY_RULES_VERSION)
     setConditionalRules(restored.project.rulesVersion === CONDITIONAL_ARMOUR_RUNE_RULES_VERSION)
     setPricing(restored.project.pricing)
+    setRequestedPricing(undefined)
     setTargetContext({
       definitions: restored.project.targetDefinitions,
       orphanedTargets: restored.project.orphanedTargets,
@@ -1822,6 +1824,7 @@ export function RehearsalPanel({
       key={targetSession}
       catalog={catalog}
       pricing={pricing}
+      {...(requestedPricing ? { requestedMaterialIds: requestedPricing } : {})}
       costs={costResult}
       materialIds={costMaterials.map((m) => m.id)}
       onChange={setPricing}
@@ -2121,6 +2124,7 @@ export function RehearsalPanel({
         onStart={startAdvice}
         onStartPreparation={startPreparation}
         onPreviewRoute={startRoute}
+        onRequestPricing={setRequestedPricing}
         {...(pricing ? { pricing } : {})}
         spentSteps={appliedOperations}
         onStartEssence={(step) => startGuaranteed(step.operation)}

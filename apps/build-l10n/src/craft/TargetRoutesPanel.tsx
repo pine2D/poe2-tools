@@ -31,6 +31,7 @@ import { EssenceResultDetails } from './EssenceAdvicePanel'
 import { requestTargetRoutes } from './targetRoutesWorkerClient'
 
 interface Props {
+  onRequestPricing?: (materialIds: string[]) => void
   pricing?: CraftPricing
   spentSteps?: CraftStep[]
   catalog: CraftCatalog
@@ -72,6 +73,7 @@ export function TargetRoutesPanel(props: Props) {
   )
 }
 function RouteSearch({
+  onRequestPricing,
   pricing,
   spentSteps = [],
   catalog,
@@ -320,6 +322,14 @@ function RouteSearch({
                   。预览不计入实际历史。
                 </p>
                 {!materialCosts.ok ? <p role="alert">{materialCosts.error}</p> : null}
+                {onRequestPricing && materialCosts.ok && materialCosts.value.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => onRequestPricing(materialCosts.value.map((m) => m.id))}
+                  >
+                    填写本路线报价
+                  </button>
+                ) : null}
                 <CraftCostSummary
                   costs={materialCosts}
                   pricing={pricing}
