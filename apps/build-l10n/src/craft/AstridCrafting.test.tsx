@@ -149,7 +149,7 @@ it('已有双工艺的覆盖显示未核实，保留原词缀与历史', () => {
   expect(screen.getByLabelText('当前工艺容量').textContent).toContain('工艺占用 2 / 当前容量 2')
   expect(within(screen.getByLabelText('精华制作')).getByText('工艺词缀 2/2')).toBeTruthy()
   change('选择镶嵌符文', 'pob2:augment:["Iron Rune","wand"]')
-  expect(screen.getAllByText(/已有双工艺.*尚未核实/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/已有多工艺.*尚未核实/).length).toBeGreaterThan(0)
   expect(screen.getByRole('button', { name: '应用镶嵌' }).hasAttribute('disabled')).toBe(true)
   click('取消镶嵌')
   expect(screen.getByLabelText('当前工艺容量').textContent).toContain('工艺占用 2 / 当前容量 2')

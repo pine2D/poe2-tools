@@ -22,8 +22,8 @@ export function extractCraftTargets(
 ): CraftResult<ExtractedCraftTargets> {
   const checkedState = createCraftState(catalog, state)
   if (!checkedState.ok) return checkedState
-  if (!Array.isArray(selections) || selections.length > 7)
-    return { ok: false, error: '请选择至多七组当前装备上的词缀。' }
+  if (!Array.isArray(selections) || selections.length > 8)
+    return { ok: false, error: '请选择至多八组当前装备上的词缀。' }
   const affixes: CraftState['affixes'] = []
   for (const selection of selections) {
     const selector = typeof selection === 'string' ? { modId: selection } : selection
@@ -97,8 +97,8 @@ export function extractTargetDefinitions(
 ): CraftResult<CraftTargetDefinitions> {
   const checked = createCraftState(catalog, state)
   if (!checked.ok) return checked
-  if (!Array.isArray(selections) || selections.length < 1 || selections.length > 7)
-    return { ok: false, error: '请选择一至七组当前装备上的词缀。' }
+  if (!Array.isArray(selections) || selections.length < 1 || selections.length > 8)
+    return { ok: false, error: '请选择一至八组当前装备上的词缀。' }
   const definitions: CraftTargetDefinitions = {
     nextTargetId: selections.length + 1,
     targets: [],

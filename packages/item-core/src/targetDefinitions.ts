@@ -263,6 +263,7 @@ function validateDefinitionCombination(
   minimum?: number,
   fractured?: string,
   capacityContext?: CraftState,
+  values: readonly CraftTargetDefinitionValues[] = [],
 ): CraftResult<true> {
   if (
     minimum !== undefined &&
@@ -303,7 +304,11 @@ function validateDefinitionCombination(
     mods.push(mod)
     affixes.push({
       modId: mod.id,
-      lines: targetCombinationLines(mod),
+      lines: targetCombinationLines(
+        mod,
+        capacityContext,
+        values.find((entry) => entry.targetId === target.targetId && entry.modId === mod.id),
+      ),
       ...(crafted ? { crafted: true } : {}),
       ...(mod.desecratedOnly ? { desecrated: true } : {}),
     })
@@ -398,9 +403,9 @@ function readTargetDefinitions(
     !Number.isSafeInteger(input.nextTargetId) ||
     input.nextTargetId < 1 ||
     !Array.isArray(input.targets) ||
-    input.targets.length > 7 ||
+    input.targets.length > 8 ||
     !Array.isArray(input.alternatives) ||
-    input.alternatives.length > 7 ||
+    input.alternatives.length > 8 ||
     !Array.isArray(input.values) ||
     input.values.length > 192 ||
     (Object.hasOwn(input, 'minimumTargetCount') && typeof input.minimumTargetCount !== 'number')
@@ -439,16 +444,6 @@ function readTargetDefinitions(
     current = checked.value
   }
   const ids = targets.map((target) => target.modId)
-  // 共存资格仍遵守已核对规则；目标关联本身不再经旧格式往返。
-  const primary = validateDefinitionCombination(
-    catalog,
-    capacityContext?.baseId ?? baseId,
-    targets,
-    minimum,
-    fractured,
-    capacityContext,
-  )
-  if (!primary.ok) return primary
   const alternatives: CraftTargetDefinitionAlternative[] = []
   const seenAlternatives = new Set<string>()
   const modById = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
@@ -472,18 +467,6 @@ function readTargetDefinitions(
       const alternative = modById.get(id)
       if (!alternative || alternative.kind !== mod?.kind || alternative.group !== mod.group)
         return fail('替代档位必须与主目标属于同一词缀类型和冲突组。')
-      const replaced = targets.map((target, position) =>
-        position === index ? { ...target, modId: id } : target,
-      )
-      const checked = validateDefinitionCombination(
-        catalog,
-        capacityContext?.baseId ?? baseId,
-        replaced,
-        minimum,
-        undefined,
-        capacityContext,
-      )
-      if (!checked.ok) return checked
     }
     seenAlternatives.add(entry.targetId)
     alternatives.push({ targetId: entry.targetId, modIds: [...entry.modIds] })
@@ -508,6 +491,34 @@ function readTargetDefinitions(
     current === undefined ? undefined : { state: current },
   )
   if (!values.ok) return values
+  // 先读取数值约束，再校验实际可共存容量，避免用当前低掷值否定明确的未来目标。
+  const constrained = validateDefinitionCombination(
+    catalog,
+    capacityContext?.baseId ?? baseId,
+    targets,
+    minimum,
+    fractured,
+    capacityContext,
+    values.value,
+  )
+  if (!constrained.ok) return constrained
+  for (const alternative of alternatives) {
+    for (const modId of alternative.modIds) {
+      const replaced = targets.map((target) =>
+        target.targetId === alternative.targetId ? { ...target, modId } : target,
+      )
+      const checked = validateDefinitionCombination(
+        catalog,
+        capacityContext?.baseId ?? baseId,
+        replaced,
+        minimum,
+        undefined,
+        capacityContext,
+        values.value,
+      )
+      if (!checked.ok) return checked
+    }
+  }
   return {
     ok: true,
     value: {

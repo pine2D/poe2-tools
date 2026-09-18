@@ -1,7 +1,29 @@
 import type { CatalogAugment } from './catalog'
 
-// 固定 MIT ModRunes 与 ModScalability 的已核对法杖分支，不包含符文间增效来源。
+// 固定 MIT ModRunes 与 ModScalability 的已核对法杖分支，包含不可自增效的 Runeseeker 来源。
 export const WAND_RUNES: readonly CatalogAugment[] = [
+  {
+    id: 'pob2:augment:["Legacy of Runeseeker\'s Call","wand"]',
+    name: "Legacy of Runeseeker's Call",
+    category: 'wand',
+    type: 'Rune',
+    localMod: true,
+    lines: ['75% increased effect of Socketed Runes'],
+    statOrder: [176],
+    tradeHashes: {
+      '704409219': ['75% increased effect of Socketed Runes'],
+    },
+    levelReq: 65,
+    limit: 1,
+    limitId: 'AldursLegacyLimit1',
+    canSocketInChakraSlots: true,
+    canSocketInUniqueItems: true,
+    canSocketInCorruptedSanctified: true,
+    bonded: {
+      lines: ['+100 to maximum Mana'],
+      statOrder: [892],
+    },
+  },
   {
     id: 'pob2:augment:["Hedgewitch Assandra\'s Rune of Wisdom","wand"]',
     name: "Hedgewitch Assandra's Rune of Wisdom",
@@ -257,6 +279,7 @@ export const WAND_RUNES: readonly CatalogAugment[] = [
   },
 ]
 export const WAND_RUNE_SCALABILITY = {
+  '75% increased effect of Socketed Runes': [{ scalable: false, formats: [] }],
   '+1 to Level of all Spell Skills': [
     {
       scalable: true,

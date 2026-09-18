@@ -175,7 +175,7 @@ it.each(['normal', 'magic'] as const)(
   '声明候选保留，但 %s 真实状态和新增操作标记尚未核实',
   (rarity) => {
     const state = { ...initial(), rarity }
-    expect(socketCandidates(catalog, state).some(isSerleRune)).toBe(true)
+    expect(socketCandidates(catalog, state).some((augment) => isSerleRune(augment))).toBe(true)
     expect(createCraftState(catalog, { ...state, sockets: [serle] })).toMatchObject({
       ok: false,
       error: expect.stringContaining('尚未核实'),

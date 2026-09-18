@@ -26,7 +26,7 @@ import {
 import { influenceRuneTags } from './influenceRunes'
 import { inspectLiquidEmotions } from './liquidEmotions'
 import { craftModsConflict } from './modConflicts'
-import { inspectNumericLines, renderNumericLines } from './numeric'
+import { inspectNumericLines, readNumericValues, renderNumericLines } from './numeric'
 import { CRAFT_OMEN_RULES, type CraftOmen, craftOmenError, isCraftOmen } from './omens'
 import { pendingExaltationAllowed } from './pendingExaltation'
 import {
@@ -227,14 +227,25 @@ export function targetSocketContext(
   }
 }
 
-/** 仅供组合结构验证；已核对20–30区间不改变容量，代表值不写入装备或目标数值。 */
-export function targetCombinationLines(mod: CatalogMod): string[] {
+/** 结构代表值继承真实容量来源，并受目标数值约束；不写回装备或目标。 */
+export function targetCombinationLines(
+  mod: CatalogMod,
+  context?: CraftState,
+  target?: CraftTargetValues,
+): string[] {
   if (
     mod.id === 'AlloyEffectOfSocketedAugments1' &&
     mod.lines.length === 1 &&
     mod.lines[0] === '(20-30)% increased effect of Socketed Augment Items'
   ) {
-    const rendered = renderNumericLines(mod.lines, [20])
+    const actual = context?.affixes.find((affix) => affix.modId === mod.id)?.lines
+    const parsed = actual ? readNumericValues(mod.lines, actual) : null
+    const observed = parsed?.ok ? parsed.value[0] : null
+    const bound = target?.bounds.find((entry) => entry.index === 0)
+    const min = Math.max(20, Math.ceil(bound?.min ?? 20))
+    const max = Math.min(30, Math.floor(bound?.max ?? 30))
+    const representative = Math.min(max, Math.max(min, observed ?? 20))
+    const rendered = renderNumericLines(mod.lines, [representative])
     if (rendered.ok) return rendered.value
   }
   return [...mod.lines]
@@ -271,7 +282,7 @@ export function craftTargetCandidates(
         affixes: [
           {
             modId: mod.id,
-            lines: [...mod.lines],
+            lines: targetCombinationLines(mod, state),
             ...(desecrated.has(mod.id)
               ? { desecrated: true }
               : !ordinary.has(mod.id) && !genesis.has(mod.id)
@@ -293,7 +304,7 @@ export function validateCraftTargets(
 ): CraftResult<string[]> {
   if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string'))
     return { ok: false, error: '制作目标必须是词缀 ID 字符串数组。' }
-  if (ids.length > 7) return { ok: false, error: '制作目标最多包含七组词缀。' }
+  if (ids.length > 8) return { ok: false, error: '制作目标最多包含八组词缀。' }
   if (new Set(ids).size !== ids.length) return { ok: false, error: '制作目标不能包含重复词缀 ID。' }
   if (
     minimumTargetCount !== undefined &&
@@ -323,7 +334,7 @@ export function validateCraftTargets(
       (essence.has(id) || liquid.has(id) || alloy.has(id))
     affixes.push({
       modId: mod.id,
-      lines: targetCombinationLines(mod),
+      lines: targetCombinationLines(mod, capacityContext),
       ...(crafted ? { crafted: true } : {}),
       ...(mod.desecratedOnly ? { desecrated: true } : {}),
     })
@@ -397,8 +408,8 @@ export function validateCraftTargetAlternatives(
     capacityContext,
   )
   if (!targets.ok) return targets
-  if (!Array.isArray(alternatives) || alternatives.length > 7)
-    return { ok: false, error: '替代档位必须是最多七组的数组。' }
+  if (!Array.isArray(alternatives) || alternatives.length > 8)
+    return { ok: false, error: '替代档位必须是最多八组的数组。' }
   const byId = new Map(catalog.modifiers.map((mod) => [mod.id, mod]))
   const seen = new Set<string>()
   const result: CraftTargetAlternative[] = []

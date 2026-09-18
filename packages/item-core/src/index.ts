@@ -519,6 +519,10 @@ export {
   runeforgingCatalogSignature,
 } from './runeforgingCatalog'
 export {
+  RUNESEEKER_RULES_VERSION,
+  requiresRuneseekerProjectVersion,
+} from './runeseekerProjectVersion'
+export {
   requiresSceptreAugmentProjectVersion,
   SCEPTRE_AUGMENT_RULES_VERSION,
 } from './sceptreAugmentProjectVersion'
@@ -589,6 +593,7 @@ export {
 } from './statScalability'
 export {
   CRAFT_STRATEGY_AFFIX_LIMITS,
+  CRAFT_STRATEGY_DESECRATED_LIMIT,
   CRAFT_STRATEGY_SOCKET_LIMIT,
   craftStrategyLeaves,
 } from './strategyConditions'

@@ -1,6 +1,7 @@
-import { ASTRID_NAME, astridSourceValid, isAstridRune } from './astridRune'
+import { ASTRID_LINE, ASTRID_NAME, astridSourceValid, isAstridRune } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftResult, CraftState } from './rehearsal'
+import { amplifiedRuneCapacity } from './runeseeker'
 import { weaponSocketKind } from './weaponRuneEffects'
 
 /** 只映射现有普通孔类别；不因目录首饰标志创建尚未核实的孔。 */
@@ -44,9 +45,10 @@ export function craftedModifierCapacity(
   if (astrid.length !== 1)
     return { ok: false, error: '多枚 Astrid 的容量叠加尚未核实；原文仍可对比。' }
   const augment = astrid[0]?.augment
-  return augment && astridFitsBase(catalog, state, augment)
-    ? { ok: true, value: 2 }
-    : { ok: false, error: 'Astrid 容量符文的身份、类别或来源无效。' }
+  if (!augment || !astridFitsBase(catalog, state, augment))
+    return { ok: false, error: 'Astrid 容量符文的身份、类别或来源无效。' }
+  const capacity = amplifiedRuneCapacity(catalog, state, ASTRID_LINE)
+  return capacity.ok ? { ok: true, value: 1 + capacity.value } : capacity
 }
 
 export function astridSocketError(
@@ -64,6 +66,6 @@ export function astridSocketError(
   const capacity = craftedModifierCapacity(catalog, after)
   if (!capacity.ok) return capacity.error
   return state.affixes.filter((a) => a.crafted).length > capacity.value
-    ? '已有双工艺时替换 Astrid 后的保留行为尚未核实；请保留当前容量来源。'
+    ? '已有多工艺时替换 Astrid 后的保留行为尚未核实；请保留当前容量来源。'
     : null
 }

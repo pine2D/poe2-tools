@@ -1,7 +1,7 @@
-import { ASTRID_LINE, isAstridRune } from './astridRune'
+import { isAstridCapacityLine, isAstridRune } from './astridRune'
 import type { CatalogAugment, CatalogBase } from './catalog'
 import { isInfluenceRune } from './influenceRunes'
-import { isSerleRune, SERLE_LINE } from './serleRune'
+import { isSerleCapacityLine, isSerleRune } from './serleRune'
 import { isSupportedSoulCore, readSoulCoreLine, WEAPON_SOUL_TOTALS } from './soulCoreEffects'
 import { isSpecialMartialConditionLine, isSpecialMartialRune } from './specialMartialRunes'
 import { isBasicTalismanBase } from './talismans'
@@ -107,7 +107,11 @@ export function parseWeaponRuneEffectTotals(
       continue
     }
     if (isSpecialMartialConditionLine(line)) continue
-    if (line === ASTRID_LINE || line === SERLE_LINE || line === 'Can roll Destruction modifiers')
+    if (
+      isAstridCapacityLine(line) ||
+      isSerleCapacityLine(line) ||
+      line === 'Can roll Destruction modifiers'
+    )
       continue
     const soul = readSoulCoreLine(line, 'weapon')
     const added = /^Adds ([1-9]\d*) to ([1-9]\d*) (Physical|Fire|Cold|Lightning) Damage$/.exec(line)
@@ -237,6 +241,8 @@ export function sumWeaponRuneEffects(
     !augments.every(
       (augment) =>
         isSupportedWeaponRune(augment, category) ||
+        (augment.category === (category === 'weapon' ? 'weapon' : 'caster') &&
+          (isAstridRune(augment, true) || isSerleRune(augment, true))) ||
         (category === 'wand' && isWandRune(augment, true)) ||
         (category === 'weapon' && isSpecialMartialRune(augment, true)) ||
         (category === 'weapon' && augment.category === 'weapon' && isSupportedSoulCore(augment)),

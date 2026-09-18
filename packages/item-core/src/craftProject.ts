@@ -106,6 +106,7 @@ import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } fro
 import { isRuneforgeCraftOperation } from './runeforge'
 import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
 import { requiresRuneforgeProjectVersion } from './runeforgeProjectVersion'
+import { requiresRuneseekerProjectVersion } from './runeseekerProjectVersion'
 import { requiresSceptreAugmentProjectVersion } from './sceptreAugmentProjectVersion'
 import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { requiresSkillLevelDeclarationProjectVersion } from './skillLevelDeclarationProjectVersion'
@@ -267,7 +268,7 @@ function readState(
       value.quality > 30)
   )
     return null
-  if (!Array.isArray(value.affixes) || value.affixes.length > 7) return null
+  if (!Array.isArray(value.affixes) || value.affixes.length > 8) return null
   if (
     Object.hasOwn(value, 'sockets') &&
     (!Array.isArray(value.sockets) ||
@@ -449,7 +450,7 @@ function readOperation(value: unknown): CraftStep | null {
   if (Object.hasOwn(value, 'removeModId') && !nonempty(value.removeModId)) return null
   const rolls: NonNullable<CraftOperation['rolls']> = []
   if (Object.hasOwn(value, 'rolls')) {
-    if (!Array.isArray(value.rolls) || value.rolls.length > 7) return null
+    if (!Array.isArray(value.rolls) || value.rolls.length > 8) return null
     for (const roll of value.rolls) {
       if (
         !record(roll) ||
@@ -767,6 +768,7 @@ export function readNativeTargetProjectProjection(
   spendingStrategy = false,
   ringLichEchoes = false,
   wandRunes = false,
+  runeseeker = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -822,6 +824,7 @@ export function readNativeTargetProjectProjection(
     spendingStrategy,
     ringLichEchoes,
     wandRunes,
+    runeseeker,
   )
 }
 
@@ -879,6 +882,7 @@ function readCraftProject(
   spendingStrategy = false,
   ringLichEchoes = false,
   wandRunes = false,
+  runeseeker = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -939,6 +943,8 @@ function readCraftProject(
   const usesSceptreAugments = requiresSceptreAugmentProjectVersion(value)
   if (!sceptreAugments && usesSceptreAugments)
     return fail('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  if (!runeseeker && requiresRuneseekerProjectVersion(value))
+    return fail('符文间增效和扩展容量必须使用 v125 项目。')
   const usesWandRunes = requiresWandRuneProjectVersion(value)
   if (!wandRunes && usesWandRunes) return fail('法杖专属符文必须使用 v124 项目。')
   const usesSpecialMartialRunes = requiresSpecialMartialRuneProjectVersion(value)
@@ -2379,6 +2385,8 @@ export function serializeCraftProject(project: CraftProject): string {
     throw new Error('手套雕像必须使用 v110 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresSceptreAugmentProjectVersion(project))
     throw new Error('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  if (requiresRuneseekerProjectVersion(project))
+    throw new Error('符文间增效和扩展容量必须使用 v125 目标项目。')
   if (requiresWandRuneProjectVersion(project))
     throw new Error('法杖专属符文必须使用 v124 目标项目。')
   if (requiresSpecialMartialRuneProjectVersion(project))

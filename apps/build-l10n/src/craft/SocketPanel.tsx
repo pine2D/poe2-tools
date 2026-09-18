@@ -99,6 +99,7 @@ export function SocketPanel({
   )
   const artificerDraft = draft?.kind === 'artificer'
   const amplification = socketEffectIncrease(catalog, state)
+  const runeAmplification = socketEffectIncrease(catalog, state, 'Rune')
   const limit = artificerSocketLimit(catalog, state)
   const sceptre = catalog.bases.find((base) => base.id === state.baseId)?.type === 'Sceptre'
   const hasIdols = sceptre || candidates.some((augment) => isArmourIdol(augment, true))
@@ -137,6 +138,12 @@ export function SocketPanel({
             其他装备与角色孔尚未核对，本件未超限不代表角色可穿戴。条件效果逐孔展示，不推算角色最终收益。
           </p>
         </section>
+      ) : null}
+      {runeAmplification !== null && amplification !== null && runeAmplification > amplification ? (
+        <p>
+          符文专用增效 {runeAmplification - amplification}%，与通用增效合计 {runeAmplification}
+          %；只作用于 Rune，自身增效行保持不变。容量按当前效果取整。
+        </p>
       ) : null}
       {amplification !== null && amplification > 0 ? (
         <p>

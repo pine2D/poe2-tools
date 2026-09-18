@@ -150,7 +150,7 @@ it('君王增效缩放概率与负作用，固定两枚投射物和无数值效�
     ).toBeNull()
   }
 })
-it('完整目录身份与缩放元数据变化必须拒绝，递归增效来源继续待核实', () => {
+it('完整目录身份与缩放元数据变化必须拒绝', () => {
   for (const field of ['limit', 'bonded', 'statOrder', 'tradeHashes']) {
     const bad = structuredClone(catalog)
     const rune = bad.augments?.find((a) => a.id === id('Rune of Reach'))
@@ -166,9 +166,6 @@ it('完整目录身份与缩放元数据变化必须拒绝，递归增效来源�
   ]
   expect(
     socketCandidates(bad, state()).some((a) => a.id === id("Thane Girt's Rune of Wildness")),
-  ).toBe(false)
-  expect(
-    socketCandidates(catalog, state()).some((a) => a.name === "Legacy of Runeseeker's Call"),
   ).toBe(false)
 })
 

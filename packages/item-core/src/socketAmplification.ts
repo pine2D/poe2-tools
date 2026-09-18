@@ -9,6 +9,7 @@ import { isRebirthArmourRune } from './extendedArmourRuneEffects'
 import { influenceRuneFitsBase, isInfluenceRune } from './influenceRunes'
 import type { CraftAffix, CraftState } from './rehearsal'
 import { isSupportedArmourRune } from './runeEffects'
+import { runeseekerIncrease } from './runeseeker'
 import { isSceptreAugmentId, scaleSceptreAugment, sceptreAugmentFits } from './sceptreAugments'
 import { isSerleRune, SERLE_LINE, serleFitsBase } from './serleRune'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
@@ -47,12 +48,20 @@ export function isHorrorSocketAffix(
 }
 
 /** 当前已核对的镶嵌物增效；不把未知效果当作已支持倍率。 */
-export function socketEffectIncrease(catalog: CraftCatalog, state: CraftState): number | null {
+export function socketEffectIncrease(
+  catalog: CraftCatalog,
+  state: CraftState,
+  type?: string,
+): number | null {
   const sovereign = sovereignEffect(catalog, state, 'socket')
   if (!sovereign.ok) return null
-  return state.affixes.some((affix) => isHorrorSocketAffix(catalog, state, affix))
+  const rune =
+    type === 'Rune' ? runeseekerIncrease(catalog, state) : { ok: true as const, value: 0 }
+  if (!rune.ok) return null
+  const general = state.affixes.some((affix) => isHorrorSocketAffix(catalog, state, affix))
     ? 60
     : sovereign.value
+  return general + rune.value
 }
 
 /** 返回当前装备上的效果副本；目录、孔内身份与绑定来源保持不变。 */
@@ -61,7 +70,7 @@ export function effectiveSocketAugment(
   state: CraftState,
   augment: CatalogAugment,
 ): CatalogAugment | null {
-  const increase = socketEffectIncrease(catalog, state)
+  const increase = socketEffectIncrease(catalog, state, augment.type)
   if (increase === null) return null
   if (isWandRuneId(augment.id))
     return wandRuneFits(catalog, state, augment) ? scaleWandRune(catalog, augment, increase) : null
@@ -91,7 +100,7 @@ export function effectiveSocketAugment(
     if (
       !(serle ? serleFitsBase(catalog, state, augment) : astridFitsBase(catalog, state, augment)) ||
       increase < 0 ||
-      increase >= 100 ||
+      increase > 105 ||
       statScalabilitySourceHash(catalog) === null
     )
       return null
@@ -103,7 +112,7 @@ export function effectiveSocketAugment(
     )
       return null
     const scaled = scaleStatLineByEffect(line, line, metadata, increase)
-    return scaled.ok && scaled.value === line ? { ...augment, lines: [scaled.value] } : null
+    return scaled.ok ? { ...augment, lines: [scaled.value] } : null
   }
   if (increase === 0) return augment
   const base = catalog.bases.find((entry) => entry.id === state.baseId)

@@ -1,5 +1,5 @@
 import { armourIdolSourceLines, isArmourIdol, isArmourIdolEffectLine } from './armourIdols'
-import { ASTRID_LINE, isAstridRune } from './astridRune'
+import { isAstridCapacityLine, isAstridRune } from './astridRune'
 import type { CatalogAugment } from './catalog'
 import {
   COMBAT_ARMOUR_TOTALS,
@@ -9,7 +9,7 @@ import {
 import { conditionalArmourRuneKind, isConditionalArmourRune } from './conditionalArmourRunes'
 import { isExtendedArmourRune, readExtendedArmourRuneLine } from './extendedArmourRuneEffects'
 import { isInfluenceRune, isInfluenceRuneLine } from './influenceRunes'
-import { isSerleRune, SERLE_LINE } from './serleRune'
+import { isSerleCapacityLine, isSerleRune } from './serleRune'
 import { ARMOUR_SOUL_TOTALS, isSupportedSoulCore, readSoulCoreLine } from './soulCoreEffects'
 import { isWardArmourRune, readWardRuneLine } from './wardRuneEffects'
 
@@ -124,8 +124,8 @@ export function parseRuneEffectTotals(lines: readonly string[]): RuneEffectTotal
       isArmourIdolEffectLine(line) ||
       conditionalArmourRuneKind(line) ||
       isInfluenceRuneLine(line) ||
-      line === ASTRID_LINE ||
-      line === SERLE_LINE
+      isAstridCapacityLine(line) ||
+      isSerleCapacityLine(line)
     )
       continue
     const combat =

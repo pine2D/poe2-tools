@@ -41,7 +41,7 @@ export function isFluxCraftOperation(value: unknown): value is FluxCraftOperatio
     FLUXES.some((flux) => flux.id === value.fluxId) &&
     Array.isArray(value.rolls) &&
     value.rolls.length > 0 &&
-    value.rolls.length <= 7 &&
+    value.rolls.length <= 8 &&
     value.rolls.every(
       (roll) =>
         record(roll) &&

@@ -122,7 +122,7 @@ it('条件严格拒绝空列表、重复身份、越界数量及未知字段', (
   const valid = { kind: 'selected-targets', modIds: ['p1'], min: 1, value: true }
   for (const change of [
     { modIds: [] },
-    { modIds: ['p1', 'p2', 'p3', 'p4', 's1', 's2', 's3', 's4'] },
+    { modIds: ['p1', 'p2', 'p3', 'p4', 's1', 's2', 's3', 's4', 's5'] },
     { modIds: ['p1', 'p1'] },
     { modIds: [''] },
     { modIds: [1] },

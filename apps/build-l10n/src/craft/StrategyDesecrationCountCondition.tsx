@@ -1,5 +1,5 @@
 import {
-  CRAFT_STRATEGY_AFFIX_LIMITS,
+  CRAFT_STRATEGY_DESECRATED_LIMIT,
   type DefinitionCraftStrategyLeafCondition,
 } from '@poe2-tools/item-core'
 
@@ -47,7 +47,7 @@ export function StrategyDesecrationCountCondition({
                 })
               }}
             >
-              {Array.from({ length: CRAFT_STRATEGY_AFFIX_LIMITS['affix-count'] + 1 }, (_, n) => (
+              {Array.from({ length: CRAFT_STRATEGY_DESECRATED_LIMIT + 1 }, (_, n) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: 固定数量选项以实际数值为身份。
                 <option key={n} value={n}>
                   {n}

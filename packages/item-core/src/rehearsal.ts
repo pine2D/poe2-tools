@@ -494,7 +494,7 @@ export function createCraftState(
       !isEssenceMappedMod(catalog, base, mod.id) &&
       !isAlloyMappedMod(catalog, base, mod.id)
     )
-      return failure('双工艺的每组属性都需要当前基底对应的精华或合金来源。')
+      return failure('多工艺的每组属性都需要当前基底对应的精华或合金来源。')
     if (
       accepted.some(
         (existing) =>
@@ -927,7 +927,7 @@ export function applyCraftOperation(
   if (
     operation.rolls !== undefined &&
     (!Array.isArray(operation.rolls) ||
-      operation.rolls.length > 7 ||
+      operation.rolls.length > 8 ||
       !operation.rolls.every(
         (roll) =>
           roll !== null &&

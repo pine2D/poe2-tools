@@ -11,11 +11,14 @@ import {
 /** 已有额外孔再经腐化加孔时，当前已支持的最大孔数。 */
 export const CRAFT_STRATEGY_SOCKET_LIMIT = 4
 
+/** 八组容量需要一条君王工艺，因此亵渎计数仍至多七组。 */
+export const CRAFT_STRATEGY_DESECRATED_LIMIT = 7
+
 /** 已支持制作容量的条件上界；条件匹配仍取装备当时的实际容量。 */
 export const CRAFT_STRATEGY_AFFIX_LIMITS = {
-  'affix-count': 7,
+  'affix-count': 8,
   'open-prefix': 3,
-  'open-suffix': 4,
+  'open-suffix': 5,
 } as const
 
 export type CraftStrategyLeafCondition =
@@ -140,7 +143,7 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
     keys(value, ['kind', 'modIds', 'min', 'value']) &&
     Array.isArray(value.modIds) &&
     value.modIds.length >= 1 &&
-    value.modIds.length <= 7 &&
+    value.modIds.length <= 8 &&
     value.modIds.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 512) &&
     new Set(value.modIds).size === value.modIds.length &&
     integer(value.min, 1, value.modIds.length) &&
@@ -164,8 +167,8 @@ function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
     value.kind === 'desecrated-count' &&
     keys(value, ['kind', 'source', 'min', 'max']) &&
     (value.source === 'unrevealed' || value.source === 'revealed') &&
-    integer(value.min, 0, CRAFT_STRATEGY_AFFIX_LIMITS['affix-count']) &&
-    integer(value.max, 0, CRAFT_STRATEGY_AFFIX_LIMITS['affix-count']) &&
+    integer(value.min, 0, CRAFT_STRATEGY_DESECRATED_LIMIT) &&
+    integer(value.max, 0, CRAFT_STRATEGY_DESECRATED_LIMIT) &&
     value.min <= value.max
   )
     return { kind: value.kind, source: value.source, min: value.min, max: value.max }

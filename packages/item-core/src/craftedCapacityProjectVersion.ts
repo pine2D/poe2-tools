@@ -9,7 +9,7 @@ export function requiresCraftedCapacityProjectVersion(
   input: unknown,
   catalog: CraftCatalog,
 ): boolean {
-  const augments = catalog.augments?.filter(isAstridRune) ?? []
+  const augments = catalog.augments?.filter((augment) => isAstridRune(augment)) ?? []
   const ids = new Set(augments.map((augment) => augment.id))
   const materials = new Set(augments.map((augment) => `augment:${augment.name}`))
   const values = (value: unknown): unknown[] =>

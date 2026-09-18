@@ -71,11 +71,11 @@ it('第四空后缀只匹配实际已生效容量，七组条件在第七组后�
   expect(before.affixes).toEqual([])
 })
 
-it('不放开第四前缀、第五后缀、八组或非整数条件', () => {
+it('不放开第四前缀、第六后缀、九组或非整数条件', () => {
   for (const condition of [
     { kind: 'open-prefix', min: 4 },
-    { kind: 'open-suffix', min: 5 },
-    { kind: 'affix-count', min: 8 },
+    { kind: 'open-suffix', min: 6 },
+    { kind: 'affix-count', min: 9 },
     { kind: 'affix-count', min: 6.5 },
   ] as CraftStrategyCondition[])
     expect(readCraftStrategy(strategy(condition)).ok).toBe(false)

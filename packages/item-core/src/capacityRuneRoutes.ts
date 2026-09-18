@@ -3,6 +3,7 @@ import type { CraftCatalog } from './catalog'
 import type { CraftStep } from './craftSteps'
 import { isInfluenceRune } from './influenceRunes'
 import type { CraftState } from './rehearsal'
+import { RUNESEEKER_ID } from './runeseeker'
 import { isSerleRune } from './serleRune'
 import { artificerSocketLimit } from './sockets'
 
@@ -13,7 +14,10 @@ export function capacityRuneRouteContext(catalog: CraftCatalog, context?: CraftS
       (context?.sockets ?? []).flatMap((id) => {
         const augment = catalog.augments?.find((entry) => entry.id === id)
         return augment &&
-          (isSerleRune(augment) || isAstridRune(augment) || isInfluenceRune(augment))
+          (augment.id === RUNESEEKER_ID ||
+            isSerleRune(augment) ||
+            isAstridRune(augment) ||
+            isInfluenceRune(augment))
           ? [augment.id]
           : []
       }),

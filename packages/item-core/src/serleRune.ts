@@ -1,13 +1,14 @@
 import { astridSourceValid } from './astridRune'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftResult, CraftState } from './rehearsal'
+import { amplifiedRuneCapacity } from './runeseeker'
 import { weaponSocketKind } from './weaponRuneEffects'
 
 export const SERLE_NAME = "Serle's Triumph"
 export const SERLE_LINE = '+1 Suffix Modifier allowed'
 
 /** 可见侧别与隐藏总量声明必须来自同一条精确目录记录。 */
-export function isSerleRune(augment: CatalogAugment): boolean {
+export function isSerleRune(augment: CatalogAugment, effective = false): boolean {
   return (
     augment.name === SERLE_NAME &&
     ['weapon', 'armour', 'caster'].includes(augment.category) &&
@@ -20,7 +21,9 @@ export function isSerleRune(augment: CatalogAugment): boolean {
     augment.bonded === undefined &&
     augment.canSocketInJewellery === true &&
     augment.lines.length === 1 &&
-    augment.lines[0] === SERLE_LINE &&
+    (effective === true
+      ? isSerleCapacityLine(augment.lines[0] ?? '')
+      : augment.lines[0] === SERLE_LINE) &&
     augment.statOrder.length === 1 &&
     augment.statOrder[0] === 19 &&
     Object.keys(augment.tradeHashes).length === 2 &&
@@ -72,7 +75,7 @@ export function serleCapacity(catalog: CraftCatalog, state: CraftState): CraftRe
       ok: false,
       error: '普通或魔法装备的 Serle 容量与占用规则尚未核实；请先升级为稀有装备。',
     }
-  return { ok: true, value: 1 }
+  return amplifiedRuneCapacity(catalog, state, SERLE_LINE)
 }
 
 export function serleSourceMatches(
@@ -80,7 +83,11 @@ export function serleSourceMatches(
   actual: readonly string[],
 ): boolean {
   return (
-    expected.filter((line) => line === SERLE_LINE).length ===
-    actual.filter((line) => line === SERLE_LINE).length
+    JSON.stringify(expected.filter(isSerleCapacityLine).sort()) ===
+    JSON.stringify(actual.filter(isSerleCapacityLine).sort())
   )
+}
+
+export function isSerleCapacityLine(line: string): boolean {
+  return /^\+[12] Suffix Modifier allowed$/.test(line)
 }

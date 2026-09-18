@@ -102,8 +102,8 @@ export function scaleStatValueBoundsByEffect(
   formats: readonly string[],
   quality: number,
 ): CraftResult<StatValueBounds> {
-  if (!Number.isInteger(quality) || quality < 0 || quality > 100)
-    return { ok: false, error: '增效必须是 0–100 的整数。' }
+  if (!Number.isInteger(quality) || quality < 0 || quality > 105)
+    return { ok: false, error: '增效必须是 0–105 的整数。' }
   const rule = statValuePrecision(formats)
   if (!rule) return { ok: false, error: '缩放来源含尚未实现的数值格式。' }
   const scale = 10 ** rule.decimals
@@ -158,8 +158,8 @@ export function scaleStatLineByEffect(
   metadata: readonly CatalogStatScalar[],
   quality: number,
 ): CraftResult<string> {
-  if (!Number.isInteger(quality) || quality < 0 || quality > 100)
-    return { ok: false, error: '增效必须是 0–100 的整数。' }
+  if (!Number.isInteger(quality) || quality < 0 || quality > 105)
+    return { ok: false, error: '增效必须是 0–105 的整数。' }
   const split = splitStatScalars(pattern)
   if (metadata.length !== split.tokens.length)
     return { ok: false, error: '缩放资料与属性数字数量不一致。' }

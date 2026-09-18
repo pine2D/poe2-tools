@@ -4,7 +4,7 @@ export const ASTRID_NAME = "Astrid's Creativity"
 export const ASTRID_LINE = 'Can have 1 additional Crafted Modifier'
 
 /** 容量语义不从相似文案猜测；类别仍由具体基底核对。 */
-export function isAstridRune(augment: CatalogAugment): boolean {
+export function isAstridRune(augment: CatalogAugment, effective = false): boolean {
   return (
     augment.name === ASTRID_NAME &&
     ['weapon', 'armour', 'caster'].includes(augment.category) &&
@@ -16,7 +16,9 @@ export function isAstridRune(augment: CatalogAugment): boolean {
     augment.isSocketBound !== true &&
     augment.canSocketInJewellery === true &&
     augment.lines.length === 1 &&
-    augment.lines[0] === ASTRID_LINE
+    (effective === true
+      ? isAstridCapacityLine(augment.lines[0] ?? '')
+      : augment.lines[0] === ASTRID_LINE)
   )
 }
 
@@ -38,7 +40,11 @@ export function astridSourceMatches(
   actual: readonly string[],
 ): boolean {
   return (
-    expected.filter((line) => line === ASTRID_LINE).length ===
-    actual.filter((line) => line === ASTRID_LINE).length
+    JSON.stringify(expected.filter(isAstridCapacityLine).sort()) ===
+    JSON.stringify(actual.filter(isAstridCapacityLine).sort())
   )
+}
+
+export function isAstridCapacityLine(line: string): boolean {
+  return /^Can have [12] additional Crafted Modifier$/.test(line)
 }

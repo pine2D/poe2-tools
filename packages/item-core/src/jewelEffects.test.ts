@@ -289,7 +289,7 @@ describe('珠宝侧别增效', () => {
       value: { min: -18, max: -18 },
     })
     expect(scaleStatValueBoundsByEffect(1, ['unknown'], 70).ok).toBe(false)
-    expect(scaleStatValueBoundsByEffect(1, [], 101).ok).toBe(false)
+    expect(scaleStatValueBoundsByEffect(1, [], 106).ok).toBe(false)
     expect(scaleStatValueBoundsByEffect(1.4, ['per_minute_to_per_second'], 70)).toEqual({
       ok: true,
       value: { min: 2.3, max: 2.4 },
