@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
+import { sovereignEffect } from './alloyEffects'
 import { alloyTestFixture } from './alloyTestFixture'
 import type { CraftCatalog } from './catalog'
 import { estimateCatalystEffects } from './catalystEffects'
@@ -11,6 +12,7 @@ import { type CraftState, createCraftState } from './rehearsal'
 import { estimateResistances } from './resistances'
 import { runeSocketContributionError } from './runeImport'
 import { socketEffects } from './sockets'
+import { readSovereignEffect } from './sovereignSource'
 import { estimateWeaponStats } from './weaponStats'
 
 function required<T>(value: T | undefined): T {
@@ -39,6 +41,29 @@ const state: CraftState = {
     { modId: 'IncreasedLife1', lines: ['+19(10-19) to maximum Life'] },
   ],
 }
+
+it('容量计算可独立读取君王来源，但超额工艺不能绕过对外增效入口', () => {
+  const overCapacity: CraftState = {
+    ...state,
+    affixes: state.affixes.map((affix, index) =>
+      index === 2 ? { ...affix, crafted: true } : affix,
+    ),
+  }
+  expect(readSovereignEffect(catalog, overCapacity, 'resistance')).toEqual({
+    ok: true,
+    value: 25,
+  })
+  expect(sovereignEffect(catalog, overCapacity, 'resistance').ok).toBe(false)
+  expect(createCraftState(catalog, overCapacity).ok).toBe(false)
+  expect(readSovereignEffect(primary, overCapacity, 'resistance').ok).toBe(false)
+  expect(
+    readSovereignEffect(
+      catalog,
+      { ...overCapacity, affixes: [required(state.affixes[0]), required(state.affixes[0])] },
+      'resistance',
+    ).ok,
+  ).toBe(false)
+})
 
 it('君王武器增效进入真实物理面板，原文来源按增效后符文核对', () => {
   const weapon: CraftState = {
