@@ -4,56 +4,59 @@ import { applyBoneCraft } from './boneCraft'
 import { boneCatalog, boneState } from './boneTestFixture'
 import { planCraftTargetRoutes } from './targetRoutes'
 
-it('已购买机会首组无目标时给第二组并真实完成，原组仍能直接揭示', () => {
-  const catalog = boneCatalog()
-  const state = {
-    ...boneState(),
-    pendingDesecration: {
-      boneId: 'preserved_rib' as const,
-      kind: 'suffix' as const,
-      options: ['suffix1', 'suffix2', 'suffix3'],
-      revealOmen: 'abyssal_echoes' as const,
-    },
-  }
-  let applications = 0
-  const advice = analyzeBoneTargets(
-    catalog,
-    state,
-    ['exclusive1'],
-    [{ modId: 'exclusive1', bounds: [{ index: 0, min: 7 }] }],
-    [],
-    {
-      consumeCandidate: () => {
-        applications++
-        return true
+it.each(['preserved_rib', 'ancient_rib'] as const)(
+  '%s 已购买机会首组无目标时给第二组并真实完成，原组仍能直接揭示',
+  (boneId) => {
+    const catalog = boneCatalog()
+    const state = {
+      ...boneState(),
+      pendingDesecration: {
+        boneId,
+        kind: 'suffix' as const,
+        options: ['suffix1', 'suffix2', 'suffix3'],
+        revealOmen: 'abyssal_echoes' as const,
       },
-    },
-  )
-  if (!advice.ok) throw new Error(advice.error)
-  const reroll = advice.value.find((entry) => entry.operation.kind === 'desecration-reroll')
-  expect(reroll).toBeDefined()
-  expect(reroll?.targetModIds).toEqual(['exclusive1'])
-  expect(
-    advice.value.some(
-      (entry) =>
-        entry.operation.kind === 'desecration-reveal' && entry.operation.modId === 'suffix1',
-    ),
-  ).toBe(true)
-  if (reroll) expect(applyBoneCraft(catalog, state, reroll.operation).ok).toBe(true)
-  expect(applications).toBeGreaterThan(0)
-  const planned = planCraftTargetRoutes(
-    catalog,
-    state,
-    ['exclusive1'],
-    [{ modId: 'exclusive1', bounds: [{ index: 0, min: 7 }] }],
-  )
-  if (!planned.ok) throw new Error(planned.error)
-  expect(
-    planned.value.routes[0]?.steps.map((step) => 'kind' in step.operation && step.operation.kind),
-  ).toEqual(['desecration-reroll', 'desecration-reveal'])
-  expect(planned.value.routes[0]?.finalState.affixes[0]?.lines).toEqual(['exclusive1 7(1-10)'])
-  expect(planned.value.candidateApplications).toBeLessThanOrEqual(4096)
-})
+    }
+    let applications = 0
+    const advice = analyzeBoneTargets(
+      catalog,
+      state,
+      ['exclusive1'],
+      [{ modId: 'exclusive1', bounds: [{ index: 0, min: 7 }] }],
+      [],
+      {
+        consumeCandidate: () => {
+          applications++
+          return true
+        },
+      },
+    )
+    if (!advice.ok) throw new Error(advice.error)
+    const reroll = advice.value.find((entry) => entry.operation.kind === 'desecration-reroll')
+    expect(reroll).toBeDefined()
+    expect(reroll?.targetModIds).toEqual(['exclusive1'])
+    expect(
+      advice.value.some(
+        (entry) =>
+          entry.operation.kind === 'desecration-reveal' && entry.operation.modId === 'suffix1',
+      ),
+    ).toBe(true)
+    if (reroll) expect(applyBoneCraft(catalog, state, reroll.operation).ok).toBe(true)
+    expect(applications).toBeGreaterThan(0)
+    const planned = planCraftTargetRoutes(
+      catalog,
+      state,
+      ['exclusive1'],
+      [{ modId: 'exclusive1', bounds: [{ index: 0, min: 7 }] }],
+    )
+    if (!planned.ok) throw new Error(planned.error)
+    expect(
+      planned.value.routes[0]?.steps.map((step) => 'kind' in step.operation && step.operation.kind),
+    ).toEqual(['desecration-reroll', 'desecration-reveal'])
+    expect(planned.value.routes[0]?.finalState.affixes[0]?.lines).toEqual(['exclusive1 7(1-10)'])
+    expect(planned.value.candidateApplications).toBeLessThanOrEqual(4096)
+  },
+)
 
 it('两组重复ID建议去重，首组替代档位已可推进时不额外重选，首offer不自动付费', () => {
   const catalog = boneCatalog()

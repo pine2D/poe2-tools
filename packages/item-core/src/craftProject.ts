@@ -6,6 +6,7 @@ import { alloyCatalogSignature as readAlloyCatalogSignature } from './alloys'
 import { requiresAmuletCatalystProjectVersion } from './amuletCatalystProjectVersion'
 import { requiresAmuletSkillLevelProjectVersion } from './amuletSkillLevelProjectVersion'
 import { requiresAmuletSkillSocketsProjectVersion } from './amuletSkillSocketsProjectVersion'
+import { requiresAncientRibEchoesProjectVersion } from './ancientRibEchoesProjectVersion'
 import { readStatAnnotations } from './annotations'
 import { isArchitectCraftOperation } from './architect'
 import { isBeltCapacityBase, resolveCraftImplicitPatterns } from './beltImplicits'
@@ -752,6 +753,7 @@ export function readNativeTargetProjectProjection(
   defenceEssences = false,
   jewelVaal = false,
   ordinaryAttributeEssences = false,
+  ancientRibEchoes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -800,6 +802,7 @@ export function readNativeTargetProjectProjection(
     defenceEssences,
     jewelVaal,
     ordinaryAttributeEssences,
+    ancientRibEchoes,
   )
 }
 
@@ -850,6 +853,7 @@ function readCraftProject(
   defenceEssences = false,
   jewelVaal = false,
   ordinaryAttributeEssences = false,
+  ancientRibEchoes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -876,6 +880,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!ancientRibEchoes && requiresAncientRibEchoesProjectVersion(value))
+    return fail('远古肋骨与回响组合必须使用 v118 项目。')
   if (!ordinaryAttributeEssences && requiresOrdinaryAttributeEssenceProjectVersion(value))
     return fail('普通属性精华操作和指引必须使用 v117 项目。')
   if (!jewelVaal && requiresJewelVaalProjectVersion(value))
@@ -2304,6 +2310,8 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (requiresAncientRibEchoesProjectVersion(project))
+    throw new Error('远古肋骨与回响组合必须使用 v118 项目。')
   if (requiresOrdinaryAttributeEssenceProjectVersion(project))
     throw new Error('普通属性精华操作和指引必须使用 v117 项目。')
   if (requiresJewelVaalProjectVersion(project))

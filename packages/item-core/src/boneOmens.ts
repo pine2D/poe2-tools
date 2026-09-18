@@ -60,7 +60,10 @@ export function boneRevealOmenError(
   omen: BoneRevealOmen,
 ): string | null {
   if (!isBoneRevealOmen(omen)) return '未知揭示预兆。'
-  if (pending.boneId.startsWith('ancient_') || pending.lichOmen)
-    return '本工具尚未验证深渊回响与远古骨骼或巫妖预兆的交互，暂不支持此组合。'
+  if (
+    (pending.boneId.startsWith('ancient_') && pending.boneId !== 'ancient_rib') ||
+    pending.lichOmen
+  )
+    return '本工具尚未验证深渊回响与远古颚骨、远古锁骨或巫妖预兆的交互，暂不支持此组合。'
   return null
 }

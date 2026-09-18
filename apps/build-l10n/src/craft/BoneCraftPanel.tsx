@@ -361,6 +361,11 @@ function BoneCraftEditor({
       <p>
         指定结果演练，不代表真实概率。施加时消耗一份骨骼及各一份施加预兆；回响在固定首组时另计一份，重选与最终揭示不重复计费。
       </p>
+      {pending?.boneId === 'ancient_rib' ? (
+        <p>
+          远古肋骨与回响已有胸甲实操依据；两组沿用最低词缀等级和方向约束属于规则推导，完整组合仍待游戏核验。
+        </p>
+      ) : null}
       {hasInfluence ? (
         <p>
           影响符文的骨骼候选按目录与规则推导，尚未逐项游戏实测；Uhtred、Kolr、Thrud、Medved、Katla、Vorana

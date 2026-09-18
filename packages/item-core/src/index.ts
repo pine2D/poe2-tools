@@ -36,6 +36,10 @@ export {
   AMULET_SKILL_SOCKETS_RULES_VERSION,
   requiresAmuletSkillSocketsProjectVersion,
 } from './amuletSkillSocketsProjectVersion'
+export {
+  ANCIENT_RIB_ECHOES_RULES_VERSION,
+  requiresAncientRibEchoesProjectVersion,
+} from './ancientRibEchoesProjectVersion'
 export type { ArchitectCraftOperation } from './architect'
 export { isArmourIdol, isBodyIdolId, isHelmetBootIdolId, isOffhandIdolId } from './armourIdols'
 export { isAstridRune } from './astridRune'

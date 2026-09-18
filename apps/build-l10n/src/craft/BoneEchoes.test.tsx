@@ -53,7 +53,7 @@ vi.mock('./targetRoutesWorkerClient', async () => {
   }
 })
 const apply = () => fireEvent.click(screen.getByRole('button', { name: '应用骨骼步骤' }))
-function normalPending() {
+function normalPending(boneId: 'preserved_rib' | 'ancient_rib' = 'preserved_rib') {
   const { sockets: _, ...initial } = boneState()
   render(
     <RehearsalPanel
@@ -70,7 +70,7 @@ function normalPending() {
       }),
     )
   fireEvent.click(screen.getByRole('button', { name: '应用本次结果' }))
-  fireEvent.change(screen.getByLabelText('骨骼材料'), { target: { value: 'preserved_rib' } })
+  fireEvent.change(screen.getByLabelText('骨骼材料'), { target: { value: boneId } })
   fireEvent.click(screen.getByLabelText('占用后缀'))
   fireEvent.click(screen.getByRole('button', { name: '预览骨骼结果' }))
   apply()
@@ -81,51 +81,55 @@ function firstOffer() {
     fireEvent.click(screen.getByLabelText(`候选 ${id}`))
   fireEvent.click(screen.getByRole('button', { name: '预览三项候选' }))
 }
-it('首offer收费一次、重选免费且保留两组，跨组同ID可访问并能选回首组保存恢复', () => {
-  normalPending()
-  firstOffer()
-  expect(screen.queryByText('深渊回响预兆 × 1')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '取消骨骼步骤' }))
-  expect((screen.getByLabelText('首次揭示使用深渊回响') as HTMLInputElement).checked).toBe(false)
-  firstOffer()
-  apply()
-  expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
-  expect(screen.queryByLabelText('首次揭示使用深渊回响')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '指定第二组三项' }))
-  for (const id of ['exclusive1', 'exclusive2', 'exclusive3'])
-    fireEvent.click(screen.getByLabelText(`第二组候选 ${id}`))
-  fireEvent.click(screen.getByRole('button', { name: '预览第二组三项' }))
-  expect(
-    within(screen.getByLabelText('骨骼待应用结果')).getByRole('heading', {
-      name: '重选第二组三项候选',
-    }),
-  ).toBeDefined()
-  apply()
-  expect(screen.getByRole('heading', { name: '首组三项候选' })).toBeDefined()
-  expect(screen.getByRole('heading', { name: '第二组三项候选' })).toBeDefined()
-  expect(screen.getByRole('button', { name: '首组：选择揭示 exclusive1' })).toBeDefined()
-  expect(screen.getByRole('button', { name: '第二组：选择揭示 exclusive1' })).toBeDefined()
-  expect(screen.queryByRole('button', { name: '指定第二组三项' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
-  const project = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(project.schemaVersion).toBe(1)
-  expect(project.operations[2].revealOmen).toBe('abyssal_echoes')
-  expect(project.operations[3].kind).toBe('desecration-reroll')
-  fireEvent.click(screen.getByRole('button', { name: '首组：选择揭示 suffix3' }))
-  fireEvent.click(screen.getByRole('button', { name: '预览揭示结果' }))
-  apply()
-  expect(screen.getByText('亵渎词缀 1/1')).toBeDefined()
-  expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
-  fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
-  expect(screen.getByRole('button', { name: '第二组：选择揭示 exclusive3' })).toBeDefined()
-  fireEvent.click(screen.getByRole('button', { name: '撤销' }))
-  expect(screen.queryByRole('heading', { name: '第二组三项候选' })).toBeNull()
-  expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
-  fireEvent.click(screen.getByRole('button', { name: '撤销' }))
-  expect(screen.queryByText('深渊回响预兆 × 1')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '重做' }))
-  expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
-})
+it.each(['preserved_rib', 'ancient_rib'] as const)(
+  '%s 首offer收费一次、重选免费且保留两组，跨组同ID可访问并能选回首组保存恢复',
+  (boneId) => {
+    normalPending(boneId)
+    firstOffer()
+    expect(screen.queryByText('深渊回响预兆 × 1')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '取消骨骼步骤' }))
+    expect((screen.getByLabelText('首次揭示使用深渊回响') as HTMLInputElement).checked).toBe(false)
+    firstOffer()
+    apply()
+    expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
+    expect(screen.queryByLabelText('首次揭示使用深渊回响')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '指定第二组三项' }))
+    for (const id of ['exclusive1', 'exclusive2', 'exclusive3'])
+      fireEvent.click(screen.getByLabelText(`第二组候选 ${id}`))
+    fireEvent.click(screen.getByRole('button', { name: '预览第二组三项' }))
+    expect(
+      within(screen.getByLabelText('骨骼待应用结果')).getByRole('heading', {
+        name: '重选第二组三项候选',
+      }),
+    ).toBeDefined()
+    apply()
+    expect(screen.getByRole('heading', { name: '首组三项候选' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: '第二组三项候选' })).toBeDefined()
+    expect(screen.getByRole('button', { name: '首组：选择揭示 exclusive1' })).toBeDefined()
+    expect(screen.getByRole('button', { name: '第二组：选择揭示 exclusive1' })).toBeDefined()
+    expect(screen.queryByRole('button', { name: '指定第二组三项' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
+    const project = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
+    expect(project.schemaVersion).toBe(1)
+    if (boneId === 'ancient_rib') expect(project.rulesVersion).toBe('basic-2026-09-18-v118')
+    expect(project.operations[2].revealOmen).toBe('abyssal_echoes')
+    expect(project.operations[3].kind).toBe('desecration-reroll')
+    fireEvent.click(screen.getByRole('button', { name: '首组：选择揭示 suffix3' }))
+    fireEvent.click(screen.getByRole('button', { name: '预览揭示结果' }))
+    apply()
+    expect(screen.getByText('亵渎词缀 1/1')).toBeDefined()
+    expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
+    expect(screen.getByRole('button', { name: '第二组：选择揭示 exclusive3' })).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '撤销' }))
+    expect(screen.queryByRole('heading', { name: '第二组三项候选' })).toBeNull()
+    expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '撤销' }))
+    expect(screen.queryByText('深渊回响预兆 × 1')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '重做' }))
+    expect(screen.getByText('深渊回响预兆 × 1')).toBeDefined()
+  },
+)
 
 it('Ancient及巫妖交互显示工具未验证原因，已有首组不能晚补回响', () => {
   for (const pending of [
