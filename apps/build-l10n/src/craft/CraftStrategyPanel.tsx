@@ -2,6 +2,7 @@ import {
   type CraftCatalog,
   type CraftOmen,
   type CraftState,
+  type CraftStrategySpending,
   type CraftStrategyWorkAction,
   type CraftTargetDefinition,
   type DefinitionCraftStrategy,
@@ -40,6 +41,7 @@ function example(): DefinitionCraftStrategy {
 }
 
 interface Props {
+  spending?: CraftStrategySpending
   stageId?: string
   startStep?: number
   stageError?: string
@@ -60,6 +62,7 @@ interface Props {
 }
 
 export function CraftStrategyPanel({
+  spending,
   stageId,
   startStep = 0,
   stageError,
@@ -108,9 +111,10 @@ export function CraftStrategyPanel({
             goals,
             stageId,
             capacityContext,
+            spending,
           )
         : null,
-    [catalog, state, strategy, appliedSteps, goals, stageId, capacityContext],
+    [catalog, state, strategy, appliedSteps, goals, stageId, capacityContext, spending],
   )
   const decision = !stageError && evaluated?.ok ? evaluated.value : null
   const replaceRule = (index: number, rule: DefinitionCraftStrategyRule) => {

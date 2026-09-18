@@ -114,6 +114,7 @@ import { requiresSkillVariantAmuletProjectVersion } from './skillVariantAmuletPr
 import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { requiresSpecialMartialRuneProjectVersion } from './specialMartialRuneProjectVersion'
+import { requiresSpendingProjectVersion } from './spendingProjectVersion'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
@@ -760,6 +761,7 @@ export function readNativeTargetProjectProjection(
   blackbloodedEchoes = false,
   infusedCatalyst = false,
   tieredMasterwork = false,
+  spendingStrategy = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -812,6 +814,7 @@ export function readNativeTargetProjectProjection(
     blackbloodedEchoes,
     infusedCatalyst,
     tieredMasterwork,
+    spendingStrategy,
   )
 }
 
@@ -866,6 +869,7 @@ function readCraftProject(
   blackbloodedEchoes = false,
   infusedCatalyst = false,
   tieredMasterwork = false,
+  spendingStrategy = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -892,6 +896,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!spendingStrategy && requiresSpendingProjectVersion(value))
+    return fail('已用材料费用条件必须使用 v122 项目。')
   if (!tieredMasterwork && requiresTieredMasterworkProjectVersion(value, catalog))
     return fail('低阶符文升级及对应指引必须使用 v121 项目。')
   if (!infusedCatalyst && requiresInfusedCatalystProjectVersion(value, catalog))

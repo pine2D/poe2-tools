@@ -1,4 +1,5 @@
 import type { CraftCatalog } from './catalog'
+import type { CraftPricing } from './craftCosts'
 import { equivalentProjectJSON, isPlainProjectJSON } from './craftProjectJSON'
 import { applyCraftStep, type CraftStep } from './craftSteps'
 import {
@@ -16,6 +17,7 @@ import { type CraftResult, type CraftState, createCraftState } from './rehearsal
 import { requiresSerleProjectVersion } from './serleProjectVersion'
 import { serleCapacity } from './serleRune'
 import type { CraftStrategyLeafCondition } from './strategyConditions'
+import type { CraftStrategySpending } from './strategySpending'
 import { replayStrategyStages } from './strategyStages'
 import {
   type CraftTargetDefinitions,
@@ -116,6 +118,7 @@ export function evaluateDefinitionCraftStrategy(
   goals: DefinitionCraftStrategyGoals,
   stageId = strategy.flow?.entryStageId,
   capacityContext?: CraftState,
+  spending?: CraftStrategySpending,
 ): CraftResult<CraftStrategyDecision> {
   const parsed = readDefinitionCraftStrategy(strategy)
   if (!parsed.ok) return parsed
@@ -154,6 +157,7 @@ export function evaluateDefinitionCraftStrategy(
       },
     },
     stageId,
+    spending,
   )
 }
 
@@ -197,6 +201,7 @@ export function definitionStrategyStageAt(
   startStep: number,
   cursor: number,
   goals: DefinitionCraftStrategyGoals,
+  pricing?: CraftPricing,
 ): CraftResult<string | undefined> {
   const parsed = readDefinitionCraftStrategy(strategy)
   if (!parsed.ok) return parsed
@@ -244,6 +249,7 @@ export function definitionStrategyStageAt(
         goals,
         stageId,
         capacityContext,
+        { operations, ...(pricing ? { pricing } : {}) },
       ),
   )
 }

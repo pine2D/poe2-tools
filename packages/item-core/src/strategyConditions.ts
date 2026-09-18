@@ -1,4 +1,5 @@
 import { CATALYSTS } from './catalystQuality'
+import { CRAFT_PRICE_UNITS, type CraftPricing } from './craftCosts'
 import { isPlainProjectJSON } from './craftProjectJSON'
 import { CRAFT_PROPERTY_LABELS, type CraftProperty } from './itemProperties'
 import type { CraftRarity } from './rehearsal'
@@ -18,6 +19,7 @@ export const CRAFT_STRATEGY_AFFIX_LIMITS = {
 } as const
 
 export type CraftStrategyLeafCondition =
+  | { kind: 'spent-cost'; unit: CraftPricing['unit']; min: number; max?: number }
   | WeightedPropertiesCondition
   | { kind: 'desecrated-count'; source: 'unrevealed' | 'revealed'; min: number; max: number }
   | { kind: 'corruption-state'; value: 'none' | 'once' | 'twice' }
@@ -57,6 +59,27 @@ function integer(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 }
 function readLeaf(value: unknown): CraftStrategyLeafCondition | null {
+  if (keys(value, ['kind', 'unit', 'min', 'max']) && value.kind === 'spent-cost') {
+    const amount = (n: unknown): n is number =>
+      typeof n === 'number' &&
+      Number.isFinite(n) &&
+      n >= 0 &&
+      n <= 1_000_000_000 &&
+      Number(n.toFixed(6)) === n
+    if (
+      typeof value.unit !== 'string' ||
+      !Object.hasOwn(CRAFT_PRICE_UNITS, value.unit) ||
+      !amount(value.min) ||
+      (Object.hasOwn(value, 'max') && (!amount(value.max) || value.max < value.min))
+    )
+      return null
+    return {
+      kind: 'spent-cost',
+      unit: value.unit as CraftPricing['unit'],
+      min: value.min,
+      ...(typeof value.max === 'number' ? { max: value.max } : {}),
+    }
+  }
   if (keys(value, ['kind', 'terms', 'min', 'max']) && value.kind === 'weighted-properties')
     return readWeightedPropertiesCondition(value)
   if (!keys(value, ['kind', 'value', 'min', 'max', 'modIds', 'property', 'source', 'catalystId']))
@@ -211,6 +234,7 @@ export function readStrategyConditions(value: unknown): CraftStrategyCondition[]
         'source',
         'catalystId',
         'terms',
+        'unit',
       ])
     )
       return null

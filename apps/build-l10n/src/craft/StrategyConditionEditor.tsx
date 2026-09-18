@@ -13,10 +13,12 @@ import {
 import { StrategyDesecrationCountCondition } from './StrategyDesecrationCountCondition'
 import { StrategyPropertyCondition } from './StrategyPropertyCondition'
 import { StrategyQualityCondition } from './StrategyQualityCondition'
+import { StrategySpendingCondition } from './StrategySpendingCondition'
 import { StrategyTargetCondition } from './StrategyTargetCondition'
 import { StrategyWeightedPropertyCondition } from './StrategyWeightedPropertyCondition'
 
 export const CONDITION_LABELS = {
+  'spent-cost': '已用材料费用范围',
   'desecrated-count': '亵渎词缀数量范围',
   quality: '品质类型与范围',
   'corruption-state': '腐化状态',
@@ -39,6 +41,7 @@ export function defaultCondition(
   kind: DefinitionCraftStrategyLeafCondition['kind'],
   targetIds: readonly string[] = [],
 ): DefinitionCraftStrategyLeafCondition | null {
+  if (kind === 'spent-cost') return { kind, unit: 'divine', min: 0 }
   if (kind === 'desecrated-count') return { kind, source: 'unrevealed', min: 1, max: 6 }
   if (kind === 'corruption-state') return { kind, value: 'none' }
   if (kind === 'granted-skill-sockets') return { kind, min: 5 }
@@ -123,6 +126,15 @@ export function StrategyConditionEditor({
           prefix={prefix}
           catalog={catalog}
           state={state}
+          canChange={canChange}
+          onChange={onChange}
+        />
+      ) : null}
+      {condition.kind === 'spent-cost' ? (
+        <StrategySpendingCondition
+          key={JSON.stringify(condition)}
+          condition={condition}
+          prefix={prefix}
           canChange={canChange}
           onChange={onChange}
         />

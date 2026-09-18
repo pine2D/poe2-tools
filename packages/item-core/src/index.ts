@@ -571,6 +571,10 @@ export {
 } from './specialMartialRuneProjectVersion'
 export { isSpecialMartialRune } from './specialMartialRunes'
 export {
+  requiresSpendingProjectVersion,
+  SPENDING_STRATEGY_RULES_VERSION,
+} from './spendingProjectVersion'
+export {
   STAT_SCALABILITY_SOURCE,
   scaleStatLine,
   scaleStatLineByEffect,
@@ -585,6 +589,8 @@ export {
 } from './strategyConditions'
 export type { SocketStrategyAction } from './strategySockets'
 export { prepareStrategySocket } from './strategySockets'
+export type { CraftStrategySpending } from './strategySpending'
+export { readStrategySpending } from './strategySpending'
 export {
   operationMatchesStrategyAction,
   strategyStageAt,

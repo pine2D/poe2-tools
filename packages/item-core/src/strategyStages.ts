@@ -1,4 +1,5 @@
 import type { CraftCatalog } from './catalog'
+import type { CraftPricing } from './craftCosts'
 import type { CraftStep } from './craftSteps'
 import {
   type CraftStrategy,
@@ -73,6 +74,7 @@ export function strategyStageAt(
   startStep: number,
   cursor: number,
   goals: CraftStrategyGoals = {},
+  pricing?: CraftPricing,
 ): CraftResult<string | undefined> {
   const checked = readCraftStrategy(strategy)
   if (!checked.ok) return checked
@@ -83,7 +85,10 @@ export function strategyStageAt(
     startStep,
     cursor,
     (state, index, stageId) =>
-      evaluateCraftStrategy(catalog, state, strategy, index, goals, stageId),
+      evaluateCraftStrategy(catalog, state, strategy, index, goals, stageId, {
+        operations,
+        ...(pricing ? { pricing } : {}),
+      }),
   )
 }
 
@@ -117,6 +122,11 @@ export function replayStrategyStages(
     if (!state || !operation) return { ok: false, error: '阶段回放缺少实际操作。' }
     const result = evaluate(state, index, stageId)
     if (!result.ok) return result
+    if (result.value.kind === 'blocked' && result.value.unresolvedCondition === 'spent-cost')
+      return {
+        ok: false,
+        error: `阶段回放无法判断第 ${index + 1} 步前的费用条件：${result.value.message}`,
+      }
     if (
       result.value.kind === 'action' &&
       operationMatchesStrategyAction(state, result.value.action, operation)

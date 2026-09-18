@@ -12,6 +12,7 @@ import {
   checkCraftStrategyAction,
   readCraftStrategyAction,
 } from './strategyActions'
+import { type CraftStrategySpending, readStrategySpending } from './strategySpending'
 import { readWeightedProperties } from './weightedProperties'
 
 export type { CraftStrategyAction, CraftStrategyWorkAction } from './strategyActions'
@@ -59,7 +60,7 @@ export type CraftStrategyDecision = (
     }
   | { kind: 'stop'; reason: 'step-limit' }
   | { kind: 'stop'; reason: 'rule'; ruleIndex: number }
-  | { kind: 'blocked'; message: string; ruleIndex?: number }
+  | { kind: 'blocked'; message: string; ruleIndex?: number; unresolvedCondition?: 'spent-cost' }
   | { kind: 'unmatched' }
 ) & { route?: { ruleIndex: number; from: string; to: string; blockedReason?: string }[] }
 
@@ -168,6 +169,7 @@ export function evaluateCraftStrategy(
   appliedSteps: number,
   goals: CraftStrategyGoals = {},
   stageId = strategy.flow?.entryStageId,
+  spending?: CraftStrategySpending,
 ): CraftResult<CraftStrategyDecision> {
   return evaluateCraftStrategyWithTargets(
     catalog,
@@ -208,6 +210,7 @@ export function evaluateCraftStrategy(
       },
     },
     stageId,
+    spending,
   )
 }
 
@@ -230,6 +233,7 @@ export function evaluateCraftStrategyWithTargets(
   appliedSteps: number,
   targets: StrategyTargetView,
   stageId = strategy.flow?.entryStageId,
+  spending?: CraftStrategySpending,
 ): CraftResult<CraftStrategyDecision> {
   const configuration = readCraftStrategy(strategy)
   if (!configuration.ok) return configuration
@@ -282,7 +286,27 @@ export function evaluateCraftStrategyWithTargets(
   const propertyValues = new Map<CraftProperty, number | null>()
   // 保留未知来源，使未被逻辑短路消解的完整目标条件明确阻塞。
   const unknownTargets = Symbol('unknown-targets')
-  const matches = (condition: CraftStrategyCondition): boolean | null | typeof unknownTargets => {
+  const unknownSpending = Symbol('unknown-spending')
+  let spendingMessage = ''
+  const spendingValues = new Map<string, CraftResult<number>>()
+  const matches = (
+    condition: CraftStrategyCondition,
+  ): boolean | null | typeof unknownTargets | typeof unknownSpending => {
+    if (condition.kind === 'spent-cost') {
+      let amount = spendingValues.get(condition.unit)
+      if (!amount) {
+        amount = readStrategySpending(catalog, spending, appliedSteps, condition.unit)
+        spendingValues.set(condition.unit, amount)
+      }
+      if (!amount.ok) {
+        spendingMessage = amount.error
+        return unknownSpending
+      }
+      return (
+        amount.value >= condition.min &&
+        (condition.max === undefined || amount.value <= condition.max)
+      )
+    }
     if (condition.kind === 'weighted-properties') {
       const result = readWeightedProperties(catalog, checked.value, condition.terms)
       return result.ok
@@ -336,18 +360,22 @@ export function evaluateCraftStrategyWithTargets(
       if (condition.kind === 'all')
         return values.includes(false)
           ? false
+          : values.includes(unknownSpending)
+            ? unknownSpending
+            : values.includes(unknownTargets)
+              ? unknownTargets
+              : values.includes(null)
+                ? null
+                : true
+      return values.includes(true)
+        ? true
+        : values.includes(unknownSpending)
+          ? unknownSpending
           : values.includes(unknownTargets)
             ? unknownTargets
             : values.includes(null)
               ? null
-              : true
-      return values.includes(true)
-        ? true
-        : values.includes(unknownTargets)
-          ? unknownTargets
-          : values.includes(null)
-            ? null
-            : false
+              : false
     }
     if (condition.kind === 'selected-targets')
       return (
@@ -402,6 +430,13 @@ export function evaluateCraftStrategyWithTargets(
     for (const [index, candidate] of strategy.rules.entries()) {
       if (strategy.flow && candidate.stageId !== currentStage) continue
       const matched = matches({ kind: 'all', conditions: candidate.conditions })
+      if (matched === unknownSpending)
+        return result({
+          kind: 'blocked',
+          ruleIndex: index,
+          message: spendingMessage,
+          unresolvedCondition: 'spent-cost',
+        })
       if (matched === unknownTargets)
         return result({
           kind: 'blocked',
