@@ -118,6 +118,7 @@ import { isHorrorSocketAffix } from './socketAmplification'
 import { isSupportedSoulCore } from './soulCoreEffects'
 import { requiresSpecialMartialRuneProjectVersion } from './specialMartialRuneProjectVersion'
 import { requiresSpendingProjectVersion } from './spendingProjectVersion'
+import { requiresStaffRuneProjectVersion } from './staffRuneProjectVersion'
 import { statScalabilitySourceHash } from './statScalability'
 import { craftStrategyLeaves } from './strategyConditions'
 import { validStrategyStartStep } from './strategyStages'
@@ -769,6 +770,7 @@ export function readNativeTargetProjectProjection(
   ringLichEchoes = false,
   wandRunes = false,
   runeseeker = false,
+  staffRunes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -825,6 +827,7 @@ export function readNativeTargetProjectProjection(
     ringLichEchoes,
     wandRunes,
     runeseeker,
+    staffRunes,
   )
 }
 
@@ -883,6 +886,7 @@ function readCraftProject(
   ringLichEchoes = false,
   wandRunes = false,
   runeseeker = false,
+  staffRunes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -943,6 +947,8 @@ function readCraftProject(
   const usesSceptreAugments = requiresSceptreAugmentProjectVersion(value)
   if (!sceptreAugments && usesSceptreAugments)
     return fail('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  const usesStaffRunes = requiresStaffRuneProjectVersion(value)
+  if (!staffRunes && usesStaffRunes) return fail('长杖专属符文必须使用 v126 项目。')
   if (!runeseeker && requiresRuneseekerProjectVersion(value))
     return fail('符文间增效和扩展容量必须使用 v125 项目。')
   const usesWandRunes = requiresWandRuneProjectVersion(value)
@@ -1895,6 +1901,7 @@ function readCraftProject(
     (initialInput.catalyst !== undefined ||
       usesJewelEffects ||
       usesSovereignEffects ||
+      usesStaffRunes ||
       usesWandRunes ||
       usesSpecialMartialRunes ||
       usesOffhandIdols ||
@@ -2293,6 +2300,7 @@ function readCraftProject(
         ...((initialInput.catalyst !== undefined ||
           usesJewelEffects ||
           usesSovereignEffects ||
+          usesStaffRunes ||
           usesWandRunes ||
           usesSpecialMartialRunes ||
           usesOffhandIdols ||
@@ -2311,6 +2319,7 @@ function readCraftProject(
         ...(importedSockets === undefined ? {} : { importedSockets }),
         ...(importedQuality === undefined ? {} : { importedQuality }),
         ...((usesSockets ||
+          usesStaffRunes ||
           usesWandRunes ||
           usesSpecialMartialRunes ||
           usesOffhandIdols ||
@@ -2385,6 +2394,8 @@ export function serializeCraftProject(project: CraftProject): string {
     throw new Error('手套雕像必须使用 v110 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresSceptreAugmentProjectVersion(project))
     throw new Error('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  if (requiresStaffRuneProjectVersion(project))
+    throw new Error('长杖专属符文必须使用 v126 目标项目。')
   if (requiresRuneseekerProjectVersion(project))
     throw new Error('符文间增效和扩展容量必须使用 v125 目标项目。')
   if (requiresWandRuneProjectVersion(project))

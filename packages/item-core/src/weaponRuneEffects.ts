@@ -1,11 +1,11 @@
 import { isAstridCapacityLine, isAstridRune } from './astridRune'
+import { isCasterRune, isCasterRuneLine } from './casterRunes'
 import type { CatalogAugment, CatalogBase } from './catalog'
 import { isInfluenceRune } from './influenceRunes'
 import { isSerleCapacityLine, isSerleRune } from './serleRune'
 import { isSupportedSoulCore, readSoulCoreLine, WEAPON_SOUL_TOTALS } from './soulCoreEffects'
 import { isSpecialMartialConditionLine, isSpecialMartialRune } from './specialMartialRunes'
 import { isBasicTalismanBase } from './talismans'
-import { isWandRune, isWandRuneLine } from './wandRunes'
 
 export type WeaponRuneCategory = 'weapon' | 'wand' | 'staff'
 
@@ -102,8 +102,8 @@ export function parseWeaponRuneEffectTotals(
   const totals = emptyTotals()
   let branch: Branch | undefined
   for (const line of lines) {
-    if (isWandRuneLine(line)) {
-      if (category && category !== 'wand') return null
+    if (isCasterRuneLine(line)) {
+      if (category && category !== 'wand' && category !== 'staff') return null
       continue
     }
     if (isSpecialMartialConditionLine(line)) continue
@@ -243,7 +243,9 @@ export function sumWeaponRuneEffects(
         isSupportedWeaponRune(augment, category) ||
         (augment.category === (category === 'weapon' ? 'weapon' : 'caster') &&
           (isAstridRune(augment, true) || isSerleRune(augment, true))) ||
-        (category === 'wand' && isWandRune(augment, true)) ||
+        ((category === 'wand' || category === 'staff') &&
+          augment.category === category &&
+          isCasterRune(augment, true)) ||
         (category === 'weapon' && isSpecialMartialRune(augment, true)) ||
         (category === 'weapon' && augment.category === 'weapon' && isSupportedSoulCore(augment)),
     )

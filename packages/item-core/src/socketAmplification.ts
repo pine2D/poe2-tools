@@ -1,6 +1,7 @@
 import { sovereignEffect } from './alloyEffects'
 import { armourIdolFits, isArmourIdolId, scaleArmourIdol } from './armourIdols'
 import { ASTRID_LINE, isAstridRune } from './astridRune'
+import { casterRuneFits, isCasterRuneId, scaleCasterRune } from './casterRunes'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { isConditionalArmourRune } from './conditionalArmourRunes'
 import { astridFitsBase } from './craftedCapacity'
@@ -19,7 +20,6 @@ import {
   specialMartialRuneFits,
 } from './specialMartialRunes'
 import { scaleStatLineByEffect, statScalabilitySourceHash } from './statScalability'
-import { isWandRuneId, scaleWandRune, wandRuneFits } from './wandRunes'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 const HORROR_MOD = 'EssenceLocalRuneAndSoulCoreEffect1'
@@ -72,8 +72,10 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state, augment.type)
   if (increase === null) return null
-  if (isWandRuneId(augment.id))
-    return wandRuneFits(catalog, state, augment) ? scaleWandRune(catalog, augment, increase) : null
+  if (isCasterRuneId(augment.id))
+    return casterRuneFits(catalog, state, augment)
+      ? scaleCasterRune(catalog, augment, increase)
+      : null
   if (isArmourIdolId(augment.id))
     return armourIdolFits(catalog, state, augment)
       ? scaleArmourIdol(catalog, augment, increase)

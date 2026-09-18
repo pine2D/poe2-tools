@@ -14,6 +14,7 @@ import {
   isBoneOperationKind,
   PENDING_DESECRATION_MESSAGE,
 } from './boneRules'
+import { casterRuneSocketError } from './casterRunes'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSocketError } from './conditionalArmourRunes'
 import { corruptionCandidates } from './corruptionEnchantments'
@@ -70,7 +71,6 @@ import {
 } from './skillSockets'
 import { artificerSocketLimit, socketCandidates, socketCapacity } from './sockets'
 import { specialMartialSocketError } from './specialMartialRunes'
-import { wandRuneSocketError } from './wandRunes'
 
 export interface ArtificerCraftOperation {
   kind: 'artificer'
@@ -444,7 +444,7 @@ export function applyCraftStep(
       step.augmentId,
     )
     if (limitError) return { ok: false, error: limitError }
-    const wandLimitError = wandRuneSocketError(
+    const wandLimitError = casterRuneSocketError(
       catalog,
       checked.value,
       step.socketIndex,

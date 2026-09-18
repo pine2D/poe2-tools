@@ -2,6 +2,7 @@ import { isSovereignAffix } from './alloyEffects'
 import { armourIdolFits, isArmourIdolId } from './armourIdols'
 import { isAstridRune } from './astridRune'
 import { bodyIdolBondedActive, bodyIdolBondedLines } from './bodyIdols'
+import { casterRuneFits, isCasterRuneId } from './casterRunes'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { astridFitsBase } from './craftedCapacity'
 import { influenceRuneFitsBase, influenceRuneTags, isInfluenceRune } from './influenceRunes'
@@ -17,7 +18,6 @@ import {
 } from './socketAmplification'
 import { armourSoulCoreFitsBase, isSupportedSoulCore } from './soulCoreEffects'
 import { isSpecialMartialRuneId, specialMartialRuneFits } from './specialMartialRunes'
-import { isWandRuneId, wandRuneFits } from './wandRunes'
 import { isSupportedWeaponRune, weaponSocketKind } from './weaponRuneEffects'
 
 /** 只列已占用孔；augment.lines 是当前效果，bonded 保留来源，激活效果显式分列。 */
@@ -100,7 +100,7 @@ function supportedAugment(
 ): boolean {
   const base = catalog.bases.find((entry) => entry.id === state.baseId)
   const weapon = base && weaponSocketKind(base)
-  if (isWandRuneId(augment.id)) return wandRuneFits(catalog, state, augment)
+  if (isCasterRuneId(augment.id)) return casterRuneFits(catalog, state, augment)
   if (isArmourIdolId(augment.id)) return armourIdolFits(catalog, state, augment)
   if (isSceptreAugmentId(augment.id)) return sceptreAugmentFits(catalog, state, augment)
   if (base?.type === 'Sceptre') return false

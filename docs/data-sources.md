@@ -609,3 +609,5 @@ B站原作者风残耶视频BV1NQeT6nEvw及流放老瓦匠视频BV1ByPceiE8j，�
 沿用上述固定 MIT PoB2 ModRunes / ModScalability 来源，逐项核对11种法杖分支的身份、完整主效果、绑定元字段、等级与限量；本轮未更新上游快照。白名单与缩放声明保存于 wandRuneData.ts，运行时仍校验目录来源与各条元数据，未使用同行的执行代码或数值文件。
 
 [CoE公开更新说明](https://beta.craftofexile.com/changelog)中的符文子类别与导入修正只作流程对照：同名材料的 wand / staff 分支不能混用，导入起点与后续模拟必须共同校验。搜索命中的其他工具物品页不作为实现数据源。绑定角色效果与 Legacy of Runeseeker's Call 的符文间增效未据此开放。
+
+v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；staffRuneData.ts 的完整记录与现有目录逐项一致，绑定元数据参与身份核对而不声明角色收益。没有新增上游文件、网络适配器或运行时请求。逐数字缩放、资格隔离与验证边界见[长杖符文研究](staff-runes-research.md)；CoE 对照明确使用 `?game=poe2`，不将其更新说明当作机制实测。

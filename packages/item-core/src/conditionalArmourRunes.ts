@@ -1,11 +1,11 @@
 import { armourIdolLimitKey } from './armourIdols'
 import { isAstridRune } from './astridRune'
+import { casterRuneLimitKey } from './casterRunes'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
 import { sceptreLimitKey } from './sceptreAugments'
 import { isSerleRune } from './serleRune'
 import { specialMartialLimitKey } from './specialMartialRunes'
-import { wandRuneLimitKey } from './wandRunes'
 
 const PROTECTION =
   /^Every 4 seconds, gain Guard equal to ([1-9]\d*)% of maximum Runic Ward for 2 seconds$/
@@ -43,7 +43,7 @@ export function socketLimitWarnings(catalog: CraftCatalog, state: CraftState) {
     const augment = catalog.augments?.find((a) => a.id === id)
     const special =
       augment &&
-      (wandRuneLimitKey(augment) ??
+      (casterRuneLimitKey(augment) ??
         specialMartialLimitKey(augment) ??
         sceptreLimitKey(augment) ??
         armourIdolLimitKey(augment))

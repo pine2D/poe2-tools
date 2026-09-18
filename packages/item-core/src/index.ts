@@ -584,6 +584,10 @@ export {
   SPENDING_STRATEGY_RULES_VERSION,
 } from './spendingProjectVersion'
 export {
+  requiresStaffRuneProjectVersion,
+  STAFF_RUNE_RULES_VERSION,
+} from './staffRuneProjectVersion'
+export {
   STAT_SCALABILITY_SOURCE,
   scaleStatLine,
   scaleStatLineByEffect,

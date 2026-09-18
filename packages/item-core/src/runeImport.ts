@@ -2,6 +2,7 @@ import { RUNE_SUFFIX } from './annotations'
 import { armourIdolSourceMatches, isBodyIdolId } from './armourIdols'
 import { astridSourceMatches } from './astridRune'
 import { BONDED_PREFIX } from './bodyIdols'
+import { casterRuneSourceMatches } from './casterRunes'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
@@ -24,7 +25,6 @@ import { serleSourceMatches } from './serleRune'
 import { effectiveSocketAugment } from './socketAmplification'
 import { specialMartialSourceMatches } from './specialMartialRunes'
 import type { ItemDocument } from './types'
-import { wandRuneSourceMatches } from './wandRunes'
 import {
   parseWeaponRuneEffectTotals,
   sumWeaponRuneEffects,
@@ -140,12 +140,12 @@ export function runeSocketContributionError(
   const weapon = base && weaponSocketKind(base)
   if (weapon) {
     if (
-      !wandRuneSourceMatches(
+      !casterRuneSourceMatches(
         mainSource,
         augments.flatMap((a) => a.lines),
       )
     )
-      return '法杖专属符文效果与孔位声明不一致，请核对完整条件、数值与重复行。'
+      return '施法武器专属符文效果与孔位声明不一致，请核对完整条件、数值与重复行。'
     if (
       !specialMartialSourceMatches(
         mainSource,
