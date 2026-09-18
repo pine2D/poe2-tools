@@ -494,6 +494,10 @@ export { estimateResistances, RESISTANCE_LABELS } from './resistances'
 export type { Resolution, StatTemplate, TranslationCandidate } from './resolve'
 export { createStatResolver, resolveBase, resolveStat } from './resolve'
 export {
+  RING_LICH_ECHOES_RULES_VERSION,
+  requiresRingLichEchoesProjectVersion,
+} from './ringLichEchoesProjectVersion'
+export {
   applyRuneforgeCraft,
   isRuneforgeCraftOperation,
   type PreparedRuneforgeCraft,

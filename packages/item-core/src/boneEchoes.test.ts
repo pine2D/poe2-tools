@@ -273,7 +273,7 @@ it.each([
       }).ok,
     ).toBe(false)
 })
-it('Ancient和巫妖组合明确未验证工具门禁，普通无Echoes路径不收紧', () => {
+it('腰带的远古锁骨和巫妖回响仍受门禁限制，普通无回响路径不收紧', () => {
   for (const pending of [
     { boneId: 'ancient_collarbone' as const, kind: 'suffix' as const },
     {
@@ -282,7 +282,7 @@ it('Ancient和巫妖组合明确未验证工具门禁，普通无Echoes路径不
       lichOmen: 'liege' as const,
     },
   ]) {
-    const catalog = boneCatalog('Ring')
+    const catalog = boneCatalog('Belt')
     const state = { ...boneState(), pendingDesecration: pending }
     const modIds = ['exclusive1', 'exclusive2', 'exclusive3']
     expect(applyBoneCraft(catalog, state, { kind: 'desecration-offer', modIds }).ok).toBe(true)

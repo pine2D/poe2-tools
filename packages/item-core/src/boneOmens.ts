@@ -63,9 +63,10 @@ export function boneRevealOmenError(
   if (!isBoneRevealOmen(omen)) return '未知揭示预兆。'
   if (
     pending.boneId === 'preserved_collarbone' &&
-    pending.lichOmen === 'blackblooded' &&
     pending.kind === 'suffix' &&
-    baseType === 'Amulet'
+    ((pending.lichOmen === 'blackblooded' && baseType === 'Amulet') ||
+      (baseType === 'Ring' &&
+        (pending.lichOmen === 'blackblooded' || pending.lichOmen === 'liege')))
   )
     return null
   if (

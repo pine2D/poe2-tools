@@ -370,11 +370,12 @@ function BoneCraftEditor({
           远古肋骨与回响已有胸甲实操依据；两组沿用最低词缀等级和方向约束属于规则推导，完整组合仍待游戏核验。
         </p>
       ) : null}
-      {pending?.boneId === 'preserved_collarbone' &&
-      pending.lichOmen === 'blackblooded' &&
-      !echoesError ? (
+      {pending?.boneId === 'preserved_collarbone' && pending.lichOmen && !echoesError ? (
         <p>
-          黑血项链后缀支持回响；两组均限定 Kurgal 词缀，组间可以重复同一身份。其他巫妖组合仍待核实。
+          {catalog.bases.find((base) => base.id === state.baseId)?.type === 'Ring'
+            ? '戒指后缀支持黑血或领主回响；第二组沿用同族约束属于原作者流程与材料规则推导，当前版完整组合待真机核验。'
+            : '黑血项链后缀支持回响。'}
+          两组均限定所选巫妖的词缀，组间可以重复同一身份；其他组合仍待核实。
         </p>
       ) : null}
       {hasInfluence ? (

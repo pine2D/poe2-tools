@@ -1,4 +1,4 @@
-import type { CraftState } from '@poe2-tools/item-core'
+import { type CraftState, loadTargetWorkbenchProject } from '@poe2-tools/item-core'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { boneCatalog, boneState } from '../../../../packages/item-core/src/boneTestFixture'
@@ -8,6 +8,38 @@ import { REHEARSAL_PROJECT_KEY } from './ProjectControls'
 import { RehearsalPanel } from './RehearsalPanel'
 
 const emptyDefinitions = { nextTargetId: 1, targets: [], alternatives: [], values: [] }
+
+it('恢复空 v123 项目后网页保存不降版', () => {
+  const catalog = boneCatalog('Ring')
+  const { sockets: _, ...initial } = boneState()
+  const initialState = { ...initial, rarity: 'normal' as const, nextAffixId: 1 }
+  const loaded = loadTargetWorkbenchProject(
+    JSON.stringify({
+      schemaVersion: 1,
+      rulesVersion: 'basic-2026-09-18-v123',
+      sourceCommit: catalog._meta.sourceCommit,
+      initialState,
+      operations: [],
+      cursor: 0,
+      targetDefinitions: emptyDefinitions,
+      orphanedTargets: [],
+    }),
+    catalog,
+  )
+  if (!loaded.ok) throw Error(loaded.error)
+  render(
+    <RehearsalPanel
+      catalog={catalog}
+      initialState={initialState}
+      initialProject={loaded.value}
+      translations={translations}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
+  expect(JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}').rulesVersion).toBe(
+    'basic-2026-09-18-v123',
+  )
+})
 
 afterEach(() => {
   cleanup()
@@ -53,11 +85,22 @@ vi.mock('./targetRoutesWorkerClient', async () => {
   }
 })
 const apply = () => fireEvent.click(screen.getByRole('button', { name: '应用骨骼步骤' }))
-function normalPending(boneId: 'preserved_rib' | 'ancient_rib' | 'blackblooded' = 'preserved_rib') {
-  const catalog = boneCatalog(boneId === 'blackblooded' ? 'Amulet' : 'Helmet')
-  if (boneId === 'blackblooded')
+function normalPending(
+  boneId:
+    | 'preserved_rib'
+    | 'ancient_rib'
+    | 'blackblooded'
+    | 'ring-blackblooded'
+    | 'ring-liege' = 'preserved_rib',
+) {
+  const ring = boneId.startsWith('ring-')
+  const lich = boneId === 'ring-liege' ? 'liege' : 'blackblooded'
+  const hasLich = ring || boneId === 'blackblooded'
+  const catalog = boneCatalog(ring ? 'Ring' : hasLich ? 'Amulet' : 'Helmet')
+  if (hasLich)
     for (const mod of catalog.modifiers) {
-      if (mod.desecratedOnly) mod.tags = ['unveiled_mod', 'kurgal_mod']
+      if (mod.desecratedOnly)
+        mod.tags = ['unveiled_mod', lich === 'liege' ? 'amanamu_mod' : 'kurgal_mod']
     }
   const { sockets: _, ...initial } = boneState()
   render(
@@ -76,10 +119,9 @@ function normalPending(boneId: 'preserved_rib' | 'ancient_rib' | 'blackblooded' 
     )
   fireEvent.click(screen.getByRole('button', { name: '应用本次结果' }))
   fireEvent.change(screen.getByLabelText('骨骼材料'), {
-    target: { value: boneId === 'blackblooded' ? 'preserved_collarbone' : boneId },
+    target: { value: hasLich ? 'preserved_collarbone' : boneId },
   })
-  if (boneId === 'blackblooded')
-    fireEvent.change(screen.getByLabelText('骨骼巫妖预兆'), { target: { value: 'blackblooded' } })
+  if (hasLich) fireEvent.change(screen.getByLabelText('骨骼巫妖预兆'), { target: { value: lich } })
   fireEvent.click(screen.getByLabelText('占用后缀'))
   fireEvent.click(screen.getByRole('button', { name: '预览骨骼结果' }))
   apply()
@@ -146,7 +188,7 @@ it('Ancient及巫妖交互显示工具未验证原因，已有首组不能晚补
     {
       boneId: 'preserved_collarbone' as const,
       kind: 'suffix' as const,
-      lichOmen: 'liege' as const,
+      lichOmen: 'sovereign' as const,
     },
   ]) {
     render(
@@ -281,8 +323,12 @@ it('比较明确保留首组并追加第二组及已购买机会', () => {
   expect(screen.getAllByText(/已购买一次重选机会/)).toHaveLength(2)
 })
 
-it('黑血项链网页计费一次，撤销保存完整第二组未来并恢复v119', () => {
-  normalPending('blackblooded')
+it.each([
+  ['blackblooded', 'basic-2026-09-18-v119', 'blackblooded'],
+  ['ring-blackblooded', 'basic-2026-09-18-v123', 'blackblooded'],
+  ['ring-liege', 'basic-2026-09-18-v123', 'liege'],
+] as const)('%s网页计费一次，撤销保存完整第二组未来并恢复版本', (mode, version, lich) => {
+  normalPending(mode)
   fireEvent.click(screen.getByLabelText('首次揭示使用深渊回响'))
   for (const id of ['exclusive1', 'exclusive2', 'exclusive3'])
     fireEvent.click(screen.getByLabelText(`候选 ${id}`))
@@ -297,9 +343,9 @@ it('黑血项链网页计费一次，撤销保存完整第二组未来并恢复v
   fireEvent.click(screen.getByRole('button', { name: '撤销' }))
   fireEvent.click(screen.getByRole('button', { name: '保存演练到本机' }))
   const future = JSON.parse(localStorage.getItem(REHEARSAL_PROJECT_KEY) ?? '{}')
-  expect(future.rulesVersion).toBe('basic-2026-09-18-v119')
+  expect(future.rulesVersion).toBe(version)
   expect(future.cursor).toBe(3)
-  expect(future.operations[1].lichOmen).toBe('blackblooded')
+  expect(future.operations[1].lichOmen).toBe(lich)
   expect(future.operations[3].kind).toBe('desecration-reroll')
   fireEvent.click(screen.getByRole('button', { name: '恢复本机演练' }))
   fireEvent.click(screen.getByRole('button', { name: '重做' }))

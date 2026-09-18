@@ -8,10 +8,11 @@ import { DESECRATION_SOURCE } from './desecration'
 import { planCraftTargetRoutes } from './targetRoutes'
 import { loadTargetWorkbenchProject } from './targetWorkbenchProject'
 
-function fixture(type = 'Amulet') {
+function fixture(type = 'Ring', lich: 'blackblooded' | 'liege' = 'blackblooded') {
   const catalog = boneCatalog(type)
   for (const mod of catalog.modifiers) {
-    if (mod.desecratedOnly) mod.tags = ['unveiled_mod', 'kurgal_mod']
+    if (mod.desecratedOnly)
+      mod.tags = ['unveiled_mod', lich === 'blackblooded' ? 'kurgal_mod' : 'amanamu_mod']
   }
   const seed = catalog.modifiers.find((mod) => mod.id === 'exclusive1')
   if (!seed) throw Error('合成词缀缺失')
@@ -20,7 +21,7 @@ function fixture(type = 'Amulet') {
     ...seed,
     id: 'foreign',
     group: 'foreign',
-    tags: ['unveiled_mod', 'amanamu_mod'],
+    tags: ['unveiled_mod', 'ulaman_mod'],
   })
   const state = boneState()
   delete state.sockets
@@ -42,37 +43,41 @@ const steps: BoneCraftOperation[] = [
   { kind: 'desecration-reveal', modId: 'exclusive2', values: [7] },
 ]
 
-it('黑血项链回响两组保持巫妖身份，跨组可重复且可选回首组', () => {
-  const { catalog, state } = fixture()
-  let current = state
-  for (const step of steps) {
-    const result = applyBoneCraft(catalog, current, step)
-    expect(result.ok, JSON.stringify(result)).toBe(true)
-    if (!result.ok) return
-    current = result.value
-    if (step.kind === 'desecration-offer') {
-      for (const id of ['foreign', 'suffix1']) {
-        expect(
-          applyBoneCraft(catalog, current, {
-            kind: 'desecration-reroll',
-            modIds: ['exclusive1', 'exclusive3', id],
-          }).ok,
-        ).toBe(false)
+it.each(['blackblooded', 'liege'] as const)(
+  '%s戒指两组保持巫妖身份，跨组可重复且可选回首组',
+  (lich) => {
+    const { catalog, state } = fixture('Ring', lich)
+    let current = state
+    for (const input of steps) {
+      const step = input.kind === 'desecrate' ? { ...input, lichOmen: lich } : input
+      const result = applyBoneCraft(catalog, current, step)
+      expect(result.ok, JSON.stringify(result)).toBe(true)
+      if (!result.ok) return
+      current = result.value
+      if (step.kind === 'desecration-offer') {
+        for (const id of ['foreign', 'suffix1']) {
+          expect(
+            applyBoneCraft(catalog, current, {
+              kind: 'desecration-reroll',
+              modIds: ['exclusive1', 'exclusive3', id],
+            }).ok,
+          ).toBe(false)
+        }
       }
     }
-  }
-  expect(current.affixes).toEqual([
-    expect.objectContaining({ modId: 'exclusive2', desecrated: true }),
-  ])
-  expect(current.pendingDesecration).toBeUndefined()
-  expect(state.affixes).toEqual([])
-})
+    expect(current.affixes).toEqual([
+      expect.objectContaining({ modId: 'exclusive2', desecrated: true }),
+    ])
+    expect(current.pendingDesecration).toBeUndefined()
+    expect(state.affixes).toEqual([])
+  },
+)
 
-it('v119 保存黑血回响完整未来，旧版只拒绝新组合', () => {
+it('v123 保存戒指回响完整未来，旧版只拒绝新组合', () => {
   const { catalog, state } = fixture()
   const input = {
     schemaVersion: 1,
-    rulesVersion: 'basic-2026-09-18-v119',
+    rulesVersion: 'basic-2026-09-18-v123',
     sourceCommit: catalog._meta.sourceCommit,
     desecrationSourceHash: DESECRATION_SOURCE.sha256,
     initialState: { ...state, rarity: 'normal', nextAffixId: 1 },
@@ -98,10 +103,10 @@ it('v119 保存黑血回响完整未来，旧版只拒绝新组合', () => {
     expect(saved.ok).toBe(true)
     if (saved.ok) expect(JSON.parse(saved.value).rulesVersion).toBe(input.rulesVersion)
   }
-  const old = { ...input, rulesVersion: 'basic-2026-09-18-v118' }
+  const old = { ...input, rulesVersion: 'basic-2026-09-18-v122' }
   expect(loadTargetWorkbenchProject(JSON.stringify(old), catalog)).toMatchObject({
     ok: false,
-    error: expect.stringContaining('v119'),
+    error: expect.stringContaining('v123'),
   })
   expect(
     loadTargetWorkbenchProject(
@@ -119,7 +124,7 @@ it.each(['Belt'])('尚未核实的%s黑血回响继续拒绝', (type) => {
     expect(applyBoneCraft(catalog, pending.value, steps[1] as BoneCraftOperation).ok).toBe(false)
 })
 
-it('黑血回响建议和路线继续第二组并完成目标，不跨巫妖', () => {
+it('戒指回响建议和路线继续第二组并完成目标，不跨巫妖', () => {
   const { catalog, state } = fixture()
   const pending = {
     ...state,

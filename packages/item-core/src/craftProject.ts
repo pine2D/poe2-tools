@@ -12,6 +12,7 @@ import { isArchitectCraftOperation } from './architect'
 import { isBeltCapacityBase, resolveCraftImplicitPatterns } from './beltImplicits'
 import { requiresBlackbloodedEchoesProjectVersion } from './blackbloodedEchoesProjectVersion'
 import { requiresBodyIdolProjectVersion } from './bodyIdolProjectVersion'
+import { hasBoneEchoesProjectCapability } from './boneEchoesProjectCapability'
 import {
   clonePendingDesecration,
   isBoneCraftOperation,
@@ -100,6 +101,7 @@ import {
 import { importCraftState, importIdentifiedCraftState } from './rehearsalImport'
 import { RESISTANCE_LABELS } from './resistances'
 import { requiresRetainedCatalystProjectVersion } from './retainedCatalystProjectVersion'
+import { requiresRingLichEchoesProjectVersion } from './ringLichEchoesProjectVersion'
 import { isSupportedArmourRune, isUtilityArmourRune, parseRuneEffectTotals } from './runeEffects'
 import { isRuneforgeCraftOperation } from './runeforge'
 import { requiresRuneforgedArmourProjectVersion } from './runeforgedProjectVersion'
@@ -762,6 +764,7 @@ export function readNativeTargetProjectProjection(
   infusedCatalyst = false,
   tieredMasterwork = false,
   spendingStrategy = false,
+  ringLichEchoes = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -815,6 +818,7 @@ export function readNativeTargetProjectProjection(
     infusedCatalyst,
     tieredMasterwork,
     spendingStrategy,
+    ringLichEchoes,
   )
 }
 
@@ -870,6 +874,7 @@ function readCraftProject(
   infusedCatalyst = false,
   tieredMasterwork = false,
   spendingStrategy = false,
+  ringLichEchoes = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -896,6 +901,8 @@ function readCraftProject(
     value.operations.length > MAX_CRAFT_PROJECT_OPERATIONS
   )
     return fail('演练操作列表无效或超过 1000 步。')
+  if (!ringLichEchoes && requiresRingLichEchoesProjectVersion(value, catalog))
+    return fail('戒指两族回响必须使用 v123 项目。')
   if (!spendingStrategy && requiresSpendingProjectVersion(value))
     return fail('已用材料费用条件必须使用 v122 项目。')
   if (!tieredMasterwork && requiresTieredMasterworkProjectVersion(value, catalog))
@@ -2334,6 +2341,13 @@ function readCraftProject(
 }
 
 export function serializeCraftProject(project: CraftProject): string {
+  if (
+    hasBoneEchoesProjectCapability(
+      project,
+      (bone, lich) => bone === 'preserved_collarbone' && lich === 'liege',
+    )
+  )
+    throw new Error('戒指巫妖回响必须使用 v123 目标项目。')
   if (requiresBlackbloodedEchoesProjectVersion(project))
     throw new Error('黑血项链回响必须使用 v119 项目。')
   if (requiresAncientRibEchoesProjectVersion(project))
