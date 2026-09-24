@@ -3,9 +3,15 @@ import { prepareImport } from '../adapters/coe-beta/import'
 export function attachImport(doc: Document, terms: readonly Term[]) {
   let target: HTMLTextAreaElement | null = null
   let panel: HTMLElement | null = null
+  let closed = false
+  let revision = 0
+  let invalidate: (() => void) | null = null
   const scan = () => {
+    if (closed) return
     const input = doc.querySelector<HTMLTextAreaElement>('dialog #importerInput')
     if (input === target && panel?.isConnected) return
+    revision++
+    invalidate = null
     panel?.remove()
     target = input
     if (!input) return
@@ -18,6 +24,9 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     preview.textContent = '预览中文转换'
     const result = doc.createElement('div')
     preview.addEventListener('click', () => {
+      if (closed || target !== input || !preview.isConnected) return
+      const current = ++revision
+      invalidate = null
       result.replaceChildren()
       const converted = prepareImport(input.value, terms)
       const message = doc.createElement('p')
@@ -45,12 +54,20 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       fill.type = 'button'
       fill.textContent = '填入英文到原站导入框'
       fill.disabled = !converted.ready
+      invalidate = () => {
+        revision++
+        fill.disabled = true
+        message.textContent = '原文已改变，请重新预览。'
+      }
       fill.addEventListener('click', () => {
+        if (closed || current !== revision || target !== input || !fill.isConnected) return
         if (!input.isConnected || input.value !== converted.original) {
           message.textContent = '原文已改变，请重新预览。'
           fill.disabled = true
           return
         }
+        revision++
+        invalidate = null
         input.value = converted.english
         input.dispatchEvent(new Event('input', { bubbles: true }))
         fill.disabled = true
@@ -61,10 +78,18 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     panel.append(preview, result)
     input.after(panel)
   }
+  const onInput = (event: Event) => {
+    if (event.target === target) invalidate?.()
+  }
+  doc.addEventListener('input', onInput, true)
   scan()
   const observer = new MutationObserver(scan)
   observer.observe(doc.body, { childList: true, subtree: true })
   return () => {
+    closed = true
+    revision++
+    invalidate = null
+    doc.removeEventListener('input', onInput, true)
     observer.disconnect()
     panel?.remove()
     target = null
