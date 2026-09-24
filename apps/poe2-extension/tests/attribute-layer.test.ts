@@ -71,3 +71,18 @@ it('重复初始化先撤销旧译文，旧 stop 不会关闭新一轮', () => {
   stop()
   expect(input.placeholder).toBe('Search')
 })
+it('祖先编辑状态和输入类型变化时恢复属性，恢复普通控件后重新翻译', async () => {
+  document.body.innerHTML = '<main><section><input placeholder="Search"></section></main>'
+  stop = attachAttributeLayer(document, lex)
+  const section = document.querySelector('section') as HTMLElement
+  const input = document.querySelector('input') as HTMLInputElement
+  section.setAttribute('contenteditable', 'true')
+  await settle()
+  expect(input.placeholder).toBe('Search')
+  section.removeAttribute('contenteditable')
+  await settle()
+  expect(input.placeholder).toBe('搜索')
+  input.type = 'hidden'
+  await settle()
+  expect(input.placeholder).toBe('Search')
+})

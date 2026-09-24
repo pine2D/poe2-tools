@@ -91,3 +91,31 @@ it('暂时移除再复用的文字节点仍可恢复原文', async () => {
   stop()
   expect(node.textContent).toBe('Runed Focus')
 })
+it('节点移入备注编辑区后恢复英文，用户改值后关闭不覆盖', async () => {
+  document.body.innerHTML =
+    '<main><span>Runed Focus</span><div contenteditable="true"></div></main>'
+  const node = document.querySelector('span') as HTMLElement
+  const stop = attachTextLayer(document, lex)
+  stops.push(stop)
+  document.querySelector('[contenteditable]')?.append(node)
+  await settle()
+  expect(node.textContent).toBe('Runed Focus')
+  node.textContent = '我的备注'
+  stop()
+  expect(node.textContent).toBe('我的备注')
+})
+it('祖先切换隐藏与编辑状态会撤销译文，恢复普通区域后重新翻译', async () => {
+  document.body.innerHTML = '<main><section><span>Runed Focus</span></section></main>'
+  stops.push(attachTextLayer(document, lex))
+  const section = document.querySelector('section') as HTMLElement
+  const node = document.querySelector('span') as HTMLElement
+  section.classList.add('hidden')
+  await settle()
+  expect(node.textContent).toBe('Runed Focus')
+  section.classList.remove('hidden')
+  await settle()
+  expect(node.textContent).toBe('符文法器')
+  section.contentEditable = 'true'
+  await settle()
+  expect(node.textContent).toBe('Runed Focus')
+})

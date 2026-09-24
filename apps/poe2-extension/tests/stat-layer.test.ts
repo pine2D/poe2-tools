@@ -120,3 +120,18 @@ it('普通翻译与 Data 词缀层同时启用，不改写词缀内部关键词�
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
   expect(document.querySelector('.modifierTable')?.textContent).toBe(original)
 })
+it('祖先隐藏或编辑状态改变时撤下词缀层，解除后可重新显示', async () => {
+  document.body.innerHTML =
+    '<main><section><span class="stat">+18% to Lightning Resistance</span></section></main>'
+  stop = attachStatLayer(document, lex)
+  const section = document.querySelector('section') as HTMLElement
+  section.hidden = true
+  await new Promise((r) => setTimeout(r, 30))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  section.hidden = false
+  await new Promise((r) => setTimeout(r, 30))
+  expect(document.querySelector('[data-poe2-l10n]')?.shadowRoot?.textContent).toBe('闪电抗性 +18%')
+  section.setAttribute('contenteditable', 'true')
+  await new Promise((r) => setTimeout(r, 30))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+})

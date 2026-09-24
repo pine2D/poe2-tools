@@ -1,4 +1,5 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
+import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { translatable } from '../adapters/coe-beta/regions'
 
 const active = new WeakMap<Document, () => void>()
@@ -42,11 +43,11 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
   }
   const observer = new MutationObserver((records) => {
     for (const record of records) {
-      if (record.type === 'characterData') scan(record.target)
+      if (record.type === 'characterData' || boundaryChanged(record)) scan(record.target)
       else for (const node of record.addedNodes) scan(node)
     }
     for (const node of owned) {
-      if (node.isConnected) continue
+      if (node.isConnected && translatable(node)) continue
       const entry = state.get(node)
       if (entry && node.data === entry.written) node.data = entry.original
       state.delete(node)
@@ -54,7 +55,14 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
     }
   })
   scan(doc.body)
-  observer.observe(doc.body, { subtree: true, childList: true, characterData: true })
+  observer.observe(doc.body, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: boundaryAttributes,
+  })
   let closed = false
   const stop = () => {
     if (closed) return

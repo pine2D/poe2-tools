@@ -5,6 +5,8 @@ export function isSupportedStat(element: Element): boolean {
     element.isConnected &&
     element.matches(statSelector) &&
     !!element.closest('main,dialog') &&
-    !element.closest('[data-poe2-l10n], [contenteditable], code, pre')
+    !element.closest(
+      '[data-poe2-l10n], [contenteditable], code, pre, [hidden], .hidden, #inventoryZone .tabs, [id*="_ad"]',
+    )
   )
 }

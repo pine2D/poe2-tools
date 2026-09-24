@@ -1,4 +1,5 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
+import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { isSupportedStat, statSelector } from '../adapters/coe-beta/stats'
 export function attachStatLayer(doc: Document, lex: Lexicon) {
   const hosts = new Map<Element, HTMLElement>()
@@ -40,6 +41,10 @@ export function attachStatLayer(doc: Document, lex: Lexicon) {
   scan(doc.body)
   const observer = new MutationObserver((records) => {
     for (const record of records) {
+      if (record.type === 'attributes') {
+        if (boundaryChanged(record)) scan(record.target)
+        continue
+      }
       // 只检查发生变化的词缀与新增子树，不因插入中文层重扫整个结果表。
       const target = record.target instanceof Element ? record.target : record.target.parentElement
       const stat = target?.closest(statSelector)
@@ -52,7 +57,14 @@ export function attachStatLayer(doc: Document, lex: Lexicon) {
         hosts.delete(stat)
       }
   })
-  observer.observe(doc.body, { subtree: true, childList: true, characterData: true })
+  observer.observe(doc.body, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: boundaryAttributes,
+  })
   return () => {
     observer.disconnect()
     for (const host of hosts.values()) host.remove()

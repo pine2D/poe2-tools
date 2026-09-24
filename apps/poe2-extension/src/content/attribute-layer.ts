@@ -1,4 +1,5 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
+import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { regions } from '../adapters/coe-beta/regions'
 
 const attributes = ['placeholder', 'title', 'aria-label'] as const
@@ -51,7 +52,12 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
   }
   const observer = new MutationObserver((records) => {
     for (const record of records) {
-      if (record.type === 'attributes') render(record.target as Element)
+      if (boundaryChanged(record)) scan(record.target)
+      else if (
+        record.type === 'attributes' &&
+        attributes.some((name) => name === record.attributeName)
+      )
+        render(record.target as Element)
       else for (const node of record.addedNodes) scan(node)
     }
     for (const element of owned.keys()) if (!eligible(element)) restore(element)
@@ -61,7 +67,8 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: [...attributes],
+    attributeOldValue: true,
+    attributeFilter: [...attributes, ...boundaryAttributes],
   })
   let closed = false
   const stop = () => {
