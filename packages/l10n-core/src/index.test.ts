@@ -117,3 +117,30 @@ it('CoE 列表占位符与区间保持原样', () => {
   expect(lex.translate('+#% to Lightning Resistance')).toBe('闪电抗性 +#%')
   expect(lex.translate('+(16-20)% to Lightning Resistance')).toBe('闪电抗性 +(16-20)%')
 })
+it('部分查询先显示更简短的匹配术语，但仍不自动认作精确身份', () => {
+  const lex = createLexicon([
+    term('a', 'Enemies have Lightning Resistance equal to yours', '敌人的闪电抗性与你相同'),
+    term('b', '#% to Maximum Lightning Resistance', '#%闪电抗性上限'),
+    term('z', '#% to Lightning Resistance', '闪电抗性 #%'),
+  ])
+  expect(lex.search('闪电抗性', 'stat').map((c) => [c.term.id, c.exact])).toEqual([
+    ['z', false],
+    ['b', false],
+    ['a', false],
+  ])
+})
+it('完整名称精确匹配优先于短别名，排序后才截取50项', () => {
+  const many = Array.from({ length: 55 }, (_, i) =>
+    term(`a${i}`, `Long term ${i}`, `长前缀 冰霜抗性 ${i}`),
+  )
+  const lex = createLexicon([
+    ...many,
+    term('z', 'Cold Resistance', '冰霜抗性'),
+    term('alias', 'Other', '其他', 'stat', { aliases: ['冰霜抗性'] }),
+  ])
+  const result = lex.search('冰霜抗性', 'stat')
+  expect(result).toHaveLength(50)
+  expect(result[0]?.term.id).toBe('z')
+  expect(result[1]?.term.id).toBe('alias')
+  expect(result[1]?.exact).toBe(false)
+})
