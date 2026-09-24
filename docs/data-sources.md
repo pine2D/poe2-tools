@@ -619,3 +619,7 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ## 施法武器魂核（2026-09-24）
 
 沿用已登记固定 MIT ModRunes、ModScalability 来源，核对10个 wand／staff 魂核身份与5条逐值缩放声明；不新增适配器或更新快照。用户指定的 [CoE 正式入口](https://www.craftofexile.com/?game=poe2)仅作为公开流程对照，其推荐新版和权重说明不作为实现或概率数据源。完整边界见[施法魂核研究](caster-soul-cores-research.md)。
+
+## 深渊精华流程复核（2026-09-24）
+
+沿用固定 MIT 精华与词缀目录及已登记的 GGG 论坛3858079。新增人工机制参考为[Bclever88胸甲原帖及作者回复](https://www.reddit.com/r/PathOfExile2/comments/1wn934z/spirit_body_armor_first_big_craft_of_the_league/)，只保存自写流程摘要与链接，不复制图片、装备文本或数据集；玩家自述不是当前版本全部规则的证明。CoE公开日志只提供复核线索。该节点不新增采集适配器、执行参数或材料授权，具体缺口见[深渊精华研究](abyss-essence-research.md)。
