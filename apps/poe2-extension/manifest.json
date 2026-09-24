@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "PoE2 中文助手",
+  "version": "0.1.0",
+  "description": "为新版 Craft of Exile 的 PoE2 页面提供国服简体术语显示。",
+  "permissions": ["storage"],
+  "action": { "default_popup": "popup.html" },
+  "content_scripts": [
+    {
+      "matches": ["https://beta.craftofexile.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    { "resources": ["assets/dictionary.json"], "matches": ["https://beta.craftofexile.com/*"] }
+  ]
+}

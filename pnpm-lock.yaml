@@ -61,6 +61,25 @@ importers:
         specifier: 8.2.2
         version: 8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(tsx@4.23.13)
 
+  apps/poe2-extension:
+    dependencies:
+      '@poe2-tools/item-core':
+        specifier: workspace:*
+        version: link:../../packages/item-core
+      '@poe2-tools/l10n-core':
+        specifier: workspace:*
+        version: link:../../packages/l10n-core
+    devDependencies:
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      happy-dom:
+        specifier: 20.14.0
+        version: 20.14.0
+      vite:
+        specifier: 8.2.2
+        version: 8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(tsx@4.23.13)
+
   packages/build-core:
     devDependencies:
       '@types/node':
@@ -88,6 +107,8 @@ importers:
       '@types/node':
         specifier: 26.4.1
         version: 26.4.1
+
+  packages/l10n-core: {}
 
 packages:
 

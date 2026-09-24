@@ -19,7 +19,10 @@
     "dict:build": "pnpm --filter @poe2-tools/dict-builder run build-dict",
     "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict",
     "craft:build": "pnpm --filter @poe2-tools/dict-builder run build-craft",
-    "craft:check": "pnpm --filter @poe2-tools/dict-builder run check-craft"
+    "craft:check": "pnpm --filter @poe2-tools/dict-builder run check-craft",
+    "extension:build": "pnpm --filter @poe2-tools/poe2-extension run build",
+    "extension:check": "node apps/poe2-extension/scripts/check.mjs",
+    "extension:package": "pnpm extension:build && node apps/poe2-extension/scripts/package.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

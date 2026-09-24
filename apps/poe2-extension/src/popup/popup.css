@@ -1,0 +1,39 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #e5e7eb;
+  background: #171b23;
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  min-width: 290px;
+}
+main {
+  padding: 20px;
+}
+h1 {
+  font-size: 19px;
+  margin: 0 0 8px;
+}
+p,
+small {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #abb7c9;
+}
+label {
+  display: block;
+  margin: 16px 0;
+  font-size: 14px;
+}
+input {
+  accent-color: #b8d9fc;
+}
+#status {
+  color: #b8d9fc;
+}
+small {
+  display: block;
+  border-top: 1px solid #343d4c;
+  padding-top: 12px;
+}

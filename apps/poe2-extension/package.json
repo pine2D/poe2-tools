@@ -1,0 +1,19 @@
+{
+  "name": "@poe2-tools/poe2-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@poe2-tools/l10n-core": "workspace:*",
+    "@poe2-tools/item-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "happy-dom": "20.14.0",
+    "vite": "8.2.2"
+  }
+}
