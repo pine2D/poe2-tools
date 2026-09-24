@@ -615,3 +615,7 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ## 装备类别跨服同形词（2026-09-18）
 
 沿用用户国服高级文本的类别观察，以及已登记 poe2db 台服 [Wands](https://poe2db.tw/tw/Wands)、[Staves](https://poe2db.tw/tw/Staves)、[Foci](https://poe2db.tw/tw/Foci)、[Sceptres](https://poe2db.tw/tw/Sceptres)、[Belts](https://poe2db.tw/tw/Belts) 列表页。后者只核对既有缓存中的类别标题，按 gray 人工术语证据处理，不视作台服剪贴板实测；未新增网络适配器或复制页面。国服“法杖”与台服“法杖”含义不同；cn 列表标题不得覆盖用户国服原生观察。映射范围及未确认项见[文本格式](item-text-format.md)。
+
+## 施法武器魂核（2026-09-24）
+
+沿用已登记固定 MIT ModRunes、ModScalability 来源，核对10个 wand／staff 魂核身份与5条逐值缩放声明；不新增适配器或更新快照。用户指定的 [CoE 正式入口](https://www.craftofexile.com/?game=poe2)仅作为公开流程对照，其推荐新版和权重说明不作为实现或概率数据源。完整边界见[施法魂核研究](caster-soul-cores-research.md)。

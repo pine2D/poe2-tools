@@ -19,6 +19,7 @@ import {
   isBoneOperationKind,
   isPendingDesecration,
 } from './boneRules'
+import { requiresCasterSoulCoreProjectVersion } from './casterSoulCoreProjectVersion'
 import { type CraftCatalog, hasCraftModEligibility, hasGenesisModEligibility } from './catalog'
 import { isCatalystQuality } from './catalystQuality'
 import { requiresCombatArmourRuneProjectVersion } from './combatArmourRuneProjectVersion'
@@ -771,6 +772,7 @@ export function readNativeTargetProjectProjection(
   wandRunes = false,
   runeseeker = false,
   staffRunes = false,
+  casterSoulCores = false,
 ): CraftResult<RestoredCraftProject> {
   return readCraftProject(
     text,
@@ -828,6 +830,7 @@ export function readNativeTargetProjectProjection(
     wandRunes,
     runeseeker,
     staffRunes,
+    casterSoulCores,
   )
 }
 
@@ -887,6 +890,7 @@ function readCraftProject(
   wandRunes = false,
   runeseeker = false,
   staffRunes = false,
+  casterSoulCores = false,
 ): CraftResult<RestoredCraftProject> {
   // 旧语义入口始终使用旧资格；载入新关系表不能改变既有项目的来源要求。
   if (!ordinaryAttributeEssences) catalog = withoutOrdinaryAttributeEssences(catalog)
@@ -947,6 +951,8 @@ function readCraftProject(
   const usesSceptreAugments = requiresSceptreAugmentProjectVersion(value)
   if (!sceptreAugments && usesSceptreAugments)
     return fail('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  const usesCasterSoulCores = requiresCasterSoulCoreProjectVersion(value)
+  if (!casterSoulCores && usesCasterSoulCores) return fail('施法武器魂核必须使用 v127 项目。')
   const usesStaffRunes = requiresStaffRuneProjectVersion(value)
   if (!staffRunes && usesStaffRunes) return fail('长杖专属符文必须使用 v126 项目。')
   if (!runeseeker && requiresRuneseekerProjectVersion(value))
@@ -1901,6 +1907,7 @@ function readCraftProject(
     (initialInput.catalyst !== undefined ||
       usesJewelEffects ||
       usesSovereignEffects ||
+      usesCasterSoulCores ||
       usesStaffRunes ||
       usesWandRunes ||
       usesSpecialMartialRunes ||
@@ -2300,6 +2307,7 @@ function readCraftProject(
         ...((initialInput.catalyst !== undefined ||
           usesJewelEffects ||
           usesSovereignEffects ||
+          usesCasterSoulCores ||
           usesStaffRunes ||
           usesWandRunes ||
           usesSpecialMartialRunes ||
@@ -2319,6 +2327,7 @@ function readCraftProject(
         ...(importedSockets === undefined ? {} : { importedSockets }),
         ...(importedQuality === undefined ? {} : { importedQuality }),
         ...((usesSockets ||
+          usesCasterSoulCores ||
           usesStaffRunes ||
           usesWandRunes ||
           usesSpecialMartialRunes ||
@@ -2394,6 +2403,8 @@ export function serializeCraftProject(project: CraftProject): string {
     throw new Error('手套雕像必须使用 v110 项目，包括起点、导入声明、完整未来和未执行指引。')
   if (requiresSceptreAugmentProjectVersion(project))
     throw new Error('权杖镶嵌必须使用 v109 项目，包括孔位声明、完整未来和未执行指引。')
+  if (requiresCasterSoulCoreProjectVersion(project))
+    throw new Error('施法武器魂核必须使用 v127 目标项目。')
   if (requiresStaffRuneProjectVersion(project))
     throw new Error('长杖专属符文必须使用 v126 目标项目。')
   if (requiresRuneseekerProjectVersion(project))

@@ -14,7 +14,7 @@ import {
   isBoneOperationKind,
   PENDING_DESECRATION_MESSAGE,
 } from './boneRules'
-import { casterRuneSocketError } from './casterRunes'
+import { casterAugmentSocketError } from './casterAugments'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSocketError } from './conditionalArmourRunes'
 import { corruptionCandidates } from './corruptionEnchantments'
@@ -444,7 +444,7 @@ export function applyCraftStep(
       step.augmentId,
     )
     if (limitError) return { ok: false, error: limitError }
-    const wandLimitError = casterRuneSocketError(
+    const wandLimitError = casterAugmentSocketError(
       catalog,
       checked.value,
       step.socketIndex,

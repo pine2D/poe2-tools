@@ -1,5 +1,5 @@
 import { isAstridCapacityLine, isAstridRune } from './astridRune'
-import { isCasterRune, isCasterRuneLine } from './casterRunes'
+import { isCasterAugment, isCasterAugmentLine } from './casterAugments'
 import type { CatalogAugment, CatalogBase } from './catalog'
 import { isInfluenceRune } from './influenceRunes'
 import { isSerleCapacityLine, isSerleRune } from './serleRune'
@@ -102,7 +102,7 @@ export function parseWeaponRuneEffectTotals(
   const totals = emptyTotals()
   let branch: Branch | undefined
   for (const line of lines) {
-    if (isCasterRuneLine(line)) {
+    if (isCasterAugmentLine(line)) {
       if (category && category !== 'wand' && category !== 'staff') return null
       continue
     }
@@ -245,7 +245,7 @@ export function sumWeaponRuneEffects(
           (isAstridRune(augment, true) || isSerleRune(augment, true))) ||
         ((category === 'wand' || category === 'staff') &&
           augment.category === category &&
-          isCasterRune(augment, true)) ||
+          isCasterAugment(augment, true)) ||
         (category === 'weapon' && isSpecialMartialRune(augment, true)) ||
         (category === 'weapon' && augment.category === 'weapon' && isSupportedSoulCore(augment)),
     )

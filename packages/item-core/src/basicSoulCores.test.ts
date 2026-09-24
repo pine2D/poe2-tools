@@ -35,7 +35,10 @@ it('十四条无特殊限制魂核分支可制作，施法类别及部位不混�
     ['Ashen Staff', 0],
   ] as const) {
     const initial = state(baseId)
-    const cores = socketCandidates(catalog, initial).filter((a) => a.type === 'SoulCore')
+    // 施法魂核另有每件限量，此处只核对无限量基础分支的范围与身份。
+    const cores = socketCandidates(catalog, initial).filter(
+      (a) => a.type === 'SoulCore' && a.limit === undefined,
+    )
     expect(cores).toHaveLength(count)
     for (const augment of cores) {
       found.add(augment.id)

@@ -78,6 +78,10 @@ export type {
   RevealDesecrationOperation,
 } from './boneRules'
 export { BONE_RULES, isCraftBone } from './boneRules'
+export {
+  CASTER_SOUL_CORE_RULES_VERSION,
+  requiresCasterSoulCoreProjectVersion,
+} from './casterSoulCoreProjectVersion'
 export type {
   CatalogAugment,
   CatalogBase,

@@ -1,7 +1,7 @@
 import { sovereignEffect } from './alloyEffects'
 import { armourIdolFits, isArmourIdolId, scaleArmourIdol } from './armourIdols'
 import { ASTRID_LINE, isAstridRune } from './astridRune'
-import { casterRuneFits, isCasterRuneId, scaleCasterRune } from './casterRunes'
+import { casterAugmentFits, isCasterAugmentId, scaleCasterAugment } from './casterAugments'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import { isConditionalArmourRune } from './conditionalArmourRunes'
 import { astridFitsBase } from './craftedCapacity'
@@ -72,9 +72,9 @@ export function effectiveSocketAugment(
 ): CatalogAugment | null {
   const increase = socketEffectIncrease(catalog, state, augment.type)
   if (increase === null) return null
-  if (isCasterRuneId(augment.id))
-    return casterRuneFits(catalog, state, augment)
-      ? scaleCasterRune(catalog, augment, increase)
+  if (isCasterAugmentId(augment.id))
+    return casterAugmentFits(catalog, state, augment)
+      ? scaleCasterAugment(catalog, augment, increase)
       : null
   if (isArmourIdolId(augment.id))
     return armourIdolFits(catalog, state, augment)

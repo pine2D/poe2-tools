@@ -1,6 +1,6 @@
 import { armourIdolLimitKey } from './armourIdols'
 import { isAstridRune } from './astridRune'
-import { casterRuneLimitKey } from './casterRunes'
+import { casterAugmentLimitKey } from './casterAugments'
 import type { CatalogAugment, CraftCatalog } from './catalog'
 import type { CraftState } from './rehearsal'
 import { sceptreLimitKey } from './sceptreAugments'
@@ -43,7 +43,7 @@ export function socketLimitWarnings(catalog: CraftCatalog, state: CraftState) {
     const augment = catalog.augments?.find((a) => a.id === id)
     const special =
       augment &&
-      (casterRuneLimitKey(augment) ??
+      (casterAugmentLimitKey(augment) ??
         specialMartialLimitKey(augment) ??
         sceptreLimitKey(augment) ??
         armourIdolLimitKey(augment))

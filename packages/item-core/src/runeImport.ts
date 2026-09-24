@@ -2,7 +2,7 @@ import { RUNE_SUFFIX } from './annotations'
 import { armourIdolSourceMatches, isBodyIdolId } from './armourIdols'
 import { astridSourceMatches } from './astridRune'
 import { BONDED_PREFIX } from './bodyIdols'
-import { casterRuneSourceMatches } from './casterRunes'
+import { casterAugmentSourceMatches } from './casterAugments'
 import type { CraftCatalog } from './catalog'
 import { conditionalRuneSourceMatches } from './conditionalArmourRunes'
 import type { InspectedRune } from './export'
@@ -140,12 +140,12 @@ export function runeSocketContributionError(
   const weapon = base && weaponSocketKind(base)
   if (weapon) {
     if (
-      !casterRuneSourceMatches(
+      !casterAugmentSourceMatches(
         mainSource,
         augments.flatMap((a) => a.lines),
       )
     )
-      return '施法武器专属符文效果与孔位声明不一致，请核对完整条件、数值与重复行。'
+      return '施法武器镶嵌效果与孔位声明不一致，请核对完整条件、数值与重复行。'
     if (
       !specialMartialSourceMatches(
         mainSource,

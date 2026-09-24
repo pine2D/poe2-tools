@@ -1297,6 +1297,12 @@ v120覆盖新增已有量的导入、搜索声明、三语高级回读、有效�
 
 导入同时核对全部专属行与普通符文贡献，不忽略负作用、触发条件或重复行。Assandra 与 Lifesprig 的同属性法术等级、重复 Desperation 的同条件穿透可核对合并显示；其他行仍逐项比较。聚合值仅接受规范正整数，额外零值、前导零和溢出不能被吞掉。简繁英名称独立来自既有词典；无译名保持英文，国服真机仍待验收。v124 覆盖起点、导入声明、完整未来和未执行指引，核对镶嵌与缩放双来源；单独同名材料报价保持旧版兼容。旧版拒绝新增部位能力，已升级空项目不降版。
 
+## 施法武器魂核（v127）
+
+普通 wand 与施法 staff 各接入 Opiloti Assault、Guatelitzi Endurance、Xopec Power、Xipocado Dominion 和 Vizoma 五种魂核，逐项核对身份、部位、完整条件、每件限量和缩放元数据。君王通用增效可作用于魂核，Runeseeker 的 Rune 专用75%不能作用于魂核。Vizoma 可与 Vision Rune 合计法术暴击贡献，其余条件与作用对象不折算为角色最终收益。来源与边界见[施法魂核研究](caster-soul-cores-research.md)。
+
+v127 贯通搜索／导入、覆盖、三语输出、完整未来及未执行指引。旧版拒绝新增魂核能力，空新版不降版；实际使用时保存符文与缩放双来源指纹。国服真实复制格式与角色收益仍待核实。
+
 ## 长杖专属符文（v126）
 
 普通施法长杖接入 Assandra Wisdom、Saqawal Sky、Fenumus Agony、Thane Girt Wildness、Desperation、Discovery、Reach 与 Dusk Vigil 的8个 staff 分支。资格同时校验类别、手数和标签，攻击长杖及同名 wand 身份不通用。绑定元数据仅作来源核对；完整条件、正负作用和逐数字可缩放标志分别保留，不推算角色最终收益。具体来源及边界见[长杖研究](staff-runes-research.md)。
