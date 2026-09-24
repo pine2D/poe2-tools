@@ -16,7 +16,8 @@ coverage/
 !.env.example
 /CLAUDE.local.md
 /.claude/settings.local.json
-/.agents/
+/.agents/*
+!/.agents/skills/
 /.codex/
 
 # 第三方导出的真实 .build 样本与抓取缓存：只在本地
