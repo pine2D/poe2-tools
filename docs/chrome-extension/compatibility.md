@@ -88,3 +88,10 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 原站装备卡显示护盾81，前缀 `+39(36-41) to maximum Energy Shield`（Radiating，T6）、后缀 `+18(16-20)% to Lightning Resistance`（of the Storm，T6），等级86；未知的合成词缀名字由原站规范化，不承诺保留自造词缀名称。
 - 自动回归额外验证重复预览、停用扩展后的旧按钮不能修改原站；58项核心／扩展测试、类型、格式、构建与包检查通过。
 - 导出按钮操作后，页面 Clipboard API 限时读取未返回，专用接口报告 Document is not focused；导出文本语义尚未验收，不能据按钮可点击声明通过。
+
+## 0.1.5 控件提示与新版介绍页补验（2026-09-25）
+
+- 页面来源：https://beta.craftofexile.com/whats-new 。最终包实装，PoE1 模式保持英文；切换 PoE2 后，“认识 Craft of Exile 2”、计算器／制作演练／流程模拟、功能、用户设置、其他改进等标题显示中文。长段落与未收录项目仍为英文，不宣称介绍页完整翻译。
+- 导入框真实 placeholder 在两句之间带两个换行，无障碍快照会省略。初版因字符串不匹配未翻译；按 DOM 原值修正词条、重建并重新实装后显示“在此粘贴装备文本（请在游戏中按 Ctrl+Alt+C 复制高级装备信息）”，value 仍为空。
+- 从另一标签页打开真实扩展 popup，取消启用；返回已打开的导入框，placeholder 恢复完整英文及两个换行，value 仍为空，扩展辅助节点为0。
+- 属性层只匹配 UI 词条，限定普通控件的 placeholder／title／aria-label；未知提示保留原文。63项核心／扩展测试、扩展类型检查、Biome、构建与包检查通过。词典6590条，未新增权限或第三方运行时请求。

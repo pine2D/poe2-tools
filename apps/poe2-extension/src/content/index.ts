@@ -1,6 +1,7 @@
 import { createLexicon, type Term } from '@poe2-tools/l10n-core'
 import { supportsPage } from '../adapters/coe-beta/context'
 import { platform } from '../platform'
+import { attachAttributeLayer } from './attribute-layer'
 import { attachImport } from './import-controller'
 import { attachSearch } from './search-controller'
 import { attachStatLayer } from './stat-layer'
@@ -28,10 +29,12 @@ async function start() {
     mode = next
     if (next) {
       const stopText = attachTextLayer(document, lexicon, settings.bilingual)
+      const stopAttributes = attachAttributeLayer(document, lexicon, settings.bilingual)
       const stopStats = attachStatLayer(document, lexicon)
       const stopSearch = attachSearch(document, lexicon)
       const stopImport = attachImport(document, data.terms)
       stop = () => {
+        stopAttributes()
         stopStats()
         stopImport()
         stopSearch()

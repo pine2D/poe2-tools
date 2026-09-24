@@ -2,7 +2,7 @@
   "_meta": {
     "tier": "manual",
     "source": "本项目人工编写的 CoE Beta 界面译文；游戏术语来自独立国服词典",
-    "gameVersion": "manual-2026-09-24"
+    "gameVersion": "manual-2026-09-25"
   },
   "entries": {
     "Crafting": "制作",
@@ -107,6 +107,37 @@
     "Compare": "对比",
     "About": "关于",
     "Privacy": "隐私",
-    "Developers": "开发者"
+    "Developers": "开发者",
+    "Modifier details": "词缀详情",
+    "Modifier": "词缀",
+    "Name": "名称",
+    "Level": "等级",
+    "Domain": "适用范围",
+    "Domains": "适用范围",
+    "Type": "类型",
+    "Types": "类型",
+    "Influence": "势力",
+    "Influences": "势力",
+    "Item categories": "物品类别",
+    "Item classes": "物品分类",
+    "Not found": "未找到",
+    "Any": "任意",
+    "Item Level:": "物品等级：",
+    "Energy Shield:": "能量护盾：",
+    "Requires level:": "需求等级：",
+    "Paste your data here": "在此粘贴装备文本",
+    "Introducing Craft of Exile 2": "认识 Craft of Exile 2",
+    "Features": "功能",
+    "User settings": "用户设置",
+    "Miscellaneous": "其他改进",
+    "Flowchart editing area": "流程图编辑区域",
+    "Descriptions for each step": "为每个步骤添加说明",
+    "Optional fullscreen interfaces": "可选全屏界面",
+    "Item data browser": "物品数据浏览器",
+    "Modifier data browser": "词缀数据浏览器",
+    "Filters and search feature": "筛选与搜索功能",
+    "Improved localization handling": "改进本地化处理",
+    "Improved patch data compare feature": "改进版本数据对比功能",
+    "Paste your data here\n\n(Please note that an ATL-CTRL-C paste is required for copying an item from the game)": "在此粘贴装备文本（请在游戏中按 Ctrl+Alt+C 复制高级装备信息）"
   }
 }
