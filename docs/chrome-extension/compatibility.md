@@ -11,7 +11,7 @@
 | 首页基底搜索 | `#searchItemInput input[type=text]` | value + input 不足以稳定出结果；keyup 后异步出现 Runed Focus 与 Runeforged Runed Focus | 已接入中文候选，选择后可进入制作页 |
 | 制作词缀搜索 | `#searchInput input[type=text]` | keyup 后 Lightning Resistance 只显示对应词缀；中文候选回填英文模板后结果相同 | 已接入 |
 | Data 物品搜索 | `#dataItemSearchInput input[type=text]` | keyup 后出现 Runed Focus 等候选 | 已接入；最终 ZIP 实装中文选择返回同一对基底 |
-| Data 词缀搜索 | `#dataModSearchInput input[type=text]` | 控件存在，使用相同适配器 | 0.1.2 最终 ZIP 实装：选择 lightning_resistance 标签后，中文候选与英文查询的 68 条结果标识及顺序一致 |
+| Data 词缀搜索 | `#dataModSearchInput input[type=text]` | 控件存在，使用相同适配器 | 0.1.2 最终 ZIP 实装：等待查询结果稳定后，中文候选与英文查询的 68 条结果标识及顺序一致 |
 | 材料检索 | 未确认独立稳定文本框 | 制作方式中的 Essences 未出现可单独核实的材料输入控件 | 不接入，避免把条件编辑器当材料搜索 |
 | 高级装备导入 | `dialog #importerInput`、`.importCommitButton` | 原站接受用户点击 Proceed 后读取文本 | 接入独立中文预览与主动回填；覆盖见下文 |
 | Inventory | `dialog#inventoryDialog` | Reset／Import／Export／Close；背包标签名属于用户文本 | 按钮可翻译，标签区排除 |
@@ -67,6 +67,15 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 将最终 ZIP 解压后作为真实扩展加载，PoE2 / English 下导航文字正常汉化。
 - 首页输入“符文”，50 个候选中 ArrowUp 进入末项；Escape 后辅助面板为0，焦点回到原 INPUT，查询仍为“符文”。
 - 再输入“符文法器”，将焦点移到“数据”链接，候选立即撤下且焦点留在该链接；进入 Data 正常。
-- Data → 词缀，输入“闪电抗性”并选择 `#% to Lightning Resistance`。原站要求至少一个筛选项；选中 `lightning_resistance` 标签后显示68行。与直接英文查询比较，68条行标识和顺序一致。这里证明查询一致，不证明这些原站行全部属于当前游戏有效词缀。
+- Data → 词缀，输入“闪电抗性”并选择 `#% to Lightning Resistance`。异步刷新后显示68行。初次读取到“至少一个筛选项”的提示，曾误判标签为必需条件；0.1.3 检查稳定状态仅有搜索条件，已纠正此前推断。与直接英文查询比较，68条行标识和顺序一致。这里证明查询一致，不证明这些原站行全部属于当前游戏有效词缀。
 - 发现 Data 结果行结构为 `.modifierTable .row > .label .text`，有 `.modValue`、`.range` 与 `.keyword` 子节点；不同于制作页 `.stat`，当前仍有分段英文。此为下一轮显示覆盖缺口，尚未接入，不能称 Data 全部中文化。
 - 本轮扩展与核心9文件52项测试、扩展类型检查、Biome、构建及包检查通过。未重跑全仓旧制作 UI 测试。
+
+
+## 0.1.3 Data 词缀显示补验（2026-09-25）
+
+- 最终 ZIP 解压实装，首页进入 Data → 词缀，中文“闪电抗性”选择 `#% to Lightning Resistance` 后等待结果行出现：仍为68行，52行得到中文叠加。此计数仅指该查询样本，不代表全站覆盖率。
+- 实际首三行原文为 +10%、+20%、+30% to Lightning Resistance，分别显示“闪电抗性 +10%／+20%／+30%”；原 `.keyword` 节点和英文 textContent 保留。
+- 截图审阅：中文独占下一行，位于英文与标签之间，未挤入相邻的词缀名称／等级列。点击结果行仍能打开原站 Modifier details 并正常关闭。
+- 稳定时选中的 li 只有 `mods`，未选中标签；此前“需要先选择标签”的结论证据不足，已改为等待异步结果。不要把结果刷新前的空态当作最终限制。
+- 分段结果接入范围为 `.modifierTable .row > .label .text`；复杂合并词缀、详情弹窗中的其他结构及未命中术语继续保留原文。核心／扩展9文件55项测试、扩展类型检查、Biome、构建与包检查通过。

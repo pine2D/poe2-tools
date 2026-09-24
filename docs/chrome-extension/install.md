@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.2 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.3 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,13 +11,13 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.2.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.3.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
 ## 三个入口
 
-- **显示**：已收录界面与术语增量翻译，未命中或多种冲突译文保留英文。国服译名独立取自已登记来源，不做繁简互转。
+- **显示**：已收录界面与术语增量翻译，未命中或多种冲突译文保留英文。制作页及 Data 已识别的分段词缀在英文旁叠加中文，以保留原站关键词交互与筛选语义。国服译名独立取自已登记来源，不做繁简互转。
 - **搜索**：在首页基底搜索、制作页词缀搜索、Data 物品／词缀搜索框输入中文，选择带英文的候选后执行原站查询。支持中英混输和方向键；唯一精确匹配可在输入框直接按 Enter，其余需选择候选；Escape 关闭候选并返回输入框。选中后的英文值可继续编辑。未核实的材料下拉框、价格、流程名称和备注不改写。
 - **装备文本**：点击原站“导入装备”，粘贴 Ctrl+Alt+C 文本，再点击“预览中文转换”。核对原文与英文两栏；仅已验收结构可“填入英文到原站导入框”，最后自己点击原站 Proceed。填入不等于导入成功，结果由 CoE 确认。交易备注、说明文本留在原文预览，不提交。
 

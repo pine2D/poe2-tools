@@ -1,6 +1,7 @@
 import { createLexicon } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
 import { attachStatLayer } from '../src/content/stat-layer'
+import { attachTextLayer } from '../src/content/text-layer'
 
 const lex = createLexicon([
   {
@@ -52,4 +53,70 @@ it('仍连接的词缀移动到另一容器时，中文层随行且关闭可清�
   expect(stat.nextElementSibling?.shadowRoot?.textContent).toContain('闪电抗性 +20%')
   stop()
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+})
+it('Data 分段词缀保留数值、关键词与筛选文本，独立显示中文', async () => {
+  document.body.innerHTML =
+    '<main><div class="modifierTable"><div class="row"><div class="key">Example</div><div class="label"><div class="flex"><div class="text">+<span class="modValue"><span class="range">(6-10)</span></span>% to <span class="keyword">Lightning Resistance</span></div><span class="modTag">Lightning</span></div></div></div></div></main>'
+  const text = document.querySelector('.label .text') as HTMLElement
+  const keyword = text.querySelector('.keyword')
+  const row = document.querySelector('.row') as HTMLElement
+  const original = row.textContent
+  stop = attachStatLayer(document, lex)
+  expect(text.nextElementSibling?.shadowRoot?.textContent).toBe('闪电抗性 +(6-10)%')
+  expect(text.querySelector('.keyword')).toBe(keyword)
+  expect(row.textContent).toBe(original)
+  const range = text.querySelector('.range') as HTMLElement
+  range.textContent = '(11-15)'
+  await new Promise((r) => setTimeout(r, 30))
+  expect(text.nextElementSibling?.shadowRoot?.textContent).toBe('闪电抗性 +(11-15)%')
+  row.remove()
+  await new Promise((r) => setTimeout(r, 30))
+  expect(row.querySelector('[data-poe2-l10n]')).toBeNull()
+})
+it('词缀移入非翻译区域后清理旧中文层', async () => {
+  document.body.innerHTML =
+    '<main><div class="stat">+18% to Lightning Resistance</div></main><aside></aside>'
+  stop = attachStatLayer(document, lex)
+  document.querySelector('aside')?.append(document.querySelector('.stat') as HTMLElement)
+  await new Promise((r) => setTimeout(r, 30))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+})
+
+it('普通翻译与 Data 词缀层同时启用，不改写词缀内部关键词或用户文本', () => {
+  document.body.innerHTML =
+    '<main><div class="modifierTable"><div class="row"><div class="label"><div class="text">+18% to <span class="keyword">Lightning Resistance</span></div></div></div></div><div contenteditable="true"><span class="stat">+18% to Lightning Resistance</span></div></main>'
+  const combined = createLexicon([
+    {
+      id: 'r',
+      en: '#% to Lightning Resistance',
+      zh: '闪电抗性 #%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'label',
+      en: 'Lightning Resistance',
+      zh: '闪电抗性',
+      domain: 'ui',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  const original = document.querySelector('.modifierTable')?.textContent
+  const stopText = attachTextLayer(document, combined)
+  const stopStats = attachStatLayer(document, combined)
+  stop = () => {
+    stopStats()
+    stopText()
+  }
+  expect(document.querySelector('.modifierTable')?.textContent).toBe(original)
+  expect(document.querySelector('.keyword')?.textContent).toBe('Lightning Resistance')
+  expect(document.querySelector('.text')?.nextElementSibling?.shadowRoot?.textContent).toBe(
+    '闪电抗性 +18%',
+  )
+  expect(document.querySelector('[contenteditable] [data-poe2-l10n]')).toBeNull()
+  stop()
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  expect(document.querySelector('.modifierTable')?.textContent).toBe(original)
 })
