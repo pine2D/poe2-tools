@@ -103,3 +103,11 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 ## 0.1.7 搜索排序离线回归（2026-09-25）
 
 中文候选以完整名称精确匹配优先，再按匹配名称／别名的长度排序；短的普通词缀不再被稳定ID排到特殊长词缀之后。真实打包词典6590条中，“闪电抗性”首项为 `#% to Lightning Resistance`，exact=false，仍需选择；前50项在排序后截取。11文件70项测试及两包类型、格式、构建、ZIP检查通过。本轮隔离浏览器两次访问远端均 ERR_CONNECTION_CLOSED，Simulator 实站链未执行，不以离线通过替代。
+
+## 0.1.7 Simulator 连接对照（2026-09-25）
+
+- 当前源码34c3127，浏览器Linux HeadlessChrome 151.0.0.0。带扩展访问PoE2入口返回 ERR_CONNECTION_CLOSED；直接HTTP HEAD首页返回200。
+- 同一会话首页导航等待超时，但之后能读到导航。点击PoE2后，DOM.enable请求超时；该请求已终止后才关闭会话。
+- 新无扩展对照浏览器访问首页也返回 ERR_CONNECTION_CLOSED。因此连接失败不是扩展独有现象；不能据此排除扩展对DOM响应时间的影响，也没有证明站点整体不可用。
+- 两个任务会话均已关闭，本轮未进入Simulator，不记录流程验收通过。没有改动网络代理、浏览器持久配置或原站数据。
+- 当前包检查重跑通过：0.1.7，6590词条，仅storage权限。词典SHA-256 `c4d206bd225246db5ada0fbba9b9785460fd6d8bacf4d75cc793460847cf4cf6`；ZIP SHA-256 `64c683771e67c80f0b772becddfa112b59aa5d6c624d2b1fc958fa2b89795aef`。
