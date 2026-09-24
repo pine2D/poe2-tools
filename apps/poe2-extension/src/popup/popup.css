@@ -1,39 +1,87 @@
 :root {
-  font-family: system-ui, sans-serif;
-  color: #e5e7eb;
-  background: #171b23;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  color: #e7ebf0;
+  background: #192330;
   color-scheme: dark;
+  --muted: #b3c0cf;
+  --gold: #e4c78a;
+  --line: #42566d;
+  --focus: #a7d7fa;
 }
 body {
   margin: 0;
-  min-width: 290px;
+  width: 340px;
 }
 main {
-  padding: 20px;
+  padding: 22px;
+}
+header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
 }
 h1 {
-  font-size: 19px;
-  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: 21px;
+  line-height: 1.4;
+  margin: 0 0 4px;
 }
-p,
-small {
+p {
+  margin: 0;
   font-size: 13px;
-  line-height: 1.6;
-  color: #abb7c9;
+  line-height: 1.65;
 }
-label {
+header p,
+small,
+footer {
+  color: var(--muted);
+}
+.setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.setting input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--gold);
+  flex-shrink: 0;
+}
+.setting:has(input:disabled) {
+  cursor: default;
+  color: var(--muted);
+}
+small {
   display: block;
-  margin: 16px 0;
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 3px;
 }
-input {
-  accent-color: #b8d9fc;
+input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
 }
 #status {
-  color: #b8d9fc;
+  color: var(--focus);
+  min-height: 43px;
+  margin: 18px 0 12px;
 }
-small {
-  display: block;
-  border-top: 1px solid #343d4c;
-  padding-top: 12px;
+aside {
+  border-left: 2px solid var(--gold);
+  padding-left: 12px;
+}
+aside strong {
+  font-size: 13px;
+  color: var(--gold);
+}
+aside p {
+  margin-top: 4px;
+}
+footer {
+  margin-top: 18px;
+  font-size: 11px;
+  line-height: 1.8;
 }

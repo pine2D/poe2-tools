@@ -75,3 +75,63 @@ it('备注输入和移除后的控件不被处理；关闭移除候选', () => {
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
   expect(input.value).toBe('符文')
 })
+it('ArrowUp 从输入框进入最后一个候选，Escape 返回输入框且不提交', () => {
+  document.body.innerHTML = '<main><div id="searchItemInput"><input></div></main>'
+  const input = document.querySelector('input') as HTMLInputElement
+  const terms = ['甲', '乙', '丙'].map((name, i) => ({
+    id: String(i),
+    en: `Focus ${i}`,
+    zh: `法器${name}`,
+    domain: 'base' as const,
+    source: 'test',
+    version: 'test',
+  }))
+  stop = attachSearch(document, createLexicon(terms))
+  input.focus()
+  type(input, '法器')
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }),
+  )
+  const buttons = [...document.querySelectorAll('[data-poe2-l10n] button')]
+  expect(document.activeElement).toBe(buttons.at(-1))
+  document.activeElement?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+  )
+  expect(document.activeElement).toBe(input)
+  expect(input.value).toBe('法器')
+})
+it('唯一精确候选支持在输入框按 Enter 执行；输入法 Enter 不提交', () => {
+  const { input, submitted } = setup()
+  type(input, '符文法器')
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'Enter',
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+    }),
+  )
+  expect(submitted).toEqual([])
+  const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+  input.dispatchEvent(enter)
+  expect(enter.defaultPrevented).toBe(true)
+  expect(submitted).toEqual(['Runed Focus'])
+})
+it('部分词 Enter 不擅自选择候选，方向键与 Escape 不冒泡到原站快捷键', () => {
+  const { input, submitted } = setup()
+  const keys: string[] = []
+  input.addEventListener('keydown', (e) => keys.push(e.key))
+  type(input, '符文')
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+  )
+  expect(submitted).toEqual([])
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }),
+  )
+  document.activeElement?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+  )
+  expect(keys).toEqual([])
+  expect(document.activeElement).toBe(input)
+})

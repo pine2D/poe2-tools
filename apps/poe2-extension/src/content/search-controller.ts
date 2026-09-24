@@ -5,6 +5,7 @@ const chinese = /\p{Script=Han}/u
 export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   const composing = new WeakSet<HTMLInputElement>()
   let panel: HTMLElement | null = null
+  let exactButton: HTMLButtonElement | null = null
   let revision = 0
   let active: HTMLInputElement | null = null
   let closed = false
@@ -13,6 +14,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     panel?.remove()
     panel = null
     active = null
+    exactButton = null
   }
   function show(input: HTMLInputElement) {
     clear()
@@ -32,6 +34,9 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       ? `“${query}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）`
       : `“${query}”：未找到术语，请缩短关键词或输入英文。`
     panel.append(label)
+    const exact = new Set(
+      candidates.filter((candidate) => candidate.exact).map((candidate) => candidate.term.en),
+    )
     const unique = new Map(candidates.map((c) => [c.term.en, c.term]))
     for (const term of unique.values()) {
       const button = doc.createElement('button')
@@ -49,6 +54,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         active = input
         input.focus()
       })
+      if (exact.size === 1 && exact.has(term.en)) exactButton = button
       panel.append(button)
     }
     input.parentElement?.append(panel)
@@ -76,12 +82,21 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       event.stopImmediatePropagation()
   }
   function key(event: KeyboardEvent) {
-    if (!panel || composing.has(active as HTMLInputElement)) return
+    if (!panel || event.isComposing || composing.has(active as HTMLInputElement)) return
     if (event.target !== active && !(event.target instanceof Node && panel.contains(event.target)))
       return
     if (event.key === 'Escape') {
       event.preventDefault()
+      event.stopPropagation()
+      const input = active
       clear()
+      if (input?.isConnected) input.focus()
+      return
+    }
+    if (event.key === 'Enter' && event.target === active && chinese.test(active?.value ?? '')) {
+      event.preventDefault()
+      event.stopPropagation()
+      exactButton?.click()
       return
     }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
@@ -90,10 +105,13 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     event.preventDefault()
     event.stopPropagation()
     const index = buttons.indexOf(doc.activeElement as HTMLButtonElement)
-    buttons[
-      (index + (event.key === 'ArrowDown' ? 1 : buttons.length - 1) + buttons.length) %
-        buttons.length
-    ]?.focus()
+    const next =
+      index < 0
+        ? event.key === 'ArrowDown'
+          ? 0
+          : buttons.length - 1
+        : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
+    buttons[next]?.focus()
   }
   for (const type of ['input', 'keyup', 'compositionstart', 'compositionend'])
     doc.addEventListener(type, handle, true)

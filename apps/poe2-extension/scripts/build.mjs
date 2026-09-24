@@ -43,7 +43,7 @@ await buildDictionary(path.resolve(root, '../..'), path.join(root, 'dist/assets/
 await copyFile(path.resolve(root, '../../LICENSE'), path.join(root, 'dist/LICENSE.txt'))
 await writeFile(
   path.join(root, 'dist/NOTICE.txt'),
-  `PoE2 中文助手 0.1.0 开发预览版
+  `PoE2 中文助手 ${manifest.version} 开发预览版
 这是非官方扩展，与 Craft of Exile、Grinding Gear Games、腾讯无隶属关系。
 MIT 仅覆盖自有代码；游戏文本权利归相应权利人。
 术语来源、快照版本与哈希见 assets/dictionary.json 的 sources。
