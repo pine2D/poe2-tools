@@ -11,7 +11,7 @@
 | 首页基底搜索 | `#searchItemInput input[type=text]` | value + input 不足以稳定出结果；keyup 后异步出现 Runed Focus 与 Runeforged Runed Focus | 已接入中文候选，选择后可进入制作页 |
 | 制作词缀搜索 | `#searchInput input[type=text]` | keyup 后 Lightning Resistance 只显示对应词缀；中文候选回填英文模板后结果相同 | 已接入 |
 | Data 物品搜索 | `#dataItemSearchInput input[type=text]` | keyup 后出现 Runed Focus 等候选 | 已接入；最终 ZIP 实装中文选择返回同一对基底 |
-| Data 词缀搜索 | `#dataModSearchInput input[type=text]` | 控件存在，使用相同适配器 | 已接入，原站结果端到端待补 |
+| Data 词缀搜索 | `#dataModSearchInput input[type=text]` | 控件存在，使用相同适配器 | 0.1.2 最终 ZIP 实装：选择 lightning_resistance 标签后，中文候选与英文查询的 68 条结果标识及顺序一致 |
 | 材料检索 | 未确认独立稳定文本框 | 制作方式中的 Essences 未出现可单独核实的材料输入控件 | 不接入，避免把条件编辑器当材料搜索 |
 | 高级装备导入 | `dialog #importerInput`、`.importCommitButton` | 原站接受用户点击 Proceed 后读取文本 | 接入独立中文预览与主动回填；覆盖见下文 |
 | Inventory | `dialog#inventoryDialog` | Reset／Import／Export／Close；背包标签名属于用户文本 | 按钮可翻译，标签区排除 |
@@ -60,3 +60,13 @@
 ## 发布分支与 CI 权限
 
 GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/extension.yml` 的推送被拒绝。完整提交 `f80341f` 保留在本地 `feat/coe-chrome-extension-ci-local`；可推送的 `feat/coe-chrome-extension` 仅排除该新增工作流，运行源码、测试、词典与已验证产物一致，未改写原提交。新增 CI 尚未在远端运行，不能报告 CI 通过。
+
+
+## 0.1.2 最终包补验（2026-09-25）
+
+- 将最终 ZIP 解压后作为真实扩展加载，PoE2 / English 下导航文字正常汉化。
+- 首页输入“符文”，50 个候选中 ArrowUp 进入末项；Escape 后辅助面板为0，焦点回到原 INPUT，查询仍为“符文”。
+- 再输入“符文法器”，将焦点移到“数据”链接，候选立即撤下且焦点留在该链接；进入 Data 正常。
+- Data → 词缀，输入“闪电抗性”并选择 `#% to Lightning Resistance`。原站要求至少一个筛选项；选中 `lightning_resistance` 标签后显示68行。与直接英文查询比较，68条行标识和顺序一致。这里证明查询一致，不证明这些原站行全部属于当前游戏有效词缀。
+- 发现 Data 结果行结构为 `.modifierTable .row > .label .text`，有 `.modValue`、`.range` 与 `.keyword` 子节点；不同于制作页 `.stat`，当前仍有分段英文。此为下一轮显示覆盖缺口，尚未接入，不能称 Data 全部中文化。
+- 本轮扩展与核心9文件52项测试、扩展类型检查、Biome、构建及包检查通过。未重跑全仓旧制作 UI 测试。

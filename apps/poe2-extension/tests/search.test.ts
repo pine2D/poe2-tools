@@ -135,3 +135,48 @@ it('部分词 Enter 不擅自选择候选，方向键与 Escape 不冒泡到原�
   expect(keys).toEqual([])
   expect(document.activeElement).toBe(input)
 })
+it('原站移除搜索框后撤下候选，重新插入旧框也不能提交旧选择', async () => {
+  const { input, submitted } = setup()
+  type(input, '符文')
+  const parent = input.parentElement as HTMLElement
+  const old = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  input.remove()
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  parent.prepend(input)
+  old?.click()
+  expect(submitted).toEqual([])
+})
+it('焦点在候选内移动时保留面板，离开查询区域后撤下且不抢焦点', () => {
+  const { input } = setup()
+  input.focus()
+  type(input, '符文')
+  const button = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  button?.focus()
+  expect(document.querySelector('[data-poe2-l10n]')).not.toBeNull()
+  const notes = document.querySelector('#notes') as HTMLInputElement
+  notes.focus()
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  expect(document.activeElement).toBe(notes)
+})
+it('原站同步替换控件时不把英文查询提示留在旧容器', () => {
+  const { input } = setup()
+  const parent = input.parentElement as HTMLElement
+  input.addEventListener('keyup', () => input.remove())
+  type(input, '符文')
+  document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')?.click()
+  expect(parent.querySelector('[data-poe2-l10n]')).toBeNull()
+})
+it('原站移动搜索框后撤下旧容器候选，新的中文输入仍可使用', async () => {
+  const { input, submitted } = setup()
+  type(input, '符文')
+  const next = document.createElement('div')
+  next.id = 'dataItemSearchInput'
+  document.querySelector('main')?.append(next)
+  next.append(input)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  type(input, '符文法器')
+  next.querySelector<HTMLButtonElement>('button')?.click()
+  expect(submitted).toEqual(['Runed Focus'])
+})

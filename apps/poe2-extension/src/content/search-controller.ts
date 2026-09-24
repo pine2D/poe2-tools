@@ -11,10 +11,11 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   let closed = false
   function clear() {
     revision++
-    panel?.remove()
+    const previous = panel
     panel = null
     active = null
     exactButton = null
+    previous?.remove()
   }
   function show(input: HTMLInputElement) {
     clear()
@@ -47,6 +48,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         if (closed || current !== revision || !input.isConnected || input.value !== query) return
         clear()
         submitSearch(input, term.en)
+        if (closed || !input.isConnected || searchDomain(input) !== domain) return
         panel = doc.createElement('div')
         panel.dataset.poe2L10n = 'search'
         panel.textContent = `中文查询：${query} → ${term.en}。可在上方继续输入中文。`
@@ -113,11 +115,35 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
     buttons[next]?.focus()
   }
+  function focusOut(event: FocusEvent) {
+    if (
+      !panel ||
+      (event.target !== active && !(event.target instanceof Node && panel.contains(event.target)))
+    )
+      return
+    const next = event.relatedTarget
+    if (next === active || (next instanceof Node && panel.contains(next))) return
+    clear()
+  }
+  const observer = new MutationObserver(() => {
+    if (
+      active &&
+      (!active.isConnected ||
+        !panel?.isConnected ||
+        panel.parentElement !== active.parentElement ||
+        !searchDomain(active))
+    )
+      clear()
+  })
+  observer.observe(doc.body, { childList: true, subtree: true })
+  doc.addEventListener('focusout', focusOut, true)
   for (const type of ['input', 'keyup', 'compositionstart', 'compositionend'])
     doc.addEventListener(type, handle, true)
   doc.addEventListener('keydown', key, true)
   return () => {
     closed = true
+    observer.disconnect()
+    doc.removeEventListener('focusout', focusOut, true)
     clear()
     for (const type of ['input', 'keyup', 'compositionstart', 'compositionend'])
       doc.removeEventListener(type, handle, true)
