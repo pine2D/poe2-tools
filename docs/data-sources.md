@@ -623,3 +623,15 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ## 深渊精华流程复核（2026-09-24）
 
 沿用固定 MIT 精华与词缀目录及已登记的 GGG 论坛3858079。新增人工机制参考为[Bclever88胸甲原帖及作者回复](https://www.reddit.com/r/PathOfExile2/comments/1wn934z/spirit_body_armor_first_big_craft_of_the_league/)，只保存自写流程摘要与链接，不复制图片、装备文本或数据集；玩家自述不是当前版本全部规则的证明。CoE公开日志只提供复核线索。该节点不新增采集适配器、执行参数或材料授权，具体缺口见[深渊精华研究](abyss-essence-research.md)。
+
+## Chrome 扩展适配参考（2026-09-24）
+
+本轮新增的是规划与人工参考登记，不新增抓取适配器、词典或运行时请求。已有制作研究的登记保留，但原独立制作模拟器计划无限期搁置。
+
+| 来源 | 用途与等级 | 使用范围与边界 |
+| --- | --- | --- |
+| [CoE 新版介绍](https://beta.craftofexile.com/whats-new)、[PoE2 入口](https://beta.craftofexile.com/?game=poe2)、[开发者说明](https://beta.craftofexile.com/developers) | gray，交互与公开集成文档参考 | 确认新版界面、功能区域及 eimport；仅人工查看公共页面和控件，不复制站点源码、语言包、目录或权重；尚未完成扩展兼容性验收 |
+| [Chrome content scripts](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts)、[storage API](https://developer.chrome.com/docs/extensions/reference/api/storage) | primary，官方平台说明 | 用于内容脚本、执行隔离与设置存储设计，不作为游戏术语或制作规则来源 |
+| 拟建 `data/l10n/coe-beta/ui.zh-CN.json` 与 `data/l10n/aliases.zh-CN.json` | manual，自写界面译文与经核对别名 | 按需创建；复用现有国服词典来源身份，未经确认不从繁体包补译；词典随扩展打包，保留原 gray 开关和来源元数据 |
+
+以上页面只用于规划核对。此前浏览器基底检索存在异步更新，尚不能据此确定全部事件与 DOM 兼容性，后续记录于 `docs/chrome-extension/compatibility.md`（实施时创建）。
