@@ -24,3 +24,6 @@
 `explicit-backedge-no-start.json`为原生UI生成的Step1→Step2→Step1无动作回边，没有显式起点，会触发起点选择错误。`explicit-backedge-property.json`是最终0.1.53包选择Step1起点并添加能量护盾属性后的原生导出；属性tier仍为null，不能将它当作指定阈值的模板。
 
 这是调查样本，不是可完成的制作方案。已有实测表明无动作回边不会自动结束，需要原生停止按钮；不要当作自动化批量执行样本。全部字段保留原生导出，仅格式化JSON。循环运行、手动停止、启停导出以及数值未保存的边界见compatibility.md。
+
+
+`silk-slippers-zh-CN.txt`为自造稀有丝绸便鞋高级文本：品质20%、一个空孔、T3护盾40和T6闪电抗性18。`silk-slippers-native.json`是无扩展英文基线的原生导出，仅格式化；0.1.57最终ZIP中文转换后的原生导出与该基线逐字一致。不是用户私人物品，也不包含站点规则库。

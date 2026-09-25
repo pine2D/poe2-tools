@@ -413,3 +413,36 @@ it('允许跨复合来源重叠不放宽同类重复、魔法上限或非法后�
   ])
     expect(prepareImport(source, hybridTerms).ready).toBe(false)
 })
+
+const bootsTerms: Term[] = [
+  ...robeTerms,
+  {
+    id: 'boots',
+    en: 'Silk Slippers',
+    zh: '丝绸便鞋',
+    domain: 'base',
+    source: 'test',
+    version: 'test',
+  },
+]
+const boots =
+  robe.replace('胸甲', '靴子').replace('丝质之袍', '丝绸便鞋').replace('等阶：6', '等阶：3') +
+  '\n--------\n品质: +20% (augmented)\n--------\n插槽: S'
+it('丝绸便鞋允许自身已验收的护盾与闪电抗性、品质和单空孔', () => {
+  const result = prepareImport(boots, bootsTerms)
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain('Item Class: Boots')
+  expect(result.english).toContain('Silk Slippers')
+  expect(result.english).toContain('Quality: +20% (augmented)')
+  expect(result.english).toContain('Sockets: S')
+  expect(result.english).toContain('+40(36-41) to maximum Energy Shield')
+  for (const invalid of [
+    boots.replace('靴子', '手套'),
+    boots.replace('插槽: S', '插槽: S S'),
+    boots.replace('品质: +20%', '品质: +21%'),
+    boots.replace('(36-41)', ''),
+    boots.replace('前缀属性', '后缀属性'),
+  ]) {
+    expect(prepareImport(invalid, bootsTerms).ready).toBe(false)
+  }
+})

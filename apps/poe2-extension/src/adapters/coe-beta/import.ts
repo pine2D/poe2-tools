@@ -52,6 +52,15 @@ const profiles = [
     prefixes: new Set(['explicit.stat_4052037485']),
   },
   {
+    base: 'Silk Slippers',
+    implicitStats: new Set<string>(),
+    armour: true,
+    emptySockets: 1,
+    classes: ['靴子', 'Boots'],
+    stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
+    prefixes: new Set(['explicit.stat_4052037485']),
+  },
+  {
     base: 'Twig Circlet',
     implicitStats: new Set<string>(),
     armour: true,
@@ -121,7 +130,9 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   )
   const verifiedStats = profile?.stats ?? new Set<string>()
   if (!profile || !['normal', 'magic', 'rare'].includes(item.rarity))
-    add('导入仅支持已验收的符文法器、细枝头冠、丝质之袍及蓝玉戒指的指定属性；其余装备仍可对照。')
+    add(
+      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋及蓝玉戒指的指定属性；其余装备仍可对照。',
+    )
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     add('特殊装备标记尚未验收。')
   if (item.itemLevel === null || item.itemLevel < 1 || item.itemLevel > 100)
