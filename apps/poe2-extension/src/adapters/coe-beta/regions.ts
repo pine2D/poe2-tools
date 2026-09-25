@@ -1,3 +1,4 @@
+import { settingsText } from './settings-text'
 import { statHeaderSelector, statSelector } from './stats'
 import { isUserContent } from './user-content'
 
@@ -18,6 +19,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'settings'
   | 'instructions'
   | 'introduction'
   | 'calculation'
@@ -27,6 +29,11 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (
+    node.parentElement?.closest('#settingsZone') ||
+    (node.ownerDocument.location.pathname === '/settings' && node.parentElement?.closest('main'))
+  )
+    return 'settings'
   if (node.parentElement?.closest('#homeFeatures')) return 'home'
   if (node.parentElement?.closest('.filterFeedback')) return 'filter'
   if (node.parentElement?.closest('.item .property')) return 'property'
@@ -180,22 +187,24 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'home'
-      ? (home.get(normalized) ?? null)
-      : context === 'filter'
-        ? (filters.get(normalized) ?? null)
-        : context === 'property'
-          ? (properties.get(normalized) ?? null)
-          : context === 'importer'
-            ? (importer.get(normalized) ?? null)
-            : context === 'tag'
-              ? tagText(normalized)
-              : context === 'calculation'
-                ? calculationText(normalized)
-                : context === 'introduction'
-                  ? (introduction.get(normalized) ?? null)
-                  : context === 'instructions'
-                    ? (instructions.get(word) ?? null)
-                    : null
+    context === 'settings'
+      ? (settingsText.get(normalized) ?? null)
+      : context === 'home'
+        ? (home.get(normalized) ?? null)
+        : context === 'filter'
+          ? (filters.get(normalized) ?? null)
+          : context === 'property'
+            ? (properties.get(normalized) ?? null)
+            : context === 'importer'
+              ? (importer.get(normalized) ?? null)
+              : context === 'tag'
+                ? tagText(normalized)
+                : context === 'calculation'
+                  ? calculationText(normalized)
+                  : context === 'introduction'
+                    ? (introduction.get(normalized) ?? null)
+                    : context === 'instructions'
+                      ? (instructions.get(word) ?? null)
+                      : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
