@@ -17,11 +17,15 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
   function add(id, en, zh, domain, source, version, extra = {}) {
     terms.push({ id, en, zh, domain, source, version, ...extra })
   }
-  for (const name of ['items', 'stats']) {
-    const entry = await read(`data/dict/zh-CN/${name}.json`)
+  for (const [relative, kind] of [
+    ['data/dict/zh-CN/items.json', 'items'],
+    ['data/dict/zh-CN/stats.json', 'stats'],
+    ['data/l10n/coe-beta/tablets.zh-CN.json', 'items'],
+  ]) {
+    const entry = await read(relative)
     const { _meta: meta } = entry.data
     if (!['primary', 'gray', 'manual'].includes(meta?.tier))
-      throw new Error(`词典来源等级缺失：${name}`)
+      throw new Error(`词典来源等级缺失：${relative}`)
     if (!allowGray && meta.tier === 'gray') continue
     sources.push({
       path: entry.path,
@@ -30,7 +34,7 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
       source: meta.source,
       version: meta.gameVersion,
     })
-    if (name === 'items') {
+    if (kind === 'items') {
       for (const [field, domain] of [
         ['bases', 'base'],
         ['uniques', 'unique'],

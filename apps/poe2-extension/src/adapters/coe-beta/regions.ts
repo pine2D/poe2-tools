@@ -62,7 +62,11 @@ export function textContext(
     (node.ownerDocument.location.pathname === '/settings' && node.parentElement?.closest('main'))
   )
     return 'settings'
-  if (node.parentElement?.closest('#itemCategorySelector li, #itemClassSelector li'))
+  if (
+    node.parentElement?.closest(
+      '#itemCategorySelector li, #itemClassSelector li, #categoriesSelector li, #classSelector li',
+    )
+  )
     return 'data-category'
   if (node.parentElement?.closest('#homeFeatures')) return 'home'
   if (node.parentElement?.closest('.filterFeedback')) return 'filter'

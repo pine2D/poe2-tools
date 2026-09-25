@@ -22,6 +22,11 @@ async function fixture() {
     bases: { 'Runed Focus': '符文法器' },
     uniques: {},
   })
+  await put('data/l10n/coe-beta/tablets.zh-CN.json', {
+    _meta: { ...meta, tier: 'gray', gameVersion: 'unknown' },
+    bases: { 'Expedition Tablet': '先祖秘藏石板' },
+    uniques: {},
+  })
   await put('data/dict/zh-CN/stats.json', {
     _meta: meta,
     entries: [{ id: 'res', en: '#% to Lightning Resistance', text: '闪电抗性 #%' }],
@@ -49,6 +54,7 @@ it('构建实际可显示和检索的资源并保留独立来源哈希', async (
   const data = JSON.parse(await readFile(output, 'utf8'))
   const lex = createLexicon(data.terms)
   expect(lex.translate('Runed Focus')).toBe('符文法器')
+  expect(lex.translate('Expedition Tablet')).toBe('先祖秘藏石板')
   expect(lex.translate('+18% to Lightning Resistance')).toBe('闪电抗性 +18%')
   expect(lex.translate('Exalted Orb')).toBe('崇高石')
   expect(lex.translate('Import an item')).toBe('导入装备')
@@ -63,6 +69,7 @@ it('关闭 gray 后覆盖旧产物且保留 primary/manual', async () => {
   const data = JSON.parse(await readFile(output, 'utf8'))
   const lex = createLexicon(data.terms)
   expect(lex.translate('Runed Focus')).toBeNull()
+  expect(lex.translate('Expedition Tablet')).toBeNull()
   expect(lex.translate('Import an item')).toBe('导入装备')
   expect(lex.translate('+18% to Lightning Resistance')).toBe('闪电抗性 +18%')
   expect(data.sources.some((x) => x.tier === 'gray')).toBe(false)

@@ -40,3 +40,18 @@ it('数据类别动态更新与双语显示保留英文身份，未知类别不�
   stop()
   expect(row.textContent).toBe('Tablet')
 })
+
+it('制作类别翻译保留原站筛选值并可恢复', () => {
+  document.body.innerHTML =
+    '<main><div id="categoriesSelector"><li value="12" search="Tablet">Tablet</li><li value="13">Waystone</li></div><div id="classSelector"><li value="a">Unknown Category</li></div></main>'
+  const original = document.body.innerHTML
+  const row = document.querySelector('li') as HTMLLIElement
+  stop = attachTextLayer(document, createLexicon([]))
+  expect(row.textContent).toBe('石板')
+  expect(row.getAttribute('search')).toBe('Tablet')
+  expect(row.getAttribute('value')).toBe('12')
+  expect(document.querySelector('[value="13"]')?.textContent).toBe('引路石')
+  expect(document.querySelector('#classSelector li')?.textContent).toBe('Unknown Category')
+  stop()
+  expect(document.body.innerHTML).toBe(original)
+})

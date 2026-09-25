@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "tier": "gray",
+    "source": "https://poe2db.tw/cn/Tablet",
+    "gameVersion": "unknown",
+    "reviewedAt": "2026-09-26",
+    "pages": {
+      "Abyss Tablet": "https://poe2db.tw/cn/Abyss_Tablet",
+      "Breach Tablet": "https://poe2db.tw/cn/Breach_Tablet",
+      "Delirium Tablet": "https://poe2db.tw/cn/Delirium_Tablet",
+      "Expedition Tablet": "https://poe2db.tw/cn/Expedition_Tablet",
+      "Irradiated Tablet": "https://poe2db.tw/cn/Irradiated_Tablet",
+      "Overseer Tablet": "https://poe2db.tw/cn/Overseer_Tablet",
+      "Ritual Tablet": "https://poe2db.tw/cn/Ritual_Tablet",
+      "Temple Tablet": "https://poe2db.tw/cn/Temple_Tablet"
+    }
+  },
+  "bases": {
+    "Abyss Tablet": "深渊石板",
+    "Breach Tablet": "裂隙石板",
+    "Delirium Tablet": "惊悸迷雾石板",
+    "Expedition Tablet": "先祖秘藏石板",
+    "Irradiated Tablet": "能量辐照石板",
+    "Overseer Tablet": "霸主石板",
+    "Ritual Tablet": "驱灵仪式石板",
+    "Temple Tablet": "神庙石板"
+  },
+  "uniques": {}
+}

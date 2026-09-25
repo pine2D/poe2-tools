@@ -718,3 +718,8 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 0.1.86沿既有CoE公开DOM人工UI来源补齐Data物品／词缀两种模式的完整空结果句No items found for this selection.与No modifiers found for this selection.，均按当前筛选条件表述，不声称中文词典缺失或原站不支持该类别。没有新增数据源或游戏规则。
 
 0.1.87沿既有CoE公开DOM人工UI来源，为https://beta.craftofexile.com/simulator-usage的六节教程增加122条限定正文上下文的手工译文，并补流程侧栏帮助入口的三段译文。保留原站链接、动图地址及“调试尚未推出”限定；House／Flag只在此教程按图标解释，普通and／or不采用逻辑运算符标签。原文Conditions configuration段重复无有效路线时处理说明，中文标题附明确校注、下文忠实翻译，不擅自改成未验证教程；不是新的制作数据源或规则导入。
+
+
+### 扩展石板名称补表（2026-09-26）
+
+来源为已登记 gray 的 [PoE2DB 简中石板列表](https://poe2db.tw/cn/Tablet)及八种石板各自页面。仅人工核对英文／简体名称，存入 `data/l10n/coe-beta/tablets.zh-CN.json`；逐项 URL 见文件 `_meta.pages`。不复制规则、权重或页面数据文件，未确认独立再分发授权，保持 gray，可通过 `--no-gray` 整体移除。无运行时请求。访问日期不代表游戏版本，版本记为 unknown；尚未国服真机核对。
