@@ -7,7 +7,7 @@ import {
 import type { Term } from '@poe2-tools/l10n-core'
 
 // 开发预览的文本资格边界；逐项端到端证据见兼容性文档，不调用本机制作资格。
-const verifiedStats = new Set([
+const focusStats = new Set([
   'explicit.stat_4052037485',
   'explicit.stat_3291658075',
   'explicit.stat_1050105434',
@@ -15,6 +15,25 @@ const verifiedStats = new Set([
   'explicit.stat_789117908',
   'explicit.stat_2923486259',
 ])
+// 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
+const profiles = [
+  {
+    base: 'Runed Focus',
+    classes: ['法器', 'Foci'],
+    stats: focusStats,
+    prefixes: new Set([
+      'explicit.stat_4052037485',
+      'explicit.stat_3291658075',
+      'explicit.stat_1050105434',
+    ]),
+  },
+  {
+    base: 'Twig Circlet',
+    classes: ['头盔', 'Helmets'],
+    stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
+    prefixes: new Set(['explicit.stat_4052037485']),
+  },
+]
 export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   const names = (domain: Term['domain']) =>
     Object.fromEntries(terms.filter((t) => t.domain === domain).map((t) => [t.en, t.zh]))
@@ -39,12 +58,12 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   const inspection = inspectItem(item, itemDictionary(terms))
   const reasons: string[] = []
   if (inspection.comparisonOnly) reasons.push(inspection.comparisonReason ?? '此装备仅供对照。')
-  if (
-    inspection.base.english !== 'Runed Focus' ||
-    !['法器', 'Foci'].includes(item.itemClass) ||
-    !['magic', 'rare'].includes(item.rarity)
+  const profile = profiles.find(
+    (p) => p.base === inspection.base.english && p.classes.includes(item.itemClass),
   )
-    reasons.push('首批导入仅验收符文法器的魔法／稀有普通词缀；其余装备仍可对照。')
+  const verifiedStats = profile?.stats ?? new Set<string>()
+  if (!profile || !['magic', 'rare'].includes(item.rarity))
+    reasons.push('导入仅支持已验收的符文法器和细枝头冠普通词缀；其余装备仍可对照。')
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     reasons.push('特殊装备标记尚未验收。')
   if (item.itemLevel === null || item.itemLevel < 1 || item.itemLevel > 100)
@@ -56,11 +75,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     if (item.mods.filter((m) => m.kind === kind).length > (item.rarity === 'magic' ? 1 : 3))
       reasons.push('前后缀数量超出普通装备范围。')
   const seenStats = new Set<string>()
-  const prefixStats = new Set([
-    'explicit.stat_4052037485',
-    'explicit.stat_3291658075',
-    'explicit.stat_1050105434',
-  ])
+  const prefixStats = profile?.prefixes ?? new Set<string>()
   for (const { mod, stats } of inspection.mods) {
     if (
       !['prefix', 'suffix'].includes(mod.kind) ||

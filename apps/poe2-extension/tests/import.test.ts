@@ -71,3 +71,75 @@ it.each([
   text.replace('前缀属性', '后缀属性'),
   text.replace('等阶：6', '等阶：999'),
 ])('拒绝异常普通词缀结构 %#', (source) => expect(prepareImport(source, terms).ready).toBe(false))
+
+const helmetTerms: Term[] = [
+  ...terms,
+  {
+    id: 'helmet',
+    en: 'Twig Circlet',
+    zh: '细枝头冠',
+    domain: 'base',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'lightning',
+    sourceId: 'explicit.stat_1671376347',
+    en: '+#% to Lightning Resistance',
+    zh: '闪电抗性 +#%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+]
+const helmet = `物品类别: 头盔
+稀有度: 魔法
+辐射的 细枝头冠 暴风之
+--------
+能量护盾: 59 (augmented)
+--------
+物品等级: 86
+--------
+{ 前缀属性 "辐射的" (等阶：4) — 能量护盾 }
++40(36-41) 能量护盾上限
+{ 后缀属性 "暴风之" (等阶：6) — 元素, 闪电, 抗性 }
+闪电抗性 +18(16-20)%`
+it('细枝头冠按自身类别导出，保留两个高级词缀的数值、范围和等阶', () => {
+  const result = prepareImport(helmet, helmetTerms)
+  expect(result.reasons).toEqual([])
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain('Item Class: Helmets')
+  expect(result.english).toContain('Tier: 4')
+  expect(result.english).toContain('+40(36-41) to maximum Energy Shield')
+  expect(result.english).toContain('+18(16-20)% to Lightning Resistance')
+  expect(
+    prepareImport(
+      helmet.replace('稀有度: 魔法\n辐射的 细枝头冠 暴风之', '稀有度: 稀有\n测试 样本\n细枝头冠'),
+      helmetTerms,
+    ).ready,
+  ).toBe(true)
+})
+it('不同装备导入档案不得交叉放行基底、类别和词缀', () => {
+  for (const source of [
+    helmet.replace('头盔', '法器'),
+    helmet.replace('细枝头冠', '符文法器'),
+    helmet.replace('能量护盾: 59', '护甲: 59'),
+    helmet.replace('前缀属性', '后缀属性'),
+  ])
+    expect(prepareImport(source, helmetTerms).ready).toBe(false)
+  const focusOnly = {
+    id: 'cold',
+    sourceId: 'explicit.stat_3291658075',
+    en: '#% increased Cold Damage',
+    zh: '冰霜伤害提高 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  } as const
+  expect(
+    prepareImport(helmet.replace('+40(36-41) 能量护盾上限', '冰霜伤害提高 25(25-34)%'), [
+      ...helmetTerms,
+      focusOnly,
+    ]).ready,
+  ).toBe(false)
+})
