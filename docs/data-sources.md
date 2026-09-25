@@ -645,3 +645,8 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ### 扩展新版介绍页术语核对（2026-09-25）
 
 0.1.30 沿既有 `data/craft/catalog.json` 国服名称核对四种 Flux 与 Vaal Infuser 系列，沿 `data/dict/zh-CN/items.json` 核对 Gloam／Tenebrous／Dusk／Penumbra 首饰及 Distorted Amulet；只增加人工组合句，不复制外站规则文件。[PoE2DB 简中 Strongbox](https://poe2db.tw/cn/Strongbox) 按已登记 gray 来源人工核对“保险箱”，页面标签亦含“施法”，可作为 Caster 人工译名的社区交叉证据，仍不等于国服真机验证。Distilled_Emotions／Distilled_Ire 页面读取均为404，不作为译名证据；分类暂保留英文。
+
+
+### 扩展分类名称人工译文（2026-09-25）
+
+0.1.35 仅从新版 CoE 可见 `categoriesSelector`／`classSelector` 记录类别名及选择身份，不读取执行源码或规则库；89条分类／分型在既有 UI 表中人工维护。Quarterstaves、Bucklers、Flails 分别依据现有国服基底表核对为节杖、轻盾、连枷；其余类别沿既有文本类别／国服物品名称和人工界面说明。BASE译为基础类型，STR／DEX／INT展开为力量／敏捷／智慧，不改变ID。分类用语不等同于国服客户端类别行已全部真机核对。碑牌、地图石等未核实分类暂保留英文。
