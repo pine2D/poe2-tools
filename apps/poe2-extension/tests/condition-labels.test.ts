@@ -1,5 +1,6 @@
 import { createLexicon, type Term } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
+import aliases from '../../../data/l10n/aliases.zh-CN.json'
 import ui from '../../../data/l10n/coe-beta/ui.zh-CN.json'
 import { searchCandidates } from '../src/adapters/coe-beta/search'
 import { attachTextLayer } from '../src/content/text-layer'
@@ -174,4 +175,22 @@ it('模拟器动态连线提示翻译并恢复，原站tooltip属性始终保留
   expect(document.querySelector('.end')?.getAttribute('tooltip')).toBe('End condition')
   stop()
   expect(tooltip.textContent).toBe('New link')
+})
+
+it('渎灵界面显示采用国服译名，旧称别名仍指向原英文身份', () => {
+  const en = 'Desecrated Prefix'
+  expect(ui.entries[en]).toBe('渎灵前缀')
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: `ui:${en}`,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+    aliases: aliases.entries.find((entry) => entry.id === `ui:${en}`)?.aliases ?? [],
+  }))
+  const lexicon = createLexicon(terms)
+  for (const query of ['渎灵前缀', '亵渎前缀'])
+    expect(lexicon.search(query, 'ui').map((entry) => entry.term.en)).toContain(en)
+  expect(lexicon.translate(en, 'ui')).toBe('渎灵前缀')
 })

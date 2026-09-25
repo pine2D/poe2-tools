@@ -1,1 +1,24 @@
-{ "entries": [] }
+{
+  "entries": [
+    {
+      "id": "ui:Desecrate",
+      "aliases": ["亵渎"]
+    },
+    {
+      "id": "ui:Desecrated",
+      "aliases": ["亵渎"]
+    },
+    {
+      "id": "ui:Desecrated Affix",
+      "aliases": ["亵渎词缀"]
+    },
+    {
+      "id": "ui:Desecrated Prefix",
+      "aliases": ["亵渎前缀"]
+    },
+    {
+      "id": "ui:Desecrated Suffix",
+      "aliases": ["亵渎后缀"]
+    }
+  ]
+}

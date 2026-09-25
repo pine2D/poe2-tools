@@ -61,3 +61,30 @@ it('揭示后的一次重选与额外神龛效果不扩大次数，空白不影�
     materialDescription(`${active}the next Shrine you click on\nwill grant an additional Effect`),
   ).toContain('额外提供一种效果')
 })
+
+it('渎灵机制使用国服专名并保留武器或首饰资格和随机限定', () => {
+  const result = materialDescription(
+    `${active}your next Weapon or Jewellery Desecration attempt will guarantee a random Amanamu modifier`,
+  )
+  expect(result).toContain('武器或首饰')
+  expect(result).toContain('渎灵')
+  expect(result).toContain('随机阿曼娜姆词缀')
+  expect(
+    materialDescription(
+      `${active}your next Weapon or Jewellery Desecration attempt will guarantee a random Unknown modifier`,
+    ),
+  ).toBeNull()
+  expect(
+    materialDescription(`${active}your next Desecration attempt will add only prefix modifiers`),
+  ).toContain('渎灵')
+})
+it('附身怪物与盗贼流放者说明不丢失所有与下次遭遇的限制', () => {
+  expect(
+    materialDescription(
+      `${active}the next Possessed monster you kill will Release and manifest all Azmeri Spirits`,
+    ),
+  ).toContain('所有阿兹莫里之灵')
+  expect(
+    materialDescription(`${active}the next Rogue Exile you encounter will summon an ally`),
+  ).toContain('下一次遭遇的盗贼流放者将召唤一名盟友')
+})

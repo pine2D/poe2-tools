@@ -2,6 +2,19 @@
 const lead = 'While this item is active in your inventory your next '
 const translatedLead = '当此物品在你的物品栏中激活时，你下一次'
 const descriptions = new Map([
+  [
+    'Weapon or Jewellery Desecration attempt will guarantee a random Ulaman modifier',
+    '尝试对武器或首饰进行渎灵时，必定获得一条随机乌拉曼词缀。',
+  ],
+  [
+    'Weapon or Jewellery Desecration attempt will guarantee a random Amanamu modifier',
+    '尝试对武器或首饰进行渎灵时，必定获得一条随机阿曼娜姆词缀。',
+  ],
+  [
+    'Weapon or Jewellery Desecration attempt will guarantee a random Kurgal modifier',
+    '尝试对武器或首饰进行渎灵时，必定获得一条随机古加尔词缀。',
+  ],
+
   ['Chaos Orb will remove the lowest level modifier', '使用混沌石将移除等级最低的词缀。'],
   ['Chaos Orb will remove only prefix modifiers', '使用混沌石将仅移除前缀词缀。'],
   ['Chaos Orb will remove only suffix modifiers', '使用混沌石将仅移除后缀词缀。'],
@@ -71,14 +84,23 @@ const descriptions = new Map([
   ],
   [
     'Desecration attempt will replace all modifiers on the item creating an item with up to 6 Unrevealed modifiers and Corrupting the item',
-    '尝试亵渎将替换该物品上的全部词缀，生成最多带有六条未揭示词缀的物品，并使其腐化。',
+    '尝试渎灵将替换该物品上的全部词缀，生成最多带有六条未揭示词缀的物品，并使其腐化。',
   ],
-  ['Orb of Annulment will remove only Desecrated modifiers', '使用剥离石将仅移除亵渎词缀。'],
-  ['Desecration attempt will add only prefix modifiers', '尝试亵渎将仅添加前缀词缀。'],
-  ['Desecration attempt will add only suffix modifiers', '尝试亵渎将仅添加后缀词缀。'],
+  ['Orb of Annulment will remove only Desecrated modifiers', '使用剥离石将仅移除渎灵词缀。'],
+  ['Desecration attempt will add only prefix modifiers', '尝试渎灵将仅添加前缀词缀。'],
+  ['Desecration attempt will add only suffix modifiers', '尝试渎灵将仅添加后缀词缀。'],
 ])
 const activeLead = 'While this item is active in your inventory '
 const activeDescriptions = new Map([
+  [
+    'the next Possessed monster you kill will Release and manifest all Azmeri Spirits',
+    '你下一次击杀的被附身怪物将释放所有阿兹莫里之灵，并使它们显现。',
+  ],
+  [
+    'the next Rogue Exile you encounter will summon an ally',
+    '你下一次遭遇的盗贼流放者将召唤一名盟友。',
+  ],
+
   [
     'will fully recover your flask and charm charges when you reach Low Life',
     '你进入低血状态时会完全恢复药剂和咒符充能。',
@@ -95,7 +117,7 @@ const activeDescriptions = new Map([
   ['the next Strongbox you click on will be reopenable', '你下一次点击的保险箱将可以再次开启。'],
   [
     'the next time you reveal Desecrated modifiers you can reroll the options once',
-    '你下一次揭示亵渎词缀时，可以重选一次候选词缀。',
+    '你下一次揭示渎灵词缀时，可以重选一次候选词缀。',
   ],
 ])
 export function materialDescription(original: string): string | null {
