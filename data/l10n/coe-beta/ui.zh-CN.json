@@ -455,6 +455,12 @@
     "Could not find starting step (please select one)": "无法自动确定起始步骤，请手动选择。",
     "Choose a starting step": "选择起始步骤",
     "AUTO-DETECT": "自动识别",
-    "No item data available.": "暂无物品数据。"
+    "No item data available.": "暂无物品数据。",
+    "Elevated modifiers shown as tier 0": "Elevated 词缀显示为等阶 0",
+    "Proper implicit overwrite handling on synth and corrupt": "正确处理合成（Synthesis）和腐化时的基底词缀覆盖",
+    "Fossil optimizer": "化石优化器",
+    "Remaining time, combinations per second feedback": "显示剩余时间与每秒处理的组合数",
+    "Editable worker count for splitting task": "可调整并行工作线程数，分担计算任务",
+    "Proper heist jewellery affix limit handling": "正确处理夺宝（Heist）首饰的词缀数量上限"
   }
 }
