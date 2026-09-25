@@ -16,15 +16,16 @@ export function isConditionSearch(input: HTMLInputElement): boolean {
 export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   const domain = searchDomain(input)
   if (!domain) return []
-  const candidates = lexicon.search(input.value, domain)
-  if (!isConditionSearch(input)) return candidates
+  if (!isConditionSearch(input)) return lexicon.search(input.value, domain)
   // 只使用原站保留的英文搜索属性，不读取已经叠加中文的可见文本。
   const options = [...(input.closest('.dropdown')?.querySelectorAll('li[search]') ?? [])].map(
     (option) => option.getAttribute('search')?.toLowerCase() ?? '',
   )
-  return [...candidates, ...lexicon.search(input.value, 'ui')].filter((candidate) =>
-    options.some((option) => option.includes(candidate.term.en.toLowerCase())),
-  )
+  const accept = (term: Term) => options.some((option) => option.includes(term.en.toLowerCase()))
+  return [
+    ...lexicon.search(input.value, domain, accept),
+    ...lexicon.search(input.value, 'ui', accept),
+  ]
 }
 export function searchDomain(input: HTMLInputElement): Term['domain'] | null {
   if (isConditionSearch(input)) return 'stat'

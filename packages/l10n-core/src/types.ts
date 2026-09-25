@@ -15,5 +15,5 @@ export interface Candidate {
 }
 export interface Lexicon {
   translate(text: string, domain?: Term['domain']): string | null
-  search(text: string, domain: Term['domain']): Candidate[]
+  search(text: string, domain: Term['domain'], accept?: (term: Term) => boolean): Candidate[]
 }

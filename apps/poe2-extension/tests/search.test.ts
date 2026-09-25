@@ -327,3 +327,37 @@ it('制作页仅在计算条件区域启用中文候选，离开时清理且不�
   type(other, '词缀数量')
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
 })
+
+it('先限定原站条件选项再截取候选，不能让无关词条挤掉有效结果', () => {
+  document.body.innerHTML =
+    '<main><div id="calculatorZone"><div class="requirements"><div class="dropdown editing"><div class="editing"><input type="text"></div><ul><li search="#% to lightning resistance"></li></ul></div></div></div></main>'
+  const noise = Array.from({ length: 60 }, (_, i) => ({
+    id: `noise-${i}`,
+    en: `Unavailable ${i}`,
+    zh: `抗性${i}`,
+    domain: 'stat' as const,
+    source: 'test',
+    version: 'test',
+  }))
+  stop = attachSearch(
+    document,
+    createLexicon([
+      ...noise,
+      {
+        id: 'lightning',
+        en: '#% to Lightning Resistance',
+        zh: '闪电抗性提高 #% ',
+        domain: 'stat',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  const input = document.querySelector('input') as HTMLInputElement
+  type(input, '抗性')
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-poe2-l10n] button')
+  expect(buttons).toHaveLength(1)
+  expect(buttons[0]?.textContent).toContain('#% to Lightning Resistance')
+  buttons[0]?.click()
+  expect(input.value).toBe('#% to Lightning Resistance')
+})

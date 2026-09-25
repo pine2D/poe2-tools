@@ -194,3 +194,16 @@ it('字面命中不能掩盖模板冲突，领域筛选与相同译文仍保持�
   expect(lex.translate('Gain 5 Life', 'stat')).toBe('获得 5 生命')
   expect(lex.translate('  RUNED   FOCUS  ')).toBe('  符文法器  ')
 })
+
+it('限定候选范围后仍保留排序与50项上限，后续无范围查询不受污染', () => {
+  const terms = Array.from({ length: 120 }, (_, i) =>
+    term(String(i), `Resistance ${i}`, `抗性 ${i}`),
+  )
+  const lex = createLexicon(terms)
+  const accept = (entry: { id: string }) => Number(entry.id) >= 60
+  const expected = createLexicon(terms.filter(accept)).search('抗性', 'stat')
+  const scoped = lex.search('抗性', 'stat', accept)
+  expect(scoped).toEqual(expected)
+  expect(scoped).toHaveLength(50)
+  expect(lex.search('抗性', 'stat').some((candidate) => Number(candidate.term.id) < 60)).toBe(true)
+})

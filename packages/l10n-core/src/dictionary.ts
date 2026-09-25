@@ -66,6 +66,6 @@ export function createLexicon(input: readonly Term[]): Lexicon {
       if (translated === undefined) return null
       return (text.match(/^\s*/)?.[0] ?? '') + translated + (text.match(/\s*$/)?.[0] ?? '')
     },
-    search: (text, domain) => searchTerms(terms, text, domain),
+    search: (text, domain, accept) => searchTerms(terms, text, domain, accept),
   }
 }
