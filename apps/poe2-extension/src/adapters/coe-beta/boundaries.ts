@@ -1,6 +1,26 @@
 // 仅这些属性与区域选择器有关；普通 hover/selected 样式不触发重扫。
-export const boundaryAttributes = ['class', 'id', 'hidden', 'contenteditable', 'role', 'type']
-const boundaryClasses = ['hidden', 'stat', 'modifierTable', 'row', 'label', 'text', 'tabs']
+export const boundaryAttributes = [
+  'class',
+  'id',
+  'hidden',
+  'contenteditable',
+  'role',
+  'type',
+  'simulationid',
+]
+const boundaryClasses = [
+  'hidden',
+  'stat',
+  'modifierTable',
+  'row',
+  'label',
+  'text',
+  'tabs',
+  'title',
+  'header',
+  'simulationsList',
+  'simulatorStep',
+]
 export function boundaryChanged(record: MutationRecord): boolean {
   if (record.type !== 'attributes' || !boundaryAttributes.includes(record.attributeName ?? ''))
     return false

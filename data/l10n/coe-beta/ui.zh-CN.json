@@ -138,6 +138,15 @@
     "Filters and search feature": "筛选与搜索功能",
     "Improved localization handling": "改进本地化处理",
     "Improved patch data compare feature": "改进版本数据对比功能",
-    "Paste your data here\n\n(Please note that an ATL-CTRL-C paste is required for copying an item from the game)": "在此粘贴装备文本（请在游戏中按 Ctrl+Alt+C 复制高级装备信息）"
+    "Paste your data here\n\n(Please note that an ATL-CTRL-C paste is required for copying an item from the game)": "在此粘贴装备文本（请在游戏中按 Ctrl+Alt+C 复制高级装备信息）",
+    "Back to layout": "返回流程图",
+    "Apply changes": "应用更改",
+    "Current Simulation": "当前流程",
+    "Copy": "复制",
+    "Title": "标题",
+    "Description": "说明",
+    "Import all": "全部导入",
+    "Export all": "全部导出",
+    "No Action": "不执行操作"
   }
 }
