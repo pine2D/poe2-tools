@@ -217,7 +217,7 @@ it('丝质之袍按胸甲身份转换两个已核对词缀，不向其他胸甲�
   for (const source of [
     robe.replace('胸甲', '头盔'),
     `${robe}\n--------\n品质: +21%`,
-    `${robe}\n--------\n插槽: S`,
+    `${robe}\n--------\n插槽: S S S`,
     robe.replace('等阶：6', '等阶：0'),
   ]) {
     expect(prepareImport(source, robeTerms).ready).toBe(false)
@@ -241,4 +241,24 @@ it('已支持基底的普通品质保持数值，重复或超范围品质不能�
   ]) {
     expect(prepareImport(withQuality(quality), terms).ready).toBe(false)
   }
+})
+
+it('空插槽按已验收基底限制数量，重复、链接或镶嵌效果不放行', () => {
+  const normal = '物品类别: 胸甲\n稀有度: 普通\n丝质之袍\n--------\n物品等级: 86'
+  for (const sockets of ['S', 'S S']) {
+    const result = prepareImport(`${normal}\n--------\n插槽: ${sockets}`, robeTerms)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain(`Sockets: ${sockets}`)
+  }
+  for (const line of [
+    '插槽: S S S',
+    '插槽: S-S',
+    '插槽: A',
+    '插槽: S\n插槽: S',
+    '插槽: S\n--------\n火焰抗性 +20% (rune)',
+  ]) {
+    expect(prepareImport(`${normal}\n--------\n${line}`, robeTerms).ready).toBe(false)
+  }
+  const helmet = normal.replace('胸甲', '头盔').replace('丝质之袍', '细枝头冠')
+  expect(prepareImport(`${helmet}\n--------\n插槽: S S`, robeTerms).ready).toBe(false)
 })

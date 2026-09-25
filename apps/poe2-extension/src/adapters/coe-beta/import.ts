@@ -19,6 +19,7 @@ const focusStats = new Set([
 const profiles = [
   {
     base: 'Runed Focus',
+    emptySockets: 1,
     classes: ['法器', 'Foci'],
     stats: focusStats,
     prefixes: new Set([
@@ -29,12 +30,14 @@ const profiles = [
   },
   {
     base: 'Silk Robe',
+    emptySockets: 2,
     classes: ['胸甲', 'Body Armours'],
     stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
     prefixes: new Set(['explicit.stat_4052037485']),
   },
   {
     base: 'Twig Circlet',
+    emptySockets: 1,
     classes: ['头盔', 'Helmets'],
     stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
     prefixes: new Set(['explicit.stat_4052037485']),
@@ -145,8 +148,23 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     }
   }
   let qualityCount = 0
+  let socketLines = 0
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers', 'item-level'].includes(block.kind)) continue
+    if (block.kind === 'sockets') {
+      for (const line of block.lines) {
+        socketLines++
+        const match = /^(?:插槽|Sockets)\s*[:：]\s*(S(?:\s+S)*)$/.exec(line.raw.trim())
+        if (
+          !match ||
+          !inspection.englishByLine[line.line] ||
+          socketLines > 1 ||
+          (match[1]?.split(/\s+/).length ?? Number.POSITIVE_INFINITY) > (profile?.emptySockets ?? 0)
+        )
+          add('仅支持该基底已验收数量的单行空 S 插槽；其他孔位结构尚未验收。', line.line)
+      }
+      continue
+    }
     if (!['requirements', 'properties'].includes(block.kind)) {
       add('包含未验收的区块、孔位或技能。', block.lines[0]?.line ?? null)
       continue
