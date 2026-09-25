@@ -167,7 +167,9 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       ]
       if (identities.length !== 1) add('普通属性身份未唯一识别。', source.line)
       for (const id of identities) {
-        const identity = `${implicit ? 'implicit' : 'explicit'}:${id}`
+        // 已验收复合组与普通组可各自贡献魔力，同类组内的重复仍拒绝。
+        const origin = implicit ? 'implicit' : compound ? 'focus-hybrid' : 'explicit'
+        const identity = `${origin}:${id}`
         if (seenStats.has(identity)) add('同一普通属性重复出现，不能确认完整导入。', source.line)
         if (!implicit && mod.kind !== (compound || prefixStats.has(id) ? 'prefix' : 'suffix'))
           add('普通属性与前后缀分组不符。', source.line)

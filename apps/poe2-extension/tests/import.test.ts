@@ -383,7 +383,33 @@ it('复合资格不放行缺行、错组、重复属性或其他基底', () => {
     hybridText.replace('+10(9-16)', '+10'),
     hybridText.replace('法器', '头盔'),
     hybridText.replace('等阶：5', '等阶：999'),
-    `${hybridText.replace('稀有度: 魔法\n测试的 符文法器', '稀有度: 稀有\n测试 样本\n符文法器')}\n{ 前缀属性 "第二个" (等阶：5) }\n+10(9-16) 魔力上限`,
+  ])
+    expect(prepareImport(source, hybridTerms).ready).toBe(false)
+})
+
+const rareHybrid = hybridText.replace(
+  '稀有度: 魔法\n测试的 符文法器',
+  '稀有度: 稀有\n测试 样本\n符文法器',
+)
+const manaPrefix = '{ 前缀属性 "青蓝的" (等阶：8) — 魔力 }\n+48(35-54) 魔力上限'
+const overlap = `${rareHybrid}\n${manaPrefix}`
+it('稀有法器复合魔力与独立魔力前缀保留两组数值，不合并导出', () => {
+  const result = prepareImport(overlap, hybridTerms)
+  expect(result.ready).toBe(true)
+  expect(result.reasons).toEqual([])
+  expect(result.english.match(/Prefix Modifier/g)).toHaveLength(2)
+  expect(result.english).toContain('+10(9-16) to maximum Mana')
+  expect(result.english).toContain('+48(35-54) to maximum Mana')
+  expect(result.english).not.toContain('+58')
+})
+it('允许跨复合来源重叠不放宽同类重复、魔法上限或非法后缀', () => {
+  const hybridGroup = hybridText.slice(hybridText.indexOf('{ 前缀属性'))
+  for (const source of [
+    `${overlap}\n${manaPrefix}`,
+    `${rareHybrid}\n${hybridGroup}`,
+    `${hybridText}\n${manaPrefix}`,
+    `${rareHybrid}\n${manaPrefix.replace('前缀属性', '后缀属性')}`,
+    rareHybrid.replace('能量护盾提高 20(14-20)%', '+10(9-16) 魔力上限'),
   ])
     expect(prepareImport(source, hybridTerms).ready).toBe(false)
 })
