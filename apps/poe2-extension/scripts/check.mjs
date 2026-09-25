@@ -2,8 +2,30 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import vm from 'node:vm'
+import { build } from 'vite'
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+// 使用与浏览器相同的核心校验；仅在 Node 检查进程内编译，不写入扩展产物。
+let lexiconModule
+async function loadLexiconModule() {
+  const result = await build({
+    configFile: false,
+    logLevel: 'silent',
+    build: {
+      write: false,
+      minify: false,
+      lib: {
+        entry: path.resolve(import.meta.dirname, '../../../packages/l10n-core/src/index.ts'),
+        formats: ['es'],
+      },
+    },
+  })
+  const output = Array.isArray(result) ? result[0] : result
+  const entry = output.output.find((chunk) => chunk.type === 'chunk' && chunk.isEntry)
+  if (!entry) throw new Error('无法加载词典核心校验')
+  return import(`data:text/javascript;base64,${Buffer.from(entry.code).toString('base64')}`)
+}
+
 export function validateManifest(m, version) {
   if (m.manifest_version !== 3 || m.version !== version || !same(m.permissions, ['storage']))
     throw new Error('Manifest 版本或权限不符合约定')
@@ -54,10 +76,14 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   if (
     dict.schemaVersion !== 1 ||
     dict.locale !== 'zh-CN' ||
+    !Array.isArray(dict.terms) ||
     !dict.terms.length ||
     new Set(dict.terms.map((t) => t.id)).size !== dict.terms.length
   )
     throw new Error('词典格式或身份不合法')
+  lexiconModule ??= loadLexiconModule()
+  const { createLexicon } = await lexiconModule
+  createLexicon(dict.terms)
   const files = await readdir(dist, { recursive: true, withFileTypes: true })
   for (const entry of files)
     if (entry.isFile() && !/\.(?:json|js|css|html|txt|png)$/.test(entry.name))
