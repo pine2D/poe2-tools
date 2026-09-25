@@ -247,3 +247,12 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 新隔离会话加载同一最终ZIP，Chrome管理页确认版本0.1.19。新版whats-new页，PoE2先选择cn，提示数量1；不点击关闭，直接从原站语言菜单切us，读取到提示0且开场“全面重构”简体译文恢复。补齐上一轮读取超时留下的证据，不据此推断上次超时根因。
 - 再切cn后，从真实扩展popup取消“启用简体中文”：原站语言仍cn，提示0。重新勾选后提示1，原站仍cn。随后真实点击POE 1，DOM为poe1 selected、语言cn、提示0。
 - 所有操作均通过菜单／复选框，未直接写入原站或扩展存储；浏览器已确认关闭。本轮只更新验收文档，没有修改运行代码或重跑历史97项测试。跨浏览器重启、其他语言及窄视口仍未完整验收。
+
+
+## 0.1.20 连线条件编辑（2026-09-25）
+
+- 在Beta English／PoE2模拟器建立两个不执行操作的自造节点，以真实鼠标拖入画布、连接，打开连线条件编辑。发现Link edition、Remove link、Change target、Evaluation mode、Passthrough、Conditions缺少译文，新增6条人工UI映射。
+- 最终ZIP解包到原隔离会话已加载目录，管理页重载确认0.1.20，刷新CoE后从原站保存状态恢复流程。编辑连线截图已审阅，6条译文可见；实际点击“直接通过／条件判断”，原站selected value分别为pass／conditions。用户节点名Step 1／Step 2保持原文。
+- 条件选用Number of Affixes。最初fill数值后没有保留，随后真实按键1、Tab、应用更改并重新打开，数值保持1。没有无扩展对照，不将先前现象归因为扩展错误。载入列表下误点隐藏画布曾报告页头遮挡，返回流程图后正常，不作为可见布局缺陷。
+- 核心／扩展15文件97测试通过，3个修改JSON的Biome检查通过；构建与包检查通过，6719词条、仅storage。pnpm extension:package入口因本机SQLite存储无法打开而失败，随后直接运行仓库build.mjs与package.mjs完成构建和打包；未安装／更改依赖。本轮无TypeScript代码变化，未重跑类型检查和全仓verify。
+- 浏览器已关闭。此轮仅证明条件编辑与身份切换，不证明条件分支运行、循环或制作动作链通过。条件下拉框的元属性、Conditions configuration、Value、All等仍有英文，搜索适配也待补；下一步继续沿真实条件流程验证，不缩小完整验收范围。

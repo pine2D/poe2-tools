@@ -261,6 +261,12 @@
     "Total spending:": "总花费：",
     "View details": "查看详情",
     "Last changes": "最近更改",
-    "Actions:": "操作次数："
+    "Actions:": "操作次数：",
+    "Link edition": "编辑连线",
+    "Remove link": "移除连线",
+    "Change target": "更改目标",
+    "Evaluation mode": "判断模式",
+    "Passthrough": "直接通过",
+    "Conditions": "条件判断"
   }
 }
