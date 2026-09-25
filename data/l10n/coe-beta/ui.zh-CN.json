@@ -274,6 +274,18 @@
     "Conditions configuration": "条件配置",
     "Value": "数值",
     "All": "全部",
-    "Active": "启用状态"
+    "Active": "启用状态",
+    "Running method setup": "配置制作方式",
+    "Obtaining initial item states": "获取初始装备状态",
+    "Crunching combinations of successes": "计算满足条件的组合",
+    "Computing permutations of valid combinations": "计算有效组合的排列",
+    "Success chance :": "单次成功率：",
+    "Expected costs :": "期望消耗：",
+    "Tries": "尝试次数",
+    "This shows the chance to hit your desired result within a fixed amount of tries.": "表示在指定尝试次数内至少获得一次目标结果的概率。",
+    "P = probability of success": "P = 单次成功概率",
+    "N = number of tries": "N = 尝试次数",
+    "^ = to the power of": "^ = 乘方运算",
+    "Formula : 1 - (1 - P) ^ N": "公式：1 - (1 - P) ^ N"
   }
 }

@@ -15,7 +15,10 @@ export function translatable(node: Text): boolean {
 }
 
 // 来自新版公开 DOM；说明连词和介绍片段只在各自区域使用。
-export function textContext(node: Text): 'instructions' | 'introduction' | 'default' {
+export function textContext(
+  node: Text,
+): 'instructions' | 'introduction' | 'calculation' | 'default' {
+  if (node.parentElement?.closest('#calculationsZone')) return 'calculation'
   if (node.parentElement?.closest('#instructions')) return 'instructions'
   if (
     node.ownerDocument.location.pathname === '/whats-new' &&
@@ -35,6 +38,15 @@ const introduction = new Map([
   ['. Please consult the', '。如需了解我正在开发的内容，请查看'],
   ['page to see what I am working on.', '页面。'],
 ])
+function calculationText(text: string): string | null {
+  if (text === 'Executed in') return '耗时'
+  if (text === 'seconds') return '秒'
+  if (text === 'Confidence :') return '累计成功率：'
+  const tries = /^1 out of (\d+(?:,\d{3})*(?:\.\d+)?) tries$/.exec(text)
+  if (tries) return `平均约每 ${tries[1]} 次成功 1 次`
+  const progress = /^(\d+(?:,\d{3})*) of (\d+(?:,\d{3})*)$/.exec(text)
+  return progress ? `${progress[1]} / ${progress[2]}` : null
+}
 export function contextualText(
   original: string,
   context: ReturnType<typeof textContext>,
@@ -42,14 +54,16 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'introduction'
-      ? (introduction.get(normalized) ?? null)
-      : context === 'instructions'
-        ? word === 'and'
-          ? '与'
-          : word === 'or'
-            ? '或'
-            : null
-        : null
+    context === 'calculation'
+      ? calculationText(normalized)
+      : context === 'introduction'
+        ? (introduction.get(normalized) ?? null)
+        : context === 'instructions'
+          ? word === 'and'
+            ? '与'
+            : word === 'or'
+              ? '或'
+              : null
+          : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }

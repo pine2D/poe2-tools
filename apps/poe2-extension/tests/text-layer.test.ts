@@ -157,3 +157,27 @@ it('说明容器身份改变后，中英对照使用新上下文而不拼接旧�
   stop()
   expect(container.textContent).toBe('and')
 })
+
+it('计算结果动态次数保留原数字，耗时节点不重建，离开上下文恢复原文', async () => {
+  document.body.innerHTML =
+    '<main><section id="calculationsZone"><div class="tries">1 out of 1,234 tries</div><div class="status">2 of 10</div><label>Executed in <b>0.209</b> seconds</label><div>Confidence :</div></section><section id="outside"></section></main>'
+  const stop = attachTextLayer(document, createLexicon([]))
+  stops.push(stop)
+  const root = document.querySelector('#calculationsZone') as HTMLElement
+  const tries = root.querySelector('.tries') as HTMLElement
+  const time = root.querySelector('b') as HTMLElement
+  expect(tries.textContent).toBe('平均约每 1,234 次成功 1 次')
+  expect(root.querySelector('.status')?.textContent).toBe('2 / 10')
+  expect(root.querySelector('label')?.textContent).toBe('耗时 0.209 秒')
+  expect(root.textContent).toContain('累计成功率：')
+  tries.textContent = '1 out of 20 tries'
+  time.textContent = '0.315'
+  await settle()
+  expect(tries.textContent).toBe('平均约每 20 次成功 1 次')
+  expect(root.querySelector('b')).toBe(time)
+  document.querySelector('#outside')?.append(tries)
+  await settle()
+  expect(tries.textContent).toBe('1 out of 20 tries')
+  stop()
+  expect(root.querySelector('label')?.textContent).toBe('Executed in 0.315 seconds')
+})
