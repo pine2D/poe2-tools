@@ -123,3 +123,27 @@ it('组运算符与组内匹配数量分别显示，翻译不改变输入值或�
   stop()
   expect(document.body.innerHTML).toBe(before)
 })
+
+it('回边缺少起点时显示可操作的中文错误，不替换原生提示节点', () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML = `<dialog id="noticeDialog"><div class="notice flex flex-columns clickable">
+    <div class="header"><label>An error occured</label></div><div class="message"><div class="icon"></div><div class="text">Could not find starting step (please select one)</div></div>
+    </div></dialog>`
+  const original = document.body.innerHTML
+  const notice = document.querySelector('.notice')
+  stop = attachTextLayer(document, createLexicon(terms))
+  expect(document.querySelector('.header')?.textContent).toBe('发生错误')
+  expect(document.querySelector('.message .text')?.textContent).toBe(
+    '无法自动确定起始步骤，请手动选择。',
+  )
+  expect(document.querySelector('.notice')).toBe(notice)
+  stop()
+  expect(document.body.innerHTML).toBe(original)
+})

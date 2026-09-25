@@ -450,6 +450,11 @@
     "Flat Life": "固定生命值",
     "Physical DPS": "物理每秒伤害",
     "Total DPS": "总每秒伤害",
-    "Total Resists": "总抗性"
+    "Total Resists": "总抗性",
+    "An error occured": "发生错误",
+    "Could not find starting step (please select one)": "无法自动确定起始步骤，请手动选择。",
+    "Choose a starting step": "选择起始步骤",
+    "AUTO-DETECT": "自动识别",
+    "No item data available.": "暂无物品数据。"
   }
 }
