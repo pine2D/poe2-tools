@@ -9,7 +9,7 @@ afterEach(() => {
 })
 async function setup() {
   document.body.innerHTML =
-    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p>'
+    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p><button id="retry" hidden>重试读取</button>'
   storage.read.mockResolvedValue({ enabled: true, bilingual: false })
   await import('../src/popup/index')
   await vi.waitFor(() =>
@@ -94,7 +94,7 @@ it('保存期间收到外部设置仍保持锁定，失败恢复最近保存的�
 
 it('启动先监听变化，晚返回的读取结果不能覆盖较新事件', async () => {
   document.body.innerHTML =
-    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p>'
+    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p><button id="retry" hidden>重试读取</button>'
   let resolve!: (value: { enabled: boolean; bilingual: boolean }) => void
   storage.read.mockImplementationOnce(
     () =>
@@ -133,4 +133,42 @@ it('保存完成回执不覆盖等待期间收到的较新已保存事件', asyn
   expect(bilingual.checked).toBe(true)
   expect(bilingual.disabled).toBe(true)
   expect(document.querySelector('#status')?.textContent).toContain('已关闭')
+})
+
+it('首次读取失败可就地重试，等待期间不能写入默认值且只绑定一次保存', async () => {
+  document.body.innerHTML =
+    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p><button id="retry" hidden>重试读取</button>'
+  storage.read.mockRejectedValueOnce(new Error('read failed'))
+  await import('../src/popup/index')
+  const retry = document.querySelector('#retry') as HTMLButtonElement
+  const enabled = document.querySelector('#enabled') as HTMLInputElement
+  const bilingual = document.querySelector('#bilingual') as HTMLInputElement
+  await vi.waitFor(() => expect(retry.hidden).toBe(false))
+  expect(enabled.disabled).toBe(true)
+  expect(bilingual.disabled).toBe(true)
+  expect(storage.write).not.toHaveBeenCalled()
+  let resolve!: (settings: { enabled: boolean; bilingual: boolean }) => void
+  storage.read.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done
+      }),
+  )
+  retry.click()
+  retry.click()
+  expect(storage.read).toHaveBeenCalledTimes(2)
+  expect(retry.hidden).toBe(true)
+  storage.subscribe.mock.calls[0]?.[0]({ enabled: false, bilingual: true })
+  resolve({ enabled: true, bilingual: false })
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(enabled.checked).toBe(false)
+  expect(bilingual.checked).toBe(true)
+  expect(bilingual.disabled).toBe(true)
+  storage.write.mockResolvedValue(undefined)
+  enabled.checked = true
+  enabled.dispatchEvent(new Event('change'))
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(storage.write).toHaveBeenCalledExactlyOnceWith({ enabled: true, bilingual: true })
+  retry.click()
+  expect(storage.read).toHaveBeenCalledTimes(2)
 })

@@ -85,3 +85,17 @@ footer {
   font-size: 11px;
   line-height: 1.8;
 }
+
+#retry {
+  color: inherit;
+  background: #20252d;
+  border: 1px solid #8499ae;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+#retry:focus-visible {
+  outline: 2px solid #b6dac4;
+  outline-offset: 2px;
+}
