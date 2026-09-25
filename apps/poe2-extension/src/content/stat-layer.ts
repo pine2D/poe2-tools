@@ -31,9 +31,17 @@ export function attachStatLayer(doc: Document, lex: Lexicon) {
     if (host.shadowRoot && host.shadowRoot.textContent !== translated)
       host.shadowRoot.textContent = translated
   }
+  function removeClonedHosts(root: Element) {
+    // 原站 cloneNode 会复制宿主标记，但不会复制 Shadow DOM；这些空壳不在 hosts 中。
+    const selector = '[data-poe2-l10n="stat"]'
+    if (root.matches(selector) && !root.shadowRoot) root.remove()
+    for (const host of root.querySelectorAll(selector)) if (!host.shadowRoot) host.remove()
+  }
   function scan(root: Node) {
     const element = root instanceof Element ? root : root.parentElement
-    if (!element || element.closest('[data-poe2-l10n]')) return
+    if (!element) return
+    removeClonedHosts(element)
+    if (element.closest('[data-poe2-l10n]')) return
     const stat = element.closest(statSelector)
     if (stat) render(stat)
     for (const child of element.querySelectorAll(statSelector)) render(child)
@@ -68,6 +76,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon) {
   return () => {
     observer.disconnect()
     for (const host of hosts.values()) host.remove()
+    removeClonedHosts(doc.body)
     hosts.clear()
     cache.clear()
   }

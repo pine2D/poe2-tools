@@ -135,3 +135,21 @@ it('祖先隐藏或编辑状态改变时撤下词缀层，解除后可重新显�
   await new Promise((r) => setTimeout(r, 30))
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
 })
+
+it('原站克隆装备 DOM 时移除没有 Shadow DOM 的译文空壳，关闭前尚未处理的克隆也清理', async () => {
+  document.body.innerHTML =
+    '<main><div class="item"><span class="stat">+18% to Lightning Resistance</span></div></main>'
+  stop = attachStatLayer(document, lex)
+  const item = document.querySelector('.item') as HTMLElement
+  const clone = item.cloneNode(true) as HTMLElement
+  document.querySelector('main')?.append(clone)
+  await new Promise((r) => setTimeout(r, 30))
+  expect(clone.querySelectorAll('[data-poe2-l10n="stat"]')).toHaveLength(1)
+  expect(clone.querySelector('[data-poe2-l10n="stat"]')?.shadowRoot?.textContent).toBe(
+    '闪电抗性 +18%',
+  )
+  document.querySelector('main')?.append(item.cloneNode(true))
+  stop()
+  expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
+  expect(document.querySelectorAll('.stat')).toHaveLength(3)
+})
