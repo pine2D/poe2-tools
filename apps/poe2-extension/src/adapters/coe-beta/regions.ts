@@ -76,6 +76,35 @@ const home = new Map([
     '浏览整理后的数据、对比版本、查看物品与词缀详情等。',
   ],
 ])
+// 操作提示按原站文本节点顺序拼接，键鼠图标保持原样。
+const instructions = new Map([
+  ['hover', '悬停'],
+  ['over an item and', '在物品上并点击'],
+  ['to', '即可'],
+  ['apply', '应用'],
+  ['the currently selected crafting method to it.', '当前选中的制作方式。'],
+  ['hold', '按住'],
+  ['to toggle between', '可切换'],
+  ['advanced', '高级'],
+  ['and', '与'],
+  ['classic', '经典'],
+  ['modifier descriptions for items.', '物品词缀说明。'],
+  ['to force', '可固定显示'],
+  ['tooltips', '提示框'],
+  ['to stay visible and enable the ability to drill-down.', '并允许查看更深层的详情。'],
+  ['hit', '按下'],
+  ['revert', '撤销'],
+  ['emulator actions.', '制作演练操作。'],
+  ['left', '在词缀池中左键点击'],
+  ['add', '添加'],
+  ['or', '或'],
+  ['remove', '移除'],
+  ['modifiers from the modpool to the current item.', '当前物品的词缀。'],
+  ['right', '右键点击'],
+  ['to access the context menu', '可打开元素的右键菜单'],
+  ['options', '选项'],
+  ['for elements.', '。'],
+])
 const filters = new Map([
   ['Searching', '搜索词'],
   ['Clear all', '清空全部筛选'],
@@ -166,11 +195,7 @@ export function contextualText(
                 : context === 'introduction'
                   ? (introduction.get(normalized) ?? null)
                   : context === 'instructions'
-                    ? word === 'and'
-                      ? '与'
-                      : word === 'or'
-                        ? '或'
-                        : null
+                    ? (instructions.get(word) ?? null)
                     : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
