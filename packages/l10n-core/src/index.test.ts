@@ -207,3 +207,24 @@ it('限定候选范围后仍保留排序与50项上限，后续无范围查询�
   expect(scoped).toHaveLength(50)
   expect(lex.search('抗性', 'stat').some((candidate) => Number(candidate.term.id) < 60)).toBe(true)
 })
+
+it('跨领域仍先限定范围再统一排序截断，领域顺序不影响结果', () => {
+  const lex = createLexicon([
+    ...Array.from({ length: 55 }, (_, i) =>
+      term(`base-${i}`, `Runic Base ${i}`, `符文基底${i}`, 'base'),
+    ),
+    term('exact', 'Rune', '符文', 'item'),
+    term('short', 'Body Rune', '身躯符文', 'item'),
+    term('outside', 'UI Rune', '符文', 'ui'),
+  ])
+  const found = lex.search('符文', ['base', 'item'])
+  expect(found).toHaveLength(50)
+  expect(found[0]?.term.id).toBe('exact')
+  expect(found.some((c) => c.term.id === 'short')).toBe(true)
+  expect(found.some((c) => c.term.id === 'outside')).toBe(false)
+  expect(lex.search('符文', ['item', 'base', 'item'])).toEqual(found)
+  expect(
+    lex.search('符文', ['base', 'item'], (t) => t.id === 'short').map((c) => c.term.id),
+  ).toEqual(['short'])
+  expect(lex.search('符文', [])).toEqual([])
+})

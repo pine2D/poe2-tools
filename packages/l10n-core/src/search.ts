@@ -4,14 +4,15 @@ import type { Candidate, Term } from './types'
 export function searchTerms(
   terms: readonly Term[],
   text: string,
-  domain: Term['domain'],
+  domain: Term['domain'] | readonly Term['domain'][],
   accept?: (term: Term) => boolean,
 ): Candidate[] {
   const query = normalize(text)
   if (!query) return []
   const words = query.split(' ')
+  const domains = typeof domain === 'string' ? [domain] : domain
   return terms
-    .filter((term) => term.domain === domain)
+    .filter((term) => domains.includes(term.domain))
     .flatMap((term) => {
       const names = [term.en, term.zh].map(normalize)
       const searchable = [...names, ...(term.aliases ?? []).map(normalize)]

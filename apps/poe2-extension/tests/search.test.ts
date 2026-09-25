@@ -436,3 +436,35 @@ it('Data 物品搜索支持材料名称，制作基底搜索仍隔离材料', ()
   type(crafting, '崇高石')
   expect(document.querySelector('[data-poe2-l10n] button')).toBeNull()
 })
+
+it('Data 跨领域按名称相关性统一排序，不让大量基底挤掉短材料名称', () => {
+  const mixed = createLexicon([
+    ...Array.from({ length: 55 }, (_, i) => ({
+      id: `base-${i}`,
+      en: `Runic Base ${i}`,
+      zh: `符文长名称基底${i}`,
+      domain: 'base' as const,
+      source: 'test',
+      version: 'test',
+    })),
+    {
+      id: 'rune',
+      en: 'Body Rune',
+      zh: '身躯符文',
+      domain: 'item',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  document.body.innerHTML = '<div id="dataItemSearchInput"><input></div>'
+  stop = attachSearch(document, mixed)
+  const input = document.querySelector('input') as HTMLInputElement
+  type(input, '符文')
+  const buttons = [...document.querySelectorAll('[data-poe2-l10n] button')]
+  expect(buttons).toHaveLength(50)
+  expect(buttons[0]?.textContent).toContain('Body Rune')
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+  expect(document.activeElement).toBe(buttons[0])
+  ;(buttons[0] as HTMLButtonElement).click()
+  expect(input.value).toBe('Body Rune')
+})

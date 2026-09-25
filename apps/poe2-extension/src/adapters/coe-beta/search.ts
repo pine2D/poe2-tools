@@ -18,9 +18,7 @@ export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   if (!domain) return []
   if (input.closest('#dataItemSearchInput')) {
     // Data 物品列表包含通货；制作页的基底选择器仍只查询 base。
-    return [...lexicon.search(input.value, domain), ...lexicon.search(input.value, 'item')]
-      .sort((a, b) => Number(b.exact) - Number(a.exact))
-      .slice(0, 50)
+    return lexicon.search(input.value, [domain, 'item'])
   }
   if (!isConditionSearch(input)) return lexicon.search(input.value, domain)
   // 只使用原站保留的英文搜索属性，不读取已经叠加中文的可见文本。
