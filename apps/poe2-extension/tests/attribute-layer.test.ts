@@ -86,3 +86,39 @@ it('祖先编辑状态和输入类型变化时恢复属性，恢复普通控件�
   await settle()
   expect(input.placeholder).toBe('Search')
 })
+
+it('条件图标从已知提示补名称，不改原生提示；动态改名与停用正确清理', async () => {
+  document.body.innerHTML =
+    '<main><div id="simulatorConditionRequirements"><button class="iconed" tooltip="Search"><img></button></div><button class="iconed" tooltip="Search"></button></main>'
+  const button = document.querySelector('button') as HTMLButtonElement
+  stop = attachAttributeLayer(document, lex, true)
+  expect(button.getAttribute('aria-label')).toBe('搜索 · Search')
+  expect(button.getAttribute('tooltip')).toBe('Search')
+  expect(document.querySelector('main > button')?.hasAttribute('aria-label')).toBe(false)
+  button.setAttribute('tooltip', 'Unknown')
+  await settle()
+  expect(button.hasAttribute('aria-label')).toBe(false)
+  button.setAttribute('tooltip', 'Search')
+  await settle()
+  expect(button.getAttribute('aria-label')).toBe('搜索 · Search')
+  stop()
+  expect(button.hasAttribute('aria-label')).toBe(false)
+})
+it('补充的条件图标名称让位于原站后来的名称和可见文字', async () => {
+  document.body.innerHTML =
+    '<main><div id="simulatorConditionRequirements"><button class="iconed" tooltip="Search"></button></div></main>'
+  const button = document.querySelector('button') as HTMLButtonElement
+  stop = attachAttributeLayer(document, lex)
+  expect(button.getAttribute('aria-label')).toBe('搜索')
+  button.setAttribute('aria-label', 'Native action')
+  await settle()
+  expect(button.getAttribute('aria-label')).toBe('Native action')
+  button.removeAttribute('aria-label')
+  await settle()
+  expect(button.getAttribute('aria-label')).toBe('搜索')
+  button.textContent = 'Visible action'
+  await settle()
+  expect(button.hasAttribute('aria-label')).toBe(false)
+  stop()
+  expect(button.textContent).toBe('Visible action')
+})
