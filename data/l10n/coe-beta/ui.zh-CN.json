@@ -419,6 +419,14 @@
     "Charms": "咒符",
     "Jewels": "珠宝",
     "Relics": "圣物",
-    "Please select at least one filter to show items.": "请至少选择一个筛选条件以显示物品。"
+    "Please select at least one filter to show items.": "请至少选择一个筛选条件以显示物品。",
+    "Prefix": "前缀",
+    "Suffix": "后缀",
+    "Corrupted Implicit": "腐化基底词缀",
+    "Essence": "精华",
+    "Meta": "特殊条件",
+    "Open Affix": "空余词缀位",
+    "Open Prefix": "空余前缀位",
+    "Open Suffix": "空余后缀位"
   }
 }

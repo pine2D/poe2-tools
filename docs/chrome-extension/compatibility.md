@@ -544,3 +544,13 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 最终0.1.46 ZIP独立解包实装Chrome151，PoE2／English。中文样本见`fixtures/focus-overlapping-mana-zh-CN.txt`，真实预览／填入／继续／导出，Ctrl+V读取的完整JSON与英文基线一致：FourFocus9、l86、r=rare、两个上述m条目，q0、qt=null、ns=null、s=[]、ip=[]。复制前独立标记，复制与粘贴分两次工具调用。
 - 转换保留10和48各自范围及高级头，不把原站显示总值58写回导入文本。样本为自造，不宣称真实国服词缀名与掉落组合已真机验收。其他复合组与跨来源属性组合仍未开放。
 - 18文件131项相关测试、类型／格式／构建／ZIP检查通过；6871词条，仅storage权限，无新来源和生产依赖。
+
+
+### 0.1.47 条件标签、空余词缀搜索与克隆恢复（2026-09-25）
+
+- 原站条件DOM使用单数Prefix／Suffix／Corrupted Implicit及Essence来源标签；Meta对应数量及空余位置等特殊条件。补8条人工UI译文，词典6879条；不改li的value或英文search属性。
+- 初版实装中，中文“空余前缀位”映射Open Prefix后，原站只显示该选项；选中值special:open-prefix，显示中文正常。但popup停用时，候选恢复MetaOpen Prefix、已选current却残留中文，确认原站复制了翻译后节点，不将该次验收算成功。
+- 新增最小克隆回归复现失败，文字层对.dropdown .current新增文本只从同一下拉框li.selected的已知翻译状态查找唯一原文。不做全词典中文反译，不改变机器身份；歧义／没有已知原文时不猜测。
+- 修复后的最终ZIP独立解包实装Chrome151：通过中文查询、ArrowDown／Enter选候选、真实点击原站特殊条件，current为“特殊条件空余前缀位”，selected值special:open-prefix。真实popup停用后current恢复MetaOpen Prefix、值仍special:open-prefix、search仍metaopen prefix。原站URL中的reqs也保留该机器身份；扩展不主动改URL。
+- 一次CLI按角色定位误打开背包，立即关闭并改用新快照引用进入导入；没有保存、删除或修改背包。本轮未运行概率计算，不声称特殊条件业务计算新增验收。
+- 19文件133项相关测试、类型／格式／构建／ZIP检查通过；新增集成测试使用实际UI词典，覆盖标签、英文属性、图标和停用恢复，以及中文特殊条件候选。权限仍仅storage，无新来源或生产依赖。

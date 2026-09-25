@@ -9,12 +9,29 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
   const state = new WeakMap<Text, { original: string; written: string; context: string }>()
   const owned = new Set<Text>()
   const cache = new Map<string, string | null>()
+  function selectedOriginal(node: Text): string | null {
+    // 原站把选项标签复制到 .current；只借用同一下拉框已选节点的已知原文，
+    // 不对任意中文反向猜译，也不修改选项的 value/search。
+    const current = node.parentElement?.closest('.dropdown .current')
+    const selected = current?.closest('.dropdown')?.querySelector('li.selected')
+    if (!selected) return null
+    const originals = new Set<string>()
+    const walker = doc.createTreeWalker(selected, NodeFilter.SHOW_TEXT)
+    let source = walker.nextNode()
+    while (source) {
+      const entry = state.get(source as Text)
+      if (entry?.written === node.data) originals.add(entry.original)
+      source = walker.nextNode()
+    }
+    return originals.size === 1 ? (originals.values().next().value ?? null) : null
+  }
   function render(node: Text) {
     if (!node.isConnected || !translatable(node) || !node.data.trim()) return
     const entry = state.get(node)
     const context = textContext(node)
     if (entry?.written === node.data && entry.context === context) return
-    const original = entry?.written === node.data ? entry.original : node.data
+    const original =
+      entry?.written === node.data ? entry.original : (selectedOriginal(node) ?? node.data)
     const cacheKey = `${context}\0${original}`
     let translated = cache.get(cacheKey)
     if (translated === undefined) {
