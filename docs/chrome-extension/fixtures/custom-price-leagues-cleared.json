@@ -1,0 +1,15 @@
+{
+  "showPrices": "1",
+  "customPrices": {
+    "leagueSoftcore": {
+      "Metadata/Items/Currency/CurrencyAddModToRare": 1.5999897599999997
+    },
+    "leagueHardcore": {},
+    "standardSoftcore": {
+      "Metadata/Items/Currency/CurrencyAddModToRare": 12.69675294
+    },
+    "standardHardcore": {
+      "Metadata/Items/Currency/CurrencyAddModToRare": null
+    }
+  }
+}
