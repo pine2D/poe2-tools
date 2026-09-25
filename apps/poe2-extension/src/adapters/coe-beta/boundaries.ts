@@ -13,6 +13,7 @@ const boundaryClasses = [
   'tag',
   'item',
   'property',
+  'filterFeedback',
   'messageBox',
   'message',
   'stat',

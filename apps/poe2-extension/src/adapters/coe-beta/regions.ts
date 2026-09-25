@@ -17,7 +17,16 @@ export function translatable(node: Text): boolean {
 // 来自新版公开 DOM；说明连词和介绍片段只在各自区域使用。
 export function textContext(
   node: Text,
-): 'instructions' | 'introduction' | 'calculation' | 'tag' | 'importer' | 'property' | 'default' {
+):
+  | 'instructions'
+  | 'introduction'
+  | 'calculation'
+  | 'tag'
+  | 'importer'
+  | 'property'
+  | 'filter'
+  | 'default' {
+  if (node.parentElement?.closest('.filterFeedback')) return 'filter'
   if (node.parentElement?.closest('.item .property')) return 'property'
   if (node.parentElement?.closest('#simulatorImporterZone')) return 'importer'
   if (node.parentElement?.closest('.tag')) return 'tag'
@@ -30,6 +39,10 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+const filters = new Map([
+  ['Searching', '搜索词'],
+  ['Clear all', '清空全部筛选'],
+])
 const properties = new Map([
   ['Focus', '法器'],
   ['Energy Shield', '能量护盾'],
@@ -101,22 +114,24 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'property'
-      ? (properties.get(normalized) ?? null)
-      : context === 'importer'
-        ? (importer.get(normalized) ?? null)
-        : context === 'tag'
-          ? tagText(normalized)
-          : context === 'calculation'
-            ? calculationText(normalized)
-            : context === 'introduction'
-              ? (introduction.get(normalized) ?? null)
-              : context === 'instructions'
-                ? word === 'and'
-                  ? '与'
-                  : word === 'or'
-                    ? '或'
-                    : null
-                : null
+    context === 'filter'
+      ? (filters.get(normalized) ?? null)
+      : context === 'property'
+        ? (properties.get(normalized) ?? null)
+        : context === 'importer'
+          ? (importer.get(normalized) ?? null)
+          : context === 'tag'
+            ? tagText(normalized)
+            : context === 'calculation'
+              ? calculationText(normalized)
+              : context === 'introduction'
+                ? (introduction.get(normalized) ?? null)
+                : context === 'instructions'
+                  ? word === 'and'
+                    ? '与'
+                    : word === 'or'
+                      ? '或'
+                      : null
+                  : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }

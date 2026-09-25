@@ -253,3 +253,33 @@ it('装备卡属性分段译文保留数值与关键词身份，移出属性区�
   stop()
   expect(document.querySelector('#Ward')?.textContent).toBe('Runic Ward')
 })
+
+it('筛选摘要区分搜索词和加载状态，清空动作说明范围并支持恢复', async () => {
+  document.body.innerHTML =
+    '<main><div class="filterFeedback"><label>Searching</label><button>Clear all</button></div><p>Searching</p></main>'
+  const stop = attachTextLayer(
+    document,
+    createLexicon([
+      {
+        id: 'searching',
+        en: 'Searching',
+        zh: '搜索中',
+        domain: 'ui',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  stops.push(stop)
+  const feedback = document.querySelector('.filterFeedback') as HTMLElement
+  expect(feedback.textContent).toBe('搜索词清空全部筛选')
+  expect(document.querySelector('p')?.textContent).toBe('搜索中')
+  feedback.classList.remove('filterFeedback')
+  await settle()
+  expect(feedback.textContent).toBe('搜索中Clear all')
+  feedback.classList.add('filterFeedback')
+  await settle()
+  expect(feedback.textContent).toBe('搜索词清空全部筛选')
+  stop()
+  expect(feedback.textContent).toBe('SearchingClear all')
+})

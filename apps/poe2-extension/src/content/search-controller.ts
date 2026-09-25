@@ -18,6 +18,21 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   let restoreInput = () => {}
   let sequence = 0
   let selectOption = (_button: HTMLButtonElement) => {}
+  function positionPanel() {
+    if (!panel || !active || panel.style.position !== 'fixed') return
+    const rect = active.getBoundingClientRect()
+    const view = doc.defaultView
+    if (!view) return
+    const width = Math.min(rect.width, view.innerWidth - 16)
+    panel.style.width = `${Math.max(0, width)}px`
+    panel.style.left = `${Math.max(8, Math.min(rect.left, view.innerWidth - width - 8))}px`
+    const below = view.innerHeight - rect.bottom - 8
+    const above = rect.top - 8
+    const useAbove = below < Math.min(240, above)
+    panel.style.top = useAbove ? 'auto' : `${rect.bottom}px`
+    panel.style.bottom = useAbove ? `${view.innerHeight - rect.top}px` : 'auto'
+    panel.style.maxHeight = `${Math.max(0, Math.min(240, useAbove ? above : below))}px`
+  }
   function clear() {
     revision++
     restoreInput()
@@ -42,8 +57,11 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     panel = doc.createElement('div')
     panel.dataset.poe2L10n = 'search'
     panel.setAttribute('aria-label', '中文搜索候选')
-    panel.style.cssText =
-      'position:relative;z-index:20;background:#20252d;color:#fff;padding:8px;border:1px solid #8499ae;max-height:240px;overflow:auto;font:14px/1.6 sans-serif'
+    // 原站输入容器会裁剪溢出；使用视口浮层，避免提示撑宽控件或失焦时移动清空按钮。
+    const panelStyle =
+      `${keepFocus ? 'position:relative;' : 'position:fixed;box-sizing:border-box;'}` +
+      'z-index:20;background:#20252d;color:#fff;padding:8px;border:1px solid #8499ae;max-height:240px;overflow:auto;overflow-wrap:anywhere;font:14px/1.6 sans-serif'
+    panel.style.cssText = panelStyle
     const label = doc.createElement('div')
     label.textContent = candidates.length
       ? `“${query}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）`
@@ -109,15 +127,18 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         if (closed || !input.isConnected || searchDomain(input) !== domain) return
         panel = doc.createElement('div')
         panel.dataset.poe2L10n = 'search'
+        panel.style.cssText = panelStyle
         panel.textContent = `中文查询：${query} → ${term.en}。可在上方继续输入中文。`
         input.parentElement?.append(panel)
         active = input
+        positionPanel()
         input.focus()
       })
       if (exact.size === 1 && exact.has(term.en)) exactButton = button
       panel.append(button)
     }
     input.parentElement?.append(panel)
+    positionPanel()
   }
   function handle(event: Event) {
     const input = event.target
@@ -216,6 +237,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     attributes: true,
     attributeFilter: ['class', 'id', 'type', 'readonly', 'disabled'],
   })
+  doc.addEventListener('scroll', positionPanel, true)
+  doc.defaultView?.addEventListener('resize', positionPanel)
   doc.addEventListener('focusout', focusOut, true)
   for (const type of ['input', 'keyup', 'compositionstart', 'compositionend', 'focusin'])
     doc.addEventListener(type, handle, true)
@@ -223,6 +246,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   return () => {
     closed = true
     observer.disconnect()
+    doc.removeEventListener('scroll', positionPanel, true)
+    doc.defaultView?.removeEventListener('resize', positionPanel)
     doc.removeEventListener('focusout', focusOut, true)
     clear()
     for (const type of ['input', 'keyup', 'compositionstart', 'compositionend', 'focusin'])
