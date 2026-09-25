@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.32 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.33 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.32.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.33.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
@@ -27,7 +27,9 @@ pnpm extension:package
 
 - 符文法器：护盾上限、冰霜伤害、魔力上限、闪电抗性、魔力再生率、混沌抗性。
 - 细枝头冠：护盾上限、闪电抗性。其他头盔基底及词缀尚未放行。
-- 丝质之袍：普通空词缀，以及魔法／稀有的护盾上限、闪电抗性。其他胸甲、品质、插槽及特殊结构尚未验收。
+- 丝质之袍：普通空词缀，以及魔法／稀有的护盾上限、闪电抗性。其他胸甲、插槽及特殊结构尚未验收。
+
+以上三种基底支持单条普通品质行，例如 `品质: +20% (augmented)`，范围为整数 0–20%。不支持催化品质、重复品质行或超范围品质。
 
 其他结构可对照；未知行保留并提示，不能强行导入。咒符和传奇始终仅供对照。原站会按自身数据重新识别词缀名称、等阶和装备属性；请核对导入后的基底、物等、稀有度、数值、范围及等阶。预览通过只表示文本满足当前支持条件，不是所有制作规则已验证。
 

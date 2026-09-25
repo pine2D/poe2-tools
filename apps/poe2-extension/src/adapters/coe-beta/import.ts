@@ -144,6 +144,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         add('缺少高级数值范围或数值不在范围内。', source.line)
     }
   }
+  let qualityCount = 0
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers', 'item-level'].includes(block.kind)) continue
     if (!['requirements', 'properties'].includes(block.kind)) {
@@ -151,9 +152,18 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       continue
     }
     for (const line of block.lines) {
+      const quality = block.kind === 'properties' && /^(?:品质|Quality)\s*[:：]/.test(line.raw)
+      if (quality) {
+        qualityCount++
+        const match = /^(?:品质|Quality)\s*[:：]\s*\+?(\d+)%(?:\s+\(augmented\))?$/.exec(line.raw)
+        if (!match || Number(match[1]) > 20 || qualityCount > 1)
+          add('普通品质仅支持单条 0–20% 整数；其他品质结构尚未验收。', line.line)
+      }
       if (
         !inspection.englishByLine[line.line] ||
-        (block.kind === 'properties' && !/^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw))
+        (block.kind === 'properties' &&
+          !quality &&
+          !/^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw))
       )
         add('包含未完整识别或尚未验收的装备属性。', line.line)
     }

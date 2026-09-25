@@ -216,10 +216,29 @@ it('丝质之袍按胸甲身份转换两个已核对词缀，不向其他胸甲�
   expect(result.english).toContain('+18(16-20)% to Lightning Resistance')
   for (const source of [
     robe.replace('胸甲', '头盔'),
-    `${robe}\n--------\n品质: +20%`,
+    `${robe}\n--------\n品质: +21%`,
     `${robe}\n--------\n插槽: S`,
     robe.replace('等阶：6', '等阶：0'),
   ]) {
     expect(prepareImport(source, robeTerms).ready).toBe(false)
+  }
+})
+
+it('已支持基底的普通品质保持数值，重复或超范围品质不能提交', () => {
+  const normal = '物品类别: 法器\n稀有度: 普通\n符文法器\n--------\n物品等级: 86'
+  const withQuality = (quality: string) => `${normal}\n--------\n${quality}`
+  for (const value of [0, 1, 20]) {
+    const result = prepareImport(withQuality(`品质: +${value}% (augmented)`), terms)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain(`Quality: +${value}% (augmented)`)
+  }
+  for (const quality of [
+    '品质: +21%',
+    '品质: -1%',
+    '品质: +1.5%',
+    '品质: +10%\n品质: +20%',
+    '品质（生命词缀）: +20%',
+  ]) {
+    expect(prepareImport(withQuality(quality), terms).ready).toBe(false)
   }
 })
