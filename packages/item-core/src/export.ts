@@ -120,6 +120,8 @@ function translateMetadata(raw: string): string | null {
 }
 
 function translateHeader(mod: ItemMod): string {
+  if (mod.kind === 'implicit' && mod.magnitude === undefined && knownImplicitHeader(mod.header.raw))
+    return `{ Implicit Modifier${mod.tags.length ? ` — ${mod.tags.join(', ')}` : ''} }`
   if (mod.kind === 'implicit' || mod.kind === 'unique') {
     if (
       !/^\s*\{\s*(?:基底(?:属性|词缀|屬性|詞綴)|传奇(?:属性|词缀)|傳奇(?:屬性|詞綴)|(?:Implicit|Unique) Modifier)\s*\}\s*$/i.test(
@@ -140,6 +142,18 @@ function translateHeader(mod: ItemMod): string {
       ? ''
       : ` — ${Math.abs(mod.magnitude)}% ${mod.magnitude < 0 ? 'Reduced' : 'Increased'}`
   return `{ ${kind} Modifier${name}${tier}${tags}${magnitude} }`
+}
+
+// 只识别基底头和逗号分隔的标签，不吞掉名称、等阶、额外来源或增效段。
+export function knownImplicitHeader(raw: string): boolean {
+  const match =
+    /^\s*\{\s*(?:基底(?:属性|词缀|屬性|詞綴)|Implicit Modifier)\s*(?:[—–]\s*([^{}\r\n—–]+))?\s*\}\s*$/i.exec(
+      raw,
+    )
+  return (
+    !!match &&
+    (match[1] === undefined || match[1].split(/[,，]/).every((tag) => tag.trim().length > 0))
+  )
 }
 
 export function knownExplicitHeader(raw: string): boolean {

@@ -2,6 +2,7 @@ import {
   type ItemDictionary,
   inspectItem,
   knownExplicitHeader,
+  knownImplicitHeader,
   parseItem,
 } from '@poe2-tools/item-core/text'
 import type { Term } from '@poe2-tools/l10n-core'
@@ -16,6 +17,7 @@ const focusStats = new Set([
   'explicit.stat_2923486259',
 ])
 // 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
+const coldImplicitTags = new Set(['元素', '冰霜', '抗性', 'Elemental', 'Cold', 'Resistance'])
 const profiles = [
   {
     base: 'Sapphire Ring',
@@ -124,7 +126,9 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     const implicit = mod.kind === 'implicit'
     const allowedStats = implicit ? (profile?.implicitStats ?? new Set<string>()) : verifiedStats
     const validHeader = implicit
-      ? inspection.englishByLine[mod.header.line] === '{ Implicit Modifier }' && mod.tier === null
+      ? knownImplicitHeader(mod.header.raw) &&
+        mod.tier === null &&
+        mod.tags.every((tag) => coldImplicitTags.has(tag))
       : ['prefix', 'suffix'].includes(mod.kind) &&
         knownExplicitHeader(mod.header.raw) &&
         mod.tier !== null &&

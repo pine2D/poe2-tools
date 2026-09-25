@@ -239,3 +239,23 @@ it.each([
   if (!parsed.ok) throw Error(parsed.error)
   expect(inspectItem(parsed.item, {}).exportText.split('\n')[0]).toBe(`Item Class: ${expected}`)
 })
+
+it('基底属性头保留标签转换，未知限定词不被丢弃', () => {
+  const tagged = inspect(
+    `${focus}\n--------\n{ 基底属性 — 元素, 闪电, 抗性 }\n闪电抗性 +17(16-20)%`,
+  )
+  expect(tagged.exportText).toContain('{ Implicit Modifier — 元素, 闪电, 抗性 }')
+  expect(tagged.bridgeText).toBeNull()
+  const unknown = inspect(
+    `${focus}\n--------\n{ 基底属性 FutureMechanic — 元素 }\n闪电抗性 +17(16-20)%`,
+  )
+  expect(unknown.exportText).toContain('{ 基底属性 FutureMechanic — 元素 }')
+})
+
+it('基底增效段不因标签转换而丢失', () => {
+  for (const header of ['{ 基底属性 — 20% Increased }', '{ 基底属性 — 元素 — 20% Increased }']) {
+    expect(inspect(`${focus}\n--------\n${header}\n闪电抗性 +17(16-20)%`).exportText).toContain(
+      header,
+    )
+  }
+})

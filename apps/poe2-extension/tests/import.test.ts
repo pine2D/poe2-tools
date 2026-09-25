@@ -317,7 +317,22 @@ it('拒绝戒指缺失或重复基底属性、错分组、未知基底、品质�
     `${ring}\n--------\n插槽: S`,
     ring.replace('25(20-30)', '25'),
     ring.replace('25(20-30)', '31(20-30)'),
-    ring.replace('基底属性', '基底属性 — 冰霜'),
   ])
     expect(prepareImport(source, ringTerms).ready).toBe(false)
+})
+
+it('蓝玉戒指接受已核对的基底标签，保留标签文字并拒绝未知来源及标签', () => {
+  for (const tags of ['元素, 冰霜, 抗性', '冰霜', 'Elemental, Cold, Resistance']) {
+    const result = prepareImport(ring.replace('{ 基底属性 }', `{ 基底属性 — ${tags} }`), ringTerms)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain(`{ Implicit Modifier — ${tags} }`)
+  }
+  for (const header of [
+    '{ 基底属性 FutureMechanic — 冰霜 }',
+    '{ 基底属性 — 未知标签 }',
+    '{ 基底属性 — 冰霜, }',
+    '{ 基底属性 — 火焰 }',
+    '{ 基底属性 — 冰霜 — 20% Increased }',
+  ])
+    expect(prepareImport(ring.replace('{ 基底属性 }', header), ringTerms).ready).toBe(false)
 })
