@@ -554,3 +554,11 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 修复后的最终ZIP独立解包实装Chrome151：通过中文查询、ArrowDown／Enter选候选、真实点击原站特殊条件，current为“特殊条件空余前缀位”，selected值special:open-prefix。真实popup停用后current恢复MetaOpen Prefix、值仍special:open-prefix、search仍metaopen prefix。原站URL中的reqs也保留该机器身份；扩展不主动改URL。
 - 一次CLI按角色定位误打开背包，立即关闭并改用新快照引用进入导入；没有保存、删除或修改背包。本轮未运行概率计算，不声称特殊条件业务计算新增验收。
 - 19文件133项相关测试、类型／格式／构建／ZIP检查通过；新增集成测试使用实际UI词典，覆盖标签、英文属性、图标和停用恢复，以及中文特殊条件候选。权限仍仅storage，无新来源或生产依赖。
+
+
+### 0.1.48 新版介绍页术语与模式复验（2026-09-25）
+
+- 对用户指定`/whats-new`重新核对残留英文，沿已有国服词条2081918629的“增幅器”补充影响其数值的词缀说明。Distilled Emotions、Chronomancy等池简称、synth／elevated说明和PoE1专属段落仍保留英文，不能声称页面完整汉化。
+- 最终ZIP独立解包实装Chrome151：PoE2／English的新说明为中文，page-labels样式1份；真实点击PoE1后，标题Calculator、新说明英文原句，data-poe2-l10n节点0；再点击PoE2，译文恢复、样式仍1份。此次模式复验不代表所有页面或原站语言矩阵均重跑。
+- 真实popup启用中英对照，新增行显示中文与完整英文，clientWidth=scrollWidth=361；桌面三列截图已查看，可正常换行。本轮未专门覆盖窄屏及所有介绍卡片尺寸。
+- 19文件133项相关测试、类型／格式／构建／ZIP检查通过。6880词条，权限仍仅storage；单条文案复用既有显示及模式回归，无新增复述文案的测试。

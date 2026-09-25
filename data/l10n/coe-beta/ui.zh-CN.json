@@ -427,6 +427,7 @@
     "Meta": "特殊条件",
     "Open Affix": "空余词缀位",
     "Open Prefix": "空余前缀位",
-    "Open Suffix": "空余后缀位"
+    "Open Suffix": "空余后缀位",
+    "Proper modifiers affecting augment values handling": "正确处理影响增幅器数值的词缀"
   }
 }
