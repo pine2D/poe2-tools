@@ -147,3 +147,31 @@ it('回边缺少起点时显示可操作的中文错误，不替换原生提示�
   stop()
   expect(document.body.innerHTML).toBe(original)
 })
+it('模拟器动态连线提示翻译并恢复，原站tooltip属性始终保留英文', async () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML =
+    '<main><div class="simulatorStep"><div class="links"><div class="end" tooltip="End condition"></div></div></div></main>'
+  stop = attachTextLayer(document, createLexicon(terms))
+  const tooltip = document.createElement('div')
+  tooltip.className = 'hover tooltip'
+  tooltip.textContent = 'End condition'
+  document.querySelector('main')?.append(tooltip)
+  await new Promise((r) => setTimeout(r, 0))
+  expect(tooltip.textContent).toBe('结束条件')
+  tooltip.textContent = 'Restart condition'
+  await new Promise((r) => setTimeout(r, 0))
+  expect(tooltip.textContent).toBe('重新开始条件')
+  tooltip.textContent = 'New link'
+  await new Promise((r) => setTimeout(r, 0))
+  expect(tooltip.textContent).toBe('新增连线')
+  expect(document.querySelector('.end')?.getAttribute('tooltip')).toBe('End condition')
+  stop()
+  expect(tooltip.textContent).toBe('New link')
+})

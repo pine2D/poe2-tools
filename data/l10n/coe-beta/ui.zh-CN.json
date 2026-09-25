@@ -461,6 +461,9 @@
     "Fossil optimizer": "化石优化器",
     "Remaining time, combinations per second feedback": "显示剩余时间与每秒处理的组合数",
     "Editable worker count for splitting task": "可调整并行工作线程数，分担计算任务",
-    "Proper heist jewellery affix limit handling": "正确处理夺宝（Heist）首饰的词缀数量上限"
+    "Proper heist jewellery affix limit handling": "正确处理夺宝（Heist）首饰的词缀数量上限",
+    "End condition": "结束条件",
+    "Restart condition": "重新开始条件",
+    "New link": "新增连线"
   }
 }
