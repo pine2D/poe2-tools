@@ -216,3 +216,44 @@ it('原生命名优先，输入禁用与重新启用会重新判断搜索名称'
   await settle()
   expect(input.getAttribute('aria-label')).toBe('搜索物品')
 })
+
+it('条件编辑容器改变用途时撤下搜索名称，恢复编辑后重新补充', async () => {
+  document.body.innerHTML =
+    '<main><div id="simulatorConditionRequirements"><div class="dropdown"><div class="editing"><input type="text"></div></div></div></main>'
+  const input = document.querySelector('input') as HTMLInputElement
+  const editing = document.querySelector('.editing') as HTMLElement
+  const dropdown = document.querySelector('.dropdown') as HTMLElement
+  stop = attachAttributeLayer(document, lex)
+  expect(input.getAttribute('aria-label')).toBe('搜索条件')
+  editing.classList.remove('editing')
+  await settle()
+  expect(input.hasAttribute('aria-label')).toBe(false)
+  editing.classList.add('editing')
+  await settle()
+  expect(input.getAttribute('aria-label')).toBe('搜索条件')
+  dropdown.classList.remove('dropdown')
+  await settle()
+  expect(input.hasAttribute('aria-label')).toBe(false)
+  dropdown.classList.add('dropdown')
+  await settle()
+  expect(input.getAttribute('aria-label')).toBe('搜索条件')
+})
+it('条件图标与计算器条件区域移除识别类时撤下名称，重加后恢复', async () => {
+  document.body.innerHTML =
+    '<main><div id="calculatorZone"><div class="requirements"><button class="iconed" tooltip="Search"></button></div></div></main>'
+  const button = document.querySelector('button') as HTMLButtonElement
+  const region = document.querySelector('.requirements') as HTMLElement
+  stop = attachAttributeLayer(document, lex)
+  expect(button.getAttribute('aria-label')).toBe('搜索')
+  for (const [element, name] of [
+    [button, 'iconed'],
+    [region, 'requirements'],
+  ] as const) {
+    element.classList.remove(name)
+    await settle()
+    expect(button.hasAttribute('aria-label')).toBe(false)
+    element.classList.add(name)
+    await settle()
+    expect(button.getAttribute('aria-label')).toBe('搜索')
+  }
+})

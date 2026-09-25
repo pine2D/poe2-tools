@@ -9,6 +9,14 @@ const controls = 'input:not([type="hidden"]), textarea, button, a, [role="button
 const excluded =
   '#inventoryZone .tabs, [contenteditable], [data-poe2-l10n], code, pre, [hidden], .hidden, [id*="_ad"]'
 const active = new WeakMap<Document, () => void>()
+// 补充名称依赖这些用途类；hover/selected 等外观变化无需重扫。
+const namingClasses = ['dropdown', 'editing', 'requirements', 'iconed']
+function namingBoundaryChanged(record: MutationRecord): boolean {
+  if (record.type !== 'attributes' || record.attributeName !== 'class') return false
+  const before = new Set((record.oldValue ?? '').split(/\s+/))
+  const after = (record.target as Element).classList
+  return namingClasses.some((name) => before.has(name) !== after.contains(name))
+}
 export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = false) {
   active.get(doc)?.()
   const owned = new Map<Element, Map<string, { original: string; written: string }>>()
@@ -97,7 +105,12 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
   }
   const observer = new MutationObserver((records) => {
     for (const record of records) {
-      if (boundaryChanged(record) || record.attributeName === 'disabled') scan(record.target)
+      if (
+        boundaryChanged(record) ||
+        namingBoundaryChanged(record) ||
+        record.attributeName === 'disabled'
+      )
+        scan(record.target)
       else if (
         record.type === 'attributes' &&
         [...attributes, 'tooltip', 'aria-labelledby', 'disabled', 'readonly'].some(
