@@ -468,3 +468,39 @@ it('Data 跨领域按名称相关性统一排序，不让大量基底挤掉短�
   ;(buttons[0] as HTMLButtonElement).click()
   expect(input.value).toBe('Body Rune')
 })
+it('价格搜索复用searchInput时查询材料，制作词缀与价格数值保持各自语义', () => {
+  const shared = createLexicon([
+    { id: 'orb', en: 'Exalted Orb', zh: '崇高石', domain: 'item', source: 'test', version: 'test' },
+    {
+      id: 'trial',
+      en: 'Sacrifice up to # Exalted Orbs',
+      zh: '献祭最多 # 崇高石',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  document.body.innerHTML =
+    '<main><div id="customPriceSearchHolder"><div id="searchInput"><input type="text"></div><input type="number" value="12.5"></div></main>'
+  const input = document.querySelector('input[type=text]') as HTMLInputElement
+  const price = document.querySelector('input[type=number]') as HTMLInputElement
+  const submitted: string[] = []
+  stop = attachSearch(document, shared)
+  input.addEventListener('keyup', () => submitted.push(input.value))
+  type(input, '崇高石')
+  const buttons = [
+    ...document.querySelectorAll<HTMLButtonElement>('[data-poe2-l10n=search] button'),
+  ]
+  expect(buttons.map((b) => b.textContent)).toEqual(['崇高石 → Exalted Orb'])
+  buttons[0]?.click()
+  expect(submitted).toEqual(['Exalted Orb'])
+  expect(price.value).toBe('12.5')
+  // 同一ID离开价格容器后仍是原制作词缀用途，不能全局改为材料。
+  document.querySelector('main')?.append(input.parentElement as HTMLElement)
+  type(input, '崇高石')
+  expect(document.querySelector('[data-poe2-l10n=search] button')?.textContent).toContain(
+    'Sacrifice',
+  )
+  price.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(price.value).toBe('12.5')
+})

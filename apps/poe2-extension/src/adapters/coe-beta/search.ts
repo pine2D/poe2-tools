@@ -1,6 +1,8 @@
 import type { Lexicon, Term } from '@poe2-tools/l10n-core'
 
 const controls: readonly [string, Term['domain']][] = [
+  // 价格页复用词缀框ID，必须先按公开父容器识别材料用途。
+  ['#customPriceSearchHolder #searchInput input[type="text"]', 'item'],
   ['#searchItemInput input[type="text"], #searchItemInput input:not([type])', 'base'],
   ['#searchInput input[type="text"], #searchInput input:not([type])', 'stat'],
   ['#dataItemSearchInput input[type="text"], #dataItemSearchInput input:not([type])', 'base'],
