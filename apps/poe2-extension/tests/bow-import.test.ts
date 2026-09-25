@@ -3,6 +3,24 @@ import { prepareImport } from '../src/adapters/coe-beta/import'
 
 const terms = [
   {
+    id: 'physical',
+    sourceId: 'explicit.stat_1940865751',
+    domain: 'stat' as const,
+    en: 'Adds # to # Physical Damage',
+    zh: '附加 # - # 物理伤害',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'speed',
+    sourceId: 'explicit.stat_210067635',
+    domain: 'stat' as const,
+    en: '#% increased Attack Speed',
+    zh: '攻击速度提高 #%',
+    source: 'test',
+    version: 'test',
+  },
+  {
     id: 'bow',
     domain: 'base' as const,
     en: 'Crude Bow',
@@ -64,4 +82,30 @@ it('粗制弓敏捷等阶或范围不匹配时阻止原站静默纠正', () => {
 
 it('人工兼容类别“弓”同样只映射已验收粗制弓档案', () => {
   expect(prepareImport(normal.replace('弓类', '弓'), terms).ready).toBe(true)
+})
+
+const attackMods =
+  '\n--------\n{ 前缀属性 "测试的" (等阶：9) — 伤害, 物理, 攻击 }\n附加 2(1-2) - 5(4-5) 物理伤害\n{ 后缀属性 "测试之" (等阶：5) — 攻击, 速度 }\n攻击速度提高 7(5-7)%'
+const attackingBow =
+  normal.replace('稀有度: 普通', '稀有度: 魔法').replace('7-11', '10-17').replace('1.20', '1.28') +
+  attackMods
+it.each([false, true])('粗制弓攻击组合保留双数值范围，稀有=%s', (rare) => {
+  const source = rare
+    ? attackingBow.replace('稀有度: 魔法', '稀有度: 稀有\n测试 狂风') + suffix
+    : attackingBow
+  const result = prepareImport(source, terms)
+  expect(result.reasons).toEqual([])
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain('Adds 2(1-2) to 5(4-5) Physical Damage')
+  expect(result.english).toContain('7(5-7)% increased Attack Speed')
+})
+it.each([
+  attackingBow.replace('2(1-2) - 5(4-5)', '5(4-5) - 2(1-2)'),
+  attackingBow.replace('等阶：9', '等阶：8'),
+  attackingBow.replace('等阶：5', '等阶：4'),
+  attackingBow.replace('7(5-7)', '7(4-7)'),
+  attackingBow.replace('2(1-2)', '3(1-2)'),
+  attackingBow.replace('前缀属性', '后缀属性'),
+])('攻击词缀未验收范围或分组不得提交：%s', (source) => {
+  expect(prepareImport(source, terms).ready).toBe(false)
 })

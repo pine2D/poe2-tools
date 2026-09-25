@@ -40,6 +40,21 @@ const implicitTagsByBase: Record<string, ReadonlySet<string>> = {
   'Topaz Ring': new Set(['元素', '闪电', '抗性', 'Elemental', 'Lightning', 'Resistance']),
   'Amethyst Ring': new Set(['混沌', '抗性', 'Chaos', 'Resistance']),
 }
+// 仅记录已通过原站文本导入核对的等阶与范围，不作为制作规则或候选池。
+const bowStats = new Map<string, { tier: number; ranges: readonly (readonly [number, number])[] }>([
+  ['explicit.stat_3261801346', { tier: 4, ranges: [[21, 24]] }],
+  [
+    'explicit.stat_1940865751',
+    {
+      tier: 9,
+      ranges: [
+        [1, 2],
+        [4, 5],
+      ],
+    },
+  ],
+  ['explicit.stat_210067635', { tier: 5, ranges: [[5, 7]] }],
+])
 const profiles = [
   {
     base: 'Crude Bow',
@@ -47,8 +62,8 @@ const profiles = [
     armour: false,
     emptySockets: 2,
     classes: ['弓类', '弓', 'Bows'],
-    stats: new Set(['explicit.stat_3261801346']),
-    prefixes: new Set<string>(),
+    stats: new Set(bowStats.keys()),
+    prefixes: new Set(['explicit.stat_1940865751']),
   },
   {
     base: 'Ruby Ring',
@@ -286,16 +301,26 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         )
       )
         add('存在未识别、歧义或尚未验收的属性。', source.line)
-      if (profile?.base === 'Crude Bow' && identities.includes('explicit.stat_3261801346')) {
-        const roll = source.rolls[0]
+      if (profile?.base === 'Crude Bow' && identities.length === 1) {
+        const verified = bowStats.get(identities[0] as string)
         if (
-          mod.tier !== 4 ||
-          source.rolls.length !== 1 ||
-          !roll?.range ||
-          Math.min(...roll.range) !== 21 ||
-          Math.max(...roll.range) !== 24
+          verified &&
+          (mod.tier !== verified.tier ||
+            source.rolls.length !== verified.ranges.length ||
+            source.rolls.some((roll, index) => {
+              const range = verified.ranges[index]
+              return (
+                !roll.range ||
+                !range ||
+                Math.min(...roll.range) !== range[0] ||
+                Math.max(...roll.range) !== range[1]
+              )
+            }))
         )
-          add('粗制弓敏捷后缀目前仅验收等阶4、范围21–24；其他组合请保留对照。', source.line)
+          add(
+            `粗制弓该词缀仅验收等阶${verified.tier}、范围${verified.ranges.map((range) => range.join('–')).join('／')}；其他组合请保留对照。`,
+            source.line,
+          )
       }
       const fixedSpeed =
         profile?.base === 'Silk Slippers' &&

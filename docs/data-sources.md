@@ -726,3 +726,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.97普通粗制弓导入沿已登记gray物品表Crude Bow→粗制弓；另核对[PoE2DB简中页面](https://poe2db.tw/cn/Crude_Bow)的类别“弓类”，作为文本类别别名映射至Bows，另加人工兼容简称“弓”，不宣称用户真机复制头已验证，不通过此项启用其他弓。敏捷复用primary国服交易词条explicit.stat_3261801346；既有MIT目录仅用于设计Dexterity5、24(21-24)自造样本，身份另以原站英文导入导出核对，不引入新规则数据、权重或采集。
+
+
+0.1.98粗制弓攻击组合沿primary国服交易词典explicit.stat_1940865751（附加物理伤害）和explicit.stat_210067635（攻击速度）进行文字映射。既有MIT目录仅用于设计LocalAddedPhysicalDamage1、LocalIncreasedAttackSpeed1样本；原站公开高级说明独立确认粗制弓上分别为T9、T5，数值范围分别1–2／4–5、5–7。不导入原站内部数据，不增加制作规则或新数据来源。
