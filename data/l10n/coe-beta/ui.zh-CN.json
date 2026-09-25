@@ -471,6 +471,8 @@
     "Restart condition": "重新开始条件",
     "New link": "新增连线",
     "No items found for this selection.": "当前筛选条件下未找到物品。",
-    "No modifiers found for this selection.": "当前筛选条件下未找到词缀。"
+    "No modifiers found for this selection.": "当前筛选条件下未找到词缀。",
+    "Inventory Importer": "导入背包",
+    "Inventory Import": "导入背包"
   }
 }

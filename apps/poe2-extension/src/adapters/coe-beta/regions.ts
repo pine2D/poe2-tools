@@ -24,6 +24,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'inventory-usage'
   | 'compare'
   | 'simulator-help'
   | 'simulator-help-link'
@@ -38,6 +39,7 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('#inventoryZone .usage .details')) return 'inventory-usage'
   if (
     node.ownerDocument.location.pathname === '/compare' &&
     node.parentElement?.closest(
@@ -228,6 +230,11 @@ const tags = new Map([
   ['Resistance', '抗性'],
   ['Speed', '速度'],
 ])
+function inventoryUsageText(text: string): string | null {
+  if (text === 'quota') return '容量限额'
+  const usage = /^\(([\d,.]+ (?:B|KB|MB|GB)) used of ([\d,.]+ (?:B|KB|MB|GB))$/.exec(text)
+  return usage ? `(已用 ${usage[1]} / ${usage[2]}` : null
+}
 function tagText(text: string): string | null {
   const negative = text.startsWith('Non-')
   const translated = tags.get(negative ? text.slice(4) : text)
@@ -261,32 +268,34 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'compare'
-      ? (compare.get(normalized) ?? null)
-      : context === 'simulator-help'
-        ? (simulatorHelpText.get(normalized) ?? null)
-        : context === 'simulator-help-link'
-          ? (simulatorHelpLink.get(normalized) ?? null)
-          : context === 'data-category'
-            ? (dataCategories.get(normalized) ?? null)
-            : context === 'settings'
-              ? (settingsText.get(normalized) ?? null)
-              : context === 'home'
-                ? (home.get(normalized) ?? null)
-                : context === 'filter'
-                  ? (filters.get(normalized) ?? null)
-                  : context === 'property'
-                    ? (properties.get(normalized) ?? null)
-                    : context === 'importer'
-                      ? (importer.get(normalized) ?? null)
-                      : context === 'tag'
-                        ? tagText(normalized)
-                        : context === 'calculation'
-                          ? calculationText(normalized)
-                          : context === 'introduction'
-                            ? (introduction.get(normalized) ?? null)
-                            : context === 'instructions'
-                              ? (instructions.get(word) ?? null)
-                              : null
+    context === 'inventory-usage'
+      ? inventoryUsageText(normalized)
+      : context === 'compare'
+        ? (compare.get(normalized) ?? null)
+        : context === 'simulator-help'
+          ? (simulatorHelpText.get(normalized) ?? null)
+          : context === 'simulator-help-link'
+            ? (simulatorHelpLink.get(normalized) ?? null)
+            : context === 'data-category'
+              ? (dataCategories.get(normalized) ?? null)
+              : context === 'settings'
+                ? (settingsText.get(normalized) ?? null)
+                : context === 'home'
+                  ? (home.get(normalized) ?? null)
+                  : context === 'filter'
+                    ? (filters.get(normalized) ?? null)
+                    : context === 'property'
+                      ? (properties.get(normalized) ?? null)
+                      : context === 'importer'
+                        ? (importer.get(normalized) ?? null)
+                        : context === 'tag'
+                          ? tagText(normalized)
+                          : context === 'calculation'
+                            ? calculationText(normalized)
+                            : context === 'introduction'
+                              ? (introduction.get(normalized) ?? null)
+                              : context === 'instructions'
+                                ? (instructions.get(word) ?? null)
+                                : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }

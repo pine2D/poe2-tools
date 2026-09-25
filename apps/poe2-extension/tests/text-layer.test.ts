@@ -295,3 +295,20 @@ it('中英对照保留文本片段两端空白，避免相邻强调节点粘连'
   stop()
   expect(box.innerHTML).toBe(original)
 })
+
+it('背包容量只翻译用途文字，保留数字单位并恢复动态最新值', async () => {
+  document.body.innerHTML =
+    '<dialog open><div id="inventoryZone"><div class="tabs">quota</div><div class="usage"><div class="details">(15.59 KB used of 5.00 MB <span>quota</span>)</div></div></div><div id="outside">quota</div></dialog>'
+  const stop = attachTextLayer(document, lex)
+  stops.push(stop)
+  const details = document.querySelector('.details') as HTMLElement
+  expect(details.textContent).toBe('(已用 15.59 KB / 5.00 MB 容量限额)')
+  expect(document.querySelector('.tabs')?.textContent).toBe('quota')
+  expect(document.querySelector('#outside')?.textContent).toBe('quota')
+  const value = details.firstChild as Text
+  value.data = '(16.65 KB used of 5.00 MB '
+  await settle()
+  expect(details.textContent).toBe('(已用 16.65 KB / 5.00 MB 容量限额)')
+  stop()
+  expect(details.textContent).toBe('(16.65 KB used of 5.00 MB quota)')
+})
