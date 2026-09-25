@@ -1,6 +1,7 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { regions } from '../adapters/coe-beta/regions'
+import { searchLabel } from '../adapters/coe-beta/search'
 import { isUserContent } from '../adapters/coe-beta/user-content'
 
 const attributes = ['placeholder', 'title', 'aria-label'] as const
@@ -11,7 +12,7 @@ const active = new WeakMap<Document, () => void>()
 export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = false) {
   active.get(doc)?.()
   const owned = new Map<Element, Map<string, { original: string; written: string }>>()
-  const iconLabels = new Map<Element, string>()
+  const fallbackLabels = new Map<Element, string>()
   function eligible(element: Element) {
     return (
       element.isConnected &&
@@ -26,13 +27,13 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
       if (element.getAttribute(name) === entry.written) element.setAttribute(name, entry.original)
     }
     owned.delete(element)
-    const label = iconLabels.get(element)
+    const label = fallbackLabels.get(element)
     if (label !== undefined && element.getAttribute('aria-label') === label)
       element.removeAttribute('aria-label')
-    iconLabels.delete(element)
+    fallbackLabels.delete(element)
   }
-  function renderIconLabel(element: Element) {
-    const previous = iconLabels.get(element)
+  function renderFallbackLabel(element: Element) {
+    const previous = fallbackLabels.get(element)
     const current = element.getAttribute('aria-label')
     const source = element.getAttribute('tooltip')
     const canLabel =
@@ -44,14 +45,25 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
       !element.hasAttribute('title') &&
       !element.querySelector('img[alt]:not([alt=""])') &&
       (current === null || current === previous)
-    const translated = canLabel && source ? lex.translate(source, 'ui') : null
+    const search =
+      element instanceof HTMLInputElement &&
+      !element.hasAttribute('aria-labelledby') &&
+      !element.hasAttribute('title') &&
+      !element.labels?.length &&
+      !element.placeholder.trim() &&
+      (current === null || current === previous)
+        ? searchLabel(element)
+        : null
+    const translated = search?.[0] ?? (canLabel && source ? lex.translate(source, 'ui') : null)
     if (!translated) {
       if (previous !== undefined && current === previous) element.removeAttribute('aria-label')
-      iconLabels.delete(element)
+      fallbackLabels.delete(element)
       return
     }
-    const written = bilingual ? `${translated.trim()} · ${source?.trim()}` : translated
-    iconLabels.set(element, written)
+    const written = bilingual
+      ? `${translated.trim()} · ${(search?.[1] ?? source)?.trim()}`
+      : translated
+    fallbackLabels.set(element, written)
     if (current !== written) element.setAttribute('aria-label', written)
   }
   function render(element: Element) {
@@ -60,7 +72,8 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
       return
     }
     for (const name of attributes) {
-      if (name === 'aria-label' && iconLabels.get(element) === element.getAttribute(name)) continue
+      if (name === 'aria-label' && fallbackLabels.get(element) === element.getAttribute(name))
+        continue
       if (name === 'placeholder' && !element.matches('input, textarea')) continue
       const original = element.getAttribute(name)
       const entries = owned.get(element)
@@ -74,7 +87,7 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
       owned.set(element, state)
       element.setAttribute(name, written)
     }
-    renderIconLabel(element)
+    renderFallbackLabel(element)
     if (owned.get(element)?.size === 0) owned.delete(element)
   }
   function scan(root: Node) {
@@ -84,10 +97,12 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
   }
   const observer = new MutationObserver((records) => {
     for (const record of records) {
-      if (boundaryChanged(record)) scan(record.target)
+      if (boundaryChanged(record) || record.attributeName === 'disabled') scan(record.target)
       else if (
         record.type === 'attributes' &&
-        [...attributes, 'tooltip', 'aria-labelledby'].some((name) => name === record.attributeName)
+        [...attributes, 'tooltip', 'aria-labelledby', 'disabled', 'readonly'].some(
+          (name) => name === record.attributeName,
+        )
       )
         render(record.target as Element)
       else {
@@ -98,7 +113,19 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
         for (const node of record.addedNodes) scan(node)
       }
     }
-    for (const element of new Set([...owned.keys(), ...iconLabels.keys()]))
+    // label 可在输入框之外新增、移除或修改 for；只在关联结构变化时重查输入名称。
+    if (
+      records.some(
+        (record) =>
+          record.attributeName === 'for' ||
+          [...record.addedNodes, ...record.removedNodes].some(
+            (node) =>
+              node instanceof Element && (node.matches('label') || node.querySelector('label')),
+          ),
+      )
+    )
+      for (const input of doc.querySelectorAll('input')) render(input)
+    for (const element of new Set([...owned.keys(), ...fallbackLabels.keys()]))
       if (!eligible(element)) restore(element)
   })
   scan(doc.body)
@@ -108,14 +135,23 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
     subtree: true,
     attributes: true,
     attributeOldValue: true,
-    attributeFilter: [...attributes, 'tooltip', 'aria-labelledby', 'alt', ...boundaryAttributes],
+    attributeFilter: [
+      ...attributes,
+      'tooltip',
+      'aria-labelledby',
+      'alt',
+      'for',
+      'disabled',
+      'readonly',
+      ...boundaryAttributes,
+    ],
   })
   let closed = false
   const stop = () => {
     if (closed) return
     closed = true
     observer.disconnect()
-    for (const element of new Set([...owned.keys(), ...iconLabels.keys()])) restore(element)
+    for (const element of new Set([...owned.keys(), ...fallbackLabels.keys()])) restore(element)
     active.delete(doc)
   }
   active.set(doc, stop)

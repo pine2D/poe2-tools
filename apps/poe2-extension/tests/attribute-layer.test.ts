@@ -147,3 +147,72 @@ it('图片替代文本动态增加或清空时重新判断名称来源，名称�
   expect(button.hasAttribute('aria-label')).toBe(false)
   expect(image.getAttribute('alt')).toBe('')
 })
+
+it('已识别的空名搜索框按用途补双语名称，保留值并在停用时撤下', () => {
+  document.body.innerHTML = `<main>
+    <div id="dataItemSearchInput"><input placeholder=" " value="中文查询"></div>
+    <div id="dataModSearchInput"><input></div>
+    <div id="searchItemInput"><input></div>
+    <div id="customPriceSearchHolder"><div id="searchInput"><input type="text"></div></div>
+    <input id="notes">
+  </main>`
+  stop = attachAttributeLayer(document, lex, true)
+  const inputs = [...document.querySelectorAll('input')]
+  expect(inputs.map((input) => input.getAttribute('aria-label'))).toEqual([
+    '搜索物品 · Search items',
+    '搜索词缀 · Search modifiers',
+    '搜索制作基底 · Search crafting bases',
+    '搜索制作材料价格 · Search crafting prices',
+    null,
+  ])
+  expect(inputs[0]?.value).toBe('中文查询')
+  expect(inputs[0]?.placeholder).toBe(' ')
+  stop()
+  expect(inputs.every((input) => !input.hasAttribute('aria-label'))).toBe(true)
+})
+it('搜索补充名称随原生关联标签、提示和身份变化撤下或恢复', async () => {
+  document.body.innerHTML = '<main><div id="dataItemSearchInput"><input id="query"></div></main>'
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachAttributeLayer(document, lex)
+  expect(input.getAttribute('aria-label')).toBe('搜索物品')
+  const label = document.createElement('label')
+  label.htmlFor = 'query'
+  label.textContent = 'Native label'
+  document.querySelector('main')?.append(label)
+  await settle()
+  expect(input.hasAttribute('aria-label')).toBe(false)
+  label.htmlFor = 'other'
+  await settle()
+  expect(input.getAttribute('aria-label')).toBe('搜索物品')
+  input.placeholder = 'Native placeholder'
+  await settle()
+  expect(input.hasAttribute('aria-label')).toBe(false)
+  input.placeholder = ' '
+  input.setAttribute('aria-label', 'Native override')
+  await settle()
+  expect(input.getAttribute('aria-label')).toBe('Native override')
+  input.removeAttribute('aria-label')
+  await settle()
+  expect(input.getAttribute('aria-label')).toBe('搜索物品')
+  input.parentElement?.removeAttribute('id')
+  await settle()
+  expect(input.hasAttribute('aria-label')).toBe(false)
+})
+it('原生命名优先，输入禁用与重新启用会重新判断搜索名称', async () => {
+  document.body.innerHTML = `<main><fieldset><div id="dataItemSearchInput">
+    <input id="plain"><input title="Native title"><input aria-labelledby="native">
+    <label>Native implicit label<input></label>
+  </div></fieldset></main>`
+  const input = document.querySelector('#plain') as HTMLInputElement
+  stop = attachAttributeLayer(document, lex)
+  expect(input.getAttribute('aria-label')).toBe('搜索物品')
+  expect(
+    [...document.querySelectorAll('input')].slice(1).every((e) => !e.hasAttribute('aria-label')),
+  ).toBe(true)
+  input.disabled = true
+  await settle()
+  expect(input.hasAttribute('aria-label')).toBe(false)
+  input.disabled = false
+  await settle()
+  expect(input.getAttribute('aria-label')).toBe('搜索物品')
+})

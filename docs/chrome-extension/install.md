@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.78 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.79 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.78.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.79.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。若提示无法读取设置，可点击“重试读取”；读取成功前开关保持禁用，不会用默认值覆盖已有偏好。
 
@@ -102,3 +102,6 @@ node apps/poe2-extension/scripts/package.mjs
 渎灵术语沿国服0.5.5官方交易词缀核对。旧称“亵渎”保留为相关界面词的检索别名，仍需选择候选；不改写用户粘贴的原始装备文本。
 
 条件数值编辑：输入后移开焦点，稍候再点击“应用更改”，并重新打开核对。本轮以失焦后等待一秒验证普通等阶2与渎灵前缀数值1均保存；连续快速输入并立即应用曾导出旧值或null，一秒是本次验证间隔，不代表原站承诺的固定时限。重要流程可再导出检查相应tier字段。
+
+
+已识别的搜索框缺少原生名称时，扩展会补充用途名称供辅助技术识别；有原生关联标签或名称时优先保留。支持随中英对照开关切换，停用扩展后撤下。当前已实测Data物品与词缀搜索的浏览器可访问树，读屏软件仍待验收。

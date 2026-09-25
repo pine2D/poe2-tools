@@ -38,6 +38,16 @@ export function searchDomain(input: HTMLInputElement): Term['domain'] | null {
   if (isConditionSearch(input)) return 'stat'
   return controls.find(([selector]) => input.matches(selector))?.[1] ?? null
 }
+// 仅为适配器已识别的搜索用途补可访问名称，不写入输入值或原生检索属性。
+export function searchLabel(input: HTMLInputElement): readonly [string, string] | null {
+  const domain = searchDomain(input)
+  if (!domain) return null
+  if (isConditionSearch(input)) return ['搜索条件', 'Search conditions']
+  if (input.closest('#dataItemSearchInput')) return ['搜索物品', 'Search items']
+  if (domain === 'item') return ['搜索制作材料价格', 'Search crafting prices']
+  if (domain === 'base') return ['搜索制作基底', 'Search crafting bases']
+  return ['搜索词缀', 'Search modifiers']
+}
 export function submitSearch(input: HTMLInputElement, english: string) {
   input.value = english
   input.dispatchEvent(new Event('input', { bubbles: true }))
