@@ -91,3 +91,46 @@ it('保存期间收到外部设置仍保持锁定，失败恢复最近保存的�
   expect(enabled.checked).toBe(true)
   expect(bilingual.checked).toBe(true)
 })
+
+it('启动先监听变化，晚返回的读取结果不能覆盖较新事件', async () => {
+  document.body.innerHTML =
+    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p>'
+  let resolve!: (value: { enabled: boolean; bilingual: boolean }) => void
+  storage.read.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done
+      }),
+  )
+  await import('../src/popup/index')
+  expect(storage.subscribe).toHaveBeenCalledOnce()
+  storage.subscribe.mock.calls[0]?.[0]({ enabled: false, bilingual: true })
+  resolve({ enabled: true, bilingual: false })
+  await vi.waitFor(() =>
+    expect(document.querySelector<HTMLInputElement>('#enabled')?.disabled).toBe(false),
+  )
+  expect(document.querySelector<HTMLInputElement>('#enabled')?.checked).toBe(false)
+  expect(document.querySelector<HTMLInputElement>('#bilingual')?.checked).toBe(true)
+  expect(document.querySelector('#status')?.textContent).toContain('已关闭')
+})
+it('保存完成回执不覆盖等待期间收到的较新已保存事件', async () => {
+  const { enabled, bilingual } = await setup()
+  let resolve!: () => void
+  storage.write.mockImplementationOnce(
+    () =>
+      new Promise<void>((done) => {
+        resolve = done
+      }),
+  )
+  bilingual.checked = true
+  bilingual.dispatchEvent(new Event('change'))
+  const update = storage.subscribe.mock.calls[0]?.[0]
+  update({ enabled: true, bilingual: true })
+  update({ enabled: false, bilingual: true })
+  resolve()
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(enabled.checked).toBe(false)
+  expect(bilingual.checked).toBe(true)
+  expect(bilingual.disabled).toBe(true)
+  expect(document.querySelector('#status')?.textContent).toContain('已关闭')
+})
