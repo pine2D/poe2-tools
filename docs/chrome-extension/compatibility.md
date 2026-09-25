@@ -676,3 +676,11 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 全部六包typecheck通过；全仓Biome首次检出8个扩展原生JSON样本的数组排版问题。只对这8个文件运行格式化，再逐文件解析并序列化，与格式化前及Git HEAD比较均完全一致，包含对象键序、数组顺序和全部值。
 - 修复后全仓Biome检查1090文件通过。本记录仅确认类型与格式两道门禁；后续完整测试与构建结果须另列，不能据此称`verify`全部通过。扩展运行版本仍为0.1.58，无运行逻辑或包内容变化。
 - 新增`validation.md`说明全仓／局部验证的范围、样本JSON必须纳入格式检查、原生逐字导出证据与入库排版的区别，以及临时包管理器诊断命令的限制。
+
+
+### 0.1.58 全仓失败隔离与安装核对（2026-09-25）
+
+- 上述完整测试已终止：578文件中577通过、1失败；4839项中4835通过、3失败、1跳过，耗时481.90秒。唯一失败文件`packages/dict-builder/src/syncCraftOptional.test.ts`的三项均报`spawnSync node EPERM`；在沙箱外原样独立运行该文件，三项全部通过（788ms）。旧制作UI此前的15秒超时本轮未复现，不继续将它列作已复现的当前失败。
+- 唯一跳过项是`packages/build-core/src/format/roundtrip.test.ts`在未提供本地真实.build样本时的既有skipIf；未新增跳过、放宽超时或改测试断言。此轮分段结果不能合并宣称一次完整verify成功。
+- 独立`pnpm build`、`pnpm dict:check`、`pnpm craft:check`均正常退出。构建仍有旧制作站大于500kB的分包提示；词典审计计数zh-CN=13、zh-TW=17及目录缺失声明原样保留，未放宽门槛。仅验证旧站回归，不恢复其功能开发或部署。
+- 在独立工作树运行`pnpm install --frozen-lockfile`成功，输出锁文件已是最新、无需重新解析、Already up to date，未更改Git跟踪文件。没有全局安装或升级pnpm。随后在允许Node子进程的环境启动无临时选项的标准`pnpm verify`，其最终结果另行记录；本段不提前宣称通过，也不把已有node_modules的安装核对称为全新环境安装。
