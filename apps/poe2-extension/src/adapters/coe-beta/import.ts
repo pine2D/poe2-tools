@@ -99,6 +99,23 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     issues.push({ line, message })
   }
   if (inspection.comparisonOnly) add(inspection.comparisonReason ?? '此装备仅供对照。')
+  // 新版原站拒绝环锁腰带的咒符固有词缀，移到属性行又会静默丢失；实测见兼容性记录。
+  if (inspection.base.english === 'Mail Belt' && ['腰带', 'Belts'].includes(item.itemClass)) {
+    for (const { mod, stats } of inspection.mods) {
+      if (mod.kind !== 'implicit') continue
+      for (const { source, resolution } of stats) {
+        if (
+          resolution.english &&
+          resolution.candidates.length === 1 &&
+          resolution.candidates[0]?.id === 'implicit.stat_1416292992'
+        )
+          add(
+            '新版 CoE 暂不能可靠导入该腰带的咒符位：基底词缀形式会报错，改成属性行会丢失数值。请保留对照，不要删行后继续。',
+            source.line,
+          )
+      }
+    }
+  }
   const profile = profiles.find(
     (p) => p.base === inspection.base.english && p.classes.includes(item.itemClass),
   )
@@ -113,7 +130,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
   const explicitMods = item.mods.filter((mod) => mod.kind !== 'implicit')
   const expectedImplicits = profile?.implicitStats.size ?? 0
-  if (item.mods.filter((mod) => mod.kind === 'implicit').length !== expectedImplicits)
+  if (profile && item.mods.filter((mod) => mod.kind === 'implicit').length !== expectedImplicits)
     add('基底属性数量与已验收结构不符。')
   if (item.rarity === 'normal') {
     if (explicitMods.length) add('普通稀有度与词缀分组不符；普通装备不能包含显式词缀。')
@@ -123,7 +140,8 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       add('前后缀数量超出普通装备范围。')
   const seenStats = new Set<string>()
   const prefixStats = profile?.prefixes ?? new Set<string>()
-  for (const { mod, stats } of inspection.mods) {
+  // 未接入的基底已由范围提示阻止提交，不能用空档案把所有已翻译词缀误报为未识别。
+  for (const { mod, stats } of profile ? inspection.mods : []) {
     const implicit = mod.kind === 'implicit'
     // 仅放行原站已核对的两行组合，不能把任意两个普通属性拼成复合词缀。
     const compound =

@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.49 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.50 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.49.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.50.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
@@ -77,3 +77,5 @@ node apps/poe2-extension/scripts/package.mjs
 ## 自制图标维护
 
 `apps/poe2-extension/public/icons/`保存16、32、48、128像素的原创PNG，自有MIT许可适用。构建直接复制入库PNG，不需Python。仅重新绘制时运行`python3 apps/poe2-extension/scripts/generate-icons.py`，需要已安装Pillow；本次使用Pillow12.2.0，无新增安装。生成器不使用外部字体或图片，未进入扩展包。
+
+环锁腰带的咒符位当前仅供对照：新版CoE原生导入会拒绝`Has 2(1-3) Charm Slot`，将其改成`Charm Slots: 2`虽不报错，实际导出却不保留该数值。扩展会在对应行提示原因，不删除属性，也不将此样本标为可提交。该结论限定当前新版原站的已测样本，并不表示游戏内腰带不能制作。
