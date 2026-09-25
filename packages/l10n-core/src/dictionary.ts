@@ -15,8 +15,10 @@ export function createLexicon(input: readonly Term[]): Lexicon {
     )
       throw new Error(`无效或重复术语身份：${term.id}`)
     ids.add(term.id)
-    const count = (term.en.match(/#/g) ?? []).length
-    if ((term.zh.match(/#/g) ?? []).length !== count) throw new Error(`数字模板不一致：${term.id}`)
+    // 界面文案仅精确匹配；例如 # Stored 的井号表示数量，并非掷值。
+    const count = term.domain === 'ui' ? 0 : (term.en.match(/#/g) ?? []).length
+    if (term.domain !== 'ui' && (term.zh.match(/#/g) ?? []).length !== count)
+      throw new Error(`数字模板不一致：${term.id}`)
     if (
       term.order &&
       (term.order.length !== count ||

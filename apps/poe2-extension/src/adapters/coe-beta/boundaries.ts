@@ -20,6 +20,7 @@ const boundaryClasses = [
   'header',
   'simulationsList',
   'simulatorStep',
+  'simulatorResultsTable',
 ]
 export function boundaryChanged(record: MutationRecord): boolean {
   if (record.type !== 'attributes' || !boundaryAttributes.includes(record.attributeName ?? ''))

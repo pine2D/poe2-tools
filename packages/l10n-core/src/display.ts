@@ -7,6 +7,8 @@ const number = String.raw`[+-]?\d+(?:\.\d+)?`
 const range = String.raw`\(${number}-${number}\)`
 const value = `([+-]?#|[+-]?${range}|${number}(?:${range})?)`
 export function compileTerm(term: Term): (text: string) => string | null {
+  if (term.domain === 'ui')
+    return (text) => (normalize(text) === normalize(term.en) ? term.zh : null)
   const source = normalize(term.en).replace(/^\+(?=#)/, '')
   const pattern = new RegExp(`^${source.split('#').map(escapePattern).join(value)}$`, 'i')
   return (text) => {

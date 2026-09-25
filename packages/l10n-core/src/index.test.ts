@@ -144,3 +144,17 @@ it('完整名称精确匹配优先于短别名，排序后才截取50项', () =>
   expect(result[1]?.term.id).toBe('alias')
   expect(result[1]?.exact).toBe(false)
 })
+
+it('界面井号按字面精确匹配，不作为游戏数值模板', () => {
+  const lex = createLexicon([
+    term('stored', '# Stored', '保存数量', 'ui'),
+    term('label', 'Issue #', '问题 #', 'ui'),
+  ])
+  expect(lex.translate(' # Stored ')).toBe(' 保存数量 ')
+  expect(lex.translate('10 Stored')).toBeNull()
+  expect(lex.translate('Issue #')).toBe('问题 #')
+  expect(lex.translate('Issue 3')).toBeNull()
+  expect(() =>
+    createLexicon([term('invalid-ui-order', '# Stored', '保存数量', 'ui', { order: [0] })]),
+  ).toThrow()
+})

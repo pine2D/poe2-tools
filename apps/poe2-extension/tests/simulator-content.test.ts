@@ -64,3 +64,34 @@ it('节点复用为步骤用户标题时恢复原文，原站后续用户修改�
   for (const stop of stops) stop()
   expect(title.textContent).toBe('我的步骤')
 })
+
+it('结果表保留用户步骤名，边界改变与关闭不会覆盖用户文本', async () => {
+  document.body.innerHTML =
+    '<main><div class="simulatorResultsTable"><div class="header"><div>Search</div></div><div class="row"><div class="title"><div>Runed Focus</div></div></div></div></main>'
+  start()
+  const table = document.querySelector('.simulatorResultsTable') as HTMLElement
+  const title = document.querySelector('.title') as HTMLElement
+  expect(title.textContent).toBe('Runed Focus')
+  expect(document.querySelector('.header')?.textContent).toBe('搜索')
+  table.className = ''
+  await new Promise((r) => setTimeout(r, 30))
+  expect(title.textContent).toBe('符文法器')
+  table.className = 'simulatorResultsTable'
+  await new Promise((r) => setTimeout(r, 30))
+  expect(title.textContent).toBe('Runed Focus')
+  title.textContent = '我的结果步骤'
+  for (const stop of stops) stop()
+  expect(title.textContent).toBe('我的结果步骤')
+})
+
+it('统计表头虽使用 stat 类仍翻译界面文案，不改写数据行词缀', () => {
+  document.body.innerHTML =
+    '<main><div class="simulatorResultsTable"><div class="header"><div class="stat">Search</div></div><div class="row"><div class="stat">+18% to Lightning Resistance</div></div></div></main>'
+  start()
+  expect(document.querySelector('.header .stat')?.textContent).toBe('搜索')
+  expect(document.querySelector('.header [data-poe2-l10n]')).toBeNull()
+  expect(document.querySelector('.row .stat')?.textContent).toBe('+18% to Lightning Resistance')
+  expect(document.querySelector('.row [data-poe2-l10n]')?.shadowRoot?.textContent).toBe(
+    '闪电抗性 +18%',
+  )
+})
