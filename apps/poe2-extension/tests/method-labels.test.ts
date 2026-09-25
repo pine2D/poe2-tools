@@ -42,3 +42,44 @@ it.each([false, true])('制作菜单标题动态翻译保留业务值与用户�
   expect(normal.textContent).toBe('Normal item')
   expect(document.querySelector('#OmensSelector label')?.textContent).toBe('Available omen(s)')
 })
+
+it.each([false, true])('精华与镶嵌物类别分域翻译及动态恢复：双语=%s', async (bilingual) => {
+  const essence = ['Lesser', 'Normal', 'Greater', 'Perfect', 'Corrupted', 'Alloy']
+  const essenceZh = ['次级', '普通', '强效', '完美', '腐化', '合金']
+  const socket = [
+    'Idol',
+    'Rune',
+    'Rune (Greater)',
+    'Rune (Lesser)',
+    'Rune (Perfect)',
+    'Rune (Special)',
+    'Soul Core',
+  ]
+  const socketZh = ['雕像', '符文', '高级符文', '次级符文', '完美符文', '特殊符文', '灵核']
+  const rows = (items: string[], group: number) =>
+    items.map((name, i) => `<li value="[${group},${i}]">${name}</li>`).join('')
+  document.body.innerHTML = `<main><div id="CraftingMethod_2" class="hidden"><ul>${rows(essence, 2)}</ul></div><div id="CraftingMethod_4"><ul>${rows(socket, 4)}</ul></div><div id="CraftingMethod_10"><ul><li>Greater</li></ul></div><p>Normal</p><input value="Alloy"></main>`
+  const menu = document.querySelector('#CraftingMethod_2') as HTMLElement
+  const identities = () =>
+    Array.from(document.querySelectorAll('li[value]'), (e) => e.getAttribute('value'))
+  const before = identities()
+  stop = attachTextLayer(document, createLexicon([]), bilingual)
+  expect(menu.querySelector('li')?.textContent).toBe('Lesser')
+  menu.classList.remove('hidden')
+  await settle()
+  const texts = (id: string) =>
+    Array.from(document.querySelectorAll(`${id} li`), (e) => e.textContent)
+  const expected = (zh: string[], en: string[]) =>
+    zh.map((word, i) => (bilingual ? `${word} · ${en[i]}` : word))
+  expect(texts('#CraftingMethod_2')).toEqual(expected(essenceZh, essence))
+  expect(texts('#CraftingMethod_4')).toEqual(expected(socketZh, socket))
+  expect(texts('#CraftingMethod_10')).toEqual(['Greater'])
+  expect(document.querySelector('p')?.textContent).toBe('Normal')
+  expect(document.querySelector('input')?.value).toBe('Alloy')
+  expect(identities()).toEqual(before)
+  menu.id = 'OtherMenu'
+  await settle()
+  expect(texts('#OtherMenu')).toEqual(essence)
+  stop()
+  expect(texts('#CraftingMethod_4')).toEqual(socket)
+})

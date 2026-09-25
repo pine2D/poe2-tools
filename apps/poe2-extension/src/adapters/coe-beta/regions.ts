@@ -25,6 +25,8 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'essence-category'
+  | 'socket-category'
   | 'method-label'
   | 'condition-empty'
   | 'notification'
@@ -43,6 +45,8 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('#CraftingMethod_2 > ul > li')) return 'essence-category'
+  if (node.parentElement?.closest('#CraftingMethod_4 > ul > li')) return 'socket-category'
   if (node.parentElement?.closest('#CraftingMethod_10 > ul > li, #OmensSelector > label'))
     return 'method-label'
   if (
@@ -92,6 +96,24 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+// 国服材料名称沿用已登记catalog；类别短语为人工UI译文，按菜单分域。
+const essenceCategories = new Map([
+  ['Lesser', '次级'],
+  ['Normal', '普通'],
+  ['Greater', '强效'],
+  ['Perfect', '完美'],
+  ['Corrupted', '腐化'],
+  ['Alloy', '合金'],
+])
+const socketCategories = new Map([
+  ['Idol', '雕像'],
+  ['Rune', '符文'],
+  ['Rune (Greater)', '高级符文'],
+  ['Rune (Lesser)', '次级符文'],
+  ['Rune (Perfect)', '完美符文'],
+  ['Rune (Special)', '特殊符文'],
+  ['Soul Core', '灵核'],
+])
 // 制作选择器公开标题；不用于用户物品名或预兆选项名称。
 const methodLabels = new Map([
   ['Normal item', '普通物品'],
@@ -304,8 +326,18 @@ export function contextualText(
   context: ReturnType<typeof textContext>,
 ): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
-  if (context === 'method-label') {
-    const translated = methodLabels.get(normalized)
+  if (
+    context === 'method-label' ||
+    context === 'essence-category' ||
+    context === 'socket-category'
+  ) {
+    const labels =
+      context === 'essence-category'
+        ? essenceCategories
+        : context === 'socket-category'
+          ? socketCategories
+          : methodLabels
+    const translated = labels.get(normalized)
     return translated ? original.replace(/\S[\s\S]*\S|\S/, translated) : null
   }
   if (context === 'condition-empty' && normalized === 'No results for this search')
