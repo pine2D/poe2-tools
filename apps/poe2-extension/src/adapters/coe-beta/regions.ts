@@ -25,6 +25,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'condition-empty'
   | 'notification'
   | 'inventory-usage'
   | 'compare'
@@ -41,6 +42,12 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (
+    node.parentElement?.closest(
+      '#calculatorZone .requirements .dropdown li.no_result, #simulatorConditionRequirements .dropdown li.no_result',
+    )
+  )
+    return 'condition-empty'
   if (node.parentElement?.closest(notificationRegions)) return 'notification'
   if (node.parentElement?.closest('#inventoryZone .usage .details')) return 'inventory-usage'
   if (
@@ -287,6 +294,8 @@ export function contextualText(
   context: ReturnType<typeof textContext>,
 ): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
+  if (context === 'condition-empty' && normalized === 'No results for this search')
+    return original.replace(/\S[\s\S]*\S|\S/, '没有符合当前搜索的条件。')
   if (context === 'notification') {
     const translated = notifications.get(normalized)
     return translated ? original.replace(/\S[\s\S]*\S|\S/, translated) : original

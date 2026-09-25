@@ -9,6 +9,9 @@ export const boundaryAttributes = [
   'simulationid',
 ]
 const boundaryClasses = [
+  'no_result',
+  'requirements',
+  'dropdown',
   'snackbar',
   'hidden',
   'tag',
