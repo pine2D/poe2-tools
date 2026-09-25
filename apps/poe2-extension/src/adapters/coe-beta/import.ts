@@ -27,8 +27,20 @@ const verifiedSpeedTiers = new Map([
 ])
 const focusCompoundPrefix = ['explicit.stat_4015621042', 'explicit.stat_1050105434']
 // 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
-const coldImplicitTags = new Set(['元素', '冰霜', '抗性', 'Elemental', 'Cold', 'Resistance'])
+const implicitTagsByBase: Record<string, ReadonlySet<string>> = {
+  'Sapphire Ring': new Set(['元素', '冰霜', '抗性', 'Elemental', 'Cold', 'Resistance']),
+  'Jade Amulet': new Set(['属性', 'Attribute']),
+}
 const profiles = [
+  {
+    base: 'Jade Amulet',
+    emptySockets: 0,
+    classes: ['项链', 'Amulets'],
+    armour: false,
+    implicitStats: new Set(['explicit.stat_3261801346']),
+    stats: new Set(['explicit.stat_3261801346', 'explicit.stat_1671376347']),
+    prefixes: new Set<string>(),
+  },
   {
     base: 'Sapphire Ring',
     emptySockets: 0,
@@ -140,7 +152,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   const verifiedStats = profile?.stats ?? new Set<string>()
   if (!profile || !['normal', 'magic', 'rare'].includes(item.rarity))
     add(
-      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋及蓝玉戒指的指定属性；其余装备仍可对照。',
+      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋、蓝玉戒指及翠玉项链的指定属性；其余装备仍可对照。',
     )
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     add('特殊装备标记尚未验收。')
@@ -181,7 +193,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     const validHeader = implicit
       ? knownImplicitHeader(mod.header.raw) &&
         mod.tier === null &&
-        mod.tags.every((tag) => coldImplicitTags.has(tag))
+        mod.tags.every((tag) => implicitTagsByBase[profile?.base ?? '']?.has(tag))
       : ['prefix', 'suffix'].includes(mod.kind) &&
         knownExplicitHeader(mod.header.raw) &&
         mod.tier !== null &&

@@ -487,3 +487,72 @@ it('移动速度例外不放宽数值、等阶、分组和其他属性的范围�
     expect(prepareImport(source, speedTerms).ready).toBe(false)
   }
 })
+
+const amuletTerms: Term[] = [
+  {
+    id: 'jade',
+    en: 'Jade Amulet',
+    zh: '翠玉项链',
+    domain: 'base',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'dexterity',
+    sourceId: 'explicit.stat_3261801346',
+    en: '# to Dexterity',
+    zh: '# 敏捷',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'lightning',
+    sourceId: 'explicit.stat_1671376347',
+    en: '#% to Lightning Resistance',
+    zh: '闪电抗性 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+]
+const jadeNormal = `物品类别: 项链
+稀有度: 普通
+翠玉项链
+--------
+物品等级: 86
+--------
+{ 基底属性 — 属性 }
++12(10-15) 敏捷`
+const jadeSuffix = '\n--------\n{ 后缀属性 "测试之" (等阶：4) — 属性 }\n+24(21-24) 敏捷'
+it('翠玉项链固有敏捷与后缀分别保留，覆盖普通魔法稀有结构', () => {
+  const magic = jadeNormal.replace('稀有度: 普通', '稀有度: 魔法') + jadeSuffix
+  const rare =
+    magic.replace('稀有度: 魔法\n', '稀有度: 稀有\n测试 项链\n') +
+    '\n{ 后缀属性 "测试之" (等阶：6) — 元素, 闪电, 抗性 }\n闪电抗性 +18(16-20)%'
+  for (const source of [jadeNormal, magic, rare]) {
+    const result = prepareImport(source, amuletTerms)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain('{ Implicit Modifier — 属性 }\n+12(10-15) to Dexterity')
+  }
+  expect(prepareImport(rare, amuletTerms).english).toContain('+24(21-24) to Dexterity')
+  expect(prepareImport(rare, amuletTerms).english).toContain('+18(16-20)% to Lightning Resistance')
+})
+it('项链固有标签不借用戒指标签，重复后缀与错误分组不能通过', () => {
+  const magic = jadeNormal.replace('稀有度: 普通', '稀有度: 魔法') + jadeSuffix
+  for (const source of [
+    jadeNormal.replace(' — 属性', ' — 冰霜'),
+    jadeNormal.replace('12(10-15)', '12'),
+    jadeNormal.replace('12(10-15)', '16(10-15)'),
+    jadeNormal.replace('{ 基底属性 — 属性 }\n+12(10-15) 敏捷', ''),
+    magic.replace('后缀属性', '前缀属性'),
+    magic + jadeSuffix,
+  ])
+    expect(prepareImport(source, amuletTerms).ready).toBe(false)
+  expect(prepareImport(jadeNormal.replace(' — 属性', ' — Attribute'), amuletTerms).ready).toBe(true)
+})
+it('项链催化品质、孔位及未验收基底继续只供对照', () => {
+  for (const line of ['品质: +20%', '品质 (属性): +20%', '插槽: S', '被腐化'])
+    expect(prepareImport(`${jadeNormal}\n--------\n${line}`, amuletTerms).ready).toBe(false)
+  expect(prepareImport(jadeNormal.replace('翠玉项链', '琥珀项链'), amuletTerms).ready).toBe(false)
+})
