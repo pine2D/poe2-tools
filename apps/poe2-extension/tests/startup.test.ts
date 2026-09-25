@@ -14,6 +14,7 @@ vi.mock('../src/content/attribute-layer', () => ({ attachAttributeLayer: () => (
 vi.mock('../src/content/stat-layer', () => ({ attachStatLayer: () => () => {} }))
 vi.mock('../src/content/search-controller', () => ({ attachSearch: () => () => {} }))
 vi.mock('../src/content/import-controller', () => ({ attachImport: () => () => {} }))
+vi.mock('../src/content/instruction-layout', () => ({ attachInstructionLayout: () => () => {} }))
 vi.mock('../src/content/page-labels', () => ({ attachPageLabels: () => () => {} }))
 vi.mock('../src/content/language-notice', () => ({ createLanguageNotice: () => ({ update() {} }) }))
 vi.mock('../src/adapters/coe-beta/context', () => ({ pageStatus: () => 'supported' }))

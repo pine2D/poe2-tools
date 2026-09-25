@@ -28,7 +28,9 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
       owned.delete(node)
       return
     }
-    const written = bilingual ? `${translated.trim()} · ${original.trim()}` : translated
+    const written = bilingual
+      ? original.replace(/\S[\s\S]*\S|\S/, () => `${translated.trim()} · ${original.trim()}`)
+      : translated
     state.set(node, { original, written, context })
     owned.add(node)
     node.data = written

@@ -3,6 +3,7 @@ import { pageStatus } from '../adapters/coe-beta/context'
 import { defaults, platform } from '../platform'
 import { attachAttributeLayer } from './attribute-layer'
 import { attachImport } from './import-controller'
+import { attachInstructionLayout } from './instruction-layout'
 import { createLanguageNotice } from './language-notice'
 import { attachPageLabels } from './page-labels'
 import { attachSearch } from './search-controller'
@@ -29,6 +30,7 @@ async function start() {
     stop = undefined
     mode = next
     if (next) {
+      const stopInstructionLayout = attachInstructionLayout(document)
       const stopLabels = attachPageLabels(document, settings.bilingual)
       const stopText = attachTextLayer(document, lexicon, settings.bilingual)
       const stopAttributes = attachAttributeLayer(document, lexicon, settings.bilingual)
@@ -36,6 +38,7 @@ async function start() {
       const stopSearch = attachSearch(document, lexicon)
       const stopImport = attachImport(document, data.terms)
       stop = () => {
+        stopInstructionLayout()
         stopLabels()
         stopAttributes()
         stopStats()

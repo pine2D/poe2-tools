@@ -283,3 +283,15 @@ it('筛选摘要区分搜索词和加载状态，清空动作说明范围并支�
   stop()
   expect(feedback.textContent).toBe('SearchingClear all')
 })
+
+it('中英对照保留文本片段两端空白，避免相邻强调节点粘连', () => {
+  document.body.innerHTML =
+    '<main><div id="instructions">Hold <b>advanced</b> and <b>classic</b></div></main>'
+  const box = document.querySelector('#instructions') as HTMLElement
+  const original = box.innerHTML
+  const stop = attachTextLayer(document, createLexicon([]), true)
+  stops.push(stop)
+  expect(box.textContent).toBe('按住 · Hold 高级 · advanced 与 · and 经典 · classic')
+  stop()
+  expect(box.innerHTML).toBe(original)
+})
