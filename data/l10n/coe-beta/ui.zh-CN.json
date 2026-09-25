@@ -290,6 +290,9 @@
     "Import a Simulation": "导入一个流程",
     "Simulator Importer": "流程导入",
     "Starting item source": "起始装备来源",
-    "One or more issues encountered while attempting import": "导入时遇到以下问题"
+    "One or more issues encountered while attempting import": "导入时遇到以下问题",
+    "Paste your data here (You can also use a pastebin or gist URL)": "在此粘贴导出数据（也可填写 Pastebin 或 Gist 链接）",
+    "Invalid JSON": "JSON 格式无效",
+    "Invalid Dataset": "数据内容无效"
   }
 }

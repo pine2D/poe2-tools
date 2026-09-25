@@ -1,6 +1,6 @@
 {
   "name": "@poe2-tools/poe2-extension",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "private": true,
   "type": "module",
   "scripts": {

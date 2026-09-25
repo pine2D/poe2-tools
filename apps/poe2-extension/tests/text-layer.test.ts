@@ -213,13 +213,24 @@ it('流程导入分段提示限定区域翻译，保留强调节点并支持恢�
   const stop = attachTextLayer(document, createLexicon([]))
   stops.push(stop)
   expect(root.textContent?.replace(/\s/g, '')).toContain(
-    '这是单个流程的导出数据；此入口需要使用“Exportall”生成的数据。',
+    '这是单个流程的导出数据；此入口需要使用Exportall生成的数据。',
   )
   expect(root.textContent?.replace(/\s/g, '')).toContain(
-    '导入单个流程，请进入“NewSimulation”，然后选择“IMPORTASIMULATION”。',
+    '导入单个流程，请进入NewSimulation，然后选择IMPORTASIMULATION。',
   )
   expect(root.querySelector('b')).toBe(bold)
   expect(document.querySelector('p')?.textContent).toBe(' and then ')
   stop()
   expect(root.innerHTML).toBe(original)
+})
+
+it('其他导入提示的独立句号不添加无配对引号', () => {
+  document.body.innerHTML =
+    '<dialog open><div id="simulatorImporterZone"><span>Unknown message</span>.</div></dialog>'
+  const root = document.querySelector('#simulatorImporterZone') as HTMLElement
+  const stop = attachTextLayer(document, createLexicon([]))
+  stops.push(stop)
+  expect(root.textContent).toBe('Unknown message。')
+  stop()
+  expect(root.textContent).toBe('Unknown message.')
 })

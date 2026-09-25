@@ -32,12 +32,12 @@ export function textContext(
 const importer = new Map([
   [
     'This appears to be a single simulation export, this function requires an',
-    '这是单个流程的导出数据；此入口需要使用“',
+    '这是单个流程的导出数据；此入口需要使用',
   ],
-  ['dataset.', '”生成的数据。'],
-  ['To import a singular simulation please go to', '导入单个流程，请进入“'],
-  ['and then', '”，然后选择“'],
-  ['.', '”。'],
+  ['dataset.', '生成的数据。'],
+  ['To import a singular simulation please go to', '导入单个流程，请进入'],
+  ['and then', '，然后选择'],
+  ['.', '。'],
 ])
 const introduction = new Map([
   ['is a complete refactor of', '是对'],
