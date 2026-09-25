@@ -4,7 +4,8 @@ import { isUserContent } from './user-content'
 export const statHeaderSelector = '.simulatorResultsTable > .header .stat'
 
 // 基于新版公开 DOM；Data 使用分段 .text，制作页使用 .stat。
-export const statSelector = '.stat, .modifierTable .row > .label .text'
+export const materialDescriptionSelector = '.item.currency .modifier'
+export const statSelector = `.stat, .modifierTable .row > .label .text, ${materialDescriptionSelector}`
 export function isSupportedStat(element: Element): boolean {
   return (
     element.isConnected &&

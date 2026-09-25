@@ -153,3 +153,31 @@ it('原站克隆装备 DOM 时移除没有 Shadow DOM 的译文空壳，关闭�
   expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
   expect(document.querySelectorAll('.stat')).toHaveLength(3)
 })
+
+it('材料整句说明保留关键词原文及监听，仅添加中文对照，未知说明不猜译', async () => {
+  document.body.innerHTML =
+    '<main><div class="item currency"><div class="modifier implicit">While this item is active in your inventory your next\n<span class="keyword" id="Abyssalify">Desecration</span> attempt will add only prefix modifiers</div></div></main>'
+  const description = document.querySelector('.modifier') as HTMLElement
+  const keyword = document.querySelector('.keyword') as HTMLElement
+  let clicked = 0
+  keyword.addEventListener('click', () => clicked++)
+  stop = attachStatLayer(document, lex)
+  const stopText = attachTextLayer(
+    document,
+    createLexicon([
+      { id: 'd', en: 'Desecration', zh: '亵渎', domain: 'ui', source: 'test', version: 'test' },
+    ]),
+  )
+  expect(description.textContent).toContain('Desecration')
+  expect(document.querySelector('.keyword')).toBe(keyword)
+  keyword.click()
+  expect(clicked).toBe(1)
+  expect(description.nextElementSibling?.shadowRoot?.textContent).toContain('仅添加前缀词缀')
+  ;(description.lastChild as Text).textContent = ' attempt will add unknown modifiers'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
+  expect(keyword.textContent).toBe('Desecration')
+  stopText()
+  stop()
+  expect(description.textContent).toContain('unknown modifiers')
+})

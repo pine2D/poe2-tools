@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.65.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.66.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
@@ -92,3 +92,5 @@ node apps/poe2-extension/scripts/package.mjs
 环锁腰带的咒符位当前仅供对照：新版CoE原生导入会拒绝`Has 2(1-3) Charm Slot`，将其改成`Charm Slots: 2`虽不报错，实际导出却不保留该数值。扩展会在对应行提示原因，不删除属性，也不将此样本标为可提交。该结论限定当前新版原站的已测样本，并不表示游戏内腰带不能制作。
 
 条件组的“与／或／非”与“组内匹配数量”是两个独立设置。不要仅凭选择“或（OR）”就认定数量已为1；需要1时在数量框实际输入1、离开输入框并应用更改。本轮实测可保存；自动化验收应检查原生导出中的matches，不能只检查输入框显示值。
+
+预兆用途说明：已核对的11条说明在原文下方显示中文对照，保留原文关键词节点；未知整句保留英文。该说明翻译不代表相应制作机制已经由扩展验证。

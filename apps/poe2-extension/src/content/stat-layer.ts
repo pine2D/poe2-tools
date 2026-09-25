@@ -1,17 +1,25 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
-import { isSupportedStat, statSelector } from '../adapters/coe-beta/stats'
+import { materialDescription } from '../adapters/coe-beta/material-descriptions'
+import {
+  isSupportedStat,
+  materialDescriptionSelector,
+  statSelector,
+} from '../adapters/coe-beta/stats'
 export function attachStatLayer(doc: Document, lex: Lexicon) {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
     const original = stat.textContent ?? ''
-    let translated = cache.get(original)
+    const key = `${stat.matches(materialDescriptionSelector) ? 'material' : 'stat'}\0${original}`
+    let translated = cache.get(key)
     if (translated === undefined) {
-      translated = lex.translate(original, 'stat')
+      translated = stat.matches(materialDescriptionSelector)
+        ? materialDescription(original)
+        : lex.translate(original, 'stat')
       if (cache.size > 2000) cache.clear()
-      cache.set(original, translated)
+      cache.set(key, translated)
     }
     let host = hosts.get(stat)
     if (!translated || translated === original) {
