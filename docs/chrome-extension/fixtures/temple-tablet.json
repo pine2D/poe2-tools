@@ -1,0 +1,25 @@
+{
+  "i": "Metadata/Items/TowerAugment/IncursionAugment",
+  "m": [],
+  "ns": 0,
+  "s": [],
+  "q": null,
+  "qt": null,
+  "l": 100,
+  "r": "normal",
+  "if": [],
+  "ip": [
+    [
+      10
+    ]
+  ],
+  "e": [],
+  "p": {},
+  "di": [],
+  "ig": 0,
+  "f": [
+    "a"
+  ],
+  "pt": null,
+  "id": null
+}

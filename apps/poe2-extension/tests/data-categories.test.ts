@@ -55,3 +55,18 @@ it('制作类别翻译保留原站筛选值并可恢复', () => {
   stop()
   expect(document.body.innerHTML).toBe(original)
 })
+
+it('石板结果卡类别翻译保留节点、数值及用户名称，关闭恢复', () => {
+  document.body.innerHTML =
+    '<main><div id="searchItemResults"><div class="item"><div class="header"><div class="name">Tablet</div></div><div class="property"><label>Tablet</label></div><div class="property"><label>Item level:</label><div>100</div></div></div></div><p>Tablet</p></main>'
+  const original = document.body.innerHTML
+  const label = document.querySelector('.property label')
+  stop = attachTextLayer(document, createLexicon([]))
+  expect(label?.textContent).toBe('石板')
+  expect(document.querySelector('.property label')).toBe(label)
+  expect(document.querySelector('.name')?.textContent).toBe('Tablet')
+  expect(document.querySelector('.property div')?.textContent).toBe('100')
+  expect(document.querySelector('p')?.textContent).toBe('Tablet')
+  stop()
+  expect(document.body.innerHTML).toBe(original)
+})

@@ -195,6 +195,7 @@ const filters = new Map([
   ['Clear all', '清空全部筛选'],
 ])
 const properties = new Map([
+  ['Tablet', '石板'],
   ['Focus', '法器'],
   ['Energy Shield', '能量护盾'],
   ['Runic Ward', '符文结界'],
