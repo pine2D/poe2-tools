@@ -18,7 +18,22 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     panel = doc.createElement('section')
     panel.dataset.poe2L10n = 'import'
     panel.style.cssText =
-      'background:#20252d;color:white;padding:12px;margin:8px 0;font:14px/1.6 sans-serif'
+      'box-sizing:border-box;min-width:0;background:#20252d;color:white;padding:12px;margin:8px 0;font:14px/1.6 sans-serif;overflow-wrap:anywhere'
+    const style = doc.createElement('style')
+    style.textContent = `
+      #noticeDialog:has([data-poe2-l10n="import"]) {
+        box-sizing: border-box;
+        width: 760px;
+        max-width: calc(100vw - 24px) !important;
+      }
+      #noticeDialog:has([data-poe2-l10n="import"]) .message > .text { min-width: 0; flex: 1; }
+      #noticeDialog:has([data-poe2-l10n="import"]) #importerInput {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+      }
+    `
     const preview = doc.createElement('button')
     preview.type = 'button'
     preview.textContent = '预览中文转换'
@@ -70,17 +85,20 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         result.append(list)
       }
       const columns = doc.createElement('div')
-      columns.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px'
+      columns.style.cssText =
+        'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px'
       for (const [title, value] of [
         ['粘贴原文（含备注）', converted.original],
         ['英文预览（不提交交易备注／描述）', converted.english],
       ]) {
         const label = doc.createElement('label')
         label.textContent = title ?? ''
+        label.style.cssText = 'display:block;min-width:0'
         const area = doc.createElement('textarea')
         area.readOnly = true
         area.value = value ?? ''
-        area.style.cssText = 'display:block;width:100%;min-height:220px;font:12px/1.5 monospace'
+        area.style.cssText =
+          'display:block;box-sizing:border-box;width:100%;min-width:0;height:240px;min-height:160px;resize:vertical;margin-top:4px;font:12px/1.5 monospace'
         label.append(area)
         columns.append(label)
       }
@@ -112,7 +130,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       })
       result.append(fill)
     })
-    panel.append(preview, result)
+    panel.append(style, preview, result)
     input.after(panel)
   }
   const onInput = (event: Event) => {
