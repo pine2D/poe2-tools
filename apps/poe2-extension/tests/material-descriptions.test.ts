@@ -88,3 +88,46 @@ it('附身怪物与盗贼流放者说明不丢失所有与下次遭遇的限制'
     materialDescription(`${active}the next Rogue Exile you encounter will summon an ally`),
   ).toContain('下一次遭遇的盗贼流放者将召唤一名盟友')
 })
+
+it('日志保留揭示地貌与指定遭遇，不把特殊词缀说成必出首领', () => {
+  for (const [boss, article, name] of [
+    ['Medved', 'a', '梅德维德'],
+    ['Vorana', 'a', '沃拉娜'],
+    ['Uhtred', 'an', '乌崔德'],
+    ['Olroth', 'an', '欧罗什'],
+  ]) {
+    expect(
+      materialDescription(
+        `${active}your next Logbook\nguarantees ${article} ${boss} encounter in the revealed Biome`,
+      ),
+    ).toBe(
+      `当此物品在你的物品栏中激活时，你下一次使用先祖秘藏日志时，揭示的地貌中必定出现${name}遭遇。`,
+    )
+  }
+  const special = materialDescription(
+    `${active}your next Logbook adds special modifiers to revealed Grand Expedition areas`,
+  )
+  expect(special).toContain('向揭示的宏大先祖秘藏区域添加特殊词缀')
+  expect(special).not.toContain('必定')
+  expect(
+    materialDescription(`${active}your next Logbook guarantees a Medved encounter in any Biome`),
+  ).toBeNull()
+})
+it('圣化保留神圣石和稀有限制，怪物效能排除不混同怪物稀有度', () => {
+  expect(
+    materialDescription(`${active}your next Divine Orb used on a Rare item will Sanctify it`),
+  ).toContain('对稀有物品使用神圣石时，将使该物品圣化')
+  expect(
+    materialDescription(`${active}your next Divine Orb used on a Unique item will Sanctify it`),
+  ).toBeNull()
+  expect(
+    materialDescription(
+      `${active}your next Chaos Orb will replace all Modifiers on a Waystone with Modifiers that do not grant Monster Effectiveness`,
+    ),
+  ).toContain('全部词缀替换为不提供怪物效能的词缀')
+  expect(
+    materialDescription(
+      `${active}your next Chaos Orb will replace all Modifiers on a Waystone with Modifiers that grant Monster Effectiveness`,
+    ),
+  ).toBeNull()
+})

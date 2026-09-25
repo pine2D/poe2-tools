@@ -681,3 +681,8 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 0.1.68按现有国服primary交易词缀快照0.5.5核对制作术语：`explicit.stat_586037801`的Desecrated Modifier→渎灵词缀、`explicit.stat_1710200734`的Desecrated Currency→渎灵通货；珠宝专名句中defilement译“亵渎”，Desecration另译“渎灵”，不可混同。纠正5条人工UI词及用途说明中的制作语境，原5个旧称只作为显式检索别名。未重写官方词典、用户输入或旧制作引擎，也不声称此快照已代表更新版本的国服真机。
 
 新增三位巫妖（stat_3418580811的|28、|24、|26）、阿兹莫里之灵（stat_3815617979）、盗贼流放者（stat_1352729973）的五条人工用途句；Possessed沿stat_3181677174等译为被附身。用途覆盖42／49段，剩余7段不填猜译。
+
+
+### 扩展预兆剩余用途术语核对（2026-09-25）
+
+0.1.70沿已登记PoE2DB简中gray参考，人工核对[地貌](https://poe2db.tw/cn/Biome)、[怪物效能](https://poe2db.tw/cn/Monster_Effectiveness)、[宏大先祖秘藏](https://poe2db.tw/cn/Grand_Expedition)及[圣化物品](https://poe2db.tw/cn/Sanctified_Items)。圣化同时见[神圣石](https://poe2db.tw/cn/Divine_Orb)的稀有物品用途语境，不从物品名称猜译动作。只参考专名，自写CoE公开用途整句译文，不复制页面规则、概率、数据表或同行代码；不是国服真机验证，也不新增采集适配器或运行时请求。梅德维德／沃拉娜／欧罗什沿已有primary国服stats快照stat_3418580811的|22／|21／|23，乌崔德沿已有gray物品表“乌崔德圣杯”。新增七句均完整匹配，未知或语义改变的句子仍回退原文。

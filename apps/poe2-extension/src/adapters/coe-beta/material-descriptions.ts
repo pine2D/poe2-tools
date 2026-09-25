@@ -3,6 +3,32 @@ const lead = 'While this item is active in your inventory your next '
 const translatedLead = '当此物品在你的物品栏中激活时，你下一次'
 const descriptions = new Map([
   [
+    'Logbook adds special modifiers to revealed Grand Expedition areas',
+    '使用先祖秘藏日志时，将向揭示的宏大先祖秘藏区域添加特殊词缀。',
+  ],
+  ['Divine Orb used on a Rare item will Sanctify it', '对稀有物品使用神圣石时，将使该物品圣化。'],
+  [
+    'Chaos Orb will replace all Modifiers on a Waystone with Modifiers that do not grant Monster Effectiveness',
+    '使用混沌石将把引路石上的全部词缀替换为不提供怪物效能的词缀。',
+  ],
+  [
+    'Logbook guarantees a Medved encounter in the revealed Biome',
+    '使用先祖秘藏日志时，揭示的地貌中必定出现梅德维德遭遇。',
+  ],
+  [
+    'Logbook guarantees a Vorana encounter in the revealed Biome',
+    '使用先祖秘藏日志时，揭示的地貌中必定出现沃拉娜遭遇。',
+  ],
+  [
+    'Logbook guarantees an Uhtred encounter in the revealed Biome',
+    '使用先祖秘藏日志时，揭示的地貌中必定出现乌崔德遭遇。',
+  ],
+  [
+    'Logbook guarantees an Olroth encounter in the revealed Biome',
+    '使用先祖秘藏日志时，揭示的地貌中必定出现欧罗什遭遇。',
+  ],
+
+  [
     'Weapon or Jewellery Desecration attempt will guarantee a random Ulaman modifier',
     '尝试对武器或首饰进行渎灵时，必定获得一条随机乌拉曼词缀。',
   ],
