@@ -3,6 +3,7 @@ import { supportsPage } from '../adapters/coe-beta/context'
 import { platform } from '../platform'
 import { attachAttributeLayer } from './attribute-layer'
 import { attachImport } from './import-controller'
+import { attachPageLabels } from './page-labels'
 import { attachSearch } from './search-controller'
 import { attachStatLayer } from './stat-layer'
 import { attachTextLayer } from './text-layer'
@@ -28,12 +29,14 @@ async function start() {
     stop = undefined
     mode = next
     if (next) {
+      const stopLabels = attachPageLabels(document, settings.bilingual)
       const stopText = attachTextLayer(document, lexicon, settings.bilingual)
       const stopAttributes = attachAttributeLayer(document, lexicon, settings.bilingual)
       const stopStats = attachStatLayer(document, lexicon)
       const stopSearch = attachSearch(document, lexicon)
       const stopImport = attachImport(document, data.terms)
       stop = () => {
+        stopLabels()
         stopAttributes()
         stopStats()
         stopImport()

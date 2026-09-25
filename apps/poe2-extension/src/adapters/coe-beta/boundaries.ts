@@ -10,6 +10,7 @@ export const boundaryAttributes = [
 ]
 const boundaryClasses = [
   'hidden',
+  'messageBox',
   'stat',
   'modifierTable',
   'row',

@@ -51,13 +51,18 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
       else for (const node of record.addedNodes) scan(node)
     }
     for (const node of owned) {
-      if (node.isConnected && translatable(node)) continue
+      if (node.isConnected && translatable(node)) {
+        if (state.get(node)?.context !== textContext(node)) render(node)
+        continue
+      }
       const entry = state.get(node)
       if (entry && node.data === entry.written) node.data = entry.original
       state.delete(node)
       owned.delete(node)
     }
   })
+  const onRoute = () => scan(doc.body)
+  doc.defaultView?.addEventListener('popstate', onRoute)
   scan(doc.body)
   observer.observe(doc.body, {
     subtree: true,
@@ -72,6 +77,7 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
     if (closed) return
     closed = true
     observer.disconnect()
+    doc.defaultView?.removeEventListener('popstate', onRoute)
     for (const node of owned) {
       const entry = state.get(node)
       if (entry && node.data === entry.written) node.data = entry.original
