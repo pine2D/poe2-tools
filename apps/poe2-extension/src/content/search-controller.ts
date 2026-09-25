@@ -64,6 +64,10 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   function handle(event: Event) {
     const input = event.target
     if (!(input instanceof HTMLInputElement) || !searchDomain(input)) return
+    if (event.type === 'focusin') {
+      if (active !== input || !panel) show(input)
+      return
+    }
     if (event.type === 'compositionstart') {
       composing.add(input)
       clear()
@@ -91,8 +95,9 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       event.preventDefault()
       event.stopPropagation()
       const input = active
-      clear()
+      // 先归还焦点，再撤下面板，避免 focusin 将刚取消的候选重新展开。
       if (input?.isConnected) input.focus()
+      clear()
       return
     }
     if (event.key === 'Enter' && event.target === active && chinese.test(active?.value ?? '')) {
@@ -137,7 +142,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   })
   observer.observe(doc.body, { childList: true, subtree: true })
   doc.addEventListener('focusout', focusOut, true)
-  for (const type of ['input', 'keyup', 'compositionstart', 'compositionend'])
+  for (const type of ['input', 'keyup', 'compositionstart', 'compositionend', 'focusin'])
     doc.addEventListener(type, handle, true)
   doc.addEventListener('keydown', key, true)
   return () => {
@@ -145,7 +150,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     observer.disconnect()
     doc.removeEventListener('focusout', focusOut, true)
     clear()
-    for (const type of ['input', 'keyup', 'compositionstart', 'compositionend'])
+    for (const type of ['input', 'keyup', 'compositionstart', 'compositionend', 'focusin'])
       doc.removeEventListener(type, handle, true)
     doc.removeEventListener('keydown', key, true)
   }
