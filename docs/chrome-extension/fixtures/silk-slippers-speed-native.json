@@ -3,25 +3,19 @@
   "m": [
     {
       "k": "LocalIncreasedEnergyShield5",
-      "v": [
-        40
-      ],
+      "v": [40],
       "f": [],
       "p": null
     },
     {
       "k": "MovementVelocity3",
-      "v": [
-        20
-      ],
+      "v": [20],
       "f": [],
       "p": null
     },
     {
       "k": "LightningResist3",
-      "v": [
-        18
-      ],
+      "v": [18],
       "f": [],
       "p": null
     }
@@ -38,9 +32,7 @@
   "p": {},
   "di": [],
   "ig": null,
-  "f": [
-    "a"
-  ],
+  "f": ["a"],
   "pt": null,
   "id": null
 }

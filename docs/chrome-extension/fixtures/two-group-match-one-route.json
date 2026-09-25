@@ -11,12 +11,7 @@
         "y": 20
       },
       "title": "Step 1",
-      "action": [
-        "legacy",
-        2,
-        3,
-        4
-      ],
+      "action": ["legacy", 2, 3, 4],
       "omens": null,
       "flags": [],
       "advanced": null,
@@ -87,12 +82,7 @@
         "y": 226.333
       },
       "title": "Step 2",
-      "action": [
-        "legacy",
-        2,
-        7,
-        8
-      ],
+      "action": ["legacy", 2, 7, 8],
       "omens": null,
       "flags": [],
       "advanced": null,
@@ -148,9 +138,7 @@
     "p": {},
     "di": [],
     "ig": 0,
-    "f": [
-      "a"
-    ],
+    "f": ["a"],
     "pt": null
   },
   "endItem": null,
