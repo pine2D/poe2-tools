@@ -19,6 +19,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'data-category'
   | 'settings'
   | 'instructions'
   | 'introduction'
@@ -34,6 +35,8 @@ export function textContext(
     (node.ownerDocument.location.pathname === '/settings' && node.parentElement?.closest('main'))
   )
     return 'settings'
+  if (node.parentElement?.closest('#itemCategorySelector li, #itemClassSelector li'))
+    return 'data-category'
   if (node.parentElement?.closest('#homeFeatures')) return 'home'
   if (node.parentElement?.closest('.filterFeedback')) return 'filter'
   if (node.parentElement?.closest('.item .property')) return 'property'
@@ -180,6 +183,18 @@ function calculationText(text: string): string | null {
   const progress = /^(\d+(?:,\d{3})*) of (\d+(?:,\d{3})*)$/.exec(text)
   return progress ? `${progress[1]} / ${progress[2]}` : null
 }
+// 国服译名沿用已登记的交易词缀与材料名称；只补数据页可见分类，不翻译内部标签代码。
+const dataCategories = new Map([
+  ['Omen', '预兆'],
+  ['Skill Gem', '技能宝石'],
+  ['Skill Gems', '技能宝石'],
+  ['Support Gem', '辅助宝石'],
+  ['Support Gems', '辅助宝石'],
+  ['Waystone', '引路石'],
+  ['Waystones', '引路石'],
+  ['Tablet', '石板'],
+  ['Tablets', '石板'],
+])
 export function contextualText(
   original: string,
   context: ReturnType<typeof textContext>,
@@ -187,24 +202,26 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'settings'
-      ? (settingsText.get(normalized) ?? null)
-      : context === 'home'
-        ? (home.get(normalized) ?? null)
-        : context === 'filter'
-          ? (filters.get(normalized) ?? null)
-          : context === 'property'
-            ? (properties.get(normalized) ?? null)
-            : context === 'importer'
-              ? (importer.get(normalized) ?? null)
-              : context === 'tag'
-                ? tagText(normalized)
-                : context === 'calculation'
-                  ? calculationText(normalized)
-                  : context === 'introduction'
-                    ? (introduction.get(normalized) ?? null)
-                    : context === 'instructions'
-                      ? (instructions.get(word) ?? null)
-                      : null
+    context === 'data-category'
+      ? (dataCategories.get(normalized) ?? null)
+      : context === 'settings'
+        ? (settingsText.get(normalized) ?? null)
+        : context === 'home'
+          ? (home.get(normalized) ?? null)
+          : context === 'filter'
+            ? (filters.get(normalized) ?? null)
+            : context === 'property'
+              ? (properties.get(normalized) ?? null)
+              : context === 'importer'
+                ? (importer.get(normalized) ?? null)
+                : context === 'tag'
+                  ? tagText(normalized)
+                  : context === 'calculation'
+                    ? calculationText(normalized)
+                    : context === 'introduction'
+                      ? (introduction.get(normalized) ?? null)
+                      : context === 'instructions'
+                        ? (instructions.get(word) ?? null)
+                        : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
