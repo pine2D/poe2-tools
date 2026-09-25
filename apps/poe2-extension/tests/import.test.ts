@@ -143,3 +143,15 @@ it('不同装备导入档案不得交叉放行基底、类别和词缀', () => {
     ]).ready,
   ).toBe(false)
 })
+it('诊断保留原文行号，缺失等阶与数值范围分别定位到对应行', () => {
+  const source = text.replace(' (等阶：6)', '').replace('(36-41)', '')
+  const result = prepareImport(source, terms)
+  expect(result.ready).toBe(false)
+  expect(result.original).toBe(source)
+  expect(result.issues).toContainEqual({
+    line: 8,
+    message: '复合词缀、特殊来源、缺等阶等结构尚未验收。',
+  })
+  expect(result.issues).toContainEqual({ line: 9, message: '缺少高级数值范围或数值不在范围内。' })
+  expect(prepareImport(source.replaceAll('\n', '\r\n'), terms).issues).toEqual(result.issues)
+})

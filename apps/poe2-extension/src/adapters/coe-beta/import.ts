@@ -53,27 +53,41 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
 }
 export function prepareImport(original: string, terms: readonly Term[]) {
   const parsed = parseItem(original)
-  if (!parsed.ok) return { original, english: '', ready: false, reasons: [parsed.error] }
+  if (!parsed.ok)
+    return {
+      original,
+      english: '',
+      ready: false,
+      reasons: [parsed.error],
+      issues: [{ line: null as number | null, message: parsed.error }],
+    }
   const item = parsed.item
   const inspection = inspectItem(item, itemDictionary(terms))
-  const reasons: string[] = []
-  if (inspection.comparisonOnly) reasons.push(inspection.comparisonReason ?? '此装备仅供对照。')
+  const issues: { line: number | null; message: string }[] = []
+  const seenIssues = new Set<string>()
+  const add = (message: string, line: number | null = null) => {
+    const key = `${line}\0${message}`
+    if (seenIssues.has(key)) return
+    seenIssues.add(key)
+    issues.push({ line, message })
+  }
+  if (inspection.comparisonOnly) add(inspection.comparisonReason ?? '此装备仅供对照。')
   const profile = profiles.find(
     (p) => p.base === inspection.base.english && p.classes.includes(item.itemClass),
   )
   const verifiedStats = profile?.stats ?? new Set<string>()
   if (!profile || !['magic', 'rare'].includes(item.rarity))
-    reasons.push('导入仅支持已验收的符文法器和细枝头冠普通词缀；其余装备仍可对照。')
+    add('导入仅支持已验收的符文法器和细枝头冠普通词缀；其余装备仍可对照。')
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
-    reasons.push('特殊装备标记尚未验收。')
+    add('特殊装备标记尚未验收。')
   if (item.itemLevel === null || item.itemLevel < 1 || item.itemLevel > 100)
-    reasons.push('物品等级缺失或超出范围。')
-  if (item.diagnostics.length) reasons.push(...item.diagnostics.map((d) => d.message))
-  if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) reasons.push('装备名称区不完整。')
-  if (!item.mods.length) reasons.push('缺少 Ctrl+Alt+C 高级词缀分组。')
+    add('物品等级缺失或超出范围。')
+  for (const diagnostic of item.diagnostics) add(diagnostic.message, diagnostic.line)
+  if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
+  if (!item.mods.length) add('缺少 Ctrl+Alt+C 高级词缀分组。')
   for (const kind of ['prefix', 'suffix'])
     if (item.mods.filter((m) => m.kind === kind).length > (item.rarity === 'magic' ? 1 : 3))
-      reasons.push('前后缀数量超出普通装备范围。')
+      add('前后缀数量超出普通装备范围。')
   const seenStats = new Set<string>()
   const prefixStats = profile?.prefixes ?? new Set<string>()
   for (const { mod, stats } of inspection.mods) {
@@ -88,7 +102,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       mod.magnitude !== undefined ||
       stats.length !== 1
     )
-      reasons.push('复合词缀、特殊来源、缺等阶等结构尚未验收。')
+      add('复合词缀、特殊来源、缺等阶等结构尚未验收。', mod.header.line)
     for (const { source, resolution } of stats) {
       const identities = [
         ...new Set(
@@ -97,11 +111,11 @@ export function prepareImport(original: string, terms: readonly Term[]) {
             .map((c) => c.id),
         ),
       ]
-      if (identities.length !== 1) reasons.push('普通属性身份未唯一识别。')
+      if (identities.length !== 1) add('普通属性身份未唯一识别。', source.line)
       for (const id of identities) {
-        if (seenStats.has(id)) reasons.push('同一普通属性重复出现，不能确认完整导入。')
+        if (seenStats.has(id)) add('同一普通属性重复出现，不能确认完整导入。', source.line)
         if (mod.kind !== (prefixStats.has(id) ? 'prefix' : 'suffix'))
-          reasons.push('普通属性与前后缀分组不符。')
+          add('普通属性与前后缀分组不符。', source.line)
         seenStats.add(id)
       }
       if (
@@ -110,7 +124,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
           (c) => verifiedStats.has(c.id) && c.english === resolution.english,
         )
       )
-        reasons.push('存在未识别、歧义或尚未验收的属性。')
+        add('存在未识别、歧义或尚未验收的属性。', source.line)
       if (
         source.unscalable ||
         source.states?.length ||
@@ -119,13 +133,13 @@ export function prepareImport(original: string, terms: readonly Term[]) {
           (r) => !r.range || r.value < Math.min(...r.range) || r.value > Math.max(...r.range),
         )
       )
-        reasons.push('缺少高级数值范围或数值不在范围内。')
+        add('缺少高级数值范围或数值不在范围内。', source.line)
     }
   }
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers', 'item-level'].includes(block.kind)) continue
     if (!['requirements', 'properties'].includes(block.kind)) {
-      reasons.push('包含未验收的区块、孔位或技能。')
+      add('包含未验收的区块、孔位或技能。', block.lines[0]?.line ?? null)
       continue
     }
     for (const line of block.lines) {
@@ -133,13 +147,16 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         !inspection.englishByLine[line.line] ||
         (block.kind === 'properties' && !/^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw))
       )
-        reasons.push('包含未完整识别或尚未验收的装备属性。')
+        add('包含未完整识别或尚未验收的装备属性。', line.line)
     }
   }
   return {
     original,
     english: inspection.exportText,
-    ready: reasons.length === 0,
-    reasons: [...new Set(reasons)],
+    ready: issues.length === 0,
+    reasons: issues.map(({ line, message }) =>
+      line === null ? message : `第 ${line} 行：${message}`,
+    ),
+    issues,
   }
 }

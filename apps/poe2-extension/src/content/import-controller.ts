@@ -32,8 +32,43 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       const message = doc.createElement('p')
       message.textContent = converted.ready
         ? '已识别。请核对两栏，再填入英文并点击原站 Proceed。'
-        : `仅供对照：${converted.reasons.join('；')}`
+        : '仅供对照，请逐项核对以下原因。'
       result.append(message)
+      if (converted.issues.length) {
+        const list = doc.createElement('ul')
+        list.setAttribute('aria-label', '导入诊断')
+        for (const issue of converted.issues) {
+          const row = doc.createElement('li')
+          if (issue.line !== null) {
+            const lineNumber = issue.line
+            const locate = doc.createElement('button')
+            locate.type = 'button'
+            locate.textContent = `第 ${issue.line} 行`
+            locate.setAttribute('aria-label', `定位第 ${issue.line} 行`)
+            locate.addEventListener('click', () => {
+              if (
+                closed ||
+                current !== revision ||
+                target !== input ||
+                !input.isConnected ||
+                input.value !== converted.original
+              )
+                return
+              const lines = input.value.split('\n')
+              const start = lines
+                .slice(0, lineNumber - 1)
+                .reduce((total, line) => total + line.length + 1, 0)
+              const length = (lines[lineNumber - 1] ?? '').replace(/\r$/, '').length
+              input.focus()
+              input.setSelectionRange(start, start + length)
+            })
+            row.append(locate, doc.createTextNode('：'))
+          }
+          row.append(doc.createTextNode(issue.message))
+          list.append(row)
+        }
+        result.append(list)
+      }
       const columns = doc.createElement('div')
       columns.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px'
       for (const [title, value] of [
@@ -57,6 +92,8 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       invalidate = () => {
         revision++
         fill.disabled = true
+        for (const button of result.querySelectorAll<HTMLButtonElement>('li button'))
+          button.disabled = true
         message.textContent = '原文已改变，请重新预览。'
       }
       fill.addEventListener('click', () => {

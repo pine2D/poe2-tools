@@ -93,3 +93,21 @@ it('编辑原文立即禁用旧填入入口，再次预览才可使用', () => {
   current.click()
   expect(input.value).toContain('+39(36-41) to maximum Energy Shield')
 })
+it('点击诊断定位原输入行，不修改文本，过期诊断不能继续操作', () => {
+  const { input, preview } = readyPreview()
+  input.value = source.replace('(36-41)', '')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  preview.click()
+  const locate = document.querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
+  expect(locate).not.toBeNull()
+  const original = input.value
+  locate?.click()
+  expect(document.activeElement).toBe(input)
+  expect(input.value).toBe(original)
+  expect(input.value.slice(input.selectionStart, input.selectionEnd)).toBe('+40 能量护盾上限')
+  input.value = source
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  input.setSelectionRange(0, 0)
+  locate?.click()
+  expect(input.selectionStart).toBe(0)
+})
