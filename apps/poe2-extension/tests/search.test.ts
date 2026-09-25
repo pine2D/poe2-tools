@@ -295,3 +295,35 @@ it('条件候选鼠标操作不触发原站失焦，候选已从原站删除时�
   expect(input.hasAttribute('aria-controls')).toBe(false)
   expect(input.hasAttribute('role')).toBe(false)
 })
+
+it('制作页仅在计算条件区域启用中文候选，离开时清理且不接管其他下拉框', () => {
+  document.body.innerHTML = `<main><div id="calculatorZone"><div class="requirements"><div class="dropdown editing"><div class="editing"><div><input type="text" id="condition"></div></div><ul><li search="metanumber of affixes"></li></ul></div></div><div class="dropdown editing"><div class="editing"><input type="text" id="other"></div><ul><li search="metanumber of affixes"></li></ul></div></div></main>`
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 'count',
+        en: 'Number of Affixes',
+        zh: '词缀数量',
+        domain: 'ui',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  const input = document.querySelector('#condition') as HTMLInputElement
+  const other = document.querySelector('#other') as HTMLInputElement
+  input.focus()
+  type(input, '词缀数量')
+  expect(document.querySelector('[data-poe2-l10n] button')?.textContent).toContain(
+    'Number of Affixes',
+  )
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+  )
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  expect(input.hasAttribute('aria-controls')).toBe(false)
+  other.focus()
+  type(other, '词缀数量')
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+})

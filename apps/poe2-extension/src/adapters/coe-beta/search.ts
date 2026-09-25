@@ -8,8 +8,9 @@ const controls: readonly [string, Term['domain']][] = [
 ]
 export function isConditionSearch(input: HTMLInputElement): boolean {
   return (
-    input.matches('#simulatorConditionRequirements .dropdown .editing input[type="text"]') &&
-    !input.closest('.dropdown')?.classList.contains('hidden')
+    input.matches(
+      '#simulatorConditionRequirements .dropdown .editing input[type="text"], #calculatorZone .requirements .dropdown .editing input[type="text"]',
+    ) && !input.closest('.dropdown')?.classList.contains('hidden')
   )
 }
 export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
