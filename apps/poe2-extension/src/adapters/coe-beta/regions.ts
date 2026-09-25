@@ -12,7 +12,11 @@ export function translatable(node: Text): boolean {
     !!parent?.closest(regions) &&
     !parent.closest(excluded) &&
     (!parent.closest(statSelector) || !!parent.closest(statHeaderSelector)) &&
-    !isUserContent(parent)
+    !isUserContent(parent) &&
+    !(
+      node.ownerDocument.location.pathname === '/compare' &&
+      parent.closest('.changeTable > .row > .path, .changeTable > .row > .details')
+    )
   )
 }
 
@@ -20,6 +24,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'compare'
   | 'simulator-help'
   | 'simulator-help-link'
   | 'data-category'
@@ -33,6 +38,13 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (
+    node.ownerDocument.location.pathname === '/compare' &&
+    node.parentElement?.closest(
+      'main #ui, main #output > .messageBox, main #changeTypeSelector, main .changeTable > .header, main .changeTable > .row > .type',
+    )
+  )
+    return 'compare'
   if (
     node.ownerDocument.location.pathname === '/simulator-usage' &&
     node.parentElement?.closest('main #output')
@@ -61,6 +73,37 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+// 新版版本对比公开控件；Base指基础数据集，不能沿用装备“基底”。
+const compare = new Map([
+  [
+    'No changes detected between the two patches for this comparison vector.',
+    '这两个版本在当前对比项目下没有检测到差异。',
+  ],
+  ['Source', '来源版本'],
+  ['Target', '目标版本'],
+  ['Select a patch', '选择版本'],
+  ['Data set', '数据集'],
+  ['Base', '基础'],
+  ['Extended', '扩展'],
+  ['Data type', '数据类型'],
+  ['Modifiers', '词缀'],
+  ['Items', '物品'],
+  ['Families', '词缀族'],
+  ['Tags', '标签'],
+  ['Classes', '物品类别'],
+  ['Categories', '分类'],
+  ['Stats', '属性定义'],
+  ['Loading required files', '正在加载所需文件'],
+  ['Processing comparison', '正在对比'],
+  ['Change type', '变更类型'],
+  ['All', '全部'],
+  ['Added', '新增'],
+  ['Changed', '修改'],
+  ['Removed', '移除'],
+  ['Type', '类型'],
+  ['Path', '路径'],
+  ['Details', '详情'],
+])
 // 流程侧栏帮助入口，短链接文字不用于其他页面。
 const simulatorHelpLink = new Map([
   ['Need help using the simulator?', '需要了解流程模拟的用法？'],
@@ -218,30 +261,32 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'simulator-help'
-      ? (simulatorHelpText.get(normalized) ?? null)
-      : context === 'simulator-help-link'
-        ? (simulatorHelpLink.get(normalized) ?? null)
-        : context === 'data-category'
-          ? (dataCategories.get(normalized) ?? null)
-          : context === 'settings'
-            ? (settingsText.get(normalized) ?? null)
-            : context === 'home'
-              ? (home.get(normalized) ?? null)
-              : context === 'filter'
-                ? (filters.get(normalized) ?? null)
-                : context === 'property'
-                  ? (properties.get(normalized) ?? null)
-                  : context === 'importer'
-                    ? (importer.get(normalized) ?? null)
-                    : context === 'tag'
-                      ? tagText(normalized)
-                      : context === 'calculation'
-                        ? calculationText(normalized)
-                        : context === 'introduction'
-                          ? (introduction.get(normalized) ?? null)
-                          : context === 'instructions'
-                            ? (instructions.get(word) ?? null)
-                            : null
+    context === 'compare'
+      ? (compare.get(normalized) ?? null)
+      : context === 'simulator-help'
+        ? (simulatorHelpText.get(normalized) ?? null)
+        : context === 'simulator-help-link'
+          ? (simulatorHelpLink.get(normalized) ?? null)
+          : context === 'data-category'
+            ? (dataCategories.get(normalized) ?? null)
+            : context === 'settings'
+              ? (settingsText.get(normalized) ?? null)
+              : context === 'home'
+                ? (home.get(normalized) ?? null)
+                : context === 'filter'
+                  ? (filters.get(normalized) ?? null)
+                  : context === 'property'
+                    ? (properties.get(normalized) ?? null)
+                    : context === 'importer'
+                      ? (importer.get(normalized) ?? null)
+                      : context === 'tag'
+                        ? tagText(normalized)
+                        : context === 'calculation'
+                          ? calculationText(normalized)
+                          : context === 'introduction'
+                            ? (introduction.get(normalized) ?? null)
+                            : context === 'instructions'
+                              ? (instructions.get(word) ?? null)
+                              : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
