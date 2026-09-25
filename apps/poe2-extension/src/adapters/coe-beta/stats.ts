@@ -1,4 +1,4 @@
-import { userContent } from './user-content'
+import { isUserContent } from './user-content'
 
 // 统计表头复用 stat 样式，但内容是界面标签。
 export const statHeaderSelector = '.simulatorResultsTable > .header .stat'
@@ -11,7 +11,7 @@ export function isSupportedStat(element: Element): boolean {
     element.matches(statSelector) &&
     !element.closest(statHeaderSelector) &&
     !!element.closest('main,dialog') &&
-    !element.closest(userContent) &&
+    !isUserContent(element) &&
     !element.closest(
       '[data-poe2-l10n], [contenteditable], code, pre, [hidden], .hidden, #inventoryZone .tabs, [id*="_ad"]',
     )

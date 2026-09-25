@@ -1,7 +1,7 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { regions } from '../adapters/coe-beta/regions'
-import { userContent } from '../adapters/coe-beta/user-content'
+import { isUserContent } from '../adapters/coe-beta/user-content'
 
 const attributes = ['placeholder', 'title', 'aria-label'] as const
 const controls = 'input:not([type="hidden"]), textarea, button, a, [role="button"]'
@@ -17,7 +17,7 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
       element.matches(controls) &&
       !!element.closest(regions) &&
       !element.closest(excluded) &&
-      !element.closest(userContent)
+      !isUserContent(element)
     )
   }
   function restore(element: Element) {

@@ -95,3 +95,21 @@ it('统计表头虽使用 stat 类仍翻译界面文案，不改写数据行词�
     '闪电抗性 +18%',
   )
 })
+it('保存目标弹窗的仓库页名称按 UUID 身份保留，普通动作仍翻译', async () => {
+  document.body.innerHTML =
+    '<dialog id="noticeDialog" open><div class="message"><div class="text"><button id="12345678-1234-4234-8234-123456789abc" title="Search">Runed Focus<span class="stat">+18% to Lightning Resistance</span></button><button id="0">Search</button></div></div></dialog><main><button id="other">Search</button></main>'
+  start()
+  const target = document.getElementById('12345678-1234-4234-8234-123456789abc') as HTMLElement
+  expect(target.firstChild?.textContent).toBe('Runed Focus')
+  expect(target.title).toBe('Search')
+  expect(target.querySelector('[data-poe2-l10n]')).toBeNull()
+  expect(document.getElementById('0')?.textContent).toBe('搜索')
+  expect(document.getElementById('other')?.textContent).toBe('搜索')
+  const action = document.getElementById('0') as HTMLElement
+  action.id = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(action.textContent).toBe('Search')
+  action.id = '0'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(action.textContent).toBe('搜索')
+})

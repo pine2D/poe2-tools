@@ -253,6 +253,14 @@
     "Special runes support (Modifier conversions, additionnal suffix, etc)": "支持特殊符文（词缀转换、额外后缀等）",
     "Special runes modpools (Chronomancy, Marksman, Destruction, Soul, etc)": "支持特殊符文词缀池（Chronomancy、Marksman、Destruction、Soul 等）",
     "View raw modifier tiers and group data details": "查看原始词缀等阶与词缀组数据详情",
-    "View raw item data details": "查看原始物品数据详情"
+    "View raw item data details": "查看原始物品数据详情",
+    "Save to": "保存到",
+    "Move to": "移动到",
+    "New tab": "新建仓库页",
+    "Rename": "重命名",
+    "Total spending:": "总花费：",
+    "View details": "查看详情",
+    "Last changes": "最近更改",
+    "Actions:": "操作次数："
   }
 }

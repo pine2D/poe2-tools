@@ -1,5 +1,5 @@
 import { statHeaderSelector, statSelector } from './stats'
-import { userContent } from './user-content'
+import { isUserContent } from './user-content'
 
 export const regions = 'header, footer, main, dialog, [role="tooltip"], #mainMenu, #settingsZone'
 export const excluded =
@@ -10,7 +10,7 @@ export function translatable(node: Text): boolean {
     !!parent?.closest(regions) &&
     !parent.closest(excluded) &&
     (!parent.closest(statSelector) || !!parent.closest(statHeaderSelector)) &&
-    !parent.closest(userContent)
+    !isUserContent(parent)
   )
 }
 
