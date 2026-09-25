@@ -1,0 +1,15 @@
+Item Class: Bows
+Rarity: Magic
+Crude Bow
+--------
+Quality: +20% (augmented)
+Physical Damage: 7-11 (augmented)
+Critical Hit Chance: 5.00%
+Attacks per Second: 1.20
+--------
+Sockets: S S
+--------
+Item Level: 86
+--------
+{ Suffix Modifier "of the Panther" (Tier: 4) — Attribute }
++24(21-24) to Dexterity

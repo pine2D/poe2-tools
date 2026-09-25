@@ -782,7 +782,7 @@ it('破碎手套普通与魔法稀有度分别校验分组', () => {
 it('武器属性可预览英文但不因此开放未验收的武器导入', () => {
   const source = `物品类别: 弓
 稀有度: 普通
-粗制弓
+符文粗制弓
 --------
 物理伤害: 7-11 (augmented)
 暴击几率: 5.00%
@@ -790,7 +790,14 @@ it('武器属性可预览英文但不因此开放未验收的武器导入', () =
 --------
 物品等级: 86`
   const result = prepareImport(source, [
-    { id: 'bow', en: 'Crude Bow', zh: '粗制弓', domain: 'base', source: 'test', version: 'test' },
+    {
+      id: 'bow',
+      en: 'Runeforged Crude Bow',
+      zh: '符文粗制弓',
+      domain: 'base',
+      source: 'test',
+      version: 'test',
+    },
   ])
   expect(result.original).toBe(source)
   expect(result.english).toContain('Physical Damage: 7-11 (augmented)')

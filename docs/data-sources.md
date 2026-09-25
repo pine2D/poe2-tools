@@ -723,3 +723,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ### 扩展石板名称补表（2026-09-26）
 
 来源为已登记 gray 的 [PoE2DB 简中石板列表](https://poe2db.tw/cn/Tablet)及八种石板各自页面。仅人工核对英文／简体名称，存入 `data/l10n/coe-beta/tablets.zh-CN.json`；逐项 URL 见文件 `_meta.pages`。不复制规则、权重或页面数据文件，未确认独立再分发授权，保持 gray，可通过 `--no-gray` 整体移除。无运行时请求。访问日期不代表游戏版本，版本记为 unknown；尚未国服真机核对。
+
+
+0.1.97普通粗制弓导入沿已登记gray物品表Crude Bow→粗制弓；另核对[PoE2DB简中页面](https://poe2db.tw/cn/Crude_Bow)的类别“弓类”，作为文本类别别名映射至Bows，另加人工兼容简称“弓”，不宣称用户真机复制头已验证，不通过此项启用其他弓。敏捷复用primary国服交易词条explicit.stat_3261801346；既有MIT目录仅用于设计Dexterity5、24(21-24)自造样本，身份另以原站英文导入导出核对，不引入新规则数据、权重或采集。

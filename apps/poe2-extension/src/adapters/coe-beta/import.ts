@@ -42,6 +42,15 @@ const implicitTagsByBase: Record<string, ReadonlySet<string>> = {
 }
 const profiles = [
   {
+    base: 'Crude Bow',
+    implicitStats: new Set<string>(),
+    armour: false,
+    emptySockets: 2,
+    classes: ['弓类', '弓', 'Bows'],
+    stats: new Set(['explicit.stat_3261801346']),
+    prefixes: new Set<string>(),
+  },
+  {
     base: 'Ruby Ring',
     emptySockets: 0,
     classes: ['戒指', 'Rings'],
@@ -197,7 +206,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   const verifiedStats = profile?.stats ?? new Set<string>()
   if (!profile || !['normal', 'magic', 'rare'].includes(item.rarity))
     add(
-      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋、破碎手套、蓝玉戒指、红玉戒指、黄玉戒指、紫晶戒指及翠玉项链的指定属性；其余装备仍可对照。',
+      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋、破碎手套、蓝玉戒指、红玉戒指、黄玉戒指、紫晶戒指、翠玉项链及粗制弓的指定属性；其余装备仍可对照。',
     )
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     add('特殊装备标记尚未验收。')
@@ -277,6 +286,17 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         )
       )
         add('存在未识别、歧义或尚未验收的属性。', source.line)
+      if (profile?.base === 'Crude Bow' && identities.includes('explicit.stat_3261801346')) {
+        const roll = source.rolls[0]
+        if (
+          mod.tier !== 4 ||
+          source.rolls.length !== 1 ||
+          !roll?.range ||
+          Math.min(...roll.range) !== 21 ||
+          Math.max(...roll.range) !== 24
+        )
+          add('粗制弓敏捷后缀目前仅验收等阶4、范围21–24；其他组合请保留对照。', source.line)
+      }
       const fixedSpeed =
         profile?.base === 'Silk Slippers' &&
         identities.length === 1 &&
@@ -303,6 +323,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         add('缺少高级数值范围或数值不在范围内。', source.line)
     }
   }
+  const bow = profile?.base === 'Crude Bow'
   let qualityCount = 0
   let socketLines = 0
   for (const block of item.blocks) {
@@ -328,7 +349,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     for (const line of block.lines) {
       const quality = block.kind === 'properties' && /^(?:品质|Quality)\s*[:：]/.test(line.raw)
       if (quality) {
-        if (!profile?.armour) add('该首饰的品质结构尚未验收。', line.line)
+        if (!profile?.armour && !bow) add('该基底的品质结构尚未验收。', line.line)
         qualityCount++
         const match = /^(?:品质|Quality)\s*[:：]\s*\+?(\d+)%(?:\s+\(augmented\))?$/.exec(line.raw)
         if (!match || Number(match[1]) > 20 || qualityCount > 1)
@@ -338,7 +359,13 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         !inspection.englishByLine[line.line] ||
         (block.kind === 'properties' &&
           !quality &&
-          (!profile?.armour || !/^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw)))
+          !(
+            (profile?.armour && /^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw)) ||
+            (bow &&
+              /^(?:物理伤害|Physical Damage|暴击几率|暴击率|Critical Hit Chance|Critical Strike Chance|每秒攻击次数|Attacks per Second)\s*[:：]/.test(
+                line.raw,
+              ))
+          ))
       )
         add('包含未完整识别或尚未验收的装备属性。', line.line)
     }
