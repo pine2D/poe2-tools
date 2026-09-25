@@ -605,3 +605,54 @@ it('红玉戒指不继承冰霜标签，未验收品质及错分组仍不放行'
   ])
     expect(prepareImport(source, rubyTerms).ready).toBe(false)
 })
+
+const lifeTerm: Term = {
+  id: 'life',
+  sourceId: 'explicit.stat_3299347043',
+  en: '# to maximum Life',
+  zh: '# 生命上限',
+  domain: 'stat',
+  source: 'test',
+  version: 'test',
+}
+it.each([
+  {
+    base: '蓝玉戒指',
+    normal: ring,
+    terms: ringTerms,
+    tier: 5,
+    suffix: '{ 后缀属性 "测试之" (等阶：6) }\n冰霜抗性 +18(16-20)%',
+  },
+  {
+    base: '红玉戒指',
+    normal: rubyNormal,
+    terms: rubyTerms,
+    tier: 5,
+    suffix: '{ 后缀属性 "测试之" (等阶：6) }\n火焰抗性 +18(16-20)%',
+  },
+  {
+    base: '翠玉项链',
+    normal: jadeNormal,
+    terms: amuletTerms,
+    tier: 6,
+    suffix: '{ 后缀属性 "测试之" (等阶：4) }\n+24(21-24) 敏捷',
+  },
+])('$base 生命前缀与原后缀分开转换，拒绝错分组和缺范围', ({ normal, terms, tier, suffix }) => {
+  const dictionary = [...terms, lifeTerm]
+  const prefix = `\n--------\n{ 前缀属性 "测试的" (等阶：${tier}) — 生命 }\n+50(40-59) 生命上限`
+  const magic = `${normal.replace('普通', '魔法')}${prefix}\n${suffix}`
+  for (const source of [magic, magic.replace('魔法\n', '稀有\n测试 首饰\n')]) {
+    const result = prepareImport(source, dictionary)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain('+50(40-59) to maximum Life')
+    expect(result.english).toContain(`Prefix Modifier "测试的" (Tier: ${tier})`)
+  }
+  for (const source of [
+    normal + prefix,
+    magic.replace('前缀属性', '后缀属性'),
+    magic.replace('50(40-59)', '50'),
+    magic.replace('50(40-59)', '60(40-59)'),
+    magic.replace('魔法\n', '稀有\n测试 首饰\n') + prefix,
+  ])
+    expect(prepareImport(source, dictionary).ready).toBe(false)
+})

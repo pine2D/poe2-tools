@@ -58,3 +58,8 @@
 
 
 `ruby-ring-transmutation-native.json`为0.1.75最终包完整链验收中的一次原生蜕变石结果：从上述normal中文样本导入，实际操作生成FireResist2=11的魔法戒指，固有火抗仍25。撤销后的原始JSON逐字等于导入基线，关闭扩展后的Export也逐字一致。本文件只保留该次随机结果用于检查结构，不保证重复制作命中同一词缀，也不是权重证据。
+
+
+## 首饰生命前缀组合
+
+`{ruby-ring,sapphire-ring,jade-amulet}-life-{magic,rare}-zh-CN.txt`是六份自造高级文本：生命50(40-59)，戒指T5、项链T6；另含原有火抗、冰抗或敏捷后缀。对应`-native.json`来自无扩展英文原站导出，仅格式化。0.1.76最终ZIP逐一转换中文并导入，六份原始导出均与英文基线逐字一致，IncreasedLife4值50与后缀独立保留。不是用户私人物品，不含制作规则库。

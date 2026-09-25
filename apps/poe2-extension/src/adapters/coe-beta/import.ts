@@ -16,6 +16,7 @@ const focusStats = new Set([
   'explicit.stat_789117908',
   'explicit.stat_2923486259',
 ])
+const lifeStatId = 'explicit.stat_3299347043'
 const movementSpeedId = 'explicit.stat_2250533757'
 const verifiedSpeedTiers = new Map([
   [10, 6],
@@ -39,8 +40,8 @@ const profiles = [
     classes: ['戒指', 'Rings'],
     armour: false,
     implicitStats: new Set(['explicit.stat_3372524247']),
-    stats: new Set(['explicit.stat_3372524247']),
-    prefixes: new Set<string>(),
+    stats: new Set(['explicit.stat_3372524247', lifeStatId]),
+    prefixes: new Set([lifeStatId]),
   },
   {
     base: 'Jade Amulet',
@@ -48,8 +49,8 @@ const profiles = [
     classes: ['项链', 'Amulets'],
     armour: false,
     implicitStats: new Set(['explicit.stat_3261801346']),
-    stats: new Set(['explicit.stat_3261801346', 'explicit.stat_1671376347']),
-    prefixes: new Set<string>(),
+    stats: new Set(['explicit.stat_3261801346', 'explicit.stat_1671376347', lifeStatId]),
+    prefixes: new Set([lifeStatId]),
   },
   {
     base: 'Sapphire Ring',
@@ -57,8 +58,8 @@ const profiles = [
     classes: ['戒指', 'Rings'],
     armour: false,
     implicitStats: new Set(['explicit.stat_4220027924']),
-    stats: new Set(['explicit.stat_4220027924']),
-    prefixes: new Set<string>(),
+    stats: new Set(['explicit.stat_4220027924', lifeStatId]),
+    prefixes: new Set([lifeStatId]),
   },
   {
     base: 'Runed Focus',
@@ -162,7 +163,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   const verifiedStats = profile?.stats ?? new Set<string>()
   if (!profile || !['normal', 'magic', 'rare'].includes(item.rarity))
     add(
-      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋、蓝玉戒指及翠玉项链的指定属性；其余装备仍可对照。',
+      '导入仅支持已验收的符文法器、细枝头冠、丝质之袍、丝绸便鞋、蓝玉戒指、红玉戒指及翠玉项链的指定属性；其余装备仍可对照。',
     )
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     add('特殊装备标记尚未验收。')
