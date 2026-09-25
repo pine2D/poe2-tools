@@ -716,3 +716,5 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.86沿既有CoE公开DOM人工UI来源补齐Data物品／词缀两种模式的完整空结果句No items found for this selection.与No modifiers found for this selection.，均按当前筛选条件表述，不声称中文词典缺失或原站不支持该类别。没有新增数据源或游戏规则。
+
+0.1.87沿既有CoE公开DOM人工UI来源，为https://beta.craftofexile.com/simulator-usage的六节教程增加122条限定正文上下文的手工译文，并补流程侧栏帮助入口的三段译文。保留原站链接、动图地址及“调试尚未推出”限定；House／Flag只在此教程按图标解释，普通and／or不采用逻辑运算符标签。原文Conditions configuration段重复无有效路线时处理说明，中文标题附明确校注、下文忠实翻译，不擅自改成未验证教程；不是新的制作数据源或规则导入。

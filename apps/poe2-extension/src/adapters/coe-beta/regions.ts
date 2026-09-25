@@ -1,4 +1,5 @@
 import { settingsText } from './settings-text'
+import { simulatorHelpText } from './simulator-help'
 import { statHeaderSelector, statSelector } from './stats'
 import { isUserContent } from './user-content'
 
@@ -19,6 +20,8 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'simulator-help'
+  | 'simulator-help-link'
   | 'data-category'
   | 'settings'
   | 'instructions'
@@ -30,6 +33,13 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (
+    node.ownerDocument.location.pathname === '/simulator-usage' &&
+    node.parentElement?.closest('main #output')
+  )
+    return 'simulator-help'
+  if (node.parentElement?.closest('#simulatorStartingItemOutput > .messageBox'))
+    return 'simulator-help-link'
   if (
     node.parentElement?.closest('#settingsZone') ||
     (node.ownerDocument.location.pathname === '/settings' && node.parentElement?.closest('main'))
@@ -51,6 +61,12 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+// 流程侧栏帮助入口，短链接文字不用于其他页面。
+const simulatorHelpLink = new Map([
+  ['Need help using the simulator?', '需要了解流程模拟的用法？'],
+  ['Click here', '查看使用说明'],
+  ['.', '。'],
+])
 // 新版首页公开功能文案，限定容器，保留原站图片与交互节点。
 const home = new Map([
   ['Emulate directly in the crafting interface', '直接在制作界面演练'],
@@ -202,26 +218,30 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'data-category'
-      ? (dataCategories.get(normalized) ?? null)
-      : context === 'settings'
-        ? (settingsText.get(normalized) ?? null)
-        : context === 'home'
-          ? (home.get(normalized) ?? null)
-          : context === 'filter'
-            ? (filters.get(normalized) ?? null)
-            : context === 'property'
-              ? (properties.get(normalized) ?? null)
-              : context === 'importer'
-                ? (importer.get(normalized) ?? null)
-                : context === 'tag'
-                  ? tagText(normalized)
-                  : context === 'calculation'
-                    ? calculationText(normalized)
-                    : context === 'introduction'
-                      ? (introduction.get(normalized) ?? null)
-                      : context === 'instructions'
-                        ? (instructions.get(word) ?? null)
-                        : null
+    context === 'simulator-help'
+      ? (simulatorHelpText.get(normalized) ?? null)
+      : context === 'simulator-help-link'
+        ? (simulatorHelpLink.get(normalized) ?? null)
+        : context === 'data-category'
+          ? (dataCategories.get(normalized) ?? null)
+          : context === 'settings'
+            ? (settingsText.get(normalized) ?? null)
+            : context === 'home'
+              ? (home.get(normalized) ?? null)
+              : context === 'filter'
+                ? (filters.get(normalized) ?? null)
+                : context === 'property'
+                  ? (properties.get(normalized) ?? null)
+                  : context === 'importer'
+                    ? (importer.get(normalized) ?? null)
+                    : context === 'tag'
+                      ? tagText(normalized)
+                      : context === 'calculation'
+                        ? calculationText(normalized)
+                        : context === 'introduction'
+                          ? (introduction.get(normalized) ?? null)
+                          : context === 'instructions'
+                            ? (instructions.get(word) ?? null)
+                            : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
