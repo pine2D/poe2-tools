@@ -195,6 +195,12 @@ const filters = new Map([
   ['Clear all', '清空全部筛选'],
 ])
 const properties = new Map([
+  ['Physical', '物理'],
+  ['Damage', '伤害'],
+  ['Critical Hit', '暴击'],
+  ['Chance:', '几率：'],
+  ['Attacks per Second:', '每秒攻击次数：'],
+  ['to', '至'],
   ['Tablet', '石板'],
   ['Focus', '法器'],
   ['Energy Shield', '能量护盾'],
