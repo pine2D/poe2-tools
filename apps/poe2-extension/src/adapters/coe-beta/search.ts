@@ -28,6 +28,7 @@ export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   ]
 }
 export function searchDomain(input: HTMLInputElement): Term['domain'] | null {
+  if (input.readOnly || input.matches(':disabled')) return null
   if (isConditionSearch(input)) return 'stat'
   return controls.find(([selector]) => input.matches(selector))?.[1] ?? null
 }

@@ -361,3 +361,60 @@ it('先限定原站条件选项再截取候选，不能让无关词条挤掉有�
   buttons[0]?.click()
   expect(input.value).toBe('#% to Lightning Resistance')
 })
+
+it.each(['readOnly', 'disabled'] as const)(
+  '控件变为 %s 后旧候选不能写入，且不再提供候选',
+  async (property) => {
+    const { input, submitted } = setup()
+    type(input, '符文法器')
+    const old = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+    input[property] = true
+    old?.click()
+    expect(input.value).toBe('符文法器')
+    expect(submitted).toEqual([])
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+    type(input, '符文')
+    expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+    input[property] = false
+    type(input, '符文法器')
+    document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')?.click()
+    expect(input.value).toBe('Runed Focus')
+  },
+)
+
+it('控件移出搜索区域后即使观察器尚未执行也不能提交旧候选', () => {
+  const { input, submitted } = setup()
+  type(input, '符文法器')
+  const old = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  document.querySelector('main')?.append(input)
+  old?.click()
+  expect(input.value).toBe('符文法器')
+  expect(submitted).toEqual([])
+})
+
+it('条件下拉框隐藏后自动撤下候选并归还辅助属性', async () => {
+  document.body.innerHTML =
+    '<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><div class="editing"><input type="text"></div><li search="Runed Focus"></li></div></div></div></main>'
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 'condition',
+        en: 'Runed Focus',
+        zh: '符文法器',
+        domain: 'stat',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  const input = document.querySelector('input') as HTMLInputElement
+  type(input, '符文法器')
+  expect(input.getAttribute('role')).toBe('combobox')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  document.querySelector('.dropdown')?.classList.add('hidden')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  expect(input.hasAttribute('role')).toBe(false)
+})

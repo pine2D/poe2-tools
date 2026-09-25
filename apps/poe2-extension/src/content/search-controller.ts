@@ -93,6 +93,10 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       }
       button.addEventListener('click', () => {
         if (closed || current !== revision || !input.isConnected || input.value !== query) return
+        if (searchDomain(input) !== domain || panel?.parentElement !== input.parentElement) {
+          clear()
+          return
+        }
         if (
           keepFocus &&
           !searchCandidates(input, lexicon).some((candidate) => candidate.term.en === term.en)
@@ -206,7 +210,12 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     )
       clear()
   })
-  observer.observe(doc.body, { childList: true, subtree: true })
+  observer.observe(doc.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'id', 'type', 'readonly', 'disabled'],
+  })
   doc.addEventListener('focusout', focusOut, true)
   for (const type of ['input', 'keyup', 'compositionstart', 'compositionend', 'focusin'])
     doc.addEventListener(type, handle, true)
