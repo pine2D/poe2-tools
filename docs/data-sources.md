@@ -713,3 +713,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.83新增黄玉／紫晶戒指档案：名称来自既有gray的zh-CN/items.json中Topaz Ring／Amethyst Ring；固有范围样本设计参考已登记MIT目录，另经原站英文导入分别核对FourRing5与FourRing6及实际固有值。生命和三元素抗性复用既有primary词条，紫晶的混沌抗性复用explicit.stat_2923486259；不从此扩大其他首饰混沌后缀资格。初选Coral Ring未在现有PoE2目录找到，未创建档案、译名或声称支持；未新增数据源或制作规则。
+
+
+0.1.86沿既有CoE公开DOM人工UI来源补齐Data物品／词缀两种模式的完整空结果句No items found for this selection.与No modifiers found for this selection.，均按当前筛选条件表述，不声称中文词典缺失或原站不支持该类别。没有新增数据源或游戏规则。

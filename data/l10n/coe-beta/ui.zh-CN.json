@@ -469,6 +469,8 @@
     "Proper heist jewellery affix limit handling": "正确处理夺宝（Heist）首饰的词缀数量上限",
     "End condition": "结束条件",
     "Restart condition": "重新开始条件",
-    "New link": "新增连线"
+    "New link": "新增连线",
+    "No items found for this selection.": "当前筛选条件下未找到物品。",
+    "No modifiers found for this selection.": "当前筛选条件下未找到词缀。"
   }
 }
