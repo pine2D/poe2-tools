@@ -640,3 +640,8 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ### 扩展标签 UI 人工译名（2026-09-25）
 
 沿用 CoE Beta 公开界面人工适配来源，仅观察 `#filterSelector li.tag` 与 `.modTag` 的文字和身份；不复制规则、权重或实现。20 个英文标签及 Non- 变体在扩展 `regions.ts` 中维护人工简体译名，属于 manual。用户高级装备样本辅助核对常用标签；Caster“施法”是人工 UI 用语，尚无国服独立标签真机证据，不标为官方已核实译名。未知标签保留原文。
+
+
+### 扩展新版介绍页术语核对（2026-09-25）
+
+0.1.30 沿既有 `data/craft/catalog.json` 国服名称核对四种 Flux 与 Vaal Infuser 系列，沿 `data/dict/zh-CN/items.json` 核对 Gloam／Tenebrous／Dusk／Penumbra 首饰及 Distorted Amulet；只增加人工组合句，不复制外站规则文件。[PoE2DB 简中 Strongbox](https://poe2db.tw/cn/Strongbox) 按已登记 gray 来源人工核对“保险箱”，页面标签亦含“施法”，可作为 Caster 人工译名的社区交叉证据，仍不等于国服真机验证。Distilled_Emotions／Distilled_Ire 页面读取均为404，不作为译名证据；分类暂保留英文。

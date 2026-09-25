@@ -296,6 +296,13 @@
     "Invalid Dataset": "数据内容无效",
     "Simulator Import": "流程数据导入",
     "This will replace current data, do you want to proceed?": "这将替换当前数据，是否继续？",
-    "THIS CANNOT BE UNDONE": "此操作无法撤销"
+    "THIS CANNOT BE UNDONE": "此操作无法撤销",
+    "Item flag editing (corruption, sanctification, mirror, split, etc)": "编辑装备状态（腐化、圣化、镜像、分裂等）",
+    "Vaal Infusers": "瓦尔注能装置",
+    "Blazing, Chilling, Crackling and Void Flux": "炽焰、冰寒、雷霆和虚空溶剂",
+    "Special bases support (gloam, tenebrous, dusk, penumbra amulets/rings, distorted amulet, etc)": "支持特殊基底（薄暮、暗黑、暮色、半影项链与戒指，以及扭曲项链等）",
+    "Strongboxes": "保险箱",
+    "Path of Exile 1": "流放之路 1",
+    "Path of Exile 2": "流放之路 2"
   }
 }
