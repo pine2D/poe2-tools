@@ -37,6 +37,11 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     const preview = doc.createElement('button')
     preview.type = 'button'
     preview.textContent = '预览中文转换'
+    // 在首次转换前挂载，后续仅更新摘要，避免重复播报两栏装备全文。
+    const message = doc.createElement('p')
+    message.setAttribute('role', 'status')
+    message.setAttribute('aria-live', 'polite')
+    message.setAttribute('aria-atomic', 'true')
     const result = doc.createElement('div')
     preview.addEventListener('click', () => {
       if (closed || target !== input || !preview.isConnected) return
@@ -44,11 +49,9 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       invalidate = null
       result.replaceChildren()
       const converted = prepareImport(input.value, terms)
-      const message = doc.createElement('p')
       message.textContent = converted.ready
         ? '已识别。请核对两栏，再填入英文并点击原站 Proceed。'
         : '仅供对照，请逐项核对以下原因。'
-      result.append(message)
       if (converted.issues.length) {
         const list = doc.createElement('ul')
         list.setAttribute('aria-label', '导入诊断')
@@ -130,7 +133,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       })
       result.append(fill)
     })
-    panel.append(style, preview, result)
+    panel.append(style, preview, message, result)
     input.after(panel)
   }
   const onInput = (event: Event) => {

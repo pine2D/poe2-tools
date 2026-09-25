@@ -111,3 +111,41 @@ it('点击诊断定位原输入行，不修改文本，过期诊断不能继续�
   locate?.click()
   expect(input.selectionStart).toBe(0)
 })
+
+it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不抢焦点', () => {
+  const { input, preview, fill } = readyPreview()
+  const status = document.querySelector('[data-poe2-l10n="import"] [role="status"]')
+  expect(status).not.toBeNull()
+  expect(status?.getAttribute('aria-live')).toBe('polite')
+  expect(status?.getAttribute('aria-atomic')).toBe('true')
+  expect(status?.textContent).toContain('已识别')
+  expect(status?.querySelector('textarea')).toBeNull()
+  input.focus()
+  input.value = source.replace('+40', '+39')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(status?.textContent).toBe('原文已改变，请重新预览。')
+  expect(document.activeElement).toBe(input)
+  expect(fill.disabled).toBe(true)
+  preview.click()
+  expect(document.querySelector('[role="status"]')).toBe(status)
+  expect(status?.textContent).toContain('已识别')
+  const current = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  current.click()
+  expect(status?.textContent).toContain('已填入英文')
+  expect(document.activeElement).toBe(input)
+  input.value = '未知文本'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  preview.click()
+  expect(document.querySelector('[role="status"]')).toBe(status)
+  expect(status?.textContent).toContain('仅供对照')
+  stop()
+  expect(status?.isConnected).toBe(false)
+})
+
+it('未预览时状态区为空，不提前播报装备内容', () => {
+  document.body.innerHTML = '<dialog open><textarea id="importerInput">私人文本</textarea></dialog>'
+  stop = attachImport(document, [])
+  const status = document.querySelector('[data-poe2-l10n="import"] [role="status"]')
+  expect(status).not.toBeNull()
+  expect(status?.textContent).toBe('')
+})
