@@ -8,13 +8,15 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
   let invalidate: (() => void) | null = null
   const scan = () => {
     if (closed) return
-    const input = doc.querySelector<HTMLTextAreaElement>('dialog #importerInput')
+    const input = doc.querySelector<HTMLTextAreaElement>('dialog[open] #importerInput')
     if (input === target && panel?.isConnected) return
     revision++
     invalidate = null
     panel?.remove()
     target = input
     if (!input) return
+    const isActive = () =>
+      !closed && target === input && input.isConnected && input.closest('dialog')?.open === true
     panel = doc.createElement('section')
     panel.dataset.poe2L10n = 'import'
     panel.style.cssText =
@@ -44,7 +46,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     message.setAttribute('aria-atomic', 'true')
     const result = doc.createElement('div')
     preview.addEventListener('click', () => {
-      if (closed || target !== input || !preview.isConnected) return
+      if (!isActive() || !preview.isConnected) return
       const current = ++revision
       invalidate = null
       result.replaceChildren()
@@ -64,14 +66,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             locate.textContent = `第 ${issue.line} 行`
             locate.setAttribute('aria-label', `定位第 ${issue.line} 行`)
             locate.addEventListener('click', () => {
-              if (
-                closed ||
-                current !== revision ||
-                target !== input ||
-                !input.isConnected ||
-                input.value !== converted.original
-              )
-                return
+              if (!isActive() || current !== revision || input.value !== converted.original) return
               const lines = input.value.split('\n')
               const start = lines
                 .slice(0, lineNumber - 1)
@@ -118,7 +113,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         message.textContent = '原文已改变，请重新预览。'
       }
       fill.addEventListener('click', () => {
-        if (closed || current !== revision || target !== input || !fill.isConnected) return
+        if (!isActive() || current !== revision || !fill.isConnected) return
         if (!input.isConnected || input.value !== converted.original) {
           message.textContent = '原文已改变，请重新预览。'
           fill.disabled = true
@@ -142,7 +137,12 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
   doc.addEventListener('input', onInput, true)
   scan()
   const observer = new MutationObserver(scan)
-  observer.observe(doc.body, { childList: true, subtree: true })
+  observer.observe(doc.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['open'],
+  })
   return () => {
     closed = true
     revision++

@@ -149,3 +149,39 @@ it('未预览时状态区为空，不提前播报装备内容', () => {
   expect(status).not.toBeNull()
   expect(status?.textContent).toBe('')
 })
+
+it('关闭对话框后立即拒绝旧按钮操作，随后移除预览，重开重新挂载', async () => {
+  const { input, preview, fill } = readyPreview()
+  const dialog = input.closest('dialog') as HTMLDialogElement
+  dialog.open = false
+  fill.click()
+  expect(input.value).toBe(source)
+  preview.click()
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelector('[data-poe2-l10n="import"]')).toBeNull()
+  dialog.open = true
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelectorAll('[data-poe2-l10n="import"]')).toHaveLength(1)
+  expect(document.querySelector('[role="status"]')?.textContent).toBe('')
+  fill.click()
+  expect(input.value).toBe(source)
+})
+
+it('未打开的原站对话框不挂载预览', () => {
+  document.body.innerHTML = '<dialog><textarea id="importerInput"></textarea></dialog>'
+  stop = attachImport(document, [])
+  expect(document.querySelector('[data-poe2-l10n="import"]')).toBeNull()
+})
+
+it('关闭后旧诊断不能改变选择区', () => {
+  const { input, preview } = readyPreview()
+  input.value = source.replace('(36-41)', '')
+  preview.click()
+  const locate = document.querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
+  expect(locate).not.toBeNull()
+  ;(input.closest('dialog') as HTMLDialogElement).open = false
+  input.setSelectionRange(0, 0)
+  locate?.click()
+  expect(input.selectionStart).toBe(0)
+  expect(input.selectionEnd).toBe(0)
+})
