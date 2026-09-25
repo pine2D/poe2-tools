@@ -95,7 +95,16 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     )
     restoreInput = () => {
       for (const [name, state] of owned) {
-        if (input.getAttribute(name) !== state.written) continue
+        const value = input.getAttribute(name)
+        if (value !== state.written) {
+          // 原站可能在列表属性中追加说明：只撤下本次提示ID，不覆盖新说明或复活旧说明。
+          if (name === 'aria-describedby' && value?.split(/\s+/).includes(label.id)) {
+            const remaining = value.split(/\s+/).filter((id) => id && id !== label.id)
+            if (remaining.length) input.setAttribute(name, remaining.join(' '))
+            else input.removeAttribute(name)
+          }
+          continue
+        }
         if (state.original === null) input.removeAttribute(name)
         else input.setAttribute(name, state.original)
       }

@@ -549,3 +549,34 @@ it('输入框滚出视口后关闭固定候选并恢复说明，旧按钮不能�
   input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
   expect(document.querySelector('[data-poe2-l10n] button')).not.toBeNull()
 })
+
+it.each(['Escape', 'stop', 'retype'])('原站追加说明后%s仅移除扩展描述引用', (action) => {
+  const { input } = setup()
+  input.setAttribute('aria-describedby', 'native-help')
+  type(input, '符文')
+  const before = input.getAttribute('aria-describedby') ?? ''
+  const ownedId = before.split(' ')[1] ?? ''
+  input.setAttribute('aria-describedby', `${before} later-help`)
+  if (action === 'Escape')
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  else if (action === 'stop') stop()
+  else type(input, '不存在')
+  const ids = input.getAttribute('aria-describedby')?.split(/\s+/) ?? []
+  expect(ids).toContain('native-help')
+  expect(ids).toContain('later-help')
+  expect(ids).not.toContain(ownedId)
+  expect(document.getElementById(ownedId)).toBeNull()
+  if (action === 'retype') {
+    expect(ids).toHaveLength(3)
+    expect(document.getElementById(ids[2] ?? '')?.textContent).toContain('未找到术语')
+  } else expect(ids).toHaveLength(2)
+})
+it('原站重排说明列表时仅删除当前提示ID，不复活已移除说明', () => {
+  const { input } = setup()
+  input.setAttribute('aria-describedby', 'removed-native-help')
+  type(input, '符文')
+  const ownedId = input.getAttribute('aria-describedby')?.split(' ')[1] ?? ''
+  input.setAttribute('aria-describedby', `later-help\t${ownedId}\n${ownedId}-native`)
+  stop()
+  expect(input.getAttribute('aria-describedby')).toBe(`later-help ${ownedId}-native`)
+})
