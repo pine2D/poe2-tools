@@ -181,3 +181,25 @@ it('计算结果动态次数保留原数字，耗时节点不重建，离开上�
   stop()
   expect(root.querySelector('label')?.textContent).toBe('Executed in 0.315 seconds')
 })
+
+it('标签限定翻译保留筛选身份，动态移出标签区域恢复英文', async () => {
+  document.body.innerHTML =
+    '<main><ul id="filterSelector"><li class="tag lightning" value="313">Lightning</li><li class="tag lightning" value="100313">Non-Lightning</li></ul><span class="modTag tag caster">Caster</span><span id="outside">Lightning</span></main>'
+  const stop = attachTextLayer(document, createLexicon([]))
+  stops.push(stop)
+  const tag = document.querySelector('li') as HTMLElement
+  expect(tag.textContent).toBe('闪电')
+  expect(tag.getAttribute('value')).toBe('313')
+  expect(document.querySelector('[value="100313"]')?.textContent).toBe('非闪电')
+  expect(document.querySelector('.modTag')?.textContent).toBe('施法')
+  expect(document.querySelector('#outside')?.textContent).toBe('Lightning')
+  tag.classList.remove('tag')
+  await settle()
+  expect(tag.textContent).toBe('Lightning')
+  tag.classList.add('tag')
+  await settle()
+  expect(tag.textContent).toBe('闪电')
+  stop()
+  expect(document.querySelector('[value="100313"]')?.textContent).toBe('Non-Lightning')
+  expect(document.querySelector('.modTag')?.textContent).toBe('Caster')
+})

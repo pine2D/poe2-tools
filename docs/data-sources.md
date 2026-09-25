@@ -635,3 +635,8 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 | 拟建 `data/l10n/coe-beta/ui.zh-CN.json` 与 `data/l10n/aliases.zh-CN.json` | manual，自写界面译文与经核对别名 | 按需创建；复用现有国服词典来源身份，未经确认不从繁体包补译；词典随扩展打包，保留原 gray 开关和来源元数据 |
 
 以上页面只用于规划核对。此前浏览器基底检索存在异步更新，尚不能据此确定全部事件与 DOM 兼容性，后续记录于 `docs/chrome-extension/compatibility.md`（实施时创建）。
+
+
+### 扩展标签 UI 人工译名（2026-09-25）
+
+沿用 CoE Beta 公开界面人工适配来源，仅观察 `#filterSelector li.tag` 与 `.modTag` 的文字和身份；不复制规则、权重或实现。20 个英文标签及 Non- 变体在扩展 `regions.ts` 中维护人工简体译名，属于 manual。用户高级装备样本辅助核对常用标签；Caster“施法”是人工 UI 用语，尚无国服独立标签真机证据，不标为官方已核实译名。未知标签保留原文。

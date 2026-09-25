@@ -17,7 +17,8 @@ export function translatable(node: Text): boolean {
 // 来自新版公开 DOM；说明连词和介绍片段只在各自区域使用。
 export function textContext(
   node: Text,
-): 'instructions' | 'introduction' | 'calculation' | 'default' {
+): 'instructions' | 'introduction' | 'calculation' | 'tag' | 'default' {
+  if (node.parentElement?.closest('.tag')) return 'tag'
   if (node.parentElement?.closest('#calculationsZone')) return 'calculation'
   if (node.parentElement?.closest('#instructions')) return 'instructions'
   if (
@@ -38,6 +39,34 @@ const introduction = new Map([
   ['. Please consult the', '。如需了解我正在开发的内容，请查看'],
   ['page to see what I am working on.', '页面。'],
 ])
+// 人工 UI 译名，限定原站标签；Caster 的“施法”尚未以国服独立标签真机核对。
+const tags = new Map([
+  ['Armour', '护甲'],
+  ['Attribute', '属性'],
+  ['Caster', '施法'],
+  ['Chaos', '混沌'],
+  ['Cold', '冰霜'],
+  ['Critical', '暴击'],
+  ['Curse', '诅咒'],
+  ['Damage', '伤害'],
+  ['Elemental', '元素'],
+  ['Energy Shield', '能量护盾'],
+  ['Evasion', '闪避'],
+  ['Fire', '火焰'],
+  ['Gem', '宝石'],
+  ['Life', '生命'],
+  ['Lightning', '闪电'],
+  ['Mana', '魔力'],
+  ['Minion', '召唤生物'],
+  ['Physical', '物理'],
+  ['Resistance', '抗性'],
+  ['Speed', '速度'],
+])
+function tagText(text: string): string | null {
+  const negative = text.startsWith('Non-')
+  const translated = tags.get(negative ? text.slice(4) : text)
+  return translated ? `${negative ? '非' : ''}${translated}` : null
+}
 function calculationText(text: string): string | null {
   if (text === 'Executed in') return '耗时'
   if (text === 'seconds') return '秒'
@@ -54,16 +83,18 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'calculation'
-      ? calculationText(normalized)
-      : context === 'introduction'
-        ? (introduction.get(normalized) ?? null)
-        : context === 'instructions'
-          ? word === 'and'
-            ? '与'
-            : word === 'or'
-              ? '或'
-              : null
-          : null
+    context === 'tag'
+      ? tagText(normalized)
+      : context === 'calculation'
+        ? calculationText(normalized)
+        : context === 'introduction'
+          ? (introduction.get(normalized) ?? null)
+          : context === 'instructions'
+            ? word === 'and'
+              ? '与'
+              : word === 'or'
+                ? '或'
+                : null
+            : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
