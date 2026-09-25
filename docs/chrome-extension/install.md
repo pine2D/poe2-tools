@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.26 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.27 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.26.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.27.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
@@ -51,3 +51,8 @@ node apps/poe2-extension/scripts/package.mjs
 ### 打包前的词典校验
 
 `extension:check` 和 ZIP 打包入口会用浏览器同一套 `createLexicon` 校验实际产物词典，包括身份、来源、数字模板及数值顺序。无效词典会阻止打包，不以资源文件存在代替可加载性。检查时利用已有 Vite 在 Node 进程内编译核心，不写入扩展目录，也不增加浏览器权限或依赖。该检查不能代替完整测试与实站验收。
+
+
+## 导入已有模拟流程
+
+单个 CoE 流程 JSON：选择“流程模拟 → 新建模拟流程 → 导入一个流程”，粘贴后继续。“载入 → 全部导入”用于原站批量导出数据；单个流程放到这里会被拒绝，按提示改用单流程入口即可。装备高级文本仍走“导入装备”，与流程 JSON 分开。

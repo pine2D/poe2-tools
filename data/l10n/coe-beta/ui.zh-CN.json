@@ -286,6 +286,10 @@
     "P = probability of success": "P = 单次成功概率",
     "N = number of tries": "N = 尝试次数",
     "^ = to the power of": "^ = 乘方运算",
-    "Formula : 1 - (1 - P) ^ N": "公式：1 - (1 - P) ^ N"
+    "Formula : 1 - (1 - P) ^ N": "公式：1 - (1 - P) ^ N",
+    "Import a Simulation": "导入一个流程",
+    "Simulator Importer": "流程导入",
+    "Starting item source": "起始装备来源",
+    "One or more issues encountered while attempting import": "导入时遇到以下问题"
   }
 }

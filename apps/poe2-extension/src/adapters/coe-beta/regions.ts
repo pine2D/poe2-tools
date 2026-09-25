@@ -17,7 +17,8 @@ export function translatable(node: Text): boolean {
 // 来自新版公开 DOM；说明连词和介绍片段只在各自区域使用。
 export function textContext(
   node: Text,
-): 'instructions' | 'introduction' | 'calculation' | 'tag' | 'default' {
+): 'instructions' | 'introduction' | 'calculation' | 'tag' | 'importer' | 'default' {
+  if (node.parentElement?.closest('#simulatorImporterZone')) return 'importer'
   if (node.parentElement?.closest('.tag')) return 'tag'
   if (node.parentElement?.closest('#calculationsZone')) return 'calculation'
   if (node.parentElement?.closest('#instructions')) return 'instructions'
@@ -28,6 +29,16 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+const importer = new Map([
+  [
+    'This appears to be a single simulation export, this function requires an',
+    '这是单个流程的导出数据；此入口需要使用“',
+  ],
+  ['dataset.', '”生成的数据。'],
+  ['To import a singular simulation please go to', '导入单个流程，请进入“'],
+  ['and then', '”，然后选择“'],
+  ['.', '”。'],
+])
 const introduction = new Map([
   ['is a complete refactor of', '是对'],
   [
@@ -83,18 +94,20 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'tag'
-      ? tagText(normalized)
-      : context === 'calculation'
-        ? calculationText(normalized)
-        : context === 'introduction'
-          ? (introduction.get(normalized) ?? null)
-          : context === 'instructions'
-            ? word === 'and'
-              ? '与'
-              : word === 'or'
-                ? '或'
-                : null
-            : null
+    context === 'importer'
+      ? (importer.get(normalized) ?? null)
+      : context === 'tag'
+        ? tagText(normalized)
+        : context === 'calculation'
+          ? calculationText(normalized)
+          : context === 'introduction'
+            ? (introduction.get(normalized) ?? null)
+            : context === 'instructions'
+              ? word === 'and'
+                ? '与'
+                : word === 'or'
+                  ? '或'
+                  : null
+              : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }

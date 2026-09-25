@@ -203,3 +203,23 @@ it('标签限定翻译保留筛选身份，动态移出标签区域恢复英文'
   expect(document.querySelector('[value="100313"]')?.textContent).toBe('Non-Lightning')
   expect(document.querySelector('.modTag')?.textContent).toBe('Caster')
 })
+
+it('流程导入分段提示限定区域翻译，保留强调节点并支持恢复', () => {
+  document.body.innerHTML =
+    '<dialog open><div id="simulatorImporterZone">This appears to be a single simulation export, this function requires an <b>Export all</b> dataset.<br>To import a singular simulation please go to <b>New Simulation</b> and then <b>IMPORT A SIMULATION</b>.</div><p> and then </p></dialog>'
+  const root = document.querySelector('#simulatorImporterZone') as HTMLElement
+  const bold = root.querySelector('b')
+  const original = root.innerHTML
+  const stop = attachTextLayer(document, createLexicon([]))
+  stops.push(stop)
+  expect(root.textContent?.replace(/\s/g, '')).toContain(
+    '这是单个流程的导出数据；此入口需要使用“Exportall”生成的数据。',
+  )
+  expect(root.textContent?.replace(/\s/g, '')).toContain(
+    '导入单个流程，请进入“NewSimulation”，然后选择“IMPORTASIMULATION”。',
+  )
+  expect(root.querySelector('b')).toBe(bold)
+  expect(document.querySelector('p')?.textContent).toBe(' and then ')
+  stop()
+  expect(root.innerHTML).toBe(original)
+})
