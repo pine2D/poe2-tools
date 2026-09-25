@@ -1,0 +1,100 @@
+{
+  "game": "poe2",
+  "name": null,
+  "id": null,
+  "steps": [
+    {
+      "id": "dd723c9a-c441-439a-9a4b-38c0e5e5b2ce",
+      "index": 1,
+      "position": {
+        "x": 20,
+        "y": 20
+      },
+      "title": "Step 1",
+      "action": null,
+      "omens": null,
+      "flags": [],
+      "advanced": null,
+      "failure": "restart",
+      "links": [
+        {
+          "requirements": null,
+          "target": "ffca7b94-926c-4223-8aad-9ec064aa4a4f",
+          "priority": 1
+        }
+      ],
+      "desc": null,
+      "start": null,
+      "end": {
+        "requirements": [
+          {
+            "type": "and",
+            "matches": null,
+            "elements": [
+              {
+                "id": "special:property:ENERGYSHIELD",
+                "tier": "41",
+                "boolean": true,
+                "state": null
+              }
+            ]
+          }
+        ],
+        "target": null,
+        "priority": 0
+      }
+    },
+    {
+      "id": "ffca7b94-926c-4223-8aad-9ec064aa4a4f",
+      "index": 2,
+      "position": {
+        "x": 282,
+        "y": 226.333
+      },
+      "title": "Step 2",
+      "action": null,
+      "omens": null,
+      "flags": [],
+      "advanced": null,
+      "failure": "restart",
+      "links": [],
+      "desc": null,
+      "start": null,
+      "end": {
+        "requirements": null,
+        "target": null,
+        "priority": 0
+      }
+    }
+  ],
+  "topIndex": 2,
+  "generationType": "fixed",
+  "fixedType": "items",
+  "targetQuantity": 10,
+  "baseItemCost": 0,
+  "storeItems": true,
+  "numberStored": 99,
+  "noStopOnLoop": false,
+  "distributionTables": false,
+  "startItem": {
+    "i": "Metadata/Items/Armours/Focii/FourFocus9",
+    "m": [],
+    "ns": 0,
+    "s": [],
+    "q": null,
+    "qt": null,
+    "l": 100,
+    "r": "normal",
+    "if": [],
+    "ip": [],
+    "e": [],
+    "p": {},
+    "di": [],
+    "ig": 0,
+    "f": ["a"],
+    "pt": null
+  },
+  "endItem": null,
+  "lastModified": 1790313383516,
+  "startingStep": "dd723c9a-c441-439a-9a4b-38c0e5e5b2ce"
+}
