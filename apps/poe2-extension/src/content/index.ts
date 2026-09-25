@@ -1,6 +1,6 @@
 import { createLexicon, type Term } from '@poe2-tools/l10n-core'
 import { pageStatus } from '../adapters/coe-beta/context'
-import { platform } from '../platform'
+import { defaults, platform } from '../platform'
 import { attachAttributeLayer } from './attribute-layer'
 import { attachImport } from './import-controller'
 import { createLanguageNotice } from './language-notice'
@@ -15,7 +15,7 @@ async function start() {
   const data = (await response.json()) as { schemaVersion: number; locale: string; terms: Term[] }
   if (data.schemaVersion !== 1 || data.locale !== 'zh-CN') throw new Error('扩展词典版本不兼容')
   const lexicon = createLexicon(data.terms)
-  let settings = await platform.read()
+  let settings = { ...defaults }
   let stop: (() => void) | undefined
   let mode = ''
   const languageNotice = createLanguageNotice(document)
@@ -45,10 +45,17 @@ async function start() {
       }
     }
   }
+  // 先监听再读取；读取期间到达的变化比初始快照更新。
+  let changedDuringRead = false
+  let ready = false
   platform.subscribe((value) => {
+    changedDuringRead = true
     settings = value
-    reconcile()
+    if (ready) reconcile()
   })
+  const initial = await platform.read()
+  if (!changedDuringRead) settings = initial
+  ready = true
   const observer = new MutationObserver(reconcile)
   observer.observe(document.body, {
     childList: true,
