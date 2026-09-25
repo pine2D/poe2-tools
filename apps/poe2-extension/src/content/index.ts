@@ -1,8 +1,9 @@
 import { createLexicon, type Term } from '@poe2-tools/l10n-core'
-import { supportsPage } from '../adapters/coe-beta/context'
+import { pageStatus } from '../adapters/coe-beta/context'
 import { platform } from '../platform'
 import { attachAttributeLayer } from './attribute-layer'
 import { attachImport } from './import-controller'
+import { createLanguageNotice } from './language-notice'
 import { attachPageLabels } from './page-labels'
 import { attachSearch } from './search-controller'
 import { attachStatLayer } from './stat-layer'
@@ -17,13 +18,12 @@ async function start() {
   let settings = await platform.read()
   let stop: (() => void) | undefined
   let mode = ''
+  const languageNotice = createLanguageNotice(document)
   const reconcile = () => {
+    const status = pageStatus(document, location.href)
+    languageNotice.update(settings.enabled && status === 'english-required')
     const next =
-      supportsPage(document, location.href) && settings.enabled
-        ? settings.bilingual
-          ? 'bilingual'
-          : 'zh-CN'
-        : ''
+      status === 'supported' && settings.enabled ? (settings.bilingual ? 'bilingual' : 'zh-CN') : ''
     if (next === mode) return
     stop?.()
     stop = undefined
@@ -54,7 +54,7 @@ async function start() {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['class', 'key'],
+    attributeFilter: ['class', 'key', 'id'],
   })
   reconcile()
 }
