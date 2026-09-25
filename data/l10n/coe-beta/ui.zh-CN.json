@@ -2,7 +2,7 @@
   "_meta": {
     "tier": "manual",
     "source": "本项目人工编写的 CoE Beta 界面译文；游戏术语来自独立国服词典",
-    "gameVersion": "manual-2026-09-25"
+    "gameVersion": "manual-2026-09-26"
   },
   "entries": {
     "Crafting": "制作",
@@ -251,6 +251,7 @@
     "Crafting methods": "制作方式",
     "Generate normal, magic or rare item": "生成普通、魔法或稀有装备",
     "New bases": "新增基底",
+    "Distilled Emotions": "液化情感（原称 Distilled Emotions）",
     "Special runes support (Modifier conversions, additionnal suffix, etc)": "支持特殊符文（词缀转换、额外后缀等）",
     "Special runes modpools (Chronomancy, Marksman, Destruction, Soul, etc)": "支持特殊符文词缀池（Chronomancy、Marksman、Destruction、Soul 等）",
     "View raw modifier tiers and group data details": "查看原始词缀等阶与词缀组数据详情",

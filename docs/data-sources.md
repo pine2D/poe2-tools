@@ -695,3 +695,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.76首饰生命前缀复用primary交易词典explicit.stat_3299347043的maximum Life→生命上限。已登记MIT制作目录仅用于设计自造IncreasedLife4、50(40-59)样本，戒指T5／项链T6另经原站可见说明和原生导出核对；不将制作规则、池或权重加入扩展资源，不修改旧引擎。三种基底魔法／稀有分别核对，不从同一stat ID直接外推全类别兼容。
+
+
+2026-09-26：0.1.77核对介绍页仍使用Distilled Emotions旧称。GGG官方[0.3.0补丁说明](https://www.pathofexile.com/forum/view-thread/3826682)明确其已改名Liquid Emotions；已登记gray来源[PoE2DB简中现名页面](https://poe2db.tw/cn/Liquid_Emotions)标题为“液化情感”。据此补人工UI条目“液化情感（原称 Distilled Emotions）”，保留旧称关系；不是已证实的国服旧版本译名，不改原生搜索词、物品ID或制作规则。此前旧URL的404不再作为当前名称无资料的依据。此条为人工组合UI译文，遵循现有manual分类，--no-gray仍保留，不宣称该模式全部用语仅来自官方。
