@@ -25,6 +25,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'method-label'
   | 'condition-empty'
   | 'notification'
   | 'inventory-usage'
@@ -42,6 +43,8 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('#CraftingMethod_10 > ul > li, #OmensSelector > label'))
+    return 'method-label'
   if (
     node.parentElement?.closest(
       '#calculatorZone .requirements .dropdown li.no_result, #simulatorConditionRequirements .dropdown li.no_result',
@@ -89,6 +92,13 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+// 制作选择器公开标题；不用于用户物品名或预兆选项名称。
+const methodLabels = new Map([
+  ['Normal item', '普通物品'],
+  ['Magic item', '魔法物品'],
+  ['Rare item', '稀有物品'],
+  ['Available omen(s)', '可用预兆'],
+])
 // 原站实际通知短句；未知通知不走通用词典，避免翻译用户名称或错误详情。
 const notifications = new Map([
   ['Clipboard action', '剪贴板操作'],
@@ -294,6 +304,10 @@ export function contextualText(
   context: ReturnType<typeof textContext>,
 ): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
+  if (context === 'method-label') {
+    const translated = methodLabels.get(normalized)
+    return translated ? original.replace(/\S[\s\S]*\S|\S/, translated) : null
+  }
   if (context === 'condition-empty' && normalized === 'No results for this search')
     return original.replace(/\S[\s\S]*\S|\S/, '没有符合当前搜索的条件。')
   if (context === 'notification') {
