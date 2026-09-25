@@ -1,31 +1,35 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
-import { translatable } from '../adapters/coe-beta/regions'
+import { contextualText, textContext, translatable } from '../adapters/coe-beta/regions'
 
 const active = new WeakMap<Document, () => void>()
 
 export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = false): () => void {
   active.get(doc)?.()
-  const state = new WeakMap<Text, { original: string; written: string }>()
+  const state = new WeakMap<Text, { original: string; written: string; context: string }>()
   const owned = new Set<Text>()
   const cache = new Map<string, string | null>()
   function render(node: Text) {
     if (!node.isConnected || !translatable(node) || !node.data.trim()) return
-    if (state.get(node)?.written === node.data) return
-    const original = node.data
-    let translated = cache.get(original)
+    const entry = state.get(node)
+    const context = textContext(node)
+    if (entry?.written === node.data && entry.context === context) return
+    const original = entry?.written === node.data ? entry.original : node.data
+    const cacheKey = `${context}\0${original}`
+    let translated = cache.get(cacheKey)
     if (translated === undefined) {
-      translated = lexicon.translate(original)
+      translated = contextualText(original, context) ?? lexicon.translate(original)
       if (cache.size >= 2000) cache.clear()
-      cache.set(original, translated)
+      cache.set(cacheKey, translated)
     }
     if (translated === null || translated === original) {
+      if (node.data !== original) node.data = original
       state.delete(node)
       owned.delete(node)
       return
     }
     const written = bilingual ? `${translated.trim()} · ${original.trim()}` : translated
-    state.set(node, { original, written })
+    state.set(node, { original, written, context })
     owned.add(node)
     node.data = written
   }

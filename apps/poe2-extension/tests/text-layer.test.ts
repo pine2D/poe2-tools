@@ -119,3 +119,41 @@ it('祖先切换隐藏与编辑状态会撤销译文，恢复普通区域后重�
   await settle()
   expect(node.textContent).toBe('Runed Focus')
 })
+it('说明连词与条件标签分别翻译，移动节点后更新上下文并可恢复', async () => {
+  const dictionary = createLexicon([
+    { id: 'and', en: 'And', zh: '全部满足', domain: 'ui', source: 'test', version: 'test' },
+    { id: 'or', en: 'Or', zh: '满足任一', domain: 'ui', source: 'test', version: 'test' },
+  ])
+  document.body.innerHTML =
+    '<main><div id="instructions"><span> and </span><b>or</b></div><div id="condition"><span> and </span><b>or</b></div></main>'
+  const stop = attachTextLayer(document, dictionary)
+  stops.push(stop)
+  const instruction = document.querySelector('#instructions') as HTMLElement
+  const condition = document.querySelector('#condition') as HTMLElement
+  expect(instruction.textContent).toBe(' 与 或')
+  expect(condition.textContent).toBe(' 全部满足 满足任一')
+  const moved = instruction.querySelector('span') as HTMLElement
+  condition.append(moved)
+  await settle()
+  expect(moved.textContent).toBe(' 全部满足 ')
+  instruction.append(moved)
+  await settle()
+  expect(moved.textContent).toBe(' 与 ')
+  stop()
+  expect(moved.textContent).toBe(' and ')
+})
+it('说明容器身份改变后，中英对照使用新上下文而不拼接旧译文', async () => {
+  const dictionary = createLexicon([
+    { id: 'and', en: 'And', zh: '全部满足', domain: 'ui', source: 'test', version: 'test' },
+  ])
+  document.body.innerHTML = '<main><div id="instructions">and</div></main>'
+  const stop = attachTextLayer(document, dictionary, true)
+  stops.push(stop)
+  const container = document.querySelector('#instructions') as HTMLElement
+  expect(container.textContent).toBe('与 · and')
+  container.id = 'condition'
+  await settle()
+  expect(container.textContent).toBe('全部满足 · and')
+  stop()
+  expect(container.textContent).toBe('and')
+})
