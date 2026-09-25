@@ -6,6 +6,7 @@ afterEach(() => {
   vi.resetModules()
   vi.resetAllMocks()
   document.body.innerHTML = ''
+  document.body.removeAttribute('tabindex')
 })
 async function setup() {
   document.body.innerHTML =
@@ -171,4 +172,64 @@ it('首次读取失败可就地重试，等待期间不能写入默认值且只�
   expect(storage.write).toHaveBeenCalledExactlyOnceWith({ enabled: true, bilingual: true })
   retry.click()
   expect(storage.read).toHaveBeenCalledTimes(2)
+})
+
+it.each([false, true])('键盘保存后归还焦点，保存失败=%s', async (failed) => {
+  const { bilingual } = await setup()
+  let finish!: () => void
+  storage.write.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        finish = () => (failed ? reject(new Error('storage failed')) : resolve())
+      }),
+  )
+  bilingual.focus()
+  bilingual.checked = true
+  bilingual.dispatchEvent(new Event('change'))
+  // 模拟Chrome禁用当前控件时实际发生的焦点离开。
+  document.body.tabIndex = -1
+  document.body.focus()
+  expect(document.activeElement).toBe(document.body)
+  finish()
+  await vi.waitFor(() => expect(bilingual.disabled).toBe(false))
+  expect(document.activeElement).toBe(bilingual)
+})
+it('保存期间用户转移焦点后不抢回', async () => {
+  const { bilingual } = await setup()
+  let finish!: () => void
+  storage.write.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+  )
+  const other = document.createElement('button')
+  document.body.append(other)
+  bilingual.focus()
+  bilingual.checked = true
+  bilingual.dispatchEvent(new Event('change'))
+  other.focus()
+  finish()
+  await vi.waitFor(() => expect(bilingual.disabled).toBe(false))
+  expect(document.activeElement).toBe(other)
+})
+it('外部停用令原焦点开关不可用时返回启用开关', async () => {
+  const { enabled, bilingual } = await setup()
+  let finish!: () => void
+  storage.write.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+  )
+  bilingual.focus()
+  bilingual.checked = true
+  bilingual.dispatchEvent(new Event('change'))
+  document.body.tabIndex = -1
+  document.body.focus()
+  storage.subscribe.mock.calls[0]?.[0]({ enabled: false, bilingual: true })
+  finish()
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(bilingual.disabled).toBe(true)
+  expect(document.activeElement).toBe(enabled)
 })

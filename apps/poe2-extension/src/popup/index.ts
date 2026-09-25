@@ -50,6 +50,7 @@ function readSettings() {
       for (const input of [enabled, bilingual]) {
         input.addEventListener('change', async () => {
           const next = { enabled: enabled.checked, bilingual: bilingual.checked }
+          const restoreFocus = document.activeElement === input
           const startedAt = revision
           saving = true
           enabled.disabled = true
@@ -66,6 +67,11 @@ function readSettings() {
           } finally {
             saving = false
             render()
+            // Chrome禁用当前控件会丢失焦点；不覆盖用户已转移到其他控件的焦点。
+            if (restoreFocus && document.activeElement === document.body) {
+              const target = input.disabled ? enabled : input
+              target.focus({ preventScroll: true })
+            }
           }
         })
       }
