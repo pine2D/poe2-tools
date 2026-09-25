@@ -41,3 +41,5 @@ CoE 开发者文档公开 `game=poe2&eimport=...`，没有公开 API。既有 `d
 权杖的原站输入、复合词缀与技能等级差异见[权杖导入核对](sceptre-import-audit.md)；不能将英文导入无报错等同于值完整保留。
 
 迭代命令、样本格式门禁及包管理器故障排查见[验证说明](validation.md)。
+
+Linux Fcitx5真实拼音输入的已验收路径及平台边界见[IME验收记录](ime-audit.md)。

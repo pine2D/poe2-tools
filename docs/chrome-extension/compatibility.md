@@ -684,3 +684,11 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 唯一跳过项是`packages/build-core/src/format/roundtrip.test.ts`在未提供本地真实.build样本时的既有skipIf；未新增跳过、放宽超时或改测试断言。此轮分段结果不能合并宣称一次完整verify成功。
 - 独立`pnpm build`、`pnpm dict:check`、`pnpm craft:check`均正常退出。构建仍有旧制作站大于500kB的分包提示；词典审计计数zh-CN=13、zh-TW=17及目录缺失声明原样保留，未放宽门槛。仅验证旧站回归，不恢复其功能开发或部署。
 - 在独立工作树运行`pnpm install --frozen-lockfile`成功，输出锁文件已是最新、无需重新解析、Already up to date，未更改Git跟踪文件。没有全局安装或升级pnpm。随后在允许Node子进程的环境启动无临时选项的标准`pnpm verify`，其最终结果另行记录；本段不提前宣称通过，也不把已有node_modules的安装核对称为全新环境安装。
+
+
+### 0.1.58 标准门禁通过与真实IME（2026-09-25）
+
+- 锁文件安装核对后，在允许Node子进程的环境原样执行`pnpm verify`，退出码0。全部六包类型检查、1090文件格式检查、578测试文件、4838测试通过；1项本地真实.build样本缺失按既有skipIf跳过。测试耗时487.58秒，随后全仓构建、dict:check、craft:check依次成功。未使用临时依赖检查选项、未调大超时、未跳过失败用例。旧站大分包提示及数据审计计数保留，不等于零警告或CI远端通过。
+- 用0.1.58最终ZIP在隔离有界面Chrome、Fcitx5 5.1.7拼音中完成Data真实IME确认与取消路径。系统输入fuwen时预编辑、无候选；空格确认符文后才出现候选；系统方向键选身躯符文、回车后原站Body Rune查询返回4件。再次输入fu后Escape清空预编辑、无候选。环境、事件标记限制和清理见ime-audit.md；不将这一结果外推Windows或全部控件。
+- 本轮未修改扩展运行逻辑和版本；现有ZIP仍为0.1.58。文档记录标准门禁与真实IME的新证据，保留CI、其他平台及完整交互矩阵的待验收项。
+- 标准`pnpm extension:package`亦正常退出，完成构建与产物检查。重新生成的content.js和dictionary.json与本轮真实IME使用的最终ZIP解包文件逐字相同；没有用旧逻辑包冒充本轮源码结果。
