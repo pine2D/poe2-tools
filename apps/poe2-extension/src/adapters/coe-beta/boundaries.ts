@@ -11,6 +11,8 @@ export const boundaryAttributes = [
 const boundaryClasses = [
   'hidden',
   'tag',
+  'item',
+  'property',
   'messageBox',
   'message',
   'stat',

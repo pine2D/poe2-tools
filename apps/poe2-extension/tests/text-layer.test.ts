@@ -234,3 +234,22 @@ it('其他导入提示的独立句号不添加无配对引号', () => {
   stop()
   expect(root.textContent).toBe('Unknown message.')
 })
+
+it('装备卡属性分段译文保留数值与关键词身份，移出属性区域恢复英文', async () => {
+  document.body.innerHTML =
+    '<main><div class="item"><div class="property"><label>Focus</label></div><div class="property itemProperty"><label><span class="keyword" id="EnergyShield">Energy Shield</span>:</label><div>42</div></div><div class="property"><label><span id="Ward">Runic Ward</span>:</label><div>32</div></div><div class="property"><div>45<span class="label" id="requirement">, Int</span> 64</div></div></div><p id="outside">, Int</p></main>'
+  const stop = attachTextLayer(document, lex)
+  stops.push(stop)
+  expect(document.querySelector('.item')?.textContent).toBe('法器能量护盾:42符文结界:3245，智慧 64')
+  expect(document.querySelector('#outside')?.textContent).toBe(', Int')
+  const keyword = document.querySelector('#EnergyShield') as HTMLElement
+  document.querySelector('main')?.append(keyword)
+  await settle()
+  expect(keyword.textContent).toBe('Energy Shield')
+  const requirement = document.querySelector('#requirement') as HTMLElement
+  requirement.parentElement?.parentElement?.classList.remove('property')
+  await settle()
+  expect(requirement.textContent).toBe(', Int')
+  stop()
+  expect(document.querySelector('#Ward')?.textContent).toBe('Runic Ward')
+})

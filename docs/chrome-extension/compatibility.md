@@ -417,3 +417,12 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 118项核心与扩展测试及扩展类型检查通过。本轮是自动化边界回归，未新增真实 CoE 浏览器验收，不代表已验证原站一定会触发上述每种状态，也不替代真实中文输入法验收。
 
 - 补查 fieldset 继承禁用时，happy-dom 的 `:disabled` 仅检查元素自身属性，导致该额外测试失败；核对其选择器实现后移除不适用于该模拟环境的断言。隔离 Chrome 151 空白页实际验证 `<fieldset disabled><legend><input></legend><input></fieldset>`：普通 input 匹配 `:disabled` 为 true，首个 legend 内 input 为 false。此项仅证明原生选择器语义，不是扩展端到端验收。构建、打包和格式检查通过，权限仍仅 storage。
+
+
+### 0.1.37 Data 装备卡属性（2026-09-25）
+
+- 从新版 Data 可见分类与结果卡核对，沿0.1.35人工类别对应关系补27条词典记录。装备卡 `.item .property` 的 Energy Shield／Runic Ward／Focus／`, Int` 分段增加限定上下文译文；数字不重写，关键词ID不改。实际版本0.1.37，词典6871条，仅storage权限。
+- Chrome 151隔离会话以最终ZIP解包目录安装，PoE2／English：Data 输入“符文法器”并选择 Runed Focus，查询结果稳定后为两张卡。图片身份 FourFocus9／FourFocus9Verisium 与0.1.36基线一致；能量护盾42，第二张符文结界32，两者物品等级100、需求等级45／智慧64；关键词ID仍 EnergyShield／EnergyShield／Ward。
+- 从真实 popup 关闭翻译：查询仍 Runed Focus，两张卡的英文标题、Focus、Energy Shield、Runic Ward、`, Int` 恢复，所有数值／图片路径相同，辅助节点为0。
+- 旧包会话尝试点击分类59（Focus）时先被底部广告挡住，滚动居中后点击返回成功，但稳定URL与筛选反馈未见新增类别条件。因此不将这次操作计为类别过滤验收；本轮证明查询结果显示与恢复，不证明全部分类筛选／排序。
+- 新回归先失败，后验证分段翻译、数值及ID保留、移出属性区域恢复、撤掉property类恢复、关闭恢复。119项核心／扩展测试及类型检查通过，构建和ZIP检查通过；未验收真实IME或其他需求属性排列。
