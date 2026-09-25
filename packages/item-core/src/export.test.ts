@@ -259,3 +259,11 @@ it('基底增效段不因标签转换而丢失', () => {
     )
   }
 })
+
+it('补充武器属性翻译不会放宽旧法器转接资格', () => {
+  const result = inspect(
+    focus.replace('能量护盾: 80 (augmented)', '能量护盾: 80 (augmented)\n物理伤害: 7-11'),
+  )
+  expect(result.exportText).toContain('Physical Damage: 7-11')
+  expect(result.bridgeText).toBeNull()
+})

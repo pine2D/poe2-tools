@@ -91,6 +91,10 @@ const WEAPON_PROPERTIES = [
   ),
 ]
 
+export function isKnownWeaponProperty(text: string): boolean {
+  return WEAPON_PROPERTIES.some((pattern) => pattern.test(text))
+}
+
 function isKnownProperty(text: string, itemClass: string): boolean {
   if (JEWEL_RADIUS_HEADER.test(text)) return true
   if (CATALYST_QUALITY_HEADER.test(text)) return true
@@ -99,7 +103,7 @@ function isKnownProperty(text: string, itemClass: string): boolean {
     CHARM_SLOTS_PROPERTY.test(text)
   )
     return true
-  if (WEAPON_PROPERTIES.some((pattern) => pattern.test(text))) return true
+  if (isKnownWeaponProperty(text)) return true
   if (isFlaskProperty(text, itemClass)) return true
   const numericValue = String.raw`[+-]?\d+(?:\.\d+)?(?:\([+-]?\d+(?:\.\d+)?-[+-]?\d+(?:\.\d+)?\))?`
   const standardProperty = new RegExp(

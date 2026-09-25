@@ -5,6 +5,7 @@ import { flaskTextType } from './flaskText'
 import { resolveGrantedSkill } from './grantedSkills'
 import { canonicalItemClass } from './itemClasses'
 import { hasSpecialModifierSource } from './modifierSource'
+import { isKnownWeaponProperty } from './parse'
 import { createStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
 import type { ItemDocument, ItemMod, ItemStat, SourceLine } from './types'
 
@@ -83,6 +84,24 @@ const VERIFIED_STATS = new Set([
 
 function translateMetadata(raw: string): string | null {
   const text = raw.trim()
+  // 复用解析器的严格属性语法，只翻译标题；不计算或归一化原文面板数值。
+  if (isKnownWeaponProperty(text)) {
+    const weaponLabels: [RegExp, string][] = [
+      [/^(?:物理伤害|物理傷害)[:：\s]+/, 'Physical Damage: '],
+      [/^(?:火焰伤害|火焰傷害)[:：\s]+/, 'Fire Damage: '],
+      [/^(?:冰霜伤害|冰冷傷害)[:：\s]+/, 'Cold Damage: '],
+      [/^(?:闪电伤害|閃電傷害)[:：\s]+/, 'Lightning Damage: '],
+      [/^(?:混沌伤害|混沌傷害)[:：\s]+/, 'Chaos Damage: '],
+      [/^(?:元素伤害|元素傷害)[:：\s]+/, 'Elemental Damage: '],
+      [/^(?:暴击率|暴击几率|暴擊率|暴擊機率)[:：\s]+/, 'Critical Hit Chance: '],
+      [/^(?:每秒攻击次数|每秒攻擊次數)[:：\s]+/, 'Attacks per Second: '],
+      [/^(?:装填时间|重新裝填時間)[:：\s]+/, 'Reload Time: '],
+    ]
+    for (const [pattern, label] of weaponLabels) {
+      if (pattern.test(text)) return text.replace(pattern, label)
+    }
+    return text
+  }
   const labels: [RegExp, string][] = [
     [/^(?:能量护盾|能量護盾)\s*[:：]\s*/, 'Energy Shield: '],
     [/^精魂\s*[:：]\s*/, 'Spirit: '],
@@ -308,6 +327,8 @@ export function inspectItem(
     if (block.kind === 'note' || block.kind === 'description') continue
     const lines: string[] = []
     for (const line of block.lines) {
+      if (isKnownWeaponProperty(line.raw.trim()))
+        bridgeReasons.push('武器面板属性的 CoE 转接尚未验证。')
       const translated = englishByLine[line.line] ?? translateMetadata(line.raw)
       if (translated !== null) englishByLine[line.line] = translated
       lines.push(translated ?? line.raw)
