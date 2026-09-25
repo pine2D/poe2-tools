@@ -530,3 +530,22 @@ it('撤下搜索提示不覆盖原站后来更新的描述属性', () => {
   stop()
   expect(input.getAttribute('aria-describedby')).toBe('updated-native-help')
 })
+
+it('输入框滚出视口后关闭固定候选并恢复说明，旧按钮不能提交', () => {
+  const { input, submitted } = setup()
+  input.setAttribute('aria-describedby', 'native-help')
+  let rect = new DOMRect(20, 80, 240, 42)
+  input.getBoundingClientRect = () => rect
+  type(input, '符文法器')
+  const button = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  expect(button).not.toBeNull()
+  rect = new DOMRect(20, -60, 240, 42)
+  document.dispatchEvent(new Event('scroll'))
+  expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
+  expect(input.getAttribute('aria-describedby')).toBe('native-help')
+  button?.click()
+  expect(submitted).toEqual([])
+  rect = new DOMRect(20, 80, 240, 42)
+  input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+  expect(document.querySelector('[data-poe2-l10n] button')).not.toBeNull()
+})

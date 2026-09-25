@@ -23,6 +23,18 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     const rect = active.getBoundingClientRect()
     const view = doc.defaultView
     if (!view) return
+    // 有效布局下，输入框完全离开视口时撤下失去锚点的固定浮层。
+    if (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      (rect.bottom <= 0 ||
+        rect.top >= view.innerHeight ||
+        rect.right <= 0 ||
+        rect.left >= view.innerWidth)
+    ) {
+      clear()
+      return
+    }
     const width = Math.min(rect.width, view.innerWidth - 16)
     panel.style.width = `${Math.max(0, width)}px`
     panel.style.left = `${Math.max(8, Math.min(rect.left, view.innerWidth - width - 8))}px`
