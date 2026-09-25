@@ -707,3 +707,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.80复用已登记primary交易词典explicit.stat_3372524247、explicit.stat_4220027924、explicit.stat_1671376347的火焰／冰霜／闪电抗性名称与模板。在无扩展原站分别导入三种既有首饰的自造魔法／稀有样本，核对FireResist3、ColdResist3、LightningResist3与IncreasedLife4独立保存；没有将同stat ID直接外推其他装备或混合抗性，不新增词典来源／数据抓取。
+
+
+0.1.82沿既有CoE公开DOM人工UI来源，核对设置导入标题Settings Importer、二次替换确认标题Settings Import与确认问句，以及通用placeholder Paste your data here；修正后者误称装备文本的问题，改为“在此粘贴数据”。包含游戏高级复制说明的装备专用完整提示独立保留，不新增外部数据源。
