@@ -710,3 +710,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.82沿既有CoE公开DOM人工UI来源，核对设置导入标题Settings Importer、二次替换确认标题Settings Import与确认问句，以及通用placeholder Paste your data here；修正后者误称装备文本的问题，改为“在此粘贴数据”。包含游戏高级复制说明的装备专用完整提示独立保留，不新增外部数据源。
+
+
+0.1.83新增黄玉／紫晶戒指档案：名称来自既有gray的zh-CN/items.json中Topaz Ring／Amethyst Ring；固有范围样本设计参考已登记MIT目录，另经原站英文导入分别核对FourRing5与FourRing6及实际固有值。生命和三元素抗性复用既有primary词条，紫晶的混沌抗性复用explicit.stat_2923486259；不从此扩大其他首饰混沌后缀资格。初选Coral Ring未在现有PoE2目录找到，未创建档案、译名或声称支持；未新增数据源或制作规则。

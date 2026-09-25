@@ -76,3 +76,8 @@
 
 
 `custom-price-leagues-four.json`与`custom-price-leagues-cleared.json`为四赛区自造价格调查的英文原生导出，仅格式化；后者只清空leagueHardcore的崇高石键。0.1.82中文路径在编辑、清空、重载三阶段均与英文原始导出逐字一致。但standardHardcore在原站导出为null、重载为空，样本保留该异常，不是四赛区完整恢复模板；复现范围见upstream-issues.md。
+
+
+## 黄玉与紫晶戒指（0.1.83）
+
+`topaz-ring-{normal,magic,rare}-zh-CN.txt`与`amethyst-ring-{normal,magic,rare}-zh-CN.txt`为六份自造高级文本；对应`-native.json`为无扩展英文导入后的原生导出，仅格式化。最终0.1.83中文导入的六份原始导出均与英文基准逐字节一致。黄玉固有闪电抗性25、紫晶固有混沌抗性10；魔法含生命与闪电后缀，稀有分别含生命＋三元素抗性、生命＋火冰混沌抗性。分组与范围见文本。并非用户交易装备，不含上游规则库。

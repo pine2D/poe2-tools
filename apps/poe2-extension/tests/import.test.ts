@@ -682,3 +682,55 @@ it.each([
   expect(prepareImport(rare.replace('后缀属性', '前缀属性'), dictionary).ready).toBe(false)
   expect(prepareImport(rare + suffixes[0], dictionary).ready).toBe(false)
 })
+
+it.each([
+  {
+    base: 'Topaz Ring',
+    zh: '黄玉戒指',
+    implicit: '闪电抗性 +25(20-30)%',
+    tags: '元素, 闪电, 抗性',
+  },
+  { base: 'Amethyst Ring', zh: '紫晶戒指', implicit: '混沌抗性 +10(7-13)%', tags: '混沌, 抗性' },
+])('$zh 独立保留固有抗性与显式词缀，不放宽品质或固有标签', ({ base, zh, implicit, tags }) => {
+  const dictionary: Term[] = [
+    ...ringTerms,
+    ...rubyTerms,
+    ...amuletTerms,
+    lifeTerm,
+    { id: base, en: base, zh, domain: 'base', source: 'test', version: 'test' },
+    {
+      id: 'chaos',
+      sourceId: 'explicit.stat_2923486259',
+      en: '#% to Chaos Resistance',
+      zh: '混沌抗性 #%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ]
+  const normal = `物品类别: 戒指\n稀有度: 普通\n${zh}\n--------\n物品等级: 86\n--------\n{ 基底属性 — ${tags} }\n${implicit}`
+  const prefix = '\n--------\n{ 前缀属性 "测试的" (等阶：5) — 生命 }\n+50(40-59) 生命上限'
+  const magic =
+    normal.replace('普通', '魔法') +
+    prefix +
+    '\n{ 后缀属性 "测试之" (等阶：6) }\n闪电抗性 +18(16-20)%'
+  const suffix = base === 'Topaz Ring' ? '闪电抗性 +18(16-20)%' : '混沌抗性 +13(12-15)%'
+  const rare =
+    normal.replace('普通\n', '稀有\n测试 戒指\n') +
+    prefix +
+    '\n{ 后缀属性 "测试之" (等阶：6) }\n火焰抗性 +18(16-20)%\n{ 后缀属性 "测试之" (等阶：6) }\n冰霜抗性 +18(16-20)%' +
+    `\n{ 后缀属性 "测试之" (等阶：${base === 'Topaz Ring' ? 6 : 4}) }\n${suffix}`
+  for (const source of [normal, magic, rare]) {
+    const result = prepareImport(source, dictionary)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain(base)
+    expect(result.english.match(/Implicit Modifier/g)).toHaveLength(1)
+  }
+  expect(prepareImport(rare, dictionary).english.match(/Suffix Modifier/g)).toHaveLength(3)
+  for (const source of [
+    normal.replace(tags, '冰霜'),
+    `${normal}\n--------\n品质: +20%`,
+    magic.replace('后缀属性', '前缀属性'),
+  ])
+    expect(prepareImport(source, dictionary).ready).toBe(false)
+})
