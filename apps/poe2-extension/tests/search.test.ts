@@ -504,3 +504,29 @@ it('价格搜索复用searchInput时查询材料，制作词缀与价格数值�
   price.dispatchEvent(new Event('input', { bubbles: true }))
   expect(price.value).toBe('12.5')
 })
+
+it('候选提示关联输入框并保留原说明，取消和停用恢复原属性', () => {
+  const { input } = setup()
+  input.setAttribute('aria-describedby', 'native-help')
+  type(input, '符文')
+  const ids = input.getAttribute('aria-describedby')?.split(' ') ?? []
+  expect(ids[0]).toBe('native-help')
+  expect(ids).toHaveLength(2)
+  expect(document.getElementById(ids[1] ?? '')?.textContent).toContain('方向键')
+  type(input, '不存在')
+  const missingId = input.getAttribute('aria-describedby')?.split(' ')[1] ?? ''
+  expect(document.getElementById(missingId)?.textContent).toContain('未找到术语')
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  expect(input.getAttribute('aria-describedby')).toBe('native-help')
+  type(input, '符文')
+  stop()
+  expect(input.getAttribute('aria-describedby')).toBe('native-help')
+})
+it('撤下搜索提示不覆盖原站后来更新的描述属性', () => {
+  const { input } = setup()
+  type(input, '符文')
+  expect(input.hasAttribute('aria-describedby')).toBe(true)
+  input.setAttribute('aria-describedby', 'updated-native-help')
+  stop()
+  expect(input.getAttribute('aria-describedby')).toBe('updated-native-help')
+})

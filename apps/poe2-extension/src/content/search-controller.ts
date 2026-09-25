@@ -76,6 +76,18 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       })
       input.setAttribute(name, value)
     }
+    label.id = `poe2-l10n-search-help-${++sequence}`
+    setInput(
+      'aria-describedby',
+      [input.getAttribute('aria-describedby'), label.id].filter(Boolean).join(' '),
+    )
+    restoreInput = () => {
+      for (const [name, state] of owned) {
+        if (input.getAttribute(name) !== state.written) continue
+        if (state.original === null) input.removeAttribute(name)
+        else input.setAttribute(name, state.original)
+      }
+    }
     if (keepFocus) {
       panel.id = `poe2-l10n-conditions-${++sequence}`
       panel.setAttribute('role', 'listbox')
@@ -85,13 +97,6 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       setInput('aria-controls', panel.id)
       setInput('aria-autocomplete', 'list')
       selectOption = (button) => setInput('aria-activedescendant', button.id)
-      restoreInput = () => {
-        for (const [name, state] of owned) {
-          if (input.getAttribute(name) !== state.written) continue
-          if (state.original === null) input.removeAttribute(name)
-          else input.setAttribute(name, state.original)
-        }
-      }
     }
     const exact = new Set(
       candidates.filter((candidate) => candidate.exact).map((candidate) => candidate.term.en),
