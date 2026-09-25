@@ -131,3 +131,22 @@ it('圣化保留神圣石和稀有限制，怪物效能排除不混同怪物稀�
     ),
   ).toBeNull()
 })
+
+it('符文用途保留装备类型、空孔和不可取回替换限制，未知变体不猜译', () => {
+  const sentence = (target: string) =>
+    `Place into an empty Augment Socket in ${target} to apply its effect to that item. Once socketed it cannot be retrieved or replaced.`
+  for (const [target, zh] of [
+    ['a pair of Boots', '靴子'],
+    ['a pair of Gloves', '手套'],
+    ['a Weapon', '武器'],
+    ['a Body Armour', '胸甲'],
+  ] as const) {
+    const translated = materialDescription(`\n ${sentence(target)} `)
+    expect(translated).toContain(`${zh}上的一个空增幅器插槽`)
+    expect(translated).toContain('对该物品施加效果')
+    expect(translated).toContain('无法取回或替换')
+  }
+  expect(materialDescription(sentence('a Helmet'))).toBeNull()
+  expect(materialDescription(sentence('a Weapon').replace('cannot', 'can'))).toBeNull()
+  expect(materialDescription(sentence('a Weapon').replace('empty ', ''))).toBeNull()
+})

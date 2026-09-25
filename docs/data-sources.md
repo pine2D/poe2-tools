@@ -698,3 +698,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 2026-09-26：0.1.77核对介绍页仍使用Distilled Emotions旧称。GGG官方[0.3.0补丁说明](https://www.pathofexile.com/forum/view-thread/3826682)明确其已改名Liquid Emotions；已登记gray来源[PoE2DB简中现名页面](https://poe2db.tw/cn/Liquid_Emotions)标题为“液化情感”。据此补人工UI条目“液化情感（原称 Distilled Emotions）”，保留旧称关系；不是已证实的国服旧版本译名，不改原生搜索词、物品ID或制作规则。此前旧URL的404不再作为当前名称无资料的依据。此条为人工组合UI译文，遵循现有manual分类，--no-gray仍保留，不宣称该模式全部用语仅来自官方。
+
+
+0.1.78沿既有primary国服交易词典rune.stat_3132681620、rune.stat_201332984、rune.stat_1676950499、rune.stat_1927467683，分别核对Chronomancy／Marksman／Destruction／Soul词缀的“塑时术师／神射手／毁灭／灵魂”名称；仅提取名称用于人工介绍句，不把原词典“重置／选取”差异推导为新机制。既有catalog名称子集中的乌崔德的星辰、克尔的狩猎、斯鲁德的神力、梅德维德的照料均在原站Data中文搜索核对英文提交及对应图像身份。沿已登记CoE公共DOM来源，人工翻译这四张结果卡可见的完整镶嵌用途句，限定靴子／手套／武器／胸甲，保留空孔及镶嵌后不可取回或替换；不增加规则数据、词缀池或外站请求。

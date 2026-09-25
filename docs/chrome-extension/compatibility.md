@@ -1032,3 +1032,14 @@ no-gray构建保存在独立临时目录；默认dist已重建并通过check，6
 最终0.1.77 ZIP独立解包，在Chrome 151.0.0.0实际显示新译文。通过真实扩展设置文档开启双语后保留完整原文；关闭扩展后列表恢复Distilled Emotions，所有data-poe2-l10n节点归零，制作演练伪元素徽标恢复Emulator。中文模式四类徽标（历史版本、制作演练、计算器、流程模拟）均读取到实际中文computed content。
 
 24文件189项相关测试、格式、构建及打包检查通过，6918词条，仅storage权限。本轮只有词条与文档修改，没有新增依赖；未重跑类型检查和全仓verify。特殊符文池简称、PoE1专属段落等仍有英文，不宣称全页已完整翻译。
+
+
+## 0.1.78：四种特殊符文的介绍与搜索结果（2026-09-26）
+
+此前未补的Chronomancy、Marksman、Destruction、Soul简称现由既有primary国服交易词典直接核对为塑时术师、神射手、毁灭、灵魂；相关rune.stat ID登记于data-sources.md。没有以英语直译或繁简转换补名称，也不根据原词条“重置／选取”的动词差异推导制作行为。
+
+最终0.1.78 ZIP独立解包Chrome，在Data PoE2英文模式依次输入乌崔德的星辰、克尔的狩猎、斯鲁德的神力、梅德维德的照料并实际选择中文候选；原生框分别写入Uhtred's Sidereus、Kolr's Hunt、Thrud's Might、Medved's Tending，各返回一张正确材料卡。原生图像身份依次为RuneWarpingTimeInfluence、RuneWarpingMarksmanInfluence、RuneWarpingDestructionInfluence、RuneWarpingSoulInfluence。
+
+四张卡新增的Shadow DOM中文分别限定靴子、手套、武器、胸甲上的空增幅器插槽，并保留不可取回或替换。与0.1.77同一路径采集结果相比，英文输入值、返回身份、原生完整用途HTML（含Augment关键词span）逐项一致。本轮对照基线为上一版扩展，不冒充无扩展测试；Data卡未显示具体特殊词缀池，因此不把此搜索链当成制作行为验证。最终包另实际打开`/whats-new?game=poe2`，列表显示“支持特殊符文词缀池（塑时术师、神射手、毁灭、灵魂等）”。介绍页四个简称的译法来自独立交易词条。
+
+新增回归先因用途未翻译返回null失败，补齐后24文件190项通过；初次类型检查发现测试数组解构可能undefined，加只读元组声明后类型及该文件9项测试重新通过。格式、构建和打包通过，6918词条，仅storage权限；未重跑全仓verify。不从四句实测外推所有符文用途，未知类型与限制变化仍不猜译。

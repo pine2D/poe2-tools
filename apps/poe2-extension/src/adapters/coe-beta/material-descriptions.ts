@@ -146,8 +146,22 @@ const activeDescriptions = new Map([
     '你下一次揭示渎灵词缀时，可以重选一次候选词缀。',
   ],
 ])
+// 四种已在 Data 实测的完整用途句，不能据此放行任意装备类型或替换限制。
+const socketDescriptions = new Map(
+  [
+    ['a pair of Boots', '靴子'],
+    ['a pair of Gloves', '手套'],
+    ['a Weapon', '武器'],
+    ['a Body Armour', '胸甲'],
+  ].map(([en, zh]) => [
+    `Place into an empty Augment Socket in ${en} to apply its effect to that item. Once socketed it cannot be retrieved or replaced.`,
+    `将其放入${zh}上的一个空增幅器插槽，即可对该物品施加效果。镶嵌后无法取回或替换。`,
+  ]),
+)
 export function materialDescription(original: string): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
+  const socket = socketDescriptions.get(normalized)
+  if (socket) return socket
   if (!normalized.startsWith(lead)) {
     if (!normalized.startsWith(activeLead)) return null
     const translated = activeDescriptions.get(normalized.slice(activeLead.length))
