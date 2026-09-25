@@ -236,3 +236,28 @@ it.each(['input', 'close', 'preview', 'stop'])('回填后%s使旧恢复入口失
   restore.click()
   expect(input.value).toBe(english)
 })
+
+it('键盘激活填入与恢复后焦点回到原导入框', () => {
+  const { input, fill } = readyPreview()
+  fill.focus()
+  fill.click()
+  expect(input.value).toContain('Item Class: Foci')
+  expect(document.activeElement).toBe(input)
+  const restore = [...document.querySelectorAll('button')].find(
+    (button) => button.textContent === '恢复粘贴原文',
+  ) as HTMLButtonElement
+  restore.focus()
+  restore.click()
+  expect(input.value).toBe(source)
+  expect(document.activeElement).toBe(input)
+})
+it('回填触发原站转移焦点时不抢回', () => {
+  const { input, fill } = readyPreview()
+  const other = document.createElement('button')
+  input.closest('dialog')?.append(other)
+  input.addEventListener('input', () => other.focus())
+  fill.focus()
+  fill.click()
+  expect(input.value).toContain('Runed Focus')
+  expect(document.activeElement).toBe(other)
+})

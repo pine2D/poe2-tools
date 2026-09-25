@@ -17,6 +17,14 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     if (!input) return
     const isActive = () =>
       !closed && target === input && input.isConnected && input.closest('dialog')?.open === true
+    const returnInputFocus = (button: HTMLButtonElement, hadFocus: boolean) => {
+      if (
+        hadFocus &&
+        isActive() &&
+        (doc.activeElement === button || doc.activeElement === doc.body)
+      )
+        input.focus()
+    }
     panel = doc.createElement('section')
     panel.dataset.poe2L10n = 'import'
     panel.style.cssText =
@@ -119,6 +127,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           fill.disabled = true
           return
         }
+        const hadFocus = doc.activeElement === fill
         revision++
         invalidate = null
         input.value = converted.english
@@ -141,14 +150,17 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             invalidateRestore()
             return
           }
+          const hadRestoreFocus = doc.activeElement === restore
           revision++
           invalidate = null
           input.value = converted.original
           input.dispatchEvent(new Event('input', { bubbles: true }))
           restore.disabled = true
           message.textContent = '已恢复粘贴原文。修改后请重新预览。'
+          returnInputFocus(restore, hadRestoreFocus)
         })
         result.append(restore)
+        returnInputFocus(fill, hadFocus)
       })
       result.append(fill)
     })
