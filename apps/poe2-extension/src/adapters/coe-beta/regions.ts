@@ -25,7 +25,9 @@ export function textContext(
   | 'importer'
   | 'property'
   | 'filter'
+  | 'home'
   | 'default' {
+  if (node.parentElement?.closest('#homeFeatures')) return 'home'
   if (node.parentElement?.closest('.filterFeedback')) return 'filter'
   if (node.parentElement?.closest('.item .property')) return 'property'
   if (node.parentElement?.closest('#simulatorImporterZone')) return 'importer'
@@ -39,6 +41,41 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+// 新版首页公开功能文案，限定容器，保留原站图片与交互节点。
+const home = new Map([
+  ['Emulate directly in the crafting interface', '直接在制作界面演练'],
+  [
+    'Apply the selected crafting method by hovering over the item and clicking on it.',
+    '将鼠标移到物品上并点击，即可应用当前选中的制作方式。',
+  ],
+  ['Build complex calculator requirements', '设置复杂的计算条件'],
+  [
+    'Set up requirement groups with partial or complete matching, query for open affixes and more.',
+    '设置部分或全部满足的条件组，查询空余词缀位等。',
+  ],
+  ['Simulate entire crafting processes for a project', '模拟项目的完整制作流程'],
+  [
+    'Create crafting steps and use routing and conditions to simulate a crafting strategy.',
+    '创建制作步骤，结合步骤连线和条件模拟制作策略。',
+  ],
+  ['Save items to inventory', '将物品保存到背包'],
+  [
+    'Store items for future reference, create and manage storage tabs and more.',
+    '保存物品以备日后查看，创建和管理仓库页等。',
+  ],
+  ['Customizability', '可自定义'],
+  ['Expansive user settings', '丰富的用户设置'],
+  [
+    'Tailor the UI to your liking, set up custom pricing and toggle user options.',
+    '按喜好调整界面、自定义价格，以及启用或关闭各项设置。',
+  ],
+  ['And much more...', '还有更多功能……'],
+  ['Expanded data viewability', '更全面的数据查看'],
+  [
+    'Browse compiled data, compare patches, view items and modifier details and more.',
+    '浏览整理后的数据、对比版本、查看物品与词缀详情等。',
+  ],
+])
 const filters = new Map([
   ['Searching', '搜索词'],
   ['Clear all', '清空全部筛选'],
@@ -114,24 +151,26 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   const word = normalized.toLowerCase()
   const translated =
-    context === 'filter'
-      ? (filters.get(normalized) ?? null)
-      : context === 'property'
-        ? (properties.get(normalized) ?? null)
-        : context === 'importer'
-          ? (importer.get(normalized) ?? null)
-          : context === 'tag'
-            ? tagText(normalized)
-            : context === 'calculation'
-              ? calculationText(normalized)
-              : context === 'introduction'
-                ? (introduction.get(normalized) ?? null)
-                : context === 'instructions'
-                  ? word === 'and'
-                    ? '与'
-                    : word === 'or'
-                      ? '或'
-                      : null
-                  : null
+    context === 'home'
+      ? (home.get(normalized) ?? null)
+      : context === 'filter'
+        ? (filters.get(normalized) ?? null)
+        : context === 'property'
+          ? (properties.get(normalized) ?? null)
+          : context === 'importer'
+            ? (importer.get(normalized) ?? null)
+            : context === 'tag'
+              ? tagText(normalized)
+              : context === 'calculation'
+                ? calculationText(normalized)
+                : context === 'introduction'
+                  ? (introduction.get(normalized) ?? null)
+                  : context === 'instructions'
+                    ? word === 'and'
+                      ? '与'
+                      : word === 'or'
+                        ? '或'
+                        : null
+                    : null
   return translated === null ? null : original.replace(/\S[\s\S]*\S|\S/, translated)
 }
