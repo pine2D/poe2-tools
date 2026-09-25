@@ -58,3 +58,8 @@ pnpm_config_verify_deps_before_run=warn pnpm verify
 
 
 词缀中文叠加使用Shadow DOM：宿主的outerHTML／textContent为空，不代表渲染内容为空。应读取shadowRoot.textContent，并结合截图或实际可见性核对；同时检查原站英文文本与业务属性未变。悬停失败时屏幕可能保留上一个提示，不能把旧提示内容当成新目标的结果。
+
+
+## 0.1.95格式门禁回归
+
+2026-09-26全仓检查发现新增的 `expedition-tablet.json` 和 `temple-tablet.json` 未按Biome排版，此前仅检查扩展与词典目录导致遗漏。使用现有Biome仅格式化这两份文件，并与修改前的Git版本解析、再序列化比较，确认对象键序、数组顺序和值全部相同；未排除目录或改动原生样本内容。后续局部迭代仍执行本页列出的全仓格式检查，不能用只检查应用目录的结果覆盖文档样本。
