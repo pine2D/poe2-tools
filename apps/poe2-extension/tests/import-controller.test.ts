@@ -185,3 +185,54 @@ it('关闭后旧诊断不能改变选择区', () => {
   expect(input.selectionStart).toBe(0)
   expect(input.selectionEnd).toBe(0)
 })
+
+it('英文回填后可恢复原始中文，恢复后需重新预览', () => {
+  const { input, preview, fill } = readyPreview()
+  fill.click()
+  const restore = [...document.querySelectorAll('button')].find(
+    (button) => button.textContent === '恢复粘贴原文',
+  ) as HTMLButtonElement
+  expect(restore).toBeDefined()
+  expect(restore.disabled).toBe(false)
+  restore.click()
+  expect(input.value).toBe(source)
+  expect(restore.disabled).toBe(true)
+  expect(fill.disabled).toBe(true)
+  expect(document.querySelector('[role="status"]')?.textContent).toContain('重新预览')
+  preview.click()
+  const current = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  expect(current.disabled).toBe(false)
+})
+it('恢复原文不覆盖后续程序化编辑，重新预览后的旧恢复按钮不能操作', () => {
+  const { input, preview, fill } = readyPreview()
+  fill.click()
+  const restore = [...document.querySelectorAll('button')].find(
+    (button) => button.textContent === '恢复粘贴原文',
+  ) as HTMLButtonElement
+  expect(restore).toBeDefined()
+  input.value = '后续编辑'
+  restore.click()
+  expect(input.value).toBe('后续编辑')
+  expect(restore.disabled).toBe(true)
+  input.value = source
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  preview.click()
+  restore.click()
+  expect(input.value).toBe(source)
+})
+
+it.each(['input', 'close', 'preview', 'stop'])('回填后%s使旧恢复入口失效', (action) => {
+  const { input, preview, fill } = readyPreview()
+  fill.click()
+  const restore = [...document.querySelectorAll('button')].find(
+    (button) => button.textContent === '恢复粘贴原文',
+  ) as HTMLButtonElement
+  expect(restore).toBeDefined()
+  const english = input.value
+  if (action === 'input') input.dispatchEvent(new Event('input', { bubbles: true }))
+  if (action === 'close') document.querySelector('dialog')?.removeAttribute('open')
+  if (action === 'preview') preview.click()
+  if (action === 'stop') stop()
+  restore.click()
+  expect(input.value).toBe(english)
+})

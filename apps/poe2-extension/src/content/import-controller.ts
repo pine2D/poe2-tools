@@ -124,7 +124,31 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         input.value = converted.english
         input.dispatchEvent(new Event('input', { bubbles: true }))
         fill.disabled = true
-        message.textContent = '已填入英文。请点击原站 Proceed；导入结果由原站确认。'
+        message.textContent = '已填入英文。请点击原站确认按钮；导入结果由原站确认。'
+        const filledRevision = revision
+        const restore = doc.createElement('button')
+        restore.type = 'button'
+        restore.textContent = '恢复粘贴原文'
+        const invalidateRestore = () => {
+          revision++
+          restore.disabled = true
+          message.textContent = '原文已改变，请重新预览。'
+        }
+        invalidate = invalidateRestore
+        restore.addEventListener('click', () => {
+          if (!isActive() || filledRevision !== revision || !restore.isConnected) return
+          if (input.value !== converted.english) {
+            invalidateRestore()
+            return
+          }
+          revision++
+          invalidate = null
+          input.value = converted.original
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+          restore.disabled = true
+          message.textContent = '已恢复粘贴原文。修改后请重新预览。'
+        })
+        result.append(restore)
       })
       result.append(fill)
     })

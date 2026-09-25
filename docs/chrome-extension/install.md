@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.88 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.89 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.88.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.89.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。若提示无法读取设置，可点击“重试读取”；读取成功前开关保持禁用，不会用默认值覆盖已有偏好。
 
@@ -116,3 +116,7 @@ node apps/poe2-extension/scripts/package.mjs
 关闭装备导入窗口会撤下中文预览；重新打开后请重新粘贴并预览。
 
 流程模拟侧栏的“查看使用说明”会打开新版教程。六个章节支持中文与双语；原站动图内的英文保持。教程中的“调试”按原文保留尚未推出标记，条件配置段的原文问题另有校注。
+
+## 回填后恢复中文原文
+
+点击“填入英文到原站导入框”后，可用“恢复粘贴原文”恢复本次粘贴的完整文本（含备注），修改后重新预览。恢复不会直接触发原站导入。若已编辑导入框、重新预览或关闭弹窗，旧恢复入口失效；它只作用于当前对话框，不保存到本地存储，也不撤销已经完成的原站导入。
