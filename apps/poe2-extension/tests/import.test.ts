@@ -446,3 +446,44 @@ it('丝绸便鞋允许自身已验收的护盾与闪电抗性、品质和单空�
     expect(prepareImport(invalid, bootsTerms).ready).toBe(false)
   }
 })
+
+const speedTerms: Term[] = [
+  ...bootsTerms,
+  {
+    id: 'speed',
+    sourceId: 'explicit.stat_2250533757',
+    en: '#% increased Movement Speed',
+    zh: '移动速度提高 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+]
+const speedBoots = (value: number, tier: number) =>
+  `${boots}\n--------\n{ 前缀属性 "测试的" (等阶：${tier}) — 速度 }\n移动速度提高 ${value}%`
+it.each([
+  [10, 6],
+  [15, 5],
+  [20, 4],
+  [25, 3],
+  [30, 2],
+  [35, 1],
+])('丝绸便鞋固定移动速度 %s / T%s 不补造范围', (value, tier) => {
+  const result = prepareImport(speedBoots(value, tier), speedTerms)
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain(`${value}% increased Movement Speed`)
+  expect(result.english).not.toContain(`${value}(${value}`)
+})
+it('移动速度例外不放宽数值、等阶、分组和其他属性的范围要求', () => {
+  for (const source of [
+    speedBoots(21, 4),
+    speedBoots(20, 3),
+    speedBoots(-20, 4),
+    speedBoots(20, 4).replace('移动速度提高 20%', '移动速度提高 20(15-25)%'),
+    speedBoots(20, 4).replace('{ 前缀属性 "测试的"', '{ 后缀属性 "测试的"'),
+    speedBoots(20, 4).replace('(36-41)', ''),
+    speedBoots(20, 4).replace('丝绸便鞋', '丝质之袍').replace('靴子', '胸甲'),
+  ]) {
+    expect(prepareImport(source, speedTerms).ready).toBe(false)
+  }
+})

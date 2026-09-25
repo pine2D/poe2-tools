@@ -16,6 +16,15 @@ const focusStats = new Set([
   'explicit.stat_789117908',
   'explicit.stat_2923486259',
 ])
+const movementSpeedId = 'explicit.stat_2250533757'
+const verifiedSpeedTiers = new Map([
+  [10, 6],
+  [15, 5],
+  [20, 4],
+  [25, 3],
+  [30, 2],
+  [35, 1],
+])
 const focusCompoundPrefix = ['explicit.stat_4015621042', 'explicit.stat_1050105434']
 // 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
 const coldImplicitTags = new Set(['元素', '冰霜', '抗性', 'Elemental', 'Cold', 'Resistance'])
@@ -57,8 +66,8 @@ const profiles = [
     armour: true,
     emptySockets: 1,
     classes: ['靴子', 'Boots'],
-    stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
-    prefixes: new Set(['explicit.stat_4052037485']),
+    stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347', movementSpeedId]),
+    prefixes: new Set(['explicit.stat_4052037485', movementSpeedId]),
   },
   {
     base: 'Twig Circlet',
@@ -211,12 +220,27 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         )
       )
         add('存在未识别、歧义或尚未验收的属性。', source.line)
+      const fixedSpeed =
+        profile?.base === 'Silk Slippers' &&
+        identities.length === 1 &&
+        identities[0] === movementSpeedId
+      const speedRoll = source.rolls[0]
+      const validFixedSpeed =
+        fixedSpeed &&
+        source.rolls.length === 1 &&
+        speedRoll !== undefined &&
+        verifiedSpeedTiers.get(speedRoll.value) === mod.tier &&
+        (!speedRoll.range || speedRoll.range.every((value) => value === speedRoll.value))
+      if (fixedSpeed && !validFixedSpeed)
+        add('移动速度的固定数值与等阶不属于已验收组合。', source.line)
       if (
         source.unscalable ||
         source.states?.length ||
         !source.rolls.length ||
         source.rolls.some(
-          (r) => !r.range || r.value < Math.min(...r.range) || r.value > Math.max(...r.range),
+          (r) =>
+            (!r.range && !validFixedSpeed) ||
+            (r.range && (r.value < Math.min(...r.range) || r.value > Math.max(...r.range))),
         )
       )
         add('缺少高级数值范围或数值不在范围内。', source.line)

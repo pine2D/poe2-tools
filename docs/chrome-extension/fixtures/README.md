@@ -27,3 +27,6 @@
 
 
 `silk-slippers-zh-CN.txt`为自造稀有丝绸便鞋高级文本：品质20%、一个空孔、T3护盾40和T6闪电抗性18。`silk-slippers-native.json`是无扩展英文基线的原生导出，仅格式化；0.1.57最终ZIP中文转换后的原生导出与该基线逐字一致。不是用户私人物品，也不包含站点规则库。
+
+
+`silk-slippers-speed-zh-CN.txt`在自造便鞋上加入无括号范围的20%移动速度T4前缀；`silk-slippers-speed-native.json`为对应英文样本的原生Export，仅格式化。0.1.58最终ZIP完成中文预览与原站导入，导出逐字一致。
