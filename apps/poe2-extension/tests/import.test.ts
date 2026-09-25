@@ -184,3 +184,42 @@ it('普通装备不能携带显式词缀；魔法稀有装备仍要求完整高�
     ).toBe(false)
   }
 })
+
+const robeTerms: Term[] = [
+  ...helmetTerms,
+  {
+    id: 'robe',
+    en: 'Silk Robe',
+    zh: '丝质之袍',
+    domain: 'base',
+    source: 'test',
+    version: 'test',
+  },
+]
+const robe = `物品类别: 胸甲
+稀有度: 稀有
+测试 长袍
+丝质之袍
+--------
+物品等级: 86
+--------
+{ 前缀属性 "测试的" (等阶：6) — 能量护盾 }
++40(36-41) 能量护盾上限
+{ 后缀属性 "测试之" (等阶：6) — 元素, 闪电, 抗性 }
+闪电抗性 +18(16-20)%`
+it('丝质之袍按胸甲身份转换两个已核对词缀，不向其他胸甲或特殊结构扩展', () => {
+  const result = prepareImport(robe, robeTerms)
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain('Item Class: Body Armours')
+  expect(result.english).toContain('Silk Robe')
+  expect(result.english).toContain('+40(36-41) to maximum Energy Shield')
+  expect(result.english).toContain('+18(16-20)% to Lightning Resistance')
+  for (const source of [
+    robe.replace('胸甲', '头盔'),
+    `${robe}\n--------\n品质: +20%`,
+    `${robe}\n--------\n插槽: S`,
+    robe.replace('等阶：6', '等阶：0'),
+  ]) {
+    expect(prepareImport(source, robeTerms).ready).toBe(false)
+  }
+})
