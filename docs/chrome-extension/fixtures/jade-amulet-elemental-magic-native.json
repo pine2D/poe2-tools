@@ -1,0 +1,32 @@
+{
+  "i": "Metadata/Items/Amulets/FourAmulet4",
+  "m": [
+    {
+      "k": "IncreasedLife4",
+      "v": [50],
+      "f": [],
+      "p": null
+    },
+    {
+      "k": "FireResist3",
+      "v": [18],
+      "f": [],
+      "p": null
+    }
+  ],
+  "ns": null,
+  "s": [],
+  "q": 0,
+  "qt": null,
+  "l": 86,
+  "r": "magic",
+  "if": [],
+  "ip": [["12"]],
+  "e": [],
+  "p": {},
+  "di": [],
+  "ig": null,
+  "f": ["a"],
+  "pt": null,
+  "id": null
+}

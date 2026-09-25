@@ -656,3 +656,29 @@ it.each([
   ])
     expect(prepareImport(source, dictionary).ready).toBe(false)
 })
+
+it.each([
+  { base: '蓝玉戒指', normal: ring, tier: 5 },
+  { base: '红玉戒指', normal: rubyNormal, tier: 5 },
+  { base: '翠玉项链', normal: jadeNormal, tier: 6 },
+])('$base 支持生命与三种元素抗性，仍限制魔法和稀有后缀数量', ({ normal, tier }) => {
+  const dictionary = [...ringTerms, ...rubyTerms, ...amuletTerms, lifeTerm]
+  const prefix = `\n--------\n{ 前缀属性 "测试的" (等阶：${tier}) — 生命 }\n+50(40-59) 生命上限`
+  const suffixes = ['火焰', '冰霜', '闪电'].map(
+    (element) =>
+      `\n{ 后缀属性 "测试之" (等阶：6) — 元素, ${element}, 抗性 }\n${element}抗性 +18(16-20)%`,
+  )
+  const magic = normal.replace('稀有度: 普通', '稀有度: 魔法') + prefix
+  for (const suffix of suffixes) expect(prepareImport(magic + suffix, dictionary).ready).toBe(true)
+  const rare =
+    normal.replace('稀有度: 普通\n', '稀有度: 稀有\n测试 首饰\n') + prefix + suffixes.join('')
+  const result = prepareImport(rare, dictionary)
+  expect(result.ready).toBe(true)
+  expect(result.english.match(/Suffix Modifier/g)).toHaveLength(3)
+  for (const element of ['Fire', 'Cold', 'Lightning'])
+    expect(result.english).toContain(`+18(16-20)% to ${element} Resistance`)
+  expect(prepareImport(magic + suffixes.join(''), dictionary).ready).toBe(false)
+  expect(prepareImport(rare + jadeSuffix, dictionary).ready).toBe(false)
+  expect(prepareImport(rare.replace('后缀属性', '前缀属性'), dictionary).ready).toBe(false)
+  expect(prepareImport(rare + suffixes[0], dictionary).ready).toBe(false)
+})

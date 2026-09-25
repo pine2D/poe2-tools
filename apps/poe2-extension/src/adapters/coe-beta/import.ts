@@ -17,6 +17,11 @@ const focusStats = new Set([
   'explicit.stat_2923486259',
 ])
 const lifeStatId = 'explicit.stat_3299347043'
+const jewelleryElementalResists = [
+  'explicit.stat_3372524247',
+  'explicit.stat_4220027924',
+  'explicit.stat_1671376347',
+]
 const movementSpeedId = 'explicit.stat_2250533757'
 const verifiedSpeedTiers = new Map([
   [10, 6],
@@ -40,7 +45,7 @@ const profiles = [
     classes: ['戒指', 'Rings'],
     armour: false,
     implicitStats: new Set(['explicit.stat_3372524247']),
-    stats: new Set(['explicit.stat_3372524247', lifeStatId]),
+    stats: new Set([...jewelleryElementalResists, lifeStatId]),
     prefixes: new Set([lifeStatId]),
   },
   {
@@ -49,7 +54,7 @@ const profiles = [
     classes: ['项链', 'Amulets'],
     armour: false,
     implicitStats: new Set(['explicit.stat_3261801346']),
-    stats: new Set(['explicit.stat_3261801346', 'explicit.stat_1671376347', lifeStatId]),
+    stats: new Set(['explicit.stat_3261801346', ...jewelleryElementalResists, lifeStatId]),
     prefixes: new Set([lifeStatId]),
   },
   {
@@ -58,7 +63,7 @@ const profiles = [
     classes: ['戒指', 'Rings'],
     armour: false,
     implicitStats: new Set(['explicit.stat_4220027924']),
-    stats: new Set(['explicit.stat_4220027924', lifeStatId]),
+    stats: new Set([...jewelleryElementalResists, lifeStatId]),
     prefixes: new Set([lifeStatId]),
   },
   {
