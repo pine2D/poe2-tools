@@ -18,7 +18,18 @@ const focusStats = new Set([
 // 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
 const profiles = [
   {
+    base: 'Sapphire Ring',
+    emptySockets: 0,
+    classes: ['戒指', 'Rings'],
+    armour: false,
+    implicitStats: new Set(['explicit.stat_4220027924']),
+    stats: new Set(['explicit.stat_4220027924']),
+    prefixes: new Set<string>(),
+  },
+  {
     base: 'Runed Focus',
+    implicitStats: new Set<string>(),
+    armour: true,
     emptySockets: 1,
     classes: ['法器', 'Foci'],
     stats: focusStats,
@@ -30,6 +41,8 @@ const profiles = [
   },
   {
     base: 'Silk Robe',
+    implicitStats: new Set<string>(),
+    armour: true,
     emptySockets: 2,
     classes: ['胸甲', 'Body Armours'],
     stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
@@ -37,6 +50,8 @@ const profiles = [
   },
   {
     base: 'Twig Circlet',
+    implicitStats: new Set<string>(),
+    armour: true,
     emptySockets: 1,
     classes: ['头盔', 'Helmets'],
     stats: new Set(['explicit.stat_4052037485', 'explicit.stat_1671376347']),
@@ -86,53 +101,58 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   )
   const verifiedStats = profile?.stats ?? new Set<string>()
   if (!profile || !['normal', 'magic', 'rare'].includes(item.rarity))
-    add('导入仅支持已验收的符文法器、细枝头冠和丝质之袍普通词缀；其余装备仍可对照。')
+    add('导入仅支持已验收的符文法器、细枝头冠、丝质之袍及蓝玉戒指的指定属性；其余装备仍可对照。')
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     add('特殊装备标记尚未验收。')
   if (item.itemLevel === null || item.itemLevel < 1 || item.itemLevel > 100)
     add('物品等级缺失或超出范围。')
   for (const diagnostic of item.diagnostics) add(diagnostic.message, diagnostic.line)
   if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
+  const explicitMods = item.mods.filter((mod) => mod.kind !== 'implicit')
+  const expectedImplicits = profile?.implicitStats.size ?? 0
+  if (item.mods.filter((mod) => mod.kind === 'implicit').length !== expectedImplicits)
+    add('基底属性数量与已验收结构不符。')
   if (item.rarity === 'normal') {
-    if (item.mods.length) add('普通稀有度与词缀分组不符；当前普通基底仅支持无词缀输入。')
-  } else if (!item.mods.length) add('缺少 Ctrl+Alt+C 高级词缀分组。')
+    if (explicitMods.length) add('普通稀有度与词缀分组不符；普通装备不能包含显式词缀。')
+  } else if (!explicitMods.length) add('缺少 Ctrl+Alt+C 高级词缀分组。')
   for (const kind of ['prefix', 'suffix'])
     if (item.mods.filter((m) => m.kind === kind).length > (item.rarity === 'magic' ? 1 : 3))
       add('前后缀数量超出普通装备范围。')
   const seenStats = new Set<string>()
   const prefixStats = profile?.prefixes ?? new Set<string>()
   for (const { mod, stats } of inspection.mods) {
-    if (
-      !['prefix', 'suffix'].includes(mod.kind) ||
-      !knownExplicitHeader(mod.header.raw) ||
-      mod.tier === null ||
-      mod.tier < 1 ||
-      !Number.isInteger(mod.tier) ||
-      mod.tier > 99 ||
-      mod.states?.length ||
-      mod.magnitude !== undefined ||
-      stats.length !== 1
-    )
+    const implicit = mod.kind === 'implicit'
+    const allowedStats = implicit ? (profile?.implicitStats ?? new Set<string>()) : verifiedStats
+    const validHeader = implicit
+      ? inspection.englishByLine[mod.header.line] === '{ Implicit Modifier }' && mod.tier === null
+      : ['prefix', 'suffix'].includes(mod.kind) &&
+        knownExplicitHeader(mod.header.raw) &&
+        mod.tier !== null &&
+        Number.isInteger(mod.tier) &&
+        mod.tier >= 1 &&
+        mod.tier <= 99
+    if (!validHeader || mod.states?.length || mod.magnitude !== undefined || stats.length !== 1)
       add('复合词缀、特殊来源、缺等阶等结构尚未验收。', mod.header.line)
     for (const { source, resolution } of stats) {
       const identities = [
         ...new Set(
           resolution.candidates
-            .filter((c) => c.english === resolution.english && verifiedStats.has(c.id))
+            .filter((c) => c.english === resolution.english && allowedStats.has(c.id))
             .map((c) => c.id),
         ),
       ]
       if (identities.length !== 1) add('普通属性身份未唯一识别。', source.line)
       for (const id of identities) {
-        if (seenStats.has(id)) add('同一普通属性重复出现，不能确认完整导入。', source.line)
-        if (mod.kind !== (prefixStats.has(id) ? 'prefix' : 'suffix'))
+        const identity = `${implicit ? 'implicit' : 'explicit'}:${id}`
+        if (seenStats.has(identity)) add('同一普通属性重复出现，不能确认完整导入。', source.line)
+        if (!implicit && mod.kind !== (prefixStats.has(id) ? 'prefix' : 'suffix'))
           add('普通属性与前后缀分组不符。', source.line)
-        seenStats.add(id)
+        seenStats.add(identity)
       }
       if (
         !resolution.english ||
         !resolution.candidates.some(
-          (c) => verifiedStats.has(c.id) && c.english === resolution.english,
+          (c) => allowedStats.has(c.id) && c.english === resolution.english,
         )
       )
         add('存在未识别、歧义或尚未验收的属性。', source.line)
@@ -172,6 +192,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     for (const line of block.lines) {
       const quality = block.kind === 'properties' && /^(?:品质|Quality)\s*[:：]/.test(line.raw)
       if (quality) {
+        if (!profile?.armour) add('该首饰的品质结构尚未验收。', line.line)
         qualityCount++
         const match = /^(?:品质|Quality)\s*[:：]\s*\+?(\d+)%(?:\s+\(augmented\))?$/.exec(line.raw)
         if (!match || Number(match[1]) > 20 || qualityCount > 1)
@@ -181,7 +202,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         !inspection.englishByLine[line.line] ||
         (block.kind === 'properties' &&
           !quality &&
-          !/^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw))
+          (!profile?.armour || !/^(?:能量护盾|Energy Shield)\s*[:：]/.test(line.raw)))
       )
         add('包含未完整识别或尚未验收的装备属性。', line.line)
     }

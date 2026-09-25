@@ -262,3 +262,62 @@ it('空插槽按已验收基底限制数量，重复、链接或镶嵌效果不�
   const helmet = normal.replace('胸甲', '头盔').replace('丝质之袍', '细枝头冠')
   expect(prepareImport(`${helmet}\n--------\n插槽: S S`, robeTerms).ready).toBe(false)
 })
+
+const ringTerms: Term[] = [
+  ...terms,
+  {
+    id: 'ring',
+    en: 'Sapphire Ring',
+    zh: '蓝玉戒指',
+    domain: 'base',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'cold',
+    sourceId: 'explicit.stat_4220027924',
+    en: '#% to Cold Resistance',
+    zh: '冰霜抗性 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+]
+const ring = `物品类别: 戒指
+稀有度: 普通
+蓝玉戒指
+--------
+物品等级: 86
+--------
+{ 基底属性 }
+冰霜抗性 +25(20-30)%`
+it('蓝玉戒指基底属性按分组保留，与同文字普通后缀分别识别', () => {
+  const normal = prepareImport(ring, ringTerms)
+  expect(normal.ready).toBe(true)
+  expect(normal.english).toContain('{ Implicit Modifier }\n+25(20-30)% to Cold Resistance')
+  const rare =
+    ring.replace('稀有度: 普通\n', '稀有度: 稀有\n测试 戒指\n') +
+    '\n--------\n{ 后缀属性 "测试之" (等阶：6) — 冰霜, 抗性 }\n冰霜抗性 +18(16-20)%'
+  expect(prepareImport(rare, ringTerms).ready).toBe(true)
+  expect(
+    prepareImport(rare.replace('稀有度: 稀有\n测试 戒指', '稀有度: 魔法'), ringTerms).ready,
+  ).toBe(true)
+  expect(
+    prepareImport(`${rare}\n{ 后缀属性 "重复之" (等阶：6) }\n冰霜抗性 +18(16-20)%`, ringTerms)
+      .ready,
+  ).toBe(false)
+})
+it('拒绝戒指缺失或重复基底属性、错分组、未知基底、品质及孔位', () => {
+  for (const source of [
+    ring.replace('\n--------\n{ 基底属性 }\n冰霜抗性 +25(20-30)%', ''),
+    `${ring}\n{ 基底属性 }\n冰霜抗性 +25(20-30)%`,
+    ring.replace('{ 基底属性 }', '{ 后缀属性 "测试之" (等阶：1) }'),
+    ring.replace('蓝玉戒指', '符文法器'),
+    `${ring}\n--------\n品质: +10%`,
+    `${ring}\n--------\n插槽: S`,
+    ring.replace('25(20-30)', '25'),
+    ring.replace('25(20-30)', '31(20-30)'),
+    ring.replace('基底属性', '基底属性 — 冰霜'),
+  ])
+    expect(prepareImport(source, ringTerms).ready).toBe(false)
+})
