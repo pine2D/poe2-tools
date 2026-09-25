@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createLexicon, type Term } from './index'
 
 const term = (
@@ -157,4 +157,40 @@ it('界面井号按字面精确匹配，不作为游戏数值模板', () => {
   expect(() =>
     createLexicon([term('invalid-ui-order', '# Stored', '保存数量', 'ui', { order: [0] })]),
   ).toThrow()
+})
+
+it('纯数字计数不尝试带英文单词的模板，仍支持纯符号模板和数值界面词条', () => {
+  const lex = createLexicon([
+    ...Array.from({ length: 100 }, (_, i) =>
+      term(`res-${i}`, `#% Resistance ${i}`, `抗性 ${i} #%`),
+    ),
+    term('plain', '#%', '#%（比例）'),
+    term('numeric-ui', '100', '一百', 'ui'),
+  ])
+  const original = RegExp.prototype.exec
+  let unrelated = 0
+  const spy = vi.spyOn(RegExp.prototype, 'exec').mockImplementation(function (this: RegExp, text) {
+    if (this.source.includes('resistance')) unrelated++
+    return original.call(this, text)
+  })
+  try {
+    expect(lex.translate('12345')).toBeNull()
+    expect(lex.translate('25%')).toBe('25%（比例）')
+    expect(lex.translate('100')).toBe('一百')
+    expect(unrelated).toBe(0)
+  } finally {
+    spy.mockRestore()
+  }
+})
+it('字面命中不能掩盖模板冲突，领域筛选与相同译文仍保持原语义', () => {
+  const lex = createLexicon([
+    term('ui', 'Gain 5 Life', '界面文案', 'ui'),
+    term('stat', 'Gain # Life', '获得 # 生命'),
+    term('base', 'Runed Focus', '符文法器', 'base'),
+    term('other', 'Runed Focus', '符文法器', 'item'),
+  ])
+  expect(lex.translate('Gain 5 Life')).toBeNull()
+  expect(lex.translate('Gain 5 Life', 'ui')).toBe('界面文案')
+  expect(lex.translate('Gain 5 Life', 'stat')).toBe('获得 5 生命')
+  expect(lex.translate('  RUNED   FOCUS  ')).toBe('  符文法器  ')
 })

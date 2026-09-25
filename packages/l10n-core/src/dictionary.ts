@@ -1,4 +1,4 @@
-import { compileTerm } from './display'
+import { compileTerm, normalize } from './display'
 import { searchTerms } from './search'
 import type { Lexicon, Term } from './types'
 
@@ -32,11 +32,31 @@ export function createLexicon(input: readonly Term[]): Lexicon {
       ...(term.aliases ? { aliases: [...term.aliases] } : {}),
     }
   })
-  const compiled = terms.map((term) => ({ term, match: compileTerm(term) }))
+  // 静态名称按规范化文本索引；动态词缀仍逐模板匹配并检查歧义。
+  const exact = new Map<string, Term[]>()
+  const templates: { term: Term; match: (text: string) => string | null }[] = []
+  for (const term of terms) {
+    if (term.domain !== 'ui' && term.en.includes('#')) {
+      templates.push({ term, match: compileTerm(term) })
+    } else {
+      const key = normalize(term.en)
+      const entries = exact.get(key) ?? []
+      entries.push(term)
+      exact.set(key, entries)
+    }
+  }
+  // 实时计数不可能匹配含英文单词的模板；纯符号模板仍须保留。
+  const symbolTemplates = templates.filter(({ term }) => !/[a-z]/i.test(term.en))
   return {
     translate(text, domain) {
       const values = new Set<string>()
-      for (const entry of compiled) {
+      const normalized = normalize(text)
+      for (const term of exact.get(normalized) ?? []) {
+        if (!domain || term.domain === domain) values.add(term.zh)
+        if (values.size > 1) return null
+      }
+      const candidates = /[a-z]/i.test(normalized) ? templates : symbolTemplates
+      for (const entry of candidates) {
         if (domain && entry.term.domain !== domain) continue
         const translated = entry.match(text)
         if (translated !== null) values.add(translated)
