@@ -336,3 +336,54 @@ it('蓝玉戒指接受已核对的基底标签，保留标签文字并拒绝未�
   ])
     expect(prepareImport(ring.replace('{ 基底属性 }', header), ringTerms).ready).toBe(false)
 })
+
+const hybridTerms: Term[] = [
+  ...terms,
+  {
+    id: 'hybrid-es',
+    sourceId: 'explicit.stat_4015621042',
+    en: '#% increased Energy Shield',
+    zh: '能量护盾提高 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'hybrid-mana',
+    sourceId: 'explicit.stat_1050105434',
+    en: '+# to maximum Mana',
+    zh: '+# 魔力上限',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+]
+const hybridText = `物品类别: 法器
+稀有度: 魔法
+测试的 符文法器
+--------
+物品等级: 86
+--------
+{ 前缀属性 "测试的" (等阶：5) — 能量护盾, 魔力 }
+能量护盾提高 20(14-20)%
++10(9-16) 魔力上限`
+it('已验收法器复合前缀保留同一高级分组和两个数值', () => {
+  const result = prepareImport(hybridText, hybridTerms)
+  expect(result.reasons).toEqual([])
+  expect(result.ready).toBe(true)
+  expect(result.english.match(/Prefix Modifier/g)).toHaveLength(1)
+  expect(result.english).toContain('20(14-20)% increased Energy Shield\n+10(9-16) to maximum Mana')
+})
+it('复合资格不放行缺行、错组、重复属性或其他基底', () => {
+  for (const source of [
+    hybridText.replace('\n+10(9-16) 魔力上限', ''),
+    hybridText.replace('前缀属性', '后缀属性'),
+    hybridText.replace('能量护盾提高 20(14-20)%', '+40(36-41) 能量护盾上限'),
+    `${hybridText}\n+10(9-16) 魔力上限`,
+    hybridText.replace('+10(9-16)', '+10'),
+    hybridText.replace('法器', '头盔'),
+    hybridText.replace('等阶：5', '等阶：999'),
+    `${hybridText.replace('稀有度: 魔法\n测试的 符文法器', '稀有度: 稀有\n测试 样本\n符文法器')}\n{ 前缀属性 "第二个" (等阶：5) }\n+10(9-16) 魔力上限`,
+  ])
+    expect(prepareImport(source, hybridTerms).ready).toBe(false)
+})

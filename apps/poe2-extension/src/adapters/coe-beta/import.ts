@@ -16,6 +16,7 @@ const focusStats = new Set([
   'explicit.stat_789117908',
   'explicit.stat_2923486259',
 ])
+const focusCompoundPrefix = ['explicit.stat_4015621042', 'explicit.stat_1050105434']
 // 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
 const coldImplicitTags = new Set(['元素', '冰霜', '抗性', 'Elemental', 'Cold', 'Resistance'])
 const profiles = [
@@ -124,7 +125,21 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   const prefixStats = profile?.prefixes ?? new Set<string>()
   for (const { mod, stats } of inspection.mods) {
     const implicit = mod.kind === 'implicit'
-    const allowedStats = implicit ? (profile?.implicitStats ?? new Set<string>()) : verifiedStats
+    // 仅放行原站已核对的两行组合，不能把任意两个普通属性拼成复合词缀。
+    const compound =
+      profile?.base === 'Runed Focus' &&
+      mod.kind === 'prefix' &&
+      stats.length === focusCompoundPrefix.length &&
+      stats.every(({ resolution }, index) =>
+        resolution.candidates.some(
+          (c) => c.id === focusCompoundPrefix[index] && c.english === resolution.english,
+        ),
+      )
+    const allowedStats = implicit
+      ? (profile?.implicitStats ?? new Set<string>())
+      : compound
+        ? new Set(focusCompoundPrefix)
+        : verifiedStats
     const validHeader = implicit
       ? knownImplicitHeader(mod.header.raw) &&
         mod.tier === null &&
@@ -135,7 +150,12 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         Number.isInteger(mod.tier) &&
         mod.tier >= 1 &&
         mod.tier <= 99
-    if (!validHeader || mod.states?.length || mod.magnitude !== undefined || stats.length !== 1)
+    if (
+      !validHeader ||
+      mod.states?.length ||
+      mod.magnitude !== undefined ||
+      (stats.length !== 1 && !compound)
+    )
       add('复合词缀、特殊来源、缺等阶等结构尚未验收。', mod.header.line)
     for (const { source, resolution } of stats) {
       const identities = [
@@ -149,7 +169,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       for (const id of identities) {
         const identity = `${implicit ? 'implicit' : 'explicit'}:${id}`
         if (seenStats.has(identity)) add('同一普通属性重复出现，不能确认完整导入。', source.line)
-        if (!implicit && mod.kind !== (prefixStats.has(id) ? 'prefix' : 'suffix'))
+        if (!implicit && mod.kind !== (compound || prefixStats.has(id) ? 'prefix' : 'suffix'))
           add('普通属性与前后缀分组不符。', source.line)
         seenStats.add(identity)
       }
