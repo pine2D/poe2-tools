@@ -1,0 +1,24 @@
+{
+  "i": "Metadata/Items/Weapons/OneHandWeapons/Sceptres/FourSceptre1",
+  "m": [
+    { "k": "NearbyAlliesAllDamage3", "v": [54], "f": [], "p": null },
+    { "k": "GlobalMinionSpellSkillGemLevelWeapon1", "v": [1], "f": [], "p": null },
+    { "k": "LightRadiusAndManaRegeneration3", "v": [15, 20], "f": [], "p": null },
+    { "k": "NearbyAlliesCriticalStrikeChance2", "v": [15], "f": [], "p": null }
+  ],
+  "ns": null,
+  "s": [],
+  "q": 0,
+  "qt": null,
+  "l": 53,
+  "r": "rare",
+  "if": [],
+  "ip": [],
+  "e": [],
+  "p": {},
+  "di": [],
+  "ig": null,
+  "f": ["a"],
+  "pt": null,
+  "id": null
+}

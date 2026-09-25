@@ -37,3 +37,5 @@ CoE 开发者文档公开 `game=poe2&eimport=...`，没有公开 API。既有 `d
 0.1.50 开发预览版已进入实施；安装见 [安装与使用](install.md)，权限见 [隐私说明](privacy.md)，实测和未验收范围见 [兼容性记录](compatibility.md)。完整路线仍以 plan.md 为准，未勾选项不是已交付承诺。
 
 阶段完成证据与下一轮施工顺序见 [阶段审计](stage-audit.md)。
+
+权杖的原站输入、复合词缀与技能等级差异见[权杖导入核对](sceptre-import-audit.md)；不能将英文导入无报错等同于值完整保留。
