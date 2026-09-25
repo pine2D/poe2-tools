@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.50 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.51 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.50.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.51.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
