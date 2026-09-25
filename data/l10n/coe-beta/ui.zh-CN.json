@@ -293,6 +293,9 @@
     "One or more issues encountered while attempting import": "导入时遇到以下问题",
     "Paste your data here (You can also use a pastebin or gist URL)": "在此粘贴导出数据（也可填写 Pastebin 或 Gist 链接）",
     "Invalid JSON": "JSON 格式无效",
-    "Invalid Dataset": "数据内容无效"
+    "Invalid Dataset": "数据内容无效",
+    "Simulator Import": "流程数据导入",
+    "This will replace current data, do you want to proceed?": "这将替换当前数据，是否继续？",
+    "THIS CANNOT BE UNDONE": "此操作无法撤销"
   }
 }

@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.28 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.29 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.28.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.29.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
@@ -56,3 +56,12 @@ node apps/poe2-extension/scripts/package.mjs
 ## 导入已有模拟流程
 
 单个 CoE 流程 JSON：选择“流程模拟 → 新建模拟流程 → 导入一个流程”，粘贴后继续。“载入 → 全部导入”用于原站批量导出数据；单个流程放到这里会被拒绝，按提示改用单流程入口即可。装备高级文本仍走“导入装备”，与流程 JSON 分开。
+
+
+## 保存与恢复流程
+
+在流程图点击“保存”，填写名称后再次保存。流程名称属于用户内容，即使包含游戏英文术语也保持原样。
+
+在“载入”列表中，点击目标行的“载入”按钮进入该流程；单击名称不会载入。已经是当前流程的行显示“当前流程”，可点击“返回流程图”。刷新后的当前流程与保存列表是两个不同状态。
+
+备份使用“载入 → 全部导出”。恢复使用“全部导入”，原站会提示替换当前数据且无法撤销；不想继续时关闭确认框。恢复保存列表后仍需使用目标行的“载入”按钮，不应假定备份中的当前编辑流程已自动恢复。此流程以一个自造保存项验证，多项和跨游戏备份仍待验收。
