@@ -28,10 +28,20 @@ const verifiedSpeedTiers = new Map([
 const focusCompoundPrefix = ['explicit.stat_4015621042', 'explicit.stat_1050105434']
 // 每个档案仅开放该装备已核对的普通词缀，不跨类别继承法器词缀。
 const implicitTagsByBase: Record<string, ReadonlySet<string>> = {
+  'Ruby Ring': new Set(['元素', '火焰', '抗性', 'Elemental', 'Fire', 'Resistance']),
   'Sapphire Ring': new Set(['元素', '冰霜', '抗性', 'Elemental', 'Cold', 'Resistance']),
   'Jade Amulet': new Set(['属性', 'Attribute']),
 }
 const profiles = [
+  {
+    base: 'Ruby Ring',
+    emptySockets: 0,
+    classes: ['戒指', 'Rings'],
+    armour: false,
+    implicitStats: new Set(['explicit.stat_3372524247']),
+    stats: new Set(['explicit.stat_3372524247']),
+    prefixes: new Set<string>(),
+  },
   {
     base: 'Jade Amulet',
     emptySockets: 0,

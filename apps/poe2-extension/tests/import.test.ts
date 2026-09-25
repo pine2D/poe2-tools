@@ -556,3 +556,52 @@ it('项链催化品质、孔位及未验收基底继续只供对照', () => {
     expect(prepareImport(`${jadeNormal}\n--------\n${line}`, amuletTerms).ready).toBe(false)
   expect(prepareImport(jadeNormal.replace('翠玉项链', '琥珀项链'), amuletTerms).ready).toBe(false)
 })
+
+const rubyTerms: Term[] = [
+  { id: 'ruby', en: 'Ruby Ring', zh: '红玉戒指', domain: 'base', source: 'test', version: 'test' },
+  {
+    id: 'fire',
+    sourceId: 'explicit.stat_3372524247',
+    en: '#% to Fire Resistance',
+    zh: '火焰抗性 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+]
+const rubyNormal = `物品类别: 戒指
+稀有度: 普通
+红玉戒指
+--------
+物品等级: 86
+--------
+{ 基底属性 — 元素, 火焰, 抗性 }
+火焰抗性 +25(20-30)%`
+const rubySuffix = '\n--------\n{ 后缀属性 "测试之" (等阶：6) — 火焰, 抗性 }\n火焰抗性 +18(16-20)%'
+it('红玉戒指普通魔法稀有保留基底及后缀火抗的独立分组', () => {
+  for (const [rarity, name] of [
+    ['普通', ''],
+    ['魔法', ''],
+    ['稀有', '测试 戒指\n'],
+  ]) {
+    const source =
+      rubyNormal.replace('普通\n', `${rarity}\n${name}`) + (rarity === '普通' ? '' : rubySuffix)
+    const result = prepareImport(source, rubyTerms)
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain('+25(20-30)% to Fire Resistance')
+    if (rarity !== '普通') expect(result.english).toContain('+18(16-20)% to Fire Resistance')
+  }
+})
+it('红玉戒指不继承冰霜标签，未验收品质及错分组仍不放行', () => {
+  const magic = rubyNormal.replace('普通', '魔法') + rubySuffix
+  for (const source of [
+    rubyNormal.replace('元素, 火焰, 抗性', '冰霜'),
+    rubyNormal.replace('25(20-30)', '31(20-30)'),
+    rubyNormal.replace('25(20-30)', '25'),
+    magic.replace('后缀属性', '前缀属性'),
+    magic + rubySuffix,
+    `${rubyNormal}\n--------\n品质: +20%`,
+    `${rubyNormal}\n--------\n插槽: S`,
+  ])
+    expect(prepareImport(source, rubyTerms).ready).toBe(false)
+})

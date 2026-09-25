@@ -686,3 +686,6 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ### 扩展预兆剩余用途术语核对（2026-09-25）
 
 0.1.70沿已登记PoE2DB简中gray参考，人工核对[地貌](https://poe2db.tw/cn/Biome)、[怪物效能](https://poe2db.tw/cn/Monster_Effectiveness)、[宏大先祖秘藏](https://poe2db.tw/cn/Grand_Expedition)及[圣化物品](https://poe2db.tw/cn/Sanctified_Items)。圣化同时见[神圣石](https://poe2db.tw/cn/Divine_Orb)的稀有物品用途语境，不从物品名称猜译动作。只参考专名，自写CoE公开用途整句译文，不复制页面规则、概率、数据表或同行代码；不是国服真机验证，也不新增采集适配器或运行时请求。梅德维德／沃拉娜／欧罗什沿已有primary国服stats快照stat_3418580811的|22／|21／|23，乌崔德沿已有gray物品表“乌崔德圣杯”。新增七句均完整匹配，未知或语义改变的句子仍回退原文。
+
+
+0.1.72红玉戒指转换复用既有国服items的Ruby Ring→红玉戒指，以及primary交易词缀explicit.stat_3372524247的火焰抗性对应。stat ID只作翻译身份；基底与后缀归属分别通过自造样本的原站导入导出核对，不从词典explicit前缀推断生成规则。没有新增数据源、抓取或制作引擎逻辑。
