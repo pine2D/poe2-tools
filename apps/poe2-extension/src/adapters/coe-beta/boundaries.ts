@@ -9,6 +9,7 @@ export const boundaryAttributes = [
   'simulationid',
 ]
 const boundaryClasses = [
+  'snackbar',
   'hidden',
   'tag',
   'item',

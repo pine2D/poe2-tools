@@ -3,7 +3,8 @@ import { simulatorHelpText } from './simulator-help'
 import { statHeaderSelector, statSelector } from './stats'
 import { isUserContent } from './user-content'
 
-export const regions = 'header, footer, main, dialog, [role="tooltip"], #mainMenu, #settingsZone'
+const notificationRegions = '#snackbarsLeft .snackbar, #snackbarsRight .snackbar'
+export const regions = `header, footer, main, dialog, [role="tooltip"], #mainMenu, #settingsZone, ${notificationRegions}`
 export const excluded =
   'script, style, #inventoryZone .tabs, input, textarea, select, option, code, pre, [contenteditable], [data-poe2-l10n], [hidden], .hidden, [id*="_ad"]'
 export function translatable(node: Text): boolean {
@@ -24,6 +25,7 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'notification'
   | 'inventory-usage'
   | 'compare'
   | 'simulator-help'
@@ -39,6 +41,7 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest(notificationRegions)) return 'notification'
   if (node.parentElement?.closest('#inventoryZone .usage .details')) return 'inventory-usage'
   if (
     node.ownerDocument.location.pathname === '/compare' &&
@@ -75,6 +78,13 @@ export function textContext(
     return 'introduction'
   return 'default'
 }
+// 原站实际通知短句；未知通知不走通用词典，避免翻译用户名称或错误详情。
+const notifications = new Map([
+  ['Clipboard action', '剪贴板操作'],
+  ['Inventory to clipboard!', '背包已复制到剪贴板！'],
+  ['Inventory Import', '背包导入'],
+  ['Data imported succesfully!', '数据导入成功！'],
+])
 // 新版版本对比公开控件；Base指基础数据集，不能沿用装备“基底”。
 const compare = new Map([
   [
@@ -266,6 +276,10 @@ export function contextualText(
   context: ReturnType<typeof textContext>,
 ): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
+  if (context === 'notification') {
+    const translated = notifications.get(normalized)
+    return translated ? original.replace(/\S[\s\S]*\S|\S/, translated) : original
+  }
   const word = normalized.toLowerCase()
   const translated =
     context === 'inventory-usage'
