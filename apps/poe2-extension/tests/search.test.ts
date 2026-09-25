@@ -418,3 +418,21 @@ it('条件下拉框隐藏后自动撤下候选并归还辅助属性', async () =
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
   expect(input.hasAttribute('role')).toBe(false)
 })
+
+it('Data 物品搜索支持材料名称，制作基底搜索仍隔离材料', () => {
+  const materials = createLexicon([
+    { id: 'orb', en: 'Exalted Orb', zh: '崇高石', domain: 'item', source: 'test', version: 'test' },
+  ])
+  document.body.innerHTML =
+    '<div id="dataItemSearchInput"><input></div><div id="searchItemInput"><input></div>'
+  stop = attachSearch(document, materials)
+  const data = document.querySelector('#dataItemSearchInput input') as HTMLInputElement
+  const crafting = document.querySelector('#searchItemInput input') as HTMLInputElement
+  type(data, '崇高石')
+  const candidate = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  expect(candidate?.textContent).toContain('Exalted Orb')
+  candidate?.click()
+  expect(data.value).toBe('Exalted Orb')
+  type(crafting, '崇高石')
+  expect(document.querySelector('[data-poe2-l10n] button')).toBeNull()
+})
