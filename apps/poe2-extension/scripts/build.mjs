@@ -1,4 +1,4 @@
-import { copyFile, readFile, rm, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
@@ -53,3 +53,7 @@ MIT 仅覆盖自有代码；游戏文本权利归相应权利人。
 Chrome 管理页禁用/卸载后，请刷新已有 CoE 标签页。
 `,
 )
+
+await mkdir(path.join(root, 'dist/icons'), { recursive: true })
+for (const file of Object.values(manifest.icons))
+  await copyFile(path.join(root, 'public', file), path.join(root, 'dist', file))

@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -32,6 +32,12 @@ async function fixture(terms) {
     'dist/assets/dictionary.json': JSON.stringify({ schemaVersion: 1, locale: 'zh-CN', terms }),
   }))
     await writeFile(path.join(root, file), value)
+  await mkdir(path.join(root, 'dist/icons'))
+  for (const file of Object.values(manifest.icons))
+    await copyFile(
+      path.resolve(import.meta.dirname, '../public', file),
+      path.join(root, 'dist', file),
+    )
   vi.spyOn(console, 'log').mockImplementation(() => {})
   return root
 }
@@ -51,4 +57,15 @@ it('包检查允许实际可加载的词缀及带字面井号的界面文案', a
     { ...term, id: 'stored', en: '# Stored', zh: '保存数量', domain: 'ui' },
   ])
   await expect(check(root)).resolves.toMatchObject({ root })
+})
+
+it('包检查拒绝缺失、截断或尺寸不符的图标', async () => {
+  const root = await fixture([term])
+  const file = path.join(root, 'dist/icons/icon-16.png')
+  await rm(file)
+  await expect(check(root)).rejects.toThrow('ENOENT')
+  await writeFile(file, Buffer.from('invalid'))
+  await expect(check(root)).rejects.toThrow('图标 PNG 头或尺寸错误')
+  await copyFile(path.join(root, 'dist/icons/icon-32.png'), file)
+  await expect(check(root)).rejects.toThrow('图标 PNG 头或尺寸错误')
 })

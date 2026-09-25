@@ -38,6 +38,11 @@ export function validateManifest(m, version) {
     'devtools_page',
   ])
     if (m[field]) throw new Error(`不允许 ${field}`)
+  const icons = Object.fromEntries(
+    [16, 32, 48, 128].map((size) => [size, `icons/icon-${size}.png`]),
+  )
+  if (!same(m.icons, icons) || !same(m.action?.default_icon, icons))
+    throw new Error('扩展图标路径不符合约定')
   const scripts = m.content_scripts
   if (
     scripts?.length !== 1 ||
@@ -63,6 +68,18 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   const m = JSON.parse(await readFile(path.join(dist, 'manifest.json'), 'utf8'))
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'))
   validateManifest(m, pkg.version)
+  for (const [size, file] of Object.entries(m.icons)) {
+    const png = await readFile(path.join(dist, file))
+    if (
+      png.length < 33 ||
+      !png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) ||
+      png.readUInt32BE(8) !== 13 ||
+      png.toString('ascii', 12, 16) !== 'IHDR' ||
+      png.readUInt32BE(16) !== Number(size) ||
+      png.readUInt32BE(20) !== Number(size)
+    )
+      throw new Error(`图标 PNG 头或尺寸错误：${file}`)
+  }
   const content = await readFile(path.join(dist, 'content.js'), 'utf8')
   new vm.Script(content)
   if (/^\s*(?:import|export)\s/m.test(content)) throw new Error('内容脚本必须独立执行')

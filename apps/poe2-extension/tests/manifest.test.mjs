@@ -1,11 +1,13 @@
 import { expect, it } from 'vitest'
 import { validateManifest } from '../scripts/check.mjs'
 
+const icons = Object.fromEntries([16, 32, 48, 128].map((size) => [size, `icons/icon-${size}.png`]))
 const manifest = {
+  icons,
   manifest_version: 3,
   version: '0.1.0',
   permissions: ['storage'],
-  action: { default_popup: 'popup.html' },
+  action: { default_popup: 'popup.html', default_icon: icons },
   content_scripts: [
     {
       matches: ['https://beta.craftofexile.com/*'],
@@ -29,4 +31,9 @@ it('禁止增加网络、剪贴板、主世界、后台权限和版本漂移', (
     { content_scripts: [{ ...manifest.content_scripts[0], world: 'MAIN' }] },
   ])
     expect(() => validateManifest({ ...manifest, ...change }, '0.1.0')).toThrow()
+})
+
+it('拒绝缺失或外部图标路径', () => {
+  for (const icons of [undefined, { 128: 'https://example.com/icon.png' }])
+    expect(() => validateManifest({ ...manifest, icons }, '0.1.0')).toThrow()
 })

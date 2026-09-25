@@ -1,6 +1,6 @@
 # 安装与使用
 
-扩展 0.1.48 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展 0.1.49 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
 ## 构建与安装
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.48.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.49.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。
 
@@ -73,3 +73,7 @@ node apps/poe2-extension/scripts/package.mjs
 
 
 空插槽支持：符文法器和细枝头冠单条 `插槽: S`；丝质之袍另支持 `插槽: S S`。这些是扩展已验收的范围，不代表游戏的通用孔位上限。带符文／灵核等镶嵌效果、重复插槽行、其他孔位标记仍只供对照。
+
+## 自制图标维护
+
+`apps/poe2-extension/public/icons/`保存16、32、48、128像素的原创PNG，自有MIT许可适用。构建直接复制入库PNG，不需Python。仅重新绘制时运行`python3 apps/poe2-extension/scripts/generate-icons.py`，需要已安装Pillow；本次使用Pillow12.2.0，无新增安装。生成器不使用外部字体或图片，未进入扩展包。

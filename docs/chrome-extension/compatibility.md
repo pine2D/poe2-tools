@@ -562,3 +562,11 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 最终ZIP独立解包实装Chrome151：PoE2／English的新说明为中文，page-labels样式1份；真实点击PoE1后，标题Calculator、新说明英文原句，data-poe2-l10n节点0；再点击PoE2，译文恢复、样式仍1份。此次模式复验不代表所有页面或原站语言矩阵均重跑。
 - 真实popup启用中英对照，新增行显示中文与完整英文，clientWidth=scrollWidth=361；桌面三列截图已查看，可正常换行。本轮未专门覆盖窄屏及所有介绍卡片尺寸。
 - 19文件133项相关测试、类型／格式／构建／ZIP检查通过。6880词条，权限仍仅storage；单条文案复用既有显示及模式回归，无新增复述文案的测试。
+
+### 0.1.49 自制图标与最终包（2026-09-25）
+
+- 最终ZIP解压后加载Chrome：管理页显示PoE2中文助手0.1.49及原创深色金色「中」字图标；管理卡片图片自然尺寸48×48，截图已实际查看。
+- 在扩展popup页面逐一调用Image.decode验证16、32、48、128四个PNG，全部成功，宽高与声明一致。未新增权限或公开资源。
+- 核心／扩展19文件135项测试通过；类型检查、变更JS/JSON格式检查、双入口构建、ZIP检查通过。图标检查限定本地路径、文件存在、PNG头和尺寸，不声称静态检查是完整图片解码；解码证据来自上述Chrome实测。
+- 图标规格依据[Chrome manifest icons文档](https://developer.chrome.com/docs/extensions/reference/manifest/icons)，采用PNG，包含16/32/48/128像素。图形自行绘制，无CoE素材或第三方字体。
+- 本轮未重新验收全部CoE页面，也未执行全仓verify；现有预览范围和待验收项不变。
