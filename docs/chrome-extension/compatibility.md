@@ -778,3 +778,12 @@ GitHub 当前推送凭证缺少 workflow scope，含新增 `.github/workflows/ex
 - 全仓构建、dict:check、craft:check依次完成。旧制作站大于500kB构建提示、词典审计zh-CN=13／zh-TW=17及既有目录未解析声明保留，不报告零警告或旧站已恢复开发。
 - 随后标准`pnpm extension:check`通过：0.1.61、6916条词条、仅storage。全仓构建所得content.js与dictionary.json和本轮重启验收使用的最终ZIP解包文件逐字一致。现有交付ZIP副本也逐字一致。
 - 仓库级frontend-design与webapp-testing共8个文件的SHA-256均与vendor-lock一致；两个技能只保留在仓库，扩展ZIP不含技能源码。本轮没有全局安装、没有发布商店或更改CI凭证；远端CI仍未验收。
+
+
+### 0.1.60→0.1.61 固定目录升级（2026-09-25）
+
+- 全新临时持久Chrome配置加载0.1.60，管理页版本确认后启用双语，真实新版介绍页九个标题为中英对照。将0.1.61最终ZIP覆盖解压到相同临时目录，通过Chrome原生Reload操作升级，没有改扩展身份或直接注入设置。
+- 首次尝试未在管理页开启开发者模式：命令行加载的扩展在Reload后变为DISABLED，disableReasons中unsupportedDeveloperExtension=true，原popup标签关闭。该次不是升级成功，也不是已证实的扩展代码缺陷。按安装说明开启隔离配置的Developer mode后，再次Reload成功；管理页同一ID、版本0.1.61、状态ENABLED、runtimeErrors为空。
+- 重新打开popup，两项设置均保持true；刷新原CoE标签后九个标题仍为双语。随后真实关闭扩展，九个标题均恢复英文、辅助节点0，说明新版刷新后的设置监听有效。
+- 已在安装说明明确开发者模式、版本号核对、重新打开popup及刷新CoE标签。此证据仅覆盖Linux Chrome同目录、此次两个版本之间的手工升级，不代表更换目录、商店自动升级或Windows路径已验收。会话已关闭，未改个人Chrome配置。
+- 本轮仅文档更新，版本仍为0.1.61；全仓格式及差异检查通过，不重复上一轮已完成的全仓verify。
