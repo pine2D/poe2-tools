@@ -122,3 +122,28 @@ it('补充的条件图标名称让位于原站后来的名称和可见文字', a
   stop()
   expect(button.textContent).toBe('Visible action')
 })
+
+it('图片替代文本动态增加或清空时重新判断名称来源，名称引用优先', async () => {
+  document.body.innerHTML =
+    '<main><div id="calculatorZone"><div class="requirements"><button class="iconed" tooltip="Search"><img></button></div></div><span id="native-name">Native action</span></main>'
+  const button = document.querySelector('button') as HTMLButtonElement
+  const image = document.querySelector('img') as HTMLImageElement
+  stop = attachAttributeLayer(document, lex)
+  expect(button.getAttribute('aria-label')).toBe('搜索')
+  image.alt = 'Native icon action'
+  await settle()
+  expect(button.hasAttribute('aria-label')).toBe(false)
+  expect(image.alt).toBe('Native icon action')
+  image.alt = ''
+  await settle()
+  expect(button.getAttribute('aria-label')).toBe('搜索')
+  button.setAttribute('aria-labelledby', 'native-name')
+  await settle()
+  expect(button.hasAttribute('aria-label')).toBe(false)
+  button.removeAttribute('aria-labelledby')
+  await settle()
+  expect(button.getAttribute('aria-label')).toBe('搜索')
+  stop()
+  expect(button.hasAttribute('aria-label')).toBe(false)
+  expect(image.getAttribute('alt')).toBe('')
+})

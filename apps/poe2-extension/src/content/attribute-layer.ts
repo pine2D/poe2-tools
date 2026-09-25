@@ -108,7 +108,7 @@ export function attachAttributeLayer(doc: Document, lex: Lexicon, bilingual = fa
     subtree: true,
     attributes: true,
     attributeOldValue: true,
-    attributeFilter: [...attributes, 'tooltip', 'aria-labelledby', ...boundaryAttributes],
+    attributeFilter: [...attributes, 'tooltip', 'aria-labelledby', 'alt', ...boundaryAttributes],
   })
   let closed = false
   const stop = () => {
