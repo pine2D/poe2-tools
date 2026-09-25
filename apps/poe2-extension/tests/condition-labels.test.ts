@@ -94,3 +94,32 @@ it('条件属性类别和路线优先级可翻译检索，不改原站筛选键�
   stop()
   expect(document.body.innerHTML).toBe(before)
 })
+
+it('组运算符与组内匹配数量分别显示，翻译不改变输入值或运算符身份', () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML = `<main><div id="simulatorConditionRequirements"><div class="requirementGroup">
+    <label>Group type</label><ul><li value="and">And</li><li value="or" class="selected">Or</li><li value="not">Not</li></ul>
+    <label class="countLabel">Matches</label><input type="number" class="matchCount" value="1" placeholder="All">
+    </div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  const before = document.body.innerHTML
+  stop = attachTextLayer(document, createLexicon(terms))
+  expect([...document.querySelectorAll('li')].map((e) => e.textContent)).toEqual([
+    '与（AND）',
+    '或（OR）',
+    '非（NOT）',
+  ])
+  expect(document.querySelector('.countLabel')?.textContent).toBe('组内匹配数量')
+  expect(document.querySelector('li.selected')?.getAttribute('value')).toBe('or')
+  expect(input.value).toBe('1')
+  expect(document.querySelector('input')).toBe(input)
+  stop()
+  expect(document.body.innerHTML).toBe(before)
+})
