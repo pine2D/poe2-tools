@@ -76,7 +76,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     (p) => p.base === inspection.base.english && p.classes.includes(item.itemClass),
   )
   const verifiedStats = profile?.stats ?? new Set<string>()
-  if (!profile || !['magic', 'rare'].includes(item.rarity))
+  if (!profile || !['normal', 'magic', 'rare'].includes(item.rarity))
     add('导入仅支持已验收的符文法器和细枝头冠普通词缀；其余装备仍可对照。')
   if (item.corrupted || item.mirrored || item.unidentified || item.fractured || item.twiceCorrupted)
     add('特殊装备标记尚未验收。')
@@ -84,7 +84,9 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     add('物品等级缺失或超出范围。')
   for (const diagnostic of item.diagnostics) add(diagnostic.message, diagnostic.line)
   if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
-  if (!item.mods.length) add('缺少 Ctrl+Alt+C 高级词缀分组。')
+  if (item.rarity === 'normal') {
+    if (item.mods.length) add('普通稀有度与词缀分组不符；当前普通基底仅支持无词缀输入。')
+  } else if (!item.mods.length) add('缺少 Ctrl+Alt+C 高级词缀分组。')
   for (const kind of ['prefix', 'suffix'])
     if (item.mods.filter((m) => m.kind === kind).length > (item.rarity === 'magic' ? 1 : 3))
       add('前后缀数量超出普通装备范围。')

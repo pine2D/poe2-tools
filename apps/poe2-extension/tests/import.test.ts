@@ -155,3 +155,32 @@ it('诊断保留原文行号，缺失等阶与数值范围分别定位到对应�
   expect(result.issues).toContainEqual({ line: 9, message: '缺少高级数值范围或数值不在范围内。' })
   expect(prepareImport(source.replaceAll('\n', '\r\n'), terms).issues).toEqual(result.issues)
 })
+
+it('普通符文法器和细枝头冠无需虚构高级词缀分组即可转换', () => {
+  for (const [itemClass, base, english, shield] of [
+    ['法器', '符文法器', 'Runed Focus', 42],
+    ['头盔', '细枝头冠', 'Twig Circlet', 19],
+  ]) {
+    const source = `物品类别: ${itemClass}\n稀有度: 普通\n${base}\n--------\n能量护盾: ${shield}\n--------\n物品等级: 86`
+    const result = prepareImport(source, helmetTerms)
+    expect(result.reasons).toEqual([])
+    expect(result.ready).toBe(true)
+    expect(result.english).toContain(`Rarity: Normal\n${english}`)
+    expect(result.english).not.toContain('Modifier')
+    expect(
+      prepareImport(`${source}\n--------\n备注: ~b/o 1 divine`, helmetTerms).english,
+    ).not.toContain('~b/o')
+  }
+})
+it('普通装备不能携带显式词缀；魔法稀有装备仍要求完整高级分组', () => {
+  expect(prepareImport(text.replace('稀有度: 稀有\n测试 样本', '稀有度: 普通'), terms).ready).toBe(
+    false,
+  )
+  for (const rarity of ['魔法', '稀有']) {
+    const name = rarity === '稀有' ? '测试 样本\n符文法器' : '符文法器'
+    expect(
+      prepareImport(`物品类别: 法器\n稀有度: ${rarity}\n${name}\n--------\n物品等级: 86`, terms)
+        .ready,
+    ).toBe(false)
+  }
+})
