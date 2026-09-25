@@ -734,3 +734,47 @@ it.each([
   ])
     expect(prepareImport(source, dictionary).ready).toBe(false)
 })
+
+const gloveTerms: Term[] = [
+  ...robeTerms,
+  {
+    id: 'gloves',
+    en: 'Torn Gloves',
+    zh: '破碎手套',
+    domain: 'base',
+    source: 'test',
+    version: 'test',
+  },
+]
+const gloves = boots.replace('靴子', '手套').replace('丝绸便鞋', '破碎手套')
+it('破碎手套保留护盾、闪电抗性、品质和单空孔，不继承靴子能力', () => {
+  const result = prepareImport(gloves, gloveTerms)
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain('Item Class: Gloves')
+  expect(result.english).toContain('Torn Gloves')
+  expect(result.english).toContain('Quality: +20% (augmented)')
+  expect(result.english).toContain('Sockets: S')
+  expect(result.english).toContain('+40(36-41) to maximum Energy Shield')
+  for (const invalid of [
+    gloves.replace('手套', '靴子'),
+    gloves.replace('插槽: S', '插槽: S S'),
+    gloves.replace('品质: +20%', '品质: +21%'),
+    gloves.replace('(36-41)', ''),
+    gloves.replace('前缀属性', '后缀属性'),
+    `${gloves}\n{ 前缀属性 "测试的" (等阶：4) — 速度 }\n移动速度提高 20%`,
+  ])
+    expect(
+      prepareImport(invalid, [...gloveTerms, ...speedTerms.filter((term) => term.id === 'speed')])
+        .ready,
+    ).toBe(false)
+})
+it('破碎手套普通与魔法稀有度分别校验分组', () => {
+  const normal = '物品类别: 手套\n稀有度: 普通\n破碎手套\n--------\n物品等级: 86'
+  expect(prepareImport(normal, gloveTerms).ready).toBe(true)
+  expect(
+    prepareImport(gloves.replace('稀有度: 稀有\n测试 长袍\n', '稀有度: 魔法\n'), gloveTerms).ready,
+  ).toBe(true)
+  expect(prepareImport(gloves.replace('稀有度: 稀有', '稀有度: 普通'), gloveTerms).ready).toBe(
+    false,
+  )
+})

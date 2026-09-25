@@ -25,6 +25,7 @@ const ALIASES: Readonly<Record<string, string>> = {
   头盔: 'Helmets',
   胸甲: 'Body Armours',
   靴子: 'Boots',
+  手套: 'Gloves',
   短杖: 'Wands',
   腰带: 'Belts',
   腰帶: 'Belts',

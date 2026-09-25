@@ -1,0 +1,32 @@
+{
+  "i": "Metadata/Items/Armours/Gloves/FourGlovesInt1",
+  "m": [
+    {
+      "k": "LocalIncreasedEnergyShield5",
+      "v": [40],
+      "f": [],
+      "p": null
+    },
+    {
+      "k": "LightningResist3",
+      "v": [18],
+      "f": [],
+      "p": null
+    }
+  ],
+  "ns": 1,
+  "s": [],
+  "q": 20,
+  "qt": null,
+  "l": 86,
+  "r": "rare",
+  "if": [],
+  "ip": [],
+  "e": [],
+  "p": {},
+  "di": [],
+  "ig": null,
+  "f": ["a"],
+  "pt": null,
+  "id": null
+}
