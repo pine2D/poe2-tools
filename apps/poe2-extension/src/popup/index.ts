@@ -15,6 +15,7 @@ void platform
   .read()
   .then((settings) => {
     let saved = settings
+    let saving = false
     function render() {
       enabled.checked = saved.enabled
       bilingual.checked = saved.bilingual
@@ -23,9 +24,16 @@ void platform
     }
     render()
     status.textContent = saved.enabled ? '简体中文已开启；设置仅保存在本机' : '简体中文已关闭'
+    platform.subscribe((current) => {
+      saved = current
+      if (saving) return
+      render()
+      status.textContent = saved.enabled ? '简体中文已开启；设置仅保存在本机' : '简体中文已关闭'
+    })
     for (const input of [enabled, bilingual]) {
       input.addEventListener('change', async () => {
         const next = { enabled: enabled.checked, bilingual: bilingual.checked }
+        saving = true
         enabled.disabled = true
         bilingual.disabled = true
         status.textContent = '正在保存…'
@@ -38,6 +46,7 @@ void platform
         } catch {
           status.textContent = '未保存，已恢复原设置。请再次操作重试。'
         } finally {
+          saving = false
           render()
         }
       })
