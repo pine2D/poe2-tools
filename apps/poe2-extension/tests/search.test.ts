@@ -216,3 +216,82 @@ it('候选 Escape 返回输入框后保持关闭，重新聚焦才恢复；英�
   expect(document.querySelector('[data-poe2-l10n]')).toBeNull()
   expect(submitted).toEqual(['Runed Focus'])
 })
+
+it('模拟器条件仅提供当前下拉框存在的术语，键盘选择保持输入焦点并恢复原属性', () => {
+  document.body.innerHTML = `<main><div id="simulatorConditionRequirements"><div class="dropdown editing"><label><div class="editing"><div><input type="text" aria-label="原站条件"></div></div></label><ul><li search="metanumber of affixes"></li></ul></div></div><input id="notes"></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  const conditionLex = createLexicon([
+    {
+      id: 'count',
+      en: 'Number of Affixes',
+      zh: '词缀数量',
+      domain: 'ui',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'other',
+      en: 'Unavailable stat',
+      zh: '词缀数量之外',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  stop = attachSearch(document, conditionLex)
+  const submitted: string[] = []
+  input.addEventListener('keyup', () => submitted.push(input.value))
+  let blurred = false
+  input.addEventListener('blur', () => {
+    blurred = true
+  })
+  input.focus()
+  type(input, '词缀')
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-poe2-l10n] button')
+  expect(buttons).toHaveLength(1)
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }),
+  )
+  expect(document.activeElement).toBe(input)
+  expect(blurred).toBe(false)
+  expect(input.getAttribute('aria-activedescendant')).toBe(buttons[0]?.id)
+  expect(buttons[0]?.getAttribute('aria-selected')).toBe('true')
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+  )
+  expect(submitted).toEqual(['Number of Affixes'])
+  expect(input.hasAttribute('aria-activedescendant')).toBe(false)
+  expect(input.hasAttribute('role')).toBe(false)
+  expect(input.getAttribute('aria-label')).toBe('原站条件')
+})
+
+it('条件候选鼠标操作不触发原站失焦，候选已从原站删除时不提交', () => {
+  document.body.innerHTML = `<main><div id="simulatorConditionRequirements"><div class="dropdown editing"><div class="editing"><div><input type="text"></div></div><ul><li search="metanumber of affixes"></li></ul></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 'count',
+        en: 'Number of Affixes',
+        zh: '词缀数量',
+        domain: 'ui',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  input.focus()
+  type(input, '词缀数量')
+  const button = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  button?.dispatchEvent(down)
+  expect(down.defaultPrevented).toBe(true)
+  document.querySelector('li')?.remove()
+  button?.click()
+  expect(input.value).toBe('词缀数量')
+  expect(document.querySelector('[data-poe2-l10n] button')).toBeNull()
+  stop()
+  expect(input.hasAttribute('aria-controls')).toBe(false)
+  expect(input.hasAttribute('role')).toBe(false)
+})

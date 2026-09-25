@@ -267,6 +267,13 @@
     "Change target": "更改目标",
     "Evaluation mode": "判断模式",
     "Passthrough": "直接通过",
-    "Conditions": "条件判断"
+    "Conditions": "条件判断",
+    "Number of Affixes": "词缀数量",
+    "Number of Prefixes": "前缀数量",
+    "Number of Suffixes": "后缀数量",
+    "Conditions configuration": "条件配置",
+    "Value": "数值",
+    "All": "全部",
+    "Active": "启用状态"
   }
 }

@@ -1,5 +1,10 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
-import { searchDomain, submitSearch } from '../adapters/coe-beta/search'
+import {
+  isConditionSearch,
+  searchCandidates,
+  searchDomain,
+  submitSearch,
+} from '../adapters/coe-beta/search'
 
 const chinese = /\p{Script=Han}/u
 export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
@@ -9,8 +14,16 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   let revision = 0
   let active: HTMLInputElement | null = null
   let closed = false
+  let selected: HTMLButtonElement | null = null
+  let restoreInput = () => {}
+  let sequence = 0
+  let selectOption = (_button: HTMLButtonElement) => {}
   function clear() {
     revision++
+    restoreInput()
+    restoreInput = () => {}
+    selected = null
+    selectOption = () => {}
     const previous = panel
     panel = null
     active = null
@@ -24,7 +37,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     active = input
     const query = input.value
     const current = revision
-    const candidates = lexicon.search(query, domain)
+    const candidates = searchCandidates(input, lexicon)
+    const keepFocus = isConditionSearch(input)
     panel = doc.createElement('div')
     panel.dataset.poe2L10n = 'search'
     panel.setAttribute('aria-label', '中文搜索候选')
@@ -35,6 +49,32 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       ? `“${query}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）`
       : `“${query}”：未找到术语，请缩短关键词或输入英文。`
     panel.append(label)
+    const owned = new Map<string, { original: string | null; written: string }>()
+    const setInput = (name: string, value: string) => {
+      const previous = owned.get(name)
+      owned.set(name, {
+        original: previous ? previous.original : input.getAttribute(name),
+        written: value,
+      })
+      input.setAttribute(name, value)
+    }
+    if (keepFocus) {
+      panel.id = `poe2-l10n-conditions-${++sequence}`
+      panel.setAttribute('role', 'listbox')
+      label.setAttribute('role', 'presentation')
+      setInput('role', 'combobox')
+      setInput('aria-expanded', 'true')
+      setInput('aria-controls', panel.id)
+      setInput('aria-autocomplete', 'list')
+      selectOption = (button) => setInput('aria-activedescendant', button.id)
+      restoreInput = () => {
+        for (const [name, state] of owned) {
+          if (input.getAttribute(name) !== state.written) continue
+          if (state.original === null) input.removeAttribute(name)
+          else input.setAttribute(name, state.original)
+        }
+      }
+    }
     const exact = new Set(
       candidates.filter((candidate) => candidate.exact).map((candidate) => candidate.term.en),
     )
@@ -44,8 +84,22 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       button.type = 'button'
       button.textContent = `${term.zh} → ${term.en}`
       button.style.cssText = 'display:block;text-align:left;margin:4px 0;white-space:normal'
+      if (keepFocus) {
+        button.id = `${panel.id}-option-${unique.size}-${panel.children.length}`
+        button.tabIndex = -1
+        button.setAttribute('role', 'option')
+        button.setAttribute('aria-selected', 'false')
+        button.addEventListener('mousedown', (event) => event.preventDefault())
+      }
       button.addEventListener('click', () => {
         if (closed || current !== revision || !input.isConnected || input.value !== query) return
+        if (
+          keepFocus &&
+          !searchCandidates(input, lexicon).some((candidate) => candidate.term.en === term.en)
+        ) {
+          show(input)
+          return
+        }
         clear()
         submitSearch(input, term.en)
         if (closed || !input.isConnected || searchDomain(input) !== domain) return
@@ -103,7 +157,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     if (event.key === 'Enter' && event.target === active && chinese.test(active?.value ?? '')) {
       event.preventDefault()
       event.stopPropagation()
-      exactButton?.click()
+      const choice = selected ?? exactButton
+      choice?.click()
       return
     }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
@@ -111,14 +166,25 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     if (!buttons.length) return
     event.preventDefault()
     event.stopPropagation()
-    const index = buttons.indexOf(doc.activeElement as HTMLButtonElement)
+    const keepFocus = !!active && isConditionSearch(active)
+    const index = buttons.indexOf(
+      keepFocus ? (selected as HTMLButtonElement) : (doc.activeElement as HTMLButtonElement),
+    )
     const next =
       index < 0
         ? event.key === 'ArrowDown'
           ? 0
           : buttons.length - 1
         : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
-    buttons[next]?.focus()
+    if (keepFocus) {
+      selected?.setAttribute('aria-selected', 'false')
+      if (selected) selected.style.outline = ''
+      selected = buttons[next] ?? null
+      selected?.setAttribute('aria-selected', 'true')
+      if (selected) selected.style.outline = '2px solid #b6dac4'
+      if (selected) selectOption(selected)
+      selected?.scrollIntoView?.({ block: 'nearest' })
+    } else buttons[next]?.focus()
   }
   function focusOut(event: FocusEvent) {
     if (
