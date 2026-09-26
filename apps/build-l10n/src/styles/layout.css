@@ -29,6 +29,17 @@
 .app__mark {
   color: var(--accent);
 }
+.app__tool-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 10px;
+  margin-right: auto;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-underline-offset: 4px;
+}
 .app__live {
   display: flex;
   align-items: center;
@@ -87,7 +98,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
+  min-height: 40px;
   padding: 4px 10px;
   border-radius: 5px;
   color: var(--text-muted);
@@ -113,7 +124,7 @@
   border-color: transparent;
   background: transparent;
   align-items: center;
-  min-height: 36px;
+  min-height: 40px;
   padding: 6px 8px;
   border-radius: 8px;
   font-size: 13px;

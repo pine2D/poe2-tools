@@ -17,6 +17,13 @@ h1,
 h2,
 h3 {
   font-weight: 600;
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+textarea {
+  caret-color: var(--accent);
 }
 code,
 pre {

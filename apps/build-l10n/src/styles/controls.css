@@ -4,7 +4,7 @@ button,
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: 40px;
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -15,7 +15,9 @@ button,
   line-height: 1.4;
   white-space: nowrap;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
 }
 button:disabled {
   color: var(--text-muted);
@@ -74,6 +76,10 @@ kbd {
   font-size: 13px;
 }
 @media (hover: hover) and (pointer: fine) {
+  .app__tool-link:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+  }
   button:hover:not(:disabled),
   .button:hover {
     background: var(--surface-hover);

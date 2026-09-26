@@ -41,7 +41,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: 40px;
   font-size: 13px;
   color: var(--text-muted);
   list-style: none;
