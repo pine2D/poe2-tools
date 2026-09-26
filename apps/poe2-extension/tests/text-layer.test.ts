@@ -1,6 +1,7 @@
 import { createLexicon } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
 import { supportsPage } from '../src/adapters/coe-beta/context'
+import { attachStatLayer } from '../src/content/stat-layer'
 import { attachTextLayer } from '../src/content/text-layer'
 
 const lex = createLexicon([
@@ -240,7 +241,17 @@ it('装备卡属性分段译文保留数值与关键词身份，移出属性区�
     '<main><div class="item"><div class="property"><label>Focus</label></div><div class="property itemProperty"><label><span class="keyword" id="EnergyShield">Energy Shield</span>:</label><div>42</div></div><div class="property"><label><span id="Ward">Runic Ward</span>:</label><div>32</div></div><div class="property"><div>45<span class="label" id="requirement">, Int</span> 64</div></div></div><p id="outside">, Int</p></main>'
   const stop = attachTextLayer(document, lex)
   stops.push(stop)
-  expect(document.querySelector('.item')?.textContent).toBe('法器能量护盾:42符文结界:3245，智慧 64')
+  const stopStats = attachStatLayer(document, lex)
+  stops.push(stopStats)
+  expect(document.querySelector('.item')?.textContent).toBe(
+    'FocusEnergy Shield:42Runic Ward:3245, Int 64',
+  )
+  const translated = Array.from(
+    document.querySelectorAll('[data-poe2-l10n]'),
+    (host) => host.shadowRoot?.textContent,
+  ).join(' ')
+  for (const word of ['法器', '能量护盾', '符文结界', '智慧', '42', '32', '64'])
+    expect(translated).toContain(word)
   expect(document.querySelector('#outside')?.textContent).toBe(', Int')
   const keyword = document.querySelector('#EnergyShield') as HTMLElement
   document.querySelector('main')?.append(keyword)

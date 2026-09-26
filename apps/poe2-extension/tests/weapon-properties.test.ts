@@ -1,5 +1,6 @@
 import { createLexicon } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
+import { attachStatLayer } from '../src/content/stat-layer'
 import { attachTextLayer } from '../src/content/text-layer'
 
 let stop = () => {}
@@ -13,14 +14,20 @@ it.each([false, true])('武器属性分段翻译保留关键词、数值和恢�
   const keyword = document.querySelector('#Physical') as HTMLElement
   const speed = document.querySelector('#speed') as HTMLElement
   const range = document.querySelector('#range') as HTMLElement
-  stop = attachTextLayer(document, createLexicon([]), bilingual)
-  expect(keyword.textContent).toContain('物理')
-  expect(keyword.parentElement?.textContent).toContain('伤害')
-  expect(document.querySelector('#Critical')?.textContent).toContain('暴击')
-  expect(document.querySelector('#Critical')?.parentElement?.textContent).toContain('几率')
-  expect(speed.previousElementSibling?.textContent).toContain('每秒攻击次数')
-  expect(range.textContent).toContain('至')
-  expect(keyword.textContent?.includes('Physical')).toBe(bilingual)
+  const text = attachTextLayer(document, createLexicon([]), bilingual)
+  const stats = attachStatLayer(document, createLexicon([]))
+  stop = () => {
+    text()
+    stats()
+  }
+  const translated = Array.from(
+    document.querySelectorAll('[data-poe2-l10n]'),
+    (host) => host.shadowRoot?.textContent,
+  ).join(' ')
+  for (const label of ['物理', '伤害', '暴击', '几率', '每秒攻击次数', '至'])
+    expect(translated).toContain(label)
+  expect(keyword.parentElement?.textContent).toBe('Physical Damage')
+  expect(range.textContent).toBe('10 to 17')
   expect(document.querySelector('#Physical')).toBe(keyword)
   expect(keyword.className).toBe('keyword keyworded')
   expect(document.querySelector('.name')?.textContent).toBe('Physical')

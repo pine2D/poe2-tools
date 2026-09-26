@@ -1,5 +1,6 @@
 import { createLexicon } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
+import { attachStatLayer } from '../src/content/stat-layer'
 import { attachTextLayer } from '../src/content/text-layer'
 
 let stop = () => {}
@@ -62,7 +63,14 @@ it('石板结果卡类别翻译保留节点、数值及用户名称，关闭恢�
   const original = document.body.innerHTML
   const label = document.querySelector('.property label')
   stop = attachTextLayer(document, createLexicon([]))
-  expect(label?.textContent).toBe('石板')
+  const text = stop
+  const stats = attachStatLayer(document, createLexicon([]))
+  stop = () => {
+    text()
+    stats()
+  }
+  expect(label?.textContent).toBe('Tablet')
+  expect(label?.parentElement?.nextElementSibling?.shadowRoot?.textContent).toBe('石板')
   expect(document.querySelector('.property label')).toBe(label)
   expect(document.querySelector('.name')?.textContent).toBe('Tablet')
   expect(document.querySelector('.property div')?.textContent).toBe('100')

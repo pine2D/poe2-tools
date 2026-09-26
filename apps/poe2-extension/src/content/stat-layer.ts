@@ -1,23 +1,58 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { materialDescription } from '../adapters/coe-beta/material-descriptions'
+import { contextualText } from '../adapters/coe-beta/regions'
 import {
   isSupportedStat,
   materialDescriptionSelector,
+  propertySelector,
   statSelector,
 } from '../adapters/coe-beta/stats'
 export function attachStatLayer(doc: Document, lex: Lexicon) {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
+  function propertyText(property: Element): string | null {
+    let changed = false
+    const parts = Array.from(property.childNodes, (part) => {
+      const nodes: Text[] = []
+      if (part.nodeType === 3) nodes.push(part as Text)
+      else {
+        const walker = doc.createTreeWalker(part, NodeFilter.SHOW_TEXT)
+        let node = walker.nextNode()
+        while (node) {
+          nodes.push(node as Text)
+          node = walker.nextNode()
+        }
+      }
+      return nodes
+        .map((node) => {
+          const translated =
+            contextualText(node.data, 'property') ?? lex.translate(node.data) ?? node.data
+          if (translated !== node.data) changed = true
+          return translated
+        })
+        .join('')
+        .trim()
+    }).filter(Boolean)
+    return changed ? parts.join(' ') : null
+  }
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
     const original = stat.textContent ?? ''
-    const key = `${stat.matches(materialDescriptionSelector) ? 'material' : 'stat'}\0${original}`
+    const kind = stat.matches(propertySelector)
+      ? 'property'
+      : stat.matches(materialDescriptionSelector)
+        ? 'material'
+        : 'stat'
+    const key = `${kind}\0${original}`
     let translated = cache.get(key)
     if (translated === undefined) {
-      translated = stat.matches(materialDescriptionSelector)
-        ? materialDescription(original)
-        : lex.translate(original, 'stat')
+      translated =
+        kind === 'property'
+          ? propertyText(stat)
+          : kind === 'material'
+            ? materialDescription(original)
+            : lex.translate(original, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
     }
