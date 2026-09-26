@@ -1,0 +1,13 @@
+Item Class: Foci
+Rarity: Rare
+Test Item
+Runed Focus
+--------
+Item Level: 86
+--------
+{ Prefix Modifier "Fearless" (Tier: 4) — Energy Shield }
+60(56-67)% increased Energy Shield
+{ Prefix Modifier "Radiating" (Tier: 6) — Energy Shield }
++40(36-41) to maximum Energy Shield
+{ Suffix Modifier "of the Storm" (Tier: 6) — Elemental, Lightning, Resistance }
++18(16-20)% to Lightning Resistance

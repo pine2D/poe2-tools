@@ -1,0 +1,8 @@
+Item Class: Foci
+Rarity: Magic
+Test Runed Focus
+--------
+Item Level: 86
+--------
+{ Prefix Modifier "Fearless" (Tier: 4) — Energy Shield }
+60(56-67)% increased Energy Shield

@@ -1,0 +1,26 @@
+{
+  "i": "Metadata/Items/Armours/Focii/FourFocus9",
+  "m": [
+    {
+      "k": "LocalIncreasedEnergyShieldPercent4",
+      "v": [60],
+      "f": [],
+      "p": null
+    }
+  ],
+  "ns": null,
+  "s": [],
+  "q": 0,
+  "qt": null,
+  "l": 86,
+  "r": "magic",
+  "if": [],
+  "ip": [],
+  "e": [],
+  "p": {},
+  "di": [],
+  "ig": null,
+  "f": ["a"],
+  "pt": null,
+  "id": null
+}
