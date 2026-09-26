@@ -28,9 +28,40 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     panel = doc.createElement('section')
     panel.dataset.poe2L10n = 'import'
     panel.style.cssText =
-      'box-sizing:border-box;min-width:0;background:#20252d;color:white;padding:12px;margin:8px 0;font:14px/1.6 sans-serif;overflow-wrap:anywhere'
+      'box-sizing:border-box;min-width:0;background:#20252d;color:#e7ebf0;padding:20px;margin:12px 0;font:14px/1.6 sans-serif;overflow-wrap:anywhere;border-radius:12px'
     const style = doc.createElement('style')
     style.textContent = `
+      [data-poe2-l10n="import"] { color-scheme: dark; }
+      [data-poe2-l10n="import"] button {
+        min-height: 40px; padding: 8px 12px; margin: 4px 8px 4px 0;
+        border: 1px solid #8390a1; border-radius: 8px;
+        background: #303c4b; color: #e7ebf0; font: inherit;
+        white-space: normal; cursor: pointer;
+      }
+      [data-poe2-l10n="import"] button[data-primary] {
+        background: #b4c9ee; color: #17263e; border-color: #b4c9ee; font-weight: 600;
+      }
+      [data-poe2-l10n="import"] button:disabled {
+        background: #20252d; color: #a1aab7; border-color: #596474; cursor: not-allowed;
+      }
+      [data-poe2-l10n="import"] :is(button, textarea):focus-visible {
+        outline: 2px solid #b4c9ee; outline-offset: 3px;
+      }
+      [data-poe2-l10n="import"] textarea {
+        background: #17191c; color: #e7ebf0; padding: 12px;
+        border: 1px solid #8390a1; border-radius: 8px; caret-color: #b4c9ee;
+        scrollbar-color: #8390a1 #17191c;
+      }
+      [data-poe2-l10n="import"] [role="status"] { margin: 12px 0; }
+      [data-poe2-l10n="import"] [role="status"]:empty { display: none; }
+      @media (hover: hover) and (pointer: fine) {
+        [data-poe2-l10n="import"] button:hover:not(:disabled) {
+          text-decoration: underline; text-underline-offset: 3px;
+        }
+      }
+      @media (forced-colors: active) {
+        [data-poe2-l10n="import"] :is(button, textarea):focus-visible { outline-color: Highlight; }
+      }
       #noticeDialog:has([data-poe2-l10n="import"]) {
         box-sizing: border-box;
         width: 760px;
@@ -117,6 +148,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       result.append(columns)
       const fill = doc.createElement('button')
       fill.type = 'button'
+      fill.dataset.primary = ''
       fill.textContent = '填入英文到原站导入框'
       fill.disabled = !converted.ready
       invalidate = () => {

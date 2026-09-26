@@ -7,28 +7,36 @@
   --gold: #e4c78a;
   --line: #42566d;
   --focus: #a7d7fa;
+  --surface: #223142;
+  -webkit-font-smoothing: antialiased;
+}
+* {
+  box-sizing: border-box;
 }
 body {
   margin: 0;
   width: 340px;
+  max-width: 100vw;
 }
 main {
-  padding: 22px;
+  padding: 24px;
 }
 header {
   border-bottom: 1px solid var(--line);
-  padding-bottom: 16px;
+  padding-bottom: 20px;
 }
 h1 {
   color: var(--gold);
   font-size: 21px;
   line-height: 1.4;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
+  text-wrap: balance;
 }
 p {
   margin: 0;
   font-size: 13px;
   line-height: 1.65;
+  text-wrap: pretty;
 }
 header p,
 small,
@@ -39,13 +47,19 @@ footer {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin-top: 20px;
+  min-height: 64px;
+  padding: 12px 8px;
+  margin-inline: -8px;
+  border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
 }
+header + .setting {
+  margin-top: 12px;
+}
 .setting input {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   margin: 2px 0 0;
   accent-color: var(--gold);
   flex-shrink: 0;
@@ -58,44 +72,65 @@ small {
   display: block;
   font-size: 12px;
   line-height: 1.8;
-  margin-top: 3px;
+  margin-top: 4px;
 }
-input:focus-visible {
+input:focus-visible,
+#retry:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 4px;
+}
+.setting:has(input:focus-visible) {
+  background: var(--surface);
 }
 #status {
   color: var(--focus);
   min-height: 43px;
-  margin: 18px 0 12px;
+  margin: 16px 0 20px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 aside {
-  border-left: 2px solid var(--gold);
-  padding-left: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
 }
 aside strong {
   font-size: 13px;
   color: var(--gold);
 }
 aside p {
-  margin-top: 4px;
+  margin-top: 6px;
 }
 footer {
-  margin-top: 18px;
-  font-size: 11px;
+  margin-top: 20px;
+  font-size: 12px;
   line-height: 1.8;
+  overflow-wrap: anywhere;
 }
-
 #retry {
+  min-height: 40px;
+  margin-bottom: 16px;
   color: inherit;
-  background: #20252d;
-  border: 1px solid #8499ae;
-  border-radius: 4px;
-  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  padding: 8px 14px;
   font: inherit;
   cursor: pointer;
 }
-#retry:focus-visible {
-  outline: 2px solid #b6dac4;
-  outline-offset: 2px;
+@media (hover: hover) and (pointer: fine) {
+  .setting:hover:not(:has(input:disabled)),
+  #retry:hover {
+    background: var(--surface);
+    outline: 1px solid var(--line);
+  }
+}
+::selection {
+  color: #192330;
+  background: var(--gold);
+}
+@media (forced-colors: active) {
+  input:focus-visible,
+  #retry:focus-visible {
+    outline-color: Highlight;
+  }
 }
