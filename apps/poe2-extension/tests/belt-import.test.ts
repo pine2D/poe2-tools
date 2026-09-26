@@ -23,30 +23,26 @@ const terms: Term[] = [
 ]
 it('国服腰带保留双固有属性与特殊词缀，明确提示原站咒符位兼容性', () => {
   const result = prepareImport(sample, terms)
-  expect(result.ready).toBe(false)
-  expect(result.issues).toHaveLength(2)
+  expect(result.ready).toBe(true)
+  expect(result.issues).toEqual([])
   expect(result.reasons.join(' ')).not.toContain('基底属性数量与已验收结构不符')
   expect(result.original).toBe(sample)
   expect(result.english).toContain('Has 2(1-3) Charm Slot')
   expect(result.english).toContain('14(15-10)% reduced Flask Charges used')
   expect(result.english).toContain('Minions deal 49(45-52)% increased Damage with Command Skills')
   expect(result.english).toContain('Minions have 20(17-20)% increased Area of Effect')
-  expect(result.issues).toContainEqual({
-    line: 13,
-    message:
-      '新版 CoE 暂不能可靠导入该腰带的咒符位：基底词缀形式会报错，改成属性行会丢失数值。请保留对照，不要删行后继续。',
-  })
+  expect(result.warnings.join(' ')).toContain('咒符位曾被 CoE 拒绝或丢失')
 })
 it('咒符位提示跟随已识别属性身份，不凭模糊中文触发', () => {
   expect(
-    prepareImport(sample.replace('具有 2(1-3) 个咒符位', '未知咒符位 2'), terms).issues.some((i) =>
-      i.message.includes('改成属性行'),
+    prepareImport(sample.replace('具有 2(1-3) 个咒符位', '未知咒符位 2'), terms).warnings.some(
+      (i) => i.includes('咒符位曾被'),
     ),
   ).toBe(false)
   expect(
     prepareImport(
       sample,
       terms.filter((t) => t.sourceId !== 'implicit.stat_1416292992'),
-    ).issues.some((i) => i.message.includes('改成属性行')),
+    ).warnings.some((i) => i.includes('咒符位曾被')),
   ).toBe(false)
 })

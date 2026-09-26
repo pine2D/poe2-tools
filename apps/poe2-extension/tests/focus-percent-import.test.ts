@@ -40,23 +40,27 @@ it.each(['magic', 'rare'])('法器独立百分比%s样本按已核对结构转�
 it.each([
   ['等阶：4', '等阶：1'],
   ['56-67', '51-65'],
-  ['60(56-67)', '68(56-67)'],
   ['60(56-67)', '60'],
   ['前缀属性', '后缀属性'],
-  ['符文法器', '细枝头冠'],
-])('拒绝独立百分比未验收变化 %s→%s', (from, to) => {
+])('保留独立百分比原文变化 %s→%s', (from, to) => {
   const source = fixture('focus-percent-magic-zh-CN.txt').replaceAll(from, to)
-  expect(prepareImport(source, terms).ready).toBe(false)
+  expect(prepareImport(source, terms).ready).toBe(true)
 })
-it.each([false, true])('拒绝独立百分比与复合百分比并存，反序=%s', (reversed) => {
+it.each([false, true])('保留独立百分比与复合百分比并存，反序=%s', (reversed) => {
   const source = fixture('focus-percent-rare-zh-CN.txt')
   const hybrid = fixture('focus-hybrid-prefix-zh-CN.txt').split('--------\n').at(-1) ?? ''
   const head = source.indexOf('{ 前缀属性')
   const combined = reversed ? source.slice(0, head) + hybrid + source.slice(head) : source + hybrid
-  expect(prepareImport(combined, terms).ready).toBe(false)
+  expect(prepareImport(combined, terms).ready).toBe(true)
 })
-it('拒绝重复独立百分比前缀', () => {
+it('重复前缀仍原样转换，由原站判断归属', () => {
   const source = fixture('focus-percent-rare-zh-CN.txt')
   const mod = fixture('focus-percent-magic-zh-CN.txt').split('--------\n').at(-1)
-  expect(prepareImport(source + mod, terms).ready).toBe(false)
+  expect(prepareImport(source + mod, terms).ready).toBe(true)
+})
+
+it('百分比超出原文范围及未知基底仍提示', () => {
+  const source = fixture('focus-percent-magic-zh-CN.txt')
+  expect(prepareImport(source.replace('60(56-67)', '68(56-67)'), terms).ready).toBe(false)
+  expect(prepareImport(source.replaceAll('符文法器', '细枝头冠'), terms).ready).toBe(false)
 })

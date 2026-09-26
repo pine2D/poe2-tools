@@ -34,8 +34,9 @@ it('权杖预览保留当前与最高技能等级，不替原站改为自动计�
       `Grants Skill: Level ${level} Skeletal Warrior Minion (Max Level 13)`,
     )
     expect(result.english).toContain('Spirit: 100')
-    expect(result.ready).toBe(false)
-    expect(result.issues).toContainEqual({ line: 12, message: '包含未验收的区块、孔位或技能。' })
+    expect(result.ready).toBe(true)
+    expect(result.issues).toEqual([])
+    expect(result.warnings.join(' ')).toContain('重算')
   }
 })
 it('两行后缀保持同一高级分组，固定数值不虚构范围', () => {

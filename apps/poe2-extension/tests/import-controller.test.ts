@@ -95,7 +95,7 @@ it('编辑原文立即禁用旧填入入口，再次预览才可使用', () => {
 })
 it('点击诊断定位原输入行，不修改文本，过期诊断不能继续操作', () => {
   const { input, preview } = readyPreview()
-  input.value = source.replace('(36-41)', '')
+  input.value = source.replace('40(36-41)', '42(36-41)')
   input.dispatchEvent(new Event('input', { bubbles: true }))
   preview.click()
   const locate = document.querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
@@ -104,7 +104,9 @@ it('点击诊断定位原输入行，不修改文本，过期诊断不能继续�
   locate?.click()
   expect(document.activeElement).toBe(input)
   expect(input.value).toBe(original)
-  expect(input.value.slice(input.selectionStart, input.selectionEnd)).toBe('+40 能量护盾上限')
+  expect(input.value.slice(input.selectionStart, input.selectionEnd)).toBe(
+    '+42(36-41) 能量护盾上限',
+  )
   input.value = source
   input.dispatchEvent(new Event('input', { bubbles: true }))
   input.setSelectionRange(0, 0)
@@ -175,7 +177,7 @@ it('未打开的原站对话框不挂载预览', () => {
 
 it('关闭后旧诊断不能改变选择区', () => {
   const { input, preview } = readyPreview()
-  input.value = source.replace('(36-41)', '')
+  input.value = source.replace('40(36-41)', '42(36-41)')
   preview.click()
   const locate = document.querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
   expect(locate).not.toBeNull()
@@ -260,4 +262,44 @@ it('回填触发原站转移焦点时不抢回', () => {
   fill.click()
   expect(input.value).toContain('Runed Focus')
   expect(document.activeElement).toBe(other)
+})
+
+it('原站兼容性警告与翻译失败分开显示，不自动点击原站提交', () => {
+  document.body.innerHTML =
+    '<dialog open><textarea id="importerInput"></textarea><button id="proceed">Proceed</button></dialog>'
+  const input = document.querySelector('#importerInput') as HTMLTextAreaElement
+  input.value =
+    '物品类别: 腰带\n稀有度: 普通\n环锁腰带\n--------\n物品等级: 79\n--------\n{ 基底属性 }\n具有 2(1-3) 个咒符位'
+  stop = attachImport(document, [
+    {
+      id: 'base',
+      en: 'Mail Belt',
+      zh: '环锁腰带',
+      domain: 'base',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'implicit.stat_1416292992',
+      en: 'Has # Charm Slot',
+      zh: '具有 # 个咒符位',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  let submitted = false
+  document.querySelector('#proceed')?.addEventListener('click', () => {
+    submitted = true
+  })
+  document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')?.click()
+  expect(document.querySelector('[aria-label="原站兼容性提示"]')?.textContent).toContain(
+    '咒符位曾被',
+  )
+  expect(document.querySelector('[aria-label="导入诊断"]')).toBeNull()
+  const fill = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] > div > button')
+  expect(fill?.disabled).toBe(false)
+  fill?.click()
+  expect(input.value).toContain('Has 2(1-3) Charm Slot')
+  expect(submitted).toBe(false)
 })

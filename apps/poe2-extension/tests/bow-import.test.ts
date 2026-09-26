@@ -68,16 +68,15 @@ it.each([
   normal.replace('插槽: S S', '插槽: S S S'),
   normal.replace('物理伤害: 7-11 (augmented)', '火焰伤害: 7-11'),
   normal.replace('稀有度: 普通', '稀有度: 魔法') + suffix.replace('后缀属性', '前缀属性'),
-  normal.replace('粗制弓', '其他弓'),
   `${normal}\n--------\n被腐化`,
-])('未验收武器结构继续拒绝：%s', (source) => {
-  expect(prepareImport(source, terms).ready).toBe(false)
+])('武器字段原样翻译，由原站判定规则：%s', (source) => {
+  expect(prepareImport(source, terms).ready).toBe(true)
 })
 
-it('粗制弓敏捷等阶或范围不匹配时阻止原站静默纠正', () => {
+it('粗制弓敏捷等阶或范围保持输入，不替原站纠正', () => {
   const magic = normal.replace('稀有度: 普通', '稀有度: 魔法') + suffix
-  expect(prepareImport(magic.replace('等阶：4', '等阶：5'), terms).ready).toBe(false)
-  expect(prepareImport(magic.replace('(21-24)', '(20-24)'), terms).ready).toBe(false)
+  expect(prepareImport(magic.replace('等阶：4', '等阶：5'), terms).ready).toBe(true)
+  expect(prepareImport(magic.replace('(21-24)', '(20-24)'), terms).ready).toBe(true)
 })
 
 it('人工兼容类别“弓”同样只映射已验收粗制弓档案', () => {
@@ -104,8 +103,12 @@ it.each([
   attackingBow.replace('等阶：9', '等阶：8'),
   attackingBow.replace('等阶：5', '等阶：4'),
   attackingBow.replace('7(5-7)', '7(4-7)'),
-  attackingBow.replace('2(1-2)', '3(1-2)'),
   attackingBow.replace('前缀属性', '后缀属性'),
-])('攻击词缀未验收范围或分组不得提交：%s', (source) => {
-  expect(prepareImport(source, terms).ready).toBe(false)
+])('攻击词缀保持原文范围或分组：%s', (source) => {
+  expect(prepareImport(source, terms).ready).toBe(true)
+})
+
+it('未知武器基底与超出原文范围的数值仍提示', () => {
+  expect(prepareImport(normal.replace('粗制弓', '其他弓'), terms).ready).toBe(false)
+  expect(prepareImport(attackingBow.replace('2(1-2)', '3(1-2)'), terms).ready).toBe(false)
 })

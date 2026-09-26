@@ -60,7 +60,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       result.replaceChildren()
       const converted = prepareImport(input.value, terms)
       message.textContent = converted.ready
-        ? '已识别。请核对两栏，再填入英文并点击原站 Proceed。'
+        ? '已识别并转换。请核对两栏后填入英文；能否导入及装备规则由原站判断。'
         : '仅供对照，请逐项核对以下原因。'
       if (converted.issues.length) {
         const list = doc.createElement('ul')
@@ -89,6 +89,12 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           list.append(row)
         }
         result.append(list)
+      }
+      if (converted.warnings.length) {
+        const warning = doc.createElement('p')
+        warning.setAttribute('aria-label', '原站兼容性提示')
+        warning.textContent = converted.warnings.join(' ')
+        result.append(warning)
       }
       const columns = doc.createElement('div')
       columns.style.cssText =
