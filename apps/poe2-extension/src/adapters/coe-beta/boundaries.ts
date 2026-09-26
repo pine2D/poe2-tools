@@ -15,6 +15,8 @@ const boundaryClasses = [
   'snackbar',
   'hidden',
   'tag',
+  'tags',
+  'modifierDetails',
   'item',
   'property',
   'filterFeedback',

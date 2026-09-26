@@ -25,6 +25,8 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'modifier-details'
+  | 'modifier-tags'
   | 'essence-category'
   | 'socket-category'
   | 'method-label'
@@ -45,6 +47,8 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('.item .modifierDetails .tags')) return 'modifier-tags'
+  if (node.parentElement?.closest('.item .modifierDetails')) return 'modifier-details'
   if (node.parentElement?.closest('#CraftingMethod_2 > ul > li')) return 'essence-category'
   if (node.parentElement?.closest('#CraftingMethod_4 > ul > li')) return 'socket-category'
   if (node.parentElement?.closest('#CraftingMethod_10 > ul > li, #OmensSelector > label'))
@@ -270,6 +274,7 @@ const introduction = new Map([
 // 人工 UI 译名，限定原站标签；Caster 的“施法”尚未以国服独立标签真机核对。
 const tags = new Map([
   ['Armour', '护甲'],
+  ['Attack', '攻击'],
   ['Attribute', '属性'],
   ['Caster', '施法'],
   ['Chaos', '混沌'],
@@ -326,6 +331,23 @@ export function contextualText(
   context: ReturnType<typeof textContext>,
 ): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
+  // 固定字段与标签可翻译，词缀名和等阶数值保留原样。
+  if (context === 'modifier-details') {
+    const header = /^(Prefix|Suffix) modifier ("[^"]+") \(Tier: (\d+)\) —$/.exec(normalized)
+    return header
+      ? original.replace(
+          /\S[\s\S]*\S|\S/,
+          `${header[1] === 'Prefix' ? '前缀属性' : '后缀属性'} ${header[2]}（等阶：${header[3]}）—`,
+        )
+      : original
+  }
+  if (context === 'modifier-tags') {
+    const translated = normalized.split(', ').map((tag) => tags.get(tag))
+    return translated.every((tag) => tag !== undefined)
+      ? original.replace(/\S[\s\S]*\S|\S/, translated.join('、'))
+      : original
+  }
+
   if (
     context === 'method-label' ||
     context === 'essence-category' ||
