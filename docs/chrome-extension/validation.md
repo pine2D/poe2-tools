@@ -68,3 +68,10 @@ pnpm_config_verify_deps_before_run=warn pnpm verify
 ## 设置切换验收
 
 扩展停用时“双语”开关按设计禁用。需要恢复纯简体时，先启用扩展并等待设置保存、控件可用，再关闭双语；不要在禁用控件上调用check／uncheck后仅凭工具成功响应判断设置已经改变。操作后同时核对popup的checked／disabled状态和目标页面最终文本。0.1.101实站曾因脚本误操作禁用控件而等待超时，纠正操作顺序后通过，详见method-labels-audit.md。
+
+
+## 安装包文件集合
+
+包检查按入口维护文件集合：manifest.json、content.js、popup.html、LICENSE.txt、NOTICE.txt、词典JSON、四个图标，以及popup引用的一个构建JS和一个CSS。资源哈希名称从popup提取，不硬编码当前hash；只接受assets/popup-*命名。多余文件即使后缀为js／json／txt也拒绝，缺少文件、额外目录或任何符号链接均阻止打包。新增合法资源或拆分构建入口时应显式更新检查与回归，不能只扩大允许扩展名。
+
+0.1.105包检查补强回归使用独立临时目录，不向实际dist注入异常文件。测试先确认旧检查会接受多余文件、缺失许可和符号链接，再验证新检查拒绝；原有词典测试夹具同步补齐实际popup资源及许可文件，原断言保留。此检查不替代JS内容审查、来源哈希核对或最终包浏览器验收。

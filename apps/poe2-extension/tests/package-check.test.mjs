@@ -28,7 +28,12 @@ async function fixture(terms) {
     'package.json': JSON.stringify({ version: manifest.version }),
     'dist/manifest.json': JSON.stringify(manifest),
     'dist/content.js': 'void 0;',
-    'dist/popup.html': '<html><body>测试</body></html>',
+    'dist/popup.html':
+      '<script src="./assets/popup-test.js"></script><link href="./assets/popup-test.css">',
+    'dist/assets/popup-test.js': 'void 0;',
+    'dist/assets/popup-test.css': '',
+    'dist/LICENSE.txt': 'fixture license',
+    'dist/NOTICE.txt': 'fixture notice',
     'dist/assets/dictionary.json': JSON.stringify({ schemaVersion: 1, locale: 'zh-CN', terms }),
   }))
     await writeFile(path.join(root, file), value)

@@ -84,9 +84,11 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   new vm.Script(content)
   if (/^\s*(?:import|export)\s/m.test(content)) throw new Error('内容脚本必须独立执行')
   const popup = await readFile(path.join(dist, 'popup.html'), 'utf8')
+  const popupResources = []
   for (const match of popup.matchAll(/(?:src|href)="([^"#]+)"/g)) {
     if (!match[1].startsWith('./assets/') || match[1].includes('..', 2))
       throw new Error('popup 含外部资源')
+    popupResources.push(match[1].slice(2))
     await readFile(path.join(dist, match[1]))
   }
   const dict = JSON.parse(await readFile(path.join(dist, 'assets/dictionary.json'), 'utf8'))
@@ -101,10 +103,34 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   lexiconModule ??= loadLexiconModule()
   const { createLexicon } = await lexiconModule
   createLexicon(dict.terms)
+  // 文件集合按实际入口核对；合法扩展名不意味着文件应随扩展发布。
+  if (
+    popupResources.length !== 2 ||
+    popupResources.filter((file) => /^assets\/popup-[\w-]+\.js$/.test(file)).length !== 1 ||
+    popupResources.filter((file) => /^assets\/popup-[\w-]+\.css$/.test(file)).length !== 1
+  )
+    throw new Error('popup 构建资源集合不符合约定')
+  const requiredFiles = new Set([
+    'manifest.json',
+    'content.js',
+    'popup.html',
+    'LICENSE.txt',
+    'NOTICE.txt',
+    'assets/dictionary.json',
+    ...Object.values(m.icons),
+    ...popupResources,
+  ])
   const files = await readdir(dist, { recursive: true, withFileTypes: true })
-  for (const entry of files)
-    if (entry.isFile() && !/\.(?:json|js|css|html|txt|png)$/.test(entry.name))
-      throw new Error(`意外打包文件：${entry.name}`)
+  for (const entry of files) {
+    const file = path
+      .relative(dist, path.join(entry.parentPath, entry.name))
+      .split(path.sep)
+      .join('/')
+    if (entry.isSymbolicLink()) throw new Error(`不允许打包符号链接：${file}`)
+    if (entry.isDirectory() && ['assets', 'icons'].includes(file)) continue
+    if (!entry.isFile() || !requiredFiles.delete(file)) throw new Error(`意外打包文件：${file}`)
+  }
+  if (requiredFiles.size) throw new Error(`缺少打包文件：${[...requiredFiles].join('、')}`)
   console.log(`扩展检查通过：${m.version}，${dict.terms.length} 条词条，仅 storage 权限`)
   return { root, dist, version: m.version }
 }
