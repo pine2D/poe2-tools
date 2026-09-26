@@ -89,7 +89,19 @@ const items = JSON.parse(readFileSync('data/dict/zh-CN/items.json', 'utf8')) as 
 const stats = JSON.parse(readFileSync('data/dict/zh-CN/stats.json', 'utf8')) as {
   entries: { id: string; en: string; text: string; order?: number[] }[]
 }
+const ui = JSON.parse(readFileSync('data/l10n/coe-beta/ui.zh-CN.json', 'utf8')).entries as Record<
+  string,
+  string
+>
 const dictionary: Term[] = [
+  ...Object.entries(ui).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui' as const,
+    source: 'fixture',
+    version: 'fixture',
+  })),
   ...Object.entries(items.bases).map(([en, zh]) => ({
     id: en,
     en,

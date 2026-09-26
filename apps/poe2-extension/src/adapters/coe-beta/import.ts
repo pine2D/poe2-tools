@@ -6,6 +6,7 @@ import {
   parseItem,
 } from '@poe2-tools/item-core/text'
 import type { Term } from '@poe2-tools/l10n-core'
+import { completeItemFields } from './item-fields'
 
 export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   const names = (domain: Term['domain']) =>
@@ -25,7 +26,7 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   }
 }
 export function prepareImport(original: string, terms: readonly Term[]) {
-  const parsed = parseItem(original)
+  const parsed = parseItem(original.replace(/^(物品类别|稀有度)\s*：/gm, '$1:'))
   if (!parsed.ok)
     return {
       original,
@@ -47,11 +48,14 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   }
   if (inspection.comparisonOnly) add(inspection.comparisonReason ?? '此装备仅供对照。')
   const warnings: string[] = []
-  // 文本类别补充映射，不改变旧网站桥接器的制作资格。
-  const english = inspection.exportText.replace(/^Item Class: 项链\n/, 'Item Class: Amulets\n')
+  const { english, fields } = completeItemFields(item, inspection, terms)
   if (!inspection.base.english) add('基底译名未匹配或存在歧义，无法确认英文。')
   if (/^Item Class: .*\p{Script=Han}/u.test(english)) add('物品类别尚未翻译。')
-  for (const diagnostic of item.diagnostics) add(diagnostic.message, diagnostic.line)
+  for (const diagnostic of item.diagnostics)
+    if (
+      !(diagnostic.code === 'unknown-line' && diagnostic.line !== null && fields[diagnostic.line])
+    )
+      add(diagnostic.message, diagnostic.line)
   if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
   // 只检查文本是否能准确表达；前后缀归属、数量及游戏等阶由原站判断。
   for (const { mod, stats } of inspection.mods) {
@@ -91,7 +95,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers'].includes(block.kind)) continue
     for (const line of block.lines)
-      if (line.raw.trim() && !inspection.englishByLine[line.line])
+      if (line.raw.trim() && !inspection.englishByLine[line.line] && !fields[line.line])
         add('该行尚未完整识别或翻译。', line.line)
   }
   return {
