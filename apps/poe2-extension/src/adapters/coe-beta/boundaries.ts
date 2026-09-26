@@ -17,6 +17,8 @@ const boundaryClasses = [
   'tag',
   'tags',
   'modifierDetails',
+  'modifier',
+  'currency',
   'item',
   'property',
   'filterFeedback',

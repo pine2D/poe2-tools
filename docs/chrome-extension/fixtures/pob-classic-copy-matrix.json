@@ -1,0 +1,61 @@
+{
+  "extensionVersion": "0.1.109",
+  "chromeVersion": "151.0.0.0",
+  "cases": [
+    {
+      "base": "Runed Focus",
+      "pob": "Rarity: Rare\nCrafted Item\nRuned Focus\n--------\nEnergy Shield: 131\n--------\nRequires Level 45, Int 64\n--------\nItem Level: 86\n--------\n60% increased Energy Shield\n+40 to maximum Energy Shield\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "focus-percent-rare-native.json"
+    },
+    {
+      "base": "Crude Bow",
+      "pob": "Rarity: Rare\nCrafted Item\nCrude Bow\n--------\nQuality: +20% (augmented)\nCritical Hit Chance: 5.00% (augmented)\nAttacks per Second: 1.28 (augmented)\n--------\nRequires Level 35\n--------\nSockets: S S\n--------\nItem Level: 86\n--------\n7% increased Attack Speed\n+24 to Dexterity\nAdds 2 to 5 Physical Damage\n--------\n\n",
+      "sourceFixture": "crude-bow-attack-rare-native.json"
+    },
+    {
+      "base": "Silk Slippers",
+      "pob": "Rarity: Rare\nCrafted Item\nSilk Slippers\n--------\nQuality: +20% (augmented)\nEnergy Shield: 91 (augmented)\n--------\nRequires Level 27, Int 38\n--------\nSockets: S\n--------\nItem Level: 86\n--------\n20% increased Movement Speed\n+40 to maximum Energy Shield\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "silk-slippers-speed-native.json"
+    },
+    {
+      "base": "Torn Gloves",
+      "pob": "Rarity: Rare\nCrafted Item\nTorn Gloves\n--------\nQuality: +20% (augmented)\nEnergy Shield: 59 (augmented)\n--------\nRequires Level 26\n--------\nSockets: S\n--------\nItem Level: 86\n--------\n+40 to maximum Energy Shield\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "torn-gloves-rare-native.json"
+    },
+    {
+      "base": "Ruby Ring",
+      "pob": "Rarity: Rare\nCrafted Item\nRuby Ring\n--------\nRequires Level 20\n--------\nItem Level: 86\n--------\n+25% to Fire Resistance (implicit)\n--------\n+50 to maximum Life\n+18% to Cold Resistance\n+18% to Fire Resistance\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "ruby-ring-elemental-rare-native.json"
+    },
+    {
+      "base": "Sapphire Ring",
+      "pob": "Rarity: Rare\nCrafted Item\nSapphire Ring\n--------\nRequires Level 20\n--------\nItem Level: 86\n--------\n+25% to Cold Resistance (implicit)\n--------\n+50 to maximum Life\n+18% to Cold Resistance\n+18% to Fire Resistance\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "sapphire-ring-elemental-rare-native.json"
+    },
+    {
+      "base": "Topaz Ring",
+      "pob": "Rarity: Rare\nCrafted Item\nTopaz Ring\n--------\nRequires Level 20\n--------\nItem Level: 86\n--------\n+25% to Lightning Resistance (implicit)\n--------\n+50 to maximum Life\n+18% to Cold Resistance\n+18% to Fire Resistance\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "topaz-ring-rare-native.json"
+    },
+    {
+      "base": "Amethyst Ring",
+      "pob": "Rarity: Rare\nCrafted Item\nAmethyst Ring\n--------\nRequires Level 35\n--------\nItem Level: 86\n--------\n+10% to Chaos Resistance (implicit)\n--------\n+50 to maximum Life\n+13% to Chaos Resistance\n+18% to Cold Resistance\n+18% to Fire Resistance\n--------\n\n",
+      "sourceFixture": "amethyst-ring-rare-native.json"
+    },
+    {
+      "base": "Jade Amulet",
+      "pob": "Rarity: Rare\nCrafted Item\nJade Amulet\n--------\nRequires Level 20\n--------\nItem Level: 86\n--------\n+12 to Dexterity (implicit)\n--------\n+50 to maximum Life\n+18% to Cold Resistance\n+18% to Fire Resistance\n+18% to Lightning Resistance\n--------\n\n",
+      "sourceFixture": "jade-amulet-elemental-rare-native.json"
+    },
+    {
+      "base": "Twig Circlet",
+      "pob": "Rarity: Normal\nCrafted Item\nTwig Circlet\n--------\nEnergy Shield: 19\n--------\nRequires Level 1\n--------\nItem Level: 86\n--------\n\n",
+      "input": "Item Class: Helmets\nRarity: Normal\nTwig Circlet\n--------\nItem Level: 86\n"
+    },
+    {
+      "base": "Silk Robe",
+      "pob": "Rarity: Normal\nCrafted Item\nSilk Robe\n--------\nEnergy Shield: 64\n--------\nRequires Level 22, Int 37\n--------\nItem Level: 86\n--------\n\n",
+      "input": "Item Class: Body Armours\nRarity: Normal\nSilk Robe\n--------\nItem Level: 86\n"
+    }
+  ]
+}
