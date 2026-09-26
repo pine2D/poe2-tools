@@ -806,3 +806,49 @@ it('武器属性可预览英文但不因此开放未验收的武器导入', () =
   expect(result.ready).toBe(false)
   expect(result.reasons.some((reason) => reason.includes('其余装备仍可对照'))).toBe(true)
 })
+
+it('已翻译但未验收的词缀只报告资格范围，不误报身份未知', () => {
+  const unsupported: Term = {
+    id: 'shield-percent',
+    sourceId: 'explicit.stat_4015621042',
+    en: '#% increased Energy Shield',
+    zh: '能量护盾提高 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  }
+  const input = text.replace('+40(36-41) 能量护盾上限', '能量护盾提高 40(36-41)%')
+  const result = prepareImport(input, [...terms, unsupported])
+  expect(result.ready).toBe(false)
+  expect(result.original).toBe(input)
+  expect(result.english).toContain('40(36-41)% increased Energy Shield')
+  expect(result.issues.filter((issue) => issue.line === 9)).toEqual([
+    { line: 9, message: '该属性已有英文译名，但尚未验收在此基底上的导入；请保留对照。' },
+  ])
+})
+it('未知词缀说明译名未确定，不与已翻译未验收混同', () => {
+  const result = prepareImport(text.replace('能量护盾上限', '未收录的属性'), terms)
+  expect(result.ready).toBe(false)
+  expect(result.issues.filter((issue) => issue.line === 9)).toEqual([
+    { line: 9, message: '属性译名未匹配或存在歧义，无法确认英文。' },
+  ])
+})
+it('同英文多个未验收身份仍报告身份歧义', () => {
+  const extra: Term = {
+    id: 'unknown-one',
+    en: '#% increased Energy Shield',
+    zh: '能量护盾提高 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  }
+  const result = prepareImport(text.replace('+40(36-41) 能量护盾上限', '能量护盾提高 40(36-41)%'), [
+    ...terms,
+    extra,
+    { ...extra, id: 'unknown-two' },
+  ])
+  expect(result.ready).toBe(false)
+  expect(result.issues.filter((issue) => issue.line === 9)).toEqual([
+    { line: 9, message: '普通属性身份未唯一识别。' },
+  ])
+})

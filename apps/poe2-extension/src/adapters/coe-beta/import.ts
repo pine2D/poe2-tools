@@ -284,7 +284,19 @@ export function prepareImport(original: string, terms: readonly Term[]) {
             .map((c) => c.id),
         ),
       ]
-      if (identities.length !== 1) add('普通属性身份未唯一识别。', source.line)
+      if (identities.length !== 1) {
+        const translatedIds = new Set(
+          resolution.candidates.filter((c) => c.english === resolution.english).map((c) => c.id),
+        )
+        add(
+          !resolution.english
+            ? '属性译名未匹配或存在歧义，无法确认英文。'
+            : identities.length === 0 && translatedIds.size === 1
+              ? '该属性已有英文译名，但尚未验收在此基底上的导入；请保留对照。'
+              : '普通属性身份未唯一识别。',
+          source.line,
+        )
+      }
       for (const id of identities) {
         // 已验收复合组与普通组可各自贡献魔力，同类组内的重复仍拒绝。
         const origin = implicit ? 'implicit' : compound ? 'focus-hybrid' : 'explicit'
@@ -294,13 +306,6 @@ export function prepareImport(original: string, terms: readonly Term[]) {
           add('普通属性与前后缀分组不符。', source.line)
         seenStats.add(identity)
       }
-      if (
-        !resolution.english ||
-        !resolution.candidates.some(
-          (c) => allowedStats.has(c.id) && c.english === resolution.english,
-        )
-      )
-        add('存在未识别、歧义或尚未验收的属性。', source.line)
       if (profile?.base === 'Crude Bow' && identities.length === 1) {
         const verified = bowStats.get(identities[0] as string)
         if (
