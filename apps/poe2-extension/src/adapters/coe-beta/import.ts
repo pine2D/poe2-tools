@@ -8,7 +8,9 @@ import {
 import type { Term } from '@poe2-tools/l10n-core'
 
 // 开发预览的文本资格边界；逐项端到端证据见兼容性文档，不调用本机制作资格。
+const focusPercentId = 'explicit.stat_4015621042'
 const focusStats = new Set([
+  focusPercentId,
   'explicit.stat_4052037485',
   'explicit.stat_3291658075',
   'explicit.stat_1050105434',
@@ -118,6 +120,7 @@ const profiles = [
     classes: ['法器', 'Foci'],
     stats: focusStats,
     prefixes: new Set([
+      focusPercentId,
       'explicit.stat_4052037485',
       'explicit.stat_3291658075',
       'explicit.stat_1050105434',
@@ -301,10 +304,26 @@ export function prepareImport(original: string, terms: readonly Term[]) {
         // 已验收复合组与普通组可各自贡献魔力，同类组内的重复仍拒绝。
         const origin = implicit ? 'implicit' : compound ? 'focus-hybrid' : 'explicit'
         const identity = `${origin}:${id}`
+        if (
+          id === focusPercentId &&
+          seenStats.has(`${compound ? 'explicit' : 'focus-hybrid'}:${id}`)
+        )
+          add('独立护盾百分比与复合护盾百分比并存尚未验收。', source.line)
         if (seenStats.has(identity)) add('同一普通属性重复出现，不能确认完整导入。', source.line)
         if (!implicit && mod.kind !== (compound || prefixStats.has(id) ? 'prefix' : 'suffix'))
           add('普通属性与前后缀分组不符。', source.line)
         seenStats.add(identity)
+      }
+      if (profile?.base === 'Runed Focus' && !compound && identities.includes(focusPercentId)) {
+        const roll = source.rolls[0]
+        if (
+          mod.tier !== 4 ||
+          source.rolls.length !== 1 ||
+          !roll?.range ||
+          Math.min(...roll.range) !== 56 ||
+          Math.max(...roll.range) !== 67
+        )
+          add('法器独立护盾百分比仅验收等阶4、范围56–67；其他组合请保留对照。', source.line)
       }
       if (profile?.base === 'Crude Bow' && identities.length === 1) {
         const verified = bowStats.get(identities[0] as string)

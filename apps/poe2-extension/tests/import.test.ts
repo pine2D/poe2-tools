@@ -809,19 +809,19 @@ it('武器属性可预览英文但不因此开放未验收的武器导入', () =
 
 it('已翻译但未验收的词缀只报告资格范围，不误报身份未知', () => {
   const unsupported: Term = {
-    id: 'shield-percent',
-    sourceId: 'explicit.stat_4015621042',
-    en: '#% increased Energy Shield',
-    zh: '能量护盾提高 #%',
+    id: 'life',
+    sourceId: 'explicit.stat_3299347043',
+    en: '+# to maximum Life',
+    zh: '+# 生命上限',
     domain: 'stat',
     source: 'test',
     version: 'test',
   }
-  const input = text.replace('+40(36-41) 能量护盾上限', '能量护盾提高 40(36-41)%')
+  const input = text.replace('+40(36-41) 能量护盾上限', '+40(36-41) 生命上限')
   const result = prepareImport(input, [...terms, unsupported])
   expect(result.ready).toBe(false)
   expect(result.original).toBe(input)
-  expect(result.english).toContain('40(36-41)% increased Energy Shield')
+  expect(result.english).toContain('+40(36-41) to maximum Life')
   expect(result.issues.filter((issue) => issue.line === 9)).toEqual([
     { line: 9, message: '该属性已有英文译名，但尚未验收在此基底上的导入；请保留对照。' },
   ])
