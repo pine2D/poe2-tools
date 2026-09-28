@@ -1,0 +1,31 @@
+{
+  "name": "@poe2-tools/site",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-dict": "node scripts/sync-dict.mjs",
+    "scan-css": "node scripts/scan-css.mjs",
+    "dev": "pnpm sync-data && vite",
+    "build": "pnpm sync-data && vite build && node scripts/check-site.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "sync-data": "node scripts/sync-dict.mjs && node scripts/sync-craft.mjs"
+  },
+  "dependencies": {
+    "@poe2-tools/build-core": "workspace:*",
+    "@poe2-tools/item-core": "workspace:*",
+    "fflate": "0.8.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "happy-dom": "20.14.0",
+    "vite": "8.2.2"
+  }
+}

@@ -2,11 +2,19 @@
 
 《流放之路 2》（Path of Exile 2）辅助工具集。TypeScript monorepo，纯静态前端，无服务端。
 
-## 当前方向（2026-09-24）
+## 当前方向（2026-09-28）
 
-后续开发转向 **Chrome 扩展：成熟 PoE2 工具网站的国服简体中文适配**，首站为 Craft of Exile 新版 Beta 的 PoE2 模式。范围包括页面汉化、中文搜索转英文术语、国服高级装备文本导入。当前仅完成规划，尚无可安装扩展。目录与文档入口见 [Chrome 扩展规划](docs/chrome-extension/README.md)。
+后续开发转向 **Chrome 扩展：成熟 PoE2 工具网站的国服简体中文适配**，首站为 Craft of Exile 新版 Beta 的 PoE2 模式。范围包括页面汉化、中文搜索转英文术语、国服高级装备文本导入。扩展在独立分支 `feat/coe-chrome-extension` 中已有 0.1.111 开发预览源码与历史验收记录，尚未合入当前主树；截至本轮核对，GitHub 无公开 Release，未提供商店入口。详情见 [扩展状态与文档](docs/chrome-extension/README.md)。
 
 原独立简体中文做装网站／自研完整制作模拟器计划按用户要求**无限期搁置**。保留现有 `/craft/`、源码、测试、数据与历史文档，不继续补制作机制、权重或最优路线；恢复须有用户明确指令。以下装备工坊描述是已有能力记录，不代表仍在执行原路线。Build Planner 汉化工具不因这次调整而停用。
+
+## 网站与目录
+
+网站由 `apps/site` 统一构建：`/` 为工具首页，`/build/` 为构筑汉化，`/extension/` 为中文助手介绍和安装说明。旧 `/craft/` 保留但不再出现在公共导航。当前改版为本地实现，尚未部署。
+
+- `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：主题、控件、样式、词典加载。
+- `packages/`：纯业务算法和构建脚本；`data/`：词典、历史制作目录及样本。
+- [设计与验收](docs/website/redesign.md) · [Cloudflare 部署流程](docs/website/deployment.md)
 
 ## 工具
 
@@ -42,8 +50,8 @@ pnpm verify
 ## 使用 build-l10n
 
 ```bash
-pnpm dev            # 本地启动静态站（先把 data/dict 同步到 apps/build-l10n/public/dict）
-pnpm --filter @poe2-tools/build-l10n build   # 产物在 apps/build-l10n/dist
+pnpm dev            # 本地启动静态站（先把 data/dict 同步到 apps/site/public/dict）
+pnpm --filter @poe2-tools/site build   # 产物在 apps/site/dist
 ```
 
 浏览器里拖入或粘贴 `.build` 文件 → 选目标语言 → 查看对照预览 → 下载。所有处理都在浏览器本地完成，不上传文件。
@@ -54,15 +62,15 @@ pnpm --filter @poe2-tools/build-l10n build   # 产物在 apps/build-l10n/dist
 2. 仓库 Settings → Secrets and variables → Actions：
    - Variables：`CF_PAGES_PROJECT` = Pages 项目名
    - Secrets：`CLOUDFLARE_API_TOKEN`（权限 Cloudflare Pages: Edit）、`CLOUDFLARE_ACCOUNT_ID`
-3. 推送到 `main`（或手动触发 `deploy` workflow）。变量未设置时 workflow 自动跳过。令牌只放 GitHub secrets，不写进仓库任何文件。
+3. 推送到 `main`（或手动运行 `ci`，选择 preview/production）。变量未设置时只跳过部署，验证仍执行。令牌只放 GitHub secrets，不写进仓库任何文件。
 
 ### 样式的死代码扫描
 
 ```bash
-pnpm --filter @poe2-tools/build-l10n scan-css
+pnpm --filter @poe2-tools/site scan-css
 ```
 
-扫两类东西：`src/styles/*.css` 里定义了但没有任何 `var()` 引用的设计令牌，以及写了样式但没有任何
+扫两类东西：`apps/site/src/**/*.css` 里定义了但没有任何 `var()` 引用的设计令牌，以及写了样式但没有任何
 `.tsx` 用到的类选择器。**不接进 `pnpm verify`**——它靠正则匹配，对「字符串拼出来的类名」和
 「只被别的 CSS 规则消费的 modifier」会误报，当成门禁只会让 CI 变吵。改完样式、或删组件之后手动跑
 一次即可；有发现时退出码是 1，输出里逐条列出名字。
@@ -78,7 +86,7 @@ pnpm --filter @poe2-tools/build-l10n scan-css
 packages/build-core/    .build 解析、词典匹配、翻译管线（无 DOM）
 packages/item-core/     装备高级文本解析、逆向词典与受控 CoE 转接（无 DOM）
 packages/dict-builder/  词典生成脚本
-apps/build-l10n/        静态站
+apps/site/        静态站
 data/dict/<locale>/     生成的词典（入库）
 data/fixtures/          测试样本（synthetic 入库，local 不入库）
 docs/build-format.md    .build 格式速查

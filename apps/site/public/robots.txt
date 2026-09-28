@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://poe2-tools.pine2d.com/sitemap.xml

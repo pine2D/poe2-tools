@@ -4,7 +4,7 @@
 `env(safe-area-inset-*)`、浏览器下载与高对比度主题这几件事，结论只能来自真机。
 每次界面有较大改动（改版、发版）跑一遍，把结论写进当次的执行报告，不要写进本文件。
 
-跑之前：`pnpm --filter @poe2-tools/build-l10n build`，把 `dist/` 放到局域网能访问的地方，
+跑之前：`pnpm --filter @poe2-tools/site build`，把 `dist/` 放到局域网能访问的地方，
 或直接用线上站 <https://poe2-tools.pages.dev/>。手边准备一份真实的 `.build`
 （`data/fixtures/synthetic/rich.build` 也行，但真实导出更能暴露长行与传奇装备的问题）。
 

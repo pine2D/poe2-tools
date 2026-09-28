@@ -81,7 +81,7 @@ data/l10n/
 | `pnpm-workspace.yaml`、`vitest.config.ts` | 当前通配符已覆盖新包；仅在实际构建／测试需要时修改 |
 | `.gitignore` | 实施时忽略扩展 artifacts；现有 dist 规则已覆盖产物 |
 | `.github/workflows/` | 实施时增加扩展产物验证／附件；不将扩展 ZIP 部署成 Cloudflare 页面 |
-| `apps/build-l10n/` 与制作规则 | 保持独立，复用修正要通过既有回归；不增加模拟机制 |
+| `apps/site/` 与制作规则 | 保持独立，复用修正要通过既有回归；不增加模拟机制 |
 
 依赖方向：扩展 → `l10n-core`（术语）；扩展 → `item-core`（文本）；核心包不得反向依赖扩展或站点选择器。`item-core` 不依赖 CoE DOM，站点特殊输入格式留在扩展适配器。
 

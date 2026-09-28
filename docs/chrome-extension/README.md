@@ -1,6 +1,14 @@
-# Chrome 扩展规划
+# Chrome 扩展状态与文档
 
-2026-09-24。状态：规划，尚未创建扩展源码或可安装包。本次交付仅为目录安排、设计、实施顺序与验收要求。
+2026-09-28 核对：扩展源码位于独立分支 `feat/coe-chrome-extension`，已到 0.1.111 开发预览版；当前主树尚未整合源码。本轮不合并扩展分支，也不重新认证历史验收结果。
+
+- [固定源码快照](https://github.com/pine2D/poe2-tools/tree/a68f6d8bacc7f336f6136a91665ca027063a536c/apps/poe2-extension)
+- [安装与构建](https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension/install.md)
+- [已有验收记录](https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension/release-readiness.md)
+
+截至本轮核对，公开仓库没有 Release；没有核实到商店安装入口。网站提供开发预览说明和源码构建入口，不提供虚构下载链接。Windows 原生输入法仍待对应环境验收。
+
+以下为 2026-09-24 的原始规划背景，其“待验证”描述只反映当时状态；当前支持范围以以上固定快照文档为准。
 
 ## 产品目标
 

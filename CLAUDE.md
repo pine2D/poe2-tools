@@ -4,7 +4,7 @@
 
 ### 当前优先级（2026-09-24）
 
-用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。当前处于规划阶段，未经实际实现与浏览器验收，不得声称扩展可安装或已支持某个页面。
+用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。扩展独立分支已有 0.1.111 开发预览源码与历史验收记录，尚未合入主树；公开发行与源码、验收状态应分别说明。
 
 poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：pnpm monorepo，TypeScript 单语言，
 纯静态前端 + 构建期脚本，不部署服务端。
@@ -18,7 +18,7 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/build-l10n`（0.3.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.3.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
@@ -29,7 +29,7 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 - `packages/dict-builder/`：Node 脚本（tsx 运行）。`cache.ts` 是唯一发网络请求的模块（按日缓存到
   `data/cache/`，`--offline` 复用）；`adapters/` 是"已解析 JSON → 词典类型"的纯函数；`build.ts` 编排并
   写 `data/dict/<locale>/`，`check.ts` 做结构校验、审计与覆盖率回归门禁。
-- `apps/build-l10n/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。样式在 `src/styles/` 下按区分成 11 个文件，由 `main.tsx` 按级联顺序引入。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；测试用 happy-dom。
+- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`；共用样式在 `src/shared/styles/`，由各页面入口按级联顺序引入。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；测试用 happy-dom。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
   `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
   `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率
@@ -99,7 +99,7 @@ pnpm dict:check    # 入库词典的结构校验、审计与覆盖率回归比�
 ## 版本与发布
 
 - Semantic Versioning 2.0.0；`CHANGELOG.md` 按 Keep a Changelog 维护（首个发布前创建）。
-- `apps/build-l10n` 通过 Cloudflare Pages 发布静态站（`.github/workflows/deploy.yml`，凭据在仓库 secrets）；词典随构建产物一起发布。
+- `apps/site` 通过 Cloudflare Pages 发布静态站（`.github/workflows/deploy.yml`，凭据在仓库 secrets）；词典随构建产物一起发布。
 - 词典更新不单独发版；应用行为变化才升版本。
 
 ## 分支与提交规范

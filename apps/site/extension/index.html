@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#17191c" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <title>PoE2 中文助手 · 安装与使用</title>
+  <meta name="description" content="适用于桌面 Chrome 的开发预览扩展，在 CoE Beta 的 PoE2 English 模式中使用国服术语。" />
+  <meta property="og:title" content="PoE2 中文助手 · 安装与使用" />
+  <meta property="og:description" content="适用于桌面 Chrome 的开发预览扩展，在 CoE Beta 的 PoE2 English 模式中使用国服术语。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:url" content="https://poe2-tools.pine2d.com/extension/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="canonical" href="https://poe2-tools.pine2d.com/extension/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script>
+      (() => {
+        var mode = null
+        var saved = null
+        try {
+          saved = localStorage.getItem('poe2-tools.theme')
+          if (saved === 'light' || saved === 'dark') {
+            mode = saved
+          }
+        } catch (_error) {
+          mode = null
+        }
+        if (mode === null) {
+          mode =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', mode)
+      })()
+    </script>
+</head>
+<body>
+  <div id="root"></div>
+  <noscript><h1>PoE2 中文助手 · 安装与使用</h1><p>适用于桌面 Chrome 的开发预览扩展，在 CoE Beta 的 PoE2 English 模式中使用国服术语。</p><p>交互功能需要启用 JavaScript。</p><a href="/build/">构筑汉化</a> · <a href="/extension/">中文助手</a></noscript>
+  <script type="module" src="/src/pages/extension/main.tsx"></script>
+</body>
+</html>

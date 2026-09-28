@@ -17,16 +17,16 @@ it.each(['alloys.json', 'fluxes.json', 'runeforging.json'])(
   (file) => {
     const root = mkdtempSync(join(tmpdir(), 'poe2-alloy-sync-'))
     try {
-      const script = join(root, 'apps/build-l10n/scripts/sync-dict.mjs')
+      const script = join(root, 'apps/site/scripts/sync-craft.mjs')
       mkdirSync(dirname(script), { recursive: true })
-      copyFileSync(resolve('apps/build-l10n/scripts/sync-dict.mjs'), script)
+      copyFileSync(resolve('apps/site/scripts/sync-craft.mjs'), script)
       for (const locale of ['zh-CN', 'zh-TW']) {
         const dir = join(root, 'data/dict', locale)
         mkdirSync(dir, { recursive: true })
         writeFileSync(join(dir, 'meta.json'), '{}')
       }
       const source = join(root, 'data/craft')
-      const target = join(root, 'apps/build-l10n/public/craft-data')
+      const target = join(root, 'apps/site/public/craft-data')
       mkdirSync(source, { recursive: true })
       writeFileSync(join(source, 'catalog.json'), '{"primary":"unchanged"}')
       writeFileSync(join(source, 'NOTICE.md'), '来源通知')

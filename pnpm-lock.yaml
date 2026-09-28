@@ -21,7 +21,7 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(@types/node@26.4.1)(happy-dom@20.14.0)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(tsx@4.23.13))
 
-  apps/build-l10n:
+  apps/site:
     dependencies:
       '@poe2-tools/build-core':
         specifier: workspace:*

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#17191c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta
+      name="description"
+      content="把英文攻略的《流放之路 2》Build Planner .build 文件翻成中文：基底名、传奇名与编号词缀行按国服或台服术语替换，输出可直接放回游戏的 .build。文件只在你的浏览器里解析，不会上传到任何服务器。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PoE2 构筑汉化" />
+    <meta
+      property="og:description"
+      content="把英文攻略的 Build Planner .build 文件翻成中文，支持国服简体与台服繁体，浏览器本地完成，不上传文件。"
+    />
+    <meta property="og:locale" content="zh_CN" />
+    <!-- Twitter 卡片：报告 §5.3 与 OG 并列要求。summary 不需要图片，与本期不做 og:image 一致 -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="PoE2 构筑汉化" />
+    <meta
+      name="twitter:description"
+      content="把英文攻略的 Build Planner .build 文件翻成中文，支持国服简体与台服繁体，浏览器本地完成，不上传文件。"
+    />
+    <!-- favicon 是内联 SVG data URI（灰阶菱形环），不额外发请求 -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317191c'/%3E%3Cpath d='M16 4.5 25 16l-9 11.5L7 16z' fill='%23b4c9ee'/%3E%3Cpath d='M16 9.5 21 16l-5 6.5L11 16z' fill='%2317191c'/%3E%3C/svg%3E"
+    />
+    <link rel="canonical" href="https://poe2-tools.pine2d.com/build/" />
+    <title>PoE2 构筑汉化 · 流放之路 2 Build Planner 汉化</title>
+    <!-- 首帧之前定妆：读 localStorage 的显式选择，没有就问系统，把结果写进 data-theme。
+         同步内联是硬要求——外部或 type="module" 的脚本是 defer 的，会先闪一帧深色。
+         用 var 与 try/catch 是为了老内核（微信 X5）与隐私模式下 localStorage 抛异常的情况。
+         matchMedia 的存在性写成 typeof 判断而不是 `window.matchMedia && …`：后者会被 Biome
+         的 useOptionalChain 要求改成 `?.`，而可选链在老内核上是解析期语法错误，整段脚本会
+         一起失效。var 也全部声明在函数根部（noInnerDeclarations）。
+         箭头函数可接受：主包本就是靠 `<script type="module">` 加载的，能跑得动 type="module"
+         的浏览器必然已经认识 ES2015 的箭头函数（module 支持落地时箭头函数早就普及），这条底线
+         不会比这段内联脚本本身更宽。可选链 `?.` 是 ES2020 语法，比那条底线晚了好几年，
+         X5 一类内核正好卡在中间——支持 module 与箭头函数，但解析 `?.` 直接报语法错误。
+         键名与取值必须与 src/theme/useTheme.ts 逐字一致，改一处就要改两处。
+         系统探测**必须留在 try 外面**：try 里只放 localStorage 这一件会抛异常的事。
+         早先把 matchMedia 也放在 try 里、catch 直接定 'dark'，于是「Chrome 阻止所有
+         Cookie / 隐私模式 / 部分 WebView」下取值抛异常时，系统是浅色的用户首帧是深色、
+         React 接管后跳浅色——正好闪在这段脚本本来要保护的场景上（三期 3b 审查 I-1）。
+         useTheme.readStoredMode() 在同样的异常下返回 'system'，之后由 systemScheme()
+         决定，两边现在逐分支等价（useTheme.test.ts 直接执行这段脚本守着）。 -->
+    <script>
+      (() => {
+        var mode = null
+        var saved = null
+        try {
+          saved = localStorage.getItem('poe2-tools.theme')
+          if (saved === 'light' || saved === 'dark') {
+            mode = saved
+          }
+        } catch (_error) {
+          mode = null
+        }
+        if (mode === null) {
+          mode =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', mode)
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/features/build-l10n/main.tsx"></script>
+  </body>
+</html>
