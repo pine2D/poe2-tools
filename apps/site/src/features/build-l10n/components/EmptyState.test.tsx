@@ -18,7 +18,7 @@ describe('EmptyState', () => {
     )
     expect(screen.getByRole('heading', { level: 2, name: '英文构筑，中文读懂。' })).toBeDefined()
     expect(screen.getByText(/攻略网站或作者提供/)).toBeDefined()
-    expect(screen.getByText(/自由备注与未收录内容保留原文/)).toBeDefined()
+    expect(screen.getByText(/自由备注和未收录的内容保留原文/)).toBeDefined()
     expect(screen.queryByText(/在游戏.*导出/)).toBeNull()
     expect(screen.getByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeDefined()
     expect(screen.getByText('词典 zh-CN 0.5（奥杜尔秘符）')).toBeDefined()
