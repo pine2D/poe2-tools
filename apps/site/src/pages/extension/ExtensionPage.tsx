@@ -24,13 +24,15 @@ export function ExtensionPage() {
             <p>用 PoE2 中文助手，在 Craft of Exile 的英文界面查看国服简体术语。</p>
             <div className="extension-actions">
               <a className="site-button" href="#install">
-                安装开发预览版
+                查看安装步骤
               </a>
               <a className="text-link" href="https://beta.craftofexile.com/?game=poe2">
                 打开 CoE Beta <span aria-hidden="true">↗</span>
               </a>
             </div>
-            <p className="desktop-note">适用于桌面 Chrome。手机上可查看说明，请在电脑上安装。</p>
+            <p className="desktop-note">
+              开发预览 · 需自行构建。适用于桌面 Chrome，请在电脑上安装。
+            </p>
           </div>
           <aside className="release-note" aria-label="版本与支持范围">
             <span className="tool-kind">开发预览 · 0.1.111</span>
@@ -127,7 +129,7 @@ export function ExtensionPage() {
             <p>关闭汉化可恢复原文。禁用或卸载扩展后，也请刷新原站页面。</p>
           </section>
           <section id="privacy">
-            <h2>你的文本，留在操作里</h2>
+            <h2>文本处理与隐私</h2>
             <p>
               汉化和文本转换都在你的浏览器里完成，设置也保存在本机。填入英文并在 CoE
               点击继续后，由原站处理后续操作。
@@ -138,7 +140,7 @@ export function ExtensionPage() {
             </a>
           </section>
           <section>
-            <h2>仍有需要核对的边界</h2>
+            <h2>支持范围与已知限制</h2>
             <p>
               开发预览版不保证支持所有页面和装备格式。遇到未收录的内容、有歧义的译文或损坏的数值时，会提示你检查，不会猜译。Windows
               原生中文输入法还需要在 Windows 环境下验证。

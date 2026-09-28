@@ -19,6 +19,14 @@ export function HomePage() {
           </h1>
           <p>给《流放之路 2》中文玩家用的构筑汉化工具和浏览器扩展。</p>
         </section>
+        <nav className="home-shortcuts" aria-label="快速打开工具">
+          <a className="site-button" href="/build/">
+            构筑汉化 <span aria-hidden="true">→</span>
+          </a>
+          <a className="site-button site-button-secondary" href="/extension/">
+            中文助手 <span aria-hidden="true">→</span>
+          </a>
+        </nav>
         <div className="tool-pair">
           <article className="tool-entry build-entry">
             <div className="tool-heading">
@@ -80,7 +88,7 @@ export function HomePage() {
             </figure>
             <div className="tool-meta">
               <span>CoE Beta · PoE2 · English</span>
-              <span>开发预览</span>
+              <span>开发预览 · 需自行构建</span>
             </div>
             <a className="site-button site-button-secondary" href="/extension/">
               查看扩展与安装方式 <span aria-hidden="true">→</span>
@@ -89,18 +97,12 @@ export function HomePage() {
         </div>
         <section className="home-notes" aria-labelledby="notes-title">
           <div>
-            <h2 id="notes-title">按自己的节奏，研究下一件装备。</h2>
-            <p>先找到需要的工具，再回到你的构筑。</p>
+            <h2 id="notes-title">本次站点更新</h2>
+            <p>构筑汉化与中文助手现已集中在首页，扩展安装方法和支持范围可在介绍页查看。</p>
           </div>
-          <div className="recent-note">
-            <h3>本次站点更新</h3>
-            <p>
-              首页现在可以打开两个工具。构筑汉化保留独立入口；扩展页面介绍中文助手的安装方法和支持范围。
-            </p>
-            <a href="/build/">
-              收藏构筑工作台 <span aria-hidden="true">↗</span>
-            </a>
-          </div>
+          <a className="text-link" href="/build/">
+            打开构筑汉化 <span aria-hidden="true">↗</span>
+          </a>
         </section>
       </main>
       <SiteFooter />

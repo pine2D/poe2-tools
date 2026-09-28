@@ -1,7 +1,29 @@
 <!doctype html>
 <html lang="zh-CN">
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>页面未找到 · PoE2 Tools</title><link rel="icon" href="/favicon.svg" /><style>
-:root { color-scheme: dark light; } body { margin: 0; background: #17191c; color: #f0f2f5; font: 16px/1.8 system-ui, sans-serif; } main { max-width: 600px; margin: 15vh auto; padding: 24px; } h1 { font-size: 32px; } p { color: #a1aab7; } a { display: inline-block; margin: 8px 24px 8px 0; padding-block: 10px; color: #d6b887; text-underline-offset: 4px; } a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; } @media(prefers-color-scheme:light) { body { background: #fff; color: #1d2632; } p { color: #566273; } a { color: #75501f; } }
-</style></head>
+:root { color-scheme: dark light; } body { margin: 0; background: #17191c; color: #f0f2f5; font: 16px/1.8 system-ui, sans-serif; } main { max-width: 600px; margin: 15vh auto; padding: 24px; } h1 { font-size: 32px; } p { color: #a1aab7; } a { display: inline-block; margin: 8px 24px 8px 0; padding-block: 10px; color: #d6b887; text-underline-offset: 4px; } a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; } :root[data-theme="light"] { color-scheme: light; } :root[data-theme="dark"] { color-scheme: dark; } :root[data-theme="light"] body { background: #fff; color: #1d2632; } :root[data-theme="light"] p { color: #566273; } :root[data-theme="light"] a { color: #75501f; }
+</style>  <script>
+      (() => {
+        var mode = null
+        var saved = null
+        try {
+          saved = localStorage.getItem('poe2-tools.theme')
+          if (saved === 'light' || saved === 'dark') {
+            mode = saved
+          }
+        } catch (_error) {
+          mode = null
+        }
+        if (mode === null) {
+          mode =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', mode)
+      })()
+    </script>
+</head>
 <body><main><p>PoE2 Tools · 404</p><h1>这里没有找到页面。</h1><p>链接可能已经变化。构筑汉化现在有了独立的工作台地址。</p><nav aria-label="返回工具"><a href="/">返回首页</a><a href="/build/">打开构筑汉化</a><a href="/extension/">查看中文助手</a></nav></main></body>
 </html>

@@ -5,7 +5,9 @@ import { HomePage } from './HomePage'
 afterEach(cleanup)
 it('按任务提供两个直达入口，不推荐已搁置的工坊', () => {
   render(<HomePage />)
-  expect(screen.getByRole('link', { name: /打开构筑汉化/ }).getAttribute('href')).toBe('/build/')
+  expect(screen.getAllByRole('link', { name: /打开构筑汉化/ })[0]?.getAttribute('href')).toBe(
+    '/build/',
+  )
   expect(screen.getByRole('link', { name: /查看扩展与安装方式/ }).getAttribute('href')).toBe(
     '/extension/',
   )

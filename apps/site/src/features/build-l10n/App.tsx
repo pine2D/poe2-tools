@@ -371,7 +371,6 @@ export function App({ fetchImpl }: AppProps) {
           <ThemeSeg mode={theme.mode} onMode={theme.setMode} />
         </OptionsBar>
       </SiteHeader>
-      <h1 className="visually-hidden">PoE2 构筑汉化</h1>
       <div className="app__live" role="status" aria-live="polite">
         <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
       </div>
@@ -440,6 +439,7 @@ export function App({ fetchImpl }: AppProps) {
           </>
         )}
         <main id="build-main" tabIndex={-1} className="app__main">
+          <h1 className="visually-hidden">PoE2 构筑汉化</h1>
           {renderMain()}
         </main>
       </div>

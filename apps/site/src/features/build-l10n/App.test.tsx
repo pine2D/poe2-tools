@@ -273,3 +273,10 @@ it('无文件时可加载自造示例、核对并下载，导航不再推荐工�
   expect(result.inventory_slots[0].inventory_id).toBe('Helm1')
   expect(result.inventory_slots[0].additional_text).not.toContain('+175 to maximum Life')
 })
+
+it('一级标题属于主内容区域', async () => {
+  await renderReady()
+  expect(within(screen.getByRole('main')).getByRole('heading', { level: 1 }).textContent).toBe(
+    'PoE2 构筑汉化',
+  )
+})
