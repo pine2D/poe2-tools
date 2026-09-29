@@ -22,7 +22,7 @@
     border: 0;
     border-bottom: 1px solid var(--line);
     border-radius: 0;
-    background: var(--surface-1);
+    background: var(--bg-2);
   }
   .app__sidechev {
     margin-left: 0;

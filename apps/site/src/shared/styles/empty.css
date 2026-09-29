@@ -6,7 +6,7 @@
 }
 .empty__hero {
   margin: 0 0 16px;
-  color: var(--text);
+  color: var(--ink);
   font-size: 36px;
   font-weight: 600;
   line-height: 1.3;
@@ -14,7 +14,7 @@
 .empty__lede {
   max-width: 62ch;
   margin: 0 0 28px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 15px;
 }
 .empty__foot {
@@ -22,13 +22,13 @@
   flex-wrap: wrap;
   gap: 8px 16px;
   margin: 20px 0 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .empty__caption {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .empty__example {
@@ -42,7 +42,7 @@
   overflow-wrap: anywhere;
 }
 .empty__example > :first-child {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .empty__example > :last-child {
   font-weight: 500;

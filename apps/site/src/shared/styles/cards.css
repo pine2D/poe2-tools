@@ -2,7 +2,7 @@
   margin-bottom: 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--surface-2);
+  background: var(--surface);
   overflow: hidden;
 }
 .card__head {
@@ -11,7 +11,7 @@
   flex-wrap: wrap;
   gap: 8px 12px;
   padding: 11px 20px;
-  background: var(--surface-3);
+  background: var(--raised);
 }
 .card__head h3 {
   margin: 0;
@@ -21,16 +21,16 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .card__count--short {
-  color: var(--warn);
+  color: var(--miss);
 }
 .card__id {
   margin-left: auto;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font: 12px var(--font-code);
   overflow-wrap: anywhere;
 }
@@ -38,11 +38,11 @@
   padding: 2px 6px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .chip--unique {
-  color: var(--rarity-unique);
+  color: var(--unique);
 }
 .namepair {
   display: inline-flex;
@@ -53,19 +53,19 @@
   overflow-wrap: anywhere;
 }
 .namepair__en {
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 13px;
 }
 .namepair__zh {
-  color: var(--text);
+  color: var(--ink);
   font-size: 15px;
   font-weight: 600;
 }
 .namepair__zh--gem {
-  color: var(--rarity-gem);
+  color: var(--gem);
 }
 .namepair__zh--miss {
-  color: var(--warn);
+  color: var(--miss);
   font-weight: 400;
 }
 .supports,

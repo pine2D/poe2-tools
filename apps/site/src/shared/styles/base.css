@@ -3,8 +3,8 @@
 }
 body {
   margin: 0;
-  background: var(--surface-0);
-  color: var(--text);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-zh-cn);
   font-size: 14px;
   line-height: 1.65;
@@ -23,7 +23,7 @@ p {
   text-wrap: pretty;
 }
 textarea {
-  caret-color: var(--accent);
+  caret-color: var(--gold);
 }
 code,
 pre {
@@ -34,7 +34,7 @@ pre {
   color: var(--selection-fg);
 }
 ::placeholder {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .visually-hidden {
   position: absolute;

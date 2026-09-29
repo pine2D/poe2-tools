@@ -8,8 +8,8 @@ button,
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface-3);
-  color: var(--text);
+  background: var(--raised);
+  color: var(--ink);
   font: inherit;
   font-size: 13px;
   line-height: 1.4;
@@ -20,19 +20,19 @@ button,
     background-color var(--dur-fast) var(--ease-out);
 }
 button:disabled {
-  color: var(--text-muted);
+  color: var(--ink-2);
   cursor: not-allowed;
 }
 .cta {
-  background: var(--action-bg);
-  border-color: var(--action-bg);
-  color: var(--action-text);
+  background: var(--bronze);
+  border-color: var(--bronze);
+  color: var(--bg);
   font-weight: 600;
 }
 .cta:disabled {
-  background: var(--surface-3);
+  background: var(--raised);
   border-color: var(--line);
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 textarea {
   width: 100%;
@@ -40,8 +40,8 @@ textarea {
   padding: 10px 12px;
   border: 1px solid var(--control-edge);
   border-radius: 8px;
-  background: var(--surface-0);
-  color: var(--text);
+  background: var(--bg);
+  color: var(--ink);
   font: 13px / 1.6 var(--font-code);
   resize: vertical;
 }
@@ -50,7 +50,7 @@ input[type="checkbox"] {
   width: 18px;
   height: 18px;
   margin: 3px 0 0;
-  accent-color: var(--action-bg);
+  accent-color: var(--bronze);
 }
 summary {
   cursor: pointer;
@@ -64,12 +64,12 @@ kbd {
   padding: 0 4px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .hint,
 .muted {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .hint {
   margin: 0;
@@ -77,15 +77,15 @@ kbd {
 }
 @media (hover: hover) and (pointer: fine) {
   .app__tool-link:hover {
-    color: var(--text);
-    background: var(--surface-hover);
+    color: var(--ink);
+    background: var(--raised-2);
   }
   button:hover:not(:disabled),
   .button:hover {
-    background: var(--surface-hover);
+    background: var(--raised-2);
   }
   .cta:hover:not(:disabled) {
-    background: var(--action-bg);
+    background: var(--bronze);
     text-decoration: underline;
     text-underline-offset: 3px;
   }

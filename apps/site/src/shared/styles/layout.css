@@ -12,7 +12,7 @@
   min-height: 56px;
   padding: 8px 24px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface-1);
+  background: var(--bg-2);
 }
 .app__brand {
   display: flex;
@@ -27,7 +27,7 @@
   white-space: nowrap;
 }
 .app__mark {
-  color: var(--accent);
+  color: var(--gold);
 }
 .app__tool-link {
   display: inline-flex;
@@ -36,7 +36,7 @@
   padding: 6px 10px;
   margin-right: auto;
   border-radius: 8px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 13px;
   text-underline-offset: 4px;
 }
@@ -46,7 +46,7 @@
   min-height: 28px;
   padding: 2px 24px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface-1);
+  background: var(--bg-2);
 }
 .badge {
   display: inline-flex;
@@ -54,20 +54,20 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .badge__dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--success);
+  background: var(--ok);
 }
 .badge__ver {
   font-variant-numeric: tabular-nums;
 }
 .badge__lack {
-  color: var(--warn);
+  color: var(--miss);
 }
 .badge--error {
   color: var(--danger);
@@ -92,7 +92,7 @@
   margin: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface-1);
+  background: var(--bg-2);
 }
 .seg__item {
   display: inline-flex;
@@ -101,14 +101,14 @@
   min-height: 40px;
   padding: 4px 10px;
   border-radius: 5px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
 }
 .seg__item--on {
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: var(--raised-2);
+  color: var(--gold);
   box-shadow: inset 0 0 0 1px var(--control-edge);
 }
 .seg__item:focus-within {
@@ -153,7 +153,7 @@
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: var(--surface-3);
+  background: var(--raised);
   box-shadow: 0 12px 36px #0003;
 }
 .export-settings__panel[data-open="true"] {
@@ -187,7 +187,7 @@
   grid-column: 2;
   display: block;
   margin: 4px 0 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .app__body {
@@ -203,7 +203,7 @@
   overflow: auto;
   padding: 24px 12px;
   border-right: 1px solid var(--line);
-  background: var(--surface-1);
+  background: var(--bg-2);
 }
 .app__main {
   min-width: 0;
@@ -220,7 +220,7 @@
 .app__side-note {
   margin: auto 0 0;
   padding-top: 16px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .errorcard {
@@ -228,7 +228,7 @@
   padding: 20px;
   border: 1px solid var(--danger);
   border-radius: 10px;
-  background: var(--surface-2);
+  background: var(--surface);
 }
 .errorcard__title {
   display: flex;
@@ -239,7 +239,7 @@
   font-size: 16px;
 }
 .errorcard p {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .errorcard__detail {
   font-size: 13px;
@@ -271,7 +271,7 @@
   padding: 12px 16px;
   border: 1px solid var(--control-edge);
   border-radius: 10px;
-  background: var(--surface-3);
+  background: var(--raised);
   box-shadow: 0 8px 28px #0003;
   overflow-wrap: anywhere;
   pointer-events: none;

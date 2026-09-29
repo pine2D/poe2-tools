@@ -63,32 +63,22 @@ describe('markupClass', () => {
 })
 
 describe('resolveRgbTag', () => {
-  it('一次算出深浅两套值：深色主题向白提亮，浅色主题向黑压暗', () => {
-    // 暗红在深底上远不达标 → 提亮；在浅底上本来就够 → 原样
-    const dark = resolveRgbTag('rgb(120, 0, 0)')
-    expect(dark).not.toBeNull()
-    expect(dark?.dark).not.toBe('#780000')
-    expect(dark?.light).toBe('#780000')
-    // 纯白在浅底上不可见 → 压暗；在深底上原样
-    const white = resolveRgbTag('rgb(255, 255, 255)')
-    expect(white?.dark).toBe('#ffffff')
-    expect(white?.light).not.toBe('#ffffff')
+  it('只算深色值：暗色向白提亮，本来够亮的原样返回', () => {
+    expect(resolveRgbTag('rgb(120, 0, 0)')).not.toBe('#780000')
+    expect(resolveRgbTag('rgb(255, 255, 255)')).toBe('#ffffff')
   })
 
-  it('两套值都真的达标（按各自的卡片底算 ≥4.5:1）', () => {
-    for (const raw of ['rgb(120, 0, 0)', 'rgb(255, 255, 255)', 'rgb(128, 128, 128)']) {
+  it('结果对对照行与译文提示框最亮的底 --raised #211c16 ≥4.5:1（含近黑输入）', () => {
+    for (const raw of [
+      'rgb(120, 0, 0)',
+      'rgb(255, 255, 255)',
+      'rgb(128, 128, 128)',
+      'rgb(0,0,0)',
+    ]) {
       const color = resolveRgbTag(raw)
       expect(color).not.toBeNull()
-      expect(contrastRatio(color?.dark ?? '', '#17191c')).toBeGreaterThanOrEqual(4.5)
-      expect(contrastRatio(color?.light ?? '', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(color ?? '', '#211c16'), raw).toBeGreaterThanOrEqual(4.5)
     }
-  })
-
-  it('近黑输入两套值都达标：深底要提亮，浅底本来就够（控制者追加 e）', () => {
-    const black = resolveRgbTag('rgb(0,0,0)')
-    expect(black).not.toBeNull()
-    expect(contrastRatio(black?.dark ?? '', '#17191c')).toBeGreaterThanOrEqual(4.5)
-    expect(contrastRatio(black?.light ?? '', '#ffffff')).toBeGreaterThanOrEqual(4.5)
   })
 
   it('不是 rgb 标签就返回 null', () => {

@@ -12,6 +12,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // 字体分片一律按文件输出，不内联进 CSS（spec §7.2）：check-site 按 coverage.json 核对 dist 的 woff2 集合
+    assetsInlineLimit: (file) => (file.endsWith('.woff2') ? false : undefined),
     rollupOptions: {
       input: {
         home: fileURLToPath(new URL('./index.html', import.meta.url)),

@@ -59,7 +59,7 @@ export function sliceSpans(spans: readonly MarkupSpan[], start: number): MarkupS
   return out
 }
 
-// 命名颜色：值与对比度见计划正文的令牌表，全部 ≥4.5:1 vs --surface-2
+// 命名颜色：取值在 @poe2-tools/ui-theme 的 tokens.css，对 --raised 都 ≥4.5:1（tokens.test.ts 门禁）
 const COLOR_TAGS = new Set([
   'red',
   'orange',
@@ -94,9 +94,9 @@ export function markupClass(tags: readonly string[]): string {
 }
 
 const RGB = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i
-// 对照表所在的卡片底，两套主题各一个（= --surface-2 的深浅两个值）
-const TIP_BG_DARK = [0x17, 0x19, 0x1c] as const
-const TIP_BG_LIGHT = [0xff, 0xff, 0xff] as const
+// 承载对照行与译文提示框的底里最亮的一档（= --raised #211c16）。--well、--surface 都不比它亮，
+// 按它算出的颜色在这些底上只会更易读；名称牌底比它亮，所以名称牌名称不用标记色（spec §6.4.3）。
+const TIP_BG_DARK = [0x21, 0x1c, 0x16] as const
 
 function channel(value: number): number {
   const c = value / 255
@@ -119,32 +119,21 @@ function hex(rgb: readonly number[]): string {
   return `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`
 }
 
-// 按 6% 一档朝 toward（深色主题向白 255、浅色主题向黑 0）混合，直到达 4.5:1。
-// 保色相、只动明度与饱和度，最多 40 档（到头就是纯白 / 纯黑，必定达标）。
-function approach(rgb: readonly number[], bg: readonly number[], toward: number): string {
+// 按 6% 一档朝白色（255）混合，直到对 bg 达 4.5:1。
+// 保色相、只动明度与饱和度，最多 40 档（到头就是纯白，必定达标）。
+function approach(rgb: readonly number[], bg: readonly number[]): string {
   let out = [...rgb]
   for (let step = 0; step < 40 && contrast(out, bg) < 4.5; step += 1) {
-    out = out.map((value) => value + (toward - value) * 0.06)
+    out = out.map((value) => value + (255 - value) * 0.06)
   }
   return hex(out)
 }
 
-/** 同一个自定义色在两套主题下各自的达标值 */
-export interface RgbColor {
-  dark: string
-  light: string
-}
-
-// <rgb(r,g,b)>{...} 自定义颜色。返回**两套**值而不是一套：这是全站唯一一处颜色由 JS 算出来
-// 的地方，也就是唯一一处不会随 data-theme 自动跟随的颜色。让 JS 去问当前主题要把主题状态
-// 穿透到 MarkupText、还要在切主题时重渲染整棵预览树；一次算两套、写成两个自定义属性交给
-// CSS 选，渲染层完全不需要知道当前主题是什么。不是 rgb 标签返回 null。
-export function resolveRgbTag(tag: string): RgbColor | null {
+// <rgb(r,g,b)>{...} 自定义颜色：这是全站唯一一处由 JS 算出的颜色。全站只有深色（spec D2），
+// 只按深色底提亮一次，返回 #rrggbb；不是 rgb 标签返回 null。
+export function resolveRgbTag(tag: string): string | null {
   const match = RGB.exec(tag.trim())
   if (match === null) return null
   const rgb = [1, 2, 3].map((i) => Math.min(255, Number(match[i] ?? 0)))
-  return {
-    dark: approach(rgb, TIP_BG_DARK, 255),
-    light: approach(rgb, TIP_BG_LIGHT, 0),
-  }
+  return approach(rgb, TIP_BG_DARK)
 }

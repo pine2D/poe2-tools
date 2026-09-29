@@ -1,7 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HomePage } from './HomePage'
-import '../../shared/styles/tokens.css'
+import '@poe2-tools/ui-theme/index.css'
+import '@poe2-tools/ui-theme/fonts.css'
 import '../../shared/styles/base.css'
 import '../../shared/styles/site.css'
 

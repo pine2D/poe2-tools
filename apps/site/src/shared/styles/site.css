@@ -1,14 +1,4 @@
-/* 藏身处工作台：品牌色与装备稀有度色分开，正文表面保持干净。 */
-:root {
-  --brand: #d6b887;
-  --brand-ink: #241e15;
-  --portal-panel: #1d2024;
-}
-:root[data-theme="light"] {
-  --brand: #75501f;
-  --brand-ink: #ffffff;
-  --portal-panel: #f4f5f7;
-}
+/* 站点外壳与门户页样式；令牌来自 @poe2-tools/ui-theme。 */
 a {
   text-underline-offset: 4px;
 }
@@ -24,14 +14,14 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: var(--brand);
+  color: var(--gold);
   text-decoration: none;
   white-space: nowrap;
   font-size: 21px;
   letter-spacing: 0.02em;
 }
 .site-brand strong {
-  color: var(--text);
+  color: var(--ink);
   font-weight: 500;
 }
 .site-nav {
@@ -43,13 +33,13 @@ a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   text-decoration: none;
 }
 .site-nav a[aria-current],
 .site-nav a:hover,
 .site-github:hover {
-  color: var(--brand);
+  color: var(--gold);
 }
 .site-nav a[aria-current] {
   text-decoration: underline;
@@ -65,8 +55,8 @@ a {
 .site-theme select {
   min-height: 44px;
   padding: 0 10px;
-  color: var(--text-muted);
-  background: var(--surface-1);
+  color: var(--ink-2);
+  background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: 4px;
   font: inherit;
@@ -81,8 +71,8 @@ a {
   left: 16px;
   z-index: 20;
   transform: translateY(-180%);
-  background: var(--brand);
-  color: var(--brand-ink);
+  background: var(--gold);
+  color: var(--bg);
   padding: 12px 20px;
 }
 .skip-link:focus {
@@ -107,11 +97,11 @@ a {
 }
 .home-intro :where(h1) span,
 .extension-intro :where(h1) span {
-  color: var(--brand);
+  color: var(--gold);
 }
 .home-intro p,
 .extension-intro > :where(div) > p {
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 16px;
   margin: 0;
 }
@@ -129,7 +119,7 @@ a {
 .tool-entry {
   padding: 30px 36px 34px;
   min-width: 0;
-  background: var(--portal-panel);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
 }
@@ -148,7 +138,7 @@ a {
   font-weight: 550;
 }
 .tool-kind {
-  color: var(--brand);
+  color: var(--gold);
   font-size: 12px;
   border: 1px solid var(--line);
   padding: 4px 8px;
@@ -160,7 +150,7 @@ a {
 }
 .tool-description {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
   max-width: 42ch;
   min-height: 48px;
 }
@@ -169,29 +159,29 @@ a {
   margin: 26px 0 22px;
   min-height: 188px;
   padding: 18px 24px;
-  background: var(--surface-1);
+  background: var(--bg-2);
   border-block: 1px solid var(--line);
 }
 .translation-demo figcaption,
 .search-demo figcaption {
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
   margin-bottom: 15px;
 }
 .affix-line {
-  color: var(--accent);
+  color: var(--gold);
   font-size: 17px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .affix-line.translated {
-  color: var(--text);
+  color: var(--ink);
 }
 .affix-rule {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--brand);
+  color: var(--gold);
   margin: 5px 0;
 }
 .affix-rule::before,
@@ -202,7 +192,7 @@ a {
   flex: 1;
 }
 .demo-foot {
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
   text-align: center;
   margin-top: 13px;
@@ -217,7 +207,7 @@ a {
 .search-key {
   margin-left: auto;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   align-self: center;
 }
 .search-result {
@@ -228,10 +218,10 @@ a {
 }
 .search-result strong {
   font-weight: 500;
-  color: var(--brand);
+  color: var(--gold);
 }
 .search-result > span {
-  color: var(--accent);
+  color: var(--gold);
 }
 .tool-meta {
   display: flex;
@@ -239,7 +229,7 @@ a {
   justify-content: space-between;
   gap: 6px 16px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   margin-bottom: 18px;
   margin-top: auto;
 }
@@ -250,9 +240,9 @@ a {
   gap: 24px;
   min-height: 48px;
   padding: 11px 20px;
-  background: var(--brand);
-  color: var(--brand-ink);
-  border: 1px solid var(--brand);
+  background: var(--gold);
+  color: var(--bg);
+  border: 1px solid var(--gold);
   border-radius: 4px;
   font: inherit;
   font-weight: 600;
@@ -265,20 +255,20 @@ a {
   width: 100%;
 }
 .site-button-secondary {
-  color: var(--brand);
+  color: var(--gold);
   background: transparent;
 }
 .site-button:hover {
-  background: var(--text);
-  color: var(--surface-0);
-  border-color: var(--text);
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
 }
 .site-button:active {
   transform: scale(0.96);
 }
 .text-link,
 .recent-note a {
-  color: var(--brand);
+  color: var(--gold);
   display: inline-block;
   padding-block: 10px;
 }
@@ -294,7 +284,7 @@ a {
   margin: 0 0 8px;
 }
 .home-notes p {
-  color: var(--text-muted);
+  color: var(--ink-2);
   margin: 0;
 }
 .site-footer {
@@ -304,12 +294,12 @@ a {
   gap: 20px;
   padding-block: 26px;
   border-top: 1px solid var(--line);
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }
 .site-footer strong {
   font-size: 15px;
-  color: var(--text);
+  color: var(--ink);
 }
 .site-footer p {
   margin: 6px 0 0;
@@ -321,7 +311,7 @@ a {
   align-items: center;
 }
 .site-footer a {
-  color: var(--text-muted);
+  color: var(--ink-2);
   padding-block: 12px;
 }
 .site-legal {
@@ -346,8 +336,8 @@ a {
 }
 .release-note {
   padding: 24px;
-  background: var(--portal-panel);
-  border-top: 1px solid var(--brand);
+  background: var(--surface);
+  border-top: 1px solid var(--gold);
 }
 .release-note h2 {
   font-size: 18px;
@@ -360,7 +350,7 @@ a {
 }
 .release-note dt,
 .release-note p {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .release-note dd {
   margin: 0;
@@ -379,11 +369,11 @@ a {
 }
 .extension-capabilities h2 {
   font-size: 20px;
-  color: var(--brand);
+  color: var(--gold);
   margin: 0 0 12px;
 }
 .extension-capabilities p {
-  color: var(--text-muted);
+  color: var(--ink-2);
   margin: 0;
 }
 .guide-section {
@@ -398,7 +388,7 @@ a {
   margin: 0 0 14px;
 }
 .guide-heading p {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .install-steps {
   margin: 0;
@@ -408,7 +398,7 @@ a {
   padding: 0 0 22px 12px;
 }
 .install-steps li::marker {
-  color: var(--brand);
+  color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
 .install-steps h3 {
@@ -416,12 +406,12 @@ a {
   font-size: 17px;
 }
 .install-steps p {
-  color: var(--text-muted);
+  color: var(--ink-2);
   margin: 0;
 }
 .install-steps code {
   overflow-wrap: anywhere;
-  color: var(--text);
+  color: var(--ink);
 }
 .extension-details {
   display: grid;
@@ -435,7 +425,7 @@ a {
   margin: 0 0 14px;
 }
 .extension-details p {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .example-action {
   display: flex;
@@ -444,13 +434,13 @@ a {
   justify-content: center;
   flex-wrap: wrap;
   margin: 20px 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .craft-paused {
   padding: 16px 24px;
   margin: 0;
-  color: var(--warn);
-  background: var(--warn-bg);
+  color: var(--miss);
+  background: var(--miss-bg);
   border-bottom: 1px solid var(--line);
 }
 .craft-paused a {
@@ -624,7 +614,7 @@ a {
 
 .install-command {
   padding: 14px;
-  background: var(--surface-1);
+  background: var(--bg-2);
   border: 1px solid var(--line);
   overflow-x: auto;
   font-size: 13px;

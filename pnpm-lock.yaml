@@ -29,6 +29,9 @@ importers:
       '@poe2-tools/item-core':
         specifier: workspace:*
         version: link:../../packages/item-core
+      '@poe2-tools/ui-theme':
+        specifier: workspace:*
+        version: link:../../packages/ui-theme
       fflate:
         specifier: 0.8.3
         version: 0.8.3

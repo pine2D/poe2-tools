@@ -41,14 +41,9 @@
   color: var(--mk-unique);
 }
 
-/* <rgb(r,g,b)>{…} 的运行时计算色：MarkupText 把深浅两套值写成自定义属性，这里按主题选。
-   两条规则的顺序不能反：浅色那条特异性更高（(0,3,0) vs (0,1,0)），本来也压得过。 */
+/* <rgb(r,g,b)>{…} 的运行时计算色：MarkupText 把按深色底提亮后的值写进 --mk-rgb-d。 */
 .mk-rgb {
   color: var(--mk-rgb-d);
-}
-
-:root[data-theme="light"] .mk-rgb {
-  color: var(--mk-rgb-l);
 }
 
 .mk-s {
@@ -79,7 +74,7 @@
   grid-template-columns: 26px minmax(0, calc(50% - 26px)) 42px minmax(0, calc(50% - 42px));
   align-items: start;
   padding: 16px 20px;
-  background: var(--surface-2);
+  background: var(--surface);
   font-size: 14px;
   line-height: 1.65;
   font-variant-numeric: tabular-nums;
@@ -89,7 +84,7 @@
   padding: 0 12px 10px 0;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--line);
-  color: var(--text);
+  color: var(--ink);
   font-size: 15px;
   overflow-wrap: anywhere;
 }
@@ -97,14 +92,14 @@
   padding-left: 20px;
 }
 .tip__base--miss {
-  color: var(--warn);
+  color: var(--miss);
 }
 .card--unique .tip__base:not(.tip__base--miss) {
-  color: var(--rarity-unique);
+  color: var(--unique);
 }
 .tip__n {
   padding: 4px 8px 4px 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
   text-align: right;
   user-select: none;
@@ -115,25 +110,25 @@
 }
 .tip__t {
   padding: 4px 12px 4px 0;
-  color: var(--text-muted);
+  color: var(--ink-2);
   overflow-wrap: anywhere;
 }
 .tip__t--zh {
   padding-left: 8px;
-  color: var(--text);
+  color: var(--ink);
 }
 .tip__t .num,
 .tip__base .num {
-  color: var(--text);
+  color: var(--ink);
   font-weight: 600;
 }
 .tip__n--miss {
-  border-left: 2px solid var(--warn);
-  color: var(--warn);
+  border-left: 2px solid var(--miss);
+  color: var(--miss);
   text-align: center;
 }
 .tip__t--miss {
-  color: var(--warn);
+  color: var(--miss);
 }
 .tip__n--miss,
 .tip__t--miss,
@@ -142,10 +137,10 @@
 }
 .tip__t--miss .num,
 .tip__base--miss .num {
-  color: var(--warn);
+  color: var(--miss);
 }
 .tip__t--keep.tip__t--zh {
-  color: var(--text-muted);
+  color: var(--ink-2);
 }
 .tip__tag {
   display: inline-block;
@@ -153,27 +148,27 @@
   padding: 2px 5px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
   line-height: 1.4;
   white-space: nowrap;
 }
 .tip__tag--miss {
-  color: var(--warn);
-  border-color: var(--warn);
+  color: var(--miss);
+  border-color: var(--miss);
 }
 .tip__tag--inject {
-  color: var(--rarity-unique);
+  color: var(--unique);
 }
 .tip__keep {
   display: block;
   padding-top: 2px;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 13px;
 }
 .tip--empty {
   display: block;
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 13px;
 }
 .tip--empty p {
@@ -216,6 +211,6 @@
   padding-block: 10px;
 }
 .tip__injected-label {
-  color: var(--text-muted);
+  color: var(--ink-2);
   font-size: 12px;
 }

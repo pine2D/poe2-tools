@@ -33,15 +33,13 @@ function withNumbers(text: string, key: string): ReactNode {
   )
 }
 
-// 自定义色取最内层的一个，写成两个自定义属性；.mk-rgb 那条 CSS 规则负责按主题选值。
+// 自定义色取最内层的一个，写进自定义属性 --mk-rgb-d；.mk-rgb 那条 CSS 规则引用它。
 // 断言成 CSSProperties 是必要的：React 支持 style 里的自定义属性，但它的类型定义只列了
 // 标准属性名，没有断言过不了 typecheck。
 function spanStyle(tags: readonly string[]): CSSProperties | undefined {
   for (let i = tags.length - 1; i >= 0; i -= 1) {
     const color = resolveRgbTag(tags[i] ?? '')
-    if (color !== null) {
-      return { '--mk-rgb-d': color.dark, '--mk-rgb-l': color.light } as CSSProperties
-    }
+    if (color !== null) return { '--mk-rgb-d': color } as CSSProperties
   }
   return undefined
 }
