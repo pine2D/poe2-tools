@@ -19,7 +19,8 @@
     "dict:build": "pnpm --filter @poe2-tools/dict-builder run build-dict",
     "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict",
     "craft:build": "pnpm --filter @poe2-tools/dict-builder run build-craft",
-    "craft:check": "pnpm --filter @poe2-tools/dict-builder run check-craft"
+    "craft:check": "pnpm --filter @poe2-tools/dict-builder run check-craft",
+    "ui-theme:motif": "pnpm --filter @poe2-tools/ui-theme run motif"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

@@ -12,7 +12,8 @@
       "!data/craft/catalog.json",
       "!data/fixtures",
       "!packages/dict-builder/fixtures/*.html",
-      "!**/dist"
+      "!**/dist",
+      "!packages/ui-theme/src/generated"
     ]
   },
   "formatter": {

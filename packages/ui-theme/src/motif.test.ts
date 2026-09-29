@@ -1,0 +1,72 @@
+// 母题生成物与唯一源一致（spec §4.5）：在内存里重算，与入库文件逐字节比较
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
+import { GENERATED_NAMES, MOTIF_CSS_PROPERTIES, renderGenerated, renderLogoSvg } from './motif-css'
+import { parseRules } from './testing/css'
+
+const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8')
+const generated = renderGenerated()
+
+describe('母题生成物（spec §4.5）', () => {
+  it('四个生成物与入库文件逐字节相同；不一致时运行 pnpm ui-theme:motif', () => {
+    expect(GENERATED_NAMES).toEqual(['motif.css', 'favicon.svg', 'logo.svg', 'knot-full.svg'])
+    for (const name of GENERATED_NAMES) {
+      expect(
+        read(`./generated/${name}`),
+        `${name} 与 motif.ts 不一致，运行 pnpm ui-theme:motif`,
+      ).toBe(generated[name])
+    }
+  })
+
+  it('motif.css 只有一个 :root 块，恰好 17 个属性，顺序与取值格式符合契约 §3.7.1', () => {
+    const css = generated['motif.css']
+    expect(
+      css.startsWith('/* 由 packages/ui-theme/scripts/build-motif-css.mjs 生成，勿手改 */\n'),
+    ).toBe(true)
+    const rules = parseRules(css)
+    expect(rules).toHaveLength(1)
+    expect(rules[0]?.selectors).toEqual([':root'])
+    const declarations = rules[0]?.declarations ?? new Map<string, string>()
+    expect([...declarations.keys()]).toEqual([...MOTIF_CSS_PROPERTIES])
+    expect(MOTIF_CSS_PROPERTIES).toHaveLength(17)
+    const values = [...declarations.values()]
+    for (const value of values.slice(0, 9)) {
+      expect(value).toMatch(/^url\("data:image\/svg\+xml,[^"\s]+"\)$/)
+    }
+    for (const value of values.slice(9)) expect(value).toMatch(/^(0|1|0\.\d{1,6})$/)
+    expect(declarations.get('--pt-motif-corner-gem-x')).toBe('0.263158')
+    expect(declarations.get('--pt-motif-corner-gem-y')).toBe('0.263158')
+    for (const name of ['logo', 'knot', 'gem']) {
+      expect(declarations.get(`--pt-motif-${name}-gem-x`)).toBe('0.5')
+      expect(declarations.get(`--pt-motif-${name}-gem-y`)).toBe('0.5')
+    }
+  })
+
+  it('宝石遮罩只含半对角线 4.9 的菱形，视框 -4.9 -4.9 9.8 9.8', () => {
+    const declarations = parseRules(generated['motif.css'])[0]?.declarations
+    const value = declarations?.get('--pt-motif-gem-mask') ?? ''
+    const svg = decodeURIComponent(value.slice('url("data:image/svg+xml,'.length, -2))
+    expect(svg).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4.9 -4.9 9.8 9.8"><path fill="#000" d="M0-4.9 4.9 0 0 4.9-4.9 0Z"/></svg>',
+    )
+  })
+
+  it('SVG 与 data URI 除 xmlns 外不含任何 http 链接', () => {
+    const xmlns = 'http://www.w3.org/2000/svg'
+    for (const name of GENERATED_NAMES) {
+      const text = name === 'motif.css' ? decodeURIComponent(generated[name]) : generated[name]
+      expect(text.replaceAll(xmlns, ''), name).not.toMatch(/https?:/i)
+    }
+  })
+
+  it('logo.svg 是 46×24、aria-hidden 的站点琥珀 logo', () => {
+    const logo = renderLogoSvg()
+    expect(
+      logo.startsWith(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -12.5 48 25" width="46" height="24" aria-hidden="true" focusable="false">',
+      ),
+    ).toBe(true)
+    for (const color of ['#fff0c8', '#e3a24a', '#7a3d0c', '#b36a22']) expect(logo).toContain(color)
+  })
+})
