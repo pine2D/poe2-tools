@@ -329,7 +329,7 @@ export function App({ fetchImpl }: AppProps) {
   }
 
   return (
-    <div className="app">
+    <div className="pt-backdrop app">
       <a className="skip-link" href="#build-main">
         跳到主要内容
       </a>

@@ -94,3 +94,8 @@ kbd {
 :root:not([data-input="keyboard"]) .export-settings__trigger:active {
   transform: scale(0.97);
 }
+
+/* 设置弹层 z-index 30 要压过主区吸顶工具栏；弹层在页头里，页头若带 z-index 会自成层叠上下文把弹层困住，构筑页让页头不建层叠上下文（spec §4.5） */
+.app .pt-header {
+  z-index: auto;
+}

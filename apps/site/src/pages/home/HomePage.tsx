@@ -3,7 +3,7 @@ import { SiteHeader } from '../../shared/components/SiteHeader'
 
 export function HomePage() {
   return (
-    <div className="portal">
+    <div className="pt-backdrop portal">
       <a className="skip-link" href="#main">
         跳到主要内容
       </a>

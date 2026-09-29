@@ -47,3 +47,14 @@
 .empty__example > :last-child {
   font-weight: 500;
 }
+
+/* 空态“试用示例构筑”一行（改版前在 site.css，随构筑页入口一起引入） */
+.example-action {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  color: var(--ink-2);
+}

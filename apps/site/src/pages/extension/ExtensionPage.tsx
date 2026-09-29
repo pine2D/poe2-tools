@@ -6,7 +6,7 @@ const docs =
   'https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension'
 export function ExtensionPage() {
   return (
-    <div className="portal">
+    <div className="pt-backdrop portal">
       <a className="skip-link" href="#main">
         跳到主要内容
       </a>

@@ -2,9 +2,8 @@
 // 全部用 <path> 表达（圆和矩形也转成 path），渲染逻辑因此只有一个分支。
 // 颜色一律 currentColor，由使用处的 color 决定；尺寸由 size 决定，不写死。
 
-// 零引用纪律（第一期 M-5）：这 14 个名字全部在 A / B 两期内被消费，多一个都不留。
+// 零引用纪律（第一期 M-5）：这 13 个名字全部有调用方，多一个都不留（页头 logo 改用 Motif 后删去 brand）。
 export type IconName =
-  | 'brand'
   | 'upload'
   | 'drop'
   | 'download'
@@ -20,8 +19,6 @@ export type IconName =
   | 'filter'
 
 const PATHS: Record<IconName, readonly string[]> = {
-  // 品牌：双层菱形，取自 mockup-1 的字标图标
-  brand: ['M12 2.5 20 12l-8 9.5L4 12z', 'M12 7.5 16.2 12 12 16.5 7.8 12z'],
   // 上传：箭头朝上进托盘（拖放区静止态）
   upload: ['M12 16V4', 'm7 9 5-5 5 5', 'M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3'],
   // 松手：箭头朝下进托盘（拖放区 drag-over 态，图标切换 = 非颜色冗余反馈）

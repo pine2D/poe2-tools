@@ -2,7 +2,13 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { GENERATED_NAMES, MOTIF_CSS_PROPERTIES, renderGenerated, renderLogoSvg } from './motif-css'
+import {
+  GENERATED_NAMES,
+  MOTIF_CSS_PROPERTIES,
+  renderFaviconSvg,
+  renderGenerated,
+  renderLogoSvg,
+} from './motif-css'
 import { parseRules } from './testing/css'
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8')
@@ -68,5 +74,21 @@ describe('母题生成物（spec §4.5）', () => {
       ),
     ).toBe(true)
     for (const color of ['#fff0c8', '#e3a24a', '#7a3d0c', '#b36a22']) expect(logo).toContain(color)
+  })
+})
+
+describe('站点副本（spec §6.1）', () => {
+  const site = (rel: string) => read(`../../../apps/site/${rel}`)
+
+  it('apps/site/public/favicon.svg 与 generated/favicon.svg 同字节', () => {
+    expect(site('public/favicon.svg'), '运行 pnpm ui-theme:motif').toBe(generated['favicon.svg'])
+  })
+
+  it('构筑页内联 favicon 解码后等于 generated/favicon.svg 去掉末尾换行', () => {
+    const href = /<link\s+rel="icon"\s+href="data:image\/svg\+xml,([^"]+)"/.exec(
+      site('build/index.html'),
+    )?.[1]
+    expect(href).toBeDefined()
+    expect(decodeURIComponent(href ?? '')).toBe(renderFaviconSvg())
   })
 })
