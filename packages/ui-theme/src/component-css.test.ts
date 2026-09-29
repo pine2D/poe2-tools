@@ -232,3 +232,62 @@ describe('pt-btn（spec §5.6）', () => {
     expect(declared('btn.css', '.pt-wide-only', 'display', /max-width:\s*600px/)).toBe('none')
   })
 })
+
+describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', () => {
+  it('分隔线 14px 高，hero 宽 440 居中上距 18，示例区左缩进 44', () => {
+    expect(declared('divider.css', '.pt-divider', 'height')).toBe('14px')
+    expect(declared('divider.css', '.pt-divider--hero', 'width')).toBe('440px')
+    expect(declared('divider.css', '.pt-divider--hero', 'max-width')).toBe('100%')
+    expect(declared('divider.css', '.pt-divider--hero', 'margin')).toBe('18px auto 0')
+    expect(declared('divider.css', '.pt-divider--indent', 'margin')).toBe('8px 0 8px 44px')
+  })
+
+  it('chip 在标题栏用金属配色，卡体 chip 默认隐藏并用非标题栏配色（R2）', () => {
+    expect(declared('chip.css', '.pt-chip', 'border')).toBe('1px solid var(--line-2)')
+    expect(declared('chip.css', '.pt-chip', 'color')).toBe('var(--ink-2)')
+    expect(declared('chip.css', '.pt-titlebar > .pt-chip', 'border-color')).toBe('#5d4229')
+    expect(declared('chip.css', '.pt-titlebar > .pt-chip', 'color')).toBe('#cdb58c')
+    expect(declared('chip.css', '.pt-titlebar > .pt-chip', 'background')).toBe(
+      'rgba(0, 0, 0, 0.25)',
+    )
+    expect(declared('chip.css', '.pt-chip--body', 'display')).toBe('none')
+  })
+
+  it('hero 标题三种字号一次写全，≤620 缩小；渐变字在强制色彩下退回 CanvasText', () => {
+    expect(declared('hero-title.css', '.pt-hero-title', 'font')).toBe(
+      '700 54px / 1.2 var(--pt-serif)',
+    )
+    expect(declared('hero-title.css', '.pt-hero-title--extension', 'font-size')).toBe('44px')
+    expect(declared('hero-title.css', '.pt-hero-title--build', 'font-size')).toBe('36px')
+    const narrow = /max-width:\s*620px/
+    expect(declared('hero-title.css', '.pt-hero-title', 'font-size', narrow)).toBe('34px')
+    expect(declared('hero-title.css', '.pt-hero-title--extension', 'font-size', narrow)).toBe(
+      '34px',
+    )
+    expect(declared('hero-title.css', '.pt-hero-title--build', 'font-size', narrow)).toBe('28px')
+    expect(declared('hero-title.css', '.pt-hero-title__gold', 'color', FORCED)).toBe('CanvasText')
+  })
+
+  it('index.css 按契约 §3.3 的顺序引入 M1 的全部文件', () => {
+    const imports = [
+      ...readFileSync(fileURLToPath(new URL('./index.css', import.meta.url)), 'utf8').matchAll(
+        /@import "([^"]+)";/g,
+      ),
+    ].map((m) => m[1])
+    expect(imports).toEqual([
+      './tokens.css',
+      './generated/motif.css',
+      './components/text.css',
+      './components/motif.css',
+      './components/backdrop.css',
+      './components/header.css',
+      './components/frame.css',
+      './components/panel.css',
+      './components/forge-btn.css',
+      './components/btn.css',
+      './components/divider.css',
+      './components/chip.css',
+      './components/hero-title.css',
+    ])
+  })
+})

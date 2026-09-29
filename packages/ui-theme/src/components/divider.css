@@ -1,0 +1,38 @@
+/* pt-divider（spec §5.9）：14px 高；两侧 1px 渐隐线，中心 31×12 的 knot（左右外距 -2px）。
+   只用在 spec §5.9 列出的位置；--sep-c 可设成稀有度边色（译文提示框） */
+.pt-divider {
+  display: flex;
+  align-items: center;
+  height: 14px;
+}
+.pt-divider::before,
+.pt-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sep-c, #7a5530));
+}
+.pt-divider::after {
+  background: linear-gradient(270deg, transparent, var(--sep-c, #7a5530));
+}
+.pt-divider > .pt-motif {
+  margin: 0 -2px;
+}
+/* 首页 hero 标题下：宽 440px 居中，上距 18px（mockup :415）；窄屏宽 100%、最大 440px */
+.pt-divider--hero {
+  width: 440px;
+  max-width: 100%;
+  margin: 18px auto 0;
+}
+/* 首页示例区 EN 行与中文行之间：左缩进 44px（mockup :209） */
+.pt-divider--indent {
+  margin: 8px 0 8px 44px;
+}
+
+/* 强制色彩：渐隐线改成实线（中心菱结由 motif.css 隐藏） */
+@media (forced-colors: active) {
+  .pt-divider::before,
+  .pt-divider::after {
+    background: CanvasText;
+  }
+}

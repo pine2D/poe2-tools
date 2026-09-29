@@ -1,0 +1,22 @@
+/* pt-chip（spec §5.10）：不可点击的标签。标题栏里用金属配色；其他位置（含窄容器里移到卡体的
+   .pt-chip--body，spec §5.3 R2）边 --line-2、字 --ink-2、无底 */
+.pt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.pt-titlebar > .pt-chip {
+  border-color: #5d4229;
+  background: rgba(0, 0, 0, 0.25);
+  color: #cdb58c;
+}
+/* 卡体第一行的 chip：默认不显示，容器宽 <480px 时由 frame.css 的容器查询显示 */
+.pt-chip--body {
+  display: none;
+}

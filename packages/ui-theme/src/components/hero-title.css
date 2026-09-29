@@ -1,0 +1,36 @@
+/* hero 标题（spec §4.4、§6.2、§6.3、§6.4.1）：衬线 700、字距 .02em；金色纵向渐变字只用于 hero 标题 */
+.pt-hero-title {
+  margin: 0;
+  color: var(--ink);
+  font: 700 54px / 1.2 var(--pt-serif);
+  letter-spacing: 0.02em;
+}
+.pt-hero-title--extension {
+  font-size: 44px;
+}
+.pt-hero-title--build {
+  font-size: 36px;
+}
+.pt-hero-title__gold {
+  background: linear-gradient(180deg, #fbe9c2 8%, #e0b46e 50%, #a8733a 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (max-width: 620px) {
+  .pt-hero-title,
+  .pt-hero-title--extension {
+    font-size: 34px;
+  }
+  .pt-hero-title--build {
+    font-size: 28px;
+  }
+}
+
+/* 强制色彩：渐变字退回 CanvasText */
+@media (forced-colors: active) {
+  .pt-hero-title__gold {
+    background: none;
+    color: CanvasText;
+  }
+}

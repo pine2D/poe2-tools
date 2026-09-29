@@ -6,4 +6,5 @@ export const SERIF_SELECTORS: readonly string[] = [
   '.pt-nav a',
   '.pt-titlebar__title',
   '.pt-forge-btn',
+  '.pt-hero-title',
 ]
