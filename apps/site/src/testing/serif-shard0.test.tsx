@@ -22,7 +22,7 @@ const shard0 = new Set(
 const rich = readFileSync(resolve(here, '../../../../data/fixtures/synthetic/rich.build'), 'utf8')
 
 // 本里程碑页面上必须至少命中一次的衬线选择器
-const MUST_HIT = ['.pt-nav a']
+const MUST_HIT = ['.pt-nav a', '.pt-titlebar__title', '.pt-forge-btn', '.pt-hero-title']
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = () => {}
