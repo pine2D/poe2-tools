@@ -1,3 +1,41 @@
+# 界面字体与素材（2026-09-28 登记）
+
+网站界面改版（PoE2 设计语言，一期）使用的字体与视觉素材。只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games、腾讯、Craft of Exile 的任何素材或纹样，也不使用 Fontin（exljbris 许可禁止再分发，而且不含中文）。
+
+- **字体**：Noto Serif SC、Noto Serif TC、Cinzel，取自 [google/fonts](https://github.com/google/fonts) 固定提交 [`23e54b51`](https://github.com/google/fonts/tree/23e54b51ddffbc7713c583748e3bd86f62b1fa4a)（2026-09-29 选定）的 `ofl/notoserifsc/`、`ofl/notoseriftc/`、`ofl/cinzel/`。许可为 SIL Open Font License 1.1；三套字体的 OFL.txt 和 name 表都没有保留字体名（RFN），子集不改内部名称，页面用站点私有别名“PoE2 Serif SC”“PoE2 Serif TC”“PoE2 Cinzel”。
+- **版权行**：Noto Serif SC、Noto Serif TC 以字体 name 表为准，为 `(c) 2017-2024 Adobe (http://www.adobe.com/).` 和 `Noto is a trademark of Google Inc.`；上游 OFL.txt 头部写的是 `Copyright 2012 Google Inc. All Rights Reserved.`，与 name 表不一致，许可文件两行都保留。Cinzel 为 `Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel)`。
+- **来源等级与风险**：上游是 google/fonts 官方仓库，许可明确，按固定提交下载并校验下表的 SHA-256，风险等级为低；不属于 gray，不需要灰区总开关。
+- **获取方式**：`packages/ui-theme/scripts/build-fonts.mjs`（`pnpm ui-theme:fonts`，只手动运行）只请求 `raw.githubusercontent.com` 上该提交的 6 个文件，User-Agent 固定为 `poe2-tools-ui-theme (github.com/pine2D/poe2-tools)`，缓存到 `data/cache/ui-fonts/<提交号>/`（不入库）；下载后先按下表校验，任何一个不一致就中止。常规构建和 CI 不联网，也不运行 subset-font。
+- **产物与开关**：分片、`fonts.css`、`coverage.json` 与每个家族一份的许可文件都在 `packages/ui-theme/fonts/`（生成、入库；该目录为 SIL OFL 1.1，项目的 MIT 许可不覆盖它）。许可文件随网站发布为 `/fonts/<Family>-OFL.txt`。删除 `fonts/` 并去掉页面入口对 `@poe2-tools/ui-theme/fonts.css` 的引入，即回到系统字体。
+- **开发依赖**：`subset-font@2.9.0`（BSD-3-Clause），只在构建期切分字体，不进入网站或扩展产物。传递依赖：fontverter 2.0.0（BSD-3-Clause）、harfbuzzjs 1.6.x（MIT；精确版本以 pnpm-lock.yaml 为准）、wawoff2 2.0.1（MIT）、woff2sfnt-sfnt2woff 1.0.0（MIT）、pako 1.0.11（MIT AND Zlib）、argparse 2.0.1（Python-2.0）、p-limit 3.1.0 与 yocto-queue 0.1.0（MIT），都是纯 JS/wasm，没有原生二进制和安装脚本。
+- **《通用规范汉字表》一级字表**：`packages/ui-theme/scripts/tongyong-level1.txt`，3500 行、每行一字，按字表序号排列，用于常用字分片（改版规格 §7.3）。字表由国务院 2013 年以《国务院关于公布〈通用规范汉字表〉的通知》（国发〔2013〕23号）公布，按《著作权法》第五条，国家机关具有行政性质的文件不适用该法。文本取自 Unicode 汉字数据库 [Unihan 16.0.0](https://www.unicode.org/Public/16.0.0/ucd/Unihan.zip)（Unicode License v3；Unihan.zip 的 SHA-256 为 `b8f000df69de7828d21326a2ffea462b04bc7560022989f7cc704f10521ef3e0`）`Unihan_OtherMappings.txt` 的 `kTGH` 字段：取值为 `2013:1` 至 `2013:3500` 的字，按序号排列。字体脚本只读取入库的这份文件，不联网获取它。
+- **自有素材**：母题「符文菱结」（`packages/ui-theme/src/motif.ts` 生成的 `src/generated/motif.css`、`favicon.svg`、`logo.svg`、`knot-full.svg`，以及站点副本 `apps/site/public/favicon.svg`）和颗粒（`src/noise.ts`）都是自绘，没有第三方来源。
+- **素材白名单**（由 `packages/ui-theme/scripts/compliance.mjs` 判定）：仓库和构建产物里的全部 png、jpg、webp、gif、svg、woff、woff2、ttf、otf 都必须属于以下三类之一，否则测试或构建失败：① 字体分片，登记目录 `packages/ui-theme/fonts/`，逐片 SHA-256 由脚本同时生成的 `fonts/coverage.json` 承载；② 母题生成物，即 `packages/ui-theme/src/generated/*.svg` 与 `apps/site/public/favicon.svg`，与源的一致性由 `motif.test.ts` 逐字节保证；③ 其余手工或一次性生成的文件，按路径和 SHA-256 逐个登记在下面的“素材白名单（第 3 类）”表里，一期为空。woff、ttf、otf 不属于任何一类，出现即失败。
+
+## 字体源文件
+
+固定提交：`23e54b51ddffbc7713c583748e3bd86f62b1fa4a`
+
+| 上游路径 | SHA-256 |
+|---|---|
+| `ofl/notoserifsc/NotoSerifSC[wght].ttf` | `050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9` |
+| `ofl/notoserifsc/OFL.txt` | `5e0da210fb04058a8c0087985d2d456b931c2579811a49655721d3cf0c36b6d6` |
+| `ofl/notoseriftc/NotoSerifTC[wght].ttf` | `0077e18f57c6908f4a000969880940bdb0dad057c0e8d98b49dc364c3d1b09c6` |
+| `ofl/notoseriftc/OFL.txt` | `5e0da210fb04058a8c0087985d2d456b931c2579811a49655721d3cf0c36b6d6` |
+| `ofl/cinzel/Cinzel[wght].ttf` | `f4d83d34d1f6c741193e4acf4b3dff9531e5a67b6aa65228d00a7db72a4e0f34` |
+| `ofl/cinzel/OFL.txt` | `f2b3029aba64c378bf0963b62945eee15e564fe4330b934c8f2eb058282b5e83` |
+
+## 通用规范汉字表一级字表
+
+| 路径 | SHA-256 |
+|---|---|
+| `packages/ui-theme/scripts/tongyong-level1.txt` | `79a6c710013cc86617d5db65871f59b2d67dee72415d380a2cc7145a51450fe4` |
+
+## 素材白名单（第 3 类）
+
+| 路径 | SHA-256 |
+|---|---|
+
 # 2026-09-18 副手雕像与格挡核对（实施前登记）
 
 沿已登记 MIT PoB2 固定提交 `ce566eac45ea8a86477f513c7ee65a1ebe60014e` 的 ModRunes、ModItem、ModScalability、Bases，以及同提交 [Classes/Item.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Classes/Item.lua#L2597) 核对副手本件格挡。只阅读规则并独立实现，不引入源代码或新数据包；本件格挡使用本地加值与提高之和，最后向下取整，品质不参与。Ox 的 shield/buckler 本地标记与显式本地格挡一致；Silk shield 保留伙伴条件，不计入无条件本件格挡。固定源 Silk buckler 正常显示行缺失，继续不开放，不能用绑定文本替代。真机面板取整待验收。
