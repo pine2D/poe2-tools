@@ -1,0 +1,27 @@
+/* pt-backdrop（spec §5.1）：页面根容器的底。顶光 + 暗角 + 0.05 颗粒；数据区和面板一律平涂 */
+.pt-backdrop {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background:
+    radial-gradient(1000px 520px at 50% -14%, rgba(201, 146, 74, 0.13), transparent 70%),
+    radial-gradient(ellipse 110% 85% at 50% 30%, transparent 50%, rgba(0, 0, 0, 0.45) 100%),
+    var(--page);
+}
+.pt-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--pt-grain);
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* 强制色彩：颗粒隐藏（spec §5.15） */
+@media (forced-colors: active) {
+  .pt-backdrop::before {
+    display: none;
+  }
+}

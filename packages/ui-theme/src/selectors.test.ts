@@ -1,0 +1,21 @@
+// SERIF_SELECTORS 与组件 CSS 实际使用衬线的选择器逐条一致（spec §7.1；契约 §3.5.6 的判定口径）
+import { readdirSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { expect, it } from 'vitest'
+import { SERIF_SELECTORS } from './selectors'
+import { parseRules } from './testing/css'
+
+const dir = fileURLToPath(new URL('./components/', import.meta.url))
+
+it('SERIF_SELECTORS 等于组件 CSS 中 font / font-family 使用 var(--pt-serif…) 的选择器集合', () => {
+  const found = new Set<string>()
+  for (const file of readdirSync(dir).filter((name) => name.endsWith('.css'))) {
+    for (const rule of parseRules(readFileSync(`${dir}${file}`, 'utf8'))) {
+      const font = `${rule.declarations.get('font') ?? ''} ${rule.declarations.get('font-family') ?? ''}`
+      if (!font.includes('var(--pt-serif')) continue
+      for (const selector of rule.selectors) found.add(selector)
+    }
+  }
+  expect([...found].sort()).toEqual([...SERIF_SELECTORS].sort())
+  expect(new Set(SERIF_SELECTORS).size).toBe(SERIF_SELECTORS.length)
+})

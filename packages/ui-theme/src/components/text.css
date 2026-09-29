@@ -1,0 +1,13 @@
+/* 文字小工具（spec §4.4） */
+
+/* 衬线文字里的 ASCII 扩展名片段（如 .build）改用无衬线 600，字距 0（mockup :163） */
+.pt-ext {
+  font-family: var(--font-zh-cn);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* 数值等宽 */
+.pt-num {
+  font-variant-numeric: tabular-nums;
+}

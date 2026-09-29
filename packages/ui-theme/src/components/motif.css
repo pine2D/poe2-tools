@@ -1,0 +1,85 @@
+/* 母题「符文菱结」的空 span（spec §4.5）：logo、分隔线菱结、名称牌扣、按钮端宝石。
+   ::before 画底层（固定刻面色，不换色）；::after 画宝石层：mask 取宝石菱形，背景是 conic 四刻面，
+   颜色取祖先上的 --gem-1..4。
+   --ptm-u 是 1 个 viewBox 单位对应的 px（SVG 按 meet 缩放，取宽高比例中较小者）；
+   宝石层边长 9.8 个单位 = 2 × GEM_HALF_DIAGONAL（motif.ts），中心在盒内 (--ptm-gx, --ptm-gy)。 */
+.pt-motif {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--ptm-w);
+  height: var(--ptm-h);
+  vertical-align: middle;
+}
+.pt-motif::before,
+.pt-motif::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pt-motif::before {
+  background: var(--ptm-base) center / 100% 100% no-repeat;
+}
+.pt-motif::after {
+  --ptm-gem: calc(9.8 * var(--ptm-u));
+  --ptm-gem-at: calc(var(--ptm-w) * var(--ptm-gx) - var(--ptm-gem) / 2)
+    calc(var(--ptm-h) * var(--ptm-gy) - var(--ptm-gem) / 2);
+  mask: var(--pt-motif-gem-mask) var(--ptm-gem-at) / var(--ptm-gem) var(--ptm-gem) no-repeat;
+  background:
+    conic-gradient(
+      from 0deg,
+      var(--gem-2) 0 25%,
+      var(--gem-3) 0 50%,
+      var(--gem-4) 0 75%,
+      var(--gem-1) 0
+    )
+    var(--ptm-gem-at) / var(--ptm-gem) var(--ptm-gem) no-repeat;
+}
+
+/* logo 简形（核心 + 短收尖）：页头 46×24（mockup :595） */
+.pt-motif--logo {
+  --ptm-w: 46px;
+  --ptm-h: 24px;
+  --ptm-u: calc(46px / 48);
+  --ptm-base: var(--pt-motif-logo);
+  --ptm-gx: var(--pt-motif-logo-gem-x);
+  --ptm-gy: var(--pt-motif-logo-gem-y);
+}
+
+/* knot 简形（核心 + 单段收尖）：分隔线中心 31×12（mockup :594） */
+.pt-motif--knot {
+  --ptm-w: 31px;
+  --ptm-h: 12px;
+  --ptm-u: calc(12px / 25);
+  --ptm-base: var(--pt-motif-knot);
+  --ptm-gx: var(--pt-motif-knot-gem-x);
+  --ptm-gy: var(--pt-motif-knot-gem-y);
+}
+
+/* 名称牌顶边扣：同一 knot 符号，36×14 */
+.pt-motif--clasp {
+  --ptm-w: 36px;
+  --ptm-h: 14px;
+  --ptm-u: calc(14px / 25);
+  --ptm-base: var(--pt-motif-knot);
+  --ptm-gx: var(--pt-motif-knot-gem-x);
+  --ptm-gy: var(--pt-motif-knot-gem-y);
+}
+
+/* gem 简形（只有核心）：按钮端 11px（mockup :598） */
+.pt-motif--gem {
+  --ptm-w: 11px;
+  --ptm-h: 11px;
+  --ptm-u: calc(11px / 25);
+  --ptm-base: var(--pt-motif-gem-ring);
+  --ptm-gx: var(--pt-motif-gem-gem-x);
+  --ptm-gy: var(--pt-motif-gem-gem-y);
+}
+
+/* 强制色彩：母题整体隐藏（spec §4.5、§5.15） */
+@media (forced-colors: active) {
+  .pt-motif {
+    display: none;
+  }
+}
