@@ -14,7 +14,6 @@ import {
 } from '@poe2-tools/item-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createDictLoader, type FetchJson, type LoadedDict } from '../../shared/dict/loadDict'
-import { useTheme } from '../../shared/theme/useTheme'
 import { CatalogPanel } from './CatalogPanel'
 import { ImportReadinessPanel } from './ImportReadinessPanel'
 import { ModStateBadges } from './ModStateBadges'
@@ -118,7 +117,6 @@ interface CraftAppProps {
 }
 
 export function CraftApp({ fetchImpl }: CraftAppProps) {
-  const { mode, setMode } = useTheme()
   const loader = useMemo(() => createDictLoader(import.meta.env.BASE_URL, fetchImpl), [fetchImpl])
   const [rawText, setRawText] = useState('')
   const [item, setItem] = useState<ItemDocument | null>(null)
@@ -307,14 +305,6 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
           <a href="/build/">构筑汉化</a>
           <strong>装备工坊</strong>
         </nav>
-        <label className="theme-control">
-          主题
-          <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            <option value="system">跟随系统</option>
-            <option value="light">浅色</option>
-            <option value="dark">深色</option>
-          </select>
-        </label>
       </header>
 
       <p className="craft-paused">

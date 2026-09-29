@@ -43,14 +43,6 @@
   color: var(--text);
   font-weight: 600;
 }
-.theme-control {
-  justify-self: end;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  color: var(--text-muted);
-}
-
 .craft-shell {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
