@@ -1,0 +1,109 @@
+/* PoE2 设计语言令牌（spec §4.3）：全站唯一的 :root 块，只有深色，没有主题变体。
+   数值由 tokens.test.ts 的对比度门禁固定；改值先改 spec。 */
+:root {
+  color-scheme: dark;
+
+  /* 表面 */
+  --page: #17130f;
+  --bg: #100e0c;
+  --bg-2: #14110e;
+  --surface: #1a1612;
+  --raised: #211c16;
+  --raised-2: #2b241c;
+  --frame-bg: #15110d;
+  --well: #0b0908;
+  --card: #0f0c0a;
+  --bar: #120f0c;
+  --miss-bg: rgba(242, 167, 102, 0.07);
+
+  /* 线条：只有 --control-edge 承担交互控件边界，其余都是装饰 */
+  --line: #322a21;
+  --line-2: #473b2d;
+  --control-edge: #8a7a62;
+  --metal-line: #7a5530;
+  --metal-edge: #5d4229;
+  --metal-bright: #c89a5e;
+
+  /* 文字与金属 */
+  --ink: #e9e0cd;
+  --ink-2: #c0b49d;
+  --ink-3: #9a8e79;
+  --bronze-lo: #6d4b27;
+  --bronze: #b98a50;
+  --bronze-hi: #e4bb7c;
+  --gold: #dcb877;
+  --title-gold: #e9c585;
+
+  /* 游戏语义色：独立一组，不从品牌色推导 */
+  --mod: #8888ff;
+  --mod-hi: #a9a9ff;
+  --mod-num-zh: #dcdcff;
+  --prop: #8c8c8c;
+  --val: #ffffff;
+  --unique: #ef6916;
+  --unique-name: #f27b2e;
+  --unique-name-2: #e7a070;
+  --unique-edge: #af6025;
+  --gem: #1ba29b;
+  --gem-en: #8cc5c1;
+
+  /* 状态与交互 */
+  --ok: #93c47d;
+  --miss: #f2a766;
+  --danger: #f28e87;
+  --focus: #ffd48a;
+  --focus-ring: 2px solid var(--focus);
+  --selection-bg: #e4bb7c;
+  --selection-fg: #100e0c;
+
+  /* 游戏标记色：14 个，沿用深色值（渲染 .build 标记语法） */
+  --mk-red: #e8695c;
+  --mk-orange: #e0904a;
+  --mk-yellow: #e6d45a;
+  --mk-green: #6fcf5e;
+  --mk-blue: #8888ff;
+  --mk-indigo: #a79bff;
+  --mk-violet: #d79be8;
+  --mk-black: #a1aab7;
+  --mk-white: #ede6d6;
+  --mk-grey: #9a9280;
+  --mk-bronze: #c9a46a;
+  --mk-silver: #c8c8c8;
+  --mk-gold: #e6e066;
+  --mk-unique: #c87b3a;
+
+  /* 归属宝石刻面：左上亮面、右上中面、右下暗面、左下中暗面；:root 取站点琥珀 */
+  --gem-1: #fff0c8;
+  --gem-2: #e3a24a;
+  --gem-3: #7a3d0c;
+  --gem-4: #b36a22;
+
+  /* 字体栈（spec §4.4）：别名优先，缺字逐级回退 */
+  --pt-serif: "PoE2 Serif SC", "Noto Serif SC", "Source Han Serif SC", serif;
+  --pt-serif-tc: "PoE2 Serif TC", "PoE2 Serif SC", "Noto Serif TC", "Source Han Serif TC", serif;
+  --pt-cinzel: "PoE2 Cinzel", "Cinzel", "PoE2 Serif SC", serif;
+  --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  --font-zh-tw:
+    system-ui, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* 动效（spec §4.6） */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --dur-enter: 180ms;
+  --dur-exit: 140ms;
+  --dur-fast: 140ms;
+}
+
+/* 归属宝石的另外两组预设：只改刻面，不改语义色 */
+.pt-attr-ext {
+  --gem-1: #c9f5f0;
+  --gem-2: #2fbdb3;
+  --gem-3: #0b4a46;
+  --gem-4: #1a8780;
+}
+.pt-attr-unique {
+  --gem-1: #ffd8b5;
+  --gem-2: #f07a2c;
+  --gem-3: #6e2405;
+  --gem-4: #b44f19;
+}
