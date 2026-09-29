@@ -13,6 +13,7 @@
       "!data/fixtures",
       "!packages/dict-builder/fixtures/*.html",
       "!**/dist",
+      "!packages/ui-theme/fonts",
       "!packages/ui-theme/src/generated"
     ]
   },

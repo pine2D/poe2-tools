@@ -1,0 +1,112 @@
+// 字体分片覆盖（spec §7.3）：名称、一级字、站点固定文案都要落在对应分片里。失败时运行 pnpm ui-theme:fonts
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join, relative, sep } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { REPO_ROOT } from '../scripts/compliance.mjs'
+import {
+  type CharsetIO,
+  enNames,
+  nonAsciiChars,
+  siteFixedChars,
+  unicodeRange,
+  zhNames,
+} from './charsets'
+import { parseRules } from './testing/css'
+
+interface CoverageShard {
+  file: string
+  family: string
+  group: string
+  weight: number
+  chars: string
+}
+
+const FONTS = join(REPO_ROOT, 'packages/ui-theme/fonts')
+const shards = (
+  JSON.parse(readFileSync(join(FONTS, 'coverage.json'), 'utf8')) as { shards: CoverageShard[] }
+).shards
+const HINT = '运行 pnpm ui-theme:fonts 重新生成字体分片，并与本次改动放在同一个提交里'
+
+const io: CharsetIO = {
+  listFiles(dirRel) {
+    const abs = join(REPO_ROOT, dirRel)
+    return readdirSync(abs, { recursive: true, encoding: 'utf8' })
+      .map((name) => join(abs, name))
+      .filter((path) => statSync(path).isFile())
+      .map((path) => relative(REPO_ROOT, path).split(sep).join('/'))
+  },
+  readText: (fileRel) => readFileSync(join(REPO_ROOT, fileRel), 'utf8'),
+}
+
+function charsOf(test: (shard: CoverageShard) => boolean): Set<string> {
+  return new Set(shards.filter(test).flatMap((shard) => [...shard.chars]))
+}
+
+function missing(text: Iterable<string>, have: ReadonlySet<string>): string {
+  return [...new Set(text)].filter((ch) => !/\s/.test(ch) && !have.has(ch)).join('')
+}
+
+const level1 = readFileSync(
+  join(REPO_ROOT, 'packages/ui-theme/scripts/tongyong-level1.txt'),
+  'utf8',
+)
+  .split('\n')
+  .filter((line) => line !== '')
+
+describe('分片覆盖（spec §7.3）', () => {
+  const sc = charsOf((shard) => shard.family === 'PoE2 Serif SC')
+
+  it('zh-CN 名称的字符 ⊆ SC 全部分片', () => {
+    expect(missing(zhNames(io, 'zh-CN').join(''), sc), HINT).toBe('')
+  })
+
+  it('《通用规范汉字表》一级字 ⊆ SC 全部分片', () => {
+    expect(missing(level1, sc), HINT).toBe('')
+  })
+
+  it('zh-TW 名称的非 ASCII 字符 ⊆ TC 全部分片', () => {
+    const tc = charsOf((shard) => shard.family === 'PoE2 Serif TC')
+    expect(missing(nonAsciiChars(zhNames(io, 'zh-TW').join('')), tc), HINT).toBe('')
+  })
+
+  it('英文名字符 ⊆ Cinzel', () => {
+    expect(
+      missing(
+        enNames(io).join(''),
+        charsOf((shard) => shard.group === 'cinzel'),
+      ),
+      HINT,
+    ).toBe('')
+  })
+
+  it('站点固定文案 ⊆ shard0 ∪ shard1', () => {
+    const fixed = charsOf((shard) => shard.group === 'sc-fixed' || shard.group === 'sc-site')
+    expect(missing(siteFixedChars(io), fixed), HINT).toBe('')
+  })
+})
+
+describe('字表与 fonts.css', () => {
+  it('tongyong-level1.txt 为 3500 个互不相同的单字', () => {
+    expect(level1).toHaveLength(3500)
+    expect(new Set(level1).size).toBe(3500)
+    for (const line of level1) expect([...line]).toHaveLength(1)
+  })
+
+  it('fonts.css 每片一条 @font-face，顺序、family、weight、swap 与 unicode-range 与 coverage.json 一致', () => {
+    const faces = parseRules(readFileSync(join(FONTS, 'fonts.css'), 'utf8')).filter((rule) =>
+      rule.selectors.includes('@font-face'),
+    )
+    expect(
+      faces.map((face) => face.declarations.get('src')),
+      HINT,
+    ).toEqual(shards.map((shard) => `url("./${shard.file}") format("woff2")`))
+    for (const [i, shard] of shards.entries()) {
+      const face = faces[i]?.declarations
+      expect(face?.get('font-family')).toBe(`"${shard.family}"`)
+      expect(face?.get('font-weight')).toBe(String(shard.weight))
+      expect(face?.get('font-style')).toBe('normal')
+      expect(face?.get('font-display')).toBe('swap')
+      expect(face?.get('unicode-range'), shard.file).toBe(unicodeRange(shard.chars))
+    }
+  })
+})

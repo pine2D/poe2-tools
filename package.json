@@ -20,6 +20,7 @@
     "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict",
     "craft:build": "pnpm --filter @poe2-tools/dict-builder run build-craft",
     "craft:check": "pnpm --filter @poe2-tools/dict-builder run check-craft",
+    "ui-theme:fonts": "pnpm --filter @poe2-tools/ui-theme run fonts",
     "ui-theme:motif": "pnpm --filter @poe2-tools/ui-theme run motif"
   },
   "devDependencies": {

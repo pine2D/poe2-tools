@@ -14,10 +14,12 @@
     }
   },
   "scripts": {
+    "fonts": "node scripts/build-fonts.mjs",
     "motif": "node scripts/build-motif-css.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "@types/node": "26.4.1"
+    "@types/node": "26.4.1",
+    "subset-font": "2.9.0"
   }
 }
