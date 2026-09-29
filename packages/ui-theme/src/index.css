@@ -4,3 +4,7 @@
 @import "./components/motif.css";
 @import "./components/backdrop.css";
 @import "./components/header.css";
+@import "./components/frame.css";
+@import "./components/panel.css";
+@import "./components/forge-btn.css";
+@import "./components/btn.css";

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { type CssRule, parseRules } from './testing/css'
+import { FORGE_COLORS } from './testing/gate'
 
 const dir = fileURLToPath(new URL('./components/', import.meta.url))
 const files = readdirSync(dir).filter((name) => name.endsWith('.css'))
@@ -147,5 +148,87 @@ describe('pt-backdrop（spec §5.1）', () => {
     expect(declared('backdrop.css', '.pt-backdrop::before', 'opacity')).toBe('0.05')
     expect(declared('backdrop.css', '.pt-backdrop::before', 'mix-blend-mode')).toBe('overlay')
     expect(readFileSync(`${dir}backdrop.css`, 'utf8')).not.toContain('fixed')
+  })
+})
+
+// 选择器的主体（最后一个复合选择器，去掉括号内容与伪元素）是否就是 pt-frame 元素本身
+function isFrameSubject(selector: string): boolean {
+  let flat = selector
+  while (/\([^()]*\)/.test(flat)) flat = flat.replace(/\([^()]*\)/g, '')
+  const subject = flat.split(/\s*[\s>+~]\s*/).at(-1) ?? ''
+  return /^\.pt-frame(?!__)/.test(subject) && !subject.includes('::')
+}
+
+describe('pt-frame 与标题栏（spec §4.5、§5.3）', () => {
+  it('角饰伪元素 z-index 3，inset 为负外伸量；桌面 40/12px，≤620 为 28/9px', () => {
+    for (const pseudo of ['.pt-frame::before', '.pt-frame::after']) {
+      expect(declared('frame.css', pseudo, 'z-index')).toBe('3')
+      expect(declared('frame.css', pseudo, 'inset')).toBe('calc(-1 * var(--pt-co))')
+    }
+    expect(declared('frame.css', '.pt-frame', '--pt-cs')).toBe('40px')
+    expect(declared('frame.css', '.pt-frame', '--pt-co')).toBe('12px')
+    expect(declared('frame.css', '.pt-frame', '--pt-cs', /max-width:\s*620px/)).toBe('28px')
+    expect(declared('frame.css', '.pt-frame', '--pt-co', /max-width:\s*620px/)).toBe('9px')
+  })
+
+  it('pt-frame 自身的规则没有 overflow: hidden / clip 与 contain: paint', () => {
+    for (const file of files) {
+      for (const rule of rulesOf(file)) {
+        if (!rule.selectors.some(isFrameSubject)) continue
+        expect(rule.declarations.get('overflow') ?? '', `${file} ${rule.selectors}`).not.toMatch(
+          /hidden|clip/,
+        )
+        expect(rule.declarations.get('contain') ?? '', `${file} ${rule.selectors}`).not.toContain(
+          'paint',
+        )
+      }
+    }
+  })
+
+  it('pt-frame 与带标题栏的 pt-panel 是容器查询挂载点；标题栏按容器宽度取内边距', () => {
+    expect(declared('frame.css', '.pt-frame', 'container-type')).toBe('inline-size')
+    expect(declared('panel.css', '.pt-panel--titled', 'container-type')).toBe('inline-size')
+    expect(declared('frame.css', '.pt-titlebar', 'height')).toBe('46px')
+    expect(declared('frame.css', '.pt-titlebar', 'padding')).toBe('0 110px')
+    expect(declared('frame.css', '.pt-titlebar', 'padding', /width < 480px/)).toBe('0 20px')
+    expect(declared('frame.css', '.pt-titlebar > .pt-chip', 'display', /width < 480px/)).toBe(
+      'none',
+    )
+    expect(declared('frame.css', '.pt-chip.pt-chip--body', 'display', /width < 480px/)).toBe('flex')
+    expect(declared('frame.css', '.pt-titlebar__title', 'text-overflow')).toBe('ellipsis')
+    expect(declared('frame.css', '.pt-titlebar__title', 'white-space')).toBe('nowrap')
+  })
+})
+
+describe('pt-forge-btn（spec §5.5）', () => {
+  it('文字色与渐变中段三个色标等于门禁用的 FORGE_COLORS', () => {
+    expect(declared('forge-btn.css', '.pt-forge-btn', 'color')).toBe(FORGE_COLORS.text)
+    const stops = declared('forge-btn.css', '.pt-forge-btn', 'background')?.match(/#[0-9a-f]{6}/g)
+    expect(stops?.slice(1, 4)).toEqual([...FORGE_COLORS.midStops])
+  })
+
+  it('按下下压 1px，减少动态效果时取消；焦点环 2px --focus 外偏移 3px', () => {
+    expect(declared('forge-btn.css', '.pt-forge-btn:active', 'transform')).toBe('translateY(1px)')
+    expect(
+      declared('forge-btn.css', '.pt-forge-btn:active', 'transform', /prefers-reduced-motion/),
+    ).toBe('none')
+    expect(declared('forge-btn.css', '.pt-forge-btn:focus-visible', 'outline')).toBe(
+      '2px solid var(--focus)',
+    )
+    expect(declared('forge-btn.css', '.pt-forge-btn:focus-visible', 'outline-offset')).toBe('3px')
+  })
+})
+
+describe('pt-btn（spec §5.6）', () => {
+  it('默认、--quiet、--sm、--xs 的尺寸与配色；≤600 时 --sm、--xs 最小高 44px', () => {
+    expect(declared('btn.css', '.pt-btn', 'height')).toBe('46px')
+    expect(declared('btn.css', '.pt-btn', 'border')).toBe('1px solid var(--bronze)')
+    expect(declared('btn.css', '.pt-btn--quiet', 'border-color')).toBe('var(--control-edge)')
+    expect(declared('btn.css', '.pt-btn--sm', 'height')).toBe('38px')
+    expect(declared('btn.css', '.pt-btn--xs', 'height')).toBe('28px')
+    for (const variant of ['.pt-btn--sm', '.pt-btn--xs']) {
+      expect(declared('btn.css', variant, 'min-height', /max-width:\s*600px/)).toBe('44px')
+    }
+    expect(declared('btn.css', '.pt-wide-only', 'display', /max-width:\s*600px/)).toBe('none')
   })
 })

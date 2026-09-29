@@ -1,0 +1,165 @@
+/* pt-frame 与 pt-titlebar（spec §5.3）：2px 金属渐变框 + 四角角饰（§4.5）；内边距与容器查询挂载点。
+   pt-frame 与其祖先不得设 overflow: hidden / clip 或 contain: paint，否则角饰被裁掉。 */
+.pt-frame {
+  --pt-frame-fill: var(--frame-bg);
+  --pt-cs: 40px; /* 角饰边长 */
+  --pt-co: 12px; /* 角饰外伸：cs × −0.263 − 1.5px（mockup :183、:397） */
+  position: relative;
+  container-type: inline-size;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--pt-frame-fill), var(--pt-frame-fill)) padding-box,
+    linear-gradient(180deg, #c89a5e, #7a5530 30%, #3b2510 55%, #86603a 80%, #4a3018) border-box;
+  box-shadow:
+    0 0 0 1px #060403,
+    inset 0 0 0 1px #060403,
+    inset 0 0 0 2px rgba(214, 170, 110, 0.12),
+    0 14px 34px rgba(0, 0, 0, 0.5);
+}
+.pt-frame--hero {
+  --pt-frame-fill: rgba(22, 18, 14, 0.94);
+}
+/* 没有标题栏的 hero 框：内边距加在框自身（首页 34px 36px，mockup :410） */
+.pt-frame--hero:not(:has(> .pt-titlebar)) {
+  padding: 34px 36px;
+}
+/* 带标题栏：框自身内边距为 0，内边距加在标题栏下方的 body（构筑主区，mockup :431） */
+.pt-frame__body {
+  padding: 18px 24px 26px;
+}
+.pt-frame--side > .pt-frame__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px; /* 构筑侧栏（mockup :427） */
+}
+.pt-frame--hero > .pt-frame__body {
+  padding: 34px 36px; /* 构筑空态：取首页同值（M0 自定 K14） */
+}
+@media (max-width: 620px) {
+  .pt-frame {
+    --pt-cs: 28px;
+    --pt-co: 9px;
+  }
+  .pt-frame--hero:not(:has(> .pt-titlebar)),
+  .pt-frame > .pt-frame__body,
+  .pt-frame--side > .pt-frame__body,
+  .pt-frame--hero > .pt-frame__body {
+    padding: 20px 16px;
+  }
+}
+
+/* 角饰（spec §4.5）：伪元素 inset −外伸量，z-index 3 压过标题栏；
+   ::before 4 层底层（预先镜像的 tl/tr/bl/br），::after 4 层宝石层（宝石菱形遮罩 + conic 四刻面）。
+   --pt-cu 是角饰 1 个视框单位的 px（47.5 = SYMBOLS.corner 视框边长，motif.ts）；
+   宝石层边长 9.8 个单位 = 2 × GEM_HALF_DIAGONAL（motif.ts），中心距角饰盒外缘 cs × --pt-motif-corner-gem-x。 */
+.pt-frame::before,
+.pt-frame::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--pt-co));
+  z-index: 3;
+  pointer-events: none;
+}
+.pt-frame::before {
+  background:
+    var(--pt-motif-corner-tl) left top / var(--pt-cs) var(--pt-cs) no-repeat,
+    var(--pt-motif-corner-tr) right top / var(--pt-cs) var(--pt-cs) no-repeat,
+    var(--pt-motif-corner-bl) left bottom / var(--pt-cs) var(--pt-cs) no-repeat,
+    var(--pt-motif-corner-br) right bottom / var(--pt-cs) var(--pt-cs) no-repeat;
+}
+.pt-frame::after {
+  --pt-cu: calc(var(--pt-cs) / 47.5);
+  --pt-gem: calc(9.8 * var(--pt-cu));
+  --pt-go: calc(var(--pt-cs) * var(--pt-motif-corner-gem-x) - var(--pt-gem) / 2);
+  --pt-facets: conic-gradient(
+    from 0deg,
+    var(--gem-2) 0 25%,
+    var(--gem-3) 0 50%,
+    var(--gem-4) 0 75%,
+    var(--gem-1) 0
+  );
+  mask-image:
+    var(--pt-motif-gem-mask), var(--pt-motif-gem-mask), var(--pt-motif-gem-mask),
+    var(--pt-motif-gem-mask);
+  mask-position:
+    left var(--pt-go) top var(--pt-go),
+    right var(--pt-go) top var(--pt-go),
+    left var(--pt-go) bottom var(--pt-go),
+    right var(--pt-go) bottom var(--pt-go);
+  mask-size: var(--pt-gem) var(--pt-gem);
+  mask-repeat: no-repeat;
+  background-image: var(--pt-facets), var(--pt-facets), var(--pt-facets), var(--pt-facets);
+  background-position:
+    left var(--pt-go) top var(--pt-go),
+    right var(--pt-go) top var(--pt-go),
+    left var(--pt-go) bottom var(--pt-go),
+    right var(--pt-go) bottom var(--pt-go);
+  background-size: var(--pt-gem) var(--pt-gem);
+  background-repeat: no-repeat;
+}
+
+/* pt-titlebar：高 46px，居中衬线金字；左右内边距只由所在容器的宽度决定（spec §5.3） */
+.pt-titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 110px;
+  background: linear-gradient(180deg, #2a2219, #17130f);
+  border-bottom: 1px solid #7a5530;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 222, 165, 0.12),
+    0 1px 0 #0b0806;
+}
+.pt-titlebar__title {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--title-gold);
+  font: 700 19px / 1.3 var(--pt-serif);
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 1px #000;
+  white-space: nowrap;
+}
+.pt-titlebar__title--lg {
+  font-size: 21px; /* 首页入口卡（mockup :419） */
+}
+.pt-titlebar > .pt-chip {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+}
+/* 容器宽 <480px：标题栏左右 20px；标题栏里的 chip 隐藏，改显示卡体第一行的 .pt-chip--body（R2） */
+@container (width < 480px) {
+  .pt-titlebar {
+    padding: 0 20px;
+  }
+  .pt-titlebar > .pt-chip {
+    display: none;
+  }
+  .pt-chip.pt-chip--body {
+    display: flex;
+    width: max-content;
+    margin: 0 0 12px auto;
+  }
+}
+
+/* 强制色彩：框退化为 2px CanvasText，角饰隐藏；标题栏底线 1px CanvasText */
+@media (forced-colors: active) {
+  .pt-frame {
+    border: 2px solid CanvasText;
+    background: Canvas;
+  }
+  .pt-frame::before,
+  .pt-frame::after {
+    display: none;
+  }
+  .pt-titlebar {
+    border-bottom: 1px solid CanvasText;
+  }
+}

@@ -1,0 +1,102 @@
+/* pt-forge-btn（spec §5.5）：每个路由状态至多一个的金属主按钮，只能用在 §4.2 白名单的位置 */
+.pt-forge-btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 36px;
+  border: 1px solid #0b0704;
+  border-radius: 3px;
+  background: linear-gradient(
+    180deg,
+    #94693a 0,
+    #75502a 30%,
+    #553619 52%,
+    #3f2610 76%,
+    #5b3b1d 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 201, 140, 0.62),
+    inset 0 0 0 2px #2a190a,
+    inset 0 2px 0 2px rgba(255, 228, 176, 0.22),
+    inset 0 -2px 0 2px rgba(0, 0, 0, 0.28),
+    0 2px 0 rgba(0, 0, 0, 0.5),
+    0 8px 18px rgba(0, 0, 0, 0.35);
+  color: #fbe7c1;
+  font: 700 15.5px / 1 var(--pt-serif);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* 颗粒：不透明度 .16，overlay（mockup :169） */
+.pt-forge-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--pt-grain);
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+/* 悬停：渐变整体提亮一档，没有外发光（§4.6） */
+.pt-forge-btn:hover {
+  background: linear-gradient(
+    180deg,
+    #a47645 0,
+    #825b31 30%,
+    #603e1e 52%,
+    #472b13 76%,
+    #664323 100%
+  );
+}
+.pt-forge-btn:active {
+  transform: translateY(1px);
+}
+/* 焦点环画在外侧，不用 clip-path，也不被 overflow 裁掉 */
+.pt-forge-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+/* 两端各一颗 11px gem，距边 11px，垂直居中 */
+.pt-forge-btn__cap {
+  position: absolute;
+  top: 50%;
+  margin-top: -5.5px;
+}
+.pt-forge-btn__cap--l {
+  left: 11px;
+}
+.pt-forge-btn__cap--r {
+  right: 11px;
+}
+/* --wide：通栏，文字靠左、箭头“→”靠右（mockup :156、:174；只用于首页入口卡） */
+.pt-forge-btn--wide {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-forge-btn:active {
+    transform: none;
+  }
+}
+
+/* 强制色彩：2px ButtonText 边框加 ButtonFace 底，隐藏颗粒（端宝石由 motif.css 隐藏） */
+@media (forced-colors: active) {
+  .pt-forge-btn {
+    border: 2px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .pt-forge-btn::after {
+    display: none;
+  }
+}

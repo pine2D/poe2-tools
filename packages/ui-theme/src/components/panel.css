@@ -1,0 +1,44 @@
+/* pt-panel（spec §5.4）：无角饰的内层面板，细边、深底。带标题栏时自身内边距 0，容器查询挂在面板上 */
+.pt-panel {
+  position: relative;
+}
+.pt-panel--card {
+  background: var(--card);
+  border: 1px solid #3a2e22;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.pt-panel--item {
+  --edge: #6e5634;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  box-shadow:
+    0 0 0 1px #000,
+    inset 0 0 0 1px rgba(255, 220, 160, 0.05),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+}
+.pt-panel--item.pt-panel--unique {
+  --edge: #af6025;
+}
+.pt-panel--item.pt-panel--gem {
+  --edge: #1ba29b;
+}
+.pt-panel--inset {
+  background: var(--well);
+  border: 1px solid #2e241a;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+.pt-panel--titled {
+  container-type: inline-size;
+}
+.pt-panel__body {
+  padding: 20px 26px 24px; /* 首页入口卡（mockup :420） */
+}
+/* item 卡列表：卡间距 18px，上距 20px（mockup :441） */
+.pt-items {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 20px;
+}
