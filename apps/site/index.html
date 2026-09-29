@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
-  <meta name="theme-color" content="#17191c" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#17130f" />
   <title>PoE2 Tools · 少查译名，多研究构筑。</title>
   <meta name="description" content="流放之路 2 中文玩家的工具入口：构筑汉化与 PoE2 中文助手扩展。" />
   <meta property="og:title" content="PoE2 Tools · 少查译名，多研究构筑。" />
@@ -16,28 +15,6 @@
   <meta name="twitter:card" content="summary" />
   <link rel="canonical" href="https://poe2-tools.pine2d.com/" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <script>
-      (() => {
-        var mode = null
-        var saved = null
-        try {
-          saved = localStorage.getItem('poe2-tools.theme')
-          if (saved === 'light' || saved === 'dark') {
-            mode = saved
-          }
-        } catch (_error) {
-          mode = null
-        }
-        if (mode === null) {
-          mode =
-            typeof window.matchMedia === 'function' &&
-            window.matchMedia('(prefers-color-scheme: light)').matches
-              ? 'light'
-              : 'dark'
-        }
-        document.documentElement.setAttribute('data-theme', mode)
-      })()
-    </script>
 </head>
 <body>
   <div id="root"></div>

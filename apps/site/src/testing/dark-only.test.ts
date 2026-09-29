@@ -75,3 +75,43 @@ describe('令牌迁移（spec §7.2）', () => {
     ).toBeGreaterThanOrEqual(4.5)
   })
 })
+
+// spec §7.2 门禁第一条：主题相关字符串全部消失
+const THEME_STRINGS = [
+  'data-theme',
+  'prefers-color-scheme: light',
+  'poe2-tools.theme',
+  'color-scheme: dark light',
+  'color-scheme: light',
+]
+const HTML_ENTRIES = [
+  'apps/site/index.html',
+  'apps/site/build/index.html',
+  'apps/site/extension/index.html',
+  'apps/site/craft/index.html',
+  'apps/site/public/404.html',
+]
+
+describe('主题移除（spec §7.2）', () => {
+  it('站点源码、四个入口 HTML、404 与 ui-theme 源码里没有主题字符串', () => {
+    const files = [
+      ...sourceFiles(SITE_SRC, ['.css', '.ts', '.tsx']),
+      ...HTML_ENTRIES,
+      ...sourceFiles(THEME_SRC, ['.css', '.ts']),
+    ]
+    const hits = files.flatMap((path) =>
+      THEME_STRINGS.filter((word) => read(path).includes(word)).map((word) => `${path}: ${word}`),
+    )
+    expect(hits).toEqual([])
+  })
+
+  it('三个页面入口只声明深色：color-scheme dark，唯一一条 theme-color #17130f', () => {
+    for (const path of HTML_ENTRIES.slice(0, 3)) {
+      const html = read(path)
+      expect(html, path).toContain('<meta name="color-scheme" content="dark" />')
+      expect(html.match(/name="theme-color"/g), path).toHaveLength(1)
+      expect(html, path).toContain('<meta name="theme-color" content="#17130f" />')
+      expect(html, path).not.toContain('<script>')
+    }
+  })
+})

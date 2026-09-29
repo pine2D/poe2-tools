@@ -190,18 +190,6 @@ describe('App', () => {
     expect(document.activeElement).toBe(toggle)
   })
 
-  it('顶栏能切主题，选中的那个 aria-checked，选择写进 <html data-theme>', async () => {
-    await renderReady()
-    fireEvent.click(screen.getByRole('button', { name: '设置' }))
-    const group = screen.getByRole('radiogroup', { name: '界面主题' })
-    expect(group).toBeDefined()
-    fireEvent.click(within(group).getByLabelText('深色'))
-    expect(document.documentElement.dataset.theme).toBe('dark')
-    expect((within(group).getByLabelText('深色') as HTMLInputElement).checked).toBe(true)
-    fireEvent.click(within(group).getByLabelText('跟随系统'))
-    expect(document.documentElement.dataset.theme).toBe('light')
-  })
-
   it('词典状态是一条礼貌播报，读屏听得到三态切换（M-1）', async () => {
     await renderReady()
     // 页面上不止一个 role="status"（词典徽章、Toast 常驻容器），用文案定位徽章那一个

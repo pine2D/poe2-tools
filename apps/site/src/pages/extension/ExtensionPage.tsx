@@ -1,18 +1,16 @@
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
-import { useTheme } from '../../shared/theme/useTheme'
 
 // 固定到已经核对的源码快照；发行包上线后再更新入口，不猜测下载地址。
 const docs =
   'https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension'
 export function ExtensionPage() {
-  const theme = useTheme()
   return (
     <div className="portal">
       <a className="skip-link" href="#main">
         跳到主要内容
       </a>
-      <SiteHeader active="extension" mode={theme.mode} onMode={theme.setMode} />
+      <SiteHeader active="extension" />
       <main id="main" tabIndex={-1} className="portal-main extension-main">
         <section className="extension-intro">
           <div>

@@ -1,15 +1,13 @@
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
-import { useTheme } from '../../shared/theme/useTheme'
 
 export function HomePage() {
-  const theme = useTheme()
   return (
     <div className="portal">
       <a className="skip-link" href="#main">
         跳到主要内容
       </a>
-      <SiteHeader active="home" mode={theme.mode} onMode={theme.setMode} />
+      <SiteHeader active="home" />
       <main id="main" tabIndex={-1} className="portal-main">
         <section className="home-intro">
           <h1>

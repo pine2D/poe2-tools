@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../shared/components/Icon'
 import { SiteHeader } from '../../shared/components/SiteHeader'
 import { createDictLoader, type FetchJson, type LoadedDict } from '../../shared/dict/loadDict'
-import { type ThemeMode, useTheme } from '../../shared/theme/useTheme'
 import { DropZone } from './components/DropZone'
 import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
@@ -37,36 +36,6 @@ const BASE = import.meta.env.BASE_URL
 function dictVersion(dict: LoadedDict): string {
   const league = dict.info.leagueName === null ? '' : `（${dict.info.leagueName}）`
   return `${dict.locale} ${dict.info.gameVersion ?? '?'}${league}`
-}
-
-const THEMES: readonly { value: ThemeMode; label: string }[] = [
-  { value: 'system', label: '跟随系统' },
-  { value: 'light', label: '浅色' },
-  { value: 'dark', label: '深色' },
-]
-
-// 主题跟随系统或用户选择，使用原生 radio 保留键盘分组行为。
-function ThemeSeg({ mode, onMode }: { mode: ThemeMode; onMode(mode: ThemeMode): void }) {
-  return (
-    <div className="seg seg--theme" role="radiogroup" aria-label="界面主题">
-      {THEMES.map((item) => (
-        <label
-          key={item.value}
-          className={mode === item.value ? 'seg__item seg__item--on' : 'seg__item'}
-        >
-          <input
-            type="radio"
-            name="theme-mode"
-            value={item.value}
-            className="visually-hidden"
-            checked={mode === item.value}
-            onChange={() => onMode(item.value)}
-          />
-          {item.label}
-        </label>
-      ))}
-    </div>
-  )
 }
 
 // 顶栏右侧的词典状态徽章：三态各有图标与颜色，失败态自带恢复动作（审计 P0-3）
@@ -133,7 +102,6 @@ function ErrorCard(props: {
 
 export function App({ fetchImpl }: AppProps) {
   const [loader] = useState(() => createDictLoader(BASE, fetchImpl))
-  const theme = useTheme()
   const [locale, setLocale] = useState<Locale>('zh-CN')
   const [options, setOptions] = useState<TranslateOptions>({
     bilingual: false,
@@ -365,11 +333,8 @@ export function App({ fetchImpl }: AppProps) {
       <a className="skip-link" href="#build-main">
         跳到主要内容
       </a>
-      <SiteHeader active="build" mode={theme.mode}>
-        <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions}>
-          <h2>界面主题</h2>
-          <ThemeSeg mode={theme.mode} onMode={theme.setMode} />
-        </OptionsBar>
+      <SiteHeader active="build">
+        <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions} />
       </SiteHeader>
       <div className="app__live" role="status" aria-live="polite">
         <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
