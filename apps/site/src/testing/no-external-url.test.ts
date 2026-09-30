@@ -23,10 +23,14 @@ it('apps/site/src 下全部 CSS 没有外链 url()', () => {
 })
 
 it('四个入口 HTML 与 404 的内联样式没有外链 url()', () => {
+  // 标签带属性（如 <style media="…">）也要扫到；合计至少一个样式块，防止写法一变就空转通过
+  let scanned = 0
   for (const file of HTML) {
-    const styles = [...readFileSync(file, 'utf8').matchAll(/<style>([\s\S]*?)<\/style>/g)].map(
-      (match) => match[1] ?? '',
-    )
+    const styles = [
+      ...readFileSync(file, 'utf8').matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi),
+    ].map((match) => match[1] ?? '')
+    scanned += styles.length
     for (const css of styles) expect(externalUrls(css), file).toEqual([])
   }
+  expect(scanned).toBeGreaterThanOrEqual(1)
 })

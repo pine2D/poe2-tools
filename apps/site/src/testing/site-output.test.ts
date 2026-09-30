@@ -83,6 +83,22 @@ describe('checkSite（spec §8.6、§8.7）', () => {
     await expect(checkSite(dir, { coveragePath })).rejects.toThrow('(c) 2017-2024 Adobe')
   })
 
+  it('缺 NOTICE.txt 时拒绝', async () => {
+    await completeSite()
+    await rm(join(dir, 'NOTICE.txt'))
+    await expect(checkSite(dir, { coveragePath })).rejects.toThrow(
+      `缺少许可文件：${join(dir, 'NOTICE.txt')}`,
+    )
+  })
+
+  it('NOTICE.txt 缺完整声明时拒绝，并报出缺的那一行', async () => {
+    await completeSite()
+    await put('NOTICE.txt', `${SITE_NOTICE_REQUIRED_LINES.slice(1).join('\n')}\n`)
+    await expect(checkSite(dir, { coveragePath })).rejects.toThrow(
+      `NOTICE.txt 缺少必含行：\n  ${FULL_DISCLAIMER}`,
+    )
+  })
+
   it('CSS 的 url() 是外链时拒绝', async () => {
     await completeSite()
     await put('assets/extra.css', 'a{background:url(https://cdn.example.test/x.woff2)}')
@@ -105,6 +121,8 @@ describe('checkSite（spec §8.6、§8.7）', () => {
     await completeSite()
     await rm(join(dir, 'assets/serif-sc-0-Ab12.woff2'))
     await put('assets/site.css', 'a{color:red}')
-    await expect(checkSite(dir, { coveragePath })).rejects.toThrow('coverage.json')
+    await expect(checkSite(dir, { coveragePath })).rejects.toThrow(
+      'dist 的 woff2 与 coverage.json 不一致',
+    )
   })
 })
