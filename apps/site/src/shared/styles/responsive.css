@@ -327,3 +327,19 @@
     width: 100%;
   }
 }
+/* ≤620px：空态导语 14px；中英示例上下排，分隔线不缩进（M0 self-decided B5） */
+@media (max-width: 620px) {
+  .app__empty-lede {
+    font-size: 14px;
+  }
+  .app__empty-example {
+    padding: 14px;
+  }
+  .app__ex-line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .app__ex-divider {
+    margin-left: 0;
+  }
+}

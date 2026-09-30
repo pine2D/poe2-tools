@@ -113,3 +113,73 @@
   gap: 10px;
   margin-top: 6px;
 }
+/* 构筑空态（spec §6.4.1）：一扇 pt-frame--hero，框最大宽 820px 居中（M0 self-decided B1）；框内一律左对齐（B2） */
+.app__empty {
+  max-width: 820px;
+  margin-inline: auto;
+}
+.app__empty-lede {
+  max-width: 62ch;
+  margin: 12px 0 0;
+  color: var(--ink-2);
+  font-size: 15px;
+}
+/* 示例行“还没有文件？[试用示例构筑] 自制演示文件…”（M0 self-decided B6） */
+.app__example-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 22px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+/* 中英示例：pt-panel inset；标签列 56px，分隔线左缘与正文列对齐（68px，spec §5.9、M0 B5） */
+.app__empty-example {
+  margin-top: 18px;
+  padding: 16px 22px;
+}
+.app__ex-line {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  font-size: 17px;
+}
+.app__ex-cap {
+  color: var(--ink-3);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.app__ex-en {
+  color: var(--mod);
+}
+.app__ex-en .pt-num {
+  color: var(--mod-hi);
+}
+.app__ex-zh {
+  color: var(--ink);
+}
+.app__ex-zh .pt-num {
+  color: var(--val);
+  font-weight: 600;
+}
+.app__ex-divider {
+  margin: 8px 0 8px 68px;
+}
+/* 隐私说明与脚注：L0，12.5–13px --ink-2（M0 self-decided B4） */
+.app__empty-trust {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 20px 0 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.app__empty-foot {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+}

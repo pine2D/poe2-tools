@@ -51,6 +51,9 @@ function upload(name: string, text: string) {
 // 不能用 within(getByRole('listitem'))：主区还有 .misslist / .supports / .passives 的 <li>。
 const inFileList = () => within(screen.getByRole('list', { name: '已导入文件' }))
 
+// hero 标题在逗号后有 <br className="mobile-break" />，happy-dom 计算可访问名时会在断行处多一个空格
+const HERO = /^英文构筑，\s*中文读懂。$/
+
 describe('App', () => {
   it('上传文件 → 列表显示覆盖率 → 下载得到译文', async () => {
     await renderReady()
@@ -163,7 +166,7 @@ describe('App', () => {
   it('空态只有一块引导区：没有侧栏、没有两句互相矛盾的空文案', async () => {
     await renderReady()
     // level 2 把它与顶栏那个 <h1> 字标分开
-    expect(screen.getByRole('heading', { level: 2, name: '英文构筑，中文读懂。' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 2, name: HERO })).toBeDefined()
     expect(screen.queryByText('还没有文件')).toBeNull()
     expect(screen.queryByText(/选择左侧文件/)).toBeNull()
     // 全站只有一个拖放区，所以「选择 .build 文件」不会一名两指
@@ -171,7 +174,7 @@ describe('App', () => {
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
     // 有文件之后引导区让位给预览，侧栏出现
-    expect(screen.queryByRole('heading', { level: 2, name: '英文构筑，中文读懂。' })).toBeNull()
+    expect(screen.queryByRole('heading', { level: 2, name: HERO })).toBeNull()
   })
 
   it('侧栏抽屉：开关声明了它控制谁，点一次展开、选中文件后自动收起', async () => {
@@ -217,7 +220,7 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Next Build' })).toBeDefined()
     expect(screen.getByRole('button', { name: '下载 b.build' })).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '移除 b.build' }))
-    expect(screen.getByRole('heading', { name: '英文构筑，中文读懂。' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: HERO })).toBeDefined()
   })
 
   it('切换预览不改变下载文件，切换文件复位阅读状态', async () => {
@@ -338,6 +341,18 @@ describe('构筑页骨架（M2）', () => {
     expect(bar.className).toBe('pt-dictbar app__dictbar')
     expect(bar.querySelector('.pt-dictbar__dot')?.getAttribute('aria-hidden')).toBe('true')
     expect(bar.querySelector('b')?.textContent).toBe('zh-CN 0.0.0（测试联盟）')
+  })
+
+  it('空态：一扇 hero 框，标题栏“导入 .build”，唯一的 pt-forge-btn 是“选择 .build 文件”', async () => {
+    await renderReady()
+    expect(frames()).toHaveLength(1)
+    const frame = frames()[0] as HTMLElement
+    expect(frame.className).toBe('pt-frame pt-frame--hero app__empty')
+    expect(frame.querySelector('.pt-titlebar__title')?.textContent).toBe('导入 .build')
+    expect(forges()).toHaveLength(1)
+    expect(forges()[0]?.tagName).toBe('LABEL')
+    expect(forges()[0]?.getAttribute('for')).toBe('file-input')
+    expect(screen.queryByText(/^词典 /)).toBeNull()
   })
 
   it('词典失败且没有文件：ErrorCard 在框外，下面一扇只有拖放区的“导入 .build”框，没有 pt-forge-btn', async () => {

@@ -312,7 +312,6 @@ export function App({ fetchImpl }: AppProps) {
     if (empty) {
       return (
         <EmptyState
-          dictVersion={dictState.status === 'ready' ? dictVersion(dictState.dict) : null}
           onFiles={onFiles}
           onPaste={onPaste}
           onExample={() =>
