@@ -58,3 +58,58 @@
   margin: 20px 0;
   color: var(--ink-2);
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* DropZone hero（spec §6.4.1；M0 self-decided B3）：图标与标题同一行，按钮、提示行、折叠对齐标题左缘 */
+.app__drop {
+  margin-top: 24px;
+  padding: 24px 28px 18px;
+}
+.app__import .app__drop {
+  margin-top: 0;
+}
+.app__drop-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.app__drop-icon {
+  color: var(--ink-2);
+}
+.app__drop-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+}
+.app__drop-body {
+  margin: 14px 0 0 58px;
+}
+.app__drop-hint {
+  margin: 12px 0 0;
+  color: var(--ink-2);
+  font-size: 13.5px;
+}
+/* 词典失败状态的拖放区保留信任说明（spec §6.4.1）；空态的信任说明移到脚注（M0 self-decided B4） */
+.app__drop-trust {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+/* “或粘贴内容”折叠：空态、词典失败与侧栏共用 */
+.app__paste {
+  margin-top: 6px;
+}
+.app__paste > summary {
+  justify-content: flex-start;
+  padding: 0;
+}
+.app__paste-body {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  margin-top: 6px;
+}

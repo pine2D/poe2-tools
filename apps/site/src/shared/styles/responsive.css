@@ -308,3 +308,22 @@
     height: 44px;
   }
 }
+/* ≤620px：拖放区收紧，按钮与正文不再缩进，金属主按钮通栏（M0 self-decided B3） */
+@media (max-width: 620px) {
+  .app__drop {
+    padding: 20px 14px 14px;
+  }
+  .app__drop-head {
+    gap: 12px;
+  }
+  .app__drop-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .app__drop-body {
+    margin-left: 0;
+  }
+  .app__drop .pt-forge-btn {
+    width: 100%;
+  }
+}

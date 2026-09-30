@@ -353,7 +353,7 @@ describe('构筑页骨架（M2）', () => {
     const frame = frames()[0] as HTMLElement
     expect(frame.className).toBe('pt-frame pt-frame--hero app__import')
     expect(frame.querySelector('.pt-titlebar__title')?.textContent).toBe('导入 .build')
-    expect(within(frame).getByLabelText('选择 .build 文件')).toBeDefined()
+    expect(within(frame).getByText('选择 .build 文件').className).toBe('pt-btn')
     expect(within(frame).getByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeDefined()
     expect(within(frame).queryByRole('button', { name: '试用示例构筑' })).toBeNull()
     expect(forges()).toHaveLength(0)

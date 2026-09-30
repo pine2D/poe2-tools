@@ -247,3 +247,20 @@ button.filelist__remove {
   gap: 12px;
   padding: 16px 14px;
 }
+/* 侧栏 DropZone rail：拖入时整块加 --bronze 虚线外框；“或粘贴内容”居中通栏 */
+.app__rail--over {
+  outline: 2px dashed var(--bronze);
+  outline-offset: 4px;
+}
+.app__rail .app__paste {
+  margin-top: 0;
+}
+.app__rail .app__paste > summary {
+  justify-content: center;
+  width: 100%;
+}
+.app__rail .app__paste-body {
+  justify-items: stretch;
+  gap: 8px;
+  margin-top: 4px;
+}
