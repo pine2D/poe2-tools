@@ -1,5 +1,7 @@
+// 页头右侧的构筑页专属控件（spec §5.2、§5.12、§6.4.5）：简繁分段 + “设置”触发器与设置弹层。
+// 外观来自 ui-theme（pt-seg、pt-trigger、pt-popover、pt-check）；弹层的位置、层级与动效在构筑页页面样式里。
 import type { Locale } from '@poe2-tools/build-core'
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../../../shared/components/Icon'
 import type { TranslateOptions } from '../translate/runTranslation'
 
@@ -8,7 +10,6 @@ export interface OptionsBarProps {
   options: TranslateOptions
   onLocale(locale: Locale): void
   onOptions(options: TranslateOptions): void
-  children?: ReactNode
 }
 
 const LOCALES: readonly { value: Locale; label: string; short: string }[] = [
@@ -16,6 +17,7 @@ const LOCALES: readonly { value: Locale; label: string; short: string }[] = [
   { value: 'zh-TW', label: '繁体中文（台服）', short: '繁体' },
 ]
 
+// 复选框保留原生控件与 label / hint 结构：说明经 aria-describedby 关联，不进可访问名（spec §5.12）
 function Toggle(props: {
   id: string
   label: string
@@ -25,7 +27,7 @@ function Toggle(props: {
 }) {
   const { id, label, hint, checked, onChange } = props
   return (
-    <div className="opt">
+    <div className="pt-check">
       <input
         id={id}
         type="checkbox"
@@ -34,14 +36,14 @@ function Toggle(props: {
         onChange={(event) => onChange(event.target.checked)}
       />
       <label htmlFor={id}>{label}</label>
-      <p id={`${id}-hint`} className="opt__hint">
+      <p id={`${id}-hint`} className="pt-check__hint">
         {hint}
       </p>
     </div>
   )
 }
 
-export function OptionsBar({ locale, options, onLocale, onOptions, children }: OptionsBarProps) {
+export function OptionsBar({ locale, options, onLocale, onOptions }: OptionsBarProps) {
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLElement>(null)
@@ -79,13 +81,10 @@ export function OptionsBar({ locale, options, onLocale, onOptions, children }: O
     }
   }, [open])
   return (
-    <div className="options">
-      <div className="seg" role="radiogroup" aria-label="目标语言">
+    <div className="app__options">
+      <div className="pt-seg" role="radiogroup" aria-label="目标语言">
         {LOCALES.map((item) => (
-          <label
-            key={item.value}
-            className={locale === item.value ? 'seg__item seg__item--on' : 'seg__item'}
-          >
+          <label key={item.value} className="pt-seg__item">
             <input
               type="radio"
               name="target-locale"
@@ -99,10 +98,10 @@ export function OptionsBar({ locale, options, onLocale, onOptions, children }: O
           </label>
         ))}
       </div>
-      <div className="export-settings" ref={root}>
+      <div className="app__settings" ref={root}>
         <button
           type="button"
-          className="export-settings__trigger"
+          className="pt-trigger"
           ref={trigger}
           id="settings-trigger"
           aria-expanded={open}
@@ -116,7 +115,7 @@ export function OptionsBar({ locale, options, onLocale, onOptions, children }: O
           <Icon name="chevron-down" size={14} />
         </button>
         <section
-          className="export-settings__panel"
+          className="pt-popover app__settings-panel"
           id="settings-panel"
           ref={panel}
           aria-label="设置"
@@ -140,8 +139,7 @@ export function OptionsBar({ locale, options, onLocale, onOptions, children }: O
             checked={options.annotateUniques}
             onChange={(checked) => onOptions({ ...options, annotateUniques: checked })}
           />
-          <p className="muted">预览中的“对照 / 译文”只改变阅读方式。</p>
-          {children}
+          <p>预览中的“对照 / 译文”只改变阅读方式。</p>
         </section>
       </div>
     </div>

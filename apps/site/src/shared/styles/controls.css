@@ -99,3 +99,58 @@ kbd {
 .app .pt-header {
   z-index: auto;
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* 构筑页元素基线：按钮继承字体与颜色（外观由 ui-theme 组件类给出）；图标块级不收缩（契约 C3，svg.icon） */
+button {
+  color: inherit;
+  font: inherit;
+}
+summary {
+  cursor: pointer;
+}
+.icon {
+  display: block;
+  flex: none;
+}
+/* 设置弹层 z-index 30 要压过吸顶页签行（2）与 pt-frame 角饰（3）。弹层在页头里，页头若带 z-index
+   会自成层叠上下文把弹层困住；构筑页让页头不建层叠上下文（spec §4.5“页面级浮层保持现有值”） */
+.app .pt-header {
+  z-index: auto;
+}
+/* 页头右侧的简繁分段与“设置”（spec §5.2、§5.12）：外观来自 ui-theme，这里只管排布与弹层位置、层级、动效 */
+.app__options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.app__settings {
+  position: relative;
+}
+.app__settings-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.97);
+  transform-origin: top right;
+  transition:
+    opacity var(--dur-exit) var(--ease-out),
+    transform var(--dur-exit) var(--ease-out),
+    visibility 0s var(--dur-exit);
+}
+.app__settings-panel[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition-duration: var(--dur-enter), var(--dur-enter), 0s;
+  transition-delay: 0s;
+}
+.app__settings-panel[data-motion="false"] {
+  transition: none;
+}

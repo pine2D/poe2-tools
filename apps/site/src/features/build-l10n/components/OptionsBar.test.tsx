@@ -95,6 +95,25 @@ describe('OptionsBar', () => {
     expect(onOptions).toHaveBeenCalledWith({ bilingual: false, annotateUniques: false })
   })
 
+  it('外观来自 ui-theme：分段 pt-seg、触发器 pt-trigger、弹层 pt-popover、复选框 pt-check；没有“界面主题”', () => {
+    const { container } = render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />)
+    const group = screen.getByRole('radiogroup', { name: '目标语言' })
+    expect(group.className).toBe('pt-seg')
+    expect([...group.querySelectorAll('label')].map((node) => node.className)).toEqual([
+      'pt-seg__item',
+      'pt-seg__item',
+    ])
+    expect(screen.getByRole('button', { name: '设置' }).className).toBe('pt-trigger')
+    const panel = container.querySelector('#settings-panel') as HTMLElement
+    expect(panel.className).toBe('pt-popover app__settings-panel')
+    expect(panel.querySelector('h2')?.textContent).toBe('导出设置')
+    expect(panel.querySelectorAll('.pt-check')).toHaveLength(2)
+    expect(panel.querySelectorAll('.pt-check__hint')).toHaveLength(2)
+    expect(panel.lastElementChild?.textContent).toBe('预览中的“对照 / 译文”只改变阅读方式。')
+    expect(screen.queryByText('界面主题')).toBeNull()
+    expect(container.querySelector('.seg__item--on')).toBeNull()
+  })
+
   it('不再自带下载按钮（下载入口在顶栏状态区，由 App 渲染）', () => {
     render(<OptionsBar {...base} onLocale={vi.fn()} onOptions={vi.fn()} />)
     expect(screen.queryByText('全部下载')).toBeNull()

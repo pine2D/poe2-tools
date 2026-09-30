@@ -103,3 +103,11 @@ describe('吸顶页签行（spec §6.4.2）', () => {
     expect(finalValue(tabs, '.pt-tabs-row--sticky', 'box-shadow')).toBe('0 12px 0 var(--frame-bg)')
   })
 })
+
+describe('页面级浮层层级（spec §4.5）', () => {
+  const rules = buildCss()
+  it('设置弹层 z-index 30；构筑页页头不建层叠上下文，弹层才能压过页签行（2）与角饰（3）', () => {
+    expect(finalValue(rules, '.app__settings-panel', 'z-index')).toBe('30')
+    expect(finalValue(rules, '.app .pt-header', 'z-index')).toBe('auto')
+  })
+})
