@@ -468,8 +468,13 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(m2Value(rules, '.pt-tabs-row--sticky', 'background')).toBe('var(--frame-bg)')
     expect(m2Value(rules, '.pt-tabs-row--sticky', 'box-shadow')).toContain('var(--frame-bg)')
   })
-  it('601–700px 工具组可换行、靠右（Ruling 11-1）', () => {
-    const band = 'min-width: 601px) and (max-width: 700px'
+  it('页签文字不折行、tablist 不被工具组挤压（M2 Ruling 10）', () => {
+    expect(m2Value(rules, '.pt-tab', 'white-space')).toBe('nowrap')
+    expect(m2Value(rules, '.pt-tabs', 'flex-shrink')).toBe('0')
+  })
+  // 上限按 M2 Ruling 10 实测：rich.build 需 ≤788px、本机真实构筑加 1 条未命中需 ≤811px，取 820px
+  it('601–820px 工具组可换行、靠右（Ruling 11-1；M2 Ruling 10 改上限）', () => {
+    const band = 'min-width: 601px) and (max-width: 820px'
     expect(m2Value(rules, '.pt-tabs-row__tools', 'flex-wrap', band)).toBe('wrap')
     expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content', band)).toBe('flex-end')
     expect(m2Value(rules, '.pt-tabs-row__tools', 'min-width', band)).toBe('0')
