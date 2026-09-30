@@ -120,6 +120,14 @@ describe('导入后的自动滚动（spec §6.4.2）', () => {
   })
 })
 
+describe('页头右侧控件组间距（spec §5.2，M2 Ruling 11）', () => {
+  const rules = buildCss()
+  it('简繁分段与“设置”之间：桌面 20px（同 M0）、≤850px 16px', () => {
+    expect(finalValue(rules, '.app__options', 'gap')).toBe('20px')
+    expect(finalValue(rules, '.app__options', 'gap', 'max-width: 850px')).toBe('16px')
+  })
+})
+
 describe('信息行计数与 tabpanel 焦点环（M2 Ruling 13）', () => {
   const rules = buildCss()
   it('统计行计数“8/8”与 M0 相同：字重 600、字色 --ink', () => {

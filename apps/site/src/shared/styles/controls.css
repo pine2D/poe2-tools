@@ -16,12 +16,18 @@ summary {
 .app .pt-header {
   z-index: auto;
 }
-/* 页头右侧的简繁分段与“设置”（spec §5.2、§5.12）：外观来自 ui-theme，这里只管排布与弹层位置、层级、动效 */
+/* 页头右侧的简繁分段与“设置”（spec §5.2、§5.12）：外观来自 ui-theme，这里只管排布与弹层位置、层级、动效。
+   两者间距同 M0 的 .pt-header__end：桌面 20px，≤850px 16px（spec §5.2“右侧控件组间距 16px”） */
 .app__options {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   min-width: 0;
+}
+@media (max-width: 850px) {
+  .app__options {
+    gap: 16px;
+  }
 }
 .app__settings {
   position: relative;
