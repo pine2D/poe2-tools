@@ -90,3 +90,24 @@
     transition-delay: 0s;
   }
 }
+:root[data-input="keyboard"] .app__toast {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app__toast {
+    transform: none;
+    transition:
+      opacity 100ms ease,
+      visibility 0s 100ms;
+  }
+  .app__toast[data-open="true"] {
+    transform: none;
+    transition-duration: 100ms, 0s;
+    transition-delay: 0s;
+  }
+}
+@media (forced-colors: active) {
+  .app__toast-close {
+    border-color: ButtonText;
+  }
+}

@@ -420,3 +420,43 @@
 .app__error + .app__import {
   margin-top: 24px;
 }
+/* Toast（下载落地引导条，spec §5.12）：外观 pt-toast；这里只管底部居中的位置、层级 40 与进出动效 */
+.app__toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  inset-inline: 16px;
+  z-index: 40;
+  margin: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(25%);
+  transition:
+    opacity var(--dur-exit) var(--ease-out),
+    transform var(--dur-exit) var(--ease-out),
+    visibility 0s var(--dur-exit);
+  pointer-events: none;
+}
+.app__toast[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-duration: var(--dur-enter), var(--dur-enter), 0s;
+  transition-delay: 0s;
+}
+.app__toast-text {
+  margin: 0;
+}
+.app__toast-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--control-edge);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  pointer-events: auto;
+}

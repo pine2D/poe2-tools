@@ -1,3 +1,4 @@
+// 下载落地引导条（spec §5.12 Toast，L0）：外观 pt-toast，位置与动效在构筑页页面样式。
 // 播报容器与视觉提示常驻：重复下载可以再次播报，开关过渡可以从当前位置反向。
 import { useEffect, useState } from 'react'
 import { Icon } from '../../../shared/components/Icon'
@@ -25,7 +26,7 @@ export function Toast({ message, onClose, duration = 4000, eventId = 0 }: ToastP
   return (
     <>
       <div
-        className="toast-live visually-hidden"
+        className="app__toast-live visually-hidden"
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -33,14 +34,14 @@ export function Toast({ message, onClose, duration = 4000, eventId = 0 }: ToastP
         {message !== null && <span key={eventId}>{message}</span>}
       </div>
       <div
-        className="toast"
+        className="pt-toast app__toast"
         data-open={message !== null}
         aria-hidden={message === null}
         inert={message === null}
       >
         <Icon name="check" size={16} />
-        <p className="toast__text">{message ?? lastMessage}</p>
-        <button type="button" className="toast__close" aria-label="关闭提示" onClick={onClose}>
+        <p className="app__toast-text">{message ?? lastMessage}</p>
+        <button type="button" className="app__toast-close" aria-label="关闭提示" onClick={onClose}>
           <Icon name="close" size={14} />
         </button>
       </div>

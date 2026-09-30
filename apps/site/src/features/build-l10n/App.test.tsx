@@ -56,7 +56,7 @@ describe('App', () => {
     await renderReady()
     const blobs = interceptDownloads()
     // Toast 的常驻容器从一开始就在，下载前是空的（控制者追加 g）
-    const toastLive = document.querySelector('.toast-live')
+    const toastLive = document.querySelector('.app__toast-live')
     expect(toastLive).not.toBeNull()
     expect(toastLive?.textContent).toBe('')
     upload('rich.build', rich)
@@ -70,7 +70,7 @@ describe('App', () => {
     expect(await screen.findByText(/已开始下载 rich\.build/, { selector: 'p' })).toBeDefined()
     expect(screen.getByText('下载后怎么使用？')).toBeDefined()
     // 还是同一个容器节点在播报，不是重新挂载了一个（容器常在）
-    expect(document.querySelector('.toast-live')).toBe(toastLive)
+    expect(document.querySelector('.app__toast-live')).toBe(toastLive)
     expect(toastLive?.textContent).toContain('已开始下载 rich.build')
   })
 
