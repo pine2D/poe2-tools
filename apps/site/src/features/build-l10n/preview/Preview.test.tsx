@@ -74,7 +74,7 @@ describe('Preview 灰阶工作台', () => {
     expect(screen.queryByText('主手')).toBeNull()
     expect(screen.getByText('烈焰冲击')).toBeDefined()
     expect(screen.getByText('深思施法')).toBeDefined()
-    expect(screen.getByText('Lv 52–100')).toBeDefined()
+    expect(screen.getByTitle(LEVEL_TITLE).textContent).toBe('适用等级 52–100')
     expect(screen.getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')).toBeDefined()
     changeSection('天赋')
     expect(screen.getByText('力量')).toBeDefined()
@@ -417,5 +417,50 @@ describe('名称回退、传奇基底与 collapsed（spec §6.4.3，B1、R9）',
     fireEvent.click(screen.getByRole('button', { name: '定位到 魔符 · 第 2 行' }))
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     expect(document.activeElement?.id).toBe('line-inventory-slots-0-additional-text-1')
+  })
+})
+
+describe('技能卡与天赋紧凑列表（spec §6.4.2，B2、B6、B9）', () => {
+  it('技能卡：gem 名称牌与适用等级；辅助宝石 NamePair 中文在前；没有备注与辅助宝石时去掉底边', () => {
+    show()
+    changeSection('技能')
+    const card = cardOf('烈焰冲击')
+    expect(card.className).toBe('pt-panel pt-panel--item pt-panel--gem')
+    expect(card.querySelector('.pt-nameplate')?.className).toBe('pt-nameplate pt-nameplate--gem')
+    expect(within(card).getByText('Flameblast').className).toBe('pt-nameplate__en')
+    expect(screen.queryByText(/^Lv /)).toBeNull()
+    const pair = screen.getByText('深思施法').closest('.namepair') as HTMLElement
+    expect([...pair.children].map((node) => node.className)).toEqual([
+      'namepair__zh namepair__zh--gem',
+      'namepair__en',
+    ])
+    expect(cardOf('火焰风暴').querySelector('.pt-nameplate')?.className).toBe(
+      'pt-nameplate pt-nameplate--gem pt-nameplate--shut',
+    )
+  })
+
+  it('辅助宝石中文缺失时中文位置显示“未命中”，英文位置显示 id', () => {
+    show()
+    changeSection('技能')
+    const pair = screen
+      .getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')
+      .closest('.namepair') as HTMLElement
+    expect(pair.firstElementChild?.textContent).toBe('未命中')
+    expect(pair.firstElementChild?.className).toBe(
+      'namepair__zh namepair__zh--gem namepair__zh--miss',
+    )
+  })
+
+  it('天赋：一张 pt-panel card 的紧凑列表，不用名称牌；名称中文在前，备注在名称行下', () => {
+    const { container } = show()
+    changeSection('天赋')
+    expect(container.querySelectorAll('ul.passives')).toHaveLength(1)
+    expect(container.querySelector('ul.passives')?.closest('.pt-panel--card')).not.toBeNull()
+    expect(container.querySelectorAll('.passives > li.passive--name-only')).toHaveLength(2)
+    expect(container.querySelector('.passives .pt-nameplate')).toBeNull()
+    expect(screen.getByText('力量').nextElementSibling?.textContent).toBe('Strength')
+    const noted = container.querySelector('.passives > li:not(.passive--name-only)') as HTMLElement
+    expect(noted.children[0]?.className).toBe('namepair')
+    expect(noted.children[1]?.className).toBe('pt-pairs')
   })
 })

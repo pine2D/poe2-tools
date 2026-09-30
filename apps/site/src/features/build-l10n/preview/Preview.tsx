@@ -1,12 +1,15 @@
-import type { Locale, PreviewName, PreviewSkill } from '@poe2-tools/build-core'
+import type { Locale } from '@poe2-tools/build-core'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../../shared/components/Icon'
+import { PtPanel } from '../../../shared/components/PtPanel'
 import type { TranslatedFile } from '../translate/runTranslation'
 import type { FieldWithRows } from './fields'
 import { collectMisses, jumpTo, type MissEntry, type PreviewSection } from './locate'
+import { NamePair } from './NamePair'
 import { PairTable, type PreviewView, pairCaption } from './PairTable'
 import { levelRange } from './plate'
 import { isMissedRow, type PairRow } from './rows'
+import { SkillCard } from './SkillCard'
 import { SlotCard } from './SlotCard'
 import { TooltipCard } from './TooltipCard'
 import { useHotkeys } from './useHotkeys'
@@ -18,10 +21,6 @@ export interface PreviewProps {
   locale: Locale
   bilingual: boolean
   onDownload(): void
-}
-
-function nameText(name: PreviewName): string {
-  return name.text ?? name.en ?? name.id
 }
 
 function CardCount({ rows }: { rows: readonly PairRow[] }) {
@@ -52,104 +51,6 @@ function openByDefault(entry: FieldWithRows): boolean {
 
 function hasText(entry: FieldWithRows | undefined): entry is FieldWithRows {
   return entry !== undefined && (entry.rows.length > 0 || entry.injected !== null)
-}
-
-function NamePair({ name, kind }: { name: PreviewName; kind: 'gem' | 'passive' }) {
-  const zh = kind === 'gem' ? name.text : nameText(name)
-  const missed = kind === 'gem' && name.text === null
-  return (
-    <span className="namepair">
-      <span className="namepair__en" lang="en">
-        {name.en ?? name.id}
-      </span>
-      {(kind === 'gem' || name.text !== null) && (
-        <span
-          className={[
-            'namepair__zh',
-            kind === 'gem' ? 'namepair__zh--gem' : '',
-            missed ? 'namepair__zh--miss' : '',
-          ]
-            .filter((c) => c !== '')
-            .join(' ')}
-        >
-          {zh ?? '未命中'}
-        </span>
-      )}
-    </span>
-  )
-}
-
-function skillLvRange(list: unknown, i: number): string | null {
-  if (!Array.isArray(list)) return null
-  const entry: unknown = list[i]
-  if (entry === null || typeof entry !== 'object') return null
-  const interval = (entry as { level_interval?: unknown }).level_interval
-  if (!Array.isArray(interval)) return null
-  const [from, to] = interval
-  if (typeof from !== 'number' || typeof to !== 'number') return null
-  return `Lv ${from}–${to}`
-}
-
-function SkillCard(props: {
-  skill: PreviewSkill
-  index: number
-  fields: ReadonlyMap<string, FieldWithRows>
-  levels: string | null
-  locale: Locale
-  bilingual: boolean
-  view: PreviewView
-}) {
-  const { skill, index, fields, levels, locale, bilingual, view } = props
-  const own = fields.get(`skills[${index}].additional_text`)
-  return (
-    <article className="card card--gem">
-      <div className="card__head">
-        <h3>
-          <NamePair name={skill} kind="gem" />
-        </h3>
-        {bilingual && <span className="chip chip--bi">双语</span>}
-        {own !== undefined && <CardCount rows={own.rows} />}
-        {levels !== null && (
-          <span className="card__id" lang="en">
-            {levels}
-          </span>
-        )}
-      </div>
-      {hasText(own) && (
-        <PairTable
-          path={own.entry.path}
-          rows={own.rows}
-          locale={locale}
-          baseName={own.entry.baseName}
-          bilingual={bilingual}
-          view={view}
-        />
-      )}
-      {skill.supports.length > 0 && (
-        <ul className="supports">
-          {skill.supports.map((support, j) => {
-            const entry = fields.get(`skills[${index}].support_skills[${j}].additional_text`)
-            return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: 同一宝石可重复出现，位置是身份的一部分
-              <li key={`${support.id}:${j}`}>
-                <NamePair name={support} kind="gem" />
-                {hasText(entry) && (
-                  <PairTable
-                    path={entry.entry.path}
-                    rows={entry.rows}
-                    locale={locale}
-                    baseName={entry.entry.baseName}
-                    bilingual={bilingual}
-                    view={view}
-                  />
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </article>
-  )
 }
 
 export function Preview({ file, fields, locale, bilingual, onDownload }: PreviewProps) {
@@ -449,36 +350,41 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             </div>
           </div>
         )}
-        {section === 'skills' &&
-          skills.map(({ skill, i }) => (
-            <SkillCard
-              key={`${skill.id}:${i}`}
-              skill={skill}
-              index={i}
-              fields={byPath}
-              levels={skillLvRange(input.skills, i)}
-              locale={locale}
-              bilingual={bilingual}
-              view={view}
-            />
-          ))}
+        {section === 'skills' && skills.length > 0 && (
+          <div className="pt-items">
+            {skills.map(({ skill, i }) => (
+              <SkillCard
+                key={`${skill.id}:${i}`}
+                skill={skill}
+                index={i}
+                fields={byPath}
+                level={levelRange(input.skills, i)}
+                locale={locale}
+                bilingual={bilingual}
+                view={view}
+              />
+            ))}
+          </div>
+        )}
         {section === 'passives' && passives.length > 0 && (
-          <article className="card">
-            <ul className="passives">
-              {passives.map(({ passive, i }) => {
-                const entry = byPath.get(`passives[${i}].additional_text`)
-                return (
-                  <li
-                    key={`${passive.id}:${i}`}
-                    className={hasText(entry) ? undefined : 'passive--name-only'}
-                  >
-                    <NamePair name={passive} kind="passive" />
-                    {hasText(entry) && pair(entry)}
-                  </li>
-                )
-              })}
-            </ul>
-          </article>
+          <div className="pt-items">
+            <PtPanel as="article" variant="card">
+              <ul className="passives">
+                {passives.map(({ passive, i }) => {
+                  const entry = byPath.get(`passives[${i}].additional_text`)
+                  return (
+                    <li
+                      key={`${passive.id}:${i}`}
+                      className={hasText(entry) ? undefined : 'passive--name-only'}
+                    >
+                      <NamePair name={passive} kind="passive" />
+                      {hasText(entry) && pair(entry)}
+                    </li>
+                  )
+                })}
+              </ul>
+            </PtPanel>
+          </div>
         )}
       </section>
     </div>

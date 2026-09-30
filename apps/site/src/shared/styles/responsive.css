@@ -343,3 +343,15 @@
     margin-left: 0;
   }
 }
+/* ≤600px：辅助宝石与天赋列表左缘 12px（spec §6.4.2、§6.7） */
+@media (max-width: 600px) {
+  .supports > li {
+    padding: 10px 12px 12px;
+  }
+  .passives > li {
+    padding: 12px;
+  }
+  .passives .pt-pairs {
+    margin-left: 12px;
+  }
+}
