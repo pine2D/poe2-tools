@@ -171,3 +171,158 @@
 .preview[data-view="translated"] .preview-columns > :last-child {
   padding-left: 0;
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* 主区框与信息行（spec §6.4.2 第 1–3 项；M0 self-decided B9、B11） */
+/* 导入后自动滚到主区 pt-frame：框顶上方留出 --main-pad-top，框顶与上方两个角饰完整可见 */
+.app__build-frame {
+  scroll-margin-top: var(--main-pad-top);
+}
+.whead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+.whead-l {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.whead-file {
+  color: var(--ink-3);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.whead-class {
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.stats > li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stats__ok .icon {
+  color: var(--ok);
+}
+/* “待核对 n（名称 m）”：--miss 加警示图标，aria-expanded 控制待核对清单 */
+.stats__miss {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--miss);
+  font-size: 14px;
+  cursor: pointer;
+}
+.stats__chev {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.stats__miss[aria-expanded="true"] .stats__chev {
+  transform: rotate(180deg);
+}
+.whead-r {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+/* “构筑说明与来源”开关：右对齐文字按钮，带三角标；aria-expanded 控制独立区域 #build-details */
+.details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.details-toggle::before {
+  content: "";
+  border: 4.5px solid transparent;
+  border-right: 0;
+  border-left: 6px solid currentColor;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.details-toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+.details-toggle:hover,
+.stats__miss:hover {
+  color: var(--ink);
+}
+/* 待核对清单：L0 面板（pt-l0-panel），位于信息行下、页签行上 */
+.review-list {
+  margin-top: 16px;
+  padding: 14px 16px;
+  font-size: 14px;
+}
+.review-list > p {
+  margin: 0 0 10px;
+  color: var(--ink-2);
+}
+.misslist {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.misslist > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+}
+.misslist__where small {
+  margin-left: 8px;
+  color: var(--miss);
+  font-size: 12.5px;
+}
+.misslist__text {
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+/* 构筑说明与来源：待核对清单之后、页签行之前的独立区域，占整行；构筑说明卡是 pt-panel card */
+.build-details {
+  margin-top: 16px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.build-details > p {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.build-details .pt-panel--card {
+  margin-top: 12px;
+}
+.build-details h3 {
+  margin: 0;
+  padding: 12px 20px 4px;
+  color: var(--ink);
+  font: 600 15px / 1.4 var(--font-zh-cn);
+}
+.app__tab-empty {
+  margin: 20px 0 0;
+  color: var(--ink-2);
+  font-size: 14px;
+}

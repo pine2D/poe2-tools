@@ -111,3 +111,11 @@ describe('页面级浮层层级（spec §4.5）', () => {
     expect(finalValue(rules, '.app .pt-header', 'z-index')).toBe('auto')
   })
 })
+
+describe('导入后的自动滚动（spec §6.4.2）', () => {
+  it('主区 pt-frame 的 scroll-margin-top 取 --main-pad-top', () => {
+    expect(finalValue(buildCss(), '.app__build-frame', 'scroll-margin-top')).toBe(
+      'var(--main-pad-top)',
+    )
+  })
+})

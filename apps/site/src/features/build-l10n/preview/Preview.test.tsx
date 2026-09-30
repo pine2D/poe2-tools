@@ -43,57 +43,223 @@ function stubScroll() {
   return vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {})
 }
 
-function show() {
+function show(bilingual = false) {
   return render(
-    <Preview file={file} fields={fields} locale="zh-CN" bilingual={false} onDownload={vi.fn()} />,
+    <Preview
+      file={file}
+      fields={buildFieldRows(file, bilingual)}
+      locale="zh-CN"
+      bilingual={bilingual}
+      onDownload={vi.fn()}
+    />,
   )
 }
 
+const tab = (name: string) => screen.getByRole('tab', { name: new RegExp(`^${name}`) })
 function changeSection(name: string) {
-  fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${name}`) }))
+  fireEvent.click(tab(name))
 }
 function openReview() {
   fireEvent.click(screen.getByRole('button', { name: /^待核对 / }))
 }
+const cardOf = (text: string) => screen.getByText(text).closest('article') as HTMLElement
 
-describe('Preview 灰阶工作台', () => {
-  it('构筑身份、紧凑命中数和当前下载作为首层信息', () => {
+describe('Preview 主区框与信息行', () => {
+  it('构筑名作为主区框标题，信息行给出文件名、升华、命中数与下载主按钮', () => {
     const { container } = show()
-    expect(screen.getByRole('heading', { name: 'Synthetic Rich - 0.5.5' })).toBeDefined()
+    const heading = screen.getByRole('heading', { name: 'Synthetic Rich - 0.5.5' })
+    expect(heading.className).toBe('pt-titlebar__title')
+    expect(heading.getAttribute('title')).toBe('Synthetic Rich - 0.5.5')
+    expect(heading.hasAttribute('data-user-text')).toBe(true)
+    expect(heading.closest('.pt-frame')?.className).toBe('pt-frame app__build-frame')
     expect(screen.getByText('魔巫 · 瓦拉煞的门徒')).toBeDefined()
     expect(screen.getByText('词缀命中 7/8')).toBeDefined()
     expect(screen.getByText('自由备注保留原文')).toBeDefined()
-    expect(screen.getByRole('button', { name: '下载 rich.build' })).toBeDefined()
+    const download = screen.getByRole('button', { name: '下载 rich.build' })
+    expect(download.className).toBe('pt-forge-btn')
+    expect(container.querySelectorAll('.pt-forge-btn')).toHaveLength(1)
     expect(container.querySelector('.meter')).toBeNull()
   })
 
-  it('区块切换保持数量，显示真实宝石与天赋名称、等级和标记', () => {
+  it('繁体模式：lang 只挂在词典内容上，页签、下载按钮与标题栏不在 lang=zh-TW 容器内（spec §4.4）', () => {
+    render(
+      <Preview file={file} fields={fields} locale="zh-TW" bilingual={false} onDownload={vi.fn()} />,
+    )
+    // base.css 的 :lang(zh-TW) 会把这些衬线固定文案改回无衬线，所以它们的祖先不得带 lang="zh-TW"
+    expect(tab('装备').closest('[lang="zh-TW"]')).toBeNull()
+    expect(screen.getByRole('button', { name: /^下载 / }).closest('[lang="zh-TW"]')).toBeNull()
+    expect(
+      screen.getByRole('heading', { name: 'Synthetic Rich - 0.5.5' }).closest('[lang="zh-TW"]'),
+    ).toBeNull()
+    // 词典内容仍按目标语言标注：tabpanel、待核对清单、构筑说明区，以及名称牌名称自身
+    expect(screen.getByRole('tabpanel').getAttribute('lang')).toBe('zh-TW')
+    expect(document.getElementById('review-list')?.getAttribute('lang')).toBe('zh-TW')
+    expect(document.getElementById('build-details')?.getAttribute('lang')).toBe('zh-TW')
+    const name = document.getElementById('line-inventory-slots-0-additional-text-0') as HTMLElement
+    expect(name.className).toBe('pt-nameplate__name')
+    expect(name.getAttribute('lang')).toBe('zh-TW')
+  })
+
+  it('导入后自动滚到主区框顶部', () => {
+    const scroll = stubScroll()
     const { container } = show()
-    expect(screen.getByText('主手')).toBeDefined()
+    expect(scroll.mock.contexts[0]).toBe(container.querySelector('.app__build-frame'))
+    expect(scroll).toHaveBeenCalledWith({ block: 'start' })
+  })
+
+  it('“构筑说明与来源”是按钮，展开独立区域（位于页签行之前）', () => {
+    const { container } = show()
+    const toggle = screen.getByRole('button', { name: '构筑说明与来源' })
+    const region = document.getElementById('build-details') as HTMLElement
+    expect(toggle.getAttribute('aria-controls')).toBe('build-details')
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(region.hidden).toBe(true)
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(region.hidden).toBe(false)
+    expect(within(region).getByText('构筑说明').closest('.pt-panel--card')).not.toBeNull()
+    const row = container.querySelector('.pt-tabs-row') as HTMLElement
+    expect(region.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+})
+
+describe('Preview 金属页签（spec §5.7）', () => {
+  it('tablist 与 tabpanel 语义：选中页签、aria-controls、aria-labelledby 与计数', () => {
+    show()
+    expect(screen.getByRole('tablist', { name: '构筑内容' })).toBeDefined()
+    expect(tab('装备').getAttribute('aria-selected')).toBe('true')
+    expect(tab('装备').textContent).toBe('装备4')
+    const panel = screen.getByRole('tabpanel')
+    expect(panel.id).toBe('build-tabpanel')
+    expect(panel.getAttribute('aria-labelledby')).toBe('tab-gear')
+    expect(panel.tabIndex).toBe(0)
+    changeSection('天赋')
+    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe('tab-passives')
+  })
+
+  it('方向键切换分区并把焦点交给新页签，Home/End 到首末', () => {
+    show()
+    fireEvent.keyDown(tab('装备'), { key: 'ArrowRight' })
+    expect(tab('技能').getAttribute('aria-selected')).toBe('true')
+    expect(document.activeElement).toBe(tab('技能'))
+    expect(screen.getByText('烈焰冲击')).toBeDefined()
+    fireEvent.keyDown(tab('技能'), { key: 'End' })
+    expect(tab('天赋').getAttribute('aria-selected')).toBe('true')
+    fireEvent.keyDown(tab('天赋'), { key: 'Home' })
+    expect(tab('装备').getAttribute('aria-selected')).toBe('true')
+    expect(screen.getAllByRole('tab').map((node) => node.tabIndex)).toEqual([0, -1, -1])
+  })
+
+  it('页签行吸顶；工具组依次为下一项、仅看待核对、视图分段，视觉隐藏的列说明在 tabpanel 之前', () => {
+    const { container } = show()
+    const row = container.querySelector('.pt-tabs-row') as HTMLElement
+    expect(row.className).toBe('pt-tabs-row pt-tabs-row--sticky')
+    const tools = row.querySelector('.pt-tabs-row__tools') as HTMLElement
+    expect([...tools.children].map((node) => node.getAttribute('aria-label'))).toEqual([
+      '下一项待核对',
+      '仅看待核对',
+      '预览方式',
+    ])
+    const only = screen.getByRole('button', { name: '仅看待核对' })
+    expect(only.textContent).toBe('仅看待核对 F')
+    expect(only.querySelector('.pt-wide-only')?.textContent).toBe('仅看')
+    const caption = screen.getByText('对照分两栏：左栏原文（英文），右栏译文（简体中文）')
+    expect(caption.className).toBe('visually-hidden')
+    expect(caption.nextElementSibling?.id).toBe('build-tabpanel')
+    expect(container.querySelector('.preview-columns')).toBeNull()
+  })
+})
+
+describe('Preview 装备名称牌（spec §6.4.3）', () => {
+  it('base：中文基底名作名称，挂首行锚点与说明 title，右侧 Cinzel 英文名；不显示“基底”标签', () => {
+    show()
+    const name = document.getElementById('line-inventory-slots-0-additional-text-0') as HTMLElement
+    expect(name.className).toBe('pt-nameplate__name')
+    expect(name.textContent).toBe('炎种长杖')
+    expect(name.getAttribute('lang')).toBe('zh-CN')
+    expect(name.getAttribute('title')).toBe('基底名：写入译文首行')
+    expect(name.getAttribute('tabindex')).toBe('-1')
+    const card = cardOf('炎种长杖')
+    expect(card.className).toBe('pt-panel pt-panel--item')
+    expect(within(card).getByText('Pyrophyte Staff').className).toBe('pt-nameplate__en')
+    expect(within(card).queryByText('基底')).toBeNull()
+    expect(within(card).getByText('主手').getAttribute('title')).toBe('Weapon1')
+    expect(within(card).getByTitle(LEVEL_TITLE).textContent).toBe('适用等级 16–100')
+    expect(within(card).getByText('3/3').closest('.pt-nameplate__ok')).not.toBeNull()
+    expect(card.querySelectorAll('.pt-pair')).toHaveLength(3)
+  })
+
+  it('unique：传奇名作名称并挂 unique_name 锚点；第二行“传奇”标签与“✓ 传奇名已写入”，注入行不进对照行', () => {
+    show()
+    const name = document.getElementById('line-inventory-slots-1-unique-name') as HTMLElement
+    expect(name.textContent).toBe('稳步印记')
+    expect(screen.getAllByText('稳步印记')).toHaveLength(1)
+    const card = cardOf('稳步印记')
+    expect(card.className).toBe('pt-panel pt-panel--item pt-panel--unique')
+    expect(card.querySelector('.pt-nameplate')?.className).toBe(
+      'pt-nameplate pt-nameplate--unique pt-nameplate--shut',
+    )
+    expect(within(card).getByText('Surefooted Sigil').className).toBe('pt-nameplate__en')
+    expect(within(card).getByText('传奇').getAttribute('title')).toBe(
+      '传奇名：来自构筑的传奇字段，写入译文首行',
+    )
+    expect(within(card).getByText('传奇名已写入')).toBeDefined()
+    expect(card.querySelector('.pt-pairs')).toBeNull()
+    expect(screen.queryByText('传奇名注入')).toBeNull()
+  })
+
+  it('有未命中行时第二行显示“⚠ x/y · n 行待核对”，对照行四重标记', () => {
+    show()
+    const card = cardOf('红宝石戒指')
+    expect(within(card).getByText('2/3 · 1 行待核对').closest('.pt-nameplate__warn')).not.toBeNull()
+    expect(within(card).getAllByLabelText('未命中')).toHaveLength(2)
+    expect(within(card).getByText('未命中 · 保留原文')).toBeDefined()
+  })
+
+  it('“导出时保留英文原行”开启时第二行加“双语”标签', () => {
+    show(true)
+    expect(within(cardOf('炎种长杖')).getByText('双语').className).toBe('pt-nameplate__tag')
+  })
+})
+
+describe('Preview 技能与天赋（spec §6.4.2）', () => {
+  it('技能卡：gem 名称牌、适用等级，辅助宝石 NamePair 中文在前', () => {
+    show()
     changeSection('技能')
     expect(screen.queryByText('主手')).toBeNull()
-    expect(screen.getByText('烈焰冲击')).toBeDefined()
-    expect(screen.getByText('深思施法')).toBeDefined()
-    expect(screen.getByTitle(LEVEL_TITLE).textContent).toBe('适用等级 52–100')
+    const card = cardOf('烈焰冲击')
+    expect(card.className).toBe('pt-panel pt-panel--item pt-panel--gem')
+    expect(card.querySelector('.pt-nameplate')?.className).toBe('pt-nameplate pt-nameplate--gem')
+    expect(within(card).getByTitle(LEVEL_TITLE).textContent).toBe('适用等级 52–100')
+    expect(screen.queryByText(/^Lv /)).toBeNull()
+    const pair = screen.getByText('深思施法').closest('.namepair') as HTMLElement
+    expect([...pair.children].map((node) => node.className)).toEqual([
+      'namepair__zh namepair__zh--gem',
+      'namepair__en',
+    ])
     expect(screen.getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')).toBeDefined()
+    expect(cardOf('火焰风暴').querySelector('.pt-nameplate')?.className).toBe(
+      'pt-nameplate pt-nameplate--gem pt-nameplate--shut',
+    )
+  })
+
+  it('天赋：一张 card 的紧凑列表，名称中文在前，备注缩进在名称行下', () => {
+    const { container } = show()
     changeSection('天赋')
-    expect(screen.getByText('力量')).toBeDefined()
+    expect(container.querySelectorAll('ul.passives')).toHaveLength(1)
+    expect(
+      container.querySelector('#build-tabpanel ul.passives')?.closest('.pt-panel--card'),
+    ).not.toBeNull()
+    expect(container.querySelectorAll('.passives > li')).toHaveLength(3)
+    expect(container.querySelectorAll('.passives > li.passive--name-only')).toHaveLength(2)
+    expect(container.querySelector('.passives .pt-nameplate')).toBeNull()
+    expect(screen.getByText('力量').nextElementSibling?.textContent).toBe('Strength')
     expect(screen.getAllByText('attributes30_')).toHaveLength(1)
     expect(container.querySelector('.mk-red .num')?.textContent).toBe('+5')
-    expect(container.querySelectorAll('.passives > li')).toHaveLength(3)
   })
+})
 
-  it('传奇名称头部与注入行保留，编号词缀仍逐行对齐', () => {
-    const { container } = show()
-    expect(screen.getByText('Surefooted Sigil')).toBeDefined()
-    // 注入行移进名称牌第二行的“✓ 传奇名已写入”，对照行里不再重复（spec §6.4.3）
-    expect(screen.getAllByText('稳步印记')).toHaveLength(1)
-    expect(screen.getByText('传奇名已写入')).toBeDefined()
-    expect(screen.getByText('2/3 · 1 行待核对')).toBeDefined()
-    expect(container.textContent).toContain('法术伤害提高 149%')
-    expect(screen.getAllByLabelText('未命中')).toHaveLength(2)
-  })
-
+describe('Preview 定位、快捷键与译文视图', () => {
   it('待核对清单定位到人话位置，跨区切回并转移焦点', () => {
     const scroll = stubScroll()
     show()
@@ -102,7 +268,7 @@ describe('Preview 灰阶工作台', () => {
     fireEvent.click(screen.getByRole('button', { name: '定位到 戒指 2 · 第 3 行' }))
     expect(scroll).toHaveBeenCalledWith({ block: 'center' })
     expect(document.activeElement?.id).toBe('line-inventory-slots-3-additional-text-3')
-    expect(screen.getByRole('button', { name: /^装备/ }).getAttribute('aria-pressed')).toBe('true')
+    expect(tab('装备').getAttribute('aria-selected')).toBe('true')
   })
 
   it('N 循环定位、F 筛选保留上下文，译文模式仍能聚焦目标', () => {
@@ -121,6 +287,28 @@ describe('Preview 灰阶工作台', () => {
     expect(document.activeElement?.id).toBe('line-inventory-slots-3-additional-text-3')
     fireEvent.keyDown(window, { key: 'f' })
     expect(screen.getByText('主手')).toBeDefined()
+  })
+
+  it('译文视图：装备页签换成只读提示框，顶部说明在“；”后可断行', () => {
+    const { container } = show()
+    fireEvent.click(screen.getByRole('radio', { name: '译文' }))
+    expect(container.querySelectorAll('.pt-tooltips .pt-panel--item')).toHaveLength(4)
+    expect(container.querySelectorAll('.pt-nameplate--tooltip')).toHaveLength(4)
+    const note = container.querySelector('.pt-tooltip-note') as HTMLElement
+    expect(note.textContent).toBe('只读预览：中文词缀用提亮的词缀蓝；核对请切回“中英对照”')
+    expect(note.querySelector('.pt-tooltip-note__tail')?.textContent).toBe('核对请切回“中英对照”')
+    expect(screen.getByText('仅显示译文（简体中文）').className).toBe('visually-hidden')
+    const ring = cardOf('红宝石戒指')
+    expect(ring.querySelector('.pt-tooltip__prop')?.textContent).toBe('戒指 2')
+    expect(ring.querySelector('.pt-divider')).not.toBeNull()
+    expect(within(ring).getByText('未命中 · 保留原文')).toBeDefined()
+    const weapon = cardOf('炎种长杖')
+    expect(weapon.querySelector('.pt-tooltip__prop')?.textContent).toBe('主手·适用等级 16–100')
+    expect(weapon.querySelector('.pt-nameplate__meta')).toBeNull()
+    expect(cardOf('稳步印记').querySelector('.pt-tooltip__prop')?.textContent).toBe('腰带·传奇')
+    changeSection('技能')
+    expect(container.querySelector('.pt-panel--gem')).not.toBeNull()
+    expect(container.querySelector('.pt-tooltips')).toBeNull()
   })
 
   it('阅读方式不修改输出或导出双语选项', () => {
@@ -187,150 +375,7 @@ describe('待核对边界', () => {
     expect(screen.getByLabelText('传奇名未收录')).toBeDefined()
   })
 
-  it('说明中的未命中会先展开说明再定位；自由备注不算问题', () => {
-    custom({ name: 'Desc', description: 'Free note\n1. Unknown Affix' })
-    fireEvent.keyDown(window, { key: 'f' })
-    fireEvent.keyDown(window, { key: 'n' })
-    expect(document.activeElement?.id).toBe('line-description-1')
-    expect((document.querySelector('.build-details') as HTMLDetailsElement).open).toBe(true)
-    expect(screen.getByRole('button', { name: '待核对 1' })).toBeDefined()
-  })
-
-  it('技能与天赋备注的问题能跨区循环，筛选不会丢失定位目标', () => {
-    custom({
-      name: 'Cross',
-      skills: [
-        {
-          id: 'Gem',
-          support_skills: [{ id: 'Support', additional_text: '1. Unknown support affix' }],
-        },
-      ],
-      passives: [{ id: 'Passive', additional_text: '1. Unknown passive affix' }],
-    })
-    fireEvent.keyDown(window, { key: 'f' })
-    fireEvent.keyDown(window, { key: 'n' })
-    expect(document.activeElement?.id).toBe('line-skills-0-support-skills-0-additional-text-0')
-    fireEvent.keyDown(window, { key: 'n' })
-    expect(document.activeElement?.id).toBe('line-passives-0-additional-text-0')
-    expect(screen.getByRole('button', { name: /^天赋/ }).getAttribute('aria-pressed')).toBe('true')
-  })
-
-  it('没有待核对时筛选禁用，N/F 不隐藏内容', () => {
-    custom({
-      name: 'Clean',
-      inventory_slots: [
-        {
-          inventory_id: 'Weapon1',
-          additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
-        },
-      ],
-    })
-    const button = screen.getByRole('button', { name: '仅看待核对' }) as HTMLButtonElement
-    expect(button.disabled).toBe(true)
-    fireEvent.keyDown(window, { key: 'f' })
-    fireEvent.keyDown(window, { key: 'n' })
-    expect(button.getAttribute('aria-pressed')).toBe('false')
-    expect(screen.getByText('主手')).toBeDefined()
-    expect(screen.queryByRole('button', { name: /下一项待核对/ })).toBeNull()
-  })
-})
-
-// —— M2：装备页签的名称牌、对照行、折叠与译文提示框（spec §6.4.3、§6.4.4）——
-const cardOf = (text: string) => screen.getByText(text).closest('article') as HTMLElement
-function showWith(bilingual: boolean) {
-  return render(
-    <Preview
-      file={file}
-      fields={buildFieldRows(file, bilingual)}
-      locale="zh-CN"
-      bilingual={bilingual}
-      onDownload={vi.fn()}
-    />,
-  )
-}
-
-describe('装备名称牌（spec §6.4.3）', () => {
-  it('base：中文基底名作名称，挂首行锚点与说明 title，右侧 Cinzel 英文名；不显示“基底”标签', () => {
-    show()
-    const name = document.getElementById('line-inventory-slots-0-additional-text-0') as HTMLElement
-    expect(name.className).toBe('pt-nameplate__name')
-    expect(name.textContent).toBe('炎种长杖')
-    expect(name.getAttribute('lang')).toBe('zh-CN')
-    expect(name.getAttribute('title')).toBe('基底名：写入译文首行')
-    expect(name.getAttribute('tabindex')).toBe('-1')
-    const card = cardOf('炎种长杖')
-    expect(card.className).toBe('pt-panel pt-panel--item')
-    expect(within(card).getByText('Pyrophyte Staff').className).toBe('pt-nameplate__en')
-    expect(within(card).queryByText('基底')).toBeNull()
-    expect(within(card).getByText('主手').getAttribute('title')).toBe('Weapon1')
-    expect(within(card).getByTitle(LEVEL_TITLE).textContent).toBe('适用等级 16–100')
-    expect(within(card).getByText('3/3').closest('.pt-nameplate__ok')).not.toBeNull()
-    expect(card.querySelectorAll('.pt-pair')).toHaveLength(3)
-  })
-
-  it('unique：传奇名挂 unique_name 锚点；第二行“传奇”标签与“✓ 传奇名已写入”；没有对照行时去掉底边', () => {
-    show()
-    const name = document.getElementById('line-inventory-slots-1-unique-name') as HTMLElement
-    expect(name.textContent).toBe('稳步印记')
-    const card = cardOf('稳步印记')
-    expect(card.className).toBe('pt-panel pt-panel--item pt-panel--unique')
-    expect(card.querySelector('.pt-nameplate')?.className).toBe(
-      'pt-nameplate pt-nameplate--unique pt-nameplate--shut',
-    )
-    expect(within(card).getByText('Surefooted Sigil').className).toBe('pt-nameplate__en')
-    expect(within(card).getByText('传奇').getAttribute('title')).toBe(
-      '传奇名：来自构筑的传奇字段，写入译文首行',
-    )
-    expect(card.querySelector('.pt-pairs')).toBeNull()
-  })
-
-  it('有未命中行时第二行显示“⚠ x/y · n 行待核对”，对照行四重标记', () => {
-    show()
-    const card = cardOf('红宝石戒指')
-    expect(within(card).getByText('2/3 · 1 行待核对').closest('.pt-nameplate__warn')).not.toBeNull()
-    expect(within(card).getAllByLabelText('未命中')).toHaveLength(2)
-    expect(within(card).getByText('未命中 · 保留原文')).toBeDefined()
-  })
-
-  it('“导出时保留英文原行”开启时第二行加“双语”标签', () => {
-    showWith(true)
-    expect(within(cardOf('炎种长杖')).getByText('双语').className).toBe('pt-nameplate__tag')
-  })
-
-  it('视觉隐藏的列说明替代原列头', () => {
-    const { container } = show()
-    expect(screen.getByText('对照分两栏：左栏原文（英文），右栏译文（简体中文）').className).toBe(
-      'visually-hidden',
-    )
-    expect(container.querySelector('.preview-columns')).toBeNull()
-  })
-})
-
-describe('译文视图的只读提示框（spec §6.4.4）', () => {
-  it('装备页签换成提示框：名称牌提示框形态、属性行、分隔线与未命中标记；顶部说明在“；”后可断行', () => {
-    const { container } = show()
-    fireEvent.click(screen.getByRole('radio', { name: '译文' }))
-    expect(container.querySelectorAll('.pt-tooltips .pt-panel--item')).toHaveLength(4)
-    expect(container.querySelectorAll('.pt-nameplate--tooltip')).toHaveLength(4)
-    const note = container.querySelector('.pt-tooltip-note') as HTMLElement
-    expect(note.textContent).toBe('只读预览：中文词缀用提亮的词缀蓝；核对请切回“中英对照”')
-    expect(note.querySelector('.pt-tooltip-note__tail')?.textContent).toBe('核对请切回“中英对照”')
-    expect(screen.getByText('仅显示译文（简体中文）').className).toBe('visually-hidden')
-    const ring = cardOf('红宝石戒指')
-    expect(ring.querySelector('.pt-tooltip__prop')?.textContent).toBe('戒指 2')
-    expect(ring.querySelector('.pt-divider')).not.toBeNull()
-    expect(within(ring).getByText('未命中 · 保留原文')).toBeDefined()
-    expect(cardOf('炎种长杖').querySelector('.pt-tooltip__prop')?.textContent).toBe(
-      '主手·适用等级 16–100',
-    )
-    expect(cardOf('稳步印记').querySelector('.pt-tooltip__prop')?.textContent).toBe('腰带·传奇')
-    changeSection('技能')
-    expect(container.querySelector('.pt-tooltips')).toBeNull()
-  })
-})
-
-describe('名称回退、传奇基底与 collapsed（spec §6.4.3，B1、R9）', () => {
-  it('名称英文回退：不渲染 Cinzel 英文名，未收录标记紧跟名称；名称类待核对时不显示 ✓', () => {
+  it('名称英文回退：不再渲染 Cinzel 英文名，未收录标记紧跟名称；名称类待核对时不显示 ✓（B1、R9）', () => {
     const { container } = custom({
       name: 'Fallback',
       inventory_slots: [
@@ -355,7 +400,7 @@ describe('名称回退、传奇基底与 collapsed（spec §6.4.3，B1、R9）',
     expect(container.querySelectorAll('.pt-nameplate__miss')).toHaveLength(2)
   })
 
-  it('传奇装备的基底名在第二行挂首行锚点；未收录时译文视图按 N 聚焦属性行里的基底名元素', () => {
+  it('传奇装备的基底名：第二行“基底 <名>”挂首行锚点；未收录时译文视图按 N 聚焦属性行里的基底名元素', () => {
     const { container } = custom({
       name: 'UniqueBase',
       inventory_slots: [
@@ -418,49 +463,54 @@ describe('名称回退、传奇基底与 collapsed（spec §6.4.3，B1、R9）',
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     expect(document.activeElement?.id).toBe('line-inventory-slots-0-additional-text-1')
   })
-})
 
-describe('技能卡与天赋紧凑列表（spec §6.4.2，B2、B6、B9）', () => {
-  it('技能卡：gem 名称牌与适用等级；辅助宝石 NamePair 中文在前；没有备注与辅助宝石时去掉底边', () => {
-    show()
-    changeSection('技能')
-    const card = cardOf('烈焰冲击')
-    expect(card.className).toBe('pt-panel pt-panel--item pt-panel--gem')
-    expect(card.querySelector('.pt-nameplate')?.className).toBe('pt-nameplate pt-nameplate--gem')
-    expect(within(card).getByText('Flameblast').className).toBe('pt-nameplate__en')
-    expect(screen.queryByText(/^Lv /)).toBeNull()
-    const pair = screen.getByText('深思施法').closest('.namepair') as HTMLElement
-    expect([...pair.children].map((node) => node.className)).toEqual([
-      'namepair__zh namepair__zh--gem',
-      'namepair__en',
-    ])
-    expect(cardOf('火焰风暴').querySelector('.pt-nameplate')?.className).toBe(
-      'pt-nameplate pt-nameplate--gem pt-nameplate--shut',
-    )
+  it('说明中的未命中会先展开说明再定位；自由备注不算问题', () => {
+    custom({ name: 'Desc', description: 'Free note\n1. Unknown Affix' })
+    fireEvent.keyDown(window, { key: 'f' })
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(document.activeElement?.id).toBe('line-description-1')
+    expect(
+      screen.getByRole('button', { name: '构筑说明与来源' }).getAttribute('aria-expanded'),
+    ).toBe('true')
+    expect((document.getElementById('build-details') as HTMLElement).hidden).toBe(false)
+    expect(screen.getByRole('button', { name: '待核对 1' })).toBeDefined()
   })
 
-  it('辅助宝石中文缺失时中文位置显示“未命中”，英文位置显示 id', () => {
-    show()
-    changeSection('技能')
-    const pair = screen
-      .getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')
-      .closest('.namepair') as HTMLElement
-    expect(pair.firstElementChild?.textContent).toBe('未命中')
-    expect(pair.firstElementChild?.className).toBe(
-      'namepair__zh namepair__zh--gem namepair__zh--miss',
-    )
+  it('技能与天赋备注的问题能跨区循环，筛选不会丢失定位目标', () => {
+    custom({
+      name: 'Cross',
+      skills: [
+        {
+          id: 'Gem',
+          support_skills: [{ id: 'Support', additional_text: '1. Unknown support affix' }],
+        },
+      ],
+      passives: [{ id: 'Passive', additional_text: '1. Unknown passive affix' }],
+    })
+    fireEvent.keyDown(window, { key: 'f' })
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(document.activeElement?.id).toBe('line-skills-0-support-skills-0-additional-text-0')
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(document.activeElement?.id).toBe('line-passives-0-additional-text-0')
+    expect(tab('天赋').getAttribute('aria-selected')).toBe('true')
   })
 
-  it('天赋：一张 pt-panel card 的紧凑列表，不用名称牌；名称中文在前，备注在名称行下', () => {
-    const { container } = show()
-    changeSection('天赋')
-    expect(container.querySelectorAll('ul.passives')).toHaveLength(1)
-    expect(container.querySelector('ul.passives')?.closest('.pt-panel--card')).not.toBeNull()
-    expect(container.querySelectorAll('.passives > li.passive--name-only')).toHaveLength(2)
-    expect(container.querySelector('.passives .pt-nameplate')).toBeNull()
-    expect(screen.getByText('力量').nextElementSibling?.textContent).toBe('Strength')
-    const noted = container.querySelector('.passives > li:not(.passive--name-only)') as HTMLElement
-    expect(noted.children[0]?.className).toBe('namepair')
-    expect(noted.children[1]?.className).toBe('pt-pairs')
+  it('没有待核对时筛选禁用，N/F 不隐藏内容', () => {
+    custom({
+      name: 'Clean',
+      inventory_slots: [
+        {
+          inventory_id: 'Weapon1',
+          additional_text: 'Pyrophyte Staff\n1. 149% increased Spell Damage',
+        },
+      ],
+    })
+    const button = screen.getByRole('button', { name: '仅看待核对' }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    fireEvent.keyDown(window, { key: 'f' })
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(button.getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByText('主手')).toBeDefined()
+    expect(screen.queryByRole('button', { name: /下一项待核对/ })).toBeNull()
   })
 })

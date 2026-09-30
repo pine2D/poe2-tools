@@ -111,3 +111,16 @@
     border-color: ButtonText;
   }
 }
+@media (prefers-reduced-motion: reduce) {
+  .stats__chev,
+  .details-toggle::before {
+    transition: none;
+  }
+}
+/* 强制色彩：“仅看待核对”按下态的内边（box-shadow）不绘制，改用 Highlight 外框 */
+@media (forced-colors: active) {
+  .pt-tabs-row__tools .pt-btn[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}

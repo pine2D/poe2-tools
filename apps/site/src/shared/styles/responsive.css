@@ -355,3 +355,43 @@
     margin-left: 12px;
   }
 }
+/* ≤600px 信息行（spec §6.7，B13）：主按钮通栏排在统计行之后；“自由备注保留原文”与“构筑说明与来源”
+   排在主按钮下方同一行、两端对齐。DOM 与 Tab 顺序不变，只移动非交互文字的视觉位置；没有开关时文字留在原位 */
+@media (max-width: 600px) {
+  .whead {
+    display: block;
+  }
+  .whead-r {
+    align-items: stretch;
+    margin-top: 16px;
+  }
+  .whead-r .pt-forge-btn {
+    width: 100%;
+  }
+  .details-toggle {
+    align-self: flex-end;
+    min-height: 44px;
+  }
+  .whead:has(.details-toggle) {
+    position: relative;
+  }
+  .whead:has(.details-toggle) .stats__note {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    min-height: 44px;
+  }
+  .stats__miss {
+    min-height: 44px;
+  }
+  .misslist > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .misslist__where {
+    grid-column: 1 / -1;
+  }
+  /* 沿用改版前 responsive.css：视图分段靠右 */
+  .pt-tabs-row__tools .pt-seg {
+    margin-left: auto;
+  }
+}

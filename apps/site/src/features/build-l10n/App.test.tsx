@@ -302,6 +302,28 @@ describe('构筑页骨架（M2）', () => {
     expect(document.querySelectorAll('.pt-frame .pt-frame')).toHaveLength(0)
   })
 
+  it('宽屏已导入：侧栏框 + 主区框共两扇（角饰 8 个），唯一的 pt-forge-btn 是下载（spec §4.2）', async () => {
+    mockMatchMedia(false)
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    expect(frames()).toHaveLength(2)
+    expect(screen.getByRole('main').querySelector('.pt-frame')?.className).toBe(
+      'pt-frame app__build-frame',
+    )
+    expect(forges()).toHaveLength(1)
+    expect(forges()[0]?.getAttribute('aria-label')).toBe('下载 rich.build')
+  })
+
+  it('≤1099px 已导入：只剩主区一扇框（spec §4.2、§6.7）', async () => {
+    mockMatchMedia(true)
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    expect(frames()).toHaveLength(1)
+    expect(forges()).toHaveLength(1)
+  })
+
   it('≤1099px：侧栏不渲染 pt-frame，内容直接排在抽屉里；抽屉开关是 L0 折叠条', async () => {
     mockMatchMedia(true)
     await renderReady()

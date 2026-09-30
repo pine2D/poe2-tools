@@ -1,14 +1,19 @@
+// 构筑主区（spec §6.4.2）：一扇 pt-frame，标题栏是构筑名；框内依次为信息行、待核对清单、构筑说明与来源、
+// 吸顶页签行（金属页签 + 工具组）、视觉隐藏的列说明与 tabpanel。定位锚点、N/F 快捷键与筛选逻辑沿用改版前。
 import type { Locale } from '@poe2-tools/build-core'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../../shared/components/Icon'
+import { PtForgeButton } from '../../../shared/components/PtForgeButton'
+import { PtFrame } from '../../../shared/components/PtFrame'
 import { PtPanel } from '../../../shared/components/PtPanel'
+import { type PtTab, PtTabs, ptTabId } from '../../../shared/components/PtTabs'
 import type { TranslatedFile } from '../translate/runTranslation'
 import type { FieldWithRows } from './fields'
 import { collectMisses, jumpTo, type MissEntry, type PreviewSection } from './locate'
 import { NamePair } from './NamePair'
 import { PairTable, type PreviewView, pairCaption } from './PairTable'
-import { levelRange } from './plate'
-import { isMissedRow, type PairRow } from './rows'
+import { hasText, levelRange } from './plate'
+import { isMissedRow } from './rows'
 import { SkillCard } from './SkillCard'
 import { SlotCard } from './SlotCard'
 import { TooltipCard } from './TooltipCard'
@@ -23,34 +28,23 @@ export interface PreviewProps {
   onDownload(): void
 }
 
-function CardCount({ rows }: { rows: readonly PairRow[] }) {
-  const mods = rows.filter((row) => row.kind === 'mod')
-  if (mods.length === 0) return null
-  const hit = mods.filter((row) => row.status === 'translated').length
-  return (
-    <span className={hit < mods.length ? 'card__count card__count--short' : 'card__count'}>
-      {hit} / {mods.length}
-    </span>
-  )
+const SECTIONS: readonly PreviewSection[] = ['gear', 'skills', 'passives']
+const SECTION_LABEL: Record<PreviewSection, string> = {
+  gear: '装备',
+  skills: '技能',
+  passives: '天赋',
 }
-
-const SECTIONS: readonly { id: PreviewSection; label: string }[] = [
-  { id: 'gear', label: '装备' },
-  { id: 'skills', label: '技能' },
-  { id: 'passives', label: '天赋' },
-]
 const ISSUE_LABEL = { mod: '词缀未命中', base: '基底名未收录', unique: '传奇名未收录' }
-
+const VIEWS = [
+  { value: 'compare', label: '中英对照' },
+  { value: 'translated', label: '译文' },
+] as const
 // locate() 指向装备字段的行时，要先展开对应的 collapsed 条目再聚焦（spec §6.4.3）
 const SLOT_FIELD = /^inventory_slots\[(\d+)\]\.additional_text$/
 
 /** collapsed 的对照区默认折叠；字段里有未命中行时默认展开（spec §6.4.3） */
 function openByDefault(entry: FieldWithRows): boolean {
   return entry.rows.some((row) => isMissedRow(row, entry.entry.baseName))
-}
-
-function hasText(entry: FieldWithRows | undefined): entry is FieldWithRows {
-  return entry !== undefined && (entry.rows.length > 0 || entry.injected !== null)
 }
 
 export function Preview({ file, fields, locale, bilingual, onDownload }: PreviewProps) {
@@ -72,7 +66,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
   const [pending, setPending] = useState<{ domId: string } | null>(null)
   // collapsed 装备的手动展开/收起；没有记录时按“有未命中行即默认展开”
   const [opened, setOpened] = useState<ReadonlyMap<number, boolean>>(() => new Map())
-  const header = useRef<HTMLElement>(null)
+  const frame = useRef<HTMLElement>(null)
   const filter = useMissFilter(misses.length > 0)
   const only = filter.only && misses.length > 0
   const cursor = useRef(0)
@@ -83,8 +77,9 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
   useLayoutEffect(() => {
     if (pending !== null) jumpTo(pending.domId)
   }, [pending])
+  // 导入后自动滚到主区 pt-frame 顶部；scroll-margin-top 取 --main-pad-top，框顶角饰完整可见（spec §6.4.2）
   useEffect(() => {
-    header.current?.scrollIntoView({ block: 'start' })
+    frame.current?.scrollIntoView({ block: 'start' })
   }, [])
   const locate = useCallback((issue: MissEntry) => {
     if (issue.path === 'description') setDetailsOpen(true)
@@ -130,86 +125,92 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
     passives: preview.passives.length,
   }
   const visibleCounts = { gear: slots.length, skills: skills.length, passives: passives.length }
+  const tabs = SECTIONS.map(
+    (key): PtTab<PreviewSection> => ({ key, label: SECTION_LABEL[key], count: counts[key] }),
+  )
   const names = misses.filter((issue) => issue.kind !== 'mod').length
+  const ascendancy = preview.ascendancy
+  const title = typeof input.name === 'string' && input.name !== '' ? input.name : file.name
+  const hasDetails =
+    description !== undefined || typeof input.author === 'string' || typeof input.link === 'string'
   const slotEntries = slots.flatMap((slot) => {
     const entry = byPath.get(`inventory_slots[${slot.rawIndex}].additional_text`)
     return entry === undefined ? [] : [{ slot, entry }]
   })
-  const ascendancy = preview.ascendancy
-  const pair = (entry: FieldWithRows) => (
-    <PairTable
-      path={entry.entry.path}
-      rows={entry.rows}
-      locale={locale}
-      baseName={entry.entry.baseName}
-      bilingual={bilingual}
-      view={view}
-    />
-  )
   return (
-    <div className="preview" lang={locale} data-view={view}>
-      <header className="build-header" ref={header}>
-        <div className="build-header__identity">
-          <small>{file.name}</small>
-          <h2>{input.name}</h2>
+    // 不在主区框上挂 lang：页签、下载按钮、标题栏是站点固定文案，繁体模式下也用 SC 衬线栈（spec §4.4）；
+    // lang 只挂在承载词典内容的升华、待核对清单、构筑说明区与 tabpanel 上
+    <PtFrame
+      ref={frame}
+      className="app__build-frame"
+      aria-labelledby="build-title"
+      titlebar={{ title, id: 'build-title', fullText: title, userText: true }}
+    >
+      <div className="whead">
+        <div className="whead-l">
+          <span className="whead-file">{file.name}</span>
           {ascendancy !== null && (
-            <p>
-              {ascendancy.classText ?? ascendancy.classCode} · {ascendancy.text ?? ascendancy.code}
-            </p>
+            <span className="whead-class" lang={locale}>
+              {`${ascendancy.classText ?? ascendancy.classCode} · ${ascendancy.text ?? ascendancy.code}`}
+            </span>
+          )}
+          <ul className="stats">
+            <li className="stats__ok">
+              <Icon name="check" size={16} />
+              <span>
+                {report.modCandidates === 0
+                  ? '无编号词缀'
+                  : `词缀命中 ${report.modTranslated}/${report.modCandidates}`}
+              </span>
+            </li>
+            <li>
+              {misses.length > 0 ? (
+                <button
+                  type="button"
+                  className="stats__miss"
+                  onClick={() => setReviewOpen((open) => !open)}
+                  aria-expanded={reviewOpen}
+                  aria-controls="review-list"
+                >
+                  <Icon name="warning" size={16} />
+                  待核对 {misses.length}
+                  {names > 0 ? `（名称 ${names}）` : ''}
+                  <Icon name="chevron-down" size={14} className="stats__chev" />
+                </button>
+              ) : (
+                <span>暂无待核对项</span>
+              )}
+            </li>
+            <li className="stats__note">自由备注保留原文</li>
+          </ul>
+        </div>
+        <div className="whead-r">
+          <PtForgeButton aria-label={`下载 ${file.name}`} onClick={onDownload}>
+            <Icon name="download" />
+            <span>
+              下载中文 <span className="pt-ext">.build</span>
+            </span>
+          </PtForgeButton>
+          {hasDetails && (
+            <button
+              type="button"
+              className="details-toggle"
+              aria-expanded={detailsOpen}
+              aria-controls="build-details"
+              onClick={() => setDetailsOpen((open) => !open)}
+            >
+              构筑说明与来源
+            </button>
           )}
         </div>
-        <button type="button" className="cta" aria-label={`下载 ${file.name}`} onClick={onDownload}>
-          <Icon name="download" />
-          下载中文 .build
-        </button>
-      </header>
-      <div className="review-summary">
-        <span>
-          <Icon name="check" size={14} />
-          {report.modCandidates === 0
-            ? '无编号词缀'
-            : `词缀命中 ${report.modTranslated}/${report.modCandidates}`}
-        </span>
-        {misses.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setReviewOpen((open) => !open)}
-            aria-expanded={reviewOpen}
-            aria-controls="review-list"
-          >
-            <Icon name="warning" size={14} />
-            待核对 {misses.length}
-            {names > 0 ? `（名称 ${names}）` : ''}
-          </button>
-        ) : (
-          <span>暂无待核对项</span>
-        )}
-        <span className="muted">自由备注保留原文</span>
       </div>
-      {(description !== undefined ||
-        typeof input.author === 'string' ||
-        typeof input.link === 'string') && (
-        <details
-          className="build-details"
-          open={detailsOpen}
-          onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
-        >
-          <summary>构筑说明与来源</summary>
-          {typeof input.author === 'string' && <p>作者：{input.author}</p>}
-          {typeof input.link === 'string' && <p className="muted">来源：{input.link}</p>}
-          {description !== undefined && (
-            <article className="card">
-              <div className="card__head">
-                <h3>构筑说明</h3>
-                <CardCount rows={description.rows} />
-              </div>
-              {pair(description)}
-            </article>
-          )}
-        </details>
-      )}
       {misses.length > 0 && (
-        <div className="review-list" id="review-list" hidden={!reviewOpen}>
+        <div
+          className="review-list pt-l0-panel"
+          id="review-list"
+          lang={locale}
+          hidden={!reviewOpen}
+        >
           <p>未收录的名称与词缀保留原文，不计入已翻译内容。</p>
           <ul className="misslist">
             {misses.map((issue) => (
@@ -223,7 +224,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
                 </span>
                 <button
                   type="button"
-                  className="misslist__go"
+                  className="pt-btn pt-btn--quiet pt-btn--sm misslist__go"
                   aria-label={`定位到 ${issue.where}`}
                   onClick={() => locate(issue)}
                 >
@@ -235,36 +236,55 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
           </ul>
         </div>
       )}
-      <div className="preview-toolbar">
-        <nav className="section-nav" aria-label="构筑内容">
-          {SECTIONS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={section === item.id}
-              onClick={() => setSection(item.id)}
-            >
-              {item.label}
-              <span>{counts[item.id]}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="preview-controls">
+      {hasDetails && (
+        <section
+          className="build-details"
+          id="build-details"
+          lang={locale}
+          aria-label="构筑说明与来源"
+          hidden={!detailsOpen}
+        >
+          {typeof input.author === 'string' && <p>作者：{input.author}</p>}
+          {typeof input.link === 'string' && <p>来源：{input.link}</p>}
+          {description !== undefined && (
+            <PtPanel as="article" variant="card">
+              <h3>构筑说明</h3>
+              <PairTable
+                path={description.entry.path}
+                rows={description.rows}
+                locale={locale}
+                baseName={description.entry.baseName}
+                bilingual={bilingual}
+                view={view}
+              />
+            </PtPanel>
+          )}
+        </section>
+      )}
+      <div className="pt-tabs-row pt-tabs-row--sticky">
+        <PtTabs
+          tabs={tabs}
+          selected={section}
+          onSelect={(key) => setSection(key)}
+          label="构筑内容"
+          panelId="build-tabpanel"
+        />
+        <div className="pt-tabs-row__tools">
           {misses.length > 0 && (
             <button
               type="button"
-              className="review-next"
+              className="pt-btn pt-btn--quiet pt-btn--sm"
               onClick={next}
               aria-keyshortcuts="n"
               aria-label="下一项待核对"
               title="下一项待核对（N）"
             >
-              下一项 <kbd>N</kbd>
+              下一项 <kbd className="pt-kbd">N</kbd>
             </button>
           )}
           <button
             type="button"
-            className="button"
+            className="pt-btn pt-btn--quiet pt-btn--sm"
             aria-label="仅看待核对"
             aria-pressed={only}
             aria-keyshortcuts="f"
@@ -272,19 +292,14 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             onClick={toggleFilter}
           >
             <Icon name="filter" size={14} />
-            待核对 <kbd>F</kbd>
+            <span>
+              <span className="pt-wide-only">仅看</span>待核对
+            </span>{' '}
+            <kbd className="pt-kbd">F</kbd>
           </button>
-          <div className="seg" role="radiogroup" aria-label="预览方式">
-            {(
-              [
-                { value: 'compare', label: '中英对照' },
-                { value: 'translated', label: '译文' },
-              ] as const
-            ).map((item) => (
-              <label
-                key={item.value}
-                className={view === item.value ? 'seg__item seg__item--on' : 'seg__item'}
-              >
+          <div className="pt-seg" role="radiogroup" aria-label="预览方式">
+            {VIEWS.map((item) => (
+              <label key={item.value} className="pt-seg__item">
                 <input
                   type="radio"
                   className="visually-hidden"
@@ -299,12 +314,16 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
         </div>
       </div>
       {section === 'gear' && <p className="visually-hidden">{pairCaption(view, locale)}</p>}
-      <section
-        className="preview__section"
-        aria-label={SECTIONS.find((item) => item.id === section)?.label}
+      <div
+        id="build-tabpanel"
+        role="tabpanel"
+        aria-labelledby={ptTabId(section)}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: ARIA tabs 模式要求 tabpanel 可聚焦（spec §5.7）
+        tabIndex={0}
+        lang={locale}
       >
         {visibleCounts[section] === 0 && (
-          <p className="muted sec__empty">
+          <p className="app__tab-empty">
             {only ? '这一区没有待核对项，可切换其他区块或关闭筛选。' : '这份构筑没有这类内容。'}
           </p>
         )}
@@ -372,13 +391,23 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
               <ul className="passives">
                 {passives.map(({ passive, i }) => {
                   const entry = byPath.get(`passives[${i}].additional_text`)
+                  const noted = hasText(entry)
                   return (
                     <li
                       key={`${passive.id}:${i}`}
-                      className={hasText(entry) ? undefined : 'passive--name-only'}
+                      className={noted ? undefined : 'passive--name-only'}
                     >
                       <NamePair name={passive} kind="passive" />
-                      {hasText(entry) && pair(entry)}
+                      {noted && (
+                        <PairTable
+                          path={entry.entry.path}
+                          rows={entry.rows}
+                          locale={locale}
+                          baseName={entry.entry.baseName}
+                          bilingual={bilingual}
+                          view={view}
+                        />
+                      )}
                     </li>
                   )
                 })}
@@ -386,7 +415,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             </PtPanel>
           </div>
         )}
-      </section>
-    </div>
+      </div>
+    </PtFrame>
   )
 }
