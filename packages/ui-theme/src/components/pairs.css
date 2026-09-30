@@ -1,0 +1,157 @@
+/* spec §5.11 对照行（L0，PairTable）：左对齐双栏，系统无衬线；网格 20px + 两栏，列距 24px；
+   英文词缀 --mod（数值 --mod-hi），中文 --ink（数值 --val 600）。未命中行四重标记。 */
+.pt-pairs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pt-panel--item > .pt-pairs {
+  padding: 3px 0 5px;
+}
+.pt-pair {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 24px;
+  padding: 8px 22px 8px 6px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+/* 卡内行间分隔（:373） */
+.pt-pair + .pt-pair {
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+}
+.pt-pair__no {
+  justify-self: end;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pt-pair__en {
+  color: var(--mod);
+  overflow-wrap: anywhere;
+}
+.pt-pair__en .pt-num {
+  color: var(--mod-hi);
+}
+.pt-pair__zh {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.pt-pair__zh .pt-num {
+  color: var(--val);
+  font-weight: 600;
+}
+/* 右栏保留的原文（原样行、未命中行）：--ink-2，数值不提亮 */
+.pt-pair__kept {
+  color: var(--ink-2);
+}
+.pt-pair__kept .pt-num {
+  color: inherit;
+  font-weight: inherit;
+}
+/* 自由备注（solo）：一整栏原文，不留编号列，左缘 20px（≤600px 12px；M0 V4） */
+.pt-pair--solo {
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: 20px;
+}
+.pt-pair--solo > .pt-pair__no {
+  display: none;
+}
+.pt-pair__text {
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.pt-pair__text .pt-num {
+  color: var(--ink);
+  font-weight: 600;
+}
+/* “原样”“原文”标签：沿用改版前形态，改用新令牌 */
+.pt-pair-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 5px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+/* 未命中行（:292-298）：底 --miss-bg、左侧 3px --miss 内色条、编号位 18×18 的“!”方框、英文虚线下划线 */
+.pt-pair--miss {
+  background: var(--miss-bg);
+  box-shadow: inset 3px 0 0 var(--miss);
+}
+.pt-pair--miss .pt-pair__no {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--miss);
+  border-radius: 3px;
+  color: var(--miss);
+  font-weight: 700;
+}
+.pt-pair--miss .pt-pair__en {
+  text-decoration: underline dashed rgba(242, 167, 102, 0.7);
+  text-underline-offset: 4px;
+}
+/* “未命中 · 保留原文”标签：1px 虚线 --miss，圆角 4px，12.5px，带警示图标 */
+.pt-tag-miss {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: max-content;
+  max-width: 100%;
+  margin-top: 5px;
+  padding: 3px 8px 3px 6px;
+  border: 1px dashed var(--miss);
+  border-radius: 4px;
+  color: var(--miss);
+  font: 12.5px / 1.2 var(--font-zh-cn);
+}
+.pt-tag-miss svg {
+  width: 14px;
+  height: 14px;
+}
+.pt-pair__zh .pt-tag-miss {
+  display: flex;
+}
+/* 译文视图：只隐藏原文列 */
+.pt-pairs--translated .pt-pair {
+  grid-template-columns: 20px minmax(0, 1fr);
+}
+.pt-pairs--translated .pt-pair__en {
+  display: none;
+}
+/* ≤600px 沿用改版前的对照行规则：收窄内边距与列距，编号 11px，标签独占一行（M0 self-decided K4） */
+@media (max-width: 600px) {
+  .pt-pair {
+    grid-template-columns: 18px minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 8px 12px 8px 4px;
+  }
+  .pt-pairs--translated .pt-pair {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+  .pt-pair--solo {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 12px;
+  }
+  .pt-pair__no {
+    font-size: 11px;
+  }
+  .pt-pair-tag {
+    display: block;
+    width: fit-content;
+    margin: 4px 0;
+    white-space: normal;
+  }
+}
+/* 强制色彩：内色条（box-shadow）不绘制，改用左边框保留未命中行的非颜色线索 */
+@media (forced-colors: active) {
+  .pt-pair--miss {
+    border-left: 3px solid CanvasText;
+  }
+}

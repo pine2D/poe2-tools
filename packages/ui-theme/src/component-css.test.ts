@@ -613,3 +613,65 @@ describe('tooltip.css（spec §6.4.4）', () => {
     expect(m2Value(rules, '.pt-tooltip__mod--kept', 'text-underline-offset')).toBe('4px')
   })
 })
+
+describe('pairs.css（spec §5.11）', () => {
+  const rules = m2Css('pairs.css')
+  it('网格 20px + 两栏，列距 24px，行内边距 8px 22px 8px 6px，15px/1.6', () => {
+    expect(m2Value(rules, '.pt-pair', 'grid-template-columns')).toBe(
+      m2Norm('20px minmax(0, 1fr) minmax(0, 1fr)'),
+    )
+    expect(m2Value(rules, '.pt-pair', 'column-gap')).toBe('24px')
+    expect(m2Value(rules, '.pt-pair', 'padding')).toBe(m2Norm('8px 22px 8px 6px'))
+    expect(m2Value(rules, '.pt-pair', 'font-size')).toBe('15px')
+    expect(m2Value(rules, '.pt-pair', 'line-height')).toBe('1.6')
+    expect(m2Value(rules, '.pt-pair + .pt-pair', 'border-top')).toBe(
+      m2Norm('1px solid rgba(255, 255, 255, 0.045)'),
+    )
+  })
+  it('编号 12px --ink-3；英文 --mod（数值 --mod-hi）；中文 --ink（数值 --val 600）', () => {
+    expect(m2Value(rules, '.pt-pair__no', 'font-size')).toBe('12px')
+    expect(m2Value(rules, '.pt-pair__no', 'color')).toBe('var(--ink-3)')
+    expect(m2Value(rules, '.pt-pair__en', 'color')).toBe('var(--mod)')
+    expect(m2Value(rules, '.pt-pair__en .pt-num', 'color')).toBe('var(--mod-hi)')
+    expect(m2Value(rules, '.pt-pair__zh', 'color')).toBe('var(--ink)')
+    expect(m2Value(rules, '.pt-pair__zh .pt-num', 'color')).toBe('var(--val)')
+    expect(m2Value(rules, '.pt-pair__zh .pt-num', 'font-weight')).toBe('600')
+  })
+  it('未命中行四重标记：底 --miss-bg、3px 内色条、18×18“!”方框、英文虚线下划线', () => {
+    expect(m2Value(rules, '.pt-pair--miss', 'background')).toBe('var(--miss-bg)')
+    expect(m2Value(rules, '.pt-pair--miss', 'box-shadow')).toBe(m2Norm('inset 3px 0 0 var(--miss)'))
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'width')).toBe('18px')
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'height')).toBe('18px')
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'border')).toBe(
+      m2Norm('1px solid var(--miss)'),
+    )
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'border-radius')).toBe('3px')
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__en', 'text-decoration')).toBe(
+      m2Norm('underline dashed rgba(242, 167, 102, 0.7)'),
+    )
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__en', 'text-underline-offset')).toBe('4px')
+    expect(m2Value(rules, '.pt-tag-miss', 'border')).toBe(m2Norm('1px dashed var(--miss)'))
+    expect(m2Value(rules, '.pt-tag-miss', 'border-radius')).toBe('4px')
+    expect(m2Value(rules, '.pt-tag-miss', 'font')).toContain('12.5px')
+  })
+  it('solo 不留编号列、左缘 20px；译文视图只剩编号与中文两列', () => {
+    expect(m2Value(rules, '.pt-pair--solo', 'grid-template-columns')).toBe(m2Norm('minmax(0, 1fr)'))
+    expect(m2Value(rules, '.pt-pair--solo', 'padding-left')).toBe('20px')
+    expect(m2Value(rules, '.pt-pairs--translated .pt-pair', 'grid-template-columns')).toBe(
+      m2Norm('20px minmax(0, 1fr)'),
+    )
+  })
+  it('≤600px 沿用改版前的收窄规则：18px 编号列、列距 12px、solo 左缘 12px', () => {
+    const narrow = 'max-width: 600px'
+    expect(m2Value(rules, '.pt-pair', 'grid-template-columns', narrow)).toBe(
+      m2Norm('18px minmax(0, 1fr) minmax(0, 1fr)'),
+    )
+    expect(m2Value(rules, '.pt-pair', 'column-gap', narrow)).toBe('12px')
+    expect(m2Value(rules, '.pt-pair--solo', 'padding-left', narrow)).toBe('12px')
+  })
+  it('强制色彩下未命中行改用左边框保留线索', () => {
+    expect(m2Value(rules, '.pt-pair--miss', 'border-left', 'forced-colors: active')).toBe(
+      m2Norm('3px solid CanvasText'),
+    )
+  })
+})
