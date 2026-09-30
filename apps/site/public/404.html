@@ -1,8 +1,83 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>页面未找到 · PoE2 Tools</title><link rel="icon" href="/favicon.svg" /><style>
-:root { color-scheme: dark; } body { margin: 0; background: #17191c; color: #f0f2f5; font: 16px/1.8 system-ui, sans-serif; } main { max-width: 600px; margin: 15vh auto; padding: 24px; } h1 { font-size: 32px; } p { color: #a1aab7; } a { display: inline-block; margin: 8px 24px 8px 0; padding-block: 10px; color: #d6b887; text-underline-offset: 4px; } a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>页面未找到 · PoE2 Tools</title>
+<link rel="icon" href="/favicon.svg" />
+<style>
+/* 404（spec §6.5）：独立静态页，只用内联 CSS 与系统无衬线；不加载 Web 字体、不用衬线；没有框、角饰、标题栏和颗粒 */
+:root {
+  color-scheme: dark;
+  /* 最小令牌：与 packages/ui-theme/src/tokens.css 同名令牌取值一致（not-found-tokens.test.ts 断言） */
+  --page: #17130f;
+  --bg: #100e0c;
+  --surface: #1a1612;
+  --ink: #e9e0cd;
+  --ink-2: #c0b49d;
+  --gold: #dcb877;
+  --bronze: #b98a50;
+  --focus: #ffd48a;
+}
+body {
+  margin: 0;
+  padding: 0 16px;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.8 system-ui, sans-serif;
+}
+/* 卡片块水平居中；卡内文字一律左对齐（L0） */
+main {
+  max-width: 600px;
+  margin: 15vh auto;
+  padding: 24px;
+  border: 1px solid var(--bronze);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+.brand svg {
+  flex: none;
+  width: 46px;
+  height: 24px;
+}
+h1 {
+  color: var(--ink);
+  font-size: 28px;
+}
+p {
+  color: var(--ink-2);
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 24px;
+  margin: 8px 0;
+}
+a {
+  display: inline-block;
+  padding-block: 10px;
+  color: var(--gold);
+  text-underline-offset: 4px;
+}
+a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
 </style>
 </head>
-<body><main><p>PoE2 Tools · 404</p><h1>这里没有找到页面。</h1><p>链接可能已经变化。构筑汉化现在有了独立的工作台地址。</p><nav aria-label="返回工具"><a href="/">返回首页</a><a href="/build/">打开构筑汉化</a><a href="/extension/">查看中文助手</a></nav></main></body>
+<body>
+<main>
+<p class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -12.5 48 25" width="46" height="24" aria-hidden="true" focusable="false"><path fill="#120a04" d="M9.5-2.8 23.6 0 9.5 2.8Z"/><path fill="#e6c083" d="M10.5-1.9 22.2 0H10.5Z"/><path fill="#7a5530" d="M10.5 1.9 22.2 0H10.5Z"/><g transform="scale(-1 1)"><path fill="#120a04" d="M9.5-2.8 23.6 0 9.5 2.8Z"/><path fill="#e6c083" d="M10.5-1.9 22.2 0H10.5Z"/><path fill="#7a5530" d="M10.5 1.9 22.2 0H10.5Z"/></g><path fill="#120a04" d="M0-12.4 12.4 0 0 12.4-12.4 0Z"/><path fill="#f3d8a2" d="M-11 0 0-11V-6.6L-6.6 0Z"/><path fill="#c89a5c" d="M0-11 11 0H6.6L0-6.6Z"/><path fill="#5e3c1b" d="M11 0 0 11V6.6L6.6 0Z"/><path fill="#94673a" d="M0 11-11 0H-6.6L0 6.6Z"/><path fill="#140b04" d="M0-6.6 6.6 0 0 6.6-6.6 0Z"/><path fill="#fff0c8" d="M0-4.9-4.9 0H0Z"/><path fill="#e3a24a" d="M0-4.9 4.9 0H0Z"/><path fill="#7a3d0c" d="M4.9 0 0 4.9V0Z"/><path fill="#b36a22" d="M-4.9 0 0 4.9V0Z"/></svg><span>PoE2 Tools · 404</span></p>
+<h1>这里没有找到页面。</h1>
+<p>链接可能已经变化。构筑汉化现在有了独立的工作台地址。</p>
+<nav aria-label="返回工具"><a href="/">返回首页</a><a href="/build/">打开构筑汉化</a><a href="/extension/">查看中文助手</a></nav>
+</main>
+</body>
 </html>

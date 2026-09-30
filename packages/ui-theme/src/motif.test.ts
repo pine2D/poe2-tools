@@ -84,6 +84,10 @@ describe('站点副本（spec §6.1）', () => {
     expect(site('public/favicon.svg'), '运行 pnpm ui-theme:motif').toBe(generated['favicon.svg'])
   })
 
+  it('404 页顶部内联的 logo 就是 generated/logo.svg 的原样字符串', () => {
+    expect(site('public/404.html')).toContain(renderLogoSvg())
+  })
+
   it('构筑页内联 favicon 解码后等于 generated/favicon.svg 去掉末尾换行', () => {
     const href = /<link\s+rel="icon"\s+href="data:image\/svg\+xml,([^"]+)"/.exec(
       site('build/index.html'),
