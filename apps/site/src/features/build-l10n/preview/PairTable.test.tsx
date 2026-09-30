@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { splitMarkupLines } from './markup'
-import { PairTable } from './PairTable'
+import { PairTable, pairCaption } from './PairTable'
 import type { PairRow } from './rows'
 
 afterEach(() => {
@@ -27,18 +27,16 @@ const row = (over: Partial<PairRow>): PairRow => ({
 
 const common = {
   path: 'inventory_slots[3].additional_text',
-  injected: null,
   locale: 'zh-CN' as const,
   bilingual: false,
 }
 
-describe('PairTable', () => {
-  it('每条编号行一行，序号 / 原文 / 中文各占一格，命中行安静', () => {
+describe('PairTable（spec §5.11）', () => {
+  it('一条编号行是一个 li：编号 / 原文 / 中文三格，数值带 pt-num', () => {
     const { container } = render(
       <PairTable
         {...common}
         baseName
-        emptyText="这个槽位没有备注"
         rows={[
           row({
             index: 1,
@@ -49,50 +47,69 @@ describe('PairTable', () => {
         ]}
       />,
     )
-    // 左右两个序号格都写标号，所以是 2 个而不是 1 个
-    expect(screen.getAllByText('1')).toHaveLength(2)
-    // 一条编号行恰好填满四列：序号 / 原文 / 序号 / 译文，多一格少一格都会让整张卡错位
-    expect(container.querySelectorAll('.tip__n, .tip__t')).toHaveLength(4)
-    // MarkupText 会把 "+10" 单独包成 <span class="num">，正文因此不再是一个整体文本节点，
-    // getByText 的 getNodeText() 只看直接子文本节点，这里必须用 textContent 比对
-    expect(container.textContent).toContain('+10 to maximum Life')
-    expect(container.textContent).toContain('+10 生命上限')
-    expect(container.querySelectorAll('.num').length).toBeGreaterThan(0)
+    expect(container.querySelector('ol')?.className).toBe('pt-pairs')
+    const items = container.querySelectorAll('li')
+    expect(items).toHaveLength(1)
+    expect(items[0]?.className).toBe('pt-pair')
+    expect([...(items[0]?.children ?? [])].map((cell) => cell.className)).toEqual([
+      'pt-pair__no',
+      'pt-pair__en',
+      'pt-pair__zh',
+    ])
+    expect(screen.getAllByText('1')).toHaveLength(1)
+    expect(container.querySelector('.pt-pair__en')?.textContent).toBe('+10 to maximum Life')
+    expect(container.querySelector('.pt-pair__zh')?.textContent).toBe('+10 生命上限')
+    expect(container.querySelector('.pt-pair__zh .pt-num')?.textContent).toBe('+10')
     expect(screen.queryByLabelText('未命中')).toBeNull()
     expect(screen.queryByText('原样')).toBeNull()
   })
 
-  it('基底名行只占「两个跨列单元」，没有序号格，四列网格不错位', () => {
+  it('中英对照视图的锚点挂在编号格上（契约 C12），不挂在 li 上', () => {
+    const { container } = render(
+      <PairTable {...common} baseName rows={[row({ index: 2, marker: '2' })]} />,
+    )
+    const anchor = document.getElementById('line-inventory-slots-3-additional-text-2')
+    expect(anchor?.className).toBe('pt-pair__no')
+    expect(anchor?.getAttribute('tabindex')).toBe('-1')
+    expect(container.querySelector('li')?.hasAttribute('id')).toBe(false)
+  })
+
+  it('不渲染字段首行的基底名行与传奇名注入行（已移进名称牌，spec §6.4.3）', () => {
     const { container } = render(
       <PairTable
         {...common}
         baseName
-        emptyText="这个槽位没有备注"
         rows={[
           row({
             index: 0,
             kind: 'name',
             base: true,
             en: spans('Pyrophyte Staff'),
-            zh: spans('炎种长杖'),
+            zh: spans('耐火长杖'),
           }),
           row({ index: 1, marker: '1' }),
         ]}
       />,
     )
-    // 只有第 2 行（编号行）产生序号格，基底名那行一个都没有
-    expect(container.querySelectorAll('.tip__n')).toHaveLength(2)
-    expect(container.querySelectorAll('.tip__base')).toHaveLength(2)
-    expect(screen.getByText('Pyrophyte Staff')).toBeDefined()
-    expect(screen.getByText('炎种长杖')).toBeDefined()
+    expect(container.querySelectorAll('li')).toHaveLength(1)
+    expect(screen.queryByText('Pyrophyte Staff')).toBeNull()
+    expect(screen.queryByText('耐火长杖')).toBeNull()
+    expect(screen.queryByText('传奇名注入')).toBeNull()
+    expect(document.getElementById('line-inventory-slots-3-additional-text-0')).toBeNull()
   })
 
-  it('未命中：左右两列都标出来，序号变叹号，行尾有文字签，带可跳转的 DOM id', () => {
-    render(
+  it('只有基底名行时什么都不渲染', () => {
+    const { container } = render(
+      <PairTable {...common} baseName rows={[row({ index: 0, kind: 'name', base: true })]} />,
+    )
+    expect(container.innerHTML).toBe('')
+  })
+
+  it('未命中：底色行、编号换“!”、右栏原文后接“未命中 · 保留原文”，两处 role=note', () => {
+    const { container } = render(
       <PairTable
         {...common}
         baseName
-        emptyText="这个槽位没有备注"
         rows={[
           row({
             index: 3,
@@ -104,18 +121,26 @@ describe('PairTable', () => {
         ]}
       />,
     )
+    expect(container.querySelector('li')?.className).toBe('pt-pair pt-pair--miss')
+    expect(screen.getAllByText('!')).toHaveLength(1)
     expect(screen.getAllByLabelText('未命中')).toHaveLength(2)
-    expect(screen.getAllByText('!')).toHaveLength(2)
-    expect(screen.getByText('未命中 · 保留英文')).toBeDefined()
-    expect(document.getElementById('line-inventory-slots-3-additional-text-3')).not.toBeNull()
+    expect(screen.getByText('未命中 · 保留原文').className).toBe('pt-tag-miss')
+    expect(screen.getByText('未命中 · 保留原文').querySelector('svg')).not.toBeNull()
+    expect(screen.queryByText('未命中 · 保留英文')).toBeNull()
+    expect(container.querySelector('.pt-pair__zh')?.getAttribute('lang')).toBe('en')
+    expect(container.querySelector('.pt-pair__kept')?.textContent).toBe(
+      '3% increased Attack Speed per 25 Dexterity',
+    )
+    expect(document.getElementById('line-inventory-slots-3-additional-text-3')?.textContent).toBe(
+      '!',
+    )
   })
 
-  it('混合字段里，非首行的 kept 标"原样"，不算未命中', () => {
-    render(
+  it('混合字段里非首行的原样行标“原样”，不算未命中', () => {
+    const { container } = render(
       <PairTable
         {...common}
         baseName
-        emptyText="这个槽位没有备注"
         rows={[
           row({ index: 1, marker: '1' }),
           row({
@@ -128,37 +153,14 @@ describe('PairTable', () => {
         ]}
       />,
     )
-    expect(screen.getByText('原样')).toBeDefined()
+    expect(screen.getByText('原样').className).toBe('pt-pair-tag')
     expect(screen.queryByLabelText('未命中')).toBeNull()
-    expect(document.querySelector('.tip__t--zh')).not.toBeNull()
+    const kept = container.querySelectorAll('.pt-pair__kept')
+    expect(kept).toHaveLength(1)
+    expect(kept[0]?.parentElement?.className).toBe('pt-pair__zh')
   })
 
-  it('基底名没命中词典时算未命中，不许伪装成"原样"', () => {
-    const { container } = render(
-      <PairTable
-        {...common}
-        baseName
-        emptyText="这个槽位没有备注"
-        rows={[
-          row({
-            index: 0,
-            kind: 'name',
-            status: 'kept',
-            base: true,
-            en: spans('Weird Base'),
-            zh: spans('Weird Base'),
-          }),
-        ]}
-      />,
-    )
-    // I-1：基底名未收录与编号行真未命中的文案与 aria-label 分开措辞，不能混用「未命中」
-    expect(screen.getAllByLabelText('基底名未收录')).toHaveLength(2)
-    expect(screen.getByText('基底名未收录')).toBeDefined()
-    expect(screen.queryByLabelText('未命中')).toBeNull()
-    expect(container.querySelector('.tip--solo')).toBeNull()
-  })
-
-  // 整段 kept 的构筑说明：两条都不是编号行、都没未命中，正是退化分支的靶子
+  // 整段原样的构筑说明：baseName=false，首行不当基底名，正是退化分支的靶子
   const notes: PairRow[] = [
     row({
       index: 0,
@@ -177,124 +179,82 @@ describe('PairTable', () => {
     }),
   ]
 
-  it('整段都是原样时退化成单列：没有列头、没有序号格、没有右列重复（I-2）', () => {
+  it('整段都是原样时退化成单栏 solo：不留编号列、原文只出现一次、锚点挂在文本格', () => {
     const { container } = render(
-      <PairTable
-        {...common}
-        path="description"
-        baseName={false}
-        emptyText="没有构筑说明"
-        rows={notes}
-      />,
+      <PairTable {...common} path="description" baseName={false} rows={notes} />,
     )
-    expect(container.querySelector('.tip--solo')).not.toBeNull()
-    // 一行一格，没有序号格、没有列头、没有译文格
-    expect(container.querySelectorAll('.tip__t--solo')).toHaveLength(2)
-    expect(container.querySelectorAll('.tip__n')).toHaveLength(0)
-    expect(container.querySelectorAll('.tip__lab')).toHaveLength(0)
-    expect(container.querySelectorAll('.tip__t--zh')).toHaveLength(0)
-    // 原文只出现一次，不再左右逐字重复
+    expect(container.querySelectorAll('.pt-pair--solo')).toHaveLength(2)
+    expect(container.querySelectorAll('.pt-pair__no')).toHaveLength(0)
+    expect(container.querySelectorAll('.pt-pair__zh')).toHaveLength(0)
     expect(screen.getAllByText('Leveling notes')).toHaveLength(1)
-    // 状态仍然可见，且整块只挂一枚标签（挂在最后一行行尾）
     expect(screen.getAllByText('原样')).toHaveLength(1)
-    // 行 id 照旧，且带 tabIndex={-1}：跳转靠它转移焦点，光有 id 只能滚动
-    expect(document.getElementById('line-description-1')?.getAttribute('tabindex')).toBe('-1')
-    // 整行 lang="en" 是给英文原文用的，"原样"标签是中文，不能被外层语言标注带偏（M-4）
-    expect(document.getElementById('line-description-1')?.getAttribute('lang')).toBe('en')
-    expect(container.querySelector('.tip__tag--keep')?.getAttribute('lang')).toBe('zh-CN')
+    const anchor = document.getElementById('line-description-1')
+    expect(anchor?.className).toBe('pt-pair__text')
+    expect(anchor?.getAttribute('tabindex')).toBe('-1')
+    expect(anchor?.getAttribute('lang')).toBe('en')
+    expect(container.querySelector('.pt-pair-tag')?.getAttribute('lang')).toBe('zh-CN')
   })
 
-  it('双语模式不退化：右列挂着保留的英文原行，不是逐字重复', () => {
+  it('双语模式不退化，保留的英文原行挂在同一行里并标“原文”', () => {
     const { container } = render(
       <PairTable
         {...common}
         bilingual
-        path="description"
-        baseName={false}
-        emptyText="没有构筑说明"
-        rows={notes}
-      />,
-    )
-    expect(container.querySelector('.tip--solo')).toBeNull()
-    expect(document.querySelector('.tip__t--zh')).not.toBeNull()
-  })
-
-  it('双语保留的英文原行挂在同一行里，行数不多一行', () => {
-    const { container } = render(
-      <PairTable
-        {...common}
         baseName
-        emptyText="这个槽位没有备注"
         rows={[row({ index: 1, marker: '1', kept: [spans('+10 to maximum Life')] })]}
       />,
     )
-    expect(container.querySelectorAll('.tip__n')).toHaveLength(2) // 左右各一个序号格
-    expect(screen.getByText('原文')).toBeDefined()
-    expect(container.querySelectorAll('.tip__keep')).toHaveLength(1)
-    expect(container.querySelector('.tip__keep')?.textContent).toContain('+10 to maximum Life')
+    expect(container.querySelector('.pt-pair--solo')).toBeNull()
+    expect(container.querySelectorAll('li')).toHaveLength(1)
+    const orig = container.querySelectorAll('.app__pair-orig')
+    expect(orig).toHaveLength(1)
+    expect(orig[0]?.textContent).toBe('+10 to maximum Life原文')
+    expect(orig[0]?.getAttribute('lang')).toBe('en')
   })
 
-  it('只有传奇名注入时紧凑显示导出备注，无空原文列', () => {
+  it('译文视图只隐藏原文列：锚点挂在中文格，编号格 aria-hidden 且不可聚焦', () => {
     const { container } = render(
-      <PairTable
-        {...common}
-        baseName
-        emptyText="这个槽位没有备注"
-        injected={spans('稳步印记')}
-        rows={[]}
-      />,
+      <PairTable {...common} baseName view="translated" rows={[row({ index: 1, marker: '1' })]} />,
     )
-    expect(screen.getByText('稳步印记')).toBeDefined()
-    expect(screen.getByText('传奇名注入')).toBeDefined()
-    expect(container.querySelector('.tip--injected')?.getAttribute('lang')).toBe('zh-CN')
-    expect(screen.getByText('导出备注')).toBeDefined()
-    expect(container.querySelectorAll('.tip__base')).toHaveLength(0)
-    expect(container.querySelectorAll('.tip__n, .tip__t')).toHaveLength(0)
-  })
-
-  it('一行都没有时给一句人话，不是一张空面板', () => {
-    render(<PairTable {...common} baseName emptyText="这个槽位没有备注" rows={[]} />)
-    expect(screen.getByText('这个槽位没有备注')).toBeDefined()
-  })
-
-  it('原样的英文格不挂零样式的 keep 类，命中行的序号格不进焦点（M-3 / M-4）', () => {
-    const { container } = render(
-      <PairTable
-        {...common}
-        baseName
-        emptyText="这个槽位没有备注"
-        rows={[
-          row({ index: 1, marker: '1' }),
-          row({
-            index: 2,
-            kind: 'name',
-            status: 'kept',
-            en: spans('Stat Priority'),
-            zh: spans('Stat Priority'),
-          }),
-        ]}
-      />,
-    )
-    const keeps = [...container.querySelectorAll('.tip__t--keep')]
-    expect(keeps).toHaveLength(1)
-    expect(keeps[0]?.classList.contains('tip__t--zh')).toBe(true)
-    // 命中行的序号格是 aria-hidden 的装饰，不该同时可聚焦
+    expect(container.querySelector('ol')?.className).toBe('pt-pairs pt-pairs--translated')
+    expect(container.querySelector('.pt-pair__en')).toBeNull()
+    const anchor = document.getElementById('line-inventory-slots-3-additional-text-1')
+    expect(anchor?.className).toBe('pt-pair__zh')
+    expect(anchor?.getAttribute('tabindex')).toBe('-1')
     for (const cell of container.querySelectorAll('[aria-hidden="true"]')) {
       expect(cell.getAttribute('tabindex')).toBeNull()
     }
   })
 
-  it('繁体目标语言时译文列标 lang=zh-TW，列头也跟着变', () => {
+  it('繁体目标语言时中文格标 lang=zh-TW', () => {
+    const { container } = render(
+      <PairTable {...common} locale="zh-TW" baseName rows={[row({ index: 1, marker: '1' })]} />,
+    )
+    expect(container.querySelector('.pt-pair__zh')?.getAttribute('lang')).toBe('zh-TW')
+  })
+
+  it('id 与 hidden 落在 ol 上（collapsed 折叠用）', () => {
     const { container } = render(
       <PairTable
         {...common}
-        locale="zh-TW"
         baseName
-        emptyText="這個槽位沒有備註"
-        rows={[row({ index: 1, marker: '1', zh: spans('生命上限') })]}
+        id="slot-rows-2"
+        hidden
+        rows={[row({ index: 1, marker: '1' })]}
       />,
     )
-    expect(container.querySelector('.tip__lab')).toBeNull()
-    expect(container.querySelector('.tip__t--zh')?.getAttribute('lang')).toBe('zh-TW')
+    const list = container.querySelector('ol')
+    expect(list?.id).toBe('slot-rows-2')
+    expect(list?.hidden).toBe(true)
+  })
+
+  it('视觉隐藏的列说明随视图与语言变化', () => {
+    expect(pairCaption('compare', 'zh-CN')).toBe(
+      '对照分两栏：左栏原文（英文），右栏译文（简体中文）',
+    )
+    expect(pairCaption('compare', 'zh-TW')).toBe(
+      '对照分两栏：左栏原文（英文），右栏译文（繁体中文）',
+    )
+    expect(pairCaption('translated', 'zh-CN')).toBe('仅显示译文（简体中文）')
   })
 })

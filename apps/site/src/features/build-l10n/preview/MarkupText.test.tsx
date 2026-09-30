@@ -25,6 +25,8 @@ describe('MarkupText', () => {
     const nums = container.querySelectorAll('.num')
     expect(nums).toHaveLength(1)
     expect(nums[0]?.textContent).toBe('+10')
+    // 同时带 pt-num：ui-theme 的对照行与提示框按它给数值着色（spec §5.11、§6.4.4）
+    expect(nums[0]?.classList.contains('pt-num')).toBe(true)
   })
 
   it('百分号与小数点跟着数值走，一行里多个数值各包各的', () => {

@@ -15,6 +15,7 @@ import { type MarkupSpan, markupClass, resolveRgbTag } from './markup'
 // 不是可高亮的数值。两侧都要连数字一起挡（不能只挡字母）——否则 "T17" 的 "1" 被字母挡住后，
 // 引擎会退到 "7" 上重来；"30s" 的 "30" 被右侧字母挡住后，会退到 "3" 上重来。
 // 左边界连 `.` 一起挡：不挡的话 v0.5.5 会被切成 v0 与 .5.5，两段小数都被染成数值（附录 D M-11）。
+// 数值 span 同时带 pt-num：ui-theme 的对照行与提示框按它着色（spec §5.11、§6.4.4）
 const NUMBER = /(?<![.A-Za-z0-9])([-+]?\d+(?:[.,]\d+)*%?)(?![A-Za-z0-9])/
 
 function withNumbers(text: string, key: string): ReactNode {
@@ -23,7 +24,7 @@ function withNumbers(text: string, key: string): ReactNode {
   return parts.map((part, i) =>
     i % 2 === 1 ? (
       // biome-ignore lint/suspicious/noArrayIndexKey: split 出的数值可重复，位置是身份的一部分
-      <span key={`${key}#${i}`} className="num">
+      <span key={`${key}#${i}`} className="num pt-num">
         {part}
       </span>
     ) : (

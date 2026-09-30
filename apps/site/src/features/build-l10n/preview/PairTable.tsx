@@ -1,159 +1,131 @@
-// 同一源行共享网格行高；阅读模式只选择显示哪些格，不改翻译结果。
+// L0 对照行（spec §5.11）：左对齐、系统无衬线，同一源行一个 li。字段首行的基底名与传奇名注入行
+// 已移进名称牌（§6.4.3），这里不再渲染。锚点 id 挂在与改版前相同的逻辑格上（契约 C12）：
+// 中英对照视图挂编号格，译文视图挂中文格，solo 挂文本格；不挂在 li 上，避免 aria-label 盖住整行。
 import type { Locale } from '@poe2-tools/build-core'
-import { Fragment } from 'react'
+import type { ReactElement } from 'react'
+import { Icon } from '../../../shared/components/Icon'
 import { rowDomId } from './locate'
 import { MarkupText } from './MarkupText'
-import type { MarkupSpan } from './markup'
 import { isMissedRow, type PairRow } from './rows'
 
 export type PreviewView = 'compare' | 'translated'
 export interface PairTableProps {
   path: string
   rows: readonly PairRow[]
-  injected: MarkupSpan[] | null
   locale: Locale
+  /** 字段首行按惯例是不是基底名（只有装备槽位是）；是的话首行已进名称牌，这里跳过 */
   baseName: boolean
   bilingual: boolean
-  emptyText: string
   view?: PreviewView
+  /** collapsed 装备的展开控件用 aria-controls 指向它（spec §6.4.3） */
+  id?: string | undefined
+  hidden?: boolean | undefined
+}
+
+/** 视觉隐藏的列说明，放在原“原文 · EN / 译文 · 简体中文”列头的位置（spec §5.11） */
+export function pairCaption(view: PreviewView, locale: Locale): string {
+  const lang = locale === 'zh-CN' ? '简体中文' : '繁体中文'
+  return view === 'compare'
+    ? `对照分两栏：左栏原文（英文），右栏译文（${lang}）`
+    : `仅显示译文（${lang}）`
 }
 
 export function PairTable({
   path,
   rows,
-  injected,
   locale,
   baseName,
   bilingual,
-  emptyText,
   view = 'compare',
-}: PairTableProps) {
-  if (rows.length === 0 && injected === null) {
+  id,
+  hidden,
+}: PairTableProps): ReactElement | null {
+  const shown = baseName ? rows.filter((row) => !row.base) : rows
+  if (shown.length === 0) return null
+  // 整段都是原样（自由备注）时退化成单栏，不左右逐字重复（改版前 .tip--solo）
+  const solo =
+    !bilingual && shown.every((row) => row.status === 'kept' && !isMissedRow(row, baseName))
+  if (solo) {
     return (
-      <div className="tip tip--empty">
-        <p>{emptyText}</p>
-      </div>
-    )
-  }
-  if (rows.length === 0 && injected !== null) {
-    return (
-      <div className="tip tip--injected" lang={locale}>
-        <span className="tip__injected-label">导出备注</span>
-        <span>
-          <MarkupText spans={injected} />
-          <span className="tip__tag tip__tag--inject">传奇名注入</span>
-        </span>
-      </div>
+      <ol className="pt-pairs" id={id} hidden={hidden}>
+        {shown.map((row, i) => (
+          <li key={row.index} className="pt-pair pt-pair--solo">
+            <span className="pt-pair__text" id={rowDomId(path, row.index)} tabIndex={-1} lang="en">
+              <MarkupText spans={row.en} />
+              {i === shown.length - 1 && (
+                <span className="pt-pair-tag" lang="zh-CN">
+                  原样
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
     )
   }
   const compare = view === 'compare'
-  const solo =
-    !bilingual &&
-    injected === null &&
-    rows.every((row) => row.status === 'kept' && !isMissedRow(row, baseName))
-  if (solo) {
-    return (
-      <div className="tip tip--solo">
-        {rows.map((row, i) => (
-          <span
-            key={row.index}
-            className="tip__t tip__t--solo"
-            id={rowDomId(path, row.index)}
-            tabIndex={-1}
-            lang="en"
-          >
-            <MarkupText spans={row.en} />
-            {i === rows.length - 1 && (
-              <span className="tip__tag tip__tag--keep" lang="zh-CN">
-                原样
-              </span>
-            )}
-          </span>
-        ))}
-      </div>
-    )
-  }
   return (
-    <div className={compare ? 'tip' : 'tip tip--translated'}>
-      {injected !== null && (
-        <>
-          {compare && <span className="tip__base" />}
-          <span className="tip__base tip__base--zh" lang={locale}>
-            <MarkupText spans={injected} />
-            <span className="tip__tag tip__tag--inject">传奇名注入</span>
-          </span>
-        </>
-      )}
-      {rows.map((row) => {
+    <ol className={compare ? 'pt-pairs' : 'pt-pairs pt-pairs--translated'} id={id} hidden={hidden}>
+      {shown.map((row) => {
         const missed = isMissedRow(row, baseName)
         const kept = !missed && row.status === 'kept'
-        const base = baseName && row.base
-        const note = missed
-          ? ({ role: 'note', 'aria-label': base ? '基底名未收录' : '未命中' } as const)
-          : {}
-        const id = rowDomId(path, row.index)
-        const enClass = base ? 'tip__base' : 'tip__t'
-        const markedClass = `${enClass}${missed ? ` ${enClass}--miss` : ''}`
-        const zh = (
-          <>
-            <MarkupText spans={row.zh ?? row.en} />
-            {missed && (
-              <span className="tip__tag tip__tag--miss" lang="zh-CN">
-                {base ? '基底名未收录' : '未命中 · 保留英文'}
-              </span>
-            )}
-            {kept && (
-              <span className="tip__tag tip__tag--keep" lang="zh-CN">
-                原样
-              </span>
-            )}
-            {row.kept.map((line, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: 保留行内容可重复，位置就是身份
-              <span key={i} className="tip__keep" lang="en">
-                <MarkupText spans={line} />
-                <span className="tip__tag tip__tag--keep" lang="zh-CN">
-                  原文
-                </span>
-              </span>
-            ))}
-          </>
-        )
-        const numClass = `tip__n${missed ? ' tip__n--miss' : ''}`
+        const note = missed ? ({ role: 'note', 'aria-label': '未命中' } as const) : {}
+        const anchor = rowDomId(path, row.index)
+        const marker = missed ? '!' : (row.marker ?? '')
         return (
-          <Fragment key={row.index}>
-            {compare && !base && (
-              <span className={numClass} id={id} tabIndex={-1} {...note}>
-                {missed ? '!' : (row.marker ?? '')}
+          <li key={row.index} className={missed ? 'pt-pair pt-pair--miss' : 'pt-pair'}>
+            {compare ? (
+              <span className="pt-pair__no" id={anchor} tabIndex={-1} {...note}>
+                {marker}
+              </span>
+            ) : (
+              <span className="pt-pair__no" aria-hidden="true">
+                {marker}
               </span>
             )}
             {compare && (
-              <span
-                className={markedClass}
-                lang="en"
-                id={base ? id : undefined}
-                tabIndex={base ? -1 : undefined}
-                {...(base ? note : {})}
-              >
+              <span className="pt-pair__en" lang="en">
                 <MarkupText spans={row.en} />
               </span>
             )}
-            {!base && (
-              <span className={`${numClass} tip__n--right`} aria-hidden="true">
-                {missed ? '!' : (row.marker ?? '')}
-              </span>
-            )}
             <span
-              className={`${markedClass} ${enClass}--zh${kept && !base ? ' tip__t--keep' : ''}`}
+              className="pt-pair__zh"
               lang={missed || kept ? 'en' : locale}
-              id={!compare ? id : undefined}
-              tabIndex={!compare ? -1 : undefined}
+              id={compare ? undefined : anchor}
+              tabIndex={compare ? undefined : -1}
               {...note}
             >
-              {zh}
+              {missed || kept ? (
+                <span className="pt-pair__kept">
+                  <MarkupText spans={row.zh ?? row.en} />
+                </span>
+              ) : (
+                <MarkupText spans={row.zh ?? row.en} />
+              )}
+              {missed && (
+                <span className="pt-tag-miss" lang="zh-CN">
+                  <Icon name="warning" size={14} />
+                  未命中 · 保留原文
+                </span>
+              )}
+              {kept && (
+                <span className="pt-pair-tag" lang="zh-CN">
+                  原样
+                </span>
+              )}
+              {row.kept.map((line, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: 保留行内容可重复，位置就是身份
+                <span key={i} className="app__pair-orig" lang="en">
+                  <MarkupText spans={line} />
+                  <span className="pt-pair-tag" lang="zh-CN">
+                    原文
+                  </span>
+                </span>
+              ))}
             </span>
-          </Fragment>
+          </li>
         )
       })}
-    </div>
+    </ol>
   )
 }

@@ -1,11 +1,14 @@
-import type { Locale, PreviewName, PreviewSkill, PreviewSlot } from '@poe2-tools/build-core'
+import type { Locale, PreviewName, PreviewSkill } from '@poe2-tools/build-core'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../../shared/components/Icon'
 import type { TranslatedFile } from '../translate/runTranslation'
-import { type FieldWithRows, slotLabel } from './fields'
-import { collectMisses, domIdFor, jumpTo, type MissEntry, type PreviewSection } from './locate'
-import { PairTable, type PreviewView } from './PairTable'
-import type { PairRow } from './rows'
+import type { FieldWithRows } from './fields'
+import { collectMisses, jumpTo, type MissEntry, type PreviewSection } from './locate'
+import { PairTable, type PreviewView, pairCaption } from './PairTable'
+import { levelRange } from './plate'
+import { isMissedRow, type PairRow } from './rows'
+import { SlotCard } from './SlotCard'
+import { TooltipCard } from './TooltipCard'
 import { useHotkeys } from './useHotkeys'
 import { useMissFilter } from './useMissFilter'
 
@@ -39,65 +42,16 @@ const SECTIONS: readonly { id: PreviewSection; label: string }[] = [
 ]
 const ISSUE_LABEL = { mod: '词缀未命中', base: '基底名未收录', unique: '传奇名未收录' }
 
-function hasText(entry: FieldWithRows | undefined): entry is FieldWithRows {
-  return entry !== undefined && (entry.rows.length > 0 || entry.injected !== null)
+// locate() 指向装备字段的行时，要先展开对应的 collapsed 条目再聚焦（spec §6.4.3）
+const SLOT_FIELD = /^inventory_slots\[(\d+)\]\.additional_text$/
+
+/** collapsed 的对照区默认折叠；字段里有未命中行时默认展开（spec §6.4.3） */
+function openByDefault(entry: FieldWithRows): boolean {
+  return entry.rows.some((row) => isMissedRow(row, entry.entry.baseName))
 }
 
-function SlotCard(props: {
-  slot: PreviewSlot
-  entry: FieldWithRows
-  locale: Locale
-  bilingual: boolean
-  view: PreviewView
-}) {
-  const { slot, entry, locale, bilingual, view } = props
-  return (
-    <article className={slot.uniqueName === null ? 'card' : 'card card--unique'}>
-      <div
-        className="card__head"
-        id={domIdFor(`inventory_slots[${slot.rawIndex}].unique_name`)}
-        tabIndex={-1}
-      >
-        <h3 title={slot.inventoryId}>{slotLabel(slot)}</h3>
-        {slot.uniqueName !== null && (
-          <>
-            <span className="chip chip--unique">传奇</span>
-
-            <span className="namepair">
-              <span className="namepair__en" lang="en">
-                {slot.uniqueName}
-              </span>
-              {slot.uniqueText === null ? (
-                <span
-                  className="namepair__zh namepair__zh--miss"
-                  role="note"
-                  aria-label="传奇名未收录"
-                >
-                  名称未收录
-                </span>
-              ) : (
-                <span className="namepair__zh">{slot.uniqueText}</span>
-              )}
-            </span>
-          </>
-        )}
-        {bilingual && <span className="chip chip--bi">双语</span>}
-        <CardCount rows={entry.rows} />
-      </div>
-      {hasText(entry) && (
-        <PairTable
-          path={entry.entry.path}
-          rows={entry.rows}
-          injected={entry.injected}
-          locale={locale}
-          baseName={entry.entry.baseName}
-          bilingual={bilingual}
-          view={view}
-          emptyText="这个槽位没有备注"
-        />
-      )}
-    </article>
-  )
+function hasText(entry: FieldWithRows | undefined): entry is FieldWithRows {
+  return entry !== undefined && (entry.rows.length > 0 || entry.injected !== null)
 }
 
 function NamePair({ name, kind }: { name: PreviewName; kind: 'gem' | 'passive' }) {
@@ -125,7 +79,7 @@ function NamePair({ name, kind }: { name: PreviewName; kind: 'gem' | 'passive' }
   )
 }
 
-function levelRange(list: unknown, i: number): string | null {
+function skillLvRange(list: unknown, i: number): string | null {
   if (!Array.isArray(list)) return null
   const entry: unknown = list[i]
   if (entry === null || typeof entry !== 'object') return null
@@ -165,12 +119,10 @@ function SkillCard(props: {
         <PairTable
           path={own.entry.path}
           rows={own.rows}
-          injected={own.injected}
           locale={locale}
           baseName={own.entry.baseName}
           bilingual={bilingual}
           view={view}
-          emptyText="这个宝石没有备注"
         />
       )}
       {skill.supports.length > 0 && (
@@ -185,12 +137,10 @@ function SkillCard(props: {
                   <PairTable
                     path={entry.entry.path}
                     rows={entry.rows}
-                    injected={entry.injected}
                     locale={locale}
                     baseName={entry.entry.baseName}
                     bilingual={bilingual}
                     view={view}
-                    emptyText="这个支援宝石没有备注"
                   />
                 )}
               </li>
@@ -219,6 +169,8 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [pending, setPending] = useState<{ domId: string } | null>(null)
+  // collapsed 装备的手动展开/收起；没有记录时按“有未命中行即默认展开”
+  const [opened, setOpened] = useState<ReadonlyMap<number, boolean>>(() => new Map())
   const header = useRef<HTMLElement>(null)
   const filter = useMissFilter(misses.length > 0)
   const only = filter.only && misses.length > 0
@@ -236,6 +188,13 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
   const locate = useCallback((issue: MissEntry) => {
     if (issue.path === 'description') setDetailsOpen(true)
     else setSection(issue.section)
+    const slot = SLOT_FIELD.exec(issue.path)
+    if (slot !== null) {
+      const index = Number(slot[1])
+      setOpened((current) =>
+        current.get(index) === true ? current : new Map(current).set(index, true),
+      )
+    }
     setPending({ domId: issue.domId })
   }, [])
   const next = useCallback(() => {
@@ -271,17 +230,19 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
   }
   const visibleCounts = { gear: slots.length, skills: skills.length, passives: passives.length }
   const names = misses.filter((issue) => issue.kind !== 'mod').length
+  const slotEntries = slots.flatMap((slot) => {
+    const entry = byPath.get(`inventory_slots[${slot.rawIndex}].additional_text`)
+    return entry === undefined ? [] : [{ slot, entry }]
+  })
   const ascendancy = preview.ascendancy
-  const pair = (entry: FieldWithRows, emptyText: string) => (
+  const pair = (entry: FieldWithRows) => (
     <PairTable
       path={entry.entry.path}
       rows={entry.rows}
-      injected={entry.injected}
       locale={locale}
       baseName={entry.entry.baseName}
       bilingual={bilingual}
       view={view}
-      emptyText={emptyText}
     />
   )
   return (
@@ -341,7 +302,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
                 <h3>构筑说明</h3>
                 <CardCount rows={description.rows} />
               </div>
-              {pair(description, '没有构筑说明')}
+              {pair(description)}
             </article>
           )}
         </details>
@@ -436,12 +397,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
           </div>
         </div>
       </div>
-      {section === 'gear' && (
-        <div className="preview-columns" aria-hidden="true">
-          {view === 'compare' && <span>原文 · EN</span>}
-          <span>译文 · {locale === 'zh-CN' ? '简体中文' : '繁体中文'}</span>
-        </div>
-      )}
+      {section === 'gear' && <p className="visually-hidden">{pairCaption(view, locale)}</p>}
       <section
         className="preview__section"
         aria-label={SECTIONS.find((item) => item.id === section)?.label}
@@ -451,20 +407,48 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             {only ? '这一区没有待核对项，可切换其他区块或关闭筛选。' : '这份构筑没有这类内容。'}
           </p>
         )}
-        {section === 'gear' &&
-          slots.map((slot) => {
-            const entry = byPath.get(`inventory_slots[${slot.rawIndex}].additional_text`)
-            return entry === undefined ? null : (
+        {section === 'gear' && view === 'compare' && slotEntries.length > 0 && (
+          <div className="pt-items">
+            {slotEntries.map(({ slot, entry }) => (
               <SlotCard
                 key={slot.rawIndex}
                 slot={slot}
                 entry={entry}
+                level={levelRange(input.inventory_slots, slot.rawIndex)}
                 locale={locale}
                 bilingual={bilingual}
-                view={view}
+                open={opened.get(slot.rawIndex) ?? openByDefault(entry)}
+                onToggle={() =>
+                  setOpened((current) =>
+                    new Map(current).set(
+                      slot.rawIndex,
+                      !(current.get(slot.rawIndex) ?? openByDefault(entry)),
+                    ),
+                  )
+                }
               />
-            )
-          })}
+            ))}
+          </div>
+        )}
+        {section === 'gear' && view === 'translated' && slotEntries.length > 0 && (
+          <div className="pt-tooltip-wrap">
+            <p className="pt-tooltip-note">
+              只读预览：中文词缀用提亮的词缀蓝；
+              <span className="pt-tooltip-note__tail">核对请切回“中英对照”</span>
+            </p>
+            <div className="pt-tooltips">
+              {slotEntries.map(({ slot, entry }) => (
+                <TooltipCard
+                  key={slot.rawIndex}
+                  slot={slot}
+                  entry={entry}
+                  level={levelRange(input.inventory_slots, slot.rawIndex)}
+                  locale={locale}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         {section === 'skills' &&
           skills.map(({ skill, i }) => (
             <SkillCard
@@ -472,7 +456,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
               skill={skill}
               index={i}
               fields={byPath}
-              levels={levelRange(input.skills, i)}
+              levels={skillLvRange(input.skills, i)}
               locale={locale}
               bilingual={bilingual}
               view={view}
@@ -489,7 +473,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
                     className={hasText(entry) ? undefined : 'passive--name-only'}
                   >
                     <NamePair name={passive} kind="passive" />
-                    {hasText(entry) && pair(entry, '没有备注')}
+                    {hasText(entry) && pair(entry)}
                   </li>
                 )
               })}
