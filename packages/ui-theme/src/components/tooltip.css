@@ -1,0 +1,99 @@
+/* spec §6.4.4 “译文”视图的只读提示框（游戏对象层，只用于装备页签）：顶部说明右对齐；主区内容宽 ≥880px 时两列；
+   正文居中，属性行 14px --prop，中文词缀 --mod-hi，数值 --mod-num-zh 700（原文带标记色的行保留标记色）。 */
+.pt-tooltip-wrap {
+  container-type: inline-size;
+  margin-top: 14px;
+}
+/* 顶部说明：一行 12.5px --ink-3 右对齐；放不下时在“；”后换行（R11），后半句包进 __tail 不被拆开 */
+.pt-tooltip-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  text-align: right;
+}
+.pt-tooltip-note__tail {
+  display: inline-block;
+}
+/* 网格上距 22px 给提示框顶边扣留位（M0 self-decided B17） */
+.pt-tooltips {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+  align-items: start;
+  margin-top: 22px;
+}
+@container (width >= 880px) {
+  .pt-tooltips {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* 正文：12px 24px 16px，居中；属性行里“传奇”标签用名称牌形态，边色与字色随卡片变体（R12） */
+.pt-tooltip__body {
+  --np-tag-edge: rgba(110, 86, 52, 0.85);
+  --np-name-2: #bcae95;
+  padding: 12px 24px 16px;
+  text-align: center;
+}
+.pt-panel--unique .pt-tooltip__body {
+  --np-tag-edge: rgba(175, 96, 37, 0.75);
+  --np-name-2: #e7a070;
+}
+.pt-tooltip__prop {
+  margin: 0;
+  color: var(--prop);
+  font-size: 14px;
+}
+.pt-tooltip__prop .pt-num {
+  color: var(--val);
+  font-weight: 500;
+}
+.pt-tooltip__dot {
+  margin: 0 6px;
+  font-style: normal;
+}
+.pt-tooltip__prop .pt-nameplate__tag {
+  display: inline-block;
+  vertical-align: 1px;
+}
+/* 属性行下的分隔线取该卡的边色，左右外距 20px（§5.9） */
+.pt-tooltip__body > .pt-divider {
+  --sep-c: var(--edge);
+  margin: 8px 20px;
+}
+.pt-tooltip__mod {
+  margin: 0;
+  padding: 3px 0;
+  color: var(--mod-hi);
+  font-size: 15.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.pt-tooltip__mod .pt-num {
+  color: var(--mod-num-zh);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* 未命中行：显示原文 --ink-2，橙色虚线下划线，下面居中接“未命中 · 保留原文” */
+.pt-tooltip__mod--kept {
+  color: var(--ink-2);
+  text-decoration: underline dashed rgba(242, 167, 102, 0.7);
+  text-underline-offset: 4px;
+}
+/* 原样行（自由备注）：显示原文，基色 --ink-2，保留标记色，不加虚线与标签（M0 self-decided B19） */
+.pt-tooltip__mod--as-is {
+  color: var(--ink-2);
+}
+.pt-tooltip__mod--kept .pt-num,
+.pt-tooltip__mod--as-is .pt-num {
+  color: inherit;
+  font-weight: inherit;
+}
+.pt-tooltip__body .pt-tag-miss {
+  display: flex;
+  margin: 4px auto 0;
+}
+@media (forced-colors: active) {
+  .pt-tooltip__mod--kept {
+    text-decoration-color: CanvasText;
+  }
+}

@@ -571,3 +571,45 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, '.pt-nameplate::after', 'display', 'forced-colors: active')).toBe('none')
   })
 })
+
+describe('tooltip.css（spec §6.4.4）', () => {
+  const rules = m2Css('tooltip.css')
+  it('主区内容宽 ≥880px 时两列，否则单列；列距 30px', () => {
+    expect(m2Value(rules, '.pt-tooltips', 'grid-template-columns')).toBe(m2Norm('minmax(0, 1fr)'))
+    expect(m2Value(rules, '.pt-tooltips', 'gap')).toBe('30px')
+    expect(m2Value(rules, '.pt-tooltips', 'grid-template-columns', 'width >= 880px')).toBe(
+      m2Norm('1fr 1fr'),
+    )
+    expect(m2Value(rules, '.pt-tooltip-wrap', 'container-type')).toBe('inline-size')
+  })
+  it('顶部说明 12.5px --ink-3 右对齐，后半句不拆开', () => {
+    expect(m2Value(rules, '.pt-tooltip-note', 'font-size')).toBe('12.5px')
+    expect(m2Value(rules, '.pt-tooltip-note', 'color')).toBe('var(--ink-3)')
+    expect(m2Value(rules, '.pt-tooltip-note', 'text-align')).toBe('right')
+    expect(m2Value(rules, '.pt-tooltip-note__tail', 'display')).toBe('inline-block')
+  })
+  it('正文居中；属性行 14px --prop，数值 --val 500；分隔线取卡片边色、左右外距 20px', () => {
+    expect(m2Value(rules, '.pt-tooltip__body', 'padding')).toBe(m2Norm('12px 24px 16px'))
+    expect(m2Value(rules, '.pt-tooltip__body', 'text-align')).toBe('center')
+    expect(m2Value(rules, '.pt-tooltip__prop', 'font-size')).toBe('14px')
+    expect(m2Value(rules, '.pt-tooltip__prop', 'color')).toBe('var(--prop)')
+    expect(m2Value(rules, '.pt-tooltip__prop .pt-num', 'color')).toBe('var(--val)')
+    expect(m2Value(rules, '.pt-tooltip__prop .pt-num', 'font-weight')).toBe('500')
+    expect(m2Value(rules, '.pt-tooltip__body > .pt-divider', '--sep-c')).toBe('var(--edge)')
+    expect(m2Value(rules, '.pt-tooltip__body > .pt-divider', 'margin')).toBe(m2Norm('8px 20px'))
+  })
+  it('中文词缀 15.5px/1.5 --mod-hi，数值 --mod-num-zh 700', () => {
+    expect(m2Value(rules, '.pt-tooltip__mod', 'color')).toBe('var(--mod-hi)')
+    expect(m2Value(rules, '.pt-tooltip__mod', 'font-size')).toBe('15.5px')
+    expect(m2Value(rules, '.pt-tooltip__mod', 'line-height')).toBe('1.5')
+    expect(m2Value(rules, '.pt-tooltip__mod .pt-num', 'color')).toBe('var(--mod-num-zh)')
+    expect(m2Value(rules, '.pt-tooltip__mod .pt-num', 'font-weight')).toBe('700')
+  })
+  it('未命中行：原文 --ink-2 加橙色虚线下划线，偏移 4px', () => {
+    expect(m2Value(rules, '.pt-tooltip__mod--kept', 'color')).toBe('var(--ink-2)')
+    expect(m2Value(rules, '.pt-tooltip__mod--kept', 'text-decoration')).toBe(
+      m2Norm('underline dashed rgba(242, 167, 102, 0.7)'),
+    )
+    expect(m2Value(rules, '.pt-tooltip__mod--kept', 'text-underline-offset')).toBe('4px')
+  })
+})
