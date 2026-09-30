@@ -58,7 +58,10 @@ describe('FileList（spec §5.12 文件项）', () => {
     expect(pick.closest('li')?.className).toBe('pt-file')
     expect(pick.closest('li')?.hasAttribute('aria-current')).toBe(false)
     expect(screen.getByRole('button', { name: 'c.build' }).hasAttribute('aria-current')).toBe(false)
-    expect(screen.getByRole('button', { name: '移除 a.build' }).className).toBe('pt-file__remove')
+    const remove = screen.getByRole('button', { name: '移除 a.build' })
+    expect(remove.className).toBe('pt-file__remove')
+    // 图标与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
+    expect(remove.querySelector('svg')?.getAttribute('width')).toBe('18')
   })
 
   it('等待词典时文件仍可选和移除', () => {

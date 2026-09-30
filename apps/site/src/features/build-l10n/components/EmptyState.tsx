@@ -66,7 +66,10 @@ export function EmptyState({ onFiles, onPaste, onExample }: EmptyStateProps) {
       </PtPanel>
       <p className="app__empty-trust">
         <Icon name="lock" size={14} />
-        文件只在你的浏览器里解析，不会上传到任何服务器
+        {/* 文字包成一个 flex 项；“任何”“服务器”不拆开（spec §6.7 R15） */}
+        <span>
+          文件只在你的浏览器里解析，不会上传到<span className="nw">任何服务器</span>
+        </span>
       </p>
       <p className="app__empty-foot">
         <span>

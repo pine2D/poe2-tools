@@ -45,6 +45,11 @@
 .stats__ok .icon {
   color: var(--ok);
 }
+/* “词缀命中 8/8”的计数：--ink、600（M0 mockup build-gear .stats b，M2 Ruling 13） */
+.stats b {
+  color: var(--ink);
+  font-weight: 600;
+}
 /* “待核对 n（名称 m）”：--miss 加警示图标，aria-expanded 控制待核对清单 */
 .stats__miss {
   display: inline-flex;

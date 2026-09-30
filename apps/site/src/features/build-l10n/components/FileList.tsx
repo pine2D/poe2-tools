@@ -86,7 +86,7 @@ export function FileList({
               aria-label={`移除 ${label}`}
               onClick={() => onRemove(source.id)}
             >
-              <Icon name="close" size={14} />
+              <Icon name="close" size={18} />
             </button>
             {result !== undefined && !result.ok && (
               <p className="app__file-error">{result.error}</p>

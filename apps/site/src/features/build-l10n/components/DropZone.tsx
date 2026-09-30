@@ -76,7 +76,7 @@ export function DropZone({ variant = 'rail', forge = false, onFiles, onPaste }: 
     <details className="app__paste">
       <summary className="pt-textbtn">
         或粘贴内容
-        <Icon name="chevron-down" size={14} />
+        <Icon name="chevron-down" size={18} />
       </summary>
       <div className="app__paste-body">
         <textarea
@@ -130,7 +130,10 @@ export function DropZone({ variant = 'rail', forge = false, onFiles, onPaste }: 
         {!forge && (
           <p className="app__drop-trust">
             <Icon name="lock" size={13} />
-            文件只在你的浏览器里解析，不会上传到任何服务器
+            {/* 文字包成一个 flex 项；“任何”“服务器”不拆开（spec §6.7 R15） */}
+            <span>
+              文件只在你的浏览器里解析，不会上传到<span className="nw">任何服务器</span>
+            </span>
           </p>
         )}
       </div>

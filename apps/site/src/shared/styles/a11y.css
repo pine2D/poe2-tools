@@ -1,4 +1,9 @@
 /* 构筑页的键盘、减少动态效果与强制色彩规则；组件外观来自 @poe2-tools/ui-theme（spec §6.4、§6.7） */
+/* tabpanel 是 tabIndex=0 的可聚焦容器（spec §5.7），键盘聚焦时用统一焦点环，不用浏览器默认的 auto 1px（spec §5.15） */
+[role="tabpanel"]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
 /* 键盘操作时关掉页面层过渡（App 在 <html> 上写 data-input，沿用改版前做法） */
 :root[data-input="keyboard"] .app__sidechev {
   transition: none;

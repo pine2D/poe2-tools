@@ -158,9 +158,16 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             <li className="stats__ok">
               <Icon name="check" size={16} />
               <span>
-                {report.modCandidates === 0
-                  ? '无编号词缀'
-                  : `词缀命中 ${report.modTranslated}/${report.modCandidates}`}
+                {report.modCandidates === 0 ? (
+                  '无编号词缀'
+                ) : (
+                  <>
+                    词缀命中{' '}
+                    <b className="pt-num">
+                      {report.modTranslated}/{report.modCandidates}
+                    </b>
+                  </>
+                )}
               </span>
             </li>
             <li>
@@ -186,7 +193,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
         </div>
         <div className="whead-r">
           <PtForgeButton aria-label={`下载 ${file.name}`} onClick={onDownload}>
-            <Icon name="download" />
+            <Icon name="download" size={18} />
             <span>
               下载中文 <span className="pt-ext">.build</span>
             </span>
@@ -291,7 +298,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
             disabled={misses.length === 0}
             onClick={toggleFilter}
           >
-            <Icon name="filter" size={14} />
+            <Icon name="filter" size={18} />
             <span>
               <span className="pt-wide-only">仅看</span>待核对
             </span>{' '}

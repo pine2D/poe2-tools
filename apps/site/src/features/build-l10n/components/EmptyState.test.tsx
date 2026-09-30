@@ -14,12 +14,17 @@ function show(onPaste = vi.fn()) {
 
 describe('EmptyState（spec §6.4.1）', () => {
   it('一眼说清这是什么、怎么用、文件去哪儿', () => {
-    show()
+    const { container } = show()
     expect(screen.getByRole('heading', { level: 2, name: HERO })).toBeDefined()
     expect(screen.getByText(/攻略网站或作者提供/)).toBeDefined()
     expect(screen.getByText(/自由备注和未收录的内容保留原文/)).toBeDefined()
     expect(screen.queryByText(/在游戏.*导出/)).toBeNull()
-    expect(screen.getByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeDefined()
+    const trust = container.querySelector('.app__empty-trust') as HTMLElement
+    expect(trust.textContent).toBe('文件只在你的浏览器里解析，不会上传到任何服务器')
+    // 窄屏不拆开“任何”“服务器”（spec §6.7 R15，M2 Ruling 13）
+    expect([...trust.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual([
+      '任何服务器',
+    ])
   })
 
   it('脚注不写词典版本，版本只在词典状态条（B14）', () => {

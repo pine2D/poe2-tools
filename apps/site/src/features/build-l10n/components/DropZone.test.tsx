@@ -14,6 +14,8 @@ describe('DropZone', () => {
     expect(details).not.toBeNull()
     expect(details?.open).toBe(false)
     expect(details?.querySelector('summary')?.className).toBe('pt-textbtn')
+    // 折叠箭头与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
+    expect(details?.querySelector('summary svg')?.getAttribute('width')).toBe('18')
     // happy-dom 会跟随 <summary> 点击切换 details.open（已实测），不用手工置位
     fireEvent.click(screen.getByText('或粘贴内容'))
     expect(details?.open).toBe(true)
@@ -55,7 +57,12 @@ describe('DropZone', () => {
       'pt-btn',
     )
     expect(screen.getByText('支持一次拖入多个文件 · 也可以粘贴文件内容')).toBeDefined()
-    expect(screen.getByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeDefined()
+    const trust = container.querySelector('.app__drop-trust') as HTMLElement
+    expect(trust.textContent).toBe('文件只在你的浏览器里解析，不会上传到任何服务器')
+    // 390 宽不拆开“任何”“服务器”（spec §6.7 R15，M2 Ruling 13）
+    expect([...trust.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual([
+      '任何服务器',
+    ])
   })
 
   it('hero + forge（构筑空态）：“选择 .build 文件”是 pt-forge-btn label，信任说明不在拖放区内', () => {
@@ -66,7 +73,7 @@ describe('DropZone', () => {
     expect(label.className).toBe('pt-forge-btn')
     expect(label.querySelector('.pt-ext')?.textContent).toBe('.build')
     expect(screen.getByLabelText('选择 .build 文件')).toBeDefined()
-    expect(screen.queryByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeNull()
+    expect(container.querySelector('.app__drop-trust')).toBeNull()
   })
 
   it('拖入时边色换档、图标与文案换成“松手即可导入”', () => {

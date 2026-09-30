@@ -235,7 +235,7 @@ describe('App', () => {
     upload('b.build', rich)
     fireEvent.click(await screen.findByRole('button', { name: 'b.build' }))
     expect((screen.getByRole('radio', { name: '中英对照' }) as HTMLInputElement).checked).toBe(true)
-    expect(screen.getByText('词缀命中 7/8')).toBeDefined()
+    expect(document.querySelector('.stats__ok')?.textContent).toBe('词缀命中 7/8')
   })
 
   it('批量部分成功准确报告成功与失败份数', async () => {
@@ -293,9 +293,10 @@ describe('构筑页骨架（M2）', () => {
     expect(side.closest('aside')?.id).toBe('app-side')
     expect(within(side).getByRole('heading', { name: '文件' }).className).toBe('pt-titlebar__title')
     expect(within(side).getByText('本次文件')).toBeDefined()
-    expect(within(side).getByRole('button', { name: '下载全部 1 份' }).className).toBe(
-      'pt-btn pt-btn--quiet pt-btn--block',
-    )
+    const all = within(side).getByRole('button', { name: '下载全部 1 份' })
+    expect(all.className).toBe('pt-btn pt-btn--quiet pt-btn--block')
+    // 图标与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
+    expect(all.querySelector('svg')?.getAttribute('width')).toBe('18')
     expect(within(side).getByText('下载后怎么使用？').className).toBe(
       'pt-textbtn pt-textbtn--underline',
     )
@@ -387,12 +388,20 @@ describe('构筑页骨架（M2）', () => {
     expect(card.className).toBe('pt-panel pt-panel--card app__error')
     expect(card.closest('.pt-frame')).toBeNull()
     expect(within(card).getByRole('button', { name: '重新加载词典' }).className).toBe('pt-btn')
+    // 390 宽不把“问题”拆开（spec §6.7 R15，M2 Ruling 13）
+    const hint = card.querySelector('.app__error-hint') as HTMLElement
+    expect(hint.textContent).toBe(
+      '没有词典就没法翻译。多半是网络或缓存出了问题，重试一次通常就好。',
+    )
+    expect([...hint.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual(['问题'])
     expect(frames()).toHaveLength(1)
     const frame = frames()[0] as HTMLElement
     expect(frame.className).toBe('pt-frame pt-frame--hero app__import')
     expect(frame.querySelector('.pt-titlebar__title')?.textContent).toBe('导入 .build')
     expect(within(frame).getByText('选择 .build 文件').className).toBe('pt-btn')
-    expect(within(frame).getByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeDefined()
+    expect(frame.querySelector('.app__drop-trust')?.textContent).toBe(
+      '文件只在你的浏览器里解析，不会上传到任何服务器',
+    )
     expect(within(frame).queryByRole('button', { name: '试用示例构筑' })).toBeNull()
     expect(forges()).toHaveLength(0)
     expect(screen.getByRole('button', { name: '重试加载词典' }).className).toBe(

@@ -105,7 +105,10 @@ export function PairTable({
               {missed && (
                 <span className="pt-tag-miss" lang="zh-CN">
                   <Icon name="warning" size={14} />
-                  未命中 · 保留原文
+                  {/* 文字包成一个 flex 项；390 宽右栏约 120px，“保留原文”不拆开（spec §6.7 R15） */}
+                  <span>
+                    未命中 · <span className="nw">保留原文</span>
+                  </span>
                 </span>
               )}
               {kept && (

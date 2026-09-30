@@ -73,10 +73,15 @@ describe('Preview 主区框与信息行', () => {
     expect(heading.hasAttribute('data-user-text')).toBe(true)
     expect(heading.closest('.pt-frame')?.className).toBe('pt-frame app__build-frame')
     expect(screen.getByText('魔巫 · 瓦拉煞的门徒')).toBeDefined()
-    expect(screen.getByText('词缀命中 7/8')).toBeDefined()
+    const hit = container.querySelector('.stats__ok') as HTMLElement
+    expect(hit.textContent).toBe('词缀命中 7/8')
+    // 计数与 M0 同为 <b class="pt-num">（字重 600、--ink，M2 Ruling 13）
+    expect(hit.querySelector('b.pt-num')?.textContent).toBe('7/8')
     expect(screen.getByText('自由备注保留原文')).toBeDefined()
     const download = screen.getByRole('button', { name: '下载 rich.build' })
     expect(download.className).toBe('pt-forge-btn')
+    // 图标与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
+    expect(download.querySelector('svg')?.getAttribute('width')).toBe('18')
     expect(container.querySelectorAll('.pt-forge-btn')).toHaveLength(1)
     expect(container.querySelector('.meter')).toBeNull()
   })
@@ -162,6 +167,7 @@ describe('Preview 金属页签（spec §5.7）', () => {
     ])
     const only = screen.getByRole('button', { name: '仅看待核对' })
     expect(only.textContent).toBe('仅看待核对 F')
+    expect(only.querySelector('svg')?.getAttribute('width')).toBe('18')
     expect(only.querySelector('.pt-wide-only')?.textContent).toBe('仅看')
     const caption = screen.getByText('对照分两栏：左栏原文（英文），右栏译文（简体中文）')
     expect(caption.className).toBe('visually-hidden')
@@ -213,7 +219,7 @@ describe('Preview 装备名称牌（spec §6.4.3）', () => {
     const card = cardOf('红宝石戒指')
     expect(within(card).getByText('2/3 · 1 行待核对').closest('.pt-nameplate__warn')).not.toBeNull()
     expect(within(card).getAllByLabelText('未命中')).toHaveLength(2)
-    expect(within(card).getByText('未命中 · 保留原文')).toBeDefined()
+    expect(card.querySelector('.pt-tag-miss')?.textContent).toBe('未命中 · 保留原文')
   })
 
   it('“导出时保留英文原行”开启时第二行加“双语”标签', () => {
@@ -379,7 +385,7 @@ describe('待核对边界', () => {
         { inventory_id: 'Ring1', additional_text: 'Pyrophyte Staff' },
       ],
     })
-    expect(screen.getByText('词缀命中 1/1')).toBeDefined()
+    expect(document.querySelector('.stats__ok')?.textContent).toBe('词缀命中 1/1')
     expect(screen.getByRole('button', { name: '待核对 2（名称 2）' })).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '仅看待核对' }))
     expect(screen.queryByText('戒指 1')).toBeNull()

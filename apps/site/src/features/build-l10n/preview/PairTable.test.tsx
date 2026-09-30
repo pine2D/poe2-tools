@@ -124,8 +124,11 @@ describe('PairTable（spec §5.11）', () => {
     expect(container.querySelector('li')?.className).toBe('pt-pair pt-pair--miss')
     expect(screen.getAllByText('!')).toHaveLength(1)
     expect(screen.getAllByLabelText('未命中')).toHaveLength(2)
-    expect(screen.getByText('未命中 · 保留原文').className).toBe('pt-tag-miss')
-    expect(screen.getByText('未命中 · 保留原文').querySelector('svg')).not.toBeNull()
+    const tag = container.querySelector('.pt-tag-miss') as HTMLElement
+    expect(tag.textContent).toBe('未命中 · 保留原文')
+    expect(tag.querySelector('svg')).not.toBeNull()
+    // 390 宽右栏约 120px，不把“保留原文”拆开（spec §6.7 R15，M2 Ruling 13）
+    expect([...tag.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual(['保留原文'])
     expect(screen.queryByText('未命中 · 保留英文')).toBeNull()
     expect(container.querySelector('.pt-pair__zh')?.getAttribute('lang')).toBe('en')
     expect(container.querySelector('.pt-pair__kept')?.textContent).toBe(

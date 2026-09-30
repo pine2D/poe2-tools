@@ -120,6 +120,20 @@ describe('导入后的自动滚动（spec §6.4.2）', () => {
   })
 })
 
+describe('信息行计数与 tabpanel 焦点环（M2 Ruling 13）', () => {
+  const rules = buildCss()
+  it('统计行计数“8/8”与 M0 相同：字重 600、字色 --ink', () => {
+    expect(finalValue(rules, '.stats b', 'font-weight')).toBe('600')
+    expect(finalValue(rules, '.stats b', 'color')).toBe('var(--ink)')
+  })
+  it('tabpanel（tabIndex=0）键盘聚焦时用统一焦点环：--focus-ring，外偏移 3px（spec §5.15）', () => {
+    expect(finalValue(rules, '[role="tabpanel"]:focus-visible', 'outline')).toBe(
+      'var(--focus-ring)',
+    )
+    expect(finalValue(rules, '[role="tabpanel"]:focus-visible', 'outline-offset')).toBe('3px')
+  })
+})
+
 describe('改版前构筑页样式已清理（契约 §2.4、§4.2）', () => {
   const rules = buildCss()
   it('M2 标记行与标记之前的改版前规则都已删除', () => {

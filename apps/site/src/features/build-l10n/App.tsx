@@ -1,5 +1,5 @@
 import type { Locale } from '@poe2-tools/build-core'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../shared/components/Icon'
 import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
@@ -84,7 +84,7 @@ function DictBadge({ state, onRetry }: { state: DictState; onRetry(): void }) {
 // 阻断性错误（spec §5.4、§6.4.1）：pt-panel card，一句人话 + 恢复动作（默认 pt-btn）+ 折叠起来的原始错误
 function ErrorCard(props: {
   title: string
-  hint: string
+  hint: ReactNode
   detail: string
   action?: { label: string; onClick(): void }
 }) {
@@ -311,7 +311,12 @@ export function App({ fetchImpl }: AppProps) {
         <>
           <ErrorCard
             title="词典没能加载"
-            hint="没有词典就没法翻译。多半是网络或缓存出了问题，重试一次通常就好。"
+            hint={
+              <>
+                没有词典就没法翻译。多半是网络或缓存出了<span className="nw">问题</span>
+                ，重试一次通常就好。
+              </>
+            }
             detail={dictState.error}
             action={{ label: '重新加载词典', onClick: () => setReloadKey((n) => n + 1) }}
           />
@@ -395,7 +400,7 @@ export function App({ fetchImpl }: AppProps) {
         disabled={translated.length === 0}
         onClick={downloadAll}
       >
-        <Icon name="download" />
+        <Icon name="download" size={18} />
         <span>
           {translated.length < sources.length && dictState.status === 'ready'
             ? `下载成功的 ${translated.length} 份`
