@@ -236,3 +236,68 @@
   margin-left: auto;
   flex: none;
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* spec §6.7 ≤1099px（构筑页）：侧栏不再用 pt-frame，折叠为 L0 抽屉；主区保留唯一一扇 pt-frame */
+@media (max-width: 1099px) {
+  .app__body {
+    display: block;
+  }
+  .app__sidetoggle {
+    display: flex;
+  }
+  .app__sidechev {
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .app__sidetoggle[aria-expanded="true"] .app__sidechev {
+    transform: rotate(180deg);
+  }
+  .app__sidecount {
+    margin-left: auto;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  /* 展开后是 L0 通栏面板：底 --surface，下边 1px --line；上边由折叠条界定，左右贴视口不画边（spec §6.7 R16） */
+  .app__side {
+    display: none;
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .app__side--open {
+    display: block;
+  }
+  .app__side-note {
+    margin: 0;
+    padding: 0 20px 16px;
+  }
+  .app__main {
+    --main-pad-top: 24px;
+    padding: var(--main-pad-top) 24px 24px;
+  }
+  .app__main:only-child {
+    padding: 24px;
+  }
+}
+/* ≤620px：页面左右外距 16px（spec §6.7） */
+@media (max-width: 620px) {
+  .app__dictbar {
+    padding-inline: 16px;
+  }
+  .app__side-inner {
+    padding: 20px 16px;
+  }
+  .app__main:only-child {
+    padding: 20px 16px 32px;
+  }
+}
+/* ≤600px（构筑页）：主区外距 16px，上内边距 20px；可点目标 ≥44px */
+@media (max-width: 600px) {
+  .app__main {
+    --main-pad-top: 20px;
+    padding: var(--main-pad-top) 16px 32px;
+  }
+  .app__error-detail > summary {
+    min-height: 44px;
+  }
+}

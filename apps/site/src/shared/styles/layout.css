@@ -302,3 +302,121 @@
   margin: 0;
   font-size: 12px;
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* 构筑页骨架（spec §6.4.2）：整页滚动（与 M0 mockup 一致，不再用内部滚动容器），
+   主体网格 276px + 1fr，内容最大宽 1280px 居中（§6.1） */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+/* 词典状态条：底色通栏，文字与 1280px 内容区对齐（M0 self-decided K6） */
+.app__dictbar {
+  padding-inline: max(24px, calc((100% - 1280px) / 2 + 24px));
+}
+.app__dictbar-lack {
+  color: var(--miss);
+}
+.app__body {
+  display: grid;
+  grid-template-columns: 276px minmax(0, 1fr);
+  align-items: start;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+/* ≤1099px 才出现的抽屉开关；桌面不占网格单元 */
+.app__sidetoggle {
+  display: none;
+}
+/* 框外侧留白 ≥ 角饰外伸 12px（spec §4.5）：侧栏 22/12/22/22，主区 22/24/44/12（spec §6.4.2，mockup :425、:430） */
+.app__side {
+  min-width: 0;
+  padding: 22px 12px 22px 22px;
+}
+/* 侧栏脚注在框外，只写未命中说明（B14 删去词典版本） */
+.app__side-note {
+  margin: 14px 0 0;
+  padding: 0 6px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+/* --main-pad-top 等于当前断点的上内边距；主区 pt-frame 的 scroll-margin-top 取它（spec §6.4.2） */
+.app__main {
+  --main-pad-top: 22px;
+  min-width: 0;
+  padding: var(--main-pad-top) 24px 44px 12px;
+}
+.app__main:focus {
+  outline: none;
+}
+/* 没有文件时主区独占整行（空态、词典失败且无文件；M0 self-decided B1：26/40/44） */
+.app__main:only-child {
+  grid-column: 1 / -1;
+  padding: 26px 40px 44px;
+}
+/* 词典失败且没有文件时的“导入 .build”框：与空态框同宽居中 */
+.app__import {
+  max-width: 820px;
+  margin-inline: auto;
+}
+/* 同一状态下框外的 ErrorCard 与下方框同宽居中，两块左缘对齐（M0 未画此状态，按 .app__import 取值） */
+.app__main:only-child > .app__error {
+  max-width: 820px;
+  margin-inline: auto;
+}
+/* 有文件在等词典（spec §6.4.1）：框里是 L0 提示文字 */
+.app__hint {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+/* ErrorCard（spec §5.4）：pt-panel card；标题前 --danger 警示图标，标题 --ink，说明 --ink-2，动作为默认 pt-btn */
+.app__error {
+  max-width: 640px;
+  padding: 20px 22px;
+}
+.app__error-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 16px;
+}
+.app__error-title .icon {
+  color: var(--danger);
+}
+.app__error-hint {
+  margin: 0 0 16px;
+  color: var(--ink-2);
+}
+.app__error-detail {
+  margin-top: 16px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.app__error-detail > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+}
+/* “查看原始错误”折叠内是 --font-code 的 L0 代码块 */
+.app__error-detail code {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 12.5px / 1.6 var(--font-code);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* ErrorCard 在框外时，与下方框之间留出大于角饰外伸（12px）的间距 */
+.app__error + .app__import {
+  margin-top: 24px;
+}

@@ -1,6 +1,8 @@
 import type { Locale } from '@poe2-tools/build-core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../shared/components/Icon'
+import { PtFrame } from '../../shared/components/PtFrame'
+import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteHeader } from '../../shared/components/SiteHeader'
 import { createDictLoader, type FetchJson, type LoadedDict } from '../../shared/dict/loadDict'
 import { DropZone } from './components/DropZone'
@@ -19,6 +21,7 @@ import {
   type TranslateResult,
   translateSource,
 } from './translate/runTranslation'
+import { NARROW_QUERY, useMediaQuery } from './useMediaQuery'
 
 export type DictState =
   | { status: 'loading' }
@@ -32,46 +35,52 @@ export interface AppProps {
 
 const BASE = import.meta.env.BASE_URL
 
-// 词典版本一句话：徽章与侧栏脚注共用
+// 词典版本一句话：只在词典状态条显示（脚注不再重复，spec §6.4.1、§6.4.2，B14）
 function dictVersion(dict: LoadedDict): string {
   const league = dict.info.leagueName === null ? '' : `（${dict.info.leagueName}）`
   return `${dict.locale} ${dict.info.gameVersion ?? '?'}${league}`
 }
 
-// 顶栏右侧的词典状态徽章：三态各有图标与颜色，失败态自带恢复动作（审计 P0-3）
+// 页头下方的词典状态条（spec §5.12）：外层 role=status 常驻、三态只换内容，读屏按礼貌播报追踪切换；
+// 失败态自带恢复动作
 function DictBadge({ state, onRetry }: { state: DictState; onRetry(): void }) {
-  if (state.status === 'loading') {
-    return (
-      <p className="badge badge--loading">
-        <Icon name="refresh" size={14} />
-        <span>词典加载中…</span>
-      </p>
-    )
-  }
-  if (state.status === 'error') {
-    return (
-      <p className="badge badge--error">
-        <Icon name="warning" size={14} />
-        <span>词典加载失败</span>
-        <button type="button" className="badge__retry" aria-label="重试加载词典" onClick={onRetry}>
-          重试
-        </button>
-      </p>
-    )
-  }
   return (
-    <p className="badge">
-      <span className="badge__dot" />
-      <span>词典就绪</span>
-      <span className="badge__ver">{dictVersion(state.dict)}</span>
-      {state.dict.missing.length > 0 && (
-        <span className="badge__lack">缺少 {state.dict.missing.join('、')}</span>
+    <div className="pt-dictbar app__dictbar" role="status" aria-live="polite">
+      {state.status === 'loading' && (
+        <>
+          <span className="pt-dictbar__dot pt-dictbar__dot--loading" aria-hidden="true" />
+          <span>词典加载中…</span>
+        </>
       )}
-    </p>
+      {state.status === 'error' && (
+        <>
+          <span className="pt-dictbar__dot pt-dictbar__dot--failed" aria-hidden="true" />
+          <span>词典加载失败</span>
+          <button
+            type="button"
+            className="pt-btn pt-btn--quiet pt-btn--xs"
+            aria-label="重试加载词典"
+            onClick={onRetry}
+          >
+            重试
+          </button>
+        </>
+      )}
+      {state.status === 'ready' && (
+        <>
+          <span className="pt-dictbar__dot" aria-hidden="true" />
+          <span>词典就绪</span>
+          <b>{dictVersion(state.dict)}</b>
+          {state.dict.missing.length > 0 && (
+            <span className="app__dictbar-lack">缺少 {state.dict.missing.join('、')}</span>
+          )}
+        </>
+      )}
+    </div>
   )
 }
 
-// 阻断性错误统一长这样：一句人话 + 恢复动作 + 折叠起来的原始错误
+// 阻断性错误（spec §5.4、§6.4.1）：pt-panel card，一句人话 + 恢复动作（默认 pt-btn）+ 折叠起来的原始错误
 function ErrorCard(props: {
   title: string
   hint: string
@@ -80,25 +89,31 @@ function ErrorCard(props: {
 }) {
   const { title, hint, detail, action } = props
   return (
-    <section className="errorcard">
-      <h2 className="errorcard__title">
+    <PtPanel as="section" variant="card" className="app__error">
+      <h2 className="app__error-title">
         <Icon name="warning" size={18} />
         {title}
       </h2>
-      <p>{hint}</p>
+      <p className="app__error-hint">{hint}</p>
       {action !== undefined && (
-        <button type="button" className="cta" onClick={action.onClick}>
+        <button type="button" className="pt-btn" onClick={action.onClick}>
           <Icon name="refresh" />
           {action.label}
         </button>
       )}
-      <details className="errorcard__detail">
+      <details className="app__error-detail">
         <summary>查看原始错误</summary>
         <code>{detail}</code>
       </details>
-    </section>
+    </PtPanel>
   )
 }
+
+const IMPORT_TITLE = (
+  <>
+    导入 <span className="pt-ext">.build</span>
+  </>
+)
 
 export function App({ fetchImpl }: AppProps) {
   const [loader] = useState(() => createDictLoader(BASE, fetchImpl))
@@ -124,7 +139,8 @@ export function App({ fetchImpl }: AppProps) {
   const closeToast = useCallback(() => {
     setToast(null)
   }, [])
-  // 中小屏文件区按需展开，桌面常驻；切换文件后归还焦点。
+  // ≤1099px 侧栏折叠为抽屉，不渲染侧栏 pt-frame（spec §6.7）；抽屉按需展开，切换文件后归还焦点
+  const narrow = useMediaQuery(NARROW_QUERY)
   const [sideOpen, setSideOpen] = useState(false)
   const sideToggle = useRef<HTMLButtonElement>(null)
 
@@ -210,9 +226,8 @@ export function App({ fetchImpl }: AppProps) {
   }
   const selectFile = (id: string) => {
     setSelectedId(id)
-    // 抽屉开着才收起并交还焦点：中小屏 收起后 <aside> 会 display:none，刚被点击的
-    // .filelist__name 随之消失，焦点被重置到 <body>——键盘与 VoiceOver 用户正好在
-    // 「选文件 → 看概览」的中间丢掉光标。桌面 时 sideOpen 恒 false，这里什么都不做。
+    // 抽屉开着才收起并交还焦点：≤1099px 收起后 <aside> 会 display:none，刚被点击的文件按钮随之消失，
+    // 焦点会被重置到 <body>——键盘与读屏用户正好在「选文件 → 看概览」的中间丢掉光标。
     if (sideOpen) {
       setSideOpen(false)
       sideToggle.current?.focus()
@@ -268,13 +283,12 @@ export function App({ fetchImpl }: AppProps) {
 
   const empty = sources.length === 0
 
-  // 主区四选一：词典失败（阻断）→ 空态引导 → 解析失败 → 预览 / 中性提示。
-  // 写成带早返回的函数而不是四层嵌套三元：嵌套三元既难读，也可能撞上 lint 规则。
+  // 主区（spec §6.4.1）：词典失败 → 空态引导 → 解析失败 → 预览 → 等词典。
+  // 写成带早返回的函数而不是多层嵌套三元：嵌套三元既难读，也可能撞上 lint 规则。
   const renderMain = () => {
     if (dictState.status === 'error') {
-      // 词典失败 + 一个文件都没有时，侧栏整条不渲染 —— 如果这里只给一张错误卡，
-      // 整页就没有任何文件入口了。补一个 hero 拖放区：先粘贴内容，词典就绪后
-      // 翻译结果会自动出现。按钮文案叫「重新加载词典」，与徽章里的「重试」不撞名。
+      // 词典失败：ErrorCard 在框外（spec §5.4 唯一例外）。没有文件时下面再放一扇“导入 .build”框，
+      // 框内只有 DropZone hero（默认 pt-btn，本状态没有 pt-forge-btn）；有文件时主区只放这张 ErrorCard。
       return (
         <>
           <ErrorCard
@@ -283,7 +297,15 @@ export function App({ fetchImpl }: AppProps) {
             detail={dictState.error}
             action={{ label: '重新加载词典', onClick: () => setReloadKey((n) => n + 1) }}
           />
-          {empty && <DropZone variant="hero" onFiles={onFiles} onPaste={onPaste} />}
+          {empty && (
+            <PtFrame
+              variant="hero"
+              className="app__import"
+              titlebar={{ title: IMPORT_TITLE, as: 'p' }}
+            >
+              <DropZone variant="hero" onFiles={onFiles} onPaste={onPaste} />
+            </PtFrame>
+          )}
         </>
       )
     }
@@ -301,12 +323,14 @@ export function App({ fetchImpl }: AppProps) {
     }
     if (selected !== null && !selected.ok) {
       return (
-        <ErrorCard
-          title="这个文件没法解析"
-          hint="它不是合法的 JSON，常见原因是复制内容时被截断了，或者拖错了文件。换一份文件再试。"
-          detail={selected.error}
-          action={{ label: `移除 ${selected.name}`, onClick: () => remove(selected.id) }}
-        />
+        <PtFrame titlebar={{ title: selected.name, fullText: selected.name, userText: true }}>
+          <ErrorCard
+            title="这个文件没法解析"
+            hint="它不是合法的 JSON，常见原因是复制内容时被截断了，或者拖错了文件。换一份文件再试。"
+            detail={selected.error}
+            action={{ label: `移除 ${selected.name}`, onClick: () => remove(selected.id) }}
+          />
+        </PtFrame>
       )
     }
     if (selected?.ok) {
@@ -321,12 +345,58 @@ export function App({ fetchImpl }: AppProps) {
         />
       )
     }
+    const waiting = sources.find((source) => source.id === selectedId)?.name ?? ''
     return (
-      <p className="hint" role="status">
-        正在准备{locale === 'zh-CN' ? '简体' : '繁体'}中文词典，文件已保留…
-      </p>
+      <PtFrame titlebar={{ title: waiting, fullText: waiting, userText: true }}>
+        <p className="app__hint" role="status">
+          正在准备{locale === 'zh-CN' ? '简体' : '繁体'}中文词典，文件已保留…
+        </p>
+      </PtFrame>
     )
   }
+
+  // 侧栏内容（spec §6.4.2）：DropZone rail、本次文件、文件列表、批量下载、失败提示、下载帮助
+  const side = (
+    <>
+      <DropZone onFiles={onFiles} onPaste={onPaste} />
+      <div className="app__rail-h">
+        <span>本次文件</span>
+        <span className="pt-num">{sources.length}</span>
+      </div>
+      <FileList
+        sources={sources}
+        results={results}
+        selectedId={selectedId}
+        onSelect={selectFile}
+        onRemove={remove}
+      />
+      <button
+        type="button"
+        className="pt-btn pt-btn--quiet pt-btn--block"
+        title={downloadTitle}
+        disabled={translated.length === 0}
+        onClick={downloadAll}
+      >
+        <Icon name="download" />
+        <span>
+          {translated.length < sources.length && dictState.status === 'ready'
+            ? `下载成功的 ${translated.length} 份`
+            : `下载全部 ${translated.length} 份`}
+        </span>
+      </button>
+      {results.some((result) => !result.ok) && (
+        <p className="app__side-warn">解析失败的文件不会导出。</p>
+      )}
+      <details className="app__download-help">
+        <summary className="pt-textbtn pt-textbtn--underline">下载后怎么使用？</summary>
+        <p>
+          将 .build 文件放进文档目录下的 My Games / Path of Exile 2 /
+          BuildPlanner。同名替换前请保留原文件备份。
+        </p>
+        <p>多文件包先解压。同名文件会加序号区分，按需要选用。</p>
+      </details>
+    </>
+  )
 
   return (
     <div className="pt-backdrop app">
@@ -336,18 +406,15 @@ export function App({ fetchImpl }: AppProps) {
       <SiteHeader active="build">
         <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions} />
       </SiteHeader>
-      <div className="app__live" role="status" aria-live="polite">
-        <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
-      </div>
+      <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
       <div className="app__body">
         {!empty && (
           <>
-            {/* 中小屏 才出现的抽屉开关。桌面 时 display:none —— 它必须真的不占 grid 单元，
-                否则 .app__body 的两列会被挤成三份。放在 {!empty} 分支里也是硬要求：
+            {/* ≤1099px 才出现的抽屉开关；桌面由 CSS 隐藏，不占网格单元。放在 {!empty} 分支里也是硬要求：
                 空态时 <main> 必须仍是 .app__body 的唯一子元素，:only-child 才成立。 */}
             <button
               type="button"
-              className="app__sidetoggle"
+              className="pt-sidetoggle app__sidetoggle"
               ref={sideToggle}
               aria-controls="app-side"
               aria-expanded={sideOpen}
@@ -358,48 +425,18 @@ export function App({ fetchImpl }: AppProps) {
               <span className="app__sidecount">{sources.length}</span>
             </button>
             <aside id="app-side" className={sideOpen ? 'app__side app__side--open' : 'app__side'}>
-              <DropZone onFiles={onFiles} onPaste={onPaste} />
-              <div className="rail-h">
-                <span className="rail-h__zh">本次文件</span>
-                <span className="rail-h__n">{sources.length}</span>
-              </div>
-              <FileList
-                sources={sources}
-                results={results}
-                selectedId={selectedId}
-                onSelect={selectFile}
-                onRemove={remove}
-              />
-              <button
-                type="button"
-                className="button batch-download"
-                title={downloadTitle}
-                disabled={translated.length === 0}
-                onClick={downloadAll}
-              >
-                <Icon name="download" />
-                {translated.length < sources.length && dictState.status === 'ready'
-                  ? `下载成功的 ${translated.length} 份`
-                  : `下载全部 ${translated.length} 份`}
-              </button>
-              {results.some((result) => !result.ok) && (
-                <p className="muted">解析失败的文件不会导出。</p>
+              {narrow ? (
+                <div className="app__side-inner">{side}</div>
+              ) : (
+                <PtFrame
+                  variant="side"
+                  aria-labelledby="side-title"
+                  titlebar={{ title: '文件', id: 'side-title' }}
+                >
+                  {side}
+                </PtFrame>
               )}
-              <details className="download-help">
-                <summary>下载后怎么使用？</summary>
-                <p>
-                  将 .build 文件放进文档目录下的 My Games / Path of Exile 2 /
-                  BuildPlanner。同名替换前请保留原文件备份。
-                </p>
-                <p>多文件包先解压。同名文件会加序号区分，按需要选用。</p>
-              </details>
-              {dictState.status === 'ready' && (
-                <p className="app__side-note">
-                  词典 {dictVersion(dictState.dict)}
-                  <br />
-                  未命中的行保留英文原文，不做猜测替换
-                </p>
-              )}
+              <p className="app__side-note">未命中的行保留英文原文，不做猜测替换</p>
             </aside>
           </>
         )}
@@ -408,8 +445,8 @@ export function App({ fetchImpl }: AppProps) {
           {renderMain()}
         </main>
       </div>
-      {/* Toast 自带一个始终渲染的空容器承载 role="status"（控制者追加 g），这里不再按
-          toast !== null 整体卸载/挂载——那样每次都是一个新 live region，读屏不保证追踪到。 */}
+      {/* Toast 自带一个始终渲染的空容器承载 role="status"，这里不再按 toast !== null 整体卸载/挂载——
+          那样每次都是一个新 live region，读屏不保证追踪到。 */}
       <Toast message={toast?.message ?? null} eventId={toast?.id ?? 0} onClose={closeToast} />
     </div>
   )

@@ -63,3 +63,14 @@
     border-color: CanvasText;
   }
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* 键盘操作时关掉页面层过渡（App 在 <html> 上写 data-input，沿用改版前做法） */
+:root[data-input="keyboard"] .app__sidechev {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app__sidechev {
+    transition: none;
+  }
+}

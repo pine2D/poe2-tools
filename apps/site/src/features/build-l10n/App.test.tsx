@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { miniBundle } from '../../../../../packages/build-core/src/testing/miniDict'
 import { fakeDictFetch } from '../../shared/testing/fakeDictFetch'
 import { fsPathFromMetaUrl } from '../../shared/testing/fsPath'
 import { App } from './App'
+import { mockMatchMedia } from './testing/mockMatchMedia'
 
 const fixtures = `${resolve(dirname(fsPathFromMetaUrl(import.meta.url)), '../../../../../data/fixtures/synthetic')}/`
 const rich = readFileSync(`${fixtures}rich.build`, 'utf8')
@@ -267,4 +268,136 @@ it('一级标题属于主内容区域', async () => {
   expect(within(screen.getByRole('main')).getByRole('heading', { level: 1 }).textContent).toBe(
     'PoE2 构筑汉化',
   )
+})
+
+// —— M2：构筑页骨架与状态（spec §4.2 白名单、§6.4.1、§6.4.2、§6.7）——
+const frames = () => document.querySelectorAll('.pt-frame')
+const forges = () => document.querySelectorAll('.pt-forge-btn')
+const failingDict = () => {
+  const good = fakeDictFetch(miniBundle)
+  return async (url: string) =>
+    url.includes('/stats.json') ? { ok: false, status: 404, json: async () => null } : good(url)
+}
+
+describe('构筑页骨架（M2）', () => {
+  it('宽屏：侧栏是一扇“文件”框，框内有 rail、本次文件、文件列表、批量下载与下载帮助', async () => {
+    mockMatchMedia(false)
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const side = document.querySelector('.pt-frame--side') as HTMLElement
+    expect(side.closest('aside')?.id).toBe('app-side')
+    expect(within(side).getByRole('heading', { name: '文件' }).className).toBe('pt-titlebar__title')
+    expect(within(side).getByText('本次文件')).toBeDefined()
+    expect(within(side).getByRole('button', { name: '下载全部 1 份' }).className).toBe(
+      'pt-btn pt-btn--quiet pt-btn--block',
+    )
+    expect(within(side).getByText('下载后怎么使用？').className).toBe(
+      'pt-textbtn pt-textbtn--underline',
+    )
+    expect(document.querySelectorAll('.pt-frame .pt-frame')).toHaveLength(0)
+  })
+
+  it('≤1099px：侧栏不渲染 pt-frame，内容直接排在抽屉里；抽屉开关是 L0 折叠条', async () => {
+    mockMatchMedia(true)
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    expect(document.querySelector('.pt-frame--side')).toBeNull()
+    expect(document.querySelector('#app-side > .app__side-inner')).not.toBeNull()
+    expect(screen.getByRole('button', { name: /^文件 · / }).className).toBe(
+      'pt-sidetoggle app__sidetoggle',
+    )
+  })
+
+  it('断点跨越时切换侧栏框，文件列表保持', async () => {
+    const media = mockMatchMedia(false)
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    expect(document.querySelector('.pt-frame--side')).not.toBeNull()
+    act(() => media.set(true))
+    expect(document.querySelector('.pt-frame--side')).toBeNull()
+    expect(inFileList().getByRole('button', { name: 'rich.build' })).toBeDefined()
+  })
+
+  it('侧栏脚注在框外，只写未命中说明，不写词典版本（B14）', async () => {
+    mockMatchMedia(false)
+    await renderReady()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const note = screen.getByText('未命中的行保留英文原文，不做猜测替换')
+    expect(note.className).toBe('app__side-note')
+    expect(note.closest('.pt-frame')).toBeNull()
+    expect(within(screen.getByRole('complementary')).queryByText(/^词典 /)).toBeNull()
+  })
+
+  it('词典状态条：pt-dictbar 常驻 role=status，就绪时圆点、“词典就绪”与版本号', async () => {
+    await renderReady()
+    const bar = screen.getByText('词典就绪').closest('[role="status"]') as HTMLElement
+    expect(bar.className).toBe('pt-dictbar app__dictbar')
+    expect(bar.querySelector('.pt-dictbar__dot')?.getAttribute('aria-hidden')).toBe('true')
+    expect(bar.querySelector('b')?.textContent).toBe('zh-CN 0.0.0（测试联盟）')
+  })
+
+  it('词典失败且没有文件：ErrorCard 在框外，下面一扇只有拖放区的“导入 .build”框，没有 pt-forge-btn', async () => {
+    render(<App fetchImpl={failingDict()} />)
+    await screen.findByText('词典加载失败')
+    const card = screen
+      .getByRole('heading', { name: '词典没能加载' })
+      .closest('.pt-panel') as HTMLElement
+    expect(card.className).toBe('pt-panel pt-panel--card app__error')
+    expect(card.closest('.pt-frame')).toBeNull()
+    expect(within(card).getByRole('button', { name: '重新加载词典' }).className).toBe('pt-btn')
+    expect(frames()).toHaveLength(1)
+    const frame = frames()[0] as HTMLElement
+    expect(frame.className).toBe('pt-frame pt-frame--hero app__import')
+    expect(frame.querySelector('.pt-titlebar__title')?.textContent).toBe('导入 .build')
+    expect(within(frame).getByLabelText('选择 .build 文件')).toBeDefined()
+    expect(within(frame).getByText('文件只在你的浏览器里解析，不会上传到任何服务器')).toBeDefined()
+    expect(within(frame).queryByRole('button', { name: '试用示例构筑' })).toBeNull()
+    expect(forges()).toHaveLength(0)
+    expect(screen.getByRole('button', { name: '重试加载词典' }).className).toBe(
+      'pt-btn pt-btn--quiet pt-btn--xs',
+    )
+  })
+
+  it('词典失败且有文件：主区只有 ErrorCard 不加框；宽屏时侧栏仍是“文件”框', async () => {
+    mockMatchMedia(false)
+    render(<App fetchImpl={failingDict()} />)
+    await screen.findByText('词典加载失败')
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const main = screen.getByRole('main')
+    expect(main.querySelector('.pt-frame')).toBeNull()
+    expect(within(main).getByRole('heading', { name: '词典没能加载' })).toBeDefined()
+    expect(frames()).toHaveLength(1)
+    expect(document.querySelector('.pt-frame--side')).not.toBeNull()
+  })
+
+  it('解析失败：主区框的标题栏是文件名，框里只有 ErrorCard，动作是默认 pt-btn', async () => {
+    await renderReady()
+    upload('bad.build', 'not json')
+    await screen.findByRole('button', { name: 'bad.build' })
+    const frame = screen.getByRole('main').querySelector('.pt-frame') as HTMLElement
+    const title = frame.querySelector('.pt-titlebar__title') as HTMLElement
+    expect(title.textContent).toBe('bad.build')
+    expect(title.getAttribute('title')).toBe('bad.build')
+    expect(title.hasAttribute('data-user-text')).toBe(true)
+    expect(within(frame).getByRole('heading', { name: '这个文件没法解析' })).toBeDefined()
+    expect(within(frame).getByRole('button', { name: '移除 bad.build' }).className).toBe('pt-btn')
+    expect(forges()).toHaveLength(0)
+  })
+
+  it('有文件在等词典：主区框的标题栏是文件名，框里是提示文字', async () => {
+    render(<App fetchImpl={() => new Promise(() => {})} />)
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const main = screen.getByRole('main')
+    expect(within(main).getByRole('heading', { name: 'rich.build' }).className).toBe(
+      'pt-titlebar__title',
+    )
+    expect(within(main).getByText('正在准备简体中文词典，文件已保留…')).toBeDefined()
+    expect(forges()).toHaveLength(0)
+  })
 })

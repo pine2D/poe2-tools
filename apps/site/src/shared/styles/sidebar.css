@@ -218,3 +218,32 @@ button.filelist__remove {
 .dropzone:not(.dropzone--hero) .dropzone__trust {
   display: none;
 }
+
+/* ===== M2 改版后（spec §6.4、§6.7）；清理任务删除本行之前的全部规则 ===== */
+/* 侧栏“文件”框内容（spec §6.4.2）：DropZone rail、本次文件、文件列表、批量下载、下载帮助（M0 self-decided B10） */
+.app__rail-h {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 6px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.app__side-warn {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.app__download-help p {
+  margin: 6px 6px 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+/* ≤1099px 不渲染侧栏 pt-frame（spec §6.7，M0 V10），内容直接排在抽屉里，间距同侧栏框体 */
+.app__side-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px;
+}
