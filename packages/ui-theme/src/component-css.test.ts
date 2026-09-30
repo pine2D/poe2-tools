@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { type CssRule, parseRules } from './testing/css'
-import { FORGE_COLORS } from './testing/gate'
+import { FORGE_COLORS, TAB_COLORS } from './testing/gate'
 
 const dir = fileURLToPath(new URL('./components/', import.meta.url))
 const files = readdirSync(dir).filter((name) => name.endsWith('.css'))
@@ -433,5 +433,61 @@ describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
     expect(m2Value(rules, '.pt-textbtn', 'min-height', narrow)).toBe('44px')
     expect(m2Value(rules, '.pt-file__remove', 'width', narrow)).toBe('44px')
     expect(m2Value(rules, '.pt-file__remove', 'height', narrow)).toBe('44px')
+  })
+})
+
+describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
+  const rules = m2Css('tabs.css')
+  it('页签渐变色标与计数色等于 TAB_COLORS（§4.3 门禁的组件色值）', () => {
+    const idle = m2Value(rules, '.pt-tab', 'background')
+    for (const stop of TAB_COLORS.idleStops) expect(idle).toContain(stop)
+    const selected = '.pt-tab[aria-selected="true"]'
+    const on = m2Value(rules, selected, 'background')
+    for (const stop of TAB_COLORS.selectedStops) expect(on).toContain(stop)
+    expect(m2Value(rules, selected, 'color')).toBe(TAB_COLORS.selectedText)
+    expect(m2Value(rules, '.pt-tab__count', 'color')).toBe('var(--ink-2)')
+    expect(m2Value(rules, '.pt-tab[aria-selected="true"] .pt-tab__count', 'color')).toBe('inherit')
+  })
+  it('页签字形：衬线 700 15px、字距 .06em；计数无衬线 500 13px、字距 0', () => {
+    expect(m2Value(rules, '.pt-tab', 'font')).toBe(m2Norm('700 15px/1.6 var(--pt-serif)'))
+    expect(m2Value(rules, '.pt-tab', 'letter-spacing')).toBe('0.06em')
+    expect(m2Value(rules, '.pt-tab__count', 'font')).toBe(m2Norm('500 13px/1 var(--font-zh-cn)'))
+    expect(m2Value(rules, '.pt-tab__count', 'letter-spacing')).toBe('0')
+  })
+  it('基线画在整行外下方；未选中页签留 2px 缝，选中页签接通基线', () => {
+    expect(m2Value(rules, '.pt-tabs-row::after', 'bottom')).toBe('-2px')
+    expect(m2Value(rules, '.pt-tabs-row::after', 'height')).toBe('2px')
+    expect(m2Value(rules, '.pt-tabs-row', 'margin-bottom')).toBe('2px')
+    expect(m2Value(rules, '.pt-tab', 'margin')).toBe(m2Norm('0 0 2px'))
+    expect(m2Value(rules, '.pt-tab[aria-selected="true"]', 'margin-bottom')).toBe('0')
+  })
+  it('吸顶页签行：top -1px、z-index 2（低于角饰 3）、底与遮挡阴影为 --frame-bg', () => {
+    expect(m2Value(rules, '.pt-tabs-row--sticky', 'position')).toBe('sticky')
+    expect(m2Value(rules, '.pt-tabs-row--sticky', 'top')).toBe('-1px')
+    expect(m2Value(rules, '.pt-tabs-row--sticky', 'z-index')).toBe('2')
+    expect(m2Value(rules, '.pt-tabs-row--sticky', 'background')).toBe('var(--frame-bg)')
+    expect(m2Value(rules, '.pt-tabs-row--sticky', 'box-shadow')).toContain('var(--frame-bg)')
+  })
+  it('601–700px 工具组可换行、靠右（Ruling 11-1）', () => {
+    const band = 'min-width: 601px) and (max-width: 700px'
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'flex-wrap', band)).toBe('wrap')
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content', band)).toBe('flex-end')
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'min-width', band)).toBe('0')
+  })
+  it('≤600px：页签独占一行，基线改画在 tablist 下方；页签最小高 44px；隐藏键帽', () => {
+    const narrow = 'max-width: 600px'
+    expect(m2Value(rules, '.pt-tabs-row', 'display', narrow)).toBe('block')
+    expect(m2Value(rules, '.pt-tabs-row::after', 'display', narrow)).toBe('none')
+    expect(m2Value(rules, '.pt-tabs::after', 'bottom', narrow)).toBe('-2px')
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'margin-top', narrow)).toBe('12px')
+    expect(m2Value(rules, '.pt-tab', 'min-height', narrow)).toBe('44px')
+    expect(m2Value(rules, '.pt-tabs-row__tools .pt-kbd', 'display', narrow)).toBe('none')
+  })
+  it('强制色彩：选中页签 2px Highlight 边框（含底边），未选中 1px CanvasText', () => {
+    const forced = 'forced-colors: active'
+    expect(m2Value(rules, '.pt-tab[aria-selected="true"]', 'border', forced)).toBe(
+      m2Norm('2px solid Highlight'),
+    )
+    expect(m2Value(rules, '.pt-tab', 'border', forced)).toBe(m2Norm('1px solid CanvasText'))
   })
 })
