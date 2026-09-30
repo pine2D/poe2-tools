@@ -85,6 +85,10 @@
   border-color: var(--control-edge);
   background-color: var(--raised);
 }
+/* 与上一条同为 (0,3,0)，必须排在其后：--quiet --sm 禁用时悬停仍是 --bar，不出现悬停反馈 */
+.pt-btn--sm:disabled:hover {
+  background-color: var(--bar);
+}
 
 /* ≤600px：只在宽屏显示的文字片段隐藏；所有按钮最小高 44px（默认高 46，只需抬高 --sm、--xs） */
 @media (max-width: 600px) {

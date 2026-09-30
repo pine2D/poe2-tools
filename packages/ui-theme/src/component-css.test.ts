@@ -231,6 +231,16 @@ describe('pt-btn（spec §5.6）', () => {
     }
     expect(declared('btn.css', '.pt-wide-only', 'display', /max-width:\s*600px/)).toBe('none')
   })
+
+  it('禁用的 --sm 悬停仍保持 --bar，且排在 --quiet 禁用悬停之后（spec §5.6、§5.12）', () => {
+    // 两条同为 (0,3,0)，靠源码顺序决胜；“仅看待核对”是 --quiet --sm，禁用时悬停不能变成 --raised
+    expect(declared('btn.css', '.pt-btn--sm:disabled:hover', 'background-color')).toBe('var(--bar)')
+    const top = rulesOf('btn.css').filter((rule) => rule.atRules.length === 0)
+    const indexOf = (selector: string) => top.findIndex((rule) => rule.selectors.includes(selector))
+    expect(indexOf('.pt-btn--sm:disabled:hover')).toBeGreaterThan(
+      indexOf('.pt-btn--quiet:disabled:hover'),
+    )
+  })
 })
 
 describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', () => {
