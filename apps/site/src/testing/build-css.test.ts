@@ -119,3 +119,69 @@ describe('导入后的自动滚动（spec §6.4.2）', () => {
     )
   })
 })
+
+describe('改版前构筑页样式已清理（契约 §2.4、§4.2）', () => {
+  const rules = buildCss()
+  it('M2 标记行与标记之前的改版前规则都已删除', () => {
+    for (const name of BUILD_STYLES) {
+      expect(read(`apps/site/src/shared/styles/${name}.css`)).not.toContain('===== M2 改版后')
+    }
+  })
+  it('不再有改版前的类选择器与全局 button 状态规则', () => {
+    const old =
+      /\.(card|tip|chip|seg|badge|preview|preview-toolbar|preview-controls|preview-columns|build-header|review-summary|section-nav|review-next|sec|errorcard|toast|toast-live|filelist|dropzone|paste|rail-h|batch-download|download-help|empty|example-action|options|export-settings|opt|cta|button|hint|muted|app__header|app__brand|app__mark|app__tool-link|app__live)(__[\w-]+|--[\w-]+)?(?![\w-])/
+    for (const rule of rules) {
+      for (const selector of rule.selectors) {
+        expect(selector, selector).not.toMatch(old)
+        expect(selector, selector).not.toMatch(/^button:/)
+      }
+    }
+  })
+  // 契约 §2.4、§7.3（v2）：构筑页整页滚动，与 M0 mockup 一致；宽屏导入后页头随页面滚出视口，用户已在 M2 开工时确认
+  it('整页滚动：.app__main 与 .app__side 在任何断点都不是滚动容器', () => {
+    for (const rule of rules) {
+      const target = rule.selectors.some((item) => /^\.app__(main|side)(:|$)/.test(flat(item)))
+      if (!target) continue
+      for (const prop of ['overflow', 'overflow-x', 'overflow-y']) {
+        expect(rule.declarations.get(prop) ?? 'visible').not.toMatch(/auto|scroll/)
+      }
+    }
+  })
+  it('站点 CSS 中 z-index ≥ 3 只剩设置弹层 30、跳转链接 20、Toast 40', () => {
+    const names = [...BUILD_STYLES, 'base', 'site', 'home', 'extension']
+    const found = new Map<string, string>()
+    for (const name of names) {
+      for (const rule of parseRules(read(`apps/site/src/shared/styles/${name}.css`))) {
+        const value = rule.declarations.get('z-index')
+        if (value === undefined || !/^\d+$/.test(value.trim()) || Number(value) < 3) continue
+        for (const selector of rule.selectors) found.set(norm(selector), value.trim())
+      }
+    }
+    expect(Object.fromEntries(found)).toEqual({
+      '.app__settings-panel': '30',
+      '.skip-link': '20',
+      '.app__toast': '40',
+    })
+    // 契约 C14：页头不建层叠上下文的规则，清理后在九个文件里只剩 controls.css 的一条，最终值仍为 auto
+    // （M1 的 SiteHeader.test 按同一拼接顺序取最终值，清理前后都成立）
+    const headerRules = BUILD_STYLES.flatMap((name) =>
+      parseRules(read(`apps/site/src/shared/styles/${name}.css`))
+        .filter((rule) => rule.selectors.some((item) => flat(item) === '.app.pt-header'))
+        .map(() => name),
+    )
+    expect(headerRules).toEqual(['controls'])
+    expect(finalValue(rules, '.app .pt-header', 'z-index')).toBe('auto')
+  })
+  it('“选择 .build 文件”的焦点环只以 label[for="file-input"] 形态出现（a11y.css 不再有旧的 .button 形态）', () => {
+    const a11y = parseRules(read('apps/site/src/shared/styles/a11y.css'))
+    for (const rule of a11y) {
+      const text = flat(rule.selectors.join(','))
+      if (text.includes('#file-input')) expect(text).toMatch(/label\[for="file-input"\]$/)
+    }
+    expect(read('apps/site/src/shared/styles/a11y.css')).not.toContain('.button')
+    const controls = parseRules(read('packages/ui-theme/src/components/controls.css'))
+    const selector =
+      ':is(.pt-dropzone, .pt-droprail):has(#file-input:focus-visible) label[for="file-input"]'
+    expect(finalValue(controls, selector, 'outline')).toBe('2px solid var(--focus)')
+  })
+})

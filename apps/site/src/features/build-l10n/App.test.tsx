@@ -439,3 +439,37 @@ describe('构筑页骨架（M2）', () => {
     expect(forges()).toHaveLength(0)
   })
 })
+
+// 契约 §2.4：M2 结束时构筑页组件不再使用改版前的类名（外观全部来自 ui-theme 与 app__* 页面类）
+const OLD_CLASS =
+  /^(card|tip|chip|seg|badge|preview|preview-toolbar|preview-controls|preview-columns|build-header|review-summary|section-nav|review-next|sec|errorcard|toast|toast-live|filelist|dropzone|paste|rail-h|batch-download|download-help|empty|example-action|options|export-settings|opt|cta|button|hint|muted)(__[\w-]+|--[\w-]+)?$/
+function oldClasses(): string[] {
+  const found = new Set<string>()
+  for (const node of document.querySelectorAll('[class]')) {
+    for (const name of node.classList) if (OLD_CLASS.test(name)) found.add(name)
+  }
+  return [...found]
+}
+
+it('构筑页各状态都不再使用改版前的类名', async () => {
+  mockMatchMedia(false)
+  await renderReady()
+  expect(oldClasses()).toEqual([])
+  upload('rich.build', rich)
+  await screen.findByRole('button', { name: 'rich.build' })
+  fireEvent.click(screen.getByRole('button', { name: '设置' }))
+  expect(oldClasses()).toEqual([])
+  fireEvent.click(screen.getByRole('radio', { name: '译文' }))
+  expect(oldClasses()).toEqual([])
+  for (const name of ['技能', '天赋']) {
+    fireEvent.click(screen.getByRole('tab', { name: new RegExp(`^${name}`) }))
+    expect(oldClasses()).toEqual([])
+  }
+  upload('bad.build', 'not json')
+  fireEvent.click(await screen.findByRole('button', { name: 'bad.build' }))
+  expect(oldClasses()).toEqual([])
+  cleanup()
+  render(<App fetchImpl={failingDict()} />)
+  await screen.findByText('词典加载失败')
+  expect(oldClasses()).toEqual([])
+})
