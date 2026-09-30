@@ -65,7 +65,8 @@ describe('App', () => {
     upload('rich.build', rich)
     // 文件名在列表按钮与（Task 5 起）概览里都会出现：按角色找列表按钮
     await screen.findByRole('button', { name: 'rich.build' })
-    expect(screen.getByText('词缀 7/8')).toBeDefined()
+    // 侧栏文件项：有待核对项时显示“待核对 n”，与信息行同一口径（spec §5.12，B1）
+    expect(inFileList().getByText('待核对 1')).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '下载 rich.build' }))
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)

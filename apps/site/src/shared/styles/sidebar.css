@@ -264,3 +264,25 @@ button.filelist__remove {
   gap: 8px;
   margin-top: 4px;
 }
+/* 文件列表（spec §5.12）：项的外观来自 pt-file，这里只管列表间距、“待词典就绪 / 解析失败”与错误说明 */
+.app__files {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.app__file-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-2);
+}
+.app__file-error {
+  margin: 6px 0 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--danger);
+  color: var(--danger);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

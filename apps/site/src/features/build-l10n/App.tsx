@@ -14,6 +14,7 @@ import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { EXAMPLE_BUILD } from './example'
 import { pastedSource, readFiles } from './files/readSources'
 import { buildFieldRows } from './preview/fields'
+import { collectMisses } from './preview/locate'
 import { Preview } from './preview/Preview'
 import {
   type SourceFile,
@@ -208,6 +209,23 @@ export function App({ fetchImpl }: AppProps) {
       ),
     [results, options.bilingual],
   )
+  // 侧栏文件项的“待核对 n”：与信息行同一口径，按文件用 collectMisses 计算（spec §5.12，B1）
+  const missCounts = useMemo(
+    () =>
+      new Map(
+        results.flatMap((result) =>
+          result.ok
+            ? [
+                [
+                  result.id,
+                  collectMisses(fieldsById.get(result.id) ?? [], result.file.preview).length,
+                ] as const,
+              ]
+            : [],
+        ),
+      ),
+    [results, fieldsById],
+  )
   const selected = results.find((result) => result.id === selectedId) ?? null
   const translated = results.flatMap((result) => (result.ok ? [result.file] : []))
 
@@ -247,7 +265,7 @@ export function App({ fetchImpl }: AppProps) {
       } else if (sideOpen) {
         sideToggle.current?.focus()
       } else {
-        document.querySelector<HTMLButtonElement>('.filelist__name[aria-current="true"]')?.focus()
+        document.querySelector<HTMLButtonElement>('.pt-file__pick[aria-current="true"]')?.focus()
       }
     })
   }
@@ -365,6 +383,7 @@ export function App({ fetchImpl }: AppProps) {
       <FileList
         sources={sources}
         results={results}
+        misses={missCounts}
         selectedId={selectedId}
         onSelect={selectFile}
         onRemove={remove}
