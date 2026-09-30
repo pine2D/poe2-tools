@@ -40,7 +40,8 @@ for (const [path, expected] of pages) {
     }
   }
 }
-// 字体分片、三份字体许可与 NOTICE 都要能取到（spec §8.7）
+// 字体分片、三份字体许可与 NOTICE 都要能取到（spec §8.7）；一个分片都没抓到说明 CSS 链接没识别出来，不能空转通过
+if (fonts.size === 0) throw new Error('页面 CSS 里没有找到任何 .woff2 字体分片')
 for (const path of fonts) await fetchStatic(path)
 for (const path of [
   '/fonts/NotoSerifSC-OFL.txt',
