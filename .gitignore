@@ -26,6 +26,9 @@ coverage/
 # 静态站从 data/dict 同步出来的词典副本（scripts/sync-dict.mjs 每次重建）
 /apps/site/public/dict/
 /apps/site/public/craft-data/
+# 字体许可与 NOTICE 的站点副本（scripts/sync-fonts.mjs 每次重建）
+/apps/site/public/fonts/
+/apps/site/public/NOTICE.txt
 
 # 系统文件
 .DS_Store

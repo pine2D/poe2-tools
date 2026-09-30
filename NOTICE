@@ -1,0 +1,20 @@
+PoE2 Tools · 第三方许可与声明（Third-party notices）
+
+非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。
+This product isn't affiliated with or endorsed by Grinding Gear Games, Tencent or Craft of Exile in any way.
+
+游戏文本（物品、技能、天赋等名称与词缀）的版权归 Grinding Gear Games、腾讯等各权利方所有。
+Game text (names and modifiers of items, skills and passives) is copyright of Grinding Gear Games, Tencent and other respective owners.
+
+本项目自有代码以 MIT 许可发布（见 LICENSE）。MIT 许可不覆盖 packages/ui-theme/fonts/：该目录与网站 /assets/ 下的字体分片以 SIL Open Font License 1.1 授权。
+The project's own code is MIT licensed (see LICENSE). The MIT license does not cover packages/ui-theme/fonts/: the font subsets there and under /assets/ on the website are licensed under the SIL Open Font License 1.1.
+
+界面字体（SIL Open Font License 1.1，子集化，未改名；页面用站点私有别名 PoE2 Serif SC、PoE2 Serif TC、PoE2 Cinzel 引用）：
+- Noto Serif SC：(c) 2017-2024 Adobe (http://www.adobe.com/). Noto is a trademark of Google Inc.
+  许可全文：/fonts/NotoSerifSC-OFL.txt
+- Noto Serif TC：(c) 2017-2024 Adobe (http://www.adobe.com/). Noto is a trademark of Google Inc.
+  许可全文：/fonts/NotoSerifTC-OFL.txt
+- Cinzel：Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel)
+  许可全文：/fonts/Cinzel-OFL.txt
+
+界面图形（logo、角饰、分隔线菱结、颗粒纹理）均为本项目自绘，没有使用 Grinding Gear Games、腾讯或 Craft of Exile 的素材。

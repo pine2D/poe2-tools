@@ -10,7 +10,7 @@
     "build": "pnpm sync-data && vite build && node scripts/check-site.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "sync-data": "node scripts/sync-dict.mjs && node scripts/sync-craft.mjs"
+    "sync-data": "node scripts/sync-dict.mjs && node scripts/sync-craft.mjs && node scripts/sync-fonts.mjs"
   },
   "dependencies": {
     "@poe2-tools/build-core": "workspace:*",

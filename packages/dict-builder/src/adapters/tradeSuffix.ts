@@ -1,5 +1,5 @@
-// 交易站为消歧追加、游戏内不显示的行尾后缀（名单式；清单见
-// docs/superpowers/research/2026-09-07-dict-builder-scout.md §2.7）。zh-CN 与 zh-TW 都混用半角与全角括号。
+// 交易站为消歧追加、游戏内不显示的行尾后缀（名单式；清单见本地调研记录
+// 2026-09-07-dict-builder-scout.md §2.7）。zh-CN 与 zh-TW 都混用半角与全角括号。
 import type { Locale } from '@poe2-tools/build-core'
 
 const SUFFIXES: Record<'en' | Locale, readonly string[]> = {

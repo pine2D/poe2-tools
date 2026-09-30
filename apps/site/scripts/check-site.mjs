@@ -1,37 +1,108 @@
-// 构建门禁：真正输出多页面和 404，每个 HTML 引用的本地资源都必须存在。
-import { access, readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+// 构建门禁（spec §8.6、§8.7）：多页面与 404 齐全，HTML 引用的本地资源存在；字体许可文件与 NOTICE
+// 含必含行；CSS 的 url() 没有外链、目标存在；图像与字体都在素材白名单里，woff2 集合与 coverage.json 相同。
+import { access, readdir, readFile } from 'node:fs/promises'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  ASSET_EXTENSIONS,
+  assertAssets,
+  assertFontSetEquals,
+  checkLicenseFile,
+  cssUrlTargets,
+  externalUrls,
+  LICENSE_FILES,
+  LICENSE_REQUIRED_LINES,
+  loadWhitelist,
+  SITE_NOTICE_REQUIRED_LINES,
+  sha256,
+} from '@poe2-tools/ui-theme/compliance'
 
-export async function checkSite(root) {
-  const pages = [
-    'index.html',
-    'build/index.html',
-    'extension/index.html',
-    'craft/index.html',
-    '404.html',
-  ]
-  for (const page of pages) {
-    try {
-      await access(resolve(root, page))
-    } catch {
-      throw new Error(`缺少页面：${page}`)
-    }
+const PAGES = [
+  'index.html',
+  'build/index.html',
+  'extension/index.html',
+  'craft/index.html',
+  '404.html',
+]
+
+async function exists(path) {
+  try {
+    await access(path)
+    return true
+  } catch {
+    return false
   }
-  for (const page of pages) {
+}
+
+async function filesUnder(dir) {
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true })
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => join(entry.parentPath, entry.name))
+}
+
+export async function checkSite(root, options = {}) {
+  // ① 五个页面
+  for (const page of PAGES) {
+    if (!(await exists(resolve(root, page)))) throw new Error(`缺少页面：${page}`)
+  }
+  // ② HTML 引用的本地资源
+  for (const page of PAGES) {
     const html = await readFile(resolve(root, page), 'utf8')
     for (const [, path] of html.matchAll(/(?:src|href)="(\/[^"#?]*)[^" ]*"/g)) {
       if (path.startsWith('//')) continue
       const resource = path.endsWith('/') ? `${path}index.html` : path
-      try {
-        await access(resolve(root, `.${resource}`))
-      } catch {
+      if (!(await exists(resolve(root, `.${resource}`)))) {
         throw new Error(`${page} 引用缺失资源：${resource}`)
       }
     }
   }
+  // ③ 字体许可文件与 NOTICE.txt
+  for (const name of LICENSE_FILES) {
+    await checkLicenseFile(resolve(root, 'fonts', name), LICENSE_REQUIRED_LINES[name])
+  }
+  await checkLicenseFile(resolve(root, 'NOTICE.txt'), SITE_NOTICE_REQUIRED_LINES)
+  // ④ CSS 的 url()：data: 跳过；外链即失败；/ 开头按 dist 根解析，其余按 CSS 所在目录解析，目标必须存在
+  const assetsDir = resolve(root, 'assets')
+  const assetFiles = (await exists(assetsDir)) ? await filesUnder(assetsDir) : []
+  for (const cssPath of assetFiles.filter((path) => path.endsWith('.css'))) {
+    const css = await readFile(cssPath, 'utf8')
+    const external = externalUrls(css)
+    if (external.length > 0)
+      throw new Error(`${relative(root, cssPath)} 有外链 url()：${external.join(' ')}`)
+    for (const target of cssUrlTargets(css)) {
+      if (target.startsWith('data:')) continue
+      const clean = target.replace(/[?#].*$/, '')
+      const file = clean.startsWith('/') ? join(root, clean) : resolve(dirname(cssPath), clean)
+      if (!(await exists(file))) {
+        throw new Error(`${relative(root, cssPath)} 的 url() 目标不存在：${target}`)
+      }
+    }
+  }
+  // ⑤ dist 里的图像与字体按 dist 模式做白名单判定
+  const whitelist = await loadWhitelist({
+    coveragePath: options.coveragePath,
+    dataSourcesPath: options.dataSourcesPath,
+  })
+  const assets = []
+  for (const path of await filesUnder(root)) {
+    const ext = path.slice(path.lastIndexOf('.') + 1).toLowerCase()
+    if (!ASSET_EXTENSIONS.includes(ext)) continue
+    assets.push({
+      path: relative(root, path).split(sep).join('/'),
+      sha256: sha256(await readFile(path)),
+    })
+  }
+  assertAssets(assets, whitelist, 'dist')
+  // ⑥ dist/assets/*.woff2 与 coverage.json 完全相同
+  const woff2 = []
+  for (const path of assetFiles.filter((file) => file.endsWith('.woff2'))) {
+    woff2.push(sha256(await readFile(path)))
+  }
+  assertFontSetEquals(woff2, whitelist)
 }
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   await checkSite(fileURLToPath(new URL('../dist/', import.meta.url)))
-  console.log('网站入口、404 和 HTML 静态资源引用检查通过')
+  console.log('网站入口、404、静态资源引用、字体许可与素材白名单检查通过')
 }
