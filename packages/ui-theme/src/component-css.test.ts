@@ -564,13 +564,37 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, '.pt-nameplate__tag', 'font-size')).toBe('12px')
     expect(m2Value(rules, '.pt-nameplate__tag', 'border-radius')).toBe('3px')
   })
-  it('≤600px：左右内边距 12px；第二行可在组间换行，组内不换行', () => {
+  it('≤600px：左右内边距 12px；第二行可在组间换行，各项自身不换行', () => {
     const narrow = 'max-width: 600px'
     expect(m2Value(rules, '.pt-nameplate', 'padding-left', narrow)).toBe('12px')
     expect(m2Value(rules, '.pt-nameplate', 'padding-right', narrow)).toBe('12px')
     expect(m2Value(rules, '.pt-nameplate__meta', 'flex-wrap', narrow)).toBe('wrap')
     expect(m2Value(rules, '.pt-nameplate__group', 'white-space', narrow)).toBe('nowrap')
     expect(m2Value(rules, '.pt-nameplate__toggle', 'min-height', narrow)).toBe('44px')
+  })
+  it('≤600px：单组超出内容宽度时组内换行，“·”跟在上一项行尾、不出现在行首（spec 附录 B.7，M2 Ruling 12）', () => {
+    const narrow = 'max-width: 600px'
+    expect(m2Value(rules, '.pt-nameplate__group', 'flex-wrap', narrow)).toBe('wrap')
+    expect(m2Value(rules, '.pt-nameplate__group', 'justify-content', narrow)).toBe('center')
+    expect(m2Value(rules, '.pt-nameplate__group', 'row-gap', narrow)).toBe('2px')
+    // 组内的 <i> 点在这一档改画成前一项的 ::after，随前一项换行
+    expect(m2Value(rules, '.pt-nameplate__group > .pt-nameplate__dot', 'display', narrow)).toBe(
+      'none',
+    )
+    const lead = '.pt-nameplate__group > :has(+ .pt-nameplate__dot)'
+    expect(m2Value(rules, lead, 'position', narrow)).toBe('relative')
+    expect(m2Value(rules, lead, 'margin-right', narrow)).toBe('10.5px')
+    // 点不进读屏：支持替代文本写法时 content 为 "·" / ""，否则退回 "·"
+    expect(
+      m2Rules(rules, `${lead}::after`, narrow).flatMap((rule) => {
+        const value = rule.declarations.get('content')
+        return value === undefined ? [] : [m2Norm(value)]
+      }),
+    ).toEqual([m2Norm('"·"'), m2Norm('"·" / ""')])
+    expect(m2Value(rules, `${lead}::after`, 'position', narrow)).toBe('absolute')
+    expect(m2Value(rules, `${lead}::after`, 'left', narrow)).toBe('100%')
+    expect(m2Value(rules, `${lead}::after`, 'width', narrow)).toBe('17.5px')
+    expect(m2Value(rules, `${lead}::after`, 'color', narrow)).toBe('var(--ink-2)')
   })
   it('强制色彩下隐藏颗粒', () => {
     expect(m2Value(rules, '.pt-nameplate::after', 'display', 'forced-colors: active')).toBe('none')

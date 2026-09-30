@@ -217,7 +217,8 @@
 .pt-nameplate--tooltip .pt-nameplate__miss {
   margin-top: 3px;
 }
-/* §6.7 ≤600px：左右内边距 12px；第一行可换行；第二行分两组，组内不换行，组间可换行 */
+/* §6.7 ≤600px：左右内边距 12px；第一行可换行；第二行分两组，组间可换行；单组超出内容宽度时组内也可换行
+   （附录 B.7 勘误，M2 Ruling 12），各项自身不换行 */
 @media (max-width: 600px) {
   .pt-nameplate {
     padding-left: 12px;
@@ -233,7 +234,46 @@
     white-space: normal;
   }
   .pt-nameplate__group {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 2px;
     white-space: nowrap;
+  }
+  /* 组内换行时“·”必须留在上一行行尾：<i> 点是独立的 flex 项，会被单独挤到下一行行首，
+     所以这一档把它隐藏，改画成前一项的 ::after，随前一项换行。前一项右侧留 10.5px（7px 间距 + 点宽，
+     本机实测 13px 的“·”宽 3.48px），点在 17.5px 宽的槽里居中，其后的组内或组间间距仍是 7px；
+     与 <i> 点的排布相差不到 0.05px，放得下时的换行位置不变 */
+  .pt-nameplate__group > .pt-nameplate__dot {
+    display: none;
+  }
+  .pt-nameplate__group > :has(+ .pt-nameplate__dot) {
+    position: relative;
+    margin-right: 10.5px;
+  }
+  .pt-nameplate__group > :has(+ .pt-nameplate__dot)::after {
+    content: "·";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 17.5px;
+    transform: translateY(-50%);
+    color: var(--ink-2);
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0;
+    text-align: center;
+  }
+  /* 点与 <i> 点一样不进读屏（替代文本为空）；不支持该写法的浏览器退回上面的 "·" */
+  @supports (content: "·" / "") {
+    .pt-nameplate__group > :has(+ .pt-nameplate__dot)::after {
+      content: "·" / "";
+    }
+  }
+  /* 标签带 1px 边框，::after 相对内边距盒定位，右移 1px 与其他项对齐 */
+  .pt-nameplate__group > .pt-nameplate__tag:has(+ .pt-nameplate__dot)::after {
+    margin-left: 1px;
   }
   .pt-nameplate__toggle {
     min-height: 44px;
