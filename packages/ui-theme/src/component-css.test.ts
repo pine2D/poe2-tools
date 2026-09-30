@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { type CssRule, parseRules } from './testing/css'
-import { FORGE_COLORS, TAB_COLORS } from './testing/gate'
+import { FORGE_COLORS, NAMEPLATE_VARIANTS, TAB_COLORS } from './testing/gate'
 
 const dir = fileURLToPath(new URL('./components/', import.meta.url))
 const files = readdirSync(dir).filter((name) => name.endsWith('.css'))
@@ -489,5 +489,85 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
       m2Norm('2px solid Highlight'),
     )
     expect(m2Value(rules, '.pt-tab', 'border', forced)).toBe(m2Norm('1px solid CanvasText'))
+  })
+})
+
+describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）', () => {
+  const rules = m2Css('nameplate.css')
+  it('四个变体的三段底、边、名称与次要文字色等于 NAMEPLATE_VARIANTS', () => {
+    for (const [variant, colors] of Object.entries(NAMEPLATE_VARIANTS)) {
+      const selector = `.pt-nameplate--${variant}`
+      expect(m2Value(rules, selector, '--np-p1')).toBe(colors.p[0])
+      expect(m2Value(rules, selector, '--np-p2')).toBe(colors.p[1])
+      expect(m2Value(rules, selector, '--np-p3')).toBe(colors.p[2])
+      expect(m2Value(rules, selector, '--np-edge')).toBe(colors.edge)
+      expect(m2Value(rules, selector, '--np-name')).toBe(colors.name)
+      expect(m2Value(rules, selector, '--np-name-2')).toBe(colors.name2)
+    }
+  })
+  it('名称牌上不使用 --ink-3', () => {
+    const code = m2Read('nameplate.css').replace(/\/\*[\s\S]*?\*\//g, '')
+    expect(code).not.toMatch(/--ink-3(?![\w-])/)
+  })
+  it('名称与第二行里的标记色一律继承（§6.4.3；§4.3 标记色只用于对照行与提示框正文）', () => {
+    expect(m2Value(rules, '.pt-nameplate__name [class*="mk-"]', 'color')).toBe('inherit')
+    expect(m2Value(rules, '.pt-nameplate__meta [class*="mk-"]', 'color')).toBe('inherit')
+    expect(m2Value(rules, '.pt-nameplate__name .pt-num', 'color')).toBe('inherit')
+  })
+  it('unique 的扣上宝石是传奇橙；名称衬线 20px .03em，提示框 21px .04em；繁体切 TC 栈', () => {
+    const unique = '.pt-nameplate--unique'
+    expect(m2Value(rules, unique, '--gem-1')).toBe('#ffd8b5')
+    expect(m2Value(rules, unique, '--gem-2')).toBe('#f07a2c')
+    expect(m2Value(rules, unique, '--gem-3')).toBe('#6e2405')
+    expect(m2Value(rules, unique, '--gem-4')).toBe('#b44f19')
+    expect(m2Value(rules, '.pt-nameplate__name', 'font')).toBe(
+      m2Norm('700 20px/1.25 var(--pt-serif)'),
+    )
+    expect(m2Value(rules, '.pt-nameplate__name', 'letter-spacing')).toBe('0.03em')
+    expect(m2Value(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'font-size')).toBe('21px')
+    expect(m2Value(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'letter-spacing')).toBe(
+      '0.04em',
+    )
+    expect(m2Value(rules, '.pt-nameplate__name:lang(zh-TW)', 'font-family')).toBe(
+      'var(--pt-serif-tc)',
+    )
+    expect(m2Value(rules, '.pt-nameplate__en', 'font')).toBe(
+      m2Norm('400 13px/1.2 var(--pt-cinzel)'),
+    )
+  })
+  it('牌本体：最小高 62px、内边距 9px 40px 8px、顶边扣 top -7px；shut 去掉底边', () => {
+    expect(m2Value(rules, '.pt-nameplate', 'min-height')).toBe('62px')
+    expect(m2Value(rules, '.pt-nameplate', 'padding')).toBe(m2Norm('9px 40px 8px'))
+    expect(m2Value(rules, '.pt-nameplate', 'border-bottom')).toBe(
+      m2Norm('1px solid var(--np-edge)'),
+    )
+    expect(m2Value(rules, '.pt-nameplate__clasp', 'top')).toBe('-7px')
+    expect(m2Value(rules, '.pt-nameplate--shut', 'border-bottom')).toBe('0')
+  })
+  it('展开控件（B15）：--gold、1px 下划线偏移 3px、13px；悬停 --ink、下划线 2px', () => {
+    expect(m2Value(rules, '.pt-nameplate__toggle', 'color')).toBe('var(--gold)')
+    expect(m2Value(rules, '.pt-nameplate__toggle', 'text-decoration')).toBe(m2Norm('underline 1px'))
+    expect(m2Value(rules, '.pt-nameplate__toggle', 'text-underline-offset')).toBe('3px')
+    expect(m2Value(rules, '.pt-nameplate__toggle', 'font-size')).toBe('13px')
+    expect(m2Value(rules, '.pt-nameplate__toggle:hover', 'color')).toBe('var(--ink)')
+    expect(m2Value(rules, '.pt-nameplate__toggle:hover', 'text-decoration-thickness')).toBe('2px')
+  })
+  it('B1 计数 --ink-2；未收录标记 --miss 虚线；“传奇 / 双语”标签 12px、圆角 3px', () => {
+    expect(m2Value(rules, '.pt-nameplate__count', 'color')).toBe('var(--ink-2)')
+    expect(m2Value(rules, '.pt-nameplate__miss', 'border')).toBe(m2Norm('1px dashed var(--miss)'))
+    expect(m2Value(rules, '.pt-nameplate__miss', 'color')).toBe('var(--miss)')
+    expect(m2Value(rules, '.pt-nameplate__tag', 'font-size')).toBe('12px')
+    expect(m2Value(rules, '.pt-nameplate__tag', 'border-radius')).toBe('3px')
+  })
+  it('≤600px：左右内边距 12px；第二行可在组间换行，组内不换行', () => {
+    const narrow = 'max-width: 600px'
+    expect(m2Value(rules, '.pt-nameplate', 'padding-left', narrow)).toBe('12px')
+    expect(m2Value(rules, '.pt-nameplate', 'padding-right', narrow)).toBe('12px')
+    expect(m2Value(rules, '.pt-nameplate__meta', 'flex-wrap', narrow)).toBe('wrap')
+    expect(m2Value(rules, '.pt-nameplate__group', 'white-space', narrow)).toBe('nowrap')
+    expect(m2Value(rules, '.pt-nameplate__toggle', 'min-height', narrow)).toBe('44px')
+  })
+  it('强制色彩下隐藏颗粒', () => {
+    expect(m2Value(rules, '.pt-nameplate::after', 'display', 'forced-colors: active')).toBe('none')
   })
 })

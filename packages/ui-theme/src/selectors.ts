@@ -8,6 +8,8 @@ export const SERIF_SELECTORS: readonly string[] = [
   '.pt-titlebar__title',
   '.pt-forge-btn',
   '.pt-hero-title',
-  // M2：金属页签（spec §5.7）
+  // M2：金属页签（§5.7）、名称牌名称（§5.8；繁体切 TC 栈，§4.4）
   '.pt-tab',
+  '.pt-nameplate__name',
+  '.pt-nameplate__name:lang(zh-TW)',
 ]

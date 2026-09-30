@@ -1,0 +1,259 @@
+/* spec §5.8 名称牌（游戏对象层）：两行居中；三段深色渐变底、顶边 knot 扣、0.05 颗粒。
+   变体色由 --np-* 给出，取值与 src/testing/gate.ts 的 NAMEPLATE_VARIANTS 一致（§4.3 门禁）。
+   名称牌上不使用 --ink-3（对 #31291d 只有 4.45:1）。 */
+.pt-nameplate {
+  --np-p1: #31291d;
+  --np-p2: #211b14;
+  --np-p3: #16120d;
+  --np-edge: #6e5634;
+  --np-name: #efe6d2;
+  --np-name-2: #bcae95;
+  --np-tag-edge: rgba(110, 86, 52, 0.85);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 62px;
+  padding: 9px 40px 8px;
+  border-bottom: 1px solid var(--np-edge);
+  background: linear-gradient(180deg, var(--np-p1), var(--np-p2) 55%, var(--np-p3));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+/* 0.05 颗粒（§5.1 同一颗粒） */
+.pt-nameplate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--pt-grain);
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+/* 内容压过颗粒；pt-frame 子孙不得 ≥3，也要低于吸顶页签行的 2（§4.5） */
+.pt-nameplate > * {
+  position: relative;
+  z-index: 1;
+}
+/* 卡内没有对照行或已折叠时去掉底边 */
+.pt-nameplate--shut {
+  border-bottom: 0;
+}
+/* base 与 collapsed 同一组配色（collapsed 来自 mockup :678 的 itm r-base shut） */
+.pt-nameplate--base,
+.pt-nameplate--collapsed {
+  --np-p1: #31291d;
+  --np-p2: #211b14;
+  --np-p3: #16120d;
+  --np-edge: #6e5634;
+  --np-name: #efe6d2;
+  --np-name-2: #bcae95;
+}
+/* unique：顶边扣的宝石换传奇橙（与 tokens.css 的 .pt-attr-unique 同值） */
+.pt-nameplate--unique {
+  --np-p1: #4a2512;
+  --np-p2: #2c1609;
+  --np-p3: #1a0c04;
+  --np-edge: #af6025;
+  --np-name: #f27b2e;
+  --np-name-2: #e7a070;
+  --np-tag-edge: rgba(175, 96, 37, 0.75);
+  --gem-1: #ffd8b5;
+  --gem-2: #f07a2c;
+  --gem-3: #6e2405;
+  --gem-4: #b44f19;
+}
+/* gem（技能）：三段底比 base 暗一档；名称 #1ba29b（--gem）对 p1 5.18:1，英文名 #8cc5c1（--gem-en）；扣保持琥珀（B7） */
+.pt-nameplate--gem {
+  --np-p1: #261f17;
+  --np-p2: #1b1611;
+  --np-p3: #12100c;
+  --np-edge: #1ba29b;
+  --np-name: #1ba29b;
+  --np-name-2: #8cc5c1;
+}
+/* 顶边中央 36×14 的 knot 扣（§5.8，:448） */
+.pt-nameplate__clasp {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  margin-left: -18px;
+}
+.pt-nameplate__row1 {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+}
+.pt-nameplate__name {
+  margin: 0;
+  color: var(--np-name);
+  font: 700 20px / 1.25 var(--pt-serif);
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
+  overflow-wrap: anywhere;
+}
+/* 繁体只对名称切 TC 栈（§4.4）；名称元素自身带 lang */
+.pt-nameplate__name:lang(zh-TW) {
+  font-family: var(--pt-serif-tc);
+}
+/* 名称里的标记色一律继承名称色（§6.4.3：名称牌底比 --raised 亮，标记色会低于 4.5:1）；标记结构仍留在 DOM 与导出里。
+   第二行（如 unique 的“基底 <名>”经 MarkupText 渲染）同理继承 --ink-2：§4.3 标记色只用于对照行与提示框正文 */
+.pt-nameplate__name [class*="mk-"],
+.pt-nameplate__meta [class*="mk-"],
+.pt-nameplate__name .pt-num {
+  color: inherit;
+}
+.pt-nameplate__en {
+  color: var(--np-name-2);
+  font: 400 13px / 1.2 var(--pt-cinzel);
+  letter-spacing: 0.04em;
+}
+/* “基底名未收录 / 传奇名未收录”：状态文字 --miss（对 #31291d 7.16:1），虚线框同“未命中 · 保留原文” */
+.pt-nameplate__miss {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px dashed var(--miss);
+  border-radius: 3px;
+  color: var(--miss);
+  font: 12px / 1.2 var(--font-zh-cn);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.pt-nameplate__miss svg {
+  width: 14px;
+  height: 14px;
+}
+/* 第二行：13px 无衬线 --ink-2，各项用“·”分隔（aria-hidden），间距 7px */
+.pt-nameplate__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.pt-nameplate__group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.pt-nameplate__dot {
+  color: var(--ink-2);
+  font-style: normal;
+}
+.pt-nameplate__ok,
+.pt-nameplate__warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pt-nameplate__ok svg {
+  color: var(--ok);
+}
+.pt-nameplate__warn {
+  color: var(--miss);
+}
+/* 名称类待核对存在时不显示 ✓，改为不带图标的“词缀 x/y”，--ink-2（B1） */
+.pt-nameplate__count {
+  color: var(--ink-2);
+}
+/* 名称牌标签（“传奇”“双语”）：pt-chip 的名称牌形态，12px、3px 6px、圆角 3px、底 rgba(0,0,0,.22) */
+.pt-nameplate__tag {
+  padding: 3px 6px;
+  border: 1px solid var(--np-tag-edge);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--np-name-2);
+  font-size: 12px;
+  line-height: 1;
+}
+.pt-nameplate__tag[title] {
+  cursor: help;
+}
+/* collapsed 的展开控件（B15）：--gold 加 1px 下划线（随字色，偏移 3px），13px；悬停 --ink、下划线 2px；焦点走全局 --focus-ring */
+.pt-nameplate__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font-size: 13px;
+  text-decoration: underline 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.pt-nameplate__toggle:hover {
+  color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+.pt-nameplate__toggle svg {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.pt-nameplate__toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+/* §6.4.4 译文提示框的名称牌：名称与英文名上下两行居中，没有第二行 */
+.pt-nameplate--tooltip {
+  min-height: 0;
+  padding: 12px 30px 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.pt-nameplate--tooltip .pt-nameplate__name {
+  font-size: 21px;
+  letter-spacing: 0.04em;
+}
+/* 名称回退为英文时，“基底名未收录”接在名称下方居中（M0 self-decided B20） */
+.pt-nameplate--tooltip .pt-nameplate__miss {
+  margin-top: 3px;
+}
+/* §6.7 ≤600px：左右内边距 12px；第一行可换行；第二行分两组，组内不换行，组间可换行 */
+@media (max-width: 600px) {
+  .pt-nameplate {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .pt-nameplate__row1 {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  .pt-nameplate__meta {
+    flex-wrap: wrap;
+    row-gap: 2px;
+    white-space: normal;
+  }
+  .pt-nameplate__group {
+    white-space: nowrap;
+  }
+  .pt-nameplate__toggle {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pt-nameplate__toggle svg {
+    transition: none;
+  }
+}
+/* 强制色彩：隐藏颗粒（母题由 motif.css 隐藏）；底边与标签保留边界 */
+@media (forced-colors: active) {
+  .pt-nameplate::after {
+    display: none;
+  }
+  .pt-nameplate {
+    border-bottom-color: CanvasText;
+  }
+  .pt-nameplate__tag,
+  .pt-nameplate__miss {
+    border-color: CanvasText;
+  }
+}
