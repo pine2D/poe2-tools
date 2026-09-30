@@ -230,6 +230,7 @@ describe('Preview 技能与天赋（spec §6.4.2）', () => {
     const card = cardOf('烈焰冲击')
     expect(card.className).toBe('pt-panel pt-panel--item pt-panel--gem')
     expect(card.querySelector('.pt-nameplate')?.className).toBe('pt-nameplate pt-nameplate--gem')
+    expect(within(card).getByText('Flameblast').className).toBe('pt-nameplate__en')
     expect(within(card).getByTitle(LEVEL_TITLE).textContent).toBe('适用等级 52–100')
     expect(screen.queryByText(/^Lv /)).toBeNull()
     const pair = screen.getByText('深思施法').closest('.namepair') as HTMLElement
@@ -240,6 +241,18 @@ describe('Preview 技能与天赋（spec §6.4.2）', () => {
     expect(screen.getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')).toBeDefined()
     expect(cardOf('火焰风暴').querySelector('.pt-nameplate')?.className).toBe(
       'pt-nameplate pt-nameplate--gem pt-nameplate--shut',
+    )
+  })
+
+  it('辅助宝石中文缺失时中文位置显示“未命中”，英文位置显示 id', () => {
+    show()
+    changeSection('技能')
+    const pair = screen
+      .getByText('Metadata/Items/Gems/SupportGemSearingFlameTwo')
+      .closest('.namepair') as HTMLElement
+    expect(pair.firstElementChild?.textContent).toBe('未命中')
+    expect(pair.firstElementChild?.className).toBe(
+      'namepair__zh namepair__zh--gem namepair__zh--miss',
     )
   })
 
@@ -254,6 +267,8 @@ describe('Preview 技能与天赋（spec §6.4.2）', () => {
     expect(container.querySelectorAll('.passives > li.passive--name-only')).toHaveLength(2)
     expect(container.querySelector('.passives .pt-nameplate')).toBeNull()
     expect(screen.getByText('力量').nextElementSibling?.textContent).toBe('Strength')
+    const noted = container.querySelector('.passives > li:not(.passive--name-only)') as HTMLElement
+    expect([...noted.children].map((node) => node.className)).toEqual(['namepair', 'pt-pairs'])
     expect(screen.getAllByText('attributes30_')).toHaveLength(1)
     expect(container.querySelector('.mk-red .num')?.textContent).toBe('+5')
   })
