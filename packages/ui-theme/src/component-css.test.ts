@@ -1,5 +1,5 @@
 // ui-theme 组件 CSS 的数值门禁（spec §4.5、§4.6、§5、§5.15）
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { type CssRule, parseRules } from './testing/css'
@@ -278,13 +278,13 @@ describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', 
     expect(declared('hero-title.css', '.pt-hero-title__gold', 'color', FORCED)).toBe('CanvasText')
   })
 
-  it('index.css 按契约 §3.3 的顺序引入 M1 的全部文件', () => {
+  it('index.css 前 13 条 @import 与 M1 顺序一致（M2 在其后追加，不打乱）', () => {
     const imports = [
       ...readFileSync(fileURLToPath(new URL('./index.css', import.meta.url)), 'utf8').matchAll(
         /@import "([^"]+)";/g,
       ),
     ].map((m) => m[1])
-    expect(imports).toEqual([
+    expect(imports.slice(0, 13)).toEqual([
       './tokens.css',
       './generated/motif.css',
       './components/text.css',
@@ -299,5 +299,139 @@ describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', 
       './components/chip.css',
       './components/hero-title.css',
     ])
+  })
+})
+
+// —— M2：组件 CSS 取值断言（spec §5.7、§5.8、§5.11、§5.12、§6.4.4；契约 §3.4、§7.3）——
+// 解析口径：选择器去空白比较（逗号内含 :is(...) 时按整条选择器文本比较，不依赖逗号拆分方式）；
+// 取值比较去空白、转小写、小数补前导零（契约 §6.1 的口径）。
+const m2Read = (name: string): string =>
+  readFileSync(new URL(`./components/${name}`, import.meta.url), 'utf8')
+const m2Css = (name: string): readonly CssRule[] => parseRules(m2Read(name))
+const m2Norm = (value: string): string =>
+  value
+    .replace(/\s+/g, '')
+    .toLowerCase()
+    .replace(/(^|[^\d])\.(\d)/g, (_all: string, lead: string, digit: string) => `${lead}0.${digit}`)
+/** 与 selector 一致的规则；media 给出时只取外层 at-rule 含该条件的规则，否则只取顶层规则 */
+function m2Rules(rules: readonly CssRule[], selector: string, media?: string): CssRule[] {
+  const want = m2Norm(selector)
+  return rules.filter((rule) => {
+    const hit =
+      rule.selectors.some((item) => m2Norm(item) === want) ||
+      m2Norm(rule.selectors.join(',')) === want
+    if (!hit) return false
+    if (media === undefined) return rule.atRules.length === 0
+    return rule.atRules.some((at) => m2Norm(at).includes(m2Norm(media)))
+  })
+}
+/** 同一选择器、同一 at-rule 范围内某属性的最终取值（后写覆盖先写），按口径归一 */
+function m2Value(
+  rules: readonly CssRule[],
+  selector: string,
+  prop: string,
+  media?: string,
+): string {
+  const values = m2Rules(rules, selector, media).flatMap((rule) => {
+    const value = rule.declarations.get(prop)
+    return value === undefined ? [] : [value]
+  })
+  const last = values.at(-1)
+  if (last === undefined) {
+    throw new Error(`${selector} 缺少 ${prop}${media === undefined ? '' : `（${media}）`}`)
+  }
+  return m2Norm(last)
+}
+
+describe('M2 组件文件接入 index.css（契约 §3.3）', () => {
+  it('已建的 M2 组件文件按固定顺序跟在 hero-title.css 之后', () => {
+    const order = ['controls.css', 'tabs.css', 'nameplate.css', 'tooltip.css', 'pairs.css']
+    const imports = [
+      ...readFileSync(new URL('./index.css', import.meta.url), 'utf8').matchAll(
+        /@import\s+"\.\/components\/([\w-]+\.css)"/g,
+      ),
+    ].map((match) => match[1] ?? '')
+    const present = order.filter((name) =>
+      existsSync(new URL(`./components/${name}`, import.meta.url)),
+    )
+    const tail = imports
+      .slice(imports.indexOf('hero-title.css') + 1)
+      .filter((name) => order.includes(name))
+    expect(tail).toEqual(present)
+  })
+})
+
+describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
+  const rules = m2Css('controls.css')
+  it('“选择 .build 文件”的焦点环只命中 label[for="file-input"]，取 §5.5 的值（R7）', () => {
+    const selector =
+      ':is(.pt-dropzone, .pt-droprail):has(#file-input:focus-visible) label[for="file-input"]'
+    expect(m2Value(rules, selector, 'outline')).toBe(m2Norm('2px solid var(--focus)'))
+    expect(m2Value(rules, selector, 'outline-offset')).toBe('3px')
+    const focusRules = rules.filter((rule) =>
+      m2Norm(rule.selectors.join(',')).includes('#file-input:focus-visible'),
+    )
+    expect(focusRules.length).toBeGreaterThan(0)
+    for (const rule of focusRules) {
+      expect(m2Norm(rule.selectors.join(','))).toMatch(/label\[for="file-input"\]$/)
+    }
+  })
+  it('拖放区 1px 虚线 --control-edge，拖入时边色 --bronze', () => {
+    expect(m2Value(rules, '.pt-dropzone', 'border')).toBe(m2Norm('1px dashed var(--control-edge)'))
+    expect(m2Value(rules, '.pt-dropzone--over', 'border-color')).toBe('var(--bronze)')
+  })
+  it('分段控件选中项：--raised-2 底、600 字重、1px --bronze 内边（两种选中写法同值）', () => {
+    for (const selector of [
+      '.pt-seg__item[aria-checked="true"]',
+      '.pt-seg__item:has(input:checked)',
+    ]) {
+      expect(m2Value(rules, selector, 'background')).toBe('var(--raised-2)')
+      expect(m2Value(rules, selector, 'box-shadow')).toBe(m2Norm('inset 0 0 0 1px var(--bronze)'))
+      expect(m2Value(rules, selector, 'font-weight')).toBe('600')
+    }
+    expect(m2Value(rules, '.pt-seg', 'border')).toBe(m2Norm('1px solid var(--control-edge)'))
+    expect(m2Value(rules, '.pt-seg', 'background')).toBe('var(--bar)')
+  })
+  it('弹层与 Toast：底 --raised、1px --metal-line（#7a5530）', () => {
+    for (const selector of ['.pt-popover', '.pt-toast']) {
+      expect(m2Value(rules, selector, 'background')).toBe('var(--raised)')
+      expect(m2Value(rules, selector, 'border')).toBe(m2Norm('1px solid var(--metal-line)'))
+    }
+    expect(m2Value(rules, '.pt-popover h2', 'font')).toContain('var(--font-zh-cn)')
+  })
+  it('词典状态条：最小高 34px、底 --bg-2、下边 1px --line；三态圆点 --ok / --ink-3 / --danger', () => {
+    expect(m2Value(rules, '.pt-dictbar', 'min-height')).toBe('34px')
+    expect(m2Value(rules, '.pt-dictbar', 'background')).toBe('var(--bg-2)')
+    expect(m2Value(rules, '.pt-dictbar', 'border-bottom')).toBe(m2Norm('1px solid var(--line)'))
+    expect(m2Value(rules, '.pt-dictbar__dot', 'background')).toBe('var(--ok)')
+    expect(m2Value(rules, '.pt-dictbar__dot--loading', 'background')).toBe('var(--ink-3)')
+    expect(m2Value(rules, '.pt-dictbar__dot--failed', 'background')).toBe('var(--danger)')
+  })
+  it('侧栏折叠条：底 --bar、下边 1px --control-edge、最小高 44px（spec §6.7）', () => {
+    expect(m2Value(rules, '.pt-sidetoggle', 'background')).toBe('var(--bar)')
+    expect(m2Value(rules, '.pt-sidetoggle', 'border-bottom')).toBe(
+      m2Norm('1px solid var(--control-edge)'),
+    )
+    expect(m2Value(rules, '.pt-sidetoggle', 'min-height')).toBe('44px')
+  })
+  it('文件项：当前项由 aria-current 选取，边 --bronze 加左侧 3px 色条（R6）', () => {
+    const current = '.pt-file:has(> [aria-current="true"])'
+    expect(m2Value(rules, current, 'border-color')).toBe('var(--bronze)')
+    expect(m2Value(rules, current, 'box-shadow')).toBe(m2Norm('inset 3px 0 0 var(--bronze)'))
+    expect(m2Value(rules, '.pt-file', 'border')).toBe(m2Norm('1px solid var(--control-edge)'))
+  })
+  it('kbd 键帽 11px --ink-3，边 --line-2，底 --bg-2', () => {
+    expect(m2Value(rules, '.pt-kbd', 'font')).toContain('11px')
+    expect(m2Value(rules, '.pt-kbd', 'color')).toBe('var(--ink-3)')
+    expect(m2Value(rules, '.pt-kbd', 'border')).toBe(m2Norm('1px solid var(--line-2)'))
+    expect(m2Value(rules, '.pt-kbd', 'background')).toBe('var(--bg-2)')
+  })
+  it('≤600px 可点目标 ≥44px（分段、触发器、文字按钮、移除按钮）', () => {
+    const narrow = 'max-width: 600px'
+    expect(m2Value(rules, '.pt-seg__item', 'min-height', narrow)).toBe('44px')
+    expect(m2Value(rules, '.pt-trigger', 'min-height', narrow)).toBe('44px')
+    expect(m2Value(rules, '.pt-textbtn', 'min-height', narrow)).toBe('44px')
+    expect(m2Value(rules, '.pt-file__remove', 'width', narrow)).toBe('44px')
+    expect(m2Value(rules, '.pt-file__remove', 'height', narrow)).toBe('44px')
   })
 })

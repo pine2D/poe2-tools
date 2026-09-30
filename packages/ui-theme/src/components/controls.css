@@ -1,0 +1,409 @@
+/* spec §5.12 L0 表单、弹层与状态；§6.4.1 拖放区与“选择 .build 文件”的焦点环；§6.7 侧栏折叠条。
+   全部属于 L0：平涂、系统无衬线、左对齐。移植自 M0 kit.css（类名按契约 C2 加 pt- 前缀，图标按 C3 用 svg 后代选择器）。 */
+
+/* 分段控件（简繁；中英对照 / 译文），沿用 radiogroup 语义：label 包视觉隐藏的 radio */
+.pt-seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--control-edge);
+  border-radius: 7px;
+  background: var(--bar);
+}
+.pt-seg__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-2);
+  font: 400 13.5px / 1 var(--font-zh-cn);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.pt-seg__item:hover {
+  color: var(--ink);
+}
+/* 选中项：--raised-2 底、600 字重、1px --bronze 内边（mockup 的 --bronze-lo 不足 3:1） */
+.pt-seg__item[aria-checked="true"],
+.pt-seg__item:has(input:checked) {
+  background: var(--raised-2);
+  box-shadow: inset 0 0 0 1px var(--bronze);
+  color: var(--ink);
+  font-weight: 600;
+}
+/* 焦点在视觉隐藏的 radio 上，环画在可见的 label 上 */
+.pt-seg__item:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* 页头“设置”触发器：按 §5.12 绘制（底 --bar、边 --control-edge），与分段控件同高（M0 self-decided K2） */
+.pt-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--control-edge);
+  border-radius: 7px;
+  background: var(--bar);
+  color: var(--ink-2);
+  font: 400 13.5px / 1 var(--font-zh-cn);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.pt-trigger:hover {
+  border-color: var(--bronze);
+  color: var(--ink);
+}
+
+/* 复选框：保留原生 checkbox 与现有 label / hint 结构（hint 经 aria-describedby 关联，不进可访问名） */
+.pt-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 2px 10px;
+  font-size: 14px;
+}
+.pt-check input {
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+  accent-color: var(--bronze);
+}
+.pt-check label {
+  color: var(--ink);
+  cursor: pointer;
+}
+.pt-check__hint {
+  grid-column: 2;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+/* 文本框（粘贴）：底 --bg，1px --control-edge，圆角 4px */
+.pt-textarea {
+  display: block;
+  width: 100%;
+  min-height: 90px;
+  padding: 10px 12px;
+  border: 1px solid var(--control-edge);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  caret-color: var(--gold);
+  font: 13px / 1.6 var(--font-code);
+  resize: vertical;
+}
+.pt-textarea::placeholder {
+  color: var(--ink-3);
+}
+
+/* 拖放区（§6.4.1）：1px 虚线 --control-edge，拖入时边色 --bronze；圆角 6px（M0 self-decided K13） */
+.pt-dropzone {
+  border: 1px dashed var(--control-edge);
+  border-radius: 6px;
+}
+.pt-dropzone--over {
+  border-color: var(--bronze);
+}
+/* 侧栏 DropZone rail：整块仍是拖放目标，可见部分只有按钮与“或粘贴内容”折叠 */
+.pt-droprail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* “选择 .build 文件”的焦点环（空态、词典失败、侧栏三处通用，spec §6.4.1 R7）：真正获得焦点的是视觉隐藏的
+   #file-input，环画在可见的 label 上；只命中这个 label，不误点亮同区块里的其他按钮；取 §5.5 的值 */
+:is(.pt-dropzone, .pt-droprail):has(#file-input:focus-visible) label[for="file-input"] {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* 文件项（mockup :233-240、:429）：当前项由项内选择按钮上的 aria-current 选取（spec §5.12 R6） */
+.pt-file {
+  position: relative;
+  padding: 12px 38px 12px 13px;
+  border: 1px solid var(--control-edge);
+  border-radius: 6px;
+  background: #0e0b09;
+}
+.pt-file:has(> [aria-current="true"]) {
+  border-color: var(--bronze);
+  box-shadow: inset 3px 0 0 var(--bronze);
+}
+.pt-file__pick {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pt-file__name {
+  display: block;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.pt-file__orig {
+  display: block;
+  color: var(--ink-3);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.pt-file__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+.pt-file__ok,
+.pt-file__warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pt-file__ok {
+  color: var(--ok);
+}
+.pt-file__warn {
+  color: var(--miss);
+}
+.pt-file__remove {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.pt-file__remove:hover {
+  color: var(--ink);
+}
+
+/* 文字按钮：“或粘贴内容 ⌄”（mockup :231）与下划线式“下载后怎么使用？”（:241）；悬停字色 --ink */
+.pt-textbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-size: 14px;
+  list-style: none;
+  cursor: pointer;
+}
+.pt-textbtn::-webkit-details-marker {
+  display: none;
+}
+.pt-textbtn:hover {
+  color: var(--ink);
+}
+.pt-textbtn--underline {
+  justify-content: flex-start;
+  min-height: 0;
+  padding: 2px 6px;
+  font-size: 13.5px;
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 3px;
+}
+
+/* 弹层与 Toast（spec §5.12）：底 --raised，1px --metal-line（#7a5530），保留现有局部投影；标题无衬线（M0 self-decided K8） */
+.pt-popover {
+  display: grid;
+  gap: 20px;
+  width: 330px;
+  max-width: calc(100vw - 24px);
+  padding: 20px;
+  border: 1px solid var(--metal-line);
+  border-radius: 12px;
+  background: var(--raised);
+  box-shadow: 0 12px 36px #0003;
+  color: var(--ink);
+}
+.pt-popover h2 {
+  margin: 0;
+  font: 600 16px / 1.4 var(--font-zh-cn);
+}
+.pt-popover > p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.pt-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  padding: 12px 16px;
+  border: 1px solid var(--metal-line);
+  border-radius: 10px;
+  background: var(--raised);
+  box-shadow: 0 8px 28px #0003;
+  color: var(--ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* L0 面板：待核对清单（spec §6.4.2 第 2 项） */
+.pt-l0-panel {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+/* ≤1099px 侧栏折叠条（spec §6.7）：L0 平涂条，底 --bar，下边 1px --control-edge（对 --bar 4.59:1），最小高 44px */
+.pt-sidetoggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 1px solid var(--control-edge);
+  background: var(--bar);
+  color: var(--ink);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 词典状态条（mockup :225-227）：最小高 34px，底 --bg-2，下边 1px --line，13px --ink-2 */
+.pt-dictbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 9px;
+  min-height: 34px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.pt-dictbar b {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.pt-dictbar__dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.pt-dictbar__dot--loading {
+  background: var(--ink-3);
+}
+.pt-dictbar__dot--failed {
+  background: var(--danger);
+}
+
+/* kbd 键帽（mockup :265）：11px --ink-3（§4.3 允许的唯一 11px 用法），1px --line-2，底 --bg-2 */
+.pt-kbd {
+  padding: 3px 5px;
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  background: var(--bg-2);
+  color: var(--ink-3);
+  font: 600 11px / 1 var(--font-zh-cn);
+}
+
+/* 组件内的图标（契约 C3：网站用 Icon.tsx 的 svg.icon，这里按 svg 后代选择器；按特异性升序排列） */
+.pt-toast > svg {
+  color: var(--ok);
+}
+.pt-file__status svg {
+  width: 15px;
+  height: 15px;
+}
+.pt-textbtn svg {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.pt-trigger svg {
+  transition: transform var(--dur-enter) var(--ease-out);
+}
+.pt-trigger[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+details[open] > .pt-textbtn svg {
+  transform: rotate(180deg);
+}
+
+/* ≤600px 可点目标 ≥44px（spec §5.15、§6.7） */
+@media (max-width: 600px) {
+  .pt-seg__item,
+  .pt-trigger {
+    height: auto;
+    min-height: 44px;
+  }
+  .pt-textbtn {
+    min-height: 44px;
+  }
+  .pt-file {
+    padding-right: 48px;
+  }
+  .pt-file__remove {
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pt-seg__item,
+  .pt-trigger,
+  .pt-trigger svg,
+  .pt-textbtn svg {
+    transition: none;
+  }
+}
+/* 强制色彩：控件保留边界；选中与当前项改用 Highlight 外框（非颜色线索由系统色承担） */
+@media (forced-colors: active) {
+  .pt-seg,
+  .pt-trigger,
+  .pt-textarea,
+  .pt-file,
+  .pt-popover,
+  .pt-toast {
+    border-color: CanvasText;
+  }
+  .pt-seg__item[aria-checked="true"],
+  .pt-seg__item:has(input:checked),
+  .pt-file:has(> [aria-current="true"]) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .pt-sidetoggle {
+    border-bottom-color: CanvasText;
+  }
+}
