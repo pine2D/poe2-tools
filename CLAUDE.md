@@ -26,10 +26,15 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 
 - `packages/build-core/`：纯 TypeScript、无 DOM。`.build` 无损解析与序列化、标记语法分词、
   词典匹配、翻译管线。浏览器与 Node 共用。
-- `packages/dict-builder/`：Node 脚本（tsx 运行）。`cache.ts` 是唯一发网络请求的模块（按日缓存到
-  `data/cache/`，`--offline` 复用）；`adapters/` 是"已解析 JSON → 词典类型"的纯函数；`build.ts` 编排并
-  写 `data/dict/<locale>/`，`check.ts` 做结构校验、审计与覆盖率回归门禁。
-- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`；共用样式在 `src/shared/styles/`，由各页面入口按级联顺序引入。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；测试用 happy-dom。
+- `packages/dict-builder/`：Node 脚本（tsx 运行）。`cache.ts` 是词典构建唯一发网络请求的模块（按日缓存到
+  `data/cache/`，`--offline` 复用）；界面字体源由 `packages/ui-theme/scripts/build-fonts.mjs` 手动下载（唯一另一处联网脚本）。
+  `adapters/` 是"已解析 JSON → 词典类型"的纯函数；`build.ts` 编排并写 `data/dict/<locale>/`，`check.ts` 做结构校验、
+  审计与覆盖率回归门禁。
+- `packages/ui-theme/`：设计语言共享包 `@poe2-tools/ui-theme`（私有，不单独计版本）。`src/tokens.css` 是唯一的令牌块（只有深色）；
+  `src/motif.ts`、`src/noise.ts` 是母题与颗粒的唯一源，`scripts/build-motif-css.mjs` 生成 `src/generated/`；`src/components/*.css`
+  是 `pt-*` 组件样式；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
+  `scripts/compliance.mjs` 是许可文件与素材白名单判定的唯一实现。`fonts/` 与 `src/generated/` 是生成物：入库、不手改、Biome 排除。
+- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；测试用 happy-dom。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
   `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
   `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率
@@ -72,7 +77,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 - 保留工作树中的无关修改；不顺手格式化任务外文件。
 - 新增数据源：先在 `docs/data-sources.md` 登记许可与风险等级，再写适配器。
 - 词典更新：先按各服实际版本改 `data/dict/_overrides/versions.json`，运行 `pnpm dict:build`，检查日志里的
-  审计计数与覆盖率，再用独立提交 `chore(dict): 更新词典至 <游戏版本>`。覆盖率下降需先查原因，不要直接
+  审计计数与覆盖率。若 `packages/ui-theme` 的 coverage.test 因新名称字符失败，运行 `pnpm ui-theme:fonts`，先用独立提交
+  `chore(ui-theme): 更新字体分片` 提交 `packages/ui-theme/fonts/`（覆盖只增不减，旧词典在这个提交下仍能通过测试），再用独立提交
+  `chore(dict): 更新词典至 <游戏版本>` 提交词典；两个提交各自都要能通过 `pnpm verify`。覆盖率下降需先查原因，不要直接
   `--allow-regression`。
 - 涉及游戏内渲染的结论（中文是否显示、`name` 截断、国服客户端行为）必须来自真机；未验证就
   明确写"待验收"。
@@ -86,6 +93,8 @@ pnpm verify        # typecheck + lint + test + build + dict:check，与 CI 同�
 pnpm dev           # 本地启动静态站
 pnpm dict:build    # 联网生成词典（按日缓存；--offline 复用缓存；--allow-regression 放行覆盖率下降）
 pnpm dict:check    # 入库词典的结构校验、审计与覆盖率回归比较
+pnpm ui-theme:fonts # 手动运行：联网下载固定提交的字体源，重新生成 packages/ui-theme/fonts/（不进 verify）
+pnpm ui-theme:motif # 手动运行：由 motif.ts 重新生成母题 CSS 与 SVG（不联网，不进 verify）
 ```
 
 ## 隐私与合规
@@ -107,7 +116,7 @@ pnpm dict:check    # 入库词典的结构校验、审计与覆盖率回归比�
 - `main` 保持可构建；开发分支用稳定可读的名字，经 PR 合入；禁止 force-push `main`。
 - 提交采用 Conventional Commits 1.0.0：`<type>(<scope>): <简体中文摘要>`。
 - type：`feat`、`fix`、`docs`、`test`、`refactor`、`perf`、`build`、`ci`、`chore`、`revert`。
-- scope：`build-core`、`dict-builder`、`build-l10n`、`dict`、`data`、`docs`、`ci`；跨域时省略。
+- scope：`build-core`、`dict-builder`、`build-l10n`、`dict`、`data`、`docs`、`ci`、`ui-theme`；跨域时省略。
 - 一次提交一个逻辑变更，含其测试与文档；只显式暂存本次文件，不用 `git add -A`。
 - 破坏性变更用 `type(scope)!:` 并加 `BREAKING CHANGE:` footer。
 
