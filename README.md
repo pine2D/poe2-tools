@@ -14,7 +14,7 @@
 
 - `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：控件、页面样式、词典加载；令牌、组件样式、母题与字体分片来自 `packages/ui-theme`。
 - `packages/`：纯业务算法和构建脚本；`data/`：词典、历史制作目录及样本。
-- [设计与验收](docs/website/redesign.md) · [2026-09 设计语言改版记录](docs/website/redesign-2026-09-design-language.md) · [Cloudflare 部署流程](docs/website/deployment.md)
+- [2026-09-28 门户改版与验收](docs/website/redesign.md) · [2026-09 设计语言改版记录](docs/website/redesign-2026-09-design-language.md) · [Cloudflare 部署流程](docs/website/deployment.md)
 
 ## 工具
 
@@ -75,7 +75,7 @@ pnpm --filter @poe2-tools/site scan-css
 「只被别的 CSS 规则消费的 modifier」会误报，当成门禁只会让 CI 变吵。改完样式、或删组件之后手动跑
 一次即可；有发现时退出码是 1，输出里逐条列出名字。
 
-已知误报（跑一次会看到，不是死代码）：`--rarity-gem`、`--rarity-unique`、`--success`、`.affix-rule`、`.desktop-note`、`.guide-heading`、`.guide-section`、`.install-command`、`.install-steps`、`.recent-note`、`.release-note`、`.search-demo`、`.site-brand`、`.site-button`、`.site-button-secondary`、`.site-github`、`.site-header`、`.site-header-actions`、`.site-nav`、`.site-theme`、`.tool-heading`、`.tool-kind`、`.translation-demo`（工坊冻结的改版前样式副本，spec §6.6、契约 §6.3 原样复制，不改）；`.pt-panel--card`（`PtPanel.tsx` 用模板字符串 `pt-panel--${variant}` 拼出类名，脚本只按整串字面量匹配）。
+已知条目（跑一次会看到，不需要处理）：`--rarity-gem`、`--rarity-unique`、`--success`、`.affix-rule`、`.desktop-note`、`.guide-heading`、`.guide-section`、`.install-command`、`.install-steps`、`.recent-note`、`.release-note`、`.search-demo`、`.site-brand`、`.site-button`、`.site-button-secondary`、`.site-github`、`.site-header`、`.site-header-actions`、`.site-nav`、`.site-theme`、`.tool-heading`、`.tool-kind`、`.translation-demo` 是历史工坊冻结的改版前样式副本（`apps/site/src/features/craft/legacy-*.css`）里已无调用方的规则，工坊按改版规格 §6.6 只冻结不改，原样保留；`.pt-panel--card` 是误报（`PtPanel.tsx` 用模板字符串 `` `pt-panel--${variant}` `` 拼出类名，脚本只按整串字面量匹配）。
 
 ## 目录
 
