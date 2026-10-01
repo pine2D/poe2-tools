@@ -3,7 +3,8 @@
 // 颜色一律 currentColor，由使用处的 color 决定；尺寸由 size 决定，不写死。
 
 // 零引用纪律（第一期 M-5）：这 12 个名字全部有调用方，多一个都不留（页头 logo 改用 Motif 后删去 brand；
-// info 由扩展介绍页的说明行使用；arrow-down 一直没有调用方，M3 删去）。Icon.test.tsx 按字面量核对。
+// info 由扩展介绍页的说明行使用；arrow-down 一直没有调用方，M3 删去）。Icon.test.tsx 只按 <Icon name> 里的字面量核对，
+// 所以调用一律写成 <Icon name="…"> 或 name={…} 里的字符串字面量，不经变量转手。
 export type IconName =
   | 'upload'
   | 'drop'
