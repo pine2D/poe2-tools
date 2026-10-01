@@ -1,9 +1,30 @@
 # Changelog
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
-版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` 是私有内部包，不单独计版本。仓库私有，暂不提供版本比较链接。
+版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` 是私有内部包，不单独计版本。仓库私有，暂不提供版本比较链接。
 
 ## [Unreleased]
+
+## [0.5.0] - 2026-10-01
+
+网站换上 PoE2 设计语言：深色暖炭底、旧铜金属框、符文菱结母题与中文衬线标题；构筑汉化改为双框工作台。翻译逻辑、词典与下载的 `.build` 内容不变。
+
+### Added
+
+- 新设计语言：全站新页头与页脚，首页和扩展介绍页的金属框、入口卡与环境卡，构筑汉化的双框工作台、金属页签、装备与技能名称牌、译文提示框；404 与站点图标换成自绘母题。
+- 新增共享样式包 `packages/ui-theme`，统一令牌、`pt-*` 组件与自绘母题，母题与字体分片由脚本生成并随测试比对。
+- 标题、导航与按钮等处使用随站自托管的 Noto Serif SC/TC 与 Cinzel 字体分片，首页只加载一个字体文件；字体许可文件与第三方许可说明随站发布（`/fonts/*-OFL.txt`、`/NOTICE.txt`），页脚新增“第三方许可”链接。
+
+### Changed
+
+- 页脚声明改为“非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。游戏文本版权归各权利方所有。”；扩展介绍页首屏也显示完整声明，手机上先显示“适用于桌面 Chrome”的提示，再显示安装按钮。
+- 构筑汉化：“仅看待核对”按钮可见文字改为“仅看待核对 F”（窄屏为“待核对”）；名称牌与译文提示框显示“适用等级 a–b”（技能原来的“Lv a–b”同步改称）；侧栏文件有待核对项时显示“⚠ 待核对 n”；未命中标签改为“未命中 · 保留原文”；辅助宝石与天赋名称改为中文在前；空态与侧栏脚注不再重复词典版本。
+- 首页“本次站点更新”的站内链接改用“→”，“↗”只留给外链。
+- 构建增加字体许可文件、CSS 外链与素材白名单检查。
+
+### Removed
+
+- 移除浅色主题与主题切换：首页、构筑汉化、扩展介绍页页头与历史工坊的主题选择，以及各页（含 404）的首帧主题脚本与浅色样式；网站固定为深色，已保存的主题偏好不再生效。
 
 ## [0.4.0] - 2026-09-28
 
@@ -474,5 +495,6 @@
 - 可选：传奇名注入（默认开）、双语模式（默认关）。
 - 词典（词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位）随站发布，浏览器零第三方请求。
 
-[Unreleased]: https://github.com/pine2D/poe2-tools/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/pine2D/poe2-tools/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.5.0
 [0.4.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.4.0
