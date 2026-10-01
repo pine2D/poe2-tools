@@ -16,33 +16,22 @@
 :root[data-input="keyboard"] .app__settings-panel {
   transition: none;
 }
+/* 减少动态效果：取消位移与全部过渡（spec §4.6），打开态一并写，盖过 controls.css 里打开态的 transition-duration */
 @media (prefers-reduced-motion: reduce) {
-  .app__settings-panel {
-    transform: none;
-    transition:
-      opacity 100ms ease,
-      visibility 0s 100ms;
-  }
+  .app__settings-panel,
   .app__settings-panel[data-open="true"] {
     transform: none;
-    transition-duration: 100ms, 0s;
-    transition-delay: 0s;
+    transition: none;
   }
 }
 :root[data-input="keyboard"] .app__toast {
   transition: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .app__toast {
-    transform: none;
-    transition:
-      opacity 100ms ease,
-      visibility 0s 100ms;
-  }
+  .app__toast,
   .app__toast[data-open="true"] {
     transform: none;
-    transition-duration: 100ms, 0s;
-    transition-delay: 0s;
+    transition: none;
   }
 }
 @media (forced-colors: active) {

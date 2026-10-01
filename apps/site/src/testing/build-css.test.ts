@@ -139,6 +139,44 @@ describe('页面级浮层层级（spec §4.5）', () => {
   })
 })
 
+describe('减少动态效果（spec §4.6、§8.4）', () => {
+  const rules = buildCss()
+  const REDUCE = /prefers-reduced-motion:\s*reduce/
+  const reduced = (rule: CssRule): boolean => rule.atRules.some((at) => REDUCE.test(at))
+  // 声明了会动的过渡：transition 不是 none，或 transition-duration 里有非零时长（var() 一律算非零）
+  const moving = (rule: CssRule): boolean => {
+    const transition = norm(rule.declarations.get('transition') ?? 'none')
+    const duration = rule.declarations.get('transition-duration') ?? '0s'
+    return transition !== 'none' || duration.split(',').some((item) => !/^\s*0m?s\s*$/.test(item))
+  }
+  it('声明了过渡的规则（含只写 transition-duration 的打开态），在减少动态效果规则里有同选择器的 transition: none', () => {
+    const reset = new Set(
+      rules
+        .filter(
+          (rule) => reduced(rule) && norm(rule.declarations.get('transition') ?? '') === 'none',
+        )
+        .flatMap((rule) => rule.selectors.map(flat)),
+    )
+    for (const rule of rules) {
+      if (reduced(rule) || !moving(rule)) continue
+      for (const selector of rule.selectors) expect(reset.has(flat(selector)), selector).toBe(true)
+    }
+  })
+  it('减少动态效果规则里不再保留任何非零时长的过渡（Toast、设置弹层不再留 100ms 淡入淡出）', () => {
+    for (const rule of rules.filter(reduced)) {
+      expect(moving(rule), rule.selectors.join(', ')).toBe(false)
+    }
+  })
+  it('Toast 与设置弹层在减少动态效果时打开、关闭两态都不位移', () => {
+    const reduce = 'prefers-reduced-motion: reduce'
+    for (const base of ['.app__toast', '.app__settings-panel']) {
+      for (const selector of [base, `${base}[data-open="true"]`]) {
+        expect(finalValue(rules, selector, 'transform', reduce)).toBe('none')
+      }
+    }
+  })
+})
+
 describe('导入后的自动滚动（spec §6.4.2）', () => {
   it('主区 pt-frame 的 scroll-margin-top 取 --main-pad-top', () => {
     expect(finalValue(buildCss(), '.app__build-frame', 'scroll-margin-top')).toBe(
