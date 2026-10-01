@@ -134,16 +134,24 @@
     transition: none;
   }
 }
-/* 强制色彩：选中页签 2px Highlight 边框（含底边），未选中 1px CanvasText */
+/* 强制色彩：选中页签 2px Highlight 边框（含底边），未选中 1px CanvasText。
+   选中页签多出的 1px 边宽由内边距各减 1px 抵消，两态外框等大、文字起点不变，切换页签时相邻页签不位移 */
 @media (forced-colors: active) {
   .pt-tab {
     border: 1px solid CanvasText;
   }
   .pt-tab[aria-selected="true"] {
+    padding: 8px 17px 11px;
     border: 2px solid Highlight;
   }
   .pt-tabs-row::after,
   .pt-tabs::after {
     background: CanvasText;
+  }
+}
+/* ≤600px 的页签左右内边距是 12px，选中页签同样减 1px */
+@media (forced-colors: active) and (max-width: 600px) {
+  .pt-tab[aria-selected="true"] {
+    padding-inline: 11px;
   }
 }

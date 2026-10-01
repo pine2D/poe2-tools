@@ -535,6 +535,68 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     )
     expect(m2Value(rules, '.pt-tab', 'border', forced)).toBe(m2Norm('1px solid CanvasText'))
   })
+  // M2 移交 F3：强制色彩下两态边宽不同（选中 2px、未选中 1px，都含底边），不补偿时选中页签宽、高各多 2px，
+  // 切换页签时相邻页签横移、纵移。按层叠逐条套用 tabs.css：先 (0,1,0) 的 .pt-tab，再 (0,2,0) 的选中态，
+  // 同特异性按源码顺序；算出外框（含 margin-bottom）与文字起点，桌面与 ≤600px、常规与强制色彩四种组合下两态都应一致
+  it('两态外框与文字起点一致：强制色彩下多出的边宽由选中页签的内边距抵消，切换页签不位移', () => {
+    const len = (value: string): number =>
+      /^-?[\d.]+px$/.test(value) ? Number.parseFloat(value) : 0
+    const four = (value: string): [number, number, number, number] => {
+      const [t = '0', r = t, b = t, l = r] = value.split(' ')
+      return [len(t), len(r), len(b), len(l)]
+    }
+    const width = (value: string): number =>
+      len(value.split(' ').find((part) => /^-?[\d.]+px$/.test(part)) ?? '0')
+    const geometry = (selected: boolean, narrow: boolean, forced: boolean) => {
+      // 内边距、边宽按 上、右、下、左
+      const pad = [0, 0, 0, 0]
+      const edge = [0, 0, 0, 0]
+      let marginBottom = 0
+      const applies = (rule: CssRule): boolean =>
+        rule.atRules.every((at) => {
+          const media = m2Norm(at)
+          if (media.includes('prefers-reduced-motion')) return false
+          if (media.includes('max-width:600px') && !narrow) return false
+          return !(media.includes('forced-colors:active') && !forced)
+        })
+      const layers = selected ? ['.pt-tab', '.pt-tab[aria-selected="true"]'] : ['.pt-tab']
+      for (const selector of layers) {
+        for (const rule of rules) {
+          if (!rule.selectors.includes(selector) || !applies(rule)) continue
+          for (const [name, value] of rule.declarations) {
+            if (name === 'padding') pad.splice(0, 4, ...four(value))
+            else if (name === 'padding-top') pad[0] = len(value)
+            else if (name === 'padding-right') pad[1] = len(value)
+            else if (name === 'padding-bottom') pad[2] = len(value)
+            else if (name === 'padding-left') pad[3] = len(value)
+            else if (name === 'padding-inline') {
+              const [left = '0', right = left] = value.split(' ')
+              pad[3] = len(left)
+              pad[1] = len(right)
+            } else if (name === 'border') edge.fill(width(value))
+            else if (name === 'border-bottom') edge[2] = width(value)
+            else if (name === 'margin') marginBottom = four(value)[2]
+            else if (name === 'margin-bottom') marginBottom = len(value)
+          }
+        }
+      }
+      const [pt = 0, pr = 0, pb = 0, pl = 0] = pad
+      const [bt = 0, br = 0, bb = 0, bl = 0] = edge
+      return {
+        outerWidth: pl + pr + bl + br,
+        outerHeight: pt + pb + bt + bb + marginBottom,
+        textTop: pt + bt,
+        textLeft: pl + bl,
+      }
+    }
+    for (const narrow of [false, true]) {
+      for (const forced of [false, true]) {
+        expect(geometry(true, narrow, forced), `narrow=${narrow} forced=${forced}`).toEqual(
+          geometry(false, narrow, forced),
+        )
+      }
+    }
+  })
 })
 
 describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）', () => {
