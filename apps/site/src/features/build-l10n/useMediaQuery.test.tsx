@@ -30,7 +30,9 @@ describe('useMediaQuery', () => {
   it('卸载后退订，不再收到变化', () => {
     const media = mockMatchMedia(false)
     const { unmount } = render(<Probe />)
+    expect(media.listeners()).toBeGreaterThan(0)
     unmount()
+    expect(media.listeners()).toBe(0)
     expect(() => act(() => media.set(true))).not.toThrow()
   })
 })

@@ -187,9 +187,13 @@ describe('改版前构筑页样式已清理（契约 §2.4、§4.2）', () => {
     }
   })
   // 契约 §2.4、§7.3（v2）：构筑页整页滚动，与 M0 mockup 一致；宽屏导入后页头随页面滚出视口，用户已在 M2 开工时确认
-  it('整页滚动：.app__main 与 .app__side 在任何断点都不是滚动容器', () => {
+  // 匹配不锚定开头、允许修饰类：≤1099px 抽屉 .app__side--open 与带祖先或属性限定的写法都算；
+  // .app__side-note 等子元素不算。偶尔误报（如 .app__main:only-child > .app__error）只会让用例失败，不会放过问题
+  it('整页滚动：.app__main 与 .app__side（含修饰类与限定写法）在任何断点都不是滚动容器', () => {
     for (const rule of rules) {
-      const target = rule.selectors.some((item) => /^\.app__(main|side)(:|$)/.test(flat(item)))
+      const target = rule.selectors.some((item) =>
+        /\.app__(main|side)(--[\w-]+)?(?![\w-])/.test(flat(item)),
+      )
       if (!target) continue
       for (const prop of ['overflow', 'overflow-x', 'overflow-y']) {
         expect(rule.declarations.get(prop) ?? 'visible').not.toMatch(/auto|scroll/)
