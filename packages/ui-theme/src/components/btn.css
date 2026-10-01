@@ -117,4 +117,10 @@
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }
+  /* 按下且键盘聚焦：上一条的内框与焦点环同为 outline，会把焦点环盖住；此时照常画焦点环，按下态改由 Highlight 边框表示 */
+  .pt-btn[aria-pressed="true"]:focus-visible {
+    border-color: Highlight;
+    outline: var(--focus-ring);
+    outline-offset: 3px;
+  }
 }

@@ -259,6 +259,19 @@ describe('pt-btn（spec §5.6）', () => {
       indexOf('.pt-btn--quiet:disabled:hover'),
     )
   })
+
+  // M2 移交 F4：强制色彩下按下态的 Highlight 内框与焦点环同为 outline，按下态规则写在后、特异性相同，
+  // 按下且键盘聚焦时焦点环被盖住
+  it('强制色彩：按下且键盘聚焦时照常画焦点环（2px，外偏移 3px），按下态改由 Highlight 边框表示（spec §5.15）', () => {
+    const selector = '.pt-btn[aria-pressed="true"]:focus-visible'
+    expect(declared('btn.css', selector, 'outline', FORCED)).toBe('var(--focus-ring)')
+    expect(declared('btn.css', selector, 'outline-offset', FORCED)).toBe('3px')
+    expect(declared('btn.css', selector, 'border-color', FORCED)).toBe('Highlight')
+    // 按下但未聚焦时仍是 Highlight 内框
+    expect(declared('btn.css', '.pt-btn[aria-pressed="true"]', 'outline-offset', FORCED)).toBe(
+      '-2px',
+    )
+  })
 })
 
 describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', () => {
@@ -409,6 +422,24 @@ describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
     }
     expect(m2Value(rules, '.pt-seg', 'border')).toBe(m2Norm('1px solid var(--control-edge)'))
     expect(m2Value(rules, '.pt-seg', 'background')).toBe('var(--bar)')
+  })
+  // 与 M2 移交 F4 同一根因：键盘进入 radiogroup 时焦点必落在选中项，强制色彩块里选中项的 Highlight 内框
+  // 也是 outline，且与焦点规则同为 (0,2,1)、写在后，焦点环被盖住；选中项仍由 600 字重区分
+  it('强制色彩：分段控件选中项聚焦时照常画焦点环，焦点规则排在选中项内框之后（spec §5.15）', () => {
+    const forced = 'forced-colors: active'
+    for (const selector of [
+      '.pt-seg__item:has(input:focus-visible)',
+      '.pt-seg__item[aria-checked="true"]:focus-visible',
+    ]) {
+      expect(m2Value(rules, selector, 'outline', forced)).toBe('var(--focus-ring)')
+      expect(m2Value(rules, selector, 'outline-offset', forced)).toBe('3px')
+    }
+    const inForced = rules.filter((rule) => rule.atRules.some((at) => FORCED.test(at)))
+    const at = (selector: string) => inForced.findIndex((rule) => rule.selectors.includes(selector))
+    expect(at('.pt-seg__item:has(input:checked)')).toBeGreaterThanOrEqual(0)
+    expect(at('.pt-seg__item:has(input:focus-visible)')).toBeGreaterThan(
+      at('.pt-seg__item:has(input:checked)'),
+    )
   })
   it('弹层与 Toast：底 --raised、1px --metal-line（#7a5530）', () => {
     for (const selector of ['.pt-popover', '.pt-toast']) {

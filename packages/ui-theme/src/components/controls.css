@@ -403,6 +403,13 @@ details[open] > .pt-textbtn svg {
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }
+  /* 键盘进入 radiogroup 时焦点必落在选中项：上一条的内框与焦点环同为 outline，且与 :has(input:focus-visible)
+     同特异性，所以焦点规则必须写在其后，照常画焦点环；选中项仍由 600 字重区分 */
+  .pt-seg__item[aria-checked="true"]:focus-visible,
+  .pt-seg__item:has(input:focus-visible) {
+    outline: var(--focus-ring);
+    outline-offset: 3px;
+  }
   .pt-sidetoggle {
     border-bottom-color: CanvasText;
   }
