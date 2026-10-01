@@ -382,8 +382,9 @@ describe('构筑页骨架（M2）', () => {
   it('词典失败且没有文件：ErrorCard 在框外，下面一扇只有拖放区的“导入 .build”框，没有 pt-forge-btn', async () => {
     render(<App fetchImpl={failingDict()} />)
     await screen.findByText('词典加载失败')
+    // ErrorCard 在框外，标题仍是 h2
     const card = screen
-      .getByRole('heading', { name: '词典没能加载' })
+      .getByRole('heading', { level: 2, name: '词典没能加载' })
       .closest('.pt-panel') as HTMLElement
     expect(card.className).toBe('pt-panel pt-panel--card app__error')
     expect(card.closest('.pt-frame')).toBeNull()
@@ -431,7 +432,9 @@ describe('构筑页骨架（M2）', () => {
     expect(title.textContent).toBe('bad.build')
     expect(title.getAttribute('title')).toBe('bad.build')
     expect(title.hasAttribute('data-user-text')).toBe(true)
-    expect(within(frame).getByRole('heading', { name: '这个文件没法解析' })).toBeDefined()
+    // 读屏大纲：ErrorCard 在主区框内，标题比框的标题栏（h2）低一级（M2 移交 A1）
+    expect(title.tagName).toBe('H2')
+    expect(within(frame).getByRole('heading', { level: 3, name: '这个文件没法解析' })).toBeDefined()
     expect(within(frame).getByRole('button', { name: '移除 bad.build' }).className).toBe('pt-btn')
     expect(forges()).toHaveLength(0)
   })

@@ -87,14 +87,16 @@ function ErrorCard(props: {
   hint: ReactNode
   detail: string
   action?: { label: string; onClick(): void }
+  /** 标题元素：框外为 h2（默认）；放在标题栏为 h2 的 pt-frame 里时用 h3，读屏大纲才有层次 */
+  headingAs?: 'h2' | 'h3'
 }) {
-  const { title, hint, detail, action } = props
+  const { title, hint, detail, action, headingAs: Heading = 'h2' } = props
   return (
     <PtPanel as="section" variant="card" className="app__error">
-      <h2 className="app__error-title">
+      <Heading className="app__error-title">
         <Icon name="warning" size={18} />
         {title}
-      </h2>
+      </Heading>
       <p className="app__error-hint">{hint}</p>
       {action !== undefined && (
         <button type="button" className="pt-btn" onClick={action.onClick}>
@@ -347,6 +349,7 @@ export function App({ fetchImpl }: AppProps) {
       return (
         <PtFrame titlebar={{ title: selected.name, fullText: selected.name, userText: true }}>
           <ErrorCard
+            headingAs="h3"
             title="这个文件没法解析"
             hint="它不是合法的 JSON，常见原因是复制内容时被截断了，或者拖错了文件。换一份文件再试。"
             detail={selected.error}
