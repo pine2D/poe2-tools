@@ -548,7 +548,7 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(code).not.toContain('max-width: 820px')
     expect(code).not.toMatch(/min-width:\s*601px/)
   })
-  it('≤600px：页签独占一行，基线改画在 tablist 下方；页签最小高 44px；隐藏键帽', () => {
+  it('≤600px：页签独占一行，基线改画在 tablist 下方；页签最小高 44px', () => {
     const narrow = 'max-width: 600px'
     expect(m2Value(rules, '.pt-tabs-row', 'display', narrow)).toBe('block')
     expect(m2Value(rules, '.pt-tabs-row::after', 'display', narrow)).toBe('none')
@@ -557,7 +557,17 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     // 基础规则的靠右在这一档覆盖回靠左，窄屏排布不变（视图分段仍由 responsive.css 的 margin-left:auto 推到右侧）
     expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content', narrow)).toBe('flex-start')
     expect(m2Value(rules, '.pt-tab', 'min-height', narrow)).toBe('44px')
-    expect(m2Value(rules, '.pt-tabs-row__tools .pt-kbd', 'display', narrow)).toBe('none')
+  })
+  // 附录 B.10：601–660px 工具组排成三行（高约 144px），隐藏键帽后为两行；阈值由 ≤600px 改为 ≤660px
+  it('≤660px：页签行工具组隐藏键帽，单独成块且只针对工具组里的键帽；≤600 块不再重复（§6.7、§5.12）', () => {
+    const kbd = '.pt-tabs-row__tools .pt-kbd'
+    expect(m2Value(rules, kbd, 'display', 'max-width: 660px')).toBe('none')
+    const block = rules.filter((rule) =>
+      rule.atRules.some((at) => m2Norm(at).includes('max-width:660px')),
+    )
+    expect(block.map((rule) => rule.selectors)).toEqual([[kbd]])
+    expect(m2Rules(rules, kbd, 'max-width: 600px')).toHaveLength(0)
+    expect(m2Rules(rules, kbd)).toHaveLength(0)
   })
   it('强制色彩：选中页签 2px Highlight 边框（含底边），未选中 1px CanvasText', () => {
     const forced = 'forced-colors: active'

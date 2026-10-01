@@ -89,6 +89,13 @@
 .pt-tab[aria-selected="true"] .pt-tab__count {
   color: inherit;
 }
+/* §6.7、§5.12 ≤660px：页签行工具组不显示快捷键键帽（改版前 responsive.css:138 只在 ≤600px 隐藏）。
+   附录 B.10：601–660px 工具组排成三行，隐藏键帽后为两行。只针对工具组里的键帽，别处的 kbd 不受影响 */
+@media (max-width: 660px) {
+  .pt-tabs-row__tools .pt-kbd {
+    display: none;
+  }
+}
 /* §6.7 ≤600px：页签独占一行，基线改画在 tablist 下方；工具组在基线下方，上距 12px；页签最小高 44px */
 @media (max-width: 600px) {
   .pt-tabs-row {
@@ -117,10 +124,6 @@
     justify-content: flex-start;
     margin-top: 12px;
     padding-bottom: 0;
-  }
-  /* 沿用改版前 responsive.css:138：触屏宽度隐藏工具组的快捷键键帽 */
-  .pt-tabs-row__tools .pt-kbd {
-    display: none;
   }
   .pt-tab {
     align-items: center;
