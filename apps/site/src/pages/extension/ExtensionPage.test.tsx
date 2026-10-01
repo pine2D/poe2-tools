@@ -195,4 +195,13 @@ describe('extension.css（spec §6.3、§6.7、§4.5；M0 extension.html）', ()
     expect(bare).not.toMatch(/overflow\s*:\s*(hidden|clip)|contain\s*:\s*paint/)
     expect(bare).not.toMatch(/url\(/)
   })
+
+  it('V11：环境卡容器宽 <500px 时标题栏内边距 20px、chip 移入卡体', () => {
+    const narrowCard = ['width < 500px']
+    expect(decls('.extension-env > .pt-titlebar', narrowCard).get('padding')).toBe('0 20px')
+    expect(decls('.extension-env > .pt-titlebar > .pt-chip', narrowCard).get('display')).toBe(
+      'none',
+    )
+    expect(decls('.extension-env .pt-chip.pt-chip--body', narrowCard).get('display')).toBe('flex')
+  })
 })

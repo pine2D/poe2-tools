@@ -275,3 +275,19 @@
     padding-top: 32px;
   }
 }
+
+/* spec §5.3 例外（M3 实测后经用户确认增补）：环境卡的 chip 较宽，容器宽 <500px 时即按窄容器处理，
+   保证 chip 留在标题栏时与居中标题的间距不小于 12px（契约 §10 V11） */
+@container (width < 500px) {
+  .extension-env > .pt-titlebar {
+    padding: 0 20px;
+  }
+  .extension-env > .pt-titlebar > .pt-chip {
+    display: none;
+  }
+  .extension-env .pt-chip.pt-chip--body {
+    display: flex;
+    width: max-content;
+    margin: 0 0 12px auto;
+  }
+}
