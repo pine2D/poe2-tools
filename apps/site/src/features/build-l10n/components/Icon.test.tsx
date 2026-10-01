@@ -64,8 +64,8 @@ describe('Icon 名单', () => {
     // 只认 <Icon …> 的 name 属性（name="x" 或 name={…} 里的字符串字面量）：整份源码粗查时，
     // addEventListener('drop') 这类同名字面量会让已无调用方的图标名照样通过
     const used = new Set<string>()
-    for (const [, attr] of code.matchAll(/<Icon\b[^>]*?\bname=(\{[^}]*\}|"[^"]*")/g))
-      for (const [, name] of attr.matchAll(/['"]([\w-]+)['"]/g)) used.add(name)
+    for (const [, attr = ''] of code.matchAll(/<Icon\b[^>]*?\bname=(\{[^}]*\}|"[^"]*")/g))
+      for (const [, name = ''] of attr.matchAll(/['"]([\w-]+)['"]/g)) used.add(name)
     const unused = ICON_NAMES.filter((name) => !used.has(name))
     expect(unused).toEqual([])
   })
