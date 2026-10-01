@@ -57,11 +57,6 @@
   max-width: 820px;
   margin-inline: auto;
 }
-/* 同一状态下框外的 ErrorCard 与下方框同宽居中，两块左缘对齐（M0 未画此状态，按 .app__import 取值） */
-.app__main:only-child > .app__error {
-  max-width: 820px;
-  margin-inline: auto;
-}
 /* 有文件在等词典（spec §6.4.1）：框里是 L0 提示文字 */
 .app__hint {
   margin: 0;
@@ -72,6 +67,12 @@
 .app__error {
   max-width: 640px;
   padding: 20px 22px;
+}
+/* 词典失败且没有文件时，框外的 ErrorCard 与下方“导入 .build”框同宽居中，两块左缘对齐（M0 未画此状态，
+   按 .app__import 取值）。写在 .app__error 之后，特异性按升序排列 */
+.app__main:only-child > .app__error {
+  max-width: 820px;
+  margin-inline: auto;
 }
 .app__error-title {
   display: flex;

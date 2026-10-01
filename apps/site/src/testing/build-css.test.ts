@@ -90,6 +90,33 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
     expect(finalValue(rules, '.app__import', 'max-width')).toBe('820px')
     expect(finalValue(rules, '.app__main:only-child > .app__error', 'max-width')).toBe('820px')
     expect(finalValue(rules, '.app__main:only-child > .app__error', 'margin-inline')).toBe('auto')
+    expect(finalValue(rules, '.app__error', 'max-width')).toBe('640px')
+  })
+  it('ErrorCard 的两条宽度规则按特异性升序：(0,3,0) 的限定写法排在 (0,1,0) 的 .app__error 之后', () => {
+    // biome lint/style/noDescendingSpecificity 只报警告、不让 verify 失败，这里钉住顺序
+    const layout = parseRules(read('apps/site/src/shared/styles/layout.css')).filter(
+      (rule) => rule.atRules.length === 0,
+    )
+    const at = (selector: string): number =>
+      layout.findIndex((rule) => rule.selectors.some((item) => flat(item) === flat(selector)))
+    expect(at('.app__error')).toBeGreaterThanOrEqual(0)
+    expect(at('.app__main:only-child > .app__error')).toBeGreaterThan(at('.app__error'))
+  })
+})
+
+describe('强制色彩下的按下态（spec §5.6；M2 终审）', () => {
+  it('“仅看待核对”等按下态的 Highlight 外框只由 ui-theme btn.css 定义，页面样式不再重复一份', () => {
+    const btn = parseRules(read('packages/ui-theme/src/components/btn.css'))
+    const forced = 'forced-colors: active'
+    expect(finalValue(btn, '.pt-btn[aria-pressed="true"]', 'outline', forced)).toBe(
+      '2px solid highlight',
+    )
+    expect(finalValue(btn, '.pt-btn[aria-pressed="true"]', 'outline-offset', forced)).toBe('-2px')
+    const duplicated = buildCss()
+      .filter((rule) => rule.atRules.some((at) => flat(at).includes(flat(forced))))
+      .flatMap((rule) => rule.selectors)
+      .filter((selector) => selector.includes('aria-pressed'))
+    expect(duplicated).toEqual([])
   })
 })
 
