@@ -407,6 +407,23 @@ describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
     expect(m2Value(rules, '.pt-dictbar__dot--loading', 'background')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-dictbar__dot--failed', 'background')).toBe('var(--danger)')
   })
+  // M2 移交 F1：强制色彩会把非系统色的底色换成 Canvas，三态只靠底色区分时圆点整颗消失
+  it('强制色彩：词典状态圆点改用系统色，就绪实心、加载空心、失败 Highlight，三态可辨', () => {
+    const forced = 'forced-colors: active'
+    expect(m2Value(rules, '.pt-dictbar__dot', 'border', forced)).toBe(
+      m2Norm('1px solid CanvasText'),
+    )
+    expect(m2Value(rules, '.pt-dictbar__dot', 'background', forced)).toBe('canvastext')
+    expect(m2Value(rules, '.pt-dictbar__dot--loading', 'background', forced)).toBe('canvas')
+    expect(m2Value(rules, '.pt-dictbar__dot--failed', 'border-color', forced)).toBe('highlight')
+    expect(m2Value(rules, '.pt-dictbar__dot--failed', 'background', forced)).toBe('highlight')
+    // 修饰类与基础类同为 (0,1,0)，靠源码顺序决胜：两条修饰类规则排在基础类之后
+    const inForced = rules.filter((rule) => rule.atRules.some((at) => FORCED.test(at)))
+    const at = (selector: string) => inForced.findIndex((rule) => rule.selectors.includes(selector))
+    expect(at('.pt-dictbar__dot')).toBeGreaterThanOrEqual(0)
+    expect(at('.pt-dictbar__dot--loading')).toBeGreaterThan(at('.pt-dictbar__dot'))
+    expect(at('.pt-dictbar__dot--failed')).toBeGreaterThan(at('.pt-dictbar__dot'))
+  })
   it('侧栏折叠条：底 --bar、下边 1px --control-edge、最小高 44px（spec §6.7）', () => {
     expect(m2Value(rules, '.pt-sidetoggle', 'background')).toBe('var(--bar)')
     expect(m2Value(rules, '.pt-sidetoggle', 'border-bottom')).toBe(

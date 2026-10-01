@@ -406,4 +406,17 @@ details[open] > .pt-textbtn svg {
   .pt-sidetoggle {
     border-bottom-color: CanvasText;
   }
+  /* 词典状态圆点：三态原本只靠底色区分，强制色彩下底色被换成 Canvas 会整颗消失；
+     改用系统色画出：就绪实心、加载空心、失败 Highlight（两条修饰类须排在基础类之后） */
+  .pt-dictbar__dot {
+    border: 1px solid CanvasText;
+    background: CanvasText;
+  }
+  .pt-dictbar__dot--loading {
+    background: Canvas;
+  }
+  .pt-dictbar__dot--failed {
+    border-color: Highlight;
+    background: Highlight;
+  }
 }
