@@ -14,7 +14,7 @@
 
 - `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：控件、页面样式、词典加载；令牌、组件样式、母题与字体分片来自 `packages/ui-theme`。
 - `packages/`：纯业务算法和构建脚本；`data/`：词典、历史制作目录及样本。
-- [设计与验收](docs/website/redesign.md) · [Cloudflare 部署流程](docs/website/deployment.md)
+- [设计与验收](docs/website/redesign.md) · [2026-09 设计语言改版记录](docs/website/redesign-2026-09-design-language.md) · [Cloudflare 部署流程](docs/website/deployment.md)
 
 ## 工具
 
