@@ -353,7 +353,7 @@ describe('构筑页骨架（M2）', () => {
     await renderReady()
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
-    const note = screen.getByText('未命中的行保留英文原文，不做猜测替换')
+    const note = screen.getByText('未命中的行保留原文，不做猜测替换')
     expect(note.className).toBe('app__side-note')
     expect(note.closest('.pt-frame')).toBeNull()
     expect(within(screen.getByRole('complementary')).queryByText(/^词典 /)).toBeNull()

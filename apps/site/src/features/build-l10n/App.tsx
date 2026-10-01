@@ -462,7 +462,7 @@ export function App({ fetchImpl }: AppProps) {
                   {side}
                 </PtFrame>
               )}
-              <p className="app__side-note">未命中的行保留英文原文，不做猜测替换</p>
+              <p className="app__side-note">未命中的行保留原文，不做猜测替换</p>
             </aside>
           </>
         )}
