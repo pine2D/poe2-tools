@@ -173,6 +173,10 @@ describe('extension.css（spec §6.3、§6.7、§4.5；M0 extension.html）', ()
     expect(decls('.extension-intro__legal').get('font-size')).toBe('13px')
   })
 
+  it('环境卡说明不沿用 base.css 的 text-wrap: pretty，390 下按 M0 断在“翻译所有 / 英文段落”（spec §6.7 R15）', () => {
+    expect(decls('.extension-env__note').get('text-wrap')).toBe('wrap')
+  })
+
   it('≤620px：页边距 16px，金属主按钮通栏，各区改单列（spec §6.7）', () => {
     expect(decls('.extension-main', NARROW).get('padding')).toBe('20px 16px 32px')
     expect(decls('.extension-actions .pt-forge-btn', NARROW).get('width')).toBe('100%')

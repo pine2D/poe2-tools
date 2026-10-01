@@ -80,12 +80,15 @@
 .extension-env__list > :nth-child(n + 3) {
   border-top: 1px solid var(--line);
 }
+/* 两行短说明：base.css 给 p 的 text-wrap: pretty 会在 390 下把“所有”拆到两行，
+   改回普通折行，与 M0 一致地断在“翻译所有 / 英文段落”（spec §6.7 R15） */
 .extension-env__note {
   margin: 12px 0 0;
   padding-top: 14px;
   border-top: 1px solid var(--line);
   color: var(--ink-2);
   font-size: 13px;
+  text-wrap: wrap;
 }
 
 /* 能力区：放在框外，上方一条 pt-divider；三列；小标题是 pt-subhead；正文 L0（M0 E6） */
