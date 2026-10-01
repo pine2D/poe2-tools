@@ -1,210 +1,274 @@
-/* 扩展介绍页专属样式：改版前的结构原样保留，令牌已换成 @poe2-tools/ui-theme 的新名（页面改版见 spec §6.3）。 */
-.extension-intro h1 {
-  font-size: clamp(32px, 3.7vw, 52px);
-  font-weight: 550;
-  line-height: 1.35;
-  letter-spacing: -0.025em;
-  margin: 0 0 16px;
+/* 扩展介绍页专属样式（spec §6.3、§6.7；精细版式以 M0 mockup extension.html 为准）。
+   令牌与 pt-* 组件来自 @poe2-tools/ui-theme；本文件只排页面布局与 L0 文字，不写衬线字体栈（spec §7.1）。 */
+
+/* §6.1 内容最大宽 1280px 居中；主区外距 26/40/48（M0 E1） */
+.extension-main {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 26px 40px 48px;
 }
-.extension-intro :where(h1) span {
-  color: var(--gold);
-}
-.extension-intro > :where(div) > p {
-  color: var(--ink-2);
-  font-size: 16px;
-  margin: 0;
-}
-.tool-kind {
-  color: var(--gold);
-  font-size: 12px;
-  border: 1px solid var(--line);
-  padding: 4px 8px;
-  white-space: nowrap;
-}
-.site-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  min-height: 48px;
-  padding: 11px 20px;
-  background: var(--gold);
-  color: var(--bg);
-  border: 1px solid var(--gold);
-  border-radius: 4px;
-  font: inherit;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    background-color 140ms,
-    color 140ms;
-}
-.site-button:hover {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
-}
-.site-button:active {
-  transform: scale(0.96);
-}
+
+/* §6.3 hero：页面唯一一扇无标题栏的 pt-frame--hero，分两栏；右栏环境卡定宽 540px，
+   使 chip 留在标题栏且与居中标题留出空隙（M0 E2） */
 .extension-intro {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 64px;
-  padding: 64px 0 42px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 540px;
+  align-items: center;
+  gap: 48px;
 }
+
+/* 左栏是 flex 列：DOM 中说明在操作行之前（读屏先读到），≥621px 用 order 显示在操作行之后（B12） */
+.extension-intro__copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.extension-intro__lead {
+  margin: 16px 0 0;
+  color: var(--ink-2);
+  font-size: 17px;
+  text-wrap: balance;
+}
+.extension-intro__note {
+  margin: 18px 0 0;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.extension-intro__note-icon {
+  display: none;
+}
+.extension-intro__legal {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.extension-intro__copy > .extension-intro__note {
+  order: 1;
+}
+.extension-intro__copy > .extension-intro__legal {
+  order: 2;
+}
+
+/* 操作行：“查看安装步骤”是本路由唯一的 pt-forge-btn，“打开 CoE Beta ↗”是 L0 文字链接 */
 .extension-actions {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 24px;
-  margin: 26px 0 15px;
+  align-items: center;
+  gap: 8px 28px;
+  margin-top: 28px;
 }
-.extension-intro .desktop-note {
-  font-size: 12px;
-}
-.release-note {
-  padding: 24px;
-  background: var(--surface);
-  border-top: 1px solid var(--gold);
-}
-.release-note h2 {
-  font-size: 18px;
-  margin: 20px 0 14px;
-}
-.release-note dl {
+
+/* 右栏环境卡：pt-panel card 加标题栏（不是 pt-frame，避免框中框）；dl 两列，行间 1px 分隔（M0 E5） */
+.extension-env__list {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px 20px;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 28px;
+  margin: 0;
 }
-.release-note dt,
-.release-note p {
+.extension-env__list dt,
+.extension-env__list dd {
+  padding-block: 9px;
+}
+.extension-env__list dt {
   color: var(--ink-2);
 }
-.release-note dd {
+.extension-env__list dd {
   margin: 0;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
-.release-note p {
-  margin-bottom: 0;
-  font-size: 12px;
+.extension-env__list > :nth-child(n + 3) {
+  border-top: 1px solid var(--line);
 }
+.extension-env__note {
+  margin: 12px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+/* 能力区：放在框外，上方一条 pt-divider；三列；小标题是 pt-subhead；正文 L0（M0 E6） */
 .extension-capabilities {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 38px;
-  padding: 26px 0 38px;
-  border-bottom: 1px solid var(--line);
+  margin-top: 40px;
 }
-.extension-capabilities h2 {
-  font-size: 20px;
-  color: var(--gold);
-  margin: 0 0 12px;
+.extension-capabilities__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+  padding-top: 26px;
 }
 .extension-capabilities p {
+  margin: 10px 0 0;
   color: var(--ink-2);
-  margin: 0;
 }
-.guide-section {
+
+/* 安装步骤与命令块：L0，小标题用无衬线（M0 E7） */
+.extension-guide {
   display: grid;
-  grid-template-columns: 1fr 1.3fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
   gap: 72px;
-  padding: 54px 0;
+  margin-top: 48px;
+  padding-top: 44px;
+  border-top: 1px solid var(--line);
   scroll-margin-top: 24px;
 }
-.guide-heading h2 {
-  font-size: 28px;
+.extension-guide h2 {
   margin: 0 0 14px;
+  color: var(--ink);
+  font: 600 28px / 1.35 var(--font-zh-cn);
 }
-.guide-heading p {
+.extension-guide__heading p {
+  margin: 0;
   color: var(--ink-2);
 }
-.install-steps {
+.extension-steps {
   margin: 0;
   padding-left: 24px;
 }
-.install-steps li {
-  padding: 0 0 22px 12px;
+.extension-steps li {
+  padding: 0 0 26px 12px;
 }
-.install-steps li::marker {
+.extension-steps li:last-child {
+  padding-bottom: 0;
+}
+.extension-steps li::marker {
   color: var(--gold);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.install-steps h3 {
+.extension-steps h3 {
   margin: 0 0 8px;
-  font-size: 17px;
-}
-.install-steps p {
-  color: var(--ink-2);
-  margin: 0;
-}
-.install-steps code {
-  overflow-wrap: anywhere;
   color: var(--ink);
+  font: 600 17px / 1.5 var(--font-zh-cn);
 }
-.install-command {
-  padding: 14px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+.extension-steps p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.extension-steps strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.extension-guide__heading .text-link {
+  margin-top: 8px;
+}
+.extension-steps .text-link {
+  margin-top: 4px;
+}
+.extension-main code {
+  color: var(--ink);
+  font-family: var(--font-code);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.extension-command {
+  margin: 12px 0 14px;
+  padding: 14px 16px;
   overflow-x: auto;
-  font-size: 13px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--surface);
+  font: 13px / 1.75 var(--font-code);
 }
+.extension-command code {
+  font-size: inherit;
+  overflow-wrap: normal;
+}
+
+/* 更新与恢复、隐私、兼容、问题反馈：L0，两列（M0 E8） */
 .extension-details {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px 72px;
-  padding: 28px 0 56px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 36px 72px;
+  margin-top: 48px;
+  padding-top: 40px;
   border-top: 1px solid var(--line);
 }
 .extension-details h2 {
-  font-size: 20px;
-  margin: 0 0 14px;
+  margin: 0 0 12px;
+  color: var(--ink);
+  font: 600 20px / 1.4 var(--font-zh-cn);
 }
 .extension-details p {
+  margin: 0 0 10px;
   color: var(--ink-2);
 }
-@media (max-width: 850px) {
+
+/* 621–1199px 没有 mockup：hero 改单栏，环境卡排在说明下方（M0 E10） */
+@media (max-width: 1199px) {
   .extension-intro {
+    grid-template-columns: minmax(0, 1fr);
     gap: 28px;
-    grid-template-columns: 1.2fr 1fr;
   }
-  .guide-section {
+}
+@media (max-width: 850px) {
+  .extension-guide {
     gap: 32px;
   }
 }
+
+/* §6.7 ≤620px：页边距 16px；框内边距、角饰与 hero 字号由 ui-theme 负责；各区改单列 */
 @media (max-width: 620px) {
-  .extension-intro,
-  .extension-capabilities,
-  .guide-section,
-  .extension-details {
-    grid-template-columns: 1fr;
+  .extension-main {
+    padding: 20px 16px 32px;
   }
   .extension-intro {
-    padding-top: 32px;
+    gap: 24px;
+  }
+  .extension-actions {
+    margin-top: 20px;
+  }
+  .extension-actions .pt-forge-btn {
+    width: 100%;
+  }
+  /* B12：说明回到 DOM 顺序（操作行之前），前置信息图标，改用 --ink-2 */
+  .extension-intro__note-icon {
+    display: block;
+    flex: none;
+    margin-top: 3px;
+  }
+  .extension-intro__copy > .extension-intro__note {
+    order: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 16px;
+    color: var(--ink-2);
+  }
+  .extension-intro__copy > .extension-intro__legal {
+    margin-top: 12px;
+  }
+  .extension-env > .pt-panel__body {
+    padding: 20px 16px;
   }
   .extension-capabilities {
-    gap: 26px;
+    margin-top: 32px;
   }
-  .guide-section {
-    padding-block: 36px;
+  .extension-capabilities__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding-top: 20px;
+  }
+  .extension-guide {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    margin-top: 36px;
+    padding-top: 32px;
+  }
+  .extension-guide h2 {
+    font-size: 24px;
+  }
+  .extension-steps {
+    padding-left: 20px;
+  }
+  .extension-steps li {
+    padding-left: 8px;
   }
   .extension-details {
+    grid-template-columns: minmax(0, 1fr);
     gap: 28px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .site-button {
-    transition: none;
-  }
-  .site-button:active {
-    transform: none;
-  }
-}
-@media (forced-colors: active) {
-  .site-button,
-  .tool-kind,
-  .release-note {
-    border: 1px solid ButtonText;
+    margin-top: 36px;
+    padding-top: 32px;
   }
 }

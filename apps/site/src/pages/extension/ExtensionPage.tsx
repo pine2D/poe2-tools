@@ -1,9 +1,17 @@
+import { Icon } from '../../shared/components/Icon'
+import { PtDivider } from '../../shared/components/PtDivider'
+import { PtForgeButton } from '../../shared/components/PtForgeButton'
+import { PtFrame } from '../../shared/components/PtFrame'
+import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
 
 // 固定到已经核对的源码快照；发行包上线后再更新入口，不猜测下载地址。
 const docs =
   'https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension'
+
+// 扩展介绍页（spec §6.3）：hero 是页面唯一的一扇 pt-frame，环境卡是框内的 pt-panel card；
+// 能力区在框外，其余安装、隐私、兼容说明保持 L0。
 export function ExtensionPage() {
   return (
     <div className="pt-backdrop portal">
@@ -12,30 +20,46 @@ export function ExtensionPage() {
       </a>
       <SiteHeader active="extension" />
       <main id="main" tabIndex={-1} className="portal-main extension-main">
-        <section className="extension-intro">
-          <div>
-            <h1>
+        <PtFrame as="section" variant="hero" className="extension-intro">
+          <div className="extension-intro__copy">
+            <h1 className="pt-hero-title pt-hero-title--extension">
               熟悉的术语，
               <br />
-              <span>就在原来的工具里。</span>
+              <span className="pt-hero-title__gold">就在原来的工具里。</span>
             </h1>
-            <p>用 PoE2 中文助手，在 Craft of Exile 的英文界面查看国服简体术语。</p>
+            <p className="extension-intro__lead">
+              用 PoE2 中文助手，在 <span className="nw">Craft of Exile</span>{' '}
+              的英文界面查看国服简体术语。
+            </p>
+            {/* B12：DOM 中说明排在操作行之前，读屏在任何宽度都先读到；≥621px 由 CSS order 显示在操作行之后 */}
+            <p className="extension-intro__note">
+              <Icon name="info" className="extension-intro__note-icon" />
+              <span>
+                开发预览 · 需自行构建。适用于桌面 Chrome，请在<span className="nw">电脑上</span>
+                安装。
+              </span>
+            </p>
             <div className="extension-actions">
-              <a className="site-button" href="#install">
+              <PtForgeButton as="a" href="#install">
                 查看安装步骤
-              </a>
+              </PtForgeButton>
               <a className="text-link" href="https://beta.craftofexile.com/?game=poe2">
                 打开 CoE Beta <span aria-hidden="true">↗</span>
               </a>
             </div>
-            <p className="desktop-note">
-              开发预览 · 需自行构建。适用于桌面 Chrome，请在电脑上安装。
+            <p className="extension-intro__legal">
+              非官方工具，与 Grinding Gear Games、腾讯及 <span className="nw">Craft of Exile</span>{' '}
+              <span className="nw">无关联</span>，也未获其认可。
             </p>
           </div>
-          <aside className="release-note" aria-label="版本与支持范围">
-            <span className="tool-kind">开发预览 · 0.1.111</span>
-            <h2>先确认你的使用环境</h2>
-            <dl>
+          <PtPanel
+            as="aside"
+            variant="card"
+            className="extension-env"
+            aria-label="版本与支持范围"
+            titlebar={{ title: '先确认你的使用环境', chip: '开发预览 · 0.1.111' }}
+          >
+            <dl className="extension-env__list">
               <dt>站点</dt>
               <dd>beta.craftofexile.com</dd>
               <dt>模式</dt>
@@ -43,35 +67,40 @@ export function ExtensionPage() {
               <dt>语言</dt>
               <dd>国服简体中文</dd>
             </dl>
-            <p>不支持旧版 www 站和 PoE1，也不会翻译所有英文段落。</p>
-          </aside>
-        </section>
+            <p className="extension-env__note">
+              不支持旧版 www 站和 PoE1，也不会翻译所有<span className="nw">英文段落</span>。
+            </p>
+          </PtPanel>
+        </PtFrame>
         <section className="extension-capabilities" aria-label="主要能力">
-          <article>
-            <h2>看得懂</h2>
-            <p>已收录的界面文字和术语显示为中文，装备属性保留英文对照；未收录的内容保持原文。</p>
-          </article>
-          <article>
-            <h2>搜得到</h2>
-            <p>在支持中文输入的搜索框中输入名称，再从中英对照的候选项里选择，由原站完成搜索。</p>
-          </article>
-          <article>
-            <h2>核对后再导入</h2>
-            <p>粘贴国服高级装备文本，查看转换后的英文。核对后填入原站，再由你继续操作。</p>
-          </article>
+          <PtDivider />
+          <div className="extension-capabilities__grid">
+            <article>
+              <h2 className="pt-subhead">看得懂</h2>
+              <p>已收录的界面文字和术语显示为中文，装备属性保留英文对照；未收录的内容保持原文。</p>
+            </article>
+            <article>
+              <h2 className="pt-subhead">搜得到</h2>
+              <p>在支持中文输入的搜索框中输入名称，再从中英对照的候选项里选择，由原站完成搜索。</p>
+            </article>
+            <article>
+              <h2 className="pt-subhead">核对后再导入</h2>
+              <p>粘贴国服高级装备文本，查看转换后的英文。核对后填入原站，再由你继续操作。</p>
+            </article>
+          </div>
         </section>
-        <section id="install" className="guide-section">
-          <div className="guide-heading">
+        <section id="install" className="extension-guide">
+          <div className="extension-guide__heading">
             <h2>安装开发预览版</h2>
             <p>
-              目前尚未提供公开发行包，也没有 Chrome
-              商店安装入口。可以下载下方已核对版本的源码，自行构建安装。
+              目前尚未提供公开发行包，也没有 Chrome 商店安装入口。可以下载下方已核对版本的源码，
+              <span className="nw">自行构建安装</span>。
             </p>
             <a className="text-link" href={`${docs}/install.md`}>
               查看源码与构建说明 <span aria-hidden="true">↗</span>
             </a>
           </div>
-          <ol className="install-steps">
+          <ol className="extension-steps">
             <li>
               <h3>获取并构建扩展</h3>
               <p>
@@ -84,7 +113,7 @@ export function ExtensionPage() {
               >
                 下载源码 ZIP（需构建）
               </a>
-              <pre className="install-command">
+              <pre className="extension-command">
                 <code>
                   {'pnpm install --frozen-lockfile\npnpm extension:build\npnpm extension:check'}
                 </code>
@@ -104,8 +133,8 @@ export function ExtensionPage() {
             <li>
               <h3>打开支持的页面</h3>
               <p>
-                进入 CoE Beta，选择 <strong>PoE2 → English</strong>
-                ，刷新页面，并在扩展弹窗启用简体中文。
+                进入 CoE Beta，选择 <strong>PoE2 → English</strong>，刷新
+                <span className="nw">页面</span>，并在扩展弹窗启用简体中文。
               </p>
             </li>
             <li>
@@ -132,7 +161,10 @@ export function ExtensionPage() {
               汉化和文本转换都在你的浏览器里完成，设置也保存在本机。填入英文并在 CoE
               点击继续后，由原站处理后续操作。
             </p>
-            <p>扩展仅面向 CoE Beta，不需要游戏账号登录，也不代替你执行原站导入。</p>
+            <p>
+              扩展仅面向 CoE Beta，不需要游戏账号登录，也不<span className="nw">代替</span>
+              你执行原站导入。
+            </p>
             <a className="text-link" href={`${docs}/privacy.md`}>
               查看权限与隐私说明
             </a>
