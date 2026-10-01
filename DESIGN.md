@@ -1,203 +1,270 @@
 ---
 name: PoE2 Tools
-description: 炭灰石板与旧铜构成的中文玩家工具工作台
+description: 藏身处里的锻铜工作台：暖炭底、旧铜金属框与符文菱结，数据区保持工具的清晰
 colors:
-  surface-0: "#17191c"
-  surface-0-light: "#ffffff"
-  surface-1: "#131518"
-  surface-1-light: "#f4f5f7"
-  surface-2: "#17191c"
-  surface-2-light: "#ffffff"
-  surface-3: "#1d2024"
-  surface-3-light: "#f9fafb"
-  surface-hover: "#272c33"
-  surface-hover-light: "#e9edf2"
-  line: "#333942"
-  line-light: "#dce1e7"
-  control-edge: "#8390a1"
-  control-edge-light: "#768292"
-  text: "#f0f2f5"
-  text-light: "#1d2632"
-  text-muted: "#a1aab7"
-  text-muted-light: "#566273"
-  accent: "#b4c9ee"
-  accent-light: "#245cc0"
-  accent-bg: "#26364e"
-  accent-bg-light: "#e9f0fc"
-  action-bg: "#b4c9ee"
-  action-bg-light: "#245cc0"
-  action-text: "#17263e"
-  action-text-light: "#ffffff"
-  success: "#8ec9aa"
-  success-light: "#256b49"
-  warn: "#edbb76"
-  warn-light: "#85510e"
-  warn-bg: "#30271d"
-  warn-bg-light: "#fff4e4"
+  page: "#17130f"
+  bg: "#100e0c"
+  bg-2: "#14110e"
+  surface: "#1a1612"
+  raised: "#211c16"
+  raised-2: "#2b241c"
+  frame-bg: "#15110d"
+  well: "#0b0908"
+  card: "#0f0c0a"
+  bar: "#120f0c"
+  miss-bg: "rgba(242, 167, 102, 0.07)"
+  line: "#322a21"
+  line-2: "#473b2d"
+  control-edge: "#8a7a62"
+  metal-line: "#7a5530"
+  metal-edge: "#5d4229"
+  metal-bright: "#c89a5e"
+  ink: "#e9e0cd"
+  ink-2: "#c0b49d"
+  ink-3: "#9a8e79"
+  bronze-lo: "#6d4b27"
+  bronze: "#b98a50"
+  bronze-hi: "#e4bb7c"
+  gold: "#dcb877"
+  title-gold: "#e9c585"
+  mod: "#8888ff"
+  mod-hi: "#a9a9ff"
+  mod-num-zh: "#dcdcff"
+  prop: "#8c8c8c"
+  val: "#ffffff"
+  unique: "#ef6916"
+  unique-name: "#f27b2e"
+  unique-name-2: "#e7a070"
+  unique-edge: "#af6025"
+  gem: "#1ba29b"
+  gem-en: "#8cc5c1"
+  ok: "#93c47d"
+  miss: "#f2a766"
   danger: "#f28e87"
-  danger-light: "#b12c28"
-  rarity-unique: "#dfa270"
-  rarity-unique-light: "#8f4a12"
-  rarity-gem: "#74cfc6"
-  rarity-gem-light: "#0d6560"
-  brand: "#d6b887"
-  brand-light: "#75501f"
-  brand-ink: "#241e15"
-  brand-ink-light: "#ffffff"
-  portal-panel: "#1d2024"
-  portal-panel-light: "#f4f5f7"
+  focus: "#ffd48a"
+  selection-bg: "#e4bb7c"
+  selection-fg: "#100e0c"
+  mk-red: "#e8695c"
+  mk-orange: "#e0904a"
+  mk-yellow: "#e6d45a"
+  mk-green: "#6fcf5e"
+  mk-blue: "#8888ff"
+  mk-indigo: "#a79bff"
+  mk-violet: "#d79be8"
+  mk-black: "#a1aab7"
+  mk-white: "#ede6d6"
+  mk-grey: "#9a9280"
+  mk-bronze: "#c9a46a"
+  mk-silver: "#c8c8c8"
+  mk-gold: "#e6e066"
+  mk-unique: "#c87b3a"
+  gem-1: "#fff0c8"
+  gem-2: "#e3a24a"
+  gem-3: "#7a3d0c"
+  gem-4: "#b36a22"
 typography:
-  display:
-    fontFamily: 'system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif'
-    fontSize: "clamp(32px, 3.7vw, 52px)"
-    fontWeight: 550
+  hero:
+    fontFamily: '"PoE2 Serif SC", "Noto Serif SC", "Source Han Serif SC", serif'
+    fontSize: "54px"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "0.02em"
+  titlebar:
+    fontFamily: '"PoE2 Serif SC", "Noto Serif SC", "Source Han Serif SC", serif'
+    fontSize: "19px"
+    fontWeight: 700
+    letterSpacing: "0.1em"
+  subhead:
+    fontFamily: '"PoE2 Serif SC", "Noto Serif SC", "Source Han Serif SC", serif'
+    fontSize: "21px"
+    fontWeight: 700
     lineHeight: 1.35
-    letterSpacing: "-0.025em"
-  title:
-    fontSize: "27px"
-    fontWeight: 550
+    letterSpacing: "0.06em"
+  nameplate:
+    fontFamily: '"PoE2 Serif SC", "Noto Serif SC", "Source Han Serif SC", serif'
+    fontSize: "20px"
+    fontWeight: 700
+    letterSpacing: "0.03em"
+  item-en:
+    fontFamily: '"PoE2 Cinzel", "Cinzel", "PoE2 Serif SC", serif'
+    fontSize: "13px"
+    fontWeight: 400
+    letterSpacing: "0.04em"
   body:
     fontFamily: 'system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif'
     fontSize: "14px"
     lineHeight: 1.65
-  label:
-    fontSize: "12px"
-  code:
-    fontFamily: 'ui-monospace, Cascadia Mono, Consolas, monospace'
-    fontSize: "13px"
+  portal-body:
+    fontFamily: 'system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif'
+    fontSize: "15px"
     lineHeight: 1.6
+  data:
+    fontSize: "15px"
+    lineHeight: 1.6
+  code:
+    fontFamily: 'ui-monospace, "Cascadia Mono", Consolas, monospace'
+    fontSize: "13px"
 rounded:
-  portal-control: "4px"
-  tool-control: "8px"
-  tool-card: "10px"
+  forge-btn: "3px"
+  btn: "4px"
+  seg: "7px"
+  tab: "5px 5px 0 0"
+  file: "6px"
 spacing:
-  small: "8px"
-  medium: "16px"
-  section-inset: "24px"
+  page-gutter: "40px"
+  page-gutter-narrow: "16px"
+  hero-frame-inset: "34px 36px"
+  frame-inset-narrow: "20px 16px"
+  corner-offset: "12px"
 components:
-  button-primary:
-    backgroundColor: "{colors.brand}"
-    textColor: "{colors.brand-ink}"
-    rounded: "{rounded.portal-control}"
-    padding: "11px 20px"
-  button-secondary:
+  forge-btn:
+    backgroundColor: "linear-gradient(180deg, #94693a 0, #75502a 30%, #553619 52%, #3f2610 76%, #5b3b1d 100%)"
+    textColor: "#fbe7c1"
+    rounded: "{rounded.forge-btn}"
+    padding: "0 36px"
+  btn:
     backgroundColor: "transparent"
-    textColor: "{colors.brand}"
-    rounded: "{rounded.portal-control}"
-    padding: "11px 20px"
-  tool-action:
-    backgroundColor: "{colors.action-bg}"
-    textColor: "{colors.action-text}"
-    rounded: "{rounded.tool-control}"
-    padding: "6px 12px"
+    textColor: "{colors.gold}"
+    rounded: "{rounded.btn}"
+    padding: "0 22px"
+  btn-quiet:
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.btn}"
+    padding: "0 22px"
+  panel-card:
+    backgroundColor: "{colors.card}"
+  panel-item:
+    backgroundColor: "{colors.well}"
   text-input:
-    backgroundColor: "{colors.surface-0}"
-    textColor: "{colors.text}"
-    rounded: "{rounded.tool-control}"
+    backgroundColor: "{colors.bg}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.btn}"
     padding: "10px 12px"
-  tool-card:
-    backgroundColor: "{colors.surface-2}"
-    rounded: "{rounded.tool-card}"
 ---
 
 # Design System: PoE2 Tools
 
-## Overview
+## 北极星
 
-**Creative North Star: "藏身处工作台"**
+**「藏身处里的锻铜工作台」**：外层容器有游戏界面的金属感和仪式感，数据区保持工具的清晰。名字沿用此前的「藏身处工作台」，内涵从“克制的炭灰石板”改为这一句（2026-09-28 设计规格经用户批准，2026-09-29 批准三视口基准 mockup）。
 
-以已批准的“炭灰石板、旧铜金属”方向为依据，网站用干净深色表面、温暖的品牌强调与冷蓝工具操作形成克制的游戏工作台。正文不叠纹理，不使用位图素材；内容对照本身承担视觉主体。
+- 只保留深色，没有主题切换。
+- 素材只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games（GGG）、腾讯、Craft of Exile（CoE）的任何素材或纹样。
+- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的 `:root` 令牌块，`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
+- 历史工坊 `/craft/` 冻结在改版前的样式（`apps/site/src/features/craft/legacy-*.css`），不接入本设计语言。
+- 扩展的设置弹窗、CoE 注入界面与图标属于二期，在扩展分支另行接入：弹窗照 L3，注入界面封顶 L1。
 
-保留系统、浅色、深色主题与本机中文字体。首页帮助玩家选择工具，构筑页集中导入、核对、下载，扩展页清楚说明环境、安装与开发预览状态。视觉资料记录本地实现，不代表网站已上线。
+## 强度分层与白名单
 
-本文件合并保留原界面约定；网站取值源为 `apps/site/src/shared/styles/tokens.css`、`site.css` 及相邻基础/控件样式。上方原始色名对应 CSS 变量，`-light` 是同一变量的浅色覆写快照；运行时仍由 CSS 与主题设置决定。侧车的色阶仅用于设计面板展示，不是新增产品 token。
+| 层级 | 用在哪里 | 允许 | 禁止 |
+|---|---|---|---|
+| L3 沉浸 | 全站页头；首页、扩展介绍页；构筑工作台的外层容器（空态框、“文件”框、主区框） | pt-frame 金属框与角饰、窗口标题栏、金属页签、pt-backdrop；白名单内的金属主按钮；衬线（见“字体”）；只用于 hero 标题的金色渐变字 | 框中框；标题栏两端端饰；同屏角饰超过 8 个 |
+| 游戏对象 | 名称牌、装备卡、译文提示框 | 两行居中；中文名衬线、英文名 Cinzel；三段深色渐变底；顶边菱结扣；0.05 颗粒 | 角饰、辉光、大面积亮色底；名称牌下面的对照行仍是 L0 |
+| L1 点缀 | CoE 注入界面（二期） | 扁平深底、1px 金线、16px 青色宝石、“PoE2 中文助手 · 非官方”署名、完整声明 | 金属按钮、角饰、衬线、渐变填充、页头式金属底边 |
+| L0 数据 | 对照行、表单、说明正文、命令块、弹层、待核对清单、状态条、404 | 平涂底、系统无衬线、左对齐、`tabular-nums` | 纹理、辉光、小型大写、文字居中、渐变字、衬线 |
 
-扩展源码位于独立分支，0.1.111 开发预览尚未合入主树。网站说明页不构成扩展发行；扩展弹窗和原站注入面板仍按各自约定维护，注入样式限定在 `data-poe2-l10n` 下，不能污染原站控件。
+“每屏”指同一路由状态下同时渲染的界面，弹层、Toast、展开的折叠区都算进它们覆盖的状态。
 
-**Key Characteristics:**
+| 路由状态 | 金属主按钮（最多 1 个） | pt-frame（角饰） |
+|---|---|---|
+| 首页 | 入口卡内“打开构筑汉化” | 1（4） |
+| 扩展介绍页 | “查看安装步骤” | 1（4） |
+| 构筑·空态 | 空态框内“选择 .build 文件” | 1（4） |
+| 构筑·词典失败 | 无 | 没有文件时 1（4）；有文件时 1（4），≤1099px 时 0 |
+| 构筑·已导入 | “下载中文 .build” | 2（8）；≤1099px 时 1（4） |
+| 构筑·解析失败或等词典 | 无 | 2（8）；≤1099px 时 1（4） |
+| 404 | 无 | 0 |
 
-- 旧铜品牌色与冷蓝操作色分工明确。
-- 细分隔与留白建立层级，避免每段文字都套卡片。
-- 桌面并排比较，手机自然纵向阅读。
-- 中文正文完整可读，未知内容与游戏标记保持原有语义。
+其余按钮一律用 pt-btn。层级例外只有四项：名称牌与译文提示框居中并使用衬线和 Cinzel；扩展弹窗页脚居中；扩展弹窗的设置开关用金属轨道；CoE 注入界面保留三处宿主全局样式。其他偏离都要先改设计规格。
 
-## Colors
+## 色彩
 
-### Primary
+- 表面：页面底 `page`（pt-backdrop、404）；平涂底 `bg`、状态条 `bg-2`；L0 面板 `surface`；弹层与安静按钮 `raised`；选中项 `raised-2`；框内底 `frame-bg`；装备卡与示例区 `well`；入口卡、环境卡 `card`；工具栏与折叠条 `bar`。
+- 线条：`line`、`line-2` 只作非交互分隔；交互控件的边界一律用 `control-edge`（对全部表面 ≥3.67:1）；`metal-*` 画金属线、页签边和当前导航底线。
+- 文字与金属：`ink`、`ink-2`、`ink-3`（只用于 12px 及以上的辅助文字，11px 只用于键帽，不用在名称牌上）；旧铜 `bronze-lo`、`bronze`、`bronze-hi`，金 `gold`，标题栏金字 `title-gold`。
+- 游戏语义色独立一组，不从品牌色推导：词缀蓝 `mod`、`mod-hi`、`mod-num-zh`，属性灰 `prop`，数值白 `val`，传奇橙 `unique`、`unique-name`、`unique-name-2`、`unique-edge`，技能青 `gem`、`gem-en`。
+- 状态：命中 `ok`、待核对 `miss`（未命中行底 `miss-bg`）、危险 `danger`、焦点 `focus`（`--focus-ring: 2px solid var(--focus)`，外偏移 3px）。状态色不和稀有度色混用，每个状态同时带图标或文字。
+- 14 个 `mk-*` 游戏标记色渲染 `.build` 的标记语法，只用于对照行和译文提示框正文，不用于名称牌名称。
+- 宝石刻面 `gem-1`…`gem-4` 表示归属：站点琥珀是默认值；扩展青 `.pt-attr-ext`（`#c9f5f0 / #2fbdb3 / #0b4a46 / #1a8780`）只表示扩展；传奇橙 `.pt-attr-unique`（`#ffd8b5 / #f07a2c / #6e2405 / #b44f19`）用于传奇名称牌的扣。网站上的宝石一律不用青色。
+- 对比度由 `packages/ui-theme/src/tokens.test.ts` 把关：文字令牌对全部表面 ≥4.5:1，控件边界、焦点、亮铜边 ≥3:1，名称牌各变体、金属主按钮和页签计数色另有专项门禁。
 
-旧铜 `brand` 用于站点识别、门户主按钮、链接与重点标题；`brand-ink` 保证填色按钮上的文字可读。浅色主题对应较深铜色，不直接照搬暗色前景。
+## 字体
 
-### Secondary
+| 位置 | 字体 | 字号 | 字距 |
+|---|---|---|---|
+| 页头导航 | 衬线 700 | 15px | .06em |
+| 首页 hero 标题 | 衬线 700 | 54px（≤620px 34px） | .02em |
+| 扩展介绍页 hero 标题 | 衬线 700 | 44px（≤620px 34px） | .02em |
+| 构筑空态 hero 标题 | 衬线 700 | 36px（≤620px 28px） | .02em |
+| pt-frame 标题栏 | 衬线 700 | 19px（首页入口卡 21px） | .1em |
+| 金属主按钮 | 衬线 700 | 15.5px | .04em |
+| 金属页签 | 衬线 700 | 15px（计数用无衬线 500 13px） | .06em |
+| 扩展介绍页能力小标题 | 衬线 700 | 21px | .06em |
+| 名称牌名称 | 衬线 700 | 20px（译文提示框 21px） | .03em（提示框 .04em） |
+| 物品、宝石英文名 | Cinzel 400 | 13px | .04em |
 
-克制冷蓝 `accent` 用于英文词缀与焦点，`action-bg` / `action-text` 用于构筑工作台主操作。门户与工作台的操作色分工来自当前实现，不应全部统一成铜色。
+- 中文衬线是 Noto Serif SC、Noto Serif TC 的 wght 700 实例，Cinzel 是 wght 400 实例，按分片自托管在 `packages/ui-theme/fonts/`，`font-display: swap`。页面用站点私有别名 “PoE2 Serif SC”“PoE2 Serif TC”“PoE2 Cinzel”，缺字时逐级回退到本机字体。
+- 首页只下载 `serif-sc-0` 一个字体文件，预算 122,880 字节，构建期有守卫。所有衬线固定文案都列在 `packages/ui-theme/scripts/shard0-text.txt`；新增衬线文案先补进这个文件，再运行 `pnpm ui-theme:fonts`。
+- 繁体衬线只用于名称牌和提示框里 `lang="zh-TW"` 的词典名称；站点固定文案一律用简体栈。
+- 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 与 L1 不用衬线；页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。
+- 正文与数据用系统无衬线（`--font-zh-cn`、`--font-zh-tw`），代码用 `--font-code`；门户页（首页、扩展介绍页）正文 15px/1.6，构筑页正文 14px/1.65，对照行 15px/1.6，数字用 `tabular-nums`。
+- 字标是无衬线 600 的“PoE2 Tools”，“PoE2”用金色；禁止英文小型大写副标，禁止用 Cinzel 做字标。
 
-### Neutral
+## 母题「符文菱结」
 
-炭灰石板 `surface-*` 承载页面、凹入示例与容器；`portal-panel` 区分门户入口。近象牙白 `text` 和冷灰 `text-muted` 提供正文层级；`line` 分隔信息，`control-edge` 保持输入边界。浅色主题以白与灰白表面承载相同层级。
+![符文菱结全形档案图，由 motif.ts 生成](packages/ui-theme/src/generated/knot-full.svg)
 
-成功、警告、危险与物品稀有度采用各自语义色；`--mk-*` 游戏标记色继续以 `tokens.css` 为准，不从品牌色推导。
+**原创来源与演进**（为应对“衍生作品”指控保留的设计档案）
 
-## Typography
+1. 起点是站点原有的 ◇ 字标图标：改版前 `apps/site/src/shared/components/Icon.tsx` 的 `brand`，两层同心菱形（外菱 `M12 2.5 20 12l-8 9.5L4 12z`，内菱 `M12 7.5 16.2 12 12 16.5 7.8 12z`）。一期改用母题字标后，这个图标已删除。
+2. 2026-09-28 设计调研：题材取哥特与铜金工艺的一般造型语言（斜面、刻面宝石、尖拱、铆钉）；为避免被认定为 GGG 纹样的衍生作品（GGG 使用条款第 7 条第 1 项），自绘时不临摹或描摹任何游戏或 CoE 的具体纹样，也不照着截图描边。
+3. 同日的 A/B/C 三档强度 mockup 把 ◇ 发展为“斜面菱环 + 四刻面宝石”的核心，两侧加尖拱叶瓣和收尖臂；斜面和宝石都用四块平涂刻面，不靠渐变。用户选定 C「沉浸」修订版。两位 mockup 评审核对后确认没有描摹：它和 CoE 的有机卷草角饰在构造逻辑、轮廓和放置方式上都不同。
+4. 2026-09-29 用户批准三视口基准 mockup。母题只保留实际用到的符号：`corner`（框角 40px，≤620px 为 28px）、`knot`（分隔线 31×12、名称牌扣 36×14）、`logo`（页头 46×24、favicon、404）、`gem`（按钮两端 11px）；全形 `knot-full`（叶瓣、刻痕、铆钉、颗粒）只用于本档案图。
+5. 一期实现把几何收进唯一源 `packages/ui-theme/src/motif.ts`，颗粒收进 `src/noise.ts`；`scripts/build-motif-css.mjs`（`pnpm ui-theme:motif`）生成 `src/generated/` 下的 CSS 自定义属性与 SVG，`motif.test.ts` 逐字节比对生成物与站点副本。
 
-显示与正文共用本机简体中文字体栈，具体顺序见 frontmatter。繁体内容通过 `:lang(zh-TW)` 使用 `system-ui, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif`。代码、路径与粘贴区使用本机等宽字体，无额外字体请求。
+**用法**
 
-门户显示标题使用 display；双工具标题桌面采用 title，850px 以下降至 24px，620px 以下为 22px。正文使用 body，门户主说明为 16px，手机首页说明为 14px；标签与辅助信息使用 label。首页说明手机限制 26ch，工具描述限制 42ch。标题平衡换行、说明自然换行，不截断关键术语；数字对照采用 `tabular-nums`。
+- 每个母题分两层：底层（斜面、臂、叶瓣，固定刻面色）画在 `::before`；宝石层用 `mask-image` 加 conic 四刻面画在 `::after`，颜色由祖先元素上的 `--gem-1..4` 决定。
+- 角饰画在 pt-frame 的两个伪元素上，外伸 12px（≤620px 为 9px），`z-index: 3` 压在标题栏之上；pt-frame 的子孙不设 3 及以上的 z-index，pt-frame 及其祖先不用 `overflow: hidden|clip` 或 `contain: paint`，框外留白不小于外伸量。
+- 母题一律 `aria-hidden`，强制色彩下隐藏。
 
-## Layout
+## 组件
 
-门户主容器与页脚最大外宽 1248px，桌面左右内距 24px，净内容最大 1200px。导航默认最小高 88px；工具入口两等列，共用上下边线与中间分隔，不是漂浮的独立卡片。入口内距为 30px 36px 34px，翻译示例为 18px 24px，正文与底部行动之间可伸展，按钮对齐。
+组件类在 `packages/ui-theme/src/components/`；网站的 React 包装在 `apps/site/src/shared/components/`（Motif、PtDivider、PtTitlebar、PtFrame、PtPanel、PtForgeButton、PtTabs、PtNameplate、SiteHeader、SiteFooter）。
 
-扩展页顶部为 1.5:1 双列、间隔 64px；能力区三等列；安装区 1:1.3 双列、间隔 72px；兼容与隐私说明双列。850px 以下导航换行、隐藏顶部 GitHub 入口（页脚仍有链接），入口内距缩至 24px，扩展顶部调整为 1.2:1。620px 以下各主要内容网格转单列，容器左右 20px，导航独占一行，手机双工具上下排列。
+| 组件 | 层级 | 要点 |
+|---|---|---|
+| `pt-backdrop` | L3 | 页面根容器：`page` 底，叠顶光与暗角两层渐变和 0.05 高频细颗粒；数据区平涂 |
+| `pt-header` | L3 | 高 74px，三层金属底线；导航用衬线，当前页有 2px 亮铜内嵌底线；≤850px、≤620px 换行 |
+| `pt-frame` / `pt-titlebar` | L3 | 2px 金属渐变框加四角角饰；标题栏高 46px，居中衬线金字，只占一行，超长时省略并用 `title` 给出全文 |
+| `pt-panel` | L3 内层 / 游戏对象 | `card`（入口卡、环境卡、ErrorCard、天赋列表）、`item`（装备卡、技能卡、提示框，边色随稀有度）、`inset`（示例区） |
+| `pt-forge-btn` | L3 | 每个路由状态最多一个；旧铜渐变、两端琥珀宝石，悬停整体提亮，按下下移 1px |
+| `pt-btn` | L0 / L3 | 其余全部按钮：默认铜边金字，`--quiet` 中性边；另有 `--sm`、`--xs`、`--wide`、`--block` |
+| `pt-tabs` | L3 | 构筑页签：金属片，选中页签下沿接通基线，未选中留 2px 缝；ARIA tabs 键盘模型 |
+| `pt-nameplate` | 游戏对象 | 装备与技能名称牌：两行居中，base、unique、gem、collapsed 四种变体，顶边菱结扣 |
+| `pt-divider` | 通用 | 两侧渐隐线加中心菱结，只用在指定位置 |
+| `pt-chip` | 通用 | 不可点击的标签；标题栏里用金属配色，窄容器时移到卡体第一行 |
+| `pt-hero-title` | L3 | hero 标题的三种字号与金色渐变字 |
+| `pt-subhead` | L3 | 扩展介绍页能力小标题 |
+| 对照行、表单、弹层、状态条 | L0 | 平涂、无衬线、左对齐；未命中行有四重标记（底色、左色条、“!”方框、虚线下划线） |
 
-宽度至少 900px 且高度不超过 800px 时启用紧凑首屏：导航最小高 72px、标题 40px、入口内距 22px 28px 24px，示例最小高 172px；目的为桌面首屏保留双入口行动。手机仍自然向下阅读，不强制全屏容纳。
+浏览器基线：组件样式依赖 `:has()` 与容器查询（`@container`），以支持这两项的现行浏览器为准，不另写旧浏览器回退。不支持 `:has()` 时，600px 及以下名称牌第二行的组内“·”不显示（设计规格附录 B.7）。
 
-构筑工作台沿用独立密度与响应式：1099px 以下侧栏折叠，600px 以下控件最小触控高度 44px。门户断点与工具断点不可混为一套。
+## 动效与无障碍
 
-## Elevation & Depth
+- 金属主按钮悬停时整体提亮一档，没有外发光；按下时 `translateY(1px)`。页签、分段控件、按钮的颜色过渡为 140ms。不做循环动画、视差和粒子。
+- `prefers-reduced-motion: reduce` 时取消下压位移和全部过渡，悬停提亮保留，改为即时变色。
+- 强制色彩：框、按钮、页签、分段控件保留边界（CanvasText、ButtonText、Highlight），母题与颗粒隐藏，渐变字退回纯色。
+- 选中态不只靠颜色：页签靠下沿接通基线加亮边，分段控件与“仅看待核对”按下态靠 600 字重加内边，文件项靠左色条加边色，导航当前页靠底线。
+- 焦点环统一为 2px `focus`、外偏移 3px；可聚焦元素的祖先不裁掉焦点环。600px 及以下，可点目标不小于 44px。
+- 每次视觉修改先查阻断问题（对比度、焦点、溢出），再查层级布局和细节；仓库级设计技能与固定版本见 `docs/design-skills.md`，技能不进入网站或扩展产物。
 
-门户默认没有投影。深浅表面、细边线和旧铜顶部强调线区分层级，正文表面干净。既有工作台弹层仍保留局部投影：设置弹层 `0 12px 36px #0003`，下载帮助 `0 8px 28px #0003`；不要把弹层阴影铺到门户每块内容上。
+## 禁止事项
 
-## Shapes
-
-门户按钮与主题选择器使用小圆角，工具按钮与输入采用略软的圆角，工具卡片为更大的容器圆角，数值见 frontmatter。门户双入口、示例与版本说明主要使用直角和 1px 分隔；品牌表达来自色彩与排版，不依赖装饰轮廓。
-
-## Components
-
-### Buttons
-
-门户主入口旧铜实底、辅助入口透明铜色边框，最小高 48px。悬停变正文色底与页面背景色文字；按下缩放至 0.96，颜色短过渡 140ms。构筑工具按钮默认最小高 40px，主操作使用冷蓝；小屏提升至 44px。高频操作即时响应，不添加入场动画。
-
-### Inputs / Fields
-
-粘贴区沿用工具输入样式：最小高 90px、完整宽度、垂直可调整尺寸、清楚的控件边界。可点击设置让标签整体可点。交互元素使用 2px 冷蓝焦点线、外偏移 3px；焦点顺序与阅读顺序一致。
-
-### Navigation
-
-导航入口最小高 44px，当前页以铜色与下划线同时区分。主题选择支持系统、浅色、深色。跳到主要内容链接仅在焦点进入时显现，手机导航换行而非压缩文字。
-
-### Chips / Containers
-
-门户类型标记为直角细框，铜色 12px 文本，内距 4px 8px；用于网页工具、Chrome 扩展与预览状态，不伪装为可点击筛选。工作台 chip 使用 4px 圆角与 2px 6px 内距，稀有度继续使用游戏语义色。工具卡片使用细框、标题浅层表面与成组内容。
-
-### Translation preview
-
-词缀示例使用冷蓝英文、正文色中文、等宽数字和细分隔箭头；搜索流程示意用静态文本与内联 SVG。两者明确标为示例或示意，不冒充截图，也不增加虚假交互。
-
-减少动态效果时禁用相关过渡和按压缩放；强制色彩模式保留按钮、标签、说明容器边界。每次视觉修改优先检查阻断问题，再检查层级布局和细节。相关技能是开发工具，不进入网站或扩展产物；固定版本见 `docs/design-skills.md`。
-
-## Do's and Don'ts
-
-### Do:
-
-- Do 使用现有 CSS 语义变量，并同时核对深浅主题。
-- Do 保留装备稀有度和游戏标记色的独立语义；动态数字使用等宽数字。
-- Do 让同组操作靠近，提供明确的禁用、加载、失败文字和可见焦点。
-- Do 在桌面、小屏、键盘、减少动态效果与高对比环境核对真实任务路径。
-- Do 使用已有依赖，记录实际验证证据，分别报告本地实现与线上发布。
-
-### Don't:
-
-- Don't 引入远程中文字体、正文纹理或无关装饰位图。
-- Don't 缩小中文导航以强塞单行，或截断对照装备原文。
-- Don't 将首页示意图称作真实扩展截图，或将源码预览写成公开发行。
-- Don't 因视觉任务重启已搁置的制作引擎，或未经授权推送、部署。
+- 不使用、不热链、不描摹 GGG、腾讯、CoE 的任何素材、纹样或字体；不照着游戏或 CoE 截图描边；不使用 Fontin。
+- 不做浅色主题与主题切换；不做营销式动效（视差、粒子、循环辉光）和整页 key art。
+- 不新增含游戏名的 meta、og 或关键词，不做 og:image；今后的推广截图只用本站自己的界面和自绘母题。
+- 不把 pt-frame 放进另一扇 pt-frame；不在白名单以外放金属主按钮；不在 L0 数据区用纹理、辉光、衬线或渐变字。
+- 不手改生成物（`packages/ui-theme/src/generated/`、`packages/ui-theme/fonts/`、`apps/site/public/favicon.svg`）。
+- 不把首页示意图称作真实扩展截图，不把源码预览写成公开发行；本地通过与线上部署分开报告。
