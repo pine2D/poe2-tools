@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   ASCII_PRINTABLE,
   type CharsetIO,
+  COMMON_SHARD_SIZE,
   chunk,
   enNames,
   nonAsciiChars,
   planShards,
   rankChars,
+  SHARD_SIZE,
   shard0Chars,
   siteFixedChars,
   stripComments,
@@ -168,5 +170,28 @@ describe('planShards（契约 §3.7.3）', () => {
     expect(byGroup['sc-common']).toContain('昔')
     expect(byGroup['tc-names']).toContain('舊')
     expect(byGroup.cinzel).toContain('é')
+  })
+})
+
+// ---- M3：常用字片每片约 100 字（spec §7.3；附录 B.8 的 B19 决定）----
+describe('常用字片切片（B19）', () => {
+  it('COMMON_SHARD_SIZE 为 100；名称与繁体分片仍按 SHARD_SIZE（300）', () => {
+    expect(COMMON_SHARD_SIZE).toBe(100)
+    expect(SHARD_SIZE).toBe(300)
+  })
+
+  it('常用字按字表序每 100 字一片，最后一片是余数，片名从 serif-sc-common-0 连续编号', () => {
+    // U+4E00 起的 250 个字都不在上方内存夹具的 shard0、站点文案与名称里，全部进入常用字片
+    const level1 = Array.from({ length: 250 }, (_, i) => String.fromCodePoint(0x4e00 + i))
+    const common = planShards({ shard0Text: '构筑汉化\n', level1, io, previous: null }).filter(
+      (shard) => shard.group === 'sc-common',
+    )
+    expect(common.map((shard) => shard.file)).toEqual([
+      'serif-sc-common-0.woff2',
+      'serif-sc-common-1.woff2',
+      'serif-sc-common-2.woff2',
+    ])
+    expect(common.map((shard) => shard.chars.length)).toEqual([100, 100, 50])
+    expect(common.flatMap((shard) => shard.chars)).toEqual(level1)
   })
 })

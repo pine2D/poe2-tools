@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest'
 import { REPO_ROOT } from '../scripts/compliance.mjs'
 import {
   type CharsetIO,
+  COMMON_SHARD_SIZE,
   enNames,
   nonAsciiChars,
+  SHARD_SIZE,
   siteFixedChars,
   unicodeRange,
   zhNames,
@@ -108,5 +110,34 @@ describe('字表与 fonts.css', () => {
       expect(face?.get('font-display')).toBe('swap')
       expect(face?.get('unicode-range'), shard.file).toBe(unicodeRange(shard.chars))
     }
+  })
+})
+
+// ---- M3：常用字片每片约 100 字（spec §7.3；附录 B.8 的 B19 决定）----
+describe('分片切片大小（spec §7.3）', () => {
+  // 按组取 coverage.json 里的分片（保持登记顺序）
+  const ofGroup = (group: string) => shards.filter((shard) => shard.group === group)
+  function expectChunked(group: string, size: number) {
+    const sizes = ofGroup(group).map((shard) => [...shard.chars].length)
+    const total = sizes.reduce((sum, n) => sum + n, 0)
+    const detail = `${group}：${sizes.join('、')}；${HINT}`
+    expect(sizes.length, detail).toBe(Math.ceil(total / size))
+    expect(
+      sizes.slice(0, -1).every((n) => n === size),
+      detail,
+    ).toBe(true)
+    expect((sizes.at(-1) ?? 0) <= size, detail).toBe(true)
+  }
+
+  it('常用字片每片 COMMON_SHARD_SIZE（100）字，最后一片是余数，片名从 serif-sc-common-0 连续编号', () => {
+    expectChunked('sc-common', COMMON_SHARD_SIZE)
+    expect(ofGroup('sc-common').map((shard) => shard.file)).toEqual(
+      ofGroup('sc-common').map((_, i) => `serif-sc-common-${i}.woff2`),
+    )
+  })
+
+  it('名称分片与繁体分片仍每片 SHARD_SIZE（300）字', () => {
+    expectChunked('sc-names', SHARD_SIZE)
+    expectChunked('tc-names', SHARD_SIZE)
   })
 })

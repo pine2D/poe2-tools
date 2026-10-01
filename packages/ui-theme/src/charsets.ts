@@ -6,6 +6,8 @@ export const ASCII_PRINTABLE = Array.from({ length: 95 }, (_, i) =>
   String.fromCharCode(0x20 + i),
 ).join('')
 export const SHARD_SIZE = 300
+/** 常用字片每片字数（spec §7.3；附录 B.8 的 B19 决定由约 300 改为约 100）；名称与繁体分片仍用 SHARD_SIZE */
+export const COMMON_SHARD_SIZE = 100
 export const SITE_SCAN_DIRS = [
   'apps/site/src/pages',
   'apps/site/src/features/build-l10n',
@@ -229,7 +231,7 @@ export function planShards(input: {
     shards.push(sc(`serif-sc-${i + 2}.woff2`, 'sc-names', part))
   for (const ch of names) covered.add(ch)
 
-  // 常用字片：按字表序号；名称分片已收的字移走；以前收过、现在仍未被覆盖的字保留在末尾
+  // 常用字片：按字表序号，每 COMMON_SHARD_SIZE 字一片；名称分片已收的字移走；以前收过、现在仍未被覆盖的字保留在末尾
   const common = input.level1.filter((ch) => !covered.has(ch))
   const inCommon = new Set(common)
   for (const ch of previous?.scCommon ?? []) {
@@ -238,7 +240,7 @@ export function planShards(input: {
       inCommon.add(ch)
     }
   }
-  for (const [i, part] of chunk(common).entries()) {
+  for (const [i, part] of chunk(common, COMMON_SHARD_SIZE).entries()) {
     shards.push(sc(`serif-sc-common-${i}.woff2`, 'sc-common', part))
   }
 
