@@ -1,6 +1,9 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { dirname, join, resolve, sep } from 'node:path'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ICON_NAMES, Icon } from '../../../shared/components/Icon'
+import { fsPathFromMetaUrl } from '../../../shared/testing/fsPath'
 
 afterEach(() => {
   cleanup()
@@ -42,5 +45,25 @@ describe('Icon', () => {
       expect(svg?.getAttribute('stroke')).toBe('currentColor')
       unmount()
     }
+  })
+})
+
+// ---- M3：零引用纪律（Icon.tsx 头注释；M1 终审 T14-1，契约 C13 v4）----
+describe('Icon 名单', () => {
+  it('每个图标名在站点非测试源码里都有调用方（按字符串字面量粗查）', () => {
+    // 本文件在 apps/site/src/features/build-l10n/components/，往上三级是 apps/site/src
+    const src = resolve(dirname(fsPathFromMetaUrl(import.meta.url)), '../../..')
+    const code = readdirSync(src, { recursive: true, encoding: 'utf8' })
+      .map((rel) => rel.split(sep).join('/'))
+      .filter(
+        (rel) =>
+          /\.tsx?$/.test(rel) && !rel.includes('.test.') && rel !== 'shared/components/Icon.tsx',
+      )
+      .map((rel) => readFileSync(join(src, rel), 'utf8'))
+      .join('\n')
+    const unused = ICON_NAMES.filter(
+      (name) => !code.includes(`'${name}'`) && !code.includes(`"${name}"`),
+    )
+    expect(unused).toEqual([])
   })
 })
