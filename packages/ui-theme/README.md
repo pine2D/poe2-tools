@@ -21,10 +21,10 @@ import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 
 ## 层级规则摘要
 
-- L3 沉浸：页头 `pt-header`、金属框 `pt-frame`（同一路由状态最多两扇、不嵌套、角饰最多 8 个）、金属主按钮 `pt-forge-btn`（每个路由状态最多一个，只用在规格白名单列出的位置）、hero 标题与衬线。
-- 游戏对象：名称牌与译文提示框。
+- L3 沉浸：页头 `pt-header`、金属框 `pt-frame`（同一路由状态最多两扇、不嵌套、角饰最多 8 个）、金属主按钮 `pt-forge-btn`（每个路由状态最多一个，只用在规格白名单列出的位置）、构筑页的金属页签 `pt-tabs`、hero 标题与衬线。
+- 游戏对象：名称牌 `pt-nameplate` 与译文提示框。
 - L0 数据：对照行、表单、说明正文，一律平涂、系统无衬线、左对齐。
-- 页面层不直接写衬线字体；需要衬线时做成本包的组件类，并登记到 `src/selectors.ts`。
+- 页面层不直接写衬线字体；需要衬线时做成本包的组件类，并登记到 `src/selectors.ts`（扩展介绍页的能力小标题 `pt-subhead` 即按此做法，M3 新增）。
 - `pt-frame` 及其祖先不得设 `overflow: hidden`、`overflow: clip` 或 `contain: paint`；`z-index ≥ 3` 只属于角饰伪元素。
 - 母题一律 `aria-hidden`；强制色彩下母题与颗粒隐藏，减少动态效果下取消下压与过渡。
 
