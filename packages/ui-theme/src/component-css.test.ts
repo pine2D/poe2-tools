@@ -272,6 +272,36 @@ describe('pt-btn（spec §5.6）', () => {
       '-2px',
     )
   })
+
+  // 附录 B.10 ①：按下且键盘聚焦时边框加到 2px Highlight，按 .pt-btn 与 --sm 的实际左右内边距各减 1px，
+  // border-box 尺寸与未聚焦时相同（站点全局 box-sizing: border-box，上下内边距为 0，高度由 height 固定）
+  it('强制色彩：按下且聚焦时 2px Highlight 边框，左右内边距各减 1px 补偿（含 --sm），外框宽度不变（spec §5.15）', () => {
+    const focused = '.pt-btn[aria-pressed="true"]:focus-visible'
+    const focusedSm = '.pt-btn--sm[aria-pressed="true"]:focus-visible'
+    expect(declared('btn.css', focused, 'border-width', FORCED)).toBe('2px')
+    expect(declared('btn.css', focused, 'border-color', FORCED)).toBe('Highlight')
+    expect(declared('btn.css', focused, 'padding-inline', FORCED)).toBe('21px')
+    expect(declared('btn.css', focusedSm, 'padding-inline', FORCED)).toBe('11px')
+    // 两条同为 (0,3,0)，--sm 必须排在后面才能覆盖基础补偿
+    const forced = rulesOf('btn.css').filter((rule) => inMedia(rule, FORCED))
+    const indexOf = (selector: string) =>
+      forced.findIndex((rule) => rule.selectors.includes(selector))
+    expect(indexOf(focusedSm)).toBeGreaterThan(indexOf(focused))
+    // 外框宽 = 左右内边距 + 左右边宽：补偿值从基础规则的实际内边距与边宽推出，未聚焦与聚焦相等
+    const px = (value: string | undefined): number => Number.parseFloat(value ?? 'NaN')
+    const inline = (padding: string | undefined): number => px(padding?.split(' ').at(-1))
+    const edge = px(declared('btn.css', '.pt-btn', 'border')?.split(' ')[0])
+    for (const [variant, pressed] of [
+      ['.pt-btn', focused],
+      ['.pt-btn--sm', focusedSm],
+    ] as const) {
+      const idle = 2 * inline(declared('btn.css', variant, 'padding')) + 2 * edge
+      const onFocus =
+        2 * px(declared('btn.css', pressed, 'padding-inline', FORCED)) +
+        2 * px(declared('btn.css', focused, 'border-width', FORCED))
+      expect(onFocus, variant).toBe(idle)
+    }
+  })
 })
 
 describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', () => {

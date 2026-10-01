@@ -117,10 +117,19 @@
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }
-  /* 按下且键盘聚焦：上一条的内框与焦点环同为 outline，会把焦点环盖住；此时照常画焦点环，按下态改由 Highlight 边框表示 */
+  /* 按下且键盘聚焦：上一条的内框与焦点环同为 outline，会把焦点环盖住；此时照常画焦点环，按下态改由 Highlight 边框表示。
+     附录 B.10 ①：1px 边框与未按下的 1px ButtonText 边框难以分辨，加到 2px；多出的 1px 由左右内边距各减 1px 抵消
+     （.pt-btn 22px→21px，--sm 12px→11px），border-box 尺寸与文字位置不变。上下内边距为 0、高度由 height /
+     min-height 固定，不需补偿 */
   .pt-btn[aria-pressed="true"]:focus-visible {
+    padding-inline: 21px;
+    border-width: 2px;
     border-color: Highlight;
     outline: var(--focus-ring);
     outline-offset: 3px;
+  }
+  /* 与上一条同为 (0,3,0)，必须排在其后 */
+  .pt-btn--sm[aria-pressed="true"]:focus-visible {
+    padding-inline: 11px;
   }
 }
