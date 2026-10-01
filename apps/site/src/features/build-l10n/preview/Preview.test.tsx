@@ -332,6 +332,56 @@ describe('Preview 定位、快捷键与译文视图', () => {
     expect(container.querySelector('.pt-tooltips')).toBeNull()
   })
 
+  // 附录 B.10：开启“导出时保留英文原行”时，提示框属性行末尾加“双语”标签（与对照视图名称牌第二行同一形态），
+  // 英文原行本身仍不在提示框里显示
+  it('译文视图：开启“导出时保留英文原行”时提示框属性行末尾显示“双语”标签，英文原行不显示', () => {
+    const both = translateSource(
+      { id: 'f2', name: 'rich.build', text: readFileSync(`${fixtures}rich.build`, 'utf8') },
+      dict,
+      { bilingual: true, annotateUniques: true },
+    )
+    if (!both.ok) throw new Error(both.error)
+    const { container } = render(
+      <Preview
+        file={both.file}
+        fields={buildFieldRows(both.file, true)}
+        locale="zh-CN"
+        bilingual
+        onDownload={vi.fn()}
+      />,
+    )
+    // 对照视图里炎种长杖确有保留的英文原行，下面“提示框不显示原行”的断言才有意义
+    expect(cardOf('炎种长杖').querySelector('.app__pair-orig')?.textContent).toBe(
+      '149% increased Spell Damage原文',
+    )
+    fireEvent.click(screen.getByRole('radio', { name: '译文' }))
+    const weapon = cardOf('炎种长杖')
+    const prop = weapon.querySelector('.pt-tooltip__prop') as HTMLElement
+    expect(prop.textContent).toBe('主手·适用等级 16–100·双语')
+    expect(prop.lastElementChild?.className).toBe('pt-nameplate__tag')
+    expect(prop.lastElementChild?.textContent).toBe('双语')
+    expect(weapon.querySelector('.app__pair-orig')).toBeNull()
+    expect(weapon.textContent).not.toContain('increased Spell Damage')
+    expect(cardOf('红宝石戒指').querySelector('.pt-tooltip__prop')?.textContent).toBe('戒指 2·双语')
+    expect(cardOf('稳步印记').querySelector('.pt-tooltip__prop')?.textContent).toBe(
+      '腰带·传奇·双语',
+    )
+    expect(container.querySelectorAll('.pt-tooltips .pt-tooltip__prop')).toHaveLength(4)
+    for (const item of container.querySelectorAll('.pt-tooltips .pt-tooltip__prop')) {
+      expect(within(item as HTMLElement).getByText('双语').className).toBe('pt-nameplate__tag')
+    }
+  })
+
+  it('译文视图：未开启“导出时保留英文原行”时提示框不显示“双语”标签', () => {
+    const { container } = show()
+    fireEvent.click(screen.getByRole('radio', { name: '译文' }))
+    const tooltips = container.querySelector('.pt-tooltips') as HTMLElement
+    expect(within(tooltips).queryByText('双语')).toBeNull()
+    expect(cardOf('炎种长杖').querySelector('.pt-tooltip__prop')?.textContent).toBe(
+      '主手·适用等级 16–100',
+    )
+  })
+
   it('阅读方式不修改输出或导出双语选项', () => {
     const onDownload = vi.fn()
     const output = file.output

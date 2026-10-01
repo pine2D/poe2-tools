@@ -371,6 +371,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
                   entry={entry}
                   level={levelRange(input.inventory_slots, slot.rawIndex)}
                   locale={locale}
+                  bilingual={bilingual}
                 />
               ))}
             </div>

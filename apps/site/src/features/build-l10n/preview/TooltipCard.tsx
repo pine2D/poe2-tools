@@ -18,13 +18,15 @@ export interface TooltipCardProps {
   entry: FieldWithRows
   level: string | null
   locale: Locale
+  /** 开启“导出时保留英文原行”时为 true：属性行末尾加“双语”标签（附录 B.10） */
+  bilingual?: boolean
 }
 
-export function TooltipCard({ slot, entry, level, locale }: TooltipCardProps) {
+export function TooltipCard({ slot, entry, level, locale, bilingual = false }: TooltipCardProps) {
   const variant = slotVariant(slot, entry)
   const { path, baseName } = entry.entry
   const first = entry.rows[0]
-  // 属性行：槽位 · 适用等级 · 类型标签（只有 unique 的“传奇”）· 基底 <基底名>；缺的项省略，collapsed 的槽位已作名称
+  // 属性行：槽位 · 适用等级 · 类型标签（只有 unique 的“传奇”）· 基底 <基底名> · 双语；缺的项省略，collapsed 的槽位已作名称
   const props: ReactNode[] = []
   if (variant !== 'collapsed') {
     props.push(
@@ -45,6 +47,14 @@ export function TooltipCard({ slot, entry, level, locale }: TooltipCardProps) {
         <UniqueBase key="base" row={first} path={path} baseName={baseName} locale={locale} />,
       )
     }
+  }
+  // 双语：与对照视图名称牌第二行的“双语”标签同一形态（SlotCard）；保留的英文原行本身不在提示框显示
+  if (bilingual) {
+    props.push(
+      <span key="bilingual" className="pt-nameplate__tag">
+        双语
+      </span>,
+    )
   }
   const pairs = entry.rows.filter((row) => !(baseName && row.base))
   return (
