@@ -18,10 +18,17 @@
   height: 2px;
   background: linear-gradient(180deg, #c89a5e, #5d4229);
 }
+/* M0 Ruling 11-1：“仅看待核对”加了“仅看”后，中等宽度下工具组会横向溢出。工具组放不下时换行、靠右，
+   页签仍贴基线；放得下时 wrap 与 flex-end 都不起作用，渲染不变。沿革：Ruling 11-1 定 601–700px →
+   M2 Ruling 10 按实测改为 601–820px（同时加 .pt-tab 不折行、.pt-tabs 不收缩）→ M2 终审取消上限，
+   >600px 一律适用（820 余量太小，且构建后与 ≤600 之间留下 (600,601) 的小数视口空档）；≤600px 见下方覆盖 */
 .pt-tabs-row__tools {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   padding-bottom: 10px;
 }
 /* 吸顶沿用改版前 .preview-toolbar（sticky、top:-1px）；z-index 由 10 改为 2，低于 pt-frame 角饰的 3（§4.5）；
@@ -82,16 +89,6 @@
 .pt-tab[aria-selected="true"] .pt-tab__count {
   color: inherit;
 }
-/* M0 Ruling 11-1："仅看待核对"加了"仅看"后，中宽度的工具组会横向溢出；这一区间让工具组可换行、靠右，
-   页签仍贴基线。上限按 M2 Ruling 10 实测（页签不收缩后）：rich.build 需到 788px，本机真实构筑
-   （装备 15、天赋 192）加 1 条未命中需到 811px，取 820px */
-@media (min-width: 601px) and (max-width: 820px) {
-  .pt-tabs-row__tools {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    min-width: 0;
-  }
-}
 /* §6.7 ≤600px：页签独占一行，基线改画在 tablist 下方；工具组在基线下方，上距 12px；页签最小高 44px */
 @media (max-width: 600px) {
   .pt-tabs-row {
@@ -114,8 +111,10 @@
     height: 2px;
     background: linear-gradient(180deg, #c89a5e, #5d4229);
   }
+  /* 基础规则的靠右在这一档改回靠左，保持窄屏原排布（视图分段由 responsive.css 的 margin-left:auto 推到右侧） */
   .pt-tabs-row__tools {
     flex-wrap: wrap;
+    justify-content: flex-start;
     margin-top: 12px;
     padding-bottom: 0;
   }

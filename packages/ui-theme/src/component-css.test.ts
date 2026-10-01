@@ -472,12 +472,15 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(m2Value(rules, '.pt-tab', 'white-space')).toBe('nowrap')
     expect(m2Value(rules, '.pt-tabs', 'flex-shrink')).toBe('0')
   })
-  // 上限按 M2 Ruling 10 实测：rich.build 需 ≤788px、本机真实构筑加 1 条未命中需 ≤811px，取 820px
-  it('601–820px 工具组可换行、靠右（Ruling 11-1；M2 Ruling 10 改上限）', () => {
-    const band = 'min-width: 601px) and (max-width: 820px'
-    expect(m2Value(rules, '.pt-tabs-row__tools', 'flex-wrap', band)).toBe('wrap')
-    expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content', band)).toBe('flex-end')
-    expect(m2Value(rules, '.pt-tabs-row__tools', 'min-width', band)).toBe('0')
+  // 沿革：Ruling 11-1 定 601–700px → M2 Ruling 10 按实测改为 601–820px → M2 终审取消上限。
+  // 820 的余量太小（本机真实构筑需 811px），且构建后与 ≤600 之间留下 (600,601) 的小数视口空档
+  it('工具组放不下时换行、靠右：>600px 为基础规则，不设宽度上限（M2 终审）', () => {
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'flex-wrap')).toBe('wrap')
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content')).toBe('flex-end')
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'min-width')).toBe('0')
+    const code = m2Read('tabs.css').replace(/\/\*[\s\S]*?\*\//g, '')
+    expect(code).not.toContain('max-width: 820px')
+    expect(code).not.toMatch(/min-width:\s*601px/)
   })
   it('≤600px：页签独占一行，基线改画在 tablist 下方；页签最小高 44px；隐藏键帽', () => {
     const narrow = 'max-width: 600px'
@@ -485,6 +488,8 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(m2Value(rules, '.pt-tabs-row::after', 'display', narrow)).toBe('none')
     expect(m2Value(rules, '.pt-tabs::after', 'bottom', narrow)).toBe('-2px')
     expect(m2Value(rules, '.pt-tabs-row__tools', 'margin-top', narrow)).toBe('12px')
+    // 基础规则的靠右在这一档覆盖回靠左，窄屏排布不变（视图分段仍由 responsive.css 的 margin-left:auto 推到右侧）
+    expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content', narrow)).toBe('flex-start')
     expect(m2Value(rules, '.pt-tab', 'min-height', narrow)).toBe('44px')
     expect(m2Value(rules, '.pt-tabs-row__tools .pt-kbd', 'display', narrow)).toBe('none')
   })
