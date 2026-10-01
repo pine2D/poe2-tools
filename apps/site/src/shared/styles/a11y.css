@@ -38,6 +38,12 @@
   .app__toast-close {
     border-color: ButtonText;
   }
+  /* svg 默认 forced-color-adjust: preserve-parent-color，写在 svg 上的颜色会原样保留；改为继承宿主的系统色 */
+  .stats__ok .icon,
+  .app__error-title .icon,
+  .app__drop-icon {
+    color: inherit;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .stats__chev,

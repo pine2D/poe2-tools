@@ -86,6 +86,24 @@ describe('通用门禁（全部组件文件）', () => {
       }
     }
   })
+
+  // svg 的 UA 默认 forced-color-adjust 是 preserve-parent-color：写在 svg 上的 color 原样保留，不随系统色（M2 移交 F2）
+  it('给 svg 图标写了 color 的规则，在同一文件的强制色彩规则里改为 inherit（spec §5.15）', () => {
+    const icon = /(^|[\s>+~])svg$/
+    for (const file of files) {
+      const rules = rulesOf(file)
+      const reset = new Set(
+        rules
+          .filter((rule) => inMedia(rule, FORCED) && rule.declarations.get('color') === 'inherit')
+          .flatMap((rule) => rule.selectors),
+      )
+      for (const rule of rules) {
+        if (inMedia(rule, FORCED) || !rule.declarations.has('color')) continue
+        for (const selector of rule.selectors.filter((item) => icon.test(item)))
+          expect(reset.has(selector), `${file} ${selector}`).toBe(true)
+      }
+    }
+  })
 })
 
 describe('pt-header（spec §5.2）', () => {

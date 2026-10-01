@@ -206,3 +206,9 @@
     padding-top: 20px;
   }
 }
+/* 强制色彩：svg 默认 forced-color-adjust: preserve-parent-color，写在 svg 上的颜色会原样保留；改为继承宿主的系统色 */
+@media (forced-colors: active) {
+  .search-query svg {
+    color: inherit;
+  }
+}

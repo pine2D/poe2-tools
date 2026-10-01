@@ -419,4 +419,8 @@ details[open] > .pt-textbtn svg {
     border-color: Highlight;
     background: Highlight;
   }
+  /* svg 默认 forced-color-adjust: preserve-parent-color，写在 svg 上的 --ok 会原样保留；改为继承宿主的系统色 */
+  .pt-toast > svg {
+    color: inherit;
+  }
 }

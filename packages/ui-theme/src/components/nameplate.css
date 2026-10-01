@@ -296,4 +296,8 @@
   .pt-nameplate__miss {
     border-color: CanvasText;
   }
+  /* svg 默认 forced-color-adjust: preserve-parent-color，写在 svg 上的 --ok 会原样保留；改为继承宿主的系统色 */
+  .pt-nameplate__ok svg {
+    color: inherit;
+  }
 }

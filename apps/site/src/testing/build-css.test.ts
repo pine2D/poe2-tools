@@ -120,6 +120,40 @@ describe('强制色彩下的按下态（spec §5.6；M2 终审）', () => {
   })
 })
 
+describe('强制色彩下图标随系统色（spec §5.15；M2 移交 F2）', () => {
+  // svg 的 UA 默认 forced-color-adjust 是 preserve-parent-color：写在 svg 上的 color 原样保留，不随系统色。
+  // 按各页面入口的引入顺序拼接页面样式；给图标（svg、svg.icon、*-icon）写了 color 的规则，须有同选择器的
+  // 强制色彩规则把 color 改为 inherit，跟随宿主的系统色
+  const PAGES = {
+    build: ['base', ...BUILD_STYLES, 'site'],
+    home: ['base', 'site', 'home'],
+    extension: ['base', 'site', 'extension'],
+  } as const
+  const ICON = /(^|[\s>+~])svg$|\.icon$|-icon$/
+  for (const [page, names] of Object.entries(PAGES)) {
+    it(`${page}：图标的 color 在强制色彩下改为 inherit`, () => {
+      const rules = parseRules(
+        names.map((name) => read(`apps/site/src/shared/styles/${name}.css`)).join('\n'),
+      )
+      const forced = (rule: CssRule): boolean =>
+        rule.atRules.some((at) => flat(at).includes('forced-colors:active'))
+      const reset = new Set(
+        rules
+          .filter(
+            (rule) => forced(rule) && norm(rule.declarations.get('color') ?? '') === 'inherit',
+          )
+          .flatMap((rule) => rule.selectors.map(flat)),
+      )
+      for (const rule of rules) {
+        if (forced(rule) || !rule.declarations.has('color')) continue
+        for (const selector of rule.selectors.filter((item) => ICON.test(item))) {
+          expect(reset.has(flat(selector)), `${page} ${selector}`).toBe(true)
+        }
+      }
+    })
+  }
+})
+
 describe('吸顶页签行（spec §6.4.2）', () => {
   const tabs = parseRules(read('packages/ui-theme/src/components/tabs.css'))
   it('.pt-tabs-row--sticky：top -1px、z-index 2、底色与遮挡阴影为 --frame-bg', () => {
