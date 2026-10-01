@@ -12,4 +12,6 @@ export const SERIF_SELECTORS: readonly string[] = [
   '.pt-tab',
   '.pt-nameplate__name',
   '.pt-nameplate__name:lang(zh-TW)',
+  // M3：扩展介绍页能力小标题（spec §6.3）
+  '.pt-subhead',
 ]

@@ -709,3 +709,42 @@ describe('pairs.css（spec §5.11）', () => {
     )
   })
 })
+
+// ---- M3：扩展介绍页能力小标题（spec §6.3、§4.4；契约 §3.4 的 subhead.css 行）----
+describe('subhead.css', () => {
+  const subheadCss = readFileSync(new URL('./components/subhead.css', import.meta.url), 'utf8')
+  // 去掉多余空白，并把 Biome 格式化出的“21px / 1.35”还原成“21px/1.35”再比较
+  const tidy = (value: string | undefined) =>
+    (value ?? '')
+      .replace(/\s+/g, ' ')
+      .replace(/ ?\/ ?/g, '/')
+      .trim()
+  const subheadRules = parseRules(subheadCss).filter((rule) =>
+    rule.selectors.map(tidy).includes('.pt-subhead'),
+  )
+
+  it('.pt-subhead 为衬线 700 21px、--title-gold、字距 .06em、外边距 0', () => {
+    const top = subheadRules.filter((rule) => rule.atRules.length === 0)
+    expect(top).toHaveLength(1)
+    const decl = top[0]?.declarations
+    expect(tidy(decl?.get('font'))).toBe('700 21px/1.35 var(--pt-serif)')
+    expect(tidy(decl?.get('color'))).toBe('var(--title-gold)')
+    expect(tidy(decl?.get('letter-spacing'))).toBe('0.06em')
+    expect(tidy(decl?.get('margin'))).toBe('0')
+  })
+
+  it('强制色彩下退回 CanvasText；不引用母题、颗粒或任何 url()', () => {
+    const forced = subheadRules.filter((rule) =>
+      rule.atRules.some((at) => at.replace(/\s+/g, '').includes('forced-colors:active')),
+    )
+    expect(tidy(forced[0]?.declarations.get('color'))).toBe('CanvasText')
+    expect(subheadCss.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/--pt-motif|--pt-grain|url\(/)
+  })
+
+  it('index.css 的最后一行引入 subhead.css（契约 §3.3 的 M3 行）', () => {
+    const lines = readFileSync(new URL('./index.css', import.meta.url), 'utf8')
+      .trim()
+      .split('\n')
+    expect(lines.at(-1)).toMatch(/^@import "\.\/components\/subhead\.css";/)
+  })
+})

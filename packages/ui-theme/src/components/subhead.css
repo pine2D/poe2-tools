@@ -1,0 +1,14 @@
+/* 扩展介绍页能力小标题（spec §6.3、§4.4）：衬线 700 21px、--title-gold、字距 .06em；取值移植自 M0 kit.css */
+.pt-subhead {
+  margin: 0;
+  color: var(--title-gold);
+  font: 700 21px / 1.35 var(--pt-serif);
+  letter-spacing: 0.06em;
+}
+
+/* spec §5.15：强制色彩下退回系统文字色；本组件没有母题、颗粒和过渡 */
+@media (forced-colors: active) {
+  .pt-subhead {
+    color: CanvasText;
+  }
+}
