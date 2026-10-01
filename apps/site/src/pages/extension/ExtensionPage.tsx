@@ -27,9 +27,11 @@ export function ExtensionPage() {
               <br />
               <span className="pt-hero-title__gold">就在原来的工具里。</span>
             </h1>
+            {/* 末段写成一个字符串：空格与后文拆成两个文本节点时，390 下 text-wrap: balance 会改在
+                “Craft of Exile / 的”断行，M0 断在“的 / 英文界面”（spec §6.7） */}
             <p className="extension-intro__lead">
-              用 PoE2 中文助手，在 <span className="nw">Craft of Exile</span>{' '}
-              的英文界面查看国服简体术语。
+              用 PoE2 中文助手，在 <span className="nw">Craft of Exile</span>
+              {' 的英文界面查看国服简体术语。'}
             </p>
             {/* B12：DOM 中说明排在操作行之前，读屏在任何宽度都先读到；≥621px 由 CSS order 显示在操作行之后 */}
             <p className="extension-intro__note">

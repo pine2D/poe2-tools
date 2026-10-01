@@ -77,6 +77,16 @@ describe('扩展介绍页结构（spec §6.3、§4.2）', () => {
     expect(legal.querySelectorAll(FOCUSABLE)).toHaveLength(0)
   })
 
+  it('导语末段是一个文本节点：空格与“的英文界面……”拆成两个节点时，390 下 balance 会改在“Craft of Exile / 的”断行（spec §6.7，以 M0 为准）', () => {
+    const { container } = render(<ExtensionPage />)
+    const lead = container.querySelector('.extension-intro__lead') as HTMLElement
+    expect(lead.textContent).toBe(
+      '用 PoE2 中文助手，在 Craft of Exile 的英文界面查看国服简体术语。',
+    )
+    expect(lead.lastChild?.nodeName).toBe('#text')
+    expect(lead.lastChild?.textContent).toBe(' 的英文界面查看国服简体术语。')
+  })
+
   it('环境卡是带标题栏与 chip 的 pt-panel card（不是框中框），内容沿用现有文案', () => {
     const { container } = render(<ExtensionPage />)
     const env = container.querySelector('aside[aria-label="版本与支持范围"]') as HTMLElement
@@ -175,6 +185,10 @@ describe('extension.css（spec §6.3、§6.7、§4.5；M0 extension.html）', ()
 
   it('环境卡说明不沿用 base.css 的 text-wrap: pretty，390 下按 M0 断在“翻译所有 / 英文段落”（spec §6.7 R15）', () => {
     expect(decls('.extension-env__note').get('text-wrap')).toBe('wrap')
+  })
+
+  it('安装区说明不沿用 base.css 的 text-wrap: pretty，390 下按 M0 断在“Chrome 商店安装 / 入口”（spec §6.7）', () => {
+    expect(decls('.extension-guide__heading p').get('text-wrap')).toBe('wrap')
   })
 
   it('≤620px：页边距 16px，金属主按钮通栏，各区改单列（spec §6.7）', () => {

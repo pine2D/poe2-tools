@@ -121,9 +121,12 @@
   color: var(--ink);
   font: 600 28px / 1.35 var(--font-zh-cn);
 }
+/* 安装区说明：base.css 给 p 的 text-wrap: pretty 会在 390 下断成“Chrome 商 / 店……”“的源 / 码”，
+   改回普通折行，与 M0 一致地断在“Chrome 商店安装 / 入口”“源码， / 自行构建安装”（spec §6.7） */
 .extension-guide__heading p {
   margin: 0;
   color: var(--ink-2);
+  text-wrap: wrap;
 }
 .extension-steps {
   margin: 0;
