@@ -12,6 +12,8 @@
 - **自有素材**：母题「符文菱结」（`packages/ui-theme/src/motif.ts` 生成的 `src/generated/motif.css`、`favicon.svg`、`logo.svg`、`knot-full.svg`，以及站点副本 `apps/site/public/favicon.svg`）和颗粒（`src/noise.ts`）都是自绘，没有第三方来源。
 - **素材白名单**（由 `packages/ui-theme/scripts/compliance.mjs` 判定）：仓库和构建产物里的全部 png、jpg、webp、gif、svg、woff、woff2、ttf、otf 都必须属于以下三类之一，否则测试或构建失败：① 字体分片，登记目录 `packages/ui-theme/fonts/`，逐片 SHA-256 由脚本同时生成的 `fonts/coverage.json` 承载；② 母题生成物，即 `packages/ui-theme/src/generated/*.svg` 与 `apps/site/public/favicon.svg`，与源的一致性由 `motif.test.ts` 逐字节保证；③ 其余手工或一次性生成的文件，按路径和 SHA-256 逐个登记在下面的“素材白名单（第 3 类）”表里，一期为空。woff、ttf、otf 不属于任何一类，出现即失败。
 
+终审（M3，2026-10-01）：本节已按 spec §7.4 与 M1–M3 的最终实现逐项核对：字体源与 SHA-256、一级字表、开发期依赖许可、自有素材、白名单三类与明确不使用的素材。
+
 ## 字体源文件
 
 固定提交：`23e54b51ddffbc7713c583748e3bd86f62b1fa4a`
@@ -369,6 +371,7 @@ GGG 官方 0.3.1 公告（`forum/view-thread/3860076`、`3862213`）作为点金
 - 国际服大版本前 PoB2 `dev` 分支通常已预适配；国服交易站滞后约一周。词典更新以国服 API 跟上为准。
 - 每次更新记录 `meta.json`：游戏版本、抓取时间、各来源条目数与哈希、启用的适配器。
 - 三服内容版本可能不同（如国际服 0.5.5 时国服仍 0.5），构建前先更新 `_overrides/versions.json`；每次构建把审计计数（重复 id、占位符不一致、键冲突、residualSuffix）写入 meta.json，突变即人工复核；交易站消歧后缀名单在 packages/dict-builder/src/adapters/tradeSuffix.ts，residualSuffix 非空时更新它。
+- 词典名称新增字符会让 `packages/ui-theme` 的 coverage.test 失败：运行 `pnpm ui-theme:fonts`，先用 `chore(ui-theme): 更新字体分片` 单独提交字体分片，再提交词典（流程见 `CLAUDE.md` 开发工作流）。
 
 ### 定向预兆人工规则依据
 
