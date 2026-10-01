@@ -12,7 +12,7 @@
 
 网站由 `apps/site` 统一构建：`/` 为工具首页，`/build/` 为构筑汉化，`/extension/` 为中文助手介绍和安装说明。旧 `/craft/` 保留但不再出现在公共导航。当前改版为本地实现，尚未部署。
 
-- `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：主题、控件、样式、词典加载。
+- `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：控件、页面样式、词典加载；令牌、组件样式、母题与字体分片来自 `packages/ui-theme`。
 - `packages/`：纯业务算法和构建脚本；`data/`：词典、历史制作目录及样本。
 - [设计与验收](docs/website/redesign.md) · [Cloudflare 部署流程](docs/website/deployment.md)
 
@@ -75,10 +75,7 @@ pnpm --filter @poe2-tools/site scan-css
 「只被别的 CSS 规则消费的 modifier」会误报，当成门禁只会让 CI 变吵。改完样式、或删组件之后手动跑
 一次即可；有发现时退出码是 1，输出里逐条列出名字。
 
-已知误报（跑一次会看到，不是死代码）：`.filelist__status--ok` / `--error` / `--pending`
-（`FileList.tsx` 用模板字符串 `` `filelist__status--${kind}` `` 拼出来，脚本只按整串字面量匹配）；
-`.w3` / `.woff2`（分别来自内联 SVG 的 `www.w3.org` 命名空间地址和 `@font-face` 里的
-`Cinzel-subset.woff2` 文件名，不是类选择器，被正则误判）。
+已知误报（跑一次会看到，不是死代码）：`--rarity-gem`、`--rarity-unique`、`--success`、`.affix-rule`、`.desktop-note`、`.guide-heading`、`.guide-section`、`.install-command`、`.install-steps`、`.recent-note`、`.release-note`、`.search-demo`、`.site-brand`、`.site-button`、`.site-button-secondary`、`.site-github`、`.site-header`、`.site-header-actions`、`.site-nav`、`.site-theme`、`.tool-heading`、`.tool-kind`、`.translation-demo`（工坊冻结的改版前样式副本，spec §6.6、契约 §6.3 原样复制，不改）；`.pt-panel--card`（`PtPanel.tsx` 用模板字符串 `pt-panel--${variant}` 拼出类名，脚本只按整串字面量匹配）。
 
 ## 目录
 
@@ -86,6 +83,7 @@ pnpm --filter @poe2-tools/site scan-css
 packages/build-core/    .build 解析、词典匹配、翻译管线（无 DOM）
 packages/item-core/     装备高级文本解析、逆向词典与受控 CoE 转接（无 DOM）
 packages/dict-builder/  词典生成脚本
+packages/ui-theme/      设计令牌、组件样式、母题与字体分片（生成物入库）
 apps/site/        静态站
 data/dict/<locale>/     生成的词典（入库）
 data/fixtures/          测试样本（synthetic 入库，local 不入库）
@@ -112,7 +110,7 @@ docs/manual-qa-checklist.md  真机走查清单
 `N` 定位下一项、`F` 切换筛选，输入期间不触发快捷键。
 当前文件下载在构筑标题旁，批量下载在文件区，同名文件打包时自动加序号避免覆盖。
 
-界面使用系统无衬线字体，支持深色、浅色和跟随系统，不加载第三方字体。
+界面只有深色。标题、导航、按钮与名称牌使用随站自托管的 Noto Serif SC/TC 与 Cinzel 字体分片（SIL OFL 1.1，许可与声明见根目录 `NOTICE`，网站发布为 `/NOTICE.txt`），正文与数据使用系统无衬线字体；不向第三方站点请求字体。
 
 ## 装备工坊
 

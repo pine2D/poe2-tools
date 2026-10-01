@@ -11,9 +11,9 @@
 | `/extension/` | `extension/index.html` | `src/pages/extension/` |
 | `/craft/` | `craft/index.html` | `src/features/craft/` |
 
-主题、词典加载、基础样式及共享控件位于 `src/shared/`。翻译与制作算法留在现有 packages。
-`sync-dict.mjs` 仅同步汉化词典，`sync-craft.mjs` 仅同步旧工坊数据；`sync-data` 在 dev/build 前调用两者。
-输出 `apps/site/dist`，包括根级 `404.html`、词典和工坊目录。首页及扩展介绍不请求这些业务数据。
+词典加载、页面样式及共享控件位于 `src/shared/`；令牌、组件样式、母题与字体分片来自 `packages/ui-theme`（历史工坊不接入）。翻译与制作算法留在现有 packages。
+`sync-dict.mjs` 仅同步汉化词典，`sync-craft.mjs` 仅同步旧工坊数据，`sync-fonts.mjs` 复制字体许可文件与根目录 `NOTICE`；`sync-data` 在 dev/build 前依次调用三者。
+输出 `apps/site/dist`，包括根级 `404.html`、词典和工坊目录、字体分片（`assets/*.woff2`）、`fonts/*-OFL.txt` 与 `NOTICE.txt`。首页及扩展介绍不请求词典和工坊数据。
 
 ```sh
 pnpm install --frozen-lockfile
@@ -21,7 +21,7 @@ pnpm dev
 pnpm verify
 ```
 
-构建末尾自动运行 `check-site.mjs`，检查四个页面、404 与 HTML 引用的站内资源。
+构建末尾自动运行 `check-site.mjs`，检查四个页面、404、HTML 引用的站内资源，以及字体许可文件与 `NOTICE.txt` 的必含行、CSS `url()` 无外链且目标存在、素材白名单与字体分片集合（判定逻辑在 `packages/ui-theme/scripts/compliance.mjs`）。
 
 ## CI 与发布
 
@@ -33,7 +33,7 @@ pnpm verify
 - 手动运行 CI 时可选择 `none`（默认）、`preview`、`production`；production 仅允许 main。
 - preview 使用 `preview-<来源分支>`，与 production 的并发组隔离；即使从 main 发起预览，也不会传 `--branch=main`。
 - 使用固定 Wrangler 4.40.2；升级时需独立验证部署命令和输出地址提取。
-- 部署后从 Wrangler 日志提取本次不可变 `pages.dev` 地址，检查页面、资源和真实 404。失败时工作流失败，但不会自动回滚。
+- 部署后从 Wrangler 日志提取本次不可变 `pages.dev` 地址，检查页面、资源、字体许可文件、`NOTICE.txt`、CSS 引用的字体分片和真实 404。失败时工作流失败，但不会自动回滚。
 - 扩展有独立源码与发行流程；网站构建不会打包或发布扩展。
 
 沿用已有变量 `CF_PAGES_PROJECT` 和 secrets `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`。项目变量未配置时不部署；凭据缺失会明确失败，不伪装成功。
