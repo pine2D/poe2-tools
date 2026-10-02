@@ -167,6 +167,31 @@ function licenseText(family, names, oflText, commit) {
   return text
 }
 
+function fontFace(spec) {
+  return [
+    '@font-face {',
+    `  font-family: "${spec.family}";`,
+    `  src: url("./${spec.file}") format("woff2");`,
+    `  font-weight: ${spec.weight};`,
+    '  font-style: normal;',
+    '  font-display: swap;',
+    `  unicode-range: ${unicodeRange(spec.chars)};`,
+    '}',
+  ].join('\n')
+}
+
+// 扩展设置弹窗只加载 SC shard0（spec §6.8、§7.6）；字体文件由扩展构建复制进包，许可文件随包发布
+function popupFontsCss(shards) {
+  const shard0 = shards.find(({ spec }) => spec.file === 'serif-sc-0.woff2')
+  if (!shard0) throw new ExitError(1, '缺少 serif-sc-0.woff2，无法生成 popup.css')
+  return `${[
+    '/* 由 packages/ui-theme/scripts/build-fonts.mjs 生成，勿手改。',
+    '   扩展设置弹窗专用（spec §6.8、§7.6）：只含 SC shard0。字体 Noto Serif SC 以 SIL Open Font License 1.1 授权，',
+    '   扩展包内附 NotoSerifSC-OFL.txt；项目的 MIT 许可不覆盖字体文件。 */',
+    fontFace(shard0.spec),
+  ].join('\n')}\n`
+}
+
 function fontsCss(shards) {
   const head = [
     '/* 由 packages/ui-theme/scripts/build-fonts.mjs 生成，勿手改。',
@@ -174,18 +199,7 @@ function fontsCss(shards) {
     '   许可文件：/fonts/NotoSerifSC-OFL.txt、/fonts/NotoSerifTC-OFL.txt、/fonts/Cinzel-OFL.txt',
     '   页面用站点私有别名 "PoE2 Serif SC"、"PoE2 Serif TC"、"PoE2 Cinzel"，分片里没有的字回退到本机字体。 */',
   ]
-  const faces = shards.map(({ spec }) =>
-    [
-      '@font-face {',
-      `  font-family: "${spec.family}";`,
-      `  src: url("./${spec.file}") format("woff2");`,
-      `  font-weight: ${spec.weight};`,
-      '  font-style: normal;',
-      '  font-display: swap;',
-      `  unicode-range: ${unicodeRange(spec.chars)};`,
-      '}',
-    ].join('\n'),
-  )
+  const faces = shards.map(({ spec }) => fontFace(spec))
   return `${[...head, ...faces].join('\n')}\n`
 }
 
@@ -256,6 +270,7 @@ async function main() {
     await mkdir(join(tmp, 'LICENSES'))
     for (const { spec, data } of outputs) await writeFile(join(tmp, spec.file), data)
     await writeFile(join(tmp, 'fonts.css'), fontsCss(outputs))
+    await writeFile(join(tmp, 'popup.css'), popupFontsCss(outputs))
     for (const [alias, family] of Object.entries(FAMILIES)) {
       const text = licenseText(family, names[family.name], sources[alias].ofl, commit)
       await writeFile(join(tmp, 'LICENSES', family.license), text)

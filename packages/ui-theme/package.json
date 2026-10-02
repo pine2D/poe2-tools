@@ -6,6 +6,7 @@
   "exports": {
     "./index.css": "./src/index.css",
     "./fonts.css": "./fonts/fonts.css",
+    "./popup-fonts.css": "./fonts/popup.css",
     "./motif": "./src/motif.ts",
     "./selectors": "./src/selectors.ts",
     "./compliance": {

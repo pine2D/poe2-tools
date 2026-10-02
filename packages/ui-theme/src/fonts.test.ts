@@ -18,6 +18,7 @@ interface CoverageShard {
   family: 'PoE2 Serif SC' | 'PoE2 Serif TC' | 'PoE2 Cinzel'
   weight: 700 | 400
   sha256: string
+  chars: string
 }
 interface Coverage {
   sourceCommit: string
@@ -83,6 +84,19 @@ describe('分片集合、源文件登记与许可文件（spec §7.3 断言 6、
         shard.sha256,
       )
     }
+  })
+
+  it('popup.css 只有一条 @font-face，与 fonts.css 里 serif-sc-0 那条逐字相同（spec §7.6）', () => {
+    const faces = (css: string) => css.match(/@font-face \{[^}]*\}/g) ?? []
+    const popup = faces(readFileSync(join(FONTS, 'popup.css'), 'utf8'))
+    expect(popup).toHaveLength(1)
+    expect(popup[0]).toContain('url("./serif-sc-0.woff2")')
+    expect(faces(readFileSync(join(FONTS, 'fonts.css'), 'utf8'))).toContain(popup[0])
+  })
+
+  it('SC shard0 覆盖扩展弹窗的衬线文案：PoE2 中文助手、使用前（spec §6.8）', () => {
+    const shard0 = coverage.shards.find((shard) => shard.file === 'serif-sc-0.woff2')
+    for (const ch of 'PoE2中文助手使用前') expect(shard0?.chars, ch).toContain(ch)
   })
 
   it('coverage.json 的提交号与 6 个源文件 SHA-256 就是 data-sources.md 登记的那组', () => {
