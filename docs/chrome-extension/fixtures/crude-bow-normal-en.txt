@@ -1,0 +1,12 @@
+Item Class: Bows
+Rarity: Normal
+Crude Bow
+--------
+Quality: +20% (augmented)
+Physical Damage: 7-11 (augmented)
+Critical Hit Chance: 5.00%
+Attacks per Second: 1.20
+--------
+Sockets: S S
+--------
+Item Level: 86

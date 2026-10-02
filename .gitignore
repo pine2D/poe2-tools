@@ -36,3 +36,6 @@ Thumbs.db
 
 # 本地 Cloudflare Pages 验证缓存
 /.wrangler/
+
+# Chrome 扩展分发产物（pnpm extension:package 生成，不入库）
+/apps/poe2-extension/artifacts/

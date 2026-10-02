@@ -4,7 +4,7 @@
 
 ### 当前优先级（2026-09-24）
 
-用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。扩展独立分支已有 0.1.111 开发预览源码与历史验收记录，尚未合入主树；公开发行与源码、验收状态应分别说明。
+用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。扩展源码已于 2026-10-02 合入主树 `apps/poe2-extension`（0.1.111 开发预览）；具体通过／未测范围见 `docs/chrome-extension/compatibility.md`。未经实际浏览器验收不得扩大页面或装备兼容性声明；公开发行与源码、验收状态应分别说明。
 
 poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：pnpm monorepo，TypeScript 单语言，
 纯静态前端 + 构建期脚本，不部署服务端。
@@ -22,6 +22,10 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
+## 扩展工程收敛（2026-09-26）
+
+遵循 `docs/chrome-extension/engineering-lessons.md`：扩展负责词典与文本转换，不再建立逐基底／词缀ID／等阶范围准入名单，不代替CoE判定游戏规则。已有实测记录用于回归，已知原站问题单独提示。按完整用户流程合并交付，避免零碎发版和无变化的重复验证。参考扩展仅学习结构，不复制专有代码或词库。
+
 ## 仓库地图
 
 - `packages/build-core/`：纯 TypeScript、无 DOM。`.build` 无损解析与序列化、标记语法分词、
@@ -35,6 +39,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   是 `pt-*` 组件样式；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
   `scripts/compliance.mjs` 是许可文件与素材白名单判定的唯一实现。`fonts/` 与 `src/generated/` 是生成物：入库、不手改、Biome 排除。
 - `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；测试用 happy-dom。
+- `apps/poe2-extension/`：Chrome 扩展（Manifest V3，只申请 `storage` 权限，内容脚本只匹配 `https://beta.craftofexile.com/*`）。`scripts/build.mjs` 构建 `dist/`（content.js、popup、词典、LICENSE、NOTICE、图标），`scripts/check.mjs` 校验 manifest 与产物白名单，`scripts/package.mjs` 打包到 `artifacts/`（不入库）。版本号独立于网站，唯一来源是该目录的 `package.json`。
+- `packages/l10n-core/`：扩展的术语匹配核心，纯 TypeScript、无 DOM、无 Chrome API；扩展运行时与打包校验共用。
+- `data/l10n/`：扩展专用数据——`coe-beta/ui.zh-CN.json`（manual 界面译文）、`aliases.zh-CN.json`（manual 别名）、`coe-beta/tablets.zh-CN.json`（gray 石板名）；构建扩展时与 `data/dict/zh-CN/` 一起裁剪进 `assets/dictionary.json`。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
   `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
   `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率
@@ -116,7 +123,7 @@ pnpm ui-theme:motif # 手动运行：由 motif.ts 重新生成母题 CSS 与 SVG
 - `main` 保持可构建；开发分支用稳定可读的名字，经 PR 合入；禁止 force-push `main`。
 - 提交采用 Conventional Commits 1.0.0：`<type>(<scope>): <简体中文摘要>`。
 - type：`feat`、`fix`、`docs`、`test`、`refactor`、`perf`、`build`、`ci`、`chore`、`revert`。
-- scope：`build-core`、`dict-builder`、`build-l10n`、`dict`、`data`、`docs`、`ci`、`ui-theme`；跨域时省略。
+- scope：`build-core`、`dict-builder`、`build-l10n`、`dict`、`data`、`docs`、`ci`、`ui-theme`、`extension`；跨域时省略。
 - 一次提交一个逻辑变更，含其测试与文档；只显式暂存本次文件，不用 `git add -A`。
 - 破坏性变更用 `type(scope)!:` 并加 `BREAKING CHANGE:` footer。
 

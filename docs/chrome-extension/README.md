@@ -1,20 +1,16 @@
-# Chrome 扩展状态与文档
+# Chrome 扩展
 
-2026-09-28 核对：扩展源码位于独立分支 `feat/coe-chrome-extension`，已到 0.1.111 开发预览版；当前主树尚未整合源码。本轮不合并扩展分支，也不重新认证历史验收结果。
+当前施工以[工程教训与收敛约定](engineering-lessons.md)为准：导入改为通用文本转换，逐基底验收记录仅作回归证据。
 
-- [固定源码快照](https://github.com/pine2D/poe2-tools/tree/a68f6d8bacc7f336f6136a91665ca027063a536c/apps/poe2-extension)
-- [安装与构建](https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension/install.md)
-- [已有验收记录](https://github.com/pine2D/poe2-tools/blob/a68f6d8bacc7f336f6136a91665ca027063a536c/docs/chrome-extension/release-readiness.md)
-
-截至本轮核对，公开仓库没有 Release；没有核实到商店安装入口。网站提供开发预览说明和源码构建入口，不提供虚构下载链接。Windows 原生输入法仍待对应环境验收。
-
-以下为 2026-09-24 的原始规划背景，其“待验证”描述只反映当时状态；当前支持范围以以上固定快照文档为准。
+2026-10-02：扩展源码已合入主树 `apps/poe2-extension`，当前为 0.1.111 开发预览版，尚未提供公开下载包，也没有商店安装入口。支持范围、未验收部分见 [兼容性记录](compatibility.md)，从源码构建见 [安装与使用](install.md)。六阶段完整路线尚未全部验收；Windows 原生输入法仍待对应环境验收。
 
 ## 产品目标
 
 在成熟 PoE2 工具网站中直接使用国服简体中文：页面术语与操作文案可读，中文搜索能驱动原站查询，国服 Ctrl+Alt+C 装备文本可转换后导入。首站为 [CoE 新版介绍](https://beta.craftofexile.com/whats-new)所指的 Beta，实际制作入口为 [PoE2 模式](https://beta.craftofexile.com/?game=poe2)。新版 CoE 与游戏 PoE2 是两个不同维度，不将新版首页默认的 PoE1 当成目标。
 
 用户实测：原站名为“简体中文”的选项实际显示繁体，并有大量英文遗漏。扩展以英文界面为基准，使用独立国服译名，不依赖原站繁体包、不做繁简转换。
+
+本轮核心覆盖与集中验收见[发布准备记录](release-readiness.md)，其中区分实际通过与待验收项。
 
 ## 文档导航
 
@@ -36,6 +32,18 @@
 
 ## 已知证据与待验证项
 
-CoE 开发者文档公开 `game=poe2&eimport=...`，没有公开 API。既有 `docs/coe-focus-bridge-research.md` 仅验收了部分普通法器导入，不能外推全部装备。上一轮隔离浏览器观察到基底搜索异步更新；填值后的即时快照不代表最终结果。尚未验证扩展注入、所有搜索框、制作页渲染或中文输入法，均不得写成已通过。
+CoE 开发者文档公开 `game=poe2&eimport=...`，没有公开 API。既有 `docs/coe-focus-bridge-research.md` 仅验收了部分普通法器导入，不能外推全部装备。上一轮隔离浏览器观察到基底搜索异步更新；填值后的即时快照不代表最终结果。现已实际装载扩展并核对首页基底检索、制作页词缀查询、中文导入和 popup 关闭恢复；并不等于所有搜索框、模拟流程或真实中文输入法均已验收。
 
-安装、兼容性与隐私的用户文档在实施相应交付时补齐；本轮不放置空文档、不预造源码目录。
+安装、兼容性和隐私文档已提供；版本证据与剩余验收项分别记录，不能把预览版安装成功当作正式首版全部完成。
+
+## 施工入口
+
+0.1.111 开发预览版已进入实施；安装见 [安装与使用](install.md)，权限见 [隐私说明](privacy.md)，实测和未验收范围见 [兼容性记录](compatibility.md)。完整路线仍以 plan.md 为准，未勾选项不是已交付承诺。
+
+阶段完成证据与下一轮施工顺序见 [阶段审计](stage-audit.md)。
+
+权杖的原站输入、复合词缀与技能等级差异见[权杖导入核对](sceptre-import-audit.md)；不能将英文导入无报错等同于值完整保留。
+
+迭代命令、样本格式门禁及包管理器故障排查见[验证说明](validation.md)。
+
+Linux Fcitx5真实拼音输入的已验收路径及平台边界见[IME验收记录](ime-audit.md)。

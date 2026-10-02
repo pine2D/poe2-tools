@@ -10,7 +10,7 @@
 - **开发依赖**：`subset-font@2.9.0`（BSD-3-Clause），只在构建期切分字体，不进入网站或扩展产物。传递依赖：fontverter 2.0.0（BSD-3-Clause）、harfbuzzjs 1.6.x（MIT；精确版本以 pnpm-lock.yaml 为准）、wawoff2 2.0.1（MIT）、woff2sfnt-sfnt2woff 1.0.0（MIT）、pako 1.0.11（MIT AND Zlib）、argparse 2.0.1（Python-2.0）、p-limit 3.1.0 与 yocto-queue 0.1.0（MIT），都是纯 JS/wasm，没有原生二进制和安装脚本。
 - **《通用规范汉字表》一级字表**：`packages/ui-theme/scripts/tongyong-level1.txt`，3500 行、每行一字，按字表序号排列，用于常用字分片（改版规格 §7.3）。字表由国务院 2013 年以《国务院关于公布〈通用规范汉字表〉的通知》（国发〔2013〕23号）公布，按《著作权法》第五条，国家机关具有行政性质的文件不适用该法。文本取自 Unicode 汉字数据库 [Unihan 16.0.0](https://www.unicode.org/Public/16.0.0/ucd/Unihan.zip)（Unicode License v3；Unihan.zip 的 SHA-256 为 `b8f000df69de7828d21326a2ffea462b04bc7560022989f7cc704f10521ef3e0`）`Unihan_OtherMappings.txt` 的 `kTGH` 字段：取值为 `2013:1` 至 `2013:3500` 的字，按序号排列。字体脚本只读取入库的这份文件，不联网获取它。
 - **自有素材**：母题「符文菱结」（`packages/ui-theme/src/motif.ts` 生成的 `src/generated/motif.css`、`favicon.svg`、`logo.svg`、`knot-full.svg`，以及站点副本 `apps/site/public/favicon.svg`）和颗粒（`src/noise.ts`）都是自绘，没有第三方来源。
-- **素材白名单**（由 `packages/ui-theme/scripts/compliance.mjs` 判定）：仓库和构建产物里的全部 png、jpg、webp、gif、svg、woff、woff2、ttf、otf 都必须属于以下三类之一，否则测试或构建失败：① 字体分片，登记目录 `packages/ui-theme/fonts/`，逐片 SHA-256 由脚本同时生成的 `fonts/coverage.json` 承载；② 母题生成物，即 `packages/ui-theme/src/generated/*.svg` 与 `apps/site/public/favicon.svg`，与源的一致性由 `motif.test.ts` 逐字节保证；③ 其余手工或一次性生成的文件，按路径和 SHA-256 逐个登记在下面的“素材白名单（第 3 类）”表里，一期为空。woff、ttf、otf 不属于任何一类，出现即失败。
+- **素材白名单**（由 `packages/ui-theme/scripts/compliance.mjs` 判定）：仓库和构建产物里的全部 png、jpg、webp、gif、svg、woff、woff2、ttf、otf 都必须属于以下三类之一，否则测试或构建失败：① 字体分片，登记目录 `packages/ui-theme/fonts/`，逐片 SHA-256 由脚本同时生成的 `fonts/coverage.json` 承载；② 母题生成物，即 `packages/ui-theme/src/generated/*.svg` 与 `apps/site/public/favicon.svg`，与源的一致性由 `motif.test.ts` 逐字节保证；③ 其余手工或一次性生成的文件，按路径和 SHA-256 逐个登记在下面的“素材白名单（第 3 类）”表里；2026-10-02 合入扩展时登记了扩展的 4 个自绘图标（`apps/poe2-extension/scripts/generate-icons.py` 一次性生成，自有 MIT，无第三方来源，只随扩展包发布、不进网站产物）。woff、ttf、otf 不属于任何一类，出现即失败。
 
 终审（M3，2026-10-01）：本节已按 spec §7.4 与 M1–M3 的最终实现逐项核对：字体源与 SHA-256、一级字表、开发期依赖许可、自有素材、白名单三类与明确不使用的素材。
 
@@ -37,6 +37,10 @@
 
 | 路径 | SHA-256 |
 |---|---|
+| `apps/poe2-extension/public/icons/icon-16.png` | `e974f150f5c2bc0fcbc6286e4f9a7516ca848eb8e6fd7d1fbec355937f91afdf` |
+| `apps/poe2-extension/public/icons/icon-32.png` | `df7691f57a6192e5bc4eb69336f0b628063da3cd1d137b59f42039144f15c9b1` |
+| `apps/poe2-extension/public/icons/icon-48.png` | `863994212b65bc689320047e0db833f77addd99d534fc60524f4892143cacb8a` |
+| `apps/poe2-extension/public/icons/icon-128.png` | `27789cbfe78eb59bdf8ff9613e350fd2058bf24bb4353fe2558fa35667ffeb96` |
 
 # 2026-09-18 副手雕像与格挡核对（实施前登记）
 
@@ -676,3 +680,97 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 | 拟建 `data/l10n/coe-beta/ui.zh-CN.json` 与 `data/l10n/aliases.zh-CN.json` | manual，自写界面译文与经核对别名 | 按需创建；复用现有国服词典来源身份，未经确认不从繁体包补译；词典随扩展打包，保留原 gray 开关和来源元数据 |
 
 以上页面只用于规划核对。此前浏览器基底检索存在异步更新，尚不能据此确定全部事件与 DOM 兼容性，后续记录于 `docs/chrome-extension/compatibility.md`（实施时创建）。
+
+
+### 扩展标签 UI 人工译名（2026-09-25）
+
+沿用 CoE Beta 公开界面人工适配来源，仅观察 `#filterSelector li.tag` 与 `.modTag` 的文字和身份；不复制规则、权重或实现。20 个英文标签及 Non- 变体在扩展 `regions.ts` 中维护人工简体译名，属于 manual。用户高级装备样本辅助核对常用标签；Caster“施法”是人工 UI 用语，尚无国服独立标签真机证据，不标为官方已核实译名。未知标签保留原文。
+
+
+### 扩展新版介绍页术语核对（2026-09-25）
+
+0.1.30 沿既有 `data/craft/catalog.json` 国服名称核对四种 Flux 与 Vaal Infuser 系列，沿 `data/dict/zh-CN/items.json` 核对 Gloam／Tenebrous／Dusk／Penumbra 首饰及 Distorted Amulet；只增加人工组合句，不复制外站规则文件。[PoE2DB 简中 Strongbox](https://poe2db.tw/cn/Strongbox) 按已登记 gray 来源人工核对“保险箱”，页面标签亦含“施法”，可作为 Caster 人工译名的社区交叉证据，仍不等于国服真机验证。Distilled_Emotions／Distilled_Ire 页面读取均为404，不作为译名证据；分类暂保留英文。
+
+
+### 扩展分类名称人工译文（2026-09-25）
+
+0.1.35 仅从新版 CoE 可见 `categoriesSelector`／`classSelector` 记录类别名及选择身份，不读取执行源码或规则库；89条分类／分型在既有 UI 表中人工维护。Quarterstaves、Bucklers、Flails 分别依据现有国服基底表核对为节杖、轻盾、连枷；其余类别沿既有文本类别／国服物品名称和人工界面说明。BASE译为基础类型，STR／DEX／INT展开为力量／敏捷／智慧，不改变ID。分类用语不等同于国服客户端类别行已全部真机核对。碑牌、地图石等未核实分类暂保留英文。
+
+
+### 扩展 Data 类别与装备卡人工译文（2026-09-25）
+
+0.1.37沿已登记CoE可见DOM观察，补齐Data中实际出现的26个类别单复数形式及1条空筛选提示；类别译名复用0.1.35对应表。装备卡属性分段“能量护盾／符文结界／智慧”沿既有国服词典与用户高级装备文本用语，仅限定`.item .property`上下文。无新增来源、同行代码或规则文件；只保存自造最小DOM回归，不归档原站全页。
+
+
+### 扩展蓝玉戒指文本导入核对（2026-09-25）
+
+0.1.39复用既有items国服Sapphire Ring→蓝玉戒指与stats的`explicit.stat_4220027924`冰霜抗性文本身份。该stat ID仅标识已登记翻译模板，不将交易词典的explicit前缀用作基底属性生成规则；来源分组由高级文本头和原站导出分离核对。只使用自造普通／魔法／稀有文本与公开导入导出界面，不复制CoE词缀池或制作源码，不新增数据来源。
+
+
+### 扩展基底属性头标签核对（2026-09-25）
+
+0.1.40使用已登记国服高级文本结构与自造带标签蓝玉戒指样本，在CoE公开原生导入导出界面核对。元素／冰霜／抗性沿既有人工标签对应，输出保留原标签文字，不增加词典来源或外站规则；新增文本结构支持与实际国服基底头标签组合是否出现分别记录。
+
+
+2026-09-25：扩展0.1.48沿用已登记国服交易词典`data/dict/zh-CN/stats.json`的`explicit.stat_2081918629`，其Socketed Augment Items对应“镶嵌的增幅器物品”，据此人工翻译新版介绍页“影响增幅器数值的词缀”说明。不新增抓取来源；不把Augment误写成增幅石，不从此句推导制作规则。Distilled Emotions和特殊符文池简称仍缺可靠国服对应，本轮保留英文。
+
+
+### 扩展材料用途说明人工译文（2026-09-25）
+
+0.1.66沿已登记的CoE新版公开Data页面观察，人工翻译11条预兆用途完整句，保存在`apps/poe2-extension/src/adapters/coe-beta/material-descriptions.ts`。通货与亵渎用语沿既有国服词典；不采集同行规则库、不推导生成权重或执行机制。仅归一化换行后完整匹配，未知句保留原文；巫妖专名等未核实内容不补猜译。原站英文与关键词节点保持，中文作为独立对照。
+
+
+0.1.67复用上述已取得的49段公开说明，新增26条人工译文，总覆盖37条。材料名称沿catalog国服表；Low Life／Shrine／Strongbox／Pack Size／Monster Rarity沿已登记交易词缀分别为低血／神龛／保险箱／怪物群规模／怪物稀有度。保留原文激活前提、概率、否定与次数，不把商人错误估价推断为必定获利，也不把机会石免销毁等同于必出传奇。剩余12段涉及未核实专名或机制措辞，仍保留英文。
+
+
+0.1.68按现有国服primary交易词缀快照0.5.5核对制作术语：`explicit.stat_586037801`的Desecrated Modifier→渎灵词缀、`explicit.stat_1710200734`的Desecrated Currency→渎灵通货；珠宝专名句中defilement译“亵渎”，Desecration另译“渎灵”，不可混同。纠正5条人工UI词及用途说明中的制作语境，原5个旧称只作为显式检索别名。未重写官方词典、用户输入或旧制作引擎，也不声称此快照已代表更新版本的国服真机。
+
+新增三位巫妖（stat_3418580811的|28、|24、|26）、阿兹莫里之灵（stat_3815617979）、盗贼流放者（stat_1352729973）的五条人工用途句；Possessed沿stat_3181677174等译为被附身。用途覆盖42／49段，剩余7段不填猜译。
+
+
+### 扩展预兆剩余用途术语核对（2026-09-25）
+
+0.1.70沿已登记PoE2DB简中gray参考，人工核对[地貌](https://poe2db.tw/cn/Biome)、[怪物效能](https://poe2db.tw/cn/Monster_Effectiveness)、[宏大先祖秘藏](https://poe2db.tw/cn/Grand_Expedition)及[圣化物品](https://poe2db.tw/cn/Sanctified_Items)。圣化同时见[神圣石](https://poe2db.tw/cn/Divine_Orb)的稀有物品用途语境，不从物品名称猜译动作。只参考专名，自写CoE公开用途整句译文，不复制页面规则、概率、数据表或同行代码；不是国服真机验证，也不新增采集适配器或运行时请求。梅德维德／沃拉娜／欧罗什沿已有primary国服stats快照stat_3418580811的|22／|21／|23，乌崔德沿已有gray物品表“乌崔德圣杯”。新增七句均完整匹配，未知或语义改变的句子仍回退原文。
+
+
+0.1.72红玉戒指转换复用既有国服items的Ruby Ring→红玉戒指，以及primary交易词缀explicit.stat_3372524247的火焰抗性对应。stat ID只作翻译身份；基底与后缀归属分别通过自造样本的原站导入导出核对，不从词典explicit前缀推断生成规则。没有新增数据源、抓取或制作引擎逻辑。
+
+
+0.1.74沿既有CoE公开DOM参考，为条件区无文字图标读取原生tooltip，不修改其值。Remove复用人工UI表，Fractured补为“破裂”人工UI译名；未新增国服真机术语证据、外站数据表或抓取适配器。只在已有条件区域为缺失名称的控件补aria-label，未知提示不猜译。
+
+
+0.1.76首饰生命前缀复用primary交易词典explicit.stat_3299347043的maximum Life→生命上限。已登记MIT制作目录仅用于设计自造IncreasedLife4、50(40-59)样本，戒指T5／项链T6另经原站可见说明和原生导出核对；不将制作规则、池或权重加入扩展资源，不修改旧引擎。三种基底魔法／稀有分别核对，不从同一stat ID直接外推全类别兼容。
+
+
+2026-09-26：0.1.77核对介绍页仍使用Distilled Emotions旧称。GGG官方[0.3.0补丁说明](https://www.pathofexile.com/forum/view-thread/3826682)明确其已改名Liquid Emotions；已登记gray来源[PoE2DB简中现名页面](https://poe2db.tw/cn/Liquid_Emotions)标题为“液化情感”。据此补人工UI条目“液化情感（原称 Distilled Emotions）”，保留旧称关系；不是已证实的国服旧版本译名，不改原生搜索词、物品ID或制作规则。此前旧URL的404不再作为当前名称无资料的依据。此条为人工组合UI译文，遵循现有manual分类，--no-gray仍保留，不宣称该模式全部用语仅来自官方。
+
+
+0.1.78沿既有primary国服交易词典rune.stat_3132681620、rune.stat_201332984、rune.stat_1676950499、rune.stat_1927467683，分别核对Chronomancy／Marksman／Destruction／Soul词缀的“塑时术师／神射手／毁灭／灵魂”名称；仅提取名称用于人工介绍句，不把原词典“重置／选取”差异推导为新机制。既有catalog名称子集中的乌崔德的星辰、克尔的狩猎、斯鲁德的神力、梅德维德的照料均在原站Data中文搜索核对英文提交及对应图像身份。沿已登记CoE公共DOM来源，人工翻译这四张结果卡可见的完整镶嵌用途句，限定靴子／手套／武器／胸甲，保留空孔及镶嵌后不可取回或替换；不增加规则数据、词缀池或外站请求。
+
+
+0.1.79沿既有CoE公开DOM与搜索适配器识别范围，为缺少原生名称的搜索框补人工UI可访问名称（物品、词缀、制作基底、材料价格、条件）。不新增数据源、请求或权限；不把用途标签当作游戏术语。原生aria、title、非空placeholder及关联label优先，未知搜索框不补名称。
+
+
+0.1.80复用已登记primary交易词典explicit.stat_3372524247、explicit.stat_4220027924、explicit.stat_1671376347的火焰／冰霜／闪电抗性名称与模板。在无扩展原站分别导入三种既有首饰的自造魔法／稀有样本，核对FireResist3、ColdResist3、LightningResist3与IncreasedLife4独立保存；没有将同stat ID直接外推其他装备或混合抗性，不新增词典来源／数据抓取。
+
+
+0.1.82沿既有CoE公开DOM人工UI来源，核对设置导入标题Settings Importer、二次替换确认标题Settings Import与确认问句，以及通用placeholder Paste your data here；修正后者误称装备文本的问题，改为“在此粘贴数据”。包含游戏高级复制说明的装备专用完整提示独立保留，不新增外部数据源。
+
+
+0.1.83新增黄玉／紫晶戒指档案：名称来自既有gray的zh-CN/items.json中Topaz Ring／Amethyst Ring；固有范围样本设计参考已登记MIT目录，另经原站英文导入分别核对FourRing5与FourRing6及实际固有值。生命和三元素抗性复用既有primary词条，紫晶的混沌抗性复用explicit.stat_2923486259；不从此扩大其他首饰混沌后缀资格。初选Coral Ring未在现有PoE2目录找到，未创建档案、译名或声称支持；未新增数据源或制作规则。
+
+
+0.1.86沿既有CoE公开DOM人工UI来源补齐Data物品／词缀两种模式的完整空结果句No items found for this selection.与No modifiers found for this selection.，均按当前筛选条件表述，不声称中文词典缺失或原站不支持该类别。没有新增数据源或游戏规则。
+
+0.1.87沿既有CoE公开DOM人工UI来源，为https://beta.craftofexile.com/simulator-usage的六节教程增加122条限定正文上下文的手工译文，并补流程侧栏帮助入口的三段译文。保留原站链接、动图地址及“调试尚未推出”限定；House／Flag只在此教程按图标解释，普通and／or不采用逻辑运算符标签。原文Conditions configuration段重复无有效路线时处理说明，中文标题附明确校注、下文忠实翻译，不擅自改成未验证教程；不是新的制作数据源或规则导入。
+
+
+### 扩展石板名称补表（2026-09-26）
+
+来源为已登记 gray 的 [PoE2DB 简中石板列表](https://poe2db.tw/cn/Tablet)及八种石板各自页面。仅人工核对英文／简体名称，存入 `data/l10n/coe-beta/tablets.zh-CN.json`；逐项 URL 见文件 `_meta.pages`。不复制规则、权重或页面数据文件，未确认独立再分发授权，保持 gray，可通过 `--no-gray` 整体移除。无运行时请求。访问日期不代表游戏版本，版本记为 unknown；尚未国服真机核对。
+
+
+0.1.97普通粗制弓导入沿已登记gray物品表Crude Bow→粗制弓；另核对[PoE2DB简中页面](https://poe2db.tw/cn/Crude_Bow)的类别“弓类”，作为文本类别别名映射至Bows，另加人工兼容简称“弓”，不宣称用户真机复制头已验证，不通过此项启用其他弓。敏捷复用primary国服交易词条explicit.stat_3261801346；既有MIT目录仅用于设计Dexterity5、24(21-24)自造样本，身份另以原站英文导入导出核对，不引入新规则数据、权重或采集。
+
+
+0.1.98粗制弓攻击组合沿primary国服交易词典explicit.stat_1940865751（附加物理伤害）和explicit.stat_210067635（攻击速度）进行文字映射。既有MIT目录仅用于设计LocalAddedPhysicalDamage1、LocalIncreasedAttackSpeed1样本；原站公开高级说明独立确认粗制弓上分别为T9、T5，数值范围分别1–2／4–5、5–7。不导入原站内部数据，不增加制作规则或新数据来源。

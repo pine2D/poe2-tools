@@ -129,9 +129,14 @@ describe('data-sources.md 机读段落（契约 §3.7.6）', () => {
     for (const sha of files.values()) expect(sha).toMatch(/^[0-9a-f]{64}$/)
   })
 
-  it('读出一级字表登记，第 3 类白名单一期为空表', () => {
+  it('读出一级字表登记；第 3 类白名单只登记扩展的 4 个自绘图标', () => {
     expect(parseLevel1Registration(dataSources)).toMatch(/^[0-9a-f]{64}$/)
-    expect(parseRegisteredAssets(dataSources).size).toBe(0)
+    expect([...parseRegisteredAssets(dataSources).keys()]).toEqual([
+      'apps/poe2-extension/public/icons/icon-16.png',
+      'apps/poe2-extension/public/icons/icon-32.png',
+      'apps/poe2-extension/public/icons/icon-48.png',
+      'apps/poe2-extension/public/icons/icon-128.png',
+    ])
   })
 
   it('缺节、缺提交号或哈希格式不对时抛错', () => {

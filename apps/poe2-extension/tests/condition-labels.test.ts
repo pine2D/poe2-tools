@@ -1,0 +1,196 @@
+import { createLexicon, type Term } from '@poe2-tools/l10n-core'
+import { afterEach, expect, it } from 'vitest'
+import aliases from '../../../data/l10n/aliases.zh-CN.json'
+import ui from '../../../data/l10n/coe-beta/ui.zh-CN.json'
+import { searchCandidates } from '../src/adapters/coe-beta/search'
+import { attachTextLayer } from '../src/content/text-layer'
+
+let stop = () => {}
+afterEach(() => {
+  stop()
+  document.body.innerHTML = ''
+})
+it('实际词典翻译条件标签并支持空余前缀位搜索，保留原站身份与英文筛选属性', () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  const lex = createLexicon(terms)
+  document.body.innerHTML = `<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><div class="editing"><input type="text"></div><ul>
+    <li value="77" search="suffix+#% to cold resistance"><div class="type">Suffix</div><span class="stat">+#% to Cold Resistance</span></li>
+    <li value="special:open-prefix" search="metaopen prefix"><div class="type">Meta</div><span>Open Prefix</span></li>
+    <li value="77_1001" search="essencesuffix+#% to cold resistance"><div class="influence"><img src="essence.webp">Essence</div><div class="type">Suffix</div></li>
+  </ul></div></div></div></main>`
+  const original = document.body.innerHTML
+  const rows = [...document.querySelectorAll('li')]
+  const image = document.querySelector('img')
+  stop = attachTextLayer(document, lex)
+  expect(rows[0]?.querySelector('.type')?.textContent).toBe('后缀')
+  expect(rows[1]?.textContent).toBe('特殊条件空余前缀位')
+  expect(rows[2]?.textContent).toBe('精华后缀')
+  expect(rows[0]?.getAttribute('search')).toBe('suffix+#% to cold resistance')
+  expect(rows[1]?.getAttribute('value')).toBe('special:open-prefix')
+  expect(rows[2]?.getAttribute('search')).toBe('essencesuffix+#% to cold resistance')
+  expect(document.querySelector('img')).toBe(image)
+  const input = document.querySelector('input') as HTMLInputElement
+  input.value = '空余前缀位'
+  expect(searchCandidates(input, lex).map((c) => c.term.en)).toContain('Open Prefix')
+  stop()
+  expect(document.body.innerHTML).toBe(original)
+})
+
+it('原站复制已翻译的选项到当前标签时，停用恢复选中项英文', async () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML =
+    '<main><div class="dropdown"><label><div class="current"></div></label><div class="editing"><ul><li class="selected" value="special:open-prefix"><div class="type">Meta</div><div class="modifier">Open Prefix</div></li></ul></div></div></main>'
+  stop = attachTextLayer(document, createLexicon(terms))
+  const current = document.querySelector('.current') as HTMLElement
+  const source = document.querySelector('li') as HTMLElement
+  for (const child of source.children) current.append(child.cloneNode(true))
+  document.querySelector('.editing')?.classList.add('hidden')
+  await new Promise((r) => setTimeout(r, 0))
+  expect(current.textContent).toBe('特殊条件空余前缀位')
+  stop()
+  expect(current.textContent).toBe('MetaOpen Prefix')
+  expect(source.getAttribute('value')).toBe('special:open-prefix')
+})
+
+it('条件属性类别和路线优先级可翻译检索，不改原站筛选键与用户步骤名', () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  const lex = createLexicon(terms)
+  document.body.innerHTML = `<main><div id="simulatorStepEditor"><div class="links"><label>Route priority order</label><div class="routeOrder"><div class="row" target="step-2"><div class="title">Property</div></div></div></div></div>
+    <div id="simulatorConditionRequirements"><div class="dropdown"><div class="editing"><input type="text"></div><ul>
+    <li value="property:energy-shield" search="propertyenergy shield"><div class="type">Property</div><span>Energy Shield</span></li>
+    <li value="flag:corrupted" search="flagcorrupted"><div class="type">Flag</div><span>Corrupted</span></li>
+    <li value="pseudo:resists" search="pseudototal resists"><div class="type">Pseudo</div><span>Total Resists</span></li>
+    </ul></div></div></main>`
+  const before = document.body.innerHTML
+  const rows = [...document.querySelectorAll('li')]
+  stop = attachTextLayer(document, lex)
+  expect(document.querySelector('.links > label')?.textContent).toBe('路线优先顺序')
+  expect(document.querySelector('.routeOrder .title')?.textContent).toBe('Property')
+  expect(rows.map((r) => r.textContent)).toEqual(['装备属性能量护盾', '状态腐化', '汇总属性总抗性'])
+  const input = document.querySelector('input') as HTMLInputElement
+  input.value = '能量护盾'
+  expect(searchCandidates(input, lex).map((c) => c.term.en)).toContain('Energy Shield')
+  expect(rows[0]?.getAttribute('search')).toBe('propertyenergy shield')
+  stop()
+  expect(document.body.innerHTML).toBe(before)
+})
+
+it('组运算符与组内匹配数量分别显示，翻译不改变输入值或运算符身份', () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML = `<main><div id="simulatorConditionRequirements"><div class="requirementGroup">
+    <label>Group type</label><ul><li value="and">And</li><li value="or" class="selected">Or</li><li value="not">Not</li></ul>
+    <label class="countLabel">Matches</label><input type="number" class="matchCount" value="1" placeholder="All">
+    </div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  const before = document.body.innerHTML
+  stop = attachTextLayer(document, createLexicon(terms))
+  expect([...document.querySelectorAll('li')].map((e) => e.textContent)).toEqual([
+    '与（AND）',
+    '或（OR）',
+    '非（NOT）',
+  ])
+  expect(document.querySelector('.countLabel')?.textContent).toBe('组内匹配数量')
+  expect(document.querySelector('li.selected')?.getAttribute('value')).toBe('or')
+  expect(input.value).toBe('1')
+  expect(document.querySelector('input')).toBe(input)
+  stop()
+  expect(document.body.innerHTML).toBe(before)
+})
+
+it('回边缺少起点时显示可操作的中文错误，不替换原生提示节点', () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML = `<dialog id="noticeDialog"><div class="notice flex flex-columns clickable">
+    <div class="header"><label>An error occured</label></div><div class="message"><div class="icon"></div><div class="text">Could not find starting step (please select one)</div></div>
+    </div></dialog>`
+  const original = document.body.innerHTML
+  const notice = document.querySelector('.notice')
+  stop = attachTextLayer(document, createLexicon(terms))
+  expect(document.querySelector('.header')?.textContent).toBe('发生错误')
+  expect(document.querySelector('.message .text')?.textContent).toBe(
+    '无法自动确定起始步骤，请手动选择。',
+  )
+  expect(document.querySelector('.notice')).toBe(notice)
+  stop()
+  expect(document.body.innerHTML).toBe(original)
+})
+it('模拟器动态连线提示翻译并恢复，原站tooltip属性始终保留英文', async () => {
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: en,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+  }))
+  document.body.innerHTML =
+    '<main><div class="simulatorStep"><div class="links"><div class="end" tooltip="End condition"></div></div></div></main>'
+  stop = attachTextLayer(document, createLexicon(terms))
+  const tooltip = document.createElement('div')
+  tooltip.className = 'hover tooltip'
+  tooltip.textContent = 'End condition'
+  document.querySelector('main')?.append(tooltip)
+  await new Promise((r) => setTimeout(r, 0))
+  expect(tooltip.textContent).toBe('结束条件')
+  tooltip.textContent = 'Restart condition'
+  await new Promise((r) => setTimeout(r, 0))
+  expect(tooltip.textContent).toBe('重新开始条件')
+  tooltip.textContent = 'New link'
+  await new Promise((r) => setTimeout(r, 0))
+  expect(tooltip.textContent).toBe('新增连线')
+  expect(document.querySelector('.end')?.getAttribute('tooltip')).toBe('End condition')
+  stop()
+  expect(tooltip.textContent).toBe('New link')
+})
+
+it('渎灵界面显示采用国服译名，旧称别名仍指向原英文身份', () => {
+  const en = 'Desecrated Prefix'
+  expect(ui.entries[en]).toBe('渎灵前缀')
+  const terms: Term[] = Object.entries(ui.entries).map(([en, zh]) => ({
+    id: `ui:${en}`,
+    en,
+    zh,
+    domain: 'ui',
+    source: 'manual',
+    version: 'test',
+    aliases: aliases.entries.find((entry) => entry.id === `ui:${en}`)?.aliases ?? [],
+  }))
+  const lexicon = createLexicon(terms)
+  for (const query of ['渎灵前缀', '亵渎前缀'])
+    expect(lexicon.search(query, 'ui').map((entry) => entry.term.en)).toContain(en)
+  expect(lexicon.translate(en, 'ui')).toBe('渎灵前缀')
+})
