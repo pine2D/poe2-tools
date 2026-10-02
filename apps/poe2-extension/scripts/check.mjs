@@ -28,18 +28,23 @@ async function loadLexiconModule() {
 
 // 弹窗里唯一允许的外链：“检查更新”打开网站介绍页（只是导航，扩展不发请求）
 export const POPUP_LINKS = ['https://poe2-tools.pine2d.com/extension/']
+// 下面识别引用属性的口径一致：属性名前只要不是字母、数字、_、-（空白、引号、/、: 都算），等号两侧可有空白，
+// 这样 src = "…"、id="x"href="…"、<a/href="…">、xlink:href="…" 都会被识别。
 // src/href 以外能让页面发请求的属性，弹窗里一律不允许
-const OTHER_REFERENCE_ATTRS = /\s(srcset|poster|action|formaction|ping|data|background)\s*=/i
+const OTHER_REFERENCE_ATTRS =
+  /(?<![\w-])(srcset|imagesrcset|poster|action|formaction|ping|data|background|http-equiv)\s*=/i
 
 /** popup.html 的资源与链接：script/link 只能引用包内 ./assets/，a 只能指向 POPUP_LINKS；返回包内资源路径 */
 export function popupReferences(html) {
   const other = html.match(OTHER_REFERENCE_ATTRS)
   if (other) throw new Error(`popup 含不允许的引用属性：${other[1]}`)
   if (/url\(|@import/i.test(html)) throw new Error('popup 含内联样式引用')
-  const total = [...html.matchAll(/\s(?:src|href)=/gi)].length
+  const total = [...html.matchAll(/(?<![\w-])(?:src|href)\s*=/gi)].length
   const resources = []
   let seen = 0
-  for (const [, tag, value] of html.matchAll(/<([a-z]+)\b[^>]*?\s(?:src|href)="([^"]*)"/gi)) {
+  for (const [, tag, value] of html.matchAll(
+    /<([a-z]+)\b[^>]*?(?<![\w-])(?:src|href)\s*=\s*"([^"]*)"/gi,
+  )) {
     seen += 1
     if (tag.toLowerCase() === 'a') {
       if (!POPUP_LINKS.includes(value)) throw new Error(`popup 含未登记的链接：${value}`)

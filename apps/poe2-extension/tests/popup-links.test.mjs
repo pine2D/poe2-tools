@@ -25,6 +25,20 @@ it.each([
   ['<img srcset="https://cdn.example.com/x.png 2x">', 'popup 含不允许的引用属性：srcset'],
   ['<form action="https://example.com/"></form>', 'popup 含不允许的引用属性：action'],
   ['<p style="background:url(https://cdn.example.com/x.png)">x</p>', 'popup 含内联样式引用'],
+  // 属性名与等号之间、等号与引号之间有空白，或属性名前不是空白，同样要识别
+  ['<script src = "https://cdn.example.com/x.js"></script>', 'popup 含外部资源'],
+  ['<link rel="stylesheet" href = "https://cdn.example.com/x.css">', 'popup 含外部资源'],
+  ['<a id="x"href="https://example.com/">别处</a>', 'popup 含未登记的链接'],
+  ['<a/href="https://example.com/">别处</a>', 'popup 含未登记的链接'],
+  [
+    '<meta http-equiv="refresh" content="0;url=https://example.com/">',
+    'popup 含不允许的引用属性：http-equiv',
+  ],
+  [
+    '<link rel="preload" as="image" imagesrcset="https://cdn.example.com/x.png 2x">',
+    'popup 含不允许的引用属性：imagesrcset',
+  ],
+  ['<svg><image xlink:href="https://cdn.example.com/x.png"/></svg>', 'popup 含外部资源'],
 ])('拒绝 %s', (html, message) => {
   expect(() => popupReferences(`${ASSETS}${html}`)).toThrow(message)
 })
