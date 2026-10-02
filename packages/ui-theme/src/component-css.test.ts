@@ -978,6 +978,21 @@ describe('pt-switch（spec §5.13）', () => {
       'ButtonText',
     )
   })
+  it('强制色彩：禁用态轨道边与旋钮改用 GrayText，且排在开启态之后（同特异度靠顺序取胜）', () => {
+    const FORCED = /forced-colors:\s*active/
+    expect(declared('switch.css', '.pt-switch:disabled', 'border-color', FORCED)).toBe('GrayText')
+    expect(declared('switch.css', '.pt-switch:disabled::before', 'background', FORCED)).toBe(
+      'GrayText',
+    )
+    const forced = rulesOf('switch.css').filter((rule) => inMedia(rule, FORCED))
+    const last = (selector: string) =>
+      forced.reduce((at, r, i) => (r.selectors.includes(selector) ? i : at), -1)
+    expect(last('.pt-switch:disabled')).toBeGreaterThan(last('.pt-switch:checked'))
+    expect(last('.pt-switch:disabled::before')).toBeGreaterThan(last('.pt-switch:checked::before'))
+    // 禁用规则不与启用态共用选择器列表（否则启用态也会变成 GrayText）
+    for (const rule of forced.filter((r) => r.selectors.some((s) => s.includes(':disabled'))))
+      expect(rule.selectors.every((s) => s.includes(':disabled'))).toBe(true)
+  })
 })
 
 describe('pt-provenance（spec §5.14）', () => {

@@ -63,15 +63,21 @@
     border: 1px solid ButtonText;
     background: Canvas;
   }
-  .pt-switch:checked,
-  .pt-switch:disabled {
+  .pt-switch:checked {
     border-color: ButtonText;
     background: Canvas;
   }
   .pt-switch::before,
-  .pt-switch:checked::before,
-  .pt-switch:disabled::before {
+  .pt-switch:checked::before {
     background: ButtonText;
+  }
+  /* 禁用态（含已开启后禁用）用 GrayText 区分；与 :checked 同特异度，靠排在其后取胜 */
+  .pt-switch:disabled {
+    border-color: GrayText;
+    background: Canvas;
+  }
+  .pt-switch:disabled::before {
+    background: GrayText;
   }
   .pt-switch:focus-visible {
     outline-color: Highlight;
