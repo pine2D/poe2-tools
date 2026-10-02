@@ -10,7 +10,7 @@ import {
 } from '@poe2-tools/ui-theme/compliance'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 // @ts-expect-error 构建脚本直接由 Node 执行，不进入浏览器包。
-import { checkSite } from '../../scripts/check-site.mjs'
+import { checkSite, EXTENSION_PAGE_FORBIDDEN } from '../../scripts/check-site.mjs'
 
 const PAGES = ['index.html', 'build/index.html', 'extension/index.html', 'craft/index.html']
 const SHARD = new Uint8Array([119, 79, 70, 50, 1, 2, 3, 4])
@@ -22,6 +22,8 @@ const RELEASE = {
   sha256: sha256(ZIP),
   date: '2026-10-02',
 }
+// 页面入口脚本：介绍页由脚本渲染，下载地址写在脚本里
+const MAIN_JS = `export const href = '/downloads/' + ${JSON.stringify(RELEASE.file)}`
 
 let dir: string
 let coveragePath: string
@@ -40,7 +42,7 @@ async function completeSite(): Promise<void> {
     )
   }
   await put('404.html', '<html>404</html>')
-  await put('assets/main.js', 'export {}')
+  await put('assets/main.js', MAIN_JS)
   await put('assets/serif-sc-0-Ab12.woff2', SHARD)
   await put(`downloads/${RELEASE.file}`, ZIP)
   await put(
@@ -77,7 +79,7 @@ describe('checkSite（spec §8.6、§8.7）', () => {
     await expect(checkSite(dir, { coveragePath, release: RELEASE })).rejects.toThrow(
       'assets/main.js',
     )
-    await put('assets/main.js', 'export {}')
+    await put('assets/main.js', MAIN_JS)
     await expect(checkSite(dir, { coveragePath, release: RELEASE })).resolves.toBeUndefined()
     expect(FULL_DISCLAIMER).toBe(SITE_NOTICE_REQUIRED_LINES[0])
   })
@@ -158,5 +160,43 @@ describe('checkSite（spec §8.6、§8.7）', () => {
     )
     await rm(join(dir, 'downloads'), { recursive: true })
     await expect(checkSite(dir, { coveragePath, release: RELEASE })).rejects.toThrow('（空）')
+  })
+
+  it('介绍页脚本里没有下载地址时拒绝', async () => {
+    await completeSite()
+    await put('assets/main.js', 'export {}')
+    await expect(checkSite(dir, { coveragePath, release: RELEASE })).rejects.toThrow(
+      '没有 /downloads/poe2-extension-9.9.9.zip 的下载地址',
+    )
+  })
+
+  it('介绍页 HTML 含开发向字样时拒绝', async () => {
+    expect(EXTENSION_PAGE_FORBIDDEN).toEqual([
+      'pnpm',
+      'Node',
+      '构建',
+      '源码 ZIP',
+      'apps/poe2-extension',
+      'dist/',
+      '开发预览',
+    ])
+    await completeSite()
+    await put(
+      'extension/index.html',
+      '<html><head><meta name="description" content="开发预览扩展"><script src="/assets/main.js"></script><link rel="stylesheet" href="/assets/site.css"></head></html>',
+    )
+    await expect(checkSite(dir, { coveragePath, release: RELEASE })).rejects.toThrow(
+      'extension/index.html 含开发向字样：开发预览',
+    )
+  })
+
+  it('禁词只查用户可见文字：脚本与预加载的文件名里出现 Node、pnpm 不误报', async () => {
+    await completeSite()
+    await put('assets/Node-pnpm-a1.js', MAIN_JS)
+    await put(
+      'extension/index.html',
+      '<html><head><title>扩展</title><script type="module" src="/assets/Node-pnpm-a1.js"></script><link rel="modulepreload" href="/assets/main.js"><link rel="stylesheet" href="/assets/site.css"></head></html>',
+    )
+    await expect(checkSite(dir, { coveragePath, release: RELEASE })).resolves.toBeUndefined()
   })
 })

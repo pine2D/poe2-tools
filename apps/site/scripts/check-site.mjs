@@ -1,6 +1,6 @@
 // 构建门禁（spec §8.6、§8.7）：多页面与 404 齐全，HTML 引用的本地资源存在；字体许可文件与 NOTICE
 // 含必含行；CSS 的 url() 没有外链、目标存在；图像与字体都在素材白名单里，woff2 集合与 coverage.json 相同；
-// 扩展发布包（扩展发布 spec §6）与 release.json 一致。
+// 扩展发布包（扩展发布 spec §6）与 release.json 一致，介绍页脚本里有它的下载地址。
 import { access, readdir, readFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -17,6 +17,17 @@ import {
   SITE_NOTICE_REQUIRED_LINES,
   sha256,
 } from '@poe2-tools/ui-theme/compliance'
+
+// 介绍页正文里不该出现的开发向字样（扩展发布 spec §9、§11）
+export const EXTENSION_PAGE_FORBIDDEN = [
+  'pnpm',
+  'Node',
+  '构建',
+  '源码 ZIP',
+  'apps/poe2-extension',
+  'dist/',
+  '开发预览',
+]
 
 const PAGES = [
   'index.html',
@@ -110,7 +121,8 @@ export async function checkSite(root, options = {}) {
   await checkExtensionDownload(root, release)
 }
 
-// dist/downloads/ 恰好一个 zip，文件名、字节数、SHA-256 与 release.json 一致
+// dist/downloads/ 恰好一个 zip，文件名、字节数、SHA-256 与 release.json 一致；介绍页 HTML 不含开发向字样，
+// 介绍页由脚本渲染，下载地址在入口脚本及其预加载的 chunk 里
 export async function checkExtensionDownload(root, release) {
   const dir = resolve(root, 'downloads')
   const names = (await exists(dir))
@@ -122,6 +134,19 @@ export async function checkExtensionDownload(root, release) {
   const zip = await readFile(join(dir, release.file))
   if (zip.length !== release.bytes || sha256(zip) !== release.sha256) {
     throw new Error(`downloads/${release.file} 与 release.json 的字节数或 SHA-256 不一致`)
+  }
+  const html = await readFile(resolve(root, 'extension/index.html'), 'utf8')
+  // 只查用户可见的文字（title、meta 的 content、noscript）：先去掉 src/href 的属性值，哈希文件名里的字母组合不算
+  const visible = html.replace(/\s(?:src|href)="[^"]*"/g, '')
+  for (const word of EXTENSION_PAGE_FORBIDDEN) {
+    if (visible.includes(word)) throw new Error(`extension/index.html 含开发向字样：${word}`)
+  }
+  let code = ''
+  for (const [, path] of html.matchAll(/(?:src|href)="(\/assets\/[^"?#]+\.js)"/g)) {
+    code += await readFile(resolve(root, `.${path}`), 'utf8')
+  }
+  if (!code.includes('/downloads/') || !code.includes(release.file)) {
+    throw new Error(`扩展介绍页的脚本里没有 /downloads/${release.file} 的下载地址`)
   }
 }
 

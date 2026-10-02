@@ -5,29 +5,60 @@ import { FULL_DISCLAIMER } from '@poe2-tools/ui-theme/compliance'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { parseRules } from '../../../../../packages/ui-theme/src/testing/css'
+// @ts-expect-error 构建脚本直接由 Node 执行，不进入浏览器包。
+import { EXTENSION_PAGE_FORBIDDEN } from '../../../scripts/check-site.mjs'
 import { fsPathFromMetaUrl } from '../../shared/testing/fsPath'
 import { ExtensionPage } from './ExtensionPage'
+import { downloadHref, EXTENSION_RELEASE, formatSize } from './release'
 
 const FOCUSABLE = 'a, button, input, select, textarea, [tabindex]'
 
 afterEach(cleanup)
-it('预览版安装不伪装为商店安装，明确支持范围与升级步骤', () => {
-  render(<ExtensionPage />)
-  expect(screen.getByRole('link', { name: /查看源码与构建说明/ }).getAttribute('href')).toContain(
-    'install.md',
-  )
-  expect(screen.getByText(/尚未提供公开发行包/)).toBeDefined()
+const DOWNLOAD_TEXT = `下载扩展（v${EXTENSION_RELEASE.version}，zip，${formatSize(EXTENSION_RELEASE.bytes)}）`
+// 可访问名称在浏览器与 happy-dom 里可能在“下载扩展”与括号之间多一个空格，比较时忽略空白
+const isDownloadName = (name: string) =>
+  name.replace(/\s+/g, '') === DOWNLOAD_TEXT.replace(/\s+/g, '')
+it('面向普通用户：下载按钮直链 zip，安装四步与更新说明齐全，不出现开发向内容', () => {
+  const { container } = render(<ExtensionPage />)
+  const download = screen.getByRole('link', { name: isDownloadName })
+  expect(download.getAttribute('href')).toBe(downloadHref)
+  expect(downloadHref).toBe(`/downloads/${EXTENSION_RELEASE.file}`)
+  expect(download.hasAttribute('download')).toBe(true)
+  expect(download.textContent).toBe(DOWNLOAD_TEXT)
+  expect(screen.getByRole('heading', { name: '安装' })).toBeDefined()
   expect(
-    screen.getByRole('link', { name: '下载源码 ZIP（需构建）' }).getAttribute('href'),
-  ).toContain('/archive/a68f6d8bacc7f336f6136a91665ca027063a536c.zip')
-  expect(screen.getByText(/pnpm extension:build/)).toBeDefined()
-  expect(screen.getByText(/pnpm extension:check/)).toBeDefined()
-  expect(screen.queryByText(/pnpm extension:package/)).toBeNull()
-  expect(screen.getByRole('heading', { name: '安装开发预览版' })).toBeDefined()
-  expect(screen.getByRole('heading', { name: '更新与恢复' })).toBeDefined()
+    [...container.querySelectorAll('.extension-steps > li > p')].map((p) => p.textContent),
+  ).toEqual([
+    '下载并解压到一个固定的文件夹（之后不要删除或移动它）。',
+    '在 Chrome 地址栏打开 chrome://extensions，打开右上角“开发者模式”。',
+    '点“加载已解压的扩展程序”，选刚才的文件夹。',
+    '打开 CoE Beta，选 PoE2 → English 并刷新页面，在扩展弹窗里启用简体中文。',
+  ])
+  expect(container.querySelector('.extension-guide__note')?.textContent).toBe(
+    'Chrome 会提示扩展不是来自应用商店，这是正常的；开发者模式需要一直开着，关掉后扩展会停用；Chrome 更新后如果扩展被停用，回到扩展页重新打开即可。',
+  )
+  expect(container.querySelector('.extension-guide__heading p')?.textContent).toContain(
+    `当前版本 v${EXTENSION_RELEASE.version}，发布于 ${EXTENSION_RELEASE.date}。`,
+  )
+  expect(container.querySelector('#update p')?.textContent).toBe(
+    '下载新版 zip，解压覆盖原文件夹里的文件，在扩展页点该扩展的“重新加载”（圆形箭头），再刷新 CoE 页面；弹窗里的“检查更新”会打开本页对比版本。',
+  )
   expect(screen.getByRole('link', { name: /打开 CoE Beta/ }).getAttribute('href')).toBe(
     'https://beta.craftofexile.com/?game=poe2',
   )
+  const main = container.querySelector('main') as HTMLElement
+  const hrefs = [...main.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '')
+  for (const word of EXTENSION_PAGE_FORBIDDEN as string[]) {
+    expect(main.textContent, word).not.toContain(word)
+    for (const href of hrefs) expect(href, word).not.toContain(word)
+  }
+  expect(
+    hrefs.some((href) => /\/archive\/|install\.md|compatibility\.md|[0-9a-f]{40}/.test(href)),
+  ).toBe(false)
+  // SHA-256 只放在 GitHub Release；页面也不链接 Release（扩展发布 spec §7、§9）
+  expect(main.textContent).not.toContain(EXTENSION_RELEASE.sha256)
+  expect(hrefs.some((href) => href.includes('/releases'))).toBe(false)
+  expect(container.querySelector('pre, .extension-command')).toBeNull()
 })
 
 describe('扩展介绍页结构（spec §6.3、§4.2）', () => {
@@ -52,10 +83,13 @@ describe('扩展介绍页结构（spec §6.3、§4.2）', () => {
     expect(title.querySelector('.pt-hero-title__gold')?.textContent).toBe('就在原来的工具里。')
     const forge = container.querySelectorAll('.pt-forge-btn')
     expect(forge).toHaveLength(1)
-    const install = screen.getByRole('link', { name: '查看安装步骤' })
-    expect(install).toBe(forge[0])
-    expect(install.getAttribute('href')).toBe('#install')
-    expect(hero.contains(install)).toBe(true)
+    const download = screen.getByRole('link', { name: isDownloadName })
+    expect(download).toBe(forge[0])
+    expect(download.className).toBe('pt-forge-btn extension-download')
+    expect(download.querySelector('.extension-download__meta')?.textContent).toBe(
+      `（v${EXTENSION_RELEASE.version}，zip，${formatSize(EXTENSION_RELEASE.bytes)}）`,
+    )
+    expect(hero.contains(download)).toBe(true)
   })
 
   it('B12：说明在 DOM 中排在操作行之前，完整声明在操作行之后，三者同在一个 flex 列里', () => {
@@ -69,7 +103,7 @@ describe('扩展介绍页结构（spec §6.3、§4.2）', () => {
       'extension-intro__legal',
     ])
     const note = copy.querySelector('.extension-intro__note') as HTMLElement
-    expect(note.textContent).toBe('开发预览 · 需自行构建。适用于桌面 Chrome，请在电脑上安装。')
+    expect(note.textContent).toBe('适用于电脑上的 Chrome。')
     expect(note.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
     const legal = copy.querySelector('.extension-intro__legal') as HTMLElement
     expect(legal.textContent).toBe(FULL_DISCLAIMER)
@@ -94,9 +128,9 @@ describe('扩展介绍页结构（spec §6.3、§4.2）', () => {
     expect(env.closest('.pt-frame')?.classList.contains('extension-intro')).toBe(true)
     const bar = env.querySelector('.pt-titlebar') as HTMLElement
     expect(within(bar).getByRole('heading', { level: 2 }).textContent).toBe('先确认你的使用环境')
-    expect(bar.querySelector('.pt-chip')?.textContent).toBe('开发预览 · 0.1.111')
+    expect(bar.querySelector('.pt-chip')?.textContent).toBe(`v${EXTENSION_RELEASE.version}`)
     expect(env.querySelector('.pt-panel__body > .pt-chip--body')?.textContent).toBe(
-      '开发预览 · 0.1.111',
+      `v${EXTENSION_RELEASE.version}`,
     )
     expect([...env.querySelectorAll('dt')].map((el) => el.textContent)).toEqual([
       '站点',
@@ -127,7 +161,8 @@ describe('扩展介绍页结构（spec §6.3、§4.2）', () => {
     ])
     expect(container.querySelectorAll('.pt-subhead')).toHaveLength(3)
     for (const name of [
-      '安装开发预览版',
+      '安装',
+      '确认翻译生效',
       '更新与恢复',
       '文本处理与隐私',
       '支持范围与已知限制',
@@ -187,8 +222,18 @@ describe('extension.css（spec §6.3、§6.7、§4.5；M0 extension.html）', ()
     expect(decls('.extension-env__note').get('text-wrap')).toBe('wrap')
   })
 
-  it('安装区说明不沿用 base.css 的 text-wrap: pretty，390 下按 M0 断在“Chrome 商店安装 / 入口”（spec §6.7）', () => {
+  it('安装区说明保持普通折行，不沿用 base.css 的 text-wrap: pretty（spec §6.7）', () => {
     expect(decls('.extension-guide__heading p').get('text-wrap')).toBe('wrap')
+  })
+
+  it('下载按钮：≥621px 一行且无间隙；≤620px 版本与大小换到第二行、字号 12px（扩展发布 spec §9）', () => {
+    expect(decls('.extension-download').get('gap')).toBe('0')
+    const narrow = decls('.extension-actions .extension-download', NARROW)
+    expect(narrow.get('flex-direction')).toBe('column')
+    expect(narrow.get('height')).toBe('auto')
+    expect(narrow.get('min-height')).toBe('46px')
+    expect(decls('.extension-download__meta', NARROW).get('font-size')).toBe('12px')
+    expect(bare).not.toMatch(/\.extension-command/)
   })
 
   it('≤620px：页边距 16px，金属主按钮通栏，各区改单列（spec §6.7）', () => {

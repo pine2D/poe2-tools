@@ -1,6 +1,6 @@
 // pt-forge-btn（spec §5.5）：金属主按钮。每个路由状态至多一个，只能用在 spec §4.2 白名单的位置：
 // 首页“打开构筑汉化”（a，wide）、构筑空态“选择 .build 文件”（label）、“下载中文 .build”（button）、
-// 扩展页“查看安装步骤”（a）。
+// 扩展页“下载扩展”（a）。
 import type {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,

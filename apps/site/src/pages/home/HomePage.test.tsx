@@ -16,7 +16,8 @@ it('按任务提供两个直达入口，不推荐已搁置的工坊', () => {
     '/extension/',
   )
   expect(document.querySelector('a[href="/craft/"]')).toBeNull()
-  expect(screen.getByText(/开发预览/)).toBeDefined()
+  expect(screen.getByText('可直接下载 · 电脑版 Chrome')).toBeDefined()
+  expect(screen.queryByText(/开发预览|需自行构建/)).toBeNull()
 })
 it('旧版本留下的浅色偏好不再生效：页面不写 data-theme，也没有主题控件（spec D2）', () => {
   localStorage.setItem('poe2-tools.theme', 'light')

@@ -111,7 +111,7 @@ export function HomePage() {
               </PtPanel>
               <div className="tool-meta">
                 <span lang="en">CoE Beta · PoE2 · English</span>
-                <span>开发预览 · 需自行构建</span>
+                <span>可直接下载 · 电脑版 Chrome</span>
               </div>
               <a className="pt-btn pt-btn--wide" href="/extension/">
                 <span>查看扩展与安装方式</span>
