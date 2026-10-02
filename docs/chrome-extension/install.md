@@ -53,15 +53,14 @@ pnpm extension:package
 
 ## 数据开关
 
-`pnpm extension:build -- --no-gray` 的参数转发受包管理器行为影响，明确关闭 gray 数据请运行：
+只想在本机看关闭 gray 数据的效果时运行：
 
 ```sh
 node apps/poe2-extension/scripts/build.mjs --no-gray
 pnpm extension:check
-node apps/poe2-extension/scripts/package.mjs
 ```
 
-关闭后基底／传奇名覆盖会减少，依赖其识别的装备导入也不可用。打包脚本不重新生成词典；普通 `extension:package` 会按默认含 gray 的配置重新构建。
+然后加载 `apps/poe2-extension/dist/`。关闭后基底／传奇名覆盖会减少，依赖其识别的装备导入也不可用。不要接着运行 `package.mjs`：它会用另一份内容覆盖 `artifacts/` 里同版本的 zip，网站构建与 `pnpm extension:release-check` 随之失败；误跑后运行 `pnpm extension:package` 恢复。长期下线按 [README](README.md#下线-gray-来源) 的步骤发版。
 
 此开关按词典表的来源等级移除数据，不是“仅使用官方译文”模式。自写界面标签、完整用途说明和手工别名仍保留，其中部分术语曾参考社区资料，来源见 `docs/data-sources.md`。0.1.70 实测从6916条降为4928条，移除1988条gray词条；这些数字仅对应当前快照。关闭后输入缺失的中文基底名会显示未找到术语提示，不自动猜译。
 
