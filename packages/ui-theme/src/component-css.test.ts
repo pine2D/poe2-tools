@@ -972,6 +972,11 @@ describe('pt-switch（spec §5.13）', () => {
     const FORCED = /forced-colors:\s*active/
     expect(declared('switch.css', '.pt-switch', 'border', FORCED)).toBe('1px solid ButtonText')
     expect(declared('switch.css', '.pt-switch::before', 'background', FORCED)).toBe('ButtonText')
+    expect(declared('switch.css', '.pt-switch:checked', 'border-color', FORCED)).toBe('ButtonText')
+    expect(declared('switch.css', '.pt-switch:checked', 'background', FORCED)).toBe('Canvas')
+    expect(declared('switch.css', '.pt-switch:checked::before', 'background', FORCED)).toBe(
+      'ButtonText',
+    )
   })
 })
 

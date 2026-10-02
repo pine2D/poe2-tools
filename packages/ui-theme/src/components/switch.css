@@ -63,7 +63,14 @@
     border: 1px solid ButtonText;
     background: Canvas;
   }
-  .pt-switch::before {
+  .pt-switch:checked,
+  .pt-switch:disabled {
+    border-color: ButtonText;
+    background: Canvas;
+  }
+  .pt-switch::before,
+  .pt-switch:checked::before,
+  .pt-switch:disabled::before {
     background: ButtonText;
   }
   .pt-switch:focus-visible {
