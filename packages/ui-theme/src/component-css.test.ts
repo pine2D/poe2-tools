@@ -588,14 +588,19 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(m2Value(rules, '.pt-tabs-row__tools', 'justify-content', narrow)).toBe('flex-start')
     expect(m2Value(rules, '.pt-tab', 'min-height', narrow)).toBe('44px')
   })
-  // 附录 B.10：601–660px 工具组排成三行（高约 144px），隐藏键帽后为两行；阈值由 ≤600px 改为 ≤660px
-  it('≤660px：页签行工具组隐藏键帽，单独成块且只针对工具组里的键帽；≤600 块不再重复（§6.7、§5.12）', () => {
+  // 附录 B.10：显示键帽时 601–663px 工具组排成三行（高约 144px），隐藏键帽后为两行；阈值由 ≤600px 改为 ≤680px
+  // （初定 660px，复验发现最宽样本在 661–663px 仍为三行，用户 2026-10-02 决定提到 680px）
+  it('≤680px：页签行工具组隐藏键帽，单独成块且只针对工具组里的键帽；≤600 块不再重复（§6.7、§5.12）', () => {
     const kbd = '.pt-tabs-row__tools .pt-kbd'
-    expect(m2Value(rules, kbd, 'display', 'max-width: 660px')).toBe('none')
+    expect(m2Value(rules, kbd, 'display', 'max-width: 680px')).toBe('none')
     const block = rules.filter((rule) =>
-      rule.atRules.some((at) => m2Norm(at).includes('max-width:660px')),
+      rule.atRules.some((at) => m2Norm(at).includes('max-width:680px')),
     )
     expect(block.map((rule) => rule.selectors)).toEqual([[kbd]])
+    // 初定的 660px 块已整体换成 680px，不留旧阈值
+    expect(
+      rules.some((rule) => rule.atRules.some((at) => m2Norm(at).includes('max-width:660px'))),
+    ).toBe(false)
     expect(m2Rules(rules, kbd, 'max-width: 600px')).toHaveLength(0)
     expect(m2Rules(rules, kbd)).toHaveLength(0)
   })

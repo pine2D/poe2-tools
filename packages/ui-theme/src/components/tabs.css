@@ -89,9 +89,10 @@
 .pt-tab[aria-selected="true"] .pt-tab__count {
   color: inherit;
 }
-/* §6.7、§5.12 ≤660px：页签行工具组不显示快捷键键帽（改版前 responsive.css:138 只在 ≤600px 隐藏）。
-   附录 B.10：601–660px 工具组排成三行，隐藏键帽后为两行。只针对工具组里的键帽，别处的 kbd 不受影响 */
-@media (max-width: 660px) {
+/* §6.7、§5.12 ≤680px：页签行工具组不显示快捷键键帽（改版前 responsive.css:138 只在 ≤600px 隐藏）。
+   附录 B.10：601–680px 隐藏键帽后工具组最多两行；初定 660，复验发现最宽样本 661–663px 仍三行，用户决定提到 680。
+   只针对工具组里的键帽，别处的 kbd 不受影响 */
+@media (max-width: 680px) {
   .pt-tabs-row__tools .pt-kbd {
     display: none;
   }
