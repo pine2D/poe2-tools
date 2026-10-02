@@ -1,0 +1,294 @@
+/* L1 点缀（spec §4.2、§6.9）：CoE 注入 UI 的唯一样式表。内容脚本用 ?inline 读成字符串，构造一份 CSSStyleSheet，
+   经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
+   令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
+   只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮、角饰与衬线。 */
+:host {
+  --ext-ink: #9fe3dc;
+  --ink: #e9e0cd;
+  --ink-2: #c0b49d;
+  --ink-3: #9a8e79;
+  --line: #322a21;
+  --line-2: #473b2d;
+  --control-edge: #8a7a62;
+  --bg: #100e0c;
+  --bg-2: #14110e;
+  --mod: #8888ff;
+  --ok: #93c47d;
+  --miss: #f2a766;
+  --focus: #ffd48a;
+  --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* L1 专用（spec §6.9 视觉） */
+  --l1-panel: #15120f;
+  --l1-edge: #8a6a40;
+  --l1-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --l1-primary-bg: #2a2118;
+  --l1-primary-edge: #c79a5e;
+  --l1-primary-ink: #f2dcb3;
+}
+
+/* 叠加译文：只换字色；字号与排版由宿主内联布局决定 */
+:host([data-poe2-l10n="stat"]) {
+  color: var(--ext-ink);
+}
+
+/* 面板类宿主：切断原站继承下来的文字样式；display、position、尺寸由宿主内联样式给出（内联优先于 :host） */
+:host([data-poe2-l10n="import"]),
+:host([data-poe2-l10n="search"]),
+:host([data-poe2-l10n="language-notice"]) {
+  all: initial;
+  color: var(--ink);
+  font: 14px / 1.6 var(--font-zh-cn);
+  color-scheme: dark;
+  overflow-wrap: anywhere;
+}
+
+/* 归属标识：扩展青 gem（svg.gem，装饰）与短署名 */
+.gem {
+  display: block;
+  flex: none;
+}
+.by {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+/* —— 装备文本转换面板（import-controller） —— */
+.panel {
+  box-sizing: border-box;
+  min-width: 0;
+  background: var(--l1-panel);
+  border: 1px solid var(--l1-edge);
+  border-radius: 6px;
+  box-shadow: var(--l1-shadow);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.title {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.head .by {
+  margin-left: auto;
+}
+.body {
+  padding: 14px 16px 4px;
+}
+.disclaimer {
+  margin: 0;
+  padding: 8px 16px 14px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+}
+label {
+  display: block;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 240px;
+  min-height: 160px;
+  resize: vertical;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid var(--control-edge);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  caret-color: var(--focus);
+  font: 12px / 1.5 var(--font-code);
+  scrollbar-color: var(--control-edge) var(--bg);
+}
+textarea[data-preview] {
+  background: var(--bg-2);
+  color: var(--mod);
+}
+[role="status"] {
+  margin: 12px 0;
+  color: var(--ink-2);
+}
+[role="status"]:empty {
+  display: none;
+}
+ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  color: var(--ink-2);
+}
+[aria-label="原站兼容性提示"] {
+  color: var(--miss);
+}
+button {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 14px;
+  margin: 4px 8px 4px 0;
+  border: 1px solid var(--control-edge);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  white-space: normal;
+  cursor: pointer;
+}
+button[data-primary] {
+  border-color: var(--l1-primary-edge);
+  background: var(--l1-primary-bg);
+  color: var(--l1-primary-ink);
+  font-weight: 600;
+}
+button[data-tertiary] {
+  border-color: transparent;
+  padding-inline: 4px;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+button:disabled {
+  border-color: var(--line-2);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+button:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* —— 搜索候选下拉（search-controller）：说明行与候选按钮留在 light DOM，经 slot 显示（B.12 修订 10）；
+   ::slotted 的声明全部 !important，才能压过原站对 button/div 的样式 —— */
+:host([data-poe2-l10n="search"]) {
+  padding: 8px;
+  background: var(--l1-panel);
+  border: 1px solid var(--l1-edge);
+  border-radius: 6px;
+  box-shadow: var(--l1-shadow);
+}
+::slotted(div) {
+  margin: 0 0 4px !important;
+  color: var(--ink-2) !important;
+  font-size: 13px !important;
+}
+::slotted(button) {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 32px !important;
+  margin: 2px 0 !important;
+  padding: 4px 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+  font: inherit !important;
+  text-align: left !important;
+  white-space: normal !important;
+  cursor: pointer !important;
+}
+::slotted(button[aria-selected="true"]) {
+  border-color: var(--l1-edge) !important;
+  background: var(--bg-2) !important;
+  outline: 2px solid var(--focus) !important;
+  outline-offset: 2px !important;
+}
+::slotted(button:focus-visible) {
+  outline: 2px solid var(--focus) !important;
+  outline-offset: 2px !important;
+}
+:host([data-poe2-l10n="search"]) .by {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+/* —— 语言提示条（language-notice） —— */
+:host([data-poe2-l10n="language-notice"]) {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: block;
+  width: min(360px, calc(100vw - 32px));
+}
+.notice {
+  padding: 8px 12px 14px 16px;
+  background: var(--l1-panel);
+  border: 1px solid var(--l1-edge);
+  border-radius: 6px;
+  box-shadow: var(--l1-shadow);
+}
+.notice header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notice strong {
+  font-weight: 700;
+  font-size: 15px;
+}
+.notice header button {
+  margin: 0 0 0 auto;
+}
+.notice p {
+  margin: 6px 0 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled) {
+    border-color: var(--l1-primary-edge);
+  }
+  button[data-tertiary]:hover:not(:disabled) {
+    border-color: transparent;
+    color: var(--ink);
+  }
+  ::slotted(button:hover) {
+    border-color: var(--control-edge) !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .panel,
+  .notice,
+  :host([data-poe2-l10n="search"]) {
+    border-color: CanvasText;
+  }
+  button {
+    border-color: ButtonText;
+  }
+  button:focus-visible,
+  textarea:focus-visible {
+    outline-color: Highlight;
+  }
+  ::slotted(button[aria-selected="true"]) {
+    border-color: Highlight !important;
+    outline-color: Highlight !important;
+  }
+  ::slotted(button:focus-visible) {
+    outline-color: Highlight !important;
+  }
+  .gem {
+    display: none;
+  }
+}
