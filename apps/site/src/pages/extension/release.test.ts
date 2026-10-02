@@ -14,4 +14,7 @@ it('大小按 1024 进位显示', () => {
   expect(formatSize(25 * 1024 * 1024)).toBe('25.0 MB')
   expect(formatSize(300 * 1024)).toBe('300 KB')
   expect(formatSize(10)).toBe('1 KB')
+  // 四舍五入到 1024 KB 时进位为 MB，不显示“1024 KB”
+  expect(formatSize(1048000)).toBe('1023 KB')
+  expect(formatSize(1048100)).toBe('1.0 MB')
 })

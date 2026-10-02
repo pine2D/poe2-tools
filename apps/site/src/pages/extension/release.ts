@@ -16,6 +16,7 @@ export const downloadHref = `/downloads/${release.file}`
 
 /** 页面显示用的大小：按 1024 进位，保留一位小数，如“1.6 MB” */
 export function formatSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
+  const kb = Math.max(1, Math.round(bytes / 1024))
+  if (kb < 1024) return `${kb} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
