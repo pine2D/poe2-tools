@@ -6,11 +6,11 @@
   "scripts": {
     "sync-dict": "node scripts/sync-dict.mjs",
     "scan-css": "node scripts/scan-css.mjs",
-    "dev": "pnpm sync-data && vite",
+    "dev": "node scripts/sync-dict.mjs && node scripts/sync-craft.mjs && node scripts/sync-fonts.mjs && node scripts/sync-extension.mjs --allow-missing && vite",
     "build": "pnpm sync-data && vite build && node scripts/check-site.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "sync-data": "node scripts/sync-dict.mjs && node scripts/sync-craft.mjs && node scripts/sync-fonts.mjs"
+    "sync-data": "node scripts/sync-dict.mjs && node scripts/sync-craft.mjs && node scripts/sync-fonts.mjs && node scripts/sync-extension.mjs"
   },
   "dependencies": {
     "@poe2-tools/build-core": "workspace:*",

@@ -1,5 +1,7 @@
 // 只验证本次不可变部署地址，避免 DNS 或旧缓存掩盖错误。
 // 用法：node apps/site/scripts/smoke-site.mjs <base>，或 --deployment-log <日志文件>
+// 扩展下载按 apps/poe2-extension/release.json 核对；EXTENSION_RELEASE_JSON 可指定别的 release.json（测试用）
+import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 // 部署工作流（.github/workflows/deploy.yml）只下载产物、不装依赖，这里不能经 workspace 包名导入；compliance.mjs 只用 Node 标准库
 import { cssUrlTargets } from '../../../packages/ui-theme/scripts/compliance.mjs'
@@ -51,8 +53,27 @@ for (const path of [
 ]) {
   await fetchStatic(path)
 }
+// 扩展下载（扩展发布 spec §6）：返回 200、不是 HTML，字节数与 SHA-256 与 release.json 一致
+const release = JSON.parse(
+  await readFile(
+    process.env.EXTENSION_RELEASE_JSON ??
+      new URL('../../poe2-extension/release.json', import.meta.url),
+    'utf8',
+  ),
+)
+const zip = Buffer.from(await (await fetchStatic(`/downloads/${release.file}`)).arrayBuffer())
+if (
+  zip.length !== release.bytes ||
+  createHash('sha256').update(zip).digest('hex') !== release.sha256
+) {
+  throw new Error(
+    `扩展下载与 release.json 不一致：/downloads/${release.file}（${zip.length} 字节）`,
+  )
+}
 const missing = await fetch(new URL('/__poe2_missing_page__/', base), {
   signal: AbortSignal.timeout(15000),
 })
 if (missing.status !== 404) throw new Error(`未知路径应返回 404，实际 ${missing.status}`)
-console.log(`页面、资源、${fonts.size} 个字体分片、许可文件及 404 检查通过：${base}`)
+console.log(
+  `页面、资源、${fonts.size} 个字体分片、许可文件、扩展下载（${release.file}）及 404 检查通过：${base}`,
+)

@@ -1,5 +1,6 @@
 // 构建门禁（spec §8.6、§8.7）：多页面与 404 齐全，HTML 引用的本地资源存在；字体许可文件与 NOTICE
-// 含必含行；CSS 的 url() 没有外链、目标存在；图像与字体都在素材白名单里，woff2 集合与 coverage.json 相同。
+// 含必含行；CSS 的 url() 没有外链、目标存在；图像与字体都在素材白名单里，woff2 集合与 coverage.json 相同；
+// 扩展发布包（扩展发布 spec §6）与 release.json 一致。
 import { access, readdir, readFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -100,9 +101,31 @@ export async function checkSite(root, options = {}) {
     woff2.push(sha256(await readFile(path)))
   }
   assertFontSetEquals(woff2, whitelist)
+  // ⑦ 扩展发布包
+  const release =
+    options.release ??
+    JSON.parse(
+      await readFile(new URL('../../poe2-extension/release.json', import.meta.url), 'utf8'),
+    )
+  await checkExtensionDownload(root, release)
+}
+
+// dist/downloads/ 恰好一个 zip，文件名、字节数、SHA-256 与 release.json 一致
+export async function checkExtensionDownload(root, release) {
+  const dir = resolve(root, 'downloads')
+  const names = (await exists(dir))
+    ? (await filesUnder(dir)).map((path) => relative(dir, path).split(sep).join('/'))
+    : []
+  if (names.length !== 1 || names[0] !== release.file) {
+    throw new Error(`downloads/ 应只有 ${release.file}，实际：${names.join('、') || '（空）'}`)
+  }
+  const zip = await readFile(join(dir, release.file))
+  if (zip.length !== release.bytes || sha256(zip) !== release.sha256) {
+    throw new Error(`downloads/${release.file} 与 release.json 的字节数或 SHA-256 不一致`)
+  }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   await checkSite(fileURLToPath(new URL('../dist/', import.meta.url)))
-  console.log('网站入口、404、静态资源引用、字体许可与素材白名单检查通过')
+  console.log('网站入口、404、静态资源引用、字体许可、素材白名单与扩展发布包检查通过')
 }

@@ -29,6 +29,8 @@ coverage/
 # 字体许可与 NOTICE 的站点副本（scripts/sync-fonts.mjs 每次重建）
 /apps/site/public/fonts/
 /apps/site/public/NOTICE.txt
+# 扩展发布包的站点副本（scripts/sync-extension.mjs 每次重建）
+/apps/site/public/downloads/
 
 # 系统文件
 .DS_Store
