@@ -1,67 +1,10 @@
 import type { Term } from '@poe2-tools/l10n-core'
 import { prepareImport } from '../adapters/coe-beta/import'
-export function attachImport(doc: Document, terms: readonly Term[]) {
-  let target: HTMLTextAreaElement | null = null
-  let panel: HTMLElement | null = null
-  let closed = false
-  let revision = 0
-  let invalidate: (() => void) | null = null
-  const scan = () => {
-    if (closed) return
-    const input = doc.querySelector<HTMLTextAreaElement>('dialog[open] #importerInput')
-    if (input === target && panel?.isConnected) return
-    revision++
-    invalidate = null
-    panel?.remove()
-    target = input
-    if (!input) return
-    const isActive = () =>
-      !closed && target === input && input.isConnected && input.closest('dialog')?.open === true
-    const returnInputFocus = (button: HTMLButtonElement, hadFocus: boolean) => {
-      if (
-        hadFocus &&
-        isActive() &&
-        (doc.activeElement === button || doc.activeElement === doc.body)
-      )
-        input.focus()
-    }
-    panel = doc.createElement('section')
-    panel.dataset.poe2L10n = 'import'
-    panel.style.cssText =
-      'box-sizing:border-box;min-width:0;background:#20252d;color:#e7ebf0;padding:20px;margin:12px 0;font:14px/1.6 sans-serif;overflow-wrap:anywhere;border-radius:12px'
-    const style = doc.createElement('style')
-    style.textContent = `
-      [data-poe2-l10n="import"] { color-scheme: dark; }
-      [data-poe2-l10n="import"] button {
-        min-height: 40px; padding: 8px 12px; margin: 4px 8px 4px 0;
-        border: 1px solid #8390a1; border-radius: 8px;
-        background: #303c4b; color: #e7ebf0; font: inherit;
-        white-space: normal; cursor: pointer;
-      }
-      [data-poe2-l10n="import"] button[data-primary] {
-        background: #b4c9ee; color: #17263e; border-color: #b4c9ee; font-weight: 600;
-      }
-      [data-poe2-l10n="import"] button:disabled {
-        background: #20252d; color: #a1aab7; border-color: #596474; cursor: not-allowed;
-      }
-      [data-poe2-l10n="import"] :is(button, textarea):focus-visible {
-        outline: 2px solid #b4c9ee; outline-offset: 3px;
-      }
-      [data-poe2-l10n="import"] textarea {
-        background: #17191c; color: #e7ebf0; padding: 12px;
-        border: 1px solid #8390a1; border-radius: 8px; caret-color: #b4c9ee;
-        scrollbar-color: #8390a1 #17191c;
-      }
-      [data-poe2-l10n="import"] [role="status"] { margin: 12px 0; }
-      [data-poe2-l10n="import"] [role="status"]:empty { display: none; }
-      @media (hover: hover) and (pointer: fine) {
-        [data-poe2-l10n="import"] button:hover:not(:disabled) {
-          text-decoration: underline; text-underline-offset: 3px;
-        }
-      }
-      @media (forced-colors: active) {
-        [data-poe2-l10n="import"] :is(button, textarea):focus-visible { outline-color: Highlight; }
-      }
+import { FULL_DISCLAIMER, SHORT_PROVENANCE } from '../provenance'
+import { adoptL1, createGem } from './l1'
+
+// 原站对话框的布局放宽（spec §6.9 宿主全局样式例外 3）：逐字沿用 0.2.0，只改布局，不改颜色与字体
+const DIALOG_CSS = `
       #noticeDialog:has([data-poe2-l10n="import"]) {
         box-sizing: border-box;
         width: 760px;
@@ -75,6 +18,57 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         max-width: 100%;
       }
     `
+export function attachImport(doc: Document, terms: readonly Term[]) {
+  let target: HTMLTextAreaElement | null = null
+  let host: HTMLElement | null = null
+  let dialogStyle: HTMLStyleElement | null = null
+  let closed = false
+  let revision = 0
+  let invalidate: (() => void) | null = null
+  const scan = () => {
+    if (closed) return
+    const input = doc.querySelector<HTMLTextAreaElement>('dialog[open] #importerInput')
+    if (input === target && host?.isConnected) return
+    revision++
+    invalidate = null
+    host?.remove()
+    dialogStyle?.remove()
+    target = input
+    if (!input) return
+    const isActive = () =>
+      !closed && target === input && input.isConnected && input.closest('dialog')?.open === true
+    host = doc.createElement('section')
+    host.dataset.poe2L10n = 'import'
+    host.style.cssText = 'display:block;box-sizing:border-box;min-width:0;margin:12px 0'
+    const shadow = host.attachShadow({ mode: 'open' })
+    adoptL1(shadow)
+    const panel = doc.createElement('div')
+    panel.className = 'panel'
+    const head = doc.createElement('div')
+    head.className = 'head'
+    const heading = doc.createElement('strong')
+    heading.className = 'title'
+    heading.textContent = '装备文本转换'
+    const by = doc.createElement('span')
+    by.className = 'by'
+    by.textContent = SHORT_PROVENANCE
+    head.append(createGem(doc, 16), heading, by)
+    const body = doc.createElement('div')
+    body.className = 'body'
+    const disclaimer = doc.createElement('p')
+    disclaimer.className = 'disclaimer'
+    disclaimer.textContent = FULL_DISCLAIMER
+    dialogStyle = doc.createElement('style')
+    dialogStyle.dataset.poe2L10n = 'import-dialog'
+    dialogStyle.textContent = DIALOG_CSS
+    const returnInputFocus = (button: HTMLButtonElement, hadFocus: boolean) => {
+      if (
+        hadFocus &&
+        isActive() &&
+        (shadow.activeElement === button || doc.activeElement === doc.body)
+      )
+        input.focus()
+    }
     const preview = doc.createElement('button')
     preview.type = 'button'
     preview.textContent = '预览中文转换'
@@ -104,6 +98,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             locate.type = 'button'
             locate.textContent = `第 ${issue.line} 行`
             locate.setAttribute('aria-label', `定位第 ${issue.line} 行`)
+            locate.dataset.tertiary = ''
             locate.addEventListener('click', () => {
               if (!isActive() || current !== revision || input.value !== converted.original) return
               const lines = input.value.split('\n')
@@ -128,20 +123,17 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         result.append(warning)
       }
       const columns = doc.createElement('div')
-      columns.style.cssText =
-        'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px'
-      for (const [title, value] of [
+      columns.className = 'columns'
+      for (const [index, [title, value]] of [
         ['粘贴原文（含备注）', converted.original],
         ['英文预览（不提交交易备注／描述）', converted.english],
-      ]) {
+      ].entries()) {
         const label = doc.createElement('label')
         label.textContent = title ?? ''
-        label.style.cssText = 'display:block;min-width:0'
         const area = doc.createElement('textarea')
         area.readOnly = true
         area.value = value ?? ''
-        area.style.cssText =
-          'display:block;box-sizing:border-box;width:100%;min-width:0;height:240px;min-height:160px;resize:vertical;margin-top:4px;font:12px/1.5 monospace'
+        if (index === 1) area.dataset.preview = ''
         label.append(area)
         columns.append(label)
       }
@@ -165,7 +157,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           fill.disabled = true
           return
         }
-        const hadFocus = doc.activeElement === fill
+        const hadFocus = shadow.activeElement === fill
         revision++
         invalidate = null
         input.value = converted.english
@@ -176,6 +168,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         const restore = doc.createElement('button')
         restore.type = 'button'
         restore.textContent = '恢复粘贴原文'
+        restore.dataset.tertiary = ''
         const invalidateRestore = () => {
           revision++
           restore.disabled = true
@@ -188,7 +181,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             invalidateRestore()
             return
           }
-          const hadRestoreFocus = doc.activeElement === restore
+          const hadRestoreFocus = shadow.activeElement === restore
           revision++
           invalidate = null
           input.value = converted.original
@@ -202,8 +195,10 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       })
       result.append(fill)
     })
-    panel.append(style, preview, message, result)
-    input.after(panel)
+    body.append(preview, message, result)
+    panel.append(head, body, disclaimer)
+    shadow.append(panel)
+    input.after(dialogStyle, host)
   }
   const onInput = (event: Event) => {
     if (event.target === target) invalidate?.()
@@ -223,7 +218,8 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     invalidate = null
     doc.removeEventListener('input', onInput, true)
     observer.disconnect()
-    panel?.remove()
+    host?.remove()
+    dialogStyle?.remove()
     target = null
   }
 }

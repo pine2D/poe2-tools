@@ -2,6 +2,8 @@ import { afterEach, expect, it } from 'vitest'
 import { attachImport } from '../src/content/import-controller'
 
 let stop = () => {}
+const ui = () =>
+  (document.querySelector('[data-poe2-l10n="import"]') as HTMLElement).shadowRoot as ShadowRoot
 afterEach(() => {
   stop()
   document.body.innerHTML = ''
@@ -10,13 +12,11 @@ it('只在原站导入弹窗挂入口；不读取剪贴板且未知文本不可�
   document.body.innerHTML =
     '<dialog open><textarea id="importerInput">私人文本</textarea><button class="importCommitButton">Proceed</button></dialog>'
   stop = attachImport(document, [])
-  const preview = document.querySelector<HTMLButtonElement>('[data-poe2-l10n="import"] button')
+  const preview = ui().querySelector<HTMLButtonElement>('.body > button')
   expect(preview?.textContent).toBe('预览中文转换')
   preview?.click()
   expect(document.querySelector<HTMLTextAreaElement>('#importerInput')?.value).toBe('私人文本')
-  const submit = document.querySelector<HTMLButtonElement>(
-    '[data-poe2-l10n="import"] button:last-child',
-  )
+  const submit = ui().querySelector<HTMLButtonElement>('.body > div > button')
   expect(submit?.disabled).toBe(true)
   stop()
   expect(document.querySelector('[data-poe2-l10n="import"]')).toBeNull()
@@ -58,9 +58,9 @@ function readyPreview() {
       version: 'test',
     },
   ])
-  const preview = document.querySelector('[data-poe2-l10n] > button') as HTMLButtonElement
+  const preview = ui().querySelector('.body > button') as HTMLButtonElement
   preview.click()
-  const fill = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  const fill = ui().querySelector('.body > div > button') as HTMLButtonElement
   expect(fill.disabled).toBe(false)
   return { input, preview, fill }
 }
@@ -69,7 +69,7 @@ it('重复预览使旧填入按钮失效，当前预览仍可填入', () => {
   preview.click()
   fill.click()
   expect(input.value).toBe(source)
-  const current = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  const current = ui().querySelector('.body > div > button') as HTMLButtonElement
   current.click()
   expect(input.value).toContain('Runed Focus')
 })
@@ -86,9 +86,9 @@ it('编辑原文立即禁用旧填入入口，再次预览才可使用', () => {
   input.value = source.replace('+40', '+39')
   input.dispatchEvent(new Event('input', { bubbles: true }))
   expect(fill.disabled).toBe(true)
-  expect(document.querySelector('[data-poe2-l10n]')?.textContent).toContain('重新预览')
+  expect(ui().textContent).toContain('重新预览')
   preview.click()
-  const current = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  const current = ui().querySelector('.body > div > button') as HTMLButtonElement
   expect(current.disabled).toBe(false)
   current.click()
   expect(input.value).toContain('+39(36-41) to maximum Energy Shield')
@@ -98,7 +98,7 @@ it('点击诊断定位原输入行，不修改文本，过期诊断不能继续�
   input.value = source.replace('40(36-41)', '42(36-41)')
   input.dispatchEvent(new Event('input', { bubbles: true }))
   preview.click()
-  const locate = document.querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
+  const locate = ui().querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
   expect(locate).not.toBeNull()
   const original = input.value
   locate?.click()
@@ -116,7 +116,7 @@ it('点击诊断定位原输入行，不修改文本，过期诊断不能继续�
 
 it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不抢焦点', () => {
   const { input, preview, fill } = readyPreview()
-  const status = document.querySelector('[data-poe2-l10n="import"] [role="status"]')
+  const status = ui().querySelector('[role="status"]')
   expect(status).not.toBeNull()
   expect(status?.getAttribute('aria-live')).toBe('polite')
   expect(status?.getAttribute('aria-atomic')).toBe('true')
@@ -129,16 +129,16 @@ it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不�
   expect(document.activeElement).toBe(input)
   expect(fill.disabled).toBe(true)
   preview.click()
-  expect(document.querySelector('[role="status"]')).toBe(status)
+  expect(ui().querySelector('[role="status"]')).toBe(status)
   expect(status?.textContent).toContain('已识别')
-  const current = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  const current = ui().querySelector('.body > div > button') as HTMLButtonElement
   current.click()
   expect(status?.textContent).toContain('已填入英文')
   expect(document.activeElement).toBe(input)
   input.value = '未知文本'
   input.dispatchEvent(new Event('input', { bubbles: true }))
   preview.click()
-  expect(document.querySelector('[role="status"]')).toBe(status)
+  expect(ui().querySelector('[role="status"]')).toBe(status)
   expect(status?.textContent).toContain('仅供对照')
   stop()
   expect(status?.isConnected).toBe(false)
@@ -147,7 +147,7 @@ it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不�
 it('未预览时状态区为空，不提前播报装备内容', () => {
   document.body.innerHTML = '<dialog open><textarea id="importerInput">私人文本</textarea></dialog>'
   stop = attachImport(document, [])
-  const status = document.querySelector('[data-poe2-l10n="import"] [role="status"]')
+  const status = ui().querySelector('[role="status"]')
   expect(status).not.toBeNull()
   expect(status?.textContent).toBe('')
 })
@@ -164,7 +164,7 @@ it('关闭对话框后立即拒绝旧按钮操作，随后移除预览，重开�
   dialog.open = true
   await new Promise((resolve) => setTimeout(resolve, 0))
   expect(document.querySelectorAll('[data-poe2-l10n="import"]')).toHaveLength(1)
-  expect(document.querySelector('[role="status"]')?.textContent).toBe('')
+  expect(ui().querySelector('[role="status"]')?.textContent).toBe('')
   fill.click()
   expect(input.value).toBe(source)
 })
@@ -179,7 +179,7 @@ it('关闭后旧诊断不能改变选择区', () => {
   const { input, preview } = readyPreview()
   input.value = source.replace('40(36-41)', '42(36-41)')
   preview.click()
-  const locate = document.querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
+  const locate = ui().querySelector<HTMLButtonElement>('button[aria-label="定位第 8 行"]')
   expect(locate).not.toBeNull()
   ;(input.closest('dialog') as HTMLDialogElement).open = false
   input.setSelectionRange(0, 0)
@@ -191,7 +191,7 @@ it('关闭后旧诊断不能改变选择区', () => {
 it('英文回填后可恢复原始中文，恢复后需重新预览', () => {
   const { input, preview, fill } = readyPreview()
   fill.click()
-  const restore = [...document.querySelectorAll('button')].find(
+  const restore = [...ui().querySelectorAll('button')].find(
     (button) => button.textContent === '恢复粘贴原文',
   ) as HTMLButtonElement
   expect(restore).toBeDefined()
@@ -200,15 +200,15 @@ it('英文回填后可恢复原始中文，恢复后需重新预览', () => {
   expect(input.value).toBe(source)
   expect(restore.disabled).toBe(true)
   expect(fill.disabled).toBe(true)
-  expect(document.querySelector('[role="status"]')?.textContent).toContain('重新预览')
+  expect(ui().querySelector('[role="status"]')?.textContent).toContain('重新预览')
   preview.click()
-  const current = document.querySelector('[data-poe2-l10n] > div > button') as HTMLButtonElement
+  const current = ui().querySelector('.body > div > button') as HTMLButtonElement
   expect(current.disabled).toBe(false)
 })
 it('恢复原文不覆盖后续程序化编辑，重新预览后的旧恢复按钮不能操作', () => {
   const { input, preview, fill } = readyPreview()
   fill.click()
-  const restore = [...document.querySelectorAll('button')].find(
+  const restore = [...ui().querySelectorAll('button')].find(
     (button) => button.textContent === '恢复粘贴原文',
   ) as HTMLButtonElement
   expect(restore).toBeDefined()
@@ -226,7 +226,7 @@ it('恢复原文不覆盖后续程序化编辑，重新预览后的旧恢复按�
 it.each(['input', 'close', 'preview', 'stop'])('回填后%s使旧恢复入口失效', (action) => {
   const { input, preview, fill } = readyPreview()
   fill.click()
-  const restore = [...document.querySelectorAll('button')].find(
+  const restore = [...ui().querySelectorAll('button')].find(
     (button) => button.textContent === '恢复粘贴原文',
   ) as HTMLButtonElement
   expect(restore).toBeDefined()
@@ -245,7 +245,7 @@ it('键盘激活填入与恢复后焦点回到原导入框', () => {
   fill.click()
   expect(input.value).toContain('Item Class: Foci')
   expect(document.activeElement).toBe(input)
-  const restore = [...document.querySelectorAll('button')].find(
+  const restore = [...ui().querySelectorAll('button')].find(
     (button) => button.textContent === '恢复粘贴原文',
   ) as HTMLButtonElement
   restore.focus()
@@ -292,14 +292,53 @@ it('原站兼容性警告与翻译失败分开显示，不自动点击原站提�
   document.querySelector('#proceed')?.addEventListener('click', () => {
     submitted = true
   })
-  document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')?.click()
-  expect(document.querySelector('[aria-label="原站兼容性提示"]')?.textContent).toContain(
-    '咒符位曾被',
-  )
-  expect(document.querySelector('[aria-label="导入诊断"]')).toBeNull()
-  const fill = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] > div > button')
+  ui().querySelector<HTMLButtonElement>('.body > button')?.click()
+  expect(ui().querySelector('[aria-label="原站兼容性提示"]')?.textContent).toContain('咒符位曾被')
+  expect(ui().querySelector('[aria-label="导入诊断"]')).toBeNull()
+  const fill = ui().querySelector<HTMLButtonElement>('.body > div > button')
   expect(fill?.disabled).toBe(false)
   fill?.click()
   expect(input.value).toContain('Has 2(1-3) Charm Slot')
   expect(submitted).toBe(false)
+})
+
+it('面板头部：gem + “装备文本转换” + 短署名；底部完整声明；样式只来自共享表（spec §6.9）', () => {
+  readyPreview()
+  const root = ui()
+  expect(root.querySelector('.head svg.gem')?.getAttribute('aria-hidden')).toBe('true')
+  expect(root.querySelector('.head .title')?.textContent).toBe('装备文本转换')
+  expect(root.querySelector('.head .by')?.textContent).toBe('PoE2 中文助手 · 非官方')
+  expect(root.querySelector('.disclaimer')?.textContent).toBe(
+    '非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。',
+  )
+  expect(root.querySelector('style')).toBeNull()
+  expect(root.adoptedStyleSheets).toHaveLength(1)
+  const host = document.querySelector('[data-poe2-l10n="import"]') as HTMLElement
+  expect(host.style.color).toBe('')
+  expect(host.style.background).toBe('')
+})
+
+it('对话框放宽规则单独放在宿主之前的 import-dialog 样式里，随宿主一起移除（spec §6.9 例外 3）', () => {
+  readyPreview()
+  const host = document.querySelector('[data-poe2-l10n="import"]') as HTMLElement
+  const style = host.previousElementSibling as HTMLStyleElement
+  expect(style.tagName).toBe('STYLE')
+  expect(style.dataset.poe2L10n).toBe('import-dialog')
+  expect(style.textContent).toContain('#noticeDialog:has([data-poe2-l10n="import"])')
+  expect(style.textContent).not.toMatch(/color|background|font/)
+  expect(document.querySelectorAll('style').length).toBe(1)
+  stop()
+  expect(document.querySelector('style[data-poe2-l10n="import-dialog"]')).toBeNull()
+})
+
+it('英文预览框带 data-preview，填入按钮为主操作、恢复为第三级', () => {
+  const { fill } = readyPreview()
+  const areas = [...ui().querySelectorAll('textarea')]
+  expect(areas.map((a) => a.hasAttribute('data-preview'))).toEqual([false, true])
+  expect(ui().querySelector('button[data-primary]')).toBe(fill)
+  expect(fill.textContent).toBe('填入英文到原站导入框')
+  fill.click()
+  expect(ui().querySelector('button[data-tertiary]:not([aria-label])')?.textContent).toBe(
+    '恢复粘贴原文',
+  )
 })
