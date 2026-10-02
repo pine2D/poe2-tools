@@ -30,6 +30,7 @@ await build({
   build: {
     outDir: 'dist',
     emptyOutDir: false,
+    assetsInlineLimit: 0,
     rollupOptions: { input: path.join(root, 'popup.html') },
   },
 })
@@ -42,6 +43,11 @@ await buildDictionary(path.resolve(root, '../..'), path.join(root, 'dist/assets/
 })
 
 await copyFile(path.resolve(root, '../../LICENSE'), path.join(root, 'dist/LICENSE.txt'))
+// 弹窗字体的许可文件随包发布（spec §7.6）
+await copyFile(
+  path.resolve(root, '../../packages/ui-theme/fonts/LICENSES/NotoSerifSC-OFL.txt'),
+  path.join(root, 'dist/NotoSerifSC-OFL.txt'),
+)
 await writeFile(path.join(root, 'dist/NOTICE.txt'), noticeText(manifest.version))
 
 await mkdir(path.join(root, 'dist/icons'), { recursive: true })

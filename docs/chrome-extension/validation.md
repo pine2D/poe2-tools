@@ -73,7 +73,7 @@ pnpm_config_verify_deps_before_run=warn pnpm verify
 
 ## 安装包文件集合
 
-包检查按入口维护文件集合：manifest.json、content.js、popup.html、LICENSE.txt、NOTICE.txt、词典JSON、四个图标，以及popup引用的一个构建JS和一个CSS。资源哈希名称从popup提取，不硬编码当前hash；只接受assets/popup-*命名。多余文件即使后缀为js／json／txt也拒绝，缺少文件、额外目录或任何符号链接均阻止打包。新增合法资源或拆分构建入口时应显式更新检查与回归，不能只扩大允许扩展名。
+包检查按入口维护文件集合：manifest.json、content.js、popup.html、LICENSE.txt、NOTICE.txt、NotoSerifSC-OFL.txt、词典JSON、四个图标、popup引用的一个构建JS和一个CSS，以及该CSS用 url() 实际引用的 woff2。资源哈希名称从popup与CSS提取，不硬编码当前hash；只接受assets/下的文件。多余文件即使后缀为js／json／txt／woff2也拒绝，缺少文件、额外目录或任何符号链接均阻止打包。字体许可与 NOTICE 按必含行检查，图像与字体按 dist 模式过素材白名单（`@poe2-tools/ui-theme/compliance`）；打包后读回 zip，条目集合须与检查通过的 dist 完全相同。新增合法资源或拆分构建入口时应显式更新检查与回归，不能只扩大允许扩展名。
 
 0.1.105包检查补强回归使用独立临时目录，不向实际dist注入异常文件。测试先确认旧检查会接受多余文件、缺失许可和符号链接，再验证新检查拒绝；原有词典测试夹具同步补齐实际popup资源及许可文件，原断言保留。此检查不替代JS内容审查、来源哈希核对或最终包浏览器验收。
 

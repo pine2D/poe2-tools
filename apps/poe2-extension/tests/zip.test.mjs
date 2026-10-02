@@ -5,7 +5,13 @@ import { chmod, mkdir, mkdtemp, readFile, rm, symlink, utimes, writeFile } from 
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
-import { FIXED_DOS_DATE, FIXED_DOS_TIME, storedZip, zipDirectory } from '../scripts/zip.mjs'
+import {
+  FIXED_DOS_DATE,
+  FIXED_DOS_TIME,
+  readStoredZip,
+  storedZip,
+  zipDirectory,
+} from '../scripts/zip.mjs'
 
 const dirs = []
 afterEach(async () => {
@@ -103,4 +109,22 @@ it('拒绝非 ASCII、越界或重复的条目名，以及符号链接', async (
   const dir = await fixture()
   await symlink(path.join(dir, 'content.js'), path.join(dir, 'link.js'))
   await expect(zipDirectory(dir)).rejects.toThrow('不允许打包符号链接：link.js')
+})
+
+it('readStoredZip 读回 storedZip 的条目，名称与内容逐字节相同', () => {
+  const entries = [
+    { name: 'b.txt', data: Buffer.from('乙') },
+    { name: 'a/x.bin', data: Buffer.from([0, 1, 2, 255]) },
+  ]
+  const back = readStoredZip(storedZip(entries))
+  expect(back.map((e) => e.name)).toEqual(['a/x.bin', 'b.txt'])
+  expect(Buffer.from(back[0].data)).toEqual(Buffer.from([0, 1, 2, 255]))
+  expect(Buffer.from(back[1].data).toString()).toBe('乙')
+})
+it('readStoredZip 拒绝结尾记录缺失与内容被改的包', () => {
+  const zip = storedZip([{ name: 'a.txt', data: Buffer.from('abc') }])
+  expect(() => readStoredZip(zip.subarray(0, zip.length - 1))).toThrow('ZIP 结尾记录缺失')
+  const broken = Buffer.from(zip)
+  broken[30 + 'a.txt'.length] ^= 1
+  expect(() => readStoredZip(broken)).toThrow('ZIP 条目校验失败')
 })

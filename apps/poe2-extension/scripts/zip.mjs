@@ -79,3 +79,34 @@ export async function zipDirectory(dir) {
   }
   return storedZip(entries)
 }
+
+/** 读回 storedZip 写出的 ZIP（只支持本仓库的只存储格式、无注释），按中央目录顺序返回条目；格式或 CRC 不符即抛错 */
+export function readStoredZip(buffer) {
+  const zip = Buffer.from(buffer)
+  const endAt = zip.length - 22
+  if (endAt < 0 || zip.readUInt32LE(endAt) !== 0x06054b50) throw new Error('ZIP 结尾记录缺失')
+  const count = zip.readUInt16LE(endAt + 10)
+  const centralSize = zip.readUInt32LE(endAt + 12)
+  let at = zip.readUInt32LE(endAt + 16)
+  if (at + centralSize !== endAt) throw new Error('ZIP 中央目录位置不符')
+  const entries = []
+  for (let index = 0; index < count; index += 1) {
+    if (zip.readUInt32LE(at) !== 0x02014b50) throw new Error('ZIP 中央目录损坏')
+    const method = zip.readUInt16LE(at + 10)
+    const crc = zip.readUInt32LE(at + 16)
+    const size = zip.readUInt32LE(at + 20)
+    const nameLength = zip.readUInt16LE(at + 28)
+    const extraLength = zip.readUInt16LE(at + 30)
+    const commentLength = zip.readUInt16LE(at + 32)
+    const offset = zip.readUInt32LE(at + 42)
+    const name = zip.toString('ascii', at + 46, at + 46 + nameLength)
+    if (method !== 0) throw new Error(`ZIP 条目不是只存储：${name}`)
+    if (zip.readUInt32LE(offset) !== 0x04034b50) throw new Error(`ZIP 本地头损坏：${name}`)
+    const start = offset + 30 + zip.readUInt16LE(offset + 26) + zip.readUInt16LE(offset + 28)
+    const data = zip.subarray(start, start + size)
+    if (data.length !== size || crc32(data) !== crc) throw new Error(`ZIP 条目校验失败：${name}`)
+    entries.push({ name, data })
+    at += 46 + nameLength + extraLength + commentLength
+  }
+  return entries
+}

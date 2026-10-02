@@ -29,6 +29,9 @@ importers:
       '@poe2-tools/l10n-core':
         specifier: workspace:*
         version: link:../../packages/l10n-core
+      '@poe2-tools/ui-theme':
+        specifier: workspace:*
+        version: link:../../packages/ui-theme
     devDependencies:
       '@types/node':
         specifier: 26.4.1

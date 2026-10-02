@@ -2,7 +2,18 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import vm from 'node:vm'
+import {
+  ASSET_EXTENSIONS,
+  assertAssets,
+  checkLicenseFile,
+  cssUrlTargets,
+  FULL_DISCLAIMER,
+  LICENSE_REQUIRED_LINES,
+  loadWhitelist,
+  sha256,
+} from '@poe2-tools/ui-theme/compliance'
 import { build } from 'vite'
+import { NOTICE_EN } from './notice.mjs'
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 // 使用与浏览器相同的核心校验；仅在 Node 检查进程内编译，不写入扩展产物。
@@ -100,6 +111,25 @@ export function popupStyleExternal(css) {
   ].map((match) => match[0])
 }
 
+/** 扩展包随附的字体许可文件（spec §7.6） */
+export const FONT_LICENSE_FILE = 'NotoSerifSC-OFL.txt'
+/** 扩展 NOTICE.txt 必含：完整声明、英文声明与字体许可文件名（spec §7.6） */
+export const EXTENSION_NOTICE_REQUIRED_LINES = [FULL_DISCLAIMER, NOTICE_EN, FONT_LICENSE_FILE]
+
+/** popup 样式引用的包内字体：data: 跳过；其余目标按 CSS 所在目录解析，只接受 assets/ 下的 woff2，返回包内路径 */
+export function popupFontReferences(css, cssFile) {
+  const dir = path.posix.dirname(cssFile)
+  const fonts = []
+  for (const target of cssUrlTargets(css)) {
+    if (/^data:/i.test(target)) continue
+    const file = path.posix.normalize(path.posix.join(dir, target))
+    if (!/^assets\/[\w.-]+\.woff2$/.test(file))
+      throw new Error(`popup 样式含不允许的引用：${target}`)
+    fonts.push(file)
+  }
+  return fonts
+}
+
 export function validateManifest(m, version) {
   if (m.manifest_version !== 3 || m.version !== version || !same(m.permissions, ['storage']))
     throw new Error('Manifest 版本或权限不符合约定')
@@ -161,10 +191,13 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   if (/^\s*(?:import|export)\s/m.test(content)) throw new Error('内容脚本必须独立执行')
   const popup = await readFile(path.join(dist, 'popup.html'), 'utf8')
   const popupResources = popupReferences(popup)
+  const popupFonts = []
   for (const file of popupResources) {
-    const content = await readFile(path.join(dist, file), 'utf8')
-    const external = file.endsWith('.css') ? popupStyleExternal(content) : []
+    if (!file.endsWith('.css')) continue
+    const css = await readFile(path.join(dist, file), 'utf8')
+    const external = popupStyleExternal(css)
     if (external.length > 0) throw new Error(`popup 样式含外部引用：${external.join(' ')}`)
+    popupFonts.push(...popupFontReferences(css, file))
   }
   const dict = JSON.parse(await readFile(path.join(dist, 'assets/dictionary.json'), 'utf8'))
   if (
@@ -191,10 +224,13 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     'popup.html',
     'LICENSE.txt',
     'NOTICE.txt',
+    FONT_LICENSE_FILE,
     'assets/dictionary.json',
     ...Object.values(m.icons),
     ...popupResources,
+    ...popupFonts,
   ])
+  const distFiles = []
   const files = await readdir(dist, { recursive: true, withFileTypes: true })
   for (const entry of files) {
     const file = path
@@ -204,10 +240,23 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     if (entry.isSymbolicLink()) throw new Error(`不允许打包符号链接：${file}`)
     if (entry.isDirectory() && ['assets', 'icons'].includes(file)) continue
     if (!entry.isFile() || !requiredFiles.delete(file)) throw new Error(`意外打包文件：${file}`)
+    distFiles.push(file)
   }
   if (requiredFiles.size) throw new Error(`缺少打包文件：${[...requiredFiles].join('、')}`)
+  await checkLicenseFile(
+    path.join(dist, FONT_LICENSE_FILE),
+    LICENSE_REQUIRED_LINES[FONT_LICENSE_FILE],
+  )
+  await checkLicenseFile(path.join(dist, 'NOTICE.txt'), EXTENSION_NOTICE_REQUIRED_LINES)
+  const assets = []
+  for (const file of distFiles) {
+    const ext = file.slice(file.lastIndexOf('.') + 1).toLowerCase()
+    if (ASSET_EXTENSIONS.includes(ext))
+      assets.push({ path: file, sha256: sha256(await readFile(path.join(dist, file))) })
+  }
+  assertAssets(assets, await loadWhitelist(), 'dist')
   console.log(`扩展检查通过：${m.version}，${dict.terms.length} 条词条，仅 storage 权限`)
-  return { root, dist, version: m.version }
+  return { root, dist, version: m.version, files: distFiles }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
   await check()

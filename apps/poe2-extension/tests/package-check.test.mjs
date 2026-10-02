@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { check } from '../scripts/check.mjs'
+import { noticeText } from '../scripts/notice.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -33,7 +34,7 @@ async function fixture(terms) {
     'dist/assets/popup-test.js': 'void 0;',
     'dist/assets/popup-test.css': '',
     'dist/LICENSE.txt': 'fixture license',
-    'dist/NOTICE.txt': 'fixture notice',
+    'dist/NOTICE.txt': noticeText(manifest.version),
     'dist/assets/dictionary.json': JSON.stringify({ schemaVersion: 1, locale: 'zh-CN', terms }),
   }))
     await writeFile(path.join(root, file), value)
@@ -43,6 +44,13 @@ async function fixture(terms) {
       path.resolve(import.meta.dirname, '../public', file),
       path.join(root, 'dist', file),
     )
+  await copyFile(
+    path.resolve(
+      import.meta.dirname,
+      '../../../packages/ui-theme/fonts/LICENSES/NotoSerifSC-OFL.txt',
+    ),
+    path.join(root, 'dist/NotoSerifSC-OFL.txt'),
+  )
   vi.spyOn(console, 'log').mockImplementation(() => {})
   return root
 }

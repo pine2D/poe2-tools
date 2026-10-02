@@ -1,7 +1,17 @@
-// 扩展包内 NOTICE.txt 的正文（扩展发布 spec §8）：首行是版本号；非官方声明、许可与数据说明保持不变。
+import { FULL_DISCLAIMER } from '@poe2-tools/ui-theme/compliance'
+
+export const NOTICE_EN =
+  "This product isn't affiliated with or endorsed by Grinding Gear Games, Tencent or Craft of Exile in any way."
+export const FONT_NOTICE =
+  '界面字体 Noto Serif SC 以 SIL OFL 1.1 授权，见 NotoSerifSC-OFL.txt；MIT 不覆盖字体文件。'
+
+// 扩展包内 NOTICE.txt 的正文（扩展发布 spec §8、设计语言 spec §7.6）：首行是版本号；随后是完整声明（与网站一字不差）、
+// 英文声明与字体许可；其余各行沿用 0.2.0。
 export function noticeText(version) {
   return `PoE2 中文助手 ${version}
-这是非官方扩展，与 Craft of Exile、Grinding Gear Games、腾讯无隶属关系。
+${FULL_DISCLAIMER}
+${NOTICE_EN}
+${FONT_NOTICE}
 MIT 仅覆盖自有代码；游戏文本权利归相应权利人。
 术语来源、快照版本与哈希见 assets/dictionary.json 的 sources。
 数据来源登记：https://github.com/pine2D/poe2-tools/blob/main/docs/data-sources.md
