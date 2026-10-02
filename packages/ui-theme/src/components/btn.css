@@ -119,8 +119,7 @@
   }
   /* 按下且键盘聚焦：上一条的内框与焦点环同为 outline，会把焦点环盖住；此时照常画焦点环，按下态改由 Highlight 边框表示。
      附录 B.10 ①：1px 边框与未按下的 1px ButtonText 边框难以分辨，加到 2px；多出的 1px 由左右内边距各减 1px 抵消
-     （.pt-btn 22px→21px，--sm 12px→11px），border-box 尺寸与文字位置不变。上下内边距为 0、高度由 height /
-     min-height 固定，不需补偿 */
+     （.pt-btn 22px→21px），border-box 尺寸与文字位置不变。上下内边距为 0、高度由 height / min-height 固定，不需补偿 */
   .pt-btn[aria-pressed="true"]:focus-visible {
     padding-inline: 21px;
     border-width: 2px;
@@ -128,8 +127,16 @@
     outline: var(--focus-ring);
     outline-offset: 3px;
   }
-  /* 与上一条同为 (0,3,0)，必须排在其后 */
+  /* 上一条是 (0,3,0)，会盖过各尺寸变体 (0,1,0) 的内边距，所以每个声明了左右内边距的变体都按自己的值减 1px
+     （--sm 12→11、--xs 10→9、--wide 36→35；--block 不声明内边距，沿用基础 22px，由上一条补偿）。
+     这几条与上一条同为 (0,3,0)，必须排在其后，彼此先后与上面的变体声明一致 */
   .pt-btn--sm[aria-pressed="true"]:focus-visible {
     padding-inline: 11px;
+  }
+  .pt-btn--xs[aria-pressed="true"]:focus-visible {
+    padding-inline: 9px;
+  }
+  .pt-btn--wide[aria-pressed="true"]:focus-visible {
+    padding-inline: 35px;
   }
 }

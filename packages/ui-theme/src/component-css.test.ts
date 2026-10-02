@@ -273,33 +273,58 @@ describe('pt-btn（spec §5.6）', () => {
     )
   })
 
-  // 附录 B.10 ①：按下且键盘聚焦时边框加到 2px Highlight，按 .pt-btn 与 --sm 的实际左右内边距各减 1px，
-  // border-box 尺寸与未聚焦时相同（站点全局 box-sizing: border-box，上下内边距为 0，高度由 height 固定）
-  it('强制色彩：按下且聚焦时 2px Highlight 边框，左右内边距各减 1px 补偿（含 --sm），外框宽度不变（spec §5.15）', () => {
-    const focused = '.pt-btn[aria-pressed="true"]:focus-visible'
-    const focusedSm = '.pt-btn--sm[aria-pressed="true"]:focus-visible'
-    expect(declared('btn.css', focused, 'border-width', FORCED)).toBe('2px')
-    expect(declared('btn.css', focused, 'border-color', FORCED)).toBe('Highlight')
-    expect(declared('btn.css', focused, 'padding-inline', FORCED)).toBe('21px')
-    expect(declared('btn.css', focusedSm, 'padding-inline', FORCED)).toBe('11px')
-    // 两条同为 (0,3,0)，--sm 必须排在后面才能覆盖基础补偿
-    const forced = rulesOf('btn.css').filter((rule) => inMedia(rule, FORCED))
+  // 附录 B.10 ①：按下且键盘聚焦时边框加到 2px Highlight，按每个尺寸变体的实际左右内边距各减 1px，
+  // border-box 尺寸与未聚焦时相同（站点全局 box-sizing: border-box，上下内边距为 0，高度由 height 固定）。
+  // 基础补偿规则是 (0,3,0)，会盖过所有变体 (0,1,0) 的内边距，所以凡声明了左右内边距的变体都要有自己的补偿
+  it('强制色彩：按下且聚焦时 2px Highlight 边框，每个声明了左右内边距的尺寸变体各减 1px，外框宽度不变（spec §5.15）', () => {
+    const rules = rulesOf('btn.css')
+    const pressedFocus = (variant: string) => `${variant}[aria-pressed="true"]:focus-visible`
+    const base = pressedFocus('.pt-btn')
+    expect(declared('btn.css', base, 'border-width', FORCED)).toBe('2px')
+    expect(declared('btn.css', base, 'border-color', FORCED)).toBe('Highlight')
+    const px = (value: string | undefined): number => Number.parseFloat(value ?? 'NaN')
+    // 左右内边距：padding-inline 优先，否则取 padding 简写的第二个值（只有一个值时取它）
+    const inlineOf = (rule: CssRule): number | undefined => {
+      const inline = rule.declarations.get('padding-inline')
+      if (inline !== undefined) return px(inline.split(' ')[0])
+      const parts = rule.declarations.get('padding')?.split(' ')
+      return parts === undefined ? undefined : px(parts[1] ?? parts[0])
+    }
+    const SIZE = /^\.pt-btn(--[\w-]+)?$/
+    // 顶层规则里声明了左右内边距的 .pt-btn 与各尺寸变体，按源码顺序
+    const variants = rules
+      .filter((rule) => rule.atRules.length === 0 && inlineOf(rule) !== undefined)
+      .flatMap((rule) =>
+        rule.selectors
+          .filter((selector) => SIZE.test(selector))
+          .map((selector) => [selector, inlineOf(rule) ?? Number.NaN] as const),
+      )
+    expect(variants.map(([selector]) => selector)).toEqual(
+      expect.arrayContaining(['.pt-btn', '.pt-btn--sm', '.pt-btn--xs', '.pt-btn--wide']),
+    )
+    expect(variants[0]?.[0]).toBe('.pt-btn')
+    const edge = px(declared('btn.css', '.pt-btn', 'border')?.split(' ')[0])
+    const focusEdge = px(declared('btn.css', base, 'border-width', FORCED))
+    const forced = rules.filter((rule) => inMedia(rule, FORCED))
     const indexOf = (selector: string) =>
       forced.findIndex((rule) => rule.selectors.includes(selector))
-    expect(indexOf(focusedSm)).toBeGreaterThan(indexOf(focused))
-    // 外框宽 = 左右内边距 + 左右边宽：补偿值从基础规则的实际内边距与边宽推出，未聚焦与聚焦相等
-    const px = (value: string | undefined): number => Number.parseFloat(value ?? 'NaN')
-    const inline = (padding: string | undefined): number => px(padding?.split(' ').at(-1))
-    const edge = px(declared('btn.css', '.pt-btn', 'border')?.split(' ')[0])
-    for (const [variant, pressed] of [
-      ['.pt-btn', focused],
-      ['.pt-btn--sm', focusedSm],
-    ] as const) {
-      const idle = 2 * inline(declared('btn.css', variant, 'padding')) + 2 * edge
-      const onFocus =
-        2 * px(declared('btn.css', pressed, 'padding-inline', FORCED)) +
-        2 * px(declared('btn.css', focused, 'border-width', FORCED))
-      expect(onFocus, variant).toBe(idle)
+    let previous = -1
+    for (const [variant, idle] of variants) {
+      const compensated = px(declared('btn.css', pressedFocus(variant), 'padding-inline', FORCED))
+      expect(compensated, variant).toBe(idle - (focusEdge - edge))
+      // 外框宽 = 左右内边距 + 左右边宽，按下且聚焦前后相等
+      expect(2 * compensated + 2 * focusEdge, variant).toBe(2 * idle + 2 * edge)
+      // 同为 (0,3,0)，靠源码顺序决胜：基础补偿在最前，变体补偿的先后与变体声明一致（叠用时胜出的变体与平时相同）
+      const at = indexOf(pressedFocus(variant))
+      expect(at, variant).toBeGreaterThan(previous)
+      previous = at
+    }
+    // 其余 @media 不改按钮的左右内边距，否则上面的补偿值对不上
+    for (const rule of rules) {
+      if (rule.atRules.length === 0 || inMedia(rule, FORCED)) continue
+      for (const selector of rule.selectors.filter((item) => SIZE.test(item))) {
+        expect(inlineOf(rule), `${selector} ${rule.atRules.join(' ')}`).toBeUndefined()
+      }
     }
   })
 })
