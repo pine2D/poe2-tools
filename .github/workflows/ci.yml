@@ -32,6 +32,24 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      # 同一版本不能换内容（扩展发布 spec §5）：GitHub 上已有该版本的 Release 附件时，必须与 release.json 逐字节一致。
+      # 在部署之前拦住误用 EXTENSION_RELEASE_AMEND 改写已发布版本的情况；只读，默认 token 足够。
+      - name: 已发布的扩展版本不得换内容
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: node apps/poe2-extension/scripts/github-release.mjs guard
+      # 打包或闸门失败时留下扩展产物，下载后可与本机逐文件比对（跨环境字节不一致时用）
+      - name: 失败时保存扩展产物
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-debug-${{ github.sha }}
+          path: |
+            apps/poe2-extension/dist
+            apps/poe2-extension/artifacts
+          if-no-files-found: ignore
+          retention-days: 3
       - uses: actions/upload-artifact@v4
         with:
           name: site-${{ github.sha }}
@@ -50,6 +68,40 @@ jobs:
     with:
       target: ${{ github.event_name == 'push' && 'production' || inputs.deploy }}
     secrets: inherit
+
+  # 扩展发布（扩展发布 spec §7）：只在 push 到 main 且本次部署成功后运行；附件取自同一次运行的网站产物。
+  # github-release.mjs publish：没有 Release 就创建（不标为 Latest）；已有且附件一致就跳过；缺附件就补传；
+  # 草稿、多余附件或内容不一致即失败。整个工作流只有这个 job 有仓库写权限。
+  # job 级 concurrency 只保证两个发布不并行；新的 push main 仍会按工作流级 cancel-in-progress 取消整次运行，
+  # 中途取消留下的缺附件 Release 由下一次运行补传，草稿则让下一次运行失败、需人工检查删除。
+  release-extension:
+    needs: [verify, deploy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release-extension
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-${{ github.sha }}
+          path: site-dist
+      - name: 生成发布说明
+        id: plan
+        run: node apps/poe2-extension/scripts/release-notes.mjs "$RUNNER_TEMP/release-notes.md" >> "$GITHUB_OUTPUT"
+      - name: 创建或核对 GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ASSET: site-dist/downloads/${{ steps.plan.outputs.file }}
+          TARGET: ${{ github.sha }}
+        run: node apps/poe2-extension/scripts/github-release.mjs publish "$ASSET" "$RUNNER_TEMP/release-notes.md" "$TARGET"
 
   # 冒烟：GitHub Actions 出口能否访问国服交易站静态端点。词典生成是否能放进 CI 取决于此。
   # 手动触发；不下载、不提交任何数据，只打印状态码与条目数。
