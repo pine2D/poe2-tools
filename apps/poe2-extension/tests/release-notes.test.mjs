@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 import { formatBytes, releaseNotes, releasePlan, SITE } from '../scripts/release-notes.mjs'
 
@@ -51,4 +53,12 @@ it('CHANGELOG 缺该版本段落时拒绝生成正文', () => {
 it('字节数按千分位分组并换算 MB', () => {
   expect(formatBytes(999)).toBe('999 字节（0.0 MB）')
   expect(formatBytes(25 * 1048576)).toBe('26,214,400 字节（25.0 MB）')
+})
+
+it('命令行出错时只输出一行中文说明并以 1 退出，不打印堆栈', () => {
+  const script = fileURLToPath(new URL('../scripts/release-notes.mjs', import.meta.url))
+  const result = spawnSync(process.execPath, [script], { encoding: 'utf8' })
+  expect(result.status).toBe(1)
+  expect(result.stderr).toContain('用法')
+  expect(result.stderr).not.toContain('    at ')
 })

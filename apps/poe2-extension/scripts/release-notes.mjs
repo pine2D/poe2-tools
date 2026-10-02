@@ -41,12 +41,17 @@ export function releaseNotes(release, changelog) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const out = process.argv[2]
-  if (!out)
-    throw new Error('用法：node apps/poe2-extension/scripts/release-notes.mjs <正文输出路径>')
-  const root = fileURLToPath(new URL('../', import.meta.url))
-  const release = JSON.parse(await readFile(path.join(root, 'release.json'), 'utf8'))
-  const changelog = await readFile(path.join(root, 'CHANGELOG.md'), 'utf8')
-  await writeFile(out, releaseNotes(release, changelog))
-  for (const [key, value] of Object.entries(releasePlan(release))) console.log(`${key}=${value}`)
+  try {
+    const out = process.argv[2]
+    if (!out)
+      throw new Error('用法：node apps/poe2-extension/scripts/release-notes.mjs <正文输出路径>')
+    const root = fileURLToPath(new URL('../', import.meta.url))
+    const release = JSON.parse(await readFile(path.join(root, 'release.json'), 'utf8'))
+    const changelog = await readFile(path.join(root, 'CHANGELOG.md'), 'utf8')
+    await writeFile(out, releaseNotes(release, changelog))
+    for (const [key, value] of Object.entries(releasePlan(release))) console.log(`${key}=${value}`)
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : error)
+    process.exit(1)
+  }
 }
