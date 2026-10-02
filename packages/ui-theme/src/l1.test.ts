@@ -89,6 +89,14 @@ describe('L1 宿主压过原站全局样式（CoE `* { color; font }`）', () =>
   })
 })
 
+describe('导入面板文本框随视口收缩（spec §8.8 声明须在视口内）', () => {
+  it('textarea 高度 clamp(120px, 20vh, 240px)，最小 120px', () => {
+    const rule = rules.find((r) => r.selectors.join(', ') === 'textarea')
+    expect(norm(rule?.declarations.get('height'))).toBe('clamp(120px, 20vh, 240px)')
+    expect(rule?.declarations.get('min-height')).toBe('120px')
+  })
+})
+
 describe('对比度（spec §6.9、§4.3）', () => {
   it('--ext-ink 对 CoE 全部实测底色 ≥4.5:1', () => {
     for (const bg of COE_BACKGROUNDS)
