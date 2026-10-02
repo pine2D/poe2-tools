@@ -10,6 +10,9 @@ const enabled = required<HTMLInputElement>('#enabled')
 const bilingual = required<HTMLInputElement>('#bilingual')
 const status = required<HTMLElement>('#status')
 const retry = required<HTMLButtonElement>('#retry')
+// 页脚版本号读自 manifest；测试替身页面没有页脚时跳过
+const versionLabel = document.querySelector<HTMLElement>('#version')
+if (versionLabel) versionLabel.textContent = `版本 ${platform.version()}`
 enabled.disabled = true
 bilingual.disabled = true
 let latest: Settings | null = null

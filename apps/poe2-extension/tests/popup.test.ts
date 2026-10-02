@@ -1,6 +1,12 @@
+import { readFileSync } from 'node:fs'
 import { afterEach, expect, it, vi } from 'vitest'
 
-const storage = vi.hoisted(() => ({ read: vi.fn(), write: vi.fn(), subscribe: vi.fn() }))
+const storage = vi.hoisted(() => ({
+  read: vi.fn(),
+  write: vi.fn(),
+  subscribe: vi.fn(),
+  version: vi.fn(),
+}))
 vi.mock('../src/platform', () => ({ platform: storage }))
 afterEach(() => {
   vi.resetModules()
@@ -232,4 +238,24 @@ it('外部停用令原焦点开关不可用时返回启用开关', async () => {
   await vi.waitFor(() => expect(enabled.disabled).toBe(false))
   expect(bilingual.disabled).toBe(true)
   expect(document.activeElement).toBe(enabled)
+})
+
+it('页脚显示 manifest 版本、检查更新链接与完整非官方声明，不再写“预览版”', async () => {
+  const html = readFileSync('apps/poe2-extension/popup.html', 'utf8')
+  document.body.innerHTML = html.match(/<main>[\s\S]*<\/main>/)?.[0] ?? ''
+  storage.read.mockResolvedValue({ enabled: true, bilingual: false })
+  storage.version.mockReturnValue('0.2.0')
+  await import('../src/popup/index')
+  expect(document.querySelector('#version')?.textContent).toBe('版本 0.2.0')
+  const link = document.querySelector<HTMLAnchorElement>('#check-update')
+  expect(link?.getAttribute('href')).toBe('https://poe2-tools.pine2d.com/extension/')
+  expect(link?.getAttribute('target')).toBe('_blank')
+  expect(link?.getAttribute('rel')).toBe('noopener noreferrer')
+  expect(link?.textContent).toBe('检查更新')
+  const footer = document.querySelector('footer')?.textContent ?? ''
+  expect(footer).toContain(
+    '非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。游戏文本版权归各权利方所有。',
+  )
+  expect(footer).not.toContain('预览')
+  expect(document.querySelectorAll('footer p')).toHaveLength(3)
 })

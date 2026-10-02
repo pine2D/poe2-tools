@@ -26,9 +26,49 @@ async function loadLexiconModule() {
   return import(`data:text/javascript;base64,${Buffer.from(entry.code).toString('base64')}`)
 }
 
+// 弹窗里唯一允许的外链：“检查更新”打开网站介绍页（只是导航，扩展不发请求）
+export const POPUP_LINKS = ['https://poe2-tools.pine2d.com/extension/']
+// src/href 以外能让页面发请求的属性，弹窗里一律不允许
+const OTHER_REFERENCE_ATTRS = /\s(srcset|poster|action|formaction|ping|data|background)\s*=/i
+
+/** popup.html 的资源与链接：script/link 只能引用包内 ./assets/，a 只能指向 POPUP_LINKS；返回包内资源路径 */
+export function popupReferences(html) {
+  const other = html.match(OTHER_REFERENCE_ATTRS)
+  if (other) throw new Error(`popup 含不允许的引用属性：${other[1]}`)
+  if (/url\(|@import/i.test(html)) throw new Error('popup 含内联样式引用')
+  const total = [...html.matchAll(/\s(?:src|href)=/gi)].length
+  const resources = []
+  let seen = 0
+  for (const [, tag, value] of html.matchAll(/<([a-z]+)\b[^>]*?\s(?:src|href)="([^"]*)"/gi)) {
+    seen += 1
+    if (tag.toLowerCase() === 'a') {
+      if (!POPUP_LINKS.includes(value)) throw new Error(`popup 含未登记的链接：${value}`)
+      continue
+    }
+    if (
+      !['script', 'link'].includes(tag.toLowerCase()) ||
+      !value.startsWith('./assets/') ||
+      value.includes('..', 2)
+    )
+      throw new Error('popup 含外部资源')
+    resources.push(value.slice(2))
+  }
+  if (seen !== total) throw new Error('popup 含无法识别的资源引用')
+  return resources
+}
+
+/** 弹窗样式里的 @import 与外部 url()（http:、https:、协议相对 //）；返回命中的片段 */
+export function popupStyleExternal(css) {
+  return [...css.matchAll(/@import\b[^;]*|url\(\s*['"]?(?:https?:|\/\/)[^)]*\)/gi)].map(
+    (match) => match[0],
+  )
+}
+
 export function validateManifest(m, version) {
   if (m.manifest_version !== 3 || m.version !== version || !same(m.permissions, ['storage']))
     throw new Error('Manifest 版本或权限不符合约定')
+  if (typeof m.description !== 'string' || !m.description.startsWith('非官方扩展：'))
+    throw new Error('Manifest 描述必须以“非官方扩展：”开头')
   for (const field of [
     'host_permissions',
     'optional_permissions',
@@ -84,12 +124,11 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   new vm.Script(content)
   if (/^\s*(?:import|export)\s/m.test(content)) throw new Error('内容脚本必须独立执行')
   const popup = await readFile(path.join(dist, 'popup.html'), 'utf8')
-  const popupResources = []
-  for (const match of popup.matchAll(/(?:src|href)="([^"#]+)"/g)) {
-    if (!match[1].startsWith('./assets/') || match[1].includes('..', 2))
-      throw new Error('popup 含外部资源')
-    popupResources.push(match[1].slice(2))
-    await readFile(path.join(dist, match[1]))
+  const popupResources = popupReferences(popup)
+  for (const file of popupResources) {
+    const content = await readFile(path.join(dist, file), 'utf8')
+    const external = file.endsWith('.css') ? popupStyleExternal(content) : []
+    if (external.length > 0) throw new Error(`popup 样式含外部引用：${external.join(' ')}`)
   }
   const dict = JSON.parse(await readFile(path.join(dist, 'assets/dictionary.json'), 'utf8'))
   if (

@@ -75,7 +75,8 @@ small {
   margin-top: 4px;
 }
 input:focus-visible,
-#retry:focus-visible {
+#retry:focus-visible,
+footer a:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 4px;
 }
@@ -106,6 +107,14 @@ footer {
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
+footer p {
+  font-size: inherit;
+  line-height: inherit;
+}
+footer a {
+  color: var(--gold);
+  text-underline-offset: 3px;
+}
 #retry {
   min-height: 40px;
   margin-bottom: 16px;
@@ -130,7 +139,8 @@ footer {
 }
 @media (forced-colors: active) {
   input:focus-visible,
-  #retry:focus-visible {
+  #retry:focus-visible,
+  footer a:focus-visible {
     outline-color: Highlight;
   }
 }

@@ -6,6 +6,7 @@ const manifest = {
   icons,
   manifest_version: 3,
   version: '0.1.0',
+  description: '非官方扩展：为新版 Craft of Exile 的 PoE2 页面提供国服简体术语显示。',
   permissions: ['storage'],
   action: { default_popup: 'popup.html', default_icon: icons },
   content_scripts: [
@@ -36,4 +37,13 @@ it('禁止增加网络、剪贴板、主世界、后台权限和版本漂移', (
 it('拒绝缺失或外部图标路径', () => {
   for (const icons of [undefined, { 128: 'https://example.com/icon.png' }])
     expect(() => validateManifest({ ...manifest, icons }, '0.1.0')).toThrow()
+})
+
+it('描述必须以“非官方扩展：”开头', () => {
+  for (const description of [
+    undefined,
+    '为新版 Craft of Exile 提供国服术语。',
+    ' 非官方扩展：前置空格',
+  ])
+    expect(() => validateManifest({ ...manifest, description }, '0.1.0')).toThrow('非官方扩展：')
 })

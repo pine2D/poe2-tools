@@ -4,7 +4,7 @@ export interface Settings {
 }
 export const defaults: Settings = { enabled: true, bilingual: false }
 interface ChromeApi {
-  runtime: { getURL(path: string): string }
+  runtime: { getURL(path: string): string; getManifest(): { version: string } }
   storage: {
     local: {
       get(key: string): Promise<Record<string, unknown>>
@@ -28,6 +28,7 @@ export function settingsFrom(value: unknown): Settings {
 }
 export const platform = {
   resource: (path: string) => chrome.runtime.getURL(path),
+  version: () => chrome.runtime.getManifest().version,
   read: async () => settingsFrom((await chrome.storage.local.get('settings')).settings),
   write: (settings: Settings) => chrome.storage.local.set({ settings }),
   subscribe: (callback: (settings: Settings) => void) =>
