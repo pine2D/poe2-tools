@@ -17,3 +17,13 @@ it('pnpm verify 在网站构建之前打包扩展（网站构建要复制扩展 
     'pnpm craft:check',
   ])
 })
+
+it('发版脚本：extension:release-check 只核对，extension:release 先打包再改写 release.json', async () => {
+  const { scripts } = JSON.parse(await read('package.json'))
+  expect(scripts['extension:release-check']).toBe(
+    'node apps/poe2-extension/scripts/release.mjs check',
+  )
+  expect(scripts['extension:release']).toBe(
+    'pnpm extension:package && node apps/poe2-extension/scripts/release.mjs write',
+  )
+})
