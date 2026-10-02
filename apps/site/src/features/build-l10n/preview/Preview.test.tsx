@@ -358,8 +358,9 @@ describe('Preview 定位、快捷键与译文视图', () => {
     const weapon = cardOf('炎种长杖')
     const prop = weapon.querySelector('.pt-tooltip__prop') as HTMLElement
     expect(prop.textContent).toBe('主手·适用等级 16–100·双语')
-    expect(prop.lastElementChild?.className).toBe('pt-nameplate__tag')
-    expect(prop.lastElementChild?.textContent).toBe('双语')
+    const last = prop.lastElementChild?.lastElementChild
+    expect(last?.className).toBe('pt-nameplate__tag')
+    expect(last?.textContent).toBe('双语')
     expect(weapon.querySelector('.app__pair-orig')).toBeNull()
     expect(weapon.textContent).not.toContain('increased Spell Damage')
     expect(cardOf('红宝石戒指').querySelector('.pt-tooltip__prop')?.textContent).toBe('戒指 2·双语')
@@ -370,6 +371,46 @@ describe('Preview 定位、快捷键与译文视图', () => {
     for (const item of container.querySelectorAll('.pt-tooltips .pt-tooltip__prop')) {
       expect(within(item as HTMLElement).getByText('双语').className).toBe('pt-nameplate__tag')
     }
+  })
+
+  // 附录 B.7 的思路用于属性行：每项与其后的“·”同在一个分组（.pt-tooltip__seg，样式里不拆行），
+  // 换行只发生在“·”之后，“·”留在上一行行尾、不出现在行首，各项自身不被拆开
+  it('译文视图：属性行每项与其后的“·”同组，最后一项不带“·”', () => {
+    const both = translateSource(
+      { id: 'f3', name: 'rich.build', text: readFileSync(`${fixtures}rich.build`, 'utf8') },
+      dict,
+      { bilingual: true, annotateUniques: true },
+    )
+    if (!both.ok) throw new Error(both.error)
+    const { container } = render(
+      <Preview
+        file={both.file}
+        fields={buildFieldRows(both.file, true)}
+        locale="zh-CN"
+        bilingual
+        onDownload={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('radio', { name: '译文' }))
+    const props = [...container.querySelectorAll('.pt-tooltips .pt-tooltip__prop')]
+    expect(props).toHaveLength(4)
+    for (const prop of props) {
+      const segs = [...prop.children]
+      expect(segs.length, prop.textContent ?? '').toBeGreaterThan(1)
+      for (const [i, seg] of segs.entries()) {
+        expect(seg.className, prop.textContent ?? '').toBe('pt-tooltip__seg')
+        const dots = seg.querySelectorAll(':scope > .pt-tooltip__dot')
+        if (i < segs.length - 1) {
+          expect(dots, prop.textContent ?? '').toHaveLength(1)
+          expect(seg.lastElementChild, prop.textContent ?? '').toBe(dots[0])
+          expect(dots[0]?.getAttribute('aria-hidden')).toBe('true')
+        } else {
+          expect(dots, prop.textContent ?? '').toHaveLength(0)
+        }
+      }
+    }
+    const belt = cardOf('稳步印记').querySelector('.pt-tooltip__prop') as HTMLElement
+    expect([...belt.children].map((seg) => seg.textContent)).toEqual(['腰带·', '传奇·', '双语'])
   })
 
   it('译文视图：未开启“导出时保留英文原行”时提示框不显示“双语”标签', () => {

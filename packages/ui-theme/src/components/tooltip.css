@@ -51,6 +51,12 @@
   margin: 0 6px;
   font-style: normal;
 }
+/* 属性行按项分组（附录 B.7 的思路）：每项连同其后的“·”是一个行内块，换行只在组与组之间，“·”留在上一行行尾、
+   不出现在行首；组宽取内容宽，放不下就整组移到下一行，只有单组宽过属性行时才在组内换行 */
+.pt-tooltip__seg {
+  display: inline-block;
+  max-width: 100%;
+}
 .pt-tooltip__prop .pt-nameplate__tag {
   display: inline-block;
   vertical-align: 1px;

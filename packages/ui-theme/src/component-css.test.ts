@@ -830,6 +830,15 @@ describe('tooltip.css（spec §6.4.4）', () => {
     expect(m2Value(rules, '.pt-tooltip__body > .pt-divider', '--sep-c')).toBe('var(--edge)')
     expect(m2Value(rules, '.pt-tooltip__body > .pt-divider', 'margin')).toBe(m2Norm('8px 20px'))
   })
+  // 附录 B.7 的思路用于属性行：每项连同其后的“·”是一个原子行内块，换行只在组与组之间，“·”留在上一行行尾；
+  // 单组宽过属性行时（max-width: 100%）组内才换行，否则组宽取内容宽、不拆开
+  it('属性行按项分组：分组为行内块、最大宽 100%，组内不另设 nowrap', () => {
+    expect(m2Value(rules, '.pt-tooltip__seg', 'display')).toBe('inline-block')
+    expect(m2Value(rules, '.pt-tooltip__seg', 'max-width')).toBe('100%')
+    expect(
+      m2Rules(rules, '.pt-tooltip__seg').some((rule) => rule.declarations.has('white-space')),
+    ).toBe(false)
+  })
   it('中文词缀 15.5px/1.5 --mod-hi，数值 --mod-num-zh 700', () => {
     expect(m2Value(rules, '.pt-tooltip__mod', 'color')).toBe('var(--mod-hi)')
     expect(m2Value(rules, '.pt-tooltip__mod', 'font-size')).toBe('15.5px')

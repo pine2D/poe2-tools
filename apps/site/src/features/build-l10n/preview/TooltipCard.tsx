@@ -66,17 +66,18 @@ export function TooltipCard({ slot, entry, level, locale, bilingual = false }: T
       <PtNameplate variant={variant} tooltip {...slotPlateName(slot, entry, locale)} />
       <div className="pt-tooltip__body">
         {props.length > 0 && (
+          // 每项连同其后的“·”包成一组（附录 B.7 的思路）：换行只发生在组与组之间，“·”留在上一行行尾，各项不被拆开
           <p className="pt-tooltip__prop">
             {props.map((item, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: 属性项按固定顺序生成，位置就是身份
-              <Fragment key={i}>
-                {i > 0 && (
+              <span key={i} className="pt-tooltip__seg">
+                {item}
+                {i < props.length - 1 && (
                   <i className="pt-tooltip__dot" aria-hidden="true">
                     ·
                   </i>
                 )}
-                {item}
-              </Fragment>
+              </span>
             ))}
           </p>
         )}
