@@ -34,7 +34,7 @@ pnpm verify
 - preview 使用 `preview-<来源分支>`，与 production 的并发组隔离；即使从 main 发起预览，也不会传 `--branch=main`。
 - 使用固定 Wrangler 4.40.2；升级时需独立验证部署命令和输出地址提取。
 - 部署后从 Wrangler 日志提取本次不可变 `pages.dev` 地址，检查页面、资源、字体许可文件、`NOTICE.txt`、CSS 引用的字体分片、扩展下载（返回 200，字节数与 SHA-256 与 `release.json` 一致）和真实 404。失败时工作流失败，但不会自动回滚。
-- 扩展随网站同一条 CI 发布：扩展版本独立，`release.json` 是发布闸门（产物变化而未发版时 `verify` 失败，不会部署）；部署成功后 `release-extension` job（整个工作流唯一有 `contents: write` 的 job）用同一次运行的网站产物里的 zip 创建 tag `ext-v<版本>` 与 GitHub Release（不标为 Latest）；已有一致的 Release 即跳过，缺附件补传，草稿或内容不一致即失败。工作流级 `cancel-in-progress` 可能在新推送时中途取消发布，留下的草稿需要人工检查删除后重跑。发版步骤见 `docs/chrome-extension/README.md`。
+- 扩展随网站同一条 CI 发布：扩展版本独立，`release.json` 是发布闸门（产物变化而未发版时 `verify` 失败，不会部署）；部署成功后 `release-extension` job（整个工作流唯一有 `contents: write` 的 job）用同一次运行的网站产物里的 zip 创建 tag `ext-v<版本>` 与 GitHub Release（不标为 Latest）；已有一致的 Release 即跳过，缺附件补传，草稿、多余附件或内容不一致即失败。工作流级 `cancel-in-progress` 可能在新推送时中途取消发布，留下的草稿需要人工检查删除后重跑。发版步骤见 `docs/chrome-extension/README.md`。
 
 沿用已有变量 `CF_PAGES_PROJECT` 和 secrets `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`。项目变量未配置时不部署；凭据缺失会明确失败，不伪装成功。
 

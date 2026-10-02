@@ -1,7 +1,7 @@
 # Changelog
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
-版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` / `l10n-core` 是私有内部包，不单独计版本；扩展 `apps/poe2-extension` 独立计版本，更新日志见 `apps/poe2-extension/CHANGELOG.md`。仓库私有，暂不提供版本比较链接。
+版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` / `l10n-core` 是私有内部包，不单独计版本；扩展 `apps/poe2-extension` 独立计版本，更新日志见 `apps/poe2-extension/CHANGELOG.md`。
 
 ## [Unreleased]
 

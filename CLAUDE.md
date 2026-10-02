@@ -38,10 +38,10 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   `src/motif.ts`、`src/noise.ts` 是母题与颗粒的唯一源，`scripts/build-motif-css.mjs` 生成 `src/generated/`；`src/components/*.css`
   是 `pt-*` 组件样式；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
   `scripts/compliance.mjs` 是许可文件与素材白名单判定的唯一实现。`fonts/` 与 `src/generated/` 是生成物：入库、不手改、Biome 排除。
-- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；测试用 happy-dom。
-- `apps/poe2-extension/`：Chrome 扩展（Manifest V3，只申请 `storage` 权限，内容脚本只匹配 `https://beta.craftofexile.com/*`）。`scripts/build.mjs` 构建 `dist/`（content.js、popup、词典、LICENSE、NOTICE、图标），`scripts/check.mjs` 校验 manifest 与产物白名单，`scripts/package.mjs` 打包到 `artifacts/`（不入库）。版本号独立于网站，唯一来源是该目录的 `package.json`。
+- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；`scripts/sync-extension.mjs` 按 `apps/poe2-extension/release.json` 把扩展 zip 复制到 `public/downloads/`（不入库）；测试用 happy-dom。
+- `apps/poe2-extension/`：Chrome 扩展（Manifest V3，只申请 `storage` 权限，内容脚本只匹配 `https://beta.craftofexile.com/*`）。`scripts/build.mjs` 构建 `dist/`（content.js、popup、词典、LICENSE、NOTICE、图标），`scripts/check.mjs` 校验 manifest 与产物白名单，`scripts/package.mjs` 打包到 `artifacts/`（不入库）。版本号独立于网站，唯一来源是该目录的 `package.json`（`manifest.json` 的 `version` 须一致，构建时核对）；发布记录 `release.json` 入库。
 - `packages/l10n-core/`：扩展的术语匹配核心，纯 TypeScript、无 DOM、无 Chrome API；扩展运行时与打包校验共用。
-- `data/l10n/`：扩展专用数据——`coe-beta/ui.zh-CN.json`（manual 界面译文）、`aliases.zh-CN.json`（manual 别名）、`coe-beta/tablets.zh-CN.json`（gray 石板名）；构建扩展时与 `data/dict/zh-CN/` 一起裁剪进 `assets/dictionary.json`。
+- `data/l10n/`：扩展专用数据——`coe-beta/ui.zh-CN.json`（manual 界面译文）、`aliases.zh-CN.json`（manual 别名）、`coe-beta/tablets.zh-CN.json`（gray 石板名）；构建扩展时与 `data/dict/zh-CN/items.json`、`stats.json` 及 `data/craft/catalog.json`（名称对照）一起裁剪进 `assets/dictionary.json`。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
   `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
   `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率
@@ -87,7 +87,7 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   审计计数与覆盖率。若 `packages/ui-theme` 的 coverage.test 因新名称字符失败，运行 `pnpm ui-theme:fonts`，先用独立提交
   `chore(ui-theme): 更新字体分片` 提交 `packages/ui-theme/fonts/`（覆盖只增不减，旧词典在这个提交下仍能通过测试），再用独立提交
   `chore(dict): 更新词典至 <游戏版本>` 提交词典；两个提交各自都要能通过 `pnpm verify`。覆盖率下降需先查原因，不要直接
-  `--allow-regression`。`data/dict/zh-CN/`、`data/l10n/` 或 `data/craft/catalog.json` 的变化会改变扩展 zip，`pnpm verify` 的
+  `--allow-regression`。`data/dict/zh-CN/items.json`、`stats.json`、`data/l10n/` 或 `data/craft/catalog.json` 的变化会改变扩展 zip，`pnpm verify` 的
   扩展发布闸门随之失败：在同一个 `chore(dict)` 提交里升扩展补丁版本（`apps/poe2-extension/package.json` 与 `manifest.json`），
   在 `apps/poe2-extension/CHANGELOG.md` 写一段“词典更新至 <游戏版本>”，运行 `pnpm extension:release` 并一起提交 `release.json`，
   保证该提交单独通过 `pnpm verify`。
@@ -132,7 +132,7 @@ pnpm ui-theme:motif # 手动运行：由 motif.ts 重新生成母题 CSS 与 SVG
   有意发版：升版本 → 写扩展 CHANGELOG → `pnpm extension:release` → 提交；只在 Linux（含 WSL）上发版；
   步骤见 `docs/chrome-extension/README.md` 的“发版步骤”。
 - 推送 main 触发网站部署（扩展 zip 随站发布在 `/downloads/`），部署成功后 `release-extension` job 创建 tag `ext-v<版本>` 与
-  GitHub Release（附件是同一个 zip，不标为 Latest；已有一致的 Release 即跳过，缺附件补传，草稿或内容不一致即失败）。
+  GitHub Release（附件是同一个 zip，不标为 Latest；已有一致的 Release 即跳过，缺附件补传，草稿、多余附件或内容不一致即失败）。
   CI 的 verify 还比对 GitHub 上已发布的同版本附件，内容不同即失败：已发布的版本只能升版本，不能 amend。
   推送由用户执行；推送含 `.github/workflows/` 改动时，HTTPS 令牌需要 `workflow` 权限（SSH 不受影响）。
 

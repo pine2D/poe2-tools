@@ -36,7 +36,7 @@
 
 - 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`；
 - `packages/item-core`：网站工坊与扩展共用，只为网站改它也会改变扩展 zip；
-- 数据：`data/dict/zh-CN/`、`data/l10n/`、`data/craft/catalog.json`，以及根目录 `LICENSE`；
+- 数据：`data/dict/zh-CN/items.json`、`stats.json`、`data/l10n/`、`data/craft/catalog.json`，以及根目录 `LICENSE`；
 - 依赖与 `pnpm-lock.yaml` 升级：Vite、Rolldown 等构建链版本变化会改变 `content.js` 与弹窗资源。
 
 只在 Linux（含 WSL）上发版：CI 在 Linux 上重新打包核对；Windows 原生检出若开启换行转换，数据文件的哈希会写进词典的 sources，产物随之不同。
@@ -45,7 +45,7 @@
 2. 在 `apps/poe2-extension/CHANGELOG.md` 顶部写 `## [<版本>] - <YYYY-MM-DD>` 一段；这个日期会写进 `release.json` 与 GitHub Release，写预计推送的日期。
 3. 运行 `pnpm extension:release`：重新构建、打包并改写 `apps/poe2-extension/release.json`（版本、文件名、字节数、SHA-256、日期）。同一版本已记录另一份产物时会拒绝；只有日期不同时也会拒绝，并单独提示。该版本尚未推送发布时可用 `EXTENSION_RELEASE_AMEND=1 pnpm extension:release` 覆盖；已发布则只能再升版本——CI 的 verify 会比对 GitHub 上已发布的同版本附件，内容不同即失败。
 4. 运行 `pnpm verify`，把 `release.json`、版本号与 CHANGELOG 和改动一起提交。
-5. 推送 main（由用户执行）：CI 验证后部署网站，`/downloads/<文件>` 随站发布；部署成功后 `release-extension` job 创建 tag `ext-v<版本>` 与同名 GitHub Release（不标为 Latest），附件是同一个 zip。已有一致的 Release 则跳过，缺附件会补传，草稿或内容不一致则失败，需要在 GitHub 上人工检查。推送含 `.github/workflows/` 改动时，HTTPS 令牌需要 `workflow` 权限（SSH 不受影响）。经 PR 合入时，分支里若有合并提交（例如扩展合入主线的 `feat/extension-release`），合并 PR 只能选“Create a merge commit”，或在 PR 的 CI 通过后本地快进推送；Squash 与 Rebase 会丢掉被合并分支的历史。
+5. 推送 main（由用户执行）：CI 验证后部署网站，`/downloads/<文件>` 随站发布；部署成功后 `release-extension` job 创建 tag `ext-v<版本>` 与同名 GitHub Release（不标为 Latest），附件是同一个 zip。已有一致的 Release 则跳过，缺附件会补传，草稿、多余附件或内容不一致则失败，需要在 GitHub 上人工检查。推送含 `.github/workflows/` 改动时，HTTPS 令牌需要 `workflow` 权限（SSH 不受影响）。经 PR 合入时，分支里若有合并提交（例如扩展合入主线的 `feat/extension-release`），合并 PR 只能选“Create a merge commit”，或在 PR 的 CI 通过后本地快进推送；Squash 与 Rebase 会丢掉被合并分支的历史。
 
 ### 下线 gray 来源
 
