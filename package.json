@@ -15,7 +15,7 @@
     "test": "vitest run --passWithNoTests",
     "build": "pnpm -r --if-present run build",
     "dev": "pnpm --filter @poe2-tools/site dev",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm extension:package && pnpm build && pnpm dict:check && pnpm craft:check",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm extension:package && pnpm extension:release-check && pnpm build && pnpm dict:check && pnpm craft:check",
     "dict:build": "pnpm --filter @poe2-tools/dict-builder run build-dict",
     "dict:check": "pnpm --filter @poe2-tools/dict-builder run check-dict",
     "craft:build": "pnpm --filter @poe2-tools/dict-builder run build-craft",

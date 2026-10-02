@@ -5,13 +5,14 @@ import { expect, it } from 'vitest'
 
 const read = (relative) => readFile(new URL(`../../../${relative}`, import.meta.url), 'utf8')
 
-it('pnpm verify 在网站构建之前打包扩展（网站构建要复制扩展 zip）', async () => {
+it('pnpm verify 先打包扩展并过发布闸门，再构建网站（网站构建要复制扩展 zip）', async () => {
   const { scripts } = JSON.parse(await read('package.json'))
   expect(scripts.verify.split(' && ')).toEqual([
     'pnpm typecheck',
     'pnpm lint',
     'pnpm test',
     'pnpm extension:package',
+    'pnpm extension:release-check',
     'pnpm build',
     'pnpm dict:check',
     'pnpm craft:check',
