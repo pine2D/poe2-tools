@@ -242,7 +242,8 @@ it('外部停用令原焦点开关不可用时返回启用开关', async () => {
 
 it('页脚显示 manifest 版本、检查更新链接与完整非官方声明，不再写“预览版”', async () => {
   const html = readFileSync('apps/poe2-extension/popup.html', 'utf8')
-  document.body.innerHTML = html.match(/<main>[\s\S]*<\/main>/)?.[0] ?? ''
+  // 页脚在 <main> 之外（spec §6.8）：取标题栏到页脚整段，不含模块脚本
+  document.body.innerHTML = html.match(/<header[\s\S]*<\/footer>/)?.[0] ?? ''
   storage.read.mockResolvedValue({ enabled: true, bilingual: false })
   storage.version.mockReturnValue('0.2.0')
   await import('../src/popup/index')
@@ -254,8 +255,60 @@ it('页脚显示 manifest 版本、检查更新链接与完整非官方声明，
   expect(link?.textContent).toBe('检查更新')
   const footer = document.querySelector('footer')?.textContent ?? ''
   expect(footer).toContain(
-    '非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。游戏文本版权归各权利方所有。',
+    '非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。',
   )
+  expect(footer).toContain('游戏文本版权归各权利方所有。')
   expect(footer).not.toContain('预览')
-  expect(document.querySelectorAll('footer p')).toHaveLength(3)
+  expect(document.querySelectorAll('footer p')).toHaveLength(4)
+})
+
+async function setupFull(settings = { enabled: true, bilingual: false }) {
+  document.body.innerHTML =
+    '<input id="enabled" type="checkbox"><span id="enabled-state"></span>' +
+    '<input id="bilingual" type="checkbox"><span id="bilingual-state"></span>' +
+    '<p id="status"></p><button id="retry" hidden>重试读取</button>'
+  storage.read.mockResolvedValue(settings)
+  await import('../src/popup/index')
+  await vi.waitFor(() =>
+    expect(document.querySelector<HTMLInputElement>('#enabled')?.disabled).toBe(false),
+  )
+  return {
+    status: document.querySelector('#status') as HTMLElement,
+    enabled: document.querySelector('#enabled') as HTMLInputElement,
+    enabledState: document.querySelector('#enabled-state') as HTMLElement,
+    bilingualState: document.querySelector('#bilingual-state') as HTMLElement,
+  }
+}
+it('状态行标注语气：读取成功且开启为 ok（B.12 修订 3）', async () => {
+  const { status } = await setupFull()
+  expect(status.dataset.tone).toBe('ok')
+})
+it('状态行标注语气：已关闭为 off，保存失败为 error', async () => {
+  const { status, enabled } = await setupFull({ enabled: false, bilingual: false })
+  expect(status.dataset.tone).toBe('off')
+  storage.write.mockRejectedValueOnce(new Error('storage failed'))
+  enabled.checked = true
+  enabled.dispatchEvent(new Event('change'))
+  await vi.waitFor(() => expect(status.dataset.tone).toBe('error'))
+  expect(status.textContent).toContain('未保存')
+})
+it('开关右侧的“开启／关闭”随勾选与保存结果同步', async () => {
+  const { enabled, enabledState, bilingualState } = await setupFull()
+  expect(enabledState.textContent).toBe('开启')
+  expect(bilingualState.textContent).toBe('关闭')
+  storage.write.mockResolvedValue(undefined)
+  enabled.checked = false
+  enabled.dispatchEvent(new Event('change'))
+  expect(enabledState.textContent).toBe('关闭')
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(enabledState.textContent).toBe('关闭')
+})
+it('读取失败时状态为 error，并显示“重试读取”', async () => {
+  document.body.innerHTML =
+    '<input id="enabled" type="checkbox"><input id="bilingual" type="checkbox"><p id="status"></p><button id="retry" hidden>重试读取</button>'
+  storage.read.mockRejectedValue(new Error('no storage'))
+  await import('../src/popup/index')
+  const status = document.querySelector('#status') as HTMLElement
+  await vi.waitFor(() => expect(status.dataset.tone).toBe('error'))
+  expect((document.querySelector('#retry') as HTMLButtonElement).hidden).toBe(false)
 })

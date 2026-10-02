@@ -1,15 +1,13 @@
-:root {
-  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-  color: #e7ebf0;
-  background: #192330;
-  color-scheme: dark;
-  --muted: #b3c0cf;
-  --gold: #e4c78a;
-  --line: #42566d;
-  --focus: #a7d7fa;
-  --surface: #223142;
-  -webkit-font-smoothing: antialiased;
-}
+/* 扩展设置弹窗（spec §6.8，L3，以 C-popup.png 为准）：令牌、母题与组件来自 ui-theme；不套 pt-frame、不加角饰 */
+@import "@poe2-tools/ui-theme/tokens.css";
+@import "@poe2-tools/ui-theme/motif.css";
+@import "@poe2-tools/ui-theme/components/motif.css";
+@import "@poe2-tools/ui-theme/components/divider.css";
+@import "@poe2-tools/ui-theme/components/btn.css";
+@import "@poe2-tools/ui-theme/components/switch.css";
+@import "@poe2-tools/ui-theme/components/provenance.css";
+@import "@poe2-tools/ui-theme/popup-fonts.css";
+
 * {
   box-sizing: border-box;
 }
@@ -17,129 +15,186 @@ body {
   margin: 0;
   width: 340px;
   max-width: 100vw;
+  background: var(--frame-bg);
+  color: var(--ink);
+  font: 14px / 1.6 var(--font-zh-cn);
+  -webkit-font-smoothing: antialiased;
 }
-main {
-  padding: 24px;
+
+/* 标题栏（spec §6.8）：高 56，金属底，居中 40×21 的扩展青 logo 与衬线标题；两端不加端饰 */
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, #2d241a, #17130f);
+  border-bottom: 1px solid #7a5530;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 222, 165, 0.14),
+    0 1px 0 #0b0806,
+    0 2px 0 #3b2510;
 }
-header {
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 20px;
+.titlebar__logo {
+  --ptm-w: 40px;
+  --ptm-h: 21px;
+  --ptm-u: calc(40px / 48);
 }
-h1 {
-  color: var(--gold);
-  font-size: 21px;
-  line-height: 1.4;
-  margin: 0 0 6px;
-  text-wrap: balance;
-}
-p {
+.titlebar__title {
   margin: 0;
+  font: 700 19px / 1 var(--pt-serif);
+  letter-spacing: 0.08em;
+  color: #eac78a;
+  text-shadow: 0 1px 1px #000;
+}
+
+main {
+  padding: 14px 22px 20px;
+}
+.subtitle {
+  margin: 0;
+  text-align: center;
   font-size: 13px;
-  line-height: 1.65;
-  text-wrap: pretty;
+  color: var(--ink-2);
 }
-header p,
-small,
-footer {
-  color: var(--muted);
+.popup-divider {
+  margin: 6px 0;
 }
+
+/* 设置行：开关在左、说明居中、状态文字在右；两行之间 1px 渐隐线 */
 .setting {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   min-height: 64px;
-  padding: 12px 8px;
-  margin-inline: -8px;
-  border-radius: 8px;
+  padding: 10px 0;
   font-size: 15px;
   cursor: pointer;
 }
-header + .setting {
-  margin-top: 12px;
+.setting + .setting {
+  background:
+    linear-gradient(90deg, transparent, #4a3a28 20%, #4a3a28 80%, transparent) top / 100% 1px
+    no-repeat;
 }
-.setting input {
-  width: 20px;
-  height: 20px;
-  margin: 2px 0 0;
-  accent-color: var(--gold);
-  flex-shrink: 0;
+.setting__text {
+  flex: 1;
+  min-width: 0;
 }
-.setting:has(input:disabled) {
-  cursor: default;
-  color: var(--muted);
-}
-small {
+.setting small {
   display: block;
+  margin-top: 2px;
   font-size: 12px;
-  line-height: 1.8;
-  margin-top: 4px;
+  line-height: 1.6;
+  color: var(--ink-2);
 }
-input:focus-visible,
-#retry:focus-visible,
-footer a:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 4px;
+.setting:has(.pt-switch:disabled) {
+  cursor: default;
+  color: var(--ink-3);
 }
-.setting:has(input:focus-visible) {
-  background: var(--surface);
+.setting:has(.pt-switch:disabled) small {
+  color: var(--ink-3);
 }
+
+/* 状态行（B.12 修订 3）：busy/off 为 --ink-2；ok 为 --ok 加勾；error 为 --miss 加警示；图标不读出 */
 #status {
-  color: var(--focus);
   min-height: 43px;
-  margin: 16px 0 20px;
+  margin: 12px 0 8px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+  color: var(--ink-2);
 }
-aside {
-  border-top: 1px solid var(--line);
-  padding-top: 16px;
+#status[data-tone="ok"] {
+  color: var(--ok);
 }
-aside strong {
-  font-size: 13px;
+#status[data-tone="error"] {
+  color: var(--miss);
+}
+#status[data-tone="ok"]::before {
+  content: "✓" / "";
+  margin-right: 6px;
+}
+#status[data-tone="error"]::before {
+  content: "!" / "";
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: 1px;
+}
+.retry {
+  height: 40px;
+  margin-bottom: 12px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.retry[hidden] {
+  display: none;
+}
+
+/* “使用前”（spec §6.8）：左侧 2px 内竖条；小标题衬线 13px 金色；正文 L0。
+   竖条用背景绘制：偏移 2px 的 inset 阴影在块高为小数像素时底边会漏出一条 1px 细线 */
+.before {
+  margin-top: 10px;
+  padding: 6px 0 0 12px;
+  background: linear-gradient(#7a5530, #7a5530) left / 2px 100% no-repeat;
+}
+.before h2 {
+  margin: 0;
+  font: 700 13px / 1.5 var(--pt-serif);
   color: var(--gold);
 }
-aside p {
-  margin-top: 6px;
+.before p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
 }
+
+/* 页脚居中（spec §4.2 层级例外 2）：版本与检查更新 → 短署名 → 完整声明 → 版权句 */
 footer {
-  margin-top: 20px;
+  padding: 0 22px 18px;
+  text-align: center;
   font-size: 12px;
   line-height: 1.8;
+  color: var(--ink-3);
   overflow-wrap: anywhere;
 }
 footer p {
-  font-size: inherit;
-  line-height: inherit;
+  margin: 0;
 }
 footer a {
   color: var(--gold);
   text-underline-offset: 3px;
 }
-#retry {
-  min-height: 40px;
-  margin-bottom: 16px;
-  color: inherit;
-  background: var(--surface);
-  border: 1px solid var(--muted);
-  border-radius: 8px;
-  padding: 8px 14px;
-  font: inherit;
-  cursor: pointer;
+footer a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }
-@media (hover: hover) and (pointer: fine) {
-  .setting:hover:not(:has(input:disabled)),
-  #retry:hover {
-    background: var(--surface);
-    outline: 1px solid var(--line);
-  }
+footer .pt-provenance {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
 }
+footer .pt-disclaimer {
+  margin-top: 2px;
+}
+
 ::selection {
-  color: #192330;
-  background: var(--gold);
+  color: var(--selection-fg);
+  background: var(--selection-bg);
 }
+
 @media (forced-colors: active) {
-  input:focus-visible,
-  #retry:focus-visible,
+  .titlebar {
+    border-bottom-color: CanvasText;
+  }
   footer a:focus-visible {
     outline-color: Highlight;
   }
