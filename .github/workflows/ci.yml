@@ -73,7 +73,8 @@ jobs:
   # github-release.mjs publish：没有 Release 就创建（不标为 Latest）；已有且附件一致就跳过；缺附件就补传；
   # 草稿、多余附件或内容不一致即失败。整个工作流只有这个 job 有仓库写权限。
   # job 级 concurrency 只保证两个发布不并行；新的 push main 仍会按工作流级 cancel-in-progress 取消整次运行，
-  # 中途取消留下的缺附件 Release 由下一次运行补传，草稿则让下一次运行失败、需人工检查删除。
+  # gh release create 带附件时先建草稿、传完附件才转正式：中途取消留下草稿，下一次运行会失败，需人工检查删除；
+  # 已发布 Release 的附件被人工删除时，由下一次运行补传。
   release-extension:
     needs: [verify, deploy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
