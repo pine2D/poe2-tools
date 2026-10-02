@@ -5,6 +5,8 @@ import {
   searchDomain,
   submitSearch,
 } from '../adapters/coe-beta/search'
+import { SHORT_PROVENANCE } from '../provenance'
+import { adoptL1, createGem } from './l1'
 
 const chinese = /\p{Script=Han}/u
 export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
@@ -18,6 +20,20 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   let restoreInput = () => {}
   let sequence = 0
   let selectOption = (_button: HTMLButtonElement) => {}
+  // 候选宿主（spec §6.9、B.12 修订 10）：说明行与候选按钮留在 light DOM，经 slot 显示，
+  // 输入框的 aria-describedby / aria-controls / aria-activedescendant 才能在 document 里解析；署名在 shadow 内且不读出
+  function createPanel(): HTMLElement {
+    const host = doc.createElement('div')
+    host.dataset.poe2L10n = 'search'
+    const root = host.attachShadow({ mode: 'open' })
+    adoptL1(root)
+    const by = doc.createElement('div')
+    by.className = 'by'
+    by.setAttribute('aria-hidden', 'true')
+    by.append(createGem(doc, 12), doc.createTextNode(SHORT_PROVENANCE))
+    root.append(doc.createElement('slot'), by)
+    return host
+  }
   function positionPanel() {
     if (!panel || !active || panel.style.position !== 'fixed') return
     const rect = active.getBoundingClientRect()
@@ -66,13 +82,12 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     const current = revision
     const candidates = searchCandidates(input, lexicon)
     const keepFocus = isConditionSearch(input)
-    panel = doc.createElement('div')
-    panel.dataset.poe2L10n = 'search'
+    panel = createPanel()
     panel.setAttribute('aria-label', '中文搜索候选')
-    // 原站输入容器会裁剪溢出；使用视口浮层，避免提示撑宽控件或失焦时移动清空按钮。
+    // 原站输入容器会裁剪溢出；使用视口浮层，避免提示撑宽控件或失焦时移动清空按钮。颜色与边框在 l1.css 的 :host 规则里
     const panelStyle =
-      `${keepFocus ? 'position:relative;' : 'position:fixed;box-sizing:border-box;'}` +
-      'z-index:20;background:#20252d;color:#fff;padding:8px;border:1px solid #8499ae;max-height:240px;overflow:auto;overflow-wrap:anywhere;font:14px/1.6 sans-serif'
+      `${keepFocus ? 'position:relative;' : 'position:fixed;'}` +
+      'display:block;box-sizing:border-box;z-index:20;max-height:240px;overflow:auto'
     panel.style.cssText = panelStyle
     const label = doc.createElement('div')
     label.textContent = candidates.length
@@ -127,7 +142,6 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       const button = doc.createElement('button')
       button.type = 'button'
       button.textContent = `${term.zh} → ${term.en}`
-      button.style.cssText = 'display:block;text-align:left;margin:4px 0;white-space:normal'
       if (keepFocus) {
         button.id = `${panel.id}-option-${unique.size}-${panel.children.length}`
         button.tabIndex = -1
@@ -151,8 +165,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         clear()
         submitSearch(input, term.en)
         if (closed || !input.isConnected || searchDomain(input) !== domain) return
-        panel = doc.createElement('div')
-        panel.dataset.poe2L10n = 'search'
+        panel = createPanel()
         panel.style.cssText = panelStyle
         panel.textContent = `中文查询：${query} → ${term.en}。可在上方继续输入中文。`
         input.parentElement?.append(panel)
@@ -229,10 +242,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
     if (keepFocus) {
       selected?.setAttribute('aria-selected', 'false')
-      if (selected) selected.style.outline = ''
       selected = buttons[next] ?? null
       selected?.setAttribute('aria-selected', 'true')
-      if (selected) selected.style.outline = '2px solid #b6dac4'
       if (selected) selectOption(selected)
       selected?.scrollIntoView?.({ block: 'nearest' })
     } else buttons[next]?.focus()

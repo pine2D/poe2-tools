@@ -580,3 +580,53 @@ it('原站重排说明列表时仅删除当前提示ID，不复活已移除说�
   stop()
   expect(input.getAttribute('aria-describedby')).toBe(`later-help ${ownedId}-native`)
 })
+
+it('候选宿主有 shadow root：样式来自共享表，署名在 shadow 内且不读出；宿主内联只留布局（spec §6.9、B.12 修订 10）', () => {
+  const { input } = setup()
+  type(input, '符文法器')
+  const host = document.querySelector('[data-poe2-l10n="search"]') as HTMLElement
+  const root = host.shadowRoot as ShadowRoot
+  expect(root.adoptedStyleSheets).toHaveLength(1)
+  expect(root.querySelector('slot')).not.toBeNull()
+  const by = root.querySelector('.by') as HTMLElement
+  expect(by.getAttribute('aria-hidden')).toBe('true')
+  expect(by.textContent).toBe('PoE2 中文助手 · 非官方')
+  expect(by.querySelector('svg.gem')?.getAttribute('width')).toBe('12')
+  for (const prop of ['color', 'background', 'border', 'padding', 'font'])
+    expect(host.style.getPropertyValue(prop), prop).toBe('')
+  for (const button of host.querySelectorAll('button'))
+    expect(button.getAttribute('style')).toBeNull()
+  expect(host.textContent).not.toContain('非官方')
+})
+
+it('条件搜索：输入框的 ARIA 引用仍能在 document 里解析到说明、列表与当前选项', () => {
+  document.body.innerHTML = `<main><div id="simulatorConditionRequirements"><div class="dropdown editing"><label><div class="editing"><div><input type="text" aria-label="原站条件"></div></div></label><ul><li search="metanumber of affixes"></li></ul></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 'count',
+        en: 'Number of Affixes',
+        zh: '词缀数量',
+        domain: 'ui',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  input.focus()
+  type(input, '词缀')
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }),
+  )
+  expect(input.getAttribute('role')).toBe('combobox')
+  for (const id of (input.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean))
+    expect(document.getElementById(id), id).not.toBeNull()
+  const list = document.getElementById(input.getAttribute('aria-controls') ?? '')
+  expect(list?.getAttribute('role')).toBe('listbox')
+  const active = document.getElementById(input.getAttribute('aria-activedescendant') ?? '')
+  expect(active?.getAttribute('role')).toBe('option')
+  expect(active?.getAttribute('aria-selected')).toBe('true')
+  expect((active as HTMLElement).style.outline).toBe('')
+})
