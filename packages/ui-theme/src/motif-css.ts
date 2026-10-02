@@ -5,10 +5,11 @@ import {
   ARM_L_EXTRA,
   ARMS,
   CORE_FACETS,
+  EXT_CYAN,
   FAVICON,
   GEM_DIAMOND_PATH,
-  GEM_FACET_PATHS,
   GEM_HALF_DIAGONAL,
+  gemFacets,
   SITE_AMBER,
   SYMBOLS,
 } from './motif.ts'
@@ -88,7 +89,7 @@ function baseBody(name: MotifSymbolName): string {
 
 /** 站点琥珀宝石的四块刻面 */
 function amberGem(): string {
-  return GEM_FACET_PATHS.map((d, i) => `<path fill="${SITE_AMBER[i]}" d="${d}"/>`).join('')
+  return paths(gemFacets(SITE_AMBER))
 }
 
 function cssUrl(svgText: string): string {
@@ -155,6 +156,11 @@ export function renderLogoSvg(): string {
     baseBody('logo') + amberGem(),
     ' width="46" height="24" aria-hidden="true" focusable="false"',
   )
+}
+
+/** 不带末尾换行；gem 符号（核心菱环）+ 扩展青宝石。扩展图标（generate-icons.mjs）用它渲染，不写入 generated/ */
+export function renderExtGemSvg(): string {
+  return svg(SYMBOLS.gem.viewBox, baseBody('gem') + paths(gemFacets(EXT_CYAN)))
 }
 
 /** 不带末尾换行；全形（叶瓣、刻痕、铆钉、颗粒），只用于 DESIGN.md 档案图 */

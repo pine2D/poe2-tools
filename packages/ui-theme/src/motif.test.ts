@@ -2,9 +2,11 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { CORE_FACETS, EXT_CYAN, GEM_FACET_PATHS, gemFacets } from './motif'
 import {
   GENERATED_NAMES,
   MOTIF_CSS_PROPERTIES,
+  renderExtGemSvg,
   renderFaviconSvg,
   renderGenerated,
   renderLogoSvg,
@@ -94,5 +96,25 @@ describe('站点副本（spec §6.1）', () => {
     )?.[1]
     expect(href).toBeDefined()
     expect(decodeURIComponent(href ?? '')).toBe(renderFaviconSvg())
+  })
+})
+
+describe('扩展青 gem（spec §6.9、§6.10）', () => {
+  it('EXT_CYAN 与 tokens.css 的 .pt-attr-ext 四个刻面色一致', () => {
+    const tokens = readFileSync(fileURLToPath(new URL('./tokens.css', import.meta.url)), 'utf8')
+    const rule = parseRules(tokens).find((r) => r.selectors.includes('.pt-attr-ext'))
+    expect(rule).toBeDefined()
+    expect([1, 2, 3, 4].map((i) => rule?.declarations.get(`--gem-${i}`))).toEqual([...EXT_CYAN])
+  })
+  it('gemFacets 按左上、右上、右下、左下给四块刻面配色', () => {
+    expect(gemFacets(EXT_CYAN)).toEqual(GEM_FACET_PATHS.map((d, i) => [EXT_CYAN[i], d]))
+  })
+  it('renderExtGemSvg 是 gem 符号：核心菱环在下，扩展青宝石在上', () => {
+    const svg = renderExtGemSvg()
+    expect(
+      svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12.5 -12.5 25 25">'),
+    ).toBe(true)
+    const fills = [...svg.matchAll(/<path fill="([^"]+)" d="([^"]+)"\/>/g)].map((m) => [m[1], m[2]])
+    expect(fills).toEqual([...CORE_FACETS, ...gemFacets(EXT_CYAN)].map(([f, d]) => [f, d]))
   })
 })

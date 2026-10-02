@@ -29,6 +29,14 @@ export const GEM_FACET_PATHS = [
 /** 站点琥珀四刻面色，依次 --gem-1..4 */
 export const SITE_AMBER = ['#fff0c8', '#e3a24a', '#7a3d0c', '#b36a22'] as const
 
+/** 扩展青四刻面色，依次 --gem-1..4；与 tokens.css 的 .pt-attr-ext 一致（motif.test.ts 断言） */
+export const EXT_CYAN = ['#c9f5f0', '#2fbdb3', '#0b4a46', '#1a8780'] as const
+
+/** 宝石四刻面：GEM_FACET_PATHS 依次配上 colors 的前四个颜色 */
+export function gemFacets(colors: readonly string[]): Facet[] {
+  return GEM_FACET_PATHS.map((d, i): Facet => [colors[i] ?? '#000', d])
+}
+
 /** 臂：s 单段收尖（分隔线、名称牌扣），xs 短收尖（logo），m 叶瓣 + 收尖（角饰）（mockup :566-583） */
 export const ARMS: {
   readonly s: readonly Facet[]
