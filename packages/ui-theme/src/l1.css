@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: ::slotted() 声明需 !important 才能压过原站样式（spec B.12 修订 10） */
 /* L1 点缀（spec §4.2、§6.9）：CoE 注入 UI 的唯一样式表。内容脚本用 ?inline 读成字符串，构造一份 CSSStyleSheet，
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
    令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
