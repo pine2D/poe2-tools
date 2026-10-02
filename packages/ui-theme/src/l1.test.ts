@@ -71,6 +71,24 @@ describe('L1 禁用项（spec §4.2）', () => {
   })
 })
 
+describe('L1 宿主压过原站全局样式（CoE `* { color; font }`）', () => {
+  const byExact = (selector: string) => rules.find((r) => r.selectors.join(', ') === selector)
+  it('叠加译文宿主的 color 带 !important', () => {
+    const rule = byExact(':host([data-poe2-l10n="stat"])')
+    expect(rule).toBeDefined()
+    expect(rule?.declarations.get('color')).toMatch(/!important$/)
+  })
+  it('面板类宿主的 color、font 带 !important，all 恰为 initial', () => {
+    const rule = byExact(
+      ':host([data-poe2-l10n="import"]), :host([data-poe2-l10n="search"]), :host([data-poe2-l10n="language-notice"])',
+    )
+    expect(rule).toBeDefined()
+    expect(rule?.declarations.get('color')).toMatch(/!important$/)
+    expect(rule?.declarations.get('font')).toMatch(/!important$/)
+    expect(rule?.declarations.get('all')).toBe('initial')
+  })
+})
+
 describe('对比度（spec §6.9、§4.3）', () => {
   it('--ext-ink 对 CoE 全部实测底色 ≥4.5:1', () => {
     for (const bg of COE_BACKGROUNDS)

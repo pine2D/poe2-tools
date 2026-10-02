@@ -1,4 +1,4 @@
-/* biome-ignore-all lint/complexity/noImportantStyles: ::slotted() 声明需 !important 才能压过原站样式（spec B.12 修订 10） */
+/* biome-ignore-all lint/complexity/noImportantStyles: ::slotted() 声明与宿主的 color、font 需 !important 才能压过原站样式（spec B.12 修订 10；原站 `* { color; font }` 会压过 :host 的普通声明） */
 /* L1 点缀（spec §4.2、§6.9）：CoE 注入 UI 的唯一样式表。内容脚本用 ?inline 读成字符串，构造一份 CSSStyleSheet，
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
    令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
@@ -30,7 +30,7 @@
 
 /* 叠加译文：只换字色；字号与排版由宿主内联布局决定 */
 :host([data-poe2-l10n="stat"]) {
-  color: var(--ext-ink);
+  color: var(--ext-ink) !important;
 }
 
 /* 面板类宿主：切断原站继承下来的文字样式；display、position、尺寸由宿主内联样式给出（内联优先于 :host） */
@@ -38,8 +38,8 @@
 :host([data-poe2-l10n="search"]),
 :host([data-poe2-l10n="language-notice"]) {
   all: initial;
-  color: var(--ink);
-  font: 14px / 1.6 var(--font-zh-cn);
+  color: var(--ink) !important;
+  font: 14px / 1.6 var(--font-zh-cn) !important;
   color-scheme: dark;
   overflow-wrap: anywhere;
 }
