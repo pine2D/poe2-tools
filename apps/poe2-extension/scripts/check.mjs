@@ -62,10 +62,39 @@ export function popupReferences(html) {
   return resources
 }
 
-/** 弹窗样式里的 @import、外部 url() 与引号内的外部地址（如 image-set("https://…" 1x)；http:、https:、协议相对 //）；返回命中的片段 */
+/** 把目标以 data: 开头的 url(…) 整段换成 url()：data URI 里的 xmlns 等地址不会被请求（B.12 修订 1）。
+ *  带引号的目标到配对引号为止；未加引号的目标里，反斜杠转义的括号不算结束；未闭合时原样保留，交给后续判定 */
+export function stripDataUrls(css) {
+  const lower = css.toLowerCase()
+  let out = ''
+  let pos = 0
+  for (;;) {
+    const start = lower.indexOf('url(', pos)
+    if (start < 0) return out + css.slice(pos)
+    let i = start + 4
+    while (/\s/.test(css[i] ?? '')) i += 1
+    const quote = css[i] === '"' || css[i] === "'" ? css[i] : null
+    const body = quote === null ? i : i + 1
+    if (!lower.startsWith('data:', body)) {
+      out += css.slice(pos, start + 4)
+      pos = start + 4
+      continue
+    }
+    const stop = quote ?? ')'
+    let j = body
+    while (j < css.length && css[j] !== stop) j += css[j] === '\\' ? 2 : 1
+    const end = quote === null ? j : css.indexOf(')', j + 1)
+    if (j >= css.length || end < 0) return out + css.slice(pos)
+    out += `${css.slice(pos, start)}url()`
+    pos = end + 1
+  }
+}
+
+/** 弹窗样式里的 @import、外部 url() 与引号内的外部地址（如 image-set("https://…" 1x)；http:、https:、协议相对 //）；
+ *  先剔除 url(data:…)；返回命中的片段 */
 export function popupStyleExternal(css) {
   return [
-    ...css.matchAll(
+    ...stripDataUrls(css).matchAll(
       /@import\b[^;]*|url\(\s*['"]?(?:https?:|\/\/)[^)]*\)|(['"])\s*(?:https?:|\/\/)[^'"]*\1/gi,
     ),
   ].map((match) => match[0])

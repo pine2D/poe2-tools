@@ -1,7 +1,12 @@
 // @vitest-environment node
 import { readFile } from 'node:fs/promises'
 import { expect, it } from 'vitest'
-import { POPUP_LINKS, popupReferences, popupStyleExternal } from '../scripts/check.mjs'
+import {
+  POPUP_LINKS,
+  popupReferences,
+  popupStyleExternal,
+  stripDataUrls,
+} from '../scripts/check.mjs'
 
 const ASSETS =
   '<script type="module" crossorigin src="./assets/popup-a1.js"></script><link rel="stylesheet" crossorigin href="./assets/popup-b2.css">'
@@ -72,4 +77,28 @@ it('弹窗样式里的 @import 与外部 url() 都被找出，包内与 data: �
   expect(
     popupStyleExternal('a{background:image-set("https://cdn.example.com/x.png" 1x)}'),
   ).not.toEqual([])
+})
+
+it('url(data:…) 里未转义的 SVG 地址不算外部引用（B.12 修订 1）', () => {
+  expect(
+    popupStyleExternal(
+      `a{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>")}` +
+        "b{mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'/>)}",
+    ),
+  ).toEqual([])
+})
+
+it('剔除 data: 之后，同一文件里的外部引用照旧找出', () => {
+  expect(
+    popupStyleExternal(
+      `a{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>")}` +
+        'b{background:image-set("https://cdn.example.com/x.png" 1x)}c{background:url(//cdn.example.com/y.png)}',
+    ),
+  ).toEqual(['"https://cdn.example.com/x.png"', 'url(//cdn.example.com/y.png)'])
+})
+
+it('stripDataUrls 只把 data: 目标的 url() 换成 url()，其余原样', () => {
+  expect(stripDataUrls('a{b:url( "DATA:x,1" )}c{d:url(./f.woff2)}e{f:url(data:x\\)y)}')).toBe(
+    'a{b:url()}c{d:url(./f.woff2)}e{f:url()}',
+  )
 })
