@@ -1,7 +1,7 @@
 // @vitest-environment node
 // CI 里的已发布版本守卫与 Release 创建/核对（扩展发布 spec §5、§7）：用假 gh 演练各分支，不联网
 import { createHash } from 'node:crypto'
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
@@ -104,6 +104,24 @@ it('guard：没有 Release 时放行；gh 的其他错误不当作未发布', as
   await expect(
     githubRelease({ root: broken.root, mode: 'guard', env: broken.env }),
   ).rejects.toThrow('HTTP 502')
+})
+
+it('guard：已发布且附件与 release.json 一致时放行', async () => {
+  const { root, env, calls } = await fixture(published(ZIP))
+  await expect(githubRelease({ root, mode: 'guard', env })).resolves.toBe(
+    'ext-v9.9.9 已发布，附件与 release.json 一致',
+  )
+  expect((await calls()).map((args) => args[1])).toEqual(['view', 'download'])
+})
+
+it('publish：附件文件名与 release.json 不符时不调用 gh 就失败', async () => {
+  const { root, env, calls, zip } = await fixture(NOT_FOUND)
+  const other = path.join(root, 'artifacts', 'other.zip')
+  await copyFile(zip, other)
+  await expect(
+    githubRelease({ root, mode: 'publish', zip: other, notes: 'notes.md', target: 'abc123', env }),
+  ).rejects.toThrow(`附件文件名应为 ${FILE}`)
+  expect(await calls()).toEqual([])
 })
 
 it('publish：没有 Release 时在目标提交创建 tag 与 Release，不标为 Latest', async () => {
