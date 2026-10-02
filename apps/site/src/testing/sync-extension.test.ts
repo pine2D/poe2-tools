@@ -52,6 +52,14 @@ it('缺 zip 时失败并提示先打包，且不留下旧的下载文件', async
   await expect(readdir(paths.targetDir)).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
+it('release.json 不是合法 JSON 时失败，且不留下旧的下载文件', async () => {
+  await mkdir(paths.targetDir, { recursive: true })
+  await writeFile(join(paths.targetDir, 'poe2-extension-0.0.1.zip'), 'old')
+  await writeFile(paths.releasePath, '{not json')
+  await expect(syncExtension(paths)).rejects.toThrow()
+  await expect(readdir(paths.targetDir)).rejects.toMatchObject({ code: 'ENOENT' })
+})
+
 it('zip 与 release.json 的字节数或 SHA-256 不一致时失败', async () => {
   await writeFile(join(paths.artifactsDir, 'poe2-extension-9.9.9.zip'), 'PK fake extension zip!')
   await expect(syncExtension(paths)).rejects.toThrow('与 release.json 不一致')

@@ -1,4 +1,4 @@
-// 把扩展发布包复制到 public/downloads/（spec §6）：只复制 release.json 记录的那一个 zip，并核对字节数与 SHA-256。
+// 把扩展发布包复制到 public/downloads/（扩展发布 spec §6）：只复制 release.json 记录的那一个 zip，并核对字节数与 SHA-256。
 // public/downloads/ 不入库，每次 dev / build 前重建。build 时缺包或不一致即以 1 退出；
 // dev 用 --allow-missing，只警告（开发服务器的下载链接会 404）。
 import { createHash } from 'node:crypto'
@@ -10,8 +10,8 @@ const appDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const extensionDir = resolve(appDir, '..', 'poe2-extension')
 
 export async function syncExtension({ releasePath, artifactsDir, targetDir }) {
-  const release = JSON.parse(await readFile(releasePath, 'utf8'))
   await rm(targetDir, { recursive: true, force: true })
+  const release = JSON.parse(await readFile(releasePath, 'utf8'))
   let zip
   try {
     zip = await readFile(join(artifactsDir, release.file))
