@@ -168,6 +168,9 @@ button:disabled {
   color: var(--ink-3);
   cursor: not-allowed;
 }
+button[data-tertiary]:disabled {
+  border-color: transparent;
+}
 button:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--focus);
@@ -176,8 +179,11 @@ textarea:focus-visible {
 
 /* —— 搜索候选下拉（search-controller）：说明行与候选按钮留在 light DOM，经 slot 显示（B.12 修订 10）；
    ::slotted 的声明全部 !important，才能压过原站对 button/div 的样式 —— */
+/* 键盘选中滚动（scrollIntoView nearest）时给 2px 焦点环 + 2px 外偏移留位：上沿与宿主内边距同为 8px；
+   下沿要越过 sticky 署名（1 + 6 + 12×1.6 + 8 = 34.2px）再加 4px 焦点环，取 42px，与自然排布里按钮到分隔线的 6px 间距一致 */
 :host([data-poe2-l10n="search"]) {
   padding: 8px;
+  scroll-padding-block: 8px 42px;
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
   border-radius: 6px;
@@ -198,6 +204,7 @@ textarea:focus-visible {
   border: 1px solid transparent !important;
   border-radius: 4px !important;
   background: transparent !important;
+  box-shadow: none !important;
   color: var(--ink) !important;
   font: inherit !important;
   text-align: left !important;
@@ -214,13 +221,21 @@ textarea:focus-visible {
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
 }
+/* 署名固定在列表底部一行（spec §6.9）：sticky 的约束矩形是滚动容器的内容框（已扣 8px 内边距），
+   bottom 取 -8px 才贴住边框内侧；署名用 padding-bottom 8px + margin-bottom -8px 吃掉宿主底部内边距，
+   未滚动时排布不变，滚到底也不留空隙；不透明面板底让候选从下面滚过 */
 :host([data-poe2-l10n="search"]) .by {
+  position: sticky;
+  bottom: -8px;
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 6px;
+  margin-bottom: -8px;
   padding-top: 6px;
+  padding-bottom: 8px;
   border-top: 1px solid var(--line);
+  background: var(--l1-panel);
   font-size: 12px;
 }
 

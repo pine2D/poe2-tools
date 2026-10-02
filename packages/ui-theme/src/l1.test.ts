@@ -97,6 +97,64 @@ describe('导入面板文本框随视口收缩（spec §8.8 声明须在视口�
   })
 })
 
+describe('搜索候选下拉（spec §6.9 列表底部一行、§5.15 焦点环不被裁掉）', () => {
+  const byExact = (selector: string) => rules.find((r) => r.selectors.join(', ') === selector)
+  const px = (value: string | undefined) => {
+    const n = Number.parseFloat(value ?? '')
+    if (!Number.isFinite(n)) throw new Error(`不是像素值：${value}`)
+    return n
+  }
+  const searchHost = byExact(':host([data-poe2-l10n="search"])')
+  const by = byExact(':host([data-poe2-l10n="search"]) .by')
+  const hostPadding = px(searchHost?.declarations.get('padding'))
+
+  it('署名 sticky 在滚动容器底部，不透明面板底；抵消宿主内边距后贴住底边', () => {
+    expect(by?.declarations.get('position')).toBe('sticky')
+    expect(by?.declarations.get('background')).toBe('var(--l1-panel)')
+    // 粘性约束矩形是滚动容器内容框（已扣内边距）：bottom 取负的宿主内边距，署名底边才贴住边框内侧
+    expect(px(by?.declarations.get('bottom'))).toBe(-hostPadding)
+    // 署名自己吃掉宿主底部内边距：未滚动时文字离底边仍是 8px，滚到底也不留空隙
+    expect(px(by?.declarations.get('padding-bottom'))).toBe(hostPadding)
+    expect(px(by?.declarations.get('margin-bottom'))).toBe(-hostPadding)
+    // 分隔线与字号保持不变
+    expect(by?.declarations.get('border-top')).toBe('1px solid var(--line)')
+    expect(by?.declarations.get('font-size')).toBe('12px')
+    expect(by?.declarations.get('padding-top')).toBe('6px')
+  })
+
+  it('scroll-padding 给 2px 焦点环 + 2px 外偏移留位：上 ≥4px，下 ≥ 署名高 + 4px', () => {
+    const ring = 2 + 2
+    const [top, bottom = top] = (searchHost?.declarations.get('scroll-padding-block') ?? '')
+      .split(' ')
+      .map(px)
+    // 署名高 = 上边框 1 + padding-top 6 + 一行（12px × 宿主行高 1.6）+ padding-bottom
+    const panel = byExact(
+      ':host([data-poe2-l10n="import"]), :host([data-poe2-l10n="search"]), :host([data-poe2-l10n="language-notice"])',
+    )
+    const lineHeight = Number(panel?.declarations.get('font')?.match(/\/\s*([\d.]+)/)?.[1])
+    const footer =
+      1 +
+      px(by?.declarations.get('padding-top')) +
+      px(by?.declarations.get('font-size')) * lineHeight +
+      px(by?.declarations.get('padding-bottom'))
+    expect(top).toBeGreaterThanOrEqual(ring)
+    expect(bottom).toBeGreaterThanOrEqual(footer + ring)
+  })
+
+  it('候选按钮去掉原站 box-shadow', () => {
+    expect(byExact('::slotted(button)')?.declarations.get('box-shadow')).toBe('none !important')
+  })
+})
+
+describe('次级按钮禁用态（spec §6.9）', () => {
+  it('button[data-tertiary]:disabled 保持透明边，且排在 button:disabled 之后', () => {
+    const at = (selector: string) => rules.findIndex((r) => r.selectors.join(', ') === selector)
+    const tertiary = at('button[data-tertiary]:disabled')
+    expect(tertiary).toBeGreaterThan(at('button:disabled'))
+    expect(rules[tertiary]?.declarations.get('border-color')).toBe('transparent')
+  })
+})
+
 describe('对比度（spec §6.9、§4.3）', () => {
   it('--ext-ink 对 CoE 全部实测底色 ≥4.5:1', () => {
     for (const bg of COE_BACKGROUNDS)
