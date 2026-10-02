@@ -8,6 +8,7 @@ import {
   propertySelector,
   statSelector,
 } from '../adapters/coe-beta/stats'
+import { adoptL1 } from './l1'
 export function attachStatLayer(doc: Document, lex: Lexicon) {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
@@ -65,8 +66,8 @@ export function attachStatLayer(doc: Document, lex: Lexicon) {
     if (!host?.isConnected) {
       host = doc.createElement('span')
       host.dataset.poe2L10n = 'stat'
-      host.style.cssText = 'display:block;flex-basis:100%;font-size:0.95em;color:#b6dac4'
-      host.attachShadow({ mode: 'open' })
+      host.style.cssText = 'display:block;flex-basis:100%;font-size:0.95em'
+      adoptL1(host.attachShadow({ mode: 'open' }))
       stat.after(host)
       hosts.set(stat, host)
     }

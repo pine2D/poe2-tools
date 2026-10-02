@@ -42,3 +42,19 @@ it('语言提示可关闭且不自动切换原站，离开非英文状态后允�
   notice.update(false)
   expect(document.querySelector('[data-poe2-l10n="language-notice"]')).toBeNull()
 })
+
+it('语言提示条首行：gem + “PoE2 中文助手” + “· 非官方”，产品名只出现一次，右侧“关闭”；样式来自共享表（spec §6.9）', () => {
+  context('cn')
+  const notice = createLanguageNotice(document)
+  notice.update(true)
+  const host = document.querySelector('[data-poe2-l10n="language-notice"]') as HTMLElement
+  const root = host.shadowRoot as ShadowRoot
+  const header = root.querySelector('header') as HTMLElement
+  expect(header.querySelector('svg.gem')?.getAttribute('aria-hidden')).toBe('true')
+  expect(header.textContent).toBe('PoE2 中文助手· 非官方关闭')
+  expect(root.textContent?.split('PoE2 中文助手').length).toBe(2)
+  expect(header.lastElementChild?.textContent).toBe('关闭')
+  expect(root.querySelector('style')).toBeNull()
+  expect(root.adoptedStyleSheets).toHaveLength(1)
+  notice.update(false)
+})

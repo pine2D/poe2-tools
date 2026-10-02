@@ -181,3 +181,20 @@ it('材料整句说明保留关键词原文及监听，仅添加中文对照，�
   stop()
   expect(description.textContent).toContain('unknown modifiers')
 })
+
+it('叠加行颜色来自共享 L1 表（--ext-ink），宿主内联样式只留布局（spec §6.9）', () => {
+  document.body.innerHTML =
+    '<main><div><span class="stat">+18% to Lightning Resistance</span></div>' +
+    '<div><span class="stat">+20% to Lightning Resistance</span></div></main>'
+  stop = attachStatLayer(document, lex)
+  const hosts = [...document.querySelectorAll<HTMLElement>('[data-poe2-l10n="stat"]')]
+  expect(hosts).toHaveLength(2)
+  for (const host of hosts) {
+    expect(host.style.color).toBe('')
+    expect(host.style.display).toBe('block')
+    expect(host.shadowRoot?.adoptedStyleSheets).toHaveLength(1)
+  }
+  expect(hosts[0]?.shadowRoot?.adoptedStyleSheets[0]).toBe(
+    hosts[1]?.shadowRoot?.adoptedStyleSheets[0],
+  )
+})
