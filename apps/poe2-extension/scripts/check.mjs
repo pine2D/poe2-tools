@@ -38,7 +38,7 @@ const OTHER_REFERENCE_ATTRS =
 export function popupReferences(html) {
   const other = html.match(OTHER_REFERENCE_ATTRS)
   if (other) throw new Error(`popup 含不允许的引用属性：${other[1]}`)
-  if (/url\(|@import/i.test(html)) throw new Error('popup 含内联样式引用')
+  if (/url\(|@import|image-set\(/i.test(html)) throw new Error('popup 含内联样式引用')
   const total = [...html.matchAll(/(?<![\w-])(?:src|href)\s*=/gi)].length
   const resources = []
   let seen = 0
@@ -62,11 +62,13 @@ export function popupReferences(html) {
   return resources
 }
 
-/** 弹窗样式里的 @import 与外部 url()（http:、https:、协议相对 //）；返回命中的片段 */
+/** 弹窗样式里的 @import、外部 url() 与引号内的外部地址（如 image-set("https://…" 1x)；http:、https:、协议相对 //）；返回命中的片段 */
 export function popupStyleExternal(css) {
-  return [...css.matchAll(/@import\b[^;]*|url\(\s*['"]?(?:https?:|\/\/)[^)]*\)/gi)].map(
-    (match) => match[0],
-  )
+  return [
+    ...css.matchAll(
+      /@import\b[^;]*|url\(\s*['"]?(?:https?:|\/\/)[^)]*\)|(['"])\s*(?:https?:|\/\/)[^'"]*\1/gi,
+    ),
+  ].map((match) => match[0])
 }
 
 export function validateManifest(m, version) {

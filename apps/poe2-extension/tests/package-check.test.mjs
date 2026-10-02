@@ -64,6 +64,15 @@ it('包检查允许实际可加载的词缀及带字面井号的界面文案', a
   await expect(check(root)).resolves.toMatchObject({ root })
 })
 
+it('包检查拒绝弹窗样式文件里的外部引用', async () => {
+  const root = await fixture([term])
+  await writeFile(
+    path.join(root, 'dist/assets/popup-test.css'),
+    "@import 'https://x.example/a.css';",
+  )
+  await expect(check(root)).rejects.toThrow('popup 样式含外部引用')
+})
+
 it('包检查拒绝缺失、截断或尺寸不符的图标', async () => {
   const root = await fixture([term])
   const file = path.join(root, 'dist/icons/icon-16.png')

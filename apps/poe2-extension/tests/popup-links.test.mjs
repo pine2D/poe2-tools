@@ -25,6 +25,10 @@ it.each([
   ['<img srcset="https://cdn.example.com/x.png 2x">', 'popup 含不允许的引用属性：srcset'],
   ['<form action="https://example.com/"></form>', 'popup 含不允许的引用属性：action'],
   ['<p style="background:url(https://cdn.example.com/x.png)">x</p>', 'popup 含内联样式引用'],
+  [
+    '<style>a{background:image-set("https://cdn.example.com/x.png" 1x)}</style>',
+    'popup 含内联样式引用',
+  ],
   // 属性名与等号之间、等号与引号之间有空白，或属性名前不是空白，同样要识别
   ['<script src = "https://cdn.example.com/x.js"></script>', 'popup 含外部资源'],
   ['<link rel="stylesheet" href = "https://cdn.example.com/x.css">', 'popup 含外部资源'],
@@ -64,4 +68,8 @@ it('弹窗样式里的 @import 与外部 url() 都被找出，包内与 data: �
     'url( "https://cdn.example.com/x.png")',
     'url(//cdn.example.com/y.png)',
   ])
+  // image-set() 可直接写字符串地址，不经 url()
+  expect(
+    popupStyleExternal('a{background:image-set("https://cdn.example.com/x.png" 1x)}'),
+  ).not.toEqual([])
 })
