@@ -1,9 +1,23 @@
 # Changelog
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
-版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` 是私有内部包，不单独计版本。仓库私有，暂不提供版本比较链接。
+版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` / `l10n-core` 是私有内部包，不单独计版本；扩展 `apps/poe2-extension` 独立计版本，更新日志见 `apps/poe2-extension/CHANGELOG.md`。仓库私有，暂不提供版本比较链接。
 
 ## [Unreleased]
+
+## [0.6.0] - 2026-10-02
+
+中文助手扩展首次提供直接下载：扩展介绍页可下载预构建的 PoE2 中文助手 0.2.0，不必自行构建。
+
+### Added
+
+- 扩展介绍页可直接下载 PoE2 中文助手 0.2.0（zip，约 1.6 MB）；推送后同一文件也发布在 GitHub Releases（tag `ext-v0.2.0`）。
+- 扩展源码合入主仓库（`apps/poe2-extension`、`packages/l10n-core`、`data/l10n/`），与网站同一条 CI 构建、校验和发布；扩展版本独立，发布记录见 `apps/poe2-extension/release.json`。
+
+### Changed
+
+- 扩展介绍页改为面向普通用户的下载与安装说明：下载按钮、四步安装、更新与恢复；删去源码下载、构建命令与“开发预览”字样。首页扩展卡改为“可直接下载 · 电脑版 Chrome”。
+- 网站构建与部署检查增加扩展下载包：构建核对 `/downloads/` 里的 zip 与 `release.json` 一致，部署后冒烟检查下载链接返回同一个文件。
 
 ## [0.5.0] - 2026-10-01
 
@@ -496,6 +510,7 @@
 - 可选：传奇名注入（默认开）、双语模式（默认关）。
 - 词典（词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位）随站发布，浏览器零第三方请求。
 
-[Unreleased]: https://github.com/pine2D/poe2-tools/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/pine2D/poe2-tools/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.6.0
 [0.5.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.5.0
 [0.4.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.4.0
