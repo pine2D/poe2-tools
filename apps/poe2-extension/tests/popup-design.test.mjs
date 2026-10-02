@@ -3,6 +3,7 @@
 import { readFile } from 'node:fs/promises'
 import { FULL_DISCLAIMER } from '@poe2-tools/ui-theme/compliance'
 import { expect, it } from 'vitest'
+import { parseRules } from '../../../packages/ui-theme/src/testing/css.ts'
 import * as provenance from '../src/provenance.ts'
 
 const html = await readFile(new URL('../popup.html', import.meta.url), 'utf8')
@@ -76,4 +77,11 @@ it('弹窗样式只引入 ui-theme 的令牌、母题、所需组件与 popup �
     '@poe2-tools/ui-theme/popup-fonts.css',
   ])
   expect(css).not.toMatch(/#192330|#223142|#42566d|#a7d7fa/)
+})
+
+it('开关禁用时右侧状态文字也降到 --ink-3（B.12 修订 3）', () => {
+  const rule = parseRules(css).findLast((r) =>
+    r.selectors.includes('.setting:has(.pt-switch:disabled) .pt-switch__state'),
+  )
+  expect(rule?.declarations.get('color')).toBe('var(--ink-3)')
 })

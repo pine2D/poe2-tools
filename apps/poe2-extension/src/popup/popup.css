@@ -92,7 +92,8 @@ main {
   cursor: default;
   color: var(--ink-3);
 }
-.setting:has(.pt-switch:disabled) small {
+.setting:has(.pt-switch:disabled) small,
+.setting:has(.pt-switch:disabled) .pt-switch__state {
   color: var(--ink-3);
 }
 
@@ -139,24 +140,6 @@ main {
   display: none;
 }
 
-/* “使用前”（spec §6.8）：左侧 2px 内竖条；小标题衬线 13px 金色；正文 L0。
-   竖条用背景绘制：偏移 2px 的 inset 阴影在块高为小数像素时底边会漏出一条 1px 细线 */
-.before {
-  margin-top: 10px;
-  padding: 6px 0 0 12px;
-  background: linear-gradient(#7a5530, #7a5530) left / 2px 100% no-repeat;
-}
-.before h2 {
-  margin: 0;
-  font: 700 13px / 1.5 var(--pt-serif);
-  color: var(--gold);
-}
-.before p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.65;
-}
-
 /* 页脚居中（spec §4.2 层级例外 2）：版本与检查更新 → 短署名 → 完整声明 → 版权句 */
 footer {
   padding: 0 22px 18px;
@@ -184,6 +167,25 @@ footer .pt-provenance {
 }
 footer .pt-disclaimer {
   margin-top: 2px;
+}
+
+/* “使用前”（spec §6.8）：左侧 2px 内竖条；小标题衬线 13px 金色；正文 L0。
+   竖条用背景绘制：偏移 2px 的 inset 阴影在块高为小数像素时底边会漏出一条 1px 细线。
+   本段排在页脚规则之后：与 footer p 不命中同一元素，只为同尾选择器特异度升序（Biome noDescendingSpecificity） */
+.before {
+  margin-top: 10px;
+  padding: 6px 0 0 12px;
+  background: linear-gradient(#7a5530, #7a5530) left / 2px 100% no-repeat;
+}
+.before h2 {
+  margin: 0;
+  font: 700 13px / 1.5 var(--pt-serif);
+  color: var(--gold);
+}
+.before p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
 }
 
 ::selection {
