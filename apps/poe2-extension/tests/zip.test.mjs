@@ -84,6 +84,12 @@ it('每个条目都写固定的 DOS 时间与日期', () => {
   expect(FIXED_DOS_DATE).toBe(0x5c21)
 })
 
+it('拒绝 65535 个及以上条目（EOCD 条目数 0xFFFF 是 ZIP64 标记值）', () => {
+  expect(() =>
+    storedZip(Array.from({ length: 0xffff }, (_, i) => ({ name: `f${i}`, data: Buffer.alloc(0) }))),
+  ).toThrow('ZIP 条目过多')
+})
+
 it('拒绝非 ASCII、越界或重复的条目名，以及符号链接', async () => {
   const data = Buffer.from('x')
   for (const name of ['中文.txt', '../x', 'a/../b', '/abs', 'a b', 'a\\b', 'a//b'])

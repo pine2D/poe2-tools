@@ -12,7 +12,7 @@ const NAME_RE = /^[\x21-\x5b\x5d-\x7e]+$/
 /** @param {{ name: string, data: Uint8Array }[]} entries */
 export function storedZip(entries) {
   const sorted = [...entries].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
-  if (sorted.length > 0xffff) throw new Error('ZIP 条目过多')
+  if (sorted.length >= 0xffff) throw new Error('ZIP 条目过多')
   const locals = []
   const centrals = []
   let offset = 0
