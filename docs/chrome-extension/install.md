@@ -86,7 +86,7 @@ pnpm extension:check
 
 ## 自制图标维护
 
-`apps/poe2-extension/public/icons/`保存16、32、48、128像素的原创PNG，自有MIT许可适用。构建直接复制入库PNG，不需Python。仅重新绘制时运行`python3 apps/poe2-extension/scripts/generate-icons.py`，需要已安装Pillow；本次使用Pillow12.2.0，无新增安装。生成器不使用外部字体或图片，未进入扩展包。
+`apps/poe2-extension/public/icons/`保存16、32、48、128像素的原创PNG，自有MIT许可适用，图形是设计语言母题的 gem 符号（核心菱环 + 扩展青宝石）。构建直接复制入库PNG。仅在母题或配色改变时重新生成：运行`CHROME_PATH=<本机 Chrome> node apps/poe2-extension/scripts/generate-icons.mjs`，四个尺寸各自渲染，不需要 Python，也不新增依赖。生成后把四个文件的 SHA-256 更新到`docs/data-sources.md`的“素材白名单（第 3 类）”，否则包检查会拒绝。生成器不使用外部字体或图片，未进入扩展包。
 
 
 条件组的“与／或／非”与“组内匹配数量”是两个独立设置。不要仅凭选择“或（OR）”就认定数量已为1；需要1时在数量框实际输入1、离开输入框并应用更改。本轮实测可保存；自动化验收应检查原生导出中的matches，不能只检查输入框显示值。
