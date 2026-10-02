@@ -955,3 +955,32 @@ describe('subhead.css', () => {
     expect(lines.at(-1)).toMatch(/^@import "\.\/components\/subhead\.css";/)
   })
 })
+
+describe('pt-switch（spec §5.13）', () => {
+  it('40×22、圆角 11；旋钮 16、开启右移 18px；开启边 #e0b574', () => {
+    expect(declared('switch.css', '.pt-switch', 'width')).toBe('40px')
+    expect(declared('switch.css', '.pt-switch', 'height')).toBe('22px')
+    expect(declared('switch.css', '.pt-switch', 'border-radius')).toBe('11px')
+    expect(declared('switch.css', '.pt-switch::before', 'width')).toBe('16px')
+    expect(declared('switch.css', '.pt-switch:checked::before', 'transform')).toBe(
+      'translateX(18px)',
+    )
+    expect(declared('switch.css', '.pt-switch:checked', 'border-color')).toBe('#e0b574')
+    expect(declared('switch.css', '.pt-switch__state', 'font-size')).toBe('12px')
+  })
+  it('强制色彩：轨道 1px ButtonText 边，旋钮 ButtonText', () => {
+    const FORCED = /forced-colors:\s*active/
+    expect(declared('switch.css', '.pt-switch', 'border', FORCED)).toBe('1px solid ButtonText')
+    expect(declared('switch.css', '.pt-switch::before', 'background', FORCED)).toBe('ButtonText')
+  })
+})
+
+describe('pt-provenance（spec §5.14）', () => {
+  it('短署名 12.5px --ink-3，gem 16px；完整声明 12px --ink-2', () => {
+    expect(declared('provenance.css', '.pt-provenance', 'font-size')).toBe('12.5px')
+    expect(declared('provenance.css', '.pt-provenance', 'color')).toBe('var(--ink-3)')
+    expect(declared('provenance.css', '.pt-provenance > .pt-motif--gem', '--ptm-w')).toBe('16px')
+    expect(declared('provenance.css', '.pt-disclaimer', 'font-size')).toBe('12px')
+    expect(declared('provenance.css', '.pt-disclaimer', 'color')).toBe('var(--ink-2)')
+  })
+})

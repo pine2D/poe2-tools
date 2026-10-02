@@ -1,0 +1,18 @@
+/* pt-provenance（spec §5.14）：扩展的“非官方”短署名与完整声明。gem 用母题 span：
+   <span class="pt-motif pt-motif--gem pt-attr-ext" aria-hidden="true"></span>，这里把它放大到 16px */
+.pt-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.pt-provenance > .pt-motif--gem {
+  --ptm-w: 16px;
+  --ptm-h: 16px;
+  --ptm-u: calc(16px / 25);
+}
+.pt-disclaimer {
+  font-size: 12px;
+  color: var(--ink-2);
+}

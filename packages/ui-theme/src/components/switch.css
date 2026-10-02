@@ -1,0 +1,72 @@
+/* pt-switch（spec §5.13）：只用于扩展设置弹窗（§4.2 层级例外 3），网站不使用。
+   结构是 <input type="checkbox" role="switch">，外观全由本文件绘制；状态由 switch 语义播报，右侧文字 aria-hidden */
+.pt-switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  border: 1px solid var(--control-edge);
+  border-radius: 11px;
+  background: linear-gradient(180deg, #141009, #2a2119);
+  cursor: pointer;
+}
+.pt-switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e8d9bd, #8d7f68 60%, #4a4034);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.pt-switch:checked {
+  border-color: #e0b574;
+  background: linear-gradient(180deg, #a47645, #553619 60%, #3f2610);
+}
+.pt-switch:checked::before {
+  transform: translateX(18px);
+  background: radial-gradient(circle at 35% 30%, #fff3d6, #e0b574 55%, #8a5e2e);
+}
+/* 读取设置完成前保持禁用（B.12 修订 3）：轨道边与旋钮降到 --ink-3 一档 */
+.pt-switch:disabled {
+  border-color: var(--line-2);
+  cursor: default;
+}
+.pt-switch:disabled::before {
+  background: var(--ink-3);
+}
+.pt-switch:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.pt-switch__state {
+  flex: none;
+  min-width: 2em;
+  font-size: 12px;
+  color: var(--ink-2);
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-switch::before {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .pt-switch {
+    border: 1px solid ButtonText;
+    background: Canvas;
+  }
+  .pt-switch::before {
+    background: ButtonText;
+  }
+  .pt-switch:focus-visible {
+    outline-color: Highlight;
+  }
+}

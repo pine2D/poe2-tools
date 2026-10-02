@@ -5,6 +5,9 @@
   "type": "module",
   "exports": {
     "./index.css": "./src/index.css",
+    "./tokens.css": "./src/tokens.css",
+    "./motif.css": "./src/generated/motif.css",
+    "./components/*": "./src/components/*",
     "./fonts.css": "./fonts/fonts.css",
     "./popup-fonts.css": "./fonts/popup.css",
     "./motif": "./src/motif.ts",
