@@ -1,8 +1,12 @@
 # 安装与使用
 
-扩展 0.1.111 为开发预览版，面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
+扩展面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
-## 构建与安装
+## 普通用户安装
+
+0.2.0 起不需要自己构建：按[网站介绍页](https://poe2-tools.pine2d.com/extension/)下载 zip，解压到固定文件夹，在 `chrome://extensions` 打开“开发者模式”，点“加载已解压的扩展程序”选择该文件夹。开发者模式需要一直开着；Chrome 会提示扩展不是来自应用商店。同一个 zip 也在 GitHub Releases（tag `ext-v<版本>`）存档。
+
+## 从源码构建（开发者）
 
 仓库根目录运行：
 
@@ -11,7 +15,9 @@ pnpm install --frozen-lockfile
 pnpm extension:package
 ```
 
-在 `chrome://extensions/` 打开开发者模式，选择“加载已解压的扩展程序”，加载 `apps/poe2-extension/dist/`。也可把 `apps/poe2-extension/artifacts/poe2-extension-0.1.111.zip` 解压到固定目录后加载。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+产物是 `apps/poe2-extension/dist/`（可直接“加载已解压的扩展程序”）与 `apps/poe2-extension/artifacts/poe2-extension-<版本>.zip`。zip 只存储不压缩，条目顺序与时间固定，同一份源码打出的 SHA-256 相同；`pnpm extension:release-check` 核对它与入库的 `release.json` 一致。发版步骤见 [README](README.md#发版步骤)。Chrome 不能把这个 ZIP 当商店安装包直接安装。
+
+## 启用与设置
 
 进入 CoE Beta，选择 **POE 2 → English**，刷新页面。扩展图标弹窗提供“启用简体中文”和“显示中英对照”；设置保存在本机，不同步账号。若提示无法读取设置，可点击“重试读取”；读取成功前开关保持禁用，不会用默认值覆盖已有偏好。
 
@@ -37,7 +43,7 @@ pnpm extension:package
 
 更新时沿用原安装目录与扩展条目：
 
-1. 重新构建，或将新版ZIP解压覆盖到原目录。
+1. 从网站下载新版 zip（开发者也可重新构建），解压覆盖到原目录；弹窗页脚的“检查更新”会打开网站介绍页，可对比版本。
 2. 在`chrome://extensions/`确认“开发者模式”已开启，再点击该扩展的“重新加载”。
 3. 核对管理页版本号，重新打开扩展弹窗，并刷新已有CoE标签页。
 

@@ -4,7 +4,7 @@
 
 ### 当前优先级（2026-09-24）
 
-用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。扩展源码已于 2026-10-02 合入主树 `apps/poe2-extension`（0.1.111 开发预览）；具体通过／未测范围见 `docs/chrome-extension/compatibility.md`。未经实际浏览器验收不得扩大页面或装备兼容性声明；公开发行与源码、验收状态应分别说明。
+用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。扩展源码已于 2026-10-02 合入主树 `apps/poe2-extension`，0.2.0 起随网站同一流程发布：网站 `/extension/` 提供预构建 zip 下载，推送 main 后同一文件由 CI 发布为 GitHub Release（tag `ext-v<版本>`）；未上架 Chrome 应用商店。具体通过／未测范围见 `docs/chrome-extension/compatibility.md`。未经实际浏览器验收不得扩大页面或装备兼容性声明；公开发行与源码、验收状态应分别说明。
 
 poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：pnpm monorepo，TypeScript 单语言，
 纯静态前端 + 构建期脚本，不部署服务端。
@@ -87,7 +87,10 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   审计计数与覆盖率。若 `packages/ui-theme` 的 coverage.test 因新名称字符失败，运行 `pnpm ui-theme:fonts`，先用独立提交
   `chore(ui-theme): 更新字体分片` 提交 `packages/ui-theme/fonts/`（覆盖只增不减，旧词典在这个提交下仍能通过测试），再用独立提交
   `chore(dict): 更新词典至 <游戏版本>` 提交词典；两个提交各自都要能通过 `pnpm verify`。覆盖率下降需先查原因，不要直接
-  `--allow-regression`。
+  `--allow-regression`。`data/dict/zh-CN/`、`data/l10n/` 或 `data/craft/catalog.json` 的变化会改变扩展 zip，`pnpm verify` 的
+  扩展发布闸门随之失败：在同一个 `chore(dict)` 提交里升扩展补丁版本（`apps/poe2-extension/package.json` 与 `manifest.json`），
+  在 `apps/poe2-extension/CHANGELOG.md` 写一段“词典更新至 <游戏版本>”，运行 `pnpm extension:release` 并一起提交 `release.json`，
+  保证该提交单独通过 `pnpm verify`。
 - 涉及游戏内渲染的结论（中文是否显示、`name` 截断、国服客户端行为）必须来自真机；未验证就
   明确写"待验收"。
 - 文档与用户可见文本用简体中文；标识符用英文；代码注释用简体中文。
@@ -96,7 +99,12 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm verify        # typecheck + lint + test + build + dict:check，与 CI 同构
+pnpm verify        # typecheck + lint + test + 扩展打包与发布闸门 + build + dict:check + craft:check，与 CI 同构
+                   # （扩展在 verify 里构建两次：extension:package 一次，根 build 递归一次，属预期）
+pnpm extension:package       # 构建并校验扩展，打出可复现 zip（apps/poe2-extension/artifacts/，不入库）
+pnpm extension:release-check # 核对 zip 与 apps/poe2-extension/release.json 一致（verify 内含）
+pnpm extension:release       # 有意发版时运行：先升扩展版本、写扩展 CHANGELOG，再打包并改写 release.json
+# 新克隆单独运行 pnpm build 或网站构建前，先 pnpm extension:package：网站构建要复制扩展 zip，缺包即失败
 pnpm dev           # 本地启动静态站
 pnpm dict:build    # 联网生成词典（按日缓存；--offline 复用缓存；--allow-regression 放行覆盖率下降）
 pnpm dict:check    # 入库词典的结构校验、审计与覆盖率回归比较
@@ -116,7 +124,17 @@ pnpm ui-theme:motif # 手动运行：由 motif.ts 重新生成母题 CSS 与 SVG
 
 - Semantic Versioning 2.0.0；`CHANGELOG.md` 按 Keep a Changelog 维护（首个发布前创建）。
 - `apps/site` 通过 Cloudflare Pages 发布静态站（`.github/workflows/deploy.yml`，凭据在仓库 secrets）；词典随构建产物一起发布。
-- 词典更新不单独发版；应用行为变化才升版本。
+- 词典更新不单独发网站版本；网站行为变化才升网站版本。词典更新会改变扩展产物，扩展要随之发补丁版（见“开发工作流”的词典更新）。
+- 扩展 `apps/poe2-extension` 版本独立于网站：唯一来源是它的 `package.json`（`manifest.json` 须一致，构建时核对），更新日志在
+  `apps/poe2-extension/CHANGELOG.md`。入库的 `apps/poe2-extension/release.json` 是发布闸门：`pnpm verify` 与 CI 重新打包后核对
+  版本、文件名、字节数与 SHA-256，不一致即失败。会改变扩展 zip 的改动：扩展源码、`packages/l10n-core`、网站与扩展共用的
+  `packages/item-core`（只为网站改它也算）、扩展用到的数据、根目录 `LICENSE`、依赖与 `pnpm-lock.yaml` 升级（构建链版本）。
+  有意发版：升版本 → 写扩展 CHANGELOG → `pnpm extension:release` → 提交；只在 Linux（含 WSL）上发版；
+  步骤见 `docs/chrome-extension/README.md` 的“发版步骤”。
+- 推送 main 触发网站部署（扩展 zip 随站发布在 `/downloads/`），部署成功后 `release-extension` job 创建 tag `ext-v<版本>` 与
+  GitHub Release（附件是同一个 zip，不标为 Latest；已有一致的 Release 即跳过，缺附件补传，草稿或内容不一致即失败）。
+  CI 的 verify 还比对 GitHub 上已发布的同版本附件，内容不同即失败：已发布的版本只能升版本，不能 amend。
+  推送由用户执行；推送含 `.github/workflows/` 改动时，HTTPS 令牌需要 `workflow` 权限（SSH 不受影响）。
 
 ## 分支与提交规范
 

@@ -2,15 +2,15 @@
 
 《流放之路 2》（Path of Exile 2）辅助工具集。TypeScript monorepo，纯静态前端，无服务端。
 
-## 当前方向（2026-09-28）
+## 当前方向（2026-10-02）
 
-后续开发转向 **Chrome 扩展：成熟 PoE2 工具网站的国服简体中文适配**，首站为 Craft of Exile 新版 Beta 的 PoE2 模式。范围包括页面汉化、中文搜索转英文术语、国服高级装备文本导入。扩展源码已合入本仓库 `apps/poe2-extension`（0.1.111 开发预览），尚未提供公开下载包与商店入口。详情见 [扩展状态与文档](docs/chrome-extension/README.md)。
+后续开发转向 **Chrome 扩展：成熟 PoE2 工具网站的国服简体中文适配**，首站为 Craft of Exile 新版 Beta 的 PoE2 模式。范围包括页面汉化、中文搜索转英文术语、国服高级装备文本导入。扩展源码在本仓库 `apps/poe2-extension`，0.2.0 起提供预构建下载：在[网站介绍页](https://poe2-tools.pine2d.com/extension/)下载 zip，解压后在 Chrome 以“加载已解压的扩展程序”安装；推送 main 后同一文件也发布在 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases)（tag `ext-v<版本>`）。未上架 Chrome 应用商店。详情见 [扩展状态与文档](docs/chrome-extension/README.md)。
 
 原独立简体中文做装网站／自研完整制作模拟器计划按用户要求**无限期搁置**。保留现有 `/craft/`、源码、测试、数据与历史文档，不继续补制作机制、权重或最优路线；恢复须有用户明确指令。以下装备工坊描述是已有能力记录，不代表仍在执行原路线。Build Planner 汉化工具不因这次调整而停用。
 
 ## 网站与目录
 
-网站由 `apps/site` 统一构建：`/` 为工具首页，`/build/` 为构筑汉化，`/extension/` 为中文助手介绍和安装说明。旧 `/craft/` 保留但不再出现在公共导航。当前改版为本地实现，尚未部署。
+网站由 `apps/site` 统一构建：`/` 为工具首页，`/build/` 为构筑汉化，`/extension/` 为中文助手介绍与下载（扩展 zip 在 `/downloads/`）。旧 `/craft/` 保留但不再出现在公共导航。网站部署在 https://poe2-tools.pine2d.com/。
 
 - `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：控件、页面样式、词典加载；令牌、组件样式、母题与字体分片来自 `packages/ui-theme`。
 - `packages/`：纯业务算法和构建脚本；`data/`：词典、历史制作目录及样本。
@@ -21,6 +21,7 @@
 | 工具 | 状态 | 说明 |
 |---|---|---|
 | `build-l10n` | 0.5.0：PoE2 设计语言（深色暖炭底、旧铜金属框与符文菱结；构筑页双框工作台、金属页签、名称牌与译文提示框），移除浅色主题；游戏内加载与真机走查待验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
+| `poe2-extension` | 0.2.0：首个公开下载版（网站下载 zip，以“加载已解压的扩展程序”安装）；Windows 原生输入法待验收 | Chrome 扩展：在 Craft of Exile 新版 Beta 的 PoE2 English 页面显示国服简体术语，支持中文搜索与国服高级装备文本转换。 |
 
 装备制作工作台位于 `/craft/`，支持粘贴简体中文、繁体中文和英文的 Ctrl+Alt+C 装备文本，或搜索基底创建演练起点。可设置目标、预览制作结果、查看材料花费、撤销与重做，并保存或导入演练项目。
 
@@ -51,7 +52,7 @@ pnpm verify
 
 ```bash
 pnpm dev            # 本地启动静态站（先把 data/dict 同步到 apps/site/public/dict）
-pnpm --filter @poe2-tools/site build   # 产物在 apps/site/dist
+pnpm extension:package && pnpm --filter @poe2-tools/site build   # 网站构建要复制扩展 zip，先打包扩展；产物在 apps/site/dist
 ```
 
 浏览器里拖入或粘贴 `.build` 文件 → 选目标语言 → 查看对照预览 → 下载。所有处理都在浏览器本地完成，不上传文件。
@@ -84,8 +85,11 @@ packages/build-core/    .build 解析、词典匹配、翻译管线（无 DOM）
 packages/item-core/     装备高级文本解析、逆向词典与受控 CoE 转接（无 DOM）
 packages/dict-builder/  词典生成脚本
 packages/ui-theme/      设计令牌、组件样式、母题与字体分片（生成物入库）
+packages/l10n-core/     扩展的术语匹配核心（无 DOM、无 Chrome API）
+apps/poe2-extension/    Chrome 扩展（发布记录 release.json，更新日志 CHANGELOG.md）
 apps/site/        静态站
 data/dict/<locale>/     生成的词典（入库）
+data/l10n/              扩展专用的界面译文、别名与石板名
 data/fixtures/          测试样本（synthetic 入库，local 不入库）
 docs/build-format.md    .build 格式速查
 docs/data-sources.md    数据源登记表

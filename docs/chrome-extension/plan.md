@@ -100,6 +100,8 @@
 
 ## 任务六：完整使用链、分发与维护
 
+2026-10-02：分发改为随网站发布——扩展合入 main，`ci.yml` 的 verify 打包并核对 `release.json`，网站 `/downloads/` 提供 zip，推送 main 且部署成功后由 CI 创建 GitHub Release；不再新增独立的 `extension.yml`。0.2.0 的本机验收结果记在 [release-readiness.md](release-readiness.md) 的“0.2.0 公开下载版”一节；远端 CI 与 Release 待用户推送后核对。下列未勾选项保持原意。
+
 **文件：** `.github/workflows/extension.yml`（实施时新增）、根脚本按需调整、扩展验收测试、安装／隐私／兼容性记录与扩展目录的 `CHANGELOG.md`。
 
 - [ ] 从新 Chrome 配置实际安装 ZIP 解包目录，检查所有资源来自包内；只发布生成物附件，不修改 Cloudflare 部署目标，不自动上架商店。

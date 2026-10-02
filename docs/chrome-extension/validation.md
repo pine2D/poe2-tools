@@ -8,8 +8,9 @@
 
 ```bash
 pnpm verify
-pnpm extension:package
 ```
+
+`pnpm verify` 已包含 `extension:package` 与 `extension:release-check`；扩展产物变化而未发版时会在这里失败（发版步骤见 [README](README.md#发版步骤)）。
 
 `verify`按顺序执行全仓类型、格式、测试、构建、词典检查与制作目录检查。中途失败时，后续步骤尚未执行，不能从命令已启动推断全部通过。旧制作网站仍搁置，但保留其回归；不要为使门禁变绿而删除旧测试、跳过失败或扩大超时。
 
