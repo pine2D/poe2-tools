@@ -326,6 +326,11 @@ it('对话框放宽规则单独放在宿主之前的 import-dialog 样式里，�
   expect(style.dataset.poe2L10n).toBe('import-dialog')
   expect(style.textContent).toContain('#noticeDialog:has([data-poe2-l10n="import"])')
   expect(style.textContent).not.toMatch(/color|background|font/)
+  // 首条规则让原站 showModal 对话框可滚动，“继续”与面板底部声明才够得着
+  const firstRule = /#noticeDialog:has\(\[data-poe2-l10n="import"\]\)\s*\{([^}]*)\}/.exec(
+    style.textContent ?? '',
+  )
+  expect(firstRule?.[1]).toContain('overflow-y: auto')
   expect(document.querySelectorAll('style').length).toBe(1)
   stop()
   expect(document.querySelector('style[data-poe2-l10n="import-dialog"]')).toBeNull()

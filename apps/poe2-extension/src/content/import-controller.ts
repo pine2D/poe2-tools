@@ -9,6 +9,7 @@ const DIALOG_CSS = `
         box-sizing: border-box;
         width: 760px;
         max-width: calc(100vw - 24px) !important;
+        overflow-y: auto;
       }
       #noticeDialog:has([data-poe2-l10n="import"]) .message > .text { min-width: 0; flex: 1; }
       #noticeDialog:has([data-poe2-l10n="import"]) #importerInput {
