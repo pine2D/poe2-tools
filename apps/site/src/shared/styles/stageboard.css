@@ -1,0 +1,497 @@
+/* 阶段并排对照（2026-10-03 方案 §3.2–3.3）：L0 数据表；本状态唯一的金属注意力落点是列头所在的阶段带。
+   字号与间距只取 scale.css 令牌（px 只用于边框、圆角与列宽这类几何尺寸）；格子是按钮，
+   悬停或聚焦时整行跨阶段提亮，行底铜线在换装格下转亮，与格子左缘刻痕连成一条线 */
+
+/* 工作台的金属落点让给阶段带：标题栏去掉金属渐变，保留衬线金字（spec §3.3；用户 2026-10-03 已确认） */
+.app__build-frame > .pt-titlebar {
+  background: var(--bar);
+  border-bottom-color: var(--line-2);
+  box-shadow: none;
+}
+.app__build-frame {
+  --slot-w: 112px;
+}
+.stageboard__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+.stageboard__facts {
+  /* 信息行可收窄换行，主按钮留在首行右侧（宽屏）；窄屏整体换到下一行 */
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.stageboard__facts b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.stageboard__miss {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--miss);
+}
+.stageboard__hint {
+  color: var(--ink-3);
+}
+.stageboard__switch {
+  margin-block-end: var(--sp-4);
+}
+/* 阶段带滚出视口后，框顶吸附一条紧凑阶段名条（只读、aria-hidden），横向与表格同步；
+   高度为 0 的吸附锚 + 绝对定位的条，不占版面。列宽、位移、显隐由组件量出写入 */
+.stageboard__ghost {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 5;
+  block-size: 0;
+}
+.stageboard__ghost-bar {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  display: flex;
+  border-block-end: 2px solid var(--metal-line);
+  background: color-mix(in srgb, var(--metal-line) 18%, var(--frame-bg));
+  box-shadow: 0 var(--sp-1) var(--sp-3) rgb(0 0 0 / 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    visibility 0s linear var(--dur-fast);
+}
+.stageboard__ghost[data-show="true"] .stageboard__ghost-bar {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.stageboard__ghost-corner {
+  flex: none;
+  inline-size: var(--slot-w);
+  border-inline-end: 1px solid var(--metal-edge);
+}
+.stageboard__ghost-clip {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.stageboard__ghost-track {
+  display: flex;
+  translate: calc(-1 * var(--ghost-x, 0px)) 0;
+}
+.stageboard__ghost-track > span {
+  flex: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) calc(var(--sp-2) + var(--sp-3) + 1px);
+  color: var(--title-gold);
+  font-family: var(--pt-serif);
+  font-size: var(--fs-lead);
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stageboard__ghost-track:lang(zh-TW) > span {
+  font-family: var(--pt-serif-tc);
+}
+/* 只在表格放不下时出现（组件按 scrollWidth > clientWidth 切换 hidden） */
+.stageboard__scrollhint {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+  text-align: end;
+}
+/* 外层不滚动，承载滚动提示；--slot-w 是吸附栏位列宽，列宽、表格最小宽度与滚动内边距共用 */
+.stageboard__viewport {
+  position: relative;
+}
+/* 右缘渐隐（右侧还有阶段）；data-start / data-end 由组件按 scrollLeft 写入 */
+.stageboard__viewport::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 4;
+  inline-size: var(--sp-6);
+  background: linear-gradient(to left, var(--frame-bg), transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.stageboard__viewport[data-end="true"]::after {
+  opacity: 1;
+}
+.stageboard__scroll {
+  /* 定位祖先：格内 visually-hidden 文本（绝对定位）随区域裁切，不把页面撑宽 */
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  /* 键盘聚焦的格子不被吸附栏位列遮住（WCAG 2.4.11） */
+  scroll-padding-inline-start: var(--slot-w);
+  scrollbar-color: var(--control-edge) var(--bg);
+  /* 展开详情按可见宽度排版（100cqi） */
+  container-type: inline-size;
+}
+.stageboard__scroll:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.stageboard__table {
+  width: 100%;
+  min-width: calc(var(--slot-w) + var(--stages, 1) * 200px);
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-data);
+  line-height: 1.5;
+}
+.stageboard__table th,
+.stageboard__table td {
+  padding: var(--sp-2);
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  vertical-align: top;
+}
+.stageboard__corner,
+.stageboard__table tbody th[scope="row"] {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  width: var(--slot-w);
+  border-inline-end: 1px solid var(--line-2);
+  background: var(--frame-bg);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+/* 数据行纵向只留 --sp-1，格子按钮自带 --sp-2，一行约 67px（1440） */
+.stageboard__table tbody td {
+  padding-block: var(--sp-1);
+}
+/* 行表头与格子首行对齐（格子 = td 内边距 + 按钮内边距 + 1px 边框） */
+.stageboard__table tbody th[scope="row"] {
+  padding-block-start: calc(var(--sp-1) + var(--sp-2) + 1px);
+}
+/* 吸附列右缘阴影（已向右滚过时）：挂在吸附格自身，只落在被它遮住的那一行，
+   不压到分组行与展开详情（不再用整块视口上的竖条） */
+.stageboard__corner::after,
+.stageboard__table tbody th[scope="row"]::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 100%;
+  inline-size: var(--sp-5);
+  background: linear-gradient(to right, rgb(0 0 0 / 0.45), transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.stageboard__viewport[data-start="true"] :is(.stageboard__corner, tbody th[scope="row"])::after {
+  opacity: 1;
+}
+
+/* 阶段带：两行表头。第一行只有阶段名（中文衬线），是列头的可访问名称；
+   第二行是天赋点数、待核对、作者备注与“逐项核对” */
+.stageboard__table thead :is(th, td) {
+  border-block-end: 0;
+  background: color-mix(in srgb, var(--metal-line) 12%, var(--frame-bg));
+}
+.stageboard__table thead tr:first-child > :is(th, td) {
+  border-block-start: 1px solid var(--metal-edge);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--metal-line) 26%, var(--frame-bg)),
+    color-mix(in srgb, var(--metal-line) 12%, var(--frame-bg))
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bronze-hi) 16%, transparent);
+}
+.stageboard__table thead .stageboard__corner {
+  z-index: 3;
+  border-block-end: 2px solid var(--metal-line);
+  border-inline-end-color: var(--metal-edge);
+}
+.stageboard__table thead .stageboard__stage {
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-2) 0 calc(var(--sp-2) + var(--sp-3) + 1px);
+}
+.stageboard__table thead .stageboard__stage-info {
+  padding: var(--sp-1) var(--sp-2) var(--sp-3) calc(var(--sp-2) + var(--sp-3) + 1px);
+  border-block-end: 2px solid var(--metal-line);
+}
+.stageboard__stage-name {
+  display: block;
+  color: var(--title-gold);
+  font-family: var(--pt-serif);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 1px #000;
+}
+.stageboard__table:lang(zh-TW) .stageboard__stage-name {
+  font-family: var(--pt-serif-tc);
+}
+.stageboard__stage-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin-block-end: var(--sp-2);
+  color: var(--ink-2);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+.stageboard__note {
+  display: -webkit-box;
+  margin: 0 0 var(--sp-2);
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.stageboard__section > th {
+  padding-block: var(--sp-4) var(--sp-2);
+  border-block-end-color: var(--line-2);
+  color: var(--bronze-hi);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+/* 分组名在横向滚动时贴住左缘（th 跨满整行，无法自身吸附，故包一层 span） */
+.stageboard__section-label {
+  position: sticky;
+  inset-inline-start: var(--sp-2);
+  display: inline-block;
+}
+
+.stageboard__cell {
+  position: relative;
+  display: grid;
+  gap: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* 横向让出焦点框外偏量；纵向让出吸顶的阶段名条 */
+  scroll-margin-inline: var(--sp-2);
+  scroll-margin-block: var(--sp-7) var(--sp-2);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.stageboard__cell:hover {
+  border-color: var(--line-2);
+  background: var(--raised-2);
+}
+.stageboard__cell:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.stageboard__cell[aria-expanded="true"] {
+  border-color: var(--control-edge);
+  background: var(--raised-2);
+}
+/* 刻痕：只给“新”与“换”（基底或传奇不同）；同一件只改词缀记“改”，不画刻痕，只把词缀数写成铜色 */
+.stageboard__cell--added,
+.stageboard__cell--changed {
+  box-shadow: inset 3px 0 0 var(--metal-bright);
+}
+.stageboard__cell--miss {
+  background: var(--miss-bg);
+}
+.stageboard__cell--miss[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--miss) 10%, var(--raised-2));
+}
+/* 第一行：标记紧贴刻痕，后接名称，标记与刻痕读作同一个记号 */
+.stageboard__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.stageboard__mark {
+  flex: none;
+  padding-inline: var(--sp-1);
+  border: 1px solid var(--metal-edge);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--metal-line) 30%, transparent);
+  color: var(--bronze-hi);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.stageboard__zh {
+  color: var(--ink);
+  font-weight: 600;
+}
+.stageboard__en,
+.stageboard__meta {
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+.stageboard__count,
+.stageboard__delta {
+  white-space: nowrap;
+}
+.stageboard__delta {
+  color: var(--bronze-hi);
+}
+.stageboard__meta--miss {
+  color: var(--miss);
+}
+/* 技能行：宝石名是比较对象，行表头用数据字号与技能青；格内是辅助宝石名 */
+.stageboard__table .stageboard__row--skill > th[scope="row"] {
+  color: var(--gem-en);
+  font-size: var(--fs-data);
+  font-weight: 600;
+  padding-block-start: calc(var(--sp-1) + var(--sp-2));
+}
+.stageboard__supports {
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  font-weight: 400;
+}
+.stageboard__supports--none {
+  color: var(--ink-3);
+}
+.stageboard__supports--modded {
+  color: var(--bronze-hi);
+}
+.stageboard__none {
+  display: block;
+  padding: calc(var(--sp-2) + 1px) calc(var(--sp-3) + 1px);
+  color: var(--ink-3);
+}
+
+/* 签名动作：悬停或聚焦某行时整行提亮，上下各一道细线；行底铜线贯穿全行，在“新／换”格下转亮、“改”格下半亮 */
+.stageboard__row:is(:hover, :focus-within) > th[scope="row"] {
+  background: var(--raised-2);
+  color: var(--ink);
+}
+.stageboard__row:is(:hover, :focus-within) > td {
+  background: color-mix(in srgb, var(--raised-2) 70%, var(--frame-bg));
+}
+.stageboard__row:is(:hover, :focus-within) > :is(th, td) {
+  border-block-end-color: var(--metal-edge);
+  box-shadow:
+    inset 0 1px 0 var(--line-2),
+    inset 0 -1px 0 var(--metal-edge);
+}
+.stageboard__row:is(:hover, :focus-within) > td:is([data-change="added"], [data-change="changed"]) {
+  box-shadow:
+    inset 0 1px 0 var(--line-2),
+    inset 0 -3px 0 var(--metal-bright);
+}
+.stageboard__row:is(:hover, :focus-within) > td[data-change="modded"] {
+  box-shadow:
+    inset 0 1px 0 var(--line-2),
+    inset 0 -2px 0 var(--bronze);
+}
+.stageboard__table .stageboard__row--skill:is(:hover, :focus-within) > th[scope="row"] {
+  color: var(--gem-en);
+}
+
+.stageboard__passives {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: var(--sp-3);
+  margin: 0;
+  padding: calc(var(--sp-2) + 1px) var(--sp-3) 0;
+  list-style: none;
+  font-size: var(--fs-small);
+}
+.stageboard__passives li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+.stageboard__passives .pt-num {
+  color: var(--ink-2);
+}
+.stageboard__more {
+  margin: var(--sp-1) 0 0;
+  padding-inline: var(--sp-3);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+
+/* 展开详情：紧跟被点的行，整行跨列；内容吸左、宽度等于表格可见宽度，横向滚动时不跟着跑 */
+.stageboard__table .stageboard__expand > td {
+  padding: 0;
+  border-block-end: 1px solid var(--line-2);
+}
+.stageboard__detail {
+  position: sticky;
+  inset-inline-start: 0;
+  box-sizing: border-box;
+  inline-size: 100cqi;
+  padding: var(--sp-3) var(--sp-2) var(--sp-4);
+  background: var(--well);
+  box-shadow: inset 0 1px 0 var(--control-edge);
+}
+.stageboard__detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+.stageboard__detail-head h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-lead);
+}
+@media (max-width: 620px) {
+  .app__build-frame {
+    --slot-w: 88px;
+  }
+  .stageboard__table thead .stageboard__stage {
+    min-width: 168px;
+  }
+  .stageboard__table {
+    min-width: calc(var(--slot-w) + var(--stages, 1) * 168px);
+  }
+  .stageboard__stage-name {
+    font-size: var(--fs-lead);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stageboard__cell,
+  .stageboard__corner::after,
+  .stageboard__table tbody th[scope="row"]::after,
+  .stageboard__viewport::after,
+  .stageboard__ghost-bar {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .stageboard__cell--added,
+  .stageboard__cell--changed {
+    box-shadow: none;
+    border-inline-start: 3px solid CanvasText;
+  }
+  .stageboard__mark {
+    border-color: CanvasText;
+  }
+  .stageboard__table thead .stageboard__stage-info,
+  .stageboard__table thead .stageboard__corner {
+    border-block-end-color: CanvasText;
+  }
+}
