@@ -65,7 +65,7 @@
 .entry--coe .entry__act {
   flex-direction: row-reverse;
 }
-/* 场景标题的衬线、金字与字号来自 ui-theme 的 .pt-subhead--lg；页面层只管折行 */
+/* 场景标题的衬线、金字与宽屏 28px 来自 ui-theme 的 .pt-subhead--lg；≤1099px 的字号见下方媒体查询 */
 .entry__head h2 {
   text-wrap: balance;
 }
@@ -428,7 +428,7 @@
   }
 }
 
-/* ≤620px：两个入口上下排（场景句 + 按钮），示例带随后；场景标题由 .pt-subhead--lg 自己回到 21px */
+/* ≤620px：两个入口上下排（场景句 + 按钮），示例带随后；场景标题沿用 ≤1099px 的 --fs-title */
 @media (max-width: 620px) {
   .home-main {
     padding-block: var(--sp-4) var(--sp-6);
