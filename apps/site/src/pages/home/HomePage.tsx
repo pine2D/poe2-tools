@@ -46,7 +46,7 @@ export function HomePage() {
             </header>
             <div className="entry__act">
               <a className="pt-btn" href="/build/" aria-describedby="facts-build">
-                打开构筑汉化 <span aria-hidden="true">→</span>
+                打开构筑汉化 <Icon name="arrow-right" />
               </a>
               <p className="entry__facts" id="facts-build">
                 <span className="nw">网页工具</span>
@@ -71,7 +71,7 @@ export function HomePage() {
             </header>
             <div className="entry__act">
               <a className="pt-btn" href="/extension/" aria-describedby="facts-coe">
-                安装中文助手 <span aria-hidden="true">→</span>
+                安装中文助手 <Icon name="arrow-right" />
               </a>
               <p className="entry__facts" id="facts-coe">
                 <span className="nw">Chrome 扩展</span>
@@ -238,7 +238,6 @@ export function HomePage() {
                   <Icon name="search" />
                   {L1_DEMO_QUERY}
                   <span className="l1demo__caret" aria-hidden="true" />
-                  <span className="l1demo__ime">中文输入</span>
                 </div>
                 <div className="l1demo__box l1demo__box--top">
                   <p className="l1demo__help">

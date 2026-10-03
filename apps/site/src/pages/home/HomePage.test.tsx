@@ -23,13 +23,20 @@ describe('首页结构', () => {
       links.map((link) => [
         link.getAttribute('class'),
         link.getAttribute('href'),
-        link.textContent,
+        link.textContent?.trim(),
       ]),
     ).toEqual([
-      ['pt-btn', '/build/', '打开构筑汉化 →'],
-      ['pt-btn', '/extension/', '安装中文助手 →'],
+      ['pt-btn', '/build/', '打开构筑汉化'],
+      ['pt-btn', '/extension/', '安装中文助手'],
     ])
-    // 箭头 aria-hidden，读屏只读动作本身
+    // 去向箭头是 Icon arrow-right（aria-hidden 的 SVG），不用 Unicode 字形；读屏只读动作本身
+    for (const link of links) {
+      const icons = link.querySelectorAll('svg.icon')
+      expect(icons).toHaveLength(1)
+      expect(icons[0]?.getAttribute('aria-hidden')).toBe('true')
+      expect(icons[0]?.querySelector('path')?.getAttribute('d')).toBe('M5 12h14')
+      expect(link.textContent).not.toContain('→')
+    }
     expect(screen.getByRole('link', { name: '打开构筑汉化' })).toBe(links[0])
     expect(screen.getByRole('link', { name: '安装中文助手' })).toBe(links[1])
     // 每个按钮由同一端的事实条描述
@@ -103,6 +110,9 @@ describe('首页结构', () => {
     expect(coe.querySelector('.demo__spot')?.textContent).toBe('水晶法器→Crystal Focus')
     // 右段用共用的 l1demo__ 示意：两个搜索框都画 Icon 的 search；候选框拆成框顶、框腰、框底三段，选中项只靠类名
     expect(coe.querySelectorAll('.l1demo__field > svg.icon')).toHaveLength(2)
+    // 扩展不渲染“中文输入”之类的徽记：搜索框里只有图标、查询词与光标，没有虚构控件
+    expect(coe.querySelector('.l1demo__ime')).toBeNull()
+    expect(coe.querySelector('.l1demo__field')?.textContent).toBe('水晶')
     expect([...coe.querySelectorAll('.l1demo__box')].map((box) => box.className)).toEqual([
       'l1demo__box l1demo__box--top',
       'l1demo__box l1demo__box--mid',

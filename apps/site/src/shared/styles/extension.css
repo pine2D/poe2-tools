@@ -108,7 +108,11 @@
   color: var(--ink-2);
   font-size: var(--fs-small);
 }
+/* 文字与外链箭头图标（Icon external）垂直居中，间距与图标走同一条基线 */
 .ext-env__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
   margin-block-start: var(--sp-1);
 }
 

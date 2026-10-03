@@ -56,9 +56,9 @@ export function ExtensionPage(): ReactElement {
         <PtFrame as="div" variant="hero" className="ext-gate">
           <header className="ext-gate__hero">
             <h1 className="pt-hero-title pt-hero-title--extension">
-              熟悉的术语，
+              <span className="hero-clause">熟悉的术语，</span>
               <br className="mobile-break" />
-              <span className="pt-hero-title__gold">就在原来的工具里。</span>
+              <span className="pt-hero-title__gold hero-clause">就在原来的工具里。</span>
             </h1>
             <p className="ext-gate__lead">
               PoE2 中文助手在 <span className="nw">Craft of Exile</span>
@@ -107,7 +107,7 @@ export function ExtensionPage(): ReactElement {
                 不支持旧版 www 站和 PoE1，也不会翻译所有<span className="nw">英文段落</span>。
               </p>
               <a className="text-link ext-env__link" href={COE_BETA}>
-                打开 CoE Beta <span aria-hidden="true">↗</span>
+                打开 CoE Beta <Icon name="external" size={14} />
               </a>
             </section>
             {/* 中缝：从“确认环境”指向“下载”；铜线与菱结属于这扇框，不另算落点 */}
@@ -235,7 +235,6 @@ export function ExtensionPage(): ReactElement {
                   <Icon name="search" />
                   {L1_DEMO_QUERY}
                   <span className="l1demo__caret" aria-hidden="true" />
-                  <span className="l1demo__ime">中文输入</span>
                 </div>
                 <div className="l1demo__box">
                   <p className="l1demo__help">

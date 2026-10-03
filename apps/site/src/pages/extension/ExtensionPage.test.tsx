@@ -105,6 +105,22 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     expect(gate.contains(download)).toBe(true)
   })
 
+  it('hero 标题两个分句各自整体换行：宽度不够时只在“，”后断开', () => {
+    const { container } = setup()
+    const h1 = container.querySelector('h1') as HTMLElement
+    expect(texts(h1.querySelectorAll('.hero-clause'))).toEqual([
+      '熟悉的术语，',
+      '就在原来的工具里。',
+    ])
+    expect(h1.querySelector('.pt-hero-title__gold')?.classList.contains('hero-clause')).toBe(true)
+    const rules = parseRules(
+      readFileSync(resolve(here, '../../shared/styles/site.css'), 'utf8'),
+    ).filter((rule) => rule.selectors.includes('.hero-clause'))
+    expect(rules.map((rule) => [rule.atRules, [...rule.declarations]])).toEqual([
+      [[], [['display', 'inline-block']]],
+    ])
+  })
+
   it('导语一句话说清能力范围；安装路线是四个页内链接，目标都存在', () => {
     const { container } = setup()
     const lead = container.querySelector('.ext-gate__lead') as HTMLElement
@@ -146,6 +162,11 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     const coe = within(env).getByRole('link', { name: /打开 CoE Beta/ })
     expect(coe.getAttribute('href')).toBe(COE_BETA)
     expect(coe.className).toBe('text-link ext-env__link')
+    // 外链箭头是 Icon external（aria-hidden 的 SVG），不用 Unicode 字形“↗”
+    expect(coe.textContent?.trim()).toBe('打开 CoE Beta')
+    const icon = coe.querySelector('svg.icon')
+    expect(icon?.getAttribute('aria-hidden')).toBe('true')
+    expect(icon?.querySelector('path')?.getAttribute('d')).toBe('M7 17 17 7')
   })
 
   it('右栏“再下载”：说明 → 下载按钮 → 发布日期、权限、更新入口 → 完整声明；中间的中缝只是装饰', () => {
@@ -241,6 +262,9 @@ describe('安装与确认生效（L0）', () => {
     expect(caption.querySelector('.l1demo__tag')?.textContent).toBe('示例')
     // 搜索框的放大镜是 Task 2 加入的 Icon search；候选框是整框，不用首页的拆段修饰类
     expect(demo.querySelectorAll('.l1demo__field > svg.icon')).toHaveLength(1)
+    // 扩展不渲染“中文输入”之类的徽记：示意只画扩展真实输出的部分
+    expect(demo.querySelector('.l1demo__ime')).toBeNull()
+    expect(demo.querySelector('.l1demo__field')?.textContent).toBe('水晶')
     expect([...demo.querySelectorAll('.l1demo__box')].map((box) => box.className)).toEqual([
       'l1demo__box',
     ])

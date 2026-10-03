@@ -65,12 +65,6 @@
   margin-inline-start: calc(-1 * var(--sp-2));
   background: var(--focus);
 }
-.l1demo__ime {
-  margin-inline-start: auto;
-  color: var(--ink-3);
-  font-size: var(--fs-micro);
-}
-
 /* L1 候选框：整框（扩展介绍页）不画投影 */
 .l1demo__box {
   margin-block-start: var(--sp-1);

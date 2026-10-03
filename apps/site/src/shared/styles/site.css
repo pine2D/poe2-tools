@@ -38,6 +38,11 @@ a {
 .mobile-break {
   display: none;
 }
+/* hero 标题的分句整体换行：宽度不够放下整句时只在“，”后断开，不把分句首字孤零零留在上一行；
+   分句本身比容器宽时仍会在内部折行，不会撑出横向滚动 */
+.hero-clause {
+  display: inline-block;
+}
 /* 短说明文字里容易被拆开的词不换行（spec §6.7） */
 .nw {
   white-space: nowrap;
