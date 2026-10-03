@@ -60,6 +60,12 @@ it('弹窗不套 pt-frame、没有 pt-forge-btn（spec §4.2 白名单）', () =
   expect(html).not.toMatch(/pt-frame|pt-forge-btn/)
 })
 
+it('弹窗定宽 340px，不用视口单位限宽（工具栏弹窗的视口随内容变化，用 100vw 会停在初始的 240px）', () => {
+  const body = parseRules(css).findLast((r) => r.selectors.includes('body'))
+  expect(body?.declarations.get('width')).toBe('340px')
+  expect(css.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/\d(?:d|s|l)?v(?:w|h|i|b|min|max)\b/)
+})
+
 it('“重试读取”在 hidden 时不被 pt-btn 的 display 覆盖', () => {
   expect(css.replace(/\s+/g, '')).toContain('.retry[hidden]{display:none')
 })

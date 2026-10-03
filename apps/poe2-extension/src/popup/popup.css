@@ -11,10 +11,10 @@
 * {
   box-sizing: border-box;
 }
+/* 工具栏弹窗的窗口宽度由内容决定，初始视口很窄：不能用 vw／vh 限宽，否则弹窗会停在初始宽度（实测 240px） */
 body {
   margin: 0;
   width: 340px;
-  max-width: 100vw;
   background: var(--frame-bg);
   color: var(--ink);
   font: 14px / 1.6 var(--font-zh-cn);
