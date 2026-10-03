@@ -126,7 +126,7 @@ describe('强制色彩下图标随系统色（spec §5.15；M2 移交 F2）', ()
   // 强制色彩规则把 color 改为 inherit，跟随宿主的系统色
   const PAGES = {
     build: ['base', ...BUILD_STYLES, 'site'],
-    home: ['base', 'site', 'home'],
+    home: ['base', 'site', 'l1-demo', 'home'],
     extension: ['base', 'site', 'extension'],
   } as const
   const ICON = /(^|[\s>+~])svg$|\.icon$|-icon$/

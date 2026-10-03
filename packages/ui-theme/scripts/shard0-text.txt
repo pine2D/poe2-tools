@@ -40,3 +40,11 @@ PoE2 中文助手
 # 原扩展设置弹窗文案（扩展 0.3.2 起弹窗改用 popup-text.txt 的独立子集）；保留下面两行，删掉会改变 shard0
 PoE2 中文助手
 使用前
+
+# 首页场景标题（二期，.pt-subhead--lg）
+我拿到了一份英文 .build
+我在 Craft of Exile 做装
+
+# 首页对照带示例的阶段名（二期，.pt-stagehead）
+31–60 级
+终局

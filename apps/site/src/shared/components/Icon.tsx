@@ -2,8 +2,8 @@
 // 全部用 <path> 表达（圆和矩形也转成 path），渲染逻辑因此只有一个分支。
 // 颜色一律 currentColor，由使用处的 color 决定；尺寸由 size 决定，不写死。
 
-// 零引用纪律（第一期 M-5）：这 12 个名字全部有调用方，多一个都不留（页头 logo 改用 Motif 后删去 brand；
-// info 由扩展介绍页的说明行使用；arrow-down 一直没有调用方，M3 删去）。Icon.test.tsx 只按 <Icon name> 里的字面量核对，
+// 零引用纪律（第一期 M-5）：这 13 个名字全部有调用方，多一个都不留（页头 logo 改用 Motif 后删去 brand；
+// info 由扩展介绍页的说明行使用；arrow-down 一直没有调用方，M3 删去；search 由首页对照带的搜索框示意使用）。Icon.test.tsx 只按 <Icon name> 里的字面量核对，
 // 所以调用一律写成 <Icon name="…"> 或 name={…} 里的字符串字面量，不经变量转手。
 export type IconName =
   | 'upload'
@@ -18,6 +18,7 @@ export type IconName =
   | 'lock'
   | 'chevron-down'
   | 'filter'
+  | 'search'
 
 const PATHS: Record<IconName, readonly string[]> = {
   // 上传：箭头朝上进托盘（拖放区静止态）
@@ -41,6 +42,8 @@ const PATHS: Record<IconName, readonly string[]> = {
   'chevron-down': ['m6 9 6 6 6-6'],
   // 漏斗简化成三条递减的横线：24px 下画真漏斗会糊成一团
   filter: ['M3 6h18', 'M7 12h10', 'M10 18h4'],
+  // 放大镜：圆用 path 画（M19 11 起笔的两段半圆弧），柄朝右下
+  search: ['M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0', 'm21 21-4.3-4.3'],
 }
 
 export const ICON_NAMES: readonly IconName[] = Object.keys(PATHS) as IconName[]

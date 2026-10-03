@@ -1,0 +1,159 @@
+/* 搜索候选示意（二期）：首页对照带右段与扩展介绍页“确认生效”共用，类前缀 l1demo__。
+   自绘示意，不是 CoE 截图：搜索框是 CoE 的基底搜索（自绘），候选框的结构同 packages/ui-theme/src/l1.css 的
+   search 宿主（说明行 → 候选 → 署名）。面板底与边框用站点令牌近似 --l1-panel、--l1-edge（--frame-bg、--metal-line），
+   本文件不写任何色值。“选中”只是外观（.l1demo__opt--selected），示意里没有 ARIA 状态，也没有可聚焦元素。
+   字号与间距只取 scale.css 令牌；px 只用于边框、圆角、控件高度、插入光标、投影与母题尺寸。没有动效，不需要 reduced-motion 分支。
+   引入顺序：site.css 之后、页面样式（home.css、extension.css）之前；放大行和排版由页面样式决定。 */
+
+/* “示例”图注、小标签与尾注：两页所有示例 figure 共用 */
+.l1demo__cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+.l1demo__tag {
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.l1demo__foot {
+  margin: 0;
+  padding-block-start: var(--sp-3);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+
+/* CoE 的基底搜索框（自绘）；放大镜是 <Icon name="search"> */
+.l1demo__label {
+  margin: 0 0 var(--sp-1);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+.l1demo__field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 40px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--control-edge);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-data);
+}
+.l1demo__field .icon {
+  flex: none;
+  color: var(--ink-3);
+}
+/* 小号搜索框：放在 flex 行里（首页“选中后”一行） */
+.l1demo__field--sm {
+  flex: 1 1 160px;
+  height: 32px;
+  padding-inline: var(--sp-2);
+  font-size: var(--fs-small);
+}
+.l1demo__caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 18px;
+  margin-inline-start: calc(-1 * var(--sp-2));
+  background: var(--focus);
+}
+.l1demo__ime {
+  margin-inline-start: auto;
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+
+/* L1 候选框：整框（扩展介绍页）不画投影 */
+.l1demo__box {
+  margin-block-start: var(--sp-1);
+  padding: var(--sp-2);
+  border: 1px solid var(--metal-line);
+  border-radius: 6px;
+  background: var(--frame-bg);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+/* 拆段（首页对照带）：框顶、框腰、框底三段首尾相接，跨 subgrid 的三行读作一个框；只在框底画投影 */
+.l1demo__box--top,
+.l1demo__box--mid,
+.l1demo__box--bottom {
+  padding-inline: var(--sp-3);
+}
+.l1demo__box--top {
+  padding-block-end: 0;
+  border-block-end: 0;
+  border-radius: 6px 6px 0 0;
+}
+.l1demo__box--mid {
+  margin-block-start: 0;
+  padding-block: 0;
+  border-block: 0;
+  border-radius: 0;
+}
+.l1demo__box--bottom {
+  margin-block: 0 var(--sp-1);
+  padding-block-start: 0;
+  border-block-start: 0;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--well) 70%, transparent);
+}
+.l1demo__help {
+  margin: 0 0 var(--sp-1);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.l1demo__opt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+  min-height: 32px;
+  margin: 0 0 var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink);
+}
+.l1demo__opt [lang="en"] {
+  color: var(--ink-2);
+}
+/* 选中项（示意）：外观同扩展里键盘选中的候选；字号放大由页面样式决定 */
+.l1demo__opt--selected {
+  border-color: var(--metal-line);
+  background: var(--bg-2);
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.l1demo__opt--selected [lang="en"] {
+  color: var(--ink);
+}
+/* 署名：上边距与上内边距各 --sp-1，下方留白由候选框的底内边距（--sp-2）给出 */
+.l1demo__by {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-1);
+  padding-block: var(--sp-1) 0;
+  border-block-start: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+.l1demo__by > .pt-motif--gem {
+  --ptm-w: 12px;
+  --ptm-h: 12px;
+  --ptm-u: calc(12px / 25);
+}
+
+/* 强制色彩：svg 默认保留父元素颜色，写了颜色的搜索框图标改为 inherit，跟随系统色 */
+@media (forced-colors: active) {
+  .l1demo__field .icon {
+    color: inherit;
+  }
+}

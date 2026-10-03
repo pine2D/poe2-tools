@@ -46,6 +46,14 @@ describe('Icon', () => {
       unmount()
     }
   })
+
+  it('search（放大镜）是圆与右下的柄两条 path：首页对照带与扩展介绍页的搜索框示意共用', () => {
+    const { container } = render(<Icon name="search" />)
+    expect([...container.querySelectorAll('path')].map((path) => path.getAttribute('d'))).toEqual([
+      'M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
+      'm21 21-4.3-4.3',
+    ])
+  })
 })
 
 // ---- M3：零引用纪律（Icon.tsx 头注释；M1 终审 T14-1，契约 C13 v4）----
