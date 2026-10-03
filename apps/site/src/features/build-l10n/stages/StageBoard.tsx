@@ -74,6 +74,11 @@ function slotPath(rawIndex: number): string {
   return `inventory_slots[${rawIndex}].additional_text`
 }
 
+// 天赋点数相对前一阶段的增减：非负写“+d”，负数写数学负号“−”加绝对值
+function passiveDelta(delta: number): string {
+  return delta >= 0 ? `（+${delta}）` : `（−${-delta}）`
+}
+
 function MarkTag({ change }: { change: Change | null }) {
   const mark = markOf(change)
   if (mark === null) return null
@@ -282,7 +287,7 @@ export function StageBoard({
   return (
     <PtFrame
       ref={frame}
-      className="app__build-frame"
+      className="app__build-frame app__build-frame--board"
       aria-labelledby="board-title"
       titlebar={{ title: series.title, id: 'board-title', fullText: series.title, userText: true }}
     >
@@ -345,7 +350,7 @@ export function StageBoard({
         <div className="stageboard__ghost-bar">
           <span className="stageboard__ghost-corner" />
           <div className="stageboard__ghost-clip">
-            <div className="stageboard__ghost-track" lang={locale}>
+            <div className="stageboard__ghost-track pt-stagehead" lang={locale} data-user-text="">
               {stages.map((stage, i) => (
                 <span key={stage.file.id} style={{ inlineSize: widths[i] }}>
                   {stage.label}
@@ -375,7 +380,7 @@ export function StageBoard({
                 <td className="stageboard__corner" rowSpan={2} />
                 {stages.map((stage) => (
                   <th key={stage.file.id} scope="col" className="stageboard__stage">
-                    <span className="stageboard__stage-name" data-user-text="">
+                    <span className="stageboard__stage-name pt-stagehead" data-user-text="">
                       {stage.label}
                     </span>
                   </th>
@@ -394,7 +399,8 @@ export function StageBoard({
                     <td key={stage.file.id} className="stageboard__stage-info">
                       <span className="stageboard__stage-meta">
                         <span>
-                          天赋 {count} 点{previous === undefined ? '' : `（+${count - previous}）`}
+                          天赋 {count} 点
+                          {previous === undefined ? '' : passiveDelta(count - previous)}
                         </span>
                         {missCount > 0 && (
                           <span className="stageboard__miss">待核对 {missCount}</span>
@@ -462,7 +468,9 @@ export function StageBoard({
                         count = (
                           <span className="stageboard__delta">
                             {prevMods === mods
-                              ? `词缀 ${mods}（已改）`
+                              ? mods === 0
+                                ? '已改'
+                                : `词缀 ${mods}（已改）`
                               : `词缀 ${prevMods}→${mods}`}
                           </span>
                         )
@@ -482,7 +490,7 @@ export function StageBoard({
                               missed && 'stageboard__cell--miss',
                             )}
                             aria-expanded={focus?.id === id}
-                            aria-controls="stage-detail"
+                            aria-controls={focus?.id === id ? 'stage-detail' : undefined}
                             aria-label={`${stage.label} · ${row.label}：${name.zh}${suffixOf(cell.change, '（词缀有变化）')}${missed ? '，有待核对' : ''}`}
                             onClick={(event) =>
                               toggle(event, {
@@ -583,7 +591,7 @@ export function StageBoard({
                                 missed && 'stageboard__cell--miss',
                               )}
                               aria-expanded={focus?.id === id}
-                              aria-controls="stage-detail"
+                              aria-controls={focus?.id === id ? 'stage-detail' : undefined}
                               aria-label={`${stage.label} · ${rowName}：${summary}${suffixOf(cell.change, '（辅助有变化）')}${missed ? '，有待核对' : ''}`}
                               onClick={(event) =>
                                 toggle(event, {

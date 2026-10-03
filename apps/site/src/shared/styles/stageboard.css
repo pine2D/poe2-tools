@@ -3,7 +3,7 @@
    悬停或聚焦时整行跨阶段提亮，行底铜线在换装格下转亮，与格子左缘刻痕连成一条线 */
 
 /* 工作台的金属落点让给阶段带：标题栏去掉金属渐变，保留衬线金字（spec §3.3；用户 2026-10-03 已确认） */
-.app__build-frame > .pt-titlebar {
+.app__build-frame--board > .pt-titlebar {
   background: var(--bar);
   border-bottom-color: var(--line-2);
   box-shadow: none;
@@ -95,15 +95,10 @@
   overflow: hidden;
   padding: var(--sp-2) var(--sp-2) var(--sp-2) calc(var(--sp-2) + var(--sp-3) + 1px);
   color: var(--title-gold);
-  font-family: var(--pt-serif);
   font-size: var(--fs-lead);
-  font-weight: 700;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.stageboard__ghost-track:lang(zh-TW) > span {
-  font-family: var(--pt-serif-tc);
 }
 /* 只在表格放不下时出现（组件按 scrollWidth > clientWidth 切换 hidden） */
 .stageboard__scrollhint {
@@ -231,15 +226,10 @@
 .stageboard__stage-name {
   display: block;
   color: var(--title-gold);
-  font-family: var(--pt-serif);
   font-size: var(--fs-title);
-  font-weight: 700;
   line-height: 1.3;
   letter-spacing: 0.04em;
   text-shadow: 0 1px 1px #000;
-}
-.stageboard__table:lang(zh-TW) .stageboard__stage-name {
-  font-family: var(--pt-serif-tc);
 }
 .stageboard__stage-meta {
   display: flex;

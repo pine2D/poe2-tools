@@ -14,4 +14,7 @@ export const SERIF_SELECTORS: readonly string[] = [
   '.pt-nameplate__name:lang(zh-TW)',
   // M3：扩展介绍页能力小标题（spec §6.3）
   '.pt-subhead',
+  // 阶段看板的阶段名（2026-10-03 方案 §3.3；繁体切 TC 栈）
+  '.pt-stagehead',
+  '.pt-stagehead:lang(zh-TW)',
 ]

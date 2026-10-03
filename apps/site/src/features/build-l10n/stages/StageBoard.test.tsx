@@ -140,6 +140,39 @@ describe('StageBoard', () => {
     expect(handlers.onSeries).toHaveBeenCalledWith('link:https://example.invalid/o')
   })
 
+  it('改了词缀的装备格写出词缀数变化；改了辅助的技能格 aria 带“辅助有变化”', () => {
+    show()
+    expect(cell(/^31–60 级 · 主手/).querySelector('.stageboard__delta')?.textContent).toBe(
+      '词缀 1→2',
+    )
+    cleanup()
+    // 终局去掉烈焰冲击的辅助：同一宝石辅助不同记 modded
+    const endgame = JSON.parse(EXAMPLE_SERIES[2]?.text ?? '{}') as {
+      skills: { support_skills?: string[] }[]
+    }
+    for (const skill of endgame.skills) skill.support_skills = []
+    const result = translateSource(
+      { id: 'm2', name: 'example-3.build', text: JSON.stringify(endgame) },
+      dict,
+      { bilingual: false, annotateUniques: true },
+    )
+    if (!result.ok) throw new Error(result.error)
+    fieldsById.set('m2', buildFieldRows(result.file, false))
+    show(groupSeries([files[0], files[1], result.file] as TranslatedFile[]))
+    const skill = cell(/^终局 · 烈焰冲击：/)
+    expect(skill.getAttribute('aria-label')).toMatch(/（辅助有变化）$/)
+    expect(skill.closest('td')?.dataset.change).toBe('modded')
+  })
+
+  it('aria-controls 只在展开的格子上出现', () => {
+    show()
+    const button = cell(/^31–60 级 · 主手/)
+    expect(button.hasAttribute('aria-controls')).toBe(false)
+    fireEvent.click(button)
+    expect(button.getAttribute('aria-controls')).toBe('stage-detail')
+    expect(cell(/^终局 · 主手/).hasAttribute('aria-controls')).toBe(false)
+  })
+
   it('单阶段时下载按钮写文件名', () => {
     const [series] = groupSeries([files[0] as TranslatedFile])
     if (series === undefined) throw new Error('no series')

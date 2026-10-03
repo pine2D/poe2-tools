@@ -1,0 +1,8 @@
+/* 阶段看板的阶段名（2026-10-03 方案 §3.3、spec §4.4）：衬线 700，繁体切 TC 栈；字号与颜色由页面 CSS 决定 */
+.pt-stagehead {
+  font-family: var(--pt-serif);
+  font-weight: 700;
+}
+.pt-stagehead:lang(zh-TW) {
+  font-family: var(--pt-serif-tc);
+}
