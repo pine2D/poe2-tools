@@ -81,10 +81,10 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
       expect(px(left)).toBeGreaterThanOrEqual(least)
     }
   })
-  it('侧栏内边距 22px 12px 22px 22px，四边都不小于角饰外伸 12px', () => {
+  // 2026-10-03 起侧栏是 L0 面板、没有角饰，外距改用间距令牌（方案 §3.3）
+  it('侧栏内边距取间距令牌 --sp-5 / --sp-3 / --sp-5 / --sp-5', () => {
     const sides = box(finalValue(rules, '.app__side', 'padding'))
-    expect(sides).toEqual(['22px', '12px', '22px', '22px'])
-    for (const side of sides) expect(px(side)).toBeGreaterThanOrEqual(12)
+    expect(sides).toEqual(['var(--sp-5)', 'var(--sp-3)', 'var(--sp-5)', 'var(--sp-5)'])
   })
   it('词典失败且没有文件：ErrorCard 与下方“导入 .build”框同宽 820px 居中，左缘对齐', () => {
     expect(finalValue(rules, '.app__import', 'max-width')).toBe('820px')

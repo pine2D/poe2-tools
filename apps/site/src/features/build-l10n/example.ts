@@ -1,14 +1,3 @@
-// 自造最小示例；只包含已支持的官方 Build Planner 字段，不代表配装建议。
-export const EXAMPLE_BUILD = JSON.stringify(
-  {
-    name: '示例构筑（自造）',
-    author: 'PoE2 Tools',
-    inventory_slots: [{ inventory_id: 'Helm1', additional_text: '1. +175 to maximum Life' }],
-  },
-  null,
-  2,
-)
-
 // 自造三阶段示例：演示阶段并排对照；只包含已支持的官方 Build Planner 字段，不代表配装建议。
 // 三份文件 link 相同，会归为同一构筑；名称都取自正式词典（example.test.ts 校验）。
 const LINK = 'https://example.invalid/poe2-tools/example'

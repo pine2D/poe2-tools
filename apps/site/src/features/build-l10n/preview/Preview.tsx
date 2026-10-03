@@ -26,6 +26,8 @@ export interface PreviewProps {
   locale: Locale
   bilingual: boolean
   onDownload(): void
+  /** 从阶段看板进入时提供：回到看板 */
+  onBack?: (() => void) | undefined
 }
 
 const SECTIONS: readonly PreviewSection[] = ['gear', 'skills', 'passives']
@@ -47,7 +49,7 @@ function openByDefault(entry: FieldWithRows): boolean {
   return entry.rows.some((row) => isMissedRow(row, entry.entry.baseName))
 }
 
-export function Preview({ file, fields, locale, bilingual, onDownload }: PreviewProps) {
+export function Preview({ file, fields, locale, bilingual, onDownload, onBack }: PreviewProps) {
   const byPath = useMemo(() => new Map(fields.map((item) => [item.entry.path, item])), [fields])
   const misses = useMemo(() => collectMisses(fields, file.preview), [fields, file.preview])
   const { preview, report, input } = file
@@ -148,6 +150,16 @@ export function Preview({ file, fields, locale, bilingual, onDownload }: Preview
     >
       <div className="whead">
         <div className="whead-l">
+          {onBack !== undefined && (
+            <button
+              type="button"
+              className="pt-btn pt-btn--quiet pt-btn--xs whead-back"
+              onClick={onBack}
+            >
+              <Icon name="chevron-down" size={14} className="whead-back__icon" />
+              返回阶段对照
+            </button>
+          )}
           <span className="whead-file">{file.name}</span>
           {ascendancy !== null && (
             <span className="whead-class" lang={locale}>

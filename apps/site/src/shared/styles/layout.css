@@ -25,10 +25,11 @@
 .app__sidetoggle {
   display: none;
 }
-/* 框外侧留白 ≥ 角饰外伸 12px（spec §4.5）：侧栏 22/12/22/22，主区 22/24/44/12（spec §6.4.2，mockup :425、:430） */
+/* 侧栏是 L0 面板、没有角饰，外距取间距令牌；主区框外侧留白 ≥ 角饰外伸 12px（spec §4.5），
+   主区 22/24/44/12（spec §6.4.2，mockup :430） */
 .app__side {
   min-width: 0;
-  padding: 22px 12px 22px 22px;
+  padding: var(--sp-5) var(--sp-3) var(--sp-5) var(--sp-5);
 }
 /* 侧栏脚注在框外，只写未命中说明（B14 删去词典版本） */
 .app__side-note {

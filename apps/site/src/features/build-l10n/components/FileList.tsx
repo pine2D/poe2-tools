@@ -1,4 +1,5 @@
 // 侧栏文件列表（spec §5.12 文件项）：构筑名为主、文件名为辅；当前项由选择按钮上的 aria-current 表达（R6）。
+// 看板同时展示多个阶段时（stages）降为紧凑行，没有单选语义，不写 aria-current（2026-10-03 修订 1）。
 // 状态：有待核对项时“⚠ 待核对 n”（n 与信息行同一口径，含名称类，B1），否则“✓ 词缀 x/y”；
 // “待词典就绪”“解析失败”沿用改版前。
 import { Icon } from '../../../shared/components/Icon'
@@ -10,6 +11,8 @@ export interface FileListProps {
   /** 已解析文件的待核对条数（collectMisses 的条数，含基底名、传奇名未收录），键为文件 id */
   misses: ReadonlyMap<string, number>
   selectedId: string | null
+  /** 看板正展示多个阶段：紧凑行、不标当前项 */
+  stages?: boolean | undefined
   onSelect(id: string): void
   onRemove(id: string): void
 }
@@ -53,12 +56,13 @@ export function FileList({
   results,
   misses,
   selectedId,
+  stages = false,
   onSelect,
   onRemove,
 }: FileListProps) {
   if (sources.length === 0) return null
   return (
-    <ul className="app__files" aria-label="已导入文件">
+    <ul className={stages ? 'app__files app__files--stages' : 'app__files'} aria-label="已导入文件">
       {sources.map((source, index) => {
         const result = results.find((item) => item.id === source.id)
         const duplicate = sources.filter((item) => item.name === source.name).length > 1
@@ -71,7 +75,7 @@ export function FileList({
               className="pt-file__pick"
               title={`${title} · ${label}`}
               aria-label={label}
-              aria-current={source.id === selectedId ? 'true' : undefined}
+              aria-current={!stages && source.id === selectedId ? 'true' : undefined}
               onClick={() => onSelect(source.id)}
             >
               <span className="pt-file__name">{title}</span>

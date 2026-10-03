@@ -11,18 +11,19 @@ import { FileList } from './components/FileList'
 import { OptionsBar } from './components/OptionsBar'
 import { Toast } from './components/Toast'
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
-import { EXAMPLE_BUILD } from './example'
+import { EXAMPLE_SERIES } from './example'
 import { pastedSource, readFiles } from './files/readSources'
 import { buildFieldRows } from './preview/fields'
 import { collectMisses } from './preview/locate'
 import { Preview } from './preview/Preview'
+import { StageBoard } from './stages/StageBoard'
+import { groupSeries, type Series } from './stages/stages'
 import {
   type SourceFile,
   type TranslateOptions,
   type TranslateResult,
   translateSource,
 } from './translate/runTranslation'
-import { NARROW_QUERY, useMediaQuery } from './useMediaQuery'
 
 export type DictState =
   | { status: 'loading' }
@@ -142,9 +143,10 @@ export function App({ fetchImpl }: AppProps) {
   const closeToast = useCallback(() => {
     setToast(null)
   }, [])
-  // ≤1099px 侧栏折叠为抽屉，不渲染侧栏 pt-frame（spec §6.7）；抽屉按需展开，切换文件后归还焦点
-  const narrow = useMediaQuery(NARROW_QUERY)
+  // ≤1099px 侧栏折叠为抽屉（spec §6.7）；抽屉按需展开，切换文件后归还焦点
   const [sideOpen, setSideOpen] = useState(false)
+  // 导入后默认看阶段看板；“逐项核对”进入单阶段 Preview
+  const [mode, setMode] = useState<'board' | 'detail'>('board')
   const sideToggle = useRef<HTMLButtonElement>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 不出现在 effect 体里是故意的——它就是「重跑一次」的开关，删掉重试按钮会失效
@@ -229,7 +231,19 @@ export function App({ fetchImpl }: AppProps) {
     [results, fieldsById],
   )
   const selected = results.find((result) => result.id === selectedId) ?? null
-  const translated = results.flatMap((result) => (result.ok ? [result.file] : []))
+  const translated = useMemo(
+    () => results.flatMap((result) => (result.ok ? [result.file] : [])),
+    [results],
+  )
+  const seriesList = useMemo(() => groupSeries(translated), [translated])
+  const currentSeries =
+    seriesList.find((item) => item.stages.some((stage) => stage.file.id === selectedId)) ?? null
+  // 看板同时展示多个阶段：侧栏文件只是阶段来源清单，降为紧凑行、不标当前项（修订 1：侧栏让位）
+  const boardStages =
+    selected?.ok === true && mode === 'board' && currentSeries !== null
+      ? currentSeries.stages.length
+      : 0
+  const stagesList = boardStages > 1
 
   const addSources = (added: SourceFile[]) => {
     if (added.length === 0) return
@@ -246,6 +260,7 @@ export function App({ fetchImpl }: AppProps) {
   }
   const selectFile = (id: string) => {
     setSelectedId(id)
+    setMode('board')
     // 抽屉开着才收起并交还焦点：≤1099px 收起后 <aside> 会 display:none，刚被点击的文件按钮随之消失，
     // 焦点会被重置到 <body>——键盘与读屏用户正好在「选文件 → 看概览」的中间丢掉光标。
     if (sideOpen) {
@@ -267,7 +282,12 @@ export function App({ fetchImpl }: AppProps) {
       } else if (sideOpen) {
         sideToggle.current?.focus()
       } else {
-        document.querySelector<HTMLButtonElement>('.pt-file__pick[aria-current="true"]')?.focus()
+        // 紧凑行（看板多阶段）没有 aria-current，退到移除位置上的相邻文件
+        const picks = document.querySelectorAll<HTMLButtonElement>('.pt-file__pick')
+        const current = document.querySelector<HTMLButtonElement>(
+          '.pt-file__pick[aria-current="true"]',
+        )
+        ;(current ?? picks[Math.min(index, picks.length - 1)])?.focus()
       }
     })
   }
@@ -292,6 +312,18 @@ export function App({ fetchImpl }: AppProps) {
         `已开始下载 ${name}，共 ${translated.length} 份${sources.length > translated.length ? `；另有 ${sources.length - translated.length} 份失败未导出` : ''}`,
       )
     }
+  }
+  // 看板的主按钮：只打包当前构筑的各阶段；单阶段时等同单文件下载
+  const downloadSeries = (series: Series) => {
+    const files = series.stages.map((stage) => stage.file)
+    const first = files[0]
+    if (files.length === 1 && first !== undefined) {
+      downloadOne(first.id)
+      return
+    }
+    const name = zipName(locale)
+    saveBlob(zipBlob(files), name)
+    notifyDownload(`已开始下载 ${name}，共 ${files.length} 个阶段`)
   }
   // 批量操作只导出成功结果，界面明确给出实际份数。
   const downloadTitle =
@@ -340,7 +372,11 @@ export function App({ fetchImpl }: AppProps) {
           onFiles={onFiles}
           onPaste={onPaste}
           onExample={() =>
-            onFiles([new File([EXAMPLE_BUILD], 'example.build', { type: 'application/json' })])
+            onFiles(
+              EXAMPLE_SERIES.map(
+                (item) => new File([item.text], item.name, { type: 'application/json' }),
+              ),
+            )
           }
         />
       )
@@ -359,6 +395,27 @@ export function App({ fetchImpl }: AppProps) {
       )
     }
     if (selected?.ok) {
+      if (mode === 'board' && currentSeries !== null) {
+        return (
+          <StageBoard
+            key={currentSeries.key}
+            series={currentSeries}
+            allSeries={seriesList}
+            fieldsById={fieldsById}
+            locale={locale}
+            bilingual={options.bilingual}
+            onSeries={(key) => {
+              const first = seriesList.find((item) => item.key === key)?.stages[0]
+              if (first !== undefined) setSelectedId(first.file.id)
+            }}
+            onDownload={() => downloadSeries(currentSeries)}
+            onReview={(id) => {
+              setSelectedId(id)
+              setMode('detail')
+            }}
+          />
+        )
+      }
       return (
         <Preview
           key={selected.id}
@@ -367,6 +424,7 @@ export function App({ fetchImpl }: AppProps) {
           locale={locale}
           bilingual={options.bilingual}
           onDownload={() => downloadOne(selected.id)}
+          onBack={() => setMode('board')}
         />
       )
     }
@@ -393,6 +451,7 @@ export function App({ fetchImpl }: AppProps) {
         results={results}
         misses={missCounts}
         selectedId={selectedId}
+        stages={stagesList}
         onSelect={selectFile}
         onRemove={remove}
       />
@@ -447,21 +506,18 @@ export function App({ fetchImpl }: AppProps) {
               onClick={() => setSideOpen((open) => !open)}
             >
               <Icon name="chevron-down" size={14} className="app__sidechev" />
-              文件 · {selected?.name ?? sources[0]?.name ?? '未选择'}
-              <span className="app__sidecount">{sources.length}</span>
+              {stagesList ? (
+                `文件 · ${sources.length} 份`
+              ) : (
+                <>
+                  文件 · {selected?.name ?? sources[0]?.name ?? '未选择'}
+                  <span className="app__sidecount">{sources.length}</span>
+                </>
+              )}
             </button>
             <aside id="app-side" className={sideOpen ? 'app__side app__side--open' : 'app__side'}>
-              {narrow ? (
-                <div className="app__side-inner">{side}</div>
-              ) : (
-                <PtFrame
-                  variant="side"
-                  aria-labelledby="side-title"
-                  titlebar={{ title: '文件', id: 'side-title' }}
-                >
-                  {side}
-                </PtFrame>
-              )}
+              {/* 侧栏是 L0 面板：每个路由状态只留主区一处金属重点（2026-10-03 方案 §3.3） */}
+              <div className="app__side-inner">{side}</div>
               <p className="app__side-note">未命中的行保留原文，不做猜测替换</p>
             </aside>
           </>

@@ -157,3 +157,11 @@
   color: var(--ink-2);
   font-size: 14px;
 }
+/* 逐项核对 → 返回阶段看板；图标借 chevron-down 旋转成向左 */
+.whead-back {
+  align-self: flex-start;
+  margin-block-end: var(--sp-2);
+}
+.whead-back__icon {
+  transform: rotate(90deg);
+}
