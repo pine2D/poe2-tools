@@ -520,6 +520,17 @@ describe('阶段看板（第一期）', () => {
     expect(screen.getByRole('region', { name: '阶段对照表' })).toBeDefined()
   })
 
+  // 看板与逐项核对互换时整块卸载：不接住焦点就掉回 <body>，键盘与读屏用户在新主动线中途丢位置
+  it('逐项核对与返回阶段对照都交接焦点：进入落在构筑标题，返回落回原来的逐项核对按钮', async () => {
+    await renderReady()
+    fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
+    await screen.findByRole('heading', { name: '示例构筑（自造）' })
+    fireEvent.click(screen.getByRole('button', { name: '逐项核对 1–30 级' }))
+    expect(document.activeElement).toBe(document.getElementById('build-title'))
+    fireEvent.click(screen.getByRole('button', { name: '返回阶段对照' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '逐项核对 1–30 级' }))
+  })
+
   it('两套攻略分成两个构筑，可切换', async () => {
     await renderReady()
     upload('a.build', JSON.stringify({ name: 'Act 1 - Alpha', link: 'https://example.invalid/a' }))

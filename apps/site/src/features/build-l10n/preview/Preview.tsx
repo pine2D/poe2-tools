@@ -146,7 +146,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload, onBack }:
       ref={frame}
       className="app__build-frame"
       aria-labelledby="build-title"
-      titlebar={{ title, id: 'build-title', fullText: title, userText: true }}
+      titlebar={{ title, id: 'build-title', fullText: title, userText: true, tabIndex: -1 }}
     >
       <div className="whead">
         <div className="whead-l">

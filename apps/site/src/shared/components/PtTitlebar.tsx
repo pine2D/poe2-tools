@@ -16,6 +16,8 @@ export interface PtTitlebarProps {
   userText?: boolean
   /** 右侧 chip 文案 */
   chip?: string
+  /** -1：标题可被程序聚焦（视图切换后交接焦点），不进 Tab 序列 */
+  tabIndex?: -1
 }
 
 export function PtTitlebar({
@@ -26,12 +28,14 @@ export function PtTitlebar({
   fullText,
   userText = false,
   chip,
+  tabIndex,
 }: PtTitlebarProps): ReactElement {
   return (
     <header className="pt-titlebar">
       <Tag
         className={cx('pt-titlebar__title', large && 'pt-titlebar__title--lg')}
         id={id}
+        tabIndex={tabIndex}
         title={fullText}
         data-user-text={userText ? '' : undefined}
       >

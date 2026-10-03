@@ -148,6 +148,9 @@ export function App({ fetchImpl }: AppProps) {
   // 导入后默认看阶段看板；“逐项核对”进入单阶段 Preview
   const [mode, setMode] = useState<'board' | 'detail'>('board')
   const sideToggle = useRef<HTMLButtonElement>(null)
+  // 看板与逐项核对互换时旧视图整块卸载，焦点会掉回 <body>：切换前记下要交给谁，提交 DOM 后再聚焦。
+  // 进入逐项核对落在构筑标题；返回看板落回刚才那一列的“逐项核对”按钮。
+  const handoff = useRef<{ mode: 'board' | 'detail'; label?: string | undefined } | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 不出现在 effect 体里是故意的——它就是「重跑一次」的开关，删掉重试按钮会失效
   useEffect(() => {
@@ -183,6 +186,24 @@ export function App({ fetchImpl }: AppProps) {
       delete root.dataset.input
     }
   }, [])
+
+  useEffect(() => {
+    const target = handoff.current
+    if (target === null || target.mode !== mode) return
+    handoff.current = null
+    if (mode === 'detail') {
+      document.getElementById('build-title')?.focus()
+      return
+    }
+    if (target.label === undefined) return
+    const name = `逐项核对 ${target.label}`
+    for (const button of document.querySelectorAll<HTMLButtonElement>('button[aria-label]')) {
+      if (button.getAttribute('aria-label') === name) {
+        button.focus()
+        return
+      }
+    }
+  }, [mode])
 
   // 兜底：拖到 DropZone 区域外松手时浏览器会打开/导航到该文件，丢失当前页面状态；
   // DropZone 自身的 onDrop 已 preventDefault，这里在冒泡到 window 时再挡一次
@@ -410,6 +431,7 @@ export function App({ fetchImpl }: AppProps) {
             }}
             onDownload={() => downloadSeries(currentSeries)}
             onReview={(id) => {
+              handoff.current = { mode: 'detail' }
               setSelectedId(id)
               setMode('detail')
             }}
@@ -424,7 +446,13 @@ export function App({ fetchImpl }: AppProps) {
           locale={locale}
           bilingual={options.bilingual}
           onDownload={() => downloadOne(selected.id)}
-          onBack={() => setMode('board')}
+          onBack={() => {
+            const label = currentSeries?.stages.find(
+              (stage) => stage.file.id === selected.id,
+            )?.label
+            handoff.current = { mode: 'board', label }
+            setMode('board')
+          }}
         />
       )
     }
