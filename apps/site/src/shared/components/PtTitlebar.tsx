@@ -8,7 +8,7 @@ export interface PtTitlebarProps {
   /** 标题元素，沿用各处现有标题级别；默认 'h2'。构筑空态“导入 .build”用 'p'（M0 B7） */
   as?: 'h1' | 'h2' | 'h3' | 'p'
   id?: string
-  /** 21px，只用于首页入口卡 */
+  /** 21px（原用于一期首页入口卡；二期起页面没有调用方，保留组件能力） */
   large?: boolean
   /** 省略号截断时的全文，写入标题元素的 title 属性；来自用户文件的标题必须给 */
   fullText?: string

@@ -18,7 +18,7 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.7.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.8.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
@@ -36,9 +36,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   审计与覆盖率回归门禁。
 - `packages/ui-theme/`：设计语言共享包 `@poe2-tools/ui-theme`（私有，不单独计版本）。`src/tokens.css` 是唯一的颜色、字体与动效令牌块（只有深色），`src/scale.css` 是只由网站入口引入的字号与间距阶梯；
   `src/motif.ts`、`src/noise.ts` 是母题与颗粒的唯一源，`scripts/build-motif-css.mjs` 生成 `src/generated/`；`src/components/*.css`
-  是 `pt-*` 组件样式（`switch.css`、`provenance.css` 只用于扩展弹窗；`stagehead.css` 是阶段看板的阶段名衬线，只由构筑页入口引入）；`src/l1.css` 是 CoE 注入 UI 的 L1 样式，扩展内容脚本以 adoptedStyleSheets 挂进各 Shadow DOM；`fonts/popup.css` 是扩展弹窗的字体声明，只指向弹窗独立子集 `serif-sc-popup.woff2`（收字见 `scripts/popup-text.txt`，不进 `fonts.css`，网站不下载）；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
+  是 `pt-*` 组件样式（`switch.css`、`provenance.css` 只用于扩展弹窗；`stagehead.css` 是阶段名衬线（阶段看板与首页对照带示例），由构筑页与首页入口引入）；`src/l1.css` 是 CoE 注入 UI 的 L1 样式，扩展内容脚本以 adoptedStyleSheets 挂进各 Shadow DOM；`fonts/popup.css` 是扩展弹窗的字体声明，只指向弹窗独立子集 `serif-sc-popup.woff2`（收字见 `scripts/popup-text.txt`，不进 `fonts.css`，网站不下载）；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
   `scripts/compliance.mjs` 是许可文件与素材白名单判定的唯一实现。`fonts/` 与 `src/generated/` 是生成物：入库、不手改、Biome 排除。
-- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`（构筑页导入后默认显示阶段看板 `build-l10n/stages/`，逐项核对沿用 `build-l10n/preview/`）；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；`scripts/sync-extension.mjs` 按 `apps/poe2-extension/release.json` 把扩展 zip 复制到 `public/downloads/`（不入库）；测试用 happy-dom。
+- `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`（构筑页导入后默认显示阶段看板 `build-l10n/stages/`，逐项核对沿用 `build-l10n/preview/`）；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（首页与扩展介绍页共用的 CoE 搜索候选示意样式在 `src/shared/styles/l1-demo.css`，类前缀 `l1demo__`，门禁 `src/testing/l1-demo.test.ts`；历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；`scripts/sync-extension.mjs` 按 `apps/poe2-extension/release.json` 把扩展 zip 复制到 `public/downloads/`（不入库）；测试用 happy-dom。
 - `apps/poe2-extension/`：Chrome 扩展（Manifest V3，只申请 `storage` 权限，内容脚本只匹配 `https://beta.craftofexile.com/*`）。`scripts/build.mjs` 构建 `dist/`（content.js、popup 及其弹窗字体子集 `serif-sc-popup`、词典、LICENSE、NOTICE、NotoSerifSC-OFL.txt、图标），`scripts/check.mjs` 校验 manifest、产物白名单、字体许可与素材白名单，`scripts/generate-icons.mjs` 手动重新生成图标，`scripts/package.mjs` 打包到 `artifacts/`（不入库）。版本号独立于网站，唯一来源是该目录的 `package.json`（`manifest.json` 的 `version` 须一致，构建时核对）；发布记录 `release.json` 入库。
 - `packages/l10n-core/`：扩展的术语匹配核心，纯 TypeScript、无 DOM、无 Chrome API；扩展运行时与打包校验共用。
 - `data/l10n/`：扩展专用数据——`coe-beta/ui.zh-CN.json`（manual 界面译文）、`aliases.zh-CN.json`（manual 别名）、`coe-beta/tablets.zh-CN.json`（gray 石板名）；构建扩展时与 `data/dict/zh-CN/items.json`、`stats.json` 及 `data/craft/catalog.json`（名称对照）一起裁剪进 `assets/dictionary.json`。

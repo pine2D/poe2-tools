@@ -1,6 +1,6 @@
 // pt-forge-btn（spec §5.5）：金属主按钮。每个路由状态至多一个，只能用在 spec §4.2 白名单的位置：
-// 首页“打开构筑汉化”（a，wide）、构筑空态“选择 .build 文件”（label）、“下载中文 .build”（button）、
-// 扩展页“下载扩展”（a）。
+// 构筑空态“选择 .build 文件”（label）、“下载中文 .build”（button）、扩展页“下载扩展”（a）。
+// 二期起首页不用金属主按钮（两个入口是同款 pt-btn）。
 import type {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
@@ -11,7 +11,7 @@ import type {
 import { cx, Motif } from './Motif'
 
 interface ForgeOwnProps {
-  /** 通栏：文字靠左、箭头“→”靠右（只用于首页入口卡） */
+  /** 通栏：文字靠左、箭头“→”靠右（原用于一期首页入口卡；二期起页面没有调用方，保留组件能力） */
   wide?: boolean
   className?: string
   children: ReactNode

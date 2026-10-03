@@ -152,7 +152,7 @@ components:
 - 只保留深色，没有主题切换。
 - 素材只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games（GGG）、腾讯、Craft of Exile（CoE）的任何素材或纹样。
 - 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的颜色、字体与动效令牌块，尺寸阶梯另见下一条，`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
-- 尺寸阶梯在 `packages/ui-theme/src/scale.css`（`--fs-*` 九档字号、`--sp-*` 八档间距），只由网站入口引入；页面层新写的样式不再写死字号与间距（边框宽度、圆角、列宽这类几何尺寸除外）。扩展在第三期接入时并入 `tokens.css`。
+- 尺寸阶梯在 `packages/ui-theme/src/scale.css`（`--fs-*` 九档字号、`--sp-*` 八档间距），只由网站入口引入；页面层样式（`apps/site/src/shared/styles/*.css`）的字号与间距一律取令牌，由 `apps/site/src/testing/scale-tokens.test.ts` 把关；边框、圆角、列宽、图标宽这类几何尺寸除外，门禁里逐条登记理由。三个页面入口都在 `base.css` 之前引入 `scale.css`。扩展在第三期接入时并入 `tokens.css`。
 - 历史工坊 `/craft/` 冻结在改版前的样式（`apps/site/src/features/craft/legacy-*.css`），不接入本设计语言。
 - 扩展的设置弹窗、CoE 注入界面与图标属于二期，在扩展分支另行接入：弹窗照 L3，注入界面封顶 L1。
 
@@ -169,7 +169,7 @@ components:
 
 | 路由状态 | 金属主按钮（最多 1 个） | pt-frame（角饰） |
 |---|---|---|
-| 首页 | 入口卡内“打开构筑汉化” | 1（4） |
+| 首页 | 无 | 1（4） |
 | 扩展介绍页 | “下载扩展（v<版本>，zip，<大小>）” | 1（4） |
 | 构筑·空态 | 空态框内“选择 .build 文件” | 1（4） |
 | 构筑·词典失败 | 无 | 1（4）（有无文件均如此） |
@@ -179,13 +179,13 @@ components:
 
 阶段看板与逐项核对各是一个路由状态，各自只有一扇主区框；侧栏是 L0 面板，不再有第二扇框，所以 ≤1099px 也不再减框。
 
-**注意力落点**：首页是入口区，扩展介绍页是下载区，构筑看板是主区框与阶段带（列头底线），逐项核对是主区框。看板里的标题栏只在看板上降为平涂（`.app__build-frame--board > .pt-titlebar`：`bar` 底、`line-2` 底线、仍是衬线金字），让阶段带成为落点：阶段带是 2px `metal-line` 底线加 1px `metal-edge` 顶线和暖色渐变底，阶段名用衬线。逐项核对保留金属标题栏。装备与技能在看板里是 L0 行，名称牌只在展开详情与逐项核对里出现。侧栏在看板显示多个阶段时用紧凑行（无边框与金线，单行省略名称，隐藏原名）。
+**注意力落点**：首页是对照带（唯一一扇金属框包住的中英对照示例带，中缝铜线与菱结属于框内母题，不另算落点），扩展介绍页是下载框（“先确认环境”与“再下载”两栏所在的 hero 框），构筑看板是主区框与阶段带（列头底线），逐项核对是主区框。首页的两个入口是同款 `pt-btn`，左右镜像，没有金属主按钮。看板里的标题栏只在看板上降为平涂（`.app__build-frame--board > .pt-titlebar`：`bar` 底、`line-2` 底线、仍是衬线金字），让阶段带成为落点：阶段带是 2px `metal-line` 底线加 1px `metal-edge` 顶线和暖色渐变底，阶段名用衬线。逐项核对保留金属标题栏。装备与技能在看板里是 L0 行，名称牌只在展开详情与逐项核对里出现。侧栏在看板显示多个阶段时用紧凑行（无边框与金线，单行省略名称，隐藏原名）。
 
 其余按钮一律用 pt-btn。层级例外只有四项：名称牌与译文提示框居中并使用衬线和 Cinzel；扩展弹窗页脚居中；扩展弹窗的设置开关用金属轨道；CoE 注入界面保留三处宿主全局样式。其他偏离都要先改设计规格。
 
 ## 色彩
 
-- 表面：页面底 `page`（pt-backdrop、404）；平涂底 `bg`、状态条 `bg-2`；L0 面板 `surface`；弹层与安静按钮 `raised`；选中项 `raised-2`；框内底 `frame-bg`；装备卡与示例区 `well`；入口卡、环境卡 `card`；工具栏与折叠条 `bar`。
+- 表面：页面底 `page`（pt-backdrop、404）；平涂底 `bg`、状态条 `bg-2`；L0 面板 `surface`；弹层与安静按钮 `raised`；选中项 `raised-2`；框内底 `frame-bg`；装备卡与示例区 `well`；ErrorCard 与天赋列表 `card`；工具栏与折叠条 `bar`。
 - 线条：`line`、`line-2` 只作非交互分隔；交互控件的边界一律用 `control-edge`（对全部表面 ≥3.67:1）；`metal-*` 画金属线、页签边和当前导航底线。
 - 文字与金属：`ink`、`ink-2`、`ink-3`（只用于 12px 及以上的辅助文字，11px 只用于键帽，不用在名称牌上）；旧铜 `bronze-lo`、`bronze`、`bronze-hi`，金 `gold`，标题栏金字 `title-gold`。
 - 游戏语义色独立一组，不从品牌色推导：词缀蓝 `mod`、`mod-hi`、`mod-num-zh`，属性灰 `prop`，数值白 `val`，传奇橙 `unique`、`unique-name`、`unique-name-2`、`unique-edge`，技能青 `gem`、`gem-en`。
@@ -202,20 +202,22 @@ components:
 | 首页 hero 标题 | 衬线 700 | 54px（≤620px 34px） | .02em |
 | 扩展介绍页 hero 标题 | 衬线 700 | 44px（≤620px 34px） | .02em |
 | 构筑空态 hero 标题 | 衬线 700 | 36px（≤620px 28px） | .02em |
-| pt-frame 标题栏 | 衬线 700 | 19px（首页入口卡 21px） | .1em |
+| pt-frame 标题栏 | 衬线 700 | 19px | .1em |
 | 金属主按钮 | 衬线 700 | 15.5px（扩展介绍页下载按钮 ≤620px 时分两行，第二行版本与大小 12px） | .04em（该第二行 .02em） |
 | 金属页签 | 衬线 700 | 15px（计数用无衬线 500 13px） | .06em |
-| 扩展介绍页能力小标题 | 衬线 700 | 21px | .06em |
+| 扩展介绍页分步标题（先确认环境、再下载） | 衬线 700 | 21px | .06em |
+| 首页场景标题 | 衬线 700 | 28px（≤620px 21px） | .06em |
 | 名称牌名称 | 衬线 700 | 20px（译文提示框 21px） | .03em（提示框 .04em） |
 | 阶段名（阶段看板） | 衬线 700 | 21px（≤620px 17px，取 `--fs-title`、`--fs-lead`） | .04em |
 | 物品、宝石英文名 | Cinzel 400 | 13px | .04em |
 
 - 中文衬线是 Noto Serif SC、Noto Serif TC 的 wght 700 实例，Cinzel 是 wght 400 实例，按分片自托管在 `packages/ui-theme/fonts/`，`font-display: swap`。页面用站点私有别名 “PoE2 Serif SC”“PoE2 Serif TC”“PoE2 Cinzel”，缺字时逐级回退到本机字体。
-- 首页只下载 `serif-sc-0` 一个字体文件，预算 122,880 字节，构建期有守卫。所有衬线固定文案都列在 `packages/ui-theme/scripts/shard0-text.txt`；新增衬线文案先补进这个文件，再运行 `pnpm ui-theme:fonts`。扩展设置弹窗不用 shard0，用独立子集 `serif-sc-popup`（收字见 `packages/ui-theme/scripts/popup-text.txt`），只由 `fonts/popup.css` 引用，网站文案变化不影响扩展包。
+- 首页只下载 `serif-sc-0` 一个字体文件，预算 122,880 字节，构建期有守卫。网站的衬线固定文案都列在 `packages/ui-theme/scripts/shard0-text.txt`；新增衬线文案先补进这个文件，再运行 `pnpm ui-theme:fonts`。
+- 扩展弹窗用自己的字体子集 `serif-sc-popup`：弹窗衬线文案列在 `packages/ui-theme/scripts/popup-text.txt`，字体声明在 `fonts/popup.css`。网站文案与 `shard0-text.txt` 的变化不再改变扩展 zip；改弹窗衬线文案会改变扩展 zip，要连同扩展版本一起发布。
 - 繁体衬线只用于名称牌和提示框里 `lang="zh-TW"` 的词典名称；站点固定文案一律用简体栈。
-- 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 与 L1 不用衬线；页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。
+- 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 与 L1 不用衬线；页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。只改字号的修饰类（如 `.pt-subhead--lg`）继承所属组件的衬线，不另列。
 - 正文与数据用系统无衬线（`--font-zh-cn`、`--font-zh-tw`），代码用 `--font-code`；门户页（首页、扩展介绍页）正文 15px/1.6，构筑页正文 14px/1.65，对照行 15px/1.6，数字用 `tabular-nums`。
-- 页面层字号取 `scale.css` 的 `--fs-*` 阶梯：12、13、14、15、17、21、28、36、54px，与上表各行对应（如阶段名 `--fs-title`、对照行 `--fs-data`）。
+- 页面层字号取 `scale.css` 的 `--fs-*` 阶梯：12、13、14、15、17、21、28、36、54px，与上表各行对应（如阶段名 `--fs-title`、对照行 `--fs-data`）。首页场景标题的 28px 对应 `--fs-display-s`，由组件 `.pt-subhead--lg` 写成字面值：组件文件不引用 `--fs-*`（扩展不引入 `scale.css`），与 hero 标题同例。
 - 字标是无衬线 600 的“PoE2 Tools”，“PoE2”用金色；禁止英文小型大写副标，禁止用 Cinzel 做字标。
 
 ## 母题「符文菱结」
@@ -245,7 +247,7 @@ components:
 | `pt-backdrop` | L3 | 页面根容器：`page` 底，叠顶光与暗角两层渐变和 0.05 高频细颗粒；数据区平涂 |
 | `pt-header` | L3 | 高 74px，三层金属底线；导航用衬线，当前页有 2px 亮铜内嵌底线；≤850px、≤620px 换行 |
 | `pt-frame` / `pt-titlebar` | L3 | 2px 金属渐变框加四角角饰；标题栏高 46px，居中衬线金字，只占一行，超长时省略并用 `title` 给出全文 |
-| `pt-panel` | L3 内层 / 游戏对象 | `card`（入口卡、环境卡、ErrorCard、天赋列表）、`item`（装备卡、技能卡、提示框，边色随稀有度）、`inset`（示例区） |
+| `pt-panel` | L3 内层 / 游戏对象 | `card`（ErrorCard、天赋列表）、`item`（装备卡、技能卡、提示框，边色随稀有度）、`inset`（示例区：构筑空态示例、首页对照带、扩展介绍页搜索候选示意） |
 | `pt-forge-btn` | L3 | 每个路由状态最多一个；旧铜渐变、两端琥珀宝石，悬停整体提亮，按下下移 1px |
 | `pt-btn` | L0 / L3 | 其余全部按钮：默认铜边金字，`--quiet` 中性边；另有 `--sm`、`--xs`、`--wide`、`--block` |
 | `pt-tabs` | L3 | 构筑页签：金属片，选中页签下沿接通基线，未选中留 2px 缝；ARIA tabs 键盘模型 |
@@ -253,8 +255,8 @@ components:
 | `pt-divider` | 通用 | 两侧渐隐线加中心菱结，只用在指定位置 |
 | `pt-chip` | 通用 | 不可点击的标签；标题栏里用金属配色，窄容器时移到卡体第一行 |
 | `pt-hero-title` | L3 | hero 标题的三种字号与金色渐变字 |
-| `pt-subhead` | L3 | 扩展介绍页能力小标题 |
-| `pt-stagehead` | L3 | 阶段看板的阶段名：衬线 700，`lang="zh-TW"` 切 TC 栈；字号与颜色由页面层决定，已列入 `SERIF_SELECTORS` |
+| `pt-subhead` | L3 | 衬线小标题 21px：扩展介绍页的分步标题（先确认环境、再下载）；`--lg` 修饰类 28px，用于首页两个场景标题（≤620px 回到 21px），只改字号 |
+| `pt-stagehead` | L3 | 阶段看板的阶段名与首页对照带示例的阶段名：衬线 700，`lang="zh-TW"` 切 TC 栈；字号与颜色由页面层决定，已列入 `SERIF_SELECTORS`；由构筑页与首页入口引入 |
 | `stageboard`（页面层） | L0 | 阶段并排对照表：列头一条 `metal-line` 底线（阶段带），格子是按钮，“新／换”用亮铜左边线加文字标记，“改”（同一件词缀有变化）只把词缀变化写成铜色、不加标记字，悬停或聚焦整行提亮 |
 | 对照行、表单、弹层、状态条 | L0 | 平涂、无衬线、左对齐；未命中行有四重标记（底色、左色条、“!”方框、虚线下划线） |
 
