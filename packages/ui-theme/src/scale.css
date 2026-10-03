@@ -1,0 +1,22 @@
+/* 尺寸阶梯（2026-10-03 设计系统提升方案 §3.3）：字号与间距的唯一取值源。
+   网站页面层只用这些令牌，不再写死 px；只由网站入口引入，扩展第三期接入时并入 tokens.css。 */
+:root {
+  --fs-micro: 12px;
+  --fs-small: 13px;
+  --fs-body: 14px;
+  --fs-data: 15px;
+  --fs-lead: 17px;
+  --fs-title: 21px;
+  --fs-display-s: 28px;
+  --fs-display: 36px;
+  --fs-display-l: 54px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+}
