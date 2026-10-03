@@ -151,7 +151,7 @@ components:
 
 - 只保留深色，没有主题切换。
 - 素材只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games（GGG）、腾讯、Craft of Exile（CoE）的任何素材或纹样。
-- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的 `:root` 令牌块，`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
+- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的颜色、字体与动效令牌块，尺寸阶梯另见下一条，`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
 - 尺寸阶梯在 `packages/ui-theme/src/scale.css`（`--fs-*` 九档字号、`--sp-*` 八档间距），只由网站入口引入；页面层新写的样式不再写死字号与间距（边框宽度、圆角、列宽这类几何尺寸除外）。扩展在第三期接入时并入 `tokens.css`。
 - 历史工坊 `/craft/` 冻结在改版前的样式（`apps/site/src/features/craft/legacy-*.css`），不接入本设计语言。
 - 扩展的设置弹窗、CoE 注入界面与图标属于二期，在扩展分支另行接入：弹窗照 L3，注入界面封顶 L1。

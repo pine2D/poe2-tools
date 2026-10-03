@@ -526,7 +526,8 @@
 - 可选：传奇名注入（默认开）、双语模式（默认关）。
 - 词典（词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位）随站发布，浏览器零第三方请求。
 
-[Unreleased]: https://github.com/pine2D/poe2-tools/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/pine2D/poe2-tools/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.7.0
 [0.6.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.6.0
 [0.5.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.5.0
 [0.4.0]: https://github.com/pine2D/poe2-tools/releases/tag/v0.4.0
