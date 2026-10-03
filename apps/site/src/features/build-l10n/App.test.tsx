@@ -542,6 +542,30 @@ describe('阶段看板（第一期）', () => {
     expect(screen.getByRole('heading', { name: 'Act 1 - Beta' })).toBeDefined()
   })
 
+  // 看板按构筑重挂，“切换构筑”单选组随之卸载：不接住焦点就掉回 <body>，方向键再按无效
+  it('切换构筑后焦点落在新的选中项上', async () => {
+    await renderReady()
+    upload('a.build', JSON.stringify({ name: 'Act 1 - Alpha', link: 'https://example.invalid/a' }))
+    await screen.findByRole('heading', { name: 'Act 1 - Alpha' })
+    upload('b.build', JSON.stringify({ name: 'Act 1 - Beta', link: 'https://example.invalid/b' }))
+    await screen.findByRole('button', { name: 'b.build' })
+    const before = within(screen.getByRole('radiogroup', { name: '切换构筑' })).getByLabelText(
+      'Act 1 - Alpha',
+    )
+    before.focus()
+    // 键盘方向键在浏览器里等于选中下一项并触发 change
+    fireEvent.click(
+      within(screen.getByRole('radiogroup', { name: '切换构筑' })).getByLabelText('Act 1 - Beta'),
+    )
+    expect(screen.getByRole('heading', { name: 'Act 1 - Beta' })).toBeDefined()
+    const after = within(screen.getByRole('radiogroup', { name: '切换构筑' })).getByLabelText(
+      'Act 1 - Beta',
+    )
+    expect(before.isConnected).toBe(false)
+    expect(document.activeElement).toBe(after)
+    expect((after as HTMLInputElement).checked).toBe(true)
+  })
+
   it('解析失败的阶段不进看板，侧栏照常提示', async () => {
     await renderReady()
     upload('ok.build', JSON.stringify({ name: 'Act 1 - G', link: 'https://example.invalid/g' }))
@@ -580,5 +604,40 @@ describe('阶段看板（第一期）', () => {
     expect(
       within(list).getByRole('button', { name: 'example-1.build' }).getAttribute('aria-current'),
     ).toBe('true')
+  })
+
+  // 紧凑行不是死控件：点同一构筑的另一份进入它的逐项核对，焦点交给构筑标题
+  it('看板多阶段时点侧栏紧凑行进入该阶段的逐项核对', async () => {
+    await renderReady()
+    fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
+    await screen.findByRole('heading', { name: '示例构筑（自造）' })
+    const pick = inFileList().getByRole('button', { name: 'example-3.build' })
+    expect(pick.getAttribute('title')).toMatch(/^逐项核对 /)
+    fireEvent.click(pick)
+    expect(screen.getByRole('button', { name: '返回阶段对照' })).toBeDefined()
+    expect(document.activeElement).toBe(document.getElementById('build-title'))
+    expect(
+      inFileList().getByRole('button', { name: 'example-3.build' }).getAttribute('aria-current'),
+    ).toBe('true')
+    // 返回看板落回终局一列的“逐项核对”
+    fireEvent.click(screen.getByRole('button', { name: '返回阶段对照' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '逐项核对 终局' }))
+  })
+
+  it('在逐项核对时移除全部文件，再次导入回到默认的阶段看板', async () => {
+    await renderReady()
+    fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
+    await screen.findByRole('heading', { name: '示例构筑（自造）' })
+    fireEvent.click(screen.getByRole('button', { name: '逐项核对 1–30 级' }))
+    expect(screen.queryByRole('region', { name: '阶段对照表' })).toBeNull()
+    for (const n of [1, 2, 3]) {
+      fireEvent.click(inFileList().getByRole('button', { name: `移除 example-${n}.build` }))
+    }
+    fireEvent.click(await screen.findByRole('button', { name: '试用示例构筑' }))
+    await screen.findByRole('heading', { name: '示例构筑（自造）' })
+    expect(screen.getByRole('region', { name: '阶段对照表' })).toBeDefined()
+    expect(screen.getByRole('list', { name: '已导入文件' }).className).toBe(
+      'app__files app__files--stages',
+    )
   })
 })

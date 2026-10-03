@@ -151,6 +151,8 @@ export function App({ fetchImpl }: AppProps) {
   // 看板与逐项核对互换时旧视图整块卸载，焦点会掉回 <body>：切换前记下要交给谁，提交 DOM 后再聚焦。
   // 进入逐项核对落在构筑标题；返回看板落回刚才那一列的“逐项核对”按钮。
   const handoff = useRef<{ mode: 'board' | 'detail'; label?: string | undefined } | null>(null)
+  // 看板按构筑 key 整块重挂：“切换构筑”单选组随之卸载，记下目标构筑，重挂后把焦点交给新的选中项
+  const seriesHandoff = useRef<string | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 不出现在 effect 体里是故意的——它就是「重跑一次」的开关，删掉重试按钮会失效
   useEffect(() => {
@@ -259,6 +261,12 @@ export function App({ fetchImpl }: AppProps) {
   const seriesList = useMemo(() => groupSeries(translated), [translated])
   const currentSeries =
     seriesList.find((item) => item.stages.some((stage) => stage.file.id === selectedId)) ?? null
+  const currentKey = currentSeries?.key
+  useEffect(() => {
+    if (currentKey === undefined || seriesHandoff.current !== currentKey) return
+    seriesHandoff.current = null
+    document.querySelector<HTMLInputElement>('input[name="stage-series"]:checked')?.focus()
+  }, [currentKey])
   // 看板同时展示多个阶段：侧栏文件只是阶段来源清单，降为紧凑行、不标当前项（修订 1：侧栏让位）
   const boardStages =
     selected?.ok === true && mode === 'board' && currentSeries !== null
@@ -268,6 +276,8 @@ export function App({ fetchImpl }: AppProps) {
 
   const addSources = (added: SourceFile[]) => {
     if (added.length === 0) return
+    // 从空态导入是一次新的开始：回到默认的阶段看板（此前可能停在逐项核对）
+    if (sources.length === 0) setMode('board')
     setSources((previous) => [...previous, ...added])
     setSelectedId((current) => current ?? added[0]?.id ?? null)
   }
@@ -280,6 +290,14 @@ export function App({ fetchImpl }: AppProps) {
     addSources([pastedSource(text, n)])
   }
   const selectFile = (id: string) => {
+    // 看板已并排展示本构筑的各阶段：点其中一份没有新的看板可换，直接进入它的逐项核对
+    if (stagesList && currentSeries?.stages.some((stage) => stage.file.id === id) === true) {
+      handoff.current = { mode: 'detail' }
+      setSelectedId(id)
+      setMode('detail')
+      setSideOpen(false)
+      return
+    }
     setSelectedId(id)
     setMode('board')
     // 抽屉开着才收起并交还焦点：≤1099px 收起后 <aside> 会 display:none，刚被点击的文件按钮随之消失，
@@ -293,6 +311,7 @@ export function App({ fetchImpl }: AppProps) {
     const index = sources.findIndex((source) => source.id === id)
     const remaining = sources.filter((source) => source.id !== id)
     setSources(remaining)
+    if (remaining.length === 0) setMode('board')
     if (selectedId === id) {
       setSelectedId(remaining[Math.min(index, remaining.length - 1)]?.id ?? null)
     }
@@ -427,7 +446,9 @@ export function App({ fetchImpl }: AppProps) {
             bilingual={options.bilingual}
             onSeries={(key) => {
               const first = seriesList.find((item) => item.key === key)?.stages[0]
-              if (first !== undefined) setSelectedId(first.file.id)
+              if (first === undefined) return
+              seriesHandoff.current = key
+              setSelectedId(first.file.id)
             }}
             onDownload={() => downloadSeries(currentSeries)}
             onReview={(id) => {

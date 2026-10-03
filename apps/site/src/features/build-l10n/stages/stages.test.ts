@@ -75,6 +75,28 @@ describe('groupSeries', () => {
     const other = make('other', { name: 'Act 2 - G', author: 'Y', ascendancy: 'Sorceress3' })
     expect(groupSeries([one, two, other]).map((s) => s.stages.length)).toEqual([2, 1])
   })
+  it('没有 link 时，名称到 40 字符截断上限、构筑名互为前缀也归为一组，标题取最完整的构筑名', () => {
+    const who = { author: 'X', ascendancy: 'Sorceress3' }
+    // 两份都恰好 40 字符：阶段前缀越长，构筑名被截得越多
+    const act1 = make('act1', { ...who, name: 'Act 1 & 2 (Pre-Ascend) - [9.9] Synthetic' })
+    const act2 = make('act2', { ...who, name: 'Act 2 - [9.9] Synthetic Fracturing Spark' })
+    const late = make('late', { ...who, name: 'Act 3 & Interlude - [9.9] Synthetic Frac' })
+    expect([act1, act2, late].map((file) => file.input.name?.length)).toEqual([40, 40, 40])
+    const [series, ...rest] = groupSeries([act1, act2, late])
+    expect(rest).toEqual([])
+    expect(series?.stages.map((stage) => stage.label)).toEqual([
+      'Act 1 & 2 (Pre-Ascend)',
+      'Act 2',
+      'Act 3 & Interlude',
+    ])
+    expect(series?.title).toBe('[9.9] Synthetic Fracturing Spark')
+  })
+  it('没有 link 时，未到截断上限的短名称只是前缀相同不归为一组', () => {
+    const who = { author: 'X', ascendancy: 'Sorceress3' }
+    const one = make('one', { ...who, name: 'Act 1 - Guide' })
+    const two = make('two', { ...who, name: 'Act 1 - Guide 2' })
+    expect(groupSeries([one, two]).map((s) => s.stages.length)).toEqual([1, 1])
+  })
   it('单份构筑的标题用完整名称；没有 name 时阶段名与标题回退为文件名', () => {
     const [named] = groupSeries([make('n', { name: 'Synthetic Rich - 0.5.5' })])
     expect(named?.title).toBe('Synthetic Rich - 0.5.5')

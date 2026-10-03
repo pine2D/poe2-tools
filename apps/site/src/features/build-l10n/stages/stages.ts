@@ -116,10 +116,48 @@ export function seriesKey(file: TranslatedFile): string {
   return `file:${file.id}`
 }
 
+/** 游戏内 name 约 40 字符截断（docs/build-format.md）；达到上限的名称视为可能被截断 */
+const NAME_LIMIT = 40
+
+interface Fallback {
+  owner: string
+  series: string
+  truncated: boolean
+}
+
+// 没有 link 时的分组依据：作者 + 升华 + 构筑名，并记下名称是否可能被截断
+function fallbackOf(file: TranslatedFile): Fallback | null {
+  if (text(file.input.link) !== null) return null
+  const author = text(file.input.author)
+  const name = text(file.input.name)
+  const series = name === null ? null : splitStageName(name).series
+  if (author === null || name === null || series === null) return null
+  return {
+    owner: `${author}|${text(file.input.ascendancy) ?? ''}`,
+    series,
+    truncated: [...(file.input.name as string)].length >= NAME_LIMIT,
+  }
+}
+
+// 阶段前缀越长，构筑名被截得越多：被截断的一方是另一方的前缀时也算同一套
+function sameSeries(a: Fallback, b: Fallback): boolean {
+  if (a.owner !== b.owner) return false
+  if (a.series === b.series) return true
+  return (
+    (a.truncated && b.series.startsWith(a.series)) || (b.truncated && a.series.startsWith(b.series))
+  )
+}
+
 export function groupSeries(files: readonly TranslatedFile[]): Series[] {
   const groups = new Map<string, TranslatedFile[]>()
+  const fallbacks: { key: string; fallback: Fallback }[] = []
   for (const file of files) {
-    const key = seriesKey(file)
+    const fallback = fallbackOf(file)
+    const key =
+      (fallback === null
+        ? undefined
+        : fallbacks.find((item) => sameSeries(item.fallback, fallback))?.key) ?? seriesKey(file)
+    if (fallback !== null) fallbacks.push({ key, fallback })
     const list = groups.get(key)
     if (list === undefined) groups.set(key, [file])
     else list.push(file)
@@ -133,7 +171,15 @@ export function groupSeries(files: readonly TranslatedFile[]): Series[] {
     })
     const first = ordered[0]
     const firstName = first === undefined ? null : text(first.input.name)
-    const seriesName = firstName === null ? null : splitStageName(firstName).series
+    // 各阶段名称截断程度不同，标题取最完整（最长）的构筑名；等长保持阶段顺序
+    let seriesName: string | null = null
+    for (const file of ordered) {
+      const name = text(file.input.name)
+      const series = name === null ? null : splitStageName(name).series
+      if (series !== null && (seriesName === null || series.length > seriesName.length)) {
+        seriesName = series
+      }
+    }
     const title = (stages.length > 1 ? seriesName : null) ?? firstName ?? first?.name ?? ''
     return { key, title, author: first === undefined ? null : text(first.input.author), stages }
   })

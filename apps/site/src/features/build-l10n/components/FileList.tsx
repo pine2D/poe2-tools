@@ -1,5 +1,6 @@
 // 侧栏文件列表（spec §5.12 文件项）：构筑名为主、文件名为辅；当前项由选择按钮上的 aria-current 表达（R6）。
-// 看板同时展示多个阶段时（stages）降为紧凑行，没有单选语义，不写 aria-current（2026-10-03 修订 1）。
+// 看板同时展示多个阶段时（stages）降为紧凑行，没有单选语义，不写 aria-current（2026-10-03 修订 1）；
+// 紧凑行点击进入该份的逐项核对。
 // 状态：有待核对项时“⚠ 待核对 n”（n 与信息行同一口径，含名称类，B1），否则“✓ 词缀 x/y”；
 // “待词典就绪”“解析失败”沿用改版前。
 import { Icon } from '../../../shared/components/Icon'
@@ -73,7 +74,8 @@ export function FileList({
             <button
               type="button"
               className="pt-file__pick"
-              title={`${title} · ${label}`}
+              // 紧凑行点击进入该阶段的逐项核对（App.selectFile），提示写进说明
+              title={stages ? `逐项核对 ${title} · ${label}` : `${title} · ${label}`}
               aria-label={label}
               aria-current={!stages && source.id === selectedId ? 'true' : undefined}
               onClick={() => onSelect(source.id)}
