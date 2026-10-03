@@ -127,7 +127,7 @@ describe('强制色彩下图标随系统色（spec §5.15；M2 移交 F2）', ()
   const PAGES = {
     build: ['base', ...BUILD_STYLES, 'site'],
     home: ['base', 'site', 'l1-demo', 'home'],
-    extension: ['base', 'site', 'extension'],
+    extension: ['base', 'site', 'l1-demo', 'extension'],
   } as const
   const ICON = /(^|[\s>+~])svg$|\.icon$|-icon$/
   for (const [page, names] of Object.entries(PAGES)) {

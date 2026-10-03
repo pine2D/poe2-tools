@@ -2,8 +2,8 @@
 // 全部用 <path> 表达（圆和矩形也转成 path），渲染逻辑因此只有一个分支。
 // 颜色一律 currentColor，由使用处的 color 决定；尺寸由 size 决定，不写死。
 
-// 零引用纪律（第一期 M-5）：这 13 个名字全部有调用方，多一个都不留（页头 logo 改用 Motif 后删去 brand；
-// info 由扩展介绍页的说明行使用；arrow-down 一直没有调用方，M3 删去；search 由首页对照带的搜索框示意使用）。Icon.test.tsx 只按 <Icon name> 里的字面量核对，
+// 零引用纪律（第一期 M-5）：这 12 个名字全部有调用方，多一个都不留（页头 logo 改用 Motif 后删去 brand；
+// arrow-down 一直没有调用方，M3 删去；二期扩展介绍页去掉说明行后删去 info；search 由首页对照带与扩展介绍页“确认生效”的搜索框示意使用）。Icon.test.tsx 只按 <Icon name> 里的字面量核对，
 // 所以调用一律写成 <Icon name="…"> 或 name={…} 里的字符串字面量，不经变量转手。
 export type IconName =
   | 'upload'
@@ -13,7 +13,6 @@ export type IconName =
   | 'check'
   | 'warning'
   | 'refresh'
-  | 'info'
   | 'locate'
   | 'lock'
   | 'chevron-down'
@@ -30,8 +29,6 @@ const PATHS: Record<IconName, readonly string[]> = {
   check: ['M20 6 9 17l-5-5'],
   warning: ['M12 4 2.5 20h19z', 'M12 10v4', 'M12 17h.01'],
   refresh: ['M20 12a8 8 0 1 1-2.3-5.6', 'M20 4v4h-4'],
-  // 圆用 path 画：M21 12 起笔的两段半圆弧
-  info: ['M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', 'M12 16v-5', 'M12 8h.01'],
   // 定位：向右的角标，跟在「定位」文字后面
   locate: ['m9 6 6 6-6 6'],
   lock: [

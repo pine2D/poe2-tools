@@ -10,6 +10,7 @@ const read = (rel: string): string => readFileSync(new URL(rel, repo), 'utf8')
 /** 引入 l1-demo.css 的页面入口与该页自己的样式：都要在 site.css 之后、本页样式之前引入 */
 const ENTRIES: readonly (readonly [entry: string, page: string])[] = [
   ['apps/site/src/pages/home/main.tsx', 'home.css'],
+  ['apps/site/src/pages/extension/main.tsx', 'extension.css'],
 ]
 
 describe('l1-demo.css（首页与扩展介绍页共用的搜索候选示意）', () => {

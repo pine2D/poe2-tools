@@ -1,299 +1,574 @@
-/* 扩展介绍页专属样式（spec §6.3、§6.7；精细版式以 M0 mockup extension.html 为准）。
-   令牌与 pt-* 组件来自 @poe2-tools/ui-theme；本文件只排页面布局与 L0 文字，不写衬线字体栈（spec §7.1）。 */
+/* 扩展介绍页（二期重排；样稿 2026-10-03-extension，本地留存，用户已确认）。
+   阅读顺序：确认环境 → 下载 → 四步安装 → 确认生效 → 更新、隐私、支持范围、反馈。
+   唯一的金属重点是下载区那扇 pt-frame（4 个角饰）与框内唯一的 pt-forge-btn；中缝铜线与菱结属于这扇框，不另算落点；其余各区都是 L0。
+   字号与间距（font-size、margin、padding、gap）只取 scale.css 的 --fs-*／--sp-* 令牌；px 只用于几何：
+   边框与轮廓线宽、圆角、下划线偏移、图标／母题／步号方块与插入光标的宽高、44px／46px 点击高度。
+   颜色只取 ui-theme 令牌，不写字面颜色；衬线只经 ui-theme 组件类（pt-hero-title、pt-subhead、pt-forge-btn）。
+   “确认生效”里的搜索候选示意用共用的 l1-demo.css（l1demo__ 类，首页对照带同用；main.tsx 先于本文件引入），
+   本文件只管它的外框留白和选中项放大。 */
 
-/* §6.1 内容最大宽 1280px 居中；主区外距 26/40/48（M0 E1） */
-.extension-main {
-  max-width: 1280px;
-  margin-inline: auto;
-  padding: 26px 40px 48px;
+.ext-main {
+  /* 步号方块边长；≤620px 竖排时的轨线位置与缩进都由它推出 */
+  --ext-mark: 30px;
+  --ext-rail: calc(var(--ext-mark) / 2);
+  padding-block: var(--sp-5) var(--sp-7);
 }
 
-/* §6.3 hero：页面唯一一扇无标题栏的 pt-frame--hero，分两栏；右栏环境卡定宽 540px，
-   使 chip 留在标题栏且与居中标题留出空隙（M0 E2） */
-.extension-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 540px;
-  align-items: center;
-  gap: 48px;
+/* ---------- 下载区：本页唯一一扇 pt-frame（无标题栏 hero） ---------- */
+.ext-gate__hero {
+  text-align: center;
 }
-
-/* 左栏是 flex 列：DOM 中说明在操作行之前（读屏先读到），≥621px 用 order 显示在操作行之后（B12） */
-.extension-intro__copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.extension-intro__lead {
-  margin: 16px 0 0;
+.ext-gate__lead {
+  max-width: 46em;
+  margin: var(--sp-3) auto 0;
   color: var(--ink-2);
-  font-size: 17px;
+  font-size: var(--fs-lead);
   text-wrap: balance;
 }
-.extension-intro__note {
-  margin: 18px 0 0;
+/* 安装路线：四站页内链接，顺序即操作顺序；只是目录，没有“已完成”状态 */
+.ext-route {
+  margin: var(--sp-4) 0 0;
+}
+.ext-route ol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-small);
+}
+.ext-route li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+/* 箭头只是视觉连接，替代文本为空，读屏不读 */
+.ext-route li + li::before {
+  content: "→" / "";
   color: var(--ink-3);
-  font-size: 13px;
 }
-.extension-intro__note-icon {
-  display: none;
-}
-.extension-intro__legal {
-  margin: 4px 0 0;
-  color: var(--ink-2);
-  font-size: 13px;
-}
-.extension-intro__copy > .extension-intro__note {
-  order: 1;
-}
-.extension-intro__copy > .extension-intro__legal {
-  order: 2;
+.ext-route a {
+  padding-block: var(--sp-1);
+  color: var(--gold);
+  text-underline-offset: 3px;
 }
 
-/* 操作行：“下载扩展”是本路由唯一的 pt-forge-btn，“打开 CoE Beta ↗”是 L0 文字链接 */
-.extension-actions {
+/* 下半：左“先确认环境” | 中缝 | 右“再下载” */
+.ext-gate__split {
+  --seam-w: calc(var(--sp-8) + var(--sp-4));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--seam-w) minmax(0, 1fr);
+  column-gap: var(--sp-3);
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--line);
+}
+.ext-gate__col {
+  min-width: 0;
+  scroll-margin-top: var(--sp-5);
+}
+.ext-gate__note {
+  margin: var(--sp-2) 0 0;
+  color: var(--ink-2);
+}
+
+/* 环境清单：dl 两列，行间 1px 分隔（L0，不再套 pt-panel） */
+.ext-env {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--sp-5);
+  margin: var(--sp-3) 0 0;
+}
+.ext-env dt,
+.ext-env dd {
+  padding-block: var(--sp-2);
+  border-block-start: 1px solid var(--line);
+}
+.ext-env dt {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.9;
+}
+.ext-env dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-data);
+  overflow-wrap: anywhere;
+}
+.ext-env dd small {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+.ext-env__not {
+  margin: 0;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.ext-env__link {
+  margin-block-start: var(--sp-1);
+}
+
+/* 中缝：上下两段铜线，菱结落在两侧小标题之下的同一水平线 */
+.ext-seam {
+  display: grid;
+  grid-template-rows: var(--sp-7) auto minmax(0, 1fr);
+  justify-items: center;
+}
+.ext-seam__line {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--metal-line) 40%, var(--metal-edge));
+}
+.ext-seam__line--bottom {
+  background: linear-gradient(0deg, transparent, var(--metal-line) 40%, var(--metal-edge));
+}
+.ext-seam__knot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--sp-1);
+}
+.ext-seam__knot > .pt-motif--knot {
+  --ptm-w: 72px;
+  --ptm-h: 28px;
+  --ptm-u: calc(28px / 25);
+}
+
+/* 下载列：说明 → 唯一的金属主按钮 → 版本事实 → 完整声明 */
+.ext-download {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 28px;
-  margin-top: 28px;
+  gap: var(--sp-2) var(--sp-5);
+  margin-block-start: var(--sp-5);
 }
-/* 下载按钮：“下载扩展”与“（v…，zip，…）”同排，不留 pt-forge-btn 的 10px 间隙 */
-.extension-download {
+.ext-download__btn {
   gap: 0;
 }
-
-/* 右栏环境卡：pt-panel card 加标题栏（不是 pt-frame，避免框中框）；dl 两列，行间 1px 分隔（M0 E5） */
-.extension-env__list {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 28px;
-  margin: 0;
+.ext-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  list-style: none;
 }
-.extension-env__list dt,
-.extension-env__list dd {
-  padding-block: 9px;
+.ext-facts .text-link {
+  padding-block: 0;
 }
-.extension-env__list dt {
+.ext-facts b {
   color: var(--ink-2);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
-.extension-env__list dd {
+.ext-gate__legal {
+  margin: var(--sp-4) 0 0;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+
+/* ---------- 安装：四步横排（L0），步号压在一条细轨上 ---------- */
+.ext-guide {
+  margin-block-start: var(--sp-7);
+  scroll-margin-top: var(--sp-5);
+}
+.ext-guide__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-5);
+}
+.ext-guide h2,
+.ext-verify h2 {
   margin: 0;
   color: var(--ink);
-  overflow-wrap: anywhere;
+  font-size: var(--fs-display-s);
+  line-height: 1.3;
 }
-.extension-env__list > :nth-child(n + 3) {
-  border-top: 1px solid var(--line);
-}
-/* 两行短说明：base.css 给 p 的 text-wrap: pretty 会在 390 下把“所有”拆到两行，
-   改回普通折行，与 M0 一致地断在“翻译所有 / 英文段落”（spec §6.7 R15） */
-.extension-env__note {
-  margin: 12px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  color: var(--ink-2);
-  font-size: 13px;
-  text-wrap: wrap;
-}
-
-/* 能力区：放在框外，上方一条 pt-divider；三列；小标题是 pt-subhead；正文 L0（M0 E6） */
-.extension-capabilities {
-  margin-top: 40px;
-}
-.extension-capabilities__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 40px;
-  padding-top: 26px;
-}
-.extension-capabilities p {
-  margin: 10px 0 0;
-  color: var(--ink-2);
-}
-
-/* 安装步骤：L0，小标题用无衬线（M0 E7） */
-.extension-guide {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
-  gap: 72px;
-  margin-top: 48px;
-  padding-top: 44px;
-  border-top: 1px solid var(--line);
-  scroll-margin-top: 24px;
-}
-.extension-guide h2 {
-  margin: 0 0 14px;
-  color: var(--ink);
-  font: 600 28px / 1.35 var(--font-zh-cn);
-}
-/* 安装区说明保持普通折行，不沿用 base.css 给 p 的 text-wrap: pretty（spec §6.7） */
-.extension-guide__heading p {
+.ext-guide__head p {
   margin: 0;
   color: var(--ink-2);
-  text-wrap: wrap;
 }
-.extension-steps {
-  margin: 0;
-  padding-left: 24px;
+.ext-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-5) var(--sp-6);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
 }
-.extension-steps li {
-  padding: 0 0 26px 12px;
+.ext-step {
+  position: relative;
+  min-width: 0;
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--line-2);
+  counter-increment: step;
 }
-.extension-steps li:last-child {
-  padding-bottom: 0;
-}
-.extension-steps li::marker {
+/* 步号：L0 平涂小方块，压在轨线上；不是金属、不是角饰 */
+.ext-step::before,
+.ext-verify__mark {
+  position: absolute;
+  top: calc(var(--ext-rail) * -1);
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: var(--ext-mark);
+  height: var(--ext-mark);
+  border: 1px solid var(--control-edge);
+  border-radius: 4px;
+  background: var(--page);
   color: var(--gold);
+  font-size: var(--fs-data);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.extension-steps h3 {
-  margin: 0 0 8px;
-  color: var(--ink);
-  font: 600 17px / 1.5 var(--font-zh-cn);
+.ext-step::before {
+  content: counter(step);
 }
-.extension-steps p {
+.ext-step h3 {
+  margin: var(--sp-2) 0;
+  color: var(--ink);
+  font-size: var(--fs-lead);
+  line-height: 1.45;
+}
+.ext-step p {
   margin: 0;
   color: var(--ink-2);
 }
-.extension-steps strong {
+.ext-step p + p {
+  margin-block-start: var(--sp-2);
+}
+.ext-step strong {
   color: var(--ink);
   font-weight: 600;
 }
-.extension-guide__note {
-  margin: 22px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  color: var(--ink-2);
-  font-size: 14px;
-}
-.extension-main code {
+.ext-main code {
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-code);
-  font-size: 0.9em;
+  font-size: var(--fs-small);
   overflow-wrap: anywhere;
 }
+.ext-guide__note {
+  margin: var(--sp-5) 0 0;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
 
-/* 确认翻译、更新与恢复、隐私、支持范围、问题反馈：L0，两列（M0 E8） */
-.extension-details {
+/* ---------- 确认生效：安装路线的最后一站 ---------- */
+.ext-verify {
+  position: relative;
+  margin-block-start: var(--sp-7);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--line-2);
+  scroll-margin-top: var(--sp-5);
+}
+.ext-verify__mark {
+  color: var(--ok);
+}
+.ext-verify h2 {
+  margin-block-start: var(--sp-2);
+}
+.ext-verify__intro {
+  margin: var(--sp-2) 0 0;
+  color: var(--ink-2);
+}
+.ext-verify__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 36px 72px;
-  margin-top: 48px;
-  padding-top: 40px;
-  border-top: 1px solid var(--line);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--sp-6) var(--sp-7);
+  margin-block-start: var(--sp-5);
 }
-.extension-details h2 {
-  margin: 0 0 12px;
+
+/* 左：应该看到的两处 + 搜索候选示意 */
+.ext-see {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ext-see li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding-block: var(--sp-2);
   color: var(--ink);
-  font: 600 20px / 1.4 var(--font-zh-cn);
 }
-.extension-details p {
-  margin: 0 0 10px;
+.ext-see li + li {
+  border-block-start: 1px solid var(--line);
+}
+.ext-see .icon {
+  margin-block-start: var(--sp-1);
+  color: var(--ok);
+}
+.ext-see li small {
+  display: block;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+
+/* 搜索候选示意：图注、搜索框、整框候选、署名与尾注都来自共用的 l1-demo.css（底色 --frame-bg、边框 --metal-line，
+   整框不画投影）；这里只给外框留白，并按样稿放大选中项 */
+.ext-demo {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-4);
+  border-radius: 6px;
+}
+.ext-demo .l1demo__opt--selected {
+  margin-block: var(--sp-1);
+  font-size: var(--fs-lead);
+}
+
+/* 右：三种状态，用词与第三期弹窗的当前页状态一致。状态色写在 dt 上（dt 为 display: contents），
+   图标与状态名随它变色；强制色彩下由系统色接管，不需要另写 */
+.ext-states {
+  margin: 0;
+}
+.ext-state {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-2);
+  padding-block: var(--sp-4);
+  border-block-start: 1px solid var(--line);
+}
+.ext-state:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+.ext-state dt {
+  display: contents;
+}
+.ext-state__icon {
+  margin-block-start: var(--sp-1);
+}
+.ext-state__name {
+  font-size: var(--fs-lead);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.ext-state--ok dt {
+  color: var(--ok);
+}
+.ext-state--part dt {
+  color: var(--miss);
+}
+.ext-state--off dt {
+  color: var(--danger);
+}
+.ext-state dd {
+  grid-column: 2;
+  margin: 0;
+  color: var(--ink-2);
+}
+/* 未生效的三个原因：原因 | 怎么办，两列；窄屏上下排 */
+.ext-causes {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.ext-cause {
+  display: grid;
+  grid-template-columns: minmax(0, 13em) minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+}
+.ext-cause + .ext-cause {
+  border-block-start: 1px solid var(--line);
+}
+.ext-cause__why {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ext-cause__fix {
+  margin: 0;
   color: var(--ink-2);
 }
 
-/* 621–1199px 没有 mockup：hero 改单栏，环境卡排在说明下方（M0 E10） */
-@media (max-width: 1199px) {
-  .extension-intro {
+/* ---------- 参考信息：更新、隐私、支持范围、反馈（L0，两列） ---------- */
+.ext-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6) var(--sp-8);
+  margin-block-start: var(--sp-7);
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--line);
+}
+.ext-details section {
+  scroll-margin-top: var(--sp-5);
+}
+.ext-details h2 {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink);
+  font-size: var(--fs-title);
+  line-height: 1.4;
+}
+.ext-details section p {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-2);
+}
+
+/* 621–1099px：环境与下载仍左右分；安装四步改 2×2，确认生效改单列 */
+@media (max-width: 1099px) {
+  .ext-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--sp-7);
+  }
+  .ext-verify__grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
   }
 }
 @media (max-width: 850px) {
-  .extension-guide {
-    gap: 32px;
+  .ext-gate__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ext-seam {
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    margin-block: var(--sp-5);
+  }
+  .ext-seam__line {
+    width: auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--metal-edge));
+  }
+  .ext-seam__line--bottom {
+    background: linear-gradient(270deg, transparent, var(--metal-edge));
+  }
+  .ext-seam__knot {
+    padding-inline: var(--sp-2);
+  }
+  .ext-details {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* §6.7 ≤620px：页边距 16px；框内边距、角饰与 hero 字号由 ui-theme 负责；各区改单列 */
+/* ≤620px：页边 16px（site.css）；按钮通栏、版本与大小换第二行；步骤竖排，轨线改到左侧；页内链接可点高 ≥44px */
 @media (max-width: 620px) {
-  .extension-main {
-    padding: 20px 16px 32px;
+  .ext-main {
+    padding-block: var(--sp-4) var(--sp-6);
   }
-  .extension-intro {
-    gap: 24px;
+  .ext-gate__lead {
+    font-size: var(--fs-data);
   }
-  .extension-actions {
-    margin-top: 20px;
+  .ext-gate__split {
+    margin-block-start: var(--sp-5);
+    padding-block-start: var(--sp-4);
   }
-  .extension-actions .pt-forge-btn {
-    width: 100%;
+  .ext-seam__knot > .pt-motif--knot {
+    --ptm-w: 52px;
+    --ptm-h: 20px;
+    --ptm-u: calc(20px / 25);
   }
-  /* 窄屏放不下一整行：版本与大小换到第二行，字号减小（≥621px 仍是一行） */
-  .extension-actions .extension-download {
+  .ext-env {
+    column-gap: var(--sp-4);
+  }
+  .ext-download .pt-forge-btn {
     flex-direction: column;
-    gap: 2px;
+    gap: 0;
+    width: 100%;
     height: auto;
     min-height: 46px;
-    padding: 8px 32px;
+    padding: var(--sp-2) var(--sp-6);
   }
-  .extension-download__meta {
-    font-size: 12px;
+  .ext-download__meta {
+    font-size: var(--fs-micro);
     letter-spacing: 0.02em;
   }
-  /* B12：说明回到 DOM 顺序（操作行之前），前置信息图标，改用 --ink-2 */
-  .extension-intro__note-icon {
-    display: block;
-    flex: none;
-    margin-top: 3px;
+  .ext-route a,
+  .ext-env__link,
+  .ext-facts .text-link,
+  .ext-details .text-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
-  .extension-intro__copy > .extension-intro__note {
-    order: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    margin-top: 16px;
-    color: var(--ink-2);
+  .ext-guide {
+    margin-block-start: var(--sp-6);
   }
-  .extension-intro__copy > .extension-intro__legal {
-    margin-top: 12px;
+  .ext-guide h2,
+  .ext-verify h2 {
+    font-size: var(--fs-title);
   }
-  .extension-env > .pt-panel__body {
-    padding: 20px 16px;
-  }
-  .extension-capabilities {
-    margin-top: 32px;
-  }
-  .extension-capabilities__grid {
+  .ext-steps {
     grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
-    padding-top: 20px;
+    gap: 0;
+    margin-block-start: var(--sp-4);
   }
-  .extension-guide {
+  .ext-step {
+    margin-inline-start: var(--ext-rail);
+    padding: 0 0 var(--sp-5) calc(var(--ext-mark) + var(--sp-3));
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--line-2);
+  }
+  .ext-step:last-child {
+    border-inline-start-color: transparent;
+  }
+  .ext-step::before {
+    top: 0;
+    left: calc(var(--ext-rail) * -1);
+  }
+  .ext-step h3 {
+    margin-block-start: var(--sp-1);
+  }
+  .ext-verify {
+    margin-block-start: var(--sp-5);
+    padding: 0 0 0 calc(var(--ext-mark) + var(--sp-3) + var(--ext-rail));
+    border-block-start: 0;
+  }
+  .ext-verify__mark {
+    top: 0;
+    left: 0;
+  }
+  .ext-verify h2 {
+    margin-block-start: var(--sp-1);
+  }
+  .ext-verify__grid {
+    margin-inline-start: calc(-1 * (var(--ext-mark) + var(--sp-3) + var(--ext-rail)));
+  }
+  .ext-demo {
+    padding: var(--sp-3);
+  }
+  .ext-cause {
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    margin-top: 36px;
-    padding-top: 32px;
+    padding: var(--sp-3);
   }
-  .extension-guide h2 {
-    font-size: 24px;
+  .ext-details {
+    margin-block-start: var(--sp-6);
+    padding-block-start: var(--sp-5);
   }
-  .extension-steps {
-    padding-left: 20px;
-  }
-  .extension-steps li {
-    padding-left: 8px;
-  }
-  .extension-details {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    margin-top: 36px;
-    padding-top: 32px;
+  .ext-details h2 {
+    font-size: var(--fs-lead);
   }
 }
 
-/* spec §5.3 例外（M3 实测后经用户确认增补，附录 B.9）：容器宽 <500px 时即按窄容器处理，
-   保证 chip 留在标题栏时与居中标题的间距不小于 12px（契约 §10 V11）。chip 改为“v<版本>”后变短，例外保留 */
-@container (width < 500px) {
-  .extension-env > .pt-titlebar {
-    padding: 0 20px;
+/* 强制色彩：中缝退回系统文字色；svg 默认保留父元素颜色，写了颜色的图标改为 inherit 跟随系统色
+   （搜索框图标 .l1demo__field .icon 的 inherit 在 l1-demo.css） */
+@media (forced-colors: active) {
+  .ext-seam__line {
+    background: CanvasText;
   }
-  .extension-env > .pt-titlebar > .pt-chip {
-    display: none;
+  .ext-step::before,
+  .ext-verify__mark,
+  .ext-causes {
+    border-color: CanvasText;
   }
-  .extension-env .pt-chip.pt-chip--body {
-    display: flex;
-    width: max-content;
-    margin: 0 0 12px auto;
+  .ext-see .icon {
+    color: inherit;
   }
 }

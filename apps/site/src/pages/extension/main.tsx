@@ -2,9 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ExtensionPage } from './ExtensionPage'
 import '@poe2-tools/ui-theme/index.css'
+import '@poe2-tools/ui-theme/scale.css'
 import '@poe2-tools/ui-theme/fonts.css'
 import '../../shared/styles/base.css'
 import '../../shared/styles/site.css'
+import '../../shared/styles/l1-demo.css'
 import '../../shared/styles/extension.css'
 
 const root = document.getElementById('root')
