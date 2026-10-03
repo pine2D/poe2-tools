@@ -948,6 +948,25 @@ describe('subhead.css', () => {
     expect(subheadCss.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/--pt-motif|--pt-grain|url\(/)
   })
 
+  it('.pt-subhead--lg 只放大字号：28px，≤620px 回到 21px；不另写字体、颜色与字距（首页场景标题）', () => {
+    const lg = parseRules(subheadCss).filter((rule) =>
+      rule.selectors.map(tidy).includes('.pt-subhead--lg'),
+    )
+    const top = lg.filter((rule) => rule.atRules.length === 0)
+    const narrow = lg.filter((rule) =>
+      rule.atRules.some((at) => at.replace(/\s+/g, '').includes('max-width:620px')),
+    )
+    expect(lg).toHaveLength(2)
+    expect(top).toHaveLength(1)
+    expect(narrow).toHaveLength(1)
+    expect([...(top[0]?.declarations ?? new Map<string, string>())]).toEqual([
+      ['font-size', '28px'],
+    ])
+    expect([...(narrow[0]?.declarations ?? new Map<string, string>())]).toEqual([
+      ['font-size', '21px'],
+    ])
+  })
+
   it('index.css 的最后一行引入 subhead.css（契约 §3.3 的 M3 行）', () => {
     const lines = readFileSync(new URL('./index.css', import.meta.url), 'utf8')
       .trim()

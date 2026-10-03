@@ -1,4 +1,4 @@
-/* 扩展介绍页能力小标题（spec §6.3、§4.4）：衬线 700 21px、--title-gold、字距 .06em；取值移植自 M0 kit.css */
+/* 衬线小标题（spec §6.3、§4.4）：扩展介绍页小标题与首页场景标题（--lg）；衬线 700 21px、--title-gold、字距 .06em；取值移植自 M0 kit.css */
 .pt-subhead {
   margin: 0;
   color: var(--title-gold);
@@ -10,5 +10,16 @@
 @media (forced-colors: active) {
   .pt-subhead {
     color: CanvasText;
+  }
+}
+
+/* 首页场景标题（二期）：沿用 .pt-subhead 的衬线、金字与字距，只把字号升到 28px；≤620px 回到 21px。
+   只写 font-size，所以不进 SERIF_SELECTORS（衬线由 .pt-subhead 给出）；扩展不引入本文件，扩展 zip 不变 */
+.pt-subhead--lg {
+  font-size: 28px;
+}
+@media (max-width: 620px) {
+  .pt-subhead--lg {
+    font-size: 21px;
   }
 }
