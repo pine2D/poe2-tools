@@ -1,11 +1,11 @@
 /* 由 packages/ui-theme/scripts/build-fonts.mjs 生成，勿手改。
-   扩展设置弹窗专用（spec §6.8、§7.6）：只含 SC shard0。字体 Noto Serif SC 以 SIL Open Font License 1.1 授权，
-   扩展包内附 NotoSerifSC-OFL.txt；项目的 MIT 许可不覆盖字体文件。 */
+   扩展设置弹窗专用（spec §6.8、§7.6）：只含弹窗独立子集 serif-sc-popup（收字见 scripts/popup-text.txt），不进 fonts.css。
+   字体 Noto Serif SC 以 SIL Open Font License 1.1 授权，扩展包内附 NotoSerifSC-OFL.txt；项目的 MIT 许可不覆盖字体文件。 */
 @font-face {
   font-family: "PoE2 Serif SC";
-  src: url("./serif-sc-0.woff2") format("woff2");
+  src: url("./serif-sc-popup.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+20-7E, U+2026, U+2192, U+3002, U+4E0B, U+4E2D, U+4EF6, U+4F60, U+4F7F, U+5148, U+5165, U+5177, U+518D, U+5230, U+524D, U+52A9, U+5316, U+539F, U+540D-540E, U+5728, U+5883, U+5907, U+591A, U+5929, U+5BF9, U+5BFC, U+5C11, U+5C31, U+5C55, U+5DE5, U+5F00, U+5F97, U+6089, U+61C2, U+624B, U+6253, U+6269, U+6280, U+62E9, U+641C, U+6587, U+672F, U+6765, U+6784, U+67E5, U+6838, U+6C49, U+719F, U+73AF, U+7528, U+7684, U+770B, U+7814, U+786E, U+7A76, U+7B51, U+80FD, U+82F1, U+88C5, U+8BA4, U+8BD1, U+8BED, U+8BFB, U+8D4B, U+8F7D, U+9009, U+91CC, U+FF08-FF09, U+FF0C;
+  unicode-range: U+20-7E, U+4E2D, U+4F7F, U+524D, U+52A9, U+624B, U+6587, U+7528;
 }

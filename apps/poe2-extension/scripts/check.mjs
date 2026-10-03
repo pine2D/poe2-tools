@@ -10,6 +10,7 @@ import {
   FULL_DISCLAIMER,
   LICENSE_REQUIRED_LINES,
   loadWhitelist,
+  POPUP_FONT_FILE,
   sha256,
 } from '@poe2-tools/ui-theme/compliance'
 import { build } from 'vite'
@@ -248,13 +249,23 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     LICENSE_REQUIRED_LINES[FONT_LICENSE_FILE],
   )
   await checkLicenseFile(path.join(dist, 'NOTICE.txt'), EXTENSION_NOTICE_REQUIRED_LINES)
+  // 弹窗只加载自己的独立字体子集（扩展 0.3.2 起与网站 shard0 解耦）：恰好一个 woff2，内容即 coverage.json 登记的弹窗子集
+  const whitelist = await loadWhitelist()
+  const popupFontFiles = [...new Set(popupFonts)]
+  const popupFontSha = whitelist.fontShards.get(POPUP_FONT_FILE)
+  if (
+    popupFontFiles.length !== 1 ||
+    popupFontSha === undefined ||
+    sha256(await readFile(path.join(dist, popupFontFiles[0]))) !== popupFontSha
+  )
+    throw new Error(`popup 字体必须恰好是 ${POPUP_FONT_FILE}（packages/ui-theme/fonts/popup.css）`)
   const assets = []
   for (const file of distFiles) {
     const ext = file.slice(file.lastIndexOf('.') + 1).toLowerCase()
     if (ASSET_EXTENSIONS.includes(ext))
       assets.push({ path: file, sha256: sha256(await readFile(path.join(dist, file))) })
   }
-  assertAssets(assets, await loadWhitelist(), 'dist')
+  assertAssets(assets, whitelist, 'dist')
   console.log(`扩展检查通过：${m.version}，${dict.terms.length} 条词条，仅 storage 权限`)
   return { root, dist, version: m.version, files: distFiles }
 }

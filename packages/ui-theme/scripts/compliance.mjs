@@ -52,6 +52,9 @@ export const SITE_NOTICE_REQUIRED_LINES = [
 
 export const ASSET_EXTENSIONS = ['png', 'jpg', 'webp', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'otf']
 
+/** 扩展弹窗专用字体分片（build-fonts.mjs 生成）：只由 fonts/popup.css 引用，不进 fonts.css，网站产物里不应出现 */
+export const POPUP_FONT_FILE = 'serif-sc-popup.woff2'
+
 /** spec §8.5 的检测正则 */
 export const EXTERNAL_URL_RE = /url\(\s*['"]?\s*(?:https?:)?\/\//i
 
@@ -257,9 +260,11 @@ export function assertAssets(entries, whitelist, mode) {
   }
 }
 
-/** 网站 dist：dist/assets/*.woff2 的 SHA-256 集合必须与 coverage.json 完全相同 */
+/** 网站 dist：dist/assets/*.woff2 的 SHA-256 集合必须与 coverage.json 完全相同；扩展弹窗子集（POPUP_FONT_FILE）不属于网站，不计入 */
 export function assertFontSetEquals(distWoff2Shas, whitelist) {
-  const expected = new Set(whitelist.fontShards.values())
+  const expected = new Set(
+    [...whitelist.fontShards].filter(([file]) => file !== POPUP_FONT_FILE).map(([, sha]) => sha),
+  )
   const actual = new Set(distWoff2Shas)
   const missing = [...expected].filter((sha) => !actual.has(sha))
   const extra = [...actual].filter((sha) => !expected.has(sha))

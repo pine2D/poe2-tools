@@ -1,5 +1,7 @@
 // 字体分片的收字规则（spec §7.3）：纯函数，文件访问由调用方注入。
 // build-fonts.mjs 与 coverage.test.ts 共用；相对导入写 .ts 扩展名，Node 直接加载。
+// 弹窗子集文件名只在 compliance.mjs 定义一处（扩展检查与网站检查也用它），这里导入后改名导出
+import { POPUP_FONT_FILE } from '../scripts/compliance.mjs'
 
 /** U+0020–U+007E，共 95 个字符 */
 export const ASCII_PRINTABLE = Array.from({ length: 95 }, (_, i) =>
@@ -182,7 +184,14 @@ export function unicodeRange(chars: Iterable<string>): string {
   return ranges.join(', ')
 }
 
-export type ShardGroup = 'sc-fixed' | 'sc-site' | 'sc-names' | 'sc-common' | 'tc-names' | 'cinzel'
+export type ShardGroup =
+  | 'sc-fixed'
+  | 'sc-site'
+  | 'sc-names'
+  | 'sc-common'
+  | 'tc-names'
+  | 'cinzel'
+  | 'sc-popup'
 export type FontFamilyAlias = 'PoE2 Serif SC' | 'PoE2 Serif TC' | 'PoE2 Cinzel'
 export interface ShardSpec {
   /** 'serif-sc-0.woff2' 等（契约 §3.7.3） */
@@ -267,4 +276,20 @@ export function planShards(input: {
     chars: sorted(cinzel),
   })
   return shards
+}
+
+/** 扩展弹窗独立子集的文件名（扩展 0.3.2 起）：只由 fonts/popup.css 引用，不进 fonts.css。
+ *  与 compliance.mjs 的 POPUP_FONT_FILE 是同一个常量，不另写字符串 */
+export const POPUP_SHARD_FILE = POPUP_FONT_FILE
+
+/** 扩展设置弹窗的衬线子集：popup-text.txt 非注释行的字 ∪ ASCII_PRINTABLE（格式与 shard0-text.txt 相同）。
+ *  与网站分片相互独立：网站文案变化不改变这一片，也就不改变扩展 zip */
+export function popupShard(popupText: string): ShardSpec {
+  return {
+    file: POPUP_SHARD_FILE,
+    family: 'PoE2 Serif SC',
+    group: 'sc-popup',
+    weight: 700,
+    chars: sorted(shard0Chars(popupText)),
+  }
 }

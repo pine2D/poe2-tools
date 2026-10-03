@@ -211,7 +211,7 @@ components:
 | 物品、宝石英文名 | Cinzel 400 | 13px | .04em |
 
 - 中文衬线是 Noto Serif SC、Noto Serif TC 的 wght 700 实例，Cinzel 是 wght 400 实例，按分片自托管在 `packages/ui-theme/fonts/`，`font-display: swap`。页面用站点私有别名 “PoE2 Serif SC”“PoE2 Serif TC”“PoE2 Cinzel”，缺字时逐级回退到本机字体。
-- 首页只下载 `serif-sc-0` 一个字体文件，预算 122,880 字节，构建期有守卫。所有衬线固定文案都列在 `packages/ui-theme/scripts/shard0-text.txt`；新增衬线文案先补进这个文件，再运行 `pnpm ui-theme:fonts`。
+- 首页只下载 `serif-sc-0` 一个字体文件，预算 122,880 字节，构建期有守卫。所有衬线固定文案都列在 `packages/ui-theme/scripts/shard0-text.txt`；新增衬线文案先补进这个文件，再运行 `pnpm ui-theme:fonts`。扩展设置弹窗不用 shard0，用独立子集 `serif-sc-popup`（收字见 `packages/ui-theme/scripts/popup-text.txt`），只由 `fonts/popup.css` 引用，网站文案变化不影响扩展包。
 - 繁体衬线只用于名称牌和提示框里 `lang="zh-TW"` 的词典名称；站点固定文案一律用简体栈。
 - 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 与 L1 不用衬线；页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。
 - 正文与数据用系统无衬线（`--font-zh-cn`、`--font-zh-tw`），代码用 `--font-code`；门户页（首页、扩展介绍页）正文 15px/1.6，构筑页正文 14px/1.65，对照行 15px/1.6，数字用 `tabular-nums`。

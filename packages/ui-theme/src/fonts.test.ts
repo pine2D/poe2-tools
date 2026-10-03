@@ -6,16 +6,19 @@ import {
   checkLicenseFile,
   LICENSE_FILES,
   LICENSE_REQUIRED_LINES,
+  POPUP_FONT_FILE,
   parseFontSources,
   parseLevel1Registration,
   REPO_ROOT,
   sha256,
 } from '../scripts/compliance.mjs'
+import { POPUP_SHARD_FILE, popupShard, unicodeRange } from './charsets'
 import { readNameRecords, readUsWeightClass, readWoff2Tables } from './font-tables'
 
 interface CoverageShard {
   file: string
   family: 'PoE2 Serif SC' | 'PoE2 Serif TC' | 'PoE2 Cinzel'
+  group: string
   weight: 700 | 400
   sha256: string
   chars: string
@@ -86,17 +89,26 @@ describe('分片集合、源文件登记与许可文件（spec §7.3 断言 6、
     }
   })
 
-  it('popup.css 只有一条 @font-face，与 fonts.css 里 serif-sc-0 那条逐字相同（spec §7.6）', () => {
+  it('popup.css 只有一条 @font-face：指向扩展弹窗独立子集，unicode-range 与 coverage.json 一致（扩展 0.3.2）', () => {
     const faces = (css: string) => css.match(/@font-face \{[^}]*\}/g) ?? []
     const popup = faces(readFileSync(join(FONTS, 'popup.css'), 'utf8'))
+    const shard = coverage.shards.find((item) => item.file === POPUP_SHARD_FILE)
+    expect(shard?.group, HINT).toBe('sc-popup')
     expect(popup).toHaveLength(1)
-    expect(popup[0]).toContain('url("./serif-sc-0.woff2")')
-    expect(faces(readFileSync(join(FONTS, 'fonts.css'), 'utf8'))).toContain(popup[0])
+    expect(popup[0]).toContain(`url("./${POPUP_SHARD_FILE}")`)
+    expect(popup[0]).toContain(`unicode-range: ${unicodeRange(shard?.chars ?? '')};`)
   })
 
-  it('SC shard0 覆盖扩展弹窗的衬线文案：PoE2 中文助手、使用前（spec §6.8）', () => {
-    const shard0 = coverage.shards.find((shard) => shard.file === 'serif-sc-0.woff2')
-    for (const ch of 'PoE2中文助手使用前') expect(shard0?.chars, ch).toContain(ch)
+  it('fonts.css 不声明弹窗子集：网站不下载它，也不与 shard0 的 unicode-range 重叠', () => {
+    expect(readFileSync(join(FONTS, 'fonts.css'), 'utf8')).not.toContain(POPUP_SHARD_FILE)
+    expect(POPUP_SHARD_FILE).toBe(POPUP_FONT_FILE)
+  })
+
+  it('弹窗子集恰好是 popup-text.txt 的文案 ∪ ASCII，覆盖 PoE2 中文助手、使用前（spec §6.8）', () => {
+    const text = readFileSync(join(REPO_ROOT, 'packages/ui-theme/scripts/popup-text.txt'), 'utf8')
+    const shard = coverage.shards.find((item) => item.file === POPUP_SHARD_FILE)
+    expect([...(shard?.chars ?? '')], HINT).toEqual(popupShard(text).chars)
+    for (const ch of 'PoE2中文助手使用前') expect(shard?.chars, ch).toContain(ch)
   })
 
   it('coverage.json 的提交号与 6 个源文件 SHA-256 就是 data-sources.md 登记的那组', () => {

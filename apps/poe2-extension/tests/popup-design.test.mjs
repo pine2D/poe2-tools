@@ -20,12 +20,28 @@ it('署名常量与网站完整声明一字不差', () => {
   expect(provenance.SHORT_PROVENANCE).toBe('PoE2 中文助手 · 非官方')
 })
 
-it('衬线文案（标题、使用前）全部在 SC shard0 里', () => {
-  const shard0 = new Set(coverage.shards.find((s) => s.file === 'serif-sc-0.woff2').chars)
+it('衬线文案（标题、使用前）全部在弹窗独立子集里，且列在 popup-text.txt（扩展 0.3.2）', async () => {
+  const shard = coverage.shards.find((s) => s.file === 'serif-sc-popup.woff2')
+  expect(shard?.group).toBe('sc-popup')
+  const chars = new Set(shard?.chars ?? '')
   const serif = [...html.matchAll(/<(h1|h2)\b[^>]*>([^<]*)<\/\1>/g)].map((m) => m[2])
   expect(serif).toEqual(['PoE2 中文助手', '使用前'])
   for (const text of serif)
-    for (const ch of text.replace(/\s/g, '')) expect(shard0.has(ch), ch).toBe(true)
+    for (const ch of text.replace(/\s/g, '')) expect(chars.has(ch), ch).toBe(true)
+  const popupText = await readFile(
+    new URL('../../../packages/ui-theme/scripts/popup-text.txt', import.meta.url),
+    'utf8',
+  )
+  expect(popupText.split(/\r?\n/)).toEqual(expect.arrayContaining(serif))
+})
+
+it('弹窗样式里用衬线的只有标题与“使用前”小标题：新增衬线位置须同步 popup-text.txt', () => {
+  const serifSelectors = parseRules(css)
+    .filter((r) =>
+      /var\(--pt-serif/.test(r.declarations.get('font') ?? r.declarations.get('font-family') ?? ''),
+    )
+    .flatMap((r) => r.selectors)
+  expect(serifSelectors).toEqual(['.titlebar__title', '.before h2'])
 })
 
 it('副标题改写为“适用于 Craft of Exile 新版”', () => {

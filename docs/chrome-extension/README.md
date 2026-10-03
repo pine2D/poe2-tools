@@ -36,7 +36,7 @@
 
 - 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`；
 - `packages/item-core`：网站工坊与扩展共用，只为网站改它也会改变扩展 zip；
-- `packages/ui-theme` 中扩展用到的部分：令牌、母题、弹窗组件、L1 样式、弹窗字体分片与 shard0 文案 `scripts/shard0-text.txt`、完整声明，只为网站改它也会改变扩展 zip；
+- `packages/ui-theme` 中扩展用到的部分：令牌、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、完整声明，只为网站改它也会改变扩展 zip；
 - 数据：`data/dict/zh-CN/items.json`、`stats.json`、`data/l10n/`、`data/craft/catalog.json`，以及根目录 `LICENSE`；
 - 依赖与 `pnpm-lock.yaml` 升级：Vite、Rolldown 等构建链版本变化会改变 `content.js` 与弹窗资源。
 

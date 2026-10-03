@@ -18,6 +18,7 @@ import {
   LICENSE_REQUIRED_LINES,
   loadWhitelist,
   missingLines,
+  POPUP_FONT_FILE,
   parseFontSources,
   parseLevel1Registration,
   parseRegisteredAssets,
@@ -214,6 +215,20 @@ describe('素材白名单（spec §8.6）', () => {
     expect(() => assertFontSetEquals([SHA_A], whitelist)).not.toThrow()
     expect(() => assertFontSetEquals([], whitelist)).toThrow(SHA_A)
     expect(() => assertFontSetEquals([SHA_A, SHA_B], whitelist)).toThrow(SHA_B)
+  })
+
+  it('assertFontSetEquals 不要求网站产物含扩展弹窗子集；网站产物里出现它则拒绝（扩展 0.3.2）', () => {
+    expect(POPUP_FONT_FILE).toBe('serif-sc-popup.woff2')
+    const withPopup: Whitelist = {
+      ...whitelist,
+      fontShards: new Map([
+        ['serif-sc-0.woff2', SHA_A],
+        [POPUP_FONT_FILE, SHA_B],
+      ]),
+    }
+    expect(() => assertFontSetEquals([SHA_A], withPopup)).not.toThrow()
+    expect(() => assertFontSetEquals([SHA_A, SHA_B], withPopup)).toThrow(SHA_B)
+    expect(() => assertFontSetEquals([], withPopup)).toThrow(SHA_A)
   })
 
   it('loadWhitelist 读 coverage.json、母题生成物与第 3 类登记', async () => {

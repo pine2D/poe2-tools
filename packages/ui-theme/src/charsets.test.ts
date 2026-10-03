@@ -7,7 +7,9 @@ import {
   chunk,
   enNames,
   nonAsciiChars,
+  POPUP_SHARD_FILE,
   planShards,
+  popupShard,
   rankChars,
   SHARD_SIZE,
   shard0Chars,
@@ -193,5 +195,30 @@ describe('常用字片切片（B19）', () => {
     ])
     expect(common.map((shard) => shard.chars.length)).toEqual([100, 100, 50])
     expect(common.flatMap((shard) => shard.chars)).toEqual(level1)
+  })
+})
+
+// ---- 扩展 0.3.2：弹窗独立子集，与网站分片解耦 ----
+describe('popupShard（扩展弹窗独立子集）', () => {
+  it('收 popup-text 非注释行的字与 95 个 ASCII；文件名、分组、家族、字重固定；码位升序', () => {
+    const shard = popupShard('# 注释\n\nPoE2 中文助手\n使用前\n')
+    expect(POPUP_SHARD_FILE).toBe('serif-sc-popup.woff2')
+    expect([shard.file, shard.group, shard.family, shard.weight]).toEqual([
+      'serif-sc-popup.woff2',
+      'sc-popup',
+      'PoE2 Serif SC',
+      700,
+    ])
+    expect(shard.chars).toHaveLength(95 + 7)
+    for (const ch of `${ASCII_PRINTABLE}中文助手使用前`) expect(shard.chars, ch).toContain(ch)
+    expect(shard.chars).not.toContain('注')
+    expect(shard.chars).toEqual(
+      [...shard.chars].sort((a, b) => (a.codePointAt(0) ?? 0) - (b.codePointAt(0) ?? 0)),
+    )
+  })
+
+  it('planShards 不产出弹窗子集：网站分片与弹窗子集互不牵连', () => {
+    const shards = planShards({ shard0Text: '构筑汉化\n', level1: ['的'], io, previous: null })
+    expect(shards.some((shard) => shard.group === 'sc-popup')).toBe(false)
   })
 })

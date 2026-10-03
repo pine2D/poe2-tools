@@ -22,6 +22,8 @@ export declare const ASSET_EXTENSIONS: readonly [
   'ttf',
   'otf',
 ]
+/** 扩展弹窗专用字体分片：只由 fonts/popup.css 引用，不进 fonts.css；assertFontSetEquals 不把它计入网站产物 */
+export declare const POPUP_FONT_FILE: 'serif-sc-popup.woff2'
 /** spec §8.5 的检测正则 /url\(\s*['"]?\s*(?:https?:)?\/\//i */
 export declare const EXTERNAL_URL_RE: RegExp
 export declare function sha256(data: Uint8Array | string): string
@@ -81,7 +83,7 @@ export declare function assertAssets(
   whitelist: Whitelist,
   mode: AssetMode,
 ): void
-/** 网站 dist：dist/assets/*.woff2 的 SHA-256 集合必须与 coverage.json 完全相同 */
+/** 网站 dist：dist/assets/*.woff2 的 SHA-256 集合必须与 coverage.json 完全相同；扩展弹窗子集（POPUP_FONT_FILE）不计入 */
 export declare function assertFontSetEquals(
   distWoff2Shas: readonly string[],
   whitelist: Whitelist,

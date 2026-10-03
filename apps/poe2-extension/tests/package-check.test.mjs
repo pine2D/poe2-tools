@@ -32,7 +32,8 @@ async function fixture(terms) {
     'dist/popup.html':
       '<script src="./assets/popup-test.js"></script><link href="./assets/popup-test.css">',
     'dist/assets/popup-test.js': 'void 0;',
-    'dist/assets/popup-test.css': '',
+    // 弹窗恰好引用一个字体：扩展弹窗独立子集（扩展 0.3.2 起由 check.mjs 强制）
+    'dist/assets/popup-test.css': '@font-face{src:url(./serif-sc-popup-test.woff2)}',
     'dist/LICENSE.txt': 'fixture license',
     'dist/NOTICE.txt': noticeText(manifest.version),
     'dist/assets/dictionary.json': JSON.stringify({ schemaVersion: 1, locale: 'zh-CN', terms }),
@@ -50,6 +51,10 @@ async function fixture(terms) {
       '../../../packages/ui-theme/fonts/LICENSES/NotoSerifSC-OFL.txt',
     ),
     path.join(root, 'dist/NotoSerifSC-OFL.txt'),
+  )
+  await copyFile(
+    path.resolve(import.meta.dirname, '../../../packages/ui-theme/fonts/serif-sc-popup.woff2'),
+    path.join(root, 'dist/assets/serif-sc-popup-test.woff2'),
   )
   vi.spyOn(console, 'log').mockImplementation(() => {})
   return root

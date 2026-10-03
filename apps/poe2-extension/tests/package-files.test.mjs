@@ -27,7 +27,7 @@ async function fixture() {
     'content.js': 'void 0;',
     'assets/popup-test.js': 'void 0;',
     'assets/popup-test.css':
-      'h1{font-family:x}@font-face{font-family:x;src:url(./serif-sc-0-test.woff2)}',
+      'h1{font-family:x}@font-face{font-family:x;src:url(./serif-sc-popup-test.woff2)}',
     'LICENSE.txt': 'fixture license',
     'NOTICE.txt': noticeText(manifest.version),
     'assets/dictionary.json': JSON.stringify({
@@ -45,8 +45,8 @@ async function fixture() {
     path.join(dist, 'NotoSerifSC-OFL.txt'),
   )
   await copyFile(
-    new URL('fonts/serif-sc-0.woff2', theme),
-    path.join(dist, 'assets/serif-sc-0-test.woff2'),
+    new URL('fonts/serif-sc-popup.woff2', theme),
+    path.join(dist, 'assets/serif-sc-popup-test.woff2'),
   )
   for (const icon of Object.values(manifest.icons))
     await copyFile(new URL(`../public/${icon}`, import.meta.url), path.join(dist, icon))
@@ -64,7 +64,7 @@ it.each(['debug.js', 'private.json', 'notes.txt', 'assets/popup-old.js'])(
     await expect(check(root)).rejects.toThrow('意外打包文件')
   },
 )
-it.each(['LICENSE.txt', 'NOTICE.txt', 'NotoSerifSC-OFL.txt', 'assets/serif-sc-0-test.woff2'])(
+it.each(['LICENSE.txt', 'NOTICE.txt', 'NotoSerifSC-OFL.txt', 'assets/serif-sc-popup-test.woff2'])(
   '拒绝缺少 %s',
   async (name) => {
     const { root, dist } = await fixture()
@@ -96,10 +96,18 @@ it('拒绝额外目录链接与popup多余引用', async () => {
 it('拒绝 popup 样式没引用的 woff2', async () => {
   const { root, dist } = await fixture()
   await copyFile(
-    path.join(dist, 'assets/serif-sc-0-test.woff2'),
+    path.join(dist, 'assets/serif-sc-popup-test.woff2'),
     path.join(dist, 'assets/extra.woff2'),
   )
   await expect(check(root)).rejects.toThrow('意外打包文件：assets/extra.woff2')
+})
+it('拒绝弹窗引用独立子集以外的字体（如网站 shard0）', async () => {
+  const { root, dist } = await fixture()
+  await copyFile(
+    new URL('../../../packages/ui-theme/fonts/serif-sc-0.woff2', import.meta.url),
+    path.join(dist, 'assets/serif-sc-popup-test.woff2'),
+  )
+  await expect(check(root)).rejects.toThrow('popup 字体必须恰好是 serif-sc-popup.woff2')
 })
 it('拒绝 popup 样式里的外链 url() 与包外引用', async () => {
   const { root, dist } = await fixture()

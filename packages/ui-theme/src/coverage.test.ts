@@ -56,7 +56,8 @@ const level1 = readFileSync(
   .filter((line) => line !== '')
 
 describe('分片覆盖（spec §7.3）', () => {
-  const sc = charsOf((shard) => shard.family === 'PoE2 Serif SC')
+  // 弹窗子集只由扩展 popup.css 引用，网站不加载，不计入网站覆盖
+  const sc = charsOf((shard) => shard.family === 'PoE2 Serif SC' && shard.group !== 'sc-popup')
 
   it('zh-CN 名称的字符 ⊆ SC 全部分片', () => {
     expect(missing(zhNames(io, 'zh-CN').join(''), sc), HINT).toBe('')
@@ -94,15 +95,16 @@ describe('字表与 fonts.css', () => {
     for (const line of level1) expect([...line]).toHaveLength(1)
   })
 
-  it('fonts.css 每片一条 @font-face，顺序、family、weight、swap 与 unicode-range 与 coverage.json 一致', () => {
+  it('fonts.css 每片一条 @font-face，顺序、family、weight、swap 与 unicode-range 与 coverage.json 一致（弹窗子集除外）', () => {
+    const siteShards = shards.filter((shard) => shard.group !== 'sc-popup')
     const faces = parseRules(readFileSync(join(FONTS, 'fonts.css'), 'utf8')).filter((rule) =>
       rule.selectors.includes('@font-face'),
     )
     expect(
       faces.map((face) => face.declarations.get('src')),
       HINT,
-    ).toEqual(shards.map((shard) => `url("./${shard.file}") format("woff2")`))
-    for (const [i, shard] of shards.entries()) {
+    ).toEqual(siteShards.map((shard) => `url("./${shard.file}") format("woff2")`))
+    for (const [i, shard] of siteShards.entries()) {
       const face = faces[i]?.declarations
       expect(face?.get('font-family')).toBe(`"${shard.family}"`)
       expect(face?.get('font-weight')).toBe(String(shard.weight))

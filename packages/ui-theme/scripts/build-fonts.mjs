@@ -7,7 +7,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import subsetFont from 'subset-font'
-import { planShards, unicodeRange } from '../src/charsets.ts'
+import { planShards, popupShard, unicodeRange } from '../src/charsets.ts'
 import { readNameRecords, readSfntTables } from '../src/font-tables.ts'
 import {
   assertLicenseText,
@@ -180,15 +180,15 @@ function fontFace(spec) {
   ].join('\n')
 }
 
-// 扩展设置弹窗只加载 SC shard0（spec §6.8、§7.6）；字体文件由扩展构建复制进包，许可文件随包发布
-function popupFontsCss(shards) {
-  const shard0 = shards.find(({ spec }) => spec.file === 'serif-sc-0.woff2')
-  if (!shard0) throw new ExitError(1, '缺少 serif-sc-0.woff2，无法生成 popup.css')
+// 扩展设置弹窗只加载自己的独立子集（spec §6.8、§7.6；扩展 0.3.2 起与 shard0 解耦），收字见 scripts/popup-text.txt。
+// 这一片不写进 fonts.css：网站不下载它，也不会和 shard0 的 unicode-range 重叠导致重复请求。
+// 字体文件由扩展构建复制进包，许可文件随包发布
+function popupFontsCss(popup) {
   return `${[
     '/* 由 packages/ui-theme/scripts/build-fonts.mjs 生成，勿手改。',
-    '   扩展设置弹窗专用（spec §6.8、§7.6）：只含 SC shard0。字体 Noto Serif SC 以 SIL Open Font License 1.1 授权，',
-    '   扩展包内附 NotoSerifSC-OFL.txt；项目的 MIT 许可不覆盖字体文件。 */',
-    fontFace(shard0.spec),
+    '   扩展设置弹窗专用（spec §6.8、§7.6）：只含弹窗独立子集 serif-sc-popup（收字见 scripts/popup-text.txt），不进 fonts.css。',
+    '   字体 Noto Serif SC 以 SIL Open Font License 1.1 授权，扩展包内附 NotoSerifSC-OFL.txt；项目的 MIT 许可不覆盖字体文件。 */',
+    fontFace(popup.spec),
   ].join('\n')}\n`
 }
 
@@ -261,6 +261,11 @@ async function main() {
   }
   const outputs = []
   for (const spec of specs) outputs.push(done.get(spec.file) ?? (await subset(spec, sources)))
+  // 扩展弹窗独立子集：不计入首页预算、不进 fonts.css，只写 popup.css，并登记在 coverage.json 末尾
+  const popup = await subset(
+    popupShard(await readFile(resolve(PKG_DIR, 'scripts/popup-text.txt'), 'utf8')),
+    sources,
+  )
 
   // 临时目录放在已忽略的 data/cache/ 下：脚本被中断时残留的 woff2 不会变成未跟踪文件；
   // 与仓库同一文件系统，rename 不跨设备
@@ -268,9 +273,9 @@ async function main() {
   const tmp = await mkdtemp(resolve(REPO_ROOT, 'data/cache/ui-fonts-out-'))
   try {
     await mkdir(join(tmp, 'LICENSES'))
-    for (const { spec, data } of outputs) await writeFile(join(tmp, spec.file), data)
+    for (const { spec, data } of [...outputs, popup]) await writeFile(join(tmp, spec.file), data)
     await writeFile(join(tmp, 'fonts.css'), fontsCss(outputs))
-    await writeFile(join(tmp, 'popup.css'), popupFontsCss(outputs))
+    await writeFile(join(tmp, 'popup.css'), popupFontsCss(popup))
     for (const [alias, family] of Object.entries(FAMILIES)) {
       const text = licenseText(family, names[family.name], sources[alias].ofl, commit)
       await writeFile(join(tmp, 'LICENSES', family.license), text)
@@ -280,7 +285,7 @@ async function main() {
       sourceCommit: commit,
       sources: sourceHashes,
       sourceNames: names,
-      shards: outputs.map(({ spec, data }) => ({
+      shards: [...outputs, popup].map(({ spec, data }) => ({
         file: spec.file,
         family: spec.family,
         group: spec.group,
@@ -296,7 +301,9 @@ async function main() {
   } finally {
     await rm(tmp, { recursive: true, force: true })
   }
-  console.log(`已写入 ${relative(REPO_ROOT, FONTS_DIR)}：${outputs.length} 个分片`)
+  console.log(
+    `已写入 ${relative(REPO_ROOT, FONTS_DIR)}：${outputs.length} 个网站分片，1 个弹窗分片`,
+  )
   // 契约 §3.6：标准输出末行为 shard0+cinzel=<字节数>/122880
   console.log(`shard0+cinzel=${budget}/${BUDGET}`)
 }

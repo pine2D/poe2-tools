@@ -1,0 +1,9 @@
+# 扩展设置弹窗的衬线文案（扩展 0.3.2 起与网站 shard0 解耦）：build-fonts.mjs 据此生成 fonts/serif-sc-popup.woff2，
+# 只由 fonts/popup.css 引用，不进 fonts.css，网站不下载。格式同 shard0-text.txt：一行一条，# 开头为注释，空行忽略，
+# 行内空白不计，ASCII 可打印字符由脚本自动加入。弹窗新增衬线文字（popup.css 里用 var(--pt-serif) 的元素）时先补这里，
+# 再运行 pnpm ui-theme:fonts；这一片一变扩展 zip 就变，须在同一提交里发扩展补丁版。网站文案改动与本文件无关。
+
+# 标题栏（.titlebar__title）
+PoE2 中文助手
+# “使用前”小标题（.before h2）
+使用前
