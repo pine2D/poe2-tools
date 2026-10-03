@@ -6,31 +6,32 @@ a {
 /* 金底上的文字用 --bg（契约 C7，对 --gold 约 10:1） */
 .skip-link {
   position: fixed;
-  top: 8px;
-  left: 16px;
+  top: var(--sp-2);
+  left: var(--sp-4);
   z-index: 20;
   transform: translateY(-180%);
   background: var(--gold);
   color: var(--bg);
-  padding: 12px 20px;
+  padding: var(--sp-3) var(--sp-5);
 }
 .skip-link:focus {
   transform: translateY(0);
 }
-/* 门户页（首页、扩展介绍页）的根：正文 15px/1.6（M0 mockup 的正文取值） */
+/* 门户页（首页、扩展介绍页）的根：正文 --fs-data / 1.6（M0 mockup 的正文取值） */
 .portal {
-  font-size: 15px;
+  font-size: var(--fs-data);
   line-height: 1.6;
 }
-/* 页面内容最大宽 1280px 居中；更宽的视口两侧只露出 pt-backdrop */
+/* 页面内容最大宽 1280px 居中；左右外距 40px（--sp-4 + --sp-5），与已确认的首页、扩展页样稿一致，页脚同值 */
 .portal-main {
   max-width: 1280px;
   margin-inline: auto;
-  padding-inline: 40px;
+  padding-inline: calc(var(--sp-4) + var(--sp-5));
 }
+/* 上下 --sp-3：单行链接（15px × 1.6）可点高度 48px，不低于 44px */
 .text-link {
   display: inline-block;
-  padding-block: 10px;
+  padding-block: var(--sp-3);
   color: var(--gold);
 }
 /* hero 标题 ≤620px 在逗号后断行 */
@@ -46,33 +47,33 @@ a {
 .site-footer {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 calc(var(--sp-4) + var(--sp-5));
 }
 .site-footer__inner {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 20px;
-  padding-block: 26px;
+  gap: var(--sp-5);
+  padding-block: var(--sp-5);
   border-top: 1px solid var(--line);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 .site-footer strong {
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--fs-data);
 }
 .site-footer p {
-  margin: 6px 0 0;
+  margin: var(--sp-2) 0 0;
 }
 .site-footer nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: var(--sp-5);
 }
 .site-footer a {
-  padding-block: 12px;
+  padding-block: var(--sp-3);
   color: var(--ink-2);
 }
 .site-footer .site-legal {
@@ -83,16 +84,16 @@ a {
 /* ≤620px：页面左右外距 16px；页脚链接可点高 ≥44px（spec §5.15、§6.7） */
 @media (max-width: 620px) {
   .portal-main {
-    padding-inline: 16px;
+    padding-inline: var(--sp-4);
   }
   .mobile-break {
     display: initial;
   }
   .site-footer {
-    padding: 0 16px;
+    padding: 0 var(--sp-4);
   }
   .site-footer nav {
-    gap: 16px;
+    gap: var(--sp-4);
   }
   .site-footer a {
     display: inline-flex;

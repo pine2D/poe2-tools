@@ -6,7 +6,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-zh-cn);
-  font-size: 14px;
+  font-size: var(--fs-body);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }

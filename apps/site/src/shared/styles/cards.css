@@ -1,17 +1,17 @@
 /* 行内 NamePair、辅助宝石与天赋紧凑列表；组件外观来自 @poe2-tools/ui-theme（spec §6.4、§6.7） */
-/* 行内 NamePair（辅助宝石、天赋，spec §6.4.2，B6）：中文在前（--ink 600 15px）、英文在后（13px --ink-2），
-   基线对齐，间距 12px，换行行距 4px（沿用改版前 cards.css:47-53） */
+/* 行内 NamePair（辅助宝石、天赋，spec §6.4.2，B6）：中文在前（--ink 600 --fs-data）、英文在后（--fs-small --ink-2），
+   基线对齐，间距 --sp-3，换行行距 --sp-1（沿用改版前 cards.css:47-53） */
 .namepair {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: var(--sp-1) var(--sp-3);
   min-width: 0;
   overflow-wrap: anywhere;
 }
 .namepair__zh {
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--fs-data);
   font-weight: 600;
 }
 .namepair__zh--gem {
@@ -23,28 +23,28 @@
 }
 .namepair__en {
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
-/* 技能卡里的辅助宝石：沿用 .supports 的 14px 400；左缘 20px 与主宝石自由备注对齐（M0 V4） */
+/* 技能卡里的辅助宝石：--fs-body 400；左缘 20px（--sp-2 + --sp-3）与 ui-theme .pt-pair--solo 的左缘对齐（M0 V4） */
 .supports {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .supports > li {
-  padding: 10px 22px 12px 20px;
+  padding: var(--sp-3) var(--sp-5) var(--sp-3) calc(var(--sp-2) + var(--sp-3));
   border-top: 1px solid rgba(255, 255, 255, 0.045);
 }
 .supports .namepair__zh {
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 400;
 }
 .supports .pt-pairs {
-  margin-top: 4px;
+  margin-top: var(--sp-1);
 }
 .supports .pt-pair--solo {
   display: block;
-  padding: 2px 0 0;
+  padding: var(--sp-1) 0 0;
 }
 /* 天赋紧凑列表（spec §6.4.2，B2）：一张 pt-panel card、每个天赋一个 li；带备注的天赋在名称行下接缩进 20px、相距 4px 的对照行 */
 .passives {
@@ -53,18 +53,18 @@
   list-style: none;
 }
 .passives > li {
-  padding: 12px 20px;
+  padding: var(--sp-3) calc(var(--sp-2) + var(--sp-3));
   border-bottom: 1px solid var(--line);
 }
 .passives > li:last-child {
   border-bottom: 0;
 }
 .passives .pt-pairs {
-  margin: 4px 0 0 20px;
+  margin: var(--sp-1) 0 0 calc(var(--sp-2) + var(--sp-3));
 }
 .passives .pt-pair--solo {
   display: block;
-  padding: 2px 0 0;
+  padding: var(--sp-1) 0 0;
 }
 /* gem 名称牌上的“未命中”是状态文字，用 --miss（对 #261f17 为 8.13:1，spec §5.8） */
 .app__gem-miss {

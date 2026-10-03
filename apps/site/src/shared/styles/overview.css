@@ -8,39 +8,39 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px 24px;
+  gap: var(--sp-4) var(--sp-5);
 }
 .whead-l {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-1);
   min-width: 0;
 }
 .whead-file {
   color: var(--ink-3);
-  font-size: 13px;
+  font-size: var(--fs-small);
   overflow-wrap: anywhere;
 }
 .whead-class {
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .stats {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 20px;
-  margin: 8px 0 0;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-2) 0 0;
   padding: 0;
   list-style: none;
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-variant-numeric: tabular-nums;
 }
 .stats > li {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
 }
 .stats__ok .icon {
   color: var(--ok);
@@ -54,12 +54,12 @@
 .stats__miss {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
   padding: 0;
   border: 0;
   background: none;
   color: var(--miss);
-  font-size: 14px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .stats__chev {
@@ -73,18 +73,18 @@
   flex: none;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 /* “构筑说明与来源”开关：右对齐文字按钮，带三角标；aria-expanded 控制独立区域 #build-details */
 .details-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
   padding: 0;
   border: 0;
   background: none;
   color: var(--ink-2);
-  font-size: 13.5px;
+  font-size: var(--fs-small);
   cursor: pointer;
 }
 .details-toggle::before {
@@ -103,17 +103,17 @@
 }
 /* 待核对清单：L0 面板（pt-l0-panel），位于信息行下、页签行上 */
 .review-list {
-  margin-top: 16px;
-  padding: 14px 16px;
-  font-size: 14px;
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  font-size: var(--fs-body);
 }
 .review-list > p {
-  margin: 0 0 10px;
+  margin: 0 0 var(--sp-2);
   color: var(--ink-2);
 }
 .misslist {
   display: grid;
-  gap: 8px;
+  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -122,12 +122,12 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px 16px;
+  gap: var(--sp-2) var(--sp-4);
 }
 .misslist__where small {
-  margin-left: 8px;
+  margin-left: var(--sp-2);
   color: var(--miss);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
 }
 .misslist__text {
   color: var(--ink-2);
@@ -135,27 +135,28 @@
 }
 /* 构筑说明与来源：待核对清单之后、页签行之前的独立区域，占整行；构筑说明卡是 pt-panel card */
 .build-details {
-  margin-top: 16px;
+  margin-top: var(--sp-4);
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 .build-details > p {
-  margin: 0 0 6px;
+  margin: 0 0 var(--sp-2);
   overflow-wrap: anywhere;
 }
 .build-details .pt-panel--card {
-  margin-top: 12px;
+  margin-top: var(--sp-3);
 }
+/* 标题左右 20px（--sp-2 + --sp-3）= 下方对照行 .pt-pair--solo 的左缘，标题与说明文字对齐 */
 .build-details h3 {
   margin: 0;
-  padding: 12px 20px 4px;
+  padding: var(--sp-3) calc(var(--sp-2) + var(--sp-3)) var(--sp-1);
   color: var(--ink);
-  font: 600 15px / 1.4 var(--font-zh-cn);
+  font: 600 var(--fs-data) / 1.4 var(--font-zh-cn);
 }
 .app__tab-empty {
-  margin: 20px 0 0;
+  margin: var(--sp-5) 0 0;
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 /* 逐项核对 → 返回阶段看板；图标借 chevron-down 旋转成向左 */
 .whead-back {

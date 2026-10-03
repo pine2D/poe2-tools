@@ -68,12 +68,12 @@
   font-weight: 400;
   font-style: normal;
 }
-/* 双语模式挂在译文后的英文原行（改版前 .tip__keep）：块级、13px --ink-2，数值不提亮 */
+/* 双语模式挂在译文后的英文原行（改版前 .tip__keep）：块级、--fs-small --ink-2，数值不提亮 */
 .app__pair-orig {
   display: block;
-  padding-top: 2px;
+  padding-top: var(--sp-1);
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .app__pair-orig .pt-num {
   color: inherit;

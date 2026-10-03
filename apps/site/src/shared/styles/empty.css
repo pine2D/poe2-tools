@@ -1,8 +1,8 @@
 /* 构筑空态与拖放区；组件外观来自 @poe2-tools/ui-theme（spec §6.4、§6.7） */
 /* DropZone hero（spec §6.4.1；M0 self-decided B3）：图标与标题同一行，按钮、提示行、折叠对齐标题左缘 */
 .app__drop {
-  margin-top: 24px;
-  padding: 24px 28px 18px;
+  margin-top: var(--sp-5);
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
 }
 .app__import .app__drop {
   margin-top: 0;
@@ -10,7 +10,7 @@
 .app__drop-head {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: var(--sp-4);
 }
 .app__drop-icon {
   color: var(--ink-2);
@@ -18,29 +18,30 @@
 .app__drop-title {
   margin: 0;
   color: var(--ink);
-  font-size: 17px;
+  font-size: var(--fs-lead);
   font-weight: 600;
 }
+/* 正文左缘对齐标题：图标宽 40px（DropZone 的 Icon size）+ 标题行间距 --sp-4 */
 .app__drop-body {
-  margin: 14px 0 0 58px;
+  margin: var(--sp-3) 0 0 calc(40px + var(--sp-4));
 }
 .app__drop-hint {
-  margin: 12px 0 0;
+  margin: var(--sp-3) 0 0;
   color: var(--ink-2);
-  font-size: 13.5px;
+  font-size: var(--fs-small);
 }
 /* 词典失败状态的拖放区保留信任说明（spec §6.4.1）；空态的信任说明移到脚注（M0 self-decided B4） */
 .app__drop-trust {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 12px 0 0;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 /* “或粘贴内容”折叠：空态、词典失败与侧栏共用 */
 .app__paste {
-  margin-top: 6px;
+  margin-top: var(--sp-2);
 }
 .app__paste > summary {
   justify-content: flex-start;
@@ -49,8 +50,8 @@
 .app__paste-body {
   display: grid;
   justify-items: start;
-  gap: 10px;
-  margin-top: 6px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
 }
 /* 构筑空态（spec §6.4.1）：一扇 pt-frame--hero，框最大宽 820px 居中（M0 self-decided B1）；框内一律左对齐（B2） */
 .app__empty {
@@ -59,35 +60,35 @@
 }
 .app__empty-lede {
   max-width: 62ch;
-  margin: 12px 0 0;
+  margin: var(--sp-3) 0 0;
   color: var(--ink-2);
-  font-size: 15px;
+  font-size: var(--fs-data);
 }
 /* 示例行“还没有文件？[试用示例构筑] 自制演示文件…”（M0 self-decided B6） */
 .app__example-action {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 14px;
-  margin-top: 22px;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-5);
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
-/* 中英示例：pt-panel inset；标签列 56px，分隔线左缘与正文列对齐（68px，spec §5.9、M0 B5） */
+/* 中英示例：pt-panel inset；标签列 56px，分隔线左缘与正文列对齐（56px + --sp-3，spec §5.9、M0 B5） */
 .app__empty-example {
-  margin-top: 18px;
-  padding: 16px 22px;
+  margin-top: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
 }
 .app__ex-line {
   display: grid;
   grid-template-columns: 56px minmax(0, 1fr);
   align-items: baseline;
-  gap: 12px;
-  font-size: 17px;
+  gap: var(--sp-3);
+  font-size: var(--fs-lead);
 }
 .app__ex-cap {
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   white-space: nowrap;
 }
 .app__ex-en {
@@ -104,21 +105,21 @@
   font-weight: 600;
 }
 .app__ex-divider {
-  margin: 8px 0 8px 68px;
+  margin: var(--sp-2) 0 var(--sp-2) calc(56px + var(--sp-3));
 }
-/* 隐私说明与脚注：L0，12.5–13px --ink-2（M0 self-decided B4） */
+/* 隐私说明与脚注：L0，--fs-small --ink-2（M0 self-decided B4） */
 .app__empty-trust {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 20px 0 0;
+  gap: var(--sp-2);
+  margin: var(--sp-5) 0 0;
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .app__empty-foot {
   display: grid;
-  gap: 4px;
-  margin: 8px 0 0;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
 }

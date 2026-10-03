@@ -3,7 +3,7 @@
 // 页面样式按 main.tsx 的引入顺序拼接后解析，“最终取值”取后写的一条（与层叠顺序一致）。
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { type CssRule, parseRules } from '../../../../packages/ui-theme/src/testing/css'
+import { type CssRule, parseRules, rootTokens } from '../../../../packages/ui-theme/src/testing/css'
 
 const repo = new URL('../../../../', import.meta.url)
 const read = (rel: string): string => readFileSync(new URL(rel, repo), 'utf8')
@@ -56,18 +56,31 @@ function box(value: string): [string, string, string, string] {
   const [top = '0', right = top, bottom = top, left = right] = parts
   return [top, right, bottom, left]
 }
+/** 尺寸阶梯（scale.css）：页面层间距写成 var(--sp-N)，比较前换算成 px */
+const SCALE = rootTokens(read('packages/ui-theme/src/scale.css')).tokens
 const px = (value: string): number => {
-  const match = /^(-?\d+(?:\.\d+)?)px$/.exec(value)
-  if (match === null) throw new Error(`不是 px 值：${value}`)
+  const token = /^var\((--sp-\d)\)$/.exec(value)
+  const raw = token === null ? value : (SCALE.get(token[1] ?? '') ?? '')
+  const match = /^(-?\d+(?:\.\d+)?)px$/.exec(raw)
+  if (match === null) throw new Error(`不是 px 值或间距令牌：${value}`)
   return Number(match[1])
 }
 
 describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
   const rules = buildCss()
-  it('--main-pad-top 三档：桌面 22px、≤1099px 24px、≤600px 20px', () => {
-    expect(finalValue(rules, '.app__main', '--main-pad-top')).toBe('22px')
-    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 1099px')).toBe('24px')
-    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 600px')).toBe('20px')
+  it('--main-pad-top 三档取间距令牌：桌面与 ≤1099px --sp-5、≤600px --sp-4，都不小于角饰外伸 12px', () => {
+    expect(finalValue(rules, '.app__main', '--main-pad-top')).toBe('var(--sp-5)')
+    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 1099px')).toBe(
+      'var(--sp-5)',
+    )
+    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 600px')).toBe(
+      'var(--sp-4)',
+    )
+    for (const media of [undefined, 'max-width: 1099px', 'max-width: 600px']) {
+      expect(px(finalValue(rules, '.app__main', '--main-pad-top', media))).toBeGreaterThanOrEqual(
+        12,
+      )
+    }
   })
   it('主区上内边距就是 --main-pad-top，左右内边距不小于角饰外伸（桌面 12px，≤620px 9px）', () => {
     for (const [media, least] of [
@@ -221,9 +234,15 @@ describe('导入后的自动滚动（spec §6.4.2）', () => {
 
 describe('页头右侧控件组间距（spec §5.2，M2 Ruling 11）', () => {
   const rules = buildCss()
-  it('简繁分段与“设置”之间：桌面 20px（同 M0）、≤850px 16px', () => {
-    expect(finalValue(rules, '.app__options', 'gap')).toBe('20px')
-    expect(finalValue(rules, '.app__options', 'gap', 'max-width: 850px')).toBe('16px')
+  it('简繁分段与“设置”之间与 ui-theme 的 .pt-header__end 一致：桌面 20px（--sp-2 + --sp-3）、≤850px 16px（--sp-4）', () => {
+    expect(finalValue(rules, '.app__options', 'gap')).toBe('calc(var(--sp-2) + var(--sp-3))')
+    expect(finalValue(rules, '.app__options', 'gap', 'max-width: 850px')).toBe('var(--sp-4)')
+    const header = parseRules(read('packages/ui-theme/src/components/header.css'))
+    expect(finalValue(header, '.pt-header__end', 'gap')).toBe('20px')
+    expect(finalValue(header, '.pt-header__end', 'gap', 'max-width: 850px')).toBe('16px')
+    expect(SCALE.get('--sp-2')).toBe('8px')
+    expect(SCALE.get('--sp-3')).toBe('12px')
+    expect(SCALE.get('--sp-4')).toBe('16px')
   })
 })
 

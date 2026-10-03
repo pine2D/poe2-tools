@@ -8,7 +8,7 @@
 }
 /* 词典状态条：底色通栏，文字与 1280px 内容区对齐（M0 self-decided K6） */
 .app__dictbar {
-  padding-inline: max(24px, calc((100% - 1280px) / 2 + 24px));
+  padding-inline: max(var(--sp-5), calc((100% - 1280px) / 2 + var(--sp-5)));
 }
 .app__dictbar-lack {
   color: var(--miss);
@@ -26,32 +26,32 @@
   display: none;
 }
 /* 侧栏是 L0 面板、没有角饰，外距取间距令牌；主区框外侧留白 ≥ 角饰外伸 12px（spec §4.5），
-   主区 22/24/44/12（spec §6.4.2，mockup :430） */
+   主区上 / 右 / 下 / 左取 --sp-5 / --sp-5 / --sp-7 / --sp-3，左 12px 恰等于角饰外伸 */
 .app__side {
   min-width: 0;
   padding: var(--sp-5) var(--sp-3) var(--sp-5) var(--sp-5);
 }
 /* 侧栏脚注在框外，只写未命中说明（B14 删去词典版本） */
 .app__side-note {
-  margin: 14px 0 0;
-  padding: 0 6px;
+  margin: var(--sp-3) 0 0;
+  padding: 0 var(--sp-2);
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   line-height: 1.7;
 }
 /* --main-pad-top 等于当前断点的上内边距；主区 pt-frame 的 scroll-margin-top 取它（spec §6.4.2） */
 .app__main {
-  --main-pad-top: 22px;
+  --main-pad-top: var(--sp-5);
   min-width: 0;
-  padding: var(--main-pad-top) 24px 44px 12px;
+  padding: var(--main-pad-top) var(--sp-5) var(--sp-7) var(--sp-3);
 }
 .app__main:focus {
   outline: none;
 }
-/* 没有文件时主区独占整行（空态、词典失败且无文件；M0 self-decided B1：26/40/44） */
+/* 没有文件时主区独占整行（空态、词典失败且无文件）：框最大宽 820px 居中，左右内边距只在窄视口里看得出 */
 .app__main:only-child {
   grid-column: 1 / -1;
-  padding: 26px 40px 44px;
+  padding: var(--sp-5) var(--sp-6) var(--sp-7);
 }
 /* 词典失败且没有文件时的“导入 .build”框：与空态框同宽居中 */
 .app__import {
@@ -62,12 +62,12 @@
 .app__hint {
   margin: 0;
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 /* ErrorCard（spec §5.4）：pt-panel card；标题前 --danger 警示图标，标题 --ink，说明 --ink-2，动作为默认 pt-btn */
 .app__error {
   max-width: 640px;
-  padding: 20px 22px;
+  padding: var(--sp-5);
 }
 /* 词典失败且没有文件时，框外的 ErrorCard 与下方“导入 .build”框同宽居中，两块左缘对齐（M0 未画此状态，
    按 .app__import 取值）。写在 .app__error 之后，特异性按升序排列 */
@@ -78,22 +78,22 @@
 .app__error-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
   color: var(--ink);
-  font-size: 16px;
+  font-size: var(--fs-lead);
 }
 .app__error-title .icon {
   color: var(--danger);
 }
 .app__error-hint {
-  margin: 0 0 16px;
+  margin: 0 0 var(--sp-4);
   color: var(--ink-2);
 }
 .app__error-detail {
-  margin-top: 16px;
+  margin-top: var(--sp-4);
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .app__error-detail > summary {
   display: inline-flex;
@@ -103,25 +103,25 @@
 /* “查看原始错误”折叠内是 --font-code 的 L0 代码块 */
 .app__error-detail code {
   display: block;
-  margin-top: 8px;
-  padding: 10px 12px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--bg);
   color: var(--ink);
-  font: 12.5px / 1.6 var(--font-code);
+  font: var(--fs-small) / 1.6 var(--font-code);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 /* ErrorCard 在框外时，与下方框之间留出大于角饰外伸（12px）的间距 */
 .app__error + .app__import {
-  margin-top: 24px;
+  margin-top: var(--sp-5);
 }
 /* Toast（下载落地引导条，spec §5.12）：外观 pt-toast；这里只管底部居中的位置、层级 40 与进出动效 */
 .app__toast {
   position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  inset-inline: 16px;
+  bottom: calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
+  inset-inline: var(--sp-4);
   z-index: 40;
   margin: auto;
   opacity: 0;
