@@ -128,7 +128,7 @@ pnpm ui-theme:motif # 手动运行：由 motif.ts 重新生成母题 CSS 与 SVG
 - 扩展 `apps/poe2-extension` 版本独立于网站：唯一来源是它的 `package.json`（`manifest.json` 须一致，构建时核对），更新日志在
   `apps/poe2-extension/CHANGELOG.md`。入库的 `apps/poe2-extension/release.json` 是发布闸门：`pnpm verify` 与 CI 重新打包后核对
   版本、文件名、字节数与 SHA-256，不一致即失败。会改变扩展 zip 的改动：扩展源码、`packages/l10n-core`、网站与扩展共用的
-  `packages/item-core`（只为网站改它也算）、扩展用到的数据、根目录 `LICENSE`、依赖与 `pnpm-lock.yaml` 升级（构建链版本）。
+  `packages/item-core`（只为网站改它也算）、`packages/ui-theme` 中扩展用到的部分（令牌、母题、弹窗组件、L1 样式、弹窗字体分片与 shard0 文案 `scripts/shard0-text.txt`、完整声明；只为网站改它也算）、扩展用到的数据、根目录 `LICENSE`、依赖与 `pnpm-lock.yaml` 升级（构建链版本）。
   有意发版：升版本 → 写扩展 CHANGELOG → `pnpm extension:release` → 提交；只在 Linux（含 WSL）上发版；
   步骤见 `docs/chrome-extension/README.md` 的“发版步骤”。
 - 推送 main 触发网站部署（扩展 zip 随站发布在 `/downloads/`），部署成功后 `release-extension` job 创建 tag `ext-v<版本>` 与

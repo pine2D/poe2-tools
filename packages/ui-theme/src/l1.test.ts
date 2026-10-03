@@ -64,7 +64,9 @@ describe('L1 禁用项（spec §4.2）', () => {
     expect(l1).not.toMatch(/url\(/i)
   })
   it('::slotted() 规则的每条声明都带 !important（B.12 修订 10）', () => {
-    for (const rule of rules.filter((r) => r.selectors.some((s) => s.includes('::slotted(')))) {
+    const slotted = rules.filter((r) => r.selectors.some((s) => s.includes('::slotted(')))
+    expect(slotted.length).toBeGreaterThan(0)
+    for (const rule of slotted) {
       for (const [name, value] of rule.declarations)
         expect(value, `${rule.selectors.join(',')} ${name}`).toMatch(/!important$/)
     }

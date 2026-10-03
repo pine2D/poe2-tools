@@ -3,7 +3,7 @@ import { prepareImport } from '../adapters/coe-beta/import'
 import { FULL_DISCLAIMER, SHORT_PROVENANCE } from '../provenance'
 import { adoptL1, createGem } from './l1'
 
-// 原站对话框的布局放宽（spec §6.9 宿主全局样式例外 3）：逐字沿用 0.2.0，只改布局，不改颜色与字体
+// 原站对话框的布局放宽（spec §6.9 宿主全局样式例外 3）：只改布局，不改颜色与字体；第一条规则是 0.2.0 原文加 overflow-y: auto（spec B.12 第 11 条），另两条逐字沿用 0.2.0
 const DIALOG_CSS = `
       #noticeDialog:has([data-poe2-l10n="import"]) {
         box-sizing: border-box;
