@@ -98,6 +98,29 @@ function NoneCell() {
   )
 }
 
+// 作者备注：默认两行摘要，可展开全文（触屏与键盘都能操作）；未被截断时点击不切换
+function StageNote({ note }: { note: string }) {
+  // 展开态跟随 toggle 事件记录，点击时按记录判定（不读点击当下的 open，各环境切换时机不同）
+  const [open, setOpen] = useState(false)
+  return (
+    <details className="stageboard__note" onToggle={(event) => setOpen(event.currentTarget.open)}>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: summary 是原生可交互的展开控件（键盘 Enter/Space 也会触发 click） */}
+      <summary
+        onClick={(event) => {
+          const details = event.currentTarget.parentElement as HTMLElement
+          if (!open && details.dataset.clamped === 'false') event.preventDefault()
+        }}
+      >
+        <span className="stageboard__note-text">{note}</span>
+        <span className="stageboard__note-more" aria-hidden="true">
+          <span className="stageboard__note-open">展开全文</span>
+          <span className="stageboard__note-close">收起</span>
+        </span>
+      </summary>
+    </details>
+  )
+}
+
 export function StageBoard({
   series,
   allSeries,
@@ -174,6 +197,15 @@ export function StageBoard({
       )
     }
     const measure = () => {
+      // 幽灵条角格取实测的栏位列宽，不直接取 --slot-w（自动表格布局下实际列宽可能不同）
+      const corner = tb.querySelector('.stageboard__corner')?.getBoundingClientRect().width
+      if (corner !== undefined) gh.style.setProperty('--ghost-corner', `${corner}px`)
+      // 作者备注只在被截断时给出“展开全文”；已展开的保持原判定
+      for (const note of tb.querySelectorAll<HTMLDetailsElement>('details.stageboard__note')) {
+        if (note.open) continue
+        const text = note.querySelector('.stageboard__note-text')
+        if (text !== null) note.dataset.clamped = String(text.scrollHeight > text.clientHeight + 1)
+      }
       setWidths(
         // 用选择器而不是 tHead.rows：happy-dom 不实现 rows 集合
         [...tb.querySelectorAll('thead > tr:first-child > th')].map(
@@ -188,13 +220,21 @@ export function StageBoard({
         .closest('.stageboard__cell, .pt-btn')
         ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     }
+    // 表格与滚动容器都要观察：容器变宽而表格因 min-width 不变时，溢出状态也要更新
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
     observer?.observe(tb)
+    observer?.observe(sc)
+    // 字体换入后列宽会变，首帧测量可能用的是后备字体
+    let alive = true
+    void document.fonts?.ready.then(() => {
+      if (alive) measure()
+    })
     sc.addEventListener('scroll', update, { passive: true })
     sc.addEventListener('focusin', onFocus)
     window.addEventListener('scroll', update, { passive: true })
     measure()
     return () => {
+      alive = false
       observer?.disconnect()
       sc.removeEventListener('scroll', update)
       sc.removeEventListener('focusin', onFocus)
@@ -406,11 +446,7 @@ export function StageBoard({
                           <span className="stageboard__miss">待核对 {missCount}</span>
                         )}
                       </span>
-                      {note !== '' && (
-                        <p className="stageboard__note" title={note}>
-                          {note}
-                        </p>
-                      )}
+                      {note !== '' && <StageNote note={note} />}
                       <button
                         type="button"
                         className="pt-btn pt-btn--quiet pt-btn--xs"

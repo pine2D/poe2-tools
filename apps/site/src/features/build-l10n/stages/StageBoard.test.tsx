@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { miniBundle, miniIndex } from '../../../../../../packages/build-core/src/testing/miniDict'
 import type { LoadedDict } from '../../../shared/dict/loadDict'
@@ -178,5 +178,69 @@ describe('StageBoard', () => {
     if (series === undefined) throw new Error('no series')
     show([series])
     expect(screen.getByRole('button', { name: '下载 example-1.build' })).toBeDefined()
+  })
+
+  it('作者备注默认两行摘要，可用按键或点击展开全文；未截断时不切换', () => {
+    const noted = EXAMPLE_SERIES.map((item, i) => {
+      const input = JSON.parse(item.text) as Record<string, unknown>
+      input.description = `第 ${i + 1} 阶段备注：先拿武器，再补抗性。`
+      const result = translateSource(
+        { id: `n${i}`, name: item.name, text: JSON.stringify(input) },
+        dict,
+        { bilingual: false, annotateUniques: true },
+      )
+      if (!result.ok) throw new Error(result.error)
+      return result.file
+    })
+    for (const file of noted) fieldsById.set(file.id, buildFieldRows(file, false))
+    show(groupSeries(noted))
+    const notes = document.querySelectorAll<HTMLDetailsElement>('details.stageboard__note')
+    expect(notes).toHaveLength(3)
+    const [first, second] = notes
+    if (first === undefined || second === undefined) throw new Error('no note')
+    expect(first.querySelector('.stageboard__note-text')?.textContent).toContain('第 1 阶段备注')
+    expect(first.open).toBe(false)
+    first.dataset.clamped = 'true'
+    fireEvent.click(first.querySelector('summary') as HTMLElement)
+    expect(first.open).toBe(true)
+    // 未截断的备注：点击被取消默认动作（不切换）。happy-dom 在冒泡经过 details 时就切换，
+    // 早于 React 根节点上的处理函数，所以这里只断言默认动作被取消，真实浏览器的表现见验收截图
+    second.dataset.clamped = 'false'
+    expect(fireEvent.click(second.querySelector('summary') as HTMLElement)).toBe(false)
+    expect(document.querySelector('.stageboard__note[title]')).toBeNull()
+  })
+
+  it('滚动容器与表格都受尺寸观察；容器变化时滚动提示与幽灵条角格宽随之更新', () => {
+    const observed: Element[] = []
+    let notify = () => {}
+    class FakeObserver {
+      constructor(callback: () => void) {
+        notify = callback
+      }
+      observe(target: Element) {
+        observed.push(target)
+      }
+      disconnect() {}
+      unobserve() {}
+    }
+    vi.stubGlobal('ResizeObserver', FakeObserver)
+    try {
+      show()
+      const scroller = document.querySelector('.stageboard__scroll') as HTMLElement
+      expect(observed).toContain(scroller)
+      expect(observed).toContain(document.querySelector('.stageboard__table'))
+      const hint = document.querySelector('.stageboard__scrollhint') as HTMLElement
+      expect(hint.hidden).toBe(true)
+      Object.defineProperty(scroller, 'scrollWidth', { configurable: true, value: 900 })
+      Object.defineProperty(scroller, 'clientWidth', { configurable: true, value: 600 })
+      const corner = document.querySelector('.stageboard__corner') as HTMLElement
+      corner.getBoundingClientRect = () => ({ width: 145 }) as DOMRect
+      act(() => notify())
+      expect(hint.hidden).toBe(false)
+      const ghost = document.querySelector('.stageboard__ghost') as HTMLElement
+      expect(ghost.style.getPropertyValue('--ghost-corner')).toBe('145px')
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

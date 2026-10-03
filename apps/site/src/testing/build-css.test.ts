@@ -310,3 +310,30 @@ describe('改版前构筑页样式已清理（契约 §2.4、§4.2）', () => {
     expect(finalValue(controls, selector, 'outline')).toBe('2px solid var(--focus)')
   })
 })
+
+describe('阶段看板与紧凑文件行的几何（阶段看板验收修正第 1 轮）', () => {
+  const side = parseRules(read('apps/site/src/shared/styles/sidebar.css'))
+  const board = parseRules(read('apps/site/src/shared/styles/stageboard.css'))
+  it('文件列表是可收窄的单列：长名称按省略号截断，不把行撑出卡片', () => {
+    expect(finalValue(side, '.app__files', 'grid-template-columns')).toBe('minmax(0, 1fr)')
+  })
+  it('紧凑文件行右内边距让出移除按钮（right 6px + 28px）再留 --sp-1', () => {
+    expect(finalValue(side, '.app__files--stages .pt-file', 'padding')).toBe(
+      'var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-1)',
+    )
+  })
+  it('吸附栏位列与角格有最小宽度 --slot-w，不被长名称的阶段列挤窄', () => {
+    expect(
+      finalValue(
+        board,
+        '.stageboard__corner, .stageboard__table tbody th[scope="row"]',
+        'min-width',
+      ),
+    ).toBe('var(--slot-w)')
+  })
+  it('幽灵阶段名条的角格取组件实测宽度，缺省回落 --slot-w', () => {
+    expect(finalValue(board, '.stageboard__ghost-corner', 'inline-size')).toBe(
+      'var(--ghost-corner, var(--slot-w))',
+    )
+  })
+})

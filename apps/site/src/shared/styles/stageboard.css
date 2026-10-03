@@ -77,7 +77,9 @@
 }
 .stageboard__ghost-corner {
   flex: none;
-  inline-size: var(--slot-w);
+  /* 组件实测角格宽写入 --ghost-corner，阶段名与正文各列对齐 */
+  box-sizing: border-box;
+  inline-size: var(--ghost-corner, var(--slot-w));
   border-inline-end: 1px solid var(--metal-edge);
 }
 .stageboard__ghost-clip {
@@ -162,7 +164,9 @@
   position: sticky;
   inset-inline-start: 0;
   z-index: 1;
+  /* 自动表格布局下 width 只是建议值，长名称的阶段列会把栏位列挤窄；min-width 保住列宽 */
   width: var(--slot-w);
+  min-width: var(--slot-w);
   border-inline-end: 1px solid var(--line-2);
   background: var(--frame-bg);
   color: var(--ink-2);
@@ -240,14 +244,53 @@
   font-size: var(--fs-micro);
   font-variant-numeric: tabular-nums;
 }
+/* 作者备注：默认两行摘要，点开读全文；只在被截断时显示“展开全文”（组件实测写 data-clamped） */
 .stageboard__note {
-  display: -webkit-box;
   margin: 0 0 var(--sp-2);
-  overflow: hidden;
   color: var(--ink-2);
   font-size: var(--fs-small);
+}
+.stageboard__note > summary {
+  display: block;
+  border-radius: 3px;
+  list-style: none;
+  cursor: pointer;
+}
+.stageboard__note > summary::-webkit-details-marker {
+  display: none;
+}
+.stageboard__note > summary:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.stageboard__note[data-clamped="false"]:not([open]) > summary {
+  cursor: default;
+}
+.stageboard__note-text {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+.stageboard__note[open] .stageboard__note-text {
+  display: block;
+  overflow: visible;
+}
+.stageboard__note-more {
+  display: inline-block;
+  margin-block-start: var(--sp-1);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+.stageboard__note > summary:hover .stageboard__note-more {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.stageboard__note[data-clamped="false"]:not([open]) .stageboard__note-more,
+.stageboard__note[open] .stageboard__note-open,
+.stageboard__note:not([open]) .stageboard__note-close {
+  display: none;
 }
 .stageboard__section > th {
   padding-block: var(--sp-4) var(--sp-2);

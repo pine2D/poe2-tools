@@ -53,6 +53,8 @@
 /* 文件列表（spec §5.12）：项的外观来自 pt-file，这里只管列表间距、“待词典就绪 / 解析失败”与错误说明 */
 .app__files {
   display: grid;
+  /* 单列且可收窄：隐式 auto 轨道会被不换行的长名称撑开，省略号失效、移除按钮被推出卡片 */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   margin: 0;
   padding: 0;
@@ -63,8 +65,9 @@
 .app__files--stages {
   gap: 0;
 }
+/* 右内边距让出移除按钮（right 6px + 28px）再留 --sp-1，与 pt-file 原 38px 一致 */
 .app__files--stages .pt-file {
-  padding: var(--sp-2) var(--sp-5) var(--sp-2) var(--sp-1);
+  padding: var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-1);
   border: 0;
   border-block-end: 1px solid var(--line);
   border-radius: 0;
