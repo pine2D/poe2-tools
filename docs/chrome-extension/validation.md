@@ -90,6 +90,7 @@ pnpm_config_verify_deps_before_run=warn pnpm verify
 
 宿主污染比对沿用 0.3.0 的口径，允许的差异只多这一张样式表，以及被它命中的元素的 `font-family`（见 compatibility.md 0.4.0 节）。
 
+
 ## 复制格式分别验收
 
 显示层改动必须分别检查原生JSON Export和POB文本复制，不能以一种格式通过推断另一种也正常。0.1.107的JSON导出保持正确，但属性标签翻译导致POB文本出现中文与undefined；0.1.108通过属性中文叠加修复，见property-copy-audit.md。
