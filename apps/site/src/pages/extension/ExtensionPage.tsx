@@ -355,7 +355,7 @@ export function ExtensionPage(): ReactElement {
               <li>
                 预览后显示“可以填入”（译文完整）时，核对两栏后点“
                 <strong>填入英文到原站导入框</strong>
-                ”；显示“需先核对 N 处”时这个按钮不能用，点问题前面的“<strong>第 N 行</strong>
+                ”；显示“需先改正 N 行”时这个按钮不能用，点问题前面的“<strong>第 N 行</strong>
                 ”会选中原文里的这一行，改正后重新预览。
               </li>
               <li>

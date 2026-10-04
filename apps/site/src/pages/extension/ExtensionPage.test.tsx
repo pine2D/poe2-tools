@@ -439,7 +439,7 @@ describe('参考信息与删除项', () => {
     expect(steps).toEqual([
       '在 CoE Beta 点原站的“导入装备”，粘贴在游戏里按 Ctrl+Alt+C 复制的国服装备文本。',
       '点“预览中文转换”，对照原文与英文两栏核对。',
-      '预览后显示“可以填入”（译文完整）时，核对两栏后点“填入英文到原站导入框”；显示“需先核对 N 处”时这个按钮不能用，点问题前面的“第 N 行”会选中原文里的这一行，改正后重新预览。',
+      '预览后显示“可以填入”（译文完整）时，核对两栏后点“填入英文到原站导入框”；显示“需先改正 N 行”时这个按钮不能用，点问题前面的“第 N 行”会选中原文里的这一行，改正后重新预览。',
       '最后由你自己点原站的“继续”（Proceed）完成导入。扩展不会替你提交，导入结果以原站为准。',
     ])
     expect(texts(section.querySelectorAll('ol > li:nth-child(3) strong'))).toEqual([
@@ -451,7 +451,7 @@ describe('参考信息与删除项', () => {
       resolve(here, '../../../../poe2-extension/src/content/import-controller.ts'),
       'utf8',
     )
-    for (const text of ['预览中文转换', '填入英文到原站导入框', '可以填入', '需先核对']) {
+    for (const text of ['预览中文转换', '填入英文到原站导入框', '可以填入', '需先改正']) {
       expect(controller, text).toContain(text)
     }
     // 定位按钮的文字是模板串 `第 ${行号} 行`；用正则字面量，避免字符串里出现 ${ 触发 Biome 报警

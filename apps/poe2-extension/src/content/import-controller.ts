@@ -193,32 +193,39 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       invalidate = null
       result.replaceChildren()
       const converted = prepareImport(input.value, terms)
-      const { lines, warnings } = converted
-      const items = checklist(converted.issues)
+      const { lines, warnings, comparisonOnly } = converted
+      // 仅供对照：issues[0] 是对照原因，已作结论副句，不在待核对里重复
+      const items = checklist(comparisonOnly ? converted.issues.slice(1) : converted.issues)
       const located = items.filter((item) => item.line !== null).length
-      const whole = converted.issues.filter((issue) => issue.line === null).length
+      const whole = items.length - located
       const check = doc.createElement('div')
       check.className = 'check'
       const done = group('已完成', 'done')
       const pending = group('待核对', 'pending')
       const next = group('下一步', 'next')
-      check.append(done.box, pending.box, next.box)
+      // 解析失败没有完成任何事：不出“已完成”组（失效态再补回）
+      check.append(...(lines === null ? [] : [done.box]), pending.box, next.box)
       const warningRows = () =>
         warnings.map((text) => entry(icon(doc, 'alert', 'miss'), text, 'warning'))
-      // 已完成：解析失败不出预览；有无行号问题时不显示分数（裁定 21）
-      done.list.append(
-        lines === null
-          ? entry(icon(doc, 'alert', 'miss'), '未生成英文预览')
-          : entry(
-              icon(doc, 'done', 'ok'),
-              whole > 0
-                ? `已生成英文预览（${whole} 条问题涉及整件装备，无法定位到行）`
-                : `已识别 ${lines.recognized} / ${lines.total} 行，生成英文预览`,
-            ),
-      )
+      // 已完成：有无行号问题时不显示分数（裁定 21）
+      if (lines !== null)
+        done.list.append(
+          entry(
+            icon(doc, 'done', 'ok'),
+            whole > 0
+              ? `已生成英文预览（${whole} 条问题涉及整件装备，无法定位到行）`
+              : `已识别 ${lines.recognized} / ${lines.total} 行，生成英文预览`,
+          ),
+        )
       // 待核对：问题（同一行合并，带“第 N 行”定位）＋ 原站兼容性提示（不影响能否填入）
-      if (items.length === 0)
-        pending.list.append(entry(icon(doc, 'done', 'ok'), '没有需要先改正的行', 'clear'))
+      if (items.length === 0 && (!comparisonOnly || warnings.length === 0))
+        pending.list.append(
+          entry(
+            icon(doc, 'done', 'ok'),
+            comparisonOnly ? '没有其他待核对项' : '没有需要先改正的行',
+            'clear',
+          ),
+        )
       for (const { line, text } of items) {
         const row = entry(icon(doc, 'alert', 'miss'), text, 'issue')
         if (line !== null) {
@@ -267,7 +274,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           entry(actor('你'), '粘贴游戏里按 Ctrl+Alt+C 复制的完整装备文本，再点“预览中文转换”'),
         )
         setPrimary(preview)
-      } else if (converted.comparisonOnly) {
+      } else if (comparisonOnly) {
         say('alert', 'miss', '仅供对照', converted.issues[0]?.message ?? null)
         next.list.append(entry(actor('你'), '对照两栏阅读；此类装备暂不能填入'))
         setPrimary(null)
@@ -284,7 +291,13 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         )
         setPrimary(fill)
       } else {
-        say('alert', 'miss', `需先核对 ${items.length} 处`, '两栏仅供对照，暂不能填入')
+        // 全部问题都有行号时与“第 N 行”“改正这 M 行”同用“行”；有整件问题时行数说不清，用“处”
+        say(
+          'alert',
+          'miss',
+          whole > 0 ? `需先核对 ${items.length} 处` : `需先改正 ${located} 行`,
+          '两栏仅供对照，暂不能填入',
+        )
         next.list.append(
           entry(
             actor('你'),
@@ -307,6 +320,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         for (const button of check.querySelectorAll<HTMLButtonElement>('li button'))
           button.disabled = true
         check.classList.add('stale')
+        if (done.box.parentNode !== check) check.prepend(done.box)
         done.list.replaceChildren(
           entry(icon(doc, 'stale', 'dim'), '上次预览已失效，两栏为改动前内容'),
         )

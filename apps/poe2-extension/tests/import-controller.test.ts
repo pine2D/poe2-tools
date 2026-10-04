@@ -420,12 +420,12 @@ it('① 可以填入：唯一 live region 是结论行；已识别 6 / 6 行；�
   expect(preview.hasAttribute('data-primary')).toBe(false)
 })
 
-it('② 需先核对：越界一行，分数、处数与“改正这 M 行”一致，预览是唯一主按钮', () => {
+it('② 需先改正：越界一行，结论“需先改正 N 行”与“第 N 行”“改正这 M 行”同一单位，预览是唯一主按钮', () => {
   const { input, preview } = readyPreview()
   input.value = source.replace('40(36-41)', '42(36-41)')
   input.dispatchEvent(new Event('input', { bubbles: true }))
   preview.click()
-  expect(verdict()?.textContent).toBe('需先核对 1 处两栏仅供对照，暂不能填入')
+  expect(verdict()?.textContent).toBe('需先改正 1 行两栏仅供对照，暂不能填入')
   expect(groups()).toEqual({
     已完成: ['已识别 5 / 6 行，生成英文预览'],
     待核对: ['第 8 行数值无效或不在原文范围内。'],
@@ -446,7 +446,7 @@ it('同一行两条问题只出一条、一个定位按钮；处数与分数都�
   expect(issues[0]?.querySelectorAll('button')).toHaveLength(1)
   expect(issues[0]?.querySelector('button')?.getAttribute('aria-label')).toBe('定位第 10 行')
   expect(issues[0]?.textContent).toBe('第 10 行无法分类的原文已保留 该行尚未完整识别或翻译。')
-  expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 1 处')
+  expect(verdict()?.querySelector('span')?.textContent).toBe('需先改正 1 行')
   expect(groups().已完成).toEqual(['已识别 6 / 7 行，生成英文预览'])
   expect(groups().下一步).toEqual(['你在原站导入框改正这 1 行，再点“预览中文转换”'])
 })
@@ -481,25 +481,53 @@ it.each([
     '传奇装备仅供解析与中英对照，不开放制作。',
   ],
   ['咒符', source.replace('类别: 法器', '类别: 咒符'), '咒符仅供解析与中英对照，不开放制作。'],
-])('②b %s仅供对照：副句为对照原因，不写“改正这”，没有主按钮', (_, text, reason) => {
-  previewWith(text, [BASE, STAT])
-  expect(verdict()?.querySelector('span')?.textContent).toBe('仅供对照')
-  expect(verdict()?.querySelector('small')?.textContent).toBe(reason)
-  expect(groups().待核对?.[0]).toBe(reason)
-  expect(groups().下一步).toEqual(['你对照两栏阅读；此类装备暂不能填入'])
-  expect(ui().querySelector('.check')?.textContent).not.toContain('改正这')
-  expect(primary()).toEqual([])
+])(
+  '②b %s仅供对照：副句为对照原因且不在待核对里重复，不写“改正这”，没有主按钮',
+  (_, text, reason) => {
+    previewWith(text, [BASE, STAT])
+    expect(verdict()?.querySelector('span')?.textContent).toBe('仅供对照')
+    expect(verdict()?.querySelector('small')?.textContent).toBe(reason)
+    expect(groups().待核对).not.toContain(reason)
+    expect(groups().下一步).toEqual(['你对照两栏阅读；此类装备暂不能填入'])
+    expect(ui().querySelector('.check')?.textContent).not.toContain('改正这')
+    expect(primary()).toEqual([])
+  },
+)
+
+it('②b 只有对照原因时：待核对写“没有其他待核对项”，已完成照常给分数', () => {
+  previewWith(source.replace('类别: 法器', '类别: 咒符'), [BASE, STAT])
+  expect(groups().待核对).toEqual(['没有其他待核对项'])
+  expect(ui().querySelector('li[data-kind="clear"]')).not.toBeNull()
+  expect(groups().已完成).toEqual(['已识别 6 / 6 行，生成英文预览'])
 })
 
-it('②c 解析失败：无法识别装备文本，未生成英文预览，下一步写 Ctrl+Alt+C', () => {
+it('②b 对照原因之外的整件问题照常列出，“已完成”只计这些问题', () => {
+  previewWith(source.replace('稀有度: 魔法', '稀有度: 传奇'), [STAT])
+  expect(groups().待核对).toEqual(['基底译名未匹配或存在歧义，无法确认英文。'])
+  expect(groups().已完成).toEqual(['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'])
+})
+
+it('②c 解析失败：无法识别装备文本；不出“已完成”组，待核对写具体原因，下一步写 Ctrl+Alt+C', () => {
   const { preview } = previewWith('任意文本', [])
   expect(verdict()?.textContent).toBe('无法识别装备文本两栏仅供对照')
   expect(groups()).toEqual({
-    已完成: ['未生成英文预览'],
-    待核对: ['无法识别装备文本'],
+    待核对: ['没有找到“物品类别”和“稀有度”行'],
     下一步: ['你粘贴游戏里按 Ctrl+Alt+C 复制的完整装备文本，再点“预览中文转换”'],
   })
+  expect(ui().querySelector('[data-group="done"]')).toBeNull()
   expect(primary()).toEqual([preview])
+})
+
+it('②c 稀有度认不出：原因带“第 N 行”定位；改动原文后失效态补回“已完成”组', () => {
+  const { input } = previewWith('物品类别: 法器\n稀有度: 奇异\n测试', [])
+  expect(groups().待核对).toEqual(['第 2 行稀有度“奇异”认不出，应为普通、魔法、稀有或传奇'])
+  expect(ui().querySelector('li[data-kind="issue"] button')?.getAttribute('aria-label')).toBe(
+    '定位第 2 行',
+  )
+  input.value += ' '
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(Object.keys(groups())).toEqual(['已完成', '待核对', '下一步'])
+  expect(groups().已完成).toEqual(['上次预览已失效，两栏为改动前内容'])
 })
 
 it('③ 已填入：下一步交给原站“继续”，没有主按钮；无兼容性提示时“没有待核对项”', () => {

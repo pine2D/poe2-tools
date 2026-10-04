@@ -264,6 +264,24 @@ describe('导入面板核对清单（方案 §4 第三期；裁定 25）', () =>
       if (value !== undefined) expect(value, rule.selectors.join(', ')).toMatch(/^\d+(\.\d+)?$/)
     }
   })
+  // Task 8 评审第 1 轮：320 宽下标题词中断开、问题原文每行约 4 字；窄面板改排版，宽面板规则不动（以截图复核观感）
+  it('面板是具名尺寸容器；窄于 480px 时标题不断行、署名换行、组名放上方、条目绕排', () => {
+    const panel = byExact('.panel')
+    expect(panel?.declarations.get('container')).toBe('import-panel / inline-size')
+    const narrow = rules.filter(
+      (r) => r.atRules.join(' ') === '@container import-panel (width < 480px)',
+    )
+    const at = (selector: string) => narrow.find((r) => r.selectors.join(', ') === selector)
+    expect(at('.title')?.declarations.get('white-space')).toBe('nowrap')
+    expect(at('.head')?.declarations.get('flex-wrap')).toBe('wrap')
+    expect(at('.head .by')?.declarations.get('flex-basis')).toBe('100%')
+    expect(at('.group')?.declarations.get('grid-template-columns')).toBe('minmax(0, 1fr)')
+    expect(at('.check li')?.declarations.get('display')).toBe('flow-root')
+    expect(at('.check li .ico')?.declarations.get('float')).toBe('left')
+    // 宽面板规则里没有这些声明：窄排版只在容器查询里
+    expect(byExact('.check li')?.declarations.get('display')).toBe('flex')
+    expect(byExact('.group')?.declarations.get('grid-template-columns')).toBe('56px minmax(0, 1fr)')
+  })
   it('失效态排在兼容性提示与语气色之后，只降已完成与待核对两组为 --ink-3，下一步不降', () => {
     const at = (selector: string) => rules.findIndex((r) => r.selectors.join(', ') === selector)
     const stale = at(

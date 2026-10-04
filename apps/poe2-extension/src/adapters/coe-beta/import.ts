@@ -53,19 +53,41 @@ function checkedLines(item: ItemDocument): Set<number> {
   return lines
 }
 
+/** item-core 只回“无法识别装备文本”；面板结论已是这句，待核对改写出认不出的具体原因（标签写法同 item-core 的 LABELS） */
+function unparsedIssue(
+  normalized: string,
+  error: string,
+): { line: number | null; message: string } {
+  if (error !== '无法识别装备文本') return { line: null, message: error }
+  const rows = normalized.split(/\r?\n/)
+  const hasClass = rows.some((row) => /^(?:物品类别|物品種類|Item Class)\s*:\s*\S/i.test(row))
+  const rarityIndex = rows.findIndex((row) => /^(?:稀有度|Rarity)\s*:\s*\S/i.test(row))
+  if (!hasClass && rarityIndex < 0) return { line: null, message: '没有找到“物品类别”和“稀有度”行' }
+  if (!hasClass) return { line: null, message: '没有找到“物品类别”行' }
+  if (rarityIndex < 0) return { line: null, message: '没有找到“稀有度”行' }
+  const value = (rows[rarityIndex] ?? '').replace(/^[^:]*:\s*/, '').trim()
+  return {
+    line: rarityIndex + 1,
+    message: `稀有度“${value}”认不出，应为普通、魔法、稀有或传奇`,
+  }
+}
+
 export function prepareImport(original: string, terms: readonly Term[]): PreparedImport {
-  const parsed = parseItem(original.replace(/^(物品类别|稀有度)\s*：/gm, '$1:'))
-  if (!parsed.ok)
+  const normalized = original.replace(/^(物品类别|稀有度)\s*：/gm, '$1:')
+  const parsed = parseItem(normalized)
+  if (!parsed.ok) {
+    const issue = unparsedIssue(normalized, parsed.error)
     return {
       original,
       english: '',
       ready: false,
-      reasons: [parsed.error],
-      issues: [{ line: null, message: parsed.error }],
+      reasons: [issue.line === null ? issue.message : `第 ${issue.line} 行：${issue.message}`],
+      issues: [issue],
       warnings: [],
       lines: null,
       comparisonOnly: false,
     }
+  }
   const item = parsed.item
   const inspection = inspectItem(item, itemDictionary(terms))
   const issues: { line: number | null; message: string }[] = []

@@ -68,6 +68,8 @@
 
 /* —— 装备文本转换面板（import-controller） —— */
 .panel {
+  /* 窄面板排版的查询容器（见下方 @container import-panel） */
+  container: import-panel / inline-size;
   box-sizing: border-box;
   min-width: 0;
   background: var(--l1-panel);
@@ -233,6 +235,38 @@ textarea[data-preview] {
 .check.stale [data-group="pending"] li,
 .check.stale [data-group="pending"] .ico {
   color: var(--ink-3);
+}
+/* 窄面板（对话框在 320 宽视口里约 257px）：宽面板版式不动，只在面板窄于 480px 时改排——
+   标题不在词中断开，署名整体换到标题下一行并与标题左对齐（gem 16px + 间距 --sp-2）；
+   组名放到条目上方；条目改成行内流，“第 N 行”与“你／原站”在文字开头，图标左浮，问题原文绕排占满整行 */
+@container import-panel (width < 480px) {
+  .head {
+    flex-wrap: wrap;
+    gap: 0 var(--sp-2);
+    padding-block: var(--sp-2);
+  }
+  .title {
+    white-space: nowrap;
+  }
+  .head .by {
+    flex-basis: 100%;
+    margin-left: calc(var(--sp-4) + var(--sp-2));
+    white-space: nowrap;
+  }
+  .group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .check li {
+    display: flow-root;
+  }
+  .check li .ico {
+    float: left;
+    margin-right: var(--sp-2);
+  }
+  .check li button,
+  .check li .who {
+    margin-right: var(--sp-2);
+  }
 }
 button {
   box-sizing: border-box;

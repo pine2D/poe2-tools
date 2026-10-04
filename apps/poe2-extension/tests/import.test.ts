@@ -145,6 +145,18 @@ it('解析失败：lines 为 null，不是仅供对照', () => {
   expect(result.comparisonOnly).toBe(false)
   invariant(result)
 })
+// Task 8 评审第 1 轮：待核对写出具体原因，不复述结论“无法识别装备文本”
+it.each([
+  ['任意文本', null, '没有找到“物品类别”和“稀有度”行'],
+  ['稀有度: 魔法\n测试', null, '没有找到“物品类别”行'],
+  ['物品类别：法器\n测试', null, '没有找到“稀有度”行'],
+  ['物品类别: 法器\n稀有度：奇异\n测试', 2, '稀有度“奇异”认不出，应为普通、魔法、稀有或传奇'],
+])('解析失败写出认不出的原因：%j', (input, line, message) => {
+  const result = prepareImport(input, terms)
+  expect(result.lines).toBeNull()
+  expect(result.issues).toEqual([{ line, message }])
+  invariant(result)
+})
 it('CRLF 换行：行数与行号同 LF 版本', () => {
   const crlf = (value: string) => value.replace(/\n/g, '\r\n')
   expect(prepareImport(crlf(text), terms).lines).toEqual({ total: 7, recognized: 7 })
