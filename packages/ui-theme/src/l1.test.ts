@@ -236,11 +236,15 @@ describe('导入面板核对清单（方案 §4 第三期；裁定 25）', () =>
       if (value !== undefined) expect(value, rule.selectors.join(', ')).toMatch(/^\d+(\.\d+)?$/)
     }
   })
-  it('失效态排在兼容性提示与语气色之后，整组降为 --ink-3', () => {
+  it('失效态排在兼容性提示与语气色之后，只降已完成与待核对两组为 --ink-3，下一步不降', () => {
     const at = (selector: string) => rules.findIndex((r) => r.selectors.join(', ') === selector)
-    const stale = at('.check.stale li, .check.stale .ico')
+    const stale = at(
+      '.check.stale [data-group="done"] li, .check.stale [data-group="done"] .ico, .check.stale [data-group="pending"] li, .check.stale [data-group="pending"] .ico',
+    )
     expect(stale).toBeGreaterThan(at('.check li[data-kind="warning"]'))
     expect(stale).toBeGreaterThan(at('.dim'))
     expect(rules[stale]?.declarations.get('color')).toBe('var(--ink-3)')
+    expect(rules.some((r) => r.selectors.join(', ').includes('[data-group="next"]'))).toBe(false)
+    expect(at('.check.stale li, .check.stale .ico')).toBe(-1)
   })
 })

@@ -225,9 +225,11 @@ textarea[data-preview] {
 .dim {
   color: var(--ink-3);
 }
-/* ④ 原文已改变：旧条目整组降为 --ink-3（含图标），排在语气色之后 */
-.check.stale li,
-.check.stale .ico {
+/* ④ 原文已改变：“已完成”“待核对”降为 --ink-3（含图标），“下一步”是当前唯一有效的指令，保持原样；排在语气色之后 */
+.check.stale [data-group="done"] li,
+.check.stale [data-group="done"] .ico,
+.check.stale [data-group="pending"] li,
+.check.stale [data-group="pending"] .ico {
   color: var(--ink-3);
 }
 button {

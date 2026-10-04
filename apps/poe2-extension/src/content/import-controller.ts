@@ -177,9 +177,10 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       tag.textContent = who
       return tag
     }
-    const group = (title: '已完成' | '待核对' | '下一步') => {
+    const group = (title: '已完成' | '待核对' | '下一步', key: 'done' | 'pending' | 'next') => {
       const box = doc.createElement('div')
       box.className = 'group'
+      box.dataset.group = key
       const caption = doc.createElement('h3')
       caption.textContent = title
       const list = doc.createElement('ul')
@@ -198,9 +199,9 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       const whole = converted.issues.filter((issue) => issue.line === null).length
       const check = doc.createElement('div')
       check.className = 'check'
-      const done = group('已完成')
-      const pending = group('待核对')
-      const next = group('下一步')
+      const done = group('已完成', 'done')
+      const pending = group('待核对', 'pending')
+      const next = group('下一步', 'next')
       check.append(done.box, pending.box, next.box)
       const warningRows = () =>
         warnings.map((text) => entry(icon(doc, 'alert', 'miss'), text, 'warning'))
@@ -296,6 +297,12 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       }
       /** ④ 原文已改变：旧结果降级保留，定位与填入停用，预览成为主按钮 */
       const markStale = (note: string) => {
+        // 已失效且副句不变：不重写结论行（live region）与清单，避免重复播报
+        if (
+          check.classList.contains('stale') &&
+          message.querySelector('small')?.textContent === note
+        )
+          return
         fill.disabled = true
         for (const button of check.querySelectorAll<HTMLButtonElement>('li button'))
           button.disabled = true

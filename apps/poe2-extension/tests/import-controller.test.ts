@@ -540,6 +540,25 @@ it('④ 原文已改变：清单降级、定位停用，预览是唯一主按钮
   expect(primary()).toEqual([preview])
 })
 
+it('R-T4a 清单三组带 data-group，失效态选择器据此只降前两组', () => {
+  readyPreview()
+  const keys = [...ui().querySelectorAll('.check .group')].map((g) => g.getAttribute('data-group'))
+  expect(keys).toEqual(['done', 'pending', 'next'])
+})
+
+it('R-T4a 已失效且副句不变时，后续 input 不重写结论行与清单', () => {
+  const { input } = readyPreview()
+  input.value = source.replace('40(36-41)', '42(36-41)')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(ui().querySelector('.check')?.classList.contains('stale')).toBe(true)
+  const verdictChild = verdict()?.firstElementChild
+  const rows = [...ui().querySelectorAll('.check li')]
+  input.value = `${input.value} `
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(verdict()?.firstElementChild).toBe(verdictChild)
+  expect([...ui().querySelectorAll('.check li')]).toEqual(rows)
+})
+
 it('已恢复：结论行沿用原句，三组清空，预览是唯一主按钮', () => {
   const { preview, fill } = readyPreview()
   fill.click()
