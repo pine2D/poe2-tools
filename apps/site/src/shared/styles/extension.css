@@ -254,7 +254,8 @@
   color: var(--ink);
   font-weight: 600;
 }
-.ext-main code {
+.ext-main code,
+.ext-main kbd {
   padding: 0 var(--sp-1);
   border: 1px solid var(--line-2);
   border-radius: 3px;
@@ -424,6 +425,19 @@
 .ext-details section p {
   margin: 0 0 var(--sp-2);
   color: var(--ink-2);
+}
+/* 装备文本转换：L0 有序步骤，按钮名加粗，快捷键沿用行内代码的样式 */
+.ext-convert {
+  margin: 0 0 var(--sp-2);
+  padding-inline-start: var(--sp-5);
+  color: var(--ink-2);
+}
+.ext-convert li + li {
+  margin-block-start: var(--sp-1);
+}
+.ext-convert strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 /* 621–1099px：环境与下载仍左右分；安装四步改 2×2，确认生效改单列 */

@@ -352,16 +352,17 @@ describe('安装与确认生效（L0）', () => {
 })
 
 describe('参考信息与删除项', () => {
-  it('更新、隐私、支持范围、反馈四节沿用原文案，各自带 aria-labelledby；其余标题保持 L0', () => {
+  it('更新、隐私、装备文本转换、支持范围、反馈五节，各自带 aria-labelledby；其余标题保持 L0', () => {
     const { container } = setup()
     const details = [...container.querySelectorAll('.ext-details > section')]
     expect(details.map((section) => labelOf(container, section))).toEqual([
       '更新与恢复',
       '文本处理与隐私',
+      '装备文本转换',
       '支持范围与已知限制',
       '遇到问题？',
     ])
-    expect(details.map((section) => section.id)).toEqual(['update', 'privacy', '', ''])
+    expect(details.map((section) => section.id)).toEqual(['update', 'privacy', 'convert', '', ''])
     expect(texts(container.querySelectorAll('#update p'))).toEqual([
       '下载新版 zip，解压覆盖原文件夹里的文件，在扩展页点该扩展的“重新加载”（圆形箭头），再刷新 CoE 页面；弹窗里的“检查更新”会打开本页对比版本。',
       '关闭汉化可恢复原文。禁用或卸载扩展后，也请刷新原站页面。',
@@ -373,14 +374,14 @@ describe('参考信息与删除项', () => {
     expect(screen.getByRole('link', { name: '查看权限与隐私说明' }).getAttribute('href')).toBe(
       'https://github.com/pine2D/poe2-tools/blob/main/docs/chrome-extension/privacy.md',
     )
-    expect((details[2] as Element).querySelector('p')?.textContent).toBe(
+    expect((details[3] as Element).querySelector('p')?.textContent).toBe(
       '当前版本不保证支持所有页面和装备格式。遇到未收录的内容、有歧义的译文或损坏的数值时，会提示你检查，不会猜译。Windows 自带的中文输入法尚未完成验证，遇到输入问题请反馈。',
     )
-    expect((details[3] as Element).querySelector('p')?.textContent).toBe(
+    expect((details[4] as Element).querySelector('p')?.textContent).toBe(
       '可以先关闭扩展，看看原站是否也有同样的问题。反馈时请说明页面、操作步骤和扩展版本；如果附上装备样本，请先删去私人信息。',
     )
     expect(
-      within(details[3] as HTMLElement)
+      within(details[4] as HTMLElement)
         .getByRole('link', { name: '反馈问题' })
         .getAttribute('href'),
     ).toBe('https://github.com/pine2D/poe2-tools/issues')
@@ -389,11 +390,42 @@ describe('参考信息与删除项', () => {
       '确认生效',
       '更新与恢复',
       '文本处理与隐私',
+      '装备文本转换',
       '支持范围与已知限制',
       '遇到问题？',
     ]) {
       expect(screen.getByRole('heading', { name }).className, name).toBe('')
     }
+  })
+
+  // 首页写“部分装备的国服文本可转成英文导入（支持范围见介绍页）”，落点就是这一节；
+  // 按钮名逐字取自扩展实际渲染的文字（import-controller.ts）与扩展对原站按钮的译名（ui.zh-CN.json）
+  it('装备文本转换：在“确认生效”之后，有序步骤写明入口、快捷键、预览与由玩家在原站确认，限制写明咒符和传奇', () => {
+    const { container, main } = setup()
+    const section = container.querySelector('#convert') as HTMLElement
+    expect(section).not.toBeNull()
+    expect(section.tagName).toBe('SECTION')
+    expect(labelOf(container, section)).toBe('装备文本转换')
+    const heading = within(section).getByRole('heading', { level: 2, name: '装备文本转换' })
+    expect(heading.className).toBe('')
+    const verify = container.querySelector('#verify') as Element
+    expect(verify.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    const steps = texts(section.querySelectorAll('ol > li'))
+    expect(steps).toEqual([
+      '在 CoE Beta 点原站的“导入装备”，粘贴在游戏里按 Ctrl+Alt+C 复制的国服装备文本。',
+      '点“预览中文转换”，对照原文与英文两栏核对。',
+      '核对无误后点“填入英文到原站导入框”。',
+      '最后由你自己点原站的“继续”（Proceed）完成导入。扩展不会替你提交，导入结果以原站为准。',
+    ])
+    const limits = section.querySelector('ol + p')?.textContent ?? ''
+    expect(limits).toContain('咒符')
+    expect(limits).toContain('传奇')
+    expect(limits).toContain('仅供对照')
+    expect(limits).toContain('保持原文')
+    for (const word of EXTENSION_PAGE_FORBIDDEN as string[]) {
+      expect(section.textContent, word).not.toContain(word)
+    }
+    expect(main.querySelectorAll('#convert').length).toBe(1)
   })
 
   it('能力区与旧“确认翻译生效”一节已删去', () => {

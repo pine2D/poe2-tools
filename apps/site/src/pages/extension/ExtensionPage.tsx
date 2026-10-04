@@ -341,6 +341,29 @@ export function ExtensionPage(): ReactElement {
               查看权限与隐私说明
             </a>
           </section>
+          {/* 首页“支持范围见介绍页”的落点；按钮名逐字取自扩展实际渲染的文字与扩展对原站按钮的译名 */}
+          <section id="convert" aria-labelledby="convert-title">
+            <h2 id="convert-title">装备文本转换</h2>
+            <ol className="ext-convert">
+              <li>
+                在 CoE Beta 点原站的“<strong>导入装备</strong>”，粘贴在游戏里按{' '}
+                <kbd>Ctrl+Alt+C</kbd> 复制的国服装备文本。
+              </li>
+              <li>
+                点“<strong>预览中文转换</strong>”，对照原文与英文两栏核对。
+              </li>
+              <li>
+                核对无误后点“<strong>填入英文到原站导入框</strong>”。
+              </li>
+              <li>
+                最后由你自己点原站的“<strong>继续</strong>
+                ”（Proceed）完成导入。扩展不会替你提交，导入结果以原站为准。
+              </li>
+            </ol>
+            <p>
+              咒符和传奇装备目前仅供对照；特殊标题、未收录的类别或属性格式可能无法转换，没转换的部分保持原文并标出提示。
+            </p>
+          </section>
           <section aria-labelledby="scope-title">
             <h2 id="scope-title">支持范围与已知限制</h2>
             <p>
