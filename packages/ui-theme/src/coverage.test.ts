@@ -32,7 +32,7 @@ const HINT = '运行 pnpm ui-theme:fonts 重新生成字体分片，并与本次
 /** 只属于扩展的字体分组：网站覆盖与 fonts.css 都不含它们 */
 const EXTENSION_GROUPS = ['sc-popup', 'sc-l1']
 const L1_HINT =
-  '运行 node packages/ui-theme/scripts/build-fonts.mjs --offline 重新生成，并在同一提交里 AMEND 扩展 0.4.0（EXTENSION_RELEASE_AMEND=1 pnpm extension:release）'
+  '运行 pnpm ui-theme:fonts --offline 重新生成；L1 子集变化会改变扩展 zip：与扩展版本、扩展 CHANGELOG、release.json 放进同一提交——该版本尚未推送时可用 EXTENSION_RELEASE_AMEND=1 pnpm extension:release，已发布则必须升版本'
 /** 原站 Fontin 位置上已知会出现的译文（selectors.md 样例）：兜住 adapters 写进 Fontin 位置的字 */
 const FONTIN_SAMPLES = [
   '制作',

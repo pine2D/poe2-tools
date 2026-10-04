@@ -581,10 +581,15 @@ it('R-T4a 已失效且副句不变时，后续 input 不重写结论行与清单
   expect(ui().querySelector('.check')?.classList.contains('stale')).toBe(true)
   const verdictChild = verdict()?.firstElementChild
   const rows = [...ui().querySelectorAll('.check li')]
+  expect(rows.length).toBeGreaterThan(0)
   input.value = `${input.value} `
   input.dispatchEvent(new Event('input', { bubbles: true }))
   expect(verdict()?.firstElementChild).toBe(verdictChild)
-  expect([...ui().querySelectorAll('.check li')]).toEqual(rows)
+  const after = [...ui().querySelectorAll('.check li')]
+  expect(after).toHaveLength(rows.length)
+  after.forEach((row, i) => {
+    expect(row).toBe(rows[i])
+  })
 })
 
 it('已恢复：结论行沿用原句，三组清空，预览是唯一主按钮', () => {

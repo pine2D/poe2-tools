@@ -274,7 +274,7 @@ async function main() {
   if (l1.data.length > L1_FONT_BUDGET) {
     throw new ExitError(
       4,
-      `L1 字体预算超出 131,072 字节（实际 ${l1.data.length}）：检查 l1Shard 的收字范围（是否误收 ASCII 或 adapters），不要直接放宽 L1_FONT_BUDGET`,
+      `L1 字体预算超出 ${L1_FONT_BUDGET.toLocaleString('en-US')} 字节（实际 ${l1.data.length}）：检查 l1Shard 的收字范围（是否误收 ASCII 或 adapters），不要直接放宽 L1_FONT_BUDGET`,
     )
   }
   // 临时目录放在已忽略的 data/cache/ 下：脚本被中断时残留的 woff2 不会变成未跟踪文件；

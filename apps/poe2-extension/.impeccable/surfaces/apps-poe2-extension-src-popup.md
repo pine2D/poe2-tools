@@ -27,7 +27,8 @@ FORM：状态置顶（未抽签：用户在 A/B 两版样稿中直接选定 A，
 
 FINISH：unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
-## 待决
+## 已决（0.4.0 落地）
 
-- 内容脚本回报字段（页面状态、已翻译计数、搜索框是否接上、初始化错误）与无回应时的判定，要在只有 storage 权限下实测 tabs.query、tabs.sendMessage、tabs.reload。
-- “未运行”状态不给刷新按钮（当前页可能不是 CoE）；“仍不行请反馈”暂不加链接。
+- 内容脚本只回事实快照（启动阶段、错误类别、页面是否 PoE2 + English、开关、已翻译处数、搜索框是否接上），不含网址、页面文字或原始报错；弹窗经 `tabs.query`、`tabs.sendMessage`、`tabs.reload` 取用，只有 storage 权限时这三个接口在无头 Chrome 里可用（见 compatibility.md），活动标签页的 `url` 与 `title` 取不到，弹窗不依赖它们。
+- 无应答一律显示“未生效”并给“不是 beta 页或页面在安装、更新前已打开”两种可能的原因句，不给刷新按钮；“刷新页面”只在部分生效与初始化失败出现。
+- “仍不行请反馈”未加链接，文案保留，初始化失败改为提示检查更新。

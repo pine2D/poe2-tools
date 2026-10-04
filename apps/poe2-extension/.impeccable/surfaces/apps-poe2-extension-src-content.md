@@ -11,13 +11,13 @@ related_targets: ["packages/ui-theme/src/l1.css"]
 
 用户与任务：玩家在 CoE 英文界面看国服术语、用中文搜基底，把游戏里复制的中文装备文本转成英文后填进原站导入框，再由原站确认导入。
 
-约束：隐形融入原站；扩展从不自动提交，导入结果与装备规则由原站判断；不新增权限；字体只收 `data/l10n/coe-beta/ui.zh-CN.json` 全部译文与面板固定文案，粗体一档，设体积守卫。
+约束：隐形融入原站；扩展从不自动提交，导入结果与装备规则由原站判断；不新增权限；字体只收 `data/l10n/coe-beta/ui.zh-CN.json` 全部译文 ∪ `src/content/*.ts` 与 `src/provenance.ts` 的中文文案，粗体一档，设体积守卫。
 
 ## Direction contract
 
 THESIS：中文要像原站自己的字：原站用游戏风衬线（Fontin）的地方，中文也用衬线；导入面板把“转完了没有、还剩什么、下一步谁做”摆在两栏对照之前。拒绝的默认做法：中文一律系统黑体；转换后只给一句笼统提示。
 
-OWN-WORLD：衬线只落在原站 Fontin 的位置：主导航（背包页签名不改：用户自定义名收字不全会混排，用户 2026-10-04 确认）、button.game 与物品卡底部按钮、首页区块与功能标题；扩展面板标题与主次按钮同样用衬线（“第 N 行”定位按钮除外）。原站 Montserrat 的位置（选择物品分组等小标题、分组按钮、原站对话框标题）、物品卡与词缀、模拟数据、键帽标签、搜索候选保持无衬线。字体 Noto Serif SC 700 一档，拉丁字母仍回落原站字体。
+OWN-WORLD：衬线只落在原站 Fontin 的位置：主导航（背包页签名不改：用户自定义名收字不全会混排，用户 2026-10-04 确认）、button.game 与物品卡底部按钮、首页区块与功能标题、设置面板补丁版本标签；扩展面板标题与主次按钮同样用衬线（“第 N 行”定位按钮除外）。原站 Montserrat 的位置（选择物品分组等小标题、分组按钮、原站对话框标题）、物品卡与词缀、模拟数据、键帽标签、搜索候选保持无衬线。字体 Noto Serif SC 700 一档，拉丁字母仍回落原站字体。
 
 STORY：粘贴中文 → 预览 → 读结论行（可以填入／需先改正 N 行，定位不到行时为需先核对 N 处）→ 按“已完成／待核对（每条带第 N 行定位）／下一步（你／原站）”核对 → 填入英文 → 点原站确认。
 
@@ -27,9 +27,9 @@ FORM：核对清单（未抽签：用户在 A/B 两版样稿中直接选定 B，
 
 FINISH：unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
-## 待决
+## 已决（0.4.0 落地）
 
-- DESIGN.md 的 L1 白名单与 l1.css 头注释“禁止衬线”要先改。
-- 衬线选择器需写文档级样式，与 l1.ts“不写文档级样式”的约定冲突，需在计划里裁定；字体用 web_accessible_resources + fetch + FontFace 加载，从隔离世界调用是否生效要实测。
-- “已识别 X/Y 行”需 prepareImport 新增行数统计；出现无行号问题时不显示分数。
-- 原文已改变状态下是否把“预览中文转换”设为主按钮；已填入状态是否写出原站按钮名“继续”。
+- DESIGN.md 的 L1 规则已改：L1 只在白名单位置用衬线，`l1.css` 头注释同步为“衬线只经 `--l1-serif` 用于 `L1_SERIF_SELECTORS`”，其余仍禁止渐变、金属按钮与角饰。
+- 原站文档里的衬线选择器写成一张文档级样式（`style[data-poe2-l10n="serif"]`，只声明 `font-family`），范围限于 `HOST_SERIF_SELECTORS`；字体文件作为 web_accessible_resources 资源，由内容脚本读成 ArrayBuffer 后以 `FontFace` 注册到原站文档，不写 `@font-face`，加载失败只在控制台警告一行并回落无衬线。已在无头 Chrome 实测生效，正式 Chrome 稳定版仍待验收。
+- “已识别 X/Y 行”由 `prepareImport` 的行数统计提供；有问题涉及整件装备、无法定位到行时不显示分数，改写为“已生成英文预览（N 条问题涉及整件装备，无法定位到行）”。
+- 原文已改变（`markStale`）时旧结果降级保留，定位与填入停用，“预览中文转换”成为唯一主按钮；已失效且副句不变时不重写结论行与清单。已填入状态的下一步写出原站按钮名：点原站的“继续”（Proceed），扩展不提交，且无主按钮。
