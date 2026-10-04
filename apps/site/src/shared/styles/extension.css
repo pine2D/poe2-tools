@@ -1,7 +1,7 @@
 /* 扩展介绍页（二期重排；样稿 2026-10-03-extension，本地留存，用户已确认）。
    阅读顺序：确认环境 → 下载 → 四步安装 → 确认生效 → 更新、隐私、支持范围、反馈。
    唯一的金属重点是下载区那扇 pt-frame（4 个角饰）与框内唯一的 pt-forge-btn；中缝铜线与菱结属于这扇框，不另算落点；其余各区都是 L0。
-   字号与间距（font-size、margin、padding、gap）只取 scale.css 的 --fs-*／--sp-* 令牌；px 只用于几何：
+   字号与间距（font-size、margin、padding、gap）只取 tokens.css 的 --fs-*／--sp-* 尺寸阶梯令牌；px 只用于几何：
    边框与轮廓线宽、圆角、下划线偏移、图标／母题／步号方块与插入光标的宽高、44px／46px 点击高度。
    颜色只取 ui-theme 令牌，不写字面颜色；衬线只经 ui-theme 组件类（pt-hero-title、pt-subhead、pt-forge-btn）。
    “确认生效”里的搜索候选示意用共用的 l1-demo.css（l1demo__ 类，首页对照带同用；main.tsx 先于本文件引入），

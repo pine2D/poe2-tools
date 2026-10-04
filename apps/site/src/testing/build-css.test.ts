@@ -56,8 +56,8 @@ function box(value: string): [string, string, string, string] {
   const [top = '0', right = top, bottom = top, left = right] = parts
   return [top, right, bottom, left]
 }
-/** 尺寸阶梯（scale.css）：页面层间距写成 var(--sp-N)，比较前换算成 px */
-const SCALE = rootTokens(read('packages/ui-theme/src/scale.css')).tokens
+/** 尺寸阶梯（tokens.css）：页面层间距写成 var(--sp-N)，比较前换算成 px */
+const SCALE = rootTokens(read('packages/ui-theme/src/tokens.css')).tokens
 const px = (value: string): number => {
   const token = /^var\((--sp-\d)\)$/.exec(value)
   const raw = token === null ? value : (SCALE.get(token[1] ?? '') ?? '')

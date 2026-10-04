@@ -11,7 +11,7 @@ import '@poe2-tools/ui-theme/index.css' // 令牌、母题与组件
 import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 ```
 
-`src/tokens.css` 是全站唯一的 `:root` 令牌块，只有深色，没有主题变体。其他导出：
+`src/tokens.css` 是全站唯一的 `:root` 令牌块，只有深色，没有主题变体；含颜色、字体栈、尺寸阶梯（`--fs-*` 九档字号、`--sp-*` 八档间距）与动效。扩展设置弹窗经 `tokens.css` 取用阶梯；CoE 注入样式 `l1.css` 不往原站文档写令牌，在 `:host` 声明所用子集（同值，`l1.test.ts` 断言）。字号与间距的防回退门禁共用 `src/testing/size-gate.ts`：网站页面层见 `apps/site/src/testing/scale-tokens.test.ts`，扩展弹窗与 L1 见 `src/extension-sizes.test.ts`。其他导出：
 
 | 导出 | 内容 |
 |---|---|

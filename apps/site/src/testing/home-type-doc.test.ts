@@ -1,6 +1,6 @@
 // @vitest-environment node
 // 设计规格与首页实际字号的一致性门禁：DESIGN.md 字体表里“首页 hero 标题”“首页场景标题”两行的字号与断点，
-// 必须等于 home.css 页面层覆盖经 scale.css 令牌解析后的取值；改其中一边而漏改另一边即失败。
+// 必须等于 home.css 页面层覆盖经 tokens.css 尺寸阶梯令牌解析后的取值；改其中一边而漏改另一边即失败。
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseRules, rootTokens } from '../../../../packages/ui-theme/src/testing/css'
@@ -8,7 +8,7 @@ import { parseRules, rootTokens } from '../../../../packages/ui-theme/src/testin
 const repo = new URL('../../../../', import.meta.url)
 const read = (rel: string): string => readFileSync(new URL(rel, repo), 'utf8')
 
-const tokens = rootTokens(read('packages/ui-theme/src/scale.css')).tokens
+const tokens = rootTokens(read('packages/ui-theme/src/tokens.css')).tokens
 const homeRules = parseRules(read('apps/site/src/shared/styles/home.css'))
 const subheadRules = parseRules(read('packages/ui-theme/src/components/subhead.css'))
 

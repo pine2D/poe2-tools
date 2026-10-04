@@ -1,4 +1,5 @@
-/* 扩展设置弹窗（spec §6.8，L3，以 C-popup.png 为准）：令牌、母题与组件来自 ui-theme；不套 pt-frame、不加角饰 */
+/* 扩展设置弹窗（spec §6.8，L3，以 C-popup.png 为准）：令牌、母题与组件来自 ui-theme；不套 pt-frame、不加角饰。
+   字号与间距只取 tokens.css 的尺寸阶梯（--fs-*、--sp-*），例外见 packages/ui-theme/src/extension-sizes.test.ts 的 ALLOW */
 @import "@poe2-tools/ui-theme/tokens.css";
 @import "@poe2-tools/ui-theme/motif.css";
 @import "@poe2-tools/ui-theme/components/motif.css";
@@ -17,7 +18,7 @@ body {
   width: 340px;
   background: var(--frame-bg);
   color: var(--ink);
-  font: 14px / 1.6 var(--font-zh-cn);
+  font: var(--fs-body) / 1.6 var(--font-zh-cn);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -26,9 +27,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--sp-2);
   height: 56px;
-  padding: 0 16px;
+  padding: 0 var(--sp-4);
   background: linear-gradient(180deg, #2d241a, #17130f);
   border-bottom: 1px solid #7a5530;
   box-shadow:
@@ -50,26 +51,26 @@ body {
 }
 
 main {
-  padding: 14px 22px 20px;
+  padding: var(--sp-3) var(--sp-5) var(--sp-4);
 }
 .subtitle {
   margin: 0;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--ink-2);
 }
 .popup-divider {
-  margin: 6px 0;
+  margin: var(--sp-2) 0;
 }
 
 /* 设置行：开关在左、说明居中、状态文字在右；两行之间 1px 渐隐线 */
 .setting {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--sp-3);
   min-height: 64px;
-  padding: 10px 0;
-  font-size: 15px;
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-data);
   cursor: pointer;
 }
 .setting + .setting {
@@ -83,8 +84,7 @@ main {
 }
 .setting small {
   display: block;
-  margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.6;
   color: var(--ink-2);
 }
@@ -100,8 +100,8 @@ main {
 /* 状态行（B.12 修订 3）：busy/off 为 --ink-2；ok 为 --ok 加勾；error 为 --miss 加警示；图标不读出 */
 #status {
   min-height: 43px;
-  margin: 12px 0 8px;
-  font-size: 13px;
+  margin: var(--sp-3) 0 var(--sp-2);
+  font-size: var(--fs-small);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
   color: var(--ink-2);
@@ -114,7 +114,7 @@ main {
 }
 #status[data-tone="ok"]::before {
   content: "✓" / "";
-  margin-right: 6px;
+  margin-right: var(--sp-2);
 }
 #status[data-tone="error"]::before {
   content: "!" / "";
@@ -122,19 +122,19 @@ main {
   place-items: center;
   width: 14px;
   height: 14px;
-  margin-right: 6px;
+  margin-right: var(--sp-2);
   border: 1.5px solid currentColor;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   line-height: 1;
   vertical-align: 1px;
 }
 .retry {
   height: 40px;
-  margin-bottom: 12px;
-  padding: 0 16px;
-  font-size: 14px;
+  margin-bottom: var(--sp-3);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-body);
 }
 .retry[hidden] {
   display: none;
@@ -142,9 +142,9 @@ main {
 
 /* 页脚居中（spec §4.2 层级例外 2）：版本与检查更新 → 短署名 → 完整声明 → 版权句 */
 footer {
-  padding: 0 22px 18px;
+  padding: 0 var(--sp-5) var(--sp-4);
   text-align: center;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.8;
   color: var(--ink-3);
   overflow-wrap: anywhere;
@@ -163,28 +163,28 @@ footer a:focus-visible {
 footer .pt-provenance {
   display: flex;
   justify-content: center;
-  margin-top: 6px;
+  margin-top: var(--sp-1);
 }
 footer .pt-disclaimer {
-  margin-top: 2px;
+  margin-top: var(--sp-1);
 }
 
 /* “使用前”（spec §6.8）：左侧 2px 内竖条；小标题衬线 13px 金色；正文 L0。
    竖条用背景绘制：偏移 2px 的 inset 阴影在块高为小数像素时底边会漏出一条 1px 细线。
    本段排在页脚规则之后：与 footer p 不命中同一元素，只为同尾选择器特异度升序（Biome noDescendingSpecificity） */
 .before {
-  margin-top: 10px;
-  padding: 6px 0 0 12px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-1) 0 0 var(--sp-3);
   background: linear-gradient(#7a5530, #7a5530) left / 2px 100% no-repeat;
 }
 .before h2 {
   margin: 0;
-  font: 700 13px / 1.5 var(--pt-serif);
+  font: 700 var(--fs-small) / 1.5 var(--pt-serif);
   color: var(--gold);
 }
 .before p {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-small);
   line-height: 1.65;
 }
 

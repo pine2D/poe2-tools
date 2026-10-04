@@ -151,8 +151,8 @@ components:
 
 - 只保留深色，没有主题切换。
 - 素材只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games（GGG）、腾讯、Craft of Exile（CoE）的任何素材或纹样。
-- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的颜色、字体与动效令牌块，尺寸阶梯另见下一条，`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
-- 尺寸阶梯在 `packages/ui-theme/src/scale.css`（`--fs-*` 九档字号、`--sp-*` 八档间距），只由网站入口引入；页面层样式（`apps/site/src/shared/styles/*.css`）的字号与间距一律取令牌，由 `apps/site/src/testing/scale-tokens.test.ts` 把关；边框、圆角、列宽、图标宽这类几何尺寸除外，门禁里逐条登记理由。三个页面入口都在 `base.css` 之前引入 `scale.css`。扩展在第三期接入时并入 `tokens.css`。
+- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的令牌块，含颜色、字体、尺寸阶梯与动效，尺寸阶梯的用法见下一条；`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
+- 尺寸阶梯（`--fs-*` 九档字号、`--sp-*` 八档间距）在 `packages/ui-theme/src/tokens.css` 的同一个 `:root` 里（扩展 0.4.0 起由原 `scale.css` 并入，`scale.css` 已删除）。网站三个页面入口经 `index.css` 取得（都在 `base.css` 之前引入）；扩展设置弹窗经 `popup.css` 引入的 `tokens.css` 取得；CoE 注入界面不往原站文档写令牌，只在 `l1.css` 的 `:host` 声明它用到的子集（目前是 `--fs-micro`、`--fs-small`、`--fs-body`、`--fs-data` 与 `--sp-1`～`--sp-5`），取值与 `tokens.css` 相同，由 `l1.test.ts` 断言。网站页面层样式（`apps/site/src/shared/styles/*.css`）、弹窗 `popup.css` 与 `l1.css` 的字号与间距一律取令牌：网站由 `apps/site/src/testing/scale-tokens.test.ts`、扩展由 `packages/ui-theme/src/extension-sizes.test.ts` 把关，两者共用 `packages/ui-theme/src/testing/size-gate.ts` 的检查器；边框、圆角、列宽、图标宽这类几何尺寸除外，门禁里逐条登记理由。扩展的例外恰好四条：弹窗标题 19px（与 `pt-frame` 标题栏同值）、短署名 12.5px（与 `pt-provenance` 同值）、搜索候选 `scroll-padding-block` 的 42px（由 sticky 署名高度推出）、候选按钮上下外边距 2px。
 - 历史工坊 `/craft/` 冻结在改版前的样式（`apps/site/src/features/craft/legacy-*.css`），不接入本设计语言。
 - 扩展的设置弹窗、CoE 注入界面与图标属于二期，在扩展分支另行接入：弹窗照 L3，注入界面封顶 L1。
 
@@ -217,7 +217,7 @@ components:
 - 繁体衬线只用于名称牌和提示框里 `lang="zh-TW"` 的词典名称；站点固定文案一律用简体栈。
 - 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 与 L1 不用衬线；页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。只改字号的修饰类（如 `.pt-subhead--lg`）继承所属组件的衬线，不另列。
 - 正文与数据用系统无衬线（`--font-zh-cn`、`--font-zh-tw`），代码用 `--font-code`；门户页（首页、扩展介绍页）正文 15px/1.6，构筑页正文 14px/1.65，对照行 15px/1.6，数字用 `tabular-nums`。
-- 页面层字号取 `scale.css` 的 `--fs-*` 阶梯：12、13、14、15、17、21、28、36、54px，与上表各行对应（如阶段名 `--fs-title`、对照行 `--fs-data`）。组件文件不引用 `--fs-*`（扩展不引入 `scale.css`），组件里的字号都是字面值；首页需要别的字号时由页面层用令牌覆盖。首页 hero 标题：组件 `.pt-hero-title` 默认 54px，`home.css` 改为 `--fs-display`（36px），≤620px 为 `--fs-display-s`（28px）。首页场景标题：宽屏的 28px 来自组件 `.pt-subhead--lg` 的字面值（与 `--fs-display-s` 同值），≤1099px 由 `home.css` 改为 `--fs-title`（21px）。
+- 页面层字号取 `tokens.css` 的 `--fs-*` 阶梯：12、13、14、15、17、21、28、36、54px，与上表各行对应（如阶段名 `--fs-title`、对照行 `--fs-data`）。组件文件不引用 `--fs-*`，组件里的字号都是字面值（组件由网站与扩展弹窗共用，改用令牌会同时改变两边产物，另行立项）；首页需要别的字号时由页面层用令牌覆盖。首页 hero 标题：组件 `.pt-hero-title` 默认 54px，`home.css` 改为 `--fs-display`（36px），≤620px 为 `--fs-display-s`（28px）。首页场景标题：宽屏的 28px 来自组件 `.pt-subhead--lg` 的字面值（与 `--fs-display-s` 同值），≤1099px 由 `home.css` 改为 `--fs-title`（21px）。
 - 字标是无衬线 600 的“PoE2 Tools”，“PoE2”用金色；禁止英文小型大写副标，禁止用 Cinzel 做字标。
 
 ## 母题「符文菱结」

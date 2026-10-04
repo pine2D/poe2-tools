@@ -140,9 +140,10 @@ describe('令牌结构（spec §4.3）', () => {
     expect(root?.declarations.get('color-scheme')).toBe('dark')
   })
 
-  it('令牌集合与取值等于契约 §6.1 的 71 项', () => {
-    expect([...tokens.keys()].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(tokens.size).toBe(71)
+  it('令牌集合与取值等于契约 §6.1 的 71 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
+    const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
+    expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
+    expect(contract).toHaveLength(71)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }

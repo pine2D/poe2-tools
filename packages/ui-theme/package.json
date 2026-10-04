@@ -6,7 +6,6 @@
   "exports": {
     "./index.css": "./src/index.css",
     "./tokens.css": "./src/tokens.css",
-    "./scale.css": "./src/scale.css",
     "./l1.css": "./src/l1.css",
     "./motif.css": "./src/generated/motif.css",
     "./components/*": "./src/components/*",

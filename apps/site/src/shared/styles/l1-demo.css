@@ -2,7 +2,7 @@
    自绘示意，不是 CoE 截图：搜索框是 CoE 的基底搜索（自绘），候选框的结构同 packages/ui-theme/src/l1.css 的
    search 宿主（说明行 → 候选 → 署名）。面板底与边框用站点令牌近似 --l1-panel、--l1-edge（--frame-bg、--metal-line），
    本文件不写任何色值。“选中”只是外观（.l1demo__opt--selected），示意里没有 ARIA 状态，也没有可聚焦元素。
-   字号与间距只取 scale.css 令牌；px 只用于边框、圆角、控件高度、插入光标、投影与母题尺寸。没有动效，不需要 reduced-motion 分支。
+   字号与间距只取 tokens.css 的尺寸阶梯令牌；px 只用于边框、圆角、控件高度、插入光标、投影与母题尺寸。没有动效，不需要 reduced-motion 分支。
    引入顺序：site.css 之后、页面样式（home.css、extension.css）之前；放大行和排版由页面样式决定。 */
 
 /* “示例”图注、小标签与尾注：两页所有示例 figure 共用 */

@@ -2,6 +2,7 @@
 /* L1 点缀（spec §4.2、§6.9）：CoE 注入 UI 的唯一样式表。内容脚本用 ?inline 读成字符串，构造一份 CSSStyleSheet，
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
    令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
+   尺寸阶梯只声明本文件用到的档；字号与间距一律取阶梯，例外逐条登记在 extension-sizes.test.ts 的 ALLOW。
    只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮、角饰与衬线。 */
 :host {
   --ext-ink: #9fe3dc;
@@ -19,6 +20,16 @@
   --focus: #ffd48a;
   --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档，取值同 tokens.css */
+  --fs-micro: 12px;
+  --fs-small: 13px;
+  --fs-body: 14px;
+  --fs-data: 15px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
   /* L1 专用（spec §6.9 视觉） */
   --l1-panel: #15120f;
   --l1-edge: #8a6a40;
@@ -39,7 +50,7 @@
 :host([data-poe2-l10n="language-notice"]) {
   all: initial;
   color: var(--ink) !important;
-  font: 14px / 1.6 var(--font-zh-cn) !important;
+  font: var(--fs-body) / 1.6 var(--font-zh-cn) !important;
   color-scheme: dark;
   overflow-wrap: anywhere;
 }
@@ -66,37 +77,37 @@
 .head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-2);
   min-height: 46px;
-  padding: 0 16px;
+  padding: 0 var(--sp-4);
   border-bottom: 1px solid var(--line);
 }
 .title {
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-data);
   letter-spacing: 0;
 }
 .head .by {
   margin-left: auto;
 }
 .body {
-  padding: 14px 16px 4px;
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
 }
 .disclaimer {
   margin: 0;
-  padding: 8px 16px 14px;
-  font-size: 12px;
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+  font-size: var(--fs-micro);
   color: var(--ink-3);
 }
 .columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: 12px;
+  gap: var(--sp-3);
 }
 label {
   display: block;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--ink-2);
 }
 textarea {
@@ -107,14 +118,14 @@ textarea {
   height: clamp(120px, 20vh, 240px);
   min-height: 120px;
   resize: vertical;
-  margin-top: 4px;
-  padding: 12px;
+  margin-top: var(--sp-1);
+  padding: var(--sp-3);
   border: 1px solid var(--control-edge);
   border-radius: 4px;
   background: var(--bg);
   color: var(--ink);
   caret-color: var(--focus);
-  font: 12px / 1.5 var(--font-code);
+  font: var(--fs-micro) / 1.5 var(--font-code);
   scrollbar-color: var(--control-edge) var(--bg);
 }
 textarea[data-preview] {
@@ -122,15 +133,15 @@ textarea[data-preview] {
   color: var(--mod);
 }
 [role="status"] {
-  margin: 12px 0;
+  margin: var(--sp-3) 0;
   color: var(--ink-2);
 }
 [role="status"]:empty {
   display: none;
 }
 ul {
-  margin: 8px 0;
-  padding-left: 20px;
+  margin: var(--sp-2) 0;
+  padding-left: var(--sp-5);
   color: var(--ink-2);
 }
 [aria-label="原站兼容性提示"] {
@@ -139,8 +150,8 @@ ul {
 button {
   box-sizing: border-box;
   min-height: 40px;
-  padding: 8px 14px;
-  margin: 4px 8px 4px 0;
+  padding: var(--sp-2) var(--sp-3);
+  margin: var(--sp-1) var(--sp-2) var(--sp-1) 0;
   border: 1px solid var(--control-edge);
   border-radius: 4px;
   background: transparent;
@@ -157,7 +168,7 @@ button[data-primary] {
 }
 button[data-tertiary] {
   border-color: transparent;
-  padding-inline: 4px;
+  padding-inline: var(--sp-1);
   color: var(--ink-2);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -179,20 +190,21 @@ textarea:focus-visible {
 
 /* —— 搜索候选下拉（search-controller）：说明行与候选按钮留在 light DOM，经 slot 显示（B.12 修订 10）；
    ::slotted 的声明全部 !important，才能压过原站对 button/div 的样式 —— */
-/* 键盘选中滚动（scrollIntoView nearest）时给 2px 焦点环 + 2px 外偏移留位：上沿与宿主内边距同为 8px；
-   下沿要越过 sticky 署名（1 + 6 + 12×1.6 + 8 = 34.2px）再加 4px 焦点环，取 42px，与自然排布里按钮到分隔线的 6px 间距一致 */
+/* 键盘选中滚动（scrollIntoView nearest）时给 2px 焦点环 + 2px 外偏移留位：上沿与宿主内边距同为 --sp-2（8px）；
+   下沿要越过 sticky 署名（1 + 8 + 12×1.6 + 8 = 36.2px）再加 4px 焦点环（40.2px），取 42px（不在阶梯上，
+   extension-sizes.test.ts 的 ALLOW 登记），按钮到分隔线留约 6px，与自然排布里的 4px 外边距相近 */
 :host([data-poe2-l10n="search"]) {
-  padding: 8px;
-  scroll-padding-block: 8px 42px;
+  padding: var(--sp-2);
+  scroll-padding-block: var(--sp-2) 42px;
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
   border-radius: 6px;
   box-shadow: var(--l1-shadow);
 }
 ::slotted(div) {
-  margin: 0 0 4px !important;
+  margin: 0 0 var(--sp-1) !important;
   color: var(--ink-2) !important;
-  font-size: 13px !important;
+  font-size: var(--fs-small) !important;
 }
 ::slotted(button) {
   display: block !important;
@@ -200,7 +212,7 @@ textarea:focus-visible {
   width: 100% !important;
   min-height: 32px !important;
   margin: 2px 0 !important;
-  padding: 4px 8px !important;
+  padding: var(--sp-1) var(--sp-2) !important;
   border: 1px solid transparent !important;
   border-radius: 4px !important;
   background: transparent !important;
@@ -221,35 +233,35 @@ textarea:focus-visible {
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
 }
-/* 署名固定在列表底部一行（spec §6.9）：sticky 的约束矩形是滚动容器的内容框（已扣 8px 内边距），
-   bottom 取 -8px 才贴住边框内侧；署名用 padding-bottom 8px + margin-bottom -8px 吃掉宿主底部内边距，
+/* 署名固定在列表底部一行（spec §6.9）：sticky 的约束矩形是滚动容器的内容框（已扣 --sp-2 内边距），
+   bottom 取负的 --sp-2 才贴住边框内侧；署名用 padding-bottom --sp-2 + margin-bottom 负 --sp-2 吃掉宿主底部内边距，
    未滚动时排布不变，滚到底也不留空隙；不透明面板底让候选从下面滚过 */
 :host([data-poe2-l10n="search"]) .by {
   position: sticky;
-  bottom: -8px;
+  bottom: calc(-1 * var(--sp-2));
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  margin-bottom: -8px;
-  padding-top: 6px;
-  padding-bottom: 8px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  margin-bottom: calc(-1 * var(--sp-2));
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
   border-top: 1px solid var(--line);
   background: var(--l1-panel);
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 /* —— 语言提示条（language-notice） —— */
 :host([data-poe2-l10n="language-notice"]) {
   position: fixed;
-  left: 16px;
-  bottom: 16px;
+  left: var(--sp-4);
+  bottom: var(--sp-4);
   z-index: 1000;
   display: block;
   width: min(360px, calc(100vw - 32px));
 }
 .notice {
-  padding: 8px 12px 14px 16px;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3) var(--sp-4);
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
   border-radius: 6px;
@@ -258,17 +270,17 @@ textarea:focus-visible {
 .notice header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 .notice strong {
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-data);
 }
 .notice header button {
   margin: 0 0 0 auto;
 }
 .notice p {
-  margin: 6px 0 0;
+  margin: var(--sp-2) 0 0;
 }
 
 @media (hover: hover) and (pointer: fine) {

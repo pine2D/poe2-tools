@@ -87,6 +87,27 @@
     system-ui, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
+  /* 尺寸阶梯（2026-10-03 设计系统提升方案 §3.3）：字号与间距的唯一取值源，网站与扩展弹窗共用。
+     CoE 注入界面不往原站文档写令牌，在 l1.css 的 :host 声明所用子集（同值，由 l1.test.ts 断言） */
+  --fs-micro: 12px;
+  --fs-small: 13px;
+  --fs-body: 14px;
+  --fs-data: 15px;
+  --fs-lead: 17px;
+  --fs-title: 21px;
+  --fs-display-s: 28px;
+  --fs-display: 36px;
+  --fs-display-l: 54px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
   /* 动效（spec §4.6） */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --dur-enter: 180ms;

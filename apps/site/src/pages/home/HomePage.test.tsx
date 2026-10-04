@@ -218,7 +218,7 @@ describe('home.css', () => {
     expect(at('.band', 'grid-template-columns', '620px')).toBe('minmax(0, 1fr)')
   })
 
-  it('字号与间距只用 scale.css 令牌；不写色值、衬线字体栈与 z-index', () => {
+  it('字号与间距只用尺寸阶梯令牌；不写色值、衬线字体栈与 z-index', () => {
     const SIZE = /^(font-size|margin|padding|gap|row-gap|column-gap)(-|$)/
     for (const rule of rules) {
       for (const [prop, value] of rule.declarations) {

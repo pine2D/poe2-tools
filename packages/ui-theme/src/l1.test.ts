@@ -101,9 +101,18 @@ describe('导入面板文本框随视口收缩（spec §8.8 声明须在视口�
 
 describe('搜索候选下拉（spec §6.9 列表底部一行、§5.15 焦点环不被裁掉）', () => {
   const byExact = (selector: string) => rules.find((r) => r.selectors.join(', ') === selector)
+  /** 把 var(--x) 换成 :host 上的令牌值（尺寸阶梯第三期起写成令牌） */
+  const resolve = (value: string | undefined) =>
+    (value ?? '').replace(/var\((--[\w-]+)\)/g, (_, name: string) => token(name))
+  /** 像素值：认 “8px”、“var(--sp-2)” 与取负写法 “calc(-1 * var(--sp-2))”，忽略 !important */
   const px = (value: string | undefined) => {
-    const n = Number.parseFloat(value ?? '')
-    if (!Number.isFinite(n)) throw new Error(`不是像素值：${value}`)
+    const text = resolve(value)
+      .replace(/\s*!important$/, '')
+      .trim()
+    const negated = /^calc\(\s*-1\s*\*\s*(-?[\d.]+)px\s*\)$/.exec(text)
+    const n = negated ? -Number(negated[1]) : Number.parseFloat(text)
+    if (!Number.isFinite(n) || (!negated && !/^-?[\d.]+px$/.test(text)))
+      throw new Error(`不是像素值：${value}`)
     return n
   }
   const searchHost = byExact(':host([data-poe2-l10n="search"])')
@@ -118,18 +127,22 @@ describe('搜索候选下拉（spec §6.9 列表底部一行、§5.15 焦点环�
     // 署名自己吃掉宿主底部内边距：未滚动时文字离底边仍是 8px，滚到底也不留空隙
     expect(px(by?.declarations.get('padding-bottom'))).toBe(hostPadding)
     expect(px(by?.declarations.get('margin-bottom'))).toBe(-hostPadding)
-    // 分隔线与字号保持不变
+    // 分隔线不变；字号与上内边距取尺寸阶梯（第三期：12px 与 8px）
     expect(by?.declarations.get('border-top')).toBe('1px solid var(--line)')
-    expect(by?.declarations.get('font-size')).toBe('12px')
-    expect(by?.declarations.get('padding-top')).toBe('6px')
+    expect(by?.declarations.get('font-size')).toBe('var(--fs-micro)')
+    expect(by?.declarations.get('padding-top')).toBe('var(--sp-2)')
+    expect([
+      px(by?.declarations.get('font-size')),
+      px(by?.declarations.get('padding-top')),
+    ]).toEqual([12, 8])
   })
 
   it('scroll-padding 给 2px 焦点环 + 2px 外偏移留位：上 ≥4px，下 ≥ 署名高 + 4px', () => {
     const ring = 2 + 2
-    const [top, bottom = top] = (searchHost?.declarations.get('scroll-padding-block') ?? '')
+    const [top, bottom = top] = resolve(searchHost?.declarations.get('scroll-padding-block'))
       .split(' ')
       .map(px)
-    // 署名高 = 上边框 1 + padding-top 6 + 一行（12px × 宿主行高 1.6）+ padding-bottom
+    // 署名高 = 上边框 1 + padding-top 8 + 一行（12px × 宿主行高 1.6）+ padding-bottom 8 = 36.2
     const panel = byExact(
       ':host([data-poe2-l10n="import"]), :host([data-poe2-l10n="search"]), :host([data-poe2-l10n="language-notice"])',
     )
