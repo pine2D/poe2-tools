@@ -73,10 +73,22 @@ pnpm_config_verify_deps_before_run=warn pnpm verify
 
 ## 安装包文件集合
 
-包检查按入口维护文件集合：manifest.json、content.js、popup.html、LICENSE.txt、NOTICE.txt、NotoSerifSC-OFL.txt、词典JSON、四个图标、popup引用的一个构建JS和一个CSS，以及该CSS用 url() 实际引用的 woff2。资源哈希名称从popup与CSS提取，不硬编码当前hash；只接受assets/下的文件。多余文件即使后缀为js／json／txt／woff2也拒绝，缺少文件、额外目录或任何符号链接均阻止打包。字体许可与 NOTICE 按必含行检查，图像与字体按 dist 模式过素材白名单（`@poe2-tools/ui-theme/compliance`）；打包后读回 zip，条目集合须与检查通过的 dist 完全相同。新增合法资源或拆分构建入口时应显式更新检查与回归，不能只扩大允许扩展名。
+包检查按入口维护文件集合：manifest.json、content.js、popup.html、LICENSE.txt、NOTICE.txt、NotoSerifSC-OFL.txt、词典JSON、四个图标、popup引用的一个构建JS和一个CSS、该CSS用 url() 实际引用的 woff2（弹窗字体子集），以及内容脚本经 web_accessible_resources 读取的注入衬线字体 `assets/serif-sc-l1.woff2`（固定路径，字节数不超过 131,072，SHA-256 与 `packages/ui-theme/fonts/coverage.json` 一致）。资源哈希名称从popup与CSS提取，不硬编码当前hash；只接受assets/下的文件。多余文件即使后缀为js／json／txt／woff2也拒绝，缺少文件、额外目录或任何符号链接均阻止打包。字体许可与 NOTICE 按必含行检查，图像与字体按 dist 模式过素材白名单（`@poe2-tools/ui-theme/compliance`）；打包后读回 zip，条目集合须与检查通过的 dist 完全相同。新增合法资源或拆分构建入口时应显式更新检查与回归，不能只扩大允许扩展名。
 
 0.1.105包检查补强回归使用独立临时目录，不向实际dist注入异常文件。测试先确认旧检查会接受多余文件、缺失许可和符号链接，再验证新检查拒绝；原有词典测试夹具同步补齐实际popup资源及许可文件，原断言保留。此检查不替代JS内容审查、来源哈希核对或最终包浏览器验收。
 
+
+## 注入衬线字体验收（0.4.0 起）
+
+0.4.0 起，内容脚本会在原站文档注册一个字体，并加入一张只设置字体的样式表。验收时逐项核对：
+
+1. `document.fonts` 里恰有一个 family 为 “PoE2 Serif SC L1” 的 FontFace，`status` 为 `loaded`；网络记录里这个字体只从 `chrome-extension://<扩展 ID>/assets/serif-sc-l1.woff2` 读取一次，没有向第三方请求字体。
+2. 原站文档里恰有一张 `style[data-poe2-l10n="serif"]`，里面只有 `font-family` 声明，选择器都以 `:root ` 开头；除它以外，document 级样式仍只有既有三处（翻译徽标、`#instructions` 排版、导入对话框放宽）。
+3. 用 `getComputedStyle` 抽查：主导航、`button.game`、物品卡底部按钮、首页功能区标题的 `font-family` 以 `Fontin, "PoE2 Serif SC L1"` 开头；原站 Montserrat 的位置（分组标题、分组按钮、对话框标题与按钮）、物品卡词缀、搜索候选和“第 N 行”定位按钮的 `font-family` 不含 “PoE2 Serif SC L1”。
+4. 在弹窗关闭“启用简体中文”后，这张样式表消失，`document.fonts` 不再有这个字体；重新打开后恢复，且不重复插入。
+5. 被改元素的盒宽高、行数与文档总高和关闭时相同（汉字等宽，原型实测无变化）；出现变化时截图记录，按回归处理。
+
+宿主污染比对沿用 0.3.0 的口径，允许的差异只多这一张样式表，以及被它命中的元素的 `font-family`（见 compatibility.md 0.4.0 节）。
 
 ## 复制格式分别验收
 

@@ -151,10 +151,10 @@ components:
 
 - 只保留深色，没有主题切换。
 - 素材只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games（GGG）、腾讯、Craft of Exile（CoE）的任何素材或纹样。
-- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的令牌块，含颜色、字体、尺寸阶梯与动效，尺寸阶梯的用法见下一条；`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
-- 尺寸阶梯（`--fs-*` 九档字号、`--sp-*` 八档间距）在 `packages/ui-theme/src/tokens.css` 的同一个 `:root` 里（扩展 0.4.0 起由原 `scale.css` 并入，`scale.css` 已删除）。网站三个页面入口经 `index.css` 取得（都在 `base.css` 之前引入）；扩展设置弹窗经 `popup.css` 引入的 `tokens.css` 取得；CoE 注入界面不往原站文档写令牌，只在 `l1.css` 的 `:host` 声明它用到的子集（目前是 `--fs-micro`、`--fs-small`、`--fs-body`、`--fs-data` 与 `--sp-1`～`--sp-5`），取值与 `tokens.css` 相同，由 `l1.test.ts` 断言。网站页面层样式（`apps/site/src/shared/styles/*.css`）、弹窗 `popup.css` 与 `l1.css` 的字号与间距一律取令牌：网站由 `apps/site/src/testing/scale-tokens.test.ts`、扩展由 `packages/ui-theme/src/extension-sizes.test.ts` 把关，两者共用 `packages/ui-theme/src/testing/size-gate.ts` 的检查器；边框、圆角、列宽、图标宽这类几何尺寸除外，门禁里逐条登记理由。扩展的例外恰好四条：弹窗标题 19px（与 `pt-frame` 标题栏同值）、短署名 12.5px（与 `pt-provenance` 同值）、搜索候选 `scroll-padding-block` 的 42px（由 sticky 署名高度推出）、候选按钮上下外边距 2px。
+- 取值源：令牌与组件样式在 `packages/ui-theme`（`src/tokens.css` 是唯一的颜色、字体、尺寸与动效令牌块，`src/components/*.css` 是 `pt-*` 组件）；页面专属样式在 `apps/site/src/shared/styles/`。上方 frontmatter 是 tokens.css 的快照，两者不一致时以 tokens.css 为准。
+- 尺寸阶梯（`--fs-*` 九档字号 12、13、14、15、17、21、28、36、54px，`--sp-*` 八档间距 4、8、12、16、24、32、48、64px）在 `tokens.css` 的唯一 `:root` 里，网站页面与扩展弹窗都经 `tokens.css` 取用。CoE 注入界面不在原站文档写令牌：`l1.css` 在 `:host` 声明它用到的子集（`--fs-micro`、`--fs-small`、`--fs-body`、`--fs-data` 与 `--sp-1`…`--sp-4`），取值与 `tokens.css` 相同，由 `l1.test.ts` 核对。页面层样式（`apps/site/src/shared/styles/*.css`）的字号与间距一律取令牌，由 `apps/site/src/testing/scale-tokens.test.ts` 把关；扩展的 `popup.css` 与 `l1.css` 由 `packages/ui-theme/src/extension-sizes.test.ts` 把关；两道门禁共用 `packages/ui-theme/src/testing/size-gate.ts` 的检查器。边框、圆角、列宽、图标宽这类几何尺寸除外；偏离阶梯的值逐条登记在门禁的 ALLOW 里并写明理由。扩展只有四条：弹窗标题 19px（与 `pt-frame` 标题栏同值）、L1 署名 12.5px（与 `pt-provenance` 同值）、搜索候选的 `scroll-padding-block` 42px（由吸底署名的高度推出）、候选按钮的 2px 外边距。
 - 历史工坊 `/craft/` 冻结在改版前的样式（`apps/site/src/features/craft/legacy-*.css`），不接入本设计语言。
-- 扩展的设置弹窗、CoE 注入界面与图标属于二期，在扩展分支另行接入：弹窗照 L3，注入界面封顶 L1。
+- 扩展的设置弹窗照 L3，CoE 注入界面封顶 L1（扩展 0.3.0 起接入）。0.4.0 起，注入界面在原站 Fontin 的位置与扩展面板的标题、主次按钮上使用中文衬线，范围见“字体”。
 
 ## 强度分层与白名单
 
@@ -176,8 +176,14 @@ components:
 | 构筑·已导入 | “下载中文 .build” | 1（4） |
 | 构筑·解析失败或等词典 | 无 | 1（4） |
 | 404 | 无 | 0 |
+| 扩展弹窗（全部状态） | 无（重点是金属标题栏；“刷新页面”是安静按钮） | 0 |
+| CoE 导入面板（全部状态） | 无（L1 不用金属按钮；`data-primary` 规则见下） | 0 |
 
 阶段看板与逐项核对各是一个路由状态，各自只有一扇主区框；侧栏是 L0 面板，不再有第二扇框，所以 ≤1099px 也不再减框。
+
+扩展弹窗的标题栏下第一块是当前页状态块：内联 SVG 状态图标、“状态词 · 原因”、一句做法，至多一个 `pt-btn pt-btn--quiet`“刷新页面”（只在部分生效与初始化失败两种状态出现）。状态块平涂、无衬线，不用左侧色条与 ✓ 字形。状态词只有生效中、部分生效、未生效三个，未生效的原因写在状态词后，与网站扩展介绍页同词。开关的金属轨道是已登记的层级例外，不算第二处重点。
+
+CoE 导入面板每个状态至多一个 `button[data-primary]`，落在“下一步”里由你操作的那一步：未预览、需先核对、无法识别、原文已改变、已恢复粘贴原文时是“预览中文转换”；可以填入时是“填入英文到原站导入框”；已填入与仅供对照（传奇、咒符）时没有主按钮。
 
 **注意力落点**：首页是对照带（唯一一扇金属框包住的中英对照示例带，中缝铜线与菱结属于框内母题，不另算落点），扩展介绍页是下载框（“先确认环境”与“再下载”两栏所在的 hero 框），构筑看板是主区框与阶段带（列头底线），逐项核对是主区框。首页的两个入口是同款 `pt-btn`，左右镜像，没有金属主按钮。看板里的标题栏只在看板上降为平涂（`.app__build-frame--board > .pt-titlebar`：`bar` 底、`line-2` 底线、仍是衬线金字），让阶段带成为落点：阶段带是 2px `metal-line` 底线加 1px `metal-edge` 顶线和暖色渐变底，阶段名用衬线。逐项核对保留金属标题栏。装备与技能在看板里是 L0 行，名称牌只在展开详情与逐项核对里出现。侧栏在看板显示多个阶段时用紧凑行（无边框与金线，单行省略名称，隐藏原名）。
 
@@ -261,6 +267,9 @@ components:
 | `pt-subhead` | L3 | 衬线小标题 21px：扩展介绍页的分步标题（先确认环境、再下载）；`--lg` 修饰类 28px，用于首页两个场景标题，只改字号；首页在 ≤1099px 由页面层改为 21px，所以组件自带的 ≤620px 21px 规则在首页不起作用 |
 | `pt-stagehead` | L3 | 阶段看板的阶段名与首页对照带示例的阶段名：衬线 700，`lang="zh-TW"` 切 TC 栈；字号与颜色由页面层决定，已列入 `SERIF_SELECTORS`；由构筑页与首页入口引入 |
 | `stageboard`（页面层） | L0 | 阶段并排对照表：列头一条 `metal-line` 底线（阶段带），格子是按钮，“新／换”用亮铜左边线加文字标记，“改”（同一件词缀有变化）只把词缀变化写成铜色、不加标记字，悬停或聚焦整行提亮 |
+| 弹窗状态块 `#page` | L0 | 扩展弹窗标题栏下第一块：状态图标、“状态词 · 原因”、一句做法，至多一个安静按钮“刷新页面”；平涂、无衬线、不用 `h2`，`role="status"`、`aria-live="polite"`；状态由 `apps/poe2-extension/src/popup/page-view.ts` 的纯函数从内容脚本的事实快照推导 |
+| 状态图标 | 通用 | 内联 SVG，`aria-hidden`，形状区分不只靠颜色：圈勾（生效中，`ok`）、半填圆（部分生效，`miss`）、圈叉（未生效且要在原站操作或刷新，`danger`）、圈中横线（用户自己关闭了简体中文，`ink-2`）、虚线圆（读取中，`ink-3`）；前三种与网站扩展介绍页的 `StateIcon` 同形；弹窗的图标由 `src/popup/icons.ts` 生成 |
+| 导入面板核对清单 | L1 | 预览后一行结论 `p.verdict`（唯一的 live region）＋“已完成”“待核对”“下一步”三组；“已识别 X / Y 行”只写已识别，存在无法定位到行的问题时不显示分数；同一行号的问题合并为一条，带“第 N 行”定位按钮（高 24px、无衬线）；原站兼容性提示列在待核对，不影响能否填入；下一步用纯文字标签“你”“原站”；原文改变后“已完成”“待核对”降为 `ink-3`、定位按钮停用，“下一步”保持正常亮度 |
 | 对照行、表单、弹层、状态条 | L0 | 平涂、无衬线、左对齐；未命中行有四重标记（底色、左色条、“!”方框、虚线下划线） |
 
 浏览器基线：组件样式依赖 `:has()` 与容器查询（`@container`），以支持这两项的现行浏览器为准，不另写旧浏览器回退。不支持 `:has()` 的浏览器不在支持范围：分段控件的选中态与焦点环、文件当前项、拖放区焦点环、无标题栏 hero 框的内边距都依赖它；设计规格附录 B.7 记录的 600px 及以下名称牌组内“·”不显示是其中一例。
