@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { parseRules } from '../../../../../packages/ui-theme/src/testing/css'
-import { L1_DEMO_CANDIDATES } from '../../shared/l1Demo'
+import { L1_DEMO_CANDIDATES, L1_DEMO_LABEL } from '../../shared/l1Demo'
 import { fsPathFromMetaUrl } from '../../shared/testing/fsPath'
 import { HomePage } from './HomePage'
 
@@ -113,6 +113,10 @@ describe('首页结构', () => {
     // 扩展不渲染“中文输入”之类的徽记：搜索框里只有图标、查询词与光标，没有虚构控件
     expect(coe.querySelector('.l1demo__ime')).toBeNull()
     expect(coe.querySelector('.l1demo__field')?.textContent).toBe('水晶')
+    // 搜索框标签是扩展生效时原站标签的译名（shared/l1Demo.ts 的 L1_DEMO_LABEL，与扩展介绍页同一常量）
+    const label = coe.querySelector('.l1demo__label') as HTMLElement
+    expect(label.textContent).toBe(L1_DEMO_LABEL)
+    expect(label.hasAttribute('lang')).toBe(false)
     expect([...coe.querySelectorAll('.l1demo__box')].map((box) => box.className)).toEqual([
       'l1demo__box l1demo__box--top',
       'l1demo__box l1demo__box--mid',

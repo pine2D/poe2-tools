@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { parseRules } from '../../../../../packages/ui-theme/src/testing/css'
 // @ts-expect-error 构建脚本直接由 Node 执行，不进入浏览器包。
 import { EXTENSION_PAGE_FORBIDDEN } from '../../../scripts/check-site.mjs'
+import { L1_DEMO_LABEL } from '../../shared/l1Demo'
 import { fsPathFromMetaUrl } from '../../shared/testing/fsPath'
 import { ExtensionPage } from './ExtensionPage'
 import { downloadHref, EXTENSION_RELEASE, formatSize } from './release'
@@ -260,6 +261,10 @@ describe('安装与确认生效（L0）', () => {
     expect(demo.getAttribute('aria-labelledby')).toBe(caption.id)
     expect(caption.textContent).toBe('示例中文助手的搜索候选 · 自绘示意，不是 CoE 截图')
     expect(caption.querySelector('.l1demo__tag')?.textContent).toBe('示例')
+    // 搜索框标签画的是扩展生效时原站标签的译名（与首页同一常量），不再写英文 “Base search”
+    const label = demo.querySelector('.l1demo__label') as HTMLElement
+    expect(label.textContent).toBe(L1_DEMO_LABEL)
+    expect(label.hasAttribute('lang')).toBe(false)
     // 搜索框的放大镜是 Task 2 加入的 Icon search；候选框是整框，不用首页的拆段修饰类
     expect(demo.querySelectorAll('.l1demo__field > svg.icon')).toHaveLength(1)
     // 扩展不渲染“中文输入”之类的徽记：示意只画扩展真实输出的部分
@@ -296,7 +301,8 @@ describe('安装与确认生效（L0）', () => {
       '候选框底部有“PoE2 中文助手 · 非官方”署名，用来区分扩展和原站的内容。',
     )
     expect(demo.querySelectorAll(FOCUSABLE)).toHaveLength(0)
-    // 示意不能和扩展实际行为脱节：候选名在正式词典里，说明句与扩展搜索框一致，弹窗开关名与弹窗一致
+    // 示意不能和扩展实际行为脱节：候选名在正式词典里，搜索框标签是扩展对原站标签的译名，
+    // 说明句与扩展搜索框一致，弹窗开关名与弹窗一致
     const items = readFileSync(resolve(here, '../../../../../data/dict/zh-CN/items.json'), 'utf8')
     for (const [zh, en] of pairs) expect(items, en).toContain(`"${en}": "${zh}"`)
     const search = readFileSync(
@@ -304,11 +310,15 @@ describe('安装与确认生效（L0）', () => {
       'utf8',
     )
     expect(search).toContain('：选择英文查询（方向键移动，Enter 选择，Escape 取消）')
+    const ui = JSON.parse(
+      readFileSync(resolve(here, '../../../../../data/l10n/coe-beta/ui.zh-CN.json'), 'utf8'),
+    ) as { entries: Record<string, string> }
+    expect(ui.entries['Search for a craftable item']).toBe(L1_DEMO_LABEL)
     const popup = readFileSync(resolve(here, '../../../../poe2-extension/popup.html'), 'utf8')
     for (const label of ['启用简体中文', '显示中英对照', '检查更新']) expect(popup).toContain(label)
   })
 
-  it('三种状态与第三期弹窗同词：生效中／部分生效／未生效；部分生效只指真故障，未生效列三个原因', () => {
+  it('三种状态与 0.4.0 弹窗同词：判据用弹窗状态词与带署名的候选，未生效三个原因的做法与弹窗状态 5、3、6 一致', () => {
     const { container } = setup()
     const states = [...container.querySelectorAll('#verify .ext-states > .ext-state')]
     expect(states.map((state) => state.className)).toEqual([
@@ -329,25 +339,40 @@ describe('安装与确认生效（L0）', () => {
       '两处都对上了。页面上仍有一些英文是正常的：未收录的内容保持原文。转换装备文本后，仍要在原站核对导入结果。',
     )
     expect(part.querySelector('dd')?.textContent).toBe(
-      '界面已有中文，但基底搜索框输入“水晶”不出候选，或某一整块区域的界面文字仍全是英文。先刷新页面；仍不行请反馈，并写明是哪个区域。',
+      '弹窗显示“部分生效”，或界面已有中文但基底搜索框输入“水晶”不出候选，或某一整块区域的界面文字仍全是英文。先刷新页面；仍不行请反馈，并写明是哪个区域。',
     )
     const offDd = off.querySelector('dd') as HTMLElement
-    expect(offDd.firstChild?.textContent).toBe('页面没有任何中文。通常是下面三个原因之一：')
+    // 不再用“页面有没有中文”判断：语言不是 English 时扩展会显示中文提示，原站自带中文界面时页面本来就是中文
+    expect(offDd.firstChild?.textContent).toBe(
+      '扩展弹窗顶部显示“未生效”；或者在搜索框输入“水晶”，没有出现带“PoE2 中文助手 · 非官方”署名的候选。原站自带的中文界面不算生效。通常是下面三个原因之一：',
+    )
     const causes = [...offDd.querySelectorAll('.ext-causes > li.ext-cause')].map((cause) => [
       cause.querySelector('.ext-cause__why')?.textContent,
       cause.querySelector('.ext-cause__fix')?.textContent,
     ])
     expect(causes).toEqual([
-      ['不是 CoE Beta 页面', '地址要是 beta.craftofexile.com；旧版 www 站不支持。'],
+      [
+        '不是 CoE Beta 页面',
+        '地址要是 beta.craftofexile.com；旧版 www 站不支持。地址没错时，可能是页面在安装或更新扩展之前就打开了，刷新即可。',
+      ],
       [
         '没切到 PoE2 + English',
-        '在原站选 PoE2，右上角语言选 English，再刷新页面。语言不是 English 时，页面左下角会出现扩展的提示。',
+        '在原站选 PoE2，右上角语言选 English，再刷新页面。语言不是 English 时，页面左下角会出现扩展的提示，弹窗里也会写明原因。',
       ],
       [
         '扩展未启用',
-        '在 chrome://extensions 确认开发者模式和这个扩展都开着；再在弹窗里打开“启用简体中文”，刷新页面。',
+        '在 chrome://extensions 确认开发者模式和这个扩展都开着，刚在扩展页打开扩展时要刷新页面；在弹窗里打开“启用简体中文”不用刷新。',
       ],
     ])
+    // 不为“初始化失败”单列第四条：弹窗状态 7 自带做法句与“刷新页面”按钮
+    expect(offDd.querySelectorAll('.ext-causes > li')).toHaveLength(3)
+    // 状态词与弹窗同源：0.4.0 弹窗的状态词是 page-view.ts 里 PageView['word'] 的字面量
+    const pageView = readFileSync(
+      resolve(here, '../../../../poe2-extension/src/popup/page-view.ts'),
+      'utf8',
+    )
+    for (const word of ['生效中', '部分生效', '未生效'])
+      expect(pageView, word).toContain(`'${word}'`)
   })
 })
 
@@ -414,9 +439,23 @@ describe('参考信息与删除项', () => {
     expect(steps).toEqual([
       '在 CoE Beta 点原站的“导入装备”，粘贴在游戏里按 Ctrl+Alt+C 复制的国服装备文本。',
       '点“预览中文转换”，对照原文与英文两栏核对。',
-      '核对无误后点“填入英文到原站导入框”。',
+      '预览后显示“可以填入”（译文完整）时，核对两栏后点“填入英文到原站导入框”；显示“需先核对 N 处”时这个按钮不能用，点问题前面的“第 N 行”会选中原文里的这一行，改正后重新预览。',
       '最后由你自己点原站的“继续”（Proceed）完成导入。扩展不会替你提交，导入结果以原站为准。',
     ])
+    expect(texts(section.querySelectorAll('ol > li:nth-child(3) strong'))).toEqual([
+      '填入英文到原站导入框',
+      '第 N 行',
+    ])
+    // 第 2、3 步引用的按钮名、结论词与定位按钮逐字取自面板源码（第三期核对清单）：控制器改词时这里先失败
+    const controller = readFileSync(
+      resolve(here, '../../../../poe2-extension/src/content/import-controller.ts'),
+      'utf8',
+    )
+    for (const text of ['预览中文转换', '填入英文到原站导入框', '可以填入', '需先核对']) {
+      expect(controller, text).toContain(text)
+    }
+    // 定位按钮的文字是模板串 `第 ${行号} 行`；用正则字面量，避免字符串里出现 ${ 触发 Biome 报警
+    expect(controller).toMatch(/`第 \$\{/)
     const limits = section.querySelector('ol + p')?.textContent ?? ''
     expect(limits).toContain('咒符')
     expect(limits).toContain('传奇')

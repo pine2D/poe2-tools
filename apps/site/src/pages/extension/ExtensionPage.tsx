@@ -6,7 +6,7 @@ import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
-import { L1_DEMO_CANDIDATES, L1_DEMO_QUERY } from '../../shared/l1Demo'
+import { L1_DEMO_CANDIDATES, L1_DEMO_LABEL, L1_DEMO_QUERY } from '../../shared/l1Demo'
 import { downloadHref, EXTENSION_RELEASE, formatSize } from './release'
 
 const { version, date, bytes } = EXTENSION_RELEASE
@@ -220,17 +220,15 @@ export function ExtensionPage(): ReactElement {
                   </span>
                 </li>
               </ul>
-              {/* 自绘示意，不是 CoE 截图；不可交互。样式来自共用的 l1-demo.css，输入与候选来自 shared/l1Demo.ts
-                  （与首页对照带同一套 l1demo__ 类与示例数据；候选名逐字取自正式词典，l1Demo.test.ts 核对）。
-                  这里用整框，选中项只靠类名 l1demo__opt--selected 表示外观 */}
+              {/* 自绘示意，不是 CoE 截图；不可交互。样式来自共用的 l1-demo.css，标签、输入与候选来自 shared/l1Demo.ts
+                  （与首页对照带同一套 l1demo__ 类与示例数据；标签是扩展对原站搜索框标签的译名，候选名逐字取自正式词典，
+                  l1Demo.test.ts 核对）。这里用整框，选中项只靠类名 l1demo__opt--selected 表示外观 */}
               <PtPanel as="figure" variant="inset" className="ext-demo" aria-labelledby="demo-cap">
                 <figcaption className="l1demo__cap" id="demo-cap">
                   <span className="l1demo__tag">示例</span>
                   <span>中文助手的搜索候选 · 自绘示意，不是 CoE 截图</span>
                 </figcaption>
-                <p className="l1demo__label" lang="en">
-                  Base search
-                </p>
+                <p className="l1demo__label">{L1_DEMO_LABEL}</p>
                 <div className="l1demo__field">
                   <Icon name="search" />
                   {L1_DEMO_QUERY}
@@ -276,7 +274,7 @@ export function ExtensionPage(): ReactElement {
                   <span className="ext-state__name">部分生效</span>
                 </dt>
                 <dd>
-                  界面已有中文，但基底搜索框输入“水晶”不出候选，或某一整块区域的界面文字仍全是英文。先刷新页面；仍不行请反馈，并写明是哪个区域。
+                  弹窗显示“部分生效”，或界面已有中文但基底搜索框输入“水晶”不出候选，或某一整块区域的界面文字仍全是英文。先刷新页面；仍不行请反馈，并写明是哪个区域。
                 </dd>
               </div>
               <div className="ext-state ext-state--off">
@@ -285,26 +283,28 @@ export function ExtensionPage(): ReactElement {
                   <span className="ext-state__name">未生效</span>
                 </dt>
                 <dd>
-                  页面没有任何中文。通常是下面三个原因之一：
+                  扩展弹窗顶部显示“未生效”；或者在搜索框输入“水晶”，没有出现带“PoE2 中文助手 ·
+                  非官方”署名的候选。原站自带的中文界面不算生效。通常是下面三个原因之一：
                   <ul className="ext-causes">
                     <li className="ext-cause">
                       <span className="ext-cause__why">不是 CoE Beta 页面</span>
                       <p className="ext-cause__fix">
-                        地址要是 beta.craftofexile.com；旧版 www 站不支持。
+                        地址要是 beta.craftofexile.com；旧版 www
+                        站不支持。地址没错时，可能是页面在安装或更新扩展之前就打开了，刷新即可。
                       </p>
                     </li>
                     <li className="ext-cause">
                       <span className="ext-cause__why">没切到 PoE2 + English</span>
                       <p className="ext-cause__fix">
                         在原站选 PoE2，右上角语言选 English，再刷新页面。语言不是 English
-                        时，页面左下角会出现扩展的提示。
+                        时，页面左下角会出现扩展的提示，弹窗里也会写明原因。
                       </p>
                     </li>
                     <li className="ext-cause">
                       <span className="ext-cause__why">扩展未启用</span>
                       <p className="ext-cause__fix">
                         在 <code>chrome://extensions</code>{' '}
-                        确认开发者模式和这个扩展都开着；再在弹窗里打开“启用简体中文”，刷新页面。
+                        确认开发者模式和这个扩展都开着，刚在扩展页打开扩展时要刷新页面；在弹窗里打开“启用简体中文”不用刷新。
                       </p>
                     </li>
                   </ul>
@@ -353,7 +353,10 @@ export function ExtensionPage(): ReactElement {
                 点“<strong>预览中文转换</strong>”，对照原文与英文两栏核对。
               </li>
               <li>
-                核对无误后点“<strong>填入英文到原站导入框</strong>”。
+                预览后显示“可以填入”（译文完整）时，核对两栏后点“
+                <strong>填入英文到原站导入框</strong>
+                ”；显示“需先核对 N 处”时这个按钮不能用，点问题前面的“<strong>第 N 行</strong>
+                ”会选中原文里的这一行，改正后重新预览。
               </li>
               <li>
                 最后由你自己点原站的“<strong>继续</strong>

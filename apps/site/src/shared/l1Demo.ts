@@ -8,3 +8,7 @@ export const L1_DEMO_CANDIDATES = [
   ['符文水晶法器', 'Runeforged Crystal Focus'],
   ['符文师匠水晶法器', 'Runemastered Crystal Focus'],
 ] as const satisfies readonly (readonly [zh: string, en: string])[]
+
+// 示意里搜索框上方的标签：扩展生效时原站标签 “Search for a craftable item” 显示的译名，
+// 逐字取自 data/l10n/coe-beta/ui.zh-CN.json（l1Demo.test.ts 核对）；真站把标签浮在框内左上角，示意仍画在框上方
+export const L1_DEMO_LABEL = '搜索可制作的物品'

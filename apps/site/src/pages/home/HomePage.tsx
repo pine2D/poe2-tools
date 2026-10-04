@@ -11,7 +11,7 @@ import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
-import { L1_DEMO_CANDIDATES, L1_DEMO_QUERY } from '../../shared/l1Demo'
+import { L1_DEMO_CANDIDATES, L1_DEMO_LABEL, L1_DEMO_QUERY } from '../../shared/l1Demo'
 
 // 候选示意的数据与扩展介绍页共用（shared/l1Demo.ts）；第一项是选中项，放进框腰作为放大行
 const [SELECTED, ...REST] = L1_DEMO_CANDIDATES
@@ -231,9 +231,7 @@ export function HomePage() {
                 <span>中文助手的搜索候选 · 自绘示意，不是 CoE 截图</span>
               </figcaption>
               <div className="strip__above">
-                <p className="l1demo__label" lang="en">
-                  Base search
-                </p>
+                <p className="l1demo__label">{L1_DEMO_LABEL}</p>
                 <div className="l1demo__field">
                   <Icon name="search" />
                   {L1_DEMO_QUERY}
