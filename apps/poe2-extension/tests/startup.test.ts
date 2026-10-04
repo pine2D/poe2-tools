@@ -241,3 +241,27 @@ it('生效时挂上衬线，关闭简体中文时随其余层一起撤下，再�
   changed({ enabled: true, bilingual: true })
   expect(mocks.serif).toHaveBeenCalledTimes(2)
 })
+
+it('挂层中途抛错：此前已挂上的层（含衬线）按逆序撤下，并记为 failed/other', async () => {
+  const order: string[] = []
+  const stopSerif = vi.fn(() => order.push('serif'))
+  const stopText = Object.assign(
+    vi.fn(() => order.push('text')),
+    { count: () => 0 },
+  )
+  mocks.serif.mockReturnValue(stopSerif)
+  mocks.attach.mockImplementation(() => stopText)
+  mocks.stat.mockImplementation(() => {
+    throw new Error('词缀层挂载失败')
+  })
+  mocks.read.mockResolvedValue({ enabled: true, bilingual: false })
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(OK_DICTIONARY))
+  quietObserver()
+  vi.spyOn(console, 'error').mockImplementation(() => {})
+  await import('../src/content/index')
+  await vi.waitFor(() => expect(reply().phase).toBe('failed'))
+  expect(reply()).toMatchObject({ phase: 'failed', error: 'other' })
+  expect(stopSerif).toHaveBeenCalledOnce()
+  expect(stopText).toHaveBeenCalledOnce()
+  expect(order).toEqual(['text', 'serif'])
+})

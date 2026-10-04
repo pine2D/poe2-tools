@@ -66,25 +66,29 @@ async function start() {
       stop = undefined
       mode = next
       if (next) {
-        const stopSerif = attachSerif(document)
-        const stopInstructionLayout = attachInstructionLayout(document)
-        const stopLabels = attachPageLabels(document, settings.bilingual)
-        const stopText = attachTextLayer(document, lexicon, settings.bilingual)
-        const stopAttributes = attachAttributeLayer(document, lexicon, settings.bilingual)
-        const stopStats = attachStatLayer(document, lexicon)
-        const stopSearch = attachSearch(document, lexicon)
-        const stopImport = attachImport(document, data.terms)
-        counters = [stopText.count, stopStats.count]
-        stop = () => {
+        // 逐层累积 stop：任一层抛错时，按逆序撤下已挂上的层（含文档级衬线样式与字体）。
+        const stops: (() => void)[] = []
+        const teardown = () => {
           counters = []
-          stopSerif()
-          stopInstructionLayout()
-          stopLabels()
-          stopAttributes()
-          stopStats()
-          stopImport()
-          stopSearch()
-          stopText()
+          for (const stopLayer of stops.splice(0).reverse()) stopLayer()
+        }
+        stop = teardown
+        try {
+          stops.push(attachSerif(document))
+          stops.push(attachInstructionLayout(document))
+          stops.push(attachPageLabels(document, settings.bilingual))
+          const stopText = attachTextLayer(document, lexicon, settings.bilingual)
+          stops.push(stopText)
+          stops.push(attachAttributeLayer(document, lexicon, settings.bilingual))
+          const stopStats = attachStatLayer(document, lexicon)
+          stops.push(stopStats)
+          stops.push(attachSearch(document, lexicon))
+          stops.push(attachImport(document, data.terms))
+          counters = [stopText.count, stopStats.count]
+        } catch (error) {
+          stop = undefined
+          teardown()
+          throw error
         }
       }
     } catch (error) {

@@ -229,8 +229,10 @@ const NEGATIVE = [
 it('HOST_SERIF_SELECTORS 只命中原站 Fontin 位置；后备栈不含 Fontin 与扩展字体', () => {
   document.body.innerHTML = FIXTURE
   const serifOf = (el: Element) => HOST_SERIF_SELECTORS.some((selector) => el.matches(selector))
-  for (const selector of POSITIVE)
+  for (const selector of POSITIVE) {
+    expect(document.querySelectorAll(selector).length, selector).toBeGreaterThan(0)
     for (const el of document.querySelectorAll(selector)) expect(serifOf(el), selector).toBe(true)
+  }
   for (const selector of NEGATIVE) {
     expect(document.querySelectorAll(selector).length, selector).toBeGreaterThan(0)
     for (const el of document.querySelectorAll(selector)) expect(serifOf(el), selector).toBe(false)
