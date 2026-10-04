@@ -68,6 +68,7 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
       }
       if (!current()) return
       if (!tab) {
+        if (reloading) reloadMode = 'off'
         emit({ status: 'none' })
         return
       }

@@ -560,6 +560,25 @@ it('应答里的开关与已保存设置不一致：300 ms 后补查一次，不
   expect(query.refresh).toHaveBeenCalledTimes(3)
 })
 
+it('应答先于设置读取到达：设置读到后仍安排 300 ms 补查（R-T3d）', async () => {
+  document.body.innerHTML = FIXTURE
+  let resolve!: (settings: { enabled: boolean; bilingual: boolean }) => void
+  storage.read.mockReturnValue(
+    new Promise((done) => {
+      resolve = done
+    }),
+  )
+  await import('../src/popup/index')
+  emit(answered({ enabled: false }))
+  vi.useFakeTimers()
+  resolve({ enabled: true, bilingual: false })
+  await vi.waitFor(() =>
+    expect(document.querySelector<HTMLInputElement>('#enabled')?.disabled).toBe(false),
+  )
+  vi.advanceTimersByTime(300)
+  expect(query.refresh).toHaveBeenCalledOnce()
+})
+
 it('补查等待期间到达一致的应答：取消补查', async () => {
   await setup()
   vi.useFakeTimers()

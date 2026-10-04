@@ -174,8 +174,14 @@ describe('pageView：优先级（计划裁定 7）', () => {
     expect(pageView(answered({ enabled: false }), ON).kind).toBe('ok')
   })
 
-  it('内容脚本还在启动时一律显示读取中，不因超时改报原因', () => {
-    expect(pageView(answered({ phase: 'starting', page: 'unknown' }, true), ON)).toEqual(READING)
+  it('内容脚本启动期间显示读取中；到重查上限仍在启动才报初始化失败（R-T3d）', () => {
+    expect(pageView(answered({ phase: 'starting', page: 'unknown' }, false), ON)).toEqual(READING)
+    expect(pageView(answered({ phase: 'starting', page: 'unknown' }, true), ON)).toEqual(
+      off('初始化失败', HINT.failed, 'reload'),
+    )
+    expect(pageView(answered({ phase: 'starting' }, true), OFF)).toEqual(
+      off('初始化失败', HINT.failed, 'reload'),
+    )
   })
 
   it('语言或游戏不对时不报部分生效', () => {

@@ -37,11 +37,12 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
       '两种可能：这不是 beta.craftofexile.com 页面（旧版 www 站不支持）；或页面在安装、更新扩展前就已打开，刷新即可。',
     )
   const { reply, settled } = probe
-  if (reply.phase === 'starting' || (reply.page === 'unknown' && !settled)) return reading()
-  if (reply.phase === 'failed')
+  if (!settled && (reply.phase === 'starting' || reply.page === 'unknown')) return reading()
+  // 到重查上限内容脚本仍在启动：启动挂起，刷新是唯一可做的事；极慢的词典加载也会误报于此，刷新即恢复（R-T3d）
+  if (reply.phase === 'failed' || reply.phase === 'starting')
     return blocked(
       '初始化失败',
-      reply.error === 'dictionary'
+      reply.phase === 'failed' && reply.error === 'dictionary'
         ? '词典没能加载，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。'
         : '中文助手没能启动，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。',
       'reload',

@@ -110,12 +110,10 @@ if (reloadButton) {
   reloadButton.addEventListener('click', () => {
     if (reloadButton.disabled) return
     reloadButton.disabled = true
-    void page
-      .reload()
-      .catch(() => refreshPage())
-      .finally(() => {
-        reloadButton.disabled = false
-      })
+    // reload() 自己吞掉刷新失败：标签页已关闭时由 page-query 的无应答路径落到“本页没有中文助手”
+    void page.reload().finally(() => {
+      reloadButton.disabled = false
+    })
   })
 }
 window.addEventListener('pagehide', () => page.dispose())
@@ -151,6 +149,8 @@ function readSettings() {
         syncStates()
         shown = saved
         paintPage()
+        // 应答可能先于设置读取到达：此时才能比较开关并安排补查
+        checkEnabled()
       }
       render()
       receive = (current) => {

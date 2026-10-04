@@ -244,6 +244,19 @@ it('reload：一直有应答时，等标签页加载完才采纳', async () => {
   })
 })
 
+it('刷新模式中标签页消失（activeTab 为 null）：退出刷新模式，之后的 refresh 不再把加载中的应答当旧页回声', async () => {
+  mocks.ask.mockResolvedValue(reply())
+  const page = await open()
+  mocks.activeTab.mockResolvedValue(null)
+  await page.reload()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(seen.at(-1)).toEqual({ status: 'none' })
+  mocks.activeTab.mockResolvedValue({ id: 7, loading: true })
+  page.refresh()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(seen.at(-1)).toMatchObject({ status: 'reply', reply: reply() })
+})
+
 it('reload：还没拿到过应答（状态 5）时什么都不做', async () => {
   mocks.ask.mockResolvedValue(null)
   const page = await open()
