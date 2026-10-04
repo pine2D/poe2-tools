@@ -56,6 +56,10 @@ async function fixture(terms) {
     path.resolve(import.meta.dirname, '../../../packages/ui-theme/fonts/serif-sc-popup.woff2'),
     path.join(root, 'dist/assets/serif-sc-popup-test.woff2'),
   )
+  await copyFile(
+    path.resolve(import.meta.dirname, '../../../packages/ui-theme/fonts/serif-sc-l1.woff2'),
+    path.join(root, 'dist/assets/serif-sc-l1.woff2'),
+  )
   vi.spyOn(console, 'log').mockImplementation(() => {})
   return root
 }

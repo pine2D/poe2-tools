@@ -24,6 +24,14 @@ export declare const ASSET_EXTENSIONS: readonly [
 ]
 /** 扩展弹窗专用字体分片：只由 fonts/popup.css 引用，不进 fonts.css；assertFontSetEquals 不把它计入网站产物 */
 export declare const POPUP_FONT_FILE: 'serif-sc-popup.woff2'
+/** CoE 注入界面的中文衬线子集：内容脚本以 FontFace 注册，不进 fonts.css；assertFontSetEquals 不把它计入网站产物 */
+export declare const L1_FONT_FILE: 'serif-sc-l1.woff2'
+/** 内容脚本注册 L1 子集时用的 family 名 */
+export declare const L1_FONT_FAMILY: 'PoE2 Serif SC L1'
+/** L1 子集体积上限（字节）：build-fonts.mjs 退出码 4，扩展 check.mjs 复查 */
+export declare const L1_FONT_BUDGET: 131072
+/** 只属于扩展的字体分片 */
+export declare const EXTENSION_FONT_FILES: readonly ['serif-sc-popup.woff2', 'serif-sc-l1.woff2']
 /** spec §8.5 的检测正则 /url\(\s*['"]?\s*(?:https?:)?\/\//i */
 export declare const EXTERNAL_URL_RE: RegExp
 export declare function sha256(data: Uint8Array | string): string
@@ -83,7 +91,7 @@ export declare function assertAssets(
   whitelist: Whitelist,
   mode: AssetMode,
 ): void
-/** 网站 dist：dist/assets/*.woff2 的 SHA-256 集合必须与 coverage.json 完全相同；扩展弹窗子集（POPUP_FONT_FILE）不计入 */
+/** 网站 dist：dist/assets/*.woff2 的 SHA-256 集合必须与 coverage.json 完全相同；扩展的两片（EXTENSION_FONT_FILES）不计入 */
 export declare function assertFontSetEquals(
   distWoff2Shas: readonly string[],
   whitelist: Whitelist,

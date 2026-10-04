@@ -8,6 +8,8 @@ import {
   checkLicenseFile,
   cssUrlTargets,
   FULL_DISCLAIMER,
+  L1_FONT_BUDGET,
+  L1_FONT_FILE,
   LICENSE_REQUIRED_LINES,
   loadWhitelist,
   POPUP_FONT_FILE,
@@ -117,6 +119,25 @@ export const FONT_LICENSE_FILE = 'NotoSerifSC-OFL.txt'
 /** 扩展 NOTICE.txt 必含：完整声明、英文声明与字体许可文件名（spec §7.6） */
 export const EXTENSION_NOTICE_REQUIRED_LINES = [FULL_DISCLAIMER, NOTICE_EN, FONT_LICENSE_FILE]
 
+/** CoE 注入界面的中文衬线子集在包内的固定路径（扩展 0.4.0）：manifest 公开给内容脚本读取，content/serif.ts 用同一路径 */
+export const L1_FONT_PATH = `assets/${L1_FONT_FILE}`
+/** web_accessible_resources 恰为这一项：词典与注入衬线子集，只对 beta.craftofexile.com 开放 */
+const WEB_ACCESSIBLE_RESOURCES = [
+  {
+    resources: ['assets/dictionary.json', L1_FONT_PATH],
+    matches: ['https://beta.craftofexile.com/*'],
+  },
+]
+
+/** 注入衬线子集：内容必须是 coverage.json 登记的 serif-sc-l1.woff2，且不超过预算（build-fonts.mjs 退出码 4 之外的第二道守卫） */
+export function assertL1Font(data, whitelist, budget = L1_FONT_BUDGET) {
+  const expected = whitelist.fontShards.get(L1_FONT_FILE)
+  if (expected === undefined || sha256(data) !== expected)
+    throw new Error(`注入字体必须恰好是 ${L1_FONT_FILE}（packages/ui-theme/fonts/coverage.json）`)
+  if (data.length > budget)
+    throw new Error(`注入字体 ${L1_FONT_FILE} 为 ${data.length} 字节，超出预算 ${budget} 字节`)
+}
+
 /** popup 样式引用的包内字体：data: 跳过；其余目标按 CSS 所在目录解析，只接受 assets/ 下的 woff2，返回包内路径 */
 export function popupFontReferences(css, cssFile) {
   const dir = path.posix.dirname(cssFile)
@@ -164,9 +185,7 @@ export function validateManifest(m, version) {
     throw new Error('内容脚本范围发生变化')
   if (
     m.action?.default_popup !== 'popup.html' ||
-    !same(m.web_accessible_resources, [
-      { resources: ['assets/dictionary.json'], matches: ['https://beta.craftofexile.com/*'] },
-    ])
+    !same(m.web_accessible_resources, WEB_ACCESSIBLE_RESOURCES)
   )
     throw new Error('扩展入口或公开资源范围发生变化')
 }
@@ -227,6 +246,7 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     'NOTICE.txt',
     FONT_LICENSE_FILE,
     'assets/dictionary.json',
+    L1_FONT_PATH,
     ...Object.values(m.icons),
     ...popupResources,
     ...popupFonts,
@@ -259,6 +279,7 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     sha256(await readFile(path.join(dist, popupFontFiles[0]))) !== popupFontSha
   )
     throw new Error(`popup 字体必须恰好是 ${POPUP_FONT_FILE}（packages/ui-theme/fonts/popup.css）`)
+  assertL1Font(await readFile(path.join(dist, L1_FONT_PATH)), whitelist)
   const assets = []
   for (const file of distFiles) {
     const ext = file.slice(file.lastIndexOf('.') + 1).toLowerCase()

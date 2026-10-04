@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   checkLicenseFile,
+  L1_FONT_BUDGET,
+  L1_FONT_FILE,
   LICENSE_FILES,
   LICENSE_REQUIRED_LINES,
   POPUP_FONT_FILE,
@@ -12,7 +14,7 @@ import {
   REPO_ROOT,
   sha256,
 } from '../scripts/compliance.mjs'
-import { POPUP_SHARD_FILE, popupShard, unicodeRange } from './charsets'
+import { L1_SHARD_FILE, POPUP_SHARD_FILE, popupShard, unicodeRange } from './charsets'
 import { readNameRecords, readUsWeightClass, readWoff2Tables } from './font-tables'
 
 interface CoverageShard {
@@ -20,6 +22,7 @@ interface CoverageShard {
   family: 'PoE2 Serif SC' | 'PoE2 Serif TC' | 'PoE2 Cinzel'
   group: string
   weight: 700 | 400
+  bytes: number
   sha256: string
   chars: string
 }
@@ -110,6 +113,22 @@ describe('分片集合、源文件登记与许可文件（spec §7.3 断言 6、
     expect([...(shard?.chars ?? '')], HINT).toEqual(popupShard(text).chars)
     for (const ch of 'PoE2中文助手') expect(shard?.chars, ch).toContain(ch)
     for (const ch of '使用前') expect(shard?.chars, ch).not.toContain(ch)
+  })
+
+  it('注入衬线子集恰好一片：不进 fonts.css 与 popup.css，不含 ASCII，不超过 L1_FONT_BUDGET（扩展 0.4.0）', () => {
+    const l1 = coverage.shards.filter((item) => item.group === 'sc-l1')
+    expect(
+      l1.map((item) => item.file),
+      HINT,
+    ).toEqual([L1_SHARD_FILE])
+    expect(L1_SHARD_FILE).toBe(L1_FONT_FILE)
+    for (const css of ['fonts.css', 'popup.css'])
+      expect(readFileSync(join(FONTS, css), 'utf8'), css).not.toContain(L1_SHARD_FILE)
+    const chars = l1[0]?.chars ?? ''
+    expect([...chars].filter((ch) => (ch.codePointAt(0) ?? 0) <= 0x7f).join('')).toBe('')
+    const bytes = readFileSync(join(FONTS, L1_SHARD_FILE)).length
+    expect(l1[0]?.bytes).toBe(bytes)
+    expect(bytes).toBeLessThanOrEqual(L1_FONT_BUDGET)
   })
 
   it('coverage.json 的提交号与 6 个源文件 SHA-256 就是 data-sources.md 登记的那组', () => {

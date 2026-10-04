@@ -2,15 +2,16 @@
 // dict-builder 之外唯一联网的脚本：只请求 raw.githubusercontent.com 上 docs/data-sources.md
 // 登记的固定提交的 6 个文件，下载后先按登记的 SHA-256 校验。
 // 用法：node packages/ui-theme/scripts/build-fonts.mjs [--offline] [--cache-dir <目录>]
-// 退出码：0 成功；1 一般错误；2 源文件或一级字表的 SHA-256 与登记不符；3 首页预算守卫（不写产物）
+// 退出码：0 成功；1 一般错误；2 源文件或一级字表的 SHA-256 与登记不符；3 首页预算守卫（不写产物）；4 CoE 注入衬线子集超出 L1_FONT_BUDGET（不写产物）
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import subsetFont from 'subset-font'
-import { planShards, popupShard, unicodeRange } from '../src/charsets.ts'
+import { l1Shard, planShards, popupShard, unicodeRange } from '../src/charsets.ts'
 import { readNameRecords, readSfntTables } from '../src/font-tables.ts'
 import {
   assertLicenseText,
+  L1_FONT_BUDGET,
   LICENSE_REQUIRED_LINES,
   parseFontSources,
   parseLevel1Registration,
@@ -267,13 +268,23 @@ async function main() {
     sources,
   )
 
+  // CoE 注入衬线子集（扩展 0.4.0）：内容脚本以 FontFace 注册，不写 CSS，登记在 coverage.json 末尾；
+  // 超出预算时在写盘前终止，现有产物一律不动
+  const l1 = await subset(l1Shard(repoIO), sources)
+  if (l1.data.length > L1_FONT_BUDGET) {
+    throw new ExitError(
+      4,
+      `L1 字体预算超出 131,072 字节（实际 ${l1.data.length}）：检查 l1Shard 的收字范围（是否误收 ASCII 或 adapters），不要直接放宽 L1_FONT_BUDGET`,
+    )
+  }
   // 临时目录放在已忽略的 data/cache/ 下：脚本被中断时残留的 woff2 不会变成未跟踪文件；
   // 与仓库同一文件系统，rename 不跨设备
   await mkdir(resolve(REPO_ROOT, 'data/cache'), { recursive: true })
   const tmp = await mkdtemp(resolve(REPO_ROOT, 'data/cache/ui-fonts-out-'))
   try {
     await mkdir(join(tmp, 'LICENSES'))
-    for (const { spec, data } of [...outputs, popup]) await writeFile(join(tmp, spec.file), data)
+    for (const { spec, data } of [...outputs, popup, l1])
+      await writeFile(join(tmp, spec.file), data)
     await writeFile(join(tmp, 'fonts.css'), fontsCss(outputs))
     await writeFile(join(tmp, 'popup.css'), popupFontsCss(popup))
     for (const [alias, family] of Object.entries(FAMILIES)) {
@@ -285,7 +296,7 @@ async function main() {
       sourceCommit: commit,
       sources: sourceHashes,
       sourceNames: names,
-      shards: [...outputs, popup].map(({ spec, data }) => ({
+      shards: [...outputs, popup, l1].map(({ spec, data }) => ({
         file: spec.file,
         family: spec.family,
         group: spec.group,
@@ -302,7 +313,7 @@ async function main() {
     await rm(tmp, { recursive: true, force: true })
   }
   console.log(
-    `已写入 ${relative(REPO_ROOT, FONTS_DIR)}：${outputs.length} 个网站分片，1 个弹窗分片`,
+    `已写入 ${relative(REPO_ROOT, FONTS_DIR)}：${outputs.length} 个网站分片，1 个弹窗分片，1 个注入分片`,
   )
   // 契约 §3.6：标准输出末行为 shard0+cinzel=<字节数>/122880
   console.log(`shard0+cinzel=${budget}/${BUDGET}`)

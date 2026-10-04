@@ -106,7 +106,7 @@ export async function checkSite(root, options = {}) {
     })
   }
   assertAssets(assets, whitelist, 'dist')
-  // ⑥ dist/assets/*.woff2 与 coverage.json 完全相同（扩展弹窗子集除外，见 assertFontSetEquals）
+  // ⑥ dist/assets/*.woff2 与 coverage.json 完全相同（扩展的弹窗子集与注入衬线子集除外，见 assertFontSetEquals）
   const woff2 = []
   for (const path of assetFiles.filter((file) => file.endsWith('.woff2'))) {
     woff2.push(sha256(await readFile(path)))

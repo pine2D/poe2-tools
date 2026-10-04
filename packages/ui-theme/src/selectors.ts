@@ -18,3 +18,12 @@ export const SERIF_SELECTORS: readonly string[] = [
   '.pt-stagehead',
   '.pt-stagehead:lang(zh-TW)',
 ]
+
+/** CoE 注入面板（l1.css）里用 var(--l1-serif) 的选择器：面板标题与预览、填入、恢复按钮（扩展 0.4.0）。
+ *  “第 N 行”定位按钮在清单里，不是 .body 或 .result 的直接子元素，不在内。与 SERIF_SELECTORS 分开：
+ *  后者驱动网站 shard0 门禁，L1 文字由 serif-sc-l1 子集负责（coverage.test.ts）；集合与 l1.css 一致由 selectors.test.ts 断言 */
+export const L1_SERIF_SELECTORS: readonly string[] = [
+  '.title',
+  '.body > button',
+  '.result > button',
+]

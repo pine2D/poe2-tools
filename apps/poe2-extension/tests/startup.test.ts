@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   subscribe: vi.fn(),
   answer: vi.fn(),
   attach: vi.fn<(...args: unknown[]) => Counted>(),
+  serif: vi.fn<(doc: Document) => () => void>(() => vi.fn()),
   stat: vi.fn<(...args: unknown[]) => Counted>(),
 }))
 vi.mock('../src/platform', () => ({
@@ -25,6 +26,7 @@ vi.mock('../src/content/search-controller', () => ({ attachSearch: () => () => {
 vi.mock('../src/content/import-controller', () => ({ attachImport: () => () => {} }))
 vi.mock('../src/content/instruction-layout', () => ({ attachInstructionLayout: () => () => {} }))
 vi.mock('../src/content/page-labels', () => ({ attachPageLabels: () => () => {} }))
+vi.mock('../src/content/serif', () => ({ attachSerif: mocks.serif }))
 vi.mock('../src/content/language-notice', () => ({ createLanguageNotice: () => ({ update() {} }) }))
 vi.mock('../src/adapters/coe-beta/context', () => ({ pageStatus: () => 'supported' }))
 beforeEach(() => {
@@ -210,4 +212,32 @@ it('关闭时仍应答 enabled=false、translated=0；打开后计数恢复，�
   expect(reply()).toMatchObject({ phase: 'ready', enabled: true, translated: 5 })
   changed({ enabled: false, bilingual: false })
   expect(reply()).toMatchObject({ enabled: false, translated: 0 })
+})
+
+it('生效时挂上衬线，关闭简体中文时随其余层一起撤下，再启用重新挂（扩展 0.4.0）', async () => {
+  const stopSerif = vi.fn()
+  mocks.serif.mockReturnValue(stopSerif)
+  mocks.attach.mockImplementation(() => Object.assign(vi.fn(), { count: () => 0 }))
+  mocks.read.mockResolvedValue({ enabled: true, bilingual: false })
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ schemaVersion: 1, locale: 'zh-CN', terms: [] }),
+    }),
+  )
+  vi.stubGlobal(
+    'MutationObserver',
+    class {
+      observe() {}
+    },
+  )
+  await import('../src/content/index')
+  await vi.waitFor(() => expect(mocks.serif).toHaveBeenCalledOnce())
+  expect(mocks.serif).toHaveBeenCalledWith(document)
+  const changed = mocks.subscribe.mock.calls[0]?.[0]
+  changed({ enabled: false, bilingual: false })
+  expect(stopSerif).toHaveBeenCalledOnce()
+  changed({ enabled: true, bilingual: true })
+  expect(mocks.serif).toHaveBeenCalledTimes(2)
 })

@@ -3,7 +3,7 @@
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
    令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
    尺寸阶梯只声明本文件用到的档；字号与间距一律取阶梯，例外逐条登记在 extension-sizes.test.ts 的 ALLOW。
-   只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮、角饰与衬线。 */
+   只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮与角饰。衬线只经 --l1-serif 用于 L1_SERIF_SELECTORS（selectors.ts：面板标题与主次按钮，“第 N 行”定位按钮除外）；字体由内容脚本 serif.ts 以 FontFace 注册到文档，这里不写 @font-face。 */
 :host {
   --ext-ink: #9fe3dc;
   --ink: #e9e0cd;
@@ -20,6 +20,8 @@
   --focus: #ffd48a;
   --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* 面板标题与主次按钮的中文衬线（扩展 0.4.0）：family 由内容脚本注册到文档，Shadow DOM 只引用名字 */
+  --l1-serif: "PoE2 Serif SC L1", var(--font-zh-cn);
   /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档，取值同 tokens.css */
   --fs-micro: 12px;
   --fs-small: 13px;
@@ -266,6 +268,13 @@ button:disabled {
 }
 button[data-tertiary]:disabled {
   border-color: transparent;
+}
+/* 面板标题与主次按钮用中文衬线（DESIGN.md L1 白名单）。只换字族，字重沿用各自规则：字体只有 700 一档，
+   400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响 */
+.title,
+.body > button,
+.result > button {
+  font-family: var(--l1-serif);
 }
 button:focus-visible,
 textarea:focus-visible {

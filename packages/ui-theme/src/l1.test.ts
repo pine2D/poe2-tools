@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { L1_FONT_FAMILY } from '../scripts/compliance.mjs'
 import { contrastRatio } from './testing/contrast'
 import { parseRules, rootTokens } from './testing/css'
 
@@ -38,6 +39,7 @@ const L1_ONLY = [
   '--l1-primary-bg',
   '--l1-primary-edge',
   '--l1-primary-ink',
+  '--l1-serif',
 ]
 
 describe('l1.css 令牌（spec §6.9 样式注入）', () => {
@@ -58,7 +60,7 @@ describe('l1.css 令牌（spec §6.9 样式注入）', () => {
 })
 
 describe('L1 禁用项（spec §4.2）', () => {
-  it('不用渐变、衬线、外部或内嵌 url()', () => {
+  it('不用渐变、网站衬线栈（--pt-serif、--pt-cinzel）、外部或内嵌 url()', () => {
     expect(l1).not.toMatch(/gradient\(/)
     expect(l1).not.toMatch(/--pt-serif|--pt-cinzel/)
     expect(l1).not.toMatch(/url\(/i)
@@ -69,6 +71,32 @@ describe('L1 禁用项（spec §4.2）', () => {
     for (const rule of slotted) {
       for (const [name, value] of rule.declarations)
         expect(value, `${rule.selectors.join(',')} ${name}`).toMatch(/!important$/)
+    }
+  })
+})
+
+describe('L1 衬线（扩展 0.4.0，DESIGN.md L1 白名单）', () => {
+  it('--l1-serif 恰为 L1 子集 family 加 --font-zh-cn；全部声明里只有这一处写 family 名', () => {
+    expect(token('--l1-serif')).toBe(`"${L1_FONT_FAMILY}", var(--font-zh-cn)`)
+    const mentions = rules
+      .flatMap((rule) => [...rule.declarations.values()])
+      .filter((value) => value.includes(L1_FONT_FAMILY))
+    expect(mentions).toHaveLength(1)
+  })
+  it('用 --l1-serif 的规则恰好一条，只声明 font-family、不带 !important，不落在定位按钮、候选、输入框、声明、提示条与署名上', () => {
+    const serif = rules.filter(
+      (rule) =>
+        !rule.selectors.includes(':host') &&
+        [...rule.declarations.values()].some((value) => value.includes('var(--l1-serif')),
+    )
+    expect(serif).toHaveLength(1)
+    for (const rule of serif) {
+      expect([...rule.declarations.keys()]).toEqual(['font-family'])
+      expect(rule.declarations.get('font-family')).toBe('var(--l1-serif)')
+      for (const selector of rule.selectors)
+        expect(selector).not.toMatch(
+          /data-tertiary|::slotted|textarea|\.disclaimer|\.notice|\.check|\.by/,
+        )
     }
   })
 })

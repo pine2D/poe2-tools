@@ -1,5 +1,6 @@
 // L1 注入 UI 的共享样式与归属标识（spec §6.9）。l1.css 以字符串打进 content.js，构造一份 CSSStyleSheet，
-// 经 adoptedStyleSheets 挂到各 shadow root，不写 document 级样式。
+// 经 adoptedStyleSheets 挂到各 shadow root；L1 共享样式不写进 document。原站 Fontin 位置的字体族规则是另一张
+// 文档级样式，见 serif.ts（DESIGN.md“宿主全局样式”第 4 处）。
 import l1Css from '@poe2-tools/ui-theme/l1.css?inline'
 import { CORE_FACETS, EXT_CYAN, gemFacets, SYMBOLS } from '@poe2-tools/ui-theme/motif'
 

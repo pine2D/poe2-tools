@@ -6,6 +6,8 @@ import {
   COMMON_SHARD_SIZE,
   chunk,
   enNames,
+  L1_SHARD_FILE,
+  l1Shard,
   nonAsciiChars,
   POPUP_SHARD_FILE,
   planShards,
@@ -220,5 +222,43 @@ describe('popupShard（扩展弹窗独立子集）', () => {
   it('planShards 不产出弹窗子集：网站分片与弹窗子集互不牵连', () => {
     const shards = planShards({ shard0Text: '构筑汉化\n', level1: ['的'], io, previous: null })
     expect(shards.some((shard) => shard.group === 'sc-popup')).toBe(false)
+  })
+})
+
+// ---- 扩展 0.4.0：CoE 注入衬线子集，与网站分片、弹窗子集互不牵连 ----
+describe('l1Shard（CoE 注入衬线子集）', () => {
+  const l1io = memoryIO({
+    'data/l10n/coe-beta/ui.zh-CN.json': JSON.stringify({
+      _meta: { source: '元数据不收' },
+      entries: { Crafting: '制作', 'Import an item': '导入装备 (Item)', Proceed: '继续' },
+    }),
+    'apps/poe2-extension/src/content/import-controller.ts':
+      "// 整行注释不收\nconst a = '预览' /* 块注释不收 */\nconst b = '第 ' + n + ' 行'",
+    'apps/poe2-extension/src/content/import-controller.test.ts': "const t = '测试不收'",
+    'apps/poe2-extension/src/content/README.md': '说明不收',
+    'apps/poe2-extension/src/provenance.ts': "export const S = 'PoE2 中文助手 · 非官方'",
+    'apps/poe2-extension/src/adapters/coe-beta/settings-text.ts': "const x = '适配器不收'",
+  })
+
+  it('收 ui.zh-CN.json 全部译文 ∪ 内容脚本 .ts（去注释、排除测试）∪ provenance.ts 的非 ASCII 字符；不含 ASCII；文件名、分组、家族、字重固定；码位升序', () => {
+    const shard = l1Shard(l1io)
+    expect(L1_SHARD_FILE).toBe('serif-sc-l1.woff2')
+    expect([shard.file, shard.group, shard.family, shard.weight]).toEqual([
+      'serif-sc-l1.woff2',
+      'sc-l1',
+      'PoE2 Serif SC',
+      700,
+    ])
+    expect(new Set(shard.chars)).toEqual(new Set([...'制作导入装备继续预览第行中文助手·非官方']))
+    expect(shard.chars).toHaveLength([...'制作导入装备继续预览第行中文助手·非官方'].length)
+    expect(shard.chars.some((ch) => (ch.codePointAt(0) ?? 0) <= 0x7f)).toBe(false)
+    expect(shard.chars).toEqual(
+      [...shard.chars].sort((a, b) => (a.codePointAt(0) ?? 0) - (b.codePointAt(0) ?? 0)),
+    )
+  })
+
+  it('planShards 不产出注入子集', () => {
+    const shards = planShards({ shard0Text: '构筑汉化\n', level1: ['的'], io, previous: null })
+    expect(shards.some((shard) => shard.group === 'sc-l1')).toBe(false)
   })
 })

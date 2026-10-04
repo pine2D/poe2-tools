@@ -7,6 +7,7 @@ import {
   type CharsetIO,
   COMMON_SHARD_SIZE,
   enNames,
+  l1Shard,
   nonAsciiChars,
   SHARD_SIZE,
   siteFixedChars,
@@ -28,6 +29,31 @@ const shards = (
   JSON.parse(readFileSync(join(FONTS, 'coverage.json'), 'utf8')) as { shards: CoverageShard[] }
 ).shards
 const HINT = '运行 pnpm ui-theme:fonts 重新生成字体分片，并与本次改动放在同一个提交里'
+/** 只属于扩展的字体分组：网站覆盖与 fonts.css 都不含它们 */
+const EXTENSION_GROUPS = ['sc-popup', 'sc-l1']
+const L1_HINT =
+  '运行 node packages/ui-theme/scripts/build-fonts.mjs --offline 重新生成，并在同一提交里 AMEND 扩展 0.4.0（EXTENSION_RELEASE_AMEND=1 pnpm extension:release）'
+/** 原站 Fontin 位置上已知会出现的译文（selectors.md 样例）：兜住 adapters 写进 Fontin 位置的字 */
+const FONTIN_SAMPLES = [
+  '制作',
+  '数据',
+  '背包',
+  '导入装备',
+  '重置',
+  '流程模拟',
+  '模拟此结果',
+  '创建模拟流程',
+  '编辑',
+  '百科',
+  '导出',
+  '保存',
+  '主要功能',
+  '使用方法',
+  '制作演练',
+  '计算器',
+  '可自定义',
+  '最新版本',
+]
 
 const io: CharsetIO = {
   listFiles(dirRel) {
@@ -56,8 +82,10 @@ const level1 = readFileSync(
   .filter((line) => line !== '')
 
 describe('分片覆盖（spec §7.3）', () => {
-  // 弹窗子集只由扩展 popup.css 引用，网站不加载，不计入网站覆盖
-  const sc = charsOf((shard) => shard.family === 'PoE2 Serif SC' && shard.group !== 'sc-popup')
+  // 扩展的两片（弹窗子集、注入衬线子集）网站不加载，不计入网站覆盖
+  const sc = charsOf(
+    (shard) => shard.family === 'PoE2 Serif SC' && !EXTENSION_GROUPS.includes(shard.group),
+  )
 
   it('zh-CN 名称的字符 ⊆ SC 全部分片', () => {
     expect(missing(zhNames(io, 'zh-CN').join(''), sc), HINT).toBe('')
@@ -88,6 +116,18 @@ describe('分片覆盖（spec §7.3）', () => {
   })
 })
 
+describe('CoE 注入衬线子集（扩展 0.4.0，裁定 14）', () => {
+  const l1 = charsOf((shard) => shard.group === 'sc-l1')
+
+  it('ui.zh-CN.json 译文与内容脚本固定文案的非 ASCII 字符 ⊆ sc-l1', () => {
+    expect(missing(l1Shard(io).chars, l1), L1_HINT).toBe('')
+  })
+
+  it('原站 Fontin 位置的样例文案 ⊆ sc-l1', () => {
+    expect(missing(FONTIN_SAMPLES.join(''), l1), L1_HINT).toBe('')
+  })
+})
+
 describe('字表与 fonts.css', () => {
   it('tongyong-level1.txt 为 3500 个互不相同的单字', () => {
     expect(level1).toHaveLength(3500)
@@ -95,8 +135,8 @@ describe('字表与 fonts.css', () => {
     for (const line of level1) expect([...line]).toHaveLength(1)
   })
 
-  it('fonts.css 每片一条 @font-face，顺序、family、weight、swap 与 unicode-range 与 coverage.json 一致（弹窗子集除外）', () => {
-    const siteShards = shards.filter((shard) => shard.group !== 'sc-popup')
+  it('fonts.css 每片一条 @font-face，顺序、family、weight、swap 与 unicode-range 与 coverage.json 一致（扩展两片除外）', () => {
+    const siteShards = shards.filter((shard) => !EXTENSION_GROUPS.includes(shard.group))
     const faces = parseRules(readFileSync(join(FONTS, 'fonts.css'), 'utf8')).filter((rule) =>
       rule.selectors.includes('@font-face'),
     )

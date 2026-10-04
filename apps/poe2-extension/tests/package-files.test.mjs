@@ -2,8 +2,9 @@
 import { copyFile, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { sha256 } from '@poe2-tools/ui-theme/compliance'
 import { afterEach, expect, it } from 'vitest'
-import { check } from '../scripts/check.mjs'
+import { assertL1Font, check } from '../scripts/check.mjs'
 import { noticeText } from '../scripts/notice.mjs'
 import { verifyZip } from '../scripts/package.mjs'
 import { storedZip } from '../scripts/zip.mjs'
@@ -48,6 +49,10 @@ async function fixture() {
     new URL('fonts/serif-sc-popup.woff2', theme),
     path.join(dist, 'assets/serif-sc-popup-test.woff2'),
   )
+  await copyFile(
+    new URL('fonts/serif-sc-l1.woff2', theme),
+    path.join(dist, 'assets/serif-sc-l1.woff2'),
+  )
   for (const icon of Object.values(manifest.icons))
     await copyFile(new URL(`../public/${icon}`, import.meta.url), path.join(dist, icon))
   return { root, dist }
@@ -64,14 +69,17 @@ it.each(['debug.js', 'private.json', 'notes.txt', 'assets/popup-old.js'])(
     await expect(check(root)).rejects.toThrow('意外打包文件')
   },
 )
-it.each(['LICENSE.txt', 'NOTICE.txt', 'NotoSerifSC-OFL.txt', 'assets/serif-sc-popup-test.woff2'])(
-  '拒绝缺少 %s',
-  async (name) => {
-    const { root, dist } = await fixture()
-    await rm(path.join(dist, name))
-    await expect(check(root)).rejects.toThrow('缺少打包文件')
-  },
-)
+it.each([
+  'LICENSE.txt',
+  'NOTICE.txt',
+  'NotoSerifSC-OFL.txt',
+  'assets/serif-sc-popup-test.woff2',
+  'assets/serif-sc-l1.woff2',
+])('拒绝缺少 %s', async (name) => {
+  const { root, dist } = await fixture()
+  await rm(path.join(dist, name))
+  await expect(check(root)).rejects.toThrow('缺少打包文件')
+})
 it('拒绝伪装为必需文件的符号链接', async () => {
   const { root, dist } = await fixture()
   await rm(path.join(dist, 'NOTICE.txt'))
@@ -108,6 +116,27 @@ it('拒绝弹窗引用独立子集以外的字体（如网站 shard0）', async 
     path.join(dist, 'assets/serif-sc-popup-test.woff2'),
   )
   await expect(check(root)).rejects.toThrow('popup 字体必须恰好是 serif-sc-popup.woff2')
+})
+it('拒绝内容与 coverage.json 登记不符的注入衬线子集（扩展 0.4.0）', async () => {
+  const { root, dist } = await fixture()
+  await copyFile(
+    new URL('../../../packages/ui-theme/fonts/serif-sc-popup.woff2', import.meta.url),
+    path.join(dist, 'assets/serif-sc-l1.woff2'),
+  )
+  await expect(check(root)).rejects.toThrow('注入字体必须恰好是 serif-sc-l1.woff2')
+})
+it('assertL1Font：哈希一致且不超预算才放行', () => {
+  const data = Buffer.from('l1-font')
+  const whitelist = {
+    fontShards: new Map([['serif-sc-l1.woff2', sha256(data)]]),
+    motifSvgs: new Map(),
+    registered: new Map(),
+  }
+  expect(() => assertL1Font(data, whitelist, data.length)).not.toThrow()
+  expect(() => assertL1Font(data, whitelist, data.length - 1)).toThrow('超出预算')
+  expect(() => assertL1Font(Buffer.from('other'), whitelist, 1_000)).toThrow(
+    '注入字体必须恰好是 serif-sc-l1.woff2',
+  )
 })
 it('拒绝 popup 样式里的外链 url() 与包外引用', async () => {
   const { root, dist } = await fixture()

@@ -12,9 +12,13 @@ import {
   checkLicenseFile,
   classifyAsset,
   cssUrlTargets,
+  EXTENSION_FONT_FILES,
   EXTERNAL_URL_RE,
   externalUrls,
   FULL_DISCLAIMER,
+  L1_FONT_BUDGET,
+  L1_FONT_FAMILY,
+  L1_FONT_FILE,
   LICENSE_REQUIRED_LINES,
   loadWhitelist,
   missingLines,
@@ -229,6 +233,24 @@ describe('素材白名单（spec §8.6）', () => {
     expect(() => assertFontSetEquals([SHA_A], withPopup)).not.toThrow()
     expect(() => assertFontSetEquals([SHA_A, SHA_B], withPopup)).toThrow(SHA_B)
     expect(() => assertFontSetEquals([], withPopup)).toThrow(SHA_A)
+  })
+
+  it('L1 注入衬线子集常量；assertFontSetEquals 对扩展两片都豁免，网站产物里出现任一片即拒绝（扩展 0.4.0）', () => {
+    expect(L1_FONT_FILE).toBe('serif-sc-l1.woff2')
+    expect(L1_FONT_FAMILY).toBe('PoE2 Serif SC L1')
+    expect(L1_FONT_BUDGET).toBe(131_072)
+    expect(EXTENSION_FONT_FILES).toEqual([POPUP_FONT_FILE, L1_FONT_FILE])
+    const withExtension: Whitelist = {
+      ...whitelist,
+      fontShards: new Map([
+        ['serif-sc-0.woff2', SHA_A],
+        [POPUP_FONT_FILE, SHA_B],
+        [L1_FONT_FILE, SHA_C],
+      ]),
+    }
+    expect(() => assertFontSetEquals([SHA_A], withExtension)).not.toThrow()
+    expect(() => assertFontSetEquals([SHA_A, SHA_C], withExtension)).toThrow(SHA_C)
+    expect(() => assertFontSetEquals([SHA_A, SHA_B], withExtension)).toThrow(SHA_B)
   })
 
   it('loadWhitelist 读 coverage.json、母题生成物与第 3 类登记', async () => {

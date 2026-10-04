@@ -1,7 +1,7 @@
 // 字体分片的收字规则（spec §7.3）：纯函数，文件访问由调用方注入。
 // build-fonts.mjs 与 coverage.test.ts 共用；相对导入写 .ts 扩展名，Node 直接加载。
-// 弹窗子集文件名只在 compliance.mjs 定义一处（扩展检查与网站检查也用它），这里导入后改名导出
-import { POPUP_FONT_FILE } from '../scripts/compliance.mjs'
+// 扩展两片（弹窗子集、注入衬线子集）的文件名只在 compliance.mjs 定义一处（扩展检查与网站检查也用它），这里导入后改名导出
+import { L1_FONT_FILE, POPUP_FONT_FILE } from '../scripts/compliance.mjs'
 
 /** U+0020–U+007E，共 95 个字符 */
 export const ASCII_PRINTABLE = Array.from({ length: 95 }, (_, i) =>
@@ -192,6 +192,7 @@ export type ShardGroup =
   | 'tc-names'
   | 'cinzel'
   | 'sc-popup'
+  | 'sc-l1'
 export type FontFamilyAlias = 'PoE2 Serif SC' | 'PoE2 Serif TC' | 'PoE2 Cinzel'
 export interface ShardSpec {
   /** 'serif-sc-0.woff2' 等（契约 §3.7.3） */
@@ -291,5 +292,35 @@ export function popupShard(popupText: string): ShardSpec {
     group: 'sc-popup',
     weight: 700,
     chars: sorted(shard0Chars(popupText)),
+  }
+}
+
+/** CoE 注入衬线子集的收字来源（扩展 0.4.0，计划裁定 14）：界面译文表、内容脚本目录、署名常量文件 */
+export const L1_UI_FILE = 'data/l10n/coe-beta/ui.zh-CN.json'
+export const L1_SCAN_DIR = 'apps/poe2-extension/src/content'
+export const L1_SCAN_FILES = ['apps/poe2-extension/src/provenance.ts'] as const
+/** 注入衬线子集的文件名：与 compliance.mjs 的 L1_FONT_FILE 是同一个常量 */
+export const L1_SHARD_FILE = L1_FONT_FILE
+
+/** CoE 注入界面的中文衬线子集：ui.zh-CN.json 的 entries 全部值 ∪ 内容脚本 .ts（排除 .test.）与 provenance.ts
+ *  经 stripComments 后的非 ASCII 字符。不含 ASCII：原站位置的拉丁字母由 Fontin 渲染，面板里的回落 --font-zh-cn。
+ *  family 记源字体别名 'PoE2 Serif SC'（subset 与 name 表检查按它取源），运行时注册名见 compliance.mjs 的 L1_FONT_FAMILY。
+ *  不进 planShards，不改网站分片 */
+export function l1Shard(io: CharsetIO): ShardSpec {
+  const ui = JSON.parse(io.readText(L1_UI_FILE)) as { entries?: Record<string, unknown> }
+  const chars = nonAsciiChars(strings(Object.values(ui.entries ?? {})).join('\n'))
+  const files: string[] = [...L1_SCAN_FILES]
+  for (const file of io.listFiles(L1_SCAN_DIR)) {
+    if (file.endsWith('.ts') && !file.includes('.test.')) files.push(file)
+  }
+  for (const file of files) {
+    for (const ch of nonAsciiChars(stripComments(io.readText(file)))) chars.add(ch)
+  }
+  return {
+    file: L1_SHARD_FILE,
+    family: 'PoE2 Serif SC',
+    group: 'sc-l1',
+    weight: 700,
+    chars: sorted(chars),
   }
 }

@@ -9,6 +9,7 @@ import { createLanguageNotice } from './language-notice'
 import { attachPageLabels } from './page-labels'
 import { snapshot } from './page-state'
 import { attachSearch } from './search-controller'
+import { attachSerif } from './serif'
 import { attachStatLayer } from './stat-layer'
 import { attachTextLayer } from './text-layer'
 
@@ -65,6 +66,7 @@ async function start() {
       stop = undefined
       mode = next
       if (next) {
+        const stopSerif = attachSerif(document)
         const stopInstructionLayout = attachInstructionLayout(document)
         const stopLabels = attachPageLabels(document, settings.bilingual)
         const stopText = attachTextLayer(document, lexicon, settings.bilingual)
@@ -75,6 +77,7 @@ async function start() {
         counters = [stopText.count, stopStats.count]
         stop = () => {
           counters = []
+          stopSerif()
           stopInstructionLayout()
           stopLabels()
           stopAttributes()

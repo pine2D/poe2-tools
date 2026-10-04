@@ -20,7 +20,10 @@ const manifest = {
     },
   ],
   web_accessible_resources: [
-    { resources: ['assets/dictionary.json'], matches: ['https://beta.craftofexile.com/*'] },
+    {
+      resources: ['assets/dictionary.json', 'assets/serif-sc-l1.woff2'],
+      matches: ['https://beta.craftofexile.com/*'],
+    },
   ],
 }
 it('仅准许固定域、单个隔离内容入口和 storage', () =>
@@ -68,4 +71,30 @@ it('入库 manifest.json 的 permissions 恰为 ["storage"]，没有 host 与可
   expect(real.host_permissions).toBeUndefined()
   expect(real.optional_permissions).toBeUndefined()
   expect(real.optional_host_permissions).toBeUndefined()
+})
+
+it('公开资源恰为词典与注入衬线子集，只对 beta 站开放（扩展 0.4.0）', () => {
+  const war = (resources, matches = ['https://beta.craftofexile.com/*']) => ({
+    ...manifest,
+    web_accessible_resources: [{ resources, matches }],
+  })
+  for (const changed of [
+    war(['assets/dictionary.json']),
+    war(['assets/dictionary.json', 'assets/serif-sc-l1.woff2', 'assets/popup.css']),
+    war(['assets/dictionary.json', 'assets/serif-sc-l1.woff2'], ['<all_urls>']),
+    {
+      ...manifest,
+      web_accessible_resources: [
+        ...manifest.web_accessible_resources,
+        { resources: ['icons/icon-16.png'], matches: ['https://beta.craftofexile.com/*'] },
+      ],
+    },
+  ])
+    expect(() => validateManifest(changed, '0.1.0')).toThrow('扩展入口或公开资源范围发生变化')
+})
+
+it('仓库 manifest.json 通过同一套检查', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const real = JSON.parse(await readFile(new URL('../manifest.json', import.meta.url), 'utf8'))
+  expect(() => validateManifest(real, real.version)).not.toThrow()
 })

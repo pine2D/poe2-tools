@@ -162,7 +162,7 @@ components:
 |---|---|---|---|
 | L3 沉浸 | 全站页头；首页、扩展介绍页；构筑工作台的外层容器（空态框、主区框；侧栏“文件”是 L0 面板） | pt-frame 金属框与角饰、窗口标题栏、金属页签、pt-backdrop；白名单内的金属主按钮；衬线（见“字体”）；只用于 hero 标题的金色渐变字 | 框中框；标题栏两端端饰；同屏角饰超过 8 个 |
 | 游戏对象 | 名称牌、装备卡、译文提示框 | 两行居中；中文名衬线、英文名 Cinzel；三段深色渐变底；顶边菱结扣；0.05 颗粒 | 角饰、辉光、大面积亮色底；名称牌下面的对照行仍是 L0 |
-| L1 点缀 | CoE 注入界面（二期） | 扁平深底、1px 金线、16px 青色宝石、“PoE2 中文助手 · 非官方”署名、完整声明 | 金属按钮、角饰、衬线、渐变填充、页头式金属底边 |
+| L1 点缀 | CoE 注入界面 | 扁平深底、1px 金线、16px 青色宝石、“PoE2 中文助手 · 非官方”署名、完整声明；白名单位置的中文衬线（700 一档，见“字体”） | 金属按钮、角饰、渐变填充、页头式金属底边；白名单以外的衬线（词缀、数据、搜索候选、键帽、语言提示条、“第 N 行”定位按钮） |
 | L0 数据 | 对照行、表单、说明正文、命令块、弹层、待核对清单、状态条、404 | 平涂底、系统无衬线、左对齐、`tabular-nums` | 纹理、辉光、小型大写、文字居中、渐变字、衬线 |
 
 “每屏”指同一路由状态下同时渲染的界面，弹层、Toast、展开的折叠区都算进它们覆盖的状态。
@@ -181,7 +181,7 @@ components:
 
 **注意力落点**：首页是对照带（唯一一扇金属框包住的中英对照示例带，中缝铜线与菱结属于框内母题，不另算落点），扩展介绍页是下载框（“先确认环境”与“再下载”两栏所在的 hero 框），构筑看板是主区框与阶段带（列头底线），逐项核对是主区框。首页的两个入口是同款 `pt-btn`，左右镜像，没有金属主按钮。看板里的标题栏只在看板上降为平涂（`.app__build-frame--board > .pt-titlebar`：`bar` 底、`line-2` 底线、仍是衬线金字），让阶段带成为落点：阶段带是 2px `metal-line` 底线加 1px `metal-edge` 顶线和暖色渐变底，阶段名用衬线。逐项核对保留金属标题栏。装备与技能在看板里是 L0 行，名称牌只在展开详情与逐项核对里出现。侧栏在看板显示多个阶段时用紧凑行（无边框与金线，单行省略名称，隐藏原名）。
 
-其余按钮一律用 pt-btn。层级例外只有四项：名称牌与译文提示框居中并使用衬线和 Cinzel；扩展弹窗页脚居中；扩展弹窗的设置开关用金属轨道；CoE 注入界面保留三处宿主全局样式。其他偏离都要先改设计规格。
+其余按钮一律用 pt-btn。层级例外只有四项：名称牌与译文提示框居中并使用衬线和 Cinzel；扩展弹窗页脚居中；扩展弹窗的设置开关用金属轨道；CoE 注入界面保留四处宿主全局样式：前三处是 0.1.111 已有的翻译徽标 `::after`、`#instructions` 块级排版、导入对话框的三条放宽规则（`<style data-poe2-l10n="import-dialog">`）；第 4 处是 0.4.0 起的注入衬线 `<style data-poe2-l10n="serif">`，全文档唯一、挂载前查重，只声明 `font-family`，选择器一律加 `:root ` 前缀，不写 `!important`、`url()` 与 `@font-face`，停用时移除。其他偏离都要先改设计规格。
 
 ## 色彩
 
@@ -210,12 +210,15 @@ components:
 | 名称牌名称 | 衬线 700 | 20px（译文提示框 21px） | .03em（提示框 .04em） |
 | 阶段名（阶段看板） | 衬线 700 | 21px（≤620px 17px，取 `--fs-title`、`--fs-lead`） | .04em |
 | 物品、宝石英文名 | Cinzel 400 | 13px | .04em |
+| CoE 注入：原站 Fontin 的位置（主导航、原站按钮与物品卡底部按钮、首页功能区标题、补丁版本标签） | 原站 Fontin，中文落到衬线 700（“PoE2 Serif SC L1”） | 沿用原站 | 沿用原站 |
+| CoE 导入面板标题与预览、填入、恢复按钮 | 衬线 700（“PoE2 Serif SC L1”） | 标题 15px（`--fs-data`），按钮 14px（`--fs-body`） | 0 |
 
 - 中文衬线是 Noto Serif SC、Noto Serif TC 的 wght 700 实例，Cinzel 是 wght 400 实例，按分片自托管在 `packages/ui-theme/fonts/`，`font-display: swap`。页面用站点私有别名 “PoE2 Serif SC”“PoE2 Serif TC”“PoE2 Cinzel”，缺字时逐级回退到本机字体。
 - 首页只下载 `serif-sc-0` 一个字体文件，预算 122,880 字节，构建期有守卫。网站的衬线固定文案都列在 `packages/ui-theme/scripts/shard0-text.txt`；新增衬线文案先补进这个文件，再运行 `pnpm ui-theme:fonts`。
 - 扩展弹窗用自己的字体子集 `serif-sc-popup`：弹窗衬线文案列在 `packages/ui-theme/scripts/popup-text.txt`，字体声明在 `fonts/popup.css`。网站文案与 `shard0-text.txt` 的变化不再改变扩展 zip；改弹窗衬线文案会改变扩展 zip，要连同扩展版本一起发布。
+- CoE 注入界面用另一份子集 `serif-sc-l1`（family “PoE2 Serif SC L1”，wght 700）：收 `data/l10n/coe-beta/ui.zh-CN.json` 的全部译文与 `apps/poe2-extension/src/content/*.ts`、`src/provenance.ts` 的中文文案，不收 ASCII（拉丁字母仍由原站 Fontin 或 `--font-zh-cn` 显示），预算 131,072 字节，超出时 `pnpm ui-theme:fonts` 以退出码 4 终止。文件随扩展打包为 `assets/serif-sc-l1.woff2`，内容脚本读成 ArrayBuffer 后用 `FontFace` 注册到原站文档，不写 `@font-face`；加载失败只在控制台警告一行，界面回落无衬线。这两处文案出现新字时重新生成子集，连同扩展版本一起发布。网站不下载这个文件。
 - 繁体衬线只用于名称牌和提示框里 `lang="zh-TW"` 的词典名称；站点固定文案一律用简体栈。
-- 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 与 L1 不用衬线；页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。只改字号的修饰类（如 `.pt-subhead--lg`）继承所属组件的衬线，不另列。
+- 衬线文字里的 ASCII 文件扩展名片段（如 `.build`）用无衬线（`.pt-ext`）。L0 不用衬线。L1 只在白名单位置用衬线：原站文档里是 `apps/poe2-extension/src/adapters/coe-beta/serif.ts` 的 `HOST_SERIF_SELECTORS`（原站 Fontin 的位置，字体栈以 `Fontin, "PoE2 Serif SC L1"` 开头、接原站后备栈）；Shadow DOM 里是 `packages/ui-theme/src/selectors.ts` 的 `L1_SERIF_SELECTORS`（`.title`、`.body > button`、`.result > button`，取 `l1.css` 的 `--l1-serif`）。原站 Montserrat 的位置（分组标题、分组按钮、原站对话框标题与按钮）、物品卡与词缀、模拟数据、键帽、搜索候选与署名、语言提示条和“第 N 行”定位按钮保持无衬线。背包页签名是用户自定义名，子集收不全，不纳入。页面层 CSS 不写衬线字体栈，需要衬线时做成 ui-theme 组件类并列入 `SERIF_SELECTORS`。只改字号的修饰类（如 `.pt-subhead--lg`）继承所属组件的衬线，不另列。
 - 正文与数据用系统无衬线（`--font-zh-cn`、`--font-zh-tw`），代码用 `--font-code`；门户页（首页、扩展介绍页）正文 15px/1.6，构筑页正文 14px/1.65，对照行 15px/1.6，数字用 `tabular-nums`。
 - 页面层字号取 `tokens.css` 的 `--fs-*` 阶梯：12、13、14、15、17、21、28、36、54px，与上表各行对应（如阶段名 `--fs-title`、对照行 `--fs-data`）。组件文件不引用 `--fs-*`，组件里的字号都是字面值（组件由网站与扩展弹窗共用，改用令牌会同时改变两边产物，另行立项）；首页需要别的字号时由页面层用令牌覆盖。首页 hero 标题：组件 `.pt-hero-title` 默认 54px，`home.css` 改为 `--fs-display`（36px），≤620px 为 `--fs-display-s`（28px）。首页场景标题：宽屏的 28px 来自组件 `.pt-subhead--lg` 的字面值（与 `--fs-display-s` 同值），≤1099px 由 `home.css` 改为 `--fs-title`（21px）。
 - 字标是无衬线 600 的“PoE2 Tools”，“PoE2”用金色；禁止英文小型大写副标，禁止用 Cinzel 做字标。
@@ -273,7 +276,7 @@ components:
 
 ## 禁止事项
 
-- 不使用、不热链、不描摹 GGG、腾讯、CoE 的任何素材、纹样或字体；不照着游戏或 CoE 截图描边；不使用 Fontin。
+- 不使用、不热链、不描摹 GGG、腾讯、CoE 的任何素材、纹样或字体；不照着游戏或 CoE 截图描边；不使用 Fontin：注入样式只引用原站已声明的 Fontin family 名，用来让英文保持原站外观，不打包、不热链、不复制 Fontin。
 - 不做浅色主题与主题切换；不做营销式动效（视差、粒子、循环辉光）和整页 key art。
 - 不新增含游戏名的 meta、og 或关键词，不做 og:image；今后的推广截图只用本站自己的界面和自绘母题。
 - 不把 pt-frame 放进另一扇 pt-frame；不在白名单以外放金属主按钮；不在 L0 数据区用纹理、辉光、衬线或渐变字。
