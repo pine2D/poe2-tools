@@ -1,5 +1,6 @@
 import { createLexicon } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
+import { searchPresence } from '../src/adapters/coe-beta/search'
 import { attachSearch } from '../src/content/search-controller'
 
 const lex = createLexicon([
@@ -629,4 +630,33 @@ it('条件搜索：输入框的 ARIA 引用仍能在 document 里解析到说明
   expect(active?.getAttribute('role')).toBe('option')
   expect(active?.getAttribute('aria-selected')).toBe('true')
   expect((active as HTMLElement).style.outline).toBe('')
+})
+
+it('searchPresence：页上没有认得的搜索容器时为 none（本页没有搜索框，不算部分生效）', () => {
+  document.body.innerHTML = '<main><input id="notes"></main>'
+  expect(searchPresence(document)).toEqual({ search: 'none', missing: [] })
+})
+
+it('searchPresence：容器里有 controls 认得的输入框即为 ok；只读或禁用也算接上（不用 searchDomain）', () => {
+  document.body.innerHTML =
+    '<main><div id="searchItemInput"><input readonly></div><div id="searchInput"><input type="text" disabled></div></main>'
+  expect(searchPresence(document)).toEqual({ search: 'ok', missing: [] })
+})
+
+it('searchPresence：容器在而输入框换了类型或被移走，按用途列出 missing，顺序固定为 base、stat、item', () => {
+  document.body.innerHTML =
+    '<main><div id="dataModSearchInput"><input type="search"></div><div id="searchItemInput"></div><div id="dataItemSearchInput"><input></div></main>'
+  expect(searchPresence(document)).toEqual({ search: 'missing', missing: ['base', 'stat'] })
+})
+
+it('searchPresence：价格页复用 #searchInput 时按材料价格（item）归类，不重复计为词缀', () => {
+  document.body.innerHTML =
+    '<main><div id="customPriceSearchHolder"><div id="searchInput"><span></span></div></div></main>'
+  expect(searchPresence(document)).toEqual({ search: 'missing', missing: ['item'] })
+})
+
+it('searchPresence：条件下拉里的搜索框不计入', () => {
+  document.body.innerHTML =
+    '<main><div id="simulatorConditionRequirements"><div class="dropdown"><div class="editing"><input type="text"></div></div></div></main>'
+  expect(searchPresence(document)).toEqual({ search: 'none', missing: [] })
 })

@@ -9,7 +9,10 @@ import {
   statSelector,
 } from '../adapters/coe-beta/stats'
 import { adoptL1 } from './l1'
-export function attachStatLayer(doc: Document, lex: Lexicon) {
+import type { CountedStop } from './text-layer'
+
+export type { CountedStop } from './text-layer'
+export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
   function propertyText(property: Element): string | null {
@@ -117,11 +120,15 @@ export function attachStatLayer(doc: Document, lex: Lexicon) {
     attributeOldValue: true,
     attributeFilter: boundaryAttributes,
   })
-  return () => {
-    observer.disconnect()
-    for (const host of hosts.values()) host.remove()
-    removeClonedHosts(doc.body)
-    hosts.clear()
-    cache.clear()
-  }
+  return Object.assign(
+    () => {
+      observer.disconnect()
+      for (const host of hosts.values()) host.remove()
+      removeClonedHosts(doc.body)
+      hosts.clear()
+      cache.clear()
+    },
+    // 每个宿主是一条用户可见的中文词缀行；不再受支持的词缀在变更回调末尾剔除（上方 MutationObserver 回调）
+    { count: () => hosts.size },
+  )
 }

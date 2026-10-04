@@ -198,3 +198,18 @@ it('叠加行颜色来自共享 L1 表（--ext-ink），宿主内联样式只留
     hosts[1]?.shadowRoot?.adoptedStyleSheets[0],
   )
 })
+
+it('count() 是当前词缀叠加行数：未命中不计，原站移除词缀后减少，关闭后为 0', async () => {
+  document.body.innerHTML =
+    '<main><div id="a"><span class="stat">+18% to Lightning Resistance</span></div>' +
+    '<div id="b"><span class="stat">+20% to Lightning Resistance</span></div>' +
+    '<div><span class="stat">Unknown modifier</span></div></main>'
+  const counted = attachStatLayer(document, lex)
+  stop = counted
+  expect(counted.count()).toBe(2)
+  document.querySelector('#b')?.remove()
+  await new Promise((r) => setTimeout(r, 30))
+  expect(counted.count()).toBe(1)
+  counted()
+  expect(counted.count()).toBe(0)
+})

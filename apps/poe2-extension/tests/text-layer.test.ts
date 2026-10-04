@@ -323,3 +323,16 @@ it('背包容量只翻译用途文字，保留数字单位并恢复动态最新�
   stop()
   expect(details.textContent).toBe('(16.65 KB used of 5.00 MB quota)')
 })
+
+it('count() 是当前显示中文的文本节点数：未命中不计，原站移除节点后减少，关闭后为 0', async () => {
+  document.body.innerHTML =
+    '<main><span id="a">+18% to Lightning Resistance</span><span id="b">+20% to Lightning Resistance</span><span>Unknown words</span></main>'
+  const stop = attachTextLayer(document, lex)
+  stops.push(stop)
+  expect(stop.count()).toBe(2)
+  document.querySelector('#b')?.remove()
+  await settle()
+  expect(stop.count()).toBe(1)
+  stop()
+  expect(stop.count()).toBe(0)
+})

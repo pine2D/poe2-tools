@@ -1,3 +1,5 @@
+// @vitest-environment node
+import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
 import { validateManifest } from '../scripts/check.mjs'
 
@@ -46,4 +48,24 @@ it('描述必须以“非官方扩展：”开头', () => {
     ' 非官方扩展：前置空格',
   ])
     expect(() => validateManifest({ ...manifest, description }, '0.1.0')).toThrow('非官方扩展：')
+})
+
+it('弹窗读当前页状态与刷新不加权限：tabs、activeTab、scripting 一律拒绝（第三期）', () => {
+  for (const permissions of [
+    ['storage', 'tabs'],
+    ['storage', 'activeTab'],
+    ['storage', 'scripting'],
+    ['tabs'],
+  ])
+    expect(() => validateManifest({ ...manifest, permissions }, '0.1.0')).toThrow(
+      'Manifest 版本或权限不符合约定',
+    )
+})
+
+it('入库 manifest.json 的 permissions 恰为 ["storage"]，没有 host 与可选权限', () => {
+  const real = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'))
+  expect(real.permissions).toEqual(['storage'])
+  expect(real.host_permissions).toBeUndefined()
+  expect(real.optional_permissions).toBeUndefined()
+  expect(real.optional_host_permissions).toBeUndefined()
 })

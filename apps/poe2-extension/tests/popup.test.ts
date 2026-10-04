@@ -6,6 +6,10 @@ const storage = vi.hoisted(() => ({
   write: vi.fn(),
   subscribe: vi.fn(),
   version: vi.fn(),
+  activeTab: vi.fn(),
+  ask: vi.fn(),
+  reload: vi.fn(),
+  answer: vi.fn(),
 }))
 vi.mock('../src/platform', () => ({ platform: storage }))
 afterEach(() => {

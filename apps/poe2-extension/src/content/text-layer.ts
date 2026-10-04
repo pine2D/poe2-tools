@@ -2,9 +2,11 @@ import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { contextualText, textContext, translatable } from '../adapters/coe-beta/regions'
 
+/** 停止函数，附带“当前页面上正显示中文的处数”（弹窗“已翻译 N 处”，第三期裁定 5） */
+export type CountedStop = (() => void) & { count(): number }
 const active = new WeakMap<Document, () => void>()
 
-export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = false): () => void {
+export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = false): CountedStop {
   active.get(doc)?.()
   const state = new WeakMap<Text, { original: string; written: string; context: string }>()
   const owned = new Set<Text>()
@@ -92,19 +94,23 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
     attributeFilter: boundaryAttributes,
   })
   let closed = false
-  const stop = () => {
-    if (closed) return
-    closed = true
-    observer.disconnect()
-    doc.defaultView?.removeEventListener('popstate', onRoute)
-    for (const node of owned) {
-      const entry = state.get(node)
-      if (entry && node.data === entry.written) node.data = entry.original
-    }
-    owned.clear()
-    cache.clear()
-    active.delete(doc)
-  }
+  const stop = Object.assign(
+    () => {
+      if (closed) return
+      closed = true
+      observer.disconnect()
+      doc.defaultView?.removeEventListener('popstate', onRoute)
+      for (const node of owned) {
+        const entry = state.get(node)
+        if (entry && node.data === entry.written) node.data = entry.original
+      }
+      owned.clear()
+      cache.clear()
+      active.delete(doc)
+    },
+    // 断开的节点在下一次变更回调末尾剔除（上方 MutationObserver 回调），计数随之减少
+    { count: () => owned.size },
+  )
   active.set(doc, stop)
   return stop
 }
