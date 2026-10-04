@@ -331,9 +331,9 @@
       "family": "PoE2 Serif SC",
       "group": "sc-popup",
       "weight": 700,
-      "bytes": 38976,
-      "sha256": "26264a482fc40ae279ceda21c96503e27a543da3dba9823a830ce39bf86d233c",
-      "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~中使前助手文用"
+      "bytes": 38392,
+      "sha256": "395d7eb4920dbbc51bd0d3421b3d7cafcae2f48602732ef959877aad5a76603d",
+      "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~中助手文"
     }
   ]
 }

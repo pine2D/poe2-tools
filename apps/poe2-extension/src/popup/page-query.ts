@@ -27,6 +27,7 @@ const REQUEST = { type: PAGE_STATE_TYPE, v: 1 } as const
  * 弹窗读取当前标签页状态（第三期裁定 2、4）。只把事实交给 onChange，状态由 pageView 推导。
  * 相同结果不重复发出；refresh() 重查且不先显示“读取中”；reload() 刷新最近一次拿到应答的标签页，
  * 刷新后在标签页仍加载中、且尚未出现过无应答之前收到的应答当作旧页面卸载前的回声忽略。
+ * 刷新模式从 reload() 开始，到采纳新页应答或判定无应答为止；其间 refresh() 不退出刷新模式（R-T3b）。
  */
 export function watchPage(onChange: (probe: PageProbe) => void): {
   refresh(): void
@@ -38,6 +39,9 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
   let disposed = false
   let lastKey = ''
   let tabId: number | null = null
+  // 刷新模式：pending 是等浏览器开始刷新，on 是刷新后的这一轮询问；silent 记刷新后是否出现过无应答（旧页已卸载）
+  let reloadMode: 'off' | 'pending' | 'on' = 'off'
+  let silent = false
   const emit = (probe: PageProbe) => {
     const key = JSON.stringify(probe)
     if (disposed || key === lastKey) return
@@ -49,8 +53,8 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
     clearTimeout(timer)
     const began = Date.now()
     let firstReply: number | null = null
+    let lastReply: PageStateReply | null = null
     let idleRetried = false
-    let sawSilence = false
     const current = () => !disposed && id === generation
     const later = (ms: number) => {
       timer = setTimeout(() => void attempt(), ms)
@@ -71,8 +75,19 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
       if (!current()) return
       const now = Date.now()
       const waiting = tab.loading || reloading
-      if (reply === null) sawSilence = true
-      const stale = reply !== null && reloading && tab.loading && !sawSilence
+      if (reply === null) silent = true
+      // 本轮已拿到过应答，证明是 beta 页：之后的无应答（挂层期间询问超时等）按“读取中”重查到 SETTLE_LIMIT_MS，
+      // 到点以最后一次应答 settled 发出，不报“本页没有中文助手”（R-T3a）
+      if (reply === null && lastReply !== null && firstReply !== null) {
+        if (now - firstReply < SETTLE_LIMIT_MS) {
+          emit({ status: 'reading' })
+          later(SETTLE_RETRY_MS)
+          return
+        }
+        emit({ status: 'reply', tabId: tab.id, reply: lastReply, settled: true })
+        return
+      }
+      const stale = reply !== null && reloading && tab.loading && !silent
       if (reply === null || stale) {
         if (waiting && now - began < LOADING_LIMIT_MS) {
           emit({ status: 'reading' })
@@ -85,12 +100,15 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
             later(IDLE_RETRY_MS)
             return
           }
+          if (reloading) reloadMode = 'off'
           emit({ status: 'none' })
           return
         }
       }
+      if (reloading) reloadMode = 'off'
       tabId = tab.id
       firstReply ??= now
+      lastReply = reply
       const pending = reply.phase === 'starting' || reply.page === 'unknown'
       const settled = !pending || now - firstReply >= SETTLE_LIMIT_MS
       emit({ status: 'reply', tabId: tab.id, reply, settled })
@@ -102,20 +120,26 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
   run(false)
   return {
     refresh() {
-      if (!disposed) run(false)
+      // 等浏览器开始刷新期间不抢先询问旧页（随后 reload() 自己开始这一轮）；刷新模式中保持旧页回声保护
+      if (disposed || reloadMode === 'pending') return
+      run(reloadMode === 'on')
     },
     async reload() {
       if (disposed || tabId === null) return
       const target = tabId
       generation++
       clearTimeout(timer)
+      reloadMode = 'pending'
+      silent = false
       emit({ status: 'reading' })
       try {
         await platform.reload(target)
       } catch {
         // 标签页已关闭等：照常进入刷新模式，随后按无应答落到“本页没有中文助手”
       }
-      if (!disposed) run(true)
+      if (disposed) return
+      reloadMode = 'on'
+      run(true)
     },
     dispose() {
       disposed = true

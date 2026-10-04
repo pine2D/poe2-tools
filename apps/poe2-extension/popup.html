@@ -7,7 +7,11 @@
   <h1 class="titlebar__title">PoE2 中文助手</h1>
 </header>
 <main>
-  <p class="subtitle">适用于 Craft of Exile 新版</p>
+  <div id="page" class="page" data-kind="reading" role="status" aria-live="polite">
+    <p class="page__head" hidden><strong class="page__word"></strong><span class="page__reason"></span></p>
+    <p class="page__hint">正在读取当前页…</p>
+    <button id="reload" class="pt-btn pt-btn--quiet page__action" type="button" hidden>刷新页面</button>
+  </div>
   <div class="pt-divider popup-divider" aria-hidden="true"><span class="pt-motif pt-motif--knot pt-attr-ext"></span></div>
   <label class="setting">
     <!-- biome-ignore lint/a11y/useAriaPropsForRole: 原生 checkbox 自带勾选状态，ARIA in HTML 禁止再写 aria-checked -->
@@ -21,15 +25,12 @@
     <span class="setting__text">显示中英对照<small>保留英文，方便核对术语</small></span>
     <span class="pt-switch__state" id="bilingual-state" aria-hidden="true">关闭</span>
   </label>
-  <p id="status" role="status" aria-live="polite" data-tone="busy">读取设置…</p>
+  <p id="status" role="status" aria-live="polite" data-tone="idle"></p>
   <button id="retry" class="pt-btn pt-btn--quiet retry" type="button" hidden>重试读取</button>
-  <aside class="before"><h2>使用前</h2><p>原站选择 <b>PoE2</b> 和 <b>English</b>。未匹配的术语保留英文。</p></aside>
 </main>
 <footer>
   <p><span id="version">版本</span> · <a id="check-update" href="https://poe2-tools.pine2d.com/extension/" target="_blank" rel="noopener noreferrer">检查更新</a></p>
-  <p class="pt-provenance"><span class="pt-motif pt-motif--gem pt-attr-ext" aria-hidden="true"></span>PoE2 中文助手 · 非官方</p>
-  <p class="pt-disclaimer">非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。</p>
-  <p>游戏文本版权归各权利方所有。</p>
+  <p class="pt-disclaimer"><span class="pt-motif pt-motif--gem pt-attr-ext footer__gem" aria-hidden="true"></span>非官方工具，与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。游戏文本版权归各权利方所有。</p>
 </footer>
 <script type="module" src="/src/popup/index.ts"></script>
 </body>

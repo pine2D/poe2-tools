@@ -104,11 +104,12 @@ describe('分片集合、源文件登记与许可文件（spec §7.3 断言 6、
     expect(POPUP_SHARD_FILE).toBe(POPUP_FONT_FILE)
   })
 
-  it('弹窗子集恰好是 popup-text.txt 的文案 ∪ ASCII，覆盖 PoE2 中文助手、使用前（spec §6.8）', () => {
+  it('弹窗子集恰好是 popup-text.txt 的文案 ∪ ASCII：只覆盖标题 PoE2 中文助手，不再收“使用前”（扩展 0.4.0）', () => {
     const text = readFileSync(join(REPO_ROOT, 'packages/ui-theme/scripts/popup-text.txt'), 'utf8')
     const shard = coverage.shards.find((item) => item.file === POPUP_SHARD_FILE)
     expect([...(shard?.chars ?? '')], HINT).toEqual(popupShard(text).chars)
-    for (const ch of 'PoE2中文助手使用前') expect(shard?.chars, ch).toContain(ch)
+    for (const ch of 'PoE2中文助手') expect(shard?.chars, ch).toContain(ch)
+    for (const ch of '使用前') expect(shard?.chars, ch).not.toContain(ch)
   })
 
   it('coverage.json 的提交号与 6 个源文件 SHA-256 就是 data-sources.md 登记的那组', () => {

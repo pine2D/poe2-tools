@@ -5,5 +5,3 @@
 
 # 标题栏（.titlebar__title）
 PoE2 中文助手
-# “使用前”小标题（.before h2）
-使用前

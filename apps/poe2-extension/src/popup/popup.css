@@ -1,5 +1,6 @@
-/* 扩展设置弹窗（spec §6.8，L3，以 C-popup.png 为准）：令牌、母题与组件来自 ui-theme；不套 pt-frame、不加角饰。
-   字号与间距只取 tokens.css 的尺寸阶梯（--fs-*、--sp-*），例外见 packages/ui-theme/src/extension-sizes.test.ts 的 ALLOW */
+/* 扩展设置弹窗（spec §6.8；第三期 A「状态置顶」，方向约定 .impeccable/surfaces/apps-poe2-extension-src-popup.md）：
+   令牌、母题与组件来自 ui-theme；不套 pt-frame、不加角饰。字号与间距只用 tokens.css 的尺寸阶梯，
+   偏离阶梯的值逐条登记在 packages/ui-theme/src/extension-sizes.test.ts 的 ALLOW */
 @import "@poe2-tools/ui-theme/tokens.css";
 @import "@poe2-tools/ui-theme/motif.css";
 @import "@poe2-tools/ui-theme/components/motif.css";
@@ -22,7 +23,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 标题栏（spec §6.8）：高 56，金属底，居中 40×21 的扩展青 logo 与衬线标题；两端不加端饰 */
+/* 标题栏（spec §6.8）：高 56，金属底，居中 40×21 的扩展青 logo 与衬线标题；两端不加端饰。
+   全弹窗唯一的金属重点（开关金属轨道是 DESIGN.md 已登记的层级例外） */
 .titlebar {
   display: flex;
   align-items: center;
@@ -42,6 +44,7 @@ body {
   --ptm-h: 21px;
   --ptm-u: calc(40px / 48);
 }
+/* 19px 与 pt-frame 标题栏同值（尺寸门禁 ALLOW 登记）；弹窗里唯一的衬线位置，收字见 popup-text.txt */
 .titlebar__title {
   margin: 0;
   font: 700 19px / 1 var(--pt-serif);
@@ -53,14 +56,85 @@ body {
 main {
   padding: var(--sp-3) var(--sp-5) var(--sp-4);
 }
-.subtitle {
+
+/* 当前页状态块（第三期 A）：L0 平涂，无左侧色条、无字形图标。两列 grid：第一列 18px 是脚本插入的内联 SVG 图标，
+   第二列依次是“状态词 · 原因”、做法句与至多一个安静按钮“刷新页面”。颜色只是第二信号，形状已区分状态 */
+.page {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: var(--sp-2);
+  row-gap: var(--sp-1);
+  align-items: start;
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.page__icon {
+  grid-area: 1 / 1;
+  align-self: center;
+  width: 18px;
+  height: 18px;
+  color: var(--ink-3);
+}
+.page__head,
+.page__hint,
+.page__action {
+  grid-column: 2;
+}
+.page__head {
   margin: 0;
-  text-align: center;
   font-size: var(--fs-small);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.page__word {
+  font-size: var(--fs-data);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.page__hint {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.65;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+/* 尺寸沿用“重试读取”：高 40、字号 14 */
+.page__action {
+  justify-self: start;
+  height: 40px;
+  margin-top: var(--sp-1);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-body);
+}
+.page__action[hidden] {
+  display: none;
+}
+.page[data-kind="ok"] .page__icon,
+.page[data-kind="ok"] .page__word {
+  color: var(--ok);
+}
+.page[data-kind="part"] .page__icon,
+.page[data-kind="part"] .page__word {
+  color: var(--miss);
+}
+.page[data-kind="off"] .page__icon,
+.page[data-kind="off"] .page__word {
+  color: var(--danger);
+}
+.page[data-kind="mute"] .page__icon {
   color: var(--ink-2);
 }
+.page[data-kind="reading"] .page__hint {
+  color: var(--ink-3);
+}
+
 .popup-divider {
-  margin: var(--sp-2) 0;
+  margin: var(--sp-3) 0 var(--sp-1);
 }
 
 /* 设置行：开关在左、说明居中、状态文字在右；两行之间 1px 渐隐线 */
@@ -97,42 +171,24 @@ main {
   color: var(--ink-3);
 }
 
-/* 状态行（B.12 修订 3）：busy/off 为 --ink-2；ok 为 --ok 加勾；error 为 --miss 加警示；图标不读出 */
+/* 设置提示行（计划裁定 9）：平时为空、不占高度；只说“正在保存…”（--ink-2）与读取、保存失败（--miss）。
+   结果由文字本身说明，不加字形 */
 #status {
-  min-height: 43px;
-  margin: var(--sp-3) 0 var(--sp-2);
+  margin: 0;
   font-size: var(--fs-small);
-  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
   overflow-wrap: anywhere;
   color: var(--ink-2);
 }
-#status[data-tone="ok"] {
-  color: var(--ok);
+#status:not(:empty) {
+  margin-top: var(--sp-2);
 }
 #status[data-tone="error"] {
   color: var(--miss);
 }
-#status[data-tone="ok"]::before {
-  content: "✓" / "";
-  margin-right: var(--sp-2);
-}
-#status[data-tone="error"]::before {
-  content: "!" / "";
-  display: inline-grid;
-  place-items: center;
-  width: 14px;
-  height: 14px;
-  margin-right: var(--sp-2);
-  border: 1.5px solid currentColor;
-  border-radius: 50%;
-  font-size: var(--fs-micro);
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: 1px;
-}
 .retry {
   height: 40px;
-  margin-bottom: var(--sp-3);
+  margin-top: var(--sp-2);
   padding: 0 var(--sp-4);
   font-size: var(--fs-body);
 }
@@ -140,7 +196,7 @@ main {
   display: none;
 }
 
-/* 页脚居中（spec §4.2 层级例外 2）：版本与检查更新 → 短署名 → 完整声明 → 版权句 */
+/* 页脚居中（spec §4.2 层级例外 2；第三期 A）：“版本 · 检查更新”一行；宝石母题 + 完整声明与版权句一段 */
 footer {
   padding: 0 var(--sp-5) var(--sp-4);
   text-align: center;
@@ -160,32 +216,15 @@ footer a:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 3px;
 }
-footer .pt-provenance {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--sp-1);
-}
 footer .pt-disclaimer {
   margin-top: var(--sp-1);
+  color: var(--ink-3);
 }
-
-/* “使用前”（spec §6.8）：左侧 2px 内竖条；小标题衬线 13px 金色；正文 L0。
-   竖条用背景绘制：偏移 2px 的 inset 阴影在块高为小数像素时底边会漏出一条 1px 细线。
-   本段排在页脚规则之后：与 footer p 不命中同一元素，只为同尾选择器特异度升序（Biome noDescendingSpecificity） */
-.before {
-  margin-top: var(--sp-2);
-  padding: var(--sp-1) 0 0 var(--sp-3);
-  background: linear-gradient(#7a5530, #7a5530) left / 2px 100% no-repeat;
-}
-.before h2 {
-  margin: 0;
-  font: 700 var(--fs-small) / 1.5 var(--pt-serif);
-  color: var(--gold);
-}
-.before p {
-  margin: var(--sp-1) 0 0;
-  font-size: var(--fs-small);
-  line-height: 1.65;
+.footer__gem {
+  --ptm-w: 12px;
+  --ptm-h: 12px;
+  --ptm-u: calc(12px / 25);
+  margin-inline-end: var(--sp-1);
 }
 
 ::selection {
@@ -196,6 +235,9 @@ footer .pt-disclaimer {
 @media (forced-colors: active) {
   .titlebar {
     border-bottom-color: CanvasText;
+  }
+  .page {
+    border-color: CanvasText;
   }
   footer a:focus-visible {
     outline-color: Highlight;

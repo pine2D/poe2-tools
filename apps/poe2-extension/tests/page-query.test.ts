@@ -269,3 +269,84 @@ it('dispose：之后不再询问，也不回调（含已发出的询问晚到）
   expect(statuses()).toEqual(['reading'])
   expect(mocks.ask).toHaveBeenCalledOnce()
 })
+
+it('本轮已拿到过应答后又无应答：按“读取中”重查到 SETTLE_LIMIT_MS，不报“本页没有中文助手”（裁定 R-T3a）', async () => {
+  const unknown = reply({ page: 'unknown', translated: 0, search: 'none' })
+  mocks.ask.mockResolvedValueOnce(unknown).mockResolvedValue(null)
+  await open()
+  expect(seen.at(-1)).toEqual({ status: 'reply', tabId: 7, reply: unknown, settled: false })
+  await vi.advanceTimersByTimeAsync(SETTLE_LIMIT_MS - 1)
+  expect(statuses()).not.toContain('none')
+  expect(seen.at(-1)).toEqual({ status: 'reading' })
+  await vi.advanceTimersByTimeAsync(1)
+  // 这一页已证明是 beta 页：到点以最后一次应答 settled 发出
+  expect(seen.at(-1)).toEqual({ status: 'reply', tabId: 7, reply: unknown, settled: true })
+  expect(mocks.ask).toHaveBeenCalledTimes(SETTLE_LIMIT_MS / SETTLE_RETRY_MS + 1)
+  await vi.advanceTimersByTimeAsync(20_000)
+  expect(statuses()).not.toContain('none')
+  expect(mocks.ask).toHaveBeenCalledTimes(SETTLE_LIMIT_MS / SETTLE_RETRY_MS + 1)
+})
+
+it('reload 的刷新模式进行中调用 refresh：仍忽略旧页回声，不提前采纳（裁定 R-T3b）', async () => {
+  const partial = reply({ search: 'missing', searchMissing: ['base'] })
+  mocks.ask.mockResolvedValueOnce(partial)
+  const page = await open()
+  mocks.activeTab.mockResolvedValue({ id: 7, loading: true })
+  // 旧页卸载前一直回声
+  mocks.ask.mockResolvedValue(partial)
+  await page.reload()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(seen.at(-1)).toEqual({ status: 'reading' })
+  // 设置变化或 300 ms 补查在刷新模式中途触发
+  page.refresh()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(seen.at(-1)).toEqual({ status: 'reading' })
+  mocks.ask.mockResolvedValueOnce(null).mockResolvedValue(reply({ translated: 30 }))
+  await vi.advanceTimersByTimeAsync(LOADING_RETRY_MS * 2)
+  expect(seen.at(-1)).toEqual({
+    status: 'reply',
+    tabId: 7,
+    reply: reply({ translated: 30 }),
+    settled: true,
+  })
+})
+
+it('reload 等待浏览器刷新期间调用 refresh：不抢先询问旧页，刷新模式随后照常开始', async () => {
+  mocks.ask.mockResolvedValueOnce(reply())
+  const page = await open()
+  let reloaded!: () => void
+  mocks.reload.mockImplementationOnce(
+    () =>
+      new Promise<void>((done) => {
+        reloaded = done
+      }),
+  )
+  mocks.activeTab.mockResolvedValue({ id: 7, loading: true })
+  mocks.ask.mockResolvedValue(reply())
+  const pending = page.reload()
+  page.refresh()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(mocks.ask).toHaveBeenCalledOnce()
+  expect(seen.at(-1)).toEqual({ status: 'reading' })
+  reloaded()
+  await pending
+  await vi.advanceTimersByTimeAsync(0)
+  // 刷新模式：标签页仍加载中、尚未出现无应答，回声被忽略
+  expect(seen.at(-1)).toEqual({ status: 'reading' })
+  expect(mocks.ask).toHaveBeenCalledTimes(2)
+})
+
+it('刷新模式采纳新页应答后结束：之后的 refresh 按普通查询处理', async () => {
+  mocks.ask.mockResolvedValueOnce(reply())
+  const page = await open()
+  mocks.activeTab.mockResolvedValue({ id: 7, loading: true })
+  mocks.ask.mockResolvedValueOnce(null).mockResolvedValue(reply({ translated: 30 }))
+  await page.reload()
+  await vi.advanceTimersByTimeAsync(LOADING_RETRY_MS)
+  expect(seen.at(-1)).toMatchObject({ status: 'reply', reply: reply({ translated: 30 }) })
+  // 标签页仍在加载（如原站继续拉资源）：普通查询直接采纳，不当作旧页回声
+  mocks.ask.mockResolvedValue(reply({ translated: 31 }))
+  page.refresh()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(seen.at(-1)).toMatchObject({ status: 'reply', reply: reply({ translated: 31 }) })
+})

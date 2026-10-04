@@ -77,6 +77,12 @@ it('answer：类型相符时同步回快照；不符时不应答并返回 false'
   expect(listener('poe2-l10n/page-state', {}, sendResponse)).toBe(false)
   expect(sendResponse).not.toHaveBeenCalled()
   expect(snapshot).not.toHaveBeenCalled()
-  listener(request, {}, sendResponse)
+  // 类型相符：同步应答后同样返回 false（不保持消息通道）
+  expect(listener(request, {}, sendResponse)).toBe(false)
   expect(sendResponse).toHaveBeenCalledExactlyOnceWith({ v: 1 })
+})
+
+it('ask：没有 chrome.tabs（内容脚本环境）时记为无应答，不抛出', async () => {
+  vi.stubGlobal('chrome', { runtime: fakeChrome.runtime })
+  await expect(platform.ask(7, request, 1000)).resolves.toBeNull()
 })
