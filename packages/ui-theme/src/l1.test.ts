@@ -187,3 +187,60 @@ describe('对比度（spec §6.9、§4.3）', () => {
       expect(contrastRatio(token(edge), PANEL), edge).toBeGreaterThanOrEqual(3)
   })
 })
+
+describe('导入面板核对清单（方案 §4 第三期；裁定 25）', () => {
+  const byExact = (selector: string) => rules.find((r) => r.selectors.join(', ') === selector)
+  it('旧的状态句、诊断列表与兼容性提示规则已删，清单规则齐全', () => {
+    for (const old of [
+      '[role="status"]',
+      '[role="status"]:empty',
+      'ul',
+      '[aria-label="原站兼容性提示"]',
+    ])
+      expect(byExact(old), old).toBeUndefined()
+    for (const selector of [
+      '.verdict',
+      '.verdict:empty',
+      '.verdict small',
+      '.check',
+      '.check:empty',
+      '.group',
+      '.group h3',
+      '.check ul',
+      '.check li',
+      '.ico',
+      '.check li .ico',
+      '.who',
+      '.check li button',
+      '.check li[data-kind="warning"]',
+      '.ok',
+      '.miss',
+      '.dim',
+    ])
+      expect(byExact(selector), selector).toBeDefined()
+    expect(byExact('.verdict:empty')?.declarations.get('display')).toBe('none')
+    expect(byExact('.check:empty')?.declarations.get('display')).toBe('none')
+  })
+  it('“第 N 行”定位按钮高 24px（WCAG 2.5.8 下限），外边距归零', () => {
+    const rule = byExact('.check li button')
+    expect(rule?.declarations.get('min-height')).toBe('24px')
+    expect(rule?.declarations.get('margin')).toBe('0')
+  })
+  it('清单相关规则的行高一律无单位', () => {
+    const related = rules.filter((r) =>
+      r.selectors.some((s) => /\.(check|group|who|verdict)\b/.test(s)),
+    )
+    expect(related.length).toBeGreaterThan(0)
+    for (const rule of related) {
+      const value = rule.declarations.get('line-height')
+      if (value !== undefined) expect(value, rule.selectors.join(', ')).toMatch(/^\d+(\.\d+)?$/)
+    }
+  })
+  it('失效态排在兼容性提示与语气色之后，整组降为 --ink-3', () => {
+    const at = (selector: string) => rules.findIndex((r) => r.selectors.join(', ') === selector)
+    const stale = at('.check.stale li, .check.stale .ico')
+    expect(stale).toBeGreaterThan(at('.check li[data-kind="warning"]'))
+    expect(stale).toBeGreaterThan(at('.dim'))
+    expect(rules[stale]?.declarations.get('color')).toBe('var(--ink-3)')
+  })
+})

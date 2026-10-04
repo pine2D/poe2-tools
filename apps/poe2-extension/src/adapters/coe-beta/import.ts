@@ -1,5 +1,6 @@
 import {
   type ItemDictionary,
+  type ItemDocument,
   inspectItem,
   knownExplicitHeader,
   knownImplicitHeader,
@@ -7,6 +8,22 @@ import {
 } from '@poe2-tools/item-core/text'
 import type { Term } from '@poe2-tools/l10n-core'
 import { completeItemFields } from './item-fields'
+
+/** 装备文本转换的预览结果；面板据此呈现结论与核对清单，不另行判断 */
+export interface PreparedImport {
+  original: string
+  english: string
+  /** 恒等于 issues.length === 0 */
+  ready: boolean
+  /** 带“第 N 行：”前缀的问题文本 */
+  reasons: string[]
+  issues: { line: number | null; message: string }[]
+  warnings: string[]
+  /** 参与核对的行数；解析失败为 null。ready 时 recognized === total */
+  lines: { total: number; recognized: number } | null
+  /** 传奇、咒符等仅供对照；为真时 issues[0] 是对照原因（无行号） */
+  comparisonOnly: boolean
+}
 
 export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   const names = (domain: Term['domain']) =>
@@ -25,7 +42,18 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
     },
   }
 }
-export function prepareImport(original: string, terms: readonly Term[]) {
+
+/** 参与核对的行号：名称行，以及交易备注（note）、描述（description）以外各块的非空行。
+    空行与分隔线不进 ItemDocument；类别行、稀有度行不记行号，由调用方另加 2。 */
+function checkedLines(item: ItemDocument): Set<number> {
+  const lines = new Set(item.nameLines.map(({ line }) => line))
+  for (const block of item.blocks)
+    if (block.kind !== 'note' && block.kind !== 'description')
+      for (const { raw, line } of block.lines) if (raw.trim()) lines.add(line)
+  return lines
+}
+
+export function prepareImport(original: string, terms: readonly Term[]): PreparedImport {
   const parsed = parseItem(original.replace(/^(物品类别|稀有度)\s*：/gm, '$1:'))
   if (!parsed.ok)
     return {
@@ -33,8 +61,10 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       english: '',
       ready: false,
       reasons: [parsed.error],
-      issues: [{ line: null as number | null, message: parsed.error }],
-      warnings: [] as string[],
+      issues: [{ line: null, message: parsed.error }],
+      warnings: [],
+      lines: null,
+      comparisonOnly: false,
     }
   const item = parsed.item
   const inspection = inspectItem(item, itemDictionary(terms))
@@ -46,6 +76,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     seenIssues.add(key)
     issues.push({ line, message })
   }
+  // 必须是第一条：comparisonOnly 时面板以 issues[0] 作结论副句
   if (inspection.comparisonOnly) add(inspection.comparisonReason ?? '此装备仅供对照。')
   const warnings: string[] = []
   const { english, fields } = completeItemFields(item, inspection, terms)
@@ -98,6 +129,12 @@ export function prepareImport(original: string, terms: readonly Term[]) {
       if (line.raw.trim() && !inspection.englishByLine[line.line] && !fields[line.line])
         add('该行尚未完整识别或翻译。', line.line)
   }
+  // 已识别 = 参与核对的行减去带问题的不重复行号（同一行多条问题只算一次）
+  const checked = checkedLines(item)
+  const flagged = new Set(
+    issues.flatMap(({ line }) => (line !== null && checked.has(line) ? [line] : [])),
+  )
+  const total = 2 + checked.size
   return {
     original,
     english,
@@ -107,5 +144,7 @@ export function prepareImport(original: string, terms: readonly Term[]) {
     ),
     issues,
     warnings: [...new Set(warnings)],
+    lines: { total, recognized: total - flagged.size },
+    comparisonOnly: inspection.comparisonOnly,
   }
 }

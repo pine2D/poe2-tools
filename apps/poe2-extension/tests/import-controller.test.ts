@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import type { Term } from '@poe2-tools/l10n-core'
 import { afterEach, expect, it } from 'vitest'
 import { attachImport } from '../src/content/import-controller'
 
@@ -120,17 +122,18 @@ it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不�
   expect(status).not.toBeNull()
   expect(status?.getAttribute('aria-live')).toBe('polite')
   expect(status?.getAttribute('aria-atomic')).toBe('true')
-  expect(status?.textContent).toContain('已识别')
+  expect(status?.textContent).toContain('可以填入')
   expect(status?.querySelector('textarea')).toBeNull()
   input.focus()
   input.value = source.replace('+40', '+39')
   input.dispatchEvent(new Event('input', { bubbles: true }))
-  expect(status?.textContent).toBe('原文已改变，请重新预览。')
+  expect(status?.querySelector('span')?.textContent).toBe('原文已改变，请重新预览')
+  expect(status?.querySelector('small')?.textContent).toBe('以下为改动前的结果')
   expect(document.activeElement).toBe(input)
   expect(fill.disabled).toBe(true)
   preview.click()
   expect(ui().querySelector('[role="status"]')).toBe(status)
-  expect(status?.textContent).toContain('已识别')
+  expect(status?.textContent).toContain('可以填入')
   const current = ui().querySelector('.body > div > button') as HTMLButtonElement
   current.click()
   expect(status?.textContent).toContain('已填入英文')
@@ -140,6 +143,7 @@ it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不�
   preview.click()
   expect(ui().querySelector('[role="status"]')).toBe(status)
   expect(status?.textContent).toContain('仅供对照')
+  expect(status?.textContent).toContain('无法识别装备文本')
   stop()
   expect(status?.isConnected).toBe(false)
 })
@@ -150,6 +154,10 @@ it('未预览时状态区为空，不提前播报装备内容', () => {
   const status = ui().querySelector('[role="status"]')
   expect(status).not.toBeNull()
   expect(status?.textContent).toBe('')
+  expect(status?.classList.contains('verdict')).toBe(true)
+  expect(ui().querySelector('.check')).toBeNull()
+  // 未预览时主按钮是预览
+  expect(primary()).toEqual([ui().querySelector('.body > button')])
 })
 
 it('关闭对话框后立即拒绝旧按钮操作，随后移除预览，重开重新挂载', async () => {
@@ -293,8 +301,11 @@ it('原站兼容性警告与翻译失败分开显示，不自动点击原站提�
     submitted = true
   })
   ui().querySelector<HTMLButtonElement>('.body > button')?.click()
-  expect(ui().querySelector('[aria-label="原站兼容性提示"]')?.textContent).toContain('咒符位曾被')
-  expect(ui().querySelector('[aria-label="导入诊断"]')).toBeNull()
+  expect(ui().querySelector('li[data-kind="warning"]')?.textContent).toContain('咒符位曾被')
+  expect(ui().querySelectorAll('li[data-kind="issue"]')).toHaveLength(0)
+  expect(ui().querySelector('p.verdict')?.textContent).toBe(
+    '可以填入1 条原站兼容性提示需在导入后核对',
+  )
   const fill = ui().querySelector<HTMLButtonElement>('.body > div > button')
   expect(fill?.disabled).toBe(false)
   fill?.click()
@@ -346,4 +357,202 @@ it('英文预览框带 data-preview，填入按钮为主操作、恢复为第三
   expect(ui().querySelector('button[data-tertiary]:not([aria-label])')?.textContent).toBe(
     '恢复粘贴原文',
   )
+})
+
+// ---- 0.4.0 核对清单（裁定 21–25；样稿 phase3/import 版 B） ----
+const BASE: Term = {
+  id: 'base',
+  en: 'Runed Focus',
+  zh: '符文法器',
+  domain: 'base',
+  source: 'test',
+  version: 'test',
+}
+const STAT: Term = {
+  id: 'stat',
+  sourceId: 'explicit.stat_4052037485',
+  en: '+# to maximum Energy Shield',
+  zh: '+# 能量护盾上限',
+  domain: 'stat',
+  source: 'test',
+  version: 'test',
+}
+function previewWith(text: string, terms: readonly Term[]) {
+  document.body.innerHTML = '<dialog open><textarea id="importerInput"></textarea></dialog>'
+  const input = document.querySelector('#importerInput') as HTMLTextAreaElement
+  input.value = text
+  stop = attachImport(document, terms)
+  const preview = ui().querySelector('.body > button') as HTMLButtonElement
+  preview.click()
+  return { input, preview }
+}
+const verdict = () => ui().querySelector('p.verdict')
+const groups = () =>
+  Object.fromEntries(
+    [...ui().querySelectorAll('.check > .group')].map((group) => [
+      group.querySelector('h3')?.textContent ?? '',
+      [...group.querySelectorAll('li')].map((li) => li.textContent),
+    ]),
+  )
+const primary = () => [...ui().querySelectorAll<HTMLButtonElement>('button[data-primary]')]
+
+it('① 可以填入：唯一 live region 是结论行；已识别 6 / 6 行；下一步你与原站；填入是唯一主按钮', () => {
+  const { preview, fill } = readyPreview()
+  expect(ui().querySelectorAll('[role="status"]')).toHaveLength(1)
+  expect(verdict()?.getAttribute('role')).toBe('status')
+  expect(verdict()?.querySelector('span')?.textContent).toBe('可以填入')
+  expect(verdict()?.querySelector('small')).toBeNull()
+  expect(verdict()?.querySelector('svg.ico')?.getAttribute('aria-hidden')).toBe('true')
+  expect(ui().querySelector('.result > .check')).toBe(
+    ui().querySelector('.result')?.firstElementChild,
+  )
+  expect(groups()).toEqual({
+    已完成: ['已识别 6 / 6 行，生成英文预览'],
+    待核对: ['没有需要先改正的行'],
+    下一步: [
+      '你核对两栏后，点“填入英文到原站导入框”',
+      '原站填入后点“继续”（Proceed），能否导入由原站判断',
+    ],
+  })
+  expect(ui().querySelector('li[data-kind="clear"]')).not.toBeNull()
+  expect([...ui().querySelectorAll('.who')].map((tag) => tag.textContent)).toEqual(['你', '原站'])
+  expect(primary()).toEqual([fill])
+  expect(preview.hasAttribute('data-primary')).toBe(false)
+})
+
+it('② 需先核对：越界一行，分数、处数与“改正这 M 行”一致，预览是唯一主按钮', () => {
+  const { input, preview } = readyPreview()
+  input.value = source.replace('40(36-41)', '42(36-41)')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  preview.click()
+  expect(verdict()?.textContent).toBe('需先核对 1 处两栏仅供对照，暂不能填入')
+  expect(groups()).toEqual({
+    已完成: ['已识别 5 / 6 行，生成英文预览'],
+    待核对: ['第 8 行数值无效或不在原文范围内。'],
+    下一步: ['你在原站导入框改正这 1 行，再点“预览中文转换”'],
+  })
+  const locate = ui().querySelectorAll<HTMLButtonElement>('li[data-kind="issue"] button')
+  expect(locate).toHaveLength(1)
+  expect(locate[0]?.dataset.tertiary).toBe('')
+  expect(locate[0]?.getAttribute('aria-label')).toBe('定位第 8 行')
+  expect((ui().querySelector('.result > button') as HTMLButtonElement).disabled).toBe(true)
+  expect(primary()).toEqual([preview])
+})
+
+it('同一行两条问题只出一条、一个定位按钮；处数与分数都只算一次', () => {
+  previewWith(`${source}\n--------\n未知面板: 123`, [BASE, STAT])
+  const issues = [...ui().querySelectorAll('li[data-kind="issue"]')]
+  expect(issues).toHaveLength(1)
+  expect(issues[0]?.querySelectorAll('button')).toHaveLength(1)
+  expect(issues[0]?.querySelector('button')?.getAttribute('aria-label')).toBe('定位第 10 行')
+  expect(issues[0]?.textContent).toBe('第 10 行无法分类的原文已保留 该行尚未完整识别或翻译。')
+  expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 1 处')
+  expect(groups().已完成).toEqual(['已识别 6 / 7 行，生成英文预览'])
+  expect(groups().下一步).toEqual(['你在原站导入框改正这 1 行，再点“预览中文转换”'])
+})
+
+it('只有无行号问题：不显示分数、不出定位按钮，下一步按提示改正', () => {
+  previewWith(source, [STAT])
+  expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 1 处')
+  expect(groups()).toEqual({
+    已完成: ['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'],
+    待核对: ['基底译名未匹配或存在歧义，无法确认英文。'],
+    下一步: ['你按上面的提示改正原文，再点“预览中文转换”'],
+  })
+  expect(ui().querySelector('.check')?.textContent).not.toMatch(/\d+ \/ \d+/)
+  expect(ui().querySelector('.check li button')).toBeNull()
+})
+
+it('有行号与无行号问题并存：无行号的排前，处数为合并后条数', () => {
+  previewWith(source.replace('40(36-41)', '42(36-41)'), [STAT])
+  expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 2 处')
+  expect(groups().待核对).toEqual([
+    '基底译名未匹配或存在歧义，无法确认英文。',
+    '第 8 行数值无效或不在原文范围内。',
+  ])
+  expect(groups().已完成).toEqual(['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'])
+  expect(groups().下一步).toEqual(['你按上面的提示改正原文，再点“预览中文转换”'])
+})
+
+it.each([
+  [
+    '传奇',
+    source.replace('稀有度: 魔法', '稀有度: 传奇'),
+    '传奇装备仅供解析与中英对照，不开放制作。',
+  ],
+  ['咒符', source.replace('类别: 法器', '类别: 咒符'), '咒符仅供解析与中英对照，不开放制作。'],
+])('②b %s仅供对照：副句为对照原因，不写“改正这”，没有主按钮', (_, text, reason) => {
+  previewWith(text, [BASE, STAT])
+  expect(verdict()?.querySelector('span')?.textContent).toBe('仅供对照')
+  expect(verdict()?.querySelector('small')?.textContent).toBe(reason)
+  expect(groups().待核对?.[0]).toBe(reason)
+  expect(groups().下一步).toEqual(['你对照两栏阅读；此类装备暂不能填入'])
+  expect(ui().querySelector('.check')?.textContent).not.toContain('改正这')
+  expect(primary()).toEqual([])
+})
+
+it('②c 解析失败：无法识别装备文本，未生成英文预览，下一步写 Ctrl+Alt+C', () => {
+  const { preview } = previewWith('任意文本', [])
+  expect(verdict()?.textContent).toBe('无法识别装备文本两栏仅供对照')
+  expect(groups()).toEqual({
+    已完成: ['未生成英文预览'],
+    待核对: ['无法识别装备文本'],
+    下一步: ['你粘贴游戏里按 Ctrl+Alt+C 复制的完整装备文本，再点“预览中文转换”'],
+  })
+  expect(primary()).toEqual([preview])
+})
+
+it('③ 已填入：下一步交给原站“继续”，没有主按钮；无兼容性提示时“没有待核对项”', () => {
+  const { fill } = readyPreview()
+  fill.click()
+  expect(verdict()?.textContent).toBe('已填入英文尚未导入，导入结果由原站确认')
+  expect(groups()).toEqual({
+    已完成: ['英文已写入原站导入框（6 行）'],
+    待核对: ['没有待核对项'],
+    下一步: ['原站点原站的“继续”（Proceed）后由原站完成导入；扩展不会替你提交'],
+  })
+  expect(primary()).toEqual([])
+})
+
+it('④ 原文已改变：清单降级、定位停用，预览是唯一主按钮；填入后再改导入框副句不同', () => {
+  const { input, preview } = readyPreview()
+  input.value = source.replace('40(36-41)', '42(36-41)')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  preview.click()
+  input.value = source
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(ui().querySelector('.check')?.classList.contains('stale')).toBe(true)
+  expect((ui().querySelector('.check li button') as HTMLButtonElement).disabled).toBe(true)
+  expect(verdict()?.querySelector('span')?.textContent).toBe('原文已改变，请重新预览')
+  expect(verdict()?.querySelector('small')?.textContent).toBe('以下为改动前的结果')
+  expect(groups()).toEqual({
+    已完成: ['上次预览已失效，两栏为改动前内容'],
+    待核对: ['第 8 行数值无效或不在原文范围内。'],
+    下一步: ['你点“预览中文转换”重新生成'],
+  })
+  expect(primary()).toEqual([preview])
+  preview.click()
+  ;(ui().querySelector('.result > button') as HTMLButtonElement).click()
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(verdict()?.querySelector('small')?.textContent).toBe(
+    '导入框内容已改变，以下为填入前的结果',
+  )
+  expect(primary()).toEqual([preview])
+})
+
+it('已恢复：结论行沿用原句，三组清空，预览是唯一主按钮', () => {
+  const { preview, fill } = readyPreview()
+  fill.click()
+  ;(ui().querySelector('.result > button[data-tertiary]') as HTMLButtonElement).click()
+  expect(verdict()?.textContent).toBe('已恢复粘贴原文。修改后请重新预览。')
+  expect(ui().querySelector('.check')?.childElementCount).toBe(0)
+  expect(primary()).toEqual([preview])
+})
+
+it('“继续”与原站按钮译名一致（ui.zh-CN.json 的 Proceed）', () => {
+  const entries = JSON.parse(readFileSync('data/l10n/coe-beta/ui.zh-CN.json', 'utf8'))
+    .entries as Record<string, string>
+  expect(entries.Proceed).toBe('继续')
+  const code = readFileSync('apps/poe2-extension/src/content/import-controller.ts', 'utf8')
+  expect(code).toContain(`“${entries.Proceed}”（Proceed）`)
 })

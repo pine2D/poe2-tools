@@ -29,7 +29,6 @@
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
-  --sp-5: 24px;
   /* L1 专用（spec §6.9 视觉） */
   --l1-panel: #15120f;
   --l1-edge: #8a6a40;
@@ -132,20 +131,104 @@ textarea[data-preview] {
   background: var(--bg-2);
   color: var(--mod);
 }
-[role="status"] {
-  margin: var(--sp-3) 0;
-  color: var(--ink-2);
+/* 结论行（唯一 live region）：图标 + 结论 + 副句；未预览时为空并隐藏 */
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  align-items: center;
+  margin: var(--sp-3) 0 var(--sp-2);
+  font-size: var(--fs-data);
+  font-weight: 600;
+  color: var(--ink);
 }
-[role="status"]:empty {
+.verdict:empty {
   display: none;
 }
-ul {
-  margin: var(--sp-2) 0;
-  padding-left: var(--sp-5);
+.verdict small {
+  font-size: var(--fs-small);
+  font-weight: 400;
   color: var(--ink-2);
 }
-[aria-label="原站兼容性提示"] {
+/* 核对清单（样稿版 B）：已完成／待核对／下一步三组，左列 56px 放组名；
+   清单行高约 24px，与“第 N 行”定位按钮同高；已恢复时清空并隐藏 */
+.check {
+  margin: 0 0 var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+.check:empty {
+  display: none;
+}
+.group {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0 var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.group h3 {
+  margin: 0;
+  font-size: var(--fs-small);
+  font-weight: 400;
+  line-height: 1.8;
+  color: var(--ink-3);
+}
+.check ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink);
+}
+.check li {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  line-height: 1.7;
+}
+.ico {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.check li .ico {
+  margin-top: var(--sp-1);
+}
+/* 行动方标签：纯文字“你”／“原站”，读屏按正文读出 */
+.who {
+  display: inline-block;
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  font-size: var(--fs-micro);
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: nowrap;
+}
+/* “第 N 行”定位按钮：24px 高（WCAG 2.5.8 下限），与问题文字同一行 */
+.check li button {
+  flex: none;
+  min-height: 24px;
+  margin: 0;
+  padding: 0 var(--sp-1);
+  line-height: 1.5;
+}
+.check li[data-kind="warning"] {
   color: var(--miss);
+}
+.ok {
+  color: var(--ok);
+}
+.miss {
+  color: var(--miss);
+}
+.dim {
+  color: var(--ink-3);
+}
+/* ④ 原文已改变：旧条目整组降为 --ink-3（含图标），排在语气色之后 */
+.check.stale li,
+.check.stale .ico {
+  color: var(--ink-3);
 }
 button {
   box-sizing: border-box;

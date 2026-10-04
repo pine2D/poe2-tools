@@ -1,5 +1,5 @@
 import type { Term } from '@poe2-tools/l10n-core'
-import { prepareImport } from '../adapters/coe-beta/import'
+import { type PreparedImport, prepareImport } from '../adapters/coe-beta/import'
 import { FULL_DISCLAIMER, SHORT_PROVENANCE } from '../provenance'
 import { adoptL1, createGem } from './l1'
 
@@ -19,6 +19,72 @@ const DIALOG_CSS = `
         max-width: 100%;
       }
     `
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+type IconKind = 'done' | 'alert' | 'stale' | 'fill'
+type Tone = 'ok' | 'miss' | 'dim'
+type Shape = readonly [tag: 'circle' | 'path', attributes: Readonly<Record<string, string>>]
+// 核对清单图标（样稿 phase3/import/gen.py）：16×16 线框，currentColor 取色；形状区分状态，不只靠颜色
+const ICONS: Readonly<Record<IconKind, readonly Shape[]>> = {
+  done: [
+    ['circle', { cx: '8', cy: '8', r: '6.6' }],
+    ['path', { d: 'M5 8.2 7.1 10.3 11 6.1' }],
+  ],
+  alert: [
+    ['circle', { cx: '8', cy: '8', r: '6.6' }],
+    ['path', { d: 'M8 4.6V8.8' }],
+    ['circle', { cx: '8', cy: '11.3', r: '.5', fill: 'currentColor' }],
+  ],
+  stale: [
+    ['path', { d: 'M13 8A5 5 0 1 1 11.5 4.5' }],
+    ['path', { d: 'M11.9 2.2V4.9H9.2' }],
+  ],
+  fill: [
+    ['path', { d: 'M8 2.6V9.4M5.3 6.8 8 9.5 10.7 6.8' }],
+    ['path', { d: 'M3 10.6V13H13V10.6' }],
+  ],
+}
+
+/** 装饰图标：读屏不读，含义由旁边的文字给出 */
+function icon(doc: Document, kind: IconKind, tone: Tone): SVGSVGElement {
+  const svg = doc.createElementNS(SVG_NS, 'svg')
+  for (const [name, value] of Object.entries({
+    class: `ico ${tone}`,
+    viewBox: '0 0 16 16',
+    width: '16',
+    height: '16',
+    'aria-hidden': 'true',
+    focusable: 'false',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '1.6',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+  }))
+    svg.setAttribute(name, value)
+  for (const [tag, attributes] of ICONS[kind]) {
+    const shape = doc.createElementNS(SVG_NS, tag)
+    for (const [name, value] of Object.entries(attributes)) shape.setAttribute(name, value)
+    svg.append(shape)
+  }
+  return svg
+}
+
+/** 待核对条目（裁定 25）：无行号问题各占一条、排在前；同一行号的问题合并为一条，行号升序 */
+function checklist(issues: PreparedImport['issues']): { line: number | null; text: string }[] {
+  const byLine = new Map<number, string[]>()
+  for (const { line, message } of issues)
+    if (line !== null) byLine.set(line, [...(byLine.get(line) ?? []), message])
+  return [
+    ...issues
+      .filter((issue) => issue.line === null)
+      .map(({ message }) => ({ line: null, text: message })),
+    ...[...byLine]
+      .sort(([a], [b]) => a - b)
+      .map(([line, messages]) => ({ line, text: messages.join(' ') })),
+  ]
+}
+
 export function attachImport(doc: Document, terms: readonly Term[]) {
   let target: HTMLTextAreaElement | null = null
   let host: HTMLElement | null = null
@@ -73,56 +139,106 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     const preview = doc.createElement('button')
     preview.type = 'button'
     preview.textContent = '预览中文转换'
-    // 在首次转换前挂载，后续仅更新摘要，避免重复播报两栏装备全文。
+    // 结论行在首次转换前挂载、跨重试是同一节点：只播报结论与副句，不播报清单与两栏全文
     const message = doc.createElement('p')
+    message.className = 'verdict'
     message.setAttribute('role', 'status')
     message.setAttribute('aria-live', 'polite')
     message.setAttribute('aria-atomic', 'true')
     const result = doc.createElement('div')
+    result.className = 'result'
+    /** 结论行：图标 + 结论 + 可选副句；整体替换，空状态用 replaceChildren() 让 :empty 生效 */
+    const say = (kind: IconKind, tone: Tone, text: string, note: string | null = null) => {
+      const conclusion = doc.createElement('span')
+      conclusion.textContent = text
+      message.replaceChildren(icon(doc, kind, tone), conclusion)
+      if (note === null) return
+      const small = doc.createElement('small')
+      small.textContent = note
+      message.append(small)
+    }
+    /** 每个状态至多一个主按钮，放在“下一步［你］”对应的按钮上（裁定 24） */
+    const setPrimary = (el: HTMLButtonElement | null) => {
+      for (const button of panel.querySelectorAll<HTMLButtonElement>('button[data-primary]'))
+        if (button !== el) button.removeAttribute('data-primary')
+      if (el) el.dataset.primary = ''
+    }
+    const entry = (lead: Node, text: string, kind: 'issue' | 'warning' | 'clear' | null = null) => {
+      const row = doc.createElement('li')
+      if (kind) row.dataset.kind = kind
+      const span = doc.createElement('span')
+      span.textContent = text
+      row.append(lead, span)
+      return row
+    }
+    const actor = (who: '你' | '原站') => {
+      const tag = doc.createElement('span')
+      tag.className = 'who'
+      tag.textContent = who
+      return tag
+    }
+    const group = (title: '已完成' | '待核对' | '下一步') => {
+      const box = doc.createElement('div')
+      box.className = 'group'
+      const caption = doc.createElement('h3')
+      caption.textContent = title
+      const list = doc.createElement('ul')
+      box.append(caption, list)
+      return { box, list }
+    }
     preview.addEventListener('click', () => {
       if (!isActive() || !preview.isConnected) return
       const current = ++revision
       invalidate = null
       result.replaceChildren()
       const converted = prepareImport(input.value, terms)
-      message.textContent = converted.ready
-        ? '已识别并转换。请核对两栏后填入英文；能否导入及装备规则由原站判断。'
-        : '仅供对照，请逐项核对以下原因。'
-      if (converted.issues.length) {
-        const list = doc.createElement('ul')
-        list.setAttribute('aria-label', '导入诊断')
-        for (const issue of converted.issues) {
-          const row = doc.createElement('li')
-          if (issue.line !== null) {
-            const lineNumber = issue.line
-            const locate = doc.createElement('button')
-            locate.type = 'button'
-            locate.textContent = `第 ${issue.line} 行`
-            locate.setAttribute('aria-label', `定位第 ${issue.line} 行`)
-            locate.dataset.tertiary = ''
-            locate.addEventListener('click', () => {
-              if (!isActive() || current !== revision || input.value !== converted.original) return
-              const lines = input.value.split('\n')
-              const start = lines
-                .slice(0, lineNumber - 1)
-                .reduce((total, line) => total + line.length + 1, 0)
-              const length = (lines[lineNumber - 1] ?? '').replace(/\r$/, '').length
-              input.focus()
-              input.setSelectionRange(start, start + length)
-            })
-            row.append(locate, doc.createTextNode('：'))
-          }
-          row.append(doc.createTextNode(issue.message))
-          list.append(row)
+      const { lines, warnings } = converted
+      const items = checklist(converted.issues)
+      const located = items.filter((item) => item.line !== null).length
+      const whole = converted.issues.filter((issue) => issue.line === null).length
+      const check = doc.createElement('div')
+      check.className = 'check'
+      const done = group('已完成')
+      const pending = group('待核对')
+      const next = group('下一步')
+      check.append(done.box, pending.box, next.box)
+      const warningRows = () =>
+        warnings.map((text) => entry(icon(doc, 'alert', 'miss'), text, 'warning'))
+      // 已完成：解析失败不出预览；有无行号问题时不显示分数（裁定 21）
+      done.list.append(
+        lines === null
+          ? entry(icon(doc, 'alert', 'miss'), '未生成英文预览')
+          : entry(
+              icon(doc, 'done', 'ok'),
+              whole > 0
+                ? `已生成英文预览（${whole} 条问题涉及整件装备，无法定位到行）`
+                : `已识别 ${lines.recognized} / ${lines.total} 行，生成英文预览`,
+            ),
+      )
+      // 待核对：问题（同一行合并，带“第 N 行”定位）＋ 原站兼容性提示（不影响能否填入）
+      if (items.length === 0)
+        pending.list.append(entry(icon(doc, 'done', 'ok'), '没有需要先改正的行', 'clear'))
+      for (const { line, text } of items) {
+        const row = entry(icon(doc, 'alert', 'miss'), text, 'issue')
+        if (line !== null) {
+          const locate = doc.createElement('button')
+          locate.type = 'button'
+          locate.textContent = `第 ${line} 行`
+          locate.setAttribute('aria-label', `定位第 ${line} 行`)
+          locate.dataset.tertiary = ''
+          locate.addEventListener('click', () => {
+            if (!isActive() || current !== revision || input.value !== converted.original) return
+            const rows = input.value.split('\n')
+            const start = rows.slice(0, line - 1).reduce((total, row) => total + row.length + 1, 0)
+            const length = (rows[line - 1] ?? '').replace(/\r$/, '').length
+            input.focus()
+            input.setSelectionRange(start, start + length)
+          })
+          row.insertBefore(locate, row.lastChild)
         }
-        result.append(list)
+        pending.list.append(row)
       }
-      if (converted.warnings.length) {
-        const warning = doc.createElement('p')
-        warning.setAttribute('aria-label', '原站兼容性提示')
-        warning.textContent = converted.warnings.join(' ')
-        result.append(warning)
-      }
+      pending.list.append(...warningRows())
       const columns = doc.createElement('div')
       columns.className = 'columns'
       for (const [index, [title, value]] of [
@@ -138,24 +254,67 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         label.append(area)
         columns.append(label)
       }
-      result.append(columns)
       const fill = doc.createElement('button')
       fill.type = 'button'
-      fill.dataset.primary = ''
       fill.textContent = '填入英文到原站导入框'
       fill.disabled = !converted.ready
+      result.append(check, columns, fill)
+      // 结论行与下一步（裁定 23）
+      if (lines === null) {
+        say('alert', 'miss', '无法识别装备文本', '两栏仅供对照')
+        next.list.append(
+          entry(actor('你'), '粘贴游戏里按 Ctrl+Alt+C 复制的完整装备文本，再点“预览中文转换”'),
+        )
+        setPrimary(preview)
+      } else if (converted.comparisonOnly) {
+        say('alert', 'miss', '仅供对照', converted.issues[0]?.message ?? null)
+        next.list.append(entry(actor('你'), '对照两栏阅读；此类装备暂不能填入'))
+        setPrimary(null)
+      } else if (converted.ready) {
+        say(
+          'done',
+          'ok',
+          '可以填入',
+          warnings.length ? `${warnings.length} 条原站兼容性提示需在导入后核对` : null,
+        )
+        next.list.append(
+          entry(actor('你'), '核对两栏后，点“填入英文到原站导入框”'),
+          entry(actor('原站'), '填入后点“继续”（Proceed），能否导入由原站判断'),
+        )
+        setPrimary(fill)
+      } else {
+        say('alert', 'miss', `需先核对 ${items.length} 处`, '两栏仅供对照，暂不能填入')
+        next.list.append(
+          entry(
+            actor('你'),
+            whole > 0
+              ? '按上面的提示改正原文，再点“预览中文转换”'
+              : `在原站导入框改正这 ${located} 行，再点“预览中文转换”`,
+          ),
+        )
+        setPrimary(preview)
+      }
+      /** ④ 原文已改变：旧结果降级保留，定位与填入停用，预览成为主按钮 */
+      const markStale = (note: string) => {
+        fill.disabled = true
+        for (const button of check.querySelectorAll<HTMLButtonElement>('li button'))
+          button.disabled = true
+        check.classList.add('stale')
+        done.list.replaceChildren(
+          entry(icon(doc, 'stale', 'dim'), '上次预览已失效，两栏为改动前内容'),
+        )
+        next.list.replaceChildren(entry(actor('你'), '点“预览中文转换”重新生成'))
+        say('stale', 'miss', '原文已改变，请重新预览', note)
+        setPrimary(preview)
+      }
       invalidate = () => {
         revision++
-        fill.disabled = true
-        for (const button of result.querySelectorAll<HTMLButtonElement>('li button'))
-          button.disabled = true
-        message.textContent = '原文已改变，请重新预览。'
+        markStale('以下为改动前的结果')
       }
       fill.addEventListener('click', () => {
         if (!isActive() || current !== revision || !fill.isConnected) return
         if (!input.isConnected || input.value !== converted.original) {
-          message.textContent = '原文已改变，请重新预览。'
-          fill.disabled = true
+          markStale('以下为改动前的结果')
           return
         }
         const hadFocus = shadow.activeElement === fill
@@ -164,7 +323,20 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         input.value = converted.english
         input.dispatchEvent(new Event('input', { bubbles: true }))
         fill.disabled = true
-        message.textContent = '已填入英文。请点击原站确认按钮；导入结果由原站确认。'
+        // ③ 已填入：导入仍由原站完成，扩展不提交
+        say('fill', 'ok', '已填入英文', '尚未导入，导入结果由原站确认')
+        done.list.replaceChildren(
+          entry(icon(doc, 'fill', 'ok'), `英文已写入原站导入框（${lines?.total ?? 0} 行）`),
+        )
+        pending.list.replaceChildren(
+          ...(warnings.length
+            ? warningRows()
+            : [entry(icon(doc, 'done', 'ok'), '没有待核对项', 'clear')]),
+        )
+        next.list.replaceChildren(
+          entry(actor('原站'), '点原站的“继续”（Proceed）后由原站完成导入；扩展不会替你提交'),
+        )
+        setPrimary(null)
         const filledRevision = revision
         const restore = doc.createElement('button')
         restore.type = 'button'
@@ -173,7 +345,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         const invalidateRestore = () => {
           revision++
           restore.disabled = true
-          message.textContent = '原文已改变，请重新预览。'
+          markStale('导入框内容已改变，以下为填入前的结果')
         }
         invalidate = invalidateRestore
         restore.addEventListener('click', () => {
@@ -188,17 +360,20 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           input.value = converted.original
           input.dispatchEvent(new Event('input', { bubbles: true }))
           restore.disabled = true
-          message.textContent = '已恢复粘贴原文。修改后请重新预览。'
+          say('stale', 'dim', '已恢复粘贴原文。修改后请重新预览。')
+          check.classList.remove('stale')
+          check.replaceChildren()
+          setPrimary(preview)
           returnInputFocus(restore, hadRestoreFocus)
         })
         result.append(restore)
         returnInputFocus(fill, hadFocus)
       })
-      result.append(fill)
     })
     body.append(preview, message, result)
     panel.append(head, body, disclaimer)
     shadow.append(panel)
+    setPrimary(preview)
     input.after(dialogStyle, host)
   }
   const onInput = (event: Event) => {

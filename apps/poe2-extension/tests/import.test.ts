@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import type { Term } from '@poe2-tools/l10n-core'
 import { expect, it } from 'vitest'
-import { prepareImport } from '../src/adapters/coe-beta/import'
+import { type PreparedImport, prepareImport } from '../src/adapters/coe-beta/import'
 
 const terms: Term[] = [
   {
@@ -82,6 +82,76 @@ it('品质、孔位、腐化及词缀归属原样转换，不代替原站校验�
   for (const value of ['Suffix Modifier', 'Quality: +21%', 'Sockets: S S S', 'Corrupted'])
     expect(result.english).toContain(value)
 })
+// ---- 0.4.0 核对清单：行数统计（裁定 21、22） ----
+// Y = 类别行 + 稀有度行 + 名称行 + note/description 以外各块的非空行；X = Y − 带问题的不重复行号
+const invariant = (result: PreparedImport) => {
+  expect(result.ready).toBe(result.issues.length === 0)
+  if (result.ready) expect(result.lines?.recognized).toBe(result.lines?.total)
+}
+it('行数统计：正常样本 7 行全部识别，不是仅供对照', () => {
+  const result = prepareImport(text, terms)
+  // 类别、稀有度、2 个名称行、物品等级、词缀标题、属性行；2 条分隔线不计
+  expect(result.lines).toEqual({ total: 7, recognized: 7 })
+  expect(result.comparisonOnly).toBe(false)
+  invariant(result)
+})
+it.each([
+  ['交易备注', `${text}\n--------\n备注: ~b/o 1 divine`],
+  ['引号描述', `${text}\n--------\n“测试描述第一行\n第二行”`],
+  ['空行与多余分隔线', text.replace('物品等级: 86', '\n物品等级: 86\n\n--------\n--------')],
+])('行数统计：%s不计入参与核对的行', (_, source) => {
+  const result = prepareImport(source, terms)
+  expect(result.lines).toEqual({ total: 7, recognized: 7 })
+  expect(result.ready).toBe(true)
+  invariant(result)
+})
+it('行数统计：属性数值越界只减去那一行', () => {
+  const result = prepareImport(text.replace('40(36-41)', '42(36-41)'), terms)
+  expect(result.issues).toEqual([{ line: 9, message: '数值无效或不在原文范围内。' }])
+  expect(result.lines).toEqual({ total: 7, recognized: 6 })
+  invariant(result)
+})
+it('行数统计：同一行两条问题按行号去重，只减 1', () => {
+  const result = prepareImport(`${text}\n--------\n未知面板: 123`, terms)
+  expect(result.issues.filter((issue) => issue.line === 11)).toHaveLength(2)
+  expect(result.lines).toEqual({ total: 8, recognized: 7 })
+  invariant(result)
+})
+it('行数统计：只有无行号问题时分数不变，但不能填入（显不显示分数由面板决定）', () => {
+  const result = prepareImport(text.replace('符文法器\n', '不存在的法器\n'), terms)
+  expect(result.issues.length).toBeGreaterThan(0)
+  expect(result.issues.every((issue) => issue.line === null)).toBe(true)
+  expect(result.lines).toEqual({ total: 7, recognized: 7 })
+  expect(result.ready).toBe(false)
+  invariant(result)
+})
+it.each([
+  [
+    '传奇',
+    text.replace('稀有度: 稀有', '稀有度: 传奇'),
+    '传奇装备仅供解析与中英对照，不开放制作。',
+  ],
+  ['咒符', text.replace('类别: 法器', '类别: 咒符'), '咒符仅供解析与中英对照，不开放制作。'],
+])('%s仅供对照：comparisonOnly 为真，对照原因是第一条无行号问题', (_, source, reason) => {
+  const result = prepareImport(source, terms)
+  expect(result.comparisonOnly).toBe(true)
+  expect(result.issues[0]).toEqual({ line: null, message: reason })
+  expect(result.lines).not.toBeNull()
+  invariant(result)
+})
+it('解析失败：lines 为 null，不是仅供对照', () => {
+  const result = prepareImport('任意文本', terms)
+  expect(result.lines).toBeNull()
+  expect(result.comparisonOnly).toBe(false)
+  invariant(result)
+})
+it('CRLF 换行：行数与行号同 LF 版本', () => {
+  const crlf = (value: string) => value.replace(/\n/g, '\r\n')
+  expect(prepareImport(crlf(text), terms).lines).toEqual({ total: 7, recognized: 7 })
+  const broken = prepareImport(crlf(text.replace('40(36-41)', '42(36-41)')), terms)
+  expect(broken.issues).toEqual([{ line: 9, message: '数值无效或不在原文范围内。' }])
+  expect(broken.lines).toEqual({ total: 7, recognized: 6 })
+})
 // 既有实测装备是回归样本，不是导入资格名单。使用入库词典，避免依赖本地构建产物。
 const items = JSON.parse(readFileSync('data/dict/zh-CN/items.json', 'utf8')) as {
   bases: Record<string, string>
@@ -128,6 +198,11 @@ it.each(fixtures)('既有样本保留分组与数值：%s', (name) => {
   expect(result.issues).toEqual([])
   expect(result.ready).toBe(true)
   expect(result.original).toBe(original)
+  // 0.4.0 核对清单：既有样本全部识别（已识别 Y / Y 行）
+  expect(result.comparisonOnly).toBe(false)
+  expect(result.lines?.total).toBeGreaterThan(0)
+  expect(result.lines?.recognized).toBe(result.lines?.total)
+  if (name === 'rattling-sceptre-zh-CN.txt') expect(result.lines?.total).toBe(17)
   const englishFile = `${folder}/${name.replace('-zh-CN.txt', '-en.txt')}`
   if (existsSync(englishFile)) {
     // 原站对照样本使用英文自定义名/词缀名；逐行比较实际属性，分组数另行核对。
