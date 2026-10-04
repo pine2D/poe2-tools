@@ -23,7 +23,7 @@ STORY：打开弹窗 → 读状态区一句结论和一句做法 → 需要时�
 
 FIRST VIEWPORT：标题栏；状态区（状态词 · 原因，下一行做法，至多一个 pt-btn 安静按钮，只在部分生效与初始化失败出现）；菱结分隔；两个开关（右侧保留“开启／关闭”）；页脚一行版本与检查更新，加非官方声明全文。“适用于 Craft of Exile 新版”副标题与“使用前”框取消，提示并入状态原因。
 
-FORM：状态置顶（用户在两版样稿中选 A，2026-10-04），样稿 popup.html 与 deck-popup-a.png，本地留存。
+FORM：状态置顶（未抽签：用户在 A/B 两版样稿中直接选定 A，2026-10-04），样稿 popup.html 与 deck-popup-a.png，本地留存。
 
 FINISH：unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
