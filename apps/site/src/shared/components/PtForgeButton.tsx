@@ -11,8 +11,6 @@ import type {
 import { cx, Motif } from './Motif'
 
 interface ForgeOwnProps {
-  /** 通栏：文字靠左、箭头“→”靠右（原用于一期首页入口卡；二期起页面没有调用方，保留组件能力） */
-  wide?: boolean
   className?: string
   children: ReactNode
 }
@@ -31,29 +29,21 @@ export type PtForgeButtonProps =
         keyof ForgeOwnProps | 'htmlFor'
       >)
 
-function ForgeContent({ wide, children }: { wide: boolean; children: ReactNode }) {
+function ForgeContent({ children }: { children: ReactNode }) {
   return (
     <>
       <Motif symbol="gem" className="pt-forge-btn__cap pt-forge-btn__cap--l" />
-      {wide ? (
-        <>
-          <span>{children}</span>
-          <span aria-hidden="true">→</span>
-        </>
-      ) : (
-        children
-      )}
+      {children}
       <Motif symbol="gem" className="pt-forge-btn__cap pt-forge-btn__cap--r" />
     </>
   )
 }
 
 export function PtForgeButton(props: PtForgeButtonProps): ReactElement {
-  const wide = props.wide ?? false
-  const classes = cx('pt-forge-btn', wide && 'pt-forge-btn--wide', props.className)
-  const content = <ForgeContent wide={wide}>{props.children}</ForgeContent>
+  const classes = cx('pt-forge-btn', props.className)
+  const content = <ForgeContent>{props.children}</ForgeContent>
   if (props.as === 'a') {
-    const { as: _as, wide: _wide, className: _className, children: _children, ...rest } = props
+    const { as: _as, className: _className, children: _children, ...rest } = props
     return (
       <a {...rest} className={classes}>
         {content}
@@ -61,28 +51,14 @@ export function PtForgeButton(props: PtForgeButtonProps): ReactElement {
     )
   }
   if (props.as === 'label') {
-    const {
-      as: _as,
-      wide: _wide,
-      className: _className,
-      children: _children,
-      htmlFor,
-      ...rest
-    } = props
+    const { as: _as, className: _className, children: _children, htmlFor, ...rest } = props
     return (
       <label {...rest} htmlFor={htmlFor} className={classes}>
         {content}
       </label>
     )
   }
-  const {
-    as: _as,
-    wide: _wide,
-    className: _className,
-    children: _children,
-    type = 'button',
-    ...rest
-  } = props
+  const { as: _as, className: _className, children: _children, type = 'button', ...rest } = props
   return (
     <button {...rest} type={type} className={classes}>
       {content}

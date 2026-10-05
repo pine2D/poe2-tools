@@ -125,9 +125,6 @@
   text-shadow: 0 1px 1px #000;
   white-space: nowrap;
 }
-.pt-titlebar__title--lg {
-  font-size: 21px; /* 首页入口卡（mockup :419） */
-}
 .pt-titlebar > .pt-chip {
   position: absolute;
   top: 50%;

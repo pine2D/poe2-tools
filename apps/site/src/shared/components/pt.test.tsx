@@ -43,10 +43,10 @@ describe('Motif 与 PtDivider（spec §4.5、§5.9）', () => {
 
 describe('PtTitlebar（spec §5.3）', () => {
   it('默认 h2；chip 在标题之后；没有 chip 时不渲染', () => {
-    const { container } = render(<PtTitlebar title="构筑汉化" chip="网页工具" large />)
+    const { container } = render(<PtTitlebar title="构筑汉化" chip="网页工具" />)
     const header = container.querySelector('header.pt-titlebar')
     expect(header?.innerHTML).toBe(
-      '<h2 class="pt-titlebar__title pt-titlebar__title--lg">构筑汉化</h2><span class="pt-chip">网页工具</span>',
+      '<h2 class="pt-titlebar__title">构筑汉化</h2><span class="pt-chip">网页工具</span>',
     )
     cleanup()
     const plain = render(<PtTitlebar title="文件" as="p" id="t" />).container
@@ -118,7 +118,7 @@ describe('PtPanel（spec §5.4）', () => {
         <PtPanel variant="inset" edge="gem" as="figure">
           c
         </PtPanel>
-        <PtPanel variant="card" titlebar={{ title: '构筑汉化', chip: '网页工具', large: true }}>
+        <PtPanel variant="card" titlebar={{ title: '构筑汉化', chip: '网页工具' }}>
           d
         </PtPanel>
       </>,
@@ -150,20 +150,20 @@ describe('PtForgeButton（spec §5.5）', () => {
     expect(button?.textContent).toBe('下载中文 .build')
   })
 
-  it('a 形态的 wide：文字靠左、aria-hidden 的箭头靠右', () => {
+  it('a 形态：href 原样，两端 gem 夹文字', () => {
     const { container } = render(
-      <PtForgeButton as="a" href="/build/" wide>
+      <PtForgeButton as="a" href="/build/">
         打开构筑汉化
       </PtForgeButton>,
     )
     const link = container.querySelector('a')
     expect(link?.getAttribute('href')).toBe('/build/')
-    expect(link?.getAttribute('class')).toBe('pt-forge-btn pt-forge-btn--wide')
-    const inner = [...(link?.children ?? [])].map((el) => el.outerHTML)
-    expect(inner.slice(1, 3)).toEqual([
-      '<span>打开构筑汉化</span>',
-      '<span aria-hidden="true">→</span>',
-    ])
+    expect(link?.getAttribute('class')).toBe('pt-forge-btn')
+    expect(link?.children.length).toBe(2)
+    expect(link?.textContent).toBe('打开构筑汉化')
+    expect(link?.querySelectorAll('.pt-motif--gem').length).toBe(2)
+    expect(link?.querySelector('.pt-forge-btn__cap--l')).toBe(link?.firstElementChild)
+    expect(link?.querySelector('.pt-forge-btn__cap--r')).toBe(link?.lastElementChild)
   })
 
   it('label 形态指向文件输入', () => {

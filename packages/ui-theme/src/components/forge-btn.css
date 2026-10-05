@@ -76,12 +76,6 @@
 .pt-forge-btn__cap--r {
   right: 11px;
 }
-/* --wide：通栏，文字靠左、箭头“→”靠右（mockup :156、:174；只用于首页入口卡） */
-.pt-forge-btn--wide {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .pt-forge-btn:active {
