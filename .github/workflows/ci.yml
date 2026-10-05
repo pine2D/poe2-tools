@@ -22,11 +22,11 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -42,7 +42,7 @@ jobs:
       # 打包或闸门失败时留下扩展产物，下载后可与本机逐文件比对（跨环境字节不一致时用）
       - name: 失败时保存扩展产物
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extension-debug-${{ github.sha }}
           path: |
@@ -50,7 +50,7 @@ jobs:
             apps/poe2-extension/artifacts
           if-no-files-found: ignore
           retention-days: 3
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: site-${{ github.sha }}
           path: apps/site/dist
@@ -78,18 +78,18 @@ jobs:
   release-extension:
     needs: [verify, deploy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     concurrency:
       group: release-extension
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: site-${{ github.sha }}
           path: site-dist
@@ -108,7 +108,7 @@ jobs:
   # 手动触发；不下载、不提交任何数据，只打印状态码与条目数。
   smoke-cn-trade-api:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: 请求 poe.game.qq.com trade2 stats
         run: |

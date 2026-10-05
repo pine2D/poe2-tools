@@ -19,17 +19,17 @@ permissions:
 jobs:
   pages:
     if: vars.CF_PAGES_PROJECT != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     concurrency:
       group: pages-${{ inputs.target }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: site-${{ github.sha }}
           path: apps/site/dist
