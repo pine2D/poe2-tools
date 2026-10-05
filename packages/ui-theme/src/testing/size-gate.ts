@@ -53,7 +53,8 @@ export interface SizeScan {
   used: Set<string>
 }
 
-/** 扫描一份 CSS：受检属性里出现非零 px/rem 字面值，且不全在 allow[文件|选择器|属性] 之内，即为违规 */
+/** 扫描一份 CSS：受检属性里出现非零 px/rem 字面值，且不全在 allow[文件|选择器|属性] 之内，即为违规。
+ * options 可加严：tokenOnly 要求字号整值是 var(--fs-*)，emChecked 把间距属性里的 em 也算作字面值。 */
 export function scanSizes(
   file: string,
   css: string,

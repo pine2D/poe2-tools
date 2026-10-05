@@ -4,7 +4,7 @@
 // 检查器（受检属性、字面值规则、扫描）与扩展门禁共用 packages/ui-theme/src/testing/size-gate.ts。
 // home、l1-demo、extension 三个页面文件走严格档（PAGE_STRICT）：字号整值必须是 --fs-* 令牌，间距属性里 em 也算字面值。
 // 几何尺寸（图标宽、标签列宽、内容最大宽、视觉隐藏、移除按钮偏移）逐条列入 ALLOW 并写明理由；
-// em、%、无单位行高、0、auto、var() 不算字面值。历史工坊（features/craft）冻结且不得引入 ui-theme，不在范围内。
+// 默认档里 em、%、无单位行高、0、auto、var() 不算字面值。历史工坊（features/craft）冻结且不得引入 ui-theme，不在范围内。
 import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
