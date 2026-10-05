@@ -3,15 +3,23 @@
 // 两个入口用同款 pt-btn，本页没有金属主按钮。DOM 顺序固定为 hero → 构筑入口 → 中文助手入口 → 示例带：
 // ≤1099px 按 DOM 顺序先读到两组“场景句 + 按钮”；宽屏由 home.css 的网格把按钮排到带子下方，不用 order。
 // 示例数据全部自造：左段取阶段看板的示例构筑，右段是扩展的搜索候选（自绘示意，不是 CoE 截图）。
-// 图注、尾注与右段的搜索框、候选框用共用的 l1demo__ 类（shared/styles/l1-demo.css，扩展介绍页同用）；
+// 图注、尾注与右段的搜索框、候选框用共用的 l1demo__ 类（shared/styles/l1-demo.css，扩展介绍页同用），
+// 图注、搜索框、说明行、候选与署名部件来自 shared/components/L1Demo.tsx；
 // 候选框在这里拆成框顶／框腰／框底三段，落进对照带的 subgrid 行，让放大行与左段对齐。
 import { Icon } from '../../shared/components/Icon'
+import {
+  L1DemoBy,
+  L1DemoCaption,
+  L1DemoHelp,
+  L1DemoOption,
+  L1DemoSearch,
+} from '../../shared/components/L1Demo'
 import { Motif } from '../../shared/components/Motif'
 import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
-import { L1_DEMO_CANDIDATES, L1_DEMO_LABEL, L1_DEMO_QUERY } from '../../shared/l1Demo'
+import { L1_DEMO_CANDIDATES, L1_DEMO_CAPTION } from '../../shared/l1Demo'
 
 // 候选示意的数据与扩展介绍页共用（shared/l1Demo.ts）；第一项是选中项，放进框腰作为放大行
 const [SELECTED, ...REST] = L1_DEMO_CANDIDATES
@@ -87,10 +95,9 @@ export function HomePage() {
 
           <PtPanel as="section" variant="inset" className="strip" aria-label="两件工具的对照示例">
             <figure className="strip__side strip__side--build" aria-labelledby="demo-build-cap">
-              <figcaption className="l1demo__cap" id="demo-build-cap">
-                <span className="l1demo__tag">示例</span>
-                <span>构筑汉化的阶段看板 · 示例构筑（自造）</span>
-              </figcaption>
+              <L1DemoCaption id="demo-build-cap">
+                构筑汉化的阶段看板 · 示例构筑（自造）
+              </L1DemoCaption>
               <div className="strip__above">
                 <table className="mini-board">
                   <caption className="visually-hidden">
@@ -226,43 +233,22 @@ export function HomePage() {
             </div>
 
             <figure className="strip__side strip__side--coe" aria-labelledby="demo-coe-cap">
-              <figcaption className="l1demo__cap" id="demo-coe-cap">
-                <span className="l1demo__tag">示例</span>
-                <span>中文助手的搜索候选 · 自绘示意，不是 CoE 截图</span>
-              </figcaption>
+              <L1DemoCaption id="demo-coe-cap">{L1_DEMO_CAPTION}</L1DemoCaption>
               <div className="strip__above">
-                <p className="l1demo__label">{L1_DEMO_LABEL}</p>
-                <div className="l1demo__field">
-                  <Icon name="search" />
-                  {L1_DEMO_QUERY}
-                  <span className="l1demo__caret" aria-hidden="true" />
-                </div>
+                <L1DemoSearch />
                 <div className="l1demo__box l1demo__box--top">
-                  <p className="l1demo__help">
-                    “{L1_DEMO_QUERY}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）
-                  </p>
+                  <L1DemoHelp />
                 </div>
               </div>
               <div className="l1demo__box l1demo__box--mid">
-                <div className="l1demo__opt l1demo__opt--selected demo__spot">
-                  <span>{SELECTED[0]}</span>
-                  <span aria-hidden="true">→</span>
-                  <span lang="en">{SELECTED[1]}</span>
-                </div>
+                <L1DemoOption zh={SELECTED[0]} en={SELECTED[1]} selected className="demo__spot" />
               </div>
               <div className="strip__below">
                 <div className="l1demo__box l1demo__box--bottom">
                   {REST.map(([zh, en]) => (
-                    <div className="l1demo__opt" key={en}>
-                      <span>{zh}</span>
-                      <span aria-hidden="true">→</span>
-                      <span lang="en">{en}</span>
-                    </div>
+                    <L1DemoOption key={en} zh={zh} en={en} />
                   ))}
-                  <div className="l1demo__by" aria-hidden="true">
-                    <Motif symbol="gem" className="pt-attr-ext" />
-                    PoE2 中文助手 · 非官方
-                  </div>
+                  <L1DemoBy />
                 </div>
               </div>
               <div className="coe-after l1demo__foot">

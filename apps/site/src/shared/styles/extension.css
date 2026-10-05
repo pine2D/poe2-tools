@@ -135,6 +135,7 @@
   justify-content: center;
   padding-block: var(--sp-1);
 }
+/* 菱结尺寸（含 ≤620 档）与首页（home.css）中缝的菱结同值，改动时两处同改；两页中缝几何不同，不抽共用样式 */
 .ext-seam__knot > .pt-motif--knot {
   --ptm-w: 72px;
   --ptm-h: 28px;

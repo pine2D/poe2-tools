@@ -1,12 +1,19 @@
 import type { ReactElement } from 'react'
 import { Icon } from '../../shared/components/Icon'
+import {
+  L1DemoBy,
+  L1DemoCaption,
+  L1DemoHelp,
+  L1DemoOption,
+  L1DemoSearch,
+} from '../../shared/components/L1Demo'
 import { Motif } from '../../shared/components/Motif'
 import { PtForgeButton } from '../../shared/components/PtForgeButton'
 import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
-import { L1_DEMO_CANDIDATES, L1_DEMO_LABEL, L1_DEMO_QUERY } from '../../shared/l1Demo'
+import { L1_DEMO_CANDIDATES, L1_DEMO_CAPTION } from '../../shared/l1Demo'
 import { downloadHref, EXTENSION_RELEASE, formatSize } from './release'
 
 const { version, date, bytes } = EXTENSION_RELEASE
@@ -220,38 +227,18 @@ export function ExtensionPage(): ReactElement {
                   </span>
                 </li>
               </ul>
-              {/* 自绘示意，不是 CoE 截图；不可交互。样式来自共用的 l1-demo.css，标签、输入与候选来自 shared/l1Demo.ts
-                  （与首页对照带同一套 l1demo__ 类与示例数据；标签是扩展对原站搜索框标签的译名，候选名逐字取自正式词典，
-                  l1Demo.test.ts 核对）。这里用整框，选中项只靠类名 l1demo__opt--selected 表示外观 */}
+              {/* 自绘示意，不是 CoE 截图；不可交互。样式来自共用的 l1-demo.css，部件来自 shared/components/L1Demo.tsx，
+                  标签、输入与候选来自 shared/l1Demo.ts（与首页对照带同一套部件与示例数据；标签是扩展对原站搜索框标签的译名，
+                  候选名逐字取自正式词典，l1Demo.test.ts 核对）。这里用整框，选中项只靠类名 l1demo__opt--selected 表示外观 */}
               <PtPanel as="figure" variant="inset" className="ext-demo" aria-labelledby="demo-cap">
-                <figcaption className="l1demo__cap" id="demo-cap">
-                  <span className="l1demo__tag">示例</span>
-                  <span>中文助手的搜索候选 · 自绘示意，不是 CoE 截图</span>
-                </figcaption>
-                <p className="l1demo__label">{L1_DEMO_LABEL}</p>
-                <div className="l1demo__field">
-                  <Icon name="search" />
-                  {L1_DEMO_QUERY}
-                  <span className="l1demo__caret" aria-hidden="true" />
-                </div>
+                <L1DemoCaption id="demo-cap">{L1_DEMO_CAPTION}</L1DemoCaption>
+                <L1DemoSearch />
                 <div className="l1demo__box">
-                  <p className="l1demo__help">
-                    “{L1_DEMO_QUERY}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）
-                  </p>
+                  <L1DemoHelp />
                   {L1_DEMO_CANDIDATES.map(([zh, en], index) => (
-                    <div
-                      key={en}
-                      className={index === 0 ? 'l1demo__opt l1demo__opt--selected' : 'l1demo__opt'}
-                    >
-                      <span>{zh}</span>
-                      <span aria-hidden="true">→</span>
-                      <span lang="en">{en}</span>
-                    </div>
+                    <L1DemoOption key={en} zh={zh} en={en} selected={index === 0} />
                   ))}
-                  <div className="l1demo__by" aria-hidden="true">
-                    <Motif symbol="gem" className="pt-attr-ext" />
-                    PoE2 中文助手 · 非官方
-                  </div>
+                  <L1DemoBy />
                 </div>
                 <p className="l1demo__foot">
                   候选框底部有“PoE2 中文助手 · 非官方”署名，用来区分扩展和原站的内容。

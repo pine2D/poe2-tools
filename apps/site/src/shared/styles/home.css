@@ -171,6 +171,7 @@
     transparent calc(50% + 0.5px)
   );
 }
+/* 菱结尺寸（含 ≤620 档）与扩展介绍页（extension.css）中缝的菱结同值，改动时两处同改；两页中缝几何不同，不抽共用样式 */
 .seam__knot > .pt-motif--knot {
   --ptm-w: 72px;
   --ptm-h: 28px;
