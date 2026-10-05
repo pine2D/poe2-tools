@@ -499,20 +499,9 @@ describe('extension.css（二期样稿，令牌化）', () => {
     return merged
   }
 
-  it('字号只用 --fs-* 令牌；margin、padding、gap 不写 px、em、rem（几何尺寸除外）', () => {
+  it('font-size 声明不少于 10 处，严格档门禁不空转（规则见 scale-tokens.test.ts）', () => {
     let sizes = 0
-    for (const rule of rules) {
-      const where = rule.selectors.join(', ')
-      for (const [name, value] of rule.declarations) {
-        if (name === 'font-size') {
-          sizes += 1
-          expect(norm(value), `${where} font-size`).toMatch(/^var\(--fs-[a-z-]+\)$/)
-        }
-        if (/^(margin|padding|gap|row-gap|column-gap)(-|$)/.test(name)) {
-          expect(value, `${where} ${name}`).not.toMatch(/\d(px|r?em)\b/)
-        }
-      }
-    }
+    for (const rule of rules) if (rule.declarations.has('font-size')) sizes += 1
     expect(sizes).toBeGreaterThan(10)
   })
 

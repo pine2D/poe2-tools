@@ -2,11 +2,13 @@
 // 页面层尺寸阶梯门禁（2026-10-03 方案 §3.3、第二期）：apps/site/src/shared/styles 下的字号与间距只取
 // @poe2-tools/ui-theme 的 tokens.css 里的 --fs-* / --sp-* 令牌，不写 px/rem 字面值。
 // 检查器（受检属性、字面值规则、扫描）与扩展门禁共用 packages/ui-theme/src/testing/size-gate.ts。
+// home、l1-demo、extension 三个页面文件走严格档（PAGE_STRICT）：字号整值必须是 --fs-* 令牌，间距属性里 em 也算字面值。
 // 几何尺寸（图标宽、标签列宽、内容最大宽、视觉隐藏、移除按钮偏移）逐条列入 ALLOW 并写明理由；
 // em、%、无单位行高、0、auto、var() 不算字面值。历史工坊（features/craft）冻结且不得引入 ui-theme，不在范围内。
 import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  PAGE_STRICT,
   SIZE_CHECKED,
   type SizeAllow,
   scanSizes,
@@ -19,6 +21,9 @@ const STYLES = 'apps/site/src/shared/styles'
 const FILES = readdirSync(new URL(`${STYLES}/`, repo))
   .filter((name) => name.endsWith('.css'))
   .sort()
+
+/** 严格档文件。table.css 的 .mk-* 是标记语法的相对字号（em），有意不进严格档 */
+const STRICT = new Set(['home.css', 'l1-demo.css', 'extension.css'])
 
 /** 几何尺寸允许清单：键为“文件|选择器|属性”，值为该声明里允许出现的字面值。每条写理由，不用通配 */
 const ALLOW: SizeAllow = {
@@ -38,7 +43,12 @@ function scan(): { violations: string[]; used: Set<string> } {
   const violations: string[] = []
   const used = new Set<string>()
   for (const file of FILES) {
-    const result = scanSizes(file, read(`${STYLES}/${file}`), ALLOW)
+    const result = scanSizes(
+      file,
+      read(`${STYLES}/${file}`),
+      ALLOW,
+      STRICT.has(file) ? PAGE_STRICT : {},
+    )
     violations.push(...result.violations)
     for (const key of result.used) used.add(key)
   }
@@ -62,6 +72,16 @@ describe('页面层尺寸阶梯门禁（方案 §3.3）', () => {
     expect(sizeLiterals('calc(var(--sp-5) + env(safe-area-inset-bottom, 0px))')).toEqual([])
     expect(sizeLiterals('0.86em')).toEqual([])
     expect(sizeLiterals('var(--main-pad-top) var(--sp-5) var(--sp-7) var(--sp-3)')).toEqual([])
+    expect(sizeLiterals('1.5em')).toEqual([])
+    expect(sizeLiterals('1.5em', true)).toEqual(['1.5em'])
+    const strict = (decl: string): string[] =>
+      scanSizes('x.css', `.a { ${decl} }`, {}, PAGE_STRICT).violations
+    expect(strict('font-size: 0.86em')).toHaveLength(1)
+    expect(strict('font-size: calc(var(--fs-body) * 1.1)')).toHaveLength(1)
+    expect(strict('font-size: 15px')).toHaveLength(1)
+    expect(strict('font-size:  var(--fs-lead)')).toEqual([])
+    expect(strict('margin: 1em')).toHaveLength(1)
+    expect(strict('letter-spacing: 0.04em')).toEqual([])
     expect(SIZE_CHECKED.test('padding-inline-start')).toBe(true)
     expect(SIZE_CHECKED.test('--main-pad-top')).toBe(true)
     expect(SIZE_CHECKED.test('min-height')).toBe(false)
@@ -87,6 +107,10 @@ describe('页面层尺寸阶梯门禁（方案 §3.3）', () => {
         'table.css',
       ]),
     )
+  })
+
+  it('严格档文件都在 shared/styles 里（改名后严格档不会静默失效）', () => {
+    for (const file of STRICT) expect(FILES, file).toContain(file)
   })
 
   it('shared/styles 的字号与间距不写 px/rem 字面值（几何项见 ALLOW）', () => {

@@ -1,6 +1,6 @@
 // 扩展尺寸阶梯门禁（2026-10-03 方案 §3.3、第三期）：扩展设置弹窗（apps/poe2-extension/src/popup/popup.css，
 // 经 tokens.css 的 :root 取阶梯）与 CoE 注入界面（l1.css，在 :host 声明阶梯子集）的字号与间距只取 --fs-* / --sp-*，
-// 不写 px/rem 字面值。检查器与网站页面层门禁共用（testing/size-gate.ts），规则逐条相同。
+// 不写 px/rem 字面值。检查器与网站页面层门禁共用（testing/size-gate.ts），默认规则相同（网站对三个页面文件另加严格档）。
 // 偏离阶梯的值逐条登记在 ALLOW 并写明理由，恰好四条（第三期计划裁定 12）；新增例外先改计划与 DESIGN.md。
 // 几何尺寸（宽高、圆角、边框、outline、下划线偏移、logo 的 --ptm-*）不在受检属性里，门禁不看。
 import { readFileSync } from 'node:fs'

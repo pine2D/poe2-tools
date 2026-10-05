@@ -54,18 +54,6 @@ describe('l1-demo.css（首页与扩展介绍页共用的搜索候选示意）',
     expect(bare).not.toMatch(/aria-(selected|expanded)|data-selected/)
   })
 
-  it('字号只用 --fs-* 令牌；margin、padding、gap 不写 px、em、rem', () => {
-    for (const rule of rules) {
-      for (const [name, value] of rule.declarations) {
-        const where = `${rule.selectors.join(', ')} { ${name}: ${value} }`
-        if (name === 'font-size') expect(norm(value), where).toMatch(/^var\(--fs-[a-z-]+\)$/)
-        if (/^(margin|padding|gap|row-gap|column-gap)(-|$)/.test(name)) {
-          expect(value, where).not.toMatch(/\d(px|r?em)\b/)
-        }
-      }
-    }
-  })
-
   it('不写字面颜色、衬线字体栈、z-index 与 url()；搜索框图标在强制色彩下改为 inherit', () => {
     expect(bare).not.toMatch(/#[0-9a-f]{3,8}\b/i)
     expect(bare).not.toMatch(/\b(rgba?|hsla?)\(/)

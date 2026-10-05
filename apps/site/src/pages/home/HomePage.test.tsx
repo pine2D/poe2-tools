@@ -222,17 +222,7 @@ describe('home.css', () => {
     expect(at('.band', 'grid-template-columns', '620px')).toBe('minmax(0, 1fr)')
   })
 
-  it('字号与间距只用尺寸阶梯令牌；不写色值、衬线字体栈与 z-index', () => {
-    const SIZE = /^(font-size|margin|padding|gap|row-gap|column-gap)(-|$)/
-    for (const rule of rules) {
-      for (const [prop, value] of rule.declarations) {
-        if (!SIZE.test(prop)) continue
-        const where = `${rule.atRules.join(' ')} ${rule.selectors.join(', ')} { ${prop}: ${value} }`
-        // 列头、行头里的“+ 1px”是格子边框的补偿，属于几何值
-        expect(value.replace(/\+ 1px/g, ''), where).not.toMatch(/\d(px|rem|em)\b/)
-        if (prop === 'font-size') expect(value, where).toMatch(/^var\(--fs-[a-z-]+\)$/)
-      }
-    }
+  it('不写色值、衬线字体栈与 z-index（字号与间距由 scale-tokens.test.ts 把关）', () => {
     expect(bare).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/)
     expect(bare).not.toMatch(/--pt-(serif|cinzel)/)
     expect(bare).not.toMatch(/z-index/)
