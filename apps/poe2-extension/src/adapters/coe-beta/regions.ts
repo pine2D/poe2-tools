@@ -333,7 +333,7 @@ export function contextualText(
   const normalized = original.trim().replace(/\s+/g, ' ')
   // 固定字段与标签可翻译，词缀名和等阶数值保留原样。
   if (context === 'modifier-details') {
-    const header = /^(Prefix|Suffix) modifier ("[^"]+") \(Tier: (\d+)\) —$/.exec(normalized)
+    const header = /^(Prefix|Suffix) [Mm]odifier ("[^"]+") \(Tier: (\d+)\) —$/.exec(normalized)
     return header
       ? original.replace(
           /\S[\s\S]*\S|\S/,

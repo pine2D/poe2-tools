@@ -1,10 +1,11 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { materialDescription } from '../adapters/coe-beta/material-descriptions'
-import { contextualText } from '../adapters/coe-beta/regions'
+import { contextualText, textContext } from '../adapters/coe-beta/regions'
 import {
   isSupportedStat,
   materialDescriptionSelector,
+  modifierDetailsSelector,
   propertySelector,
   statSelector,
 } from '../adapters/coe-beta/stats'
@@ -15,6 +16,20 @@ export type { CountedStop } from './text-layer'
 export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
+  function modifierDetailsText(details: Element): string | null {
+    let changed = false
+    let result = ''
+    const walker = doc.createTreeWalker(details, NodeFilter.SHOW_TEXT)
+    let node = walker.nextNode()
+    while (node) {
+      const text = node as Text
+      const translated = contextualText(text.data, textContext(text)) ?? text.data
+      if (translated !== text.data) changed = true
+      result += translated
+      node = walker.nextNode()
+    }
+    return changed ? result : null
+  }
   function propertyText(property: Element): string | null {
     let changed = false
     const parts = Array.from(property.childNodes, (part) => {
@@ -45,18 +60,22 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
     const original = stat.textContent ?? ''
     const kind = stat.matches(propertySelector)
       ? 'property'
-      : stat.matches(materialDescriptionSelector)
-        ? 'material'
-        : 'stat'
+      : stat.matches(modifierDetailsSelector)
+        ? 'details'
+        : stat.matches(materialDescriptionSelector)
+          ? 'material'
+          : 'stat'
     const key = `${kind}\0${original}`
     let translated = cache.get(key)
     if (translated === undefined) {
       translated =
         kind === 'property'
           ? propertyText(stat)
-          : kind === 'material'
-            ? materialDescription(original)
-            : lex.translate(original, 'stat')
+          : kind === 'details'
+            ? modifierDetailsText(stat)
+            : kind === 'material'
+              ? materialDescription(original)
+              : lex.translate(original, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
     }

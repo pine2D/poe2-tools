@@ -6,9 +6,11 @@ export const statHeaderSelector = '.simulatorResultsTable > .header .stat'
 // 基于新版公开 DOM；Data 使用分段 .text，制作页使用 .stat。
 export const materialDescriptionSelector = '.item.currency .modifier'
 export const propertySelector = '.item .property'
+// 高级词缀标题及标签也被原站 PoB 导出读取，沿用独立中文层保护英文。
+export const modifierDetailsSelector = '.item .modifierDetails'
 // 经典词缀没有 .stat，原站POB复制读取这套节点；有高级子节点时不重复叠加。
 export const classicModifierSelector = '.item:not(.currency) .modifier'
-export const statSelector = `.stat, .modifierTable .row > .label .text, ${materialDescriptionSelector}, ${propertySelector}, ${classicModifierSelector}`
+export const statSelector = `.stat, .modifierTable .row > .label .text, ${materialDescriptionSelector}, ${propertySelector}, ${modifierDetailsSelector}, ${classicModifierSelector}`
 export function isSupportedStat(element: Element): boolean {
   return (
     element.isConnected &&
