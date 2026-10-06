@@ -36,7 +36,7 @@ afterEach(() => {
 
 function show(
   list: readonly Series[] = groupSeries(files),
-  handlers = { onSeries: vi.fn(), onDownload: vi.fn(), onReview: vi.fn() },
+  handlers = { onSeries: vi.fn(), onDownload: vi.fn(), onReview: vi.fn(), onOrder: vi.fn() },
 ) {
   const series = list[0]
   if (series === undefined) throw new Error('no series')
@@ -138,6 +138,33 @@ describe('StageBoard', () => {
     const group = screen.getByRole('radiogroup', { name: '切换构筑' })
     fireEvent.click(within(group).getByLabelText('Solo - Other'))
     expect(handlers.onSeries).toHaveBeenCalledWith('link:https://example.invalid/o')
+  })
+
+  it('来源冲突的同名构筑在切换区显示作者，用户能区分', () => {
+    const variants = ['Alice', 'Bob'].map((author) => {
+      const result = translateSource(
+        {
+          id: author,
+          name: `${author}.build`,
+          text: JSON.stringify({
+            name: 'Act 1 - Guide',
+            author,
+            link: 'https://example.invalid/shared',
+          }),
+        },
+        dict,
+        { bilingual: false, annotateUniques: true },
+      )
+      if (!result.ok) throw new Error(result.error)
+      fieldsById.set(author, buildFieldRows(result.file, false))
+      return result.file
+    })
+    const handlers = show(groupSeries(variants))
+    const group = screen.getByRole('radiogroup', { name: '切换构筑' })
+    expect(within(group).getByLabelText('Act 1 - Guide · Alice · 升华未填写')).toBeDefined()
+    fireEvent.click(within(group).getByLabelText('Act 1 - Guide · Bob · 升华未填写'))
+    expect(handlers.onSeries).toHaveBeenCalledWith(groupSeries(variants)[1]?.key)
+    expect(screen.getByText(/同一来源中作者或升华不同/)).toBeDefined()
   })
 
   it('改了词缀的装备格写出词缀数变化；改了辅助的技能格 aria 带“辅助有变化”', () => {

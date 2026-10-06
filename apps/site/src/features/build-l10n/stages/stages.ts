@@ -1,5 +1,5 @@
 // 阶段并排对照的纯模型（2026-10-03 方案 §3.2）：把一次导入的多份 .build 分成“构筑”，
-// 每个构筑的文件按天赋点数排成阶段，再按栏位、宝石对齐成行并判定与上一阶段的变化。不碰 DOM。
+// 天赋完整时按点数排成阶段，否则保留导入顺序；再按栏位、宝石对齐成行并判定变化。不碰 DOM。
 import {
   gemKey,
   type PreviewName,
@@ -23,6 +23,8 @@ export interface Series {
   title: string
   author: string | null
   stages: Stage[]
+  order: 'passives' | 'import' | 'manual'
+  separated: boolean
 }
 
 /** added 新出现；changed 基底／宝石不同；modded 同基底但词缀或辅助不同；same 完全相同 */
@@ -149,22 +151,44 @@ function sameSeries(a: Fallback, b: Fallback): boolean {
 }
 
 export function groupSeries(files: readonly TranslatedFile[]): Series[] {
+  // 同一链接可以包含多套攻略：仅用明确的作者／升华冲突分组，不猜缺失信息。
+  const linked = new Map<string, { authors: Set<string>; ascendancies: Set<string> }>()
+  for (const file of files) {
+    const link = text(file.input.link)
+    if (link === null) continue
+    const info = linked.get(link) ?? { authors: new Set<string>(), ascendancies: new Set<string>() }
+    const author = text(file.input.author)
+    const ascendancy = text(file.input.ascendancy)
+    if (author !== null) info.authors.add(author)
+    if (ascendancy !== null) info.ascendancies.add(ascendancy)
+    linked.set(link, info)
+  }
+  const separated = new Set<string>()
   const groups = new Map<string, TranslatedFile[]>()
   const fallbacks: { key: string; fallback: Fallback }[] = []
   for (const file of files) {
     const fallback = fallbackOf(file)
-    const key =
+    let key =
       (fallback === null
         ? undefined
         : fallbacks.find((item) => sameSeries(item.fallback, fallback))?.key) ?? seriesKey(file)
+    const link = text(file.input.link)
+    const info = link === null ? undefined : linked.get(link)
+    if (info !== undefined && (info.authors.size > 1 || info.ascendancies.size > 1)) {
+      key += `|${JSON.stringify([text(file.input.author), text(file.input.ascendancy)])}`
+      separated.add(key)
+    }
     if (fallback !== null) fallbacks.push({ key, fallback })
     const list = groups.get(key)
     if (list === undefined) groups.set(key, [file])
     else list.push(file)
   }
   return [...groups.entries()].map(([key, list]) => {
-    // 天赋点随等级单调增加，是阶段先后最稳的信号；sort 稳定，同数保持导入顺序
-    const ordered = [...list].sort((a, b) => a.preview.passives.length - b.preview.passives.length)
+    // 天赋点数只是排序依据；缺少天赋的文件不能被当成最早阶段。同数保持导入顺序。
+    const complete = list.every((file) => file.preview.passives.length > 0)
+    const ordered = complete
+      ? [...list].sort((a, b) => a.preview.passives.length - b.preview.passives.length)
+      : list
     const stages = ordered.map((file) => {
       const name = text(file.input.name)
       return { file, label: name === null ? file.name : splitStageName(name).stage }
@@ -181,8 +205,31 @@ export function groupSeries(files: readonly TranslatedFile[]): Series[] {
       }
     }
     const title = (stages.length > 1 ? seriesName : null) ?? firstName ?? first?.name ?? ''
-    return { key, title, author: first === undefined ? null : text(first.input.author), stages }
+    return {
+      key,
+      title,
+      author: first === undefined ? null : text(first.input.author),
+      stages,
+      order: complete ? 'passives' : 'import',
+      separated: separated.has(key),
+    }
   })
+}
+
+/** 手动顺序只作用于当前构筑：已移除的文件忽略，新导入的阶段追加，翻译与文件内容不变。 */
+export function applyStageOrder(series: Series, ids: readonly string[]): Series {
+  const remaining = new Map(series.stages.map((stage) => [stage.file.id, stage]))
+  // 原文件已全部移除：新导入的文件没有可沿用的手动顺序，回到当前建议。
+  if (!ids.some((id) => remaining.has(id))) return series
+  const stages: Stage[] = []
+  for (const id of ids) {
+    const stage = remaining.get(id)
+    if (stage === undefined) continue
+    stages.push(stage)
+    remaining.delete(id)
+  }
+  stages.push(...remaining.values())
+  return { ...series, stages, order: 'manual' }
 }
 
 export function slotKey(slot: PreviewSlot): string {

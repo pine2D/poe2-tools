@@ -2,7 +2,7 @@
 
 《流放之路 2》（Path of Exile 2）辅助工具集。TypeScript monorepo，纯静态前端，无服务端。
 
-## 当前方向（2026-10-02）
+## 当前方向（2026-10-06）
 
 后续开发转向 **Chrome 扩展：成熟 PoE2 工具网站的国服简体中文适配**，首站为 Craft of Exile 新版 Beta 的 PoE2 模式。范围包括页面汉化、中文搜索转英文术语、国服高级装备文本导入。扩展源码在本仓库 `apps/poe2-extension`，0.2.0 起提供预构建下载：在[网站介绍页](https://poe2-tools.pine2d.com/extension/)下载 zip，解压后在 Chrome 以“加载已解压的扩展程序”安装；推送 main 后同一文件也发布在 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases)（tag `ext-v<版本>`）。未上架 Chrome 应用商店。详情见 [扩展状态与文档](docs/chrome-extension/README.md)。
 
@@ -14,14 +14,16 @@
 
 - `src/pages/`：首页与扩展说明；`src/features/`：构筑与历史工坊；`src/shared/`：控件、页面样式、词典加载；令牌、组件样式、母题与字体分片来自 `packages/ui-theme`。
 - `packages/`：纯业务算法和构建脚本；`data/`：词典、历史制作目录及样本。
-- [2026-09-28 门户改版与验收](docs/website/redesign.md) · [2026-09 设计语言改版记录](docs/website/redesign-2026-09-design-language.md) · [Cloudflare 部署流程](docs/website/deployment.md)
+- [2026-10-06 阶段分组与排序验收](docs/website/validation-2026-10-06.md) · [2026-09-28 门户改版与验收](docs/website/redesign.md) · [2026-09 设计语言改版记录](docs/website/redesign-2026-09-design-language.md) · [Cloudflare 部署流程](docs/website/deployment.md)
 
 ## 工具
 
 | 工具 | 状态 | 说明 |
 |---|---|---|
-| `build-l10n` | 0.5.0：PoE2 设计语言（深色暖炭底、旧铜金属框与符文菱结；构筑页双框工作台、金属页签、名称牌与译文提示框），移除浅色主题；游戏内加载与真机走查待验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
-| `poe2-extension` | 0.2.0：首个公开下载版（网站下载 zip，以“加载已解压的扩展程序”安装）；Windows 原生输入法待验收 | Chrome 扩展：在 Craft of Exile 新版 Beta 的 PoE2 English 页面显示国服简体术语，支持中文搜索与国服高级装备文本转换。 |
+| `build-l10n` | 本地源码 0.9.0：阶段并排对照、分组冲突提示与手动排序；游戏内加载待真机验收 | 汉化游戏官方 Build Planner 的 `.build` 文件：翻译备注文本里的基底名与词缀行，输出可直接放进 BuildPlanner 目录的中文 `.build`，并提供中英对照预览。支持简体（国服术语）与繁体（台服术语）。 |
+| `poe2-extension` | 本地源码及打包记录 0.4.1：当前页状态、导入核对清单与原生复制保护；Windows 原生输入法待验收 | Chrome 扩展：在 Craft of Exile 新版 Beta 的 PoE2 English 页面显示国服简体术语，支持中文搜索与国服高级装备文本转换。 |
+
+版本行描述本地源码与产物，不保证远端已更新；公开下载以网站与 GitHub Release 为准，已测范围见 [扩展兼容性](docs/chrome-extension/compatibility.md)。
 
 装备制作工作台位于 `/craft/`，支持粘贴简体中文、繁体中文和英文的 Ctrl+Alt+C 装备文本，或搜索基底创建演练起点。可设置目标、预览制作结果、查看材料花费、撤销与重做，并保存或导入演练项目。
 
@@ -48,6 +50,16 @@ pnpm verify
 
 需要 Node 24 与 pnpm 11。
 
+### 日常验证与完整门禁
+
+```bash
+pnpm test:active    # 当前产品相关测试：构筑、扩展、共享界面与装备文本
+pnpm verify:active  # 上述测试 + 全仓类型、格式、打包发布闸门、构建与数据检查
+pnpm verify         # 集成前完整门禁；保留历史工坊与制作算法的全部测试，与 CI 同构
+```
+
+日常入口缩短当前主线的反馈时间，不替代完整门禁。它不运行 `packages/dict-builder` 的全部测试，也不覆盖 `packages/item-core` 的制作算法；修改这些包时先运行对应包的相关测试。集成或发布前始终运行 `pnpm verify`，不改 CI、测试超时或跳过规则。
+
 ## 使用 build-l10n
 
 ```bash
@@ -55,7 +67,9 @@ pnpm dev            # 本地启动静态站（先把 data/dict 同步到 apps/si
 pnpm extension:package && pnpm --filter @poe2-tools/site build   # 网站构建要复制扩展 zip，先打包扩展；产物在 apps/site/dist
 ```
 
-浏览器里拖入或粘贴 `.build` 文件 → 选目标语言 → 查看对照预览 → 下载。所有处理都在浏览器本地完成，不上传文件。
+浏览器里拖入或粘贴 `.build` 文件 → 选目标语言 → 查看阶段对照或逐项核对 → 下载。所有处理都在浏览器本地完成，不上传文件。
+
+同一来源链接的文件通常合为一套构筑；已填写的作者或升华明确冲突时分别显示，并标出作者、升华，缺失信息不猜测归属。没有链接时沿用作者、升华和构筑名称匹配。全部阶段都有天赋时按点数排列，否则保留导入顺序；排序依据默认显示，可展开“调整阶段顺序”上移、下移或恢复建议顺序。调整在本次页面会话内保留，影响阅读、变化对照和 ZIP 条目顺序，不改写任何 `.build` 内容。
 
 ### 部署到 Cloudflare Pages
 

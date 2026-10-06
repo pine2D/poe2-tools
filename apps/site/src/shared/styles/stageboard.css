@@ -48,6 +48,42 @@
 .stageboard__switch {
   margin-block-end: var(--sp-4);
 }
+.stageboard__groupnote,
+.stageboard__order {
+  margin: 0 0 var(--sp-4);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.stageboard__order summary {
+  box-sizing: border-box;
+  min-block-size: 44px;
+  width: fit-content;
+  padding-block: var(--sp-2);
+  cursor: pointer;
+}
+.stageboard__order summary:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.stageboard__order p {
+  margin: var(--sp-2) 0;
+}
+.stageboard__order ol {
+  margin: var(--sp-3) 0;
+  padding: 0;
+  list-style: none;
+}
+.stageboard__order li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block: var(--sp-2);
+}
+.stageboard__order-label {
+  flex: 1 1 160px;
+  overflow-wrap: anywhere;
+}
 /* 阶段带滚出视口后，框顶吸附一条紧凑阶段名条（只读、aria-hidden），横向与表格同步；
    高度为 0 的吸附锚 + 绝对定位的条，不占版面。列宽、位移、显隐由组件量出写入 */
 .stageboard__ghost {

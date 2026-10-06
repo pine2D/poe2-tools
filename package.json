@@ -1,6 +1,6 @@
 {
   "name": "poe2-tools",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "description": "《流放之路 2》辅助工具集",
@@ -26,7 +26,9 @@
     "extension:check": "node apps/poe2-extension/scripts/check.mjs",
     "extension:package": "pnpm extension:build && node apps/poe2-extension/scripts/package.mjs",
     "extension:release-check": "node apps/poe2-extension/scripts/release.mjs check",
-    "extension:release": "pnpm extension:package && node apps/poe2-extension/scripts/release.mjs write"
+    "extension:release": "pnpm extension:package && node apps/poe2-extension/scripts/release.mjs write",
+    "test:active": "vitest run packages/build-core packages/l10n-core packages/ui-theme apps/poe2-extension/tests apps/site/src/features/build-l10n apps/site/src/pages apps/site/src/shared apps/site/src/testing packages/item-core/src/parse.test.ts packages/item-core/src/mixedTextImport.test.ts packages/item-core/src/craftItemText.test.ts packages/item-core/src/jewelEffectText.test.ts packages/item-core/src/talismanText.test.ts packages/item-core/src/export.test.ts",
+    "verify:active": "pnpm typecheck && pnpm lint && pnpm test:active && pnpm extension:package && pnpm extension:release-check && pnpm build && pnpm dict:check && pnpm craft:check"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

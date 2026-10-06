@@ -17,7 +17,7 @@ import { buildFieldRows } from './preview/fields'
 import { collectMisses } from './preview/locate'
 import { Preview } from './preview/Preview'
 import { StageBoard } from './stages/StageBoard'
-import { groupSeries, type Series } from './stages/stages'
+import { applyStageOrder, groupSeries, type Series } from './stages/stages'
 import {
   type SourceFile,
   type TranslateOptions,
@@ -147,6 +147,9 @@ export function App({ fetchImpl }: AppProps) {
   const [sideOpen, setSideOpen] = useState(false)
   // 导入后默认看阶段看板；“逐项核对”进入单阶段 Preview
   const [mode, setMode] = useState<'board' | 'detail'>('board')
+  const [stageOrders, setStageOrders] = useState<ReadonlyMap<string, readonly string[]>>(
+    () => new Map(),
+  )
   const sideToggle = useRef<HTMLButtonElement>(null)
   // 看板与逐项核对互换时旧视图整块卸载，焦点会掉回 <body>：切换前记下要交给谁，提交 DOM 后再聚焦。
   // 进入逐项核对落在构筑标题；返回看板落回刚才那一列的“逐项核对”按钮。
@@ -258,7 +261,14 @@ export function App({ fetchImpl }: AppProps) {
     () => results.flatMap((result) => (result.ok ? [result.file] : [])),
     [results],
   )
-  const seriesList = useMemo(() => groupSeries(translated), [translated])
+  const seriesList = useMemo(
+    () =>
+      groupSeries(translated).map((series) => {
+        const order = stageOrders.get(series.key)
+        return order === undefined ? series : applyStageOrder(series, order)
+      }),
+    [translated, stageOrders],
+  )
   const currentSeries =
     seriesList.find((item) => item.stages.some((stage) => stage.file.id === selectedId)) ?? null
   const currentKey = currentSeries?.key
@@ -451,6 +461,14 @@ export function App({ fetchImpl }: AppProps) {
               setSelectedId(first.file.id)
             }}
             onDownload={() => downloadSeries(currentSeries)}
+            onOrder={(ids) =>
+              setStageOrders((previous) => {
+                const next = new Map(previous)
+                if (ids === null) next.delete(currentSeries.key)
+                else next.set(currentSeries.key, ids)
+                return next
+              })
+            }
             onReview={(id) => {
               handoff.current = { mode: 'detail' }
               setSelectedId(id)

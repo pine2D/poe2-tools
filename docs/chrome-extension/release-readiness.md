@@ -1,5 +1,9 @@
 # 核心覆盖与发布验收
 
+## 当前补验入口（2026-10-06）
+
+当前源码与本地打包记录为 0.4.1；代表流程及稳定版 Chrome 的实测边界见 [本轮验收记录](validation-2026-10-06.md)。下面的 0.2.0 与 0.1.111 内容保留为历史证据，不表示当前版本已经重跑全部矩阵，也不表示远端已更新。
+
 ## 0.2.0 公开下载版（2026-10-02）
 
 扩展分支合入 main，与网站同一条 CI：`pnpm verify` 先打包扩展并核对入库的 `apps/poe2-extension/release.json`（版本、文件名、字节数、SHA-256），网站构建把同一个 zip 复制到 `/downloads/`，推送 main 且部署成功后由 CI 创建 tag `ext-v0.2.0` 与 GitHub Release。0.2.0 只改非官方声明、弹窗页脚（版本、检查更新链接）与 NOTICE，翻译功能沿用 0.1.111。本机验收（2026-10-02，`feat/extension-release` `472693b`；完整 `pnpm verify` 在只差一处文档改动的 `885d2d5` 上通过：630 个测试文件、5382 个测试通过、1 个跳过）：连续两次打包与 `release.json` 一致（1667156 字节，SHA-256 `f3910dbfb51da747a39363f5b7487a987902cc76c4718c8c525431db9f46b61f`）。本机 Pages 服务上，介绍页在 1440、1280、390 宽 axe（wcag2a/2aa/21aa）0 违规，键盘可达下载按钮，320–390 宽下载按钮文字不压端饰、无横向滚动；`/downloads/poe2-extension-0.2.0.zip` 返回 200，字节数与 SHA-256 与 `release.json` 一致。Chrome for Testing 148.0.7778.96（Playwright 1.60 自带）以全新配置“加载已解压的扩展程序”后，弹窗显示“版本 0.2.0”、检查更新链接与完整非官方声明；CoE Beta（PoE2、English）首页输入“水晶法器”出现“水晶法器 → Crystal Focus”，选中后回填 `Crystal Focus`；从弹窗关闭汉化后页面恢复英文，重新开启后中文恢复。远端 CI 与 GitHub Release 的首次运行在用户推送 main 之后核对。以下为 0.1.111 的历史记录。

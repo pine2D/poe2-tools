@@ -5,6 +5,7 @@ import { buildFieldRows } from '../preview/fields'
 import { collectMisses } from '../preview/locate'
 import { type TranslatedFile, translateSource } from '../translate/runTranslation'
 import {
+  applyStageOrder,
   gearRows,
   groupSeries,
   missPrefixes,
@@ -52,6 +53,50 @@ describe('splitStageName', () => {
 })
 
 describe('groupSeries', () => {
+  it('同一来源链接的升华明确不同，不把两套构筑合成阶段', () => {
+    const one = make('one', { name: 'Act 1 - A', link: LINK, ascendancy: 'Sorceress3' })
+    const two = make('two', { name: 'Act 1 - B', link: LINK, ascendancy: 'Warrior1' })
+    const groups = groupSeries([one, two])
+    expect(groups.map((group) => group.stages.map((stage) => stage.file.id))).toEqual([
+      ['one'],
+      ['two'],
+    ])
+  })
+  it('同一来源链接的作者明确不同，分别显示且分组键不重复', () => {
+    const one = make('one', { name: 'Act 1 - A', link: LINK, author: 'Alice' })
+    const two = make('two', { name: 'Act 1 - B', link: LINK, author: 'Bob' })
+    const groups = groupSeries([one, two])
+    expect(groups.map((group) => group.stages.length)).toEqual([1, 1])
+    expect(new Set(groups.map((group) => group.key)).size).toBe(2)
+  })
+  it('有文件没有天赋时保留导入顺序，不把终局排到开荒之前', () => {
+    const early = make('early', { name: 'Act 1 - Guide', link: LINK, passives: ['strength16'] })
+    const late = make('late', { name: 'Endgame - Guide', link: LINK })
+    const [series] = groupSeries([early, late])
+    expect(series?.stages.map((stage) => stage.label)).toEqual(['Act 1', 'Endgame'])
+  })
+  it('来源存在冲突时，信息不完整的文件不猜测归属', () => {
+    const groups = groupSeries([
+      make('a', { name: 'Act 1 - Guide', link: LINK, author: 'Alice' }),
+      make('b', { name: 'Act 1 - Guide', link: LINK, author: 'Bob' }),
+      make('unknown', { name: 'Endgame - Guide', link: LINK }),
+    ])
+    expect(groups.map((group) => group.stages.map((stage) => stage.file.id))).toEqual([
+      ['a'],
+      ['b'],
+      ['unknown'],
+    ])
+    expect(groups.every((group) => group.separated)).toBe(true)
+  })
+  it('手动顺序忽略已移除或重复的文件，新阶段追加且原文件不变', () => {
+    const [series] = groupSeries(['a', 'b', 'new'].map((id) => make(id, { name: id, link: LINK })))
+    if (series === undefined) throw new Error('no series')
+    const ordered = applyStageOrder(series, ['removed', 'b', 'b', 'a'])
+    expect(ordered.stages.map((stage) => stage.file.id)).toEqual(['b', 'a', 'new'])
+    expect(series.stages.map((stage) => stage.file.id)).toEqual(['a', 'b', 'new'])
+    expect(ordered.stages[0]?.file).toBe(series.stages[1]?.file)
+    expect(applyStageOrder(series, ['removed']).order).toBe('import')
+  })
   it('同 link 归为一个构筑，阶段按天赋点数升序，同数保持导入顺序', () => {
     const late = make('late', {
       name: 'Endgame - Guide',

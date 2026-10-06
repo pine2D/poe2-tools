@@ -8,7 +8,7 @@ import { PtFrame } from '../../../shared/components/PtFrame'
 import type { FieldWithRows } from '../preview/fields'
 import { BoardDetailRow } from './board/BoardDetailRow'
 import { BoardGearRow } from './board/BoardGearRow'
-import { BoardFacts, SeriesSwitch } from './board/BoardHead'
+import { BoardFacts, SeriesSwitch, StageOrder } from './board/BoardHead'
 import { SectionRow } from './board/BoardParts'
 import { BoardPassiveRows } from './board/BoardPassiveRows'
 import { BoardSkillRow } from './board/BoardSkillRow'
@@ -27,6 +27,7 @@ export interface StageBoardProps {
   onSeries(key: string): void
   onDownload(): void
   onReview(fileId: string): void
+  onOrder(ids: readonly string[] | null): void
 }
 
 export function StageBoard({
@@ -38,6 +39,7 @@ export function StageBoard({
   onSeries,
   onDownload,
   onReview,
+  onOrder,
 }: StageBoardProps) {
   const { stages } = series
   const frame = useRef<HTMLElement>(null)
@@ -102,6 +104,20 @@ export function StageBoard({
       />
       {allSeries.length > 1 && (
         <SeriesSwitch allSeries={allSeries} currentKey={series.key} onSeries={onSeries} />
+      )}
+      {series.separated && (
+        <p className="stageboard__groupnote">
+          同一来源中作者或升华不同，已分开显示；信息不完整的文件单独保留。
+        </p>
+      )}
+      {stages.length > 1 && (
+        <StageOrder
+          series={series}
+          onOrder={(ids) => {
+            setFocus(null)
+            onOrder(ids)
+          }}
+        />
       )}
       <div ref={ghost} className="stageboard__ghost" data-show="false" aria-hidden="true">
         <div className="stageboard__ghost-bar">

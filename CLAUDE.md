@@ -18,7 +18,7 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.8.1）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.9.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
@@ -101,6 +101,8 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm test:active   # 当前产品相关测试；不替代完整门禁
+pnpm verify:active # 日常门禁；全仓类型/格式/构建/数据 + 当前产品测试
 pnpm verify        # typecheck + lint + test + 扩展打包与发布闸门 + build + dict:check + craft:check，与 CI 同构
                    # （扩展在 verify 里构建两次：extension:package 一次，根 build 递归一次，属预期）
 pnpm extension:package       # 构建并校验扩展，打出可复现 zip（apps/poe2-extension/artifacts/，不入库）
