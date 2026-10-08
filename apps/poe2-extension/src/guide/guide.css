@@ -78,6 +78,7 @@ body {
   border-bottom: 1px solid var(--line);
 }
 .block[hidden],
+.guide[hidden],
 .guide [hidden] {
   display: none;
 }
