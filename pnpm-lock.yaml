@@ -23,6 +23,9 @@ importers:
 
   apps/poe2-extension:
     dependencies:
+      '@poe2-tools/guide-core':
+        specifier: workspace:*
+        version: link:../../packages/guide-core
       '@poe2-tools/item-core':
         specifier: workspace:*
         version: link:../../packages/item-core

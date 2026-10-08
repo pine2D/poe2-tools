@@ -8,6 +8,7 @@
     "build": "node scripts/build.mjs"
   },
   "dependencies": {
+    "@poe2-tools/guide-core": "workspace:*",
     "@poe2-tools/l10n-core": "workspace:*",
     "@poe2-tools/item-core": "workspace:*",
     "@poe2-tools/ui-theme": "workspace:*"
