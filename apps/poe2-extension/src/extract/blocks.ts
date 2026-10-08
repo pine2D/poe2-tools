@@ -146,11 +146,15 @@ export function collectBlocks(root: Element, sink: BlockSink, extraSkip = ''): v
   const skip = extraSkip ? `${SKIP},${extraSkip}` : SKIP
   const nested = (el: Element) => el.querySelector(BLOCK_SELECTOR) !== null
   // 含块级后代的元素：子块之间连续的行内内容（文字与行内元素）单独成块。
-  // 本身是块标签（如 li）时照收；其他容器（div 等）沿用“直接文字满 40 字才算段落”。
+  // 本身是块标签（如 li）时照收；其他容器（div 等）沿用“直接文字满 40 字才算段落”，
+  // 不够时零碎文字丢弃，但行内包装元素（span、a、自定义元素）里可能还有 div 正文，照常递归。
   const flush = (parent: Element, run: Node[]) => {
     if (!run.length) return
     const own = BLOCKS[parent.tagName]
-    if (!own && directText(run).trim().length < 40) return
+    if (!own && directText(run).trim().length < 40) {
+      for (const node of run) if (node.nodeType === 1) visit(node as Element)
+      return
+    }
     const { text, emphasis } = textWithEmphasis(run, skip)
     sink.add(parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, { emphasis })
   }

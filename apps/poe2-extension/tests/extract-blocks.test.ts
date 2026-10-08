@@ -90,6 +90,31 @@ describe('collectBlocks 块级子元素', () => {
   })
 })
 
+describe('collectBlocks 行内包装里的块', () => {
+  const long = 'This long paragraph lives inside an inline wrapper element.'
+  const texts = (html: string) => {
+    const sink = createSink()
+    collectBlocks(doc(html).body, sink)
+    return sink.blocks.map((b) => b.text)
+  }
+  it('span 包着的 div 正文不丢', () => {
+    expect(texts(`<body><div><p>Intro</p><span><div>${long}</div></span></div></body>`)).toEqual([
+      'Intro',
+      long,
+    ])
+  })
+  it('自定义元素包着的 div 正文不丢', () => {
+    expect(
+      texts(`<body><div><p>Intro</p><x-card><div>${long}</div></x-card></div></body>`),
+    ).toEqual(['Intro', long])
+  })
+  it('链接包着的 div 正文不丢', () => {
+    expect(
+      texts(`<body><section><h2>T</h2><a href="#"><div>${long}</div></a></section></body>`),
+    ).toEqual(['T', long])
+  })
+})
+
 describe('createSink', () => {
   it('丢弃零长度与越界的范围', () => {
     const sink = createSink()

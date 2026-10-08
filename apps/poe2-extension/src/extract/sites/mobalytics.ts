@@ -161,13 +161,17 @@ function walk(
   }
 }
 
+// 攻略页是 /poe-2/<类型>/<slug>；/poe-2/builds 这类列表页没有 slug（末段只是类型名），返回空字符串
+export function documentSlug(pathname: string): string {
+  const parts = pathname.split('/').filter(Boolean)
+  return parts.length >= 3 ? (parts[parts.length - 1] ?? '') : ''
+}
+
 export function extractMobalytics(
   doc: Document,
   pathname: string,
 ): { stages: GuideStage[]; blocks: GuideBlock[] } | null {
-  // 攻略页是 /poe-2/<类型>/<slug>；/poe-2/builds 这类列表页没有 slug（末段只是类型名）
-  const parts = pathname.split('/').filter(Boolean)
-  const slug = parts.length >= 3 ? (parts[parts.length - 1] ?? '') : ''
+  const slug = documentSlug(pathname)
   if (!slug) return null
   const state = readPreloadedState(doc)
   const queries = findKey(state, 'queries')

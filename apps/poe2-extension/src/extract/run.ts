@@ -7,7 +7,7 @@ import type {
 } from '@poe2-tools/guide-core'
 import { createSink } from './blocks'
 import { extractGeneric } from './sites/generic'
-import { extractMobalytics } from './sites/mobalytics'
+import { documentSlug, extractMobalytics } from './sites/mobalytics'
 import { extractPoe2com } from './sites/poe2com'
 
 export interface PageLocation {
@@ -50,7 +50,8 @@ export function extractPage(
     blocks = sink.blocks
   } else if (siteId === 'mobalytics') {
     const moba = extractMobalytics(doc, loc.pathname)
-    fallback = !moba
+    // 只有攻略页（路径带 slug）读不到内嵌状态才算适配器失效；列表页等本来就走通用提取
+    fallback = !moba && documentSlug(loc.pathname) !== ''
     blocks = moba ? moba.blocks : extractGeneric(doc)
     stages = moba ? moba.stages : []
   } else if (siteId === 'poe2com') {

@@ -60,6 +60,18 @@ describe('extractPage', () => {
     expect(r.ok && r.doc.stages).toEqual([])
     expect(r.ok && r.doc.source.fallback).toBe(true)
   })
+  it('Mobalytics 列表页等非攻略页用通用提取，不置回退标记', () => {
+    for (const pathname of ['/poe-2/builds', '/poe-2/builds/', '/poe-2/']) {
+      const r = extractPage(doc(body), at('mobalytics.gg', pathname), '', NOW)
+      expect(r.ok && r.doc.source.siteId).toBe('mobalytics')
+      expect(r.ok && r.doc.stages).toEqual([])
+      expect(r.ok && r.doc.source.fallback).toBeUndefined()
+    }
+  })
+  it('Mobalytics 攻略页读不到内嵌状态时置回退标记（含末尾斜杠）', () => {
+    const r = extractPage(doc(body), at('mobalytics.gg', '/poe-2/builds/some-build/'), '', NOW)
+    expect(r.ok && r.doc.source.fallback).toBe(true)
+  })
   it('poe2.com 正文容器读到的文字过短时改用通用提取并置回退标记', () => {
     const page = doc(
       `<main><p>short</p></main><div id="content"><p>${'Craft step text here. '.repeat(5)}</p></div>`,
