@@ -108,6 +108,8 @@ importers:
         specifier: 4.23.13
         version: 4.23.13
 
+  packages/guide-core: {}
+
   packages/item-core:
     devDependencies:
       '@types/node':
