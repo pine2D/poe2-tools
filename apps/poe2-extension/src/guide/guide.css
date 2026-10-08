@@ -7,4 +7,129 @@ body {
   color: var(--ink);
   font-family: var(--font-zh-cn);
   font-size: var(--fs-body);
+  line-height: 1.6;
+}
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+.guide-header {
+  display: grid;
+  gap: var(--sp-1);
+}
+.guide-title {
+  margin: 0;
+  font-size: var(--fs-lead);
+  color: var(--title-gold);
+}
+.guide-site,
+.guide-scope,
+.guide-usage,
+.block-status {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+}
+.guide-actions,
+.block-actions,
+.guide-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.guide-intro,
+.guide-banner,
+.guide-ask {
+  padding: var(--sp-3);
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+}
+.guide-banner[data-kind="error"] {
+  border-color: var(--danger);
+}
+.stage {
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--control-edge);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.stage[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: var(--gold);
+}
+.stage[data-state="idle"]::after {
+  content: "（未翻译）";
+}
+.stage[data-state="translating"]::after {
+  content: "（翻译中）";
+}
+.stage[data-state="done"]::after {
+  content: "（已翻译）";
+}
+.block {
+  display: grid;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.block[hidden],
+.guide [hidden] {
+  display: none;
+}
+.src {
+  margin: 0;
+  color: var(--ink-2);
+}
+.dst {
+  margin: 0;
+  color: var(--ink);
+}
+.dst:empty {
+  display: none;
+}
+.term {
+  text-decoration: underline dotted var(--mod);
+  text-underline-offset: 3px;
+}
+.term[data-status="candidates"] {
+  text-decoration-style: dashed;
+}
+.term[data-status="hint"] {
+  text-decoration-color: var(--line-2);
+}
+.term:focus-visible,
+abbr:focus-visible,
+.stage:focus-visible {
+  outline: var(--focus-ring);
+}
+/* 键盘聚焦时显示术语说明（title 只在鼠标悬停时出现） */
+.term:focus-visible::after,
+abbr:focus-visible::after {
+  content: "（" attr(title) "）";
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+.issues summary {
+  color: var(--danger);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.guide-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+}
+.guide-footer a {
+  color: var(--ink-2);
+}
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
