@@ -60,6 +60,32 @@ function findKey(value: Json, key: string, depth = 0): Json {
   return undefined
 }
 
+// 合并空白并去掉首尾空白，实体范围跟着平移；范围两端的空白收进范围外，零长度范围交给 createSink 丢弃。
+function squash(text: string, ranges: readonly Range[]): { text: string; ranges: Range[] } {
+  let out = ''
+  // at[i]：原文第 i 个字符（含末尾位置）在结果里的位置
+  const at: number[] = []
+  for (const ch of text) {
+    for (let k = 0; k < ch.length; k++) at.push(out.length)
+    if (/\s/.test(ch)) {
+      if (out && !out.endsWith(' ')) out += ' '
+    } else out += ch
+  }
+  at.push(out.length)
+  const clean = out.trimEnd()
+  const pos = (i: number) => Math.min(at[Math.max(0, Math.min(i, text.length))] ?? 0, clean.length)
+  return {
+    text: clean,
+    ranges: ranges.map(([a, b]): Range => {
+      let s = pos(a)
+      let e = pos(b)
+      while (s < e && clean[s] === ' ') s++
+      while (e > s && clean[e - 1] === ' ') e--
+      return [s, e]
+    }),
+  }
+}
+
 interface Inline {
   text: string
   entities: Range[]
@@ -139,16 +165,28 @@ export function extractMobalytics(
   doc: Document,
   pathname: string,
 ): { stages: GuideStage[]; blocks: GuideBlock[] } | null {
-  const slug = pathname.replace(/\/+$/, '').split('/').pop() ?? ''
+  // 攻略页是 /poe-2/<类型>/<slug>；/poe-2/builds 这类列表页没有 slug（末段只是类型名）
+  const parts = pathname.split('/').filter(Boolean)
+  const slug = parts.length >= 3 ? (parts[parts.length - 1] ?? '') : ''
+  if (!slug) return null
   const state = readPreloadedState(doc)
   const queries = findKey(state, 'queries')
-  // 实测快照：页面 slug 只在该查询的 queryKey（与 data.featured.slug）里；data.typeData.slug 是 'builds'
+  // 实测快照：页面 slug 只在该查询的 queryKey（第 3 项起，前两项是查询名与类型名）与 data.featured.slug 里；
+  // data.typeData.slug 是 'builds'。只认真正带文档数据的那项查询。
   const query = Array.isArray(queries)
-    ? queries.find((q) => isObj(q) && Array.isArray(q.queryKey) && q.queryKey.includes(slug))
+    ? queries.find(
+        (q) =>
+          isObj(q) &&
+          Array.isArray(q.queryKey) &&
+          q.queryKey.slice(2).includes(slug) &&
+          findKey(q, 'userGeneratedDocumentBySlug') !== undefined,
+      )
     : undefined
   const wrapper = findKey(query, 'userGeneratedDocumentBySlug')
   const data = isObj(wrapper) ? wrapper.data : undefined
-  if (!slug || !isObj(data)) return null
+  if (!isObj(data)) return null
+  if (isObj(data.featured) && typeof data.featured.slug === 'string' && data.featured.slug !== slug)
+    return null
 
   // 阶段在 data.data.buildVariants
   const body = isObj(data.data) ? data.data : {}
@@ -211,8 +249,8 @@ export function extractMobalytics(
       text: string,
       entities: Range[],
     ) => {
-      const clean = text.replace(/\s+/g, ' ').trim()
-      const extra = { ...(stageId ? { stageId } : {}), entities }
+      const { text: clean, ranges } = squash(text, entities)
+      const extra = { ...(stageId ? { stageId } : {}), entities: ranges }
       if (kind === 'item' || kind === 'modline') {
         const key = `${kind}:${clean}`
         if (seen.has(key)) return

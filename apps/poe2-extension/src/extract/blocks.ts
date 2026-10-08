@@ -40,7 +40,9 @@ export function createSink(): BlockSink {
       if (blocks.length >= MAX_BLOCKS || !text.trim()) return
       const block: GuideBlock = { id: `b${blocks.length}`, kind, text: text.slice(0, 20000) }
       if (extra.stageId !== undefined) block.stageId = extra.stageId
-      const fit = (rs: Range[] | undefined) => rs?.filter(([, b]) => b <= block.text.length)
+      // 只留非空且不越界的范围（零长度范围会让 parseExtractResult 拒收整页）
+      const fit = (rs: Range[] | undefined) =>
+        rs?.filter(([a, b]) => a >= 0 && a < b && b <= block.text.length)
       const entities = fit(extra.entities)
       const emphasis = fit(extra.emphasis)
       if (entities?.length) block.entities = entities
@@ -50,10 +52,55 @@ export function createSink(): BlockSink {
   }
 }
 
-// 拼接元素文字并合并空白，同时记录强调元素的范围。
-function textWithEmphasis(el: Element): { text: string; emphasis: Range[] } {
+// 块级标签：在块文字里与相邻文字之间要隔开
+const BLOCK_LEVEL = new Set([
+  'DIV',
+  'P',
+  'LI',
+  'UL',
+  'OL',
+  'SECTION',
+  'ARTICLE',
+  'TABLE',
+  'TR',
+  'TD',
+  'TH',
+  'DL',
+  'DT',
+  'DD',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'BLOCKQUOTE',
+  'PRE',
+  'FIGURE',
+  'FIGCAPTION',
+  'HR',
+  'DETAILS',
+  'SUMMARY',
+])
+
+// 块级标签，或页面样式把它显示成块（只读 getComputedStyle）。
+// 未渲染的文档（DOMParser、测试环境）对行内元素给出空字符串，按行内处理。
+function isBlockLevel(el: Element): boolean {
+  if (BLOCK_LEVEL.has(el.tagName)) return true
+  const display = el.ownerDocument.defaultView?.getComputedStyle(el).display ?? ''
+  return display !== '' && !display.startsWith('inline') && display !== 'contents'
+}
+
+// 拼接一串节点的文字并合并空白，同时记录强调元素的范围；块级子元素前后补空格。
+function textWithEmphasis(
+  nodes: readonly Node[],
+  skip: string = SKIP,
+): { text: string; emphasis: Range[] } {
   let text = ''
   const emphasis: Range[] = []
+  const gap = () => {
+    if (text && !text.endsWith(' ')) text += ' '
+  }
   const visit = (node: Node) => {
     if (node.nodeType === 3) {
       const piece = (node.nodeValue ?? '').replace(/\s+/g, ' ')
@@ -62,11 +109,13 @@ function textWithEmphasis(el: Element): { text: string; emphasis: Range[] } {
     }
     if (node.nodeType !== 1) return
     const child = node as Element
-    if (child.matches(SKIP)) return
+    if (child.matches(skip)) return
     if (child.tagName === 'BR') {
       text += ' '
       return
     }
+    const block = isBlockLevel(child)
+    if (block) gap()
     const start = text.length
     for (const n of Array.from(child.childNodes)) visit(n)
     if (EMPHASIS.has(child.tagName)) {
@@ -74,8 +123,9 @@ function textWithEmphasis(el: Element): { text: string; emphasis: Range[] } {
       const end = text.trimEnd().length
       if (end > start + lead) emphasis.push([start + lead, end])
     }
+    if (block) gap()
   }
-  for (const n of Array.from(el.childNodes)) visit(n)
+  for (const n of nodes) visit(n)
   const lead = text.length - text.trimStart().length
   const trimmed = text.trim()
   return {
@@ -86,31 +136,62 @@ function textWithEmphasis(el: Element): { text: string; emphasis: Range[] } {
   }
 }
 
+const directText = (nodes: readonly Node[]) =>
+  nodes
+    .filter((n) => n.nodeType === 3)
+    .map((n) => n.nodeValue ?? '')
+    .join(' ')
+
 export function collectBlocks(root: Element, sink: BlockSink, extraSkip = ''): void {
   const skip = extraSkip ? `${SKIP},${extraSkip}` : SKIP
+  const nested = (el: Element) => el.querySelector(BLOCK_SELECTOR) !== null
+  // 含块级后代的元素：子块之间连续的行内内容（文字与行内元素）单独成块。
+  // 本身是块标签（如 li）时照收；其他容器（div 等）沿用“直接文字满 40 字才算段落”。
+  const flush = (parent: Element, run: Node[]) => {
+    if (!run.length) return
+    const own = BLOCKS[parent.tagName]
+    if (!own && directText(run).trim().length < 40) return
+    const { text, emphasis } = textWithEmphasis(run, skip)
+    sink.add(parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, { emphasis })
+  }
   const visit = (el: Element) => {
     if (el.matches(skip)) return
     const kind = BLOCKS[el.tagName]
-    if (kind && !el.querySelector(BLOCK_SELECTOR)) {
-      if (kind === 'verbatim') sink.add('verbatim', (el.textContent ?? '').trim())
-      else {
-        const { text, emphasis } = textWithEmphasis(el)
-        sink.add(kind, text, { emphasis })
+    if (!nested(el)) {
+      if (kind) {
+        if (kind === 'verbatim') sink.add('verbatim', (el.textContent ?? '').trim())
+        else {
+          const { text, emphasis } = textWithEmphasis(Array.from(el.childNodes), skip)
+          sink.add(kind, text, { emphasis })
+        }
+        return
       }
-      return
-    }
-    if (el.tagName === 'DIV' && !el.querySelector(BLOCK_SELECTOR)) {
-      const direct = Array.from(el.childNodes)
-        .filter((n) => n.nodeType === 3)
-        .map((n) => n.nodeValue ?? '')
-        .join(' ')
-      if (direct.trim().length >= 40) {
-        const { text, emphasis } = textWithEmphasis(el)
+      if (el.tagName === 'DIV' && directText(Array.from(el.childNodes)).trim().length >= 40) {
+        const { text, emphasis } = textWithEmphasis(Array.from(el.childNodes), skip)
         sink.add('paragraph', text, { emphasis })
         return
       }
+      for (const child of Array.from(el.children)) visit(child)
+      return
     }
-    for (const child of Array.from(el.children)) visit(child)
+    let run: Node[] = []
+    for (const node of Array.from(el.childNodes)) {
+      if (node.nodeType === 3) {
+        run.push(node)
+        continue
+      }
+      if (node.nodeType !== 1) continue
+      const child = node as Element
+      if (child.matches(skip)) continue
+      if (!nested(child) && !child.matches(BLOCK_SELECTOR) && !isBlockLevel(child)) {
+        run.push(child)
+        continue
+      }
+      flush(el, run)
+      run = []
+      visit(child)
+    }
+    flush(el, run)
   }
   visit(root)
 }

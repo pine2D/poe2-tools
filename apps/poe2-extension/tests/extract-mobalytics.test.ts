@@ -1,4 +1,6 @@
+import { parseExtractResult } from '@poe2-tools/guide-core'
 import { describe, expect, it } from 'vitest'
+import { extractPage } from '../src/extract/run'
 import { extractMobalytics, sliceJsonObject } from '../src/extract/sites/mobalytics'
 
 const lexical = (children: unknown[]) =>
@@ -137,6 +139,40 @@ describe('extractMobalytics', () => {
   })
   it('slug 与当前路径不符（站内跳转后的旧数据）时放弃内嵌状态', () => {
     expect(extractMobalytics(page('naviras'), '/poe-2/builds/other-build')).toBeNull()
+  })
+  it('列表页路径（slug 只是类型名）不误用上一篇攻略的内嵌状态', () => {
+    expect(extractMobalytics(page('naviras'), '/poe-2/builds')).toBeNull()
+    expect(extractMobalytics(page('naviras'), '/poe-2/builds/')).toBeNull()
+  })
+  it('空标签实体与多余空白：实体范围随空白折叠平移，整页仍能通过 parseExtractResult', () => {
+    const notes = {
+      id: 'w9',
+      data: {
+        text: lexical([
+          { type: 'text', text: '  Then   use  ' },
+          { type: 'static-data-widget', groupId: 'skill-gems', label: 'Essence Drain' },
+          { type: 'static-data-widget', groupId: 'skill-gems', label: '' },
+          { type: 'text', text: '   now, then keep mapping for a while.  ' },
+        ]),
+      },
+    }
+    const doc = page('naviras', 'uuid-2', [notes])
+    const r = extractMobalytics(doc, '/poe-2/builds/naviras')
+    const b = r?.blocks.find((x) => x.text.startsWith('Then'))
+    expect(b?.text).toBe('Then use Essence Drain now, then keep mapping for a while.')
+    expect(b?.entities?.map(([s, e]) => b.text.slice(s, e))).toEqual(['Essence Drain'])
+    const full = extractPage(
+      doc,
+      {
+        hostname: 'mobalytics.gg',
+        pathname: '/poe-2/builds/naviras',
+        href: 'https://mobalytics.gg/poe-2/builds/naviras',
+      },
+      '',
+      '2026-10-08T00:00:00.000Z',
+    )
+    expect(full.ok).toBe(true)
+    expect(parseExtractResult(full)).toEqual(full)
   })
   it('页面没有内嵌状态时返回 null', () => {
     expect(
