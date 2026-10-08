@@ -17,7 +17,12 @@ const app = document.querySelector('#app')
 
 const json = async <T>(path: string): Promise<T> =>
   (await fetch(guideChrome.resource(path))).json() as Promise<T>
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+// 停止时清掉计时器（withRetry 自己会立即以“已停止”结束）
+const sleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, ms)
+    signal?.addEventListener('abort', () => clearTimeout(timer), { once: true })
+  })
 const randomHex = () =>
   [...crypto.getRandomValues(new Uint8Array(6))]
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -63,7 +68,7 @@ async function boot(root: Element) {
       params: JSON.stringify([REQUEST_PARAMS, cfg.extraBody ?? null]),
       runner: {
         run: (messages, onText, signal) =>
-          withRetry(() => streamChat(cfg, messages, { signal, onText }), sleep),
+          withRetry(() => streamChat(cfg, messages, { signal, onText }), sleep, signal),
       },
       costText: (prompt, completion) => {
         if (cfg.provider !== 'deepseek') return '费用以服务商账单为准'

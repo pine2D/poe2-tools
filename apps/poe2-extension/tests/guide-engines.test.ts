@@ -47,6 +47,8 @@ describe('streamChat', () => {
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe('https://api.deepseek.com/chat/completions')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sk-secret-123456')
+    // 不跟随重定向：Key 只发往配置的地址
+    expect(init.redirect).toBe('error')
     const body = JSON.parse(String(init.body))
     expect(body).toMatchObject({
       model: 'deepseek-flash',
@@ -141,6 +143,41 @@ describe('streamChat', () => {
       streamChat(cfg, msgs, { signal: ac.signal, onText: () => {}, fetchImpl: fail }),
     ).rejects.toMatchObject({ kind: 'aborted' })
   })
+  it('超时与用户取消分开提示', async () => {
+    const ac = new AbortController()
+    const slow = vi.fn(async () => {
+      ac.abort(new DOMException('signal timed out', 'TimeoutError'))
+      throw new DOMException('signal timed out', 'TimeoutError')
+    })
+    await expect(
+      streamChat(cfg, msgs, { signal: ac.signal, onText: () => {}, fetchImpl: slow }),
+    ).rejects.toMatchObject({ kind: 'network', message: '连接超时' })
+  })
+  it('服务地址发生跳转时拒绝发送，归类为网络错误', async () => {
+    const redirected = vi.fn(async () => {
+      throw new TypeError('fetch failed', { cause: new Error('unexpected redirect') })
+    })
+    await expect(
+      streamChat(cfg, msgs, {
+        signal: new AbortController().signal,
+        onText: () => {},
+        fetchImpl: redirected,
+      }),
+    ).rejects.toMatchObject({ kind: 'network', message: '服务地址发生跳转，已拒绝发送' })
+    // fetch 实现没有遵守 redirect 选项时也不读取跳转后的响应
+    const followed = vi.fn(async () => {
+      const res = sse(['data: [DONE]\n\n'])
+      Object.defineProperty(res, 'redirected', { value: true })
+      return res
+    })
+    await expect(
+      streamChat(cfg, msgs, {
+        signal: new AbortController().signal,
+        onText: () => {},
+        fetchImpl: followed,
+      }),
+    ).rejects.toMatchObject({ kind: 'network', message: '服务地址发生跳转，已拒绝发送' })
+  })
 })
 
 describe('classifyStatus', () => {
@@ -170,13 +207,37 @@ describe('withRetry', () => {
       .mockRejectedValueOnce(new EngineError('rate', 'x', 3000))
       .mockResolvedValueOnce('ok')
     await expect(withRetry(run, sleep)).resolves.toBe('ok')
-    expect(sleep).toHaveBeenCalledWith(3000)
+    expect(sleep).toHaveBeenCalledWith(3000, undefined)
     const always = vi.fn().mockRejectedValue(new EngineError('rate', 'x', null))
     await expect(withRetry(always, sleep)).rejects.toMatchObject({ kind: 'rate' })
-    expect(sleep).toHaveBeenLastCalledWith(5000)
+    expect(sleep).toHaveBeenLastCalledWith(5000, undefined)
     const auth = vi.fn().mockRejectedValue(new EngineError('auth', 'x'))
     await expect(withRetry(auth, sleep)).rejects.toMatchObject({ kind: 'auth' })
     expect(auth).toHaveBeenCalledTimes(1)
+  })
+  it('Retry-After 超过 60 秒直接停止，不等待', async () => {
+    const sleep = vi.fn(async () => {})
+    const run = vi.fn().mockRejectedValue(new EngineError('rate', 'x', 61_000))
+    await expect(withRetry(run, sleep)).rejects.toMatchObject({
+      kind: 'rate',
+      message: '请求太频繁，服务要求等待 61 秒（超过 60 秒），已停止，请稍后再试',
+    })
+    expect(sleep).not.toHaveBeenCalled()
+    expect(run).toHaveBeenCalledTimes(1)
+    const edge = vi.fn().mockRejectedValueOnce(new EngineError('rate', 'x', 60_000))
+    edge.mockResolvedValueOnce('ok')
+    await expect(withRetry(edge, sleep)).resolves.toBe('ok')
+    expect(sleep).toHaveBeenCalledWith(60_000, undefined)
+  })
+  it('等待期间停止立即生效，不再重试', async () => {
+    const ac = new AbortController()
+    const sleep = vi.fn(() => new Promise<void>(() => {}))
+    const run = vi.fn().mockRejectedValue(new EngineError('rate', 'x', 30_000))
+    const pending = withRetry(run, sleep, ac.signal)
+    await vi.waitFor(() => expect(sleep).toHaveBeenCalled())
+    ac.abort()
+    await expect(pending).rejects.toMatchObject({ kind: 'aborted' })
+    expect(run).toHaveBeenCalledTimes(1)
   })
 })
 

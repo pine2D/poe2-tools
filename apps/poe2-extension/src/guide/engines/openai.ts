@@ -79,6 +79,24 @@ export function classifyStatus(
   )
 }
 
+const REDIRECTED = '服务地址发生跳转，已拒绝发送'
+
+// 信号已中止时：超时（AbortSignal.timeout）按网络错误提示，用户停止按已停止
+function abortedError(signal: AbortSignal): EngineError {
+  const reason: unknown = signal.reason
+  return reason instanceof DOMException && reason.name === 'TimeoutError'
+    ? new EngineError('network', '连接超时')
+    : new EngineError('aborted', '已停止')
+}
+
+// redirect: 'error' 拒绝跳转时 fetch 只抛 TypeError；能从信息或 cause 认出跳转时单独提示
+function isRedirectFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const cause: unknown = (error as { cause?: unknown }).cause
+  const text = `${error.message} ${cause instanceof Error ? cause.message : String(cause ?? '')}`
+  return /redirect/i.test(text)
+}
+
 export interface StreamOptions {
   signal: AbortSignal
   onText: (delta: string) => void
@@ -114,7 +132,7 @@ export async function streamChat(
     ...(cfg.provider === 'deepseek' ? { thinking: { type: 'disabled' } } : {}),
     ...(cfg.extraBody ?? {}),
   }
-  if (opts.signal.aborted) throw new EngineError('aborted', '已停止')
+  if (opts.signal.aborted) throw abortedError(opts.signal)
   let res: Response
   try {
     res = await fetchImpl(endpoint(cfg.baseUrl), {
@@ -122,11 +140,20 @@ export async function streamChat(
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
       body: JSON.stringify(body),
       signal: opts.signal,
+      // 不跟随重定向：Key 与正文只发往用户配置的地址
+      redirect: 'error',
     })
-  } catch {
-    throw opts.signal.aborted
-      ? new EngineError('aborted', '已停止')
-      : new EngineError('network', '网络错误，或请求被浏览器拦截')
+  } catch (error) {
+    if (opts.signal.aborted) throw abortedError(opts.signal)
+    throw new EngineError(
+      'network',
+      isRedirectFailure(error) ? REDIRECTED : '网络错误、请求被浏览器拦截，或服务地址发生跳转',
+    )
+  }
+  // fetch 实现没有遵守 redirect 选项时，同样不读取跳转后的响应
+  if (res.redirected || res.type === 'opaqueredirect') {
+    void res.body?.cancel().catch(() => {})
+    throw new EngineError('network', REDIRECTED)
   }
   if (!res.ok)
     throw classifyStatus(
@@ -142,7 +169,7 @@ export async function streamChat(
       json = (await res.json()) as Payload
     } catch {
       throw opts.signal.aborted
-        ? new EngineError('aborted', '已停止')
+        ? abortedError(opts.signal)
         : new EngineError('network', '响应格式无法解析')
     }
     const choice = json.choices?.[0]
@@ -172,9 +199,7 @@ export async function streamChat(
       usage = usageOf(json) ?? usage
     })
   } catch {
-    throw opts.signal.aborted
-      ? new EngineError('aborted', '已停止')
-      : new EngineError('network', '连接中断')
+    throw opts.signal.aborted ? abortedError(opts.signal) : new EngineError('network', '连接中断')
   }
   return { finishReason, usage }
 }
