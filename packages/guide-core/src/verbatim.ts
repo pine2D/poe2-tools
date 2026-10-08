@@ -1,8 +1,12 @@
 import type { Range } from './types'
 
-// 需要逐字保留的片段：游戏内搜索正则、代码、网址、PoB 之类的长编码。
+// 双引号在同一行内从左到右两两配对；只有带强正则特征的引号串才逐字保留。
+const QUOTED = /"[^"\n]*"/g
+// 强特征：| \ ^ $ .* .+ […]；单独的 + ( ) 常见于词缀文本，不算。
+const STRONG_REGEX = /[|\\^$]|\.[*+]|\[[^\]]*\]/
+
+// 需要逐字保留的片段：游戏内搜索正则（见 QUOTED）、代码、网址、PoB 之类的长编码。
 const PATTERNS: readonly RegExp[] = [
-  /"[^"\n]*(?:\\[dDwWsSbB]|[|^$*+?()[\]{}])[^"\n]*"/g,
   /`[^`\n]+`/g,
   /https?:\/\/[^\s<>"'）)]+/g,
   /(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{40,}={0,2}/g,
@@ -12,6 +16,11 @@ const PATTERNS: readonly RegExp[] = [
 
 export function findVerbatim(text: string): Range[] {
   const found: Range[] = []
+  for (const match of text.matchAll(QUOTED)) {
+    if (!STRONG_REGEX.test(match[0].slice(1, -1))) continue
+    const start = match.index ?? 0
+    found.push([start, start + match[0].length])
+  }
   for (const re of PATTERNS) {
     for (const match of text.matchAll(re)) {
       const start = match.index ?? 0

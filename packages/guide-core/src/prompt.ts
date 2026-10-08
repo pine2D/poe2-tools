@@ -1,6 +1,8 @@
 import type { PreparedBlock } from './prepare'
+import type { ModifierSpan } from './types'
+import { findVerbatim } from './verbatim'
 
-export const PROMPT_VERSION = 'guide-v1' as const
+export const PROMPT_VERSION = 'guide-v2' as const
 
 export interface ChatMessage {
   role: 'system' | 'user'
@@ -20,9 +22,18 @@ export const SYSTEM_PROMPT = [
   '8. 每个 <s id="…"> 片段输出一个 <t id="…">译文</t>，段号与输入一致，按输入顺序，除此之外不输出任何内容。',
 ].join('\n')
 
-function excerpt(source: string, start: number, end: number): string {
-  const before = source.slice(0, start).match(/(\S+\s*)$/)?.[1] ?? ''
-  return (before + source.slice(start, end)).trim()
+// 修饰词是本段中第几个同形词（不计被占位保护的片段，与模型看到的文本一致）。
+// 只给序号、不给原文摘录：分隔符外不得出现任何原文，避免提示词注入。
+function ordinal(source: string, m: ModifierSpan): number {
+  const verbatim = findVerbatim(source)
+  let n = 0
+  for (const match of source.matchAll(new RegExp(`\\b${m.word}\\b`, 'gi'))) {
+    const start = match.index ?? 0
+    if (start > m.start) break
+    const end = start + match[0].length
+    if (!verbatim.some(([a, b]) => start < b && a < end)) n += 1
+  }
+  return n
 }
 
 export function buildMessages(chunk: readonly PreparedBlock[], delimiter: string): ChatMessage[] {
@@ -39,7 +50,7 @@ export function buildMessages(chunk: readonly PreparedBlock[], delimiter: string
       if (!glossary.has(t.en)) glossary.set(t.en, zh)
     }
     for (const m of b.modifiers)
-      modifiers.push(`- ${b.id}：「${excerpt(b.source, m.start, m.end)}」→ ${m.zh}`)
+      modifiers.push(`- ${b.id}：第 ${ordinal(b.source, m)} 个“${m.word}” → ${m.zh}`)
     for (const a of b.abbreviations) abbreviations.add(a.en)
   }
   const lines: string[] = []
