@@ -1,12 +1,335 @@
 {
   "_meta": {
     "tier": "manual",
-    "source": "本项目人工审定的攻略术语；中文写法以国服交易站词缀模板（stats.json，primary）为准",
+    "source": "本项目人工审定的攻略术语；中文写法以国服交易站词缀模板（stats.json，primary）为准，并以 poe2db.tw（已登记 gray）交叉核对，一词多译由维护者拍板",
     "gameVersion": "0.5.5",
-    "reviewedAt": "2026-10-07"
+    "reviewedAt": "2026-10-09"
   },
+  "exclude": ["Reduced Attribute Requirements"],
   "entries": [
+    { "id": "kw:life", "en": "Life", "zh": "生命", "kind": "keyword" },
+    { "id": "kw:mana", "en": "Mana", "zh": "魔力", "kind": "keyword" },
     { "id": "kw:spirit", "en": "Spirit", "zh": "精魂", "kind": "keyword" },
-    { "id": "kw:energy-shield", "en": "Energy Shield", "zh": "能量护盾", "kind": "keyword" }
+    { "id": "kw:energy-shield", "en": "Energy Shield", "zh": "能量护盾", "kind": "keyword" },
+    { "id": "kw:armour", "en": "Armour", "zh": "护甲", "kind": "keyword", "aliasesEn": ["Armor"] },
+    { "id": "kw:evasion", "en": "Evasion", "zh": "闪避", "kind": "keyword" },
+    { "id": "kw:deflection", "en": "Deflection", "zh": "偏转", "kind": "keyword" },
+    { "id": "kw:block", "en": "Block", "zh": "格挡", "kind": "keyword" },
+    { "id": "kw:runic-ward", "en": "Runic Ward", "zh": "符文结界", "kind": "keyword" },
+    { "id": "kw:ignite", "en": "Ignite", "zh": "点燃", "kind": "keyword" },
+    {
+      "id": "kw:bleeding",
+      "en": "Bleeding",
+      "zh": "流血",
+      "kind": "keyword",
+      "aliasesEn": ["Bleed"]
+    },
+    { "id": "kw:poison", "en": "Poison", "zh": "中毒", "kind": "keyword" },
+    { "id": "kw:shock", "en": "Shock", "zh": "感电", "kind": "keyword" },
+    { "id": "kw:freeze", "en": "Freeze", "zh": "冻结", "kind": "keyword", "aliasesEn": ["Frozen"] },
+    { "id": "kw:chill", "en": "Chill", "zh": "冰缓", "kind": "keyword" },
+    { "id": "kw:electrocute", "en": "Electrocute", "zh": "触电", "kind": "keyword" },
+    { "id": "kw:pin", "en": "Pin", "zh": "定身", "kind": "keyword" },
+    { "id": "kw:maim", "en": "Maim", "zh": "瘫痪", "kind": "keyword" },
+    { "id": "kw:blind", "en": "Blind", "zh": "致盲", "kind": "keyword" },
+    { "id": "kw:exposure", "en": "Exposure", "zh": "曝露", "kind": "keyword" },
+    { "id": "kw:ailment", "en": "Ailment", "zh": "异常状态", "kind": "keyword" },
+    { "id": "kw:critical-hit", "en": "Critical Hit", "zh": "暴击", "kind": "keyword" },
+    {
+      "id": "kw:critical-damage-bonus",
+      "en": "Critical Damage Bonus",
+      "zh": "暴击伤害加成",
+      "kind": "keyword"
+    },
+    { "id": "kw:accuracy", "en": "Accuracy", "zh": "命中", "kind": "keyword" },
+    { "id": "kw:attack-speed", "en": "Attack Speed", "zh": "攻击速度", "kind": "keyword" },
+    { "id": "kw:cast-speed", "en": "Cast Speed", "zh": "施法速度", "kind": "keyword" },
+    { "id": "kw:movement-speed", "en": "Movement Speed", "zh": "移动速度", "kind": "keyword" },
+    { "id": "kw:sprint", "en": "Sprint", "zh": "冲刺", "kind": "keyword" },
+    { "id": "kw:area-of-effect", "en": "Area of Effect", "zh": "效果区域", "kind": "keyword" },
+    { "id": "kw:projectile", "en": "Projectile", "zh": "投射物", "kind": "keyword" },
+    { "id": "kw:minion", "en": "Minion", "zh": "召唤生物", "kind": "keyword" },
+    { "id": "kw:totem", "en": "Totem", "zh": "图腾", "kind": "keyword" },
+    { "id": "kw:curse", "en": "Curse", "zh": "诅咒", "kind": "keyword" },
+    { "id": "kw:herald", "en": "Herald", "zh": "捷", "kind": "keyword" },
+    { "id": "kw:aura", "en": "Aura", "zh": "光环", "kind": "keyword" },
+    { "id": "kw:power-charge", "en": "Power Charge", "zh": "暴击球", "kind": "keyword" },
+    { "id": "kw:frenzy-charge", "en": "Frenzy Charge", "zh": "狂怒球", "kind": "keyword" },
+    { "id": "kw:endurance-charge", "en": "Endurance Charge", "zh": "耐力球", "kind": "keyword" },
+    { "id": "kw:rage", "en": "Rage", "zh": "怒火", "kind": "keyword" },
+    { "id": "kw:elemental-damage", "en": "Elemental Damage", "zh": "元素伤害", "kind": "keyword" },
+    { "id": "kw:physical-damage", "en": "Physical Damage", "zh": "物理伤害", "kind": "keyword" },
+    { "id": "kw:chaos-damage", "en": "Chaos Damage", "zh": "混沌伤害", "kind": "keyword" },
+    { "id": "kw:fire-damage", "en": "Fire Damage", "zh": "火焰伤害", "kind": "keyword" },
+    { "id": "kw:cold-damage", "en": "Cold Damage", "zh": "冰霜伤害", "kind": "keyword" },
+    { "id": "kw:lightning-damage", "en": "Lightning Damage", "zh": "闪电伤害", "kind": "keyword" },
+    { "id": "kw:damage-over-time", "en": "Damage over Time", "zh": "持续伤害", "kind": "keyword" },
+    { "id": "kw:resistance", "en": "Resistance", "zh": "抗性", "kind": "keyword" },
+    { "id": "kw:stun", "en": "Stun", "zh": "晕眩", "kind": "keyword" },
+    { "id": "kw:heavy-stun", "en": "Heavy Stun", "zh": "重度晕眩", "kind": "keyword" },
+    { "id": "kw:leech", "en": "Leech", "zh": "偷取", "kind": "keyword" },
+    { "id": "kw:recoup", "en": "Recoup", "zh": "吸纳", "kind": "keyword" },
+    {
+      "id": "kw:regeneration",
+      "en": "Regeneration",
+      "zh": "再生",
+      "kind": "keyword",
+      "aliasesEn": ["Regen"]
+    },
+    { "id": "kw:flask", "en": "Flask", "zh": "药剂", "kind": "keyword" },
+    { "id": "kw:charm", "en": "Charm", "zh": "咒符", "kind": "keyword" },
+    { "id": "kw:low-life", "en": "Low Life", "zh": "低血", "kind": "keyword" },
+    { "id": "kw:full-life", "en": "Full Life", "zh": "满血", "kind": "keyword" },
+    { "id": "kw:combo", "en": "Combo", "zh": "连击", "kind": "keyword" },
+    { "id": "kw:infusion", "en": "Infusion", "zh": "灌注", "kind": "keyword" },
+    {
+      "id": "kw:body-armour",
+      "en": "Body Armour",
+      "zh": "胸甲",
+      "kind": "keyword",
+      "aliasesEn": ["Body Armor"]
+    },
+    { "id": "kw:strength", "en": "Strength", "zh": "力量", "kind": "keyword" },
+    { "id": "kw:dexterity", "en": "Dexterity", "zh": "敏捷", "kind": "keyword" },
+    { "id": "kw:intelligence", "en": "Intelligence", "zh": "智慧", "kind": "keyword" },
+    { "id": "kw:attribute", "en": "Attribute", "zh": "属性", "kind": "keyword" },
+    { "id": "kw:spell-damage", "en": "Spell Damage", "zh": "法术伤害", "kind": "keyword" },
+    { "id": "kw:attack-damage", "en": "Attack Damage", "zh": "攻击伤害", "kind": "keyword" },
+    { "id": "kw:melee-damage", "en": "Melee Damage", "zh": "近战伤害", "kind": "keyword" },
+    {
+      "id": "kw:projectile-damage",
+      "en": "Projectile Damage",
+      "zh": "投射物伤害",
+      "kind": "keyword"
+    },
+    { "id": "kw:skill-speed", "en": "Skill Speed", "zh": "技能速度", "kind": "keyword" },
+    {
+      "id": "kw:cooldown-recovery",
+      "en": "Cooldown Recovery",
+      "zh": "冷却回复",
+      "kind": "keyword"
+    },
+    {
+      "id": "kw:reservation-efficiency",
+      "en": "Reservation Efficiency",
+      "zh": "保留效能",
+      "kind": "keyword"
+    },
+    { "id": "kw:presence", "en": "Presence", "zh": "在场", "kind": "keyword" },
+    { "id": "kw:glory", "en": "Glory", "zh": "荣耀", "kind": "keyword" },
+    { "id": "kw:thorns", "en": "Thorns", "zh": "荆棘", "kind": "keyword" },
+    {
+      "id": "kw:armour-break",
+      "en": "Armour Break",
+      "zh": "粉碎护甲",
+      "kind": "keyword",
+      "aliasesEn": ["Armor Break"]
+    },
+    {
+      "id": "kw:fully-broken-armour",
+      "en": "Fully Broken Armour",
+      "zh": "护甲完全破损",
+      "kind": "keyword",
+      "aliasesEn": ["Fully Broken Armor"]
+    },
+    { "id": "kw:culling-strike", "en": "Culling Strike", "zh": "终结", "kind": "keyword" },
+    {
+      "id": "kw:immobilise",
+      "en": "Immobilise",
+      "zh": "不可移动",
+      "kind": "keyword",
+      "aliasesEn": ["Immobilize"]
+    },
+    { "id": "kw:daze", "en": "Daze", "zh": "恍惚", "kind": "keyword" },
+    { "id": "kw:slow", "en": "Slow", "zh": "减速", "kind": "keyword" },
+    { "id": "kw:hinder", "en": "Hinder", "zh": "缓速", "kind": "keyword" },
+    { "id": "kw:withered", "en": "Withered", "zh": "死亡凋零", "kind": "keyword" },
+    { "id": "kw:archon", "en": "Archon", "zh": "执政官", "kind": "keyword" },
+    { "id": "kw:companion", "en": "Companion", "zh": "伙伴", "kind": "keyword" },
+    { "id": "kw:offering", "en": "Offering", "zh": "奉献", "kind": "keyword" },
+    { "id": "kw:warcry", "en": "Warcry", "zh": "战吼", "kind": "keyword" },
+    {
+      "id": "kw:penetrate",
+      "en": "Penetrate",
+      "zh": "穿透",
+      "kind": "keyword",
+      "aliasesEn": ["Penetration"]
+    },
+    { "id": "kw:evasion-rating", "en": "Evasion Rating", "zh": "闪避值", "kind": "keyword" },
+    { "id": "kw:stun-threshold", "en": "Stun Threshold", "zh": "晕眩阈值", "kind": "keyword" },
+    {
+      "id": "kw:ailment-threshold",
+      "en": "Ailment Threshold",
+      "zh": "异常状态阈值",
+      "kind": "keyword"
+    },
+    {
+      "id": "kw:elemental-ailment",
+      "en": "Elemental Ailment",
+      "zh": "元素异常状态",
+      "kind": "keyword"
+    },
+    {
+      "id": "kw:maximum-resistance",
+      "en": "Maximum Resistance",
+      "zh": "抗性上限",
+      "kind": "keyword"
+    },
+    { "id": "kw:life-flask", "en": "Life Flask", "zh": "生命药剂", "kind": "keyword" },
+    { "id": "kw:mana-flask", "en": "Mana Flask", "zh": "魔力药剂", "kind": "keyword" },
+    {
+      "id": "kw:energy-shield-recharge",
+      "en": "Energy Shield Recharge",
+      "zh": "能量护盾充能",
+      "kind": "keyword"
+    },
+    {
+      "id": "kw:life-regeneration",
+      "en": "Life Regeneration",
+      "zh": "生命再生",
+      "kind": "keyword",
+      "aliasesEn": ["Life Regen"]
+    },
+    {
+      "id": "kw:mana-regeneration",
+      "en": "Mana Regeneration",
+      "zh": "魔力再生",
+      "kind": "keyword",
+      "aliasesEn": ["Mana Regen"]
+    },
+    {
+      "id": "kw:critical-hit-chance",
+      "en": "Critical Hit Chance",
+      "zh": "暴击率",
+      "kind": "keyword"
+    },
+    { "id": "kw:spell", "en": "Spell", "zh": "法术", "kind": "keyword" },
+    { "id": "kw:attack", "en": "Attack", "zh": "攻击", "kind": "keyword" },
+    { "id": "kw:gem", "en": "Gem", "zh": "宝石", "kind": "keyword" },
+    {
+      "id": "kw:persistent-minion",
+      "en": "Persistent Minion",
+      "zh": "永久性召唤生物",
+      "kind": "keyword"
+    },
+    { "id": "kw:impale", "en": "Impale", "zh": "穿刺", "kind": "keyword" },
+    { "id": "kw:unholy-might", "en": "Unholy Might", "zh": "不洁之力", "kind": "keyword" },
+    { "id": "kw:onslaught", "en": "Onslaught", "zh": "猛攻", "kind": "keyword" },
+    { "id": "kw:low-mana", "en": "Low Mana", "zh": "低魔", "kind": "keyword" },
+    { "id": "kw:full-mana", "en": "Full Mana", "zh": "满魔", "kind": "keyword" },
+    { "id": "kw:dodge-roll", "en": "Dodge Roll", "zh": "闪避翻滚", "kind": "keyword" },
+    {
+      "id": "jg:exalted-orb",
+      "en": "Exalted Orb",
+      "zh": "崇高石",
+      "kind": "jargon",
+      "aliasesEn": ["exalt", "exalts"]
+    },
+    { "id": "jg:chaos-orb", "en": "Chaos Orb", "zh": "混沌石", "kind": "jargon" },
+    {
+      "id": "jg:regal-orb",
+      "en": "Regal Orb",
+      "zh": "富豪石",
+      "kind": "jargon",
+      "aliasesEn": ["regal"]
+    },
+    {
+      "id": "jg:orb-of-alchemy",
+      "en": "Orb of Alchemy",
+      "zh": "点金石",
+      "kind": "jargon",
+      "aliasesEn": ["alch", "alchemy"]
+    },
+    {
+      "id": "jg:desecrate",
+      "en": "Desecrate",
+      "zh": "渎灵",
+      "kind": "jargon",
+      "aliasesEn": ["Desecrated", "Desecration"]
+    },
+    { "id": "jg:ascendancy", "en": "Ascendancy", "zh": "升华", "kind": "jargon" },
+    {
+      "id": "jg:runecraft",
+      "en": "Runecraft",
+      "zh": "符文锻造",
+      "kind": "jargon",
+      "aliasesEn": ["Runecrafting", "Runecrafted"]
+    },
+    { "id": "jg:omen", "en": "Omen", "zh": "预兆", "kind": "jargon" },
+    { "id": "jg:essence", "en": "Essence", "zh": "精华", "kind": "jargon" },
+    { "id": "jg:waystone", "en": "Waystone", "zh": "引路石", "kind": "jargon" },
+    { "id": "jg:tablet", "en": "Tablet", "zh": "石板", "kind": "jargon" },
+    { "id": "jg:stage", "en": "Stage", "zh": "阶段", "kind": "jargon" },
+    {
+      "id": "jg:league-starter",
+      "en": "league starter",
+      "zh": "开荒构筑",
+      "kind": "jargon",
+      "aliasesEn": ["league-starter"]
+    },
+    { "id": "jg:slam", "en": "slam", "zh": "砸崇高", "kind": "jargon", "aliasesEn": ["slammed"] },
+    { "id": "jg:bricked", "en": "bricked", "zh": "做废", "kind": "jargon", "aliasesEn": ["brick"] },
+    {
+      "id": "jg:divine-orb",
+      "en": "Divine Orb",
+      "zh": "神圣石",
+      "kind": "jargon",
+      "aliasesEn": ["div", "divine"]
+    },
+    {
+      "id": "jg:orb-of-annulment",
+      "en": "Orb of Annulment",
+      "zh": "剥离石",
+      "kind": "jargon",
+      "aliasesEn": ["annul", "annulment"]
+    },
+    {
+      "id": "jg:orb-of-augmentation",
+      "en": "Orb of Augmentation",
+      "zh": "增幅石",
+      "kind": "jargon",
+      "aliasesEn": ["aug"]
+    },
+    {
+      "id": "jg:orb-of-transmutation",
+      "en": "Orb of Transmutation",
+      "zh": "蜕变石",
+      "kind": "jargon",
+      "aliasesEn": ["transmute"]
+    },
+    { "id": "jg:vaal-orb", "en": "Vaal Orb", "zh": "瓦尔宝珠", "kind": "jargon" },
+    { "id": "jg:fracturing-orb", "en": "Fracturing Orb", "zh": "破溃宝珠", "kind": "jargon" },
+    { "id": "jg:artificers-orb", "en": "Artificer's Orb", "zh": "巧匠石", "kind": "jargon" },
+    {
+      "id": "jg:mirror-of-kalandra",
+      "en": "Mirror of Kalandra",
+      "zh": "卡兰德的魔镜",
+      "kind": "jargon",
+      "aliasesEn": ["mirror"]
+    },
+    { "id": "jg:orb-of-chance", "en": "Orb of Chance", "zh": "机会石", "kind": "jargon" },
+    {
+      "id": "jg:jewellers-orb",
+      "en": "Jeweller's Orb",
+      "zh": "工匠石",
+      "kind": "jargon",
+      "aliasesEn": ["Jeweler's Orb"]
+    },
+    { "id": "jg:soul-core", "en": "Soul Core", "zh": "灵核", "kind": "jargon" },
+    { "id": "jg:rune", "en": "Rune", "zh": "符文", "kind": "jargon" },
+    {
+      "id": "kw:minion-instability",
+      "en": "Minion Instability",
+      "zh": "复仇之灵",
+      "kind": "keyword"
+    },
+    { "id": "kw:infernal-legion", "en": "Infernal Legion", "zh": "炎军", "kind": "keyword" },
+    {
+      "id": "kw:immobilisation-buildup",
+      "en": "Immobilisation Buildup",
+      "zh": "不可移动积蓄",
+      "kind": "keyword",
+      "aliasesEn": ["Immobilization Buildup"]
+    }
   ]
 }
