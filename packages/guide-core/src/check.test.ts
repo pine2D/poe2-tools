@@ -43,6 +43,10 @@ describe('checkTranslation', () => {
       'number-unit',
     ])
   })
+  it('网址后紧跟中文标点或汉字不算新增网址', () => {
+    expect(kinds('施放瘟疫获得 30% 总增伤害，见 https://a.example/x，然后')).toEqual([])
+    expect(kinds('施放瘟疫获得 30% 总增伤害，见 https://a.example/x。')).toEqual([])
+  })
   it('新增网址、未翻译、截断、占位符问题', () => {
     expect(kinds('施放瘟疫获得 30% 总增伤害，见 https://a.example/x https://evil.example')).toEqual(
       ['url-added'],

@@ -3,7 +3,7 @@ import type { Issue } from './types'
 import type { Restored } from './verbatim'
 
 const NUMBER = /\d+(?:\.\d+)?/g
-const URL = /https?:\/\/[^\s<>"'）)]+/g
+const URL = /https?:\/\/[^\s<>"'）)\u3000-\u303f\uff00-\uffef\u4e00-\u9fff」』》“”‘’]+/g
 const CJK = /[一-鿿]/
 
 const multiset = (text: string) => {
