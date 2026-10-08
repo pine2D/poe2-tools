@@ -66,17 +66,37 @@ interface Run {
   controller: AbortController
   /** 发起任务的阶段；undefined 表示单段重试 */
   stageId: string | null | undefined
-  /** 本任务标为“翻译中”的段落 */
+  /** 本任务标为“翻译中”、还没有结果的段落 */
   inflight: Set<string>
+  /** 任务结束（完成或被中止）时兑现，排队的单段重试据此接着执行 */
+  ended: Promise<void>
+  end(): void
+}
+
+interface Failure {
+  state: 'failed' | 'missing'
+  message: string | undefined
+}
+
+function newRun(stageId: string | null | undefined): Run {
+  let end = () => {}
+  const ended = new Promise<void>((resolve) => (end = resolve))
+  return { controller: new AbortController(), stageId, inflight: new Set(), ended, end }
 }
 
 export function createController(deps: ControllerDeps): Controller {
   const { view } = deps
+  // 读取成功后才有文档；读取中或读取失败时为 null，阶段与重试操作一律不执行
   let guide: GuideDocument | null = null
   let blocks: PreparedBlock[] = []
   let dictHash = ''
   const done = new Set<string>()
+  // 标为失败或未返回的段：停止、切换阶段时保留错误说明与重试按钮
+  const failures = new Map<string, Failure>()
   let active: Run | null = null
+  // 排队等当前任务结束的单段重试；停止或重新读取时整体作废
+  let queueEpoch = 0
+  const queued = new Set<string>()
   // 每次 start() 加一；旧文档的任务与回调据此放弃写入
   let generation = 0
   let tokens = { prompt: 0, completion: 0 }
@@ -97,14 +117,34 @@ export function createController(deps: ControllerDeps): Controller {
       promptVersion: PROMPT_VERSION,
     })
 
-  // 同步中止当前任务：未完成段回到 idle，挂起的确认框随信号按取消结束
+  // 未完成的段：之前失败过的回到失败状态，其余回到 idle
+  const resetBlock = (id: string) => {
+    const f = failures.get(id)
+    if (f) view.setBlockState(id, f.state, f.message)
+    else view.setBlockState(id, 'idle')
+  }
+  const markFailed = (run: Run, id: string, state: Failure['state'], message?: string) => {
+    run.inflight.delete(id)
+    failures.set(id, { state, message })
+    view.setBlockState(id, state, message)
+  }
+
+  // 同步中止当前任务：未完成段复位，挂起的确认框随信号按取消结束
   function cancelRun(): boolean {
     const run = active
     if (!run) return false
     active = null
     run.controller.abort()
-    for (const id of run.inflight) if (!done.has(id)) view.setBlockState(id, 'idle')
+    for (const id of run.inflight) if (!done.has(id)) resetBlock(id)
+    run.end()
     return true
+  }
+
+  // 作废排队中的单段重试，段落复位
+  function dropQueued() {
+    queueEpoch++
+    for (const id of queued) resetBlock(id)
+    queued.clear()
   }
 
   async function translate(
@@ -114,7 +154,7 @@ export function createController(deps: ControllerDeps): Controller {
   ): Promise<void> {
     // 先同步登记，保证旧任务在新任务的任何 await 之前就已失效
     cancelRun()
-    const run: Run = { controller: new AbortController(), stageId, inflight: new Set() }
+    const run = newRun(stageId)
     active = run
     const { signal } = run.controller
     const live = () => !signal.aborted
@@ -150,6 +190,7 @@ export function createController(deps: ControllerDeps): Controller {
         if (hit) {
           view.setTranslation(b.id, hit.text, 'cache', hit.issues)
           done.add(b.id)
+          failures.delete(b.id)
           cacheHits++
         } else pending.push(b)
       }
@@ -197,6 +238,8 @@ export function createController(deps: ControllerDeps): Controller {
             const issues = checkTranslation(b, restored.text, restored, null)
             view.setTranslation(id, restored.text, 'engine', issues)
             done.add(id)
+            run.inflight.delete(id)
+            failures.delete(id)
             const key = keys.get(id)
             if (key)
               void deps.store.putCached({ hash: key, text: restored.text, issues }).catch(() => {})
@@ -225,7 +268,8 @@ export function createController(deps: ControllerDeps): Controller {
           }
           view.setUsage(usageText(engine))
           for (const id of splitter.end())
-            view.setBlockState(
+            markFailed(
+              run,
               id,
               'missing',
               result.finishReason === 'length' ? '输出被截断，可单独重试' : undefined,
@@ -236,11 +280,11 @@ export function createController(deps: ControllerDeps): Controller {
           const kind = error instanceof EngineError ? error.kind : 'network'
           const unfinished = chunk.filter((b) => !done.has(b.id))
           if (kind === 'aborted') {
-            for (const b of pending.filter((x) => !done.has(x.id))) view.setBlockState(b.id, 'idle')
+            for (const b of pending.filter((x) => !done.has(x.id))) resetBlock(b.id)
             break
           }
           const message = error instanceof Error ? error.message : '翻译失败'
-          for (const b of unfinished) view.setBlockState(b.id, 'failed', message)
+          for (const b of unfinished) markFailed(run, b.id, 'failed', message)
           if (kind === 'auth') {
             view.setBanner('setup', message) // 横幅带“配置翻译服务”按钮，直达设置
             break
@@ -258,6 +302,7 @@ export function createController(deps: ControllerDeps): Controller {
         active = null
         view.setBusy(false)
       }
+      run.end()
     }
   }
 
@@ -272,41 +317,51 @@ export function createController(deps: ControllerDeps): Controller {
   return {
     async start() {
       const gen = ++generation
+      dropQueued()
       if (cancelRun()) view.setBusy(false)
+      // 读取期间旧视图保留，但阶段与重试操作不执行；读取成功后才替换文档与状态
       guide = null
-      blocks = []
-      done.clear()
-      tokens = { prompt: 0, completion: 0 }
-      cacheHits = 0
       view.setBanner('none', '')
+      // 读取失败：清空旧视图，避免旧页面的阶段与段落继续可点
+      const fail = (message: string) => {
+        if (gen !== generation) return
+        blocks = []
+        done.clear()
+        failures.clear()
+        view.clearDocument()
+        view.setBanner('error', message)
+      }
       let raw: unknown
       try {
         raw = await deps.extract()
       } catch {
-        if (gen === generation)
-          view.setBanner('error', '页面已更换或无法读取，请在攻略页重新点扩展图标。')
+        fail('页面已更换或无法读取，请在攻略页重新点扩展图标。')
         return
       }
       if (gen !== generation) return
       const result = parseExtractResult(raw)
       if (!result) {
-        view.setBanner('error', '读取结果无效，请刷新攻略页后重试。')
+        fail('读取结果无效，请刷新攻略页后重试。')
         return
       }
       if (!result.ok) {
-        view.setBanner('error', REASONS[result.reason])
+        fail(REASONS[result.reason])
         return
       }
       let dict: GuideDictionary
       try {
         dict = await deps.dictionary()
       } catch {
-        if (gen === generation) view.setBanner('error', '术语词典载入失败，请重新打开侧边栏。')
+        fail('术语词典载入失败，请重新打开侧边栏。')
         return
       }
       if (gen !== generation) return
       guide = result.doc
       dictHash = dict.hash
+      done.clear()
+      failures.clear()
+      tokens = { prompt: 0, completion: 0 }
+      cacheHits = 0
       const matcher = createMatcher(dict)
       blocks = guide.blocks.map((b) => prepareBlock(b, matcher))
       const current = guide.stages.find((s) => s.current)?.id ?? null
@@ -322,6 +377,7 @@ export function createController(deps: ControllerDeps): Controller {
     },
     async translateStage(stageId) {
       const gen = generation
+      if (!guide) return
       if (stageId) {
         view.showStage(stageId)
         view.setStageState(stageId, 'translating')
@@ -332,12 +388,25 @@ export function createController(deps: ControllerDeps): Controller {
       view.setStageState(stageId, stageTargets(stageId).length ? 'idle' : 'done')
     },
     async retryBlock(id) {
+      if (!guide || queued.has(id)) return
       const b = blocks.find((x) => x.id === id && sendable(x))
       if (!b) return
+      // 有任务进行中时排队，等它结束再重试，不中止正在翻译的阶段
+      if (active) {
+        const epoch = queueEpoch
+        queued.add(id)
+        view.setBlockState(id, 'pending', '排队中，当前任务结束后重试')
+        while (active && epoch === queueEpoch) await active.ended
+        if (epoch !== queueEpoch) return
+        queued.delete(id)
+        // 排队期间已被阶段任务译出，不再重复请求
+        if (done.has(id)) return
+      }
       done.delete(id)
       await translate([b], true, undefined)
     },
     stop() {
+      dropQueued()
       if (cancelRun()) view.setBusy(false)
     },
   }

@@ -39,7 +39,7 @@ export function extractPage(
 
   let blocks: GuideBlock[]
   let stages: GuideStage[] = []
-  // 站点适配器没读到数据、改用通用提取时置位，侧边栏据此常驻提示“站点可能改版”
+  // 站点适配器没读到数据、改用通用提取时置位，侧边栏据此在站点行常驻提示（Mobalytics 多为站内跳转，其他站点提示可能改版）
   let fallback = false
   const selection = selectionText.trim()
   const scope = selection.length >= 2 ? 'selection' : 'full'

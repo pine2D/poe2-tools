@@ -110,7 +110,36 @@ describe('createReadingView', () => {
     expect(site()).toBe('example.com · 通用提取，仅支持 PoE2 术语')
     const fallback = { ...doc, stages: [], source: { ...doc.source, fallback: true as const } }
     v.showDocument(fallback, prepared, null)
-    expect(site()).toBe('mobalytics.gg · 通用提取，仅支持 PoE2 术语 · 站点可能改版，可检查扩展更新')
+    expect(site()).toBe(
+      'mobalytics.gg · 通用提取，仅支持 PoE2 术语 · 页面数据与地址不一致（站内跳转后常见），已改用通用读取；刷新页面可恢复完整阶段',
+    )
+    const other = {
+      ...doc,
+      stages: [],
+      source: {
+        ...doc.source,
+        url: 'https://pathofexile2.com/forum/x',
+        siteId: 'poe2com' as const,
+        fallback: true as const,
+      },
+    }
+    v.showDocument(other, prepared, null)
+    expect(site()).toBe(
+      'pathofexile2.com · 通用提取，仅支持 PoE2 术语 · 站点可能改版，可检查扩展更新',
+    )
+  })
+  it('clearDocument 清空标题、阶段条与段落', () => {
+    const { v } = mount()
+    v.clearDocument()
+    expect(document.querySelector('.guide-title')?.textContent).toBe('')
+    expect(document.querySelector('.guide-site')?.textContent).toBe('')
+    expect(document.querySelectorAll('.stage')).toHaveLength(0)
+    expect(document.querySelector<HTMLElement>('.guide-stages')?.hidden).toBe(true)
+    expect(document.querySelectorAll('.block')).toHaveLength(0)
+    // 清空后旧段号的状态更新不报错、不留痕
+    v.setBlockState('b0', 'failed', 'x')
+    v.setStageState('s1', 'done')
+    expect(document.querySelectorAll('.block')).toHaveLength(0)
   })
   it('阶段状态有文字说明', () => {
     const { v } = mount()

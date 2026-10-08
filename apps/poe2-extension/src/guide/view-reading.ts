@@ -20,6 +20,8 @@ export interface ReadingView {
   root: HTMLElement
   showIntro(show: boolean): void
   showDocument(doc: GuideDocument, blocks: readonly PreparedBlock[], stageId: string | null): void
+  /** 读取失败时清空旧文档（标题、站点行、阶段条与段落） */
+  clearDocument(): void
   showStage(stageId: string): void
   setTranslation(blockId: string, text: string, origin: Origin, issues: readonly Issue[]): void
   setBlockState(blockId: string, state: BlockState, message?: string): void
@@ -45,6 +47,12 @@ const STATE: Record<BlockState, string> = {
 }
 const STAGE: Record<StageState, string> = { idle: '未翻译', translating: '翻译中', done: '已翻译' }
 const UPDATE_URL = 'https://poe2-tools.pine2d.com/extension/'
+
+// Mobalytics 站内跳转后内嵌数据仍是上一个构筑，回退通用读取是预期情况，刷新即可恢复
+const fallbackNote = (siteId: GuideDocument['source']['siteId']) =>
+  siteId === 'mobalytics'
+    ? '页面数据与地址不一致（站内跳转后常见），已改用通用读取；刷新页面可恢复完整阶段'
+    : '站点可能改版，可检查扩展更新'
 
 export function createReadingView(doc: Document, h: ReadingHandlers, version: string): ReadingView {
   const title = el(doc, 'p', { class: 'guide-title' })
@@ -173,7 +181,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         guide.source.siteId === 'generic' || guide.source.fallback
           ? '通用提取，仅支持 PoE2 术语'
           : '',
-        guide.source.fallback ? '站点可能改版，可检查扩展更新' : '',
+        guide.source.fallback ? fallbackNote(guide.source.siteId) : '',
       ].filter(Boolean)
       site.textContent = [new URL(guide.source.url).hostname, ...notes].join(' · ')
       scope.hidden = guide.source.scope !== 'selection'
@@ -240,6 +248,17 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         list.append(node)
       }
       if (stageId) showStage(stageId)
+    },
+    clearDocument() {
+      title.textContent = ''
+      site.textContent = ''
+      scope.hidden = true
+      scopeText.textContent = ''
+      stagesBar.replaceChildren()
+      stageButtons.clear()
+      stagesBar.hidden = true
+      list.replaceChildren()
+      items.clear()
     },
     showStage,
     setTranslation(blockId, text, origin, issueList) {

@@ -49,6 +49,7 @@ function fakeView() {
     root: document.createElement('main'),
     showIntro: vi.fn(),
     showDocument: vi.fn(),
+    clearDocument: vi.fn(() => calls.push('CLEAR')),
     showStage: vi.fn(),
     setTranslation: vi.fn((id: string, text: string, origin: string) =>
       calls.push(`T ${id} ${origin} ${text}`),
@@ -321,6 +322,126 @@ describe('createController', () => {
     await createController(d).start()
     const last = String(view.setUsage.mock.calls.at(-1)?.[0])
     expect(Number(/本次约 \d+\+(\d+) tokens/.exec(last)?.[1])).toBeGreaterThan(0)
+  })
+  it('阶段任务进行中点单段重试：排队到当前任务结束后执行，不中止阶段', async () => {
+    const { run, calls: engineCalls, handle } = gatedEngine()
+    const { d, view, calls } = deps({ engine: async () => handle })
+    const c = createController(d)
+    const first = c.start()
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
+    const retry = c.retryBlock('b')
+    await new Promise((r) => setTimeout(r, 0))
+    expect(run).toHaveBeenCalledTimes(1) // 重试在排队，没有中止阶段任务
+    expect(calls).toContain('S b pending')
+    engineCalls[0]?.release()
+    await first
+    expect(calls.some((x) => x.startsWith('T a engine'))).toBe(true)
+    expect(view.setStageState).toHaveBeenCalledWith('s1', 'done')
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
+    expect(engineCalls[1]?.user).toContain('<s id="b">')
+    engineCalls[1]?.release()
+    await retry
+    expect(calls.some((x) => x.startsWith('T b engine'))).toBe(true)
+  })
+  it('停止时排队中的重试一并取消，段落回到原来的失败状态', async () => {
+    let n = 0
+    const gate = gatedEngine()
+    const run = vi.fn(
+      async (messages: readonly ChatMessage[], onText: (d: string) => void, s: AbortSignal) => {
+        if (n++ === 0) throw new EngineError('network', '网络错误')
+        return gate.handle.runner.run(messages, onText, s)
+      },
+    )
+    const { d, calls } = deps({ engine: async () => ({ ...gate.handle, runner: { run } }) })
+    const c = createController(d)
+    await c.start() // a 失败
+    expect(calls).toContain('S a failed')
+    const stage = c.translateStage('s2') // b 挂起
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
+    const retry = c.retryBlock('a')
+    await new Promise((r) => setTimeout(r, 0))
+    c.stop()
+    await retry
+    expect(run).toHaveBeenCalledTimes(2)
+    expect(calls.filter((x) => x.startsWith('S a ')).at(-1)).toBe('S a failed')
+    gate.calls[0]?.release()
+    await stage
+  })
+  it('失败或未返回的段在停止、切换阶段后保留错误状态', async () => {
+    const many = (stage: string, from: number, count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `p${from + i}`,
+        kind: 'paragraph',
+        text: `Contagion paragraph number ${from + i}.`,
+        stageId: stage,
+      }))
+    const raw = doc(
+      [...many('s1', 0, 12), ...many('s2', 12, 1)],
+      [
+        { id: 's1', name: 'L', current: true },
+        { id: 's2', name: 'E', current: false },
+      ],
+    )
+    for (const how of ['stop', 'stage'] as const) {
+      let n = 0
+      const gate = gatedEngine()
+      const run = vi.fn(
+        async (messages: readonly ChatMessage[], onText: (d: string) => void, s: AbortSignal) => {
+          if (n++ === 0) throw new EngineError('network', '网络错误')
+          return gate.handle.runner.run(messages, onText, s)
+        },
+      )
+      const { d, calls } = deps({ raw, engine: async () => ({ ...gate.handle, runner: { run } }) })
+      const c = createController(d)
+      void c.start() // 第一块（p0–p9）失败，第二块（p10、p11）挂起
+      await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
+      if (how === 'stop') c.stop()
+      else void c.translateStage('s2')
+      const last = (id: string) => calls.filter((x) => x.startsWith(`S ${id} `)).at(-1)
+      expect(last('p0')).toBe('S p0 failed')
+      expect(last('p9')).toBe('S p9 failed')
+      expect(last('p10')).toBe('S p10 idle')
+    }
+  })
+  it('重新读取失败时清空视图，之后点阶段不会把空目标标为已翻译', async () => {
+    const { run, handle } = fakeEngine()
+    let reads = 0
+    const { d, view, calls } = deps({
+      engine: async () => handle,
+      extract: async () => {
+        if (reads++ === 0) return twoStages
+        throw new Error('Cannot access contents of the page')
+      },
+    })
+    const c = createController(d)
+    await c.start()
+    expect(run).toHaveBeenCalledTimes(1)
+    view.setStageState.mockClear()
+    await c.start()
+    expect(calls).toContain('CLEAR')
+    await c.translateStage('s2')
+    await c.retryBlock('a')
+    expect(run).toHaveBeenCalledTimes(1)
+    expect(view.setStageState).not.toHaveBeenCalled()
+  })
+  it('读取进行中点阶段不发送，也不改阶段状态', async () => {
+    const { run, handle } = fakeEngine()
+    let release: (v: unknown) => void = () => {}
+    let reads = 0
+    const { d, view } = deps({
+      engine: async () => handle,
+      extract: () =>
+        reads++ === 0 ? Promise.resolve(twoStages) : new Promise((r) => (release = r)),
+    })
+    const c = createController(d)
+    await c.start()
+    view.setStageState.mockClear()
+    const again = c.start()
+    await c.translateStage('s2')
+    expect(view.setStageState).not.toHaveBeenCalled()
+    release(twoStages)
+    await again
+    expect(run).toHaveBeenCalledTimes(1) // 新文档的 s1 命中缓存
   })
   it('词典或设置读取失败时显示错误横幅', async () => {
     const bad = deps({
