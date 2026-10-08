@@ -128,6 +128,46 @@ const WEB_ACCESSIBLE_RESOURCES = [
     matches: ['https://beta.craftofexile.com/*'],
   },
 ]
+/** 扩展 0.5.0 起的权限：storage（设置）、activeTab + scripting（点击后读当前页）、sidePanel（攻略翻译） */
+export const PERMISSIONS = ['storage', 'activeTab', 'scripting', 'sidePanel']
+export const MINIMUM_CHROME = '116'
+/** 只有扩展页面（侧边栏）联网；脚本只能来自扩展自身 */
+export const EXTENSION_CSP = {
+  extension_pages:
+    "script-src 'self'; object-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
+}
+/** 取文脚本与 CoE 内容脚本里不得出现的联网目标 */
+const PROVIDER_MARKERS = ['api.deepseek.com', '/chat/completions']
+const GUIDE_KINDS = ['gem', 'passive', 'ascendancy', 'class', 'base', 'unique', 'keyword', 'jargon']
+
+/** 攻略词典：结构、身份唯一、来源等级合法 */
+export function validateGuideDictionary(dict) {
+  if (
+    dict.schemaVersion !== 1 ||
+    dict.locale !== 'zh-CN' ||
+    typeof dict.hash !== 'string' ||
+    !/^[0-9a-f]{16}$/.test(dict.hash) ||
+    !Array.isArray(dict.entries) ||
+    !dict.entries.length ||
+    !Array.isArray(dict.abbreviations)
+  )
+    throw new Error('攻略词典格式不合法')
+  const ids = new Set()
+  for (const e of dict.entries) {
+    if (
+      typeof e.id !== 'string' ||
+      ids.has(e.id) ||
+      typeof e.en !== 'string' ||
+      !e.en ||
+      typeof e.zh !== 'string' ||
+      !e.zh ||
+      !GUIDE_KINDS.includes(e.kind) ||
+      !['primary', 'gray', 'manual'].includes(e.tier)
+    )
+      throw new Error(`攻略词典条目不合法：${e.id}`)
+    ids.add(e.id)
+  }
+}
 
 /** 注入衬线子集：内容必须是 coverage.json 登记的 serif-sc-l1.woff2，且不超过预算（build-fonts.mjs 退出码 4 之外的第二道守卫） */
 export function assertL1Font(data, whitelist, budget = L1_FONT_BUDGET) {
@@ -153,7 +193,7 @@ export function popupFontReferences(css, cssFile) {
 }
 
 export function validateManifest(m, version) {
-  if (m.manifest_version !== 3 || m.version !== version || !same(m.permissions, ['storage']))
+  if (m.manifest_version !== 3 || m.version !== version || !same(m.permissions, PERMISSIONS))
     throw new Error('Manifest 版本或权限不符合约定')
   if (typeof m.description !== 'string' || !m.description.startsWith('非官方扩展：'))
     throw new Error('Manifest 描述必须以“非官方扩展：”开头')
@@ -164,6 +204,12 @@ export function validateManifest(m, version) {
     'background',
     'externally_connectable',
     'devtools_page',
+    'side_panel',
+    'commands',
+    'options_ui',
+    'options_page',
+    'sandbox',
+    'chrome_url_overrides',
   ])
     if (m[field]) throw new Error(`不允许 ${field}`)
   const icons = Object.fromEntries(
@@ -188,6 +234,8 @@ export function validateManifest(m, version) {
     !same(m.web_accessible_resources, WEB_ACCESSIBLE_RESOURCES)
   )
     throw new Error('扩展入口或公开资源范围发生变化')
+  if (m.minimum_chrome_version !== MINIMUM_CHROME) throw new Error('最低 Chrome 版本不符合约定')
+  if (!same(m.content_security_policy, EXTENSION_CSP)) throw new Error('扩展页面 CSP 不符合约定')
 }
 export async function check(root = fileURLToPath(new URL('../', import.meta.url))) {
   const dist = path.join(root, 'dist')
@@ -209,6 +257,32 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   const content = await readFile(path.join(dist, 'content.js'), 'utf8')
   new vm.Script(content)
   if (/^\s*(?:import|export)\s/m.test(content)) throw new Error('内容脚本必须独立执行')
+  const extract = await readFile(path.join(dist, 'extract.js'), 'utf8')
+  new vm.Script(extract)
+  if (/^\s*(?:import|export)\s/m.test(extract)) throw new Error('取文脚本必须独立执行')
+  if (/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/.test(extract))
+    throw new Error('取文脚本不得发网络请求')
+  for (const marker of PROVIDER_MARKERS)
+    if (extract.includes(marker) || content.includes(marker))
+      throw new Error(`内容脚本或取文脚本含联网目标：${marker}`)
+  const guide = await readFile(path.join(dist, 'guide.html'), 'utf8')
+  const guideResources = popupReferences(guide)
+  for (const file of guideResources) {
+    if (!file.endsWith('.css')) continue
+    const css = await readFile(path.join(dist, file), 'utf8')
+    const external = popupStyleExternal(css)
+    if (external.length > 0) throw new Error(`侧边栏样式含外部引用：${external.join(' ')}`)
+    if (popupFontReferences(css, file).length) throw new Error('侧边栏不加载字体文件')
+  }
+  if (
+    guideResources.length !== 2 ||
+    guideResources.filter((file) => /^assets\/guide-[\w-]+\.js$/.test(file)).length !== 1 ||
+    guideResources.filter((file) => /^assets\/guide-[\w-]+\.css$/.test(file)).length !== 1
+  )
+    throw new Error('侧边栏构建资源集合不符合约定')
+  validateGuideDictionary(
+    JSON.parse(await readFile(path.join(dist, 'assets/guide-dictionary.json'), 'utf8')),
+  )
   const popup = await readFile(path.join(dist, 'popup.html'), 'utf8')
   const popupResources = popupReferences(popup)
   const popupFonts = []
@@ -250,6 +324,10 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     ...Object.values(m.icons),
     ...popupResources,
     ...popupFonts,
+    'extract.js',
+    'guide.html',
+    'assets/guide-dictionary.json',
+    ...guideResources,
   ])
   const distFiles = []
   const files = await readdir(dist, { recursive: true, withFileTypes: true })
@@ -287,7 +365,9 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
       assets.push({ path: file, sha256: sha256(await readFile(path.join(dist, file))) })
   }
   assertAssets(assets, whitelist, 'dist')
-  console.log(`扩展检查通过：${m.version}，${dict.terms.length} 条词条，仅 storage 权限`)
+  console.log(
+    `扩展检查通过：${m.version}，${dict.terms.length} 条词条，权限 ${PERMISSIONS.join('、')}`,
+  )
   return { root, dist, version: m.version, files: distFiles }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))

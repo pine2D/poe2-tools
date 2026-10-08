@@ -1,0 +1,10 @@
+@import "@poe2-tools/ui-theme/tokens.css";
+@import "@poe2-tools/ui-theme/components/btn.css";
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-zh-cn);
+  font-size: var(--fs-body);
+}

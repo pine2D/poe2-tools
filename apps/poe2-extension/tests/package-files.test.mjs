@@ -29,6 +29,13 @@ async function fixture() {
     'assets/popup-test.js': 'void 0;',
     'assets/popup-test.css':
       'h1{font-family:x}@font-face{font-family:x;src:url(./serif-sc-popup-test.woff2)}',
+    'guide.html':
+      '<!doctype html><html><head><link rel="stylesheet" href="./assets/guide-test.css"></head><body><script type="module" src="./assets/guide-test.js"></script></body></html>',
+    'assets/guide-test.js': 'console.log(1)',
+    'assets/guide-test.css': 'body{margin:0}',
+    'extract.js': '(function(){globalThis.__poe2GuideExtract=function(){return null}})();',
+    'assets/guide-dictionary.json':
+      '{"schemaVersion":1,"locale":"zh-CN","hash":"0123456789abcdef","entries":[{"id":"gem:a","en":"A","zh":"甲","kind":"gem","tier":"gray"}],"abbreviations":[],"sources":[],"allowGray":true}',
     'LICENSE.txt': 'fixture license',
     'NOTICE.txt': noticeText(manifest.version),
     'assets/dictionary.json': JSON.stringify({
@@ -61,7 +68,7 @@ it('接受完整入口、双popup资源和许可说明', async () => {
   const { root } = await fixture()
   await expect(check(root)).resolves.toMatchObject({ root })
 })
-it.each(['debug.js', 'private.json', 'notes.txt', 'assets/popup-old.js'])(
+it.each(['debug.js', 'private.json', 'notes.txt', 'assets/popup-old.js', 'assets/guide-old.js'])(
   '拒绝额外产物 %s',
   async (name) => {
     const { root, dist } = await fixture()
@@ -75,11 +82,21 @@ it.each([
   'NotoSerifSC-OFL.txt',
   'assets/serif-sc-popup-test.woff2',
   'assets/serif-sc-l1.woff2',
+  'assets/guide-test.js',
 ])('拒绝缺少 %s', async (name) => {
   const { root, dist } = await fixture()
   await rm(path.join(dist, name))
   await expect(check(root)).rejects.toThrow('缺少打包文件')
 })
+// 这几项在集合比对前就要读取内容，缺失时直接报 ENOENT
+it.each(['guide.html', 'assets/guide-test.css', 'extract.js', 'assets/guide-dictionary.json'])(
+  '拒绝缺少 %s（读取即失败）',
+  async (name) => {
+    const { root, dist } = await fixture()
+    await rm(path.join(dist, name))
+    await expect(check(root)).rejects.toThrow('ENOENT')
+  },
+)
 it('拒绝伪装为必需文件的符号链接', async () => {
   const { root, dist } = await fixture()
   await rm(path.join(dist, 'NOTICE.txt'))
@@ -178,4 +195,27 @@ it('打包后复核：条目集合必须与 dist 相同，图像过白名单', a
     e.name === 'icons/icon-16.png' ? { ...e, data: Buffer.concat([e.data, Buffer.from([0])]) } : e,
   )
   await expect(verifyZip(storedZip(bad), files)).rejects.toThrow('素材白名单')
+})
+it('取文脚本发网络请求或含服务商地址时拒绝', async () => {
+  const { root, dist } = await fixture()
+  await writeFile(
+    path.join(dist, 'extract.js'),
+    'fetch("https://api.deepseek.com/chat/completions")',
+  )
+  await expect(check(root)).rejects.toThrow('取文脚本不得发网络请求')
+})
+it('攻略词典条目重复时拒绝', async () => {
+  const { root, dist } = await fixture()
+  const bad = {
+    schemaVersion: 1,
+    locale: 'zh-CN',
+    hash: '0123456789abcdef',
+    entries: [
+      { id: 'x', en: 'A', zh: '甲', kind: 'gem', tier: 'gray' },
+      { id: 'x', en: 'B', zh: '乙', kind: 'gem', tier: 'gray' },
+    ],
+    abbreviations: [],
+  }
+  await writeFile(path.join(dist, 'assets/guide-dictionary.json'), JSON.stringify(bad))
+  await expect(check(root)).rejects.toThrow('攻略词典条目不合法')
 })

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { L1_FONT_FILE } from '@poe2-tools/ui-theme/compliance'
 import { build } from 'vite'
 import { buildDictionary } from './build-dictionary.mjs'
+import { buildGuideDictionary } from './build-guide-dictionary.mjs'
 import { noticeText } from './notice.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -35,11 +36,44 @@ await build({
     rollupOptions: { input: path.join(root, 'popup.html') },
   },
 })
+// 取文脚本：按需注入的独立 IIFE，不与 content.js 共享任何 chunk
+await build({
+  configFile: false,
+  root,
+  publicDir: false,
+  build: {
+    outDir: 'dist',
+    emptyOutDir: false,
+    lib: {
+      entry: path.join(root, 'src/extract/index.ts'),
+      name: 'Poe2GuideExtract',
+      formats: ['iife'],
+      fileName: () => 'extract.js',
+    },
+  },
+})
+// 侧边栏页面：单独一次 HTML 构建，产物 guide.html 与 assets/guide-*.js|css
+await build({
+  configFile: false,
+  root,
+  base: './',
+  publicDir: false,
+  build: {
+    outDir: 'dist',
+    emptyOutDir: false,
+    assetsInlineLimit: 0,
+    rollupOptions: { input: path.join(root, 'guide.html') },
+  },
+})
 const manifest = JSON.parse(await readFile(path.join(root, 'manifest.json'), 'utf8'))
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'))
 if (manifest.version !== pkg.version) throw new Error('扩展版本不一致')
 await writeFile(path.join(root, 'dist/manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
-await buildDictionary(path.resolve(root, '../..'), path.join(root, 'dist/assets/dictionary.json'), {
+const repoRoot = path.resolve(root, '../..')
+await buildDictionary(repoRoot, path.join(root, 'dist/assets/dictionary.json'), {
+  allowGray: !process.argv.includes('--no-gray'),
+})
+await buildGuideDictionary(repoRoot, path.join(root, 'dist/assets/guide-dictionary.json'), {
   allowGray: !process.argv.includes('--no-gray'),
 })
 

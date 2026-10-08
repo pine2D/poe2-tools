@@ -9,7 +9,12 @@ const manifest = {
   manifest_version: 3,
   version: '0.1.0',
   description: '非官方扩展：为新版 Craft of Exile 的 PoE2 页面提供国服简体术语显示。',
-  permissions: ['storage'],
+  minimum_chrome_version: '116',
+  permissions: ['storage', 'activeTab', 'scripting', 'sidePanel'],
+  content_security_policy: {
+    extension_pages:
+      "script-src 'self'; object-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
+  },
   action: { default_popup: 'popup.html', default_icon: icons },
   content_scripts: [
     {
@@ -53,24 +58,45 @@ it('描述必须以“非官方扩展：”开头', () => {
     expect(() => validateManifest({ ...manifest, description }, '0.1.0')).toThrow('非官方扩展：')
 })
 
-it('弹窗读当前页状态与刷新不加权限：tabs、activeTab、scripting 一律拒绝（第三期）', () => {
+it('权限必须恰为 storage、activeTab、scripting、sidePanel；tabs 与额外权限一律拒绝', () => {
   for (const permissions of [
-    ['storage', 'tabs'],
-    ['storage', 'activeTab'],
-    ['storage', 'scripting'],
-    ['tabs'],
+    ['storage'],
+    ['storage', 'activeTab', 'scripting'],
+    ['storage', 'activeTab', 'scripting', 'sidePanel', 'tabs'],
+    ['storage', 'activeTab', 'scripting', 'sidePanel', 'contextMenus'],
+    ['sidePanel', 'scripting', 'activeTab', 'storage'],
   ])
     expect(() => validateManifest({ ...manifest, permissions }, '0.1.0')).toThrow(
       'Manifest 版本或权限不符合约定',
     )
 })
 
-it('入库 manifest.json 的 permissions 恰为 ["storage"]，没有 host 与可选权限', () => {
+it('入库 manifest.json 的 permissions 恰为四项，没有 host 与可选权限', () => {
   const real = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'))
-  expect(real.permissions).toEqual(['storage'])
+  expect(real.permissions).toEqual(['storage', 'activeTab', 'scripting', 'sidePanel'])
   expect(real.host_permissions).toBeUndefined()
   expect(real.optional_permissions).toBeUndefined()
   expect(real.optional_host_permissions).toBeUndefined()
+})
+
+it('禁止后台、侧边栏全局面板、快捷键与选项页；CSP 与最低版本必须精确', () => {
+  for (const field of [
+    'background',
+    'side_panel',
+    'commands',
+    'options_ui',
+    'options_page',
+    'sandbox',
+    'chrome_url_overrides',
+  ])
+    expect(() => validateManifest({ ...manifest, [field]: {} }, '0.1.0')).toThrow(`不允许 ${field}`)
+  expect(() => validateManifest({ ...manifest, minimum_chrome_version: '120' }, '0.1.0')).toThrow(
+    '最低 Chrome 版本不符合约定',
+  )
+  const loose = { extension_pages: "script-src 'self' 'unsafe-eval'; object-src 'self'" }
+  expect(() => validateManifest({ ...manifest, content_security_policy: loose }, '0.1.0')).toThrow(
+    '扩展页面 CSP 不符合约定',
+  )
 })
 
 it('公开资源恰为词典与注入衬线子集，只对 beta 站开放（扩展 0.4.0）', () => {
