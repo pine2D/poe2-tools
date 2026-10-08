@@ -1,3 +1,5 @@
+export { type CacheKeyParts, cacheKey } from './cache-key'
+export { checkTranslation } from './check'
 export { parseExtractResult, parseGuideDocument } from './document'
 export { createMatcher, type MatchContext, type Matcher } from './matcher'
 export { findModifiers, MODIFIER_ZH } from './modifiers'
