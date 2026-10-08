@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "tier": "manual",
+    "source": "本项目人工整理的攻略常见简称",
+    "reviewedAt": "2026-10-07"
+  },
+  "entries": [
+    { "en": "ES", "note": "Energy Shield，能量护盾" },
+    { "en": "DoT", "note": "Damage over Time，持续伤害" },
+    { "en": "CI", "note": "Chaos Inoculation，异灵之体" },
+    { "en": "MoM", "note": "Mind over Matter，心灵升华" },
+    { "en": "AoE", "note": "Area of Effect，效果范围" }
+  ]
+}

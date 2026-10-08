@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "tier": "manual",
+    "source": "本项目人工审定的攻略术语；中文写法以国服交易站词缀模板（stats.json，primary）为准",
+    "gameVersion": "0.5.5",
+    "reviewedAt": "2026-10-07"
+  },
+  "entries": [
+    { "id": "kw:spirit", "en": "Spirit", "zh": "精魂", "kind": "keyword" },
+    { "id": "kw:energy-shield", "en": "Energy Shield", "zh": "能量护盾", "kind": "keyword" }
+  ]
+}

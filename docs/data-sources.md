@@ -351,6 +351,8 @@ v76 执行范围补充：仅使用本节材料升级至 20 的确定性说明和
 | `data/dict/_overrides/versions.json` | 各服当前内容版本，写入 meta.json 的 gameVersion |
 | `data/dict/_overrides/stat-winners.json` | 同一模板键多条译文时的取舍（模板键 → stat id，按 locale 分节） |
 | `data/fixtures/synthetic/*.build` | 合成语料（覆盖率度量），只含公开的英文词缀模板与基底名 |
+| `data/l10n/guide/terms.zh-CN.json` | 攻略正文术语（机制关键词与制作行话）人工审定表；中文写法以国服交易站词缀模板（primary）为准，一词多译由维护者拍板 |
+| `data/l10n/guide/abbreviations.zh-CN.json` | 攻略常见简称（ES、DoT 等）的人工说明，只用于悬停提示，不替换原文 |
 | `packages/dict-builder/fixtures/*` | 手写的迷你测试数据（非抓取产物）；只含极少量真实名称用于 join 用例，不作为词典来源 |
 | `packages/item-core/src/*test.ts`、`apps/site/src/features/craft/*test.ts` | 自造装备文本测试，验证分组、范围、逆向模板和导出门禁；真实用户样本仅保存在 `data/fixtures/local/`，不入库 |
 | `packages/item-core/src/export.ts` 中的类别标题对照和转接白名单 | 手工适配装备剪贴板标题；白名单来自公开 CoE 界面中的合成法器黑盒验收，2026-09-18 扩展至固定 MIT 目录的23种普通法器、魔法与稀有输入，仅作兼容范围标记，不含第三方 mod 数据或权重；见[转接核对](coe-focus-bridge-research.md) |
@@ -572,6 +574,10 @@ v115 接入采用的规则推导：以原作者单防御／双防御实际产物
 [SaVeQ 制作视频](https://www.youtube.com/watch?v=mA6cjs1frao&t=590s)，上传 2026-06-19，按 gray 作者第一手操作记录登记。人工核对约 10:06–10:50 连续画面：远古肋骨与左旋亵渎预兆生成前缀占位，未揭示时追加两个抗性后缀，随后完成首次三选一。材料名称以可读提示框核对，修正自动字幕的 Ancient Orb；强效搭配完美崇高的层级另结合作者讲解与既有独立规则。没有观察到深渊回响第二组，不能推断其最低等级或巫妖限定。
 
 仅入库自写证据边界与链接，视频、字幕、帧图留在本机临时目录，不复制作者配方、价格、权重或完整装备。无新增抓取适配器、客户端解包或浏览器第三方请求；本次登记不直接授权新操作。实现缺口和验收见 [未揭示亵渎核对](pending-desecration-research.md)。
+
+### 攻略术语表（2026-10-07）
+
+攻略翻译用的 `assets/guide-dictionary.json` 由 `apps/poe2-extension/scripts/build-guide-dictionary.mjs` 在构建扩展时生成：合并已登记的 gems、passives、items（gray，可随 `--no-gray` 整体去掉）、`_overrides` 升华与职业（manual）以及上表两份手工文件，不发网络请求。手工术语表的中文先查 `stats.json`（primary）的模板写法；RePoE 关键词表如需使用，只在起草时用作英文核对，不入库、不分发。
 
 ## 2026-09-16 分类注能器原始画面核对
 
