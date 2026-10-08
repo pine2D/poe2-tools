@@ -5,7 +5,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildGuideDictionary } from '../scripts/build-guide-dictionary.mjs'
 
-async function fixture() {
+async function fixture({ terms } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'guide-dict-'))
   const write = async (file, value) => {
     await mkdir(path.dirname(path.join(root, file)), { recursive: true })
@@ -43,10 +43,13 @@ async function fixture() {
     _meta: {},
     entries: { Ranger: { en: 'Ranger', 'zh-CN': '游侠', 'zh-TW': '遊俠' } },
   })
-  await write('data/l10n/guide/terms.zh-CN.json', {
-    _meta: { tier: 'manual' },
-    entries: [{ id: 'kw:spirit', en: 'Spirit', zh: '精魂', kind: 'keyword' }],
-  })
+  await write(
+    'data/l10n/guide/terms.zh-CN.json',
+    terms ?? {
+      _meta: { tier: 'manual' },
+      entries: [{ id: 'kw:spirit', en: 'Spirit', zh: '精魂', kind: 'keyword' }],
+    },
+  )
   await write('data/l10n/guide/abbreviations.zh-CN.json', {
     _meta: { tier: 'manual' },
     entries: [{ en: 'ES', note: 'Energy Shield，能量护盾' }],
@@ -111,6 +114,36 @@ describe('buildGuideDictionary', () => {
       'class:Ranger',
       'kw:spirit',
     ])
+  })
+
+  it('exclude 名单去掉同名（忽略大小写）的非手工条目，手工条目保留', async () => {
+    const root = await fixture({
+      terms: {
+        _meta: { tier: 'manual' },
+        exclude: ['spirit', 'Contagion'],
+        entries: [{ id: 'kw:spirit', en: 'Spirit', zh: '精魂', kind: 'keyword' }],
+      },
+    })
+    const base = await buildGuideDictionary(await fixture(), path.join(root, 'base.json'))
+    const out = path.join(root, 'out/g.json')
+    const result = await buildGuideDictionary(root, out)
+    const dict = JSON.parse(await readFile(out, 'utf8'))
+    const ids = dict.entries.map((e) => e.id)
+    expect(ids).not.toContain('passive:A')
+    expect(ids).not.toContain('passive:B')
+    expect(ids).not.toContain('gem:SkillGemContagion')
+    expect(ids).toContain('kw:spirit')
+    expect(ids).toContain('base:Amethyst Charm')
+    expect(result.excluded).toBe(3)
+    expect(dict).not.toHaveProperty('excluded')
+    expect(dict.hash).not.toBe(base.hash)
+  })
+
+  it('exclude 不是字符串数组时报错', async () => {
+    const root = await fixture({
+      terms: { _meta: { tier: 'manual' }, exclude: 'Spirit', entries: [] },
+    })
+    await expect(buildGuideDictionary(root, path.join(root, 'g.json'))).rejects.toThrow('排除名单')
   })
 
   it('相同输入两次构建结果逐字节相同', async () => {

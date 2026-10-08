@@ -12,18 +12,30 @@ export interface Matcher {
 }
 
 // 只给名称最后一个词生成规则变体；不规则形式走手工表 aliasesEn。
-function inflect(name: string): string[] {
+// derived 标记 -ed/-d/-ing 这类派生形：小写时常是普通英文词（spirited），手工条目据此降为提示。
+function inflect(name: string): { form: string; derived: boolean }[] {
   const parts = name.trim().split(/\s+/)
   const last = parts.pop()
   if (!last) return []
   const head = parts.length ? `${parts.join(' ')} ` : ''
-  const forms = new Set([last, `${last}s`, `${last}es`, `${last}ed`, `${last}ing`])
-  if (/[^aeiou]y$/i.test(last)) forms.add(`${last.slice(0, -1)}ies`)
-  if (/e$/i.test(last)) {
-    forms.add(`${last}d`)
-    forms.add(`${last.slice(0, -1)}ing`)
+  const forms = new Map<string, boolean>()
+  const add = (f: string, derived: boolean) => {
+    if (!forms.has(f) || !derived) forms.set(f, derived)
   }
-  return [...forms].map((f) => head + f)
+  for (const f of [last, `${last}s`, `${last}es`]) add(f, false)
+  if (/[^aeiou]y$/i.test(last)) add(`${last.slice(0, -1)}ies`, false)
+  add(`${last}ed`, true)
+  add(`${last}ing`, true)
+  if (/e$/i.test(last)) {
+    add(`${last}d`, true)
+    add(`${last.slice(0, -1)}ing`, true)
+  }
+  return [...forms].map(([f, derived]) => ({ form: head + f, derived }))
+}
+
+interface Hit {
+  entry: GuideEntry
+  derived: boolean
 }
 
 const isManual = (e: GuideEntry) =>
@@ -32,19 +44,31 @@ const within = (ranges: readonly Range[] | undefined, start: number, end: number
   !!ranges?.some(([a, b]) => a <= start && end <= b)
 
 export function createMatcher(dict: GuideDictionary): Matcher {
-  const index = new Map<string, GuideEntry[]>()
+  const index = new Map<string, Hit[]>()
   let maxWords = 1
   for (const entry of dict.entries) {
     for (const name of [entry.en, ...(entry.aliasesEn ?? [])]) {
-      for (const form of inflect(name)) {
+      for (const { form, derived } of inflect(name)) {
         const key = normalizeName(form)
         if (!key) continue
         const list = index.get(key)
-        if (!list) index.set(key, [entry])
-        else if (!list.includes(entry)) list.push(entry)
+        const hit = list?.find((h) => h.entry === entry)
+        if (!list) index.set(key, [{ entry, derived }])
+        else if (!hit) list.push({ entry, derived })
+        else if (!derived) hit.derived = false
         maxWords = Math.max(maxWords, key.split(' ').length)
       }
     }
+  }
+
+  // 先按原样查；查不到且末词带所有格 's 时，去掉后缀再查，命中范围不含后缀
+  const lookup = (text: string, start: number, end: number) => {
+    const key = normalizeName(text.slice(start, end))
+    const list = index.get(key)
+    if (list) return { list, end }
+    if (!key.endsWith("'s")) return null
+    const bare = index.get(key.slice(0, -2))
+    return bare ? { list: bare, end: end - 2 } : null
   }
 
   const contiguous = (text: string, ws: readonly Word[], i: number, n: number) => {
@@ -57,13 +81,14 @@ export function createMatcher(dict: GuideDictionary): Matcher {
   }
 
   const resolve = (
-    list: GuideEntry[],
+    hits: Hit[],
     text: string,
     start: number,
     end: number,
     next: Word | undefined,
     ctx?: MatchContext,
   ): TermSpan => {
+    const list = hits.map((h) => h.entry)
     const manual = list.filter(isManual)
     let pool = manual.length ? manual : list
     const support =
@@ -77,7 +102,12 @@ export function createMatcher(dict: GuideDictionary): Matcher {
     const matched = text.slice(start, end)
     let status: TermStatus
     if (zhs.length > 1) status = 'candidates'
-    else if (manual.length) status = 'confirmed'
+    // 手工条目：原形与复数一律确认；派生形（-ed/-d/-ing）只在首字母大写时确认
+    else if (manual.length)
+      status =
+        hits.some((h) => isManual(h.entry) && !h.derived) || /^[A-Z]/.test(matched)
+          ? 'confirmed'
+          : 'hint'
     else if (within(ctx?.entities, start, end) || within(ctx?.emphasis, start, end) || support)
       status = 'confirmed'
     // 多词名称不论大小写都确认；单词型名称句中首字母大写才确认（偏离 spec 记录第 1 条）
@@ -108,9 +138,9 @@ export function createMatcher(dict: GuideDictionary): Matcher {
           if (!contiguous(text, ws, i, n)) continue
           const first = ws[i] as Word
           const last = ws[i + n - 1] as Word
-          const list = index.get(normalizeName(text.slice(first.start, last.end)))
-          if (!list) continue
-          spans.push(resolve(list, text, first.start, last.end, ws[i + n], ctx))
+          const hit = lookup(text, first.start, last.end)
+          if (!hit) continue
+          spans.push(resolve(hit.list, text, first.start, hit.end, ws[i + n], ctx))
           step = n
           break
         }

@@ -87,9 +87,30 @@ describe('createMatcher', () => {
   it('词形变体与手工别名', () => {
     expect(brief('Ignited enemies explode; igniting is key')).toEqual([
       'Ignited:点燃:confirmed',
-      'igniting:点燃:confirmed',
+      'igniting:点燃:hint',
     ])
     expect(brief('Frozen targets shatter')).toEqual(['Frozen:冰冻:confirmed'])
+  })
+  it('手工条目：原形与复数不论大小写都确认，-ed/-d/-ing 形只在首字母大写时确认', () => {
+    expect(brief('stack spirit; more spirits; Spirits')).toEqual([
+      'spirit:精魂:confirmed',
+      'spirits:精魂:confirmed',
+      'Spirits:精魂:confirmed',
+    ])
+    expect(brief('a spirited defence')).toEqual(['spirited:精魂:hint'])
+    expect(brief('freezes and freezing')).toEqual(['freezes:冰冻:confirmed', 'freezing:冰冻:hint'])
+  })
+  it("所有格：去掉 's 再查，命中范围不含后缀", () => {
+    const text = "Contagion's damage and Contagion’s spread"
+    const spans = m.find(text)
+    expect(spans.map((s) => [text.slice(s.start, s.end), s.entryId])).toEqual([
+      ['Contagion', 'gem:Contagion'],
+      ['Contagion', 'gem:Contagion'],
+    ])
+    expect(brief("Essence Drain's duration")).toEqual(['Essence Drain:精华吸取:confirmed'])
+    expect(brief('Take Kelari’s Brutality early')).toEqual([
+      'Kelari’s Brutality:凯拉里的残暴:confirmed',
+    ])
   })
   it('简称只匹配原样大小写的整词', () => {
     expect(m.abbreviations('Stack ES, not es or ESX')).toEqual([

@@ -70,6 +70,15 @@ export async function buildGuideDictionary(root, output, { allowGray = true } = 
       push(`unique:${en}`, en, zh, 'unique', items.tier)
   }
   const terms = await readJson(root, 'data/l10n/guide/terms.zh-CN.json', sources)
+  // 排除名单：人工审定为不该作为名称识别的英文（如与修饰词重叠的天赋名），只去掉非手工条目
+  const exclude = terms.data.exclude ?? []
+  if (!Array.isArray(exclude) || exclude.some((x) => typeof x !== 'string' || !x.trim()))
+    throw new Error('攻略术语排除名单必须是非空字符串数组')
+  const excludedNames = new Set(exclude.map((x) => x.trim().toLowerCase()))
+  const before = entries.length
+  const kept = entries.filter((e) => e.tier === 'manual' || !excludedNames.has(e.en.toLowerCase()))
+  entries.splice(0, entries.length, ...kept)
+  const excluded = before - entries.length
   const ids = new Set(entries.map((e) => e.id))
   for (const t of terms.data.entries) {
     if (!['keyword', 'jargon'].includes(t.kind)) throw new Error(`攻略术语类型无效：${t.id}`)
@@ -99,7 +108,8 @@ export async function buildGuideDictionary(root, output, { allowGray = true } = 
   }
   await mkdir(path.dirname(output), { recursive: true })
   await writeFile(output, `${JSON.stringify(result)}\n`)
-  return result
+  // excluded 只供命令行报告，不写进词典文件
+  return { ...result, excluded }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -110,6 +120,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     allowGray: !process.argv.includes('--no-gray'),
   })
   console.log(
-    `攻略词典：${result.entries.length} 条，${result.abbreviations.length} 条简称，hash ${result.hash}`,
+    `攻略词典：${result.entries.length} 条（手工 ${result.entries.filter((e) => e.tier === 'manual').length}，排除 ${result.excluded}），${result.abbreviations.length} 条简称，hash ${result.hash}`,
   )
 }
