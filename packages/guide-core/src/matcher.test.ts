@@ -29,6 +29,10 @@ const dict: GuideDictionary = {
     e('gem:U', 'Unbreakable', '不摧', 'gem'),
     e('kw:ignite', 'Ignite', '点燃', 'keyword', 'manual'),
     e('kw:freeze', 'Freeze', '冰冻', 'keyword', 'manual', ['Frozen']),
+    e('kw:life', 'Life', '生命', 'keyword', 'manual'),
+    e('kw:slow', 'Slow', '减速', 'keyword', 'manual'),
+    e('kw:energy-shield', 'Energy Shield', '能量护盾', 'keyword', 'manual'),
+    e('jg:exalted-orb', 'Exalted Orb', '崇高石', 'jargon', 'manual', ['exalt']),
   ],
   abbreviations: [{ en: 'ES', note: 'Energy Shield，能量护盾' }],
 }
@@ -85,20 +89,35 @@ describe('createMatcher', () => {
     expect(brief('Link Unbreakable Support here')).toEqual(['Unbreakable:不摧:confirmed'])
   })
   it('词形变体与手工别名', () => {
-    expect(brief('Ignited enemies explode; igniting is key')).toEqual([
+    expect(brief('All Ignited enemies explode; igniting is key')).toEqual([
       'Ignited:点燃:confirmed',
       'igniting:点燃:hint',
     ])
-    expect(brief('Frozen targets shatter')).toEqual(['Frozen:冰冻:confirmed'])
+    expect(brief('Ignited enemies explode')).toEqual(['Ignited:点燃:hint'])
+    expect(brief('Hit Frozen targets')).toEqual(['Frozen:冰冻:confirmed'])
   })
-  it('手工条目：原形与复数不论大小写都确认，-ed/-d/-ing 形只在首字母大写时确认', () => {
-    expect(brief('stack spirit; more spirits; Spirits')).toEqual([
-      'spirit:精魂:confirmed',
-      'spirits:精魂:confirmed',
+  it('单词型手工关键词与非手工单词同一道门槛：句中首字母大写或站点范围内才确认', () => {
+    expect(brief('clear is slow')).toEqual(['slow:减速:hint'])
+    expect(brief('Stack Slow on bosses')).toEqual(['Slow:减速:confirmed'])
+    expect(brief('quality of life')).toEqual(['life:生命:hint'])
+    expect(brief('in essence')).toEqual(['essence:精华:hint'])
+    expect(brief('stack spirit and more Spirits')).toEqual([
+      'spirit:精魂:hint',
       'Spirits:精魂:confirmed',
     ])
+    expect(brief('use slow here', { entities: [[4, 8]] })).toEqual(['slow:减速:confirmed'])
     expect(brief('a spirited defence')).toEqual(['spirited:精魂:hint'])
-    expect(brief('freezes and freezing')).toEqual(['freezes:冰冻:confirmed', 'freezing:冰冻:hint'])
+    expect(brief('freezes and freezing')).toEqual(['freezes:冰冻:hint', 'freezing:冰冻:hint'])
+    // 派生形另需首字母大写：站点范围内的小写派生形仍只作提示
+    expect(brief('use freezing here', { emphasis: [[0, 17]] })).toEqual(['freezing:冰冻:hint'])
+  })
+  it('多词手工关键词与行话：原形不论大小写都确认，派生形只在首字母大写时确认', () => {
+    expect(brief('Energy Shield first. stack energy shield')).toEqual([
+      'Energy Shield:能量护盾:confirmed',
+      'energy shield:能量护盾:confirmed',
+    ])
+    expect(brief('exalt it')).toEqual(['exalt:崇高石:confirmed'])
+    expect(brief('then exalting it')).toEqual(['exalting:崇高石:hint'])
   })
   it("所有格：去掉 's 再查，命中范围不含后缀", () => {
     const text = "Contagion's damage and Contagion’s spread"

@@ -9,6 +9,6 @@
     { "en": "DoT", "note": "Damage over Time，持续伤害" },
     { "en": "CI", "note": "Chaos Inoculation，异灵之体" },
     { "en": "MoM", "note": "Mind over Matter，心灵升华" },
-    { "en": "AoE", "note": "Area of Effect，效果范围" }
+    { "en": "AoE", "note": "Area of Effect，效果区域" }
   ]
 }

@@ -100,19 +100,24 @@ export function createMatcher(dict: GuideDictionary): Matcher {
     const zhs = [...new Set(pool.map((e) => e.zh))]
     const head = pool[0] as GuideEntry
     const matched = text.slice(start, end)
+    const single = !/\s/.test(matched)
+    const caps = /^[A-Z]/.test(matched)
+    // 站点实体、强调范围或后接 Support
+    const marked = within(ctx?.entities, start, end) || within(ctx?.emphasis, start, end) || support
+    const midCaps = caps && !sentenceInitial(text, start)
+    const derivedOnly = !hits.some((h) => isManual(h.entry) && !h.derived)
     let status: TermStatus
     if (zhs.length > 1) status = 'candidates'
-    // 手工条目：原形与复数一律确认；派生形（-ed/-d/-ing）只在首字母大写时确认
-    else if (manual.length)
-      status =
-        hits.some((h) => isManual(h.entry) && !h.derived) || /^[A-Z]/.test(matched)
-          ? 'confirmed'
-          : 'hint'
-    else if (within(ctx?.entities, start, end) || within(ctx?.emphasis, start, end) || support)
-      status = 'confirmed'
+    // 单词型手工关键词与非手工单词同一道门槛；派生形（-ed/-d/-ing）另需首字母大写
+    else if (manual.length && single && manual.every((e) => e.kind === 'keyword'))
+      status = (derivedOnly ? caps && (marked || midCaps) : marked || midCaps)
+        ? 'confirmed'
+        : 'hint'
+    // 多词手工关键词与行话：原形与复数一律确认；派生形只在首字母大写时确认
+    else if (manual.length) status = !derivedOnly || caps ? 'confirmed' : 'hint'
+    else if (marked) status = 'confirmed'
     // 多词名称不论大小写都确认；单词型名称句中首字母大写才确认（偏离 spec 记录第 1 条）
-    else if (/\s/.test(matched) || (/^[A-Z]/.test(matched) && !sentenceInitial(text, start)))
-      status = 'confirmed'
+    else if (!single || midCaps) status = 'confirmed'
     else status = 'hint'
     const span: TermSpan = {
       start,
