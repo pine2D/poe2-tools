@@ -8,6 +8,8 @@
 
 在成熟 PoE2 工具网站中直接使用国服简体中文：页面术语与操作文案可读，中文搜索能驱动原站查询，国服 Ctrl+Alt+C 装备文本可转换后导入。首站为 [CoE 新版介绍](https://beta.craftofexile.com/whats-new)所指的 Beta，实际制作入口为 [PoE2 模式](https://beta.craftofexile.com/?game=poe2)。新版 CoE 与游戏 PoE2 是两个不同维度，不将新版首页默认的 PoE1 当成目标。
 
+0.5.0 起另含攻略翻译：用户在攻略页点扩展图标、再点“翻译此页”后，扩展读取一次当前页正文，在侧边栏逐段显示中英对照，宝石、天赋、物品与机制术语按国服写法标注并约束译文。整段翻译由用户自备翻译服务的 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key；未配置时仍显示原文与术语标注。隐私与权限见[隐私说明](privacy.md)。
+
 用户实测：原站名为“简体中文”的选项实际显示繁体，并有大量英文遗漏。扩展以英文界面为基准，使用独立国服译名，不依赖原站繁体包、不做繁简转换。
 
 本轮核心覆盖与集中验收见[发布准备记录](release-readiness.md)，其中区分实际通过与待验收项。
@@ -28,16 +30,17 @@
 - 首个端到端验证使用法器，但正式首版不能将法器试点当成全部装备导入完成。按页面与文本结构记录覆盖和未支持项。
 - 交付包括扩展包、国服术语资源及来源清单、安装说明、兼容性记录、隐私说明和验收结果。
 - 暂不适配旧版 `www.craftofexile.com`、PoE1、手机浏览器或其他工具站。后续站点复用术语核心，单独写站点适配器。
+- 攻略翻译首版支持 Mobalytics（PoE2 构筑页）、poe2.com 与通用正文提取；只支持桌面 Chrome；不做原页内嵌双语、手机、PoE1。
 - 原制作网站无限期搁置；共用解析／词典的必要修正可以继续，但不能借此重启制作引擎开发。
 
 ## 发版步骤
 
 扩展版本号独立于网站，唯一来源是 `apps/poe2-extension/package.json`（`manifest.json` 须一致，构建时核对）。任何改变扩展产物的改动都会让 `pnpm verify` 的发布闸门失败，必须显式发版。会改变产物的有：
 
-- 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`；
+- 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`、`packages/guide-core`；
 - `packages/item-core`：网站工坊与扩展共用，只为网站改它也会改变扩展 zip；
 - `packages/ui-theme` 中扩展用到的部分：令牌（含尺寸阶梯）、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、注入衬线字体子集 `serif-sc-l1` 及其收字来源（`data/l10n/coe-beta/ui.zh-CN.json` 全部译文、`apps/poe2-extension/src/content/*.ts` 与 `src/provenance.ts` 的中文文案）、完整声明，只为网站改它也会改变扩展 zip。收字来源出现新字时 `packages/ui-theme` 的 coverage.test 会失败：运行 `pnpm ui-theme:fonts --offline` 重新生成（`serif-sc-l1` 超过 131,072 字节时脚本以退出码 4 终止），与扩展版本放进同一提交；
-- 数据：`data/dict/zh-CN/items.json`、`stats.json`、`data/l10n/`、`data/craft/catalog.json`，以及根目录 `LICENSE`；
+- 数据：`data/dict/zh-CN/items.json`、`stats.json`、`gems.json`、`passives.json`、`data/dict/_overrides/ascendancies.json`、`classes.json`、`data/l10n/`（含攻略术语表 `data/l10n/guide/`）、`data/craft/catalog.json`，以及根目录 `LICENSE`；
 - 依赖与 `pnpm-lock.yaml` 升级：Vite、Rolldown 等构建链版本变化会改变 `content.js` 与弹窗资源。
 
 只在 Linux（含 WSL）上发版：CI 在 Linux 上重新打包核对；Windows 原生检出若开启换行转换，数据文件的哈希会写进词典的 sources，产物随之不同。
@@ -50,7 +53,7 @@
 
 ### 下线 gray 来源
 
-`apps/poe2-extension/scripts/build.mjs` 的 `--no-gray` 会去掉所有 gray 来源的词条（poe2db 派生的物品名与石板名），primary 与 manual 来源不受影响。根脚本与 `extension:*` 都不传这个参数，而 `pnpm verify` 与 CI 每次都按扩展 `package.json` 的 `build` 脚本重建，所以一次性带参数构建过不了发布闸门。长期下线：
+`apps/poe2-extension/scripts/build.mjs` 的 `--no-gray` 会去掉所有 gray 来源的词条（poe2db 派生的物品名与石板名，以及攻略词典中的宝石与天赋名（`gems.json`、`passives.json`）），primary 与 manual 来源不受影响。根脚本与 `extension:*` 都不传这个参数，而 `pnpm verify` 与 CI 每次都按扩展 `package.json` 的 `build` 脚本重建，所以一次性带参数构建过不了发布闸门。长期下线：
 
 1. 把 `apps/poe2-extension/package.json` 的 `build` 脚本改为 `node scripts/build.mjs --no-gray`。
 2. 按上面的步骤升补丁版本、在 CHANGELOG 写明去掉了哪些来源、运行 `pnpm extension:release`、`pnpm verify` 后一起提交。

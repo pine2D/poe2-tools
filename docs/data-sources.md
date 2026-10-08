@@ -579,6 +579,8 @@ v115 接入采用的规则推导：以原作者单防御／双防御实际产物
 
 攻略翻译用的 `assets/guide-dictionary.json` 由 `apps/poe2-extension/scripts/build-guide-dictionary.mjs` 在构建扩展时生成：合并已登记的 gems、passives、items（gray，可随 `--no-gray` 整体去掉）、`_overrides` 升华与职业（manual）以及上表两份手工文件，不发网络请求。手工术语表的中文先查 `stats.json`（primary）的模板写法；RePoE 关键词表如需使用，只在起草时用作英文核对，不入库、不分发。
 
+RePoE 两处说法的核对（2026-10-07）：`## primary` 表的 `repoe-fork/poe2` 条目把它列为构建期来源，“2026-09-16 制作步骤清单与权重来源复查”一节则说 RePoE-fork 的客户端导出不符合禁止入库客户端解包产物的约束、未作为新来源接入。两处字面上看似冲突，以下述范围为准：已接入的只有 primary 表列出的 `data/passive_skill_trees/Default.json` 与 `data/skill_gems.json` 两个文件，构建期获取、原始响应只留在不入库的 `data/cache/`，入库词典只用其中的 id 与英文名作键和 poe2db 校验锚点；复查一节的结论针对制作词缀与权重数据，RePoE 不作为制作目录来源，primary 表以外的文件（含关键词表）不接入、不入库、不分发。攻略术语表只把 RePoE 用作起草时的英文核对。
+
 ## 2026-09-16 分类注能器原始画面核对
 
 [Diztoh 0.5 铁匠注能器实操](https://www.youtube.com/watch?v=KRrvAvt7Azo)（2026-06-10）作为 gray 人工机制参考，核对材料身份、单颗消耗、品质变化与腐化同次发生。只记录机制观察，不入库作者装备、完整文本、视频、截图、字幕、价格或概率。另读 [旧 Vaal Infuser Wiki 正文](https://www.poe2wiki.net/wiki/Vaal_Infuser)及其引用，明确旧名称和统计推论不能直接授权当前四分类材料。与 [CoE 更新说明](https://beta.craftofexile.com/changelog)核对品质导入和条件衔接，只读公开文字。没有新增适配器、执行参数或浏览器外站请求；详细范围见 [品质实验审计](quality-infuser-research.md)。
