@@ -119,8 +119,8 @@ data/l10n/
 ## 五、权限、来源与站点边界
 
 - manifest 静态匹配仅 `https://beta.craftofexile.com/*`，默认顶层 frame；运行时再次检查 PoE2，不能仅看 URL 参数，因为切换游戏／本地设置也可能改变上下文。
-- 只请求 `storage`。不申请 `<all_urls>`、cookies、history、webRequest、clipboardRead；用户主动粘贴，无后台剪贴板监听。不为未知将来功能预加权限。
-- 词典随包发布；无远程脚本、云翻译、遥测或词典在线抓取。若通过扩展 URL 读取词典，仅将所需 JSON 声明为针对 Beta 域的 web-accessible resource，不暴露其他文件。
+- 权限恰为 `storage`、`activeTab`、`scripting`、`sidePanel`（`check.mjs` 逐项比对）。CoE 术语转换只用 `storage`；后三项只服务攻略翻译：用户点扩展图标后借 activeTab 临时读取当前标签页正文，并在侧边栏显示译文，不获得常驻网站权限（说明见 `privacy.md`）。不申请 `<all_urls>`、`host_permissions`、cookies、history、webRequest、clipboardRead；用户主动粘贴，无后台剪贴板监听。不为未知将来功能预加权限。
+- 词典随包发布；无远程脚本、遥测或词典在线抓取。CoE 术语转换不联网；只有攻略翻译在用户自行配置服务与 Key 后，由侧边栏把选中的段落发往该服务。若通过扩展 URL 读取词典，仅将所需 JSON 声明为针对 Beta 域的 web-accessible resource，不暴露其他文件。
 - storage.local 只保存开关、显示模式和有界聚合诊断；完整装备、网页全文、私人备注不持久化。诊断只记录可确认的公共界面模板与计数，导出前用户预览。
 - 非英文模式提示切回 English；不静默改用户站点设置。PoE1、旧站或无法确认上下文时不进行游戏术语和输入替换。
 - 游戏数据沿用已登记来源和灰区开关；UI 译文为本项目人工编写，来源标记为 manual。CoE 页面只参考交互，不复制其代码、语言包或权重文件。
