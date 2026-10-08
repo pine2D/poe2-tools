@@ -227,6 +227,19 @@ footer .pt-disclaimer {
   margin-inline-end: var(--sp-1);
 }
 
+.translate {
+  width: 100%;
+  margin-top: var(--sp-2);
+}
+.translate[hidden],
+.guide-notice[hidden] {
+  display: none;
+}
+.guide-notice {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
 ::selection {
   color: var(--selection-fg);
   background: var(--selection-bg);

@@ -1,4 +1,6 @@
 import { platform, type Settings } from '../platform'
+import { setupGuideButton } from './guide-button'
+import { guidePlatform } from './guide-platform'
 import { stateIcon } from './icons'
 import { type PageProbe, watchPage } from './page-query'
 import { type PageView, pageView } from './page-view'
@@ -200,3 +202,16 @@ function readSettings() {
 }
 retry.addEventListener('click', readSettings)
 readSettings()
+
+// 攻略翻译入口独立运行，失败不影响上面的 CoE 状态与设置
+void setupGuideButton(
+  document,
+  {
+    activeTab: () => platform.activeTab(),
+    openGuide: (id) => guidePlatform.openGuide(id),
+    readGuidePrefs: () => guidePlatform.readGuidePrefs(),
+    writeGuidePrefs: (p) => guidePlatform.writeGuidePrefs(p),
+    version: () => platform.version(),
+  },
+  () => window.close(),
+).catch(() => {})

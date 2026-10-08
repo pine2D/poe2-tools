@@ -128,6 +128,8 @@ it('标题栏下第一块是状态块 #page，随后依次是菱结分隔、两�
   expect(main.trimStart().startsWith('<div id="page"')).toBe(true)
   const order = [
     'id="page"',
+    'id="translate"',
+    'id="guide-notice"',
     'class="pt-divider popup-divider"',
     'id="enabled"',
     'id="bilingual"',
@@ -155,8 +157,20 @@ it('状态块是 polite 的 status 区域；唯一动作是默认隐藏的安静
 
 it('同屏金属重点只有标题栏：弹窗里的按钮都是安静按钮', () => {
   const buttons = [...html.matchAll(/<button\b[^>]*class="([^"]*)"/g)].map((m) => m[1])
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(3)
   for (const cls of buttons) expect(cls).toMatch(/\bpt-btn pt-btn--quiet\b/)
+})
+
+it('翻译此页按钮与一次性说明默认隐藏，[hidden] 有 display:none；说明不是标题（0.5.0）', () => {
+  const translate = html.match(/<button[^>]*id="translate"[^>]*>/)?.[0] ?? ''
+  expect(translate).toContain('class="pt-btn pt-btn--quiet translate"')
+  expect(translate).toMatch(/\shidden[\s>]/)
+  expect(html).toMatch(/<p id="guide-notice"[^>]*\shidden[\s>]/)
+  const rules = parseRules(css)
+  for (const selector of ['.translate[hidden]', '.guide-notice[hidden]']) {
+    const rule = rules.find((r) => r.selectors.includes(selector))
+    expect(rule?.declarations.get('display')).toBe('none')
+  }
 })
 
 it('状态图标颜色：生效中 --ok、部分生效 --miss、未生效 --danger、已关闭 --ink-2、读取中 --ink-3（形状另行区分）', () => {

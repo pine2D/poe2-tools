@@ -21,6 +21,8 @@ const query = vi.hoisted(() => ({
   dispose: vi.fn(),
 }))
 vi.mock('../src/platform', () => ({ platform: storage }))
+// 攻略翻译入口（0.5.0）整体换成空实现：入口行为由 guide-button 测试负责，旧用例只测 CoE 状态与设置
+vi.mock('../src/popup/guide-button', () => ({ setupGuideButton: async () => {} }))
 vi.mock('../src/popup/page-query', () => ({ watchPage: query.watchPage }))
 beforeEach(() => {
   query.watchPage.mockImplementation(() => ({
