@@ -137,7 +137,14 @@ export async function streamChat(
     )
 
   if (!(res.headers.get('content-type') ?? '').includes('text/event-stream') || !res.body) {
-    const json = (await res.json()) as Payload
+    let json: Payload
+    try {
+      json = (await res.json()) as Payload
+    } catch {
+      throw opts.signal.aborted
+        ? new EngineError('aborted', '已停止')
+        : new EngineError('network', '响应格式无法解析')
+    }
     const choice = json.choices?.[0]
     const content = choice?.message?.content
     if (typeof content === 'string') opts.onText(content)

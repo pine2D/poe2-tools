@@ -96,6 +96,34 @@ describe('streamChat', () => {
     expect(text).toBe('<t id="a">一</t>')
     expect(r.finishReason).toBe('length')
   })
+  it('非流式响应无法解析或读取时归类为引擎错误', async () => {
+    const bad = vi.fn(
+      async () =>
+        new Response('not json', { status: 200, headers: { 'content-type': 'application/json' } }),
+    )
+    await expect(
+      streamChat(cfg, msgs, {
+        signal: new AbortController().signal,
+        onText: () => {},
+        fetchImpl: bad,
+      }),
+    ).rejects.toMatchObject({ kind: 'network' })
+    const ac = new AbortController()
+    const aborted = vi.fn(async () => {
+      const res = new Response('{}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+      res.json = async () => {
+        ac.abort()
+        throw new DOMException('aborted', 'AbortError')
+      }
+      return res
+    })
+    await expect(
+      streamChat(cfg, msgs, { signal: ac.signal, onText: () => {}, fetchImpl: aborted }),
+    ).rejects.toMatchObject({ kind: 'aborted' })
+  })
   it('网络失败与取消', async () => {
     const fail = vi.fn(async () => {
       throw new TypeError('Failed to fetch')
