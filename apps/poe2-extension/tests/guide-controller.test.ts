@@ -1,7 +1,7 @@
 import type { ChatMessage, GuideDictionary } from '@poe2-tools/guide-core'
 import { describe, expect, it, vi } from 'vitest'
 import { type ControllerDeps, createController, type EngineHandle } from '../src/guide/controller'
-import { EngineError } from '../src/guide/engines/openai'
+import { type ChunkResult, EngineError } from '../src/guide/engines/openai'
 import { DEFAULT_PREFS } from '../src/guide/prefs'
 import { createMemoryStore } from '../src/guide/store/memory'
 import type { ReadingView } from '../src/guide/view-reading'
@@ -56,7 +56,7 @@ function fakeView() {
     setBlockState: vi.fn((id: string, state: string) => calls.push(`S ${id} ${state}`)),
     setStageState: vi.fn(),
     setBanner: vi.fn((kind: string, msg: string) => calls.push(`B ${kind} ${msg}`)),
-    ask: vi.fn(async () => true),
+    ask: vi.fn(async (_message: string, _okLabel: string, _signal?: AbortSignal) => true),
     setUsage: vi.fn(),
     setBusy: vi.fn(),
   }
@@ -64,7 +64,7 @@ function fakeView() {
 }
 
 // 假引擎：按收到的 <s id> 原样回 “译:<原文>”，可注入错误或漏段
-function fakeEngine(opts: { fail?: EngineError; drop?: string } = {}) {
+function fakeEngine(opts: { fail?: EngineError; drop?: string; noUsage?: boolean } = {}) {
   const run = vi.fn(async (messages: readonly ChatMessage[], onText: (d: string) => void) => {
     if (opts.fail) throw opts.fail
     const user = messages[1]?.content ?? ''
@@ -72,7 +72,7 @@ function fakeEngine(opts: { fail?: EngineError; drop?: string } = {}) {
       if (m[1] === opts.drop) continue
       onText(`<t id="${m[1]}">译:${m[2]} 瘟疫</t>`)
     }
-    return { finishReason: 'stop', usage: { prompt: 10, completion: 5 } }
+    return { finishReason: 'stop', usage: opts.noUsage ? null : { prompt: 10, completion: 5 } }
   })
   const handle: EngineHandle = {
     runner: { run },
@@ -82,6 +82,33 @@ function fakeEngine(opts: { fail?: EngineError; drop?: string } = {}) {
     costText: () => '约 ¥0.0001',
   }
   return { run, handle }
+}
+
+// 可控假引擎：每次调用挂起，直到测试手动 release；不理会中止信号，模拟仍在吐字的旧请求
+function gatedEngine() {
+  const calls: { user: string; release(): void }[] = []
+  const run = vi.fn(
+    (messages: readonly ChatMessage[], onText: (d: string) => void) =>
+      new Promise<ChunkResult>((resolve) => {
+        const user = messages[1]?.content ?? ''
+        calls.push({
+          user,
+          release() {
+            for (const m of user.matchAll(/<s id="([^"]+)">([\s\S]*?)<\/s>/g))
+              onText(`<t id="${m[1]}">译:${m[2]} 瘟疫</t>`)
+            resolve({ finishReason: 'stop', usage: { prompt: 10, completion: 5 } })
+          },
+        })
+      }),
+  )
+  const handle: EngineHandle = {
+    runner: { run },
+    provider: 'deepseek',
+    model: 'deepseek-flash',
+    params: 'p',
+    costText: () => '约 ¥0.0001',
+  }
+  return { run, calls, handle }
 }
 
 function deps(over: Partial<ControllerDeps> & { raw?: unknown } = {}) {
@@ -211,5 +238,106 @@ describe('createController', () => {
       expect(run).toHaveBeenCalledTimes(1)
       expect(calls).toContain(`B error ${fail.message}`)
     }
+  })
+  it('切换阶段时旧任务结束不会隐藏新任务的停止按钮', async () => {
+    const { run, calls: engineCalls, handle } = gatedEngine()
+    const { d, view } = deps({ engine: async () => handle })
+    const c = createController(d)
+    const first = c.start()
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
+    const second = c.translateStage('s2')
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
+    engineCalls[0]?.release()
+    await first
+    expect(view.setBusy.mock.calls.at(-1)).toEqual([true])
+    engineCalls[1]?.release()
+    await second
+    expect(view.setBusy.mock.calls.at(-1)).toEqual([false])
+    expect(view.setStageState).toHaveBeenCalledWith('s2', 'done')
+  })
+  it('重新读取后旧任务的译文不会写进新文档，新文档同号段落照常翻译', async () => {
+    const { run, calls: engineCalls, handle } = gatedEngine()
+    const oldDoc = doc([{ id: 'a', kind: 'paragraph', text: 'Old Contagion text one.' }])
+    const newDoc = doc([{ id: 'a', kind: 'paragraph', text: 'New Contagion text two.' }])
+    let reads = 0
+    const { d, view, calls } = deps({
+      engine: async () => handle,
+      extract: async () => (reads++ === 0 ? oldDoc : newDoc),
+    })
+    view.showDocument.mockImplementation(() => calls.push('D'))
+    const c = createController(d)
+    const first = c.start()
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
+    const second = c.start()
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
+    engineCalls[0]?.release()
+    engineCalls[1]?.release()
+    await Promise.all([first, second])
+    const after = calls.slice(calls.lastIndexOf('D'))
+    expect(after.some((x) => x.includes('Old'))).toBe(false)
+    expect(after.some((x) => x.startsWith('T a engine') && x.includes('New'))).toBe(true)
+  })
+  it('等待字数确认时切换阶段：旧确认按取消结束，新阶段照常确认并完成', async () => {
+    const { run, handle } = fakeEngine()
+    const { d, view, calls } = deps({
+      engine: async () => handle,
+      prefs: async () => ({ ...DEFAULT_PREFS, charLimit: 10 }),
+    })
+    const answers: { promise: Promise<boolean>; resolve(v: boolean): void }[] = []
+    view.ask.mockImplementation((_m: string, _l: string, signal?: AbortSignal) => {
+      let resolve: (v: boolean) => void = () => {}
+      const promise = new Promise<boolean>((r) => {
+        resolve = r
+        signal?.addEventListener('abort', () => r(false), { once: true })
+      })
+      answers.push({ promise, resolve })
+      return promise
+    })
+    const c = createController(d)
+    const first = c.start()
+    await vi.waitFor(() => expect(view.ask).toHaveBeenCalledTimes(1))
+    const second = c.translateStage('s2')
+    await expect(answers[0]?.promise).resolves.toBe(false)
+    await vi.waitFor(() => expect(view.ask).toHaveBeenCalledTimes(2))
+    answers[1]?.resolve(true)
+    await Promise.all([first, second])
+    expect(run).toHaveBeenCalledTimes(1)
+    expect(calls.some((x) => x.startsWith('T b engine'))).toBe(true)
+    expect(calls.some((x) => x.startsWith('T a'))).toBe(false)
+    expect(calls.some((x) => x.startsWith('B info'))).toBe(false)
+    expect(view.setStageState).toHaveBeenCalledWith('s2', 'done')
+  })
+  it('缓存读取失败按未命中处理，仍走引擎翻译', async () => {
+    const { run, handle } = fakeEngine()
+    const { d, calls, store } = deps({ engine: async () => handle })
+    vi.spyOn(store, 'getCached').mockRejectedValue(new Error('IndexedDB 不可用'))
+    await createController(d).start()
+    expect(run).toHaveBeenCalledTimes(1)
+    expect(calls.some((x) => x.startsWith('T a engine'))).toBe(true)
+  })
+  it('服务未返回用量时按已收到的译文估算输出 tokens', async () => {
+    const { handle } = fakeEngine({ noUsage: true })
+    const { d, view } = deps({ engine: async () => handle })
+    await createController(d).start()
+    const last = String(view.setUsage.mock.calls.at(-1)?.[0])
+    expect(Number(/本次约 \d+\+(\d+) tokens/.exec(last)?.[1])).toBeGreaterThan(0)
+  })
+  it('词典或设置读取失败时显示错误横幅', async () => {
+    const bad = deps({
+      dictionary: async () => {
+        throw new Error('404')
+      },
+    })
+    await createController(bad.d).start()
+    expect(bad.calls.some((x) => x.startsWith('B error'))).toBe(true)
+    const { handle } = fakeEngine()
+    const badPrefs = deps({
+      engine: async () => handle,
+      prefs: async () => {
+        throw new Error('storage')
+      },
+    })
+    await createController(badPrefs.d).start()
+    expect(badPrefs.calls.some((x) => x.startsWith('B error'))).toBe(true)
   })
 })

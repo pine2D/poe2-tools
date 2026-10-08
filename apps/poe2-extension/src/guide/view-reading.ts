@@ -25,7 +25,8 @@ export interface ReadingView {
   setBlockState(blockId: string, state: BlockState, message?: string): void
   setStageState(stageId: string, state: StageState): void
   setBanner(kind: 'none' | 'setup' | 'error' | 'info', message: string): void
-  ask(message: string, okLabel: string): Promise<boolean>
+  /** signal 中止或被新的确认框取代时按“取消”（false）结束 */
+  ask(message: string, okLabel: string, signal?: AbortSignal): Promise<boolean>
   setUsage(text: string): void
   setBusy(busy: boolean): void
 }
@@ -107,6 +108,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     bannerAction,
   )
   const askBox = el(doc, 'div', { class: 'guide-ask', role: 'alertdialog', hidden: true })
+  let pendingAsk: ((value: boolean) => void) | null = null
   const stagesBar = el(doc, 'nav', {
     class: 'guide-stages',
     'aria-label': '构筑阶段',
@@ -276,13 +278,22 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       bannerText.textContent = message
       bannerAction.hidden = kind !== 'setup'
     },
-    ask(message, okLabel) {
+    ask(message, okLabel, signal) {
+      // 同一时间只有一个确认框：旧的先按取消结束，避免其 Promise 永远挂起
+      pendingAsk?.(false)
+      if (signal?.aborted) return Promise.resolve(false)
       return new Promise<boolean>((resolve) => {
+        const onAbort = () => finish(false)
         const finish = (value: boolean) => {
+          if (pendingAsk !== finish) return
+          pendingAsk = null
+          signal?.removeEventListener('abort', onAbort)
           askBox.hidden = true
           askBox.replaceChildren()
           resolve(value)
         }
+        pendingAsk = finish
+        signal?.addEventListener('abort', onAbort, { once: true })
         const ok = el(doc, 'button', { class: 'pt-btn ask-ok', type: 'button' }, okLabel)
         const cancel = el(
           doc,
