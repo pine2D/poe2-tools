@@ -19,10 +19,17 @@ interface GuideChrome {
 }
 declare const chrome: GuideChrome
 
+// 侧边栏地址 ?tab=<标签页号>：缺失、空串或不是纯数字时返回 null（Number('') 会得到 0）
+export function parseTabId(href: string): number | null {
+  const raw = new URL(href).searchParams.get('tab')
+  if (raw === null || !/^\d+$/.test(raw)) return null
+  const id = Number(raw)
+  return Number.isSafeInteger(id) ? id : null
+}
+
 export const guideChrome = {
   tabId(): number | null {
-    const id = Number(new URL(location.href).searchParams.get('tab'))
-    return Number.isInteger(id) && id >= 0 ? id : null
+    return parseTabId(location.href)
   },
   async readPrefs(): Promise<GuidePrefs> {
     return prefsFrom((await chrome.storage.local.get('guide')).guide)

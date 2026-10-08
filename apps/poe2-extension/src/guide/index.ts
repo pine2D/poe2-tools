@@ -137,6 +137,7 @@ async function boot(root: Element) {
         extraBody: '',
       })
     },
+    onRefresh: () => fillSettings(),
     onClose: () => showReading(),
   })
 
@@ -157,7 +158,8 @@ async function boot(root: Element) {
     settings.root.hidden = true
     reading.root.hidden = false
   }
-  const showSettings = async () => {
+  // 用当前偏好、Key 状态与缓存占用回填设置表单（打开设置、清除数据后都会调用）
+  const fillSettings = async () => {
     settings.fill(
       {
         provider: prefs.provider,
@@ -169,6 +171,9 @@ async function boot(root: Element) {
       !!(await store.getKey()),
       await store.usage(),
     )
+  }
+  const showSettings = async () => {
+    await fillSettings()
     reading.root.hidden = true
     settings.root.hidden = false
   }

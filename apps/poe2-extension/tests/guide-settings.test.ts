@@ -1,6 +1,32 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { parseTabId } from '../src/guide/chrome'
 import { createSettingsView, type SettingsHandlers } from '../src/guide/view-settings'
+
+const handlers = (over: Partial<SettingsHandlers> = {}): SettingsHandlers => ({
+  onSave: vi.fn(async () => null),
+  onSaveLimits: vi.fn(async () => {}),
+  onTest: vi.fn(async () => '连接正常。'),
+  onClearCache: vi.fn(async () => {}),
+  onClearAll: vi.fn(async () => {}),
+  onRefresh: vi.fn(async () => {}),
+  onClose: vi.fn(),
+  ...over,
+})
+const mountSettings = (h: SettingsHandlers, provider: 'deepseek' | 'custom' = 'deepseek') => {
+  const v = createSettingsView(document, h)
+  document.body.append(v.root)
+  v.fill(
+    { provider, baseUrl: '', model: '', extraBody: '' },
+    { charLimit: 20000, cacheLimitMb: 50 },
+    false,
+    0,
+  )
+  return v
+}
+const text = (selector: string) => document.querySelector(selector)?.textContent
+const click = (selector: string) => document.querySelector<HTMLElement>(selector)?.click()
+const message = () => text('.settings-message')
 
 afterEach(() => {
   document.body.textContent = ''
@@ -14,6 +40,7 @@ describe('createSettingsView', () => {
       onTest: vi.fn(),
       onClearCache: vi.fn(),
       onClearAll: vi.fn(),
+      onRefresh: vi.fn(),
       onClose: vi.fn(),
     })
     document.body.append(v.root)
@@ -38,6 +65,7 @@ describe('createSettingsView', () => {
       onTest: vi.fn(),
       onClearCache: vi.fn(),
       onClearAll: vi.fn(),
+      onRefresh: vi.fn(),
       onClose: vi.fn(),
     })
     document.body.append(v.root)
@@ -72,7 +100,107 @@ describe('createSettingsView', () => {
   })
 })
 
+describe('设置页文案（M2）', () => {
+  it('首次使用确认显示目标来源，随地址实时更新，地址无效时注明', () => {
+    mountSettings(handlers(), 'custom')
+    const url = document.querySelector<HTMLInputElement>('input[name="baseUrl"]')
+    const confirmText = () => text('.field-check')
+    expect(confirmText()).toBe('我确认把选中的攻略段落发送到（地址无效）')
+    if (url) url.value = 'https://a.example/v1'
+    url?.dispatchEvent(new Event('input', { bubbles: true }))
+    expect(confirmText()).toBe('我确认把选中的攻略段落发送到 https://a.example')
+    if (url) url.value = 'http://evil.example/v1'
+    url?.dispatchEvent(new Event('input', { bubbles: true }))
+    expect(confirmText()).toBe('我确认把选中的攻略段落发送到（地址无效）')
+  })
+  it('Key 说明与服务商数据用途说明', () => {
+    mountSettings(handlers())
+    expect(text('.key-note')).toBe(
+      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。建议为本扩展单独创建 Key 并设置额度上限。',
+    )
+    expect(text('.provider-note')).toBe(
+      'DeepSeek 的服务条款没有承诺不使用你提交的内容训练模型，请自行评估。',
+    )
+    click('input[value="custom"]')
+    expect(text('.provider-note')).toBe('数据如何使用以所选服务商的条款为准。')
+    click('input[value="deepseek"]')
+    expect(text('.provider-note')).toContain('DeepSeek 的服务条款')
+  })
+})
+
+describe('设置页按钮（S2、S3）', () => {
+  it('清除缓存或全部数据后刷新表单，提示如实列出清掉的内容', async () => {
+    const h = handlers()
+    mountSettings(h)
+    click('.clear-cache')
+    await vi.waitFor(() => expect(message()).toBe('缓存已清除。'))
+    expect(h.onRefresh).toHaveBeenCalledTimes(1)
+    click('.clear-all')
+    await vi.waitFor(() =>
+      expect(message()).toBe(
+        '已清除 Key、译文缓存、自定义接口的地址、模型与额外参数，以及已确认的发送地址。',
+      ),
+    )
+    expect(h.onClearAll).toHaveBeenCalledTimes(1)
+    expect(h.onRefresh).toHaveBeenCalledTimes(2)
+  })
+  it('按钮操作失败时显示“操作失败：原因”', async () => {
+    const boom = () => Promise.reject(new Error('IndexedDB 不可用'))
+    mountSettings(
+      handlers({
+        onTest: vi.fn(boom),
+        onSave: vi.fn(boom),
+        onSaveLimits: vi.fn(boom),
+        onClearCache: vi.fn(boom),
+        onClearAll: vi.fn(boom),
+      }),
+    )
+    for (const selector of ['.test', '.save', '.save-limits', '.clear-cache', '.clear-all']) {
+      const messageNode = document.querySelector('.settings-message')
+      if (messageNode) messageNode.textContent = ''
+      click(selector)
+      await vi.waitFor(() => expect(message()).toBe('操作失败：IndexedDB 不可用'))
+    }
+  })
+})
+
+describe('parseTabId（S1）', () => {
+  it('只接受纯数字的 tab 参数', () => {
+    expect(parseTabId('chrome-extension://x/guide.html?tab=42')).toBe(42)
+    expect(parseTabId('chrome-extension://x/guide.html?tab=0')).toBe(0)
+    for (const href of [
+      'chrome-extension://x/guide.html',
+      'chrome-extension://x/guide.html?tab=',
+      'chrome-extension://x/guide.html?tab=%20',
+      'chrome-extension://x/guide.html?tab=1e3',
+      'chrome-extension://x/guide.html?tab=-1',
+      'chrome-extension://x/guide.html?tab=0x10',
+      'chrome-extension://x/guide.html?tab=1.5',
+      'chrome-extension://x/guide.html?tab=99999999999999999999',
+    ])
+      expect(parseTabId(href)).toBeNull()
+  })
+})
+
 describe('guide.css', () => {
+  it('设置视图与阅读视图同样留边，字段纵排、控件占满宽，标题与边框走令牌', () => {
+    const css = readFileSync('apps/poe2-extension/src/guide/guide.css', 'utf8')
+    const rule = (selector: string) =>
+      new RegExp(
+        `(^|\\n|,\\s*)${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[,{][^}]*}`,
+        'm',
+      ).exec(css)?.[0] ?? ''
+    expect(rule('.guide-settings')).toContain('padding: var(--sp-3)')
+    expect(rule('.guide-settings .field')).toMatch(/flex-direction: column|display: grid/)
+    const control = rule('.guide-settings input:not([type="radio"]):not([type="checkbox"])')
+    expect(control).toContain('width: 100%')
+    expect(control).toContain('box-sizing: border-box')
+    expect(rule('.guide-settings h1')).toContain('font-size: var(--fs-title)')
+    expect(rule('.guide-settings h2')).toContain('font-size: var(--fs-lead)')
+    expect(rule('.guide-settings fieldset')).toContain('border: 1px solid var(--line)')
+    expect(rule('.guide-settings .note')).toContain('font-size: var(--fs-small)')
+    expect(rule('.guide-settings .note')).toContain('color: var(--ink-2)')
+  })
   it('阅读视图根节点带 hidden 时隐藏（打开设置时切换视图）', () => {
     const style = document.createElement('style')
     style.textContent = readFileSync('apps/poe2-extension/src/guide/guide.css', 'utf8')

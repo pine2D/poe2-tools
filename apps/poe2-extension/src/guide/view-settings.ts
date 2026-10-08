@@ -1,6 +1,7 @@
 import type { SettingsValues } from './config'
 import { el } from './dom'
 import type { Provider } from './engines/openai'
+import { originOf } from './store/keys'
 
 export interface Limits {
   charLimit: number
@@ -13,6 +14,8 @@ export interface SettingsHandlers {
   onTest(values: SettingsValues): Promise<string>
   onClearCache(): Promise<void>
   onClearAll(): Promise<void>
+  /** 清除数据后重新读取 Key、占用与偏好并回填表单 */
+  onRefresh(): Promise<void>
   onClose(): void
 }
 
@@ -26,6 +29,15 @@ export interface SettingsView {
   ): void
   setMessage(text: string): void
 }
+
+const PROVIDER_NOTE: Record<Provider, string> = {
+  deepseek: 'DeepSeek 的服务条款没有承诺不使用你提交的内容训练模型，请自行评估。',
+  custom: '数据如何使用以所选服务商的条款为准。',
+}
+
+// 失败原因只取一行短文字，避免把长错误堆进设置页
+const shortReason = (error: unknown) =>
+  (error instanceof Error && error.message.trim() ? error.message.trim() : '未知错误').slice(0, 80)
 
 export function createSettingsView(doc: Document, h: SettingsHandlers): SettingsView {
   const radio = (value: Provider, label: string) =>
@@ -51,6 +63,13 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     placeholder: '可选，例如 {"top_p": 0.9}',
   })
   const confirm = el(doc, 'input', { type: 'checkbox', name: 'confirmOrigin' })
+  const confirmText = el(doc, 'span')
+  // 确认框写明实际发送到的来源，随地址输入实时更新
+  const updateConfirm = () => {
+    const origin = originOf(baseUrl.value.trim())
+    confirmText.textContent = `我确认把选中的攻略段落发送到${origin ? ` ${origin}` : '（地址无效）'}`
+  }
+  baseUrl.addEventListener('input', updateConfirm)
   const customFields = el(
     doc,
     'div',
@@ -58,7 +77,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     field('接口地址（Base URL）', baseUrl),
     field('模型名', model),
     field('额外请求参数（高级）', extra),
-    el(doc, 'label', { class: 'field-check' }, confirm, '我确认把选中的攻略段落发送到这个地址'),
+    el(doc, 'label', { class: 'field-check' }, confirm, confirmText),
   )
   const apiKey = el(doc, 'input', {
     name: 'apiKey',
@@ -67,6 +86,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     spellcheck: 'false',
   })
   const message = el(doc, 'p', { class: 'settings-message', role: 'status' })
+  const providerNote = el(doc, 'p', { class: 'note provider-note' })
   const usage = el(doc, 'p', { class: 'usage' })
   const charLimit = el(doc, 'input', {
     name: 'charLimit',
@@ -87,11 +107,18 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     b.addEventListener('click', on)
     return b
   }
+  // 按钮操作：成功时写结果，失败时写“操作失败：原因”，不留未处理的 Promise
+  const act = (task: () => Promise<string>) => () =>
+    void task().then(
+      (text) => (message.textContent = text),
+      (error: unknown) => (message.textContent = `操作失败：${shortReason(error)}`),
+    )
   const form = el(doc, 'form', { class: 'settings-form' })
   const values = (): SettingsValues => ({
+    // 逐个读 checked 属性，不用 :checked 选择器（happy-dom 会缓存伪类查询结果）
     provider:
-      (form.querySelector<HTMLInputElement>('input[name="provider"]:checked')?.value as Provider) ??
-      'deepseek',
+      ([...form.querySelectorAll<HTMLInputElement>('input[name="provider"]')].find((r) => r.checked)
+        ?.value as Provider) ?? 'deepseek',
     baseUrl: baseUrl.value,
     model: model.value,
     apiKey: apiKey.value,
@@ -106,14 +133,15 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       el(doc, 'legend', {}, '翻译服务'),
       radio('deepseek', 'DeepSeek（默认）'),
       radio('custom', 'OpenAI 兼容自定义接口'),
+      providerNote,
     ),
     customFields,
     field('Key', apiKey),
     el(
       doc,
       'p',
-      { class: 'note' },
-      '扩展不内置任何 Key。建议为本扩展单独创建 Key 并设置额度上限。Key 只保存在本机扩展存储，未加密，网页读不到。',
+      { class: 'note key-note' },
+      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。建议为本扩展单独创建 Key 并设置额度上限。',
     ),
     el(
       doc,
@@ -122,16 +150,16 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       button(
         '测试连接',
         'pt-btn--quiet test',
-        () => void h.onTest(values()).then((t) => (message.textContent = t)),
+        act(() => h.onTest(values())),
       ),
       button(
         '保存',
         'save',
-        () =>
-          void h.onSave(values()).then((error) => {
-            message.textContent = error ?? '已保存。'
-            if (!error) apiKey.value = ''
-          }),
+        act(async () => {
+          const error = await h.onSave(values())
+          if (!error) apiKey.value = ''
+          return error ?? '已保存。'
+        }),
       ),
       button('返回', 'pt-btn--quiet', () => h.onClose()),
     ),
@@ -146,10 +174,10 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       button(
         '保存限额',
         'pt-btn--quiet save-limits',
-        () =>
-          void h
-            .onSaveLimits(Number(charLimit.value), Number(cacheLimit.value))
-            .then(() => (message.textContent = '限额已保存，重新打开侧边栏后缓存上限生效。')),
+        act(async () => {
+          await h.onSaveLimits(Number(charLimit.value), Number(cacheLimit.value))
+          return '限额已保存，重新打开侧边栏后缓存上限生效。'
+        }),
       ),
     ),
     el(doc, 'h2', {}, '本机数据'),
@@ -160,19 +188,30 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       { class: 'settings-actions' },
       button(
         '清除缓存',
-        'pt-btn--quiet',
-        () => void h.onClearCache().then(() => (message.textContent = '缓存已清除。')),
+        'pt-btn--quiet clear-cache',
+        act(async () => {
+          await h.onClearCache()
+          await h.onRefresh()
+          return '缓存已清除。'
+        }),
       ),
       button(
         '清除全部数据（含 Key）',
-        'pt-btn--quiet',
-        () => void h.onClearAll().then(() => (message.textContent = '已清除 Key、缓存与偏好。')),
+        'pt-btn--quiet clear-all',
+        act(async () => {
+          await h.onClearAll()
+          await h.onRefresh()
+          return '已清除 Key、译文缓存、自定义接口的地址、模型与额外参数，以及已确认的发送地址。'
+        }),
       ),
     ),
   )
-  form.addEventListener('change', () => {
-    customFields.hidden = values().provider !== 'custom'
-  })
+  const updateProvider = () => {
+    const provider = values().provider
+    customFields.hidden = provider !== 'custom'
+    providerNote.textContent = PROVIDER_NOTE[provider]
+  }
+  form.addEventListener('change', updateProvider)
   form.addEventListener('submit', (e) => e.preventDefault())
   const root = el(
     doc,
@@ -196,7 +235,8 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       confirm.checked = false
       apiKey.value = ''
       apiKey.placeholder = hasKey ? '已保存，留空表示不修改' : '粘贴你的 Key'
-      customFields.hidden = v.provider !== 'custom'
+      updateProvider()
+      updateConfirm()
       usage.textContent = `译文缓存约 ${Math.ceil(usageBytes / 1024)} KB`
     },
     setMessage(text) {

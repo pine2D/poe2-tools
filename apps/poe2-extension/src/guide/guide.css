@@ -34,7 +34,8 @@ body {
 }
 .guide-actions,
 .block-actions,
-.guide-stages {
+.guide-stages,
+.settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
@@ -129,6 +130,88 @@ abbr:focus-visible::after {
 }
 .guide-footer a {
   color: var(--ink-2);
+}
+/* 设置视图：与阅读视图同样留边；字段标签在上、控件在下，控件占满宽 */
+.guide-settings {
+  padding: var(--sp-3);
+}
+.guide-settings[hidden],
+.guide-settings [hidden] {
+  display: none;
+}
+.guide-settings h1 {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-title);
+  line-height: 1.3;
+  color: var(--title-gold);
+}
+.guide-settings h2 {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-lead);
+  line-height: 1.3;
+  color: var(--ink);
+}
+.settings-form,
+.custom-fields {
+  display: grid;
+  gap: var(--sp-3);
+}
+.guide-settings fieldset {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border: 1px solid var(--line);
+}
+.guide-settings legend {
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.guide-settings .provider,
+.guide-settings .field-check {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  cursor: pointer;
+}
+.guide-settings .field {
+  display: grid;
+  gap: var(--sp-1);
+}
+.guide-settings .field > span {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.guide-settings input:not([type="radio"]):not([type="checkbox"]),
+.guide-settings textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--control-edge);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.guide-settings textarea {
+  resize: vertical;
+}
+.guide-settings input:focus-visible,
+.guide-settings textarea:focus-visible {
+  outline: var(--focus-ring);
+}
+.guide-settings .note,
+.guide-settings .usage,
+.settings-message {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.settings-message:empty {
+  display: none;
 }
 ::selection {
   background: var(--selection-bg);
