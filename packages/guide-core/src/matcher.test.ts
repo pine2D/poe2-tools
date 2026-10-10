@@ -111,6 +111,19 @@ describe('createMatcher', () => {
     // 派生形另需首字母大写：站点范围内的小写派生形仍只作提示
     expect(brief('use freezing here', { emphasis: [[0, 17]] })).toEqual(['freezing:冰冻:hint'])
   })
+  it('专有名词归为手工关键词后同样按大小写确认（Essence）', () => {
+    const mk = createMatcher({
+      ...dict,
+      entries: [
+        e('gem:Essence', 'Essence', '精华', 'gem'),
+        e('kw:essence', 'Essence', '精华', 'keyword', 'manual'),
+      ],
+    })
+    const show = (text: string) =>
+      mk.find(text).map((s) => `${text.slice(s.start, s.end)}:${s.entryId}:${s.status}`)
+    expect(show('in essence, the build scales')).toEqual(['essence:kw:essence:hint'])
+    expect(show('Use an Essence of Haste here')).toEqual(['Essence:kw:essence:confirmed'])
+  })
   it('多词手工关键词与行话：原形不论大小写都确认，派生形只在首字母大写时确认', () => {
     expect(brief('Energy Shield first. stack energy shield')).toEqual([
       'Energy Shield:能量护盾:confirmed',

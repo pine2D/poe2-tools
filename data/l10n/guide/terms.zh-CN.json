@@ -51,7 +51,7 @@
     { "id": "kw:minion", "en": "Minion", "zh": "召唤生物", "kind": "keyword" },
     { "id": "kw:totem", "en": "Totem", "zh": "图腾", "kind": "keyword" },
     { "id": "kw:curse", "en": "Curse", "zh": "诅咒", "kind": "keyword" },
-    { "id": "kw:herald", "en": "Herald", "zh": "捷", "kind": "keyword" },
+    { "id": "kw:herald", "en": "Herald", "zh": "捷技能", "kind": "keyword" },
     { "id": "kw:aura", "en": "Aura", "zh": "光环", "kind": "keyword" },
     { "id": "kw:power-charge", "en": "Power Charge", "zh": "暴击球", "kind": "keyword" },
     { "id": "kw:frenzy-charge", "en": "Frenzy Charge", "zh": "狂怒球", "kind": "keyword" },
@@ -241,25 +241,25 @@
       "aliasesEn": ["alch", "alchemy"]
     },
     {
-      "id": "jg:desecrate",
+      "id": "kw:desecrate",
       "en": "Desecrate",
       "zh": "渎灵",
-      "kind": "jargon",
+      "kind": "keyword",
       "aliasesEn": ["Desecrated", "Desecration"]
     },
-    { "id": "jg:ascendancy", "en": "Ascendancy", "zh": "升华", "kind": "jargon" },
+    { "id": "kw:ascendancy", "en": "Ascendancy", "zh": "升华", "kind": "keyword" },
     {
-      "id": "jg:runecraft",
+      "id": "kw:runecraft",
       "en": "Runecraft",
       "zh": "符文锻造",
-      "kind": "jargon",
+      "kind": "keyword",
       "aliasesEn": ["Runecrafting", "Runecrafted"]
     },
-    { "id": "jg:omen", "en": "Omen", "zh": "预兆", "kind": "jargon" },
-    { "id": "jg:essence", "en": "Essence", "zh": "精华", "kind": "jargon" },
-    { "id": "jg:waystone", "en": "Waystone", "zh": "引路石", "kind": "jargon" },
-    { "id": "jg:tablet", "en": "Tablet", "zh": "石板", "kind": "jargon" },
-    { "id": "jg:stage", "en": "Stage", "zh": "阶段", "kind": "jargon" },
+    { "id": "kw:omen", "en": "Omen", "zh": "预兆", "kind": "keyword" },
+    { "id": "kw:essence", "en": "Essence", "zh": "精华", "kind": "keyword" },
+    { "id": "kw:waystone", "en": "Waystone", "zh": "引路石", "kind": "keyword" },
+    { "id": "kw:tablet", "en": "Tablet", "zh": "石板", "kind": "keyword" },
+    { "id": "kw:stage", "en": "Stage", "zh": "阶段", "kind": "keyword" },
     {
       "id": "jg:league-starter",
       "en": "league starter",
@@ -267,7 +267,6 @@
       "kind": "jargon",
       "aliasesEn": ["league-starter"]
     },
-    { "id": "jg:slam", "en": "slam", "zh": "砸崇高", "kind": "jargon", "aliasesEn": ["slammed"] },
     { "id": "jg:bricked", "en": "bricked", "zh": "做废", "kind": "jargon", "aliasesEn": ["brick"] },
     {
       "id": "jg:divine-orb",
@@ -316,7 +315,7 @@
       "aliasesEn": ["Jeweler's Orb"]
     },
     { "id": "jg:soul-core", "en": "Soul Core", "zh": "灵核", "kind": "jargon" },
-    { "id": "jg:rune", "en": "Rune", "zh": "符文", "kind": "jargon" },
+    { "id": "kw:rune", "en": "Rune", "zh": "符文", "kind": "keyword" },
     {
       "id": "kw:minion-instability",
       "en": "Minion Instability",
