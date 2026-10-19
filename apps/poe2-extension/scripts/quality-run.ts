@@ -14,6 +14,7 @@ import {
 } from '@poe2-tools/guide-core'
 import { redact, streamChat } from '../src/guide/engines/openai'
 import { DEEPSEEK } from '../src/guide/engines/presets'
+import { readSse } from '../src/guide/engines/sse'
 import {
   contextKey,
   digest,
@@ -55,7 +56,45 @@ export function jobsFor(fixture: Fixture, dict: GuideDictionary, mode: Mode, rep
   })
 }
 
-async function main() {
+async function responseMetadata(
+  response: Response,
+): Promise<{ models: string[]; usage: { prompt: number; completion: number } | null }> {
+  const models = new Set<string>()
+  let usage: { prompt: number; completion: number } | null = null
+  const accept = (payload: unknown) => {
+    if (!payload || typeof payload !== 'object') return
+    if ('model' in payload && typeof payload.model === 'string') models.add(payload.model)
+    if (!('usage' in payload) || payload.usage === null) return
+    // 产品引擎会把缺字段归零；预算只能采用原响应明确给出的完整用量。
+    usage = null
+    const raw = payload.usage
+    if (!raw || typeof raw !== 'object') return
+    const prompt = 'prompt_tokens' in raw ? raw.prompt_tokens : undefined
+    const completion = 'completion_tokens' in raw ? raw.completion_tokens : undefined
+    if (
+      typeof prompt === 'number' &&
+      Number.isSafeInteger(prompt) &&
+      prompt >= 0 &&
+      typeof completion === 'number' &&
+      Number.isSafeInteger(completion) &&
+      completion >= 0
+    )
+      usage = { prompt, completion }
+  }
+  if (response.headers.get('content-type')?.includes('text/event-stream') && response.body) {
+    await readSse(response.body, (data) => {
+      if (data === '[DONE]') return
+      try {
+        accept(JSON.parse(data))
+      } catch {
+        // 只采集模型名和完整用量，解析失败时不释放预算预留。
+      }
+    })
+  } else accept(await response.json())
+  return { models: [...models], usage }
+}
+
+export async function runExperiment() {
   const arg = (name: string) =>
     process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3)
   const root = arg('root')
@@ -214,7 +253,7 @@ async function main() {
     const start = Date.now()
     let raw = ''
     let firstContentMs: number | null = null
-    let responseModels: Promise<string[]> = Promise.resolve([])
+    let metadata: ReturnType<typeof responseMetadata> = Promise.resolve({ models: [], usage: null })
     try {
       const result = await streamChat({ ...DEEPSEEK, apiKey, extraBody: params }, job.messages, {
         signal: AbortSignal.timeout(120000),
@@ -224,25 +263,20 @@ async function main() {
         },
         fetchImpl: async (input, init) => {
           const response = await fetch(input, init)
-          responseModels = response
-            .clone()
-            .text()
-            .then((body) => [
-              ...new Set([...body.matchAll(/"model"\s*:\s*"([^"]+)"/g)].map((m) => m[1] ?? '')),
-            ])
-            .catch(() => [])
+          metadata = responseMetadata(response.clone()).catch(() => ({ models: [], usage: null }))
           return response
         },
       })
-      await settleBudget(file('budget.json'), job.key, result.usage, 'complete')
+      const observed = await metadata
+      await settleBudget(file('budget.json'), job.key, observed.usage, 'complete')
       const evaluated = evaluateOutput(job.targets, raw, result.finishReason)
       results.push({
         ...record.jobs[i],
         raw,
         result: evaluated,
-        usage: result.usage,
+        usage: observed.usage,
         finishReason: result.finishReason,
-        responseModels: await responseModels,
+        responseModels: observed.models,
         elapsedMs: Date.now() - start,
         firstContentMs,
       })
@@ -255,7 +289,7 @@ async function main() {
           returned: evaluated.rows.length,
           expected: job.targets.length,
           automaticPass: evaluated.valid,
-          usage: result.usage,
+          usage: observed.usage,
         }),
       )
       if (result.finishReason !== 'stop' || evaluated.missing.length || !evaluated.orderValid) {
@@ -280,7 +314,7 @@ async function main() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((error: unknown) => {
+  runExperiment().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : '实验未完成')
     process.exitCode = 1
   })

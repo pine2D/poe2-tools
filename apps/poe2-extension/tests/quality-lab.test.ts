@@ -1,17 +1,24 @@
+// @vitest-environment node
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createMatcher, prepareBlock } from '@poe2-tools/guide-core'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   contextKey,
+  digest,
   evaluateOutput,
   planUnits,
   requestMessages,
   reserveBudget,
   settleBudget,
 } from '../scripts/quality-lab'
-import { jobsFor } from '../scripts/quality-run'
+import { jobsFor, runExperiment } from '../scripts/quality-run'
+
+vi.mock('node:fs/promises', async (original) => {
+  const actual = await original<typeof import('node:fs/promises')>()
+  return { ...actual, readFile: vi.fn(actual.readFile) }
+})
 
 const matcher = createMatcher({
   schemaVersion: 1,
@@ -153,6 +160,81 @@ describe('固定翻译单元实验', () => {
 })
 
 describe('真实请求预算', () => {
+  it.each([
+    { label: '缺usage', usage: undefined },
+    { label: '空usage', usage: {} },
+    { label: '缺输出用量', usage: { prompt_tokens: 20 } },
+    { label: '缺输入用量', usage: { completion_tokens: 7 } },
+    { label: '完整用量', usage: { prompt_tokens: 20, completion_tokens: 7 }, charged: 27 },
+    { label: '明确零输出', usage: { prompt_tokens: 20, completion_tokens: 0 }, charged: 20 },
+  ])('实际运行器处理 $label 时只按完整证据释放预留', async ({ usage, charged }) => {
+    const file = await budget(2, 20000)
+    const root = join(file, '..')
+    const fixture = JSON.stringify({
+      split: 'development',
+      documents: [
+        {
+          name: 'test',
+          source: 'synthetic',
+          blocks: [{ id: 'a', kind: 'paragraph', text: 'Stop now.' }],
+        },
+      ],
+    })
+    await writeFile(join(root, 'development.json'), fixture)
+    await writeFile(
+      join(root, 'manifest.json'),
+      JSON.stringify({ files: { 'development.json': digest(fixture) } }),
+    )
+    const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
+    vi.mocked(readFile).mockImplementation((...args) => {
+      const path = String(args[0])
+      if (path.endsWith('/keys.env'))
+        return Promise.resolve('DEEPSEEK_API_KEY=synthetic-offline-key')
+      if (path.endsWith('/guide-dictionary.json'))
+        return Promise.resolve(
+          JSON.stringify({
+            schemaVersion: 1,
+            locale: 'zh-CN',
+            hash: 'test',
+            entries: [],
+            abbreviations: [],
+          }),
+        )
+      return actual.readFile(...args)
+    })
+    const previousArgv = process.argv
+    const previousExitCode = process.exitCode
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const fetch = vi.fn(
+      async () =>
+        new Response(
+          `data: ${JSON.stringify({
+            model: 'synthetic',
+            choices: [{ delta: { content: '<t id="a">现在停止。</t>' }, finish_reason: 'stop' }],
+            usage,
+          })}\n\ndata: [DONE]\n\n`,
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+    )
+    vi.stubGlobal('fetch', fetch)
+    process.argv = ['node', 'test', `--root=${root}`, '--mode=a', '--run']
+    try {
+      await runExperiment()
+      expect(fetch).toHaveBeenCalledTimes(1)
+      const entry = JSON.parse(await readFile(file, 'utf8')).entries[0]
+      expect(entry.status).toBe('complete')
+      expect(entry.chargedTokens).toBe(charged ?? entry.upperTokens)
+      expect(entry.usage).toEqual(
+        charged === undefined ? null : { prompt: 20, completion: charged - 20 },
+      )
+    } finally {
+      process.argv = previousArgv
+      process.exitCode = previousExitCode
+      vi.mocked(readFile).mockImplementation(actual.readFile)
+      vi.restoreAllMocks()
+      vi.unstubAllGlobals()
+    }
+  })
   it('发请求前占次数，失败不退还；相同请求不能自动重发', async () => {
     const file = await budget(1)
     await reserveBudget(file, 'development', 'one', 40)
