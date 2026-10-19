@@ -29,9 +29,13 @@ export function findVerbatim(text: string): Range[] {
       found.push([start, start + match[0].length])
     }
   }
-  found.sort((a, b) => a[0] - b[0])
+  return mergeRanges(found)
+}
+
+// 重叠范围合并为同一个占位，避免重复截取、恢复或破坏原文顺序。
+export function mergeRanges(ranges: readonly Range[]): Range[] {
   const merged: Range[] = []
-  for (const r of found) {
+  for (const r of [...ranges].sort((a, b) => a[0] - b[0])) {
     const last = merged[merged.length - 1]
     if (last && r[0] < last[1]) merged[merged.length - 1] = [last[0], Math.max(last[1], r[1])]
     else merged.push(r)

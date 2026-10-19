@@ -22,6 +22,7 @@ const BLOCKS: Readonly<Record<string, BlockKind>> = {
 const BLOCK_SELECTOR = Object.keys(BLOCKS).join(',').toLowerCase()
 const EMPHASIS = new Set(['STRONG', 'B', 'EM', 'A', 'CODE'])
 const MAX_BLOCKS = 5000
+type EntityMarker = (element: Element, text: string) => boolean
 
 export interface BlockSink {
   blocks: GuideBlock[]
@@ -95,9 +96,11 @@ function isBlockLevel(el: Element): boolean {
 function textWithEmphasis(
   nodes: readonly Node[],
   skip: string = SKIP,
-): { text: string; emphasis: Range[] } {
+  entityMarker?: EntityMarker,
+): { text: string; emphasis: Range[]; entities: Range[] } {
   let text = ''
   const emphasis: Range[] = []
+  const entities: Range[] = []
   const gap = () => {
     if (text && !text.endsWith(' ')) text += ' '
   }
@@ -118,10 +121,13 @@ function textWithEmphasis(
     if (block) gap()
     const start = text.length
     for (const n of Array.from(child.childNodes)) visit(n)
-    if (EMPHASIS.has(child.tagName)) {
+    if (EMPHASIS.has(child.tagName) || entityMarker) {
       const lead = text.slice(start).length - text.slice(start).trimStart().length
       const end = text.trimEnd().length
-      if (end > start + lead) emphasis.push([start + lead, end])
+      if (end > start + lead) {
+        if (EMPHASIS.has(child.tagName)) emphasis.push([start + lead, end])
+        if (entityMarker?.(child, text.slice(start + lead, end))) entities.push([start + lead, end])
+      }
     }
     if (block) gap()
   }
@@ -133,6 +139,9 @@ function textWithEmphasis(
     emphasis: emphasis
       .map(([a, b]): Range => [a - lead, b - lead])
       .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
+    entities: entities
+      .map(([a, b]): Range => [a - lead, b - lead])
+      .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
   }
 }
 
@@ -142,7 +151,12 @@ const directText = (nodes: readonly Node[]) =>
     .map((n) => n.nodeValue ?? '')
     .join(' ')
 
-export function collectBlocks(root: Element, sink: BlockSink, extraSkip = ''): void {
+export function collectBlocks(
+  root: Element,
+  sink: BlockSink,
+  extraSkip = '',
+  entityMarker?: EntityMarker,
+): void {
   const skip = extraSkip ? `${SKIP},${extraSkip}` : SKIP
   const nested = (el: Element) => el.querySelector(BLOCK_SELECTOR) !== null
   // 含块级后代的元素：子块之间连续的行内内容（文字与行内元素）单独成块。
@@ -155,8 +169,8 @@ export function collectBlocks(root: Element, sink: BlockSink, extraSkip = ''): v
       for (const node of run) if (node.nodeType === 1) visit(node as Element)
       return
     }
-    const { text, emphasis } = textWithEmphasis(run, skip)
-    sink.add(parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, { emphasis })
+    const { text, emphasis, entities } = textWithEmphasis(run, skip, entityMarker)
+    sink.add(parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, { emphasis, entities })
   }
   const visit = (el: Element) => {
     if (el.matches(skip)) return
@@ -165,14 +179,22 @@ export function collectBlocks(root: Element, sink: BlockSink, extraSkip = ''): v
       if (kind) {
         if (kind === 'verbatim') sink.add('verbatim', (el.textContent ?? '').trim())
         else {
-          const { text, emphasis } = textWithEmphasis(Array.from(el.childNodes), skip)
-          sink.add(kind, text, { emphasis })
+          const { text, emphasis, entities } = textWithEmphasis(
+            Array.from(el.childNodes),
+            skip,
+            entityMarker,
+          )
+          sink.add(kind, text, { emphasis, entities })
         }
         return
       }
       if (el.tagName === 'DIV' && directText(Array.from(el.childNodes)).trim().length >= 40) {
-        const { text, emphasis } = textWithEmphasis(Array.from(el.childNodes), skip)
-        sink.add('paragraph', text, { emphasis })
+        const { text, emphasis, entities } = textWithEmphasis(
+          Array.from(el.childNodes),
+          skip,
+          entityMarker,
+        )
+        sink.add('paragraph', text, { emphasis, entities })
         return
       }
       for (const child of Array.from(el.children)) visit(child)

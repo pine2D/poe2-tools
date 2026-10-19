@@ -2,6 +2,8 @@ import type { TermSpan } from './types'
 
 export interface CacheKeyParts {
   text: string
+  protectedText: string
+  tokens: readonly string[]
   game: 'poe2'
   locale: 'zh-CN'
   dictHash: string
@@ -12,10 +14,12 @@ export interface CacheKeyParts {
   promptVersion: string
 }
 
-// 任何会改变译文的因素都进缓存键：原文、词典版本、本段术语、服务与参数、提示词版本。
+// 原文相同但实体标记不同，也可能改变译文；占位位置与恢复内容一并参与缓存。
 export async function cacheKey(p: CacheKeyParts): Promise<string> {
   const canonical = JSON.stringify([
     p.text.replace(/\s+/g, ' ').trim(),
+    p.protectedText.replace(/\s+/g, ' ').trim(),
+    p.tokens,
     p.game,
     p.locale,
     p.dictHash,

@@ -5,6 +5,8 @@ import type { TermSpan } from './types'
 
 const base: CacheKeyParts = {
   text: 'Cast  Contagion\n',
+  protectedText: 'Cast  Contagion\n',
+  tokens: [],
   game: 'poe2',
   locale: 'zh-CN',
   dictHash: 'abc',
@@ -44,6 +46,35 @@ describe('cacheKey', () => {
     ]
     for (const v of variants) expect(await cacheKey({ ...base, ...v })).not.toBe(k)
   })
+})
+
+it('相同原文的实体保护位置与恢复内容参与缓存键', async () => {
+  const common = { ...base, text: 'Use Unknown Crown or Unknown Crown.', terms: [] }
+  const plain = await cacheKey({ ...common, protectedText: common.text, tokens: [] })
+  const first = await cacheKey({
+    ...common,
+    protectedText: 'Use ⟦0⟧ or Unknown Crown.',
+    tokens: ['Unknown Crown'],
+  })
+  const last = await cacheKey({
+    ...common,
+    protectedText: 'Use Unknown Crown or ⟦0⟧.',
+    tokens: ['Unknown Crown'],
+  })
+  expect(new Set([plain, first, last]).size).toBe(3)
+  expect(
+    await cacheKey({
+      ...common,
+      protectedText: 'Use ⟦0⟧ or Unknown Crown.',
+      tokens: ['Unknown  Crown'],
+    }),
+  ).not.toBe(first)
+})
+
+it('未知实体保护启用后不复用 guide-v6 旧结果', async () => {
+  expect(await cacheKey({ ...base, promptVersion: PROMPT_VERSION })).not.toBe(
+    await cacheKey({ ...base, promptVersion: 'guide-v6' }),
+  )
 })
 
 it('数字保护启用后不读取旧 guide-v5 译文缓存', async () => {

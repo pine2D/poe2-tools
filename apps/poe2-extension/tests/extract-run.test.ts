@@ -1,4 +1,4 @@
-import { parseExtractResult } from '@poe2-tools/guide-core'
+import { createMatcher, parseExtractResult, prepareBlock } from '@poe2-tools/guide-core'
 import { describe, expect, it } from 'vitest'
 import { extractPage } from '../src/extract/run'
 
@@ -53,6 +53,43 @@ describe('extractPage', () => {
     expect(r.ok && r.doc.source.scope).toBe('selection')
     expect(r.ok && r.doc.blocks.map((b) => b.text)).toEqual(['First line.', 'Second line here.'])
     expect(r.ok && r.doc.source.siteId).toBe('poe2com')
+  })
+  it('poe2.com 只将名称一致的专名提示链接标为实体，保留已知词条并保护未知名称', () => {
+    const html = `<article><p>Use
+      <a href="https://poe2db.tw/us/Unknown_Crown" title="Unknown Crown — hover for tooltip, click for poe2db"><b>Unknown</b> Crown</a>
+      and <a href="https://poe2db.tw/us/Contagion" title="Contagion — hover for tooltip, click for poe2db">Contagion</a>.
+      <a href="https://poe2db.tw/us/Other">Read the full guide</a>;
+      <a href="https://poe2db.tw.evil.test/us/X" title="Fake — hover for tooltip, click for poe2db">Fake</a>;
+      <a href="https://poe2db.tw/us/X" title="Other — hover for tooltip, click for poe2db">Mismatch</a>.</p>
+      <p>${'Guide paragraph with enough text. '.repeat(4)}</p></article>`
+    const page = doc(html)
+    const before = page.body.innerHTML
+    const r = extractPage(page, at('www.poe2.com', '/juice-box/x'), '', NOW)
+    expect(page.body.innerHTML).toBe(before)
+    if (!r.ok) throw new Error('取文失败')
+    expect(parseExtractResult(r)).toEqual(r)
+    const b = r.doc.blocks[0]
+    if (!b) throw new Error('缺少正文段落')
+    expect(b.entities?.map(([a, z]) => b.text.slice(a, z))).toEqual(['Unknown Crown', 'Contagion'])
+    const matcher = createMatcher({
+      schemaVersion: 1,
+      locale: 'zh-CN',
+      hash: 'h',
+      entries: [{ id: 'c', en: 'Contagion', zh: '瘟疫', kind: 'gem', tier: 'gray' }],
+      abbreviations: [],
+    })
+    const prepared = prepareBlock(b, matcher)
+    expect(prepared.tokens).toEqual(['Unknown Crown'])
+    expect(prepared.terms.map((t) => t.zh)).toEqual(['瘟疫'])
+    const generic = extractPage(doc(html), at('example.com'), '', NOW)
+    expect(generic.ok && generic.doc.blocks[0]?.entities).toBeUndefined()
+    const selection = extractPage(
+      page,
+      at('www.poe2.com'),
+      'Use Unknown Crown before the next stage.',
+      NOW,
+    )
+    expect(selection.ok && selection.doc.blocks[0]?.entities).toBeUndefined()
   })
   it('Mobalytics 内嵌状态缺失时回退读 DOM', () => {
     const r = extractPage(doc(body), at('mobalytics.gg', '/poe-2/builds/x'), '', NOW)

@@ -191,7 +191,20 @@ export function createMatcher(dict: GuideDictionary): Matcher {
         }
         i += step
       }
-      return spans
+      // 明确实体可按完整名称查表，覆盖逗号、尾撇号等普通连续分词无法跨过的标点。
+      // 已有覆盖整个实体的更长词条保持原匹配；只替换被完整实体包住的零碎命中。
+      for (const [start, end] of ctx?.entities ?? []) {
+        if (spans.some((s) => s.start <= start && end <= s.end)) continue
+        const hit = lookup(text, start, end)
+        if (!hit) continue
+        const exact = resolve(hit.list, text, start, hit.end, undefined, false, ctx)
+        for (let i = spans.length - 1; i >= 0; i--) {
+          const s = spans[i]
+          if (s && s.start < exact.end && exact.start < s.end) spans.splice(i, 1)
+        }
+        spans.push(exact)
+      }
+      return spans.sort((a, b) => a.start - b.start)
     },
     abbreviations(text) {
       const out: AbbrSpan[] = []

@@ -71,7 +71,11 @@ export function checkTranslation(
   const added = (output.match(URL) ?? []).filter((u) => !known.has(u))
   if (added.length) issues.push({ kind: 'url-added', detail: added.join(' ') })
 
-  if (!CJK.test(output) && block.source.trim().split(/\s+/).length >= 3)
+  if (
+    !CJK.test(output) &&
+    block.source.trim().split(/\s+/).length >= 3 &&
+    /[A-Za-z]/.test(block.protectedText.replace(/⟦\d+⟧/g, ''))
+  )
     issues.push({ kind: 'untranslated', detail: '译文没有中文' })
   if (finishReason === 'length') issues.push({ kind: 'truncated', detail: '输出被截断' })
   return issues

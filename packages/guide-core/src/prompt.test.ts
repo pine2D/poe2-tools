@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createMatcher } from './matcher'
 import { prepareBlock } from './prepare'
-import { buildMessages, PROMPT_VERSION, SYSTEM_PROMPT } from './prompt'
+import { buildMessages, SYSTEM_PROMPT } from './prompt'
 import type { GuideDictionary } from './types'
 
 const dict: GuideDictionary = {
@@ -28,7 +28,6 @@ describe('buildMessages', () => {
       ),
     ]
     const [system, user] = buildMessages(blocks, 'D7')
-    expect(PROMPT_VERSION).toBe('guide-v6')
     expect(system).toEqual({ role: 'system', content: SYSTEM_PROMPT })
     expect(user?.role).toBe('user')
     const c = user?.content ?? ''

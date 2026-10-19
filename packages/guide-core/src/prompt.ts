@@ -1,8 +1,7 @@
 import type { PreparedBlock } from './prepare'
 import type { ModifierSpan } from './types'
-import { findVerbatim } from './verbatim'
 
-export const PROMPT_VERSION = 'guide-v6' as const
+export const PROMPT_VERSION = 'guide-v7' as const
 
 export interface ChatMessage {
   role: 'system' | 'user'
@@ -24,23 +23,20 @@ export const SYSTEM_PROMPT = [
 
 // 修饰词是本段中第几个同形词（不计被占位保护的片段，与模型看到的文本一致）。
 // 只给序号、不给原文摘录：分隔符外不得出现任何原文，避免提示词注入。
-function ordinal(source: string, m: ModifierSpan): number {
-  const verbatim = findVerbatim(source)
+function ordinal(block: PreparedBlock, m: ModifierSpan): number {
   let n = 0
-  for (const match of source.matchAll(new RegExp(`\\b${m.word}\\b`, 'gi'))) {
+  for (const match of block.source.matchAll(new RegExp(`\\b${m.word}\\b`, 'gi'))) {
     const start = match.index ?? 0
     if (start > m.start) break
     const end = start + match[0].length
-    if (!verbatim.some(([a, b]) => start < b && a < end)) n += 1
+    if (!block.protectedRanges.some(([a, b]) => start < b && a < end)) n += 1
   }
   return n
 }
 
 // 在已占位的正文中按同形词序号标出词缀义；不改原文与逐字保护内容。
 function markedSource(block: PreparedBlock): string {
-  const labels = new Map(
-    block.modifiers.map((m) => [`${m.word}:${ordinal(block.source, m)}`, m.zh]),
-  )
+  const labels = new Map(block.modifiers.map((m) => [`${m.word}:${ordinal(block, m)}`, m.zh]))
   const seen = new Map<string, number>()
   return block.protectedText.replace(/\b(increased|reduced|more|less)\b/gi, (word) => {
     const key = word.toLowerCase()
@@ -85,7 +81,7 @@ export function buildMessages(chunk: readonly PreparedBlock[], delimiter: string
         : ['- （无）']),
     )
     for (const m of b.modifiers)
-      modifiers.push(`- ${b.id}：第 ${ordinal(b.source, m)} 个“${m.word}” → ${m.zh}`)
+      modifiers.push(`- ${b.id}：第 ${ordinal(b, m)} 个“${m.word}” → ${m.zh}`)
     for (const a of b.abbreviations) abbreviations.add(a.en)
   }
   const lines: string[] = []

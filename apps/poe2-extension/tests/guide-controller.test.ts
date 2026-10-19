@@ -189,6 +189,27 @@ describe('createController', () => {
     await createController(second.d).start()
     expect(run).toHaveBeenCalledTimes(2)
   })
+  it('同一原文新增实体标记后重新请求，重开同一实体版本仍命中缓存', async () => {
+    const { run, handle } = fakeEngine()
+    const text = 'Use Unknown Crown before the next stage.'
+    const b = { id: 'e', kind: 'paragraph', text }
+    const first = deps({ raw: doc([b]), engine: async () => handle })
+    await createController(first.d).start()
+    const second = deps({
+      raw: doc([{ ...b, entities: [[4, 17]] }]),
+      store: first.store,
+      engine: async () => handle,
+    })
+    await createController(second.d).start()
+    expect(run).toHaveBeenCalledTimes(2)
+    expect(run.mock.calls[1]?.[0][1]?.content).toContain(
+      '<s id="e">Use ⟦0⟧ before the next stage.</s>',
+    )
+    expect(second.calls).toContain('T e engine 译:Use Unknown Crown before the next stage. 瘟疫')
+    await createController(second.d).start()
+    expect(run).toHaveBeenCalledTimes(2)
+    expect(second.calls.some((s) => s.startsWith('T e cache'))).toBe(true)
+  })
   it('超过字数上限且用户取消时不发送', async () => {
     const { run, handle } = fakeEngine()
     const { d, view } = deps({

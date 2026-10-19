@@ -3,7 +3,7 @@ import { checkTranslation } from './check'
 import { createMatcher } from './matcher'
 import { chunkBlocks, prepareBlock, sendable } from './prepare'
 import { buildMessages } from './prompt'
-import type { GuideDictionary } from './types'
+import type { GuideDictionary, Range } from './types'
 import { restore } from './verbatim'
 
 const dict: GuideDictionary = {
@@ -14,6 +14,165 @@ const dict: GuideDictionary = {
   abbreviations: [{ en: 'ES', note: 'Energy Shield' }],
 }
 const matcher = createMatcher(dict)
+const entity = (text: string, label: string): Range => [
+  text.indexOf(label),
+  text.indexOf(label) + label.length,
+]
+
+describe('明确标记的未知实体', () => {
+  it('实体完整名称含逗号或尾撇号时仍识别词典译名，不因分词失败误保护', () => {
+    const m = createMatcher({
+      ...dict,
+      entries: [
+        {
+          id: 'k',
+          en: 'Kelari, the Tainted Sands',
+          zh: '凯拉里，污秽沙暴',
+          kind: 'gem',
+          tier: 'gray',
+        },
+        { id: 'b', en: "Brutus' Brain", zh: '布鲁特斯之脑', kind: 'unique', tier: 'gray' },
+      ],
+    })
+    const text = "Use Kelari, the Tainted Sands and Brutus' Brain."
+    const b = prepareBlock(
+      {
+        id: 'e',
+        kind: 'paragraph',
+        text,
+        entities: [entity(text, 'Kelari, the Tainted Sands'), entity(text, "Brutus' Brain")],
+      },
+      m,
+    )
+    expect(b.tokens).toEqual([])
+    expect(b.terms.map((t) => t.zh)).toEqual(['凯拉里，污秽沙暴', '布鲁特斯之脑'])
+  })
+  it('整段的更长命中不能遮住实体自身已收录的名称', () => {
+    const m = createMatcher({
+      ...dict,
+      entries: [
+        { id: 'a', en: 'Energy Shield', zh: '能量护盾', kind: 'keyword', tier: 'manual' },
+        {
+          id: 'b',
+          en: 'Energy Shield Recharge',
+          zh: '能量护盾充能',
+          kind: 'keyword',
+          tier: 'manual',
+        },
+      ],
+    })
+    const text = 'Use Energy Shield recharge.'
+    const b = prepareBlock({ id: 'e', kind: 'paragraph', text, entities: [[4, 17]] }, m)
+    expect(b.tokens).toEqual([])
+    expect(b.terms.map((t) => t.zh)).toEqual(['能量护盾充能'])
+  })
+  it('沿用名称匹配支持的所有格撇号，不将已知词变成未知实体', () => {
+    for (const text of ['Contagionʼs', 'Contagion‘s', 'Contagions’']) {
+      const b = prepareBlock(
+        { id: 'e', kind: 'heading', text, entities: [[0, text.length]] },
+        matcher,
+      )
+      expect(b.tokens).toEqual([])
+      expect(b.terms.map((t) => t.zh)).toEqual(['瘟疫'])
+    }
+  })
+  it('整段只有受保护的专名时不误报未翻译，周围动作原样返回时仍提示', () => {
+    const text = 'Unknown Crown Idol'
+    const b = prepareBlock(
+      { id: 'e', kind: 'heading', text, entities: [[0, text.length]] },
+      matcher,
+    )
+    const restored = restore('⟦0⟧', b.tokens)
+    expect(checkTranslation(b, restored.text, restored, 'stop')).toEqual([])
+    const prose = prepareBlock(
+      { id: 'p', kind: 'paragraph', text: `Use ${text}`, entities: [[4, 4 + text.length]] },
+      matcher,
+    )
+    const untranslated = restore('Use ⟦0⟧', prose.tokens)
+    expect(
+      checkTranslation(prose, untranslated.text, untranslated, 'stop').map((i) => i.kind),
+    ).toEqual(['untranslated'])
+  })
+  it('完整实体未收录时整体保护，不强制翻译其中已知单词或拆开数字', () => {
+    const text = 'Use Contagion Crown 2 and Contagion.'
+    const b = prepareBlock(
+      { id: 'e', kind: 'paragraph', text, entities: [entity(text, 'Contagion Crown 2')] },
+      matcher,
+    )
+    expect(b.source).toBe(text)
+    expect(b.protectedText).toBe('Use ⟦0⟧ and Contagion.')
+    expect(b.tokens).toEqual(['Contagion Crown 2'])
+    expect(b.terms.map((t) => t.start)).toEqual([26])
+    const restored = restore('使用 ⟦0⟧ 和瘟疫。', b.tokens)
+    expect(restored.text).toBe('使用 Contagion Crown 2 和瘟疫。')
+    expect(checkTranslation(b, restored.text, restored, 'stop')).toEqual([])
+    const lost = restore('使用瘟疫。', b.tokens)
+    expect(checkTranslation(b, lost.text, lost, 'stop').some((i) => i.kind === 'placeholder')).toBe(
+      true,
+    )
+  })
+  it('完整已知名称、复数、所有格与同名候选仍交给术语表', () => {
+    const m = createMatcher({
+      ...dict,
+      entries: [
+        ...dict.entries,
+        { id: 'a', en: 'Unbreakable', zh: '坚韧', kind: 'passive', tier: 'gray' },
+        { id: 'b', en: 'Unbreakable', zh: '不摧', kind: 'gem', tier: 'gray' },
+      ],
+    })
+    const text = "Contagions and Contagion's power with Unbreakable."
+    const b = prepareBlock(
+      {
+        id: 'e',
+        kind: 'paragraph',
+        text,
+        entities: ['Contagions', "Contagion's", 'Unbreakable'].map((s) => entity(text, s)),
+      },
+      m,
+    )
+    expect(b.protectedText).toBe(text)
+    expect(b.tokens).toEqual([])
+    expect(b.terms.map((t) => t.status)).toEqual(['confirmed', 'confirmed', 'candidates'])
+  })
+  it('普通文字与强调不提升为需要保护的实体', () => {
+    const text = 'Prepare Unknown Crown before the next stage.'
+    const b = prepareBlock(
+      { id: 'e', kind: 'paragraph', text, emphasis: [entity(text, 'Unknown Crown')] },
+      matcher,
+    )
+    expect(b.protectedText).toBe(text)
+    expect(b.tokens).toEqual([])
+  })
+  it('乱序、重复、嵌套实体与代码范围重叠时只保护一次，原文可完整往返', () => {
+    const text = 'Use `Lost Rune` Crest and ES Idol.'
+    const first = entity(text, '`Lost Rune` Crest')
+    const b = prepareBlock(
+      {
+        id: 'e',
+        kind: 'paragraph',
+        text,
+        entities: [entity(text, 'ES Idol'), first, entity(text, 'Lost Rune'), first],
+      },
+      matcher,
+    )
+    expect(b.protectedText).toBe('Use ⟦0⟧ and ⟦1⟧.')
+    expect(b.tokens).toEqual(['`Lost Rune` Crest', 'ES Idol'])
+    expect(b.abbreviations).toEqual([])
+    expect(restore(b.protectedText, b.tokens)).toEqual({ text, missing: [], duplicated: [] })
+  })
+  it('实体里的修饰词不进入术语规则，后面的同形修饰词仍指向正确位置', () => {
+    const text = 'Use More Life Idol for 10% more damage.'
+    const b = prepareBlock(
+      { id: 'e', kind: 'paragraph', text, entities: [entity(text, 'More Life Idol')] },
+      matcher,
+    )
+    expect(b.tokens).toEqual(['More Life Idol', '10%'])
+    expect(b.modifiers.map((m) => m.start)).toEqual([27])
+    const user = buildMessages([b], 'E')[1]?.content ?? ''
+    expect(user).toContain('Use ⟦0⟧ for ⟦1⟧ <m zh="总增">more</m> damage.')
+    expect(user).toContain('第 1 个“more”')
+  })
+})
 
 describe('prepareBlock', () => {
   it('同时给出术语、修饰词、简称与占位保护后的文本', () => {

@@ -18,6 +18,7 @@ export interface GuideBlock {
   kind: BlockKind
   text: string
   stageId?: string
+  // 站点明确标记的完整实体名称；普通链接、加粗与选区纯文本不能推断为实体。
   entities?: Range[]
   emphasis?: Range[]
 }

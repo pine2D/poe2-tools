@@ -107,6 +107,8 @@ export function createController(deps: ControllerDeps): Controller {
   const keyOf = (b: PreparedBlock, e: EngineHandle) =>
     cacheKey({
       text: b.source,
+      protectedText: b.protectedText,
+      tokens: b.tokens,
       game: 'poe2',
       locale: 'zh-CN',
       dictHash,

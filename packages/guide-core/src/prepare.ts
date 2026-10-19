@@ -1,7 +1,8 @@
 import type { Matcher } from './matcher'
 import { findModifiers } from './modifiers'
+import { normalizeName } from './text'
 import type { AbbrSpan, BlockKind, GuideBlock, ModifierSpan, Range, TermSpan } from './types'
-import { findVerbatim, protect } from './verbatim'
+import { findVerbatim, mergeRanges, protect } from './verbatim'
 
 export interface PreparedBlock {
   id: string
@@ -10,6 +11,7 @@ export interface PreparedBlock {
   source: string
   protectedText: string
   tokens: string[]
+  protectedRanges: Range[]
   terms: TermSpan[]
   modifiers: ModifierSpan[]
   abbreviations: AbbrSpan[]
@@ -28,11 +30,25 @@ const NUMBER = new RegExp(
 )
 
 export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock {
-  const verbatim = findVerbatim(block.text)
   const ctx = { entities: block.entities ?? [], emphasis: block.emphasis ?? [] }
+  const found = matcher.find(block.text, ctx)
+  // 只采信取文器明确标记的实体。完整名称有译名才交给术语表，部分命中不能拆译未知专名。
+  const unknown = ctx.entities.filter(([a, b]) => {
+    const name = block.text.slice(a, b)
+    // 单独查实体，防止正文中的更长命中跨过实体边界而遮住已知名称。
+    return !matcher
+      .find(name, { entities: [[0, name.length]] })
+      .some(
+        (t) =>
+          t.status !== 'hint' &&
+          t.start === 0 &&
+          (t.end === name.length || /^'(?:s)?$/.test(normalizeName(name.slice(t.end)))),
+      )
+  })
+  const verbatim = mergeRanges([...findVerbatim(block.text), ...unknown])
   const keep = <T extends { start: number; end: number }>(spans: T[]) =>
     spans.filter((s) => !overlaps(verbatim, s.start, s.end))
-  const terms = keep(matcher.find(block.text, ctx))
+  const terms = keep(found)
   // 已确认或待选的完整词条仍由术语表翻译；不能把其中数字换掉而破坏名称匹配。
   const named: Range[] = terms.filter((t) => t.status !== 'hint').map((t) => [t.start, t.end])
   const numbers: Range[] = []
@@ -49,6 +65,7 @@ export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock
     source: block.text,
     protectedText: text,
     tokens,
+    protectedRanges: ranges,
     terms,
     modifiers: keep(findModifiers(block.text)),
     abbreviations: keep(matcher.abbreviations(block.text)),
