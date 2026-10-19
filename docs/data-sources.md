@@ -60,6 +60,19 @@
 
 # 数据源登记表
 
+## 2026-10-20 翻译质量封存样本
+
+以下六篇公开攻略沿用 gray 阅读测试边界，仅在用户已批准的质量周期中取文和调用自备服务。原文、网页快照和译文只放本地忽略目录，不入库、不分发、不用于训练；评估译文是否忠于原文，不据此更新游戏制作规则或声明攻略机制正确。登记先于抓取。
+
+- [PoE2 Directory / Ritual City](https://www.poe2.com/juice-box/ritual-city)
+- [PoE2 Directory / Grand Expedition](https://www.poe2.com/juice-box/grand-expedition)
+- [PoE2 Directory / Negative Rarity T16](https://www.poe2.com/juice-box/negative-rarity)
+- [GuyThatDies / Huntress-Ranger Grenades Leveling](https://mobalytics.gg/poe-2/profile/guythatdies/builds/0-4-huntress-ranger-grenades-leveling)
+- [imexile / Lightning Arrow Leveling](https://mobalytics.gg/poe-2/profile/imexile/builds/0-3-imexile-leveling-fubgun-lite)
+- [Fubgun / Lightning Arrow Farmer](https://mobalytics.gg/poe-2/builds/lightning-arrow-farmer-fubgun)
+
+每篇预先按正文顺序选择十段，采样规则与哈希封存；不同页面的实际作者元数据保存在本地快照。此记录不代表已调用服务、通过语义验收或新增运行时站点支持。
+
 ## 专属攻击武器符文（2026-09-17，v108实施前登记）
 
 沿用固定 MIT PoB2 ce566eac45ea8a86477f513c7ee65a1ebe60014e 的 ModRunes.lua、Item.lua、ItemsTab.lua 及数值缩放元数据；新增人工解析依据 [ModParser.lua](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/ce566eac45ea8a86477f513c7ee65a1ebe60014e/src/Modules/ModParser.lua)，SHA-256 c31136162c8987f0b77bc523d63818b5accf4d2ee849224e64b2c9ad82f65d26。仅临时读取代码并自写规则，不新增抓取适配器或来源数据文件。固定解析链将 Vital Flame 第一行映射为无条件 FireMin/Max，由 Item 本地武器计算消费；第二行为 HybridManaAndLifeCost_Life，保持技能费用效果。未运行 PoB 或真机，不把静态源码结论写成客户端实测。
