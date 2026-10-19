@@ -68,6 +68,8 @@ export interface GuideEntry {
   kind: EntryKind
   tier: Tier
   aliasesEn?: string[]
+  // 仅人工审定的 keyword 原形／复数可跳过上下文门槛，派生形仍保守处理。
+  matchWithoutContext?: true
 }
 // 简称俚语
 export interface Abbreviation {

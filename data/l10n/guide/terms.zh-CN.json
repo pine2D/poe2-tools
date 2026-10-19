@@ -8,6 +8,14 @@
   "exclude": ["Reduced Attribute Requirements"],
   "entries": [
     { "id": "kw:life", "en": "Life", "zh": "生命", "kind": "keyword" },
+    { "id": "kw:maximum-life", "en": "Maximum Life", "zh": "生命上限", "kind": "keyword" },
+    { "id": "kw:expedition", "en": "Expedition", "zh": "先祖秘藏", "kind": "keyword" },
+    {
+      "id": "kw:craiceanns-rune-of-warding",
+      "en": "Craiceann's Rune of Warding",
+      "zh": "克林斯昂的守护符文",
+      "kind": "keyword"
+    },
     { "id": "kw:mana", "en": "Mana", "zh": "魔力", "kind": "keyword" },
     { "id": "kw:spirit", "en": "Spirit", "zh": "精魂", "kind": "keyword" },
     { "id": "kw:energy-shield", "en": "Energy Shield", "zh": "能量护盾", "kind": "keyword" },
@@ -257,7 +265,13 @@
     },
     { "id": "kw:omen", "en": "Omen", "zh": "预兆", "kind": "keyword" },
     { "id": "kw:essence", "en": "Essence", "zh": "精华", "kind": "keyword" },
-    { "id": "kw:waystone", "en": "Waystone", "zh": "引路石", "kind": "keyword" },
+    {
+      "id": "kw:waystone",
+      "en": "Waystone",
+      "zh": "引路石",
+      "kind": "keyword",
+      "matchWithoutContext": true
+    },
     { "id": "kw:tablet", "en": "Tablet", "zh": "石板", "kind": "keyword" },
     { "id": "kw:stage", "en": "Stage", "zh": "阶段", "kind": "keyword" },
     {

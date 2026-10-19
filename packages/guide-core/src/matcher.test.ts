@@ -161,3 +161,71 @@ describe('sentenceInitial', () => {
     expect(sentenceInitial(t, t.lastIndexOf('Life'))).toBe(false)
   })
 })
+
+it('仅显式人工例外的原形和复数跳过大小写门槛，不放行派生形或其他常见词', () => {
+  const mk = createMatcher({
+    ...dict,
+    entries: [
+      ...dict.entries,
+      {
+        ...e('kw:waystone', 'Waystone', '引路石', 'keyword', 'manual'),
+        matchWithoutContext: true,
+      },
+    ],
+  })
+  expect(
+    mk.find('a waystone and waystones; waystoned; life and spirit').map((s) => s.status),
+  ).toEqual(['confirmed', 'confirmed', 'hint', 'hint', 'hint'])
+  const untrusted = createMatcher({
+    ...dict,
+    entries: [
+      {
+        ...e('gem:W', 'Waystone', '引路石', 'gem'),
+        matchWithoutContext: true,
+      },
+    ],
+  })
+  expect(untrusted.find('a waystone')[0]?.status).toBe('hint')
+})
+
+describe('未知复合名称中的单词', () => {
+  it('单词后连续两个未收录的大写词不足以确认其是独立术语', () => {
+    expect(brief('Use Frozen Ground Trail here')).toEqual(['Frozen:冰冻:hint'])
+    expect(brief('Use Spirit Amber Crown here')).toEqual(['Spirit:精魂:hint'])
+    expect(brief('Hit Frozen targets')).toEqual(['Frozen:冰冻:confirmed'])
+    expect(brief('Get Spirit Skill now')).toEqual(['Spirit:精魂:confirmed'])
+    expect(brief('Hit Frozen. Ground Trail follows')).toEqual(['Frozen:冰冻:confirmed'])
+  })
+  it('完整词条和精确实体标记可确认，整个未知名称的强调不能证明其中单词', () => {
+    const named = createMatcher({
+      ...dict,
+      entries: [...dict.entries, e('g:full', 'Frozen Ground Trail', '完整名称', 'gem')],
+    })
+    expect(named.find('Use Frozen Ground Trail')[0]).toMatchObject({
+      en: 'Frozen Ground Trail',
+      status: 'confirmed',
+    })
+    expect(brief('Use Frozen Ground Trail', { entities: [[4, 10]] })).toEqual([
+      'Frozen:冰冻:confirmed',
+    ])
+    expect(brief('Use Frozen Ground Trail', { emphasis: [[4, 23]] })).toEqual(['Frozen:冰冻:hint'])
+    expect(brief('Use Frozen Ground Trail', { entities: [[4, 23]] })).toEqual(['Frozen:冰冻:hint'])
+    expect(brief('Use Frozen Energy Shield')).toEqual([
+      'Frozen:冰冻:confirmed',
+      'Energy Shield:能量护盾:confirmed',
+    ])
+  })
+})
+
+it('疑似名称规则不覆盖 Support、人工例外与行话', () => {
+  const mk = createMatcher({
+    ...dict,
+    entries: [
+      ...dict.entries,
+      { ...e('kw:w', 'Waystone', '引路石', 'keyword', 'manual'), matchWithoutContext: true },
+    ],
+  })
+  expect(mk.find('Use Contagion Support Tomorrow')[0]?.status).toBe('confirmed')
+  expect(mk.find('Use Waystone Amber Crown')[0]?.status).toBe('confirmed')
+  expect(mk.find('Then Exalt Amber Crown')[0]?.status).toBe('confirmed')
+})

@@ -1,10 +1,11 @@
-// 从流式输出里逐段取出 <t id="…">…</t>。只接受本块请求过的段号，每个段号只取第一次出现。
+// 只接受本块请求过的段号，每个段号只取第一次出现。
+// 兼容实测的 <s id="…">译文</t>；不接受输入 <s>…</s> 回显或嵌套段落。
 export interface TagSplitter {
   push(text: string): void
   end(): string[]
 }
 
-const TAG = /<t id="([^"]{1,64})">([\s\S]*?)<\/t>/g
+const TAG = /<(?:t|s) id="([^"]{1,64})">((?:(?!<\/?[st]\b)[\s\S])*?)<\/t>/g
 
 export function createTagSplitter(
   expected: readonly string[],

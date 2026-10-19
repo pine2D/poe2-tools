@@ -1,13 +1,15 @@
 // @vitest-environment node
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
-import { validateManifest } from '../scripts/check.mjs'
+import { MANIFEST_KEY, validateManifest } from '../scripts/check.mjs'
 
 const icons = Object.fromEntries([16, 32, 48, 128].map((size) => [size, `icons/icon-${size}.png`]))
 const manifest = {
   icons,
   manifest_version: 3,
   version: '0.1.0',
+  key: MANIFEST_KEY,
   description: '非官方扩展：为新版 Craft of Exile 的 PoE2 页面提供国服简体术语显示。',
   minimum_chrome_version: '116',
   permissions: ['storage', 'activeTab', 'scripting', 'sidePanel'],
@@ -123,4 +125,20 @@ it('仓库 manifest.json 通过同一套检查', async () => {
   const { readFile } = await import('node:fs/promises')
   const real = JSON.parse(await readFile(new URL('../manifest.json', import.meta.url), 'utf8'))
   expect(() => validateManifest(real, real.version)).not.toThrow()
+})
+
+it('扩展身份公钥缺失或被替换时拒绝打包', () => {
+  for (const key of [undefined, 'MIIB-other'])
+    expect(() => validateManifest({ ...manifest, key }, '0.1.0')).toThrow('扩展身份公钥不符合约定')
+})
+
+it('入库公钥推导出的 ID 与商店草稿一致', () => {
+  const real = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'))
+  expect(typeof real.key).toBe('string')
+  const id = createHash('sha256')
+    .update(Buffer.from(real.key, 'base64'))
+    .digest('hex')
+    .slice(0, 32)
+    .replace(/[0-9a-f]/g, (digit) => String.fromCharCode(97 + Number.parseInt(digit, 16)))
+  expect(id).toBe('chcijeghknaadobhcfdbfpdjppfimhkn')
 })

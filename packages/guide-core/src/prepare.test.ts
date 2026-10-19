@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { checkTranslation } from './check'
 import { createMatcher } from './matcher'
 import { chunkBlocks, prepareBlock, sendable } from './prepare'
+import { buildMessages } from './prompt'
 import type { GuideDictionary } from './types'
 
 const dict: GuideDictionary = {
@@ -65,4 +67,30 @@ describe('chunkBlocks', () => {
     const many = Array.from({ length: 12 }, (_, i) => block(`k${i}`, 10))
     expect(chunkBlocks(many).map((c) => c.length)).toEqual([10, 2])
   })
+})
+
+it('未知复合名中的提示词不进入强制术语表，也不产生缺译误报', () => {
+  const matcher = createMatcher({
+    ...dict,
+    entries: [
+      {
+        id: 'kw:freeze',
+        en: 'Freeze',
+        zh: '冻结',
+        kind: 'keyword',
+        tier: 'manual',
+        aliasesEn: ['Frozen'],
+      },
+    ],
+  })
+  const b = prepareBlock(
+    { id: 'n', kind: 'paragraph', text: 'Use Frozen Ground Trail here.' },
+    matcher,
+  )
+  expect(b.source).toBe('Use Frozen Ground Trail here.')
+  expect(b.protectedText).toBe(b.source)
+  expect(buildMessages([b], 'X')[1]?.content).not.toContain('Freeze → 冻结')
+  expect(
+    checkTranslation(b, '这里使用 Frozen Ground Trail。', { missing: [], duplicated: [] }, 'stop'),
+  ).toEqual([])
 })

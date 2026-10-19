@@ -37,12 +37,18 @@ export function checkTranslation(
   const src = multiset(block.source)
   const out = multiset(output)
   const lost = [...src].filter(([n, c]) => (out.get(n) ?? 0) < c).map(([n]) => n)
+  const repeated = [...src].filter(([n, c]) => (out.get(n) ?? 0) > c).map(([n]) => n)
   if (lost.length) {
     issues.push(
       /[万千亿]/.test(output)
         ? { kind: 'number-unit', detail: `数字写法有换算：${lost.join('、')}` }
         : { kind: 'number-mismatch', detail: `译文缺少数字：${lost.join('、')}` },
     )
+  }
+
+  if (!lost.length && repeated.length) {
+    // 只提示原有数字的重复，避免把英文数词改写成阿拉伯数字一概当作新增。
+    issues.push({ kind: 'number-mismatch', detail: `译文重复了原文数字：${repeated.join('、')}` })
   }
 
   const need = new Map<string, number>()
@@ -56,6 +62,10 @@ export function checkTranslation(
       detail: `占位符缺失 ${restored.missing.length} 个、重复 ${restored.duplicated.length} 个`,
     })
   }
+
+  const markerTags = output.match(/<\/?m\b[^>]*>/gi) ?? []
+  if (markerTags.some((tag) => count(output, tag) > count(block.source, tag)))
+    issues.push({ kind: 'placeholder', detail: '译文残留修饰词标记，请核对' })
 
   const known = new Set(block.source.match(URL) ?? [])
   const added = (output.match(URL) ?? []).filter((u) => !known.has(u))

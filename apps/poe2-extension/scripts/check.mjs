@@ -131,6 +131,9 @@ const WEB_ACCESSIBLE_RESOURCES = [
 /** 扩展 0.5.0 起的权限：storage（设置）、activeTab + scripting（点击后读当前页）、sidePanel（攻略翻译） */
 export const PERMISSIONS = ['storage', 'activeTab', 'scripting', 'sidePanel']
 export const MINIMUM_CHROME = '116'
+/** 商店草稿公钥：固定网站 ZIP 与商店版的扩展身份，不是 API Key 或私钥。 */
+export const MANIFEST_KEY =
+  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1+udQ+yQctJG1yVcov3wOXpooi1T7CRamhrl4L1uT7wOf+iZXqU0tPQoH80x5aS7VM2YBFYRIrZn533NS9hXMfo37hKmCgg8/Xz+GEXub2h3FxA4jzkZIw8BD+PCSWpCzLZmxpn40alhkqJjPbhRWChqJ9HOSTS8Ab43FqRgFuIFF50WoL3lbIvAjD8Y9qdeuHKsFJOmmZB5TxB1MNDb2Ri4CcGRsACO62DyYZDEaeLkKJfDpEt1K55IV7CJM91OE5CtPLZw6fyb4f8Bc8u/wsFHtZKbtbCxaHMKKxceZ7wxohuz+GbZh+3xHgBSLiXYYs7HpeCqAbrNU0V3HPg88wIDAQAB'
 /** 只有扩展页面（侧边栏）联网；脚本只能来自扩展自身 */
 export const EXTENSION_CSP = {
   extension_pages:
@@ -165,6 +168,11 @@ export function validateGuideDictionary(dict) {
       !['primary', 'gray', 'manual'].includes(e.tier)
     )
       throw new Error(`攻略词典条目不合法：${e.id}`)
+    if (
+      e.matchWithoutContext !== undefined &&
+      (e.matchWithoutContext !== true || e.kind !== 'keyword' || e.tier !== 'manual')
+    )
+      throw new Error(`攻略术语匹配例外无效：${e.id}`)
     ids.add(e.id)
   }
 }
@@ -236,6 +244,7 @@ export function validateManifest(m, version) {
     throw new Error('扩展入口或公开资源范围发生变化')
   if (m.minimum_chrome_version !== MINIMUM_CHROME) throw new Error('最低 Chrome 版本不符合约定')
   if (!same(m.content_security_policy, EXTENSION_CSP)) throw new Error('扩展页面 CSP 不符合约定')
+  if (m.key !== MANIFEST_KEY) throw new Error('扩展身份公钥不符合约定')
 }
 export async function check(root = fileURLToPath(new URL('../', import.meta.url))) {
   const dist = path.join(root, 'dist')

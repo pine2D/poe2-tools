@@ -84,13 +84,26 @@ export async function buildGuideDictionary(root, output, { allowGray = true } = 
     if (!['keyword', 'jargon'].includes(t.kind)) throw new Error(`攻略术语类型无效：${t.id}`)
     if (ids.has(t.id)) throw new Error(`攻略术语身份重复：${t.id}`)
     ids.add(t.id)
+    if (
+      t.matchWithoutContext !== undefined &&
+      (t.matchWithoutContext !== true || t.kind !== 'keyword')
+    )
+      throw new Error(`攻略术语匹配例外无效：${t.id}`)
     const extra =
       Array.isArray(t.aliasesEn) && t.aliasesEn.length ? { aliasesEn: t.aliasesEn.map(clean) } : {}
     // 手工表不参与“同 en 同 zh 去重”：它要压过 gray 表的同名歧义
     const en = clean(t.en)
     const zh = clean(t.zh)
     if (rejected(en, zh)) throw new Error(`攻略术语无效：${t.id}`)
-    entries.push({ id: t.id, en, zh, kind: t.kind, tier: 'manual', ...extra })
+    entries.push({
+      id: t.id,
+      en,
+      zh,
+      kind: t.kind,
+      tier: 'manual',
+      ...extra,
+      ...(t.matchWithoutContext === true ? { matchWithoutContext: true } : {}),
+    })
   }
   const abbr = await readJson(root, 'data/l10n/guide/abbreviations.zh-CN.json', sources)
   const abbreviations = abbr.data.entries.map((a) => ({ en: clean(a.en), note: clean(a.note) }))

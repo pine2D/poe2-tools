@@ -35,6 +35,7 @@ describe('cacheKey', () => {
     const variants: Partial<CacheKeyParts>[] = [
       { dictHash: 'abd' },
       { terms: [{ ...(base.terms[0] as TermSpan), zh: '传染' }] },
+      { terms: [{ ...(base.terms[0] as TermSpan), status: 'hint' }] },
       { model: 'other' },
       { params: 't0.3' },
       { promptVersion: 'guide-v2' },

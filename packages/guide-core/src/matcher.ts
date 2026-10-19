@@ -86,6 +86,7 @@ export function createMatcher(dict: GuideDictionary): Matcher {
     start: number,
     end: number,
     next: Word | undefined,
+    unknownTitleTail: boolean,
     ctx?: MatchContext,
   ): TermSpan => {
     const list = hits.map((h) => h.entry)
@@ -108,6 +109,16 @@ export function createMatcher(dict: GuideDictionary): Matcher {
     const derivedOnly = !hits.some((h) => isManual(h.entry) && !h.derived)
     let status: TermStatus
     if (zhs.length > 1) status = 'candidates'
+    else if (
+      hits.some(
+        (h) =>
+          h.entry.tier === 'manual' &&
+          h.entry.kind === 'keyword' &&
+          h.entry.matchWithoutContext === true &&
+          !h.derived,
+      )
+    )
+      status = 'confirmed'
     // 单词型手工关键词与非手工单词同一道门槛；派生形（-ed/-d/-ing）另需首字母大写
     else if (manual.length && single && manual.every((e) => e.kind === 'keyword'))
       status = (derivedOnly ? caps && (marked || midCaps) : marked || midCaps)
@@ -119,6 +130,21 @@ export function createMatcher(dict: GuideDictionary): Matcher {
     // 多词名称不论大小写都确认；单词型名称句中首字母大写才确认（偏离 spec 记录第 1 条）
     else if (!single || midCaps) status = 'confirmed'
     else status = 'hint'
+    // 连续两个未收录的大写后续词可能与当前单词构成完整名称；不能仅凭大小写或整段加粗强制译名。
+    // 精确标记当前词、Support 与显式人工例外仍按既有规则确认；行话动词不受此限制。
+    const exactMark = [...(ctx?.entities ?? []), ...(ctx?.emphasis ?? [])].some(
+      ([a, b]) => a === start && b === end,
+    )
+    if (
+      status === 'confirmed' &&
+      single &&
+      caps &&
+      unknownTitleTail &&
+      !exactMark &&
+      !support &&
+      !pool.some((e) => e.kind === 'jargon' || e.matchWithoutContext)
+    )
+      status = 'hint'
     const span: TermSpan = {
       start,
       end,
@@ -145,7 +171,21 @@ export function createMatcher(dict: GuideDictionary): Matcher {
           const last = ws[i + n - 1] as Word
           const hit = lookup(text, first.start, last.end)
           if (!hit) continue
-          spans.push(resolve(hit.list, text, first.start, hit.end, ws[i + n], ctx))
+          const a = ws[i + 1]
+          const b = ws[i + 2]
+          const unknownTitleTail =
+            n === 1 &&
+            !!a &&
+            !!b &&
+            contiguous(text, ws, i, 3) &&
+            /^[A-Z][a-z]/.test(a.text) &&
+            /^[A-Z][a-z]/.test(b.text) &&
+            !lookup(text, a.start, a.end) &&
+            !lookup(text, b.start, b.end) &&
+            !lookup(text, a.start, b.end)
+          spans.push(
+            resolve(hit.list, text, first.start, hit.end, ws[i + n], unknownTitleTail, ctx),
+          )
           step = n
           break
         }

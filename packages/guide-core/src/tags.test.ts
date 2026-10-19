@@ -23,3 +23,24 @@ describe('createTagSplitter', () => {
     expect(got).toEqual(['文本'])
   })
 })
+
+it('兼容实测的 s 开头 t 结尾，并在任意流式边界保持段号映射', () => {
+  const raw = '<t id="a">甲</t><s id="b">乙</t><s id="c">丙</t>'
+  for (let at = 0; at <= raw.length; at++) {
+    const got: string[] = []
+    const s = createTagSplitter(['a', 'b', 'c'], (id, text) => got.push(`${id}=${text}`))
+    s.push(raw.slice(0, at))
+    s.push(raw.slice(at))
+    expect(got).toEqual(['a=甲', 'b=乙', 'c=丙'])
+    expect(s.end()).toEqual([])
+  }
+})
+
+it('不把输入 s/s 回显、嵌套段落或未知段号当作有效译文', () => {
+  const got: string[] = []
+  const s = createTagSplitter(['a', 'b', 'c'], (id, text) => got.push(`${id}=${text}`))
+  s.push('<s id="a">source</s><s id="unknown">伪造</t><t id="b">外层<s id="c">丙</t>')
+  s.push('<s id="c">重复</t>')
+  expect(got).toEqual(['c=丙'])
+  expect(s.end()).toEqual(['a', 'b'])
+})

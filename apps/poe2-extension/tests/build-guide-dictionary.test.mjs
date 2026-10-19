@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildGuideDictionary } from '../scripts/build-guide-dictionary.mjs'
+import { validateGuideDictionary } from '../scripts/check.mjs'
 
 async function fixture({ terms } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'guide-dict-'))
@@ -154,4 +155,29 @@ describe('buildGuideDictionary', () => {
       await readFile(path.join(root, 'b.json'), 'utf8'),
     )
   })
+})
+
+it('人工匹配例外随构建保留并改变词典哈希；无效例外被拒绝', async () => {
+  const entry = { id: 'kw:waystone', en: 'Waystone', zh: '引路石', kind: 'keyword' }
+  const build = async (change) => {
+    const root = await fixture({
+      terms: { _meta: { tier: 'manual' }, entries: [{ ...entry, ...change }] },
+    })
+    const out = path.join(root, 'out/g.json')
+    await buildGuideDictionary(root, out)
+    return JSON.parse(await readFile(out, 'utf8'))
+  }
+  const before = await build({})
+  const after = await build({ matchWithoutContext: true })
+  expect(after.entries.find((e) => e.id === entry.id).matchWithoutContext).toBe(true)
+  expect(after.hash).not.toBe(before.hash)
+  expect(() => validateGuideDictionary(after)).not.toThrow()
+  for (const change of [
+    { matchWithoutContext: 'true' },
+    { matchWithoutContext: true, kind: 'jargon' },
+  ]) {
+    await expect(build(change)).rejects.toThrow('匹配例外')
+  }
+  const invalid = { ...after, entries: [{ ...entry, tier: 'gray', matchWithoutContext: true }] }
+  expect(() => validateGuideDictionary(invalid)).toThrow('匹配例外')
 })
