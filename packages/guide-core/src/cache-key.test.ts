@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { type CacheKeyParts, cacheKey } from './cache-key'
+import { PROMPT_VERSION } from './prompt'
 import type { TermSpan } from './types'
 
 const base: CacheKeyParts = {
@@ -43,4 +44,14 @@ describe('cacheKey', () => {
     ]
     for (const v of variants) expect(await cacheKey({ ...base, ...v })).not.toBe(k)
   })
+})
+
+it('数字保护启用后不读取旧 guide-v5 译文缓存', async () => {
+  const old = await cacheKey({ ...base, text: 'Keep 300,000+ gold.', promptVersion: 'guide-v5' })
+  const current = await cacheKey({
+    ...base,
+    text: 'Keep 300,000+ gold.',
+    promptVersion: PROMPT_VERSION,
+  })
+  expect(current).not.toBe(old)
 })

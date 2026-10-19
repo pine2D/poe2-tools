@@ -2,7 +2,7 @@ import type { PreparedBlock } from './prepare'
 import type { ModifierSpan } from './types'
 import { findVerbatim } from './verbatim'
 
-export const PROMPT_VERSION = 'guide-v5' as const
+export const PROMPT_VERSION = 'guide-v6' as const
 
 export interface ChatMessage {
   role: 'system' | 'user'

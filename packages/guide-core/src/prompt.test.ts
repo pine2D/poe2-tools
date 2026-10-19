@@ -28,7 +28,7 @@ describe('buildMessages', () => {
       ),
     ]
     const [system, user] = buildMessages(blocks, 'D7')
-    expect(PROMPT_VERSION).toBe('guide-v5')
+    expect(PROMPT_VERSION).toBe('guide-v6')
     expect(system).toEqual({ role: 'system', content: SYSTEM_PROMPT })
     expect(user?.role).toBe('user')
     const c = user?.content ?? ''
@@ -38,7 +38,7 @@ describe('buildMessages', () => {
     expect(c).toContain('- b1：第 1 个“more” → 总增')
     expect(c.split('\n')).toContain('简称（保留英文）：ES')
     expect(c).toContain(
-      '<<<D7>>>\n<s id="b1">Cast Contagion for 30% <m zh="总增">more</m> ES.</s>\n<s id="b2">Take Unbreakable. life matters. REGEX: ⟦0⟧</s>\n<<<END-D7>>>',
+      '<<<D7>>>\n<s id="b1">Cast Contagion for ⟦0⟧ <m zh="总增">more</m> ES.</s>\n<s id="b2">Take Unbreakable. life matters. REGEX: ⟦0⟧</s>\n<<<END-D7>>>',
     )
   })
   it('同段术语去重，跨段表各自限定范围', () => {
@@ -81,11 +81,11 @@ it('词缀义在受保护正文中标出具体位置，普通 more 和逐字片�
   )
   const user = buildMessages([b], 'D')[1]?.content ?? ''
   expect(user).toContain(
-    'for more options, then 10% <m zh="总降">less</m> Life and <m zh="总降">Less</m> Maximum Life.',
+    'for more options, then ⟦1⟧ <m zh="总降">less</m> Life and <m zh="总降">Less</m> Maximum Life.',
   )
   expect(user).toContain('Use ⟦0⟧')
   expect(b.protectedText).not.toContain('<m')
-  expect(b.tokens).toEqual(['`20% less Life`'])
+  expect(b.tokens).toEqual(['`20% less Life`', '10%'])
 })
 
 it('术语别名按实际词形入表，保留规范名称和同一译名', () => {
