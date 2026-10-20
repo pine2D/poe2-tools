@@ -2,6 +2,8 @@
 
 扩展面向新版 `https://beta.craftofexile.com/` 的 PoE2、English 模式。并非 CoE 官方扩展，不覆盖旧版 www 站、PoE1 或所有英文段落。
 
+本地 0.6.0 整合候选仍未通过攻略整段语义验收，仅供测试；具体通过与未测范围见[衔接验收](validation-2026-10-20-bridge.md)，不能据此认为网站或商店已有新版。
+
 ## 普通用户安装
 
 0.2.0 起不需要自己构建：按[网站介绍页](https://poe2-tools.pine2d.com/extension/)下载 zip，解压到固定文件夹，在 `chrome://extensions` 打开“开发者模式”，点“加载已解压的扩展程序”选择该文件夹。开发者模式需要一直开着；Chrome 会提示扩展不是来自应用商店。同一个 zip 也在 GitHub Releases（tag `ext-v<版本>`）存档。
