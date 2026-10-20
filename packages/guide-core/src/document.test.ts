@@ -91,3 +91,31 @@ describe('parseExtractResult', () => {
     expect(parseExtractResult(undefined)).toBeNull()
   })
 })
+
+it('验证结构元数据、保护范围与诊断，不接收伪造的跨范围标题引用', () => {
+  const block = {
+    id: 'b1',
+    kind: 'paragraph',
+    text: 'Life code',
+    breaks: [5],
+    verbatim: [[5, 9]],
+    context: { headingIds: ['b0'], listId: 'l1' },
+    truncated: true,
+  }
+  const input = {
+    ...valid,
+    blocks: [valid.blocks[0], block],
+    diagnostics: [{ kind: 'text-truncated', blockId: 'b1' }],
+  }
+  expect(parseGuideDocument(input)).toEqual(input)
+  for (const extra of [
+    { breaks: [99] },
+    { verbatim: [[3, 99]] },
+    { context: { headingIds: ['outside'] } },
+    { context: { column: -1 } },
+  ]) {
+    expect(
+      parseGuideDocument({ ...valid, blocks: [valid.blocks[0], { ...block, ...extra }] }),
+    ).toBeNull()
+  }
+})

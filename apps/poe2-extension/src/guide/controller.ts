@@ -10,9 +10,12 @@ import {
   type GuideDocument,
   PROMPT_VERSION,
   type PreparedBlock,
+  type PreserveReason,
   parseExtractResult,
   prepareBlock,
   restore,
+  routeBlock,
+  type StatResolver,
   sendable,
 } from '@poe2-tools/guide-core'
 import { type ChunkResult, EngineError } from './engines/openai'
@@ -40,7 +43,7 @@ export interface EngineHandle {
 export interface ControllerDeps {
   extract(): Promise<unknown>
   dictionary(): Promise<GuideDictionary>
-  translateLine(line: string): string | null
+  stats: { hash: string; ruleVersion: string; resolve: StatResolver }
   store: GuideStore
   prefs(): Promise<GuidePrefs>
   engine(): Promise<EngineHandle | null>
@@ -60,6 +63,14 @@ const REASONS = {
   poe1: '这是 PoE1 页面，本工具只支持 PoE2。',
   empty: '没有读到正文。可以先选中要翻译的文字，再点扩展图标。',
 } as const
+
+const PRESERVED: Record<PreserveReason, string> = {
+  unmatched: '词典未收录，原样保留',
+  ambiguous: '词缀存在多个译义，原样保留',
+  'source-untranslated': '来源尚未提供中文，原样保留',
+  verbatim: '原样保留',
+  truncated: '提取已截断，原样保留；请缩小选区重新读取',
+}
 
 /** 一次翻译任务：被新任务、停止或重新读取取代时整体中止，之后不再写入任何状态 */
 interface Run {
@@ -162,6 +173,7 @@ export function createController(deps: ControllerDeps): Controller {
     const live = () => !signal.aborted
     view.setBusy(true)
     try {
+      if (!targets.length) return
       let engine: EngineHandle | null
       try {
         engine = await deps.engine()
@@ -365,15 +377,18 @@ export function createController(deps: ControllerDeps): Controller {
       tokens = { prompt: 0, completion: 0 }
       cacheHits = 0
       const matcher = createMatcher(dict)
-      blocks = guide.blocks.map((b) => prepareBlock(b, matcher))
+      blocks = guide.blocks.map((b) => ({
+        ...prepareBlock(b, matcher),
+        route: routeBlock(b, deps.stats.resolve),
+      }))
       const current = guide.stages.find((s) => s.current)?.id ?? null
       view.showDocument(guide, blocks, current)
       for (const b of blocks) {
-        if (b.kind === 'modline') {
-          const zh = deps.translateLine(b.source)
-          if (zh) view.setTranslation(b.id, zh, 'dictionary', [])
-          else view.setBlockState(b.id, 'skipped', '词典未收录，保留原文')
-        } else if (b.kind === 'verbatim') view.setBlockState(b.id, 'skipped', '原样保留')
+        if (b.route?.kind === 'dictionary') {
+          view.setTranslation(b.id, b.route.text, 'dictionary', [])
+          done.add(b.id)
+        } else if (b.route?.kind === 'preserved')
+          view.setBlockState(b.id, 'skipped', PRESERVED[b.route.reason])
       }
       await this.translateStage(current)
     },

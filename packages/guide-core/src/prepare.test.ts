@@ -333,3 +333,11 @@ it('未支持的数字后缀与点分名称不做半截保护', () => {
   expect(b.protectedText).toBe('Deals 1.5x damage; use 10.5ms, A1.5b, 2,500ms and ⟦0⟧.')
   expect(b.tokens).toEqual(['12.5%'])
 })
+
+it('提取器的行内代码保护优先于词典，恢复后空白和数字不变', () => {
+  const text = 'Keep Contagion  +80 unchanged and use Contagion.'
+  const block = prepareBlock({ id: 'code', kind: 'paragraph', text, verbatim: [[5, 19]] }, matcher)
+  expect(block.tokens).toEqual(['Contagion  +80'])
+  expect(block.terms.map((t) => t.start)).toEqual([38])
+  expect(restore(block.protectedText, block.tokens).text).toBe(text)
+})

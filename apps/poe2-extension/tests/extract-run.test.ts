@@ -138,3 +138,57 @@ describe('extractPage', () => {
     ])
   })
 })
+
+it('短正文不被整页 80 字门槛丢弃，截断诊断通过输入校验', () => {
+  const r = extractPage(
+    doc('<main><div>+80 to maximum Life</div></main>'),
+    at('example.com'),
+    '',
+    NOW,
+  )
+  expect(r.ok && r.doc.blocks.map((b) => b.text)).toEqual(['+80 to maximum Life'])
+  const long = extractPage(
+    doc(`<main><p>${'a'.repeat(20010)}</p></main>`),
+    at('example.com'),
+    '',
+    NOW,
+  )
+  expect(parseExtractResult(long)).toEqual(long)
+  expect(long.ok && long.doc.diagnostics).toEqual([{ kind: 'text-truncated', blockId: 'b0' }])
+})
+
+it('DOM 选区只取所选内容并保留实体、BR 与代码；截断的实体不被当作完整名称', () => {
+  const d = document
+  d.body.innerHTML =
+    '<article><p>Outside selection.</p><p id="chosen">Use <a href="https://poe2db.tw/us/Crown" title="Unknown Crown — hover for tooltip, click for poe2db">Unknown Crown</a><br><code>+80 Life</code></p><p>More outside.</p></article>'
+  const before = d.body.innerHTML
+  const range = d.createRange()
+  const chosen = d.getElementById('chosen')
+  if (!chosen) throw Error('missing fixture')
+  range.selectNodeContents(chosen)
+  const r = extractPage(d, at('poe2.com'), range.toString(), NOW, range)
+  if (!r.ok) throw Error('missing selection')
+  expect(r.doc.source.scope).toBe('selection')
+  expect(r.doc.blocks.map((b) => b.text)).toEqual(['Use Unknown Crown +80 Life'])
+  const block = r.doc.blocks[0]
+  if (!block) throw Error('missing block')
+  expect(block.entities?.map(([a, b]) => block.text.slice(a, b))).toEqual(['Unknown Crown'])
+  expect(block.verbatim?.map(([a, b]) => block.text.slice(a, b))).toEqual(['+80 Life'])
+  expect(block.breaks).toHaveLength(1)
+  expect(parseExtractResult(r)).toEqual(r)
+  expect(d.body.innerHTML).toBe(before)
+  const anchorText = chosen.querySelector('a')?.firstChild
+  if (!anchorText) throw Error('missing anchor')
+  range.setStart(anchorText, 8)
+  range.setEnd(anchorText, 13)
+  expect(range.toString()).toBe('Crown')
+  const partial = extractPage(d, at('poe2.com'), range.toString(), NOW, range)
+  expect(partial.ok && partial.doc.blocks[0]?.text).toBe('Crown')
+  expect(partial.ok && partial.doc.blocks[0]?.entities).toBeUndefined()
+})
+
+it('单字符选区也不扩大为全文', () => {
+  const r = extractPage(doc(body), at('example.com'), 'A', NOW)
+  expect(r.ok && r.doc.source.scope).toBe('selection')
+  expect(r.ok && r.doc.blocks.map((b) => b.text)).toEqual(['A'])
+})

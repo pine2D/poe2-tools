@@ -1,5 +1,6 @@
 import type { Matcher } from './matcher'
 import { findModifiers } from './modifiers'
+import type { BlockRoute } from './route'
 import { normalizeName } from './text'
 import type { AbbrSpan, BlockKind, GuideBlock, ModifierSpan, Range, TermSpan } from './types'
 import { findVerbatim, mergeRanges, protect } from './verbatim'
@@ -15,6 +16,7 @@ export interface PreparedBlock {
   terms: TermSpan[]
   modifiers: ModifierSpan[]
   abbreviations: AbbrSpan[]
+  route?: BlockRoute
 }
 
 const overlaps = (ranges: readonly Range[], start: number, end: number) =>
@@ -45,7 +47,7 @@ export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock
           (t.end === name.length || /^'(?:s)?$/.test(normalizeName(name.slice(t.end)))),
       )
   })
-  const verbatim = mergeRanges([...findVerbatim(block.text), ...unknown])
+  const verbatim = mergeRanges([...findVerbatim(block.text), ...unknown, ...(block.verbatim ?? [])])
   const keep = <T extends { start: number; end: number }>(spans: T[]) =>
     spans.filter((s) => !overlaps(verbatim, s.start, s.end))
   const terms = keep(found)
@@ -74,7 +76,8 @@ export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock
   return out
 }
 
-export const sendable = (b: PreparedBlock) => b.kind !== 'modline' && b.kind !== 'verbatim'
+export const sendable = (b: PreparedBlock) =>
+  b.route ? b.route.kind === 'narrative' : b.kind !== 'modline' && b.kind !== 'verbatim'
 
 export interface ChunkLimits {
   maxBlocks: number

@@ -1,4 +1,4 @@
-import type { GuideBlock, GuideStage, Range } from '@poe2-tools/guide-core'
+import type { ExtractionDiagnostic, GuideBlock, GuideStage, Range } from '@poe2-tools/guide-core'
 import { createSink } from '../blocks'
 
 type Json = unknown
@@ -170,6 +170,7 @@ export function documentSlug(pathname: string): string {
 export function extractMobalytics(
   doc: Document,
   pathname: string,
+  diagnostics: ExtractionDiagnostic[] = [],
 ): { stages: GuideStage[]; blocks: GuideBlock[] } | null {
   const slug = documentSlug(pathname)
   if (!slug) return null
@@ -236,7 +237,7 @@ export function extractMobalytics(
   const current = stages.find((s) => selected.includes(s.id)) ?? stages[0]
   if (current) current.current = true
 
-  const sink = createSink()
+  const sink = createSink(diagnostics)
   const emitters = new Map<string, ReturnType<typeof makeEmitter>>()
   const emitter = (stageId?: string) => {
     const key = stageId ?? ''

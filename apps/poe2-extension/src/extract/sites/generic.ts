@@ -1,4 +1,4 @@
-import type { GuideBlock } from '@poe2-tools/guide-core'
+import type { ExtractionDiagnostic, GuideBlock } from '@poe2-tools/guide-core'
 import { collectBlocks, createSink } from '../blocks'
 
 const DEFAULT_ROOTS = ['article', 'main', '[role="main"]', '#content', '.content']
@@ -19,8 +19,12 @@ export function pickRoot(doc: Document, preferred: readonly string[] = DEFAULT_R
   return best ?? doc.body
 }
 
-export function extractGeneric(doc: Document): GuideBlock[] {
-  const sink = createSink()
-  collectBlocks(pickRoot(doc), sink)
+export function extractGeneric(
+  doc: Document,
+  diagnostics: ExtractionDiagnostic[] = [],
+): GuideBlock[] {
+  const sink = createSink(diagnostics)
+  const root = pickRoot(doc)
+  collectBlocks(root, sink, '', undefined, root !== doc.body)
   return sink.blocks
 }

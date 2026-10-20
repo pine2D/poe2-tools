@@ -182,6 +182,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           ? '通用提取，仅支持 PoE2 术语'
           : '',
         guide.source.fallback ? fallbackNote(guide.source.siteId) : '',
+        guide.diagnostics?.length ? '提取达到长度或段数上限，部分内容未完整读取；请缩小选区' : '',
       ].filter(Boolean)
       site.textContent = [new URL(guide.source.url).hostname, ...notes].join(' · ')
       scope.hidden = guide.source.scope !== 'selection'

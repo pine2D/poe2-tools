@@ -12,6 +12,19 @@ export type BlockKind =
   | 'verbatim'
 // 半开区间 [start, end)
 export type Range = readonly [number, number]
+export interface BlockContextRef {
+  headingLevel?: number
+  headingIds?: string[]
+  listId?: string
+  tableId?: string
+  rowId?: string
+  column?: number
+  header?: boolean
+}
+export interface ExtractionDiagnostic {
+  kind: 'text-truncated' | 'block-limit'
+  blockId?: string
+}
 // 一个正文块
 export interface GuideBlock {
   id: string
@@ -21,6 +34,11 @@ export interface GuideBlock {
   // 站点明确标记的完整实体名称；普通链接、加粗与选区纯文本不能推断为实体。
   entities?: Range[]
   emphasis?: Range[]
+  // 均相对于 text；breaks 指显式换行后的首字符位置，不能从视觉折行推断。
+  breaks?: number[]
+  verbatim?: Range[]
+  context?: BlockContextRef
+  truncated?: true
 }
 // 攻略阶段
 export interface GuideStage {
@@ -46,6 +64,7 @@ export interface GuideDocument {
   source: GuideSource
   stages: GuideStage[]
   blocks: GuideBlock[]
+  diagnostics?: ExtractionDiagnostic[]
 }
 // 取正文结果
 export type ExtractResult =

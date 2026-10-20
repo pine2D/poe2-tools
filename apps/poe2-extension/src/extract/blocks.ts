@@ -1,4 +1,10 @@
-import type { BlockKind, GuideBlock, Range } from '@poe2-tools/guide-core'
+import type {
+  BlockContextRef,
+  BlockKind,
+  ExtractionDiagnostic,
+  GuideBlock,
+  Range,
+} from '@poe2-tools/guide-core'
 
 // 只读遍历：不改 DOM、不加监听。
 const SKIP =
@@ -26,28 +32,40 @@ type EntityMarker = (element: Element, text: string) => boolean
 
 export interface BlockSink {
   blocks: GuideBlock[]
-  add(
-    kind: BlockKind,
-    text: string,
-    extra?: { stageId?: string; entities?: Range[]; emphasis?: Range[] },
-  ): void
+  diagnostics: ExtractionDiagnostic[]
+  add(kind: BlockKind, text: string, extra?: Omit<GuideBlock, 'id' | 'kind' | 'text'>): void
 }
 
-export function createSink(): BlockSink {
+export function createSink(diagnostics: ExtractionDiagnostic[] = []): BlockSink {
   const blocks: GuideBlock[] = []
   return {
     blocks,
+    diagnostics,
     add(kind, text, extra = {}) {
-      if (blocks.length >= MAX_BLOCKS || !text.trim()) return
+      if (!text.trim()) return
+      if (blocks.length >= MAX_BLOCKS) {
+        if (!diagnostics.some((d) => d.kind === 'block-limit'))
+          diagnostics.push({ kind: 'block-limit' })
+        return
+      }
       const block: GuideBlock = { id: `b${blocks.length}`, kind, text: text.slice(0, 20000) }
       if (extra.stageId !== undefined) block.stageId = extra.stageId
+      if (extra.context) block.context = extra.context
+      if (text.length > block.text.length) {
+        block.truncated = true
+        diagnostics.push({ kind: 'text-truncated', blockId: block.id })
+      }
+      const breaks = extra.breaks?.filter((n) => n > 0 && n < block.text.length)
+      if (breaks?.length) block.breaks = [...new Set(breaks)].sort((a, b) => a - b)
       // 只留非空且不越界的范围（零长度范围会让 parseExtractResult 拒收整页）
       const fit = (rs: Range[] | undefined) =>
         rs?.filter(([a, b]) => a >= 0 && a < b && b <= block.text.length)
       const entities = fit(extra.entities)
       const emphasis = fit(extra.emphasis)
+      const verbatim = fit(extra.verbatim)
       if (entities?.length) block.entities = entities
       if (emphasis?.length) block.emphasis = emphasis
+      if (verbatim?.length) block.verbatim = verbatim
       blocks.push(block)
     },
   }
@@ -97,30 +115,36 @@ function textWithEmphasis(
   nodes: readonly Node[],
   skip: string = SKIP,
   entityMarker?: EntityMarker,
-): { text: string; emphasis: Range[]; entities: Range[] } {
+): { text: string; emphasis: Range[]; entities: Range[]; breaks: number[]; verbatim: Range[] } {
   let text = ''
   const emphasis: Range[] = []
   const entities: Range[] = []
+  const breaks: number[] = []
+  const verbatim: Range[] = []
   const gap = () => {
     if (text && !text.endsWith(' ')) text += ' '
   }
-  const visit = (node: Node) => {
+  const visit = (node: Node, keepSpace = false) => {
     if (node.nodeType === 3) {
-      const piece = (node.nodeValue ?? '').replace(/\s+/g, ' ')
-      text += text.endsWith(' ') && piece.startsWith(' ') ? piece.slice(1) : piece
+      const raw = node.nodeValue ?? ''
+      const piece = keepSpace ? raw : raw.replace(/\s+/g, ' ')
+      text += !keepSpace && text.endsWith(' ') && piece.startsWith(' ') ? piece.slice(1) : piece
       return
     }
     if (node.nodeType !== 1) return
     const child = node as Element
     if (child.matches(skip)) return
     if (child.tagName === 'BR') {
-      text += ' '
+      gap()
+      breaks.push(text.length)
       return
     }
     const block = isBlockLevel(child)
     if (block) gap()
     const start = text.length
-    for (const n of Array.from(child.childNodes)) visit(n)
+    const protectedElement = child.matches('code,kbd,samp,[translate="no"]')
+    for (const n of Array.from(child.childNodes)) visit(n, keepSpace || protectedElement)
+    if (protectedElement && text.length > start) verbatim.push([start, text.length])
     if (EMPHASIS.has(child.tagName) || entityMarker) {
       const lead = text.slice(start).length - text.slice(start).trimStart().length
       const end = text.trimEnd().length
@@ -136,6 +160,10 @@ function textWithEmphasis(
   const trimmed = text.trim()
   return {
     text: trimmed,
+    breaks: [...new Set(breaks.map((n) => n - lead).filter((n) => n > 0 && n < trimmed.length))],
+    verbatim: verbatim
+      .map(([a, b]): Range => [a - lead, b - lead])
+      .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
     emphasis: emphasis
       .map(([a, b]): Range => [a - lead, b - lead])
       .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
@@ -156,45 +184,83 @@ export function collectBlocks(
   sink: BlockSink,
   extraSkip = '',
   entityMarker?: EntityMarker,
+  allowShort = false,
 ): void {
   const skip = extraSkip ? `${SKIP},${extraSkip}` : SKIP
   const nested = (el: Element) => el.querySelector(BLOCK_SELECTOR) !== null
+  const ids = new WeakMap<Element, string>()
+  let nextId = 0
+  const id = (el: Element) => {
+    let found = ids.get(el)
+    if (!found) {
+      found = `c${nextId++}`
+      ids.set(el, found)
+    }
+    return found
+  }
+  const headings: { id: string; level: number }[] = []
+  const add = (
+    el: Element,
+    kind: BlockKind,
+    text: string,
+    extra: Omit<GuideBlock, 'id' | 'kind' | 'text'> = {},
+  ) => {
+    const context: BlockContextRef = {}
+    const level = /^H[1-6]$/.test(el.tagName) ? Number(el.tagName.slice(1)) : undefined
+    if (level) {
+      while (headings.length && (headings.at(-1)?.level ?? 0) >= level) headings.pop()
+      context.headingLevel = level
+    }
+    if (headings.length) context.headingIds = headings.map((h) => h.id)
+    const list = el.closest('ul,ol')
+    if (list && root.contains(list)) context.listId = id(list)
+    const table = el.closest('table')
+    const cell = el.closest('td,th')
+    const row = el.closest('tr')
+    if (table && root.contains(table)) context.tableId = id(table)
+    if (row && root.contains(row)) context.rowId = id(row)
+    if (cell && row) {
+      context.column = Array.from(row.children)
+        .filter((c) => c.matches('td,th'))
+        .indexOf(cell)
+      context.header = cell.tagName === 'TH'
+    }
+    const previous = sink.blocks.length
+    sink.add(kind, text, { ...extra, ...(Object.keys(context).length ? { context } : {}) })
+    const added = sink.blocks[previous]
+    if (level && added) headings.push({ id: added.id, level })
+  }
   // 含块级后代的元素：子块之间连续的行内内容（文字与行内元素）单独成块。
   // 本身是块标签（如 li）时照收；其他容器（div 等）沿用“直接文字满 40 字才算段落”，
   // 不够时零碎文字丢弃，但行内包装元素（span、a、自定义元素）里可能还有 div 正文，照常递归。
   const flush = (parent: Element, run: Node[]) => {
     if (!run.length) return
     const own = BLOCKS[parent.tagName]
-    if (!own && directText(run).trim().length < 40) {
+    if (!own && !allowShort && directText(run).trim().length < 40) {
       for (const node of run) if (node.nodeType === 1) visit(node as Element)
       return
     }
-    const { text, emphasis, entities } = textWithEmphasis(run, skip, entityMarker)
-    sink.add(parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, { emphasis, entities })
+    const { text, ...extra } = textWithEmphasis(run, skip, entityMarker)
+    add(parent, parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, extra)
   }
   const visit = (el: Element) => {
     if (el.matches(skip)) return
     const kind = BLOCKS[el.tagName]
-    if (!nested(el)) {
+    if (!nested(el) && !(allowShort && !kind && Array.from(el.children).some(isBlockLevel))) {
       if (kind) {
-        if (kind === 'verbatim') sink.add('verbatim', (el.textContent ?? '').trim())
+        if (kind === 'verbatim') add(el, 'verbatim', (el.textContent ?? '').trim())
         else {
-          const { text, emphasis, entities } = textWithEmphasis(
-            Array.from(el.childNodes),
-            skip,
-            entityMarker,
-          )
-          sink.add(kind, text, { emphasis, entities })
+          const { text, ...extra } = textWithEmphasis(Array.from(el.childNodes), skip, entityMarker)
+          add(el, kind, text, extra)
         }
         return
       }
-      if (el.tagName === 'DIV' && directText(Array.from(el.childNodes)).trim().length >= 40) {
-        const { text, emphasis, entities } = textWithEmphasis(
-          Array.from(el.childNodes),
-          skip,
-          entityMarker,
-        )
-        sink.add('paragraph', text, { emphasis, entities })
+      if (
+        (el.tagName === 'DIV' && directText(Array.from(el.childNodes)).trim().length >= 40) ||
+        (allowShort && !Array.from(el.children).some(isBlockLevel))
+      ) {
+        const { text, ...extra } = textWithEmphasis(Array.from(el.childNodes), skip, entityMarker)
+        add(el, 'paragraph', text, extra)
         return
       }
       for (const child of Array.from(el.children)) visit(child)

@@ -118,7 +118,14 @@ function deps(over: Partial<ControllerDeps> & { raw?: unknown } = {}) {
   const base: ControllerDeps = {
     extract: async () => over.raw ?? twoStages,
     dictionary: async () => dict,
-    translateLine: (line) => (line === '+80 to maximum Life' ? '+80 最大生命' : null),
+    stats: {
+      hash: 'stats1',
+      ruleVersion: 's1',
+      resolve: (line) =>
+        line === '+80 to maximum Life'
+          ? { status: 'translated', text: '+80 最大生命', candidates: [] }
+          : { status: 'unmatched', text: null, candidates: [] },
+    },
     store,
     prefs: async () => DEFAULT_PREFS,
     engine: async () => null,
@@ -482,4 +489,26 @@ describe('createController', () => {
     await createController(badPrefs.d).start()
     expect(badPrefs.calls.some((x) => x.startsWith('B error'))).toBe(true)
   })
+})
+
+it('词缀跨段落/列表/表格走词典；普通混合建议走模型，明确未知不发送', async () => {
+  const engine = fakeEngine()
+  const raw = doc([
+    ...(['paragraph', 'list-item', 'table-cell'] as const).map((kind, i) => ({
+      id: `s${i}`,
+      kind,
+      text: '+80 to maximum Life',
+    })),
+    { id: 'unknown', kind: 'modline', text: 'Unknown stat' },
+    { id: 'prose', kind: 'paragraph', text: 'Prefer gloves with +80 to maximum Life.' },
+  ])
+  const { d, view } = deps({ raw, engine: async () => engine.handle })
+  await createController(d).start()
+  for (let i = 0; i < 3; i++)
+    expect(view.setTranslation).toHaveBeenCalledWith(`s${i}`, '+80 最大生命', 'dictionary', [])
+  expect(engine.run).toHaveBeenCalledTimes(1)
+  const user = engine.run.mock.calls[0]?.[0][1]?.content ?? ''
+  expect(user).toContain('<s id="prose">')
+  expect(user).not.toContain('<s id="s0">')
+  expect(user).not.toContain('Unknown stat')
 })

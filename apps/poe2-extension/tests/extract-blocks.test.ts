@@ -137,3 +137,53 @@ describe('extractGeneric', () => {
     expect(extractGeneric(d).map((b) => b.text)).toEqual(['a much longer article body text here'])
   })
 })
+
+describe('通用结构与诊断', () => {
+  it('语义正文收集短 div，保留 BR、代码与标题/列表/表格关系，不重复或改 DOM', () => {
+    const d = doc(
+      '<article><h2>Gear</h2><div>+80 to maximum Life<br>25% reduced Attribute Requirements</div><p>Use <code>Life +80</code> here.</p><ul><li>First</li><li>Second</li></ul><table><tr><th>Slot</th><th>Goal</th></tr><tr><td>Gloves</td><td>Life</td></tr></table><nav><div>Menu</div></nav></article>',
+    )
+    const before = d.body.innerHTML
+    const bs = extractGeneric(d)
+    expect(bs.map((b) => b.text)).toEqual([
+      'Gear',
+      '+80 to maximum Life 25% reduced Attribute Requirements',
+      'Use Life +80 here.',
+      'First',
+      'Second',
+      'Slot',
+      'Goal',
+      'Gloves',
+      'Life',
+    ])
+    expect(bs[1]?.breaks).toEqual([20])
+    expect(bs[1]?.context?.headingIds).toEqual(['b0'])
+    expect(bs[2]?.verbatim?.map(([a, b]) => bs[2]?.text.slice(a, b))).toEqual(['Life +80'])
+    expect(bs[3]?.context?.listId).toBeTruthy()
+    expect(bs[3]?.context?.listId).toBe(bs[4]?.context?.listId)
+    expect(bs[5]?.context).toMatchObject({ header: true, column: 0 })
+    expect(bs[7]?.context?.tableId).toBe(bs[5]?.context?.tableId)
+    expect(bs[7]?.context?.rowId).toBe(bs[8]?.context?.rowId)
+    expect(bs[7]?.context?.rowId).not.toBe(bs[5]?.context?.rowId)
+    expect(d.body.innerHTML).toBe(before)
+  })
+  it('单块和块数截断可见；范围不漂移且不伪造完整实体', () => {
+    const sink = createSink()
+    sink.add('paragraph', 'x'.repeat(20010), {
+      entities: [[19990, 20010]],
+      verbatim: [[0, 3]],
+      breaks: [19999, 20005],
+    })
+    expect(sink.blocks[0]).toMatchObject({ truncated: true, verbatim: [[0, 3]], breaks: [19999] })
+    expect(sink.blocks[0]?.entities).toBeUndefined()
+    expect(sink.diagnostics).toEqual([{ kind: 'text-truncated', blockId: 'b0' }])
+    for (let i = 0; i < 5005; i++) sink.add('paragraph', 'a')
+    expect(sink.blocks).toHaveLength(5000)
+    expect(sink.diagnostics.filter((d) => d.kind === 'block-limit')).toHaveLength(1)
+  })
+})
+
+it('短正文容器里的直接文字和子 div 按顺序保留，不漏掉前后说明', () => {
+  const d = doc('<main><div>Before<div>+80 Life</div>After</div></main>')
+  expect(extractGeneric(d).map((b) => b.text)).toEqual(['Before', '+80 Life', 'After'])
+})

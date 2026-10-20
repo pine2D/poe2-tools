@@ -1,6 +1,6 @@
 import './guide.css'
 import type { GuideDictionary } from '@poe2-tools/guide-core'
-import { createLexicon, type Term } from '@poe2-tools/l10n-core'
+import { createGameLexicon, type Term } from '@poe2-tools/l10n-core'
 import { guideChrome } from './chrome'
 import { resolveConfig } from './config'
 import { type Controller, createController, type EngineHandle } from './controller'
@@ -40,8 +40,11 @@ async function boot(root: Element) {
     capacityBytes: prefs.cacheLimitMb * 1024 * 1024,
     now: Date.now,
   })
-  // 词缀行用现有 l10n-core 的整行模板翻译（与 CoE 同一份词典）
-  const lexicon = createLexicon((await json<{ terms: Term[] }>('assets/dictionary.json')).terms)
+  // 共用确定性核心，仅读攻略专用简体投影；CoE UI 和繁体输入不进入正文依赖。
+  const stats = await json<{ terms: Term[]; hash: string; ruleVersion: string }>(
+    'assets/guide-stats.json',
+  )
+  const lexicon = createGameLexicon(stats.terms)
 
   const engine = async (): Promise<EngineHandle | null> => {
     const record = await store.getKey()
@@ -183,7 +186,7 @@ async function boot(root: Element) {
   controller = createController({
     extract: () => guideChrome.extract(tabId),
     dictionary: () => json<GuideDictionary>('assets/guide-dictionary.json'),
-    translateLine: (line) => lexicon.translate(line, 'stat'),
+    stats: { hash: stats.hash, ruleVersion: stats.ruleVersion, resolve: lexicon.resolveStat },
     store,
     prefs: async () => prefs,
     engine,
