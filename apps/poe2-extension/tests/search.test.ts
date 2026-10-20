@@ -714,3 +714,35 @@ it('词缀集合缺失时明确显示全局候选降级，Data 查询不受制�
   type(document.querySelector('input') as HTMLInputElement, '魔力')
   expect(document.querySelectorAll('[data-poe2-l10n] button')).toHaveLength(3)
 })
+
+it('制作搜索保留固定数字语义，仅模板占位符匹配原生数值或范围', () => {
+  const fixed = createLexicon([
+    {
+      id: 'fixed',
+      en: 'Gain 1 Charge every # Hits for 10 Seconds',
+      zh: '每 # 次击中获得 1 充能，持续 10 秒',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'other',
+      en: 'Gain 2 Charge every # Hits for 20 Seconds',
+      zh: '每 # 次击中获得 2 充能，持续 20 秒',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  document.body.innerHTML =
+    '<main><div id="searchInput"><input></div><div id="output"><div class="modGroup"></div></div></main>'
+  stop = attachSearch(document, fixed)
+  const group = document.querySelector('.modGroup') as HTMLElement
+  for (const value of ['#', '3', '(2-4)']) {
+    group.setAttribute('search', `Gain 1 Charge every ${value} Hits for 10 Seconds`)
+    type(document.querySelector('input') as HTMLInputElement, '充能')
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-poe2-l10n] button')
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0]?.textContent).toContain('Gain 1 Charge')
+  }
+})

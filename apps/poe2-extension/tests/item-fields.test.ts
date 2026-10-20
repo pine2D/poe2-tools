@@ -76,7 +76,10 @@ it('核心已知类别也不能绕过词典的真实歧义', () => {
   }
   expect(prepareImport(source('腰带'), [...terms, conflicting]).ready).toBe(false)
 })
-it('国服类别词典不覆盖台服同形词的既有语义', () => {
+it('两服混合输入时，同形类别不由标题单独消歧', () => {
   const input = source('法杖').replace('物品类别', '物品種類')
-  expect(prepareImport(input, terms).english).toContain('Item Class: Wands')
+  const result = prepareImport(input, terms)
+  expect(result.english).toContain('Item Class: 法杖')
+  expect(result.ready).toBe(false)
+  expect(result.issues.some((issue) => issue.kind === 'ambiguous')).toBe(true)
 })

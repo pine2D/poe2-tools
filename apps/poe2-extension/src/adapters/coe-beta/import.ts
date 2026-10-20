@@ -125,7 +125,7 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
   if (inspection.comparisonOnly)
     add(inspection.comparisonReason ?? '此装备仅供对照。', null, 'policy')
   const warnings: string[] = []
-  const { english, fields } = completeItemFields(item, inspection, terms)
+  const { english, fields, ambiguousClass } = completeItemFields(item, inspection, terms)
   if (!inspection.base.english)
     add(
       inspection.base.candidates.length
@@ -134,7 +134,9 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
       null,
       inspection.base.candidates.length ? 'ambiguous' : 'unsupported',
     )
-  if (/^Item Class: .*\p{Script=Han}/u.test(english)) add('物品类别尚未翻译。')
+  if (ambiguousClass)
+    add('物品类别存在跨服译名歧义，原文已保留。请确认实际类别后使用英文类别名。', null, 'ambiguous')
+  else if (/^Item Class: .*\p{Script=Han}/u.test(english)) add('物品类别尚未翻译。')
   for (const diagnostic of item.diagnostics)
     if (
       !(diagnostic.code === 'unknown-line' && diagnostic.line !== null && fields[diagnostic.line])
@@ -181,9 +183,13 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
         )
     }
   }
-  if (inspection.base.english === 'Rattling Sceptre' && inspection.skills.length)
+  if (item.mods.some((mod) => mod.magnitude !== undefined))
     warnings.push(
-      '原站兼容性：罪孽权杖的授予技能等级可能被 CoE 重算。转换保留当前与最高等级，请核对导入结果。',
+      '原站兼容性：CoE 可能按品质再次计算增效，已见召唤技能等级 +3 显示为 +4。转换保留原文数值与增效，请核对导入后的显示及复制结果。',
+    )
+  if (inspection.skills.length)
+    warnings.push(
+      '原站兼容性：授予技能的等级或列表可能被 CoE 重算。已见权杖技能等级变化、项链出现额外技能；转换保留原文，请核对导入结果。',
     )
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers'].includes(block.kind)) continue

@@ -37,7 +37,7 @@
 - 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`；
 - `packages/item-core`：网站工坊与扩展共用，只为网站改它也会改变扩展 zip；
 - `packages/ui-theme` 中扩展用到的部分：令牌（含尺寸阶梯）、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、注入衬线字体子集 `serif-sc-l1` 及其收字来源（`data/l10n/coe-beta/ui.zh-CN.json` 全部译文、`apps/poe2-extension/src/content/*.ts` 与 `src/provenance.ts` 的中文文案）、完整声明，只为网站改它也会改变扩展 zip。收字来源出现新字时 `packages/ui-theme` 的 coverage.test 会失败：运行 `pnpm ui-theme:fonts --offline` 重新生成（`serif-sc-l1` 超过 131,072 字节时脚本以退出码 4 终止），与扩展版本放进同一提交；
-- 数据：`data/dict/zh-CN/items.json`、`stats.json`、`data/l10n/`、`data/craft/catalog.json`，以及根目录 `LICENSE`；
+- 数据：`data/dict/zh-CN/items.json`、`stats.json`、`data/dict/zh-TW/items.json`、`stats.json`、`data/l10n/`、`data/craft/catalog.json`，以及根目录 `LICENSE`；
 - 依赖与 `pnpm-lock.yaml` 升级：Vite、Rolldown 等构建链版本变化会改变 `content.js` 与弹窗资源。
 
 只在 Linux（含 WSL）上发版：CI 在 Linux 上重新打包核对；Windows 原生检出若开启换行转换，数据文件的哈希会写进词典的 sources，产物随之不同。
@@ -59,7 +59,7 @@
 
 ## 已知证据与待验证项
 
-最新本地 0.4.1 的稳定版 Chrome 代表流程与复制保护修复见 [2026-10-06 验收记录](validation-2026-10-06.md)，历史证据保留在兼容性与验收清单中。
+本分支 0.4.2 是未发布的 CoE 兼容修复候选，记录见 [2026-10-20 验收](validation-2026-10-20.md)。此前 0.4.1 的稳定版 Chrome 代表流程与复制保护修复见 [2026-10-06 验收记录](validation-2026-10-06.md)，历史证据保留在兼容性与验收清单中。
 
 CoE 开发者文档公开 `game=poe2&eimport=...`，没有公开 API。既有 `docs/coe-focus-bridge-research.md` 仅验收了部分普通法器导入，不能外推全部装备。上一轮隔离浏览器观察到基底搜索异步更新；填值后的即时快照不代表最终结果。现已实际装载扩展并核对首页基底检索、制作页词缀查询、中文导入和 popup 关闭恢复；并不等于所有搜索框、模拟流程或真实中文输入法均已验收。
 

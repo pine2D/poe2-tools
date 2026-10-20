@@ -238,3 +238,29 @@ it('诊断区分未知词典、歧义、文本格式与对照政策，完整转�
   expect(comparison.ready).toBe(false)
   expect(comparison.issues.map((issue) => issue.kind)).toEqual(['policy'])
 })
+
+it('增效和授予技能的原站重算单独提示，不逆改原文数值', () => {
+  const scaled = prepareImport(source('{ 后缀属性 "自造" — 生命——提高 40% }'), terms)
+  expect(scaled.warnings.join()).toContain('增效')
+  expect(scaled.english).toContain('+40(30-50) to maximum Life')
+  const skills = [
+    ...terms,
+    term('skill.synthetic', 'Grants Skill: Level # Wolf Pack', '获得技能: 等级 # 狼群', 'stat'),
+  ]
+  const granted = prepareImport(source(plain, '\n--------\n获得技能: 等级 18 狼群'), skills)
+  expect(granted.warnings.join()).toContain('授予技能')
+  expect(granted.english).toContain('Level 18 Wolf Pack')
+})
+
+it.each(['Item Class', '物品类别', '物品種類'])('混合输入同形类别不按标题猜选：%s', (label) => {
+  const input = `${label}: 法杖\nRarity: Normal\n失衡法杖\n--------\nItem Level: 80`
+  const result = prepareImport(input, [
+    { ...term('wand', 'Volatile Wand', '失衡法杖', 'base'), inputOnly: true },
+  ])
+  expect(result.ready).toBe(false)
+  expect(result.complete).toBe(false)
+  expect(result.english).toContain('Item Class: 法杖')
+  expect(
+    result.issues.some((issue) => issue.kind === 'ambiguous' && issue.message.includes('类别')),
+  ).toBe(true)
+})

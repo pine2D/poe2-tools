@@ -25,12 +25,18 @@ export function searchContext(input: HTMLInputElement): string[] | null {
   if (!input.closest('#searchInput') || input.closest('#customPriceSearchHolder')) return null
   const groups = input.ownerDocument.querySelectorAll('#output .modGroup[search]')
   return groups.length
-    ? [...groups].map((group) =>
-        (group.getAttribute('search') ?? '')
-          .toLowerCase()
-          .replace(/\(\d+(?:\.\d+)?[-–]\d+(?:\.\d+)?\)|\d+(?:\.\d+)?/g, '#'),
-      )
+    ? [...groups].map((group) => (group.getAttribute('search') ?? '').toLowerCase())
     : null
+}
+function matchesSearch(option: string, template: string): boolean {
+  const number = String.raw`[+-]?\d+(?:\.\d+)?`
+  const range = String.raw`\(${number}[-–—]${number}\)`
+  const value = `(?:#|${number}(?:${range})?|${range})`
+  const pattern = template
+    .split('#')
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join(value)
+  return new RegExp(pattern, 'i').test(option)
 }
 export function usesGlobalStatFallback(input: HTMLInputElement): boolean {
   return (
@@ -49,7 +55,7 @@ export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   // 只使用原站保留的英文搜索属性，不读取已经叠加中文的可见文本。
   const options = searchContext(input)
   if (options === null) return lexicon.search(input.value, domain)
-  const accept = (term: Term) => options.some((option) => option.includes(term.en.toLowerCase()))
+  const accept = (term: Term) => options.some((option) => matchesSearch(option, term.en))
   return [
     ...lexicon.search(input.value, domain, accept),
     ...(isConditionSearch(input) ? lexicon.search(input.value, 'ui', accept) : []),

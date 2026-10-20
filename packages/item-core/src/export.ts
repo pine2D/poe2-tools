@@ -173,8 +173,9 @@ export function knownImplicitHeader(raw: string): boolean {
 }
 
 export function knownExplicitHeader(raw: string): boolean {
-  const kind = readModifierHeader(raw)?.kind
-  return kind === 'prefix' || kind === 'suffix'
+  // 旧制作调用方只接受普通命名头；扩展使用 knownModifierHeader 识别来源状态。
+  const header = readModifierHeader(raw)
+  return !header?.states?.length && (header?.kind === 'prefix' || header?.kind === 'suffix')
 }
 
 function choose(resolution: Resolution, id: string | undefined): Resolution {
