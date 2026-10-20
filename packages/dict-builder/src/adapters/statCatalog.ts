@@ -1,4 +1,5 @@
 import type { StatEntry } from '@poe2-tools/build-core'
+import { statSignature } from '../stat-signature.mjs'
 import { buildStatsDict, type StatsBuildInput } from './trade2Stats'
 
 export interface StatSnapshot {
@@ -12,6 +13,7 @@ export interface StatSnapshot {
 export interface CanonicalDecision {
   en: string
   sourceId: string
+  signature: string
   reason: string
 }
 
@@ -68,7 +70,9 @@ export function buildStatCatalog(
       decided.has(key) ||
       selected.length !== 1 ||
       candidates.length < 2 ||
-      selected[0]?.en === selected[0]?.text
+      selected[0]?.en === selected[0]?.text ||
+      !selected[0] ||
+      decision.signature !== statSignature(selected[0])
     )
       throw new Error(`失效或重复的词缀裁决：${decision.en}`)
     decided.add(key)

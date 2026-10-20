@@ -8,6 +8,7 @@ import { assertL1Font, check } from '../scripts/check.mjs'
 import { noticeText } from '../scripts/notice.mjs'
 import { verifyZip } from '../scripts/package.mjs'
 import { storedZip } from '../scripts/zip.mjs'
+import { guideStatsFixture } from './fixtures/guide-stats.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -34,6 +35,7 @@ async function fixture() {
     'assets/guide-test.js': 'console.log(1)',
     'assets/guide-test.css': 'body{margin:0}',
     'extract.js': '(function(){globalThis.__poe2GuideExtract=function(){return null}})();',
+    'assets/guide-stats.json': JSON.stringify(guideStatsFixture()),
     'assets/guide-dictionary.json':
       '{"schemaVersion":1,"locale":"zh-CN","hash":"0123456789abcdef","entries":[{"id":"gem:a","en":"A","zh":"甲","kind":"gem","tier":"gray"}],"abbreviations":[],"sources":[],"allowGray":true}',
     'LICENSE.txt': 'fixture license',
@@ -218,4 +220,22 @@ it('攻略词典条目重复时拒绝', async () => {
   }
   await writeFile(path.join(dist, 'assets/guide-dictionary.json'), JSON.stringify(bad))
   await expect(check(root)).rejects.toThrow('攻略词典条目不合法')
+})
+
+it('攻略词缀投影必须随包存在，缺失或加入界面词时拒绝', async () => {
+  const { root, dist } = await fixture()
+  const file = path.join(dist, 'assets/guide-stats.json')
+  await rm(file)
+  await expect(check(root)).rejects.toThrow('ENOENT')
+  const dict = guideStatsFixture()
+  dict.terms[0].domain = 'ui'
+  await writeFile(file, JSON.stringify(dict))
+  await expect(check(root)).rejects.toThrow('攻略词缀')
+})
+it('攻略词缀的内容变更不能继续复用旧摘要', async () => {
+  const { root, dist } = await fixture()
+  const dict = guideStatsFixture()
+  dict.terms[0].zh = '属性需求降低 #%'
+  await writeFile(path.join(dist, 'assets/guide-stats.json'), JSON.stringify(dict))
+  await expect(check(root)).rejects.toThrow('攻略词缀')
 })

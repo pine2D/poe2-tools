@@ -1,0 +1,21 @@
+{
+  "version": "0.4.4",
+  "status": "local-unpublished",
+  "commit": "378e0d5",
+  "zipSha256": "d93a643167ec9fa942cbfdbb9edf34289265ca03c742a215997308c18b4ac8a1",
+  "files": {
+    "content.js": {
+      "baselineSha256": "d1c000a94e4e0dc837c919d6d18fb3be77f498ad2daccbc3528abeaeacfcc65c",
+      "expectedSha256": "d1c000a94e4e0dc837c919d6d18fb3be77f498ad2daccbc3528abeaeacfcc65c"
+    },
+    "assets/dictionary.json": {
+      "baselineSha256": "3be118370f481468daf927eec6c2d206c46d779e55e6146fbb82744de18bb531",
+      "expectedSha256": "277bef9a06557acc035172ac2f2a6c0f97817e5d57d1fc8124434cd2cafddecf",
+      "reason": "新增五条人工裁决的来源文本与数值顺序签名；12644 个 CoE 词条与 0.4.4 逐项完全相同，仅两项来源摘要/裁决元数据变化。"
+    },
+    "assets/serif-sc-l1.woff2": {
+      "baselineSha256": "cd1886e9f6e7970e017928406b12367e33f571270838e8365283ab4edc655703",
+      "expectedSha256": "cd1886e9f6e7970e017928406b12367e33f571270838e8365283ab4edc655703"
+    }
+  }
+}

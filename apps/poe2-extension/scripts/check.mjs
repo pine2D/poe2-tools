@@ -177,6 +177,48 @@ export function validateGuideDictionary(dict) {
   }
 }
 
+/** 攻略词缀只能包含国服原始词缀，不能继承 CoE 的 UI、繁体或优选。 */
+export function validateGuideStats(dict) {
+  const source = dict.sources?.[0]
+  if (
+    dict.schemaVersion !== 1 ||
+    dict.locale !== 'zh-CN' ||
+    dict.purpose !== 'guide-stat' ||
+    dict.ruleVersion !== 'guide-stats-v1' ||
+    !/^[a-f0-9]{16}$/.test(dict.hash) ||
+    !Array.isArray(dict.terms) ||
+    !dict.terms.length ||
+    dict.sources?.length !== 1 ||
+    source.path !== 'data/l10n/stats/zh-CN.json' ||
+    source.tier !== 'primary' ||
+    !/^[a-f0-9]{64}$/.test(source.sha256) ||
+    source.snapshots?.length !== 2 ||
+    !['en', 'zh-CN'].every((locale) =>
+      source.snapshots.some((s) => s.locale === locale && /^[a-f0-9]{64}$/.test(s.sha256)),
+    ) ||
+    dict.terms.some(
+      (t) =>
+        t.domain !== 'stat' ||
+        !t.sourceId ||
+        t.source !== source.path ||
+        t.version !== source.version ||
+        t.preferred !== undefined ||
+        t.inputOnly !== undefined,
+    )
+  )
+    throw new Error('攻略词缀来源或用途不合法')
+  const expected = sha256(
+    Buffer.from(
+      JSON.stringify({
+        ruleVersion: dict.ruleVersion,
+        terms: dict.terms,
+        snapshots: source.snapshots,
+      }),
+    ),
+  ).slice(0, 16)
+  if (expected !== dict.hash) throw new Error('攻略词缀内容摘要不一致')
+}
+
 /** 注入衬线子集：内容必须是 coverage.json 登记的 serif-sc-l1.woff2，且不超过预算（build-fonts.mjs 退出码 4 之外的第二道守卫） */
 export function assertL1Font(data, whitelist, budget = L1_FONT_BUDGET) {
   const expected = whitelist.fontShards.get(L1_FONT_FILE)
@@ -292,6 +334,8 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   validateGuideDictionary(
     JSON.parse(await readFile(path.join(dist, 'assets/guide-dictionary.json'), 'utf8')),
   )
+  const guideStats = JSON.parse(await readFile(path.join(dist, 'assets/guide-stats.json'), 'utf8'))
+  validateGuideStats(guideStats)
   const popup = await readFile(path.join(dist, 'popup.html'), 'utf8')
   const popupResources = popupReferences(popup)
   const popupFonts = []
@@ -314,6 +358,7 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   lexiconModule ??= loadLexiconModule()
   const { createGameLexicon } = await lexiconModule
   createGameLexicon(dict.terms)
+  createGameLexicon(guideStats.terms)
   // 文件集合按实际入口核对；合法扩展名不意味着文件应随扩展发布。
   if (
     popupResources.length !== 2 ||
@@ -336,6 +381,7 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     'extract.js',
     'guide.html',
     'assets/guide-dictionary.json',
+    'assets/guide-stats.json',
     ...guideResources,
   ])
   const distFiles = []

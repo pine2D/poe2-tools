@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { statTerm, validateStatSource } from './stat-source.mjs'
 
 export async function buildDictionary(root, output, { allowGray = true } = {}) {
   const terms = []
@@ -39,15 +40,7 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
     if (!allowGray && meta.tier === 'gray') continue
     if (kind === 'stats') {
       const locale = inputOnly ? 'zh-TW' : 'zh-CN'
-      if (
-        meta.projection !== 'source-placeholders' ||
-        meta.sources?.length !== 2 ||
-        !['en', locale].every((l) =>
-          meta.sources.some((s) => s.locale === l && /^[a-f0-9]{64}$/.test(s.sha256)),
-        ) ||
-        JSON.stringify(meta.decisions) !== JSON.stringify(decisions.data.entries[locale])
-      )
-        throw new Error(`词缀投影或来源裁决失效，请重新生成：${relative}`)
+      validateStatSource(entry.data, decisions.data.entries[locale], locale)
     }
     sources.push({
       path: entry.path,
@@ -75,23 +68,7 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
       }
     } else {
       for (const stat of entry.data.entries)
-        add(
-          `${inputOnly ? 'input:zh-TW:' : ''}stat:${stat.id}:${createHash('sha256')
-            .update(JSON.stringify([stat.en, stat.text, stat.order ?? null]))
-            .digest('hex')
-            .slice(0, 16)}`,
-          stat.en,
-          stat.text,
-          'stat',
-          entry.path,
-          meta.gameVersion,
-          {
-            sourceId: stat.id,
-            ...(stat.order ? { order: stat.order } : {}),
-            ...(stat.preferred ? { preferred: true } : {}),
-            ...(inputOnly ? { inputOnly: true } : {}),
-          },
-        )
+        terms.push(statTerm(stat, entry.path, meta.gameVersion, { inputOnly }))
     }
   }
   const variants = await read('data/l10n/coe-beta/stat-variants.zh-CN.json')

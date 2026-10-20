@@ -21,7 +21,12 @@ async function readJson(root, file, sources, tierOverride) {
   const data = JSON.parse(text)
   const tier = tierOverride ?? data._meta?.tier
   if (!['primary', 'gray', 'manual'].includes(tier)) throw new Error(`词典来源等级缺失：${file}`)
-  sources.push({ path: file, sha256: sha(text), tier })
+  sources.push({
+    path: file,
+    sha256: sha(text),
+    tier,
+    version: data._meta?.gameVersion ?? 'unknown',
+  })
   return { data, tier }
 }
 
@@ -33,7 +38,7 @@ export async function buildGuideDictionary(root, output, { allowGray = true } = 
     const e = clean(en)
     const z = clean(zh)
     if (rejected(e, z)) return
-    const key = `${e.toLowerCase()}\u0000${z}`
+    const key = id
     if (seen.has(key)) return
     seen.add(key)
     entries.push({ id, en: e, zh: z, kind, tier, ...extra })
@@ -47,7 +52,7 @@ export async function buildGuideDictionary(root, output, { allowGray = true } = 
     return { data, tier }
   }
 
-  // 手工升华与职业先读：同 en 同 zh 去重时保留 manual，而不是 passives 里同名的升华起点（gray）
+  // 各来源身份均保留；相同表面词的语义由正文匹配器按上下文处理。
   const asc = await readJson(root, 'data/dict/_overrides/ascendancies.json', sources, 'manual')
   for (const [code, v] of Object.entries(asc.data.entries))
     push(`asc:${code}`, v.en, v['zh-CN'], 'ascendancy', 'manual')
@@ -109,10 +114,35 @@ export async function buildGuideDictionary(root, output, { allowGray = true } = 
   const abbreviations = abbr.data.entries.map((a) => ({ en: clean(a.en), note: clean(a.note) }))
   if (abbreviations.some((a) => !a.en || !a.note)) throw new Error('简称表存在空字段')
 
-  const hash = sha(JSON.stringify({ entries, abbreviations })).slice(0, 16)
+  const sourceFiles = {
+    ascendancy: 'data/dict/_overrides/ascendancies.json',
+    class: 'data/dict/_overrides/classes.json',
+    gem: 'data/dict/zh-CN/gems.json',
+    passive: 'data/dict/zh-CN/passives.json',
+    base: 'data/dict/zh-CN/items.json',
+    unique: 'data/dict/zh-CN/items.json',
+    keyword: 'data/l10n/guide/terms.zh-CN.json',
+    jargon: 'data/l10n/guide/terms.zh-CN.json',
+  }
+  for (const entry of entries) {
+    const source = sources.find((s) => s.path === sourceFiles[entry.kind])
+    entry.provenance = {
+      path: source.path,
+      sha256: source.sha256,
+      sourceId: ['keyword', 'jargon'].includes(entry.kind)
+        ? entry.id
+        : entry.id.slice(entry.id.indexOf(':') + 1),
+      version: source.version,
+      locale: 'zh-CN',
+      purpose: 'guide-name',
+    }
+  }
+  const ruleVersion = 'guide-terms-v2'
+  const hash = sha(JSON.stringify({ ruleVersion, entries, abbreviations })).slice(0, 16)
   const result = {
     schemaVersion: 1,
     locale: 'zh-CN',
+    ruleVersion,
     hash,
     entries,
     abbreviations,

@@ -41,6 +41,7 @@ const input = {
 const decision: CanonicalDecision = {
   en: '#% increased Spirit',
   sourceId: 'explicit.1',
+  signature: 'fd44cda36f522d5b0ac438c9cffd0adbf030572f9fe87612a6cea0b4c934acdb',
   reason: '展示无局部语境时用通用译文；局部原文保留供反向导入。',
 }
 
@@ -89,4 +90,43 @@ describe('扩展原始词缀契约', () => {
       }),
     ).toThrow('快照')
   })
+})
+
+it('同来源 ID 的中文变化后旧裁决必须失效', () => {
+  expect(() =>
+    buildStatCatalog({
+      ...input,
+      target: response(['该装备精魂提高 #%', '精魂降低 #%', '每 4 秒回复 #% 生命']),
+      decisions: [decision],
+    }),
+  ).toThrow('裁决')
+})
+
+it('裁决签名缺失或不匹配时不能继续沿用', () => {
+  expect(() => buildStatCatalog({ ...input, decisions: [{ ...decision, signature: '' }] })).toThrow(
+    '裁决',
+  )
+  expect(() =>
+    buildStatCatalog({ ...input, decisions: [{ ...decision, signature: 'a'.repeat(64) }] }),
+  ).toThrow('裁决')
+})
+
+it('相同中英文的占位顺序变化也要求重新审定', () => {
+  const args = {
+    ...input,
+    en: response(['Gain # Life and # Mana', 'Gain # Life and # Mana']),
+    target: response(['获得 # 生命和 # 魔力', '获得 # 点生命和 # 点魔力']),
+    decisions: [
+      {
+        en: 'Gain # Life and # Mana',
+        sourceId: 'explicit.1',
+        signature: 'd8b4dd0d7f60b0a27b6ebc99bf6e3683ae08d53336e94a020cb9d4498c2bb744',
+        reason: '自造数值顺序审定',
+      },
+    ],
+  }
+  expect(() => buildStatCatalog(args)).not.toThrow()
+  expect(() => buildStatCatalog({ ...args, orderOverrides: { 'explicit.1': [1, 0] } })).toThrow(
+    '裁决',
+  )
 })

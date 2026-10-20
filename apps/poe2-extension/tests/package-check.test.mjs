@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { check } from '../scripts/check.mjs'
 import { noticeText } from '../scripts/notice.mjs'
+import { guideStatsFixture } from './fixtures/guide-stats.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -39,6 +40,7 @@ async function fixture(terms) {
     'dist/assets/guide-test.js': 'console.log(1)',
     'dist/assets/guide-test.css': 'body{margin:0}',
     'dist/extract.js': '(function(){globalThis.__poe2GuideExtract=function(){return null}})();',
+    'dist/assets/guide-stats.json': JSON.stringify(guideStatsFixture()),
     'dist/assets/guide-dictionary.json':
       '{"schemaVersion":1,"locale":"zh-CN","hash":"0123456789abcdef","entries":[{"id":"gem:a","en":"A","zh":"甲","kind":"gem","tier":"gray"}],"abbreviations":[],"sources":[],"allowGray":true}',
     'dist/LICENSE.txt': 'fixture license',

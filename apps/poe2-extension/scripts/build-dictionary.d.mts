@@ -13,7 +13,7 @@ export interface DictionarySource {
     fetchedAt: string
     gameVersion: string
   }[]
-  decisions?: { en: string; sourceId: string; reason: string }[]
+  decisions?: { en: string; sourceId: string; signature: string; reason: string }[]
 }
 
 export function buildDictionary(

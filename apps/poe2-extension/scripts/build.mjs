@@ -5,6 +5,7 @@ import { L1_FONT_FILE } from '@poe2-tools/ui-theme/compliance'
 import { build } from 'vite'
 import { buildDictionary } from './build-dictionary.mjs'
 import { buildGuideDictionary } from './build-guide-dictionary.mjs'
+import { buildGuideStats } from './build-guide-stats.mjs'
 import { noticeText } from './notice.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -76,6 +77,8 @@ await buildDictionary(repoRoot, path.join(root, 'dist/assets/dictionary.json'), 
 await buildGuideDictionary(repoRoot, path.join(root, 'dist/assets/guide-dictionary.json'), {
   allowGray: !process.argv.includes('--no-gray'),
 })
+
+await buildGuideStats(repoRoot, path.join(root, 'dist/assets/guide-stats.json'))
 
 await copyFile(path.resolve(root, '../../LICENSE'), path.join(root, 'dist/LICENSE.txt'))
 // 弹窗字体的许可文件随包发布（spec §7.6）

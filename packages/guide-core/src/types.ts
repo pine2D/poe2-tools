@@ -68,6 +68,14 @@ export interface GuideEntry {
   zh: string
   kind: EntryKind
   tier: Tier
+  provenance?: {
+    path: string
+    sha256: string
+    sourceId: string
+    version: string
+    locale: 'zh-CN'
+    purpose: 'guide-name'
+  }
   aliasesEn?: string[]
   // 仅人工审定的 keyword 原形／复数可跳过上下文门槛，派生形仍保守处理。
   matchWithoutContext?: true
@@ -80,6 +88,7 @@ export interface Abbreviation {
 // 攻略词典
 export interface GuideDictionary {
   schemaVersion: 1
+  ruleVersion?: string
   locale: 'zh-CN'
   hash: string
   entries: GuideEntry[]

@@ -72,9 +72,9 @@ describe('buildGuideDictionary', () => {
     expect(ids).not.toContain('gem:SkillGemX') // zh === en
     expect(ids).not.toContain('passive:C') // 全大写
     expect(ids).not.toContain('passive:D') // wiki 标记
-    expect(ids).not.toContain('passive:F') // 与 gem 同 en（忽略大小写）同 zh，去重
-    expect(ids).toContain('asc:Ranger1') // 手工升华先读，同名同译的 gray 天赋被去重
-    expect(ids).not.toContain('passive:G')
+    expect(ids).toContain('passive:F') // 名称相同但来源身份不同，不丢弃
+    expect(ids).toContain('asc:Ranger1') // 同名同译的升华与天赋来源均保留
+    expect(ids).toContain('passive:G')
     expect(dict.entries.find((e) => e.id === 'passive:E')).toMatchObject({
       en: 'Padded',
       zh: '留白',
@@ -135,7 +135,7 @@ describe('buildGuideDictionary', () => {
     expect(ids).not.toContain('gem:SkillGemContagion')
     expect(ids).toContain('kw:spirit')
     expect(ids).toContain('base:Amethyst Charm')
-    expect(result.excluded).toBe(3)
+    expect(result.excluded).toBe(4)
     expect(dict).not.toHaveProperty('excluded')
     expect(dict.hash).not.toBe(base.hash)
   })
@@ -180,4 +180,27 @@ it('人工匹配例外随构建保留并改变词典哈希；无效例外被拒�
   }
   const invalid = { ...after, entries: [{ ...entry, tier: 'gray', matchWithoutContext: true }] }
   expect(() => validateGuideDictionary(invalid)).toThrow('匹配例外')
+})
+
+it('每个正文名称可追溯到独立来源身份，来源更新使身份摘要变化', async () => {
+  const root = await fixture()
+  const before = await buildGuideDictionary(root, path.join(root, 'a.json'))
+  const gem = before.entries.find((e) => e.id === 'gem:SkillGemContagion')
+  expect(gem.provenance).toMatchObject({
+    path: 'data/dict/zh-CN/gems.json',
+    sourceId: 'SkillGemContagion',
+    locale: 'zh-CN',
+    purpose: 'guide-name',
+    version: '0.5.5',
+  })
+  expect(gem.provenance.sha256).toMatch(/^[0-9a-f]{64}$/)
+  const file = path.join(root, 'data/dict/zh-CN/gems.json')
+  const data = JSON.parse(await readFile(file, 'utf8'))
+  data._meta.gameVersion = '0.5.6'
+  await writeFile(file, JSON.stringify(data))
+  const after = await buildGuideDictionary(root, path.join(root, 'b.json'))
+  expect(after.hash).not.toBe(before.hash)
+  expect(after.entries.find((e) => e.id === gem.id).provenance.sha256).not.toBe(
+    gem.provenance.sha256,
+  )
 })
