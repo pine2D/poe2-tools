@@ -1,3 +1,11 @@
+# 扩展原始词缀投影（2026-10-20）
+
+`data/l10n/stats/{zh-CN,zh-TW}.json` 复用已登记的官方三服 `/api/trade2/data/stats`（primary），由 `packages/dict-builder/src/build-stat-catalog.ts` 经唯一网络模块 `cache.ts` 独立对齐英文与目标语言。使用与旧词典相同的版权与风险边界，不引入新第三方数据源。只折叠换行、剥离交易标识、合并同模板同译文；固定数字不泛化。旧 `data/dict/*/stats.json` 保持 `.build` 兼容格式。
+
+每份投影记录两侧 URL、抓取时间、SHA-256 和语种。官方静态端点未声明游戏版本，明确记录 `unknown`；抓取日期不等于游戏补丁版本，也不改变天赋、宝石或制作目录快照。`data/l10n/stat-decisions.json`（manual）记录同英文多译名的逐项裁决理由；构建产物保留未选中的原译文供反向输入，未裁决冲突仍保留。
+
+手动刷新：`pnpm --filter @poe2-tools/dict-builder exec tsx src/build-stat-catalog.ts`，可加 `--offline` 复用缓存。更新前审查各侧快照与裁决是否仍适用；普通构建和浏览器不联网刷新。不得把这一数据覆盖统计称为 CoE 全站覆盖率。
+
 # 界面字体与素材（2026-09-28 登记）
 
 网站界面改版（PoE2 设计语言，一期）使用的字体与视觉素材。只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games、腾讯、Craft of Exile 的任何素材或纹样，也不使用 Fontin（exljbris 许可禁止再分发，而且不含中文）。

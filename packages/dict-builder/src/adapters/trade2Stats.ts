@@ -21,6 +21,8 @@ export interface StatsBuildInput {
   orderOverrides: Record<string, number[]>
   winners: Record<string, string>
   meta: { source: string; gameVersion: string; fetchedAt: string }
+  /** 展示／导入保留固定数字；省略时沿用旧 .build 的数字归一化投影。 */
+  preserveLiteralNumbers?: boolean
 }
 
 export interface MultiPlaceholderEntry {
@@ -241,7 +243,8 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
           : { id, en: enStripped, text: textStripped, order }
       // 字面数字改写成全归一化变体；对应不上的保持原样并记审计
       const literal = toLiteralVariant(draft)
-      const entry = literal.kind === 'variant' ? literal.entry : draft
+      const entry =
+        !input.preserveLiteralNumbers && literal.kind === 'variant' ? literal.entry : draft
       // 同一模板键且译文相同（explicit / fractured / crafted… 分组间的同文本词缀）只留先出现的一条
       const mergeKey = JSON.stringify([templateKey(entry.en), entry.text])
       if (seen.has(mergeKey)) {
@@ -264,7 +267,7 @@ export function buildStatsDict(input: StatsBuildInput): { dict: StatsDict; audit
         audit.literalNumber += 1
         audit.literalNumberIds.push({ key, en: enStripped, text: textStripped })
       }
-      if (literal.kind === 'variant') audit.literalVariant += 1
+      if (!input.preserveLiteralNumbers && literal.kind === 'variant') audit.literalVariant += 1
       if (literal.kind === 'skipped')
         audit.literalSkipped.push({
           key,
