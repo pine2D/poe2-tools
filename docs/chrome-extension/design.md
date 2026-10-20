@@ -1,5 +1,7 @@
 # 新版 CoE 简体中文扩展设计与文件安排
 
+2026-10-20 新施工采用[衔接契约](translation-bridge.md)：共用来源和确定性核心，CoE DOM 与攻略取文分离；本文的历史目录不替代当前实施基线。
+
 状态：2026-09-24 原设计与 0.1.0 实施对照。下方目录保留责任规划，不表示每个拟定文件已创建；当前实际目录以仓库为准。
 
 0.1.0 使用 `scripts/build.mjs` 的 Vite JS API 完成两个入口，无独立 vite.config.ts；检查脚本为 `scripts/check.mjs`。小型候选与预览 UI 暂随控制器维护，settings 合并于 platform，资源加载在启动入口；新增 `content/stat-layer.ts` 保留 CoE 关键词并叠加译文。`item-core/text` 为独立文本入口。未创建空文件占位，独立诊断出口与自制图标留待后续。
