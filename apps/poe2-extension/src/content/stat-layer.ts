@@ -14,9 +14,15 @@ import { adoptL1 } from './l1'
 import type { CountedStop } from './text-layer'
 
 export type { CountedStop } from './text-layer'
-export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
+export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false): CountedStop {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
+  const originalAttribute = 'data-poe2-l10n-original'
+  const style = doc.createElement('style')
+  style.dataset.poe2L10nStyle = 'stat-visibility'
+  // 仅隐藏已译出的视觉原文；原站读取、复制与更新仍使用同一套英文节点。
+  style.textContent = `[${originalAttribute}="stat"] { display: none !important; }`
+  if (!bilingual) doc.head.append(style)
   function modifierDetailsText(details: Element): string | null {
     let changed = false
     let result = ''
@@ -88,6 +94,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
     if (!translated || translated === original) {
       host?.remove()
       hosts.delete(stat)
+      stat.removeAttribute(originalAttribute)
       return
     }
     if (!host?.isConnected) {
@@ -99,6 +106,8 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
       hosts.set(stat, host)
     }
     if (stat.nextSibling !== host) stat.after(host)
+    if (!bilingual) stat.setAttribute(originalAttribute, 'stat')
+    host.title = original
     if (host.shadowRoot && host.shadowRoot.textContent !== translated)
       host.shadowRoot.textContent = translated
   }
@@ -107,6 +116,10 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
     const selector = '[data-poe2-l10n="stat"]'
     if (root.matches(selector) && !root.shadowRoot) root.remove()
     for (const host of root.querySelectorAll(selector)) if (!host.shadowRoot) host.remove()
+    const originals = `[${originalAttribute}="stat"]`
+    if (root.matches(originals) && !hosts.has(root)) root.removeAttribute(originalAttribute)
+    for (const original of root.querySelectorAll(originals))
+      if (!hosts.has(original)) original.removeAttribute(originalAttribute)
   }
   function scan(root: Node) {
     const element = root instanceof Element ? root : root.parentElement
@@ -134,6 +147,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
       if (!isSupportedStat(stat)) {
         host.remove()
         hosts.delete(stat)
+        stat.removeAttribute(originalAttribute)
       }
   })
   observer.observe(doc.body, {
@@ -147,9 +161,13 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
   return Object.assign(
     () => {
       observer.disconnect()
-      for (const host of hosts.values()) host.remove()
-      removeClonedHosts(doc.body)
+      for (const [stat, host] of hosts) {
+        host.remove()
+        stat.removeAttribute(originalAttribute)
+      }
       hosts.clear()
+      removeClonedHosts(doc.body)
+      style.remove()
       cache.clear()
     },
     // 每个宿主是一条用户可见的中文词缀行；不再受支持的词缀在变更回调末尾剔除（上方 MutationObserver 回调）

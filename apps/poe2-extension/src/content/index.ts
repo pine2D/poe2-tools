@@ -6,6 +6,7 @@ import { attachAttributeLayer } from './attribute-layer'
 import { attachImport } from './import-controller'
 import { attachInstructionLayout } from './instruction-layout'
 import { createLanguageNotice } from './language-notice'
+import { attachModifierLayout } from './modifier-layout'
 import { attachPageLabels } from './page-labels'
 import { snapshot } from './page-state'
 import { attachSearch } from './search-controller'
@@ -76,11 +77,12 @@ async function start() {
         try {
           stops.push(attachSerif(document))
           stops.push(attachInstructionLayout(document))
+          if (settings.bilingual) stops.push(attachModifierLayout(document))
           stops.push(attachPageLabels(document, settings.bilingual))
           const stopText = attachTextLayer(document, lexicon, settings.bilingual)
           stops.push(stopText)
           stops.push(attachAttributeLayer(document, lexicon, settings.bilingual))
-          const stopStats = attachStatLayer(document, lexicon)
+          const stopStats = attachStatLayer(document, lexicon, settings.bilingual)
           stops.push(stopStats)
           stops.push(attachSearch(document, lexicon))
           stops.push(attachImport(document, data.terms))

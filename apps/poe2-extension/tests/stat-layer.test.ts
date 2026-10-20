@@ -18,6 +18,57 @@ afterEach(() => {
   stop()
   document.body.innerHTML = ''
 })
+it.each([false, true])('词缀原文的可见性跟随中英对照设置：%s', (bilingual) => {
+  document.body.innerHTML =
+    '<main><div><span class="stat">+18% to <span class="keyword">Lightning Resistance</span></span></div><div><span class="stat">Unknown mechanic</span></div></main>'
+  const [stat, unknown] = [...document.querySelectorAll<HTMLElement>('.stat')]
+  if (!stat || !unknown) throw new Error('缺少测试词缀')
+  const original = stat.textContent
+  const keyword = stat.querySelector('.keyword')
+  stop = attachStatLayer(document, lex, bilingual)
+  expect(getComputedStyle(stat).display === 'none').toBe(!bilingual)
+  expect(getComputedStyle(unknown).display).not.toBe('none')
+  expect(stat.textContent).toBe(original)
+  expect(stat.querySelector('.keyword')).toBe(keyword)
+  expect(stat.nextElementSibling?.shadowRoot?.textContent).toBe('闪电抗性 +18%')
+  stop()
+  expect(getComputedStyle(stat).display).not.toBe('none')
+  expect(stat.textContent).toBe(original)
+})
+
+it('中文模式的词缀变为未知或移入保护区域时立即恢复原文可见性', async () => {
+  document.body.innerHTML =
+    '<main><section><span class="stat">+18% to Lightning Resistance</span></section><div contenteditable></div></main>'
+  const stat = document.querySelector('.stat') as HTMLElement
+  stop = attachStatLayer(document, lex, false)
+  expect(getComputedStyle(stat).display).toBe('none')
+  stat.textContent = 'Unknown mechanic'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(getComputedStyle(stat).display).not.toBe('none')
+  expect(stat.nextElementSibling).toBeNull()
+  stat.textContent = '+20% to Lightning Resistance'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(getComputedStyle(stat).display).toBe('none')
+  document.querySelector('[contenteditable]')?.append(stat)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(getComputedStyle(stat).display).not.toBe('none')
+  expect(stat.textContent).toBe('+20% to Lightning Resistance')
+})
+
+it('中文模式停用后，尚未处理的原站克隆也恢复可见', () => {
+  document.body.innerHTML =
+    '<main><div class="item"><span class="stat">+18% to Lightning Resistance</span></div></main>'
+  stop = attachStatLayer(document, lex, false)
+  const item = document.querySelector('.item') as HTMLElement
+  document.querySelector('main')?.append(item.cloneNode(true))
+  stop()
+  for (const stat of document.querySelectorAll('.stat')) {
+    expect(getComputedStyle(stat).display).not.toBe('none')
+    expect(stat.textContent).toBe('+18% to Lightning Resistance')
+  }
+  expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
+})
+
 it('分段词缀保留原站文本、关键词节点和监听，仅叠加中文', async () => {
   document.body.innerHTML =
     '<main><div><span class="stat">+#% to <span id="keyword">Lightning Resistance</span></span></div></main>'

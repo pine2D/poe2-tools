@@ -20,7 +20,7 @@ it.each([false, true])(
     const original = details.textContent
     const lex = createLexicon([])
     const text = attachTextLayer(document, lex, bilingual)
-    const stats = attachStatLayer(document, lex)
+    const stats = attachStatLayer(document, lex, bilingual)
     stop = () => {
       stats()
       text()
@@ -28,6 +28,7 @@ it.each([false, true])(
     expect(details.textContent).toBe(original)
     expect(tags.textContent).toBe('Attribute')
     expect(details.querySelector('.tags')).toBe(tags)
+    expect(getComputedStyle(details).display === 'none').toBe(!bilingual)
     expect(details.nextElementSibling?.shadowRoot?.textContent).toBe(
       '后缀属性 "of the Panther"（等阶：4）— 属性',
     )

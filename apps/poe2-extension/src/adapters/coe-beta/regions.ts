@@ -27,6 +27,7 @@ export function textContext(
 ):
   | 'modifier-details'
   | 'modifier-tags'
+  | 'modifier-table-header'
   | 'essence-category'
   | 'socket-category'
   | 'method-label'
@@ -47,6 +48,8 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('.modInfluenceGroup > .header > :not(label)'))
+    return 'modifier-table-header'
   if (node.parentElement?.closest('.item .modifierDetails .tags')) return 'modifier-tags'
   if (node.parentElement?.closest('.item .modifierDetails')) return 'modifier-details'
   if (node.parentElement?.closest('#CraftingMethod_2 > ul > li')) return 'essence-category'
