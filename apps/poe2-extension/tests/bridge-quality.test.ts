@@ -1,11 +1,12 @@
 // @vitest-environment node
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   type CyclePlan,
   checkPlan,
+  digest,
   newBudget,
   type RequestSpec,
   reserve,
@@ -29,6 +30,7 @@ const plan = (): CyclePlan => ({
   manifestHash: 'manifest',
   candidateHash: 'candidate',
   baselineHash: 'baseline',
+  packageHash: 'package',
   local: [],
   requests: [
     ...Object.entries(stageCounts).flatMap(([stage, count]) =>
@@ -254,4 +256,90 @@ it('质量候选消费产品准备/提示/恢复逻辑，独立词缀不发模�
   expect(
     evaluate([block], '<t id="b">然后优先选择“⟦0⟧”。</t>', 'stop', pipeline.check).rows[0]?.text,
   ).toContain('+80 生命上限')
+})
+
+it('最终浏览器必须在封存和两轮稳定性完成且通过后，使用同一候选包', async () => {
+  const { file, p } = await make()
+  const browser = p.requests.find((j) => j.stage === 'browser')
+  if (!browser) throw Error('missing fixture')
+  const ready = { ...gate, stability: gate.sealed, browserPackageHash: 'package' }
+  const before = await read(file)
+  for (const gates of [
+    { ...ready, sealed: undefined },
+    { ...ready, sealed: { ...gate.sealed, passed: false } },
+    { ...ready, sealed: { ...gate.sealed, candidateHash: 'changed' } },
+    { ...ready, stability: undefined },
+    { ...ready, stability: { ...gate.sealed, passed: false } },
+    { ...ready, stability: { ...gate.sealed, manifestHash: 'changed' } },
+    { ...ready, browserPackageHash: undefined },
+    { ...ready, browserPackageHash: 'changed' },
+    ready,
+  ]) {
+    // JSON 模拟缺失字段，避免 undefined 属性与实际文件格式不同。
+    await expect(reserve(file, browser, JSON.parse(JSON.stringify(gates)))).rejects.toThrow(
+      /门槛|完成|产物/,
+    )
+    expect(await read(file)).toEqual(before)
+  }
+  for (const job of p.requests.filter((j) => j.stage !== 'browser')) {
+    await reserve(file, job, gate)
+    await settle(file, job.key, { prompt: 1, completion: 1 }, 'complete')
+  }
+  await reserve(file, browser, ready)
+  expect((await read(file)).entries.at(-1).key).toBe(browser.key)
+})
+
+it('冻结身份包含共享解析器及浏览器源码，且构建目录必须与候选 ZIP 一致', async () => {
+  const { candidateIdentity } = await import('../scripts/bridge-run')
+  const root = await mkdtemp(join(tmpdir(), 'bridge-identity-'))
+  dirs.push(root)
+  const files: Record<string, string> = {
+    'package.json': '{}',
+    'pnpm-lock.yaml': 'lockfileVersion: 9',
+    'packages/guide-core/package.json': '{}',
+    'packages/guide-core/src/index.ts': 'export const route = 1',
+    'packages/l10n-core/package.json': '{}',
+    'packages/l10n-core/src/stats.ts': 'export const parser = 1',
+    'apps/poe2-extension/package.json': '{}',
+    'apps/poe2-extension/src/extract/blocks.ts': 'export const extract = 1',
+    'apps/poe2-extension/scripts/bridge-run.ts': 'export const run = 1',
+    'apps/poe2-extension/dist/extract.js': 'built extraction',
+  }
+  const put = async (file: string, value: string | Uint8Array) => {
+    await mkdir(join(root, file, '..'), { recursive: true })
+    await writeFile(join(root, file), value)
+  }
+  for (const [file, value] of Object.entries(files)) await put(file, value)
+  const zipModule = new URL('../scripts/zip.mjs', import.meta.url).href
+  const { zipDirectory } = await import(zipModule)
+  const pack = async () => {
+    const zip: Buffer = await zipDirectory(join(root, 'apps/poe2-extension/dist'))
+    const { createHash } = await import('node:crypto')
+    const hash = createHash('sha256').update(zip).digest('hex')
+    await put('apps/poe2-extension/artifacts/poe2-extension-0.6.0.zip', zip)
+    await put(
+      'apps/poe2-extension/release.json',
+      JSON.stringify({ file: 'poe2-extension-0.6.0.zip', bytes: zip.length, sha256: hash }),
+    )
+    return hash
+  }
+  const packageHash = await pack()
+  const before = await candidateIdentity(root)
+  expect(before.packageHash).toBe(packageHash)
+  await put('packages/l10n-core/src/stats.ts', 'export const parser = 2')
+  const parserChanged = await candidateIdentity(root)
+  expect(parserChanged.candidateHash).not.toBe(before.candidateHash)
+  expect(parserChanged.packageHash).toBe(packageHash)
+  await put('apps/poe2-extension/src/extract/blocks.ts', 'export const extract = 2')
+  expect((await candidateIdentity(root)).candidateHash).not.toBe(parserChanged.candidateHash)
+  await put('apps/poe2-extension/dist/extract.js', 'different built extraction')
+  await expect(candidateIdentity(root)).rejects.toThrow(/ZIP|产物/)
+  const nextPackageHash = await pack()
+  expect(nextPackageHash).not.toBe(packageHash)
+  expect((await candidateIdentity(root)).packageHash).toBe(nextPackageHash)
+  await put(
+    'apps/poe2-extension/release.json',
+    JSON.stringify({ file: 'poe2-extension-0.6.0.zip', bytes: 0, sha256: digest('wrong') }),
+  )
+  await expect(candidateIdentity(root)).rejects.toThrow(/ZIP|产物/)
 })

@@ -1,3 +1,4 @@
+import { createMatcher, prepareBlock, routeBlock } from '@poe2-tools/guide-core'
 import { describe, expect, it } from 'vitest'
 import { collectBlocks, createSink } from '../src/extract/blocks'
 import { extractGeneric } from '../src/extract/sites/generic'
@@ -186,4 +187,47 @@ describe('通用结构与诊断', () => {
 it('短正文容器里的直接文字和子 div 按顺序保留，不漏掉前后说明', () => {
   const d = doc('<main><div>Before<div>+80 Life</div>After</div></main>')
   expect(extractGeneric(d).map((b) => b.text)).toEqual(['Before', '+80 Life', 'After'])
+})
+
+describe('代码边界空白保持原样保护', () => {
+  it.each([
+    [
+      '<p><code>25% reduced Attribute Requirements </code></p>',
+      '25% reduced Attribute Requirements ',
+      '25% reduced Attribute Requirements ',
+    ],
+    [
+      '<p><code> 25% reduced Attribute Requirements</code></p>',
+      ' 25% reduced Attribute Requirements',
+      ' 25% reduced Attribute Requirements',
+    ],
+    ['<p>Use <code>copy --force </code></p>', 'Use copy --force ', 'copy --force '],
+    ['<p><code> copy --force</code> next</p>', ' copy --force next', ' copy --force'],
+    ['<p>  <code> copy  --force\n</code>  </p>', ' copy  --force\n', ' copy  --force\n'],
+    ['<code> copy  --force </code>', ' copy  --force ', ' copy  --force '],
+  ])('不因首尾空白丢失保护：%s', (html, text, code) => {
+    const d = doc(`<article>${html}</article>`)
+    const before = d.body.innerHTML
+    const b = extractGeneric(d)[0]
+    if (!b) throw Error('missing block')
+    expect(b.text).toBe(text)
+    expect(b.verbatim?.map(([a, z]) => b.text.slice(a, z))).toEqual([code])
+    const resolve = () => ({ status: 'translated' as const, text: '不能替换代码', candidates: [] })
+    expect(routeBlock(b, resolve).kind).not.toBe('dictionary')
+    const matcher = createMatcher({
+      schemaVersion: 1,
+      locale: 'zh-CN',
+      hash: 'test',
+      entries: [],
+      abbreviations: [],
+    })
+    expect(prepareBlock(b, matcher, resolve).tokens).toContain(code)
+    expect(d.body.innerHTML).toBe(before)
+  })
+  it('整个 pre 的边界空白也不能改写', () => {
+    expect(extractGeneric(doc('<article><pre>  copy --force\n</pre></article>'))[0]).toMatchObject({
+      kind: 'verbatim',
+      text: '  copy --force\n',
+    })
+  })
 })

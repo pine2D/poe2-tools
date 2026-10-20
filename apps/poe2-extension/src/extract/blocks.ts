@@ -26,6 +26,7 @@ const BLOCKS: Readonly<Record<string, BlockKind>> = {
   PRE: 'verbatim',
 }
 const BLOCK_SELECTOR = Object.keys(BLOCKS).join(',').toLowerCase()
+const PROTECTED = 'code,kbd,samp,[translate="no"]'
 const EMPHASIS = new Set(['STRONG', 'B', 'EM', 'A', 'CODE'])
 const MAX_BLOCKS = 5000
 type EntityMarker = (element: Element, text: string) => boolean
@@ -142,7 +143,7 @@ function textWithEmphasis(
     const block = isBlockLevel(child)
     if (block) gap()
     const start = text.length
-    const protectedElement = child.matches('code,kbd,samp,[translate="no"]')
+    const protectedElement = child.matches(PROTECTED)
     for (const n of Array.from(child.childNodes)) visit(n, keepSpace || protectedElement)
     if (protectedElement && text.length > start) verbatim.push([start, text.length])
     if (EMPHASIS.has(child.tagName) || entityMarker) {
@@ -156,8 +157,10 @@ function textWithEmphasis(
     if (block) gap()
   }
   for (const n of nodes) visit(n)
-  const lead = text.length - text.trimStart().length
-  const trimmed = text.trim()
+  // 只裁去保护范围之外的边界空白；代码自身的空格/换行属于原文。
+  const lead = Math.min(text.length - text.trimStart().length, ...verbatim.map(([a]) => a))
+  const end = Math.max(text.trimEnd().length, ...verbatim.map(([, b]) => b))
+  const trimmed = text.slice(lead, end)
   return {
     text: trimmed,
     breaks: [...new Set(breaks.map((n) => n - lead).filter((n) => n > 0 && n < trimmed.length))],
@@ -246,9 +249,15 @@ export function collectBlocks(
   const visit = (el: Element) => {
     if (el.matches(skip)) return
     const kind = BLOCKS[el.tagName]
+    // 选区可能只留下代码元素的浅包装，必须把该包装本身交给范围收集器。
+    if (el.matches(PROTECTED)) {
+      const { text, ...extra } = textWithEmphasis([el], skip, entityMarker)
+      add(el, 'paragraph', text, extra)
+      return
+    }
     if (!nested(el) && !(allowShort && !kind && Array.from(el.children).some(isBlockLevel))) {
       if (kind) {
-        if (kind === 'verbatim') add(el, 'verbatim', (el.textContent ?? '').trim())
+        if (kind === 'verbatim') add(el, 'verbatim', el.textContent ?? '')
         else {
           const { text, ...extra } = textWithEmphasis(Array.from(el.childNodes), skip, entityMarker)
           add(el, kind, text, extra)

@@ -192,3 +192,23 @@ it('单字符选区也不扩大为全文', () => {
   expect(r.ok && r.doc.source.scope).toBe('selection')
   expect(r.ok && r.doc.blocks.map((b) => b.text)).toEqual(['A'])
 })
+
+it('只选中代码内容时保留浅克隆的保护语义与边界空白', () => {
+  const d = document
+  d.body.innerHTML = '<article><p>Outside <code> copy  --force </code> outside</p></article>'
+  const before = d.body.innerHTML
+  const code = d.querySelector('code')
+  if (!code?.firstChild) throw Error('missing fixture')
+  const range = d.createRange()
+  range.setStart(code.firstChild, 0)
+  range.setEnd(code.firstChild, code.textContent?.length ?? 0)
+  const result = extractPage(d, at('example.com'), range.toString(), NOW, range)
+  if (!result.ok) throw Error('missing extraction')
+  expect(parseExtractResult(result)).toEqual(result)
+  expect(result.doc.source.scope).toBe('selection')
+  expect(result.doc.blocks).toHaveLength(1)
+  const b = result.doc.blocks[0]
+  expect(b?.text).toBe(' copy  --force ')
+  expect(b?.verbatim?.map(([a, z]) => b.text.slice(a, z))).toEqual([' copy  --force '])
+  expect(d.body.innerHTML).toBe(before)
+})

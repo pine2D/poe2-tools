@@ -1,5 +1,5 @@
 // 固定衔接候选与冻结 guide-v7 的同期对照。默认只做全周期离线预检。
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
@@ -151,6 +151,57 @@ const MANIFEST = 'bbba2583cd42110f616d022549d1e18220baf2da8b1aa6521020fed8261f9c
 async function readJson<T>(path: string): Promise<T> {
   return JSON.parse(await readFile(path, 'utf8')) as T
 }
+// 质量身份覆盖直接执行的共享核心、扩展与验收脚本；浏览器必须使用同一 ZIP。
+export async function candidateIdentity(root: string) {
+  const files: string[] = []
+  const collect = async (dir: string): Promise<void> => {
+    for (const entry of await readdir(resolve(root, dir), { withFileTypes: true })) {
+      const path = `${dir}/${entry.name}`
+      if (entry.isDirectory()) await collect(path)
+      else if (/\.(?:ts|mjs|json)$/.test(path) && !/\.test\./.test(path)) files.push(path)
+    }
+  }
+  for (const dir of [
+    'packages/guide-core/src',
+    'packages/l10n-core/src',
+    'apps/poe2-extension/src',
+    'apps/poe2-extension/scripts',
+  ])
+    await collect(dir)
+  files.push(
+    'package.json',
+    'pnpm-lock.yaml',
+    ...['packages/guide-core', 'packages/l10n-core', 'apps/poe2-extension'].map(
+      (dir) => `${dir}/package.json`,
+    ),
+  )
+  const extension = resolve(root, 'apps/poe2-extension')
+  const release = await readJson<{ file: string; bytes: number; sha256: string }>(
+    resolve(extension, 'release.json'),
+  )
+  if (!/^poe2-extension-[0-9A-Za-z.-]+\.zip$/.test(release.file)) throw Error('候选 ZIP 文件名无效')
+  const zip = await readFile(resolve(extension, 'artifacts', release.file))
+  const packageHash = createHash('sha256').update(zip).digest('hex')
+  // 复用可复现打包器，只读取目录并在内存中比较；不改产物或发布记录。
+  const { zipDirectory }: { zipDirectory(path: string): Promise<Buffer> } = await import(
+    new URL('./zip.mjs', import.meta.url).href
+  )
+  if (
+    zip.length !== release.bytes ||
+    packageHash !== release.sha256 ||
+    !zip.equals(await zipDirectory(resolve(extension, 'dist')))
+  )
+    throw Error('候选 ZIP、构建目录与产物摘要不一致')
+  const sources = await Promise.all(
+    files.sort().map(async (path) => [
+      path,
+      createHash('sha256')
+        .update(await readFile(resolve(root, path)))
+        .digest('hex'),
+    ]),
+  )
+  return { candidateHash: digest(JSON.stringify({ sources, packageHash })), packageHash }
+}
 async function inputs(root: string) {
   const manifestText = await readFile(resolve(root, 'manifest.json'), 'utf8')
   if (digest(manifestText) !== MANIFEST) throw Error('冻结清单摘要不符')
@@ -158,28 +209,7 @@ async function inputs(root: string) {
   for (const [name, hash] of Object.entries(manifest.files))
     if (digest(await readFile(resolve(root, name), 'utf8')) !== hash)
       throw Error(`冻结材料变化：${name}`)
-  const src = resolve(repo, 'packages/guide-core/src')
-  const files = (await readdir(src))
-    .filter((n) => n.endsWith('.ts') && !n.endsWith('.test.ts'))
-    .map((n) => resolve(src, n))
-  files.push(
-    ...['bridge-run.ts', 'bridge-quality.ts'].map((n) =>
-      resolve(repo, 'apps/poe2-extension/scripts', n),
-    ),
-    ...['openai', 'sse', 'presets'].map((n) =>
-      resolve(repo, `apps/poe2-extension/src/guide/engines/${n}.ts`),
-    ),
-    ...['guide-dictionary', 'guide-stats'].map((n) =>
-      resolve(repo, `apps/poe2-extension/dist/assets/${n}.json`),
-    ),
-  )
-  const candidateHash = digest(
-    JSON.stringify(
-      await Promise.all(
-        files.sort().map(async (p) => [p.slice(repo.length), await readFile(p, 'utf8')]),
-      ),
-    ),
-  )
+  const identity = await candidateIdentity(repo)
   const baselineFile = resolve(root, 'baseline.mjs')
   const baselineText = await readFile(baselineFile, 'utf8')
   const baselineDictionary = await readFile(resolve(root, 'baseline-dictionary.json'), 'utf8')
@@ -204,7 +234,7 @@ async function inputs(root: string) {
     baseline,
     candidate,
     baselineHash,
-    candidateHash,
+    ...identity,
     manifestHash: MANIFEST,
     development: await readJson<Fixture>(resolve(root, 'development.json')),
     sealed: await readJson<Fixture>(resolve(root, 'sealed.json')),
@@ -264,6 +294,7 @@ export async function main() {
       schema: 1,
       manifestHash: loaded.manifestHash,
       candidateHash: loaded.candidateHash,
+      packageHash: loaded.packageHash,
       baselineHash: loaded.baselineHash,
       model: DEEPSEEK.model,
       params,
@@ -273,6 +304,7 @@ export async function main() {
     }
     const preflight = {
       candidateHash: record.candidateHash,
+      packageHash: record.packageHash,
       baselineHash: record.baselineHash,
       requests: jobs.length,
       upperTokens: jobs.reduce((n, j) => n + j.upperTokens, 0),
@@ -299,6 +331,7 @@ export async function main() {
       schema: 1,
       manifestHash: record.manifestHash,
       candidateHash: record.candidateHash,
+      packageHash: record.packageHash,
       baselineHash: record.baselineHash,
       requests: record.requests,
       local: record.local.map(({ id, stage }) => ({ id, stage })),
@@ -316,6 +349,7 @@ export async function main() {
         ...summary,
         coverage: { baseline: 82, candidate: 82, sealed: 80, stability: 40, browserSlots: 8 },
         candidateHash: record.candidateHash,
+        packageHash: record.packageHash,
         baselineHash: record.baselineHash,
         apiRequests: 0,
       }),
@@ -331,6 +365,7 @@ export async function main() {
   if (
     wrapped.hash !== digest(JSON.stringify(record)) ||
     record.candidateHash !== loaded.candidateHash ||
+    record.packageHash !== loaded.packageHash ||
     record.baselineHash !== loaded.baselineHash ||
     record.manifestHash !== loaded.manifestHash
   )
@@ -347,6 +382,7 @@ export async function main() {
     stage,
     manifestHash: record.manifestHash,
     candidateHash: record.candidateHash,
+    packageHash: record.packageHash,
     baselineHash: record.baselineHash,
     model: record.model,
     params,

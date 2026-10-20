@@ -34,6 +34,7 @@ export interface CyclePlan {
   manifestHash: string
   candidateHash: string
   baselineHash: string
+  packageHash: string
   requests: RequestSpec[]
   local: LocalRow[]
 }
@@ -45,6 +46,8 @@ export interface QualityGate {
 export interface Gates {
   development?: QualityGate
   sealed?: QualityGate
+  stability?: QualityGate
+  browserPackageHash?: string
 }
 interface Entry {
   key: string
@@ -73,6 +76,7 @@ export function checkPlan(plan: CyclePlan) {
     plan.schema !== 1 ||
     !plan.candidateHash ||
     !plan.baselineHash ||
+    !plan.packageHash ||
     !plan.manifestHash ||
     !Array.isArray(plan.requests) ||
     !Array.isArray(plan.local)
@@ -194,8 +198,21 @@ export async function reserve(file: string, job: RequestSpec, gates: Gates = {})
     if (data.entries.some((e) => e.key === job.key)) throw Error('请求已经登记，禁止重复发送')
     if (job.stage !== 'baseline' && job.stage !== 'candidate') {
       if (!gatePass(gates.development, data.plan)) throw Error('开发门槛未通过或候选已变化')
-      if (job.stage.startsWith('stability') && !gatePass(gates.sealed, data.plan))
+      if (
+        (job.stage.startsWith('stability') || job.stage === 'browser') &&
+        !gatePass(gates.sealed, data.plan)
+      )
         throw Error('封存门槛未通过')
+      if (job.stage === 'browser') {
+        if (!gatePass(gates.stability, data.plan)) throw Error('稳定性门槛未通过')
+        if (gates.browserPackageHash !== data.plan.packageHash)
+          throw Error('浏览器产物与冻结候选不符')
+        const complete = new Set(
+          data.entries.filter((e) => e.status === 'complete').map((e) => e.key),
+        )
+        if (data.plan.requests.some((j) => j.stage !== 'browser' && !complete.has(j.key)))
+          throw Error('浏览器前置阶段尚未全部完成')
+      }
     }
     if (
       data.entries.length >= LIMIT ||

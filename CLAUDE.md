@@ -6,6 +6,8 @@
 
 用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。0.5.0 起扩展另含攻略翻译：用户点击后读取当前页正文，在侧边栏按国服术语显示中英对照；翻译服务由用户自备 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key。规划入口为 `docs/chrome-extension/README.md`。扩展源码已于 2026-10-02 合入主树 `apps/poe2-extension`，0.2.0 起随网站同一流程发布：网站 `/extension/` 提供预构建 zip 下载，推送 main 后同一文件由 CI 发布为 GitHub Release（tag `ext-v<版本>`）；未上架 Chrome 应用商店。具体通过／未测范围见 `docs/chrome-extension/compatibility.md`。未经实际浏览器验收不得扩大页面或装备兼容性声明；公开发行与源码、验收状态应分别说明。
 
+2026-10-20：独立 `feat/translation-bridge` 分支已整合 CoE 0.4.4 与攻略衔接工程，生成 0.6.0 本地候选。正文开发对照仍未达到零重大错误门槛；封存、重复和付费浏览器已按契约停止。未推送、部署或提交 CWS，当前证据见 `docs/chrome-extension/validation-2026-10-20-bridge.md`；不得将工程门禁通过写成整段质量通过。
+
 poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：pnpm monorepo，TypeScript 单语言，
 纯静态前端 + 构建期脚本，不部署服务端。
 
