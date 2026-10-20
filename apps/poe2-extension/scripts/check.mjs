@@ -229,8 +229,8 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   )
     throw new Error('词典格式或身份不合法')
   lexiconModule ??= loadLexiconModule()
-  const { createLexicon } = await lexiconModule
-  createLexicon(dict.terms)
+  const { createGameLexicon } = await lexiconModule
+  createGameLexicon(dict.terms)
   // 文件集合按实际入口核对；合法扩展名不意味着文件应随扩展发布。
   if (
     popupResources.length !== 2 ||

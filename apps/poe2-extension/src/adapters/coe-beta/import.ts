@@ -5,7 +5,7 @@ import {
   knownModifierHeader,
   parseItem,
 } from '@poe2-tools/item-core/text'
-import type { Term } from '@poe2-tools/l10n-core'
+import { createGameLexicon, type Term } from '@poe2-tools/l10n-core'
 import { completeItemFields } from './item-fields'
 
 /** 装备文本转换的预览结果；面板据此呈现结论与核对清单，不另行判断 */
@@ -31,6 +31,16 @@ export interface PreparedImport {
 }
 
 export function itemDictionary(terms: readonly Term[]): ItemDictionary {
+  // 原始 stat ID 可对应 Area/Map 等多个模板；语法身份唯一，选择结果保留来源 ID。
+  const lexicon = createGameLexicon(
+    terms
+      .filter((term) => term.domain === 'stat')
+      .map((term, i) => ({
+        ...term,
+        id: `input:${i}:${term.id}`,
+        sourceId: term.sourceId ?? term.id,
+      })),
+  )
   const names = (domain: Term['domain']) =>
     Object.fromEntries(
       terms.filter((t) => t.domain === domain && !t.inputOnly).map((t) => [t.en, t.zh]),
@@ -48,6 +58,14 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
     items: { bases: names('base'), uniques: names('unique') },
     inputNames: { bases: inputNames('base'), uniques: inputNames('unique') },
     mixedInput: true,
+    resolveStat(text) {
+      const result = lexicon.resolveStat(text, 'toEnglish')
+      const candidates = result.candidates.map(({ term, text: english }) => ({
+        id: term.sourceId ?? term.id,
+        english,
+      }))
+      return { english: result.text, candidates }
+    },
     stats: {
       entries: terms
         .filter((t) => t.domain === 'stat')

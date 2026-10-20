@@ -1,4 +1,4 @@
-import { createLexicon, type Term } from '@poe2-tools/l10n-core'
+import { createGameLexicon, type Term } from '@poe2-tools/l10n-core'
 import { pageStatus } from '../adapters/coe-beta/context'
 import { defaults, platform } from '../platform'
 import { PAGE_STATE_TYPE, type PageStateReply } from '../protocol'
@@ -49,7 +49,7 @@ async function start() {
   const data = (await response.json()) as { schemaVersion: number; locale: string; terms: Term[] }
   if (data.schemaVersion !== 1 || data.locale !== 'zh-CN') throw new Error('扩展词典版本不兼容')
   step = 'other'
-  const lexicon = createLexicon(data.terms)
+  const lexicon = createGameLexicon(data.terms)
   let stop: (() => void) | undefined
   const languageNotice = createLanguageNotice(document)
   const reconcile = () => {

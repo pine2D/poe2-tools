@@ -1,6 +1,6 @@
 import { settingsText } from './settings-text'
 import { simulatorHelpText } from './simulator-help'
-import { statHeaderSelector, statSelector } from './stats'
+import { inStatRegion, statHeaderSelector, statSelector } from './stats'
 import { isUserContent } from './user-content'
 
 const notificationRegions = '#snackbarsLeft .snackbar, #snackbarsRight .snackbar'
@@ -13,6 +13,7 @@ export function translatable(node: Text): boolean {
     !!parent?.closest(regions) &&
     !parent.closest(excluded) &&
     (!parent.closest(statSelector) || !!parent.closest(statHeaderSelector)) &&
+    !inStatRegion(parent) &&
     !isUserContent(parent) &&
     !(
       node.ownerDocument.location.pathname === '/compare' &&

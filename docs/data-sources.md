@@ -4,6 +4,8 @@
 
 每份投影记录两侧 URL、抓取时间、SHA-256 和语种。官方静态端点未声明游戏版本，明确记录 `unknown`；抓取日期不等于游戏补丁版本，也不改变天赋、宝石或制作目录快照。`data/l10n/stat-decisions.json`（manual）记录同英文多译名的逐项裁决理由；构建产物保留未选中的原译文供反向输入，未裁决冲突仍保留。
 
+`data/l10n/coe-beta/stat-variants.zh-CN.json`（manual）记录交易筛选与公开展示的句式差异；当前为恍惚、创口的概率句，英文来自 CoE 公开页面观察，中文使用官方同 ID 的术语并手工补足句法。每项记录原始两侧文本、页面链接和理由；上游文本改变即阻断构建待复核。只维护显示文本，不复制原站实现、权重、词缀范围或规则数据。共用匹配器另延续已有咒符栏／位输入别名、猛攻 second／seconds 规范，以及受限的 increased／reduced 语法派生；没有泛化 same/more/less 或推断缺失概率。
+
 手动刷新：`pnpm --filter @poe2-tools/dict-builder exec tsx src/build-stat-catalog.ts`，可加 `--offline` 复用缓存。更新前审查各侧快照与裁决是否仍适用；普通构建和浏览器不联网刷新。不得把这一数据覆盖统计称为 CoE 全站覆盖率。
 
 # 界面字体与素材（2026-09-28 登记）

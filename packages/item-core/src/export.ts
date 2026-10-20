@@ -1,4 +1,4 @@
-import { RUNE_SUFFIX } from './annotations'
+import { RUNE_SUFFIX, readStatAnnotations } from './annotations'
 import { BONDED_PREFIX } from './bodyIdols'
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
 import { isCharmClass, translateCharmProperty } from './charmText'
@@ -20,6 +20,8 @@ export interface ItemDictionary {
     uniques: Record<string, readonly string[]>
   }
   mixedInput?: boolean
+  /** 扩展可注入共享词缀解析器；旧制作与 .build 调用方沿用默认路径。 */
+  resolveStat?: (text: string) => Resolution
 }
 
 export interface InspectedMod {
@@ -209,13 +211,25 @@ export function inspectItem(
         ? '咒符仅供解析与中英对照，不开放制作。'
         : null
   const entries = dictionary.stats?.entries ?? []
-  const translate = createStatResolver(
-    dictionary.mixedInput
-      ? [...entries, ...entries.map(({ id, en }) => ({ id, en, text: en }))]
-      : item.locale === 'en'
-        ? entries.map(({ id, en }) => ({ id, en, text: en }))
-        : entries,
-  )
+  const resolver = dictionary.resolveStat
+  const translate = resolver
+    ? (raw: string): Resolution => {
+        const { text, states, unscalable } = readStatAnnotations(raw)
+        const resolved = resolver(text)
+        const suffix =
+          states.map((state) => ` (${state})`).join('') + (unscalable ? ' — Unscalable Value' : '')
+        return {
+          english: resolved.english === null ? null : resolved.english + suffix,
+          candidates: resolved.candidates.map((c) => ({ ...c, english: c.english + suffix })),
+        }
+      }
+    : createStatResolver(
+        dictionary.mixedInput
+          ? [...entries, ...entries.map(({ id, en }) => ({ id, en, text: en }))]
+          : item.locale === 'en'
+            ? entries.map(({ id, en }) => ({ id, en, text: en }))
+            : entries,
+      )
   const englishByLine: Record<number, string> = {}
   const mods = item.mods.map((mod) => {
     englishByLine[mod.header.line] = translateHeader(mod)

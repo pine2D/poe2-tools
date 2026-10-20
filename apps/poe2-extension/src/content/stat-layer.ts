@@ -14,10 +14,20 @@ import { adoptL1 } from './l1'
 import type { CountedStop } from './text-layer'
 
 export type { CountedStop } from './text-layer'
+
+/** textContent 会吞掉 br 的词边界；只读取显式换行，不依赖布局或改写原站 DOM。 */
+function statText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
+  if (node.nodeName === 'BR') return '\n'
+  return Array.from(node.childNodes, statText).join('')
+}
+
 export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false): CountedStop {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
   const originalAttribute = 'data-poe2-l10n-original'
+  const diagnosticAttribute = 'data-poe2-l10n-stat-status'
+  const diagnosed = new Set<Element>()
   const style = doc.createElement('style')
   style.dataset.poe2L10nStyle = 'stat-visibility'
   // 仅隐藏已译出的视觉原文；原站读取、复制与更新仍使用同一套英文节点。
@@ -64,7 +74,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
   }
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
-    const original = stat.textContent ?? ''
+    const original = statText(stat)
     const kind = stat.matches(propertySelector)
       ? 'property'
       : stat.matches(modifierDetailsSelector)
@@ -89,6 +99,14 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
                 : lex.translate(original, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
+    }
+    if (kind === 'stat' || kind === 'data-stat') {
+      const status =
+        translated && translated !== original
+          ? 'translated'
+          : (lex.resolveStat?.(original).status ?? 'unmatched')
+      stat.setAttribute(diagnosticAttribute, status)
+      diagnosed.add(stat)
     }
     let host = hosts.get(stat)
     if (!translated || translated === original) {
@@ -120,6 +138,10 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
     if (root.matches(originals) && !hosts.has(root)) root.removeAttribute(originalAttribute)
     for (const original of root.querySelectorAll(originals))
       if (!hosts.has(original)) original.removeAttribute(originalAttribute)
+    if (root.hasAttribute(diagnosticAttribute) && !diagnosed.has(root))
+      root.removeAttribute(diagnosticAttribute)
+    for (const original of root.querySelectorAll(`[${diagnosticAttribute}]`))
+      if (!diagnosed.has(original)) original.removeAttribute(diagnosticAttribute)
   }
   function scan(root: Node) {
     const element = root instanceof Element ? root : root.parentElement
@@ -149,6 +171,11 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
         hosts.delete(stat)
         stat.removeAttribute(originalAttribute)
       }
+    for (const stat of diagnosed)
+      if (!isSupportedStat(stat)) {
+        stat.removeAttribute(diagnosticAttribute)
+        diagnosed.delete(stat)
+      }
   })
   observer.observe(doc.body, {
     subtree: true,
@@ -166,6 +193,8 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
         stat.removeAttribute(originalAttribute)
       }
       hosts.clear()
+      for (const stat of diagnosed) stat.removeAttribute(diagnosticAttribute)
+      diagnosed.clear()
       removeClonedHosts(doc.body)
       style.remove()
       cache.clear()

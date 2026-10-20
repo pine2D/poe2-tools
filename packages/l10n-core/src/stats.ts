@@ -106,11 +106,25 @@ export function createGameLexicon(input: readonly Term[]): GameLexicon {
       term,
       path,
       firstWord: normalize(term.en).match(/[a-z]+/)?.[0],
+      firstHan: term.zh.match(/[\u3400-\u9fff]/u)?.[0],
       forward: compile(term.en, term.zh, order, false),
       backward: compile(term.zh, english, inverse, true),
       english: compile(term.en, english, undefined, false),
     }
   })
+  // 变量只能是数值；第一个英文单词／汉字必属于字面模板，可安全缩小候选集。
+  const englishIndex = new Map<string, typeof prepared>()
+  const chineseIndex = new Map<string, typeof prepared>()
+  for (const entry of prepared) {
+    for (const [index, key] of [
+      [englishIndex, entry.firstWord ?? ''],
+      [chineseIndex, entry.firstHan ?? ''],
+    ] as const) {
+      const group = index.get(key)
+      if (group) group.push(entry)
+      else index.set(key, [entry])
+    }
+  }
   const searchable = [
     ...input.filter((t) => t.domain !== 'stat' && !t.inputOnly),
     ...rules.filter(({ term }) => !term.inputOnly).map(({ term }) => term),
@@ -120,13 +134,16 @@ export function createGameLexicon(input: readonly Term[]): GameLexicon {
     const cacheKey = `${direction}:${text}`
     const cached = cache.get(cacheKey)
     if (cached) return cached
-    if (text.length > 2000) return { status: 'unmatched', text: null, candidates: [] }
+    if (text.length > 2000 || (direction === 'toEnglish' && text.includes('#')))
+      return { status: 'unmatched', text: null, candidates: [] }
     const englishInput = direction === 'toChinese' || !/[\u3400-\u9fff]/u.test(text)
     const firstWord = normalize(text).match(/[a-z]+/)?.[0]
+    const pool = englishInput
+      ? englishIndex.get(firstWord ?? '')
+      : chineseIndex.get(text.match(/[\u3400-\u9fff]/u)?.[0] ?? '')
     let candidates: StatResolution['candidates'] = []
-    for (const entry of prepared) {
+    for (const entry of pool ?? []) {
       if (direction === 'toChinese' && entry.term.inputOnly) continue
-      if (englishInput && entry.firstWord !== firstWord) continue
       const translated =
         direction === 'toChinese'
           ? entry.forward(text)

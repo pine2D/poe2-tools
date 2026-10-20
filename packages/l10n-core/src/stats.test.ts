@@ -150,4 +150,11 @@ describe('共用词缀契约', () => {
     expect(lex.search('护甲', 'ui')[0]?.term.id).toBe('a')
     expect(lex.resolveStat('Armour').status).toBe('unmatched')
   })
+
+  it('列表占位符只能用于展示，不能把缺失实际数字的装备输入当作可转换', () => {
+    const lex = createGameLexicon([stat('a', '+# to maximum Life', '+# 生命上限')])
+    expect(lex.translate('+# to maximum Life', 'stat')).toBe('+# 生命上限')
+    expect(lex.resolveStat('+# 生命上限', 'toEnglish').status).toBe('unmatched')
+    expect(lex.resolveStat('+# to maximum Life', 'toEnglish').status).toBe('unmatched')
+  })
 })

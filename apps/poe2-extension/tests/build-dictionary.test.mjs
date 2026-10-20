@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
 import { createLexicon } from '../../../packages/l10n-core/src/index'
+import { createGameLexicon } from '../../../packages/l10n-core/src/stats'
 import { buildDictionary } from '../scripts/build-dictionary.mjs'
 import { prepareImport } from '../src/adapters/coe-beta/import'
 
@@ -18,6 +19,20 @@ async function fixture() {
     await writeFile(path.join(root, p), JSON.stringify(data))
   }
   const meta = { tier: 'primary', source: 'synthetic', gameVersion: 'test' }
+  const statMeta = (locale) => ({
+    ...meta,
+    projection: 'source-placeholders',
+    decisions: [],
+    sources: ['en', locale].map((locale) => ({ locale, sha256: 'a'.repeat(64) })),
+  })
+  await put('data/l10n/stat-decisions.json', {
+    _meta: { source: 'synthetic', updatedAt: 'test' },
+    entries: { 'zh-CN': [], 'zh-TW': [] },
+  })
+  await put('data/l10n/coe-beta/stat-variants.zh-CN.json', {
+    _meta: { source: 'synthetic', updatedAt: 'test', gameVersion: 'test' },
+    entries: [],
+  })
   await put('data/dict/zh-CN/items.json', {
     _meta: { ...meta, tier: 'gray' },
     bases: { 'Runed Focus': '符文法器' },
@@ -28,8 +43,8 @@ async function fixture() {
     bases: { 'Expedition Tablet': '先祖秘藏石板' },
     uniques: {},
   })
-  await put('data/dict/zh-CN/stats.json', {
-    _meta: meta,
+  await put('data/l10n/stats/zh-CN.json', {
+    _meta: statMeta('zh-CN'),
     entries: [{ id: 'res', en: '#% to Lightning Resistance', text: '闪电抗性 #%' }],
   })
   await put('data/dict/zh-TW/items.json', {
@@ -37,8 +52,8 @@ async function fixture() {
     bases: { 'Runed Focus': '臺服自造法器' },
     uniques: {},
   })
-  await put('data/dict/zh-TW/stats.json', {
-    _meta: meta,
+  await put('data/l10n/stats/zh-TW.json', {
+    _meta: statMeta('zh-TW'),
     entries: [{ id: 'res', en: '#% to Lightning Resistance', text: '#%閃電抗性' }],
   })
   await put('data/craft/catalog.json', {
@@ -101,7 +116,7 @@ it('独立台服词典用于混合装备输入，页面仍显示国服译名并�
   expect(result.ready).toBe(true)
   expect(result.english).toContain('Runed Focus')
   expect(result.english).toContain('+18(16-20)% to Lightning Resistance')
-  expect(data.sources.filter((s) => s.path.startsWith('data/dict/zh-TW/'))).toHaveLength(2)
+  expect(data.sources.filter((s) => s.path.includes('zh-TW'))).toHaveLength(2)
   const lex = createLexicon(data.terms)
   expect(lex.translate('+18% to Lightning Resistance')).toBe('闪电抗性 +18%')
   expect(lex.translate('Runed Focus')).toBe('符文法器')
@@ -116,4 +131,24 @@ it('真实入库词典可加载，保留同一来源 ID 的不同文本形式', 
     '在此区域中可找到的金币数量提高 12%',
   )
   expect(lex.translate('12% increased Gold found in Map')).toBe('地图内找到的金币数量提高 12%')
+})
+
+it('真实扩展数据保留固定条件、来源快照和显式裁决，显示与导入拒绝错误条件', async () => {
+  const outputRoot = await fixture()
+  const root = path.resolve(import.meta.dirname, '../../..')
+  const data = await buildDictionary(root, path.join(outputRoot, 'raw.json'))
+  expect(
+    data.sources.some((s) => s.path === 'data/l10n/stats/zh-CN.json' && s.snapshots?.length === 2),
+  ).toBe(true)
+  expect(data.terms.some((t) => t.sourceId === 'explicit.stat_1416406066' && t.preferred)).toBe(
+    true,
+  )
+  const lex = createGameLexicon(data.terms)
+  const source = 'Create a Fragment of Divinity in your Presence every 4 seconds'
+  expect(lex.translate(source, 'stat')).toBe('在你的在场范围内，每 4 秒创造一个神圣碎片')
+  expect(lex.translate(source.replace('4', '999'), 'stat')).toBeNull()
+  expect(lex.resolveStat('在你的在场范围内，每 999 秒创造一个神圣碎片', 'toEnglish').status).toBe(
+    'unmatched',
+  )
+  expect(lex.translate('20% increased Spirit', 'stat')).toBe('精魂提高 20%')
 })

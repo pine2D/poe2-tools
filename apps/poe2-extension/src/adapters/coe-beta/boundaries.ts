@@ -27,6 +27,8 @@ const boundaryClasses = [
   'stat',
   'modifierTable',
   'modInfluenceGroup',
+  'modGroup',
+  'modTag',
   'row',
   'label',
   'text',
