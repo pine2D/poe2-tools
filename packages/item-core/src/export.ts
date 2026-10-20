@@ -1,9 +1,11 @@
 import { RUNE_SUFFIX } from './annotations'
 import { BONDED_PREFIX } from './bodyIdols'
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
+import { isCharmClass, translateCharmProperty } from './charmText'
 import { flaskTextType } from './flaskText'
 import { resolveGrantedSkill } from './grantedSkills'
 import { canonicalItemClass } from './itemClasses'
+import { readModifierHeader } from './modifierHeaders'
 import { hasSpecialModifierSource } from './modifierSource'
 import { isKnownWeaponProperty } from './parse'
 import { createStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
@@ -12,6 +14,12 @@ import type { ItemDocument, ItemMod, ItemStat, SourceLine } from './types'
 export interface ItemDictionary {
   items?: { bases: Record<string, string>; uniques: Record<string, string> }
   stats?: { entries: readonly StatTemplate[] }
+  /** 独立语种的输入名称，不改变原词典的显示译名。 */
+  inputNames?: {
+    bases: Record<string, readonly string[]>
+    uniques: Record<string, readonly string[]>
+  }
+  mixedInput?: boolean
 }
 
 export interface InspectedMod {
@@ -84,6 +92,11 @@ const VERIFIED_STATS = new Set([
 
 function translateMetadata(raw: string): string | null {
   const text = raw.trim()
+  const sockets = /^(?:插槽|插槽連線|Sockets)\s*[:：]\s*(.*)$/i.exec(text)
+  if (sockets)
+    return /^[SABGRWJ](?:-[SABGRWJ])*(?:\s+[SABGRWJ](?:-[SABGRWJ])*)*$/i.test(sockets[1] ?? '')
+      ? `Sockets: ${sockets[1]}`
+      : null
   // 复用解析器的严格属性语法，只翻译标题；不计算或归一化原文面板数值。
   if (isKnownWeaponProperty(text)) {
     const weaponLabels: [RegExp, string][] = [
@@ -103,16 +116,17 @@ function translateMetadata(raw: string): string | null {
     return text
   }
   const labels: [RegExp, string][] = [
+    [/^(?:护甲|護甲)\s*[:：]\s*/, 'Armour: '],
+    [/^(?:闪避值|閃避值)\s*[:：]\s*/, 'Evasion Rating: '],
     [/^(?:能量护盾|能量護盾)\s*[:：]\s*/, 'Energy Shield: '],
     [/^精魂\s*[:：]\s*/, 'Spirit: '],
     [/^品質\s*[:：]\s*|^品质\s*[:：]\s*/, 'Quality: '],
-    [/^(?:插槽|插槽連線)\s*[:：]\s*/, 'Sockets: '],
     [/^(?:物品等级|物品等級)\s*[:：]\s*/, 'Item Level: '],
   ]
   for (const [pattern, label] of labels) {
     if (pattern.test(text)) {
       const rest = text.replace(pattern, '')
-      if (/^[\d+.,%\sSABGRW-]+(?:\s*\(augmented\))?$/.test(rest)) return label + rest
+      if (/^[\d+.,%\s-]+(?:\s*\(augmented\))?$/.test(rest)) return label + rest
     }
   }
   if (/^(?:需求|Requirements|Requires)\s*[:：]/i.test(text)) {
@@ -129,8 +143,9 @@ function translateMetadata(raw: string): string | null {
   if (/^(?:被腐化|已腐化|腐化|Corrupted)$/i.test(text)) return 'Corrupted'
   if (/^(?:镜像|鏡像|Mirrored)$/i.test(text)) return 'Mirrored'
   if (/^(?:未鉴定|未鑑定|Unidentified)$/i.test(text)) return 'Unidentified'
+  if (/^(?:分裂之物|Split)$/i.test(text)) return 'Split'
   if (
-    /^(?:Energy Shield|Spirit|Quality|Sockets|Item Level):\s*[\d+.,%\sSABGRW-]+(?:\s*\(augmented\))?$/i.test(
+    /^(?:Armour|Evasion Rating|Energy Shield|Spirit|Quality|Item Level):\s*[\d+.,%\s-]+(?:\s*\(augmented\))?$/i.test(
       text,
     )
   )
@@ -139,46 +154,27 @@ function translateMetadata(raw: string): string | null {
 }
 
 function translateHeader(mod: ItemMod): string {
-  if (mod.kind === 'implicit' && mod.magnitude === undefined && knownImplicitHeader(mod.header.raw))
-    return `{ Implicit Modifier${mod.tags.length ? ` — ${mod.tags.join(', ')}` : ''} }`
-  if (mod.kind === 'implicit' || mod.kind === 'unique') {
-    if (
-      !/^\s*\{\s*(?:基底(?:属性|词缀|屬性|詞綴)|传奇(?:属性|词缀)|傳奇(?:屬性|詞綴)|(?:Implicit|Unique) Modifier)\s*\}\s*$/i.test(
-        mod.header.raw,
-      )
-    )
-      return mod.header.raw
-    return mod.kind === 'implicit' ? '{ Implicit Modifier }' : '{ Unique Modifier }'
-  }
-  if (mod.kind !== 'prefix' && mod.kind !== 'suffix') return mod.header.raw
-  if (!knownExplicitHeader(mod.header.raw)) return mod.header.raw
-  const kind = mod.kind === 'prefix' ? 'Prefix' : 'Suffix'
-  const name = mod.name === null ? '' : ` "${mod.name}"`
-  const tier = mod.tier === null ? '' : ` (Tier: ${mod.tier})`
-  const tags = mod.tags.length === 0 ? '' : ` — ${mod.tags.join(', ')}`
+  const header = readModifierHeader(mod.header.raw)
+  if (!header) return mod.header.raw
+  const states =
+    header.states?.map((state) => `${state[0]?.toUpperCase()}${state.slice(1)} `).join('') ?? ''
+  const name = header.name === null ? '' : ` "${header.name}"`
+  const tier = header.tier === null ? '' : ` (Tier: ${header.tier})`
+  const tags = header.tags.length === 0 ? '' : ` — ${header.tags.join(', ')}`
   const magnitude =
-    mod.magnitude === undefined
+    header.magnitude === undefined
       ? ''
-      : ` — ${Math.abs(mod.magnitude)}% ${mod.magnitude < 0 ? 'Reduced' : 'Increased'}`
-  return `{ ${kind} Modifier${name}${tier}${tags}${magnitude} }`
+      : ` — ${Math.abs(header.magnitude)}% ${header.magnitude < 0 ? 'Reduced' : 'Increased'}`
+  return `{ ${states}${header.englishKind}${name}${tier}${tags}${magnitude} }`
 }
 
-// 只识别基底头和逗号分隔的标签，不吞掉名称、等阶、额外来源或增效段。
 export function knownImplicitHeader(raw: string): boolean {
-  const match =
-    /^\s*\{\s*(?:基底(?:属性|词缀|屬性|詞綴)|Implicit Modifier)\s*(?:[—–]\s*([^{}\r\n—–]+))?\s*\}\s*$/i.exec(
-      raw,
-    )
-  return (
-    !!match &&
-    (match[1] === undefined || match[1].split(/[,，]/).every((tag) => tag.trim().length > 0))
-  )
+  return readModifierHeader(raw)?.kind === 'implicit'
 }
 
 export function knownExplicitHeader(raw: string): boolean {
-  return /^\s*\{\s*(?:前缀(?:属性|词缀)|后缀(?:属性|词缀)|前綴(?:屬性|詞綴)|後綴(?:屬性|詞綴)|(?:Prefix|Suffix) Modifier)\s*["“][^"”{}\r\n]+["”]\s*(?:\((?:等阶|等階|阶级|階級|Tier)\s*[:：]\s*\d+\)\s*)?(?:[—–]\s*[^{}]+)?\s*\}\s*$/i.test(
-    raw,
-  )
+  const kind = readModifierHeader(raw)?.kind
+  return kind === 'prefix' || kind === 'suffix'
 }
 
 function choose(resolution: Resolution, id: string | undefined): Resolution {
@@ -197,6 +193,7 @@ export function inspectItem(
       item.nameLines.map((line) => line.raw),
       item.rarity,
       dictionary.items?.bases ?? {},
+      dictionary.inputNames?.bases,
     ),
     selections[item.nameLines.at(-1)?.line ?? -1],
   )
@@ -207,12 +204,16 @@ export function inspectItem(
   const comparisonReason =
     item.rarity === 'unique'
       ? '传奇装备仅供解析与中英对照，不开放制作。'
-      : ['咒符', '護符', 'Charms'].includes(item.itemClass)
+      : isCharmClass(item.itemClass)
         ? '咒符仅供解析与中英对照，不开放制作。'
         : null
   const entries = dictionary.stats?.entries ?? []
   const translate = createStatResolver(
-    item.locale === 'en' ? entries.map(({ id, en }) => ({ id, en, text: en })) : entries,
+    dictionary.mixedInput
+      ? [...entries, ...entries.map(({ id, en }) => ({ id, en, text: en }))]
+      : item.locale === 'en'
+        ? entries.map(({ id, en }) => ({ id, en, text: en }))
+        : entries,
   )
   const englishByLine: Record<number, string> = {}
   const mods = item.mods.map((mod) => {
@@ -275,7 +276,7 @@ export function inspectItem(
   ) {
     bridgeReasons.push('转接仅验证23种普通法器的魔法或稀有装备，其他基底与稀有度暂供对照。')
   }
-  if (item.corrupted || item.mirrored || item.unidentified)
+  if (item.corrupted || item.mirrored || item.unidentified || item.split)
     bridgeReasons.push('当前特殊状态尚未完成 CoE 转接验证。')
   if (item.itemLevel === null) bridgeReasons.push('缺少物品等级。')
   if (item.mods.length === 0)
@@ -315,7 +316,12 @@ export function inspectItem(
   const name = item.nameLines[0]?.raw ?? ''
   const unique =
     item.rarity === 'unique'
-      ? resolveBase([name], 'normal', dictionary.items?.uniques ?? {}).english
+      ? resolveBase(
+          [name],
+          'normal',
+          dictionary.items?.uniques ?? {},
+          dictionary.inputNames?.uniques,
+        ).english
       : null
   const names = item.nameLines.map((line, index) => {
     if (index === item.nameLines.length - 1) return base.english ?? line.raw
@@ -329,7 +335,10 @@ export function inspectItem(
     for (const line of block.lines) {
       if (isKnownWeaponProperty(line.raw.trim()))
         bridgeReasons.push('武器面板属性的 CoE 转接尚未验证。')
-      const translated = englishByLine[line.line] ?? translateMetadata(line.raw)
+      const translated =
+        englishByLine[line.line] ??
+        translateCharmProperty(line.raw, item.itemClass) ??
+        translateMetadata(line.raw)
       if (translated !== null) englishByLine[line.line] = translated
       lines.push(translated ?? line.raw)
       if (translated === null && line.raw.trim() !== '')

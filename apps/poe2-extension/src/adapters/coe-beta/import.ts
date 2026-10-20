@@ -2,8 +2,7 @@ import {
   type ItemDictionary,
   type ItemDocument,
   inspectItem,
-  knownExplicitHeader,
-  knownImplicitHeader,
+  knownModifierHeader,
   parseItem,
 } from '@poe2-tools/item-core/text'
 import type { Term } from '@poe2-tools/l10n-core'
@@ -27,9 +26,21 @@ export interface PreparedImport {
 
 export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   const names = (domain: Term['domain']) =>
-    Object.fromEntries(terms.filter((t) => t.domain === domain).map((t) => [t.en, t.zh]))
+    Object.fromEntries(
+      terms.filter((t) => t.domain === domain && !t.inputOnly).map((t) => [t.en, t.zh]),
+    )
+  const inputNames = (domain: Term['domain']) => {
+    const result: Record<string, string[]> = {}
+    for (const term of terms.filter((t) => t.domain === domain)) {
+      result[term.en] ??= []
+      result[term.en].push(term.zh)
+    }
+    return result
+  }
   return {
     items: { bases: names('base'), uniques: names('unique') },
+    inputNames: { bases: inputNames('base'), uniques: inputNames('unique') },
+    mixedInput: true,
     stats: {
       entries: terms
         .filter((t) => t.domain === 'stat')
@@ -109,13 +120,11 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
       !(diagnostic.code === 'unknown-line' && diagnostic.line !== null && fields[diagnostic.line])
     )
       add(diagnostic.message, diagnostic.line)
-  if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
+  if (item.nameLines.length !== (['rare', 'unique'].includes(item.rarity) ? 2 : 1))
+    add('装备名称区不完整。')
   // 只检查文本是否能准确表达；前后缀归属、数量及游戏等阶由原站判断。
   for (const { mod, stats } of inspection.mods) {
-    const validHeader =
-      mod.kind === 'implicit'
-        ? knownImplicitHeader(mod.header.raw)
-        : ['prefix', 'suffix'].includes(mod.kind) && knownExplicitHeader(mod.header.raw)
+    const validHeader = knownModifierHeader(mod.header.raw)
     if (!validHeader) add('词缀分组标题尚未完整识别。', mod.header.line)
     for (const { source, resolution } of stats) {
       if (!resolution.english) add('属性译名未匹配或存在歧义，无法确认英文。', source.line)

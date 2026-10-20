@@ -4,34 +4,36 @@ import type { Lexicon, Term } from './types'
 
 export function createLexicon(input: readonly Term[]): Lexicon {
   const ids = new Set<string>()
-  const terms = input.map((term) => {
-    if (
-      !term.id ||
-      !term.en.trim() ||
-      !term.zh.trim() ||
-      !term.source ||
-      !term.version ||
-      ids.has(term.id)
-    )
-      throw new Error(`无效或重复术语身份：${term.id}`)
-    ids.add(term.id)
-    // 界面文案仅精确匹配；例如 # Stored 的井号表示数量，并非掷值。
-    const count = term.domain === 'ui' ? 0 : (term.en.match(/#/g) ?? []).length
-    if (term.domain !== 'ui' && (term.zh.match(/#/g) ?? []).length !== count)
-      throw new Error(`数字模板不一致：${term.id}`)
-    if (
-      term.order &&
-      (term.order.length !== count ||
-        new Set(term.order).size !== count ||
-        term.order.some((i) => !Number.isInteger(i) || i < 0 || i >= count))
-    )
-      throw new Error(`数字顺序不合法：${term.id}`)
-    return {
-      ...term,
-      ...(term.order ? { order: [...term.order] } : {}),
-      ...(term.aliases ? { aliases: [...term.aliases] } : {}),
-    }
-  })
+  const terms = input
+    .map((term) => {
+      if (
+        !term.id ||
+        !term.en.trim() ||
+        !term.zh.trim() ||
+        !term.source ||
+        !term.version ||
+        ids.has(term.id)
+      )
+        throw new Error(`无效或重复术语身份：${term.id}`)
+      ids.add(term.id)
+      // 界面文案仅精确匹配；例如 # Stored 的井号表示数量，并非掷值。
+      const count = term.domain === 'ui' ? 0 : (term.en.match(/#/g) ?? []).length
+      if (term.domain !== 'ui' && (term.zh.match(/#/g) ?? []).length !== count)
+        throw new Error(`数字模板不一致：${term.id}`)
+      if (
+        term.order &&
+        (term.order.length !== count ||
+          new Set(term.order).size !== count ||
+          term.order.some((i) => !Number.isInteger(i) || i < 0 || i >= count))
+      )
+        throw new Error(`数字顺序不合法：${term.id}`)
+      return {
+        ...term,
+        ...(term.order ? { order: [...term.order] } : {}),
+        ...(term.aliases ? { aliases: [...term.aliases] } : {}),
+      }
+    })
+    .filter((term) => !term.inputOnly)
   // 静态名称按规范化文本索引；动态词缀仍逐模板匹配并检查歧义。
   const exact = new Map<string, Term[]>()
   const templates: { term: Term; match: (text: string) => string | null }[] = []

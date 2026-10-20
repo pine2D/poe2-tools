@@ -17,10 +17,12 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
   function add(id, en, zh, domain, source, version, extra = {}) {
     terms.push({ id, en, zh, domain, source, version, ...extra })
   }
-  for (const [relative, kind] of [
+  for (const [relative, kind, inputOnly = false] of [
     ['data/dict/zh-CN/items.json', 'items'],
     ['data/dict/zh-CN/stats.json', 'stats'],
     ['data/l10n/coe-beta/tablets.zh-CN.json', 'items'],
+    ['data/dict/zh-TW/items.json', 'items', true],
+    ['data/dict/zh-TW/stats.json', 'stats', true],
   ]) {
     const entry = await read(relative)
     const { _meta: meta } = entry.data
@@ -40,12 +42,20 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
         ['uniques', 'unique'],
       ]) {
         for (const [en, zh] of Object.entries(entry.data[field]))
-          add(`${domain}:${en}`, en, zh, domain, entry.path, meta.gameVersion)
+          add(
+            `${inputOnly ? 'input:zh-TW:' : ''}${domain}:${en}`,
+            en,
+            zh,
+            domain,
+            entry.path,
+            meta.gameVersion,
+            inputOnly ? { inputOnly: true } : {},
+          )
       }
     } else {
       for (const stat of entry.data.entries)
         add(
-          `stat:${stat.id}:${createHash('sha256')
+          `${inputOnly ? 'input:zh-TW:' : ''}stat:${stat.id}:${createHash('sha256')
             .update(JSON.stringify([stat.en, stat.text, stat.order ?? null]))
             .digest('hex')
             .slice(0, 16)}`,
@@ -54,7 +64,11 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
           'stat',
           entry.path,
           meta.gameVersion,
-          { sourceId: stat.id, ...(stat.order ? { order: stat.order } : {}) },
+          {
+            sourceId: stat.id,
+            ...(stat.order ? { order: stat.order } : {}),
+            ...(inputOnly ? { inputOnly: true } : {}),
+          },
         )
     }
   }

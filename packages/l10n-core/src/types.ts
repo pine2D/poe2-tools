@@ -8,6 +8,8 @@ export interface Term {
   version: string
   aliases?: readonly string[]
   order?: readonly number[]
+  /** 独立语种的导入词条，不用于页面显示和简体搜索候选。 */
+  inputOnly?: boolean
 }
 export interface Candidate {
   term: Term

@@ -150,9 +150,11 @@ function readCraftImport(
     originalFlags.item.corrupted !== item.corrupted ||
     originalFlags.item.twiceCorrupted !== item.twiceCorrupted ||
     originalFlags.item.mirrored !== item.mirrored ||
-    originalFlags.item.unidentified !== item.unidentified
+    originalFlags.item.unidentified !== item.unidentified ||
+    originalFlags.item.split !== item.split
   )
     return fail('装备状态与来源原文不一致。')
+  if (item.split) return fail('分裂装备暂不支持导入本地制作，原文状态不能丢弃。')
   if (originalFlags.item.corrupted && JSON.stringify(originalFlags.item) !== JSON.stringify(item))
     return fail('腐化装备字段与来源原文不一致，不能省略强化属性或其他状态。')
   if (item.corrupted) {

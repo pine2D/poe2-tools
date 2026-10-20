@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
 import { createLexicon } from '../../../packages/l10n-core/src/index'
 import { buildDictionary } from '../scripts/build-dictionary.mjs'
+import { prepareImport } from '../src/adapters/coe-beta/import'
 
 const roots = []
 afterEach(async () => {
@@ -30,6 +31,15 @@ async function fixture() {
   await put('data/dict/zh-CN/stats.json', {
     _meta: meta,
     entries: [{ id: 'res', en: '#% to Lightning Resistance', text: '闪电抗性 #%' }],
+  })
+  await put('data/dict/zh-TW/items.json', {
+    _meta: { ...meta, tier: 'gray' },
+    bases: { 'Runed Focus': '臺服自造法器' },
+    uniques: {},
+  })
+  await put('data/dict/zh-TW/stats.json', {
+    _meta: meta,
+    entries: [{ id: 'res', en: '#% to Lightning Resistance', text: '#%閃電抗性' }],
   })
   await put('data/craft/catalog.json', {
     _meta: {
@@ -73,6 +83,29 @@ it('关闭 gray 后覆盖旧产物且保留 primary/manual', async () => {
   expect(lex.translate('Import an item')).toBe('导入装备')
   expect(lex.translate('+18% to Lightning Resistance')).toBe('闪电抗性 +18%')
   expect(data.sources.some((x) => x.tier === 'gray')).toBe(false)
+  expect(data.terms.some((x) => x.inputOnly && x.domain === 'base')).toBe(false)
+  expect(data.terms.some((x) => x.inputOnly && x.domain === 'stat')).toBe(true)
+})
+it('独立台服词典用于混合装备输入，页面仍显示国服译名并可追溯来源', async () => {
+  const root = await fixture()
+  const data = await buildDictionary(root, path.join(root, 'out/dictionary.json'))
+  const text = `物品種類: 法器
+稀有度: 魔法
+臺服自造法器
+--------
+物品等級: 80
+--------
+{ 後綴屬性 "自造" (等階：1) }
++18(16-20)%閃電抗性`
+  const result = prepareImport(text, data.terms)
+  expect(result.ready).toBe(true)
+  expect(result.english).toContain('Runed Focus')
+  expect(result.english).toContain('+18(16-20)% to Lightning Resistance')
+  expect(data.sources.filter((s) => s.path.startsWith('data/dict/zh-TW/'))).toHaveLength(2)
+  const lex = createLexicon(data.terms)
+  expect(lex.translate('+18% to Lightning Resistance')).toBe('闪电抗性 +18%')
+  expect(lex.translate('Runed Focus')).toBe('符文法器')
+  expect(lex.search('臺服', 'base')).toEqual([])
 })
 it('真实入库词典可加载，保留同一来源 ID 的不同文本形式', async () => {
   const outputRoot = await fixture()

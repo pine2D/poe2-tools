@@ -64,6 +64,18 @@ function run(text = raw, selectedId = 'Test Focus') {
 }
 
 describe('导入当前装备进入通货演练', () => {
+  it('识别分裂文本后仍拒绝旧工坊未实现的状态，删派生字段也不能绕过', () => {
+    const text = `${raw}\n--------\n分裂之物`
+    expect(run(text).ok).toBe(false)
+    const parsed = parseItem(text)
+    if (!parsed.ok) throw new Error(parsed.error)
+    const inspection = inspectItem(parsed.item, {
+      items: { bases: { 'Test Focus': '测试法器' }, uniques: {} },
+      stats: { entries: [{ id: 'mana', en: '+# to maximum Mana', text: '+# 魔力上限' }] },
+    })
+    delete parsed.item.split
+    expect(importCraftState(catalog, 'Test Focus', parsed.item, inspection).ok).toBe(false)
+  })
   it('自动读取原文品质，并允许声明补充缺失品质', () => {
     expect(run(raw.replace('物品等级: 46', '品质: +20%\n--------\n物品等级: 46'))).toMatchObject({
       ok: true,

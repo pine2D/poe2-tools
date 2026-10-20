@@ -502,7 +502,9 @@ it('②b 只有对照原因时：待核对写“没有其他待核对项”，�
 })
 
 it('②b 对照原因之外的整件问题照常列出，“已完成”只计这些问题', () => {
-  previewWith(source.replace('稀有度: 魔法', '稀有度: 传奇'), [STAT])
+  previewWith(source.replace('稀有度: 魔法\n测试的 符文法器', '稀有度: 传奇\n自造传奇\n符文法器'), [
+    STAT,
+  ])
   expect(groups().待核对).toEqual(['基底译名未匹配或存在歧义，无法确认英文。'])
   expect(groups().已完成).toEqual(['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'])
 })
