@@ -92,6 +92,7 @@ it('同一中文基底对应不同英文时不猜选，保留原名称供核对'
   }
   const result = prepareImport(source, [...terms, duplicate])
   expect(result.ready).toBe(false)
-  expect(result.reasons.join(' ')).toContain('基底译名未匹配或存在歧义')
+  expect(result.reasons.join(' ')).toContain('基底存在多个英文候选')
+  expect(result.issues[0]?.kind).toBe('ambiguous')
   expect(result.english).toContain('鹿角法器')
 })

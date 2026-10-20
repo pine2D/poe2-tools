@@ -16,6 +16,29 @@ export function isConditionSearch(input: HTMLInputElement): boolean {
     ) && !input.closest('.dropdown')?.classList.contains('hidden')
   )
 }
+/** 只消费当前页面原生的英文搜索集合；缺失时可明确回退全局词典。 */
+export function searchContext(input: HTMLInputElement): string[] | null {
+  if (isConditionSearch(input))
+    return [...(input.closest('.dropdown')?.querySelectorAll('li[search]') ?? [])].map(
+      (option) => option.getAttribute('search')?.toLowerCase() ?? '',
+    )
+  if (!input.closest('#searchInput') || input.closest('#customPriceSearchHolder')) return null
+  const groups = input.ownerDocument.querySelectorAll('#output .modGroup[search]')
+  return groups.length
+    ? [...groups].map((group) =>
+        (group.getAttribute('search') ?? '')
+          .toLowerCase()
+          .replace(/\(\d+(?:\.\d+)?[-–]\d+(?:\.\d+)?\)|\d+(?:\.\d+)?/g, '#'),
+      )
+    : null
+}
+export function usesGlobalStatFallback(input: HTMLInputElement): boolean {
+  return (
+    !!input.closest('#searchInput') &&
+    !input.closest('#customPriceSearchHolder') &&
+    searchContext(input) === null
+  )
+}
 export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   const domain = searchDomain(input)
   if (!domain) return []
@@ -23,15 +46,13 @@ export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
     // Data 物品列表包含通货；制作页的基底选择器仍只查询 base。
     return lexicon.search(input.value, [domain, 'item'])
   }
-  if (!isConditionSearch(input)) return lexicon.search(input.value, domain)
   // 只使用原站保留的英文搜索属性，不读取已经叠加中文的可见文本。
-  const options = [...(input.closest('.dropdown')?.querySelectorAll('li[search]') ?? [])].map(
-    (option) => option.getAttribute('search')?.toLowerCase() ?? '',
-  )
+  const options = searchContext(input)
+  if (options === null) return lexicon.search(input.value, domain)
   const accept = (term: Term) => options.some((option) => option.includes(term.en.toLowerCase()))
   return [
     ...lexicon.search(input.value, domain, accept),
-    ...lexicon.search(input.value, 'ui', accept),
+    ...(isConditionSearch(input) ? lexicon.search(input.value, 'ui', accept) : []),
   ]
 }
 export function searchDomain(input: HTMLInputElement): Term['domain'] | null {

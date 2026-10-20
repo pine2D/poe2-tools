@@ -2,8 +2,10 @@ import type { Lexicon } from '@poe2-tools/l10n-core'
 import {
   isConditionSearch,
   searchCandidates,
+  searchContext,
   searchDomain,
   submitSearch,
+  usesGlobalStatFallback,
 } from '../adapters/coe-beta/search'
 import { SHORT_PROVENANCE } from '../provenance'
 import { adoptL1, createGem } from './l1'
@@ -20,6 +22,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   let restoreInput = () => {}
   let sequence = 0
   let selectOption = (_button: HTMLButtonElement) => {}
+  let context = ''
   // 候选宿主（spec §6.9、B.12 修订 10）：说明行与候选按钮留在 light DOM，经 slot 显示，
   // 输入框的 aria-describedby / aria-controls / aria-activedescendant 才能在 document 里解析；署名在 shadow 内且不读出
   function createPanel(): HTMLElement {
@@ -81,6 +84,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     const query = input.value
     const current = revision
     const candidates = searchCandidates(input, lexicon)
+    context = JSON.stringify(searchContext(input))
     const keepFocus = isConditionSearch(input)
     panel = createPanel()
     panel.setAttribute('aria-label', '中文搜索候选')
@@ -93,6 +97,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     label.textContent = candidates.length
       ? `“${query}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）`
       : `“${query}”：未找到术语，请缩短关键词或输入英文。`
+    if (usesGlobalStatFallback(input))
+      label.textContent += ' 当前词缀列表未就绪，以下为全局词典候选。'
     panel.append(label)
     const owned = new Map<string, { original: string | null; written: string }>()
     const setInput = (name: string, value: string) => {
@@ -155,10 +161,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
           clear()
           return
         }
-        if (
-          keepFocus &&
-          !searchCandidates(input, lexicon).some((candidate) => candidate.term.en === term.en)
-        ) {
+        if (!searchCandidates(input, lexicon).some((candidate) => candidate.term.en === term.en)) {
           show(input)
           return
         }
@@ -267,12 +270,18 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         !searchDomain(active))
     )
       clear()
+    else if (
+      active &&
+      chinese.test(active.value) &&
+      JSON.stringify(searchContext(active)) !== context
+    )
+      show(active)
   })
   observer.observe(doc.body, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['class', 'id', 'type', 'readonly', 'disabled'],
+    attributeFilter: ['class', 'id', 'type', 'readonly', 'disabled', 'search'],
   })
   doc.addEventListener('scroll', positionPanel, true)
   doc.defaultView?.addEventListener('resize', positionPanel)

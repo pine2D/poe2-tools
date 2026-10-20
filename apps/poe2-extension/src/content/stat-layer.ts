@@ -1,5 +1,6 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
+import { compoundStat } from '../adapters/coe-beta/compound-stat'
 import { materialDescription } from '../adapters/coe-beta/material-descriptions'
 import { contextualText, textContext } from '../adapters/coe-beta/regions'
 import {
@@ -64,7 +65,9 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
         ? 'details'
         : stat.matches(materialDescriptionSelector)
           ? 'material'
-          : 'stat'
+          : stat.matches('.modifierTable .row > .label .text')
+            ? 'data-stat'
+            : 'stat'
     const key = `${kind}\0${original}`
     let translated = cache.get(key)
     if (translated === undefined) {
@@ -75,7 +78,9 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
             ? modifierDetailsText(stat)
             : kind === 'material'
               ? materialDescription(original)
-              : lex.translate(original, 'stat')
+              : kind === 'data-stat'
+                ? compoundStat(original, lex)
+                : lex.translate(original, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
     }

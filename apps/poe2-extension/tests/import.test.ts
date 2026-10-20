@@ -107,7 +107,9 @@ it.each([
 })
 it('行数统计：属性数值越界只减去那一行', () => {
   const result = prepareImport(text.replace('40(36-41)', '42(36-41)'), terms)
-  expect(result.issues).toEqual([{ line: 9, message: '数值无效或不在原文范围内。' }])
+  expect(result.issues).toEqual([
+    { line: 9, message: '数值无效或不在原文范围内。', kind: 'format' },
+  ])
   expect(result.lines).toEqual({ total: 7, recognized: 6 })
   invariant(result)
 })
@@ -135,7 +137,7 @@ it.each([
 ])('%s仅供对照：comparisonOnly 为真，对照原因是第一条无行号问题', (_, source, reason) => {
   const result = prepareImport(source, terms)
   expect(result.comparisonOnly).toBe(true)
-  expect(result.issues[0]).toEqual({ line: null, message: reason })
+  expect(result.issues[0]).toEqual({ line: null, message: reason, kind: 'policy' })
   expect(result.lines).not.toBeNull()
   invariant(result)
 })
@@ -154,14 +156,16 @@ it.each([
 ])('解析失败写出认不出的原因：%j', (input, line, message) => {
   const result = prepareImport(input, terms)
   expect(result.lines).toBeNull()
-  expect(result.issues).toEqual([{ line, message }])
+  expect(result.issues).toEqual([{ line, message, kind: 'format' }])
   invariant(result)
 })
 it('CRLF 换行：行数与行号同 LF 版本', () => {
   const crlf = (value: string) => value.replace(/\n/g, '\r\n')
   expect(prepareImport(crlf(text), terms).lines).toEqual({ total: 7, recognized: 7 })
   const broken = prepareImport(crlf(text.replace('40(36-41)', '42(36-41)')), terms)
-  expect(broken.issues).toEqual([{ line: 9, message: '数值无效或不在原文范围内。' }])
+  expect(broken.issues).toEqual([
+    { line: 9, message: '数值无效或不在原文范围内。', kind: 'format' },
+  ])
   expect(broken.lines).toEqual({ total: 7, recognized: 6 })
 })
 // 既有实测装备是回归样本，不是导入资格名单。使用入库词典，避免依赖本地构建产物。

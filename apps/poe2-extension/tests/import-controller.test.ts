@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import type { Term } from '@poe2-tools/l10n-core'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { attachImport } from '../src/content/import-controller'
 
 let stop = () => {}
@@ -408,7 +408,7 @@ it('① 可以填入：唯一 live region 是结论行；已识别 6 / 6 行；�
   )
   expect(groups()).toEqual({
     已完成: ['已识别 6 / 6 行，生成英文预览'],
-    待核对: ['没有需要先改正的行'],
+    待核对: ['没有需要先核对的行'],
     下一步: [
       '你核对两栏后，点“填入英文到原站导入框”',
       '原站填入后点“继续”（Proceed），能否导入由原站判断',
@@ -420,16 +420,16 @@ it('① 可以填入：唯一 live region 是结论行；已识别 6 / 6 行；�
   expect(preview.hasAttribute('data-primary')).toBe(false)
 })
 
-it('② 需先改正：越界一行，结论“需先改正 N 行”与“第 N 行”“改正这 M 行”同一单位，预览是唯一主按钮', () => {
+it('② 需先核对：越界一行，保留定位与预览主按钮，不要求删除原文', () => {
   const { input, preview } = readyPreview()
   input.value = source.replace('40(36-41)', '42(36-41)')
   input.dispatchEvent(new Event('input', { bubbles: true }))
   preview.click()
-  expect(verdict()?.textContent).toBe('需先改正 1 行两栏仅供对照，暂不能填入')
+  expect(verdict()?.textContent).toBe('需先核对 1 行两栏仅供对照，暂不能填入')
   expect(groups()).toEqual({
     已完成: ['已识别 5 / 6 行，生成英文预览'],
     待核对: ['第 8 行数值无效或不在原文范围内。'],
-    下一步: ['你在原站导入框改正这 1 行，再点“预览中文转换”'],
+    下一步: ['你按提示核对来源文本。未识别不代表原文有错，请保留完整原文，不要删行绕过。'],
   })
   const locate = ui().querySelectorAll<HTMLButtonElement>('li[data-kind="issue"] button')
   expect(locate).toHaveLength(1)
@@ -446,18 +446,20 @@ it('同一行两条问题只出一条、一个定位按钮；处数与分数都�
   expect(issues[0]?.querySelectorAll('button')).toHaveLength(1)
   expect(issues[0]?.querySelector('button')?.getAttribute('aria-label')).toBe('定位第 10 行')
   expect(issues[0]?.textContent).toBe('第 10 行无法分类的原文已保留 该行尚未完整识别或翻译。')
-  expect(verdict()?.querySelector('span')?.textContent).toBe('需先改正 1 行')
+  expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 1 行')
   expect(groups().已完成).toEqual(['已识别 6 / 7 行，生成英文预览'])
-  expect(groups().下一步).toEqual(['你在原站导入框改正这 1 行，再点“预览中文转换”'])
+  expect(groups().下一步).toEqual([
+    '你按提示核对来源文本。未识别不代表原文有错，请保留完整原文，不要删行绕过。',
+  ])
 })
 
-it('只有无行号问题：不显示分数、不出定位按钮，下一步按提示改正', () => {
+it('只有无行号问题：不显示分数、不出定位按钮，下一步核对来源', () => {
   previewWith(source, [STAT])
   expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 1 处')
   expect(groups()).toEqual({
     已完成: ['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'],
-    待核对: ['基底译名未匹配或存在歧义，无法确认英文。'],
-    下一步: ['你按上面的提示改正原文，再点“预览中文转换”'],
+    待核对: ['词典暂未收录此基底译名，原文已保留。'],
+    下一步: ['你按提示核对来源文本。未识别不代表原文有错，请保留完整原文，不要删行绕过。'],
   })
   expect(ui().querySelector('.check')?.textContent).not.toMatch(/\d+ \/ \d+/)
   expect(ui().querySelector('.check li button')).toBeNull()
@@ -467,11 +469,13 @@ it('有行号与无行号问题并存：无行号的排前，处数为合并后�
   previewWith(source.replace('40(36-41)', '42(36-41)'), [STAT])
   expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 2 处')
   expect(groups().待核对).toEqual([
-    '基底译名未匹配或存在歧义，无法确认英文。',
+    '词典暂未收录此基底译名，原文已保留。',
     '第 8 行数值无效或不在原文范围内。',
   ])
   expect(groups().已完成).toEqual(['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'])
-  expect(groups().下一步).toEqual(['你按上面的提示改正原文，再点“预览中文转换”'])
+  expect(groups().下一步).toEqual([
+    '你按提示核对来源文本。未识别不代表原文有错，请保留完整原文，不要删行绕过。',
+  ])
 })
 
 it.each([
@@ -488,7 +492,11 @@ it.each([
     expect(verdict()?.querySelector('span')?.textContent).toBe('仅供对照')
     expect(verdict()?.querySelector('small')?.textContent).toBe(reason)
     expect(groups().待核对).not.toContain(reason)
-    expect(groups().下一步).toEqual(['你对照两栏阅读；此类装备暂不能填入'])
+    expect(groups().下一步).toEqual([
+      _ === '咒符'
+        ? '你可复制英文装备文本供对照；此类装备暂不能填入'
+        : '你对照两栏阅读；此类装备暂不能填入',
+    ])
     expect(ui().querySelector('.check')?.textContent).not.toContain('改正这')
     expect(primary()).toEqual([])
   },
@@ -505,7 +513,7 @@ it('②b 对照原因之外的整件问题照常列出，“已完成”只计�
   previewWith(source.replace('稀有度: 魔法\n测试的 符文法器', '稀有度: 传奇\n自造传奇\n符文法器'), [
     STAT,
   ])
-  expect(groups().待核对).toEqual(['基底译名未匹配或存在歧义，无法确认英文。'])
+  expect(groups().待核对).toEqual(['词典暂未收录此基底译名，原文已保留。'])
   expect(groups().已完成).toEqual(['已生成英文预览（1 条问题涉及整件装备，无法定位到行）'])
 })
 
@@ -609,4 +617,67 @@ it('“继续”与原站按钮译名一致（ui.zh-CN.json 的 Proceed）', () 
   expect(entries.Proceed).toBe('继续')
   const code = readFileSync('apps/poe2-extension/src/content/import-controller.ts', 'utf8')
   expect(code).toContain(`“${entries.Proceed}”（Proceed）`)
+})
+
+const copyButton = () => ui().querySelector<HTMLButtonElement>('[data-copy-english]')
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
+it('完整预览可复制，原框及原站提交保持不变', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined)
+  vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(writeText)
+  const { input } = readyPreview()
+  expect(copyButton()?.disabled).toBe(false)
+  copyButton()?.click()
+  await settle()
+  expect(writeText).toHaveBeenCalledWith(
+    ui().querySelector<HTMLTextAreaElement>('[data-preview]')?.value,
+  )
+  expect(input.value).toBe(source)
+  expect(ui().textContent).toContain('已复制英文装备文本')
+  vi.restoreAllMocks()
+})
+it('仅对照但完整的装备可复制；未知关键行不能复制', () => {
+  previewWith(source.replace('类别: 法器', '类别: 咒符'), [BASE, STAT])
+  expect(copyButton()?.disabled).toBe(false)
+  stop()
+  previewWith(`${source}\n--------\n未知效果`, [BASE, STAT])
+  expect(copyButton()?.disabled).toBe(true)
+  expect(verdict()?.textContent).toContain('需先核对')
+  expect(ui().textContent).not.toContain('改正这')
+})
+it('剪贴板失败明确报告，异步复制完成不能覆盖已变更原文的提示', async () => {
+  const write = vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'))
+  const { input } = readyPreview()
+  copyButton()?.click()
+  await settle()
+  expect(ui().textContent).toContain('复制失败')
+  let finish = () => {}
+  write.mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+  )
+  copyButton()?.click()
+  input.value += '\n未知'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  finish()
+  await settle()
+  expect(verdict()?.textContent).toContain('原文已改变')
+  expect(copyButton()?.disabled).toBe(true)
+  expect(ui().textContent).not.toContain('已复制英文装备文本')
+  vi.restoreAllMocks()
+})
+it('复制前检查未触发input的程序改动及已关闭的对话框', async () => {
+  const write = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+  const { input, preview } = readyPreview()
+  input.value += '\n未知'
+  copyButton()?.click()
+  expect(write).not.toHaveBeenCalled()
+  input.value = source
+  preview.click()
+  const old = copyButton()
+  stop()
+  old?.click()
+  expect(write).not.toHaveBeenCalled()
+  vi.restoreAllMocks()
 })

@@ -213,3 +213,48 @@ it('count() 是当前词缀叠加行数：未命中不计，原站移除词缀�
   counted()
   expect(counted.count()).toBe(0)
 })
+
+it('Data 组合词缀完整命中每段时叠加中文，保留节点与原文复制', () => {
+  const combined = createLexicon([
+    {
+      id: 'a',
+      en: '+#% to Lightning Resistance',
+      zh: '闪电抗性 +#%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'b',
+      en: '+#% to Maximum Lightning Resistance',
+      zh: '闪电抗性上限 +#%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  document.body.innerHTML =
+    '<main><div class="modifierTable"><div class="row"><div class="label"><div class="text">+<span class="modValue">(11-15)</span>% to Lightning Resistance, +1% to Maximum Lightning Resistance</div></div></div></div></main>'
+  const text = document.querySelector('.text') as HTMLElement
+  const original = text.textContent
+  const number = text.querySelector('.modValue')
+  stop = attachStatLayer(document, combined)
+  expect(text.nextElementSibling?.shadowRoot?.textContent).toBe(
+    '闪电抗性 +(11-15)%, 闪电抗性上限 +1%',
+  )
+  expect(text.textContent).toBe(original)
+  expect(text.querySelector('.modValue')).toBe(number)
+})
+it.each([
+  '+20% to Lightning Resistance, Unknown effect',
+  '+20% to Lightning Resistance, while moving',
+  '+20% to Lightning Resistance (when hit, recently)',
+  '+1,000% to Lightning Resistance',
+])('组合词缀边界不明确或子句未知时整体保留：%s', (text) => {
+  document.body.innerHTML =
+    '<main><div class="modifierTable"><div class="row"><div class="label"><div class="text"></div></div></div></div></main>'
+  const target = document.querySelector('.text') as HTMLElement
+  target.textContent = text
+  stop = attachStatLayer(document, lex)
+  expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
+})

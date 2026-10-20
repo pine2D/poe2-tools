@@ -14,9 +14,15 @@ export interface PreparedImport {
   english: string
   /** 恒等于 issues.length === 0 */
   ready: boolean
+  /** 所有参与转换的机制行均已识别；不等于原站支持导入，名称和标签仍可保留原文。 */
+  complete: boolean
   /** 带“第 N 行：”前缀的问题文本 */
   reasons: string[]
-  issues: { line: number | null; message: string }[]
+  issues: {
+    line: number | null
+    message: string
+    kind: 'unsupported' | 'ambiguous' | 'format' | 'policy'
+  }[]
   warnings: string[]
   /** 参与核对的行数；解析失败为 null。ready 时 recognized === total */
   lines: { total: number; recognized: number } | null
@@ -32,8 +38,9 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   const inputNames = (domain: Term['domain']) => {
     const result: Record<string, string[]> = {}
     for (const term of terms.filter((t) => t.domain === domain)) {
-      result[term.en] ??= []
-      result[term.en].push(term.zh)
+      const names = result[term.en] ?? []
+      names.push(term.zh)
+      result[term.en] = names
     }
     return result
   }
@@ -87,11 +94,12 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
   const normalized = original.replace(/^(物品类别|稀有度)\s*：/gm, '$1:')
   const parsed = parseItem(normalized)
   if (!parsed.ok) {
-    const issue = unparsedIssue(normalized, parsed.error)
+    const issue = { ...unparsedIssue(normalized, parsed.error), kind: 'format' as const }
     return {
       original,
       english: '',
       ready: false,
+      complete: false,
       reasons: [issue.line === null ? issue.message : `第 ${issue.line} 行：${issue.message}`],
       issues: [issue],
       warnings: [],
@@ -101,33 +109,56 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
   }
   const item = parsed.item
   const inspection = inspectItem(item, itemDictionary(terms))
-  const issues: { line: number | null; message: string }[] = []
+  const issues: PreparedImport['issues'] = []
   const seenIssues = new Set<string>()
-  const add = (message: string, line: number | null = null) => {
+  const add = (
+    message: string,
+    line: number | null = null,
+    kind: PreparedImport['issues'][number]['kind'] = 'unsupported',
+  ) => {
     const key = `${line}\0${message}`
     if (seenIssues.has(key)) return
     seenIssues.add(key)
-    issues.push({ line, message })
+    issues.push({ line, message, kind })
   }
   // 必须是第一条：comparisonOnly 时面板以 issues[0] 作结论副句
-  if (inspection.comparisonOnly) add(inspection.comparisonReason ?? '此装备仅供对照。')
+  if (inspection.comparisonOnly)
+    add(inspection.comparisonReason ?? '此装备仅供对照。', null, 'policy')
   const warnings: string[] = []
   const { english, fields } = completeItemFields(item, inspection, terms)
-  if (!inspection.base.english) add('基底译名未匹配或存在歧义，无法确认英文。')
+  if (!inspection.base.english)
+    add(
+      inspection.base.candidates.length
+        ? '基底存在多个英文候选，暂不选择。'
+        : '词典暂未收录此基底译名，原文已保留。',
+      null,
+      inspection.base.candidates.length ? 'ambiguous' : 'unsupported',
+    )
   if (/^Item Class: .*\p{Script=Han}/u.test(english)) add('物品类别尚未翻译。')
   for (const diagnostic of item.diagnostics)
     if (
       !(diagnostic.code === 'unknown-line' && diagnostic.line !== null && fields[diagnostic.line])
     )
-      add(diagnostic.message, diagnostic.line)
+      add(
+        diagnostic.message,
+        diagnostic.line,
+        diagnostic.code.startsWith('unknown-') ? 'unsupported' : 'format',
+      )
   if (item.nameLines.length !== (['rare', 'unique'].includes(item.rarity) ? 2 : 1))
-    add('装备名称区不完整。')
+    add('装备名称区不完整。', null, 'format')
   // 只检查文本是否能准确表达；前后缀归属、数量及游戏等阶由原站判断。
   for (const { mod, stats } of inspection.mods) {
     const validHeader = knownModifierHeader(mod.header.raw)
     if (!validHeader) add('词缀分组标题尚未完整识别。', mod.header.line)
     for (const { source, resolution } of stats) {
-      if (!resolution.english) add('属性译名未匹配或存在歧义，无法确认英文。', source.line)
+      if (!resolution.english)
+        add(
+          resolution.candidates.length
+            ? '属性存在多个英文候选，暂不选择。'
+            : '词典暂未收录此属性译名，原文已保留。',
+          source.line,
+          resolution.candidates.length ? 'ambiguous' : 'unsupported',
+        )
       if (
         source.rolls.some(
           (roll) =>
@@ -138,7 +169,7 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
                 roll.value > Math.max(...roll.range))),
         )
       )
-        add('数值无效或不在原文范围内。', source.line)
+        add('数值无效或不在原文范围内。', source.line, 'format')
       if (
         inspection.base.english === 'Mail Belt' &&
         mod.kind === 'implicit' &&
@@ -170,6 +201,7 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
     original,
     english,
     ready: issues.length === 0,
+    complete: issues.every((issue) => issue.kind === 'policy'),
     reasons: issues.map(({ line, message }) =>
       line === null ? message : `第 ${line} 行：${message}`,
     ),

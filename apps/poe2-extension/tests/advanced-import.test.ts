@@ -214,3 +214,27 @@ it('繁体面板字段可按字段语法转译，损坏数字仍保留诊断', (
   expect(result.english).toContain('Evasion Rating: 234')
   expect(prepareImport(input.replace('123', '123oops'), terms).ready).toBe(false)
 })
+
+it('诊断区分未知词典、歧义、文本格式与对照政策，完整转换不等于允许填入', () => {
+  const text = source(plain)
+  const unknown = prepareImport(
+    text,
+    terms.filter((entry) => entry.id !== 'life'),
+  )
+  expect(unknown.complete).toBe(false)
+  expect(unknown.issues.some((issue) => issue.kind === 'unsupported')).toBe(true)
+  const ambiguous = prepareImport(text, [
+    ...terms,
+    term('collision', '+# to maximum Mana', '+# 生命上限', 'stat'),
+  ])
+  expect(ambiguous.issues.some((issue) => issue.kind === 'ambiguous')).toBe(true)
+  expect(
+    prepareImport(text.replace('40(30-50)', '60(30-50)'), terms).issues.some(
+      (issue) => issue.kind === 'format',
+    ),
+  ).toBe(true)
+  const comparison = prepareImport(text.replace('稀有度: 稀有', '稀有度: 传奇'), terms)
+  expect(comparison.complete).toBe(true)
+  expect(comparison.ready).toBe(false)
+  expect(comparison.issues.map((issue) => issue.kind)).toEqual(['policy'])
+})
