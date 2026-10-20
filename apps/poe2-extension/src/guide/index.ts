@@ -6,7 +6,6 @@ import { resolveConfig } from './config'
 import { type Controller, createController, type EngineHandle } from './controller'
 import { streamChat } from './engines/openai'
 import { DEEPSEEK, deepseekPeak, estimateCost, REQUEST_PARAMS } from './engines/presets'
-import { withRetry } from './engines/retry'
 import { prefsFrom } from './prefs'
 import { createIdbStore } from './store/idb'
 import { keyForConfig } from './store/keys'
@@ -17,12 +16,6 @@ const app = document.querySelector('#app')
 
 const json = async <T>(path: string): Promise<T> =>
   (await fetch(guideChrome.resource(path))).json() as Promise<T>
-// 停止时清掉计时器（withRetry 自己会立即以“已停止”结束）
-const sleep = (ms: number, signal?: AbortSignal) =>
-  new Promise<void>((resolve) => {
-    const timer = setTimeout(resolve, ms)
-    signal?.addEventListener('abort', () => clearTimeout(timer), { once: true })
-  })
 const randomHex = () =>
   [...crypto.getRandomValues(new Uint8Array(6))]
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -69,9 +62,14 @@ async function boot(root: Element) {
       provider: cfg.provider,
       model: cfg.model,
       params: JSON.stringify([REQUEST_PARAMS, cfg.extraBody ?? null]),
+      outputLimit: Math.max(
+        REQUEST_PARAMS.max_tokens,
+        ...[cfg.extraBody?.max_tokens, cfg.extraBody?.max_completion_tokens].filter(
+          (n): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n > 0,
+        ),
+      ),
       runner: {
-        run: (messages, onText, signal) =>
-          withRetry(() => streamChat(cfg, messages, { signal, onText }), sleep, signal),
+        run: (messages, onText, signal) => streamChat(cfg, messages, { signal, onText }),
       },
       costText: (prompt, completion) => {
         if (cfg.provider !== 'deepseek') return '费用以服务商账单为准'

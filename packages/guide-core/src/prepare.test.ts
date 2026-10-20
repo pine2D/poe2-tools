@@ -341,3 +341,60 @@ it('提取器的行内代码保护优先于词典，恢复后空白和数字不�
   expect(block.terms.map((t) => t.start)).toEqual([38])
   expect(restore(block.protectedText, block.tokens).text).toBe(text)
 })
+
+it('完整词缀引用附局部证据和固定目标；周围动作不替换，缺失/重复仍可核对', () => {
+  const resolve = (text: string) => ({
+    status:
+      text === '25% reduced Attribute Requirements'
+        ? ('translated' as const)
+        : ('unmatched' as const),
+    text: text === '25% reduced Attribute Requirements' ? '属性需求降低 25%' : null,
+    candidates: [],
+  })
+  const text = 'Prefer "25% reduced Attribute Requirements" over more Life flasks.'
+  const b = prepareBlock({ id: 'quote', kind: 'paragraph', text }, matcher, resolve)
+  expect(b.statEvidence).toMatchObject([
+    { en: '25% reduced Attribute Requirements', zh: '属性需求降低 25%' },
+  ])
+  expect(b.source).toBe(text)
+  expect(b.protectedText).toContain('Prefer "⟦0⟧" over more Life flasks.')
+  expect(b.restoreTokens).toEqual(['属性需求降低 25%'])
+  const messages = buildMessages([b], 'BOUNDARY')
+  const body = messages[1]?.content ?? ''
+  expect(body.slice(body.indexOf('<<<BOUNDARY>>>'))).toContain('25% reduced Attribute Requirements')
+  expect(body.slice(body.indexOf('<<<BOUNDARY>>>'))).toContain('属性需求降低 25%')
+  expect(body.slice(0, body.indexOf('<<<BOUNDARY>>>'))).not.toContain(
+    '25% reduced Attribute Requirements',
+  )
+  const restored = restore('优先选择“⟦0⟧”而不是更多生命药剂。', b.restoreTokens ?? b.tokens)
+  expect(restored.text).toContain('属性需求降低 25%')
+  expect(checkTranslation(b, restored.text, restored, 'stop')).toEqual([])
+  const missing = restore('更多生命药剂。', b.restoreTokens ?? b.tokens)
+  expect(
+    checkTranslation(b, missing.text, missing, 'stop').some((i) => i.kind === 'placeholder'),
+  ).toBe(true)
+  expect(b.modifiers).toEqual([])
+})
+
+it('未知、部分或代码中的引用不固定为词缀译文', () => {
+  const resolve = (text: string) => ({
+    status: text === 'Known stat' ? ('translated' as const) : ('unmatched' as const),
+    text: text === 'Known stat' ? '已知词缀' : null,
+    candidates: [],
+  })
+  for (const text of [
+    'Prefer "Known stat with more words".',
+    'Use "Unknown stat".',
+    'Use `"Known stat"`.',
+  ]) {
+    const b = prepareBlock({ id: 'q', kind: 'paragraph', text }, matcher, resolve)
+    expect(b.statEvidence ?? []).toEqual([])
+  }
+  const text = 'Use "Known stat".'
+  const b = prepareBlock(
+    { id: 'q', kind: 'paragraph', text, entities: [[5, 15]] },
+    matcher,
+    resolve,
+  )
+  expect(b.statEvidence ?? []).toEqual([])
+})

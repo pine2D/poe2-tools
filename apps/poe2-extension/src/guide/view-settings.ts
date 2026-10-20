@@ -165,7 +165,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     ),
     message,
     el(doc, 'h2', {}, '限额'),
-    field('单次最多发送的英文字符数（超过先询问）', charLimit),
+    field('单次正文与原文语境字符上限（超过先询问）', charLimit),
     field('译文缓存上限（MB）', cacheLimit),
     el(
       doc,

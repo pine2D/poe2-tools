@@ -1,4 +1,4 @@
-import type { ChatMessage, GuideDictionary } from '@poe2-tools/guide-core'
+import type { ChatMessage, GuideDictionary, Issue } from '@poe2-tools/guide-core'
 import { describe, expect, it, vi } from 'vitest'
 import { type ControllerDeps, createController, type EngineHandle } from '../src/guide/controller'
 import { type ChunkResult, EngineError } from '../src/guide/engines/openai'
@@ -51,7 +51,7 @@ function fakeView() {
     showDocument: vi.fn(),
     clearDocument: vi.fn(() => calls.push('CLEAR')),
     showStage: vi.fn(),
-    setTranslation: vi.fn((id: string, text: string, origin: string) =>
+    setTranslation: vi.fn((id: string, text: string, origin: string, _issues: readonly Issue[]) =>
       calls.push(`T ${id} ${origin} ${text}`),
     ),
     setBlockState: vi.fn((id: string, state: string) => calls.push(`S ${id} ${state}`)),
@@ -511,4 +511,98 @@ it('词缀跨段落/列表/表格走词典；普通混合建议走模型，明�
   expect(user).toContain('<s id="prose">')
   expect(user).not.toContain('<s id="s0">')
   expect(user).not.toContain('Unknown stat')
+})
+
+it('首次、部分缓存和单段重试使用同一范围语境，修改邻段会使缓存失效', async () => {
+  const engine = fakeEngine()
+  const raw = doc([
+    { id: 'a', kind: 'paragraph', text: 'Remove one suffix first.' },
+    { id: 'b', kind: 'paragraph', text: 'Then add it again.' },
+  ])
+  const first = deps({ raw, engine: async () => engine.handle })
+  await createController(first.d).start()
+  const firstBody = engine.run.mock.calls[0]?.[0][1]?.content ?? ''
+  const contextOf = (body: string) => /<context for="b">([\s\S]*?)<\/context>/.exec(body)?.[1]
+  expect(contextOf(firstBody)).toContain('Remove one suffix first.')
+  const c1 = createController(first.d)
+  await c1.start()
+  await c1.retryBlock('b')
+  const retryBody = engine.run.mock.calls.at(-1)?.[0][1]?.content ?? ''
+  expect(contextOf(retryBody)).toBe(contextOf(firstBody))
+  let reads = 0
+  const partial = deps({
+    ...first.d,
+    raw,
+    store: {
+      ...first.store,
+      getCached: (hash) => (++reads === 1 ? first.store.getCached(hash) : Promise.resolve(null)),
+    },
+  })
+  await createController(partial.d).start()
+  const partialBody = engine.run.mock.calls.at(-1)?.[0][1]?.content ?? ''
+  expect(contextOf(partialBody)).toBe(contextOf(firstBody))
+  expect(partialBody).not.toContain('<s id="a">')
+  const before = engine.run.mock.calls.length
+  const changed = deps({
+    ...first.d,
+    extract: async () =>
+      doc([
+        { id: 'a', kind: 'paragraph', text: 'Keep that suffix.' },
+        { id: 'b', kind: 'paragraph', text: 'Then add it again.' },
+      ]),
+  })
+  await createController(changed.d).start()
+  expect(engine.run.mock.calls.length).toBe(before + 1)
+  expect(engine.run.mock.calls.at(-1)?.[0][1]?.content).toContain('<s id="b">')
+})
+
+it('请求估算包括完整提示、术语和语境，明确预留输出上限', async () => {
+  const engine = fakeEngine()
+  const cost = vi.fn((_prompt: number, _output: number) => '估算费用')
+  const { d, view } = deps({ engine: async () => ({ ...engine.handle, costText: cost }) })
+  await createController(d).start()
+  expect(cost.mock.calls[0]?.[0]).toBeGreaterThan(200)
+  expect(cost.mock.calls[0]?.[1]).toBeGreaterThanOrEqual(4096)
+  expect(view.setUsage.mock.calls[0]?.[0]).toContain('输出预留')
+})
+
+it('截断响应的已返回段仍标为待核对，缓存保留截断问题', async () => {
+  const run = vi.fn(async (_messages: readonly ChatMessage[], onText: (s: string) => void) => {
+    onText('<t id="a">向整群怪物扩散瘟疫。</t>')
+    return { finishReason: 'length', usage: { prompt: 10, completion: 5 } }
+  })
+  const engine = fakeEngine()
+  const { d, view, store } = deps({ engine: async () => ({ ...engine.handle, runner: { run } }) })
+  const writes = vi.spyOn(store, 'putCached')
+  await createController(d).start()
+  const last = view.setTranslation.mock.calls.filter((c) => c[0] === 'a').at(-1)
+  expect(last?.[3]).toEqual(
+    expect.arrayContaining([expect.objectContaining({ kind: 'truncated' })]),
+  )
+  expect(writes.mock.calls.at(-1)?.[0].issues).toEqual(
+    expect.arrayContaining([expect.objectContaining({ kind: 'truncated' })]),
+  )
+})
+
+it('停止时已闭合但请求未结束的旧段不会写缓存', async () => {
+  let finish: () => void = () => {}
+  let stream: (s: string) => void = () => {}
+  const run = vi.fn(
+    (_messages: readonly ChatMessage[], onText: (s: string) => void) =>
+      new Promise<ChunkResult>((resolve) => {
+        stream = onText
+        finish = () => resolve({ finishReason: 'stop', usage: { prompt: 10, completion: 5 } })
+      }),
+  )
+  const engine = fakeEngine()
+  const { d, store } = deps({ engine: async () => ({ ...engine.handle, runner: { run } }) })
+  const writes = vi.spyOn(store, 'putCached')
+  const c = createController(d)
+  const pending = c.start()
+  await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
+  stream('<t id="a">向整群怪物扩散瘟疫。</t>')
+  c.stop()
+  finish()
+  await pending
+  expect(writes).not.toHaveBeenCalled()
 })

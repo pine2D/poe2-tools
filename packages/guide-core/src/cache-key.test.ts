@@ -86,3 +86,35 @@ it('数字保护启用后不读取旧 guide-v5 译文缓存', async () => {
   })
   expect(current).not.toBe(old)
 })
+
+it('角色、实体、规则、引用恢复与语境都参与缓存，排除未消费的 UI/TW 数据', async () => {
+  const processing = {
+    kind: 'paragraph' as const,
+    entities: [],
+    emphasis: [],
+    verbatim: [],
+    breaks: [],
+    rules: { route: 'r1', matcher: 'm1', checker: 'c1', context: 'x1', stats: 's1' },
+    contextFingerprint: 'ctx1',
+  }
+  const key = await cacheKey({ ...base, processing, restoreTokens: [] })
+  const variants = [
+    { ...processing, kind: 'list-item' as const },
+    { ...processing, entities: [[0, 3]] as const },
+    { ...processing, rules: { ...processing.rules, checker: 'c2' } },
+    { ...processing, contextFingerprint: 'ctx2' },
+    { ...processing, rules: { ...processing.rules, stats: 's2' } },
+  ]
+  for (const next of variants)
+    expect(await cacheKey({ ...base, processing: next, restoreTokens: [] })).not.toBe(key)
+  expect(await cacheKey({ ...base, processing, restoreTokens: ['目标'] })).not.toBe(key)
+  expect(
+    await cacheKey({
+      ...base,
+      processing,
+      restoreTokens: [],
+      uiHash: 'other',
+      twHash: 'other',
+    } as CacheKeyParts),
+  ).toBe(key)
+})

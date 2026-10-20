@@ -55,3 +55,9 @@ describe('protect / restore', () => {
     expect(restore('⟦9⟧ [0]', ['x'])).toEqual({ text: '⟦9⟧ [0]', missing: [0], duplicated: [] })
   })
 })
+
+it('正文中的语境与引用协议标签逐字保护，避免被当成外层结构', () => {
+  expect(
+    pieces('Keep <context for="x">abc</context> and <quoted-stat token="0">q</quoted-stat>.'),
+  ).toEqual(['<context for="x">', '</context>', '<quoted-stat token="0">', '</quoted-stat>'])
+})

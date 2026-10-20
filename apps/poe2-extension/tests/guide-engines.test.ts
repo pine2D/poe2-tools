@@ -250,3 +250,37 @@ describe('presets', () => {
     expect(estimateCost(1_000_000, 1_000_000, true).usd).toBeCloseTo(1.5)
   })
 })
+
+it('用量字段缺失或非法时不补零，保持未知供调用方保守估算', async () => {
+  for (const usage of [
+    { prompt_tokens: 10 },
+    { completion_tokens: 2 },
+    { prompt_tokens: -1, completion_tokens: 2 },
+    { prompt_tokens: '10', completion_tokens: 2 },
+  ]) {
+    const r = await streamChat(cfg, msgs, {
+      signal: new AbortController().signal,
+      onText: () => {},
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }],
+            usage,
+          }),
+          { headers: { 'content-type': 'application/json' } },
+        ),
+    })
+    expect(r.usage).toBeNull()
+  }
+})
+
+it('最后一帧用量不完整时不沿用早先帧的旧计数', async () => {
+  const body =
+    'data: {"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":1}}\n\ndata: {"choices":[{"finish_reason":"stop"}],"usage":{"prompt_tokens":10}}\n\ndata: [DONE]\n\n'
+  const r = await streamChat(cfg, msgs, {
+    signal: new AbortController().signal,
+    onText: () => {},
+    fetchImpl: async () => new Response(body, { headers: { 'content-type': 'text/event-stream' } }),
+  })
+  expect(r.usage).toBeNull()
+})

@@ -34,16 +34,16 @@ export interface ReadingView {
 }
 
 const ORIGIN: Record<Origin, string> = {
-  engine: '引擎译文',
-  cache: '缓存译文',
-  dictionary: '词典确认',
+  engine: '机器译文',
+  cache: '机器译文（缓存）',
+  dictionary: '词典译文',
 }
 const STATE: Record<BlockState, string> = {
   idle: '',
   pending: '翻译中…',
   failed: '翻译失败',
   missing: '模型没有返回这一段',
-  skipped: '',
+  skipped: '原样保留',
 }
 const STAGE: Record<StageState, string> = { idle: '未翻译', translating: '翻译中', done: '已翻译' }
 const UPDATE_URL = 'https://poe2-tools.pine2d.com/extension/'
@@ -101,7 +101,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       doc,
       'p',
       {},
-      '只有在你配置了翻译服务后，选中的段落和本段术语才会发给你选择的服务商；扩展不内置任何 Key。',
+      '只有在你配置了翻译服务后，所选正文、本段术语和选定范围内的少量原文语境才会发给你选择的服务商；扩展不内置任何 Key。',
     ),
     el(doc, 'p', {}, 'Key 与译文缓存只存在本机扩展存储里，未加密，网页读不到；可在“设置”里清除。'),
     introOk,
@@ -266,7 +266,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       const item = items.get(blockId)
       if (!item) return
       item.dst.textContent = text
-      item.status.textContent = ORIGIN[origin]
+      item.status.textContent = `${issueList.length ? '待核对 · ' : ''}${ORIGIN[origin]}`
       item.node.dataset.origin = origin
       item.retry.hidden = origin === 'dictionary'
       const copy = item.node.querySelector<HTMLButtonElement>('.copy-block')

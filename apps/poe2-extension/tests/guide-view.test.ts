@@ -175,3 +175,16 @@ describe('createReadingView', () => {
     await expect(v.ask('已中止', '继续', done.signal)).resolves.toBe(false)
   })
 })
+
+it('词典、机器、待核对与原样保留分开，缓存不提升质量等级', () => {
+  const { v } = mount()
+  const status = () => document.querySelector('[data-id="b0"] .block-status')?.textContent
+  v.setTranslation('b0', '中文', 'dictionary', [])
+  expect(status()).toBe('词典译文')
+  v.setTranslation('b0', '中文', 'engine', [])
+  expect(status()).toBe('机器译文')
+  v.setTranslation('b0', '中文', 'cache', [{ kind: 'placeholder', detail: '缺失' }])
+  expect(status()).toBe('待核对 · 机器译文（缓存）')
+  v.setBlockState('b0', 'skipped')
+  expect(status()).toBe('原样保留')
+})

@@ -1,3 +1,5 @@
+export const MATCHER_VERSION = 'guide-matcher-v2'
+
 import { normalizeName, sentenceInitial, type Word, words } from './text'
 import type { AbbrSpan, GuideDictionary, GuideEntry, Range, TermSpan, TermStatus } from './types'
 

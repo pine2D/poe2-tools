@@ -1,9 +1,31 @@
+import type { BlockContext } from './context'
 import type { Matcher } from './matcher'
 import { findModifiers } from './modifiers'
-import type { BlockRoute } from './route'
+import type { BlockRoute, StatResolver } from './route'
+import { type QuotedStat, quotedStats } from './stat-evidence'
 import { normalizeName } from './text'
-import type { AbbrSpan, BlockKind, GuideBlock, ModifierSpan, Range, TermSpan } from './types'
+import type {
+  AbbrSpan,
+  BlockContextRef,
+  BlockKind,
+  GuideBlock,
+  ModifierSpan,
+  Range,
+  TermSpan,
+} from './types'
 import { findVerbatim, mergeRanges, protect } from './verbatim'
+
+export interface ProcessingIdentity {
+  kind: BlockKind
+  stageId?: string
+  entities: readonly Range[]
+  emphasis: readonly Range[]
+  verbatim: readonly Range[]
+  breaks: readonly number[]
+  structure?: BlockContextRef
+  rules: { route: string; matcher: string; checker: string; context: string; stats: string }
+  contextFingerprint: string
+}
 
 export interface PreparedBlock {
   id: string
@@ -17,6 +39,10 @@ export interface PreparedBlock {
   modifiers: ModifierSpan[]
   abbreviations: AbbrSpan[]
   route?: BlockRoute
+  context?: BlockContext
+  processing?: ProcessingIdentity
+  statEvidence?: QuotedStat[]
+  restoreTokens?: string[]
 }
 
 const overlaps = (ranges: readonly Range[], start: number, end: number) =>
@@ -31,7 +57,11 @@ const NUMBER = new RegExp(
   'g',
 )
 
-export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock {
+export function prepareBlock(
+  block: GuideBlock,
+  matcher: Matcher,
+  resolveStat?: StatResolver,
+): PreparedBlock {
   const ctx = { entities: block.entities ?? [], emphasis: block.emphasis ?? [] }
   const found = matcher.find(block.text, ctx)
   // 只采信取文器明确标记的实体。完整名称有译名才交给术语表，部分命中不能拆译未知专名。
@@ -48,8 +78,12 @@ export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock
       )
   })
   const verbatim = mergeRanges([...findVerbatim(block.text), ...unknown, ...(block.verbatim ?? [])])
+  const quotes = resolveStat
+    ? quotedStats(block.text, resolveStat, [...verbatim, ...ctx.entities])
+    : []
+  const protectedSpans: Range[] = [...verbatim, ...quotes.map((q) => [q.start, q.end] as Range)]
   const keep = <T extends { start: number; end: number }>(spans: T[]) =>
-    spans.filter((s) => !overlaps(verbatim, s.start, s.end))
+    spans.filter((s) => !overlaps(protectedSpans, s.start, s.end))
   const terms = keep(found)
   // 已确认或待选的完整词条仍由术语表翻译；不能把其中数字换掉而破坏名称匹配。
   const named: Range[] = terms.filter((t) => t.status !== 'hint').map((t) => [t.start, t.end])
@@ -57,9 +91,10 @@ export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock
   for (const match of block.text.matchAll(NUMBER)) {
     const start = match.index
     const end = start + match[0].length
-    if (!overlaps(verbatim, start, end) && !overlaps(named, start, end)) numbers.push([start, end])
+    if (!overlaps(protectedSpans, start, end) && !overlaps(named, start, end))
+      numbers.push([start, end])
   }
-  const ranges = [...verbatim, ...numbers].sort((a, b) => a[0] - b[0])
+  const ranges = [...protectedSpans, ...numbers].sort((a, b) => a[0] - b[0])
   const { text, tokens } = protect(block.text, ranges)
   const out: PreparedBlock = {
     id: block.id,
@@ -71,6 +106,14 @@ export function prepareBlock(block: GuideBlock, matcher: Matcher): PreparedBlock
     terms,
     modifiers: keep(findModifiers(block.text)),
     abbreviations: keep(matcher.abbreviations(block.text)),
+  }
+  if (quotes.length) {
+    out.restoreTokens = [...tokens]
+    out.statEvidence = quotes.map((q) => {
+      const token = ranges.findIndex(([a, b]) => a === q.start && b === q.end)
+      if (out.restoreTokens) out.restoreTokens[token] = q.zh
+      return { ...q, token }
+    })
   }
   if (block.stageId !== undefined) out.stageId = block.stageId
   return out

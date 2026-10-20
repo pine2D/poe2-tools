@@ -8,18 +8,17 @@ import {
   createTagSplitter,
   type GuideDictionary,
   type GuideDocument,
+  type GuideStats,
   PROMPT_VERSION,
   type PreparedBlock,
   type PreserveReason,
   parseExtractResult,
-  prepareBlock,
+  prepareGuideBlocks,
   restore,
-  routeBlock,
-  type StatResolver,
   sendable,
 } from '@poe2-tools/guide-core'
 import { type ChunkResult, EngineError } from './engines/openai'
-import { estimateTokens } from './engines/presets'
+import { estimateTokens, REQUEST_PARAMS } from './engines/presets'
 import type { GuidePrefs } from './prefs'
 import type { GuideStore } from './store/types'
 import type { ReadingView } from './view-reading'
@@ -38,12 +37,13 @@ export interface EngineHandle {
   model: string
   params: string
   costText(prompt: number, completion: number): string
+  outputLimit?: number
 }
 
 export interface ControllerDeps {
   extract(): Promise<unknown>
   dictionary(): Promise<GuideDictionary>
-  stats: { hash: string; ruleVersion: string; resolve: StatResolver }
+  stats: GuideStats
   store: GuideStore
   prefs(): Promise<GuidePrefs>
   engine(): Promise<EngineHandle | null>
@@ -120,6 +120,8 @@ export function createController(deps: ControllerDeps): Controller {
       text: b.source,
       protectedText: b.protectedText,
       tokens: b.tokens,
+      ...(b.restoreTokens ? { restoreTokens: b.restoreTokens } : {}),
+      ...(b.processing ? { processing: b.processing } : {}),
       game: 'poe2',
       locale: 'zh-CN',
       dictHash,
@@ -208,11 +210,21 @@ export function createController(deps: ControllerDeps): Controller {
           cacheHits++
         } else pending.push(b)
       }
-      const chars = pending.reduce((n, b) => n + b.source.length, 0)
-      const estimate = estimateTokens(pending.map((b) => b.protectedText).join('\n'))
+      // 实际准备的提示只构造一次；估算包含术语、语境、协议，并预留每批完整输出上限。
+      const requests = chunkBlocks(pending).map((chunk) => ({
+        chunk,
+        messages: buildMessages(chunk, deps.random()),
+      }))
+      const chars = pending.reduce((n, b) => n + b.source.length + (b.context?.text.length ?? 0), 0)
+      const promptEstimate = requests.reduce(
+        (n, r) =>
+          n + Math.ceil(estimateTokens(r.messages.map((m) => m.content).join('\n')) * 1.3) + 16,
+        0,
+      )
+      const outputReserve = requests.length * (engine.outputLimit ?? REQUEST_PARAMS.max_tokens)
       view.setUsage(
         pending.length
-          ? `待翻译 ${pending.length} 段，约 ${estimate} tokens · ${engine.costText(estimate * 2, estimate)}`
+          ? `待翻译 ${pending.length} 段，输入约 ${promptEstimate} tokens · 输出预留 ${outputReserve} tokens · ${engine.costText(promptEstimate, outputReserve)}`
           : usageText(engine),
       )
       let prefs: GuidePrefs
@@ -225,7 +237,7 @@ export function createController(deps: ControllerDeps): Controller {
       if (!live()) return
       if (chars > prefs.charLimit) {
         const ok = await view.ask(
-          `本次要发送约 ${chars} 个英文字符，超过设定的 ${prefs.charLimit}，继续吗？`,
+          `本次正文和原文语境约 ${chars} 个字符，超过设定的 ${prefs.charLimit}，继续吗？`,
           '继续翻译',
           signal,
         )
@@ -235,31 +247,27 @@ export function createController(deps: ControllerDeps): Controller {
           return
         }
       }
-      for (const chunk of chunkBlocks(pending)) {
+      for (const { chunk, messages } of requests) {
         if (!live()) return
         for (const b of chunk) {
           run.inflight.add(b.id)
           view.setBlockState(b.id, 'pending')
         }
         let streamed = ''
+        const received = new Map<string, ReturnType<typeof restore>>()
         const splitter = createTagSplitter(
           chunk.map((b) => b.id),
           (id, raw) => {
             if (!live()) return
             const b = chunk.find((x) => x.id === id)
             if (!b) return
-            const restored = restore(raw, b.tokens)
+            const restored = restore(raw, b.restoreTokens ?? b.tokens)
             const issues = checkTranslation(b, restored.text, restored, null)
             view.setTranslation(id, restored.text, 'engine', issues)
-            done.add(id)
-            run.inflight.delete(id)
-            failures.delete(id)
-            const key = keys.get(id)
-            if (key)
-              void deps.store.putCached({ hash: key, text: restored.text, issues }).catch(() => {})
+            received.set(id, restored)
+            view.setBlockState(id, 'pending', '译文已收到，等待请求结束')
           },
         )
-        const messages = buildMessages(chunk, deps.random())
         try {
           const result = await engine.runner.run(
             messages,
@@ -271,6 +279,19 @@ export function createController(deps: ControllerDeps): Controller {
             signal,
           )
           if (!live()) return
+          // 只在本次请求正常结束且仍有效时保存；流中已闭合的段也要接受最终截断检查。
+          for (const [id, restored] of received) {
+            const b = chunk.find((x) => x.id === id)
+            if (!b) continue
+            const issues = checkTranslation(b, restored.text, restored, result.finishReason)
+            view.setTranslation(id, restored.text, 'engine', issues)
+            done.add(id)
+            run.inflight.delete(id)
+            failures.delete(id)
+            const key = keys.get(id)
+            if (key)
+              void deps.store.putCached({ hash: key, text: restored.text, issues }).catch(() => {})
+          }
           // 服务没回用量时：输入按提示词估算，输出按已收到的流式文本估算
           const usage = result.usage ?? {
             prompt: estimateTokens(messages.map((m) => m.content).join('')),
@@ -304,7 +325,7 @@ export function createController(deps: ControllerDeps): Controller {
             break
           }
           if (kind === 'balance' || kind === 'rate') {
-            // rate 已由 withRetry 自动重试过一次，再失败就停下
+            // 不自动重试付费请求；由用户选择何时重新发送。
             view.setBanner('error', message)
             break
           }
@@ -377,10 +398,14 @@ export function createController(deps: ControllerDeps): Controller {
       tokens = { prompt: 0, completion: 0 }
       cacheHits = 0
       const matcher = createMatcher(dict)
-      blocks = guide.blocks.map((b) => ({
-        ...prepareBlock(b, matcher),
-        route: routeBlock(b, deps.stats.resolve),
-      }))
+      try {
+        const prepared = await prepareGuideBlocks(guide.blocks, matcher, deps.stats)
+        if (gen !== generation) return
+        blocks = prepared
+      } catch {
+        fail('正文准备失败，请重新读取页面。')
+        return
+      }
       const current = guide.stages.find((s) => s.current)?.id ?? null
       view.showDocument(guide, blocks, current)
       for (const b of blocks) {

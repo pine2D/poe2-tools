@@ -1,3 +1,4 @@
+import type { ProcessingIdentity } from './prepare'
 import type { TermSpan } from './types'
 
 export interface CacheKeyParts {
@@ -12,6 +13,8 @@ export interface CacheKeyParts {
   model: string
   params: string
   promptVersion: string
+  processing?: ProcessingIdentity
+  restoreTokens?: readonly string[]
 }
 
 // 原文相同但实体标记不同，也可能改变译文；占位位置与恢复内容一并参与缓存。
@@ -20,10 +23,14 @@ export async function cacheKey(p: CacheKeyParts): Promise<string> {
     p.text.replace(/\s+/g, ' ').trim(),
     p.protectedText.replace(/\s+/g, ' ').trim(),
     p.tokens,
+    p.restoreTokens ?? p.tokens,
+    p.processing ?? null,
     p.game,
     p.locale,
     p.dictHash,
-    p.terms.map((t) => `${t.en}=${t.zh}:${t.status}:${(t.candidates ?? []).join('/')}`).join('|'),
+    p.terms
+      .map((t) => `${t.entryId}:${t.en}=${t.zh}:${t.status}:${(t.candidates ?? []).join('/')}`)
+      .join('|'),
     p.provider,
     p.model,
     p.params,

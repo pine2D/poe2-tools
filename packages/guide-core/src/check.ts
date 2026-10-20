@@ -1,3 +1,5 @@
+export const CHECK_VERSION = 'guide-check-v2'
+
 import type { PreparedBlock } from './prepare'
 import type { Issue } from './types'
 import type { Restored } from './verbatim'

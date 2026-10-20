@@ -113,10 +113,18 @@ interface Payload {
   usage?: { prompt_tokens?: number; completion_tokens?: number }
 }
 
-const usageOf = (p: Payload): ChunkResult['usage'] =>
-  p.usage
-    ? { prompt: p.usage.prompt_tokens ?? 0, completion: p.usage.completion_tokens ?? 0 }
+const usageOf = (p: Payload): ChunkResult['usage'] => {
+  const prompt = p.usage?.prompt_tokens
+  const completion = p.usage?.completion_tokens
+  return typeof prompt === 'number' &&
+    typeof completion === 'number' &&
+    Number.isSafeInteger(prompt) &&
+    Number.isSafeInteger(completion) &&
+    prompt >= 0 &&
+    completion >= 0
+    ? { prompt, completion }
     : null
+}
 
 export async function streamChat(
   cfg: EngineConfig,
@@ -196,7 +204,7 @@ export async function streamChat(
       const delta = choice?.delta?.content
       if (typeof delta === 'string' && delta) opts.onText(delta)
       if (typeof choice?.finish_reason === 'string') finishReason = choice.finish_reason
-      usage = usageOf(json) ?? usage
+      if (json.usage !== undefined) usage = usageOf(json)
     })
   } catch {
     throw opts.signal.aborted ? abortedError(opts.signal) : new EngineError('network', '连接中断')

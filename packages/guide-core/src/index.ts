@@ -1,13 +1,16 @@
 export { type CacheKeyParts, cacheKey } from './cache-key'
-export { checkTranslation } from './check'
+export { CHECK_VERSION, checkTranslation } from './check'
+export { type BlockContext, buildContexts, CONTEXT_VERSION } from './context'
 export { parseExtractResult, parseGuideDocument } from './document'
-export { createMatcher, type MatchContext, type Matcher } from './matcher'
+export { createMatcher, MATCHER_VERSION, type MatchContext, type Matcher } from './matcher'
 export { findModifiers, MODIFIER_ZH } from './modifiers'
+export { type GuideStats, prepareGuideBlocks } from './pipeline'
 export {
   type ChunkLimits,
   chunkBlocks,
   DEFAULT_LIMITS,
   type PreparedBlock,
+  type ProcessingIdentity,
   prepareBlock,
   sendable,
 } from './prepare'
