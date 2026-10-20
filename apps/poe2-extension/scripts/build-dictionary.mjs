@@ -17,22 +17,45 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
   function add(id, en, zh, domain, source, version, extra = {}) {
     terms.push({ id, en, zh, domain, source, version, ...extra })
   }
-  for (const [relative, kind] of [
+  const decisions = await read('data/l10n/stat-decisions.json')
+  sources.push({
+    path: decisions.path,
+    sha256: decisions.sha256,
+    tier: 'manual',
+    source: decisions.data._meta.source,
+    version: decisions.data._meta.updatedAt,
+  })
+  for (const [relative, kind, inputOnly = false] of [
     ['data/dict/zh-CN/items.json', 'items'],
-    ['data/dict/zh-CN/stats.json', 'stats'],
+    ['data/l10n/stats/zh-CN.json', 'stats'],
     ['data/l10n/coe-beta/tablets.zh-CN.json', 'items'],
+    ['data/dict/zh-TW/items.json', 'items', true],
+    ['data/l10n/stats/zh-TW.json', 'stats', true],
   ]) {
     const entry = await read(relative)
     const { _meta: meta } = entry.data
     if (!['primary', 'gray', 'manual'].includes(meta?.tier))
       throw new Error(`词典来源等级缺失：${relative}`)
     if (!allowGray && meta.tier === 'gray') continue
+    if (kind === 'stats') {
+      const locale = inputOnly ? 'zh-TW' : 'zh-CN'
+      if (
+        meta.projection !== 'source-placeholders' ||
+        meta.sources?.length !== 2 ||
+        !['en', locale].every((l) =>
+          meta.sources.some((s) => s.locale === l && /^[a-f0-9]{64}$/.test(s.sha256)),
+        ) ||
+        JSON.stringify(meta.decisions) !== JSON.stringify(decisions.data.entries[locale])
+      )
+        throw new Error(`词缀投影或来源裁决失效，请重新生成：${relative}`)
+    }
     sources.push({
       path: entry.path,
       sha256: entry.sha256,
       tier: meta.tier,
       source: meta.source,
       version: meta.gameVersion,
+      ...(kind === 'stats' ? { snapshots: meta.sources, decisions: meta.decisions } : {}),
     })
     if (kind === 'items') {
       for (const [field, domain] of [
@@ -40,12 +63,20 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
         ['uniques', 'unique'],
       ]) {
         for (const [en, zh] of Object.entries(entry.data[field]))
-          add(`${domain}:${en}`, en, zh, domain, entry.path, meta.gameVersion)
+          add(
+            `${inputOnly ? 'input:zh-TW:' : ''}${domain}:${en}`,
+            en,
+            zh,
+            domain,
+            entry.path,
+            meta.gameVersion,
+            inputOnly ? { inputOnly: true } : {},
+          )
       }
     } else {
       for (const stat of entry.data.entries)
         add(
-          `stat:${stat.id}:${createHash('sha256')
+          `${inputOnly ? 'input:zh-TW:' : ''}stat:${stat.id}:${createHash('sha256')
             .update(JSON.stringify([stat.en, stat.text, stat.order ?? null]))
             .digest('hex')
             .slice(0, 16)}`,
@@ -54,9 +85,46 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
           'stat',
           entry.path,
           meta.gameVersion,
-          { sourceId: stat.id, ...(stat.order ? { order: stat.order } : {}) },
+          {
+            sourceId: stat.id,
+            ...(stat.order ? { order: stat.order } : {}),
+            ...(stat.preferred ? { preferred: true } : {}),
+            ...(inputOnly ? { inputOnly: true } : {}),
+          },
         )
     }
+  }
+  const variants = await read('data/l10n/coe-beta/stat-variants.zh-CN.json')
+  sources.push({
+    path: variants.path,
+    sha256: variants.sha256,
+    tier: 'manual',
+    source: variants.data._meta.source,
+    version: variants.data._meta.updatedAt,
+  })
+  for (const variant of variants.data.entries) {
+    if (
+      !variant.evidence ||
+      !variant.reason ||
+      !terms.some(
+        (t) =>
+          !t.inputOnly &&
+          t.domain === 'stat' &&
+          t.sourceId === variant.sourceId &&
+          t.en === variant.sourceEn &&
+          t.zh === variant.sourceZh,
+      )
+    )
+      throw new Error(`展示变体缺少仍有效的原始来源：${variant.id}`)
+    add(
+      `stat-variant:${variant.id}`,
+      variant.en,
+      variant.zh,
+      'stat',
+      variants.path,
+      variants.data._meta.gameVersion,
+      { sourceId: variant.sourceId },
+    )
   }
   // 官方静态名称的版本独立于制作目录；这里只裁剪名称，不携带规则与候选池。
   const catalog = await read('data/craft/catalog.json')

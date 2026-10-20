@@ -1,2 +1,3 @@
 export { createLexicon } from './dictionary'
-export type { Candidate, Lexicon, Term } from './types'
+export { createGameLexicon } from './stats'
+export type { Candidate, GameLexicon, Lexicon, StatDirection, StatResolution, Term } from './types'

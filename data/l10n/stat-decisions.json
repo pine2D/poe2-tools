@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "tier": "manual",
+    "updatedAt": "2026-10-20",
+    "source": "official trade2 same-English variants reviewed for display; other translations retained for input"
+  },
+  "entries": {
+    "zh-CN": [
+      {
+        "en": "# to all Attributes",
+        "sourceId": "explicit.stat_1379411836",
+        "reason": "两条官方译文仅数值语序不同：# 全属性／全属性 #；统一展示前置数值，反向保留两者。"
+      },
+      {
+        "en": "#% increased Spirit",
+        "sourceId": "explicit.stat_1416406066",
+        "reason": "继承 stat-winners 已审定规则：英文未声明局部装备时用通用精魂译文；该装备精魂的原模板仍保留用于输入。"
+      },
+      {
+        "en": "#% increased Armour, Evasion and Energy Shield",
+        "sourceId": "explicit.stat_3523867985",
+        "reason": "两条官方译文作用对象、数值和提高语义相同，仅列举标点和连接词不同；统一装备显式译文。"
+      },
+      {
+        "en": "Zealot's Oath",
+        "sourceId": "explicit.stat_1315418254",
+        "reason": "官方同名关键天赋的直接属性译作狂热誓言，选项值译作狂热者誓言；展示采用直接属性名称，两种官方输入都保留。"
+      },
+      {
+        "en": "Vaal Pact",
+        "sourceId": "explicit.stat_2257118425",
+        "reason": "官方同名关键天赋的直接属性译作瓦尔冥约，选项值译作瓦尔契约；展示采用直接属性名称，两种官方输入都保留。"
+      }
+    ],
+    "zh-TW": []
+  }
+}

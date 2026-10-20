@@ -222,7 +222,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         pending.list.append(
           entry(
             icon(doc, 'done', 'ok'),
-            comparisonOnly ? '没有其他待核对项' : '没有需要先改正的行',
+            comparisonOnly ? '没有其他待核对项' : '没有需要先核对的行',
             'clear',
           ),
         )
@@ -266,7 +266,15 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       fill.type = 'button'
       fill.textContent = '填入英文到原站导入框'
       fill.disabled = !converted.ready
-      result.append(check, columns, fill)
+      const copy = doc.createElement('button')
+      copy.type = 'button'
+      copy.dataset.copyEnglish = ''
+      copy.textContent = '复制英文装备文本'
+      copy.disabled = !converted.complete
+      // 复制结果并入已有 live region，避免新增反复播报的区域。
+      const copyStatus = doc.createElement('small')
+      copyStatus.className = 'copy-status'
+      result.append(check, columns, fill, copy)
       // 结论行与下一步（裁定 23）
       if (lines === null) {
         say('alert', 'miss', '无法识别装备文本', '两栏仅供对照')
@@ -276,7 +284,14 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         setPrimary(preview)
       } else if (comparisonOnly) {
         say('alert', 'miss', '仅供对照', converted.issues[0]?.message ?? null)
-        next.list.append(entry(actor('你'), '对照两栏阅读；此类装备暂不能填入'))
+        next.list.append(
+          entry(
+            actor('你'),
+            converted.complete
+              ? '可复制英文装备文本供对照；此类装备暂不能填入'
+              : '对照两栏阅读；此类装备暂不能填入',
+          ),
+        )
         setPrimary(null)
       } else if (converted.ready) {
         say(
@@ -291,19 +306,16 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         )
         setPrimary(fill)
       } else {
-        // 全部问题都有行号时与“第 N 行”“改正这 M 行”同用“行”；有整件问题时行数说不清，用“处”
         say(
           'alert',
           'miss',
-          whole > 0 ? `需先核对 ${items.length} 处` : `需先改正 ${located} 行`,
+          whole > 0 ? `需先核对 ${items.length} 处` : `需先核对 ${located} 行`,
           '两栏仅供对照，暂不能填入',
         )
         next.list.append(
           entry(
             actor('你'),
-            whole > 0
-              ? '按上面的提示改正原文，再点“预览中文转换”'
-              : `在原站导入框改正这 ${located} 行，再点“预览中文转换”`,
+            '按提示核对来源文本。未识别不代表原文有错，请保留完整原文，不要删行绕过。',
           ),
         )
         setPrimary(preview)
@@ -317,6 +329,8 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         )
           return
         fill.disabled = true
+        copy.disabled = true
+        copyStatus.remove()
         for (const button of check.querySelectorAll<HTMLButtonElement>('li button'))
           button.disabled = true
         check.classList.add('stale')
@@ -332,6 +346,31 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         revision++
         markStale('以下为改动前的结果')
       }
+      copy.addEventListener('click', async () => {
+        if (!converted.complete || !isActive() || current !== revision || !copy.isConnected) return
+        if (input.value !== converted.original) {
+          markStale('以下为改动前的结果')
+          return
+        }
+        copy.disabled = true
+        copyStatus.remove()
+        let text: string
+        try {
+          if (!doc.defaultView?.navigator.clipboard) throw new Error('clipboard unavailable')
+          await doc.defaultView.navigator.clipboard.writeText(converted.english)
+          text = '已复制英文装备文本；名称与标签可能保留原文，交易备注和描述不包含在内。'
+        } catch {
+          text = '复制失败，请从英文预览框手动复制。'
+        }
+        if (!isActive() || current !== revision || !copy.isConnected) return
+        if (input.value !== converted.original) {
+          markStale('以下为改动前的结果')
+          return
+        }
+        copy.disabled = false
+        copyStatus.textContent = text
+        message.append(copyStatus)
+      })
       fill.addEventListener('click', () => {
         if (!isActive() || current !== revision || !fill.isConnected) return
         if (!input.isConnected || input.value !== converted.original) {
@@ -344,6 +383,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         input.value = converted.english
         input.dispatchEvent(new Event('input', { bubbles: true }))
         fill.disabled = true
+        copy.disabled = true
         // ③ 已填入：导入仍由原站完成，扩展不提交
         say('fill', 'ok', '已填入英文', '尚未导入，导入结果由原站确认')
         done.list.replaceChildren(

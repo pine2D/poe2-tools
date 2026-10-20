@@ -2,5 +2,7 @@
 
 export type { ItemDictionary, ItemInspection } from './export'
 export { inspectItem, knownExplicitHeader, knownImplicitHeader } from './export'
+export { canonicalItemClass } from './itemClasses'
+export { knownModifierHeader } from './modifierHeaders'
 export { parseItem } from './parse'
 export type { ItemDocument } from './types'

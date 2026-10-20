@@ -1,6 +1,6 @@
 import { settingsText } from './settings-text'
 import { simulatorHelpText } from './simulator-help'
-import { statHeaderSelector, statSelector } from './stats'
+import { inStatRegion, statHeaderSelector, statSelector } from './stats'
 import { isUserContent } from './user-content'
 
 const notificationRegions = '#snackbarsLeft .snackbar, #snackbarsRight .snackbar'
@@ -13,6 +13,7 @@ export function translatable(node: Text): boolean {
     !!parent?.closest(regions) &&
     !parent.closest(excluded) &&
     (!parent.closest(statSelector) || !!parent.closest(statHeaderSelector)) &&
+    !inStatRegion(parent) &&
     !isUserContent(parent) &&
     !(
       node.ownerDocument.location.pathname === '/compare' &&
@@ -27,6 +28,7 @@ export function textContext(
 ):
   | 'modifier-details'
   | 'modifier-tags'
+  | 'modifier-table-header'
   | 'essence-category'
   | 'socket-category'
   | 'method-label'
@@ -47,6 +49,8 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('.modInfluenceGroup > .header > :not(label)'))
+    return 'modifier-table-header'
   if (node.parentElement?.closest('.item .modifierDetails .tags')) return 'modifier-tags'
   if (node.parentElement?.closest('.item .modifierDetails')) return 'modifier-details'
   if (node.parentElement?.closest('#CraftingMethod_2 > ul > li')) return 'essence-category'

@@ -2,11 +2,10 @@ import {
   type ItemDictionary,
   type ItemDocument,
   inspectItem,
-  knownExplicitHeader,
-  knownImplicitHeader,
+  knownModifierHeader,
   parseItem,
 } from '@poe2-tools/item-core/text'
-import type { Term } from '@poe2-tools/l10n-core'
+import { createGameLexicon, type Term } from '@poe2-tools/l10n-core'
 import { completeItemFields } from './item-fields'
 
 /** 装备文本转换的预览结果；面板据此呈现结论与核对清单，不另行判断 */
@@ -15,9 +14,15 @@ export interface PreparedImport {
   english: string
   /** 恒等于 issues.length === 0 */
   ready: boolean
+  /** 所有参与转换的机制行均已识别；不等于原站支持导入，名称和标签仍可保留原文。 */
+  complete: boolean
   /** 带“第 N 行：”前缀的问题文本 */
   reasons: string[]
-  issues: { line: number | null; message: string }[]
+  issues: {
+    line: number | null
+    message: string
+    kind: 'unsupported' | 'ambiguous' | 'format' | 'policy'
+  }[]
   warnings: string[]
   /** 参与核对的行数；解析失败为 null。ready 时 recognized === total */
   lines: { total: number; recognized: number } | null
@@ -26,10 +31,41 @@ export interface PreparedImport {
 }
 
 export function itemDictionary(terms: readonly Term[]): ItemDictionary {
+  // 原始 stat ID 可对应 Area/Map 等多个模板；语法身份唯一，选择结果保留来源 ID。
+  const lexicon = createGameLexicon(
+    terms
+      .filter((term) => term.domain === 'stat')
+      .map((term, i) => ({
+        ...term,
+        id: `input:${i}:${term.id}`,
+        sourceId: term.sourceId ?? term.id,
+      })),
+  )
   const names = (domain: Term['domain']) =>
-    Object.fromEntries(terms.filter((t) => t.domain === domain).map((t) => [t.en, t.zh]))
+    Object.fromEntries(
+      terms.filter((t) => t.domain === domain && !t.inputOnly).map((t) => [t.en, t.zh]),
+    )
+  const inputNames = (domain: Term['domain']) => {
+    const result: Record<string, string[]> = {}
+    for (const term of terms.filter((t) => t.domain === domain)) {
+      const names = result[term.en] ?? []
+      names.push(term.zh)
+      result[term.en] = names
+    }
+    return result
+  }
   return {
     items: { bases: names('base'), uniques: names('unique') },
+    inputNames: { bases: inputNames('base'), uniques: inputNames('unique') },
+    mixedInput: true,
+    resolveStat(text) {
+      const result = lexicon.resolveStat(text, 'toEnglish')
+      const candidates = result.candidates.map(({ term, text: english }) => ({
+        id: term.sourceId ?? term.id,
+        english,
+      }))
+      return { english: result.text, candidates }
+    },
     stats: {
       entries: terms
         .filter((t) => t.domain === 'stat')
@@ -76,11 +112,12 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
   const normalized = original.replace(/^(物品类别|稀有度)\s*：/gm, '$1:')
   const parsed = parseItem(normalized)
   if (!parsed.ok) {
-    const issue = unparsedIssue(normalized, parsed.error)
+    const issue = { ...unparsedIssue(normalized, parsed.error), kind: 'format' as const }
     return {
       original,
       english: '',
       ready: false,
+      complete: false,
       reasons: [issue.line === null ? issue.message : `第 ${issue.line} 行：${issue.message}`],
       issues: [issue],
       warnings: [],
@@ -90,35 +127,58 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
   }
   const item = parsed.item
   const inspection = inspectItem(item, itemDictionary(terms))
-  const issues: { line: number | null; message: string }[] = []
+  const issues: PreparedImport['issues'] = []
   const seenIssues = new Set<string>()
-  const add = (message: string, line: number | null = null) => {
+  const add = (
+    message: string,
+    line: number | null = null,
+    kind: PreparedImport['issues'][number]['kind'] = 'unsupported',
+  ) => {
     const key = `${line}\0${message}`
     if (seenIssues.has(key)) return
     seenIssues.add(key)
-    issues.push({ line, message })
+    issues.push({ line, message, kind })
   }
   // 必须是第一条：comparisonOnly 时面板以 issues[0] 作结论副句
-  if (inspection.comparisonOnly) add(inspection.comparisonReason ?? '此装备仅供对照。')
+  if (inspection.comparisonOnly)
+    add(inspection.comparisonReason ?? '此装备仅供对照。', null, 'policy')
   const warnings: string[] = []
-  const { english, fields } = completeItemFields(item, inspection, terms)
-  if (!inspection.base.english) add('基底译名未匹配或存在歧义，无法确认英文。')
-  if (/^Item Class: .*\p{Script=Han}/u.test(english)) add('物品类别尚未翻译。')
+  const { english, fields, ambiguousClass } = completeItemFields(item, inspection, terms)
+  if (!inspection.base.english)
+    add(
+      inspection.base.candidates.length
+        ? '基底存在多个英文候选，暂不选择。'
+        : '词典暂未收录此基底译名，原文已保留。',
+      null,
+      inspection.base.candidates.length ? 'ambiguous' : 'unsupported',
+    )
+  if (ambiguousClass)
+    add('物品类别存在跨服译名歧义，原文已保留。请确认实际类别后使用英文类别名。', null, 'ambiguous')
+  else if (/^Item Class: .*\p{Script=Han}/u.test(english)) add('物品类别尚未翻译。')
   for (const diagnostic of item.diagnostics)
     if (
       !(diagnostic.code === 'unknown-line' && diagnostic.line !== null && fields[diagnostic.line])
     )
-      add(diagnostic.message, diagnostic.line)
-  if (item.nameLines.length !== (item.rarity === 'rare' ? 2 : 1)) add('装备名称区不完整。')
+      add(
+        diagnostic.message,
+        diagnostic.line,
+        diagnostic.code.startsWith('unknown-') ? 'unsupported' : 'format',
+      )
+  if (item.nameLines.length !== (['rare', 'unique'].includes(item.rarity) ? 2 : 1))
+    add('装备名称区不完整。', null, 'format')
   // 只检查文本是否能准确表达；前后缀归属、数量及游戏等阶由原站判断。
   for (const { mod, stats } of inspection.mods) {
-    const validHeader =
-      mod.kind === 'implicit'
-        ? knownImplicitHeader(mod.header.raw)
-        : ['prefix', 'suffix'].includes(mod.kind) && knownExplicitHeader(mod.header.raw)
+    const validHeader = knownModifierHeader(mod.header.raw)
     if (!validHeader) add('词缀分组标题尚未完整识别。', mod.header.line)
     for (const { source, resolution } of stats) {
-      if (!resolution.english) add('属性译名未匹配或存在歧义，无法确认英文。', source.line)
+      if (!resolution.english)
+        add(
+          resolution.candidates.length
+            ? '属性存在多个英文候选，暂不选择。'
+            : '词典暂未收录此属性译名，原文已保留。',
+          source.line,
+          resolution.candidates.length ? 'ambiguous' : 'unsupported',
+        )
       if (
         source.rolls.some(
           (roll) =>
@@ -129,7 +189,7 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
                 roll.value > Math.max(...roll.range))),
         )
       )
-        add('数值无效或不在原文范围内。', source.line)
+        add('数值无效或不在原文范围内。', source.line, 'format')
       if (
         inspection.base.english === 'Mail Belt' &&
         mod.kind === 'implicit' &&
@@ -141,9 +201,13 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
         )
     }
   }
-  if (inspection.base.english === 'Rattling Sceptre' && inspection.skills.length)
+  if (item.mods.some((mod) => mod.magnitude !== undefined))
     warnings.push(
-      '原站兼容性：罪孽权杖的授予技能等级可能被 CoE 重算。转换保留当前与最高等级，请核对导入结果。',
+      '原站兼容性：CoE 可能按品质再次计算增效，已见召唤技能等级 +3 显示为 +4。转换保留原文数值与增效，请核对导入后的显示及复制结果。',
+    )
+  if (inspection.skills.length)
+    warnings.push(
+      '原站兼容性：授予技能的等级或列表可能被 CoE 重算。已见权杖技能等级变化、项链出现额外技能；转换保留原文，请核对导入结果。',
     )
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers'].includes(block.kind)) continue
@@ -161,6 +225,7 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
     original,
     english,
     ready: issues.length === 0,
+    complete: issues.every((issue) => issue.kind === 'policy'),
     reasons: issues.map(({ line, message }) =>
       line === null ? message : `第 ${line} 行：${message}`,
     ),

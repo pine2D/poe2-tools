@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "tier": "manual",
+    "gameVersion": "unknown",
+    "updatedAt": "2026-10-20",
+    "source": "CoE public rendered wording with official trade2 terminology; manually reviewed display variants"
+  },
+  "entries": [
+    {
+      "id": "chance-daze-on-hit",
+      "sourceId": "explicit.stat_3146310524",
+      "sourceEn": "Dazes on Hit",
+      "sourceZh": "击中时使目标恍惚",
+      "en": "#% chance to Daze on Hit",
+      "zh": "击中时有 #% 的几率使目标恍惚",
+      "evidence": "https://beta.craftofexile.com/?game=poe2&language=us&group=3&class=23&item=2439",
+      "reason": "公开词缀表展示概率，官方交易筛选只表示有无。保留展示文本的概率与击中条件，不推算实际规则或数值范围。"
+    },
+    {
+      "id": "chance-incision-on-attack-hit",
+      "sourceId": "explicit.stat_300723956",
+      "sourceEn": "Attack Hits apply Incision",
+      "sourceZh": "攻击击中施加创口",
+      "en": "#% chance for Attack Hits to apply Incision",
+      "zh": "攻击击中有 #% 的几率施加创口",
+      "evidence": "https://beta.craftofexile.com/?game=poe2&language=us&group=3&class=23&item=2439",
+      "reason": "公开展示句含概率与攻击击中限定；沿用官方创口译名。模板只转换已有概率，不把无概率词条改成某个默认概率。"
+    }
+  ]
+}

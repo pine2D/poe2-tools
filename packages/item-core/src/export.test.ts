@@ -254,9 +254,10 @@ it('基底属性头保留标签转换，未知限定词不被丢弃', () => {
 
 it('基底增效段不因标签转换而丢失', () => {
   for (const header of ['{ 基底属性 — 20% Increased }', '{ 基底属性 — 元素 — 20% Increased }']) {
-    expect(inspect(`${focus}\n--------\n${header}\n闪电抗性 +17(16-20)%`).exportText).toContain(
-      header,
-    )
+    const result = inspect(`${focus}\n--------\n${header}\n闪电抗性 +17(16-20)%`)
+    expect(result.exportText).toContain(header.replace('基底属性', 'Implicit Modifier'))
+    expect(result.mods.at(-1)?.mod.magnitude).toBe(20)
+    expect(result.bridgeText).toBeNull()
   }
 })
 

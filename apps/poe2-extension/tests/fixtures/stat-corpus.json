@@ -1,0 +1,131 @@
+{
+  "note": "自造数值与官方术语人工核对；覆盖句式契约，不代表各基底或制作规则准入。null 是必须保留的未知整句。",
+  "cases": [
+    {
+      "kind": "armour",
+      "en": "63(56-67)% increased Armour and Energy Shield",
+      "zh": "护甲与能量护盾提高 63(56-67)%"
+    },
+    {
+      "kind": "attack-physical",
+      "en": "Adds 12(10-15) to 25(20-30) Physical Damage to Attacks",
+      "zh": "攻击附加 12(10-15) - 25(20-30) 物理伤害"
+    },
+    {
+      "kind": "attack-cold",
+      "en": "Adds # to # Cold damage to Attacks",
+      "zh": "攻击附加 # - # 基础冰霜伤害"
+    },
+    {
+      "kind": "attack-fire",
+      "en": "Adds # to # Fire damage to Attacks",
+      "zh": "攻击附加 # - # 基础火焰伤害"
+    },
+    {
+      "kind": "attack-lightning",
+      "en": "Adds # to # Lightning damage to Attacks",
+      "zh": "攻击附加 # - # 基础闪电伤害"
+    },
+    { "kind": "signed-resistance", "en": "-2.5% to Lightning Resistance", "zh": "闪电抗性 -2.5%" },
+    { "kind": "attribute", "en": "+25 to all Attributes", "zh": "+25 全属性" },
+    { "kind": "spirit", "en": "20% increased Spirit", "zh": "精魂提高 20%" },
+    {
+      "kind": "armour-elemental",
+      "en": "+25% of Armour also applies to Elemental Damage",
+      "zh": "+25% 的护甲同样作用于元素伤害"
+    },
+    {
+      "kind": "requirements-polarity",
+      "en": "(15-20)% reduced Attribute Requirements",
+      "zh": "属性需求降低 (15-20)%"
+    },
+    {
+      "kind": "critical",
+      "en": "30% increased Critical Damage Bonus",
+      "zh": "暴击伤害加成提高 30%"
+    },
+    {
+      "kind": "flask-life",
+      "en": "25% increased Flask Life Recovery rate",
+      "zh": "药剂生命回复速度提高 25%"
+    },
+    {
+      "kind": "flask-mana",
+      "en": "20% increased Flask Mana Recovery rate",
+      "zh": "药剂魔力回复速度提高 20%"
+    },
+    {
+      "kind": "charm-charges",
+      "en": "22(23-21)% reduced Charm Charges used",
+      "zh": "使用的咒符充能降低 22(23-21)%"
+    },
+    { "kind": "charm-slot", "en": "Has 2(1-3) Charm Slot", "zh": "具有 2(1-3) 个咒符栏" },
+    {
+      "kind": "charm-condition",
+      "en": "20% increased Damage while you have an active Charm",
+      "zh": "激活咒符时，伤害提高 20%"
+    },
+    {
+      "kind": "shapeshift-condition",
+      "en": "10% increased Skill Speed while Shapeshifted",
+      "zh": "变形时，技能速度提高 10%"
+    },
+    {
+      "kind": "minion-life",
+      "en": "Minions have 30% increased maximum Life",
+      "zh": "召唤生物的生命上限提高 30%"
+    },
+    {
+      "kind": "minion-command",
+      "en": "Minions deal 49(45-52)% increased Damage with Command Skills",
+      "zh": "召唤生物使用命令技能造成的伤害提高 49(45-52)%"
+    },
+    {
+      "kind": "minion-area",
+      "en": "Minions have 20(17-20)% increased Area of Effect",
+      "zh": "召唤生物的效果区域提高 20(17-20)%"
+    },
+    {
+      "kind": "skill",
+      "en": "Grants Skill: Level 19 Raise Shield",
+      "zh": "获得技能: 等级 19 架盾"
+    },
+    {
+      "kind": "map",
+      "en": "12% increased Gold found in Map",
+      "zh": "地图内找到的金币数量提高 12%"
+    },
+    {
+      "kind": "area",
+      "en": "12% increased Gold found in this Area",
+      "zh": "在此区域中可找到的金币数量提高 12%"
+    },
+    {
+      "kind": "unique-fixed",
+      "en": "Create a Fragment of Divinity in your Presence every 4 seconds",
+      "zh": "在你的在场范围内，每 4 秒创造一个神圣碎片"
+    },
+    {
+      "kind": "daze-variant",
+      "en": "(10-20)% chance to Daze on Hit",
+      "zh": "击中时有 (10-20)% 的几率使目标恍惚"
+    },
+    {
+      "kind": "incision-variant",
+      "en": "(15-25)% chance for Attack Hits to apply Incision",
+      "zh": "攻击击中有 (15-25)% 的几率施加创口"
+    },
+    {
+      "kind": "fixed-negative",
+      "en": "Create a Fragment of Divinity in your Presence every 999 seconds",
+      "zh": null
+    },
+    {
+      "kind": "condition-negative",
+      "en": "20% increased Damage while your invented condition is active",
+      "zh": null
+    },
+    { "kind": "word-negative", "en": "20% less Attribute Requirements", "zh": null },
+    { "kind": "unknown-keyword", "en": "Unknown Armour condition", "zh": null }
+  ]
+}

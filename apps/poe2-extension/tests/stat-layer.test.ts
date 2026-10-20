@@ -18,6 +18,57 @@ afterEach(() => {
   stop()
   document.body.innerHTML = ''
 })
+it.each([false, true])('词缀原文的可见性跟随中英对照设置：%s', (bilingual) => {
+  document.body.innerHTML =
+    '<main><div><span class="stat">+18% to <span class="keyword">Lightning Resistance</span></span></div><div><span class="stat">Unknown mechanic</span></div></main>'
+  const [stat, unknown] = [...document.querySelectorAll<HTMLElement>('.stat')]
+  if (!stat || !unknown) throw new Error('缺少测试词缀')
+  const original = stat.textContent
+  const keyword = stat.querySelector('.keyword')
+  stop = attachStatLayer(document, lex, bilingual)
+  expect(getComputedStyle(stat).display === 'none').toBe(!bilingual)
+  expect(getComputedStyle(unknown).display).not.toBe('none')
+  expect(stat.textContent).toBe(original)
+  expect(stat.querySelector('.keyword')).toBe(keyword)
+  expect(stat.nextElementSibling?.shadowRoot?.textContent).toBe('闪电抗性 +18%')
+  stop()
+  expect(getComputedStyle(stat).display).not.toBe('none')
+  expect(stat.textContent).toBe(original)
+})
+
+it('中文模式的词缀变为未知或移入保护区域时立即恢复原文可见性', async () => {
+  document.body.innerHTML =
+    '<main><section><span class="stat">+18% to Lightning Resistance</span></section><div contenteditable></div></main>'
+  const stat = document.querySelector('.stat') as HTMLElement
+  stop = attachStatLayer(document, lex, false)
+  expect(getComputedStyle(stat).display).toBe('none')
+  stat.textContent = 'Unknown mechanic'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(getComputedStyle(stat).display).not.toBe('none')
+  expect(stat.nextElementSibling).toBeNull()
+  stat.textContent = '+20% to Lightning Resistance'
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(getComputedStyle(stat).display).toBe('none')
+  document.querySelector('[contenteditable]')?.append(stat)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(getComputedStyle(stat).display).not.toBe('none')
+  expect(stat.textContent).toBe('+20% to Lightning Resistance')
+})
+
+it('中文模式停用后，尚未处理的原站克隆也恢复可见', () => {
+  document.body.innerHTML =
+    '<main><div class="item"><span class="stat">+18% to Lightning Resistance</span></div></main>'
+  stop = attachStatLayer(document, lex, false)
+  const item = document.querySelector('.item') as HTMLElement
+  document.querySelector('main')?.append(item.cloneNode(true))
+  stop()
+  for (const stat of document.querySelectorAll('.stat')) {
+    expect(getComputedStyle(stat).display).not.toBe('none')
+    expect(stat.textContent).toBe('+18% to Lightning Resistance')
+  }
+  expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
+})
+
 it('分段词缀保留原站文本、关键词节点和监听，仅叠加中文', async () => {
   document.body.innerHTML =
     '<main><div><span class="stat">+#% to <span id="keyword">Lightning Resistance</span></span></div></main>'
@@ -212,4 +263,49 @@ it('count() 是当前词缀叠加行数：未命中不计，原站移除词缀�
   expect(counted.count()).toBe(1)
   counted()
   expect(counted.count()).toBe(0)
+})
+
+it('Data 组合词缀完整命中每段时叠加中文，保留节点与原文复制', () => {
+  const combined = createLexicon([
+    {
+      id: 'a',
+      en: '+#% to Lightning Resistance',
+      zh: '闪电抗性 +#%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'b',
+      en: '+#% to Maximum Lightning Resistance',
+      zh: '闪电抗性上限 +#%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  document.body.innerHTML =
+    '<main><div class="modifierTable"><div class="row"><div class="label"><div class="text">+<span class="modValue">(11-15)</span>% to Lightning Resistance, +1% to Maximum Lightning Resistance</div></div></div></div></main>'
+  const text = document.querySelector('.text') as HTMLElement
+  const original = text.textContent
+  const number = text.querySelector('.modValue')
+  stop = attachStatLayer(document, combined)
+  expect(text.nextElementSibling?.shadowRoot?.textContent).toBe(
+    '闪电抗性 +(11-15)%, 闪电抗性上限 +1%',
+  )
+  expect(text.textContent).toBe(original)
+  expect(text.querySelector('.modValue')).toBe(number)
+})
+it.each([
+  '+20% to Lightning Resistance, Unknown effect',
+  '+20% to Lightning Resistance, while moving',
+  '+20% to Lightning Resistance (when hit, recently)',
+  '+1,000% to Lightning Resistance',
+])('组合词缀边界不明确或子句未知时整体保留：%s', (text) => {
+  document.body.innerHTML =
+    '<main><div class="modifierTable"><div class="row"><div class="label"><div class="text"></div></div></div></div></main>'
+  const target = document.querySelector('.text') as HTMLElement
+  target.textContent = text
+  stop = attachStatLayer(document, lex)
+  expect(document.querySelector('[data-poe2-l10n="stat"]')).toBeNull()
 })

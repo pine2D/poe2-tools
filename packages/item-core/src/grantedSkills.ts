@@ -81,9 +81,15 @@ export function resolveGrantedSkill(
   entries: readonly StatTemplate[],
   locale: ItemLocale,
 ): ResolvedGrantedSkill {
-  // 整件语言不覆盖明确的英文技能语法；仍使用同一套英文名称/等级安全检查。
-  if (locale !== 'en' && raw.trim().startsWith('Grants Skill:'))
-    return resolveGrantedSkill(raw, entries, 'en')
+  // 混合文本按技能行的明确标题选择语法，不由整件语言覆盖；名称仍须命中对应词典。
+  const lineLocale = raw.trim().startsWith('Grants Skill:')
+    ? 'en'
+    : raw.trim().startsWith('获得技能')
+      ? 'zh-CN'
+      : raw.trim().startsWith('賦予技能')
+        ? 'zh-TW'
+        : locale
+  if (lineLocale !== locale) return resolveGrantedSkill(raw, entries, lineLocale)
   const match = SOURCE_SKILL[locale].exec(raw.trim())
   if (!match) {
     const name = readUnlevelledSkillName(raw, locale)
