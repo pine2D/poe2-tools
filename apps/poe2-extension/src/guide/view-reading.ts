@@ -318,8 +318,13 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     if (!items.has(id)) return
     currentId = id
     mountBlocks()
-    if (mode === 'sidebar') items.get(id)?.node.scrollIntoView?.({ block: 'start' })
-    items.get(id)?.node.focus({ preventScroll: true })
+    const node = items.get(id)?.node
+    if (mode === 'sidebar' && node) {
+      // 工具栏可展开且高度随侧栏宽度变化，跳转时按实际高度避让。
+      node.style.scrollMarginTop = `${header.getBoundingClientRect().height}px`
+      node.scrollIntoView?.({ block: 'start' })
+    }
+    node?.focus({ preventScroll: true })
     if (locate) h.onLocate(id)
   }
   function move(delta: number) {

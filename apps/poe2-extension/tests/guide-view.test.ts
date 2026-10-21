@@ -360,3 +360,28 @@ it('完成状态禁用主操作且用量位于工具区，确认可 Esc 取消�
   await expect(answer).resolves.toBe(false)
   expect(document.activeElement).toBe(focus)
 })
+
+it('仅侧栏跳转按当前工具栏高度留位，展开范围后重新测量', () => {
+  const { v } = mount()
+  v.showDocument(
+    doc,
+    doc.blocks.map((b) => prepareBlock(b, matcher)),
+    null,
+  )
+  const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  const header = document.querySelector<HTMLElement>('.guide-header')
+  if (!mode || !header) throw new Error('缺少阅读控件')
+  mode.value = 'sidebar'
+  mode.dispatchEvent(new Event('change'))
+  v.setBlockState('b1', 'missing')
+  const target = document.querySelector<HTMLElement>('[data-id="b1"]')
+  const issue = document.querySelector<HTMLButtonElement>('.guide-exceptions [data-target="b1"]')
+  if (!target || !issue) throw new Error('缺少定位目标')
+  const rect = vi.spyOn(header, 'getBoundingClientRect')
+  for (const height of [312, 452]) {
+    rect.mockReturnValue(new DOMRect(0, 0, 360, height))
+    issue.click()
+    expect(target.style.scrollMarginTop).toBe(`${height}px`)
+    expect(document.activeElement).toBe(target)
+  }
+})
