@@ -1,4 +1,4 @@
-import type { GuideBlock } from '@poe2-tools/guide-core'
+import { type GuideBlock, type PreparedBlock, translatedTerms } from '@poe2-tools/guide-core'
 import { type SelectionResult, selectionDocument } from '../selection/protocol'
 import { type ControllerDeps, createController } from './controller'
 
@@ -10,6 +10,7 @@ export async function translateSelection(
   signal: AbortSignal,
 ): Promise<SelectionResult> {
   const outcome: { result: Extract<SelectionResult, { ok: true }> | null } = { result: null }
+  let prepared: readonly PreparedBlock[] = []
   let setup = false,
     usage = '',
     error = '没有收到合格译文，请重试。'
@@ -18,15 +19,24 @@ export async function translateSelection(
     ...deps,
     extract: async () => ({ ok: true, doc: selectionDocument(block) }),
     view: {
-      showDocument: noop,
+      showDocument: (_doc, blocks) => {
+        prepared = blocks
+      },
       clearDocument: noop,
       setStageState: noop,
       setBusy: noop,
       setReady: noop,
       setProgress: noop,
       setPageState: noop,
-      setTranslation: (_, text, origin, issues) => {
-        outcome.result = { ok: true, text, origin, issues, usage }
+      setTranslation: (id, text, origin, issues) => {
+        outcome.result = {
+          ok: true,
+          text,
+          origin,
+          issues,
+          usage,
+          terms: translatedTerms(text, prepared.find((b) => b.id === id)?.terms ?? []),
+        }
       },
       setBlockState: (_, state, message) => {
         if (state === 'skipped')

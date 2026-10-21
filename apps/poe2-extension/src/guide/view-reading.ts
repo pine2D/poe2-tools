@@ -1,4 +1,9 @@
-import type { GuideDocument, Issue, PreparedBlock } from '@poe2-tools/guide-core'
+import {
+  type GuideDocument,
+  type Issue,
+  type PreparedBlock,
+  translatedTerms,
+} from '@poe2-tools/guide-core'
 import type { PageResult } from '../extract/inline'
 import type { ReadingMode } from '../extract/session'
 import { annotate } from './annotate'
@@ -6,6 +11,7 @@ import type { ReadScope } from './controller'
 import { el } from './dom'
 import { chapterPicker, scopeChapters } from './scope-view'
 import { blockLayout } from './structure-view'
+import { TERM_STYLE, translatedText } from './translated-text'
 
 export type BlockState = 'idle' | 'pending' | 'failed' | 'missing' | 'skipped'
 export type Origin = 'engine' | 'cache' | 'dictionary'
@@ -252,6 +258,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     doc,
     'main',
     { class: 'guide' },
+    el(doc, 'style', {}, TERM_STYLE),
     header,
     intro,
     banner,
@@ -543,7 +550,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     setTranslation(blockId, text, origin, issueList) {
       const item = items.get(blockId)
       if (!item) return
-      item.dst.textContent = text
+      item.dst.replaceChildren(translatedText(doc, text, translatedTerms(text, item.block.terms)))
       item.status.textContent = `${issueList.length ? '待核对 · ' : ''}${ORIGIN[origin]}`
       item.node.dataset.origin = origin
       item.node.dataset.state = 'complete'

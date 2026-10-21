@@ -1,4 +1,5 @@
-import type { Issue } from '@poe2-tools/guide-core'
+import type { Issue, TranslatedTerm } from '@poe2-tools/guide-core'
+import { TERM_STYLE, translatedText } from '../guide/translated-text'
 import type { BlockSource } from './source'
 
 export interface PageTranslation {
@@ -7,6 +8,7 @@ export interface PageTranslation {
   text: string
   origin: 'engine' | 'cache' | 'dictionary'
   issues: readonly Issue[]
+  terms?: readonly TranslatedTerm[]
 }
 export interface PageNotice {
   id: string
@@ -74,6 +76,7 @@ export function appendTranslation(
   const style = doc.createElement('style')
   style.textContent =
     ':host{display:block!important;margin:.45em 0 .8em!important;font:inherit!important;color:inherit!important;text-align:start!important;white-space:normal!important}:host([hidden]){display:none!important}.translation{display:block;padding:.35em .6em;border-inline-start:1px solid currentColor;background:color-mix(in srgb,currentColor 5%,transparent);overflow-wrap:anywhere;line-height:1.65;font-weight:400}.text{white-space:pre-wrap}small{display:block;font-size:.85em;margin-top:.25em}.notice{font-size:.9em;background:none}'
+  style.textContent += TERM_STYLE
   const box = doc.createElement('span')
   box.className = notice ? 'translation notice' : 'translation'
   box.lang = 'zh-CN'
@@ -86,7 +89,7 @@ export function appendTranslation(
     box.title = origin
     const text = doc.createElement('span')
     text.className = 'text'
-    text.textContent = result.text
+    text.append(translatedText(doc, result.text, result.terms, !point.parent.closest('a')))
     box.append(text)
     if (result.issues.length) {
       const note = doc.createElement('small')

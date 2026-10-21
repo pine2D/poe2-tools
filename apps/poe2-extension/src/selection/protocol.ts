@@ -4,6 +4,7 @@ import {
   type Issue,
   parseExtractResult,
   type Range,
+  type TranslatedTerm,
 } from '@poe2-tools/guide-core'
 
 export const MAX_SELECTION_CHARS = 6000
@@ -18,6 +19,7 @@ export type SelectionResult =
   | {
       ok: true
       text: string
+      terms?: readonly TranslatedTerm[]
       origin: 'engine' | 'cache' | 'dictionary' | 'preserved'
       issues: readonly Issue[]
       usage: string

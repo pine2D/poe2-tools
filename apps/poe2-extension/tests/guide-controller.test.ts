@@ -804,3 +804,30 @@ it('坏缓存仅在明确开始后替换，预览不请求；完成后失败计�
   expect(engine.run).toHaveBeenCalledTimes(1)
   expect(view.setProgress.mock.calls.at(-1)?.[0].failed).toBe(0)
 })
+
+it('带页面快照的翻译失败仍发送失败提示并正常结束忙碌状态', async () => {
+  const engine = fakeEngine({ drop: 'a' })
+  const raw = doc([{ id: 'a', kind: 'paragraph', text: longText }])
+  raw.doc.source = { ...raw.doc.source, snapshotId: 'snapshot-test' } as typeof raw.doc.source
+  const notice = vi.fn(async () => ({ state: 'inline' as const, message: '' }))
+  const { d, view } = deps({
+    raw,
+    engine: async () => engine.handle,
+    page: {
+      check: async () => true,
+      render: async () => ({ state: 'inline', message: '' }),
+      notice,
+      remove: async () => {},
+      reset: async () => {},
+      mode: async () => {},
+      clear: async () => {},
+      locate: async () => ({ state: 'located', message: '' }),
+    },
+  })
+  await readAndBegin(createController(d))
+  expect(notice).toHaveBeenCalledWith(
+    'snapshot-test',
+    expect.objectContaining({ id: 'a', message: expect.stringContaining('翻译失败') }),
+  )
+  expect(view.setBusy.mock.calls.at(-1)).toEqual([false])
+})

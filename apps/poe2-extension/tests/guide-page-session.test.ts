@@ -234,3 +234,22 @@ it('链接卡片的独立标题在卡片内显示，点击仍交给原链接', (
   link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
   expect(click).toHaveBeenCalledOnce()
 })
+
+it('页内术语标注保留文本和原始链接，恢复后无残留', () => {
+  const { session, guide, snapshot } = setup(
+    '<main><a href="/next"><p>Use Energy Shield for defence.</p></a></main>',
+  )
+  const original = document.body.innerHTML
+  const id = required(guide.blocks[0]).id
+  session.render(snapshot, {
+    ...translated(id),
+    text: '使用能量护盾。',
+    terms: [{ start: 2, end: 6, en: 'Energy Shield', zh: '能量护盾' }],
+  })
+  const shadow = document.querySelector('[data-poe2-guide-owned="translation"]')?.shadowRoot
+  expect(shadow?.querySelector('.text')?.textContent).toBe('使用能量护盾。')
+  expect(shadow?.querySelector('.poe2-term')?.getAttribute('title')).toContain('Energy Shield')
+  expect(shadow?.querySelector('[tabindex]')).toBeNull()
+  session.clear()
+  expect(document.body.innerHTML).toBe(original)
+})

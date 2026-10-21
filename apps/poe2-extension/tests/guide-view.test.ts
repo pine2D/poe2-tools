@@ -385,3 +385,13 @@ it('仅侧栏跳转按当前工具栏高度留位，展开范围后重新测量'
     expect(document.activeElement).toBe(target)
   }
 })
+
+it('译文也标注本段术语，复制和重译更新不残留旧标注', () => {
+  const { v } = mount()
+  v.setTranslation('b0', '使用瘟疫。', 'engine', [])
+  const dst = document.querySelector('[data-id="b0"] .dst')
+  expect(dst?.textContent).toBe('使用瘟疫。')
+  expect(dst?.querySelector('.poe2-term')?.getAttribute('title')).toContain('Contagion')
+  v.setTranslation('b0', '无术语的新译文。', 'cache', [])
+  expect(dst?.querySelector('.poe2-term')).toBeNull()
+})

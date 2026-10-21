@@ -238,3 +238,28 @@ it('多个逐字代码块保留尾部换行与类型，不产生模型请求', a
   })
   expect(d.run).not.toHaveBeenCalled()
 })
+
+it('气泡结果携带术语映射，缓存命中也重新计算标注', async () => {
+  const d = deps()
+  const withTerm = { ...block, text: 'Use Contagion to clear the area.' }
+  d.dictionary = async () => ({
+    ...dictionary,
+    entries: [{ id: 'gem:C', en: 'Contagion', zh: '瘟疫', kind: 'gem', tier: 'primary' }],
+  })
+  d.run.mockImplementation(async (_messages, onText) => {
+    onText('<t id="b0">使用瘟疫清理区域。</t>')
+    return { finishReason: 'stop', usage: null }
+  })
+  const first = await translateSelection(withTerm, d, new AbortController().signal)
+  expect(first).toMatchObject({
+    ok: true,
+    terms: [{ start: 2, end: 4, zh: '瘟疫', en: 'Contagion' }],
+  })
+  const cached = await translateSelection(withTerm, d, new AbortController().signal)
+  expect(cached).toMatchObject({
+    ok: true,
+    origin: 'cache',
+    terms: [{ start: 2, end: 4, zh: '瘟疫', en: 'Contagion' }],
+  })
+  expect(d.run).toHaveBeenCalledTimes(1)
+})

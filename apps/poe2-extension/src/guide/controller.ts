@@ -17,6 +17,7 @@ import {
   parseExtractResult,
   prepareGuideBlocks,
   sendable,
+  translatedTerms,
 } from '@poe2-tools/guide-core'
 import type { PageNotice, PageResult, PageTranslation } from '../extract/inline'
 import type { ReadingMode } from '../extract/session'
@@ -242,6 +243,7 @@ export function createController(deps: ControllerDeps): Controller {
           origin,
           issues,
           revision: String(revision),
+          terms: translatedTerms(text, blocks.find((b) => b.id === id)?.terms ?? []),
         })
       } catch {
         state = { state: 'stale', message: '页面已更换，请重新读取。' }
