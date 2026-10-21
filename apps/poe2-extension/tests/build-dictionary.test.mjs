@@ -69,6 +69,10 @@ async function fixture() {
     _meta: { ...meta, tier: 'manual' },
     entries: { 'Import an item': '导入装备' },
   })
+  await put('data/l10n/coe-beta/affix-names.zh-CN.json', {
+    _meta: { ...meta, tier: 'manual' },
+    entries: [],
+  })
   await put('data/l10n/aliases.zh-CN.json', { entries: [] })
   return root
 }
@@ -151,4 +155,28 @@ it('真实扩展数据保留固定条件、来源快照和显式裁决，显示�
     'unmatched',
   )
   expect(lex.translate('20% increased Spirit', 'stat')).toBe('精魂提高 20%')
+})
+
+it('原始词缀中的全部特殊分类与渎灵名称用于菜单显示和中文检索', async () => {
+  const outputRoot = await fixture()
+  const data = await buildDictionary(
+    path.resolve(import.meta.dirname, '../../..'),
+    path.join(outputRoot, 'labels.json'),
+  )
+  const lex = createGameLexicon(data.terms)
+  for (const [en, zh] of [
+    ['Marksman', '神射手'],
+    ['Decay', '腐蚀'],
+    ['Chronomancy', '塑时术师'],
+    ['Soul', '灵魂'],
+    ['Berserking', '盛怒'],
+    ['Destruction', '毁灭'],
+    ['Ulaman', '乌拉曼'],
+    ['Amanamu', '阿曼娜姆'],
+    ['Kurgal', '古加尔'],
+  ]) {
+    expect(lex.translate(en, 'ui')).toBe(zh)
+    expect(lex.search(zh, 'ui').some((c) => c.term.en === en)).toBe(true)
+  }
+  expect(lex.translate('Prefix modifier "Rotund"', 'ui')).toBe('前缀属性 "丰腴的"')
 })

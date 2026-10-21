@@ -46,3 +46,8 @@ Uncaught TypeError: Cannot read properties of undefined (reading 'advancedRouter
 实际：前三列初次导出为各自内部换算数值，standardHardcore为null。清空leagueHardcore只移除其物品键，另外三列导出不变；重载后leagueSoftcore和standardSoftcore分别显示12.3456和34.5678，已清空列为空，standardHardcore也为空。英文与中文三个阶段（四项、清空、重载）原始JSON逐字一致。
 
 对照样本见fixtures/custom-price-leagues-four.json及custom-price-leagues-cleared.json。它们包含上游异常值，是调查样本，不是保证四赛区价格可完整恢复的设置模板。没有核实为何该列生成null，不据此推断所有材料、计价单位或赛区都失败；后续应在原站价格数据／补丁变化后重新验证。
+
+
+## 条件菜单中的未登记来源（2026-10-21）
+
+单独运行扩展的手套回归中，条件下拉实际提供 Cold/Fire/Chaos/Physical Damage over Time Multiplier 四个候选，原站 influence 显示 `undefined`，search 同样包含 `undefinedsuffix…`。这些模板不在当前国服原始交易词缀中；不能确定原站是否混入历史规则，不据此新增人工机制译文。扩展保留英文并标记 unmatched，不移除原站候选。另有 `Leech Life (15-25)% slower` 仅在隐藏 DOM 出现，不计可见页面漏译。这里不是全站覆盖率结论。

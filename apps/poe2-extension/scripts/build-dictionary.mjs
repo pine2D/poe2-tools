@@ -71,6 +71,25 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
         terms.push(statTerm(stat, entry.path, meta.gameVersion, { inputOnly }))
     }
   }
+  // 从已验证的原始国服结构投影分类名，保留来源身份；不从台服或自由文本猜译。
+  for (const term of [...terms]) {
+    if (term.inputOnly || term.domain !== 'stat') continue
+    const roll = /^Can roll (.+) modifiers$/i.exec(term.en)
+    const rollZh = /^可以(?:重置|选取)(.+)词缀$/.exec(term.zh)
+    const tribute =
+      /^Glorifying the defilement of # souls in tribute to (\w+) Passives in radius/.exec(term.en)
+    const tributeZh = /^赞颂以(.+?)之名亵渎的/.exec(term.zh)
+    const pair =
+      roll && rollZh
+        ? [roll[1], rollZh[1]]
+        : tribute && tributeZh
+          ? [tribute[1], tributeZh[1]]
+          : null
+    if (pair)
+      add(`ui-label:${term.id}`, pair[0], pair[1], 'ui', term.source, term.version, {
+        sourceId: term.sourceId,
+      })
+  }
   const variants = await read('data/l10n/coe-beta/stat-variants.zh-CN.json')
   sources.push({
     path: variants.path,
@@ -118,6 +137,35 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
   })
   for (const [en, zh] of Object.entries(catalog.data.localizedNames['zh-CN']))
     add(`item:${en}`, en, zh, 'item', catalog.path, 'unknown')
+  const affixes = await read('data/l10n/coe-beta/affix-names.zh-CN.json')
+  sources.push({
+    path: affixes.path,
+    sha256: affixes.sha256,
+    tier: 'manual',
+    source: affixes.data._meta.source,
+    version: affixes.data._meta.gameVersion,
+  })
+  for (const entry of affixes.data.entries) {
+    const source = catalog.data.modifiers?.find((mod) => mod.id === entry.id)
+    if (
+      !source ||
+      source.name !== entry.en ||
+      source.kind !== entry.kind ||
+      !['prefix', 'suffix'].includes(entry.kind) ||
+      !entry.zh?.trim()
+    )
+      throw new Error(`词缀名称缺少仍有效的来源身份：${entry.id}`)
+    const prefix = entry.kind === 'prefix'
+    add(
+      `affix-name:${entry.id}`,
+      `${prefix ? 'Prefix' : 'Suffix'} modifier "${entry.en}"`,
+      `${prefix ? '前缀属性' : '后缀属性'} "${entry.zh}"`,
+      'ui',
+      affixes.path,
+      affixes.data._meta.gameVersion,
+      { sourceId: entry.id },
+    )
+  }
   const ui = await read('data/l10n/coe-beta/ui.zh-CN.json')
   sources.push({
     path: ui.path,

@@ -1,0 +1,124 @@
+{
+  "_meta": {
+    "tier": "manual",
+    "source": "用户提供的高级装备文本，按 catalog 的词缀身份与数值交叉核对；补丁名称，不冒称完整国服表",
+    "gameVersion": "unknown",
+    "updatedAt": "2026-10-21"
+  },
+  "entries": [
+    {
+      "id": "IncreasedLife7",
+      "kind": "prefix",
+      "en": "Rotund",
+      "zh": "丰腴的"
+    },
+    {
+      "id": "LocalBaseArmourAndEnergyShield4",
+      "kind": "prefix",
+      "en": "Hallowed",
+      "zh": "崇圣的"
+    },
+    {
+      "id": "LocalIncreasedArmourAndEnergyShield4",
+      "kind": "prefix",
+      "en": "Infused",
+      "zh": "灌注的"
+    },
+    {
+      "id": "ColdResist1",
+      "kind": "suffix",
+      "en": "of the Seal",
+      "zh": "海豹之"
+    },
+    {
+      "id": "ColdDamagePrefixOnWeapon1",
+      "kind": "prefix",
+      "en": "Bitter",
+      "zh": "苦涩的"
+    },
+    {
+      "id": "IncreasedMana4",
+      "kind": "prefix",
+      "en": "Teal",
+      "zh": "青蓝的"
+    },
+    {
+      "id": "LightningResist3",
+      "kind": "suffix",
+      "en": "of the Storm",
+      "zh": "暴风之"
+    },
+    {
+      "id": "ManaRegeneration3",
+      "kind": "suffix",
+      "en": "of Elation",
+      "zh": "兴高采烈之"
+    },
+    {
+      "id": "ChaosResist3",
+      "kind": "suffix",
+      "en": "of Eviction",
+      "zh": "驱逐之"
+    },
+    {
+      "id": "NearbyAlliesAllDamage3",
+      "kind": "prefix",
+      "en": "Instigative",
+      "zh": "鼓噪的"
+    },
+    {
+      "id": "LightRadiusAndManaRegeneration3",
+      "kind": "suffix",
+      "en": "of the Hearth",
+      "zh": "炉火之"
+    },
+    {
+      "id": "NearbyAlliesCriticalStrikeChance2",
+      "kind": "suffix",
+      "en": "of Havoc",
+      "zh": "浩劫之"
+    },
+    {
+      "id": "MinionCommandSkillDamage5",
+      "kind": "prefix",
+      "en": "Shepherd's",
+      "zh": "牧羊人的"
+    },
+    {
+      "id": "IncreasedMana9",
+      "kind": "prefix",
+      "en": "Chalybeous",
+      "zh": "靛蓝的"
+    },
+    {
+      "id": "BeltFlaskLifeRecoveryRate4",
+      "kind": "prefix",
+      "en": "Refreshing",
+      "zh": "刷新的"
+    },
+    {
+      "id": "MinionAreaOfEffect4",
+      "kind": "suffix",
+      "en": "of Storming",
+      "zh": "冲锋之"
+    },
+    {
+      "id": "FireResist7",
+      "kind": "suffix",
+      "en": "of Magma",
+      "zh": "岩浆之"
+    },
+    {
+      "id": "Strength5",
+      "kind": "suffix",
+      "en": "of the Gorilla",
+      "zh": "大猩猩之"
+    },
+    {
+      "id": "IncreasedSpirit5",
+      "kind": "prefix",
+      "en": "Countess'",
+      "zh": "女伯爵的"
+    }
+  ]
+}

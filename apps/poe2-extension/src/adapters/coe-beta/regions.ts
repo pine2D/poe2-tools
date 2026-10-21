@@ -1,3 +1,4 @@
+import type { Lexicon } from '@poe2-tools/l10n-core'
 import { settingsText } from './settings-text'
 import { simulatorHelpText } from './simulator-help'
 import { inStatRegion, statHeaderSelector, statSelector } from './stats'
@@ -26,6 +27,8 @@ export function translatable(node: Text): boolean {
 export function textContext(
   node: Text,
 ):
+  | 'item-name'
+  | 'item-export'
   | 'modifier-details'
   | 'modifier-tags'
   | 'modifier-table-header'
@@ -49,6 +52,8 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (node.parentElement?.closest('.item .header .name')) return 'item-name'
+  if (node.parentElement?.closest('.item button.exportPOB')) return 'item-export'
   if (node.parentElement?.closest('.modInfluenceGroup > .header > :not(label)'))
     return 'modifier-table-header'
   if (node.parentElement?.closest('.item .modifierDetails .tags')) return 'modifier-tags'
@@ -253,6 +258,8 @@ const properties = new Map([
   ['Energy Shield', '能量护盾'],
   ['Runic Ward', '符文结界'],
   [', Int', '，智慧'],
+  [', Str', '，力量'],
+  [', Dex', '，敏捷'],
 ])
 const importer = new Map([
   [
@@ -277,6 +284,9 @@ const introduction = new Map([
 ])
 // 人工 UI 译名，限定原站标签；Caster 的“施法”尚未以国服独立标签真机核对。
 const tags = new Map([
+  ['Ailment', '异常状态'],
+  ['Aura', '光环'],
+  ['Charm', '咒符'],
   ['Armour', '护甲'],
   ['Attack', '攻击'],
   ['Attribute', '属性'],
@@ -333,15 +343,21 @@ const dataCategories = new Map([
 export function contextualText(
   original: string,
   context: ReturnType<typeof textContext>,
+  lex?: Lexicon,
 ): string | null {
   const normalized = original.trim().replace(/\s+/g, ' ')
-  // 固定字段与标签可翻译，词缀名和等阶数值保留原样。
+  // 默认名称和导出动作限定原站上下文；自定义名称不走通用词典。
+  if (context === 'item-name') return original
+  if (context === 'item-export')
+    return normalized === 'Paste' ? original.replace('Paste', '导出文本') : original
+  // 词缀名称使用前后缀独立身份；未知名保留，不能套用同名天赋。
+
   if (context === 'modifier-details') {
     const header = /^(Prefix|Suffix) [Mm]odifier ("[^"]+") \(Tier: (\d+)\) —$/.exec(normalized)
     return header
       ? original.replace(
           /\S[\s\S]*\S|\S/,
-          `${header[1] === 'Prefix' ? '前缀属性' : '后缀属性'} ${header[2]}（等阶：${header[3]}）—`,
+          `${lex?.translate(`${header[1]} modifier ${header[2]}`, 'ui') ?? `${header[1] === 'Prefix' ? '前缀属性' : '后缀属性'} ${header[2]}`}（等阶：${header[3]}）—`,
         )
       : original
   }

@@ -833,3 +833,10 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 | [PoE2 Compass：Beginner Guide](https://poe2compass.wiki/guides/beginners/) | gray；PoE2 Compass 页面作者正文，仅翻译验收样本 | 同上；无明确再分发授权，不采集同行源码或数据文件；页面时间不充当游戏版本 |
 
 两个页面用通用提取入口，不新增站点适配器。先核对页面可读取且至少十个合格文本块，再固定摘要；若来源不可用，记录失败并重新登记替代来源，不静默换样本。
+
+
+## CoE 分类与高级名称投影（2026-10-21）
+
+- `scripts/build-dictionary.mjs` 从既有 primary 国服原始交易词缀的 `Can roll … modifiers` 与 `souls in tribute to …` 固定结构提取特殊词缀分类和渎灵名称。保留原始 sourceId 和文件哈希；只处理国服显示条目，不将台服输入词条混用，不扩写机制。分类覆盖以实际来源解析为准。
+- `data/l10n/coe-beta/affix-names.zh-CN.json`：manual，用户授权提供的高级装备样本中的名称，按既有 MIT catalog 的词缀 ID、英文名称和效果/数值交叉核对；19 条名称仅作为已核对补丁输入的对照，不声称完整官方名称表。生成时验证 ID、前后缀和英文名，缺失或漂移即失败；展示使用带前后缀的独立身份，不调用同名天赋或技能译文。未收录名称仍保留原文。
+- Ailment/Aura/Charm 等标签与属性缩写、固定操作文案属于既有 CoE 公共 DOM 人工 UI 来源。`New Item` 是原站默认显示文本，不写回物品名；用户改名按原文显示。`Paste` 按原站 `Item paste data format` 导出入口标为“导出文本”。

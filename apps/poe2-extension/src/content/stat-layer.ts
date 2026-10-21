@@ -5,6 +5,7 @@ import { materialDescription } from '../adapters/coe-beta/material-descriptions'
 import { contextualText, textContext } from '../adapters/coe-beta/regions'
 import {
   isSupportedStat,
+  itemNameSelector,
   materialDescriptionSelector,
   modifierDetailsSelector,
   propertySelector,
@@ -40,7 +41,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
     let node = walker.nextNode()
     while (node) {
       const text = node as Text
-      const translated = contextualText(text.data, textContext(text)) ?? text.data
+      const translated = contextualText(text.data, textContext(text), lex) ?? text.data
       if (translated !== text.data) changed = true
       result += translated
       node = walker.nextNode()
@@ -75,28 +76,34 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
     const original = statText(stat)
-    const kind = stat.matches(propertySelector)
-      ? 'property'
-      : stat.matches(modifierDetailsSelector)
-        ? 'details'
-        : stat.matches(materialDescriptionSelector)
-          ? 'material'
-          : stat.matches('.modifierTable .row > .label .text')
-            ? 'data-stat'
-            : 'stat'
+    const kind = stat.matches(itemNameSelector)
+      ? 'name'
+      : stat.matches(propertySelector)
+        ? 'property'
+        : stat.matches(modifierDetailsSelector)
+          ? 'details'
+          : stat.matches(materialDescriptionSelector)
+            ? 'material'
+            : stat.matches('.modifierTable .row > .label .text')
+              ? 'data-stat'
+              : 'stat'
     const key = `${kind}\0${original}`
     let translated = cache.get(key)
     if (translated === undefined) {
       translated =
-        kind === 'property'
-          ? propertyText(stat)
-          : kind === 'details'
-            ? modifierDetailsText(stat)
-            : kind === 'material'
-              ? materialDescription(original)
-              : kind === 'data-stat'
-                ? compoundStat(original, lex)
-                : lex.translate(original, 'stat')
+        kind === 'name'
+          ? original.trim() === 'New Item'
+            ? '新物品'
+            : null
+          : kind === 'property'
+            ? propertyText(stat)
+            : kind === 'details'
+              ? modifierDetailsText(stat)
+              : kind === 'material'
+                ? materialDescription(original)
+                : kind === 'data-stat'
+                  ? compoundStat(original, lex)
+                  : lex.translate(original, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
     }

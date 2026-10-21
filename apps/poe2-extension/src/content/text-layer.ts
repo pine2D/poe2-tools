@@ -43,7 +43,7 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
     const cacheKey = `${context}\0${original}`
     let translated = cache.get(cacheKey)
     if (translated === undefined) {
-      translated = contextualText(original, context) ?? lexicon.translate(original)
+      translated = contextualText(original, context, lexicon) ?? lexicon.translate(original)
       if (cache.size >= 2000) cache.clear()
       cache.set(cacheKey, translated)
     }
