@@ -28,6 +28,8 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 
 用户已批准 `docs/chrome-extension/guide-reading.md`，在现有独立分支完成范围预览、结构提取、原文定位、页内对照及格式/缓存门禁。已生成本地 0.7.0 候选，范围、页内对照与生命周期的本机合成浏览器流程通过；保留 0.6.0 语义失败结论，本轮不重开付费质量试验，不推送、部署或更新 CWS。最终证据见 `docs/chrome-extension/validation-2026-10-21-reading.md`。
 
+2026-10-21：用户批准 0.8.0 阅读整改，见 `docs/chrome-extension/reading-workspace.md`。允许为侧栏关闭后的主动划词翻译增加扩展内 service worker，复用 Key/缓存/接纳规则；页面不联网、不读取 Key，无新增 host 权限。本次授权取代本文旧“无后台服务/只有侧栏联网”限制；实现完成与实际通过范围另记。
+
 ## 扩展工程收敛（2026-09-26）
 
 遵循 `docs/chrome-extension/engineering-lessons.md`：扩展负责词典与文本转换，不再建立逐基底／词缀ID／等阶范围准入名单，不代替CoE判定游戏规则。已有实测记录用于回归，已知原站问题单独提示。按完整用户流程合并交付，避免零碎发版和无变化的重复验证。参考扩展仅学习结构，不复制专有代码或词库。
