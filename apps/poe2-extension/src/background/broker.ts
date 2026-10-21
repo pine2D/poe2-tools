@@ -47,11 +47,13 @@ const webPage = (url: string | undefined) => {
 }
 
 export function createSelectionBroker(deps: BrokerDeps) {
-  const jobs = new Map<number, () => void>()
+  const jobs = new Map<SelectionPort, { tabId: number; finish(): void }>()
   const revisions = new Map<number, number>()
   const revoke = (tabId: number) => revisions.set(tabId, (revisions.get(tabId) ?? 0) + 1)
   const controls = new Map<number, Promise<unknown>>()
-  const cancel = (tabId: number) => jobs.get(tabId)?.()
+  const cancel = (tabId: number) => {
+    for (const job of [...jobs.values()]) if (job.tabId === tabId) job.finish()
+  }
   async function control(
     raw: unknown,
     sender: Sender,
@@ -137,7 +139,7 @@ export function createSelectionBroker(deps: BrokerDeps) {
       clearTimeout(timeout)
       clearInterval(pulse)
       controller.abort()
-      if (jobs.get(tabId) === finish) jobs.delete(tabId)
+      jobs.delete(port)
       port.disconnect()
     }
     const send = (value: unknown) => {
@@ -174,7 +176,6 @@ export function createSelectionBroker(deps: BrokerDeps) {
           finish()
           return
         }
-        cancel(tabId)
         if (jobs.size >= 4) {
           send({
             type: 'result',
@@ -184,7 +185,7 @@ export function createSelectionBroker(deps: BrokerDeps) {
           finish()
           return
         }
-        jobs.set(tabId, finish)
+        jobs.set(port, { tabId, finish })
         clearTimeout(timeout)
         timeout = setTimeout(() => {
           send({

@@ -1,5 +1,6 @@
 import type { GuideBlock } from '@poe2-tools/guide-core'
 import { el } from '../guide/dom'
+import { TERM_STYLE, translatedText } from '../guide/translated-text'
 import { captureSelection } from './capture'
 import { MAX_SELECTION_CHARS, type SelectionResult } from './protocol'
 
@@ -20,6 +21,10 @@ const STYLE = `
 * { box-sizing: border-box; }
 .panel { width: max-content; max-width: min(400px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: auto; background: var(--paper); color: var(--ink); border-radius: 12px; box-shadow: 0 6px 28px #0003; padding: 12px; font: 15px/1.65 system-ui, sans-serif; overflow-wrap: anywhere; scrollbar-color: var(--muted) var(--paper); }
 .panel.expanded { width: 400px; }
+.bubble-head { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+button[data-action=move] { flex: 1; border-color: transparent; padding-inline: 0; text-align: start; cursor: grab; touch-action: none; }
+button[data-action=move]:active { cursor: grabbing; }
+button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 button { appearance: none; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); border-radius: 5px; color: var(--ink); background: transparent; padding: 5px 10px; font: 600 14px/1.5 system-ui, sans-serif; cursor: pointer; min-height: 36px; }
 button[data-action=translate] { background: var(--accent); color: var(--paper); border-color: transparent; }
@@ -35,23 +40,36 @@ summary { cursor: pointer; }
 [hidden] { display: none !important; }
 `
 
+export const MAX_BUBBLES = 6
+interface Bubble {
+  host: HTMLElement
+  panel: HTMLElement
+  range?: Range
+  persistent: boolean
+  pinned: boolean
+  position(): void
+  close(): void
+  notify(message: string): void
+  cleanup(): void
+}
+
 export function installSelection(doc: Document, win: Window, translate: SelectionTranslator) {
-  let host: HTMLElement | null = null,
-    abort: AbortController | null = null
-  let restoreFocus: HTMLElement | null = null
-  let epoch = 0
-  let timer: ReturnType<typeof setInterval> | undefined,
-    toastTimer: ReturnType<typeof setTimeout> | undefined
+  const cards = new Set<Bubble>()
+  let active: Bubble | undefined
+  const raise = (card: Bubble) => {
+    cards.delete(card)
+    cards.add(card)
+    active = card
+    const ordered = [...cards].sort((a, b) => Number(a.pinned) - Number(b.pinned))
+    ordered.forEach((c, i) => {
+      c.host.style.zIndex = String(2147483647 - MAX_BUBBLES + i)
+    })
+  }
   const dismiss = () => {
-    epoch++
-    abort?.abort()
-    abort = null
-    clearInterval(timer)
-    clearTimeout(toastTimer)
-    if (doc.activeElement === host && restoreFocus?.isConnected)
-      restoreFocus.focus({ preventScroll: true })
-    host?.remove()
-    host = null
+    for (const c of [...cards]) c.close()
+  }
+  const transient = () => {
+    for (const c of [...cards]) if (!c.persistent) c.close()
   }
   const button = (text: string, action: string, fn: () => void) => {
     const b = el(doc, 'button', { type: 'button', 'data-action': action }, text)
@@ -61,10 +79,9 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     })
     return b
   }
-  const shell = (range?: Range) => {
-    dismiss()
-    restoreFocus = doc.activeElement instanceof HTMLElement ? doc.activeElement : null
-    host = el(doc, 'div', { 'data-poe2-guide-owned': '', 'data-poe2-selection': '' })
+  const shell = (range?: Range): Bubble => {
+    const restoreFocus = doc.activeElement instanceof HTMLElement ? doc.activeElement : null
+    const host = el(doc, 'div', { 'data-poe2-guide-owned': '', 'data-poe2-selection': '' })
     const anchor = range?.commonAncestorContainer
     const ancestor = anchor?.nodeType === 1 ? (anchor as Element) : anchor?.parentElement
     let dark = win.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
@@ -80,34 +97,158 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     if (dark) host.setAttribute('data-dark', '')
     const shadow = host.attachShadow({ mode: 'open' })
     const panel = el(doc, 'section', { class: 'panel', 'aria-label': '选中文字翻译' })
-    shadow.append(el(doc, 'style', {}, STYLE), panel)
+    const notice = el(doc, 'p', { class: 'meta', role: 'status', hidden: true })
+    shadow.append(el(doc, 'style', {}, STYLE + TERM_STYLE), panel)
     doc.documentElement.append(host)
     const rect = range?.getBoundingClientRect()
-    const position = () => {
-      if (!host) return
-      const height = host.getBoundingClientRect().height,
-        width = host.getBoundingClientRect().width
-      host.style.left = `${Math.max(12, Math.min(rect?.left ?? win.innerWidth - width - 20, win.innerWidth - width - 12))}px`
-      const below = (rect?.bottom ?? 12) + 8
-      host.style.top = `${Math.max(12, Math.min(below + height > win.innerHeight ? (rect?.top ?? below) - height - 8 : below, win.innerHeight - height - 12))}px`
+    let moved = false
+    let validityTimer: ReturnType<typeof setInterval> | undefined
+    const card: Bubble = {
+      host,
+      panel,
+      ...(range ? { range } : {}),
+      persistent: false,
+      pinned: false,
+      cleanup() {},
+      notify(message) {
+        notice.textContent = message
+        notice.hidden = false
+        card.position()
+      },
+      position() {
+        const size = host.getBoundingClientRect()
+        const below = (rect?.bottom ?? 12) + 8
+        const x = moved
+          ? parseFloat(host.style.left)
+          : (rect?.left ?? win.innerWidth - size.width - 20)
+        const y = moved
+          ? parseFloat(host.style.top)
+          : below + size.height > win.innerHeight
+            ? (rect?.top ?? below) - size.height - 8
+            : below
+        host.style.left = `${Math.max(12, Math.min(x, win.innerWidth - size.width - 12))}px`
+        host.style.top = `${Math.max(12, Math.min(y, win.innerHeight - size.height - 12))}px`
+      },
+      close() {
+        if (!cards.delete(card)) return
+        clearInterval(validityTimer)
+        card.cleanup()
+        if (doc.activeElement === host && restoreFocus?.isConnected)
+          restoreFocus.focus({ preventScroll: true })
+        host.remove()
+        if (active === card) active = [...cards].at(-1)
+      },
     }
-    return { panel, position }
+    if (range) {
+      const quote = range.toString(),
+        href = win.location.href
+      validityTimer = setInterval(() => {
+        if (
+          !range.startContainer.isConnected ||
+          !range.endContainer.isConnected ||
+          range.toString() !== quote ||
+          win.location.href !== href
+        )
+          card.close()
+      }, 400)
+    }
+    const move = (x: number, y: number) => {
+      moved = true
+      card.persistent = true
+      host.style.left = `${x}px`
+      host.style.top = `${y}px`
+      card.position()
+    }
+    if (range) {
+      const handle = el(
+        doc,
+        'button',
+        {
+          type: 'button',
+          'data-action': 'move',
+          title: '拖动译文；聚焦后也可按方向键移动',
+          'aria-label': '移动译文，使用拖动或方向键',
+        },
+        '划词译文',
+      )
+      let drag: { id: number; x: number; y: number; left: number; top: number } | undefined
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return
+        e.preventDefault()
+        handle.focus({ preventScroll: true })
+        drag = {
+          id: e.pointerId,
+          x: e.clientX,
+          y: e.clientY,
+          left: parseFloat(host.style.left),
+          top: parseFloat(host.style.top),
+        }
+        handle.setPointerCapture?.(e.pointerId)
+      })
+      handle.addEventListener('pointermove', (e) => {
+        if (drag?.id === e.pointerId)
+          move(drag.left + e.clientX - drag.x, drag.top + e.clientY - drag.y)
+      })
+      handle.addEventListener('pointerup', (e) => {
+        if (drag?.id === e.pointerId) {
+          drag = undefined
+          handle.releasePointerCapture?.(e.pointerId)
+        }
+      })
+      handle.addEventListener('lostpointercapture', () => {
+        drag = undefined
+      })
+      handle.addEventListener('keydown', (e) => {
+        const direction: Record<string, [number, number]> = {
+          ArrowLeft: [-1, 0],
+          ArrowRight: [1, 0],
+          ArrowUp: [0, -1],
+          ArrowDown: [0, 1],
+        }
+        const d = direction[e.key]
+        if (!d) return
+        e.preventDefault()
+        e.stopPropagation()
+        const step = e.shiftKey ? 32 : 12
+        move(parseFloat(host.style.left) + d[0] * step, parseFloat(host.style.top) + d[1] * step)
+      })
+      const pin = button('置顶', 'pin', () => {
+        card.pinned = !card.pinned
+        card.persistent = true
+        pin.setAttribute('aria-pressed', String(card.pinned))
+        pin.textContent = card.pinned ? '取消置顶' : '置顶'
+        host.toggleAttribute('data-pinned', card.pinned)
+        raise(card)
+      })
+      pin.setAttribute('aria-pressed', 'false')
+      pin.title = '固定在当前网页内的其他译文气泡上方'
+      panel.append(
+        el(doc, 'div', { class: 'bubble-head' }, handle, pin, button('关闭', 'close', card.close)),
+      )
+    }
+    panel.append(notice)
+    cards.add(card)
+    raise(card)
+    host.addEventListener('pointerdown', () => raise(card), true)
+    host.addEventListener('focusin', () => raise(card))
+    return card
   }
 
   const show = (range: Range, block: GuideBlock) => {
     const quote = range.toString(),
       href = win.location.href
-    const { panel, position } = shell(range)
-    const version = epoch
+    const card = shell(range)
+    const { host, panel, position } = card
+    let abort: AbortController | null = null
     const valid = () =>
       range.startContainer.isConnected &&
       range.endContainer.isConnected &&
       range.toString() === quote &&
       win.location.href === href
-    const live = () => epoch === version && !!host
-    timer = setInterval(() => {
-      if (!valid()) dismiss()
-    }, 400)
+    const live = () => cards.has(card)
+    card.cleanup = () => {
+      abort?.abort()
+    }
     const status = el(doc, 'p', { class: 'meta', role: 'status', hidden: true })
     const output = el(doc, 'p', { class: 'output', hidden: true })
     const source = el(
@@ -131,7 +272,6 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         )
     })
     copy.hidden = true
-    const close = button('关闭', 'close', dismiss)
     const cancel = button('取消', 'cancel', () => {
       abort?.abort()
       abort = null
@@ -144,14 +284,15 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     cancel.hidden = true
     const start = button('翻译选中文字', 'translate', () => {
       if (!valid()) {
-        dismiss()
+        card.close()
         return
       }
       const current = captureSelection(doc, win.location, range)
       if (!current || JSON.stringify(current) !== JSON.stringify(block)) {
-        dismiss()
+        card.close()
         return
       }
+      card.persistent = true
       abort?.abort()
       const request = new AbortController()
       abort = request
@@ -172,11 +313,11 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
           (result) => {
             if (!live() || request.signal.aborted) return
             if (!valid()) {
-              dismiss()
+              card.close()
               return
             }
             if (result.ok) {
-              output.textContent = result.text
+              output.replaceChildren(translatedText(doc, result.text, result.terms))
               output.hidden = false
               copy.hidden = false
               status.textContent = [ORIGIN[result.origin], result.message, result.usage]
@@ -203,58 +344,69 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
           if (!live() || abort !== request) return
           abort = null
           start.disabled = false
-          if (
-            doc.activeElement === host &&
-            panel.getRootNode() instanceof ShadowRoot &&
-            (panel.getRootNode() as ShadowRoot).activeElement === cancel
-          )
+          if (doc.activeElement === host && host.shadowRoot?.activeElement === cancel)
             (start.hidden ? copy : start).focus({ preventScroll: true })
           cancel.hidden = true
           position()
         })
     })
     panel.append(
-      el(doc, 'div', { class: 'actions' }, start, cancel, copy, close),
+      el(doc, 'div', { class: 'actions' }, start, cancel, copy),
       source,
       status,
       output,
       issues,
     )
     position()
+    return card
   }
   const select = (event: Event) => {
-    if (!event.isTrusted || (host && event.composedPath().includes(host))) return
-    // 普通键入不干预网页；仅响应键盘扩选或鼠标选择结束。
+    if (!event.isTrusted || [...cards].some((c) => event.composedPath().includes(c.host))) return
     if (event instanceof KeyboardEvent && !(event.shiftKey || event.key === 'Shift')) return
     const selection = win.getSelection()
     if (!selection?.rangeCount || selection.isCollapsed) {
-      dismiss()
+      transient()
       return
     }
     const range = selection.getRangeAt(0).cloneRange()
+    const same = [...cards].find(
+      (c) =>
+        c.range?.startContainer === range.startContainer &&
+        c.range.startOffset === range.startOffset &&
+        c.range.endContainer === range.endContainer &&
+        c.range.endOffset === range.endOffset,
+    )
+    if (same) {
+      raise(same)
+      return
+    }
+    transient()
+    if (cards.size >= MAX_BUBBLES) {
+      active?.notify(`已打开 ${MAX_BUBBLES} 个气泡，请先关闭一个再翻译新选区。`)
+      return
+    }
     if (range.toString().length > MAX_SELECTION_CHARS) {
-      const { panel, position } = shell(range)
-      panel.append(
-        el(doc, 'p', { role: 'status' }, `选区超过 ${MAX_SELECTION_CHARS} 字符，请缩小后再试。`),
-        button('关闭', 'close', dismiss),
-      )
-      position()
+      const card = shell(range)
+      card.notify(`选区超过 ${MAX_SELECTION_CHARS} 字符，请缩小后再试。`)
       return
     }
     const block = captureSelection(doc, win.location, range)
     if (block) {
-      show(range, block)
+      const card = show(range, block)
       if (event instanceof KeyboardEvent && event.key === 'Shift')
-        host?.shadowRoot
+        card.host.shadowRoot
           ?.querySelector<HTMLButtonElement>('[data-action=translate]')
           ?.focus({ preventScroll: true })
-    } else dismiss()
+    }
   }
   const key = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' && host) {
+    if (event.key === 'Escape' && active) {
       event.preventDefault()
-      dismiss()
+      active.close()
     }
+  }
+  const resize = () => {
+    for (const c of cards) c.position()
   }
   doc.addEventListener('pointerup', select)
   doc.addEventListener('keyup', select)
@@ -263,12 +415,11 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
   win.addEventListener('pagehide', onPageHide)
   win.addEventListener('popstate', dismiss)
   win.addEventListener('hashchange', dismiss)
-  win.addEventListener('resize', dismiss)
-  // 激活反馈本身不读取选区、不请求翻译。
-  const { panel, position } = shell()
-  panel.append(el(doc, 'p', { role: 'status' }, '本页划词已启用。选中文字后，点击“翻译选中文字”。'))
-  position()
-  toastTimer = setTimeout(dismiss, 4500)
+  win.addEventListener('resize', resize)
+  const toast = shell()
+  toast.notify('本页划词已启用。选中文字后，点击“翻译选中文字”；译文可置顶、拖动并同时保留。')
+  const toastTimer = setTimeout(toast.close, 4500)
+  toast.cleanup = () => clearTimeout(toastTimer)
   function destroy() {
     dismiss()
     doc.removeEventListener('pointerup', select)
@@ -277,7 +428,7 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     win.removeEventListener('pagehide', onPageHide)
     win.removeEventListener('popstate', dismiss)
     win.removeEventListener('hashchange', dismiss)
-    win.removeEventListener('resize', dismiss)
+    win.removeEventListener('resize', resize)
   }
   return { destroy }
 }

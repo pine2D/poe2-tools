@@ -183,3 +183,42 @@ describe('独立后台的授权与生命周期', () => {
     }
   })
 })
+
+it('同页多个气泡各占一个请求，全局最多四个；单独取消与整页禁用边界不同', async () => {
+  const { port, run, broker, deps } = fixture()
+  const signals: AbortSignal[] = []
+  run.mockImplementation(async (_, signal) => {
+    signals.push(signal)
+    return new Promise((resolve) =>
+      signal.addEventListener('abort', () =>
+        resolve({ ok: true, text: 'late', origin: 'engine', issues: [], usage: '' }),
+      ),
+    )
+  })
+  const ports = Array.from({ length: 4 }, () => port())
+  for (const p of ports) p.start()
+  await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(4))
+  expect(signals.every((s) => !s.aborted)).toBe(true)
+  const fifth = port()
+  fifth.start()
+  await vi.waitFor(() =>
+    expect(fifth.p.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ result: expect.objectContaining({ ok: false }) }),
+    ),
+  )
+  expect(run).toHaveBeenCalledTimes(4)
+  ports[1]?.cancel()
+  expect(signals.map((s) => s.aborted)).toEqual([false, true, false, false])
+  const otherTab = port({
+    id: 'own',
+    tab: { id: 3 },
+    frameId: 0,
+    documentId: 'doc1',
+    url: 'https://example.com/b',
+  })
+  otherTab.start()
+  await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(5))
+  await broker.control({ type: 'selection-disable', tabId: 2 }, { id: 'own', url: deps.popupUrl })
+  expect(signals.map((s) => s.aborted)).toEqual([true, true, true, true, false])
+  otherTab.cancel()
+})
