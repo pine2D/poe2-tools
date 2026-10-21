@@ -10,6 +10,7 @@ import {
   type GuideDictionary,
   type GuideDocument,
   type GuideStats,
+  type Issue,
   PROMPT_VERSION,
   type PreparedBlock,
   type PreserveReason,
@@ -17,11 +18,24 @@ import {
   prepareGuideBlocks,
   sendable,
 } from '@poe2-tools/guide-core'
+import type { PageResult, PageTranslation } from '../extract/inline'
+import type { ReadingMode } from '../extract/session'
 import { type ChunkResult, EngineError } from './engines/openai'
 import { estimateTokens, REQUEST_PARAMS } from './engines/presets'
 import type { GuidePrefs } from './prefs'
 import type { GuideStore } from './store/types'
-import type { ReadingView } from './view-reading'
+import type { Origin, ReadingView } from './view-reading'
+
+export type ReadScope = 'full' | 'selection' | 'region'
+export interface PageBridge {
+  check(snapshot: string): Promise<boolean>
+  render(snapshot: string, result: PageTranslation): Promise<PageResult>
+  remove(snapshot: string, id: string, revision: string): Promise<void>
+  reset(snapshot: string, revision: string): Promise<void>
+  mode(mode: ReadingMode): Promise<void>
+  locate(snapshot: string, id: string): Promise<PageResult>
+  clear(): Promise<void>
+}
 
 export interface EngineRunner {
   run(
@@ -41,7 +55,8 @@ export interface EngineHandle {
 }
 
 export interface ControllerDeps {
-  extract(): Promise<unknown>
+  extract(scope: ReadScope): Promise<unknown>
+  page?: PageBridge
   dictionary(): Promise<GuideDictionary>
   stats: GuideStats
   store: GuideStore
@@ -52,8 +67,14 @@ export interface ControllerDeps {
 }
 
 export interface Controller {
-  start(): Promise<void>
-  translateStage(stageId: string | null): Promise<void>
+  start(scope?: ReadScope): Promise<void>
+  selectStage(stageId: string | null): Promise<void>
+  preview(ids?: readonly string[]): Promise<void>
+  begin(): Promise<void>
+  setMode(mode: ReadingMode): Promise<void>
+  locate(id: string): Promise<void>
+  restore(): Promise<void>
+  checkPage(): Promise<void>
   retryBlock(id: string): Promise<void>
   stop(): void
 }
@@ -61,7 +82,7 @@ export interface Controller {
 const REASONS = {
   coe: 'CoE 页面请使用扩展原有的中文显示，这里不翻译。',
   poe1: '这是 PoE1 页面，本工具只支持 PoE2。',
-  empty: '没有读到正文。可以先选中要翻译的文字，再点扩展图标。',
+  empty: '没有读到所选范围的正文。请选中文字或点选区域后重新读取。',
 } as const
 
 const PRESERVED: Record<PreserveReason, string> = {
@@ -101,8 +122,12 @@ export function createController(deps: ControllerDeps): Controller {
   let guide: GuideDocument | null = null
   let blocks: PreparedBlock[] = []
   let dictHash = ''
+  let dictionary: GuideDictionary | null = null
+  let currentStage: string | null = null
+  let mode: ReadingMode = 'inline'
+  let revision = 0
   const done = new Set<string>()
-  // 标为失败或未返回的段：停止、切换阶段时保留错误说明与重试按钮
+  // 当前范围的失败状态在暂停时保留；改选范围后按新语境重新检查缓存。
   const failures = new Map<string, Failure>()
   let active: Run | null = null
   // 排队等当前任务结束的单段重试；停止或重新读取时整体作废
@@ -142,6 +167,9 @@ export function createController(deps: ControllerDeps): Controller {
     run.inflight.delete(id)
     failures.set(id, { state, message })
     view.setBlockState(id, state, message)
+    const snapshot = guide?.source.snapshotId
+    if (snapshot) void deps.page?.remove(snapshot, id, String(revision)).catch(() => {})
+    progress()
   }
 
   // 同步中止当前任务：未完成段复位，挂起的确认框随信号按取消结束
@@ -162,10 +190,75 @@ export function createController(deps: ControllerDeps): Controller {
     queued.clear()
   }
 
+  const progress = () =>
+    view.setProgress({
+      selected: blocks.length,
+      completed: done.size,
+      failed: failures.size,
+      preserved: blocks.filter((b) => b.route?.kind === 'preserved').length,
+      characters: blocks.reduce((n, b) => n + b.source.length, 0),
+    })
+  const invalidate = () => {
+    generation++
+    dropQueued()
+    cancelRun()
+    guide = null
+    view.setBusy(false)
+    view.setReady(false)
+    view.setBanner('error', '原文已变化或页面已更换，请重新读取后继续。')
+  }
+  const validPage = async (live: () => boolean) => {
+    const snapshot = guide?.source.snapshotId
+    if (!snapshot || !deps.page) return live()
+    let valid = false
+    try {
+      valid = await deps.page.check(snapshot)
+    } catch {
+      /* 页面已退出。 */
+    }
+    if (!live()) return false
+    if (!valid) invalidate()
+    return valid
+  }
+  const publish = async (
+    id: string,
+    text: string,
+    origin: Origin,
+    issues: readonly Issue[],
+    live: () => boolean,
+  ) => {
+    if (!(await validPage(live))) return false
+    const snapshot = guide?.source.snapshotId
+    if (snapshot && deps.page) {
+      let state: PageResult
+      try {
+        state = await deps.page.render(snapshot, {
+          id,
+          text,
+          origin,
+          issues,
+          revision: String(revision),
+        })
+      } catch {
+        state = { state: 'stale', message: '页面已更换，请重新读取。' }
+      }
+      if (!live()) return false
+      if (state.state === 'stale') {
+        invalidate()
+        return false
+      }
+      view.setPageState(id, state)
+    }
+    if (!live()) return false
+    view.setTranslation(id, text, origin, issues)
+    return true
+  }
+
   async function translate(
     targets: PreparedBlock[],
     force: boolean,
     stageId: string | null | undefined,
+    previewOnly = false,
   ): Promise<void> {
     // 先同步登记，保证旧任务在新任务的任何 await 之前就已失效
     cancelRun()
@@ -175,7 +268,10 @@ export function createController(deps: ControllerDeps): Controller {
     const live = () => !signal.aborted
     view.setBusy(true)
     try {
-      if (!targets.length) return
+      if (!targets.length) {
+        view.setUsage('所选范围无需新增模型请求。')
+        return
+      }
       let engine: EngineHandle | null
       try {
         engine = await deps.engine()
@@ -183,7 +279,7 @@ export function createController(deps: ControllerDeps): Controller {
         if (live()) view.setBanner('error', '读取翻译服务设置失败，请重新打开侧边栏。')
         return
       }
-      if (!live()) return
+      if (!(await validPage(live))) return
       if (!engine) {
         view.setBanner('setup', '配置翻译服务后即可整段翻译；现在显示原文与术语标注。')
         return
@@ -206,7 +302,7 @@ export function createController(deps: ControllerDeps): Controller {
         if (hit) {
           const accepted = acceptCachedTranslation(b, hit.text, hit.issues)
           if (accepted.accepted) {
-            view.setTranslation(b.id, accepted.text, 'cache', accepted.issues)
+            if (!(await publish(b.id, accepted.text, 'cache', accepted.issues, live))) return
             done.add(b.id)
             failures.delete(b.id)
             cacheHits++
@@ -230,6 +326,7 @@ export function createController(deps: ControllerDeps): Controller {
           ? `待翻译 ${pending.length} 段，输入约 ${promptEstimate} tokens · 输出预留 ${outputReserve} tokens · ${engine.costText(promptEstimate, outputReserve)}`
           : usageText(engine),
       )
+      if (previewOnly) return
       let prefs: GuidePrefs
       try {
         prefs = await deps.prefs()
@@ -251,7 +348,7 @@ export function createController(deps: ControllerDeps): Controller {
         }
       }
       for (const { chunk, messages } of requests) {
-        if (!live()) return
+        if (!(await validPage(live))) return
         for (const b of chunk) {
           run.inflight.add(b.id)
           view.setBlockState(b.id, 'pending')
@@ -280,7 +377,7 @@ export function createController(deps: ControllerDeps): Controller {
             },
             signal,
           )
-          if (!live()) return
+          if (!(await validPage(live))) return
           // 只在本次请求正常结束且仍有效时保存；流中已闭合的段也要接受最终截断检查。
           for (const [id, raw] of received) {
             const b = chunk.find((x) => x.id === id)
@@ -291,11 +388,12 @@ export function createController(deps: ControllerDeps): Controller {
               continue
             }
             const { text, issues } = accepted
-            view.setTranslation(id, text, 'engine', issues)
+            if (!(await publish(id, text, 'engine', issues, live))) return
             done.add(id)
             run.inflight.delete(id)
             failures.delete(id)
             const key = keys.get(id)
+            progress()
             if (key) void deps.store.putCached({ hash: key, text, issues }).catch(() => {})
           }
           // 服务没回用量时：输入按提示词估算，输出按已收到的流式文本估算
@@ -342,6 +440,7 @@ export function createController(deps: ControllerDeps): Controller {
       if (active === run) {
         active = null
         view.setBusy(false)
+        progress()
       }
       run.end()
     }
@@ -355,31 +454,86 @@ export function createController(deps: ControllerDeps): Controller {
         (stageId === null || b.stageId === undefined || b.stageId === stageId),
     )
 
+  async function preview(ids?: readonly string[]) {
+    if (!guide || !dictionary) return
+    const gen = ++generation
+    revision++
+    dropQueued()
+    cancelRun()
+    view.setBusy(true)
+    view.setReady(false)
+    const current = guide
+    const allowed = ids ? new Set(ids) : null
+    const raw = current.blocks.filter(
+      (b) =>
+        (currentStage === null || b.stageId === undefined || b.stageId === currentStage) &&
+        (!allowed || allowed.has(b.id)),
+    )
+    try {
+      const snapshot = current.source.snapshotId
+      if (snapshot && deps.page) await deps.page.reset(snapshot, String(revision))
+      if (gen !== generation) return
+      done.clear()
+      failures.clear()
+      blocks = []
+      const prepared = await prepareGuideBlocks(raw, createMatcher(dictionary), deps.stats)
+      if (gen !== generation) return
+      blocks = prepared
+      view.showDocument(
+        current,
+        blocks,
+        currentStage,
+        raw.map((b) => b.id),
+      )
+      for (const b of blocks) {
+        if (b.route?.kind === 'dictionary') {
+          if (!(await publish(b.id, b.route.text, 'dictionary', [], () => gen === generation)))
+            return
+          done.add(b.id)
+        } else if (b.route?.kind === 'preserved')
+          view.setBlockState(b.id, 'skipped', PRESERVED[b.route.reason])
+      }
+      await translate(stageTargets(currentStage), false, currentStage, true)
+      if (gen !== generation) return
+      view.setReady(blocks.some(sendable))
+      progress()
+    } catch {
+      if (gen === generation) view.setBanner('error', '正文准备失败，请重新读取页面。')
+    } finally {
+      if (gen === generation) view.setBusy(false)
+    }
+  }
+
   return {
-    async start() {
+    async start(scope = 'full') {
       const gen = ++generation
       dropQueued()
-      if (cancelRun()) view.setBusy(false)
-      // 读取期间旧视图保留，但阶段与重试操作不执行；读取成功后才替换文档与状态
+      cancelRun()
+      view.setBusy(true)
+      view.setReady(false)
       guide = null
       view.setBanner('none', '')
-      // 读取失败：清空旧视图，避免旧页面的阶段与段落继续可点
       const fail = (message: string) => {
         if (gen !== generation) return
         blocks = []
         done.clear()
         failures.clear()
         view.clearDocument()
+        view.setBusy(false)
         view.setBanner('error', message)
       }
       let raw: unknown
       try {
-        raw = await deps.extract()
+        raw = await deps.extract(scope)
       } catch {
         fail('页面已更换或无法读取，请在攻略页重新点扩展图标。')
         return
       }
       if (gen !== generation) return
+      if (raw === null && scope === 'region') {
+        fail('区域选择已取消；可重新点选区域或读取整页。')
+        return
+      }
       const result = parseExtractResult(raw)
       if (!result) {
         fail('读取结果无效，请刷新攻略页后重试。')
@@ -389,51 +543,81 @@ export function createController(deps: ControllerDeps): Controller {
         fail(REASONS[result.reason])
         return
       }
-      let dict: GuideDictionary
       try {
-        dict = await deps.dictionary()
+        dictionary = await deps.dictionary()
       } catch {
         fail('术语词典载入失败，请重新打开侧边栏。')
         return
       }
       if (gen !== generation) return
       guide = result.doc
-      dictHash = dict.hash
-      done.clear()
-      failures.clear()
+      dictHash = dictionary.hash
       tokens = { prompt: 0, completion: 0 }
       cacheHits = 0
-      const matcher = createMatcher(dict)
+      currentStage = guide.stages.find((s) => s.current)?.id ?? null
       try {
-        const prepared = await prepareGuideBlocks(guide.blocks, matcher, deps.stats)
-        if (gen !== generation) return
-        blocks = prepared
+        await deps.page?.mode(mode)
       } catch {
-        fail('正文准备失败，请重新读取页面。')
+        fail('无法连接原页面，请重新读取。')
         return
       }
-      const current = guide.stages.find((s) => s.current)?.id ?? null
-      view.showDocument(guide, blocks, current)
-      for (const b of blocks) {
-        if (b.route?.kind === 'dictionary') {
-          view.setTranslation(b.id, b.route.text, 'dictionary', [])
-          done.add(b.id)
-        } else if (b.route?.kind === 'preserved')
-          view.setBlockState(b.id, 'skipped', PRESERVED[b.route.reason])
-      }
-      await this.translateStage(current)
+      if (gen !== generation) return
+      await preview()
     },
-    async translateStage(stageId) {
+    preview,
+    async selectStage(stageId) {
+      if (!guide) return
+      currentStage = stageId
+      await preview()
+    },
+    async begin() {
       const gen = generation
       if (!guide) return
-      if (stageId) {
-        view.showStage(stageId)
-        view.setStageState(stageId, 'translating')
+      if (currentStage) view.setStageState(currentStage, 'translating')
+      await translate(stageTargets(currentStage), false, currentStage)
+      if (gen === generation && currentStage && !active)
+        view.setStageState(currentStage, stageTargets(currentStage).length ? 'idle' : 'done')
+    },
+    async setMode(next) {
+      mode = next
+      try {
+        await deps.page?.mode(next)
+      } catch {
+        invalidate()
       }
-      await translate(stageTargets(stageId), false, stageId)
-      // 文档已更换，或同一阶段已有新任务接手时，不改阶段状态
-      if (gen !== generation || !stageId || active?.stageId === stageId) return
-      view.setStageState(stageId, stageTargets(stageId).length ? 'idle' : 'done')
+    },
+    async locate(id) {
+      const snapshot = guide?.source.snapshotId
+      if (!snapshot || !deps.page) {
+        view.setPageState(id, { state: 'sidebar', message: '此段只能在侧栏阅读。' })
+        return
+      }
+      const gen = generation
+      try {
+        const state = await deps.page.locate(snapshot, id)
+        if (gen === generation) {
+          view.setPageState(id, state)
+          if (state.state === 'stale') invalidate()
+        }
+      } catch {
+        if (gen === generation) invalidate()
+      }
+    },
+    async restore() {
+      generation++
+      dropQueued()
+      cancelRun()
+      guide = null
+      view.setBusy(false)
+      view.setReady(false)
+      await deps.page?.clear()
+      view.setBanner('info', '已恢复原文；侧栏译文仍可查看。继续翻译请重新读取。')
+    },
+    async checkPage() {
+      if (guide) {
+        const gen = generation
+        await validPage(() => gen === generation)
+      }
     },
     async retryBlock(id) {
       if (!guide || queued.has(id)) return
@@ -454,8 +638,10 @@ export function createController(deps: ControllerDeps): Controller {
       await translate([b], true, undefined)
     },
     stop() {
+      generation++
       dropQueued()
-      if (cancelRun()) view.setBusy(false)
+      cancelRun()
+      view.setBusy(false)
     },
   }
 }

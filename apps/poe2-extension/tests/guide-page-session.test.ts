@@ -129,3 +129,15 @@ describe('页面会话与原文旁对照', () => {
     expect(document.querySelector('[data-poe2-guide-owned]')).toBeNull()
   })
 })
+
+it('同一页面快速改选章节后，晚到旧修订译文和清理都不能影响新修订', () => {
+  const { session, guide, snapshot } = setup('<main><p>Original instructions here.</p></main>')
+  const id = required(guide.blocks[0]).id
+  session.reset(snapshot, '1')
+  session.reset(snapshot, '2')
+  expect(session.render(snapshot, { ...translated(id), revision: '1' }).state).toBe('stale')
+  expect(session.render(snapshot, { ...translated(id), revision: '2' }).state).toBe('inline')
+  session.reset(snapshot, '1')
+  session.remove(snapshot, id, '1')
+  expect(document.querySelector('[data-poe2-guide-owned="translation"]')).not.toBeNull()
+})

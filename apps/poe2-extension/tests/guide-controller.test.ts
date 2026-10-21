@@ -1,6 +1,11 @@
 import type { ChatMessage, GuideDictionary, Issue } from '@poe2-tools/guide-core'
 import { describe, expect, it, vi } from 'vitest'
-import { type ControllerDeps, createController, type EngineHandle } from '../src/guide/controller'
+import {
+  type Controller,
+  type ControllerDeps,
+  createController,
+  type EngineHandle,
+} from '../src/guide/controller'
 import { type ChunkResult, EngineError } from '../src/guide/engines/openai'
 import { DEFAULT_PREFS } from '../src/guide/prefs'
 import { createMemoryStore } from '../src/guide/store/memory'
@@ -60,6 +65,9 @@ function fakeView() {
     ask: vi.fn(async (_message: string, _okLabel: string, _signal?: AbortSignal) => true),
     setUsage: vi.fn(),
     setBusy: vi.fn(),
+    setReady: vi.fn(),
+    setProgress: vi.fn(),
+    setPageState: vi.fn(),
   }
   return { view: view as unknown as ReadingView & typeof view, calls }
 }
@@ -135,16 +143,26 @@ function deps(over: Partial<ControllerDeps> & { raw?: unknown } = {}) {
   return { d: { ...base, ...over }, view, calls, store }
 }
 
+// 旧的请求/取消回归现在明确执行“读取→开始”，默认零请求另有独立断言。
+async function readAndBegin(c: Controller) {
+  await c.start()
+  await c.begin()
+}
+async function stageAndBegin(c: Controller, stage: string | null) {
+  await c.selectStage(stage)
+  await c.begin()
+}
+
 describe('createController', () => {
   it('CoE、PoE1、空页面给出说明，不调引擎', async () => {
     for (const [reason, text] of [
       ['coe', 'CoE'],
       ['poe1', 'PoE1'],
-      ['empty', '没有读到正文'],
+      ['empty', '没有读到'],
     ] as const) {
       const engine = vi.fn()
       const { d, calls } = deps({ raw: { ok: false, reason }, engine })
-      await createController(d).start()
+      await readAndBegin(createController(d))
       expect(calls.some((c) => c.startsWith('B error') && c.includes(text))).toBe(true)
       expect(engine).not.toHaveBeenCalled()
     }
@@ -155,45 +173,45 @@ describe('createController', () => {
         throw new Error('Cannot access contents of the page')
       },
     })
-    await createController(d).start()
+    await readAndBegin(createController(d))
     expect(calls).toContain('B error 页面已更换或无法读取，请在攻略页重新点扩展图标。')
   })
   it('未配置服务：词缀行走词典，显示配置横幅', async () => {
     const { d, calls } = deps()
-    await createController(d).start()
+    await readAndBegin(createController(d))
     expect(calls).toContain('T m dictionary +80 最大生命')
     expect(calls.some((c) => c.startsWith('B setup'))).toBe(true)
   })
-  it('只自动翻当前阶段；切到其他阶段再翻', async () => {
+  it('明确开始时只翻当前阶段；切阶段后再次开始', async () => {
     const { run, handle } = fakeEngine()
     const { d, calls } = deps({ engine: async () => handle })
     const c = createController(d)
-    await c.start()
+    await readAndBegin(c)
     expect(run).toHaveBeenCalledTimes(1)
     expect(calls.some((x) => x.startsWith('T a engine'))).toBe(true)
     expect(calls.some((x) => x.startsWith('T b'))).toBe(false)
-    await c.translateStage('s2')
+    await stageAndBegin(c, 's2')
     expect(calls.some((x) => x.startsWith('T b engine'))).toBe(true)
   })
   it('第二次打开命中缓存，不再请求', async () => {
     const { run, handle } = fakeEngine()
     const first = deps({ engine: async () => handle })
-    await createController(first.d).start()
+    await readAndBegin(createController(first.d))
     const second = deps({ engine: async () => handle, store: first.store })
-    await createController(second.d).start()
+    await readAndBegin(createController(second.d))
     expect(run).toHaveBeenCalledTimes(1)
     expect(second.calls.some((x) => x.startsWith('T a cache'))).toBe(true)
   })
   it('词典版本变化后不命中旧缓存', async () => {
     const { run, handle } = fakeEngine()
     const first = deps({ engine: async () => handle })
-    await createController(first.d).start()
+    await readAndBegin(createController(first.d))
     const second = deps({
       engine: async () => handle,
       store: first.store,
       dictionary: async () => ({ ...dict, hash: 'h2' }),
     })
-    await createController(second.d).start()
+    await readAndBegin(createController(second.d))
     expect(run).toHaveBeenCalledTimes(2)
   })
   it('同一原文新增实体标记后重新请求，重开同一实体版本仍命中缓存', async () => {
@@ -201,19 +219,19 @@ describe('createController', () => {
     const text = 'Use Unknown Crown before the next stage.'
     const b = { id: 'e', kind: 'paragraph', text }
     const first = deps({ raw: doc([b]), engine: async () => handle })
-    await createController(first.d).start()
+    await readAndBegin(createController(first.d))
     const second = deps({
       raw: doc([{ ...b, entities: [[4, 17]] }]),
       store: first.store,
       engine: async () => handle,
     })
-    await createController(second.d).start()
+    await readAndBegin(createController(second.d))
     expect(run).toHaveBeenCalledTimes(2)
     expect(run.mock.calls[1]?.[0][1]?.content).toContain(
       '<s id="e">Use ⟦0⟧ before the next stage.</s>',
     )
     expect(second.calls).toContain('T e engine 译:Use Unknown Crown before the next stage. 瘟疫')
-    await createController(second.d).start()
+    await readAndBegin(createController(second.d))
     expect(run).toHaveBeenCalledTimes(2)
     expect(second.calls.some((s) => s.startsWith('T e cache'))).toBe(true)
   })
@@ -225,14 +243,14 @@ describe('createController', () => {
     })
     const big = doc([{ id: 'x', kind: 'paragraph', text: `Contagion ${'word '.repeat(300)}` }])
     view.ask.mockResolvedValueOnce(false)
-    await createController({ ...d, extract: async () => big }).start()
+    await readAndBegin(createController({ ...d, extract: async () => big }))
     expect(view.ask).toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
   })
   it('模型漏段时标记未返回', async () => {
     const { handle } = fakeEngine({ drop: 'a' })
     const { d, calls } = deps({ engine: async () => handle })
-    await createController(d).start()
+    await readAndBegin(createController(d))
     expect(calls).toContain('S a missing')
   })
   it('Key 无效时显示配置横幅（直达设置）并停止后续块', async () => {
@@ -245,7 +263,7 @@ describe('createController', () => {
       })),
     )
     const { d, calls } = deps({ engine: async () => handle, raw: many })
-    await createController(d).start()
+    await readAndBegin(createController(d))
     expect(run).toHaveBeenCalledTimes(1)
     expect(calls).toContain('B setup Key 无效或没有权限')
   })
@@ -263,7 +281,7 @@ describe('createController', () => {
         })),
       )
       const { d, calls } = deps({ engine: async () => handle, raw: many })
-      await createController(d).start()
+      await readAndBegin(createController(d))
       expect(run).toHaveBeenCalledTimes(1)
       expect(calls).toContain(`B error ${fail.message}`)
     }
@@ -272,9 +290,9 @@ describe('createController', () => {
     const { run, calls: engineCalls, handle } = gatedEngine()
     const { d, view } = deps({ engine: async () => handle })
     const c = createController(d)
-    const first = c.start()
+    const first = readAndBegin(c)
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
-    const second = c.translateStage('s2')
+    const second = stageAndBegin(c, 's2')
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
     engineCalls[0]?.release()
     await first
@@ -295,9 +313,9 @@ describe('createController', () => {
     })
     view.showDocument.mockImplementation(() => calls.push('D'))
     const c = createController(d)
-    const first = c.start()
+    const first = readAndBegin(c)
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
-    const second = c.start()
+    const second = readAndBegin(c)
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
     engineCalls[0]?.release()
     engineCalls[1]?.release()
@@ -323,9 +341,9 @@ describe('createController', () => {
       return promise
     })
     const c = createController(d)
-    const first = c.start()
+    const first = readAndBegin(c)
     await vi.waitFor(() => expect(view.ask).toHaveBeenCalledTimes(1))
-    const second = c.translateStage('s2')
+    const second = stageAndBegin(c, 's2')
     await expect(answers[0]?.promise).resolves.toBe(false)
     await vi.waitFor(() => expect(view.ask).toHaveBeenCalledTimes(2))
     answers[1]?.resolve(true)
@@ -340,36 +358,57 @@ describe('createController', () => {
     const { run, handle } = fakeEngine()
     const { d, calls, store } = deps({ engine: async () => handle })
     vi.spyOn(store, 'getCached').mockRejectedValue(new Error('IndexedDB 不可用'))
-    await createController(d).start()
+    await readAndBegin(createController(d))
     expect(run).toHaveBeenCalledTimes(1)
     expect(calls.some((x) => x.startsWith('T a engine'))).toBe(true)
   })
   it('服务未返回用量时按已收到的译文估算输出 tokens', async () => {
     const { handle } = fakeEngine({ noUsage: true })
     const { d, view } = deps({ engine: async () => handle })
-    await createController(d).start()
+    await readAndBegin(createController(d))
     const last = String(view.setUsage.mock.calls.at(-1)?.[0])
     expect(Number(/本次约 \d+\+(\d+) tokens/.exec(last)?.[1])).toBeGreaterThan(0)
   })
-  it('阶段任务进行中点单段重试：排队到当前任务结束后执行，不中止阶段', async () => {
-    const { run, calls: engineCalls, handle } = gatedEngine()
-    const { d, view, calls } = deps({ engine: async () => handle })
+  it('当前范围内失败段重试等待正在进行的请求结束', async () => {
+    const gate = gatedEngine()
+    let calls = 0
+    const run = vi.fn(
+      async (
+        messages: readonly ChatMessage[],
+        onText: (d: string) => void,
+        signal: AbortSignal,
+      ) => {
+        if (calls++ === 0) throw new EngineError('network', '第一次分块失败')
+        return gate.handle.runner.run(messages, onText, signal)
+      },
+    )
+    const raw = doc(
+      Array.from({ length: 12 }, (_, i) => ({
+        id: `p${i}`,
+        kind: 'paragraph',
+        text: `Contagion paragraph number ${i}.`,
+      })),
+    )
+    const { d, view } = deps({ raw, engine: async () => ({ ...gate.handle, runner: { run } }) })
     const c = createController(d)
-    const first = c.start()
-    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
-    const retry = c.retryBlock('b')
-    await new Promise((r) => setTimeout(r, 0))
-    expect(run).toHaveBeenCalledTimes(1) // 重试在排队，没有中止阶段任务
-    expect(calls).toContain('S b pending')
-    engineCalls[0]?.release()
-    await first
-    expect(calls.some((x) => x.startsWith('T a engine'))).toBe(true)
-    expect(view.setStageState).toHaveBeenCalledWith('s1', 'done')
+    await c.start()
+    const main = c.begin()
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
-    expect(engineCalls[1]?.user).toContain('<s id="b">')
-    engineCalls[1]?.release()
+    const retry = c.retryBlock('p0')
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(run).toHaveBeenCalledTimes(2)
+    expect(view.setBlockState).toHaveBeenCalledWith(
+      'p0',
+      'pending',
+      expect.stringContaining('排队'),
+    )
+    gate.calls[0]?.release()
+    await main
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(3))
+    expect(gate.calls[1]?.user).toContain('<s id="p0">')
+    gate.calls[1]?.release()
     await retry
-    expect(calls.some((x) => x.startsWith('T b engine'))).toBe(true)
+    expect(view.setTranslation.mock.calls.some((call) => call[0] === 'p0')).toBe(true)
   })
   it('停止时排队中的重试一并取消，段落回到原来的失败状态', async () => {
     let n = 0
@@ -382,9 +421,9 @@ describe('createController', () => {
     )
     const { d, calls } = deps({ engine: async () => ({ ...gate.handle, runner: { run } }) })
     const c = createController(d)
-    await c.start() // a 失败
+    await readAndBegin(c) // a 失败
     expect(calls).toContain('S a failed')
-    const stage = c.translateStage('s2') // b 挂起
+    const stage = stageAndBegin(c, 's2') // b 挂起
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
     const retry = c.retryBlock('a')
     await new Promise((r) => setTimeout(r, 0))
@@ -421,10 +460,10 @@ describe('createController', () => {
       )
       const { d, calls } = deps({ raw, engine: async () => ({ ...gate.handle, runner: { run } }) })
       const c = createController(d)
-      void c.start() // 第一块（p0–p9）失败，第二块（p10、p11）挂起
+      void readAndBegin(c) // 第一块（p0–p9）失败，第二块（p10、p11）挂起
       await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
       if (how === 'stop') c.stop()
-      else void c.translateStage('s2')
+      else void stageAndBegin(c, 's2')
       const last = (id: string) => calls.filter((x) => x.startsWith(`S ${id} `)).at(-1)
       expect(last('p0')).toBe('S p0 failed')
       expect(last('p9')).toBe('S p9 failed')
@@ -442,12 +481,12 @@ describe('createController', () => {
       },
     })
     const c = createController(d)
-    await c.start()
+    await readAndBegin(c)
     expect(run).toHaveBeenCalledTimes(1)
     view.setStageState.mockClear()
-    await c.start()
+    await readAndBegin(c)
     expect(calls).toContain('CLEAR')
-    await c.translateStage('s2')
+    await stageAndBegin(c, 's2')
     await c.retryBlock('a')
     expect(run).toHaveBeenCalledTimes(1)
     expect(view.setStageState).not.toHaveBeenCalled()
@@ -462,10 +501,10 @@ describe('createController', () => {
         reads++ === 0 ? Promise.resolve(twoStages) : new Promise((r) => (release = r)),
     })
     const c = createController(d)
-    await c.start()
+    await readAndBegin(c)
     view.setStageState.mockClear()
-    const again = c.start()
-    await c.translateStage('s2')
+    const again = readAndBegin(c)
+    await stageAndBegin(c, 's2')
     expect(view.setStageState).not.toHaveBeenCalled()
     release(twoStages)
     await again
@@ -477,7 +516,7 @@ describe('createController', () => {
         throw new Error('404')
       },
     })
-    await createController(bad.d).start()
+    await readAndBegin(createController(bad.d))
     expect(bad.calls.some((x) => x.startsWith('B error'))).toBe(true)
     const { handle } = fakeEngine()
     const badPrefs = deps({
@@ -486,7 +525,7 @@ describe('createController', () => {
         throw new Error('storage')
       },
     })
-    await createController(badPrefs.d).start()
+    await readAndBegin(createController(badPrefs.d))
     expect(badPrefs.calls.some((x) => x.startsWith('B error'))).toBe(true)
   })
 })
@@ -503,7 +542,7 @@ it('词缀跨段落/列表/表格走词典；普通混合建议走模型，明�
     { id: 'prose', kind: 'paragraph', text: 'Prefer gloves with +80 to maximum Life.' },
   ])
   const { d, view } = deps({ raw, engine: async () => engine.handle })
-  await createController(d).start()
+  await readAndBegin(createController(d))
   for (let i = 0; i < 3; i++)
     expect(view.setTranslation).toHaveBeenCalledWith(`s${i}`, '+80 最大生命', 'dictionary', [])
   expect(engine.run).toHaveBeenCalledTimes(1)
@@ -520,12 +559,12 @@ it('首次、部分缓存和单段重试使用同一范围语境，修改邻段�
     { id: 'b', kind: 'paragraph', text: 'Then add it again.' },
   ])
   const first = deps({ raw, engine: async () => engine.handle })
-  await createController(first.d).start()
+  await readAndBegin(createController(first.d))
   const firstBody = engine.run.mock.calls[0]?.[0][1]?.content ?? ''
   const contextOf = (body: string) => /<context for="b">([\s\S]*?)<\/context>/.exec(body)?.[1]
   expect(contextOf(firstBody)).toContain('Remove one suffix first.')
   const c1 = createController(first.d)
-  await c1.start()
+  await readAndBegin(c1)
   await c1.retryBlock('b')
   const retryBody = engine.run.mock.calls.at(-1)?.[0][1]?.content ?? ''
   expect(contextOf(retryBody)).toBe(contextOf(firstBody))
@@ -538,7 +577,7 @@ it('首次、部分缓存和单段重试使用同一范围语境，修改邻段�
       getCached: (hash) => (++reads === 1 ? first.store.getCached(hash) : Promise.resolve(null)),
     },
   })
-  await createController(partial.d).start()
+  await readAndBegin(createController(partial.d))
   const partialBody = engine.run.mock.calls.at(-1)?.[0][1]?.content ?? ''
   expect(contextOf(partialBody)).toBe(contextOf(firstBody))
   expect(partialBody).not.toContain('<s id="a">')
@@ -551,7 +590,7 @@ it('首次、部分缓存和单段重试使用同一范围语境，修改邻段�
         { id: 'b', kind: 'paragraph', text: 'Then add it again.' },
       ]),
   })
-  await createController(changed.d).start()
+  await readAndBegin(createController(changed.d))
   expect(engine.run.mock.calls.length).toBe(before + 1)
   expect(engine.run.mock.calls.at(-1)?.[0][1]?.content).toContain('<s id="b">')
 })
@@ -560,7 +599,7 @@ it('请求估算包括完整提示、术语和语境，明确预留输出上限'
   const engine = fakeEngine()
   const cost = vi.fn((_prompt: number, _output: number) => '估算费用')
   const { d, view } = deps({ engine: async () => ({ ...engine.handle, costText: cost }) })
-  await createController(d).start()
+  await readAndBegin(createController(d))
   expect(cost.mock.calls[0]?.[0]).toBeGreaterThan(200)
   expect(cost.mock.calls[0]?.[1]).toBeGreaterThanOrEqual(4096)
   expect(view.setUsage.mock.calls[0]?.[0]).toContain('输出预留')
@@ -574,7 +613,7 @@ it('截断响应即使有闭合段也不显示或缓存', async () => {
   const engine = fakeEngine()
   const { d, view, store } = deps({ engine: async () => ({ ...engine.handle, runner: { run } }) })
   const writes = vi.spyOn(store, 'putCached')
-  await createController(d).start()
+  await readAndBegin(createController(d))
   expect(view.setTranslation.mock.calls.some((c) => c[0] === 'a')).toBe(false)
   expect(view.setBlockState).toHaveBeenCalledWith('a', 'failed', expect.stringContaining('截断'))
   expect(writes).not.toHaveBeenCalled()
@@ -594,7 +633,7 @@ it('停止时已闭合但请求未结束的旧段不会写缓存', async () => {
   const { d, store } = deps({ engine: async () => ({ ...engine.handle, runner: { run } }) })
   const writes = vi.spyOn(store, 'putCached')
   const c = createController(d)
-  const pending = c.start()
+  const pending = readAndBegin(c)
   await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1))
   stream('<t id="a">向整群怪物扩散瘟疫。</t>')
   c.stop()
@@ -618,7 +657,7 @@ it.each([
     engine: async () => engine.handle,
   })
   const write = vi.spyOn(store, 'putCached')
-  await createController(d).start()
+  await readAndBegin(createController(d))
   expect(view.setTranslation).not.toHaveBeenCalled()
   expect(view.setBlockState).toHaveBeenCalledWith('bad', 'failed', expect.stringContaining('格式'))
   expect(write).not.toHaveBeenCalled()
@@ -636,8 +675,115 @@ it('坏缓存不显示，也不隐式发起付费替换', async () => {
     text: '需支付 500% <m zh="总增">总增</m>贡品。',
     issues: [],
   }))
-  await createController(d).start()
+  await readAndBegin(createController(d))
   expect(view.setTranslation).not.toHaveBeenCalled()
   expect(view.setBlockState).toHaveBeenCalledWith('bad', 'failed', expect.stringContaining('格式'))
   expect(engine.run).not.toHaveBeenCalled()
+})
+
+it('读取和切阶段只预览，开始按钮才发送；换视图不请求', async () => {
+  const engine = fakeEngine()
+  const { d, view } = deps({ engine: async () => engine.handle })
+  const c = createController(d)
+  await c.start()
+  expect(engine.run).not.toHaveBeenCalled()
+  expect(view.setUsage.mock.calls.at(-1)?.[0]).toContain('输出预留')
+  await c.selectStage('s2')
+  expect(engine.run).not.toHaveBeenCalled()
+  await c.setMode('sidebar')
+  expect(engine.run).not.toHaveBeenCalled()
+  await c.begin()
+  expect(engine.run).toHaveBeenCalledOnce()
+  expect(engine.run.mock.calls[0]?.[0][1]?.content).not.toContain(longText)
+})
+
+it('取消章节后重新准备语境和缓存，源文旁与侧栏共用合格结果', async () => {
+  const engine = fakeEngine()
+  const raw = doc([
+    { id: 'h1', kind: 'heading', text: 'Secret excluded heading', context: { headingLevel: 2 } },
+    {
+      id: 'a',
+      kind: 'paragraph',
+      text: 'Excluded action description.',
+      context: { headingIds: ['h1'] },
+    },
+    { id: 'h2', kind: 'heading', text: 'Chosen heading', context: { headingLevel: 2 } },
+    {
+      id: 'b',
+      kind: 'paragraph',
+      text: 'Perform the selected action.',
+      context: { headingIds: ['h2'] },
+    },
+  ])
+  raw.doc.source = { ...raw.doc.source, snapshotId: 'snapshot-test' } as typeof raw.doc.source
+  const render = vi.fn(
+    async (_snapshot: string, _result: import('../src/extract/inline').PageTranslation) => ({
+      state: 'inline' as const,
+      message: '已显示',
+    }),
+  )
+  const { d, view } = deps({
+    raw,
+    engine: async () => engine.handle,
+    page: {
+      check: async () => true,
+      render,
+      remove: async () => {},
+      reset: async () => {},
+      mode: async () => {},
+      locate: async () => ({ state: 'located', message: '' }),
+      clear: async () => {},
+    },
+  })
+  const c = createController(d)
+  await c.start()
+  await c.preview(['h2', 'b'])
+  expect(engine.run).not.toHaveBeenCalled()
+  await c.begin()
+  const user = engine.run.mock.calls[0]?.[0][1]?.content ?? ''
+  expect(user).not.toContain('Excluded')
+  expect(user).not.toContain('Secret')
+  expect(render).toHaveBeenCalledTimes(2)
+  expect(render.mock.calls[1]?.[1]).toMatchObject({
+    id: 'b',
+    text: view.setTranslation.mock.calls.at(-1)?.[1],
+  })
+})
+
+it('页面在请求期间更换，晚到结果不进入任何视图或缓存', async () => {
+  const engine = gatedEngine()
+  let valid = true
+  const raw = doc([{ id: 'a', kind: 'paragraph', text: longText }])
+  raw.doc.source = { ...raw.doc.source, snapshotId: 'snapshot-test' } as typeof raw.doc.source
+  const render = vi.fn(
+    async (_snapshot: string, _result: import('../src/extract/inline').PageTranslation) => ({
+      state: 'inline' as const,
+      message: '',
+    }),
+  )
+  const { d, view, store } = deps({
+    raw,
+    engine: async () => engine.handle,
+    page: {
+      check: async () => valid,
+      render,
+      remove: async () => {},
+      reset: async () => {},
+      mode: async () => {},
+      locate: async () => ({ state: 'located', message: '' }),
+      clear: async () => {},
+    },
+  })
+  const write = vi.spyOn(store, 'putCached')
+  const c = createController(d)
+  await c.start()
+  const running = c.begin()
+  await vi.waitFor(() => expect(engine.run).toHaveBeenCalledOnce())
+  valid = false
+  engine.calls[0]?.release()
+  await running
+  expect(render).not.toHaveBeenCalled()
+  expect(view.setTranslation).not.toHaveBeenCalled()
+  expect(write).not.toHaveBeenCalled()
+  expect(view.setBanner).toHaveBeenCalledWith('error', expect.stringContaining('重新读取'))
 })

@@ -9,6 +9,7 @@ export type ReadingMode = 'inline' | 'sidebar'
 export function createPageSession(doc: Document, loc: PageLocation) {
   let snapshot: string | null = null
   let url = ''
+  let revision = ''
   let mode: ReadingMode = 'inline'
   const sources = new Map<string, BlockSource>()
   const ids = new Set<string>()
@@ -79,6 +80,7 @@ export function createPageSession(doc: Document, loc: PageLocation) {
     ids.clear()
     changedIds.clear()
     snapshot = null
+    revision = ''
     doc.defaultView?.removeEventListener('pagehide', clear)
     doc.defaultView?.removeEventListener('popstate', validate)
     doc.defaultView?.removeEventListener('hashchange', validate)
@@ -119,6 +121,7 @@ export function createPageSession(doc: Document, loc: PageLocation) {
     version: 1,
     read,
     render(key: string, result: PageTranslation): PageResult {
+      if ((result.revision ?? '') !== revision) return stale()
       const source = checked(key, result.id)
       if ('state' in source) return source
       hosts.get(result.id)?.remove()
@@ -143,8 +146,16 @@ export function createPageSession(doc: Document, loc: PageLocation) {
       validate()
       for (const host of hosts.values()) host.hidden = mode === 'sidebar'
     },
-    remove(key: string, id: string) {
-      if (key === snapshot) {
+    reset(key: string, next: string) {
+      if (key !== snapshot) throw Error('原文会话已过期')
+      if (!/^\d+$/.test(next)) throw Error('无效的范围修订')
+      if (Number(next) < Number(revision)) return
+      revision = next
+      for (const host of hosts.values()) host.remove()
+      hosts.clear()
+    },
+    remove(key: string, id: string, expectedRevision = '') {
+      if (key === snapshot && revision === expectedRevision) {
         hosts.get(id)?.remove()
         hosts.delete(id)
       }

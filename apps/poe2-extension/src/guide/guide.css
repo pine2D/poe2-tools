@@ -217,3 +217,81 @@ abbr:focus-visible::after {
   background: var(--selection-bg);
   color: var(--selection-fg);
 }
+
+/* 范围预览与阅读位置 */
+.guide-actions select {
+  max-width: 100%;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 6px;
+  font: inherit;
+}
+.guide-chapters {
+  margin-block: 10px;
+}
+.guide-chapters summary {
+  cursor: pointer;
+}
+.guide-chapter {
+  display: flex;
+  gap: 6px;
+  margin-block: 6px;
+}
+.guide-chapter input {
+  flex-shrink: 0;
+}
+.guide-progress,
+.page-status,
+.table-position {
+  font-size: 0.875em;
+}
+.page-status {
+  color: var(--ink-3);
+}
+.block .src,
+.block .dst {
+  white-space: pre-wrap;
+}
+.block[data-kind="heading"] {
+  border-top: 2px solid currentColor;
+  padding-top: 12px;
+}
+.block[data-kind="heading"] .src {
+  font-size: 1.12em;
+  margin-block: 4px;
+}
+.block[data-kind="list-item"] {
+  margin-inline-start: 12px;
+  border-inline-start: 2px solid currentColor;
+  padding-inline-start: 10px;
+}
+.block[data-kind="table-cell"] {
+  border-inline-start: 2px solid currentColor;
+  padding-inline-start: 10px;
+}
+.guide-begin:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.guide-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.guide-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.guide-table th,
+.guide-table td {
+  min-width: 180px;
+  vertical-align: top;
+  text-align: start;
+  font-weight: normal;
+  border: 1px solid var(--line);
+  padding: var(--sp-2);
+}
+.guide-list {
+  padding-inline-start: var(--sp-4);
+}

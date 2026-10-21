@@ -1,6 +1,11 @@
 import type { GuideDocument, Issue, PreparedBlock } from '@poe2-tools/guide-core'
+import type { PageResult } from '../extract/inline'
+import type { ReadingMode } from '../extract/session'
 import { annotate } from './annotate'
+import type { ReadScope } from './controller'
 import { el } from './dom'
+import { chapterPicker } from './scope-view'
+import { blockLayout } from './structure-view'
 
 export type BlockState = 'idle' | 'pending' | 'failed' | 'missing' | 'skipped'
 export type Origin = 'engine' | 'cache' | 'dictionary'
@@ -12,14 +17,32 @@ export interface ReadingHandlers {
   onStop(): void
   onReload(): void
   onSettings(): void
-  onFullPage(): void
+  onScope(scope: ReadScope): void
+  onSelection(ids: string[]): void
+  onBegin(): void
+  onMode(mode: ReadingMode): void
+  onLocate(id: string): void
+  onRestore(): void
   onIntroSeen(): void
+}
+
+export interface ReadingProgress {
+  selected: number
+  completed: number
+  failed: number
+  preserved: number
+  characters: number
 }
 
 export interface ReadingView {
   root: HTMLElement
   showIntro(show: boolean): void
-  showDocument(doc: GuideDocument, blocks: readonly PreparedBlock[], stageId: string | null): void
+  showDocument(
+    doc: GuideDocument,
+    blocks: readonly PreparedBlock[],
+    stageId: string | null,
+    selectedIds?: readonly string[],
+  ): void
   /** 读取失败时清空旧文档（标题、站点行、阶段条与段落） */
   clearDocument(): void
   showStage(stageId: string): void
@@ -31,6 +54,9 @@ export interface ReadingView {
   ask(message: string, okLabel: string, signal?: AbortSignal): Promise<boolean>
   setUsage(text: string): void
   setBusy(busy: boolean): void
+  setReady(ready: boolean): void
+  setProgress(progress: ReadingProgress): void
+  setPageState(id: string, result: PageResult): void
 }
 
 const ORIGIN: Record<Origin, string> = {
@@ -57,18 +83,36 @@ const fallbackNote = (siteId: GuideDocument['source']['siteId']) =>
 export function createReadingView(doc: Document, h: ReadingHandlers, version: string): ReadingView {
   const title = el(doc, 'p', { class: 'guide-title' })
   const site = el(doc, 'p', { class: 'guide-site' })
-  const scopeText = el(doc, 'span')
-  const full = el(doc, 'button', { class: 'pt-btn pt-btn--quiet', type: 'button' }, '改为全文')
-  full.addEventListener('click', () => {
-    scopeText.textContent = '请先在页面上点一下空白处取消选中，再点改为全文。 '
-    h.onFullPage()
-  })
-  const scope = el(doc, 'p', { class: 'guide-scope', hidden: true }, scopeText, full)
   const btn = (label: string, on: () => void) => {
     const b = el(doc, 'button', { class: 'pt-btn pt-btn--quiet', type: 'button' }, label)
     b.addEventListener('click', on)
     return b
   }
+  const scopeText = el(doc, 'p', { class: 'guide-scope' })
+  const scopeChoice = el(doc, 'select', { 'aria-label': '读取范围' })
+  for (const [value, text] of [
+    ['full', '整页正文'],
+    ['selection', '选中文字'],
+    ['region', '点选区域'],
+  ])
+    scopeChoice.append(el(doc, 'option', { value }, text))
+  scopeChoice.addEventListener('change', () => h.onScope(scopeChoice.value as ReadScope))
+  const modeChoice = el(doc, 'select', { 'aria-label': '阅读位置' })
+  modeChoice.append(
+    el(doc, 'option', { value: 'inline' }, '原文旁对照'),
+    el(doc, 'option', { value: 'sidebar' }, '仅侧栏'),
+  )
+  modeChoice.addEventListener('change', () => h.onMode(modeChoice.value as ReadingMode))
+  const begin = btn('开始翻译', () => h.onBegin())
+  begin.classList.add('guide-begin')
+  let ready = false,
+    busy = false
+  const updateBegin = () => {
+    begin.disabled = !ready || busy
+  }
+  updateBegin()
+  const progress = el(doc, 'p', { class: 'guide-progress', role: 'status' })
+  const chapters = el(doc, 'div', { class: 'guide-scope-options' })
   const stop = btn('停止', () => h.onStop())
   stop.hidden = true
   const header = el(
@@ -77,12 +121,17 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     { class: 'guide-header' },
     title,
     site,
-    scope,
+    el(doc, 'div', { class: 'guide-actions' }, scopeChoice, modeChoice),
+    scopeText,
+    chapters,
+    progress,
     el(
       doc,
       'div',
       { class: 'guide-actions' },
       btn('重新读取', () => h.onReload()),
+      begin,
+      btn('恢复原文', () => h.onRestore()),
       btn('设置', () => h.onSettings()),
       stop,
     ),
@@ -96,12 +145,17 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     doc,
     'section',
     { class: 'guide-intro', hidden: true },
-    el(doc, 'p', {}, '点“翻译此页”时，扩展会读取当前标签页的正文一次，不改动原页面。'),
     el(
       doc,
       'p',
       {},
-      '只有在你配置了翻译服务后，所选正文、本段术语和选定范围内的少量原文语境才会发给你选择的服务商；扩展不内置任何 Key。',
+      '先读取当前页并预览范围，点“开始翻译”后才发送模型请求。默认将合格译文显示在原文旁，可随时恢复原文。',
+    ),
+    el(
+      doc,
+      'p',
+      {},
+      '只有在你点击开始翻译或单段重试后，所选正文、本段术语和选定范围内的少量原文语境才会发给你选择的服务商；扩展不内置任何 Key。',
     ),
     el(doc, 'p', {}, 'Key 与译文缓存只存在本机扩展存储里，未加密，网页读不到；可在“设置”里清除。'),
     introOk,
@@ -158,6 +212,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       status: HTMLElement
       issues: HTMLElement
       retry: HTMLButtonElement
+      page: HTMLElement
       stageId: string | undefined
     }
   >()
@@ -174,7 +229,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     showIntro(show) {
       intro.hidden = !show
     },
-    showDocument(guide, blocks, stageId) {
+    showDocument(guide, blocks, stageId, selectedIds = blocks.map((b) => b.id)) {
       title.textContent = guide.source.title
       // 常驻说明写在站点行，不占横幅（横幅会被“配置服务”“出错”覆盖）
       const notes = [
@@ -185,11 +240,12 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         guide.diagnostics?.length ? '提取达到长度或段数上限，部分内容未完整读取；请缩小选区' : '',
       ].filter(Boolean)
       site.textContent = [new URL(guide.source.url).hostname, ...notes].join(' · ')
-      scope.hidden = guide.source.scope !== 'selection'
-      scopeText.textContent =
-        guide.source.scope === 'selection'
-          ? `仅选区（${blocks.reduce((n, b) => n + b.source.length, 0)} 字） · `
-          : ''
+      scopeChoice.value = guide.source.scope
+      scopeText.textContent = `${{ full: '当前页正文', selection: '仅选中文字', region: '仅点选区域' }[guide.source.scope]} · 仅已加载的可访问正文，不含隐藏/折叠内容和子页`
+      const wasOpen = chapters.querySelector('details')?.open ?? false
+      const picker = chapterPicker(doc, guide, stageId, selectedIds, h.onSelection)
+      picker.open = wasOpen
+      chapters.replaceChildren(picker)
       stagesBar.replaceChildren()
       stageButtons.clear()
       stagesBar.hidden = guide.stages.length === 0
@@ -212,6 +268,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       }
       list.replaceChildren()
       items.clear()
+      const append = blockLayout(doc, list)
       for (const b of blocks) {
         const dst = el(doc, 'p', { class: 'dst', lang: 'zh-CN' })
         const status = el(doc, 'p', { class: 'block-status' })
@@ -233,7 +290,12 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           'click',
           () => void navigator.clipboard?.writeText(dst.textContent ?? '').catch(() => {}),
         )
-        const src = el(doc, 'p', { class: 'src', lang: 'en' })
+        const level = b.processing?.structure?.headingLevel ?? 2
+        const src = el(doc, b.kind === 'heading' ? 'h3' : 'p', { class: 'src', lang: 'en' })
+        if (b.kind === 'heading') src.setAttribute('aria-level', String(level))
+        const page = el(doc, 'p', { class: 'page-status' })
+        const locate = btn('定位原文', () => h.onLocate(b.id))
+        locate.classList.add('locate-block')
         src.append(annotate(doc, b.source, b.terms, b.abbreviations))
         const node = el(
           doc,
@@ -243,18 +305,29 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           dst,
           status,
           issues,
-          el(doc, 'div', { class: 'block-actions' }, copy, retry),
+          page,
+          el(doc, 'div', { class: 'block-actions' }, locate, copy, retry),
         )
-        items.set(b.id, { node, dst, status, issues, retry, stageId: b.stageId })
-        list.append(node)
+        const structure = b.processing?.structure
+        if (structure?.listId) node.dataset.list = structure.listId
+        if (structure?.tableId) {
+          node.dataset.table = structure.tableId
+          node.dataset.row = structure.rowId
+          node.dataset.column = String(structure.column ?? 0)
+        }
+        items.set(b.id, { node, dst, status, issues, retry, page, stageId: b.stageId })
+        append(b, node)
       }
       if (stageId) showStage(stageId)
     },
     clearDocument() {
       title.textContent = ''
       site.textContent = ''
-      scope.hidden = true
       scopeText.textContent = ''
+      chapters.replaceChildren()
+      progress.textContent = ''
+      ready = false
+      updateBegin()
       stagesBar.replaceChildren()
       stageButtons.clear()
       stagesBar.hidden = true
@@ -338,7 +411,23 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     setUsage(text) {
       usage.textContent = text
     },
-    setBusy(busy) {
+    setReady(value) {
+      ready = value
+      updateBegin()
+    },
+    setProgress(value) {
+      progress.textContent = `已选 ${value.selected} 段 / ${value.characters} 字 · 完成 ${value.completed} · 失败 ${value.failed} · 原样保留 ${value.preserved}`
+    },
+    setPageState(id, result) {
+      const item = items.get(id)
+      if (item) {
+        item.page.textContent = result.message
+        item.page.dataset.state = result.state
+      }
+    },
+    setBusy(value) {
+      busy = value
+      updateBegin()
       stop.hidden = !busy
       root.setAttribute('aria-busy', String(busy))
     },

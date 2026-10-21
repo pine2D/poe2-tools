@@ -8,7 +8,12 @@ const handlers = (): ReadingHandlers => ({
   onStop: vi.fn(),
   onReload: vi.fn(),
   onSettings: vi.fn(),
-  onFullPage: vi.fn(),
+  onScope: vi.fn(),
+  onSelection: vi.fn(),
+  onBegin: vi.fn(),
+  onMode: vi.fn(),
+  onLocate: vi.fn(),
+  onRestore: vi.fn(),
   onIntroSeen: vi.fn(),
 })
 const matcher = createMatcher({
@@ -196,4 +201,101 @@ it('失败后移除上一轮译文和复制入口，保留原文', () => {
   expect(document.querySelector('[data-id="b0"] .dst')?.textContent).toBe('')
   expect(document.querySelector<HTMLButtonElement>('[data-id="b0"] .copy-block')?.hidden).toBe(true)
   expect(document.querySelector('[data-id="b0"] .src')?.textContent).toBe('Use Contagion with ES.')
+})
+
+it('范围和阅读位置独立操作，开始按钮受预览和忙碌状态控制', () => {
+  const { v, h } = mount()
+  const begin = document.querySelector<HTMLButtonElement>('.guide-begin')
+  expect(begin?.disabled).toBe(true)
+  v.setReady(true)
+  begin?.click()
+  expect(h.onBegin).toHaveBeenCalledOnce()
+  v.setBusy(true)
+  expect(begin?.disabled).toBe(true)
+  v.setBusy(false)
+  const scope = document.querySelector<HTMLSelectElement>('select[aria-label="读取范围"]')
+  if (!scope) throw Error('missing scope')
+  scope.value = 'selection'
+  scope.dispatchEvent(new Event('change'))
+  expect(h.onScope).toHaveBeenCalledWith('selection')
+  const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  if (!mode) throw Error('missing mode')
+  mode.value = 'sidebar'
+  mode.dispatchEvent(new Event('change'))
+  expect(h.onMode).toHaveBeenCalledWith('sidebar')
+  document.querySelector<HTMLButtonElement>('.locate-block')?.click()
+  expect(h.onLocate).toHaveBeenCalledWith('b0')
+  v.setProgress({ selected: 2, completed: 1, failed: 0, preserved: 1, characters: 80 })
+  expect(document.querySelector('.guide-progress')?.textContent).toContain('已选 2 段 / 80 字')
+  expect(document.querySelector('.guide-scope')?.textContent).toContain('不含隐藏/折叠内容和子页')
+})
+
+it('章节取消只返回所选章节块，不扩大到其他阶段', () => {
+  const { v, h } = mount()
+  const blocks = [
+    { id: 'h', kind: 'heading' as const, text: 'First heading', stageId: 's1' },
+    { id: 'a', kind: 'paragraph' as const, text: 'First paragraph.', stageId: 's1' },
+    { id: 'h2', kind: 'heading' as const, text: 'Second heading', stageId: 's1' },
+    { id: 'b', kind: 'paragraph' as const, text: 'Second paragraph.', stageId: 's1' },
+    { id: 'outside', kind: 'paragraph' as const, text: 'Other stage.', stageId: 's2' },
+  ]
+  v.showDocument(
+    { ...doc, blocks },
+    blocks.map((b) => prepareBlock(b, matcher)),
+    's1',
+  )
+  const choices = document.querySelectorAll<HTMLInputElement>('.chapter-check')
+  expect(choices).toHaveLength(2)
+  const first = choices[0]
+  if (!first) throw Error('missing checkbox')
+  first.checked = false
+  first.dispatchEvent(new Event('change'))
+  expect(h.onSelection).toHaveBeenCalledWith(['h2', 'b'])
+  expect(h.onBegin).not.toHaveBeenCalled()
+})
+
+it('侧栏保留列表与表格行列，标题保持层级', async () => {
+  const { prepareGuideBlocks } = await import('@poe2-tools/guide-core')
+  const { v } = mount()
+  const blocks: GuideDocument['blocks'] = [
+    { id: 'h', kind: 'heading', text: 'Rewards', context: { headingLevel: 2 } },
+    { id: 'l', kind: 'list-item', text: 'Collect reward.', context: { listId: 'list' } },
+    {
+      id: 'c1',
+      kind: 'table-cell',
+      text: 'Zone',
+      context: { tableId: 'table', rowId: 'r1', column: 0, header: true },
+    },
+    {
+      id: 'c2',
+      kind: 'table-cell',
+      text: 'Reward',
+      context: { tableId: 'table', rowId: 'r1', column: 1, header: true },
+    },
+    {
+      id: 'c3',
+      kind: 'table-cell',
+      text: 'Clearfell',
+      context: { tableId: 'table', rowId: 'r2', column: 0 },
+    },
+    {
+      id: 'c4',
+      kind: 'table-cell',
+      text: 'Permanent bonus.',
+      context: { tableId: 'table', rowId: 'r2', column: 1 },
+    },
+  ]
+  const prepared = await prepareGuideBlocks(blocks, matcher, {
+    hash: 's',
+    ruleVersion: '1',
+    resolve: () => ({ status: 'unmatched', text: null, candidates: [] }),
+  })
+  v.showDocument({ ...doc, blocks, stages: [] }, prepared, null)
+  expect(document.querySelector('[data-id="h"] [aria-level="2"]')).not.toBeNull()
+  expect(document.querySelector('ul li [data-id="l"]')).not.toBeNull()
+  const rows = document.querySelectorAll('.guide-table tr')
+  expect(rows).toHaveLength(2)
+  expect(rows[0]?.querySelectorAll('th')).toHaveLength(2)
+  expect(rows[1]?.querySelectorAll('td')).toHaveLength(2)
+  expect(rows[1]?.querySelectorAll('td')[1]?.textContent).toContain('Permanent bonus.')
 })

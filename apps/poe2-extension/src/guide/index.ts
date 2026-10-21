@@ -3,7 +3,7 @@ import type { GuideDictionary } from '@poe2-tools/guide-core'
 import { createGameLexicon, type Term } from '@poe2-tools/l10n-core'
 import { guideChrome } from './chrome'
 import { resolveConfig } from './config'
-import { type Controller, createController, type EngineHandle } from './controller'
+import { type Controller, createController, type EngineHandle, type ReadScope } from './controller'
 import { streamChat } from './engines/openai'
 import { DEEPSEEK, deepseekPeak, estimateCost, REQUEST_PARAMS } from './engines/presets'
 import { prefsFrom } from './prefs'
@@ -81,6 +81,7 @@ async function boot(root: Element) {
 
   // controller 在下方创建；这些回调只会在用户操作时执行，届时已经赋值。
   let controller: Controller
+  let readScope: ReadScope = 'full'
   const savePrefs = async (next: typeof prefs) => {
     prefs = next
     await guideChrome.writePrefs(prefs)
@@ -100,7 +101,7 @@ async function boot(root: Element) {
         confirmedOrigins: [...new Set([...prefs.confirmedOrigins, resolved.origin])],
       })
       showReading()
-      void controller.start()
+      void controller.start(readScope)
       return null
     },
     async onSaveLimits(charLimit, cacheLimitMb) {
@@ -145,12 +146,26 @@ async function boot(root: Element) {
   const reading = createReadingView(
     document,
     {
-      onStage: (id) => void controller.translateStage(id),
+      onStage: (id) => void controller.selectStage(id),
       onRetryBlock: (id) => void controller.retryBlock(id),
-      onStop: () => controller.stop(),
-      onReload: () => void controller.start(),
+      onStop: () => {
+        controller.stop()
+        void guideChrome.cancelPicker(tabId).catch(() => {})
+      },
+      onReload: () => void controller.start(readScope),
       onSettings: () => void showSettings(),
-      onFullPage: () => void controller.start(),
+      onScope: (scope) => {
+        readScope = scope
+        void controller.start(scope)
+      },
+      onSelection: (ids) => void controller.preview(ids),
+      onBegin: () => void controller.begin(),
+      onMode: (mode) => void controller.setMode(mode),
+      onLocate: (id) => void controller.locate(id),
+      onRestore: () =>
+        void controller
+          .restore()
+          .catch(() => reading.setBanner('error', '页面已更换，请重新读取。')),
       onIntroSeen: () => void savePrefs({ ...prefs, introSeen: true }),
     },
     guideChrome.version(),
@@ -174,6 +189,8 @@ async function boot(root: Element) {
     )
   }
   const showSettings = async () => {
+    controller.stop()
+    void guideChrome.cancelPicker(tabId).catch(() => {})
     await fillSettings()
     reading.root.hidden = true
     settings.root.hidden = false
@@ -182,7 +199,19 @@ async function boot(root: Element) {
   reading.showIntro(!prefs.introSeen)
 
   controller = createController({
-    extract: () => guideChrome.extract(tabId),
+    extract: (scope) => guideChrome.extract(tabId, scope),
+    page: {
+      async check(snapshot) {
+        const status = await guideChrome.status(tabId)
+        return status?.snapshotId === snapshot && !status.stale
+      },
+      render: (snapshot, result) => guideChrome.render(tabId, snapshot, result),
+      remove: (snapshot, id, revision) => guideChrome.remove(tabId, snapshot, id, revision),
+      reset: (snapshot, revision) => guideChrome.reset(tabId, snapshot, revision),
+      mode: (mode) => guideChrome.mode(tabId, mode),
+      locate: (snapshot, id) => guideChrome.locate(tabId, snapshot, id),
+      clear: () => guideChrome.clear(tabId),
+    },
     dictionary: () => json<GuideDictionary>('assets/guide-dictionary.json'),
     stats: { hash: stats.hash, ruleVersion: stats.ruleVersion, resolve: lexicon.resolveStat },
     store,
@@ -190,6 +219,29 @@ async function boot(root: Element) {
     engine,
     view: reading,
     random: randomHex,
+  })
+  let checking = false
+  const timer = setInterval(() => {
+    if (checking) return
+    checking = true
+    void controller.checkPage().finally(() => {
+      checking = false
+    })
+  }, 1500)
+  const stop = () => {
+    controller.stop()
+    void guideChrome.cancelPicker(tabId).catch(() => {})
+  }
+  window.addEventListener(
+    'pagehide',
+    () => {
+      clearInterval(timer)
+      stop()
+    },
+    { once: true },
+  )
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop()
   })
   await controller.start()
 }

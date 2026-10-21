@@ -3,6 +3,7 @@ import type { BlockSource } from './source'
 
 export interface PageTranslation {
   id: string
+  revision?: string
   text: string
   origin: 'engine' | 'cache' | 'dictionary'
   issues: readonly Issue[]
