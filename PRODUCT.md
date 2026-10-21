@@ -41,7 +41,7 @@ PoE2 Tools 由两件工具组成，网站上地位并重：
 
 - 构筑汉化：拖入、选择或粘贴一个或多个 `.build` 文件，提供中英对照与纯译文两种预览，标出待核对项，可单份下载或全部下载；支持简体（zh-CN）、繁体（zh-TW）两套词典。
 - 输出必须仍能被游戏加载：只改写 `additional_text` 与 `description`，其余字段与标记语法原样保留。游戏内加载效果尚未真机验收，不得宣称已验证。
-- CoE 专用功能只支持 `beta.craftofexile.com` 的 PoE2 模式与英文界面；目前只有国服简体术语，没有繁体。攻略翻译按需读取当前页，用户自配服务和 Key；权限为 `storage`、`activeTab`、`scripting`、`sidePanel`，无常驻全站权限。
+- CoE 专用功能只支持 `beta.craftofexile.com` 的 PoE2 模式与英文界面；目前只有国服简体术语，没有繁体。攻略翻译按需读取当前页，用户自配服务和 Key；权限为 `storage`、`activeTab`、`scripting`、`sidePanel`，无强制全站权限；0.10.0 增加按用户所选站点授予的可选 host 权限，常用预设或自定义网址可自动启用划词，点击翻译才发送文字。
 - 0.8.0 已批准的阅读方向：原文旁模式侧栏以目录、当前段和异常为主；划词气泡在侧栏关闭时独立工作。实施与验收状态见 `docs/chrome-extension/reading-workspace.md`，不视为已发布功能。
 - 不使用、不热链、不描摹 GGG、腾讯、CoE 的任何素材；不复制同类工具的代码或数据。
 - 历史工坊 `/craft/` 已冻结，不在改版范围。
