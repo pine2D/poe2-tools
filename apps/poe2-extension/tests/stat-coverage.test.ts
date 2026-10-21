@@ -62,7 +62,9 @@ it('扩展词缀来源与旧 .build 投影分离，并保留三服快照和裁�
 })
 
 it('全部简体源模板均能生成译文；固定条件不会被当成同一模板的变量', () => {
-  const source = terms.filter((term) => term.domain === 'stat' && !term.inputOnly)
+  const source = terms.filter(
+    (term) => term.domain === 'stat' && !term.inputOnly && !term.displayOnly,
+  )
   // 这是当前发布快照的分母；变更必须连同来源、裁决和覆盖变化一起审查。
   expect(source).toHaveLength(3706)
   const missing: unknown[] = []
@@ -82,7 +84,7 @@ it('全部简体源模板均能生成译文；固定条件不会被当成同一�
 }, 120_000)
 
 it('所有简繁原模板的正确反向候选仍在，歧义不能静默变成错误的唯一译文', () => {
-  const source = terms.filter((term) => term.domain === 'stat')
+  const source = terms.filter((term) => term.domain === 'stat' && !term.displayOnly)
   expect(source).toHaveLength(7420)
   const failures: unknown[] = []
   const values = [13, 29, 47, 61, 83, 97, 113, 131]
@@ -108,6 +110,17 @@ it('所有简繁原模板的正确反向候选仍在，歧义不能静默变成�
   }
   expect(failures).toEqual([])
 }, 120_000)
+
+it('人工展示词条独立计数，不混入官方源模板与反向覆盖分母', () => {
+  const display = terms.filter((term) => term.domain === 'stat' && term.displayOnly)
+  expect(display).toHaveLength(4)
+  for (const term of display) {
+    expect(term.inputOnly).not.toBe(true)
+    expect(term.sourceId).toBeUndefined()
+    expect(lexicon.resolveStat(term.en).text).toBe(term.zh)
+    expect(lexicon.resolveStat(term.zh, 'toEnglish').candidates).toEqual([])
+  }
+})
 
 it.each(corpus.cases)('冻结句式：$kind', ({ en, zh }) => {
   expect(lexicon.translate(en, 'stat')).toBe(zh)
