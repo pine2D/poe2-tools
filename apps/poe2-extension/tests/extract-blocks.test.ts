@@ -231,3 +231,78 @@ describe('代码边界空白保持原样保护', () => {
     })
   })
 })
+
+describe('正文容器与内容标题', () => {
+  it('多张文章卡片不代表整页，收共同正文容器并保留前后章节', () => {
+    const d =
+      doc(`<body><header role="banner"><nav>Site navigation</nav></header><div class="reading-shell">
+      <header><h1>Campaign guide</h1></header><p>Introduction for the route.</p>
+      <div class="section-title">Ritual</div><div class="cards">
+        <article><header><h3>Campaign</h3></header><p>${'Campaign instructions. '.repeat(8)}</p></article>
+        <article><header><h3>Endgame</h3></header><p>${'Endgame instructions. '.repeat(10)}</p></article>
+      </div><div class="section-title">Speedrun</div><ul><li>Keep moving.</li></ul>
+      <h2>Permanent rewards</h2><p>Take the permanent reward.</p>
+    </div><footer>Copyright footer</footer></body>`)
+    const before = d.body.innerHTML
+    const blocks = extractGeneric(d)
+    expect(blocks.map((b) => b.text)).toEqual([
+      'Campaign guide',
+      'Introduction for the route.',
+      'Ritual',
+      'Campaign',
+      'Campaign instructions. '.repeat(8).trim(),
+      'Endgame',
+      'Endgame instructions. '.repeat(10).trim(),
+      'Speedrun',
+      'Keep moving.',
+      'Permanent rewards',
+      'Take the permanent reward.',
+    ])
+    expect(blocks.filter((b) => b.kind === 'heading').map((b) => b.text)).toEqual([
+      'Campaign guide',
+      'Ritual',
+      'Campaign',
+      'Endgame',
+      'Speedrun',
+      'Permanent rewards',
+    ])
+    expect(d.body.innerHTML).toBe(before)
+  })
+  it('正文标题和任务文字保留，隐藏副本和折叠内容不自动加入', () => {
+    const d =
+      doc(`<main><header><h1>Act I</h1></header><div class="zone-header"><label><input type="checkbox">Clearfell</label></div>
+      <div class="step">Collect the reward.</div><p style="display:none">Hidden duplicate.</p><p hidden>Hidden attribute.</p>
+      <details><summary>Optional</summary><p>Collapsed secret.</p></details><p>Visible instructions.</p></main>`)
+    const bs = extractGeneric(d)
+    expect(bs.map((b) => b.text)).toEqual([
+      'Act I',
+      'Clearfell',
+      'Collect the reward.',
+      'Optional',
+      'Visible instructions.',
+    ])
+    expect(bs.find((b) => b.text === 'Clearfell')?.kind).toBe('heading')
+  })
+  it('正文长度评分不被导航、脚本和隐藏内容撑大', () => {
+    const d = doc(
+      `<article><nav>${'Menu '.repeat(200)}</nav><script>${'script '.repeat(200)}</script><p style="display:none">${'hidden '.repeat(200)}</p></article><main><h1>Real guide</h1><p>Take this reward before entering the next zone.</p></main>`,
+    )
+    expect(extractGeneric(d).map((b) => b.text)).toEqual([
+      'Real guide',
+      'Take this reward before entering the next zone.',
+    ])
+  })
+})
+
+it('透明包装不阻断相邻卡片发现，明确main阻止扩展到站外栏', () => {
+  const a = 'First card guide instructions. '.repeat(5).trim()
+  const b = 'Second card guide instructions. '.repeat(7).trim()
+  const d = doc(
+    `<main><div class="cards"><div><article><p>${a}</p></article></div><div><article><p>${b}</p></article></div></div></main><div>${'Unrelated footer text. '.repeat(8)}</div>`,
+  )
+  expect(extractGeneric(d).map((b) => b.text)).toEqual([a, b])
+  const wrapped = doc(
+    `<div class="reading-shell"><h1>Whole guide</h1><div class="cards"><div><article><p>${a}</p></article></div><div><article><p>${b}</p></article></div></div></div>`,
+  )
+  expect(extractGeneric(wrapped).map((b) => b.text)).toEqual(['Whole guide', a, b])
+})

@@ -49,6 +49,8 @@ describe('extractPage', () => {
       at('www.poe2.com', '/x'),
       'First line.\n\nSecond line here.',
       NOW,
+      undefined,
+      { scope: 'selection' },
     )
     expect(r.ok && r.doc.source.scope).toBe('selection')
     expect(r.ok && r.doc.blocks.map((b) => b.text)).toEqual(['First line.', 'Second line here.'])
@@ -88,6 +90,8 @@ describe('extractPage', () => {
       at('www.poe2.com'),
       'Use Unknown Crown before the next stage.',
       NOW,
+      undefined,
+      { scope: 'selection' },
     )
     expect(selection.ok && selection.doc.blocks[0]?.entities).toBeUndefined()
   })
@@ -166,7 +170,7 @@ it('DOM 选区只取所选内容并保留实体、BR 与代码；截断的实体
   const chosen = d.getElementById('chosen')
   if (!chosen) throw Error('missing fixture')
   range.selectNodeContents(chosen)
-  const r = extractPage(d, at('poe2.com'), range.toString(), NOW, range)
+  const r = extractPage(d, at('poe2.com'), range.toString(), NOW, range, { scope: 'selection' })
   if (!r.ok) throw Error('missing selection')
   expect(r.doc.source.scope).toBe('selection')
   expect(r.doc.blocks.map((b) => b.text)).toEqual(['Use Unknown Crown +80 Life'])
@@ -182,13 +186,15 @@ it('DOM 选区只取所选内容并保留实体、BR 与代码；截断的实体
   range.setStart(anchorText, 8)
   range.setEnd(anchorText, 13)
   expect(range.toString()).toBe('Crown')
-  const partial = extractPage(d, at('poe2.com'), range.toString(), NOW, range)
+  const partial = extractPage(d, at('poe2.com'), range.toString(), NOW, range, {
+    scope: 'selection',
+  })
   expect(partial.ok && partial.doc.blocks[0]?.text).toBe('Crown')
   expect(partial.ok && partial.doc.blocks[0]?.entities).toBeUndefined()
 })
 
 it('单字符选区也不扩大为全文', () => {
-  const r = extractPage(doc(body), at('example.com'), 'A', NOW)
+  const r = extractPage(doc(body), at('example.com'), 'A', NOW, undefined, { scope: 'selection' })
   expect(r.ok && r.doc.source.scope).toBe('selection')
   expect(r.ok && r.doc.blocks.map((b) => b.text)).toEqual(['A'])
 })
@@ -202,7 +208,9 @@ it('只选中代码内容时保留浅克隆的保护语义与边界空白', () =
   const range = d.createRange()
   range.setStart(code.firstChild, 0)
   range.setEnd(code.firstChild, code.textContent?.length ?? 0)
-  const result = extractPage(d, at('example.com'), range.toString(), NOW, range)
+  const result = extractPage(d, at('example.com'), range.toString(), NOW, range, {
+    scope: 'selection',
+  })
   if (!result.ok) throw Error('missing extraction')
   expect(parseExtractResult(result)).toEqual(result)
   expect(result.doc.source.scope).toBe('selection')
@@ -211,4 +219,70 @@ it('只选中代码内容时保留浅克隆的保护语义与边界空白', () =
   expect(b?.text).toBe(' copy  --force ')
   expect(b?.verbatim?.map(([a, z]) => b.text.slice(a, z))).toEqual([' copy  --force '])
   expect(d.body.innerHTML).toBe(before)
+})
+
+it('整页模式显式忽略残留选区，空选区也不回退全文', () => {
+  const d = doc(body)
+  const full = extractPage(d, at('example.com'), 'stale selection', NOW, undefined, {
+    scope: 'full',
+  })
+  expect(full.ok && full.doc.source.scope).toBe('full')
+  expect(full.ok && full.doc.blocks[0]?.text).toContain('Guide paragraph')
+  expect(extractPage(d, at('example.com'), '', NOW, undefined, { scope: 'selection' })).toEqual({
+    ok: false,
+    reason: 'empty',
+  })
+  expect(extractPage(d, at('example.com'), 'stale selection', NOW).ok).toBe(true)
+  const defaultFull = extractPage(d, at('example.com'), 'stale selection', NOW)
+  expect(defaultFull.ok && defaultFull.doc.source.scope).toBe('full')
+})
+
+it('点选区域严格限制在指定容器，文档契约保留region和会话身份', () => {
+  const d = doc(
+    '<main><p>Outside one.</p><section id="region"><h2>Selected region</h2><p>Inside only.</p></section><p>Outside two.</p></main>',
+  )
+  const regionRoot = d.getElementById('region')
+  if (!regionRoot) throw Error('missing region fixture')
+  const result = extractPage(d, at('example.com'), '', NOW, undefined, {
+    scope: 'region',
+    regionRoot,
+  })
+  expect(result.ok && result.doc.source.scope).toBe('region')
+  expect(result.ok && result.doc.blocks.map((b) => b.text)).toEqual([
+    'Selected region',
+    'Inside only.',
+  ])
+  if (!result.ok) throw Error('missing region')
+  result.doc.source.snapshotId = 'snapshot-1'
+  expect(parseExtractResult(result)).toEqual(result)
+})
+
+it('相同文本分别捕获真实节点，选区边界仅对应所选字符', () => {
+  const d = document
+  d.body.innerHTML = '<main><p id="a">Same <b>text</b>.</p><p id="b">Same <b>text</b>.</p></main>'
+  const anchors: {
+    text: string
+    start: Text
+    startOffset: number
+    end: Text
+    endOffset: number
+  }[] = []
+  extractPage(d, at('example.com'), '', NOW, undefined, {
+    scope: 'full',
+    onBlock: (block, source) => anchors.push({ text: block.text, ...source }),
+  })
+  expect(anchors).toHaveLength(2)
+  expect(anchors[0]?.start).toBe(d.querySelector('#a')?.firstChild)
+  expect(anchors[1]?.start).toBe(d.querySelector('#b')?.firstChild)
+  const text = d.querySelector('#b b')?.firstChild as Text
+  const range = d.createRange()
+  range.setStart(text, 1)
+  range.setEnd(text, 3)
+  anchors.length = 0
+  const selected = extractPage(d, at('example.com'), range.toString(), NOW, range, {
+    scope: 'selection',
+    onBlock: (block, source) => anchors.push({ text: block.text, ...source }),
+  })
+  expect(selected.ok && selected.doc.blocks[0]?.text).toBe('ex')
+  expect(anchors[0]).toMatchObject({ start: text, startOffset: 1, end: text, endOffset: 3 })
 })

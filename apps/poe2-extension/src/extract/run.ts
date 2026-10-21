@@ -10,11 +10,18 @@ import { collectBlocks, createSink } from './blocks'
 import { extractGeneric, pickRoot } from './sites/generic'
 import { documentSlug, extractMobalytics } from './sites/mobalytics'
 import { entityMarker, extractPoe2com } from './sites/poe2com'
+import { type CaptureBlock, selectedSources, sourceRange } from './source'
 
 export interface PageLocation {
   hostname: string
   pathname: string
   href: string
+}
+
+export interface ExtractOptions {
+  scope: 'full' | 'selection' | 'region'
+  regionRoot?: Element
+  onBlock?: CaptureBlock
 }
 
 const MIN_CHARS = 80
@@ -32,6 +39,7 @@ export function extractPage(
   selectionText: string,
   now: string,
   selectedRange?: Range,
+  options: ExtractOptions = { scope: 'full' },
 ): ExtractResult {
   if (loc.hostname === 'craftofexile.com' || loc.hostname.endsWith('.craftofexile.com'))
     return { ok: false, reason: 'coe' }
@@ -45,8 +53,7 @@ export function extractPage(
   // 站点适配器没读到数据、改用通用提取时置位，侧边栏据此在站点行常驻提示（Mobalytics 多为站内跳转，其他站点提示可能改版）
   let fallback = false
   const selection = selectionText.trim()
-  const scope =
-    selection.length > 0 || (selectedRange && !selectedRange.collapsed) ? 'selection' : 'full'
+  const scope = options.scope
   if (scope === 'selection') {
     const sink = createSink(diagnostics)
     if (selectedRange && !selectedRange.collapsed) {
@@ -54,31 +61,64 @@ export function extractPage(
       const root = doc.createElement('div')
       const common = selectedRange.commonAncestorContainer
       const ancestor = common.nodeType === 1 ? (common as Element) : common.parentElement
+      const fragment = selectedRange.cloneContents()
+      const sources = selectedSources(selectedRange, fragment)
       const wrapper = ancestor?.cloneNode(false) as Element | undefined
       if (wrapper) {
-        wrapper.appendChild(selectedRange.cloneContents())
+        wrapper.appendChild(fragment)
         root.appendChild(wrapper)
-      } else root.appendChild(selectedRange.cloneContents())
-      collectBlocks(root, sink, '', siteId === 'poe2com' ? entityMarker : undefined, true)
+      } else root.appendChild(fragment)
+      const capture: CaptureBlock = (block, copy) => {
+        const a = sources.get(copy.start),
+          z = sources.get(copy.end)
+        if (!a || !z || !options.onBlock) return
+        const source = {
+          ...copy,
+          start: a.node,
+          startOffset: a.from + copy.startOffset,
+          end: z.node,
+          endOffset: z.from + copy.endOffset,
+        }
+        const range = sourceRange(source)
+        const common = range.commonAncestorContainer
+        source.container =
+          common.nodeType === 1 ? (common as Element) : (common.parentElement ?? doc.body)
+        source.quote = range.toString()
+        options.onBlock(block, source)
+      }
+      collectBlocks(root, sink, '', siteId === 'poe2com' ? entityMarker : undefined, true, capture)
     } else {
       for (const line of selection.split(/\n\s*\n|\n/))
         sink.add('paragraph', line.replace(/\s+/g, ' ').trim())
     }
     blocks = sink.blocks
+  } else if (scope === 'region') {
+    const root = options.regionRoot
+    if (!root || !doc.body.contains(root)) return { ok: false, reason: 'empty' }
+    const sink = createSink(diagnostics)
+    collectBlocks(
+      root,
+      sink,
+      '',
+      siteId === 'poe2com' ? entityMarker : undefined,
+      true,
+      options.onBlock,
+    )
+    blocks = sink.blocks
   } else if (siteId === 'mobalytics') {
     const moba = extractMobalytics(doc, loc.pathname, diagnostics)
     // 只有攻略页（路径带 slug）读不到内嵌状态才算适配器失效；列表页等本来就走通用提取
     fallback = !moba && documentSlug(loc.pathname) !== ''
-    blocks = moba ? moba.blocks : extractGeneric(doc, diagnostics)
+    blocks = moba ? moba.blocks : extractGeneric(doc, diagnostics, options.onBlock)
     stages = moba ? moba.stages : []
   } else if (siteId === 'poe2com') {
-    blocks = extractPoe2com(doc, diagnostics)
+    blocks = extractPoe2com(doc, diagnostics, options.onBlock)
     if (blocks.reduce((n, b) => n + b.text.length, 0) < MIN_CHARS) {
       fallback = true
       diagnostics.length = 0
-      blocks = extractGeneric(doc, diagnostics)
+      blocks = extractGeneric(doc, diagnostics, options.onBlock)
     }
-  } else blocks = extractGeneric(doc, diagnostics)
+  } else blocks = extractGeneric(doc, diagnostics, options.onBlock)
 
   const chars = blocks.reduce((n, b) => n + b.text.length, 0)
   if (!blocks.length || (scope === 'full' && chars < MIN_CHARS && pickRoot(doc) === doc.body))

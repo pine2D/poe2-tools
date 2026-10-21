@@ -52,7 +52,9 @@ export interface GuideSource {
   title: string
   siteId: SiteId
   extractedAt: string
-  scope: 'full' | 'selection'
+  scope: 'full' | 'selection' | 'region'
+  // 页面会话身份，仅供原文定位；不进入模型和持久缓存。
+  snapshotId?: string
   // 站点适配器没读到数据、已改用通用提取（侧边栏据此常驻提示“站点可能改版”）
   fallback?: true
 }

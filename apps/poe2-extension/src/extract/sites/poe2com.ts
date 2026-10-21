@@ -1,5 +1,6 @@
 import type { ExtractionDiagnostic, GuideBlock } from '@poe2-tools/guide-core'
 import { collectBlocks, createSink } from '../blocks'
+import type { CaptureBlock } from '../source'
 import { pickRoot } from './generic'
 
 // poe2.com 文章页：评分、评论、分享、相关推荐区不属于正文。
@@ -30,9 +31,10 @@ export function entityMarker(el: Element, text: string): boolean {
 export function extractPoe2com(
   doc: Document,
   diagnostics: ExtractionDiagnostic[] = [],
+  onBlock?: CaptureBlock,
 ): GuideBlock[] {
   const sink = createSink(diagnostics)
   const root = pickRoot(doc, ROOTS)
-  collectBlocks(root, sink, EXTRA_SKIP, entityMarker, root !== doc.body)
+  collectBlocks(root, sink, EXTRA_SKIP, entityMarker, root !== doc.body, onBlock)
   return sink.blocks
 }

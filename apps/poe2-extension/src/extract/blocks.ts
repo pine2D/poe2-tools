@@ -6,9 +6,10 @@ import type {
   Range,
 } from '@poe2-tools/guide-core'
 
-// 只读遍历：不改 DOM、不加监听。
-const SKIP =
-  'script,style,noscript,template,nav,header,footer,aside,form,button,input,textarea,select,svg,iframe,[hidden],[aria-hidden="true"]'
+import { type CaptureBlock, captureSource } from './source'
+import { excluded, headingLevel, BASE_SKIP as SKIP } from './visibility'
+
+// 只读遍历：不改 DOM；可将本地原文边界交给页面会话。
 const BLOCKS: Readonly<Record<string, BlockKind>> = {
   H1: 'heading',
   H2: 'heading',
@@ -134,7 +135,7 @@ function textWithEmphasis(
     }
     if (node.nodeType !== 1) return
     const child = node as Element
-    if (child.matches(skip)) return
+    if (excluded(child, skip)) return
     if (child.tagName === 'BR') {
       gap()
       breaks.push(text.length)
@@ -188,6 +189,7 @@ export function collectBlocks(
   extraSkip = '',
   entityMarker?: EntityMarker,
   allowShort = false,
+  onBlock?: CaptureBlock,
 ): void {
   const skip = extraSkip ? `${SKIP},${extraSkip}` : SKIP
   const nested = (el: Element) => el.querySelector(BLOCK_SELECTOR) !== null
@@ -207,9 +209,10 @@ export function collectBlocks(
     kind: BlockKind,
     text: string,
     extra: Omit<GuideBlock, 'id' | 'kind' | 'text'> = {},
+    nodes: readonly Node[] = Array.from(el.childNodes),
   ) => {
     const context: BlockContextRef = {}
-    const level = /^H[1-6]$/.test(el.tagName) ? Number(el.tagName.slice(1)) : undefined
+    const level = headingLevel(el)
     if (level) {
       while (headings.length && (headings.at(-1)?.level ?? 0) >= level) headings.pop()
       context.headingLevel = level
@@ -232,6 +235,10 @@ export function collectBlocks(
     sink.add(kind, text, { ...extra, ...(Object.keys(context).length ? { context } : {}) })
     const added = sink.blocks[previous]
     if (level && added) headings.push({ id: added.id, level })
+    if (added && onBlock) {
+      const source = captureSource(el, nodes, skip)
+      if (source) onBlock(added, source)
+    }
   }
   // 含块级后代的元素：子块之间连续的行内内容（文字与行内元素）单独成块。
   // 本身是块标签（如 li）时照收；其他容器（div 等）沿用“直接文字满 40 字才算段落”，
@@ -244,11 +251,11 @@ export function collectBlocks(
       return
     }
     const { text, ...extra } = textWithEmphasis(run, skip, entityMarker)
-    add(parent, parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, extra)
+    add(parent, parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, extra, run)
   }
   const visit = (el: Element) => {
-    if (el.matches(skip)) return
-    const kind = BLOCKS[el.tagName]
+    if (excluded(el, skip)) return
+    const kind = headingLevel(el) ? 'heading' : BLOCKS[el.tagName]
     // 选区可能只留下代码元素的浅包装，必须把该包装本身交给范围收集器。
     if (el.matches(PROTECTED)) {
       const { text, ...extra } = textWithEmphasis([el], skip, entityMarker)
@@ -283,7 +290,7 @@ export function collectBlocks(
       }
       if (node.nodeType !== 1) continue
       const child = node as Element
-      if (child.matches(skip)) continue
+      if (excluded(child, skip)) continue
       if (!nested(child) && !child.matches(BLOCK_SELECTOR) && !isBlockLevel(child)) {
         run.push(child)
         continue

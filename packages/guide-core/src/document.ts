@@ -46,9 +46,13 @@ function source(v: unknown): GuideSource | null {
   const { url, title, siteId, extractedAt, scope } = v
   if (!str(url) || !str(title) || !str(extractedAt)) return null
   if (!SITES.includes(siteId as SiteId)) return null
-  if (scope !== 'full' && scope !== 'selection') return null
+  if (scope !== 'full' && scope !== 'selection' && scope !== 'region') return null
   const out: GuideSource = { url, title, siteId: siteId as SiteId, extractedAt, scope }
   if (v.fallback === true) out.fallback = true
+  if (v.snapshotId !== undefined) {
+    if (!str(v.snapshotId) || !/^[a-zA-Z0-9-]{1,100}$/.test(v.snapshotId)) return null
+    out.snapshotId = v.snapshotId
+  }
   return out
 }
 
