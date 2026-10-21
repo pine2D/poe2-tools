@@ -86,7 +86,12 @@ export function submitSearch(input: HTMLInputElement, english: string) {
   const native = searchContext(input)
     ?.map((option) => searchPattern(english).exec(option)?.[0])
     .find(Boolean)
-  input.value = native && /\\n|[\r\n]/.test(native) ? native : english
+  // 单行 input 会吞掉真实 CR/LF；退回原生搜索集合里最长的连续片段，不拼出新词。
+  const query = native
+    ?.split(/[\r\n]+/)
+    .map((part) => part.trim())
+    .sort((a, b) => b.length - a.length)[0]
+  input.value = native && /\\n|[\r\n]/.test(native) ? (query ?? english) : english
   input.dispatchEvent(new Event('input', { bubbles: true }))
   input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Unidentified', bubbles: true }))
 }

@@ -770,3 +770,29 @@ it('转义换行候选可用中文检索，提交原站能匹配的英文片段�
   expect(input.value).toBe(String.raw`#% chance to gain an\nadditional infusion`)
   expect(document.querySelector('li')?.getAttribute('search')).toBe(raw)
 })
+
+it('真实换行的搜索属性使用连续片段，不让单行输入吞掉词边界', () => {
+  const raw = 'suffix#% chance to gain an\nadditional Infusion'
+  document.body.innerHTML = `<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><div class="editing"><input type="text"></div><li search="${raw}"></li></div></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 's',
+        en: '#% chance to gain an additional Infusion',
+        zh: '额外获得灌注几率 #%',
+        domain: 'stat',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  type(input, '灌注')
+  const button = document.querySelector('[data-poe2-l10n] button') as HTMLButtonElement
+  expect(button).not.toBeNull()
+  button.click()
+  expect(input.value).not.toMatch(/[\r\n]/)
+  expect(raw.toLowerCase()).toContain(input.value)
+  expect(input.value.length).toBeGreaterThan(10)
+})
