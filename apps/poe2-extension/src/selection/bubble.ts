@@ -105,6 +105,9 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
       range.toString() === quote &&
       win.location.href === href
     const live = () => epoch === version && !!host
+    timer = setInterval(() => {
+      if (!valid()) dismiss()
+    }, 400)
     const status = el(doc, 'p', { class: 'meta', role: 'status', hidden: true })
     const output = el(doc, 'p', { class: 'output', hidden: true })
     const source = el(
@@ -132,7 +135,6 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     const cancel = button('取消', 'cancel', () => {
       abort?.abort()
       abort = null
-      clearInterval(timer)
       status.textContent = '已取消翻译。'
       start.disabled = false
       start.textContent = '重新翻译'
@@ -165,9 +167,6 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
       start.textContent = '翻译中…'
       cancel.focus({ preventScroll: true })
       position()
-      timer = setInterval(() => {
-        if (!valid()) dismiss()
-      }, 400)
       void translate(block, request.signal)
         .then(
           (result) => {
@@ -202,7 +201,6 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         )
         .finally(() => {
           if (!live() || abort !== request) return
-          clearInterval(timer)
           abort = null
           start.disabled = false
           if (

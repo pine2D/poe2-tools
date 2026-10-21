@@ -77,3 +77,27 @@ it('选区变化后不发旧文本；输入与空选区不出现翻译入口', (
   document.dispatchEvent(trusted(new Event('pointerup')))
   expect(document.querySelector('[data-poe2-selection]')).toBeNull()
 })
+
+it.each(['source', 'navigation'])(
+  '完成后的气泡遇到 %s 变化也会退出，不保留旧译文',
+  async (reason) => {
+    vi.useFakeTimers()
+    const originalUrl = window.location.href
+    try {
+      const { root } = setup()
+      root
+        .querySelector('[data-action="translate"]')
+        ?.dispatchEvent(trusted(new MouseEvent('click')))
+      await vi.advanceTimersByTimeAsync(1)
+      expect(root.querySelector('.output')?.textContent).toBe('继续穿过这片区域。')
+      if (reason === 'source') document.querySelector('p')?.remove()
+      else window.history.pushState({}, '', '/next-guide')
+      await vi.advanceTimersByTimeAsync(500)
+      expect(document.querySelector('[data-poe2-selection]')).toBeNull()
+    } finally {
+      dispose()
+      window.history.replaceState({}, '', originalUrl)
+      vi.useRealTimers()
+    }
+  },
+)

@@ -51,7 +51,10 @@ export function combineSelection(blocks: readonly GuideBlock[]): GuideBlock | nu
     verbatim: Range[] = []
   const breaks: number[] = []
   for (const b of blocks) {
-    if (text) text += '\n\n'
+    if (text) {
+      text += '\n\n'
+      breaks.push(text.length)
+    }
     const offset = text.length
     text += b.text
     for (const [target, source] of [
@@ -60,12 +63,20 @@ export function combineSelection(blocks: readonly GuideBlock[]): GuideBlock | nu
       [verbatim, b.kind === 'verbatim' ? [[0, b.text.length]] : b.verbatim],
     ] as const)
       for (const [a, z] of source ?? []) target.push([a + offset, z + offset])
-    for (const n of b.breaks ?? []) breaks.push(n + offset)
+    for (const n of b.breaks ?? [...b.text.matchAll(/\n/g)].map((m) => m.index + 1))
+      if (n > 0 && n < b.text.length) breaks.push(n + offset)
   }
   if (!text.trim() || text.length > MAX_SELECTION_CHARS) return null
   return {
     id: 'b0',
-    kind: blocks.length === 1 ? (blocks[0]?.kind ?? 'paragraph') : 'paragraph',
+    kind:
+      blocks.length === 1
+        ? (blocks[0]?.kind ?? 'paragraph')
+        : blocks.every((b) => b.kind === 'verbatim')
+          ? 'verbatim'
+          : blocks.every((b) => b.kind === 'modline')
+            ? 'modline'
+            : 'paragraph',
     text,
     ...(entities.length ? { entities } : {}),
     ...(emphasis.length ? { emphasis } : {}),

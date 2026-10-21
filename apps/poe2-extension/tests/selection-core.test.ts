@@ -172,3 +172,69 @@ describe('划词复用完整接纳管线', () => {
     expect(await d.store.usage()).toBe(0)
   })
 })
+
+it('混合 br 与多个段落的已知词缀仍全部本地翻译，零请求', async () => {
+  document.body.innerHTML =
+    '<main><p>+80 to maximum Life<br>+80 to maximum Mana</p><p>+30% to Fire Resistance</p></main>'
+  const range = document.createRange()
+  range.selectNodeContents(document.querySelector('main') as HTMLElement)
+  const b = captureSelection(
+    document,
+    { href: 'https://example.com/', hostname: 'example.com', pathname: '/' },
+    range,
+  )
+  if (!b) throw Error('应能取得三行选区')
+  const known = new Map([
+    ['+80 to maximum Life', '+80 生命上限'],
+    ['+80 to maximum Mana', '+80 魔力上限'],
+    ['+30% to Fire Resistance', '+30% 火焰抗性'],
+  ])
+  const d = deps()
+  const result = await translateSelection(
+    b,
+    {
+      ...d,
+      stats: {
+        ...d.stats,
+        resolve: (text) => ({
+          status: known.has(text) ? 'translated' : 'unmatched',
+          text: known.get(text) ?? null,
+          candidates: [],
+        }),
+      },
+    },
+    new AbortController().signal,
+  )
+  expect(result).toMatchObject({
+    ok: true,
+    origin: 'dictionary',
+    text: '+80 生命上限\n+80 魔力上限\n+30% 火焰抗性',
+  })
+  expect(d.run).not.toHaveBeenCalled()
+})
+it('完全透明文字不发送，选择透明祖先内的文本也不发送', () => {
+  document.body.innerHTML =
+    '<style>.invisible { opacity: 0 }</style><p>Read <span class="invisible">private invisible text</span> instructions.</p>'
+  const range = document.createRange()
+  range.selectNodeContents(document.querySelector('p') as HTMLElement)
+  const loc = { href: 'https://example.com/', hostname: 'example.com', pathname: '/' }
+  expect(captureSelection(document, loc, range)?.text).toBe('Read instructions.')
+  range.selectNodeContents(document.querySelector('span') as HTMLElement)
+  expect(captureSelection(document, loc, range)).toBeNull()
+})
+
+it('多个逐字代码块保留尾部换行与类型，不产生模型请求', async () => {
+  const b = combineSelection([
+    { id: 'a', kind: 'verbatim', text: 'Ctrl+C\n' },
+    { id: 'b', kind: 'verbatim', text: 'Ctrl+V\n' },
+  ])
+  if (!b) throw Error('应能保留代码')
+  expect(parseSelectionRequest({ type: 'translate', id: 'r1', block: b })).not.toBeNull()
+  const d = deps()
+  expect(await translateSelection(b, d, new AbortController().signal)).toMatchObject({
+    ok: true,
+    origin: 'preserved',
+    text: b.text,
+  })
+  expect(d.run).not.toHaveBeenCalled()
+})

@@ -22,6 +22,8 @@ export function excluded(el: Element, skip = BASE_SKIP): boolean {
   return (
     inline?.display === 'none' ||
     inline?.visibility === 'hidden' ||
+    inline?.opacity === '0' ||
+    style?.opacity === '0' ||
     style?.display === 'none' ||
     style?.visibility === 'hidden' ||
     style?.contentVisibility === 'hidden'
