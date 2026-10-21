@@ -157,7 +157,7 @@ it('状态块是 polite 的 status 区域；唯一动作是默认隐藏的安静
 
 it('同屏金属重点只有标题栏：弹窗里的按钮都是安静按钮', () => {
   const buttons = [...html.matchAll(/<button\b[^>]*class="([^"]*)"/g)].map((m) => m[1])
-  expect(buttons).toHaveLength(3)
+  expect(buttons).toHaveLength(4)
   for (const cls of buttons) expect(cls).toMatch(/\bpt-btn pt-btn--quiet\b/)
 })
 

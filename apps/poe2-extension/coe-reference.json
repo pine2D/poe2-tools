@@ -6,12 +6,13 @@
   "files": {
     "content.js": {
       "baselineSha256": "d1c000a94e4e0dc837c919d6d18fb3be77f498ad2daccbc3528abeaeacfcc65c",
-      "expectedSha256": "d1c000a94e4e0dc837c919d6d18fb3be77f498ad2daccbc3528abeaeacfcc65c"
+      "expectedSha256": "2bc8e765fea36ca8ac1da5d83d6f02b9c60ff11123cf9418a65ac47d96d8bdd5",
+      "reason": "0.8.0 用户批准的 CoE 系统覆盖整改：高级词缀名称按身份显示、属性缩写、默认物品名视觉层和导出入口；原站搜索字段、复制与自定义名称有独立回归。"
     },
     "assets/dictionary.json": {
       "baselineSha256": "3be118370f481468daf927eec6c2d206c46d779e55e6146fbb82744de18bb531",
-      "expectedSha256": "277bef9a06557acc035172ac2f2a6c0f97817e5d57d1fc8124434cd2cafddecf",
-      "reason": "新增五条人工裁决的来源文本与数值顺序签名；12644 个 CoE 词条与 0.4.4 逐项完全相同，仅两项来源摘要/裁决元数据变化。"
+      "expectedSha256": "22ea45b8946daf30adc291be88dab41345cdc1c627cbd8430ce8bc6407d7bc0a",
+      "reason": "0.8.0 新增由已有国服词缀投影的分类名称、19 项用户装备样本交叉核对名称及基底分组文案，词条由 12644 变为 12676；保留此前来源裁决摘要差异，来源见数据登记及 reading-workspace.md。"
     },
     "assets/serif-sc-l1.woff2": {
       "baselineSha256": "cd1886e9f6e7970e017928406b12367e33f571270838e8365283ab4edc655703",
