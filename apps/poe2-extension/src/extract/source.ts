@@ -39,11 +39,11 @@ export function captureSource(
   return source
 }
 
-/** cloneContents 的文本节点与选区内原始文本节点顺序对应，保留首尾半个文本节点的偏移。 */
+/** 对齐选区克隆与原节点，按原页面可见性移除克隆文字，保留首尾字符偏移。 */
 export function selectedSources(
   range: Range,
   clone: Node,
-): WeakMap<Node, { node: Text; from: number; to: number }> {
+): WeakMap<Node, { node: Text; from: number; to: number }> | null {
   const parts: { node: Text; from: number; to: number }[] = []
   const common = range.commonAncestorContainer
   const collect = (node: Node) => {
@@ -61,13 +61,22 @@ export function selectedSources(
   }
   copied(clone)
   const map = new WeakMap<Node, { node: Text; from: number; to: number }>()
-  if (parts.length !== copies.length) return map
+  if (parts.length !== copies.length) return null
   for (let i = 0; i < copies.length; i++) {
     const part = parts[i],
       copy = copies[i]
-    if (!part || !copy || part.node.data.slice(part.from, part.to) !== copy.data)
-      return new WeakMap()
+    if (!part || !copy || part.node.data.slice(part.from, part.to) !== copy.data) return null
     map.set(copy, part)
+  }
+  // 脱离文档的克隆没有原页面的样式上下文；所有排除判断都针对原节点祖先。
+  for (const copy of copies) {
+    const original = map.get(copy)
+    for (let el = original?.node.parentElement; el; el = el.parentElement) {
+      if (excluded(el)) {
+        copy.remove()
+        break
+      }
+    }
   }
   return map
 }

@@ -63,6 +63,7 @@ export function extractPage(
       const ancestor = common.nodeType === 1 ? (common as Element) : common.parentElement
       const fragment = selectedRange.cloneContents()
       const sources = selectedSources(selectedRange, fragment)
+      if (!sources) return { ok: false, reason: 'empty' }
       const wrapper = ancestor?.cloneNode(false) as Element | undefined
       if (wrapper) {
         wrapper.appendChild(fragment)

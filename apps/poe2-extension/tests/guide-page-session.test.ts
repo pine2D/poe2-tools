@@ -141,3 +141,50 @@ it('同一页面快速改选章节后，晚到旧修订译文和清理都不能�
   session.remove(snapshot, id, '1')
   expect(document.querySelector('[data-poe2-guide-owned="translation"]')).not.toBeNull()
 })
+
+it.each([
+  '<p>Visible start <span class="reading-hidden">Hidden private text.</span> visible end.</p>',
+  '<p>Visible start visible end.</p><p class="reading-hidden">Hidden private text.</p>',
+])('选区只提取原页面可见内容，隐藏副本不使会话失效：%s', (content) => {
+  const style = document.createElement('style')
+  style.textContent = '.reading-hidden { display: none }'
+  document.head.append(style)
+  try {
+    const { session } = setup(`<main>${content}</main>`)
+    const original = document.body.innerHTML
+    const range = document.createRange()
+    range.selectNodeContents(required(document.querySelector('main')))
+    const selection = required(document.getSelection())
+    selection.removeAllRanges()
+    selection.addRange(range)
+    const selected = session.read({ scope: 'selection' })
+    expect(selected.ok && selected.doc.blocks.map((b) => b.text)).toEqual([
+      'Visible start visible end.',
+    ])
+    expect(session.status().stale).toBe(false)
+    expect(document.body.innerHTML).toBe(original)
+  } finally {
+    style.remove()
+    document.getSelection()?.removeAllRanges()
+  }
+})
+
+it('共享同一容器的多个正文片段回退侧栏，避免译文倒序与错误对应', () => {
+  const { session, guide, snapshot } = setup(
+    '<main><div>First instructions.<span style="display:block">Middle instructions.</span>Last instructions.</div><p>Separate instructions.</p></main>',
+  )
+  expect(guide.blocks.map((b) => b.text)).toEqual([
+    'First instructions.',
+    'Middle instructions.',
+    'Last instructions.',
+    'Separate instructions.',
+  ])
+  for (const b of guide.blocks.slice(0, 3))
+    expect(session.render(snapshot, translated(b.id)).state).toBe('sidebar')
+  expect(session.render(snapshot, translated(required(guide.blocks[3]).id)).state).toBe('inline')
+  expect(
+    [...document.querySelectorAll('[data-poe2-guide-owned="translation"]')].map((el) =>
+      el.getAttribute('data-block-id'),
+    ),
+  ).toEqual([guide.blocks[3]?.id])
+})

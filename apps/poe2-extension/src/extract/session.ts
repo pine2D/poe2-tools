@@ -12,6 +12,7 @@ export function createPageSession(doc: Document, loc: PageLocation) {
   let revision = ''
   let mode: ReadingMode = 'inline'
   const sources = new Map<string, BlockSource>()
+  const containerCounts = new Map<Element, number>()
   const ids = new Set<string>()
   const hosts = new Map<string, HTMLElement>()
   const changedIds = new Set<string>()
@@ -77,6 +78,7 @@ export function createPageSession(doc: Document, loc: PageLocation) {
     for (const host of hosts.values()) host.remove()
     hosts.clear()
     sources.clear()
+    containerCounts.clear()
     ids.clear()
     changedIds.clear()
     snapshot = null
@@ -101,6 +103,8 @@ export function createPageSession(doc: Document, loc: PageLocation) {
     url = loc.href
     result.doc.source.snapshotId = snapshot
     for (const block of result.doc.blocks) ids.add(block.id)
+    for (const source of sources.values())
+      containerCounts.set(source.container, (containerCounts.get(source.container) ?? 0) + 1)
     const Observer = doc.defaultView?.MutationObserver
     if (Observer) {
       observer = new Observer(validate)
@@ -124,6 +128,8 @@ export function createPageSession(doc: Document, loc: PageLocation) {
       if ((result.revision ?? '') !== revision) return stale()
       const source = checked(key, result.id)
       if ('state' in source) return source
+      // 同一容器拆成多个正文片段时，容器边缘不是各片段的可靠显示位置。
+      if ((containerCounts.get(source.container) ?? 0) > 1) return unavailable()
       hosts.get(result.id)?.remove()
       hosts.delete(result.id)
       const host = appendTranslation(source, result)

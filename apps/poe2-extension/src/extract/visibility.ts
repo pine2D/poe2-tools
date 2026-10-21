@@ -4,6 +4,8 @@ export const BASE_SKIP =
 
 export function excluded(el: Element, skip = BASE_SKIP): boolean {
   if (el.matches(skip)) return true
+  // body 直属页眉按站点横幅排除；普通 DIV 内的正文页眉不能仅凭缺少 main 就排除。
+  if (el.tagName === 'HEADER' && el.parentElement === el.ownerDocument.body) return true
   // 标题旁独立的复选操作不是标题正文；仅有 label 承载任务标题时仍保留。
   if (el.tagName === 'LABEL' && el.querySelector('input')) {
     for (let parent = el.parentElement; parent; parent = parent.parentElement) {

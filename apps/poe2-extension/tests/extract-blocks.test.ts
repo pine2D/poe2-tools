@@ -317,3 +317,18 @@ it('标题旁的独立复选操作标签不并入标题，任务文字本身的l
     'Defeat the boss.',
   ])
 })
+
+it('扩展正文根时排除站点页眉，保留正文区域中的页眉与标题', () => {
+  const d = doc(`<body>
+    <header><h1>Site brand</h1><p>${'Account and marketing messages. '.repeat(8)}</p></header>
+    <div><article><header><h1>Guide title</h1><p>Guide summary.</p></header><p>First guide instructions.</p></article>
+      <section><header><h2>Next chapter</h2></header><p>${'Second guide instructions. '.repeat(4)}</p></section></div>
+  </body>`)
+  expect(extractGeneric(d).map((b) => b.text)).toEqual([
+    'Guide title',
+    'Guide summary.',
+    'First guide instructions.',
+    'Next chapter',
+    'Second guide instructions. '.repeat(4).trim(),
+  ])
+})
