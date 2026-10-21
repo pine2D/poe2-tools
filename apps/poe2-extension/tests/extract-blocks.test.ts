@@ -306,3 +306,14 @@ it('透明包装不阻断相邻卡片发现，明确main阻止扩展到站外栏
   )
   expect(extractGeneric(wrapped).map((b) => b.text)).toEqual(['Whole guide', a, b])
 })
+
+it('标题旁的独立复选操作标签不并入标题，任务文字本身的label仍保留', () => {
+  const d = doc(
+    '<main><div class="zone-header"><span>Clearfell</span><label><input type="checkbox">mark required</label></div><p>Collect the reward.</p><div class="zone-header"><label><input type="checkbox">Defeat the boss.</label></div></main>',
+  )
+  expect(extractGeneric(d).map((b) => b.text)).toEqual([
+    'Clearfell',
+    'Collect the reward.',
+    'Defeat the boss.',
+  ])
+})

@@ -4,6 +4,15 @@ export const BASE_SKIP =
 
 export function excluded(el: Element, skip = BASE_SKIP): boolean {
   if (el.matches(skip)) return true
+  // 标题旁独立的复选操作不是标题正文；仅有 label 承载任务标题时仍保留。
+  if (el.tagName === 'LABEL' && el.querySelector('input')) {
+    for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+      if (headingLevel(parent) !== undefined) {
+        if ((parent.textContent ?? '').replace(el.textContent ?? '', '').trim()) return true
+        break
+      }
+    }
+  }
   const closed = el.closest('details:not([open])')
   if (closed && el !== closed && !el.closest('summary')) return true
   const inline = (el as HTMLElement).style
