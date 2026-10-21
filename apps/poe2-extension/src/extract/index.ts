@@ -1,13 +1,11 @@
-import { extractPage } from './run'
+import { createPageSession, type PageSession } from './session'
 
-// 侧边栏先注入本文件，再用第二次 executeScript 调用这个函数取回结果（文件注入拿不到 IIFE 的返回值）。
-;(globalThis as { __poe2GuideExtract?: () => unknown }).__poe2GuideExtract = () => {
-  const selection = window.getSelection()
-  return extractPage(
-    document,
-    location,
-    String(selection ?? ''),
-    new Date().toISOString(),
-    selection?.rangeCount ? selection.getRangeAt(0) : undefined,
-  )
+// 隔离世界内复用会话；页面只能看见自有译文容器，拿不到扩展凭据。
+const state = globalThis as { __poe2GuideSession?: PageSession }
+if (state.__poe2GuideSession?.version !== 1) {
+  state.__poe2GuideSession?.clear()
+  state.__poe2GuideSession = createPageSession(document, location)
 }
+// 保留读取入口，默认整页；显式范围由侧栏命令调用页面会话。
+;(globalThis as { __poe2GuideExtract?: () => unknown }).__poe2GuideExtract = () =>
+  state.__poe2GuideSession?.read({ scope: 'full' })

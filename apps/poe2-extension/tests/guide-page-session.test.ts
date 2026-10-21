@@ -1,0 +1,131 @@
+// @vitest-environment happy-dom
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createPageSession } from '../src/extract/session'
+
+function required<T>(value: T | null | undefined): T {
+  if (value == null) throw Error('missing fixture')
+  return value
+}
+const sessions: ReturnType<typeof createPageSession>[] = []
+function setup(html: string) {
+  document.body.innerHTML = html
+  const location = {
+    href: 'https://example.com/guide',
+    hostname: 'example.com',
+    pathname: '/guide',
+  }
+  const session = createPageSession(document, location)
+  sessions.push(session)
+  const result = session.read({ scope: 'full' })
+  if (!result.ok || !result.doc.source.snapshotId) throw Error('fixture extraction failed')
+  return { session, location, guide: result.doc, snapshot: result.doc.source.snapshotId }
+}
+const translated = (id: string) => ({
+  id,
+  text: '本地合成译文',
+  origin: 'engine' as const,
+  issues: [],
+})
+afterEach(() => {
+  for (const session of sessions.splice(0)) session.clear()
+  vi.useRealTimers()
+})
+
+describe('页面会话与原文旁对照', () => {
+  it('重复原文各自挂到对应节点，重读不收译文，恢复不改变原站控件', () => {
+    const { session, guide, snapshot } = setup(
+      '<main><input type="checkbox" checked><p id="a">Same instructions here.</p><p id="b">Same instructions here.</p></main>',
+    )
+    const original = document.body.innerHTML
+    expect(session.render(snapshot, translated(required(guide.blocks[1]).id)).state).toBe('inline')
+    expect(document.querySelector('#a')?.nextElementSibling?.id).toBe('b')
+    const host = document.querySelector('#b')?.nextElementSibling
+    expect(host?.hasAttribute('data-poe2-guide-owned')).toBe(true)
+    expect(host?.shadowRoot?.textContent).toContain('本地合成译文')
+    expect(document.querySelector('input')?.checked).toBe(true)
+    session.setMode('sidebar')
+    expect((host as HTMLElement).hidden).toBe(true)
+    session.setMode('inline')
+    expect((host as HTMLElement).hidden).toBe(false)
+    const again = session.read({ scope: 'full' })
+    expect(again.ok && again.doc.blocks.map((b) => b.text)).toEqual(guide.blocks.map((b) => b.text))
+    expect(session.render(snapshot, translated(required(guide.blocks[0]).id)).state).toBe('stale')
+    session.clear()
+    expect(document.body.innerHTML).toBe(original)
+  })
+  it('替换为相同文字的新节点也拒绝旧定位，不靠文字猜位置', () => {
+    const { session, guide, snapshot } = setup(
+      '<main><p>Repeat original.</p><p>Repeat original.</p></main>',
+    )
+    const first = required(document.querySelector('p'))
+    first.replaceWith(first.cloneNode(true))
+    expect(session.locate(snapshot, required(guide.blocks[0]).id).state).toBe('stale')
+    expect(session.render(snapshot, translated(required(guide.blocks[0]).id)).state).toBe('stale')
+    expect(document.querySelectorAll('[data-poe2-guide-owned]')).toHaveLength(0)
+  })
+  it('内容变动清理译文，SPA地址变化阻止旧结果', async () => {
+    const { session, guide, snapshot, location } = setup(
+      '<main><p>Original instructions here.</p></main>',
+    )
+    session.render(snapshot, translated(required(guide.blocks[0]).id))
+    required(required(document.querySelector('p')).firstChild).textContent = 'Changed source.'
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(document.querySelector('[data-poe2-guide-owned]')).toBeNull()
+    expect(session.status().changedIds).toContain(required(guide.blocks[0]).id)
+    location.href = 'https://example.com/new'
+    expect(session.locate(snapshot, required(guide.blocks[0]).id).state).toBe('stale')
+  })
+  it('表格和交互标签使用侧栏，普通链接不被替换', () => {
+    const { session, guide, snapshot } = setup(
+      '<main><label>Choose this option.</label><table><tr><td>Cell instructions.</td></tr></table><p>Visit <a href="/next">next guide</a>.</p></main>',
+    )
+    const link = document.querySelector('a')
+    const click = vi.fn()
+    link?.addEventListener('click', click)
+    expect(
+      session.render(
+        snapshot,
+        translated(required(guide.blocks.find((b) => b.text.startsWith('Choose'))).id),
+      ).state,
+    ).toBe('sidebar')
+    expect(
+      session.render(
+        snapshot,
+        translated(required(guide.blocks.find((b) => b.kind === 'table-cell')).id),
+      ).state,
+    ).toBe('sidebar')
+    expect(session.render(snapshot, translated(required(guide.blocks.at(-1)).id)).state).toBe(
+      'inline',
+    )
+    expect(document.querySelector('a')).toBe(link)
+    link?.dispatchEvent(new MouseEvent('click'))
+    expect(click).toHaveBeenCalledOnce()
+  })
+  it('点选区域取消和超时均清理，确认不触发原站click', async () => {
+    vi.useFakeTimers()
+    const { session } = setup(
+      '<main><section><h2>Zone</h2><p>Only this region.</p></section></main>',
+    )
+    const canceled = session.pickRegion()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(await canceled).toBeNull()
+    expect(document.querySelector('[data-poe2-guide-owned]')).toBeNull()
+    const expired = session.pickRegion()
+    await vi.advanceTimersByTimeAsync(30000)
+    expect(await expired).toBeNull()
+    const picked = session.pickRegion()
+    const clicked = vi.fn()
+    document.querySelector('p')?.addEventListener('click', clicked)
+    document
+      .querySelector('p')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    const result = await picked
+    expect(result?.ok && result.doc.source.scope).toBe('region')
+    expect(result?.ok && result.doc.blocks.map((b) => b.text)).toEqual([
+      'Zone',
+      'Only this region.',
+    ])
+    expect(clicked).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-poe2-guide-owned]')).toBeNull()
+  })
+})
