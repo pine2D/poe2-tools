@@ -225,19 +225,19 @@ abbr:focus-visible::after {
   background: var(--surface);
   border: 1px solid currentColor;
   border-radius: 4px;
-  padding: 6px;
+  padding: var(--sp-2);
   font: inherit;
 }
 .guide-chapters {
-  margin-block: 10px;
+  margin-block: var(--sp-2);
 }
 .guide-chapters summary {
   cursor: pointer;
 }
 .guide-chapter {
   display: flex;
-  gap: 6px;
-  margin-block: 6px;
+  gap: var(--sp-2);
+  margin-block: var(--sp-2);
 }
 .guide-chapter input {
   flex-shrink: 0;
@@ -256,20 +256,20 @@ abbr:focus-visible::after {
 }
 .block[data-kind="heading"] {
   border-top: 2px solid currentColor;
-  padding-top: 12px;
+  padding-top: var(--sp-3);
 }
 .block[data-kind="heading"] .src {
   font-size: 1.12em;
-  margin-block: 4px;
+  margin-block: var(--sp-1);
 }
 .block[data-kind="list-item"] {
-  margin-inline-start: 12px;
+  margin-inline-start: var(--sp-3);
   border-inline-start: 2px solid currentColor;
-  padding-inline-start: 10px;
+  padding-inline-start: var(--sp-2);
 }
 .block[data-kind="table-cell"] {
   border-inline-start: 2px solid currentColor;
-  padding-inline-start: 10px;
+  padding-inline-start: var(--sp-2);
 }
 .guide-begin:disabled {
   opacity: 0.55;

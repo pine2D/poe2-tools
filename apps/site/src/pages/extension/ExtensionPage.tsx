@@ -335,7 +335,7 @@ export function ExtensionPage(): ReactElement {
           <section id="guide" aria-labelledby="guide-title">
             <h2 id="guide-title">攻略翻译</h2>
             <p>
-              在攻略页点扩展图标，再点“翻译此页”，右侧侧边栏会逐段显示中英对照，宝石、天赋、物品与机制术语按国服写法标注。
+              在攻略页点扩展图标，再点“翻译此页”，先预览正文、选区或点选区域，核对章节和用量后点“开始翻译”。译文默认放在原文旁，也可仅在侧栏阅读、定位原文或恢复页面。
             </p>
             <p>
               整段翻译需要你自备翻译服务的 Key：默认 DeepSeek，也可以填写 OpenAI
