@@ -219,3 +219,25 @@ it('超长选区提示置顶后也随原文失效清理，不永久占用名额'
     vi.useRealTimers()
   }
 })
+
+it('完成后复制/置顶/关闭是有中文名称的统一 SVG，译文在原文折叠之前', async () => {
+  const { root } = setup()
+  required(root.querySelector('[data-action=translate]')).dispatchEvent(
+    trusted(new MouseEvent('click')),
+  )
+  await vi.waitFor(() => expect(root.querySelector('.output')?.textContent).toContain('继续'))
+  for (const [action, label] of [
+    ['copy', '复制译文'],
+    ['pin', '置顶译文'],
+    ['close', '关闭译文'],
+  ]) {
+    const b = required(root.querySelector(`[data-action=${action}]`))
+    expect(b.getAttribute('aria-label')).toBe(label)
+    expect(b.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+  }
+  const panel = required(root.querySelector('.panel'))
+  const children = [...panel.children]
+  expect(children.indexOf(required(root.querySelector('.output')))).toBeLessThan(
+    children.indexOf(required(root.querySelector('details'))),
+  )
+})

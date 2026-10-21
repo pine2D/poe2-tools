@@ -1,6 +1,7 @@
 import type { GuideBlock } from '@poe2-tools/guide-core'
 import { el } from '../guide/dom'
 import { TERM_STYLE, translatedText } from '../guide/translated-text'
+import { disclosure, icon, labelIcon } from '../ui/icons'
 import { captureSelection } from './capture'
 import { MAX_SELECTION_CHARS, type SelectionResult } from './protocol'
 
@@ -16,28 +17,39 @@ const ORIGIN = {
 }
 // 气泡与网页各自用色；沿用页面浅/深基调，不向原站写入全局样式或字体。
 const STYLE = `
-:host { all: initial; position: fixed; z-index: 2147483647; display: block; max-width: calc(100vw - 24px); color-scheme: light; --paper: #fffdf7; --ink: #29251e; --muted: #625747; --accent: #73501e; }
-:host([data-dark]) { color-scheme: dark; --paper: #211e18; --ink: #f0e8d9; --muted: #c2b49b; --accent: #e5bb70; }
+:host { all: initial; position: fixed; z-index: 2147483647; display: block; max-width: calc(100vw - 24px); color-scheme: light; --paper: #fffdf7; --ink: #29251e; --muted: #625747; --accent: #73501e; --hover: #eee8db; }
+:host([data-dark]) { color-scheme: dark; --paper: #211e18; --ink: #f0e8d9; --muted: #c2b49b; --accent: #e5bb70; --hover: #353026; }
 * { box-sizing: border-box; }
-.panel { width: max-content; max-width: min(400px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: auto; background: var(--paper); color: var(--ink); border-radius: 12px; box-shadow: 0 6px 28px #0003; padding: 12px; font: 15px/1.65 system-ui, sans-serif; overflow-wrap: anywhere; scrollbar-color: var(--muted) var(--paper); }
-.panel.expanded { width: 400px; }
-.bubble-head { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
-button[data-action=move] { flex: 1; border-color: transparent; padding-inline: 0; text-align: start; cursor: grab; touch-action: none; }
+.panel { width: max-content; max-width: min(420px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: auto; overflow-anchor: none; background: var(--paper); color: var(--ink); border-radius: 12px; box-shadow: 0 8px 32px #0003; padding: 8px 16px 12px; font: 15px/1.75 system-ui, sans-serif; overflow-wrap: anywhere; scrollbar-color: var(--muted) var(--paper); scrollbar-width: thin; }
+.panel.expanded { width: 420px; }
+.bubble-head { display: flex; gap: 2px; align-items: center; position: sticky; top: -8px; margin: 0 -8px 8px; padding-block: 4px; background: var(--paper); z-index: 1; }
+button[data-action=move] { flex: 1; display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; padding-inline: 8px; color: var(--muted); font-size: 13px; font-weight: 500; cursor: grab; touch-action: none; }
 button[data-action=move]:active { cursor: grabbing; }
-button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-button { appearance: none; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); border-radius: 5px; color: var(--ink); background: transparent; padding: 5px 10px; font: 600 14px/1.5 system-ui, sans-serif; cursor: pointer; min-height: 36px; }
-button[data-action=translate] { background: var(--accent); color: var(--paper); border-color: transparent; }
-button:hover { filter: brightness(1.12); }
+button { appearance: none; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; color: var(--ink); background: transparent; padding: 8px 12px; font: 500 14px/1.5 system-ui, sans-serif; cursor: pointer; min-height: 44px; }
+button.icon-button { width: 44px; height: 44px; flex: 0 0 44px; padding: 0; color: var(--muted); }
+.ui-icon { flex-shrink: 0; }
+button[aria-pressed=true] { color: var(--accent); background: var(--hover); }
+button[data-action=translate] { background: var(--accent); color: var(--paper); }
+button:hover { background: var(--hover); }
+button[data-action=translate]:hover { filter: brightness(1.12); }
 button:disabled { opacity: .6; cursor: default; }
-button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-p { margin: 10px 0; white-space: pre-wrap; }
-.source, .meta { color: var(--muted); font-size: 13px; }
-.source { max-height: 90px; overflow: auto; }
-.output { margin-block: 14px; }
-summary { cursor: pointer; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 8px; align-items: center; }
+.actions:has(button:not([hidden])) { margin-block: 8px; }
+p { margin: 0; white-space: pre-wrap; }
+.output { margin-block: 8px 12px; font-size: 16px; line-height: 1.85; }
+.source, .meta { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.source { padding-block: 4px 12px; }
+.meta { margin-block: 8px; }
+summary { min-height: 44px; display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; list-style: none; color: var(--muted); font-size: 13px; border-top: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); }
+summary::-webkit-details-marker { display: none; }
+details[open] > summary .ui-icon { transform: rotate(180deg); }
+.panel:not(.expanded) { position: relative; padding: 4px 52px 4px 8px; }
+.panel:not(.expanded) .bubble-head { position: absolute; right: 8px; top: 8px; margin: 0; padding: 0; }
+.panel:not(.expanded) button:is([data-action=move],[data-action=pin]) { display: none; }
 ::selection { background: var(--accent); color: var(--paper); }
 [hidden] { display: none !important; }
+@media (forced-colors: active) { .panel { border: 1px solid CanvasText; } button[aria-pressed=true] { outline: 2px solid Highlight; } }
 `
 
 export const MAX_BUBBLES = 6
@@ -102,6 +114,8 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     doc.documentElement.append(host)
     const rect = range?.getBoundingClientRect()
     let moved = false
+    let positioned = false
+    let expanded = false
     let validityTimer: ReturnType<typeof setInterval> | undefined
     const card: Bubble = {
       host,
@@ -116,18 +130,28 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         card.position()
       },
       position() {
+        const width = Math.min(win.innerWidth, doc.documentElement.clientWidth || win.innerWidth)
+        host.style.maxWidth = `${Math.max(1, width - 24)}px`
+        panel.style.maxWidth = `${Math.max(1, width - 24)}px`
         const size = host.getBoundingClientRect()
         const below = (rect?.bottom ?? 12) + 8
-        const x = moved
+        const wasExpanded = expanded
+        expanded = panel.classList.contains('expanded')
+        const x = positioned
           ? parseFloat(host.style.left)
           : (rect?.left ?? win.innerWidth - size.width - 20)
-        const y = moved
+        let y = positioned
           ? parseFloat(host.style.top)
           : below + size.height > win.innerHeight
             ? (rect?.top ?? below) - size.height - 8
             : below
-        host.style.left = `${Math.max(12, Math.min(x, win.innerWidth - size.width - 12))}px`
-        host.style.top = `${Math.max(12, Math.min(y, win.innerHeight - size.height - 12))}px`
+        // 首次展开为译文留足空间；之后原文/详情只在面板内生长，标题位置保持。
+        if (expanded && !wasExpanded && !moved) y = Math.min(y, win.innerHeight - 300)
+        y = Math.max(12, Math.min(y, win.innerHeight - (expanded ? 180 : 72)))
+        host.style.left = `${Math.max(12, Math.min(x, width - size.width - 12))}px`
+        host.style.top = `${y}px`
+        panel.style.maxHeight = `${Math.max(60, win.innerHeight - y - 12)}px`
+        positioned = true
       },
       close() {
         if (!cards.delete(card)) return
@@ -169,6 +193,7 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
           title: '拖动译文；聚焦后也可按方向键移动',
           'aria-label': '移动译文，使用拖动或方向键',
         },
+        icon(doc, 'move'),
         '划词译文',
       )
       let drag: { id: number; x: number; y: number; left: number; top: number } | undefined
@@ -216,15 +241,16 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         card.pinned = !card.pinned
         card.persistent = true
         pin.setAttribute('aria-pressed', String(card.pinned))
-        pin.textContent = card.pinned ? '取消置顶' : '置顶'
+        labelIcon(pin, card.pinned ? 'unpin' : 'pin', card.pinned ? '取消置顶' : '置顶译文')
         host.toggleAttribute('data-pinned', card.pinned)
         raise(card)
       })
+      labelIcon(pin, 'pin', '置顶译文')
       pin.setAttribute('aria-pressed', 'false')
       pin.title = '固定在当前网页内的其他译文气泡上方'
-      panel.append(
-        el(doc, 'div', { class: 'bubble-head' }, handle, pin, button('关闭', 'close', card.close)),
-      )
+      const close = button('关闭', 'close', card.close)
+      labelIcon(close, 'close', '关闭译文')
+      panel.append(el(doc, 'div', { class: 'bubble-head' }, handle, pin, close))
     }
     panel.append(notice)
     cards.add(card)
@@ -255,7 +281,7 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
       doc,
       'details',
       { hidden: true },
-      el(doc, 'summary', {}, `原文 · ${block.text.length} 字符`),
+      disclosure(doc, `原文 · ${block.text.length} 字符`),
       el(doc, 'p', { class: 'source' }, block.text),
     )
     const issues = el(doc, 'p', { class: 'meta', hidden: true })
@@ -264,14 +290,21 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         .then(() => win.navigator.clipboard.writeText(output.textContent ?? ''))
         .then(
           () => {
-            if (live()) status.textContent = '已复制译文。'
+            if (live()) {
+              labelIcon(copy, 'check', '已复制译文')
+              card.notify('已复制译文。')
+            }
           },
           () => {
-            if (live()) status.textContent = '复制失败，请选中译文手动复制。'
+            if (live()) card.notify('复制失败，请选中译文手动复制。')
           },
         )
     })
+    labelIcon(copy, 'copy', '复制译文')
     copy.hidden = true
+    panel.querySelector('[data-action=pin]')?.before(copy)
+    const usage = el(doc, 'p', { class: 'meta' })
+    const usageDetails = el(doc, 'details', { hidden: true }, disclosure(doc, '翻译详情'), usage)
     const cancel = button('取消', 'cancel', () => {
       abort?.abort()
       abort = null
@@ -320,7 +353,9 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
               output.replaceChildren(translatedText(doc, result.text, result.terms))
               output.hidden = false
               copy.hidden = false
-              status.textContent = [ORIGIN[result.origin], result.message, result.usage]
+              usage.textContent = result.usage
+              usageDetails.hidden = !result.usage
+              status.textContent = [ORIGIN[result.origin], result.message]
                 .filter(Boolean)
                 .join(' · ')
               issues.textContent = result.issues.length
@@ -351,11 +386,12 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         })
     })
     panel.append(
-      el(doc, 'div', { class: 'actions' }, start, cancel, copy),
-      source,
-      status,
+      el(doc, 'div', { class: 'actions' }, start, cancel),
       output,
+      status,
       issues,
+      source,
+      usageDetails,
     )
     position()
     return card

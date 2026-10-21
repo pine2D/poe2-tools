@@ -217,6 +217,12 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     doc,
     'section',
     { class: 'guide-settings', hidden: true },
+    el(
+      doc,
+      'a',
+      { href: 'sites.html', target: '_blank', class: 'site-settings-link' },
+      '管理自动划词站点',
+    ),
     el(doc, 'h1', {}, '攻略翻译设置'),
     form,
   )

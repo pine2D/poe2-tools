@@ -26,8 +26,8 @@ export function chapterPicker(
   const blocks = guide.blocks.filter((b) => stage === null || !b.stageId || b.stageId === stage)
   const groups = scopeChapters(blocks)
   const chosen = new Set(selected)
-  const details = el(doc, 'details', { class: 'guide-chapters' })
-  details.append(el(doc, 'summary', {}, `章节范围 · ${groups.length} 节（点击调整）`))
+  const details = el(doc, 'div', { class: 'guide-chapters' })
+  details.append(el(doc, 'p', { class: 'chapter-label' }, `选择章节 · ${groups.length} 节`))
   const checks: { input: HTMLInputElement; ids: string[] }[] = []
   const emit = () => change(checks.flatMap((c) => (c.input.checked ? c.ids : [])))
   for (const group of groups) {
@@ -46,6 +46,7 @@ export function chapterPicker(
     checks.push({ input, ids: group.ids })
     details.append(row)
   }
+  const actions = el(doc, 'div', { class: 'chapter-actions' })
   for (const [label, value] of [
     ['全选', true],
     ['全不选', false],
@@ -55,7 +56,8 @@ export function chapterPicker(
       for (const c of checks) c.input.checked = value
       emit()
     })
-    details.append(button)
+    actions.append(button)
   }
+  details.append(actions)
   return details
 }

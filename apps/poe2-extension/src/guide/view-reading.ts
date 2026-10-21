@@ -6,6 +6,7 @@ import {
 } from '@poe2-tools/guide-core'
 import type { PageResult } from '../extract/inline'
 import type { ReadingMode } from '../extract/session'
+import { disclosure, labelIcon } from '../ui/icons'
 import { annotate } from './annotate'
 import type { ReadScope } from './controller'
 import { el } from './dom'
@@ -95,27 +96,43 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     return b
   }
   const scopeText = el(doc, 'p', { class: 'guide-scope' })
-  const scopeChoice = el(doc, 'select', { 'aria-label': '读取范围' })
+  const scopeChoice = el(doc, 'div', {
+    class: 'scope-choices',
+    role: 'group',
+    'aria-label': '读取范围',
+  })
   for (const [value, text] of [
     ['full', '整页正文'],
     ['selection', '选中文字'],
     ['region', '点选区域'],
-  ])
-    scopeChoice.append(el(doc, 'option', { value }, text))
-  scopeChoice.addEventListener('change', () => h.onScope(scopeChoice.value as ReadScope))
+  ] as const) {
+    const button = btn(text, () => h.onScope(value))
+    button.dataset.scope = value
+    scopeChoice.append(button)
+  }
   let mode: ReadingMode = 'inline'
   let lastProgress: ReadingProgress | null = null
-  const modeChoice = el(doc, 'select', { 'aria-label': '阅读位置' })
-  modeChoice.append(
-    el(doc, 'option', { value: 'inline' }, '原文旁对照'),
-    el(doc, 'option', { value: 'sidebar' }, '仅侧栏'),
-  )
-  modeChoice.addEventListener('change', () => {
-    mode = modeChoice.value as ReadingMode
-    mountBlocks()
-    refreshSummary()
-    h.onMode(mode)
+  const modeChoice = el(doc, 'div', {
+    class: 'reading-mode',
+    role: 'group',
+    'aria-label': '阅读位置',
   })
+  for (const [value, label] of [
+    ['inline', '原文旁对照'],
+    ['sidebar', '仅侧栏'],
+  ] as const) {
+    const button = btn(label, () => {
+      mode = value
+      for (const b of modeChoice.querySelectorAll('button'))
+        b.setAttribute('aria-pressed', String(b.dataset.mode === value))
+      mountBlocks()
+      refreshSummary()
+      h.onMode(mode)
+    })
+    button.dataset.mode = value
+    button.setAttribute('aria-pressed', String(value === mode))
+    modeChoice.append(button)
+  }
   const begin = btn('开始翻译', () => h.onBegin())
   begin.classList.add('guide-begin')
   begin.classList.remove('pt-btn--quiet')
@@ -146,34 +163,35 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     doc,
     'details',
     { class: 'guide-options' },
-    el(doc, 'summary', {}, '调整翻译范围'),
-    scopeChoice,
-    scopeText,
-    chapters,
+    disclosure(doc, '翻译范围'),
+    el(doc, 'div', { class: 'scope-content' }, scopeChoice, scopeText, chapters),
   )
-  const more = el(
-    doc,
-    'details',
-    { class: 'guide-more' },
-    el(doc, 'summary', {}, '更多操作'),
-    el(
-      doc,
-      'div',
-      { class: 'guide-actions' },
-      btn('重新读取', () => h.onReload()),
-      btn('恢复原文', () => h.onRestore()),
-      btn('设置', () => h.onSettings()),
-    ),
-  )
+  const reload = btn('重新读取', () => h.onReload())
+  labelIcon(reload, 'reload', '重新读取当前页')
+  const settings = btn('设置', () => h.onSettings())
+  labelIcon(settings, 'settings', '设置翻译服务')
+  const restore = btn('恢复原文', () => h.onRestore())
+  restore.classList.add('guide-restore')
+  const progressMeter = el(doc, 'progress', {
+    class: 'guide-meter',
+    max: '100',
+    value: '0',
+    'aria-label': '翻译进度',
+  })
   const header = el(
     doc,
     'header',
     { class: 'guide-header' },
-    title,
-    site,
-    el(doc, 'div', { class: 'guide-actions' }, modeChoice, options),
+    el(doc, 'div', { class: 'guide-taskbar' }, begin, stop, reload, settings),
+    progressMeter,
     progress,
-    el(doc, 'div', { class: 'guide-actions' }, begin, stop, more),
+  )
+  const documentHeader = el(doc, 'div', { class: 'guide-document-header' }, title, site)
+  const usageDetails = el(
+    doc,
+    'details',
+    { class: 'guide-usage-details' },
+    disclosure(doc, '用量详情'),
     usage,
   )
 
@@ -219,22 +237,18 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
   const list = el(doc, 'div', { class: 'guide-blocks' })
   const directory = el(doc, 'nav', { class: 'guide-directory', 'aria-label': '正文目录' })
   const directoryItems = el(doc, 'div', { class: 'guide-directory-items' })
-  const directoryBox = el(
-    doc,
-    'details',
-    { open: true },
-    el(doc, 'summary', {}, '目录'),
-    directoryItems,
-  )
+  const directoryBox = el(doc, 'details', {}, disclosure(doc, '目录'), directoryItems)
   directory.append(directoryBox)
   const placement = el(doc, 'p', { class: 'guide-placement' })
   const exceptions = el(doc, 'details', { class: 'guide-exceptions' })
-  const exceptionSummary = el(doc, 'summary', {}, '异常与保留 0')
+  const exceptionSummary = disclosure(doc, '异常与保留 0')
   const exceptionItems = el(doc, 'div', { class: 'guide-exception-items' })
   exceptions.append(exceptionSummary, exceptionItems)
   const currentLabel = el(doc, 'h2', { class: 'guide-current-title' }, '当前段')
   const previous = btn('上一段', () => move(-1))
   const next = btn('下一段', () => move(1))
+  labelIcon(previous, 'previous', '上一段')
+  labelIcon(next, 'next', '下一段')
   const currentBar = el(
     doc,
     'div',
@@ -259,9 +273,12 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     'main',
     { class: 'guide' },
     el(doc, 'style', {}, TERM_STYLE),
-    header,
-    intro,
+    documentHeader,
     banner,
+    header,
+    modeChoice,
+    options,
+    intro,
     askBox,
     stagesBar,
     directory,
@@ -269,6 +286,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     exceptions,
     currentBar,
     list,
+    el(doc, 'div', { class: 'guide-bottom' }, restore, usageDetails),
     footer,
   )
 
@@ -388,7 +406,8 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       rows.push(button)
     }
     placement.textContent = `${mode === 'sidebar' ? '可在原文旁显示' : '原文旁'} ${inline} · 仅侧栏 ${fallback}${stale ? ` · 位置失效 ${stale}` : ''}`
-    exceptionSummary.textContent = `异常与保留 ${rows.length}`
+    const countLabel = exceptionSummary.querySelector('span')
+    if (countLabel) countLabel.textContent = `异常与保留 ${rows.length}`
     exceptions.hidden = rows.length === 0
     exceptionItems.replaceChildren(...rows)
   }
@@ -415,11 +434,10 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         guide.diagnostics?.length ? '提取达到长度或段数上限，部分内容未完整读取；请缩小选区' : '',
       ].filter(Boolean)
       site.textContent = [new URL(guide.source.url).hostname, ...notes].join(' · ')
-      scopeChoice.value = guide.source.scope
+      for (const button of scopeChoice.querySelectorAll('button'))
+        button.setAttribute('aria-pressed', String(button.dataset.scope === guide.source.scope))
       scopeText.textContent = `${{ full: '当前页正文', selection: '仅选中文字', region: '仅点选区域' }[guide.source.scope]} · 仅已加载的可访问正文，不含隐藏/折叠内容和子页`
-      const wasOpen = chapters.querySelector('details')?.open ?? false
       const picker = chapterPicker(doc, guide, stageId, selectedIds, h.onSelection)
-      picker.open = wasOpen
       chapters.replaceChildren(picker)
       stagesBar.replaceChildren()
       stageButtons.clear()
@@ -479,11 +497,15 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           try {
             if (!navigator.clipboard) throw Error('clipboard unavailable')
             await navigator.clipboard.writeText(dst.textContent ?? '')
-            copy.textContent = '已复制'
+            labelIcon(copy, 'check', '已复制译文')
+            itemCopyStatus.textContent = '已复制译文。'
           } catch {
-            copy.textContent = '复制失败，请选中文字复制'
+            itemCopyStatus.textContent = '复制失败，请选中文字复制。'
           }
         })
+        const itemCopyStatus = el(doc, 'span', { class: 'copy-feedback', role: 'status' })
+        labelIcon(copy, 'copy', '复制译文')
+        labelIcon(retry, 'reload', '重新翻译此段')
         const level = b.processing?.structure?.headingLevel ?? 2
         const src = el(doc, b.kind === 'heading' ? 'h3' : 'p', { class: 'src', lang: 'en' })
         if (b.kind === 'heading') src.setAttribute('aria-level', String(level))
@@ -500,7 +522,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           status,
           issues,
           page,
-          el(doc, 'div', { class: 'block-actions' }, locate, copy, retry),
+          el(doc, 'div', { class: 'block-actions' }, locate, copy, retry, itemCopyStatus),
         )
         const structure = b.processing?.structure
         if (structure?.listId) node.dataset.list = structure.listId
@@ -561,7 +583,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       item.issues.replaceChildren()
       item.issues.hidden = issueList.length === 0
       if (issueList.length) {
-        item.issues.append(el(doc, 'summary', {}, `核对提示 ${issueList.length} 条`))
+        item.issues.append(disclosure(doc, `核对提示 ${issueList.length} 条`))
         for (const i of issueList) item.issues.append(el(doc, 'p', {}, i.detail))
       }
       refreshSummary()
@@ -596,6 +618,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       banner.dataset.kind = kind
       bannerText.textContent = message
       bannerAction.hidden = kind !== 'setup'
+      begin.hidden = kind === 'setup'
     },
     ask(message, okLabel, signal) {
       // 同一时间只有一个确认框：旧的先按取消结束，避免其 Promise 永远挂起
@@ -647,8 +670,11 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     },
     setProgress(value) {
       lastProgress = value
+      progressMeter.max = Math.max(1, value.selected)
+      progressMeter.value = value.completed + value.preserved
       updateBegin()
-      progress.textContent = `已选 ${value.selected} 段 / ${value.characters} 字 · 完成 ${value.completed} · 失败 ${value.failed} · 原样保留 ${value.preserved}`
+      progress.textContent = `完成 ${value.completed} / ${value.selected} 段${value.failed ? ` · ${value.failed} 段失败` : ''}${value.preserved ? ` · ${value.preserved} 段保留原文` : ''}`
+      progress.title = `已选 ${value.selected} 段 / ${value.characters} 字`
     },
     setPageState(id, result) {
       const item = items.get(id)

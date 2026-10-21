@@ -30,6 +30,11 @@ async function fixture(terms) {
     'package.json': JSON.stringify({ version: manifest.version }),
     'dist/manifest.json': JSON.stringify(manifest),
     'dist/content.js': 'void 0;',
+    'dist/sites.html':
+      '<link rel="stylesheet" href="./assets/sites-test.css"><script src="./assets/sites-test.js"></script>',
+    'dist/assets/sites-test.css': '',
+    'dist/assets/sites-test.js': '',
+    'dist/Lucide-LICENSE.txt': 'ISC License Cole Bemis',
     'dist/selection.js': 'void 0;',
     'dist/background.js': 'void 0;',
     'dist/popup.html':

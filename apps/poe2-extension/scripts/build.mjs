@@ -84,6 +84,21 @@ await build({
     rollupOptions: { input: path.join(root, 'guide.html') },
   },
 })
+await build({
+  configFile: false,
+  root,
+  base: './',
+  publicDir: false,
+  build: {
+    outDir: 'dist',
+    emptyOutDir: false,
+    rollupOptions: { input: path.join(root, 'sites.html') },
+  },
+})
+await copyFile(
+  path.join(root, 'node_modules/lucide/LICENSE'),
+  path.join(root, 'dist/Lucide-LICENSE.txt'),
+)
 const manifest = JSON.parse(await readFile(path.join(root, 'manifest.json'), 'utf8'))
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'))
 if (manifest.version !== pkg.version) throw new Error('扩展版本不一致')

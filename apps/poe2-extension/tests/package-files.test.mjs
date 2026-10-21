@@ -27,6 +27,11 @@ async function fixture() {
     'popup.html':
       '<script src="./assets/popup-test.js"></script><link href="./assets/popup-test.css">',
     'content.js': 'void 0;',
+    'sites.html':
+      '<link href="./assets/sites-test.css"><script src="./assets/sites-test.js"></script>',
+    'assets/sites-test.css': '',
+    'assets/sites-test.js': '',
+    'Lucide-LICENSE.txt': 'ISC License Cole Bemis',
     'selection.js': 'void 0;',
     'background.js': 'void 0;',
     'assets/popup-test.js': 'void 0;',

@@ -222,3 +222,103 @@ it('同页多个气泡各占一个请求，全局最多四个；单独取消与�
   expect(signals.map((s) => s.aborted)).toEqual([true, true, true, true, false])
   otherTab.cancel()
 })
+
+describe('自动站点授权与临时关闭', () => {
+  function automaticFixture() {
+    const base = fixture()
+    let grant: string | null = null,
+      url: string | null = null,
+      paused: string | null = null,
+      allowed = true
+    const deps = {
+      ...base.deps,
+      getGrant: async () => grant,
+      setGrant: async (_id: number, id: string | null, auto?: string) => {
+        grant = id
+        url = auto ?? null
+      },
+      automatic: {
+        allowed: vi.fn(async () => allowed),
+        getUrl: async () => url,
+        getPaused: async () => paused,
+        setPaused: async (_id: number, id: string | null) => {
+          paused = id
+        },
+      },
+    }
+    return {
+      deps,
+      broker: createSelectionBroker(deps),
+      deny() {
+        allowed = false
+      },
+      grant: () => grant,
+    }
+  }
+  it('刷新自动注入无需弹窗、重复事件不销毁气泡，不发模型请求', async () => {
+    const f = automaticFixture()
+    await f.broker.automatic(2)
+    await f.broker.automatic(2)
+    expect(f.grant()).toBe('doc1')
+    expect(f.deps.inject).toHaveBeenCalledTimes(1)
+    expect(f.deps.run).not.toHaveBeenCalled()
+  })
+  it('关闭本页在当前文档保持，导航后按站点设置恢复', async () => {
+    const f = automaticFixture()
+    await f.broker.automatic(2)
+    await f.broker.control(
+      { type: 'selection-disable', tabId: 2 },
+      { id: 'own', url: f.deps.popupUrl },
+    )
+    await f.broker.automatic(2)
+    expect(f.grant()).toBeNull()
+    expect(f.deps.inject).toHaveBeenCalledTimes(1)
+    await f.broker.removed(2)
+    f.deps.probe = async () => ({ documentId: 'doc2', url: 'https://example.com/a' })
+    await f.broker.automatic(2)
+    expect(f.deps.inject).toHaveBeenCalledTimes(2)
+  })
+  it('撤权/退出目录撤销自动授权并销毁气泡，后台恢复后仍重新检查权限', async () => {
+    const f = automaticFixture()
+    await f.broker.automatic(2)
+    f.deny()
+    await f.broker.automatic(2)
+    expect(f.grant()).toBeNull()
+    expect(f.deps.disable).toHaveBeenCalledWith(2, 'doc1')
+    await createSelectionBroker(f.deps).automatic(2)
+    expect(f.deps.inject).toHaveBeenCalledTimes(1)
+  })
+  it('撤权后 probe 失败仍可取消授权，通过消息清理原内容脚本', async () => {
+    const f = automaticFixture()
+    await f.broker.automatic(2)
+    f.deps.probe = async () => {
+      throw Error('no host permission')
+    }
+    await f.broker.automatic(2)
+    expect(f.grant()).toBeNull()
+    expect(f.deps.disable).toHaveBeenCalledWith(2, 'doc1')
+  })
+  it('导航加载取消后同一文档继续保持关闭，后台重建不清除暂停', async () => {
+    const f = automaticFixture()
+    await f.broker.automatic(2)
+    await f.broker.control(
+      { type: 'selection-disable', tabId: 2 },
+      { id: 'own', url: f.deps.popupUrl },
+    )
+    await f.broker.removed(2)
+    await createSelectionBroker(f.deps).automatic(2)
+    expect(f.grant()).toBeNull()
+    expect(f.deps.inject).toHaveBeenCalledTimes(1)
+  })
+  it('自动模式权限变化不取消手动启用的当前页', async () => {
+    const f = automaticFixture()
+    await f.broker.control(
+      { type: 'selection-enable', tabId: 2 },
+      { id: 'own', url: f.deps.popupUrl },
+    )
+    f.deny()
+    await f.broker.automatic(2)
+    expect(f.grant()).toBe('doc1')
+    expect(f.deps.disable).not.toHaveBeenCalled()
+  })
+})

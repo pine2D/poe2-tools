@@ -25,10 +25,16 @@ export interface BrokerDeps {
   extensionId: string
   popupUrl: string
   getGrant(tabId: number): Promise<string | null>
-  setGrant(tabId: number, documentId: string | null): Promise<void>
+  setGrant(tabId: number, documentId: string | null, automaticUrl?: string): Promise<void>
   probe(tabId: number): Promise<{ documentId: string; url: string }>
   inject(tabId: number, documentId: string): Promise<void>
   disable(tabId: number, documentId: string): Promise<void>
+  automatic?: {
+    allowed(url: string): Promise<boolean>
+    getUrl(tabId: number): Promise<string | null>
+    getPaused(tabId: number): Promise<string | null>
+    setPaused(tabId: number, documentId: string | null): Promise<void>
+  }
   run(block: GuideBlock, signal: AbortSignal): Promise<SelectionResult>
 }
 const tabNumber = (id: unknown): id is number =>
@@ -85,10 +91,12 @@ export function createSelectionBroker(deps: BrokerDeps) {
         revoke(tabId)
         cancel(tabId)
         if (m.type === 'selection-disable') {
+          await deps.automatic?.setPaused(tabId, page.documentId)
           await deps.setGrant(tabId, null)
           await deps.disable(tabId, page.documentId)
           return { ok: true, enabled: false }
         }
+        await deps.automatic?.setPaused(tabId, null)
         await deps.setGrant(tabId, page.documentId)
         try {
           await deps.inject(tabId, page.documentId)
@@ -125,7 +133,10 @@ export function createSelectionBroker(deps: BrokerDeps) {
     }
     const revision = revisions.get(tabId) ?? 0
     const authorized = deps.getGrant(tabId).then(
-      (id) => id === sender.documentId,
+      async (id) =>
+        id === sender.documentId &&
+        (!(await deps.automatic?.getUrl(tabId)) ||
+          (await deps.automatic?.allowed(sender.url ?? ''))),
       () => false,
     )
     let closed = false,
@@ -215,10 +226,72 @@ export function createSelectionBroker(deps: BrokerDeps) {
   return {
     control,
     connect,
-    async removed(tabId: number) {
+    // 仅后台事件调用；站点白名单和 Chrome 实际权限均通过才注入。
+    async automatic(tabId: number) {
+      const previous = controls.get(tabId)
+      const task = (async () => {
+        await previous
+        const auto = deps.automatic
+        if (!auto) return
+        const oldUrl = await auto.getUrl(tabId)
+        let page: { documentId: string; url: string }
+        try {
+          page = await deps.probe(tabId)
+        } catch {
+          if (oldUrl) {
+            revoke(tabId)
+            cancel(tabId)
+            const grant = await deps.getGrant(tabId)
+            await deps.setGrant(tabId, null)
+            if (grant) await deps.disable(tabId, grant).catch(() => {})
+          }
+          return
+        }
+        if (!webPage(page.url) || !(await auto.allowed(page.url))) {
+          if (oldUrl) {
+            revoke(tabId)
+            cancel(tabId)
+            await deps.setGrant(tabId, null)
+            await deps.disable(tabId, page.documentId).catch(() => {})
+          }
+          return
+        }
+        if (
+          (await auto.getPaused(tabId)) === page.documentId ||
+          (await deps.getGrant(tabId)) === page.documentId
+        )
+          return
+        revoke(tabId)
+        cancel(tabId)
+        await deps.setGrant(tabId, page.documentId, page.url)
+        try {
+          await deps.inject(tabId, page.documentId)
+        } catch {
+          await deps.setGrant(tabId, null)
+        }
+      })()
+      controls.set(tabId, task)
+      try {
+        await task
+      } finally {
+        if (controls.get(tabId) === task) controls.delete(tabId)
+      }
+    },
+    async removed(tabId: number, closed = false) {
       revoke(tabId)
       cancel(tabId)
-      await deps.setGrant(tabId, null)
+      const previous = controls.get(tabId)
+      const task = (async () => {
+        await previous
+        await deps.setGrant(tabId, null)
+        if (closed) await deps.automatic?.setPaused(tabId, null)
+      })()
+      controls.set(tabId, task)
+      try {
+        await task
+      } finally {
+        if (controls.get(tabId) === task) controls.delete(tabId)
+      }
     },
   }
 }

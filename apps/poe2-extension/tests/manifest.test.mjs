@@ -13,6 +13,8 @@ const manifest = {
   description: '非官方扩展：为新版 Craft of Exile 的 PoE2 页面提供国服简体术语显示。',
   minimum_chrome_version: '116',
   permissions: ['storage', 'activeTab', 'scripting', 'sidePanel'],
+  optional_host_permissions: ['https://*/*', 'http://*/*'],
+  options_page: 'sites.html',
   content_security_policy: {
     extension_pages:
       "script-src 'self'; object-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
@@ -74,23 +76,16 @@ it('权限必须恰为 storage、activeTab、scripting、sidePanel；tabs 与额
     )
 })
 
-it('入库 manifest.json 的 permissions 恰为四项，没有 host 与可选权限', () => {
+it('入库 manifest.json 的 permissions 恰为四项，没有强制 host 权限，可选 host 仅按站点请求', () => {
   const real = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'))
   expect(real.permissions).toEqual(['storage', 'activeTab', 'scripting', 'sidePanel'])
   expect(real.host_permissions).toBeUndefined()
   expect(real.optional_permissions).toBeUndefined()
-  expect(real.optional_host_permissions).toBeUndefined()
+  expect(real.optional_host_permissions).toEqual(['https://*/*', 'http://*/*'])
 })
 
 it('后台入口固定，禁止侧边栏全局面板、快捷键与选项页；CSP 与最低版本必须精确', () => {
-  for (const field of [
-    'side_panel',
-    'commands',
-    'options_ui',
-    'options_page',
-    'sandbox',
-    'chrome_url_overrides',
-  ])
+  for (const field of ['side_panel', 'commands', 'options_ui', 'sandbox', 'chrome_url_overrides'])
     expect(() => validateManifest({ ...manifest, [field]: {} }, '0.1.0')).toThrow(`不允许 ${field}`)
   expect(() => validateManifest({ ...manifest, minimum_chrome_version: '120' }, '0.1.0')).toThrow(
     '最低 Chrome 版本不符合约定',
@@ -151,4 +146,13 @@ it('后台只能使用包内固定入口，不允许静默移除或替换', () =
     { scripts: ['background.js'] },
   ])
     expect(() => validateManifest({ ...manifest, background }, '0.1.0')).toThrow('后台入口')
+})
+
+it('禁止增加其他可选权限或替换站点设置入口', () => {
+  for (const change of [
+    { optional_host_permissions: ['<all_urls>'] },
+    { options_page: 'remote.html' },
+    { optional_permissions: ['tabs'] },
+  ])
+    expect(() => validateManifest({ ...manifest, ...change }, '0.1.0')).toThrow()
 })

@@ -41,7 +41,7 @@ async function loadLexiconModule() {
 }
 
 // 弹窗里唯一允许的外链：“检查更新”打开网站介绍页（只是导航，扩展不发请求）
-export const POPUP_LINKS = ['https://poe2-tools.pine2d.com/extension/']
+export const POPUP_LINKS = ['sites.html', 'https://poe2-tools.pine2d.com/extension/']
 // 下面识别引用属性的口径一致：属性名前只要不是字母、数字、_、-（空白、引号、/、: 都算），等号两侧可有空白，
 // 这样 src = "…"、id="x"href="…"、<a/href="…">、xlink:href="…" 都会被识别。
 // src/href 以外能让页面发请求的属性，弹窗里一律不允许
@@ -250,17 +250,20 @@ export function validateManifest(m, version) {
   for (const field of [
     'host_permissions',
     'optional_permissions',
-    'optional_host_permissions',
     'externally_connectable',
     'devtools_page',
     'side_panel',
     'commands',
     'options_ui',
-    'options_page',
     'sandbox',
     'chrome_url_overrides',
   ])
     if (m[field]) throw new Error(`不允许 ${field}`)
+  if (
+    !same(m.optional_host_permissions, ['https://*/*', 'http://*/*']) ||
+    m.options_page !== 'sites.html'
+  )
+    throw new Error('划词可选权限或设置入口不符合约定')
   if (!same(m.background, { service_worker: 'background.js' }))
     throw new Error('后台入口不符合约定')
   const icons = Object.fromEntries(
@@ -345,6 +348,21 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   )
   const guideStats = JSON.parse(await readFile(path.join(dist, 'assets/guide-stats.json'), 'utf8'))
   validateGuideStats(guideStats)
+  const siteResources = popupReferences(await readFile(path.join(dist, 'sites.html'), 'utf8'))
+  if (
+    siteResources.length !== 2 ||
+    !siteResources.some((f) => /^assets\/sites-[\w-]+\.js$/.test(f)) ||
+    !siteResources.some((f) => /^assets\/sites-[\w-]+\.css$/.test(f))
+  )
+    throw new Error('划词设置资源集合不符合约定')
+  for (const f of siteResources.filter((f) => f.endsWith('.css'))) {
+    const css = await readFile(path.join(dist, f), 'utf8')
+    if (popupStyleExternal(css).length || popupFontReferences(css, f).length)
+      throw new Error('划词设置含外部资源或字体')
+  }
+  const iconLicense = await readFile(path.join(dist, 'Lucide-LICENSE.txt'), 'utf8')
+  if (!iconLicense.includes('ISC License') || !iconLicense.includes('Cole Bemis'))
+    throw new Error('缺少 Lucide / Feather 图标许可')
   const popup = await readFile(path.join(dist, 'popup.html'), 'utf8')
   const popupResources = popupReferences(popup)
   const popupFonts = []
@@ -391,6 +409,9 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     'selection.js',
     'background.js',
     'guide.html',
+    'sites.html',
+    'Lucide-LICENSE.txt',
+    ...siteResources,
     'assets/guide-dictionary.json',
     'assets/guide-stats.json',
     ...guideResources,

@@ -13,7 +13,7 @@ const ASSETS =
 const UPDATE = `<a id="check-update" href="${POPUP_LINKS[0]}" target="_blank" rel="noopener noreferrer">检查更新</a>`
 
 it('只接受包内 assets 资源与“检查更新”链接', () => {
-  expect(POPUP_LINKS).toEqual(['https://poe2-tools.pine2d.com/extension/'])
+  expect(POPUP_LINKS).toEqual(['sites.html', 'https://poe2-tools.pine2d.com/extension/'])
   expect(popupReferences(`${ASSETS}${UPDATE}`)).toEqual([
     'assets/popup-a1.js',
     'assets/popup-b2.css',

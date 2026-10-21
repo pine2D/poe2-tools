@@ -76,10 +76,9 @@ describe('createReadingView', () => {
     expect(term?.getAttribute('tabindex')).toBe('0')
     expect(document.querySelector('abbr')?.getAttribute('title')).toBe('Energy Shield，能量护盾')
     expect(document.querySelector('img')).toBeNull()
-    const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+    const mode = document.querySelector<HTMLButtonElement>('.reading-mode [data-mode=sidebar]')
     if (!mode) throw Error('missing mode')
-    mode.value = 'sidebar'
-    mode.dispatchEvent(new Event('change'))
+    mode.click()
     v.showStage('s2')
     expect(document.querySelector('[data-id="b1"] .src')?.textContent).toBe(
       '<img src=x onerror=alert(1)>',
@@ -218,20 +217,19 @@ it('范围和阅读位置独立操作，开始按钮受预览和忙碌状态控�
   v.setBusy(true)
   expect(begin?.disabled).toBe(true)
   v.setBusy(false)
-  const scope = document.querySelector<HTMLSelectElement>('select[aria-label="读取范围"]')
+  const scope = document.querySelector<HTMLButtonElement>('[data-scope=selection]')
   if (!scope) throw Error('missing scope')
-  scope.value = 'selection'
-  scope.dispatchEvent(new Event('change'))
+  scope.click()
   expect(h.onScope).toHaveBeenCalledWith('selection')
-  const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  const mode = document.querySelector<HTMLButtonElement>('.reading-mode [data-mode=sidebar]')
   if (!mode) throw Error('missing mode')
-  mode.value = 'sidebar'
-  mode.dispatchEvent(new Event('change'))
+  mode.click()
   expect(h.onMode).toHaveBeenCalledWith('sidebar')
   document.querySelector<HTMLButtonElement>('.locate-block')?.click()
   expect(h.onLocate).toHaveBeenCalledWith('b0')
   v.setProgress({ selected: 2, completed: 1, failed: 0, preserved: 1, characters: 80 })
-  expect(document.querySelector('.guide-progress')?.textContent).toContain('已选 2 段 / 80 字')
+  expect(document.querySelector('.guide-progress')?.textContent).toContain('完成 1 / 2 段')
+  expect(document.querySelector('.guide-progress')?.getAttribute('title')).toBe('已选 2 段 / 80 字')
   expect(document.querySelector('.guide-scope')?.textContent).toContain('不含隐藏/折叠内容和子页')
 })
 
@@ -296,10 +294,9 @@ it('侧栏保留列表与表格行列，标题保持层级', async () => {
     resolve: () => ({ status: 'unmatched', text: null, candidates: [] }),
   })
   v.showDocument({ ...doc, blocks, stages: [] }, prepared, null)
-  const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  const mode = document.querySelector<HTMLButtonElement>('.reading-mode [data-mode=sidebar]')
   if (!mode) throw Error('missing mode')
-  mode.value = 'sidebar'
-  mode.dispatchEvent(new Event('change'))
+  mode.click()
   expect(document.querySelector('[data-id="h"] [aria-level="2"]')).not.toBeNull()
   expect(document.querySelector('ul li [data-id="l"]')).not.toBeNull()
   const rows = document.querySelectorAll('.guide-table tr')
@@ -342,6 +339,16 @@ it('原文旁工作区只挂载当前段，目录与异常跳转不发翻译请�
   v.setPageState('p30', { state: 'located', message: '已定位原文' })
   expect(document.querySelector('.guide-placement')?.textContent).toContain('仅侧栏 1')
 })
+it('目录默认收起，用户展开后译文更新保留展开状态', () => {
+  const { v } = mount()
+  const directory = document.querySelector<HTMLDetailsElement>('.guide-directory details')
+  expect(directory?.open).toBe(false)
+  if (!directory) throw Error('缺少目录')
+  directory.open = true
+  v.setTranslation('b0', '配合 ES 使用瘟疫。', 'engine', [])
+  expect(directory.open).toBe(true)
+})
+
 it('完成状态禁用主操作且用量位于工具区，确认可 Esc 取消并返回焦点', async () => {
   const { v } = mount()
   v.setReady(true)
@@ -350,8 +357,8 @@ it('完成状态禁用主操作且用量位于工具区，确认可 Esc 取消�
   expect(begin?.disabled).toBe(true)
   expect(begin?.textContent).toBe('翻译完成')
   v.setUsage('预计用量')
-  expect(document.querySelector('.guide-header .guide-usage')?.textContent).toBe('预计用量')
-  const focus = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  expect(document.querySelector('.guide-usage-details .guide-usage')?.textContent).toBe('预计用量')
+  const focus = document.querySelector<HTMLButtonElement>('.reading-mode [data-mode=inline]')
   focus?.focus()
   const answer = v.ask('确认', '继续')
   document
@@ -368,11 +375,10 @@ it('仅侧栏跳转按当前工具栏高度留位，展开范围后重新测量'
     doc.blocks.map((b) => prepareBlock(b, matcher)),
     null,
   )
-  const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  const mode = document.querySelector<HTMLButtonElement>('.reading-mode [data-mode=sidebar]')
   const header = document.querySelector<HTMLElement>('.guide-header')
   if (!mode || !header) throw new Error('缺少阅读控件')
-  mode.value = 'sidebar'
-  mode.dispatchEvent(new Event('change'))
+  mode.click()
   v.setBlockState('b1', 'missing')
   const target = document.querySelector<HTMLElement>('[data-id="b1"]')
   const issue = document.querySelector<HTMLButtonElement>('.guide-exceptions [data-target="b1"]')
