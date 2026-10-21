@@ -746,3 +746,27 @@ it('制作搜索保留固定数字语义，仅模板占位符匹配原生数值�
     expect(buttons[0]?.textContent).toContain('Gain 1 Charge')
   }
 })
+
+it('转义换行候选可用中文检索，提交原站能匹配的英文片段且不改 search', () => {
+  const en = '#% chance to gain an additional Infusion'
+  const raw = String.raw`suffix#% chance to gain an\nadditional Infusion`
+  document.body.innerHTML = `<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><div class="editing"><input type="text"></div><li search="${raw}"></li></div></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  const lexicon = createLexicon([
+    {
+      id: 'infusion',
+      en,
+      zh: '额外获得灌注的几率 #%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  stop = attachSearch(document, lexicon)
+  type(input, '灌注')
+  const button = document.querySelector('[data-poe2-l10n] button') as HTMLButtonElement
+  expect(button).not.toBeNull()
+  button.click()
+  expect(input.value).toBe(String.raw`#% chance to gain an\nadditional infusion`)
+  expect(document.querySelector('li')?.getAttribute('search')).toBe(raw)
+})

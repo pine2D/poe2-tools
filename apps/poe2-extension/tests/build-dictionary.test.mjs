@@ -29,6 +29,10 @@ async function fixture() {
     _meta: { source: 'synthetic', updatedAt: 'test' },
     entries: { 'zh-CN': [], 'zh-TW': [] },
   })
+  await put('data/l10n/coe-beta/display-stats.zh-CN.json', {
+    _meta: { tier: 'manual', purpose: 'display-only', source: 'synthetic', updatedAt: 'test' },
+    entries: [],
+  })
   await put('data/l10n/coe-beta/stat-variants.zh-CN.json', {
     _meta: { source: 'synthetic', updatedAt: 'test', gameVersion: 'test' },
     entries: [],
@@ -179,4 +183,19 @@ it('原始词缀中的全部特殊分类与渎灵名称用于菜单显示和中�
     expect(lex.search(zh, 'ui').some((c) => c.term.en === en)).toBe(true)
   }
   expect(lex.translate('Prefix modifier "Rotund"', 'ui')).toBe('前缀属性 "丰腴的"')
+})
+
+it('实际四条人工持续伤害展示翻译独立登记，不能流入导入词典', async () => {
+  const root = path.resolve(import.meta.dirname, '../../..')
+  const out = await mkdtemp(path.join(tmpdir(), 'display-stats-'))
+  roots.push(out)
+  const dict = await buildDictionary(root, path.join(out, 'dictionary.json'))
+  const terms = dict.terms.filter((t) => t.displayOnly)
+  expect(terms).toHaveLength(4)
+  const lex = createGameLexicon(terms)
+  for (const t of terms) {
+    expect(t.sourceId).toBeUndefined()
+    expect(lex.translate(t.en, 'stat')).toBe(t.zh)
+    expect(lex.resolveStat(t.zh.replace('#', '12'), 'toEnglish').status).toBe('unmatched')
+  }
 })

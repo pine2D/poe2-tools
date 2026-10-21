@@ -260,6 +260,12 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         area.value = value ?? ''
         if (index === 1) area.dataset.preview = ''
         label.append(area)
+        if (index === 1) {
+          const note = doc.createElement('small')
+          note.textContent =
+            '稀有装备名称、词缀名称及标签可保留中文；原站使用英文基底、属性正文和数值。已识别不等于能导入。'
+          label.append(note)
+        }
         columns.append(label)
       }
       const fill = doc.createElement('button')

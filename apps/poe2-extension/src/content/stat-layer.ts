@@ -1,6 +1,7 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
 import { compoundStat } from '../adapters/coe-beta/compound-stat'
+import { displayText } from '../adapters/coe-beta/display-text'
 import { materialDescription } from '../adapters/coe-beta/material-descriptions'
 import { contextualText, textContext } from '../adapters/coe-beta/regions'
 import {
@@ -76,6 +77,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
     const original = statText(stat)
+    const canonical = displayText(original)
     const kind = stat.matches(itemNameSelector)
       ? 'name'
       : stat.matches(propertySelector)
@@ -102,8 +104,8 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
               : kind === 'material'
                 ? materialDescription(original)
                 : kind === 'data-stat'
-                  ? compoundStat(original, lex)
-                  : lex.translate(original, 'stat')
+                  ? compoundStat(canonical, lex)
+                  : lex.translate(canonical, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
     }
@@ -111,7 +113,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
       const status =
         translated && translated !== original
           ? 'translated'
-          : (lex.resolveStat?.(original).status ?? 'unmatched')
+          : (lex.resolveStat?.(canonical).status ?? 'unmatched')
       stat.setAttribute(diagnosticAttribute, status)
       diagnosed.add(stat)
     }

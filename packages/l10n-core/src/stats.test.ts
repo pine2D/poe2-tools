@@ -158,3 +158,19 @@ describe('共用词缀契约', () => {
     expect(lex.resolveStat('+# to maximum Life', 'toEnglish').status).toBe('unmatched')
   })
 })
+
+it('人工展示词条可以显示与搜索，不能作为英文导入依据', () => {
+  const lex = createGameLexicon([
+    stat('display', '+#% to Cold Damage over Time Multiplier', '冰霜持续伤害加成 +#%', {
+      displayOnly: true,
+    }),
+  ])
+  expect(lex.resolveStat('+12% to Cold Damage over Time Multiplier').text).toBe(
+    '冰霜持续伤害加成 +12%',
+  )
+  expect(lex.search('冰霜持续伤害', 'stat')).toHaveLength(1)
+  expect(lex.resolveStat('冰霜持续伤害加成 +12%', 'toEnglish').status).toBe('unmatched')
+  expect(lex.resolveStat('+12% to Cold Damage over Time Multiplier', 'toEnglish').status).toBe(
+    'unmatched',
+  )
+})

@@ -122,6 +122,23 @@ export async function buildDictionary(root, output, { allowGray = true } = {}) {
       { sourceId: variant.sourceId },
     )
   }
+  const display = await read('data/l10n/coe-beta/display-stats.zh-CN.json')
+  if (display.data._meta.tier !== 'manual' || display.data._meta.purpose !== 'display-only')
+    throw new Error('人工展示词缀的用途或来源不合法')
+  sources.push({
+    path: display.path,
+    sha256: display.sha256,
+    tier: 'manual',
+    source: display.data._meta.source,
+    version: display.data._meta.updatedAt,
+  })
+  for (const entry of display.data.entries) {
+    if (!entry.reason || !entry.en || !entry.zh || entry.sourceId)
+      throw new Error(`人工展示词缀缺少说明或冒用了来源身份：${entry.id}`)
+    add(`display-stat:${entry.id}`, entry.en, entry.zh, 'stat', display.path, 'unknown', {
+      displayOnly: true,
+    })
+  }
   // 官方静态名称的版本独立于制作目录；这里只裁剪名称，不携带规则与候选池。
   const catalog = await read('data/craft/catalog.json')
   const nameSources = catalog.data._meta.nameSources.filter(

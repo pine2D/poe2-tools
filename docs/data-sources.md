@@ -840,3 +840,7 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 - `scripts/build-dictionary.mjs` 从既有 primary 国服原始交易词缀的 `Can roll … modifiers` 与 `souls in tribute to …` 固定结构提取特殊词缀分类和渎灵名称。保留原始 sourceId 和文件哈希；只处理国服显示条目，不将台服输入词条混用，不扩写机制。分类覆盖以实际来源解析为准。
 - `data/l10n/coe-beta/affix-names.zh-CN.json`：manual，用户授权提供的高级装备样本中的名称，按既有 MIT catalog 的词缀 ID、英文名称和效果/数值交叉核对；19 条名称仅作为已核对补丁输入的对照，不声称完整官方名称表。生成时验证 ID、前后缀和英文名，缺失或漂移即失败；展示使用带前后缀的独立身份，不调用同名天赋或技能译文。未收录名称仍保留原文。
 - Ailment/Aura/Charm 等标签与属性缩写、固定操作文案属于既有 CoE 公共 DOM 人工 UI 来源。`New Item` 是原站默认显示文本，不写回物品名；用户改名按原文显示。`Paste` 按原站 `Item paste data format` 导出入口标为“导出文本”。
+
+### CoE 人工展示词缀（2026-10-21）
+
+`data/l10n/coe-beta/display-stats.zh-CN.json`：manual，本项目对公开 CoE 菜单短语独立翻译，来源页面 https://beta.craftofexile.com/?game=poe2 。初始四条持续伤害加成没有当前国服交易 API 对应身份，保留该不确定性；只参与展示和中文检索，标记 `displayOnly`，不参与反向导入或攻略词缀事实表，不宣称当前游戏可生成。原站 undefined 分类不据此猜测。

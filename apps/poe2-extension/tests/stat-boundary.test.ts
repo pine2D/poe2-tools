@@ -105,3 +105,24 @@ it('制作和 Data 的显式换行保留词边界，但不修改原站节点和�
   expect(nodes[0]?.getAttribute('data-poe2-l10n-stat-status')).toBe('unmatched')
   expect(nodes[0]?.nextElementSibling).toBeNull()
 })
+
+it.each([String.raw`\n`, String.raw`\r\n`])(
+  '条件词缀的字面换行 %s 只规范化匹配，不改原文',
+  (lineBreak) => {
+    document.body.innerHTML = `<main><div class="stat">20% increased${lineBreak}Armour</div></main>`
+    const node = document.querySelector('.stat') as HTMLElement
+    const original = node.textContent
+    stops.push(attachStatLayer(document, lex))
+    expect(node.nextElementSibling?.shadowRoot?.textContent).toBe('护甲提高 20%')
+    expect(node.textContent).toBe(original)
+  },
+)
+
+it('未知来源徽标明确显示未知，不猜分类、不改搜索属性', () => {
+  document.body.innerHTML =
+    '<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><li search="undefinedsuffix"><div class="influence">undefined</div></li></div></div></div><p>undefined</p></main>'
+  stops.push(attachTextLayer(document, lex))
+  expect(document.querySelector('.influence')?.textContent).toBe('来源未知')
+  expect(document.querySelector('li')?.getAttribute('search')).toBe('undefinedsuffix')
+  expect(document.querySelector('p')?.textContent).toBe('undefined')
+})

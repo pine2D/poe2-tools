@@ -10,6 +10,8 @@ export interface Term {
   order?: readonly number[]
   /** 独立语种的导入词条，不用于页面显示和简体搜索候选。 */
   inputOnly?: boolean
+  /** 人工展示解释，不可作为反向导入或机制事实依据。 */
+  displayOnly?: boolean
   /** 只裁决同一原始英文模板的展示译文；不用于反向歧义消解。 */
   preferred?: boolean
 }

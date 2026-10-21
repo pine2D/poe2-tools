@@ -34,7 +34,7 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
   // 原始 stat ID 可对应 Area/Map 等多个模板；语法身份唯一，选择结果保留来源 ID。
   const lexicon = createGameLexicon(
     terms
-      .filter((term) => term.domain === 'stat')
+      .filter((term) => term.domain === 'stat' && !term.displayOnly)
       .map((term, i) => ({
         ...term,
         id: `input:${i}:${term.id}`,
@@ -68,7 +68,7 @@ export function itemDictionary(terms: readonly Term[]): ItemDictionary {
     },
     stats: {
       entries: terms
-        .filter((t) => t.domain === 'stat')
+        .filter((t) => t.domain === 'stat' && !t.displayOnly)
         .map((t) => ({
           id: t.sourceId ?? t.id,
           en: t.en,
@@ -141,7 +141,13 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
   }
   // 必须是第一条：comparisonOnly 时面板以 issues[0] 作结论副句
   if (inspection.comparisonOnly)
-    add(inspection.comparisonReason ?? '此装备仅供对照。', null, 'policy')
+    add(
+      item.rarity === 'unique'
+        ? 'CoE 当前不支持传奇稀有度导入（Unsupported rarity），此预览仅供对照。'
+        : (inspection.comparisonReason ?? '此装备仅供对照。'),
+      null,
+      'policy',
+    )
   const warnings: string[] = []
   const { english, fields, ambiguousClass } = completeItemFields(item, inspection, terms)
   if (!inspection.base.english)

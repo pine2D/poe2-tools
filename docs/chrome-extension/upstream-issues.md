@@ -50,4 +50,11 @@ Uncaught TypeError: Cannot read properties of undefined (reading 'advancedRouter
 
 ## 条件菜单中的未登记来源（2026-10-21）
 
-单独运行扩展的手套回归中，条件下拉实际提供 Cold/Fire/Chaos/Physical Damage over Time Multiplier 四个候选，原站 influence 显示 `undefined`，search 同样包含 `undefinedsuffix…`。这些模板不在当前国服原始交易词缀中；不能确定原站是否混入历史规则，不据此新增人工机制译文。扩展保留英文并标记 unmatched，不移除原站候选。另有 `Leech Life (15-25)% slower` 仅在隐藏 DOM 出现，不计可见页面漏译。这里不是全站覆盖率结论。
+单独运行扩展的手套回归中，条件下拉实际提供 Cold/Fire/Chaos/Physical Damage over Time Multiplier 四个候选，原站 influence 显示 `undefined`，search 同样包含 `undefinedsuffix…`。这些模板不在当前国服原始交易词缀中；不能确定原站是否混入历史规则。0.9.0 用独立 manual 展示译文补齐这四项并标明来源未知，不移除候选；displayOnly 词条不参与反向导入，也不冒充官方机制证据。另有 `Leech Life (15-25)% slower` 仅在隐藏 DOM 出现，不计可见页面漏译。这里不是全站覆盖率结论。
+
+
+## 传奇稀有度拒绝（2026-10-21）
+
+在隔离 Chromium 149、PoE2 英文页面，用已翻译的 Runeseeker’s Call / Runemastered Runic Fork 样本，并将类别明确设为 Wands，原生 Import an item → Proceed 返回 `Unsupported rarity`。数值词缀是否完整翻译不会解除该限制；扩展保留仅供对照，不把传奇伪装为稀有。
+
+同次稀有 Runed Focus 对照保留中文随机名称和六组中文词缀名称／标签，原站接受，URL details 中六条词缀的值依次为 40、25、48、18、31、13，基底为 FourFocus9、物等 46。名称和标签保留中文不等于属性正文漏译；本结论限此原生高级文本流程。

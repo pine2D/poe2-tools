@@ -144,6 +144,7 @@ export function createGameLexicon(input: readonly Term[]): GameLexicon {
     let candidates: StatResolution['candidates'] = []
     for (const entry of pool ?? []) {
       if (direction === 'toChinese' && entry.term.inputOnly) continue
+      if (direction === 'toEnglish' && entry.term.displayOnly) continue
       const translated =
         direction === 'toChinese'
           ? entry.forward(text)

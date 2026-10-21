@@ -1,5 +1,6 @@
 import type { Lexicon, Term } from '@poe2-tools/l10n-core'
 import type { SearchArea } from '../../protocol'
+import { displayText } from './display-text'
 
 const controls: readonly [string, Term['domain']][] = [
   // 价格页复用词缀框ID，必须先按公开父容器识别材料用途。
@@ -28,15 +29,20 @@ export function searchContext(input: HTMLInputElement): string[] | null {
     ? [...groups].map((group) => (group.getAttribute('search') ?? '').toLowerCase())
     : null
 }
-function matchesSearch(option: string, template: string): boolean {
+function searchPattern(template: string): RegExp {
   const number = String.raw`[+-]?\d+(?:\.\d+)?`
   const range = String.raw`\(${number}[-–—]${number}\)`
   const value = `(?:#|${number}(?:${range})?|${range})`
-  const pattern = template
+  const pattern = displayText(template)
     .split('#')
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map((part) =>
+      part
+        .split(/\s+/)
+        .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join(String.raw`(?:\s|\\n|\\r\\n)+`),
+    )
     .join(value)
-  return new RegExp(pattern, 'i').test(option)
+  return new RegExp(pattern, 'i')
 }
 export function usesGlobalStatFallback(input: HTMLInputElement): boolean {
   return (
@@ -55,7 +61,7 @@ export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   // 只使用原站保留的英文搜索属性，不读取已经叠加中文的可见文本。
   const options = searchContext(input)
   if (options === null) return lexicon.search(input.value, domain)
-  const accept = (term: Term) => options.some((option) => matchesSearch(option, term.en))
+  const accept = (term: Term) => options.some((option) => searchPattern(term.en).test(option))
   return [
     ...lexicon.search(input.value, domain, accept),
     ...(isConditionSearch(input) ? lexicon.search(input.value, 'ui', accept) : []),
@@ -77,7 +83,10 @@ export function searchLabel(input: HTMLInputElement): readonly [string, string] 
   return ['搜索词缀', 'Search modifiers']
 }
 export function submitSearch(input: HTMLInputElement, english: string) {
-  input.value = english
+  const native = searchContext(input)
+    ?.map((option) => searchPattern(english).exec(option)?.[0])
+    .find(Boolean)
+  input.value = native && /\\n|[\r\n]/.test(native) ? native : english
   input.dispatchEvent(new Event('input', { bubbles: true }))
   input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Unidentified', bubbles: true }))
 }

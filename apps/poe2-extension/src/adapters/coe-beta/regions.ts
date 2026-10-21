@@ -36,6 +36,7 @@ export function textContext(
   | 'socket-category'
   | 'method-label'
   | 'condition-empty'
+  | 'condition-category'
   | 'notification'
   | 'inventory-usage'
   | 'compare'
@@ -52,6 +53,12 @@ export function textContext(
   | 'filter'
   | 'home'
   | 'default' {
+  if (
+    node.parentElement?.closest(
+      '#calculatorZone .requirements .dropdown li .influence, #simulatorConditionRequirements .dropdown li .influence',
+    )
+  )
+    return 'condition-category'
   if (node.parentElement?.closest('.item .header .name')) return 'item-name'
   if (node.parentElement?.closest('.item button.exportPOB')) return 'item-export'
   if (node.parentElement?.closest('.modInfluenceGroup > .header > :not(label)'))
@@ -382,6 +389,8 @@ export function contextualText(
     const translated = labels.get(normalized)
     return translated ? original.replace(/\S[\s\S]*\S|\S/, translated) : null
   }
+  if (context === 'condition-category' && normalized.toLowerCase() === 'undefined')
+    return original.replace(/undefined/i, '来源未知')
   if (context === 'condition-empty' && normalized === 'No results for this search')
     return original.replace(/\S[\s\S]*\S|\S/, '没有符合当前搜索的条件。')
   if (context === 'notification') {

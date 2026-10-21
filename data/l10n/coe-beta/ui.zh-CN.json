@@ -474,6 +474,7 @@
     "No modifiers found for this selection.": "当前筛选条件下未找到词缀。",
     "Inventory Importer": "导入背包",
     "Inventory Import": "导入背包",
-    "Base Modifiers": "基底词缀"
+    "Base Modifiers": "基底词缀",
+    "Unsupported rarity": "原站不支持此稀有度"
   }
 }
