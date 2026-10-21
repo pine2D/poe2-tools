@@ -18,7 +18,7 @@ import {
   prepareGuideBlocks,
   sendable,
 } from '@poe2-tools/guide-core'
-import type { PageResult, PageTranslation } from '../extract/inline'
+import type { PageNotice, PageResult, PageTranslation } from '../extract/inline'
 import type { ReadingMode } from '../extract/session'
 import { type ChunkResult, EngineError } from './engines/openai'
 import { estimateTokens, REQUEST_PARAMS } from './engines/presets'
@@ -29,6 +29,7 @@ import type { Origin, ReadingView } from './view-reading'
 export type ReadScope = 'full' | 'selection' | 'region'
 export interface PageBridge {
   check(snapshot: string): Promise<boolean>
+  notice?(snapshot: string, notice: PageNotice): Promise<PageResult>
   render(snapshot: string, result: PageTranslation): Promise<PageResult>
   remove(snapshot: string, id: string, revision: string): Promise<void>
   reset(snapshot: string, revision: string): Promise<void>
@@ -444,6 +445,20 @@ export function createController(deps: ControllerDeps): Controller {
       }
     } finally {
       // 只有仍是当前任务时才收尾，避免旧任务隐藏新任务的停止按钮
+      if (active === run) {
+        const snapshot = guide?.source.snapshotId
+        if (snapshot && deps.page?.notice)
+          for (const [id, failure] of failures) {
+            if (active !== run || signal.aborted) break
+            await deps.page
+              .notice(snapshot, {
+                id,
+                revision: String(revision),
+                message: `翻译失败：${failure.message ?? '模型未返回此段'}。可在侧栏的异常列表中重试。`,
+              })
+              .catch(() => {})
+          }
+      }
       if (active === run) {
         active = null
         view.setBusy(false)

@@ -8,47 +8,94 @@ export interface PageTranslation {
   origin: 'engine' | 'cache' | 'dictionary'
   issues: readonly Issue[]
 }
+export interface PageNotice {
+  id: string
+  revision?: string
+  message: string
+}
 export interface PageResult {
   state: 'inline' | 'located' | 'sidebar' | 'stale'
   message: string
 }
 export const OWNED = 'data-poe2-guide-owned'
 const UNSAFE =
-  'table,pre,code,a,label,button,form,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="button"]'
+  'table,pre,code,label,button,form,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="button"]'
+
+/** 只在已有节点边界插入，不 splitText，不重建原站子树或事件。 */
+function insertionPoint(source: BlockSource): { parent: Element; after: Node } | null {
+  let { container } = source
+  if (container.closest(UNSAFE) || source.endOffset !== source.end.length) return null
+  const blockLike = (el: Element) =>
+    el.matches('p,div,section,article,li,h1,h2,h3,h4,h5,h6,blockquote,main,dt,dd,figcaption') ||
+    el.ownerDocument.defaultView?.getComputedStyle(el).display === 'block'
+  // 独立 span 标题可以提升到完整容器；不能把选中的半句冒充整个段落。
+  while (!blockLike(container)) {
+    const parent = container.parentElement
+    if (!parent || parent.closest(UNSAFE) || parent.textContent?.trim() !== source.quote.trim())
+      return null
+    container = parent
+  }
+  const css = container.ownerDocument.defaultView?.getComputedStyle(container)
+  if (
+    css?.display.includes('grid') ||
+    (css?.display.includes('flex') && !css.flexDirection.startsWith('column'))
+  )
+    return null
+  let after: Node = source.end
+  while (after.parentNode !== container) {
+    if (!after.parentNode || after.parentNode === container.ownerDocument) return null
+    // 选区结束在行内包装的中部时不能跨过仍有原文的尾部。
+    for (let tail = after.nextSibling; tail; tail = tail.nextSibling)
+      if (tail.textContent?.trim() && !(tail instanceof Element && tail.hasAttribute(OWNED)))
+        return null
+    after = after.parentNode
+  }
+  // 连续句子内部不人为断行；整页分段时，下一段是块元素或换行。
+  for (let tail = after.nextSibling; tail; tail = tail.nextSibling) {
+    if (tail instanceof Element && tail.hasAttribute(OWNED)) continue
+    if (tail instanceof Element && (blockLike(tail) || tail.tagName === 'BR')) break
+    if (tail.textContent?.trim()) return null
+  }
+  return { parent: container, after }
+}
 
 export function appendTranslation(
   source: BlockSource,
-  result: PageTranslation,
+  result: PageTranslation | PageNotice,
 ): HTMLElement | null {
-  const { container } = source
-  // 不能把译文插进交互控件、表格、代码或原句的行内片段。
-  if (
-    container.closest(UNSAFE) ||
-    container.querySelector('input,button,textarea,select') ||
-    !container.matches('p,div,section,article,li,h1,h2,h3,h4,h5,h6,summary,blockquote,main')
-  )
-    return null
-  if (container.querySelector('p,li,table,pre,h1,h2,h3,h4,h5,h6')) return null
-  const doc = container.ownerDocument
-  const host = doc.createElement('div')
-  host.setAttribute(OWNED, 'translation')
+  const point = insertionPoint(source)
+  if (!point) return null
+  const doc = source.container.ownerDocument
+  const host = doc.createElement('span')
+  const notice = 'message' in result
+  host.setAttribute(OWNED, notice ? 'notice' : 'translation')
   host.dataset.blockId = result.id
   const shadow = host.attachShadow({ mode: 'open' })
   const style = doc.createElement('style')
   style.textContent =
-    ':host{display:block!important;margin:6px 0 12px!important;clear:both;font:normal 15px/1.6 system-ui,sans-serif!important;text-align:start!important;white-space:normal!important}:host([hidden]){display:none!important}.translation{padding:8px 12px;border-left:3px solid #b99b5c;background:#151513;color:#f0ede5;border-radius:3px;overflow-wrap:anywhere}.text{white-space:pre-wrap}small{display:block;color:#b9b3a5;font-size:12px}'
-  const box = doc.createElement('div')
-  box.className = 'translation'
+    ':host{display:block!important;margin:.45em 0 .8em!important;font:inherit!important;color:inherit!important;text-align:start!important;white-space:normal!important}:host([hidden]){display:none!important}.translation{display:block;padding:.35em .6em;border-inline-start:1px solid currentColor;background:color-mix(in srgb,currentColor 5%,transparent);overflow-wrap:anywhere;line-height:1.65;font-weight:400}.text{white-space:pre-wrap}small{display:block;font-size:.85em;margin-top:.25em}.notice{font-size:.9em;background:none}'
+  const box = doc.createElement('span')
+  box.className = notice ? 'translation notice' : 'translation'
   box.lang = 'zh-CN'
-  const text = doc.createElement('div')
-  text.className = 'text'
-  text.textContent = result.text
-  const note = doc.createElement('small')
-  note.textContent = `${result.origin === 'dictionary' ? '词典译文' : '机器译文'}${result.issues.length ? ' · 待核对' : ''}`
-  box.append(text, note)
+  if (notice) {
+    box.setAttribute('role', 'status')
+    box.textContent = result.message
+  } else {
+    const origin = `${result.origin === 'dictionary' ? '词典译文' : '机器译文'}${result.issues.length ? ' · 待核对' : ''}`
+    box.setAttribute('aria-label', origin)
+    box.title = origin
+    const text = doc.createElement('span')
+    text.className = 'text'
+    text.textContent = result.text
+    box.append(text)
+    if (result.issues.length) {
+      const note = doc.createElement('small')
+      note.textContent = '待核对 · 在侧栏查看提示'
+      box.append(note)
+    }
+  }
   shadow.append(style, box)
-  if (container.matches('li')) container.append(host)
-  else container.after(host)
+  point.parent.insertBefore(host, point.after.nextSibling)
   return host
 }
 

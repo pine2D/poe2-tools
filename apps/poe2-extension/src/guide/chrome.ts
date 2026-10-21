@@ -1,4 +1,4 @@
-import type { PageResult, PageTranslation } from '../extract/inline'
+import type { PageNotice, PageResult, PageTranslation } from '../extract/inline'
 import type { PageSession, ReadingMode } from '../extract/session'
 import type { ReadScope } from './controller'
 import { type GuidePrefs, prefsFrom } from './prefs'
@@ -33,6 +33,7 @@ export function parseTabId(href: string): number | null {
 
 type PageCommand =
   | { kind: 'read'; scope: ReadScope }
+  | { kind: 'notice'; snapshot: string; notice: PageNotice }
   | { kind: 'render'; snapshot: string; translation: PageTranslation }
   | { kind: 'remove'; snapshot: string; id: string; revision: string }
   | { kind: 'locate'; snapshot: string; id: string }
@@ -50,6 +51,8 @@ async function command<T>(tabId: number, payload: PageCommand): Promise<T> {
       switch (c.kind) {
         case 'read':
           return c.scope === 'region' ? page.pickRegion() : page.read({ scope: c.scope })
+        case 'notice':
+          return page.notice(c.snapshot, c.notice)
         case 'render':
           return page.render(c.snapshot, c.translation)
         case 'locate':
@@ -88,6 +91,8 @@ export const guideChrome = {
     await command(tabId, { kind: 'cancel' })
     return command(tabId, { kind: 'read', scope })
   },
+  notice: (tabId: number, snapshot: string, notice: PageNotice) =>
+    command<PageResult>(tabId, { kind: 'notice', snapshot, notice }),
   render: (tabId: number, snapshot: string, translation: PageTranslation) =>
     command<PageResult>(tabId, { kind: 'render', snapshot, translation }),
   locate: (tabId: number, snapshot: string, id: string) =>

@@ -39,7 +39,7 @@ describe('页面会话与原文旁对照', () => {
     const original = document.body.innerHTML
     expect(session.render(snapshot, translated(required(guide.blocks[1]).id)).state).toBe('inline')
     expect(document.querySelector('#a')?.nextElementSibling?.id).toBe('b')
-    const host = document.querySelector('#b')?.nextElementSibling
+    const host = document.querySelector('#b > [data-poe2-guide-owned]')
     expect(host?.hasAttribute('data-poe2-guide-owned')).toBe(true)
     expect(host?.shadowRoot?.textContent).toContain('本地合成译文')
     expect(document.querySelector('input')?.checked).toBe(true)
@@ -169,7 +169,7 @@ it.each([
   }
 })
 
-it('共享同一容器的多个正文片段回退侧栏，避免译文倒序与错误对应', () => {
+it('共享容器的独立正文片段按真实节点顺序显示，避免倒序与错误对应', () => {
   const { session, guide, snapshot } = setup(
     '<main><div>First instructions.<span style="display:block">Middle instructions.</span>Last instructions.</div><p>Separate instructions.</p></main>',
   )
@@ -180,11 +180,57 @@ it('共享同一容器的多个正文片段回退侧栏，避免译文倒序与�
     'Separate instructions.',
   ])
   for (const b of guide.blocks.slice(0, 3))
-    expect(session.render(snapshot, translated(b.id)).state).toBe('sidebar')
+    expect(session.render(snapshot, translated(b.id)).state).toBe('inline')
   expect(session.render(snapshot, translated(required(guide.blocks[3]).id)).state).toBe('inline')
   expect(
     [...document.querySelectorAll('[data-poe2-guide-owned="translation"]')].map((el) =>
       el.getAttribute('data-block-id'),
     ),
-  ).toEqual([guide.blocks[3]?.id])
+  ).toEqual(guide.blocks.map((b) => b.id))
+})
+
+it('网格卡片译文留在原格内，带链接/复选框的独立文字可安全落点', async () => {
+  const { session, guide, snapshot } = setup(
+    '<main><section style="display:grid;grid-template-columns:1fr 1fr"><p id="card">Visit <a href="/next">the next zone</a>.</p><div><label><input type="checkbox">Done</label><p id="body">Collect the permanent reward.</p></div></section></main>',
+  )
+  const original = document.body.innerHTML
+  const text = required(document.querySelector('#card')).firstChild
+  const link = document.querySelector('a')
+  const p = guide.blocks.find((b) => b.text.startsWith('Visit'))
+  expect(session.render(snapshot, translated(required(p).id)).state).toBe('inline')
+  expect(document.querySelector('#card > [data-poe2-guide-owned]')).not.toBeNull()
+  expect(required(document.querySelector('section')).children).toHaveLength(2)
+  expect(document.querySelector('#card')?.firstChild).toBe(text)
+  expect(document.querySelector('a')).toBe(link)
+  await new Promise((r) => setTimeout(r, 0))
+  expect(session.status().stale).toBe(false)
+  session.clear()
+  expect(document.body.innerHTML).toBe(original)
+})
+it('失败提示与合格译文共享同一安全锚点，恢复仅移除扩展内容', () => {
+  const { session, guide, snapshot } = setup('<main><p>Read the first paragraph.</p></main>')
+  const id = required(guide.blocks[0]).id
+  expect(session.notice(snapshot, { id, message: '翻译失败，请在侧栏重试' }).state).toBe('inline')
+  expect(document.querySelector('[data-poe2-guide-owned]')?.shadowRoot?.textContent).toContain(
+    '翻译失败',
+  )
+  session.render(snapshot, translated(id))
+  expect(document.querySelectorAll('[data-poe2-guide-owned]')).toHaveLength(1)
+  expect(document.querySelector('[data-poe2-guide-owned]')?.shadowRoot?.textContent).not.toContain(
+    '翻译失败',
+  )
+})
+it('链接卡片的独立标题在卡片内显示，点击仍交给原链接', () => {
+  const { session, guide, snapshot } = setup(
+    '<main><a class="card" href="/next"><h2>Next zone</h2><p>Read these instructions first.</p></a></main>',
+  )
+  const link = required(document.querySelector('a'))
+  const click = vi.fn((event: Event) => event.preventDefault())
+  link.addEventListener('click', click)
+  for (const b of guide.blocks)
+    expect(session.render(snapshot, translated(b.id)).state).toBe('inline')
+  expect(document.querySelector('a')).toBe(link)
+  expect(link.getAttribute('href')).toBe('/next')
+  link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  expect(click).toHaveBeenCalledOnce()
 })

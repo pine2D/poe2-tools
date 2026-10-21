@@ -2,7 +2,7 @@ import { createPageSession, type PageSession } from './session'
 
 // 隔离世界内复用会话；页面只能看见自有译文容器，拿不到扩展凭据。
 const state = globalThis as { __poe2GuideSession?: PageSession }
-if (state.__poe2GuideSession?.version !== 1) {
+if (state.__poe2GuideSession?.version !== 2) {
   state.__poe2GuideSession?.clear()
   state.__poe2GuideSession = createPageSession(document, location)
 }

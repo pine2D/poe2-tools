@@ -205,6 +205,7 @@ async function boot(root: Element) {
         const status = await guideChrome.status(tabId)
         return status?.snapshotId === snapshot && !status.stale
       },
+      notice: (snapshot, notice) => guideChrome.notice(tabId, snapshot, notice),
       render: (snapshot, result) => guideChrome.render(tabId, snapshot, result),
       remove: (snapshot, id, revision) => guideChrome.remove(tabId, snapshot, id, revision),
       reset: (snapshot, revision) => guideChrome.reset(tabId, snapshot, revision),
