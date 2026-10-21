@@ -675,7 +675,7 @@ it('坏缓存不显示，也不隐式发起付费替换', async () => {
     text: '需支付 500% <m zh="总增">总增</m>贡品。',
     issues: [],
   }))
-  await readAndBegin(createController(d))
+  await createController(d).start()
   expect(view.setTranslation).not.toHaveBeenCalled()
   expect(view.setBlockState).toHaveBeenCalledWith('bad', 'failed', expect.stringContaining('格式'))
   expect(engine.run).not.toHaveBeenCalled()
@@ -786,4 +786,21 @@ it('页面在请求期间更换，晚到结果不进入任何视图或缓存', a
   expect(view.setTranslation).not.toHaveBeenCalled()
   expect(write).not.toHaveBeenCalled()
   expect(view.setBanner).toHaveBeenCalledWith('error', expect.stringContaining('重新读取'))
+})
+
+it('坏缓存仅在明确开始后替换，预览不请求；完成后失败计数清零', async () => {
+  const engine = fakeEngine()
+  const { d, store, view } = deps({ engine: async () => engine.handle })
+  vi.spyOn(store, 'getCached').mockResolvedValue({
+    hash: 'bad',
+    text: '<m zh="x">x</m>',
+    issues: [],
+  })
+  const c = createController(d)
+  await c.start()
+  expect(engine.run).not.toHaveBeenCalled()
+  expect(view.setProgress.mock.calls.at(-1)?.[0].failed).toBe(1)
+  await c.begin()
+  expect(engine.run).toHaveBeenCalledTimes(1)
+  expect(view.setProgress.mock.calls.at(-1)?.[0].failed).toBe(0)
 })

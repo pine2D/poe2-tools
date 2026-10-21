@@ -69,13 +69,18 @@ describe('createReadingView', () => {
     expect(visible).toEqual(['b0'])
   })
   it('术语与简称标注带说明，原文按纯文本显示', () => {
-    mount()
+    const { v } = mount()
     const term = document.querySelector('.term')
     expect(term?.textContent).toBe('Contagion')
     expect(term?.getAttribute('title')).toContain('瘟疫')
     expect(term?.getAttribute('tabindex')).toBe('0')
     expect(document.querySelector('abbr')?.getAttribute('title')).toBe('Energy Shield，能量护盾')
     expect(document.querySelector('img')).toBeNull()
+    const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+    if (!mode) throw Error('missing mode')
+    mode.value = 'sidebar'
+    mode.dispatchEvent(new Event('change'))
+    v.showStage('s2')
     expect(document.querySelector('[data-id="b1"] .src')?.textContent).toBe(
       '<img src=x onerror=alert(1)>',
     )
@@ -291,6 +296,10 @@ it('侧栏保留列表与表格行列，标题保持层级', async () => {
     resolve: () => ({ status: 'unmatched', text: null, candidates: [] }),
   })
   v.showDocument({ ...doc, blocks, stages: [] }, prepared, null)
+  const mode = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  if (!mode) throw Error('missing mode')
+  mode.value = 'sidebar'
+  mode.dispatchEvent(new Event('change'))
   expect(document.querySelector('[data-id="h"] [aria-level="2"]')).not.toBeNull()
   expect(document.querySelector('ul li [data-id="l"]')).not.toBeNull()
   const rows = document.querySelectorAll('.guide-table tr')
@@ -298,4 +307,56 @@ it('侧栏保留列表与表格行列，标题保持层级', async () => {
   expect(rows[0]?.querySelectorAll('th')).toHaveLength(2)
   expect(rows[1]?.querySelectorAll('td')).toHaveLength(2)
   expect(rows[1]?.querySelectorAll('td')[1]?.textContent).toContain('Permanent bonus.')
+})
+
+it('原文旁工作区只挂载当前段，目录与异常跳转不发翻译请求', () => {
+  const { v, h } = mount()
+  const blocks: GuideDocument['blocks'] = [
+    { id: 'h', kind: 'heading', text: 'Chapter' },
+    ...Array.from({ length: 99 }, (_, i) => ({
+      id: `p${i}`,
+      kind: 'paragraph' as const,
+      text: `Paragraph ${i}.`,
+    })),
+  ]
+  v.showDocument(
+    { ...doc, blocks, stages: [] },
+    blocks.map((b) => prepareBlock(b, matcher)),
+    null,
+  )
+  expect(document.querySelectorAll('.guide-blocks .block')).toHaveLength(1)
+  v.setBlockState('p20', 'missing', '没有返回这一段，可单独重试')
+  v.setTranslation('p30', '合格译文', 'engine', [])
+  v.setPageState('p30', { state: 'sidebar', message: '表格需在侧栏阅读' })
+  expect(document.querySelector('.guide-placement')?.textContent).toContain('仅侧栏 1')
+  const missing = document.querySelector<HTMLButtonElement>('.guide-exceptions [data-target="p20"]')
+  expect(missing?.textContent).toContain('没有返回')
+  missing?.click()
+  expect(document.querySelector('.guide-blocks .block')?.getAttribute('data-id')).toBe('p20')
+  expect(h.onLocate).toHaveBeenCalledWith('p20')
+  expect(h.onBegin).not.toHaveBeenCalled()
+  document.querySelector<HTMLButtonElement>('.retry-block')?.click()
+  expect(h.onRetryBlock).toHaveBeenCalledWith('p20')
+  v.setTranslation('p20', '已完成', 'engine', [])
+  expect(document.querySelector('.guide-exceptions [data-target="p20"]')).toBeNull()
+  v.setPageState('p30', { state: 'located', message: '已定位原文' })
+  expect(document.querySelector('.guide-placement')?.textContent).toContain('仅侧栏 1')
+})
+it('完成状态禁用主操作且用量位于工具区，确认可 Esc 取消并返回焦点', async () => {
+  const { v } = mount()
+  v.setReady(true)
+  v.setProgress({ selected: 1, completed: 1, failed: 0, preserved: 0, characters: 20 })
+  const begin = document.querySelector<HTMLButtonElement>('.guide-begin')
+  expect(begin?.disabled).toBe(true)
+  expect(begin?.textContent).toBe('翻译完成')
+  v.setUsage('预计用量')
+  expect(document.querySelector('.guide-header .guide-usage')?.textContent).toBe('预计用量')
+  const focus = document.querySelector<HTMLSelectElement>('select[aria-label="阅读位置"]')
+  focus?.focus()
+  const answer = v.ask('确认', '继续')
+  document
+    .querySelector('.guide-ask')
+    ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  await expect(answer).resolves.toBe(false)
+  expect(document.activeElement).toBe(focus)
 })

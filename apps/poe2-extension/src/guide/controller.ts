@@ -165,6 +165,7 @@ export function createController(deps: ControllerDeps): Controller {
   }
   const markFailed = (run: Run, id: string, state: Failure['state'], message?: string) => {
     run.inflight.delete(id)
+    done.delete(id)
     failures.set(id, { state, message })
     view.setBlockState(id, state, message)
     const snapshot = guide?.source.snapshotId
@@ -203,6 +204,8 @@ export function createController(deps: ControllerDeps): Controller {
     dropQueued()
     cancelRun()
     guide = null
+    for (const block of blocks)
+      view.setPageState(block.id, { state: 'stale', message: '原文位置已失效，请重新读取。' })
     view.setBusy(false)
     view.setReady(false)
     view.setBanner('error', '原文已变化或页面已更换，请重新读取后继续。')
@@ -306,7 +309,11 @@ export function createController(deps: ControllerDeps): Controller {
             done.add(b.id)
             failures.delete(b.id)
             cacheHits++
-          } else markFailed(run, b.id, 'failed', accepted.reason)
+          } else {
+            markFailed(run, b.id, 'failed', accepted.reason)
+            // 预览阻断坏缓存；只有用户明确开始时才请求替换。
+            if (!previewOnly) pending.push(b)
+          }
         } else pending.push(b)
       }
       // 实际准备的提示只构造一次；估算包含术语、语境、协议，并预留每批完整输出上限。
