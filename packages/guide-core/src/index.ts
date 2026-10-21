@@ -1,3 +1,4 @@
+export { acceptCachedTranslation, acceptTranslation, type TranslationAcceptance } from './accept'
 export { type CacheKeyParts, cacheKey } from './cache-key'
 export { CHECK_VERSION, checkTranslation } from './check'
 export { type BlockContext, buildContexts, CONTEXT_VERSION } from './context'

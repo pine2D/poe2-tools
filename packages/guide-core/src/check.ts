@@ -1,4 +1,4 @@
-export const CHECK_VERSION = 'guide-check-v2'
+export const CHECK_VERSION = 'guide-check-v3'
 
 import type { PreparedBlock } from './prepare'
 import type { Issue } from './types'

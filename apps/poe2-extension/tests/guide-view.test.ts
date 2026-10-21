@@ -188,3 +188,12 @@ it('词典、机器、待核对与原样保留分开，缓存不提升质量等�
   v.setBlockState('b0', 'skipped')
   expect(status()).toBe('原样保留')
 })
+
+it('失败后移除上一轮译文和复制入口，保留原文', () => {
+  const { v } = mount()
+  v.setTranslation('b0', '旧译文', 'engine', [])
+  v.setBlockState('b0', 'failed', '译文格式异常')
+  expect(document.querySelector('[data-id="b0"] .dst')?.textContent).toBe('')
+  expect(document.querySelector<HTMLButtonElement>('[data-id="b0"] .copy-block')?.hidden).toBe(true)
+  expect(document.querySelector('[data-id="b0"] .src')?.textContent).toBe('Use Contagion with ES.')
+})

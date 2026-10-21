@@ -13,7 +13,8 @@ const PATTERNS: readonly RegExp[] = [
   /https?:\/\/[^\s<>"'）)]+/g,
   /(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{40,}={0,2}/g,
   // 原文里与提示词分段标签同形的文字（<s id="…">、</t>、修饰词标记 <m …> 等）也占位，避免打乱分段与流式拆分。
-  /<\/?(?:[stm]|context|quoted-stat)(?:\s[^<>\n]*)?>/gi,
+  /<\/?(?:[stm]|context|quoted-stat)(?=[\s/>]|$)[^<>\n]*(?:>|$)/gi,
+  /&(?:amp;)*(?:lt|#0*60|#x0*3c);\/?(?:[stm]|context|quoted-stat)(?=[\s/&]|$)[^\n]*?(?:&(?:amp;)*(?:gt|#0*62|#x0*3e);|$)/gi,
 ]
 
 export function findVerbatim(text: string): Range[] {

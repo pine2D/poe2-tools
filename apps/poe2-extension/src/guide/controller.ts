@@ -1,8 +1,9 @@
 import {
+  acceptCachedTranslation,
+  acceptTranslation,
   buildMessages,
   type ChatMessage,
   cacheKey,
-  checkTranslation,
   chunkBlocks,
   createMatcher,
   createTagSplitter,
@@ -14,7 +15,6 @@ import {
   type PreserveReason,
   parseExtractResult,
   prepareGuideBlocks,
-  restore,
   sendable,
 } from '@poe2-tools/guide-core'
 import { type ChunkResult, EngineError } from './engines/openai'
@@ -204,10 +204,13 @@ export function createController(deps: ControllerDeps): Controller {
           if (!live()) return
         }
         if (hit) {
-          view.setTranslation(b.id, hit.text, 'cache', hit.issues)
-          done.add(b.id)
-          failures.delete(b.id)
-          cacheHits++
+          const accepted = acceptCachedTranslation(b, hit.text, hit.issues)
+          if (accepted.accepted) {
+            view.setTranslation(b.id, accepted.text, 'cache', accepted.issues)
+            done.add(b.id)
+            failures.delete(b.id)
+            cacheHits++
+          } else markFailed(run, b.id, 'failed', accepted.reason)
         } else pending.push(b)
       }
       // 实际准备的提示只构造一次；估算包含术语、语境、协议，并预留每批完整输出上限。
@@ -254,18 +257,17 @@ export function createController(deps: ControllerDeps): Controller {
           view.setBlockState(b.id, 'pending')
         }
         let streamed = ''
-        const received = new Map<string, ReturnType<typeof restore>>()
+        const received = new Map<string, string>()
         const splitter = createTagSplitter(
           chunk.map((b) => b.id),
           (id, raw) => {
             if (!live()) return
             const b = chunk.find((x) => x.id === id)
             if (!b) return
-            const restored = restore(raw, b.restoreTokens ?? b.tokens)
-            const issues = checkTranslation(b, restored.text, restored, null)
-            view.setTranslation(id, restored.text, 'engine', issues)
-            received.set(id, restored)
-            view.setBlockState(id, 'pending', '译文已收到，等待请求结束')
+            received.set(id, raw)
+            const accepted = acceptTranslation(b, raw, null)
+            if (!accepted.accepted) markFailed(run, id, 'failed', accepted.reason)
+            else view.setBlockState(id, 'pending', '译文已收到，等待请求结束')
           },
         )
         try {
@@ -280,17 +282,21 @@ export function createController(deps: ControllerDeps): Controller {
           )
           if (!live()) return
           // 只在本次请求正常结束且仍有效时保存；流中已闭合的段也要接受最终截断检查。
-          for (const [id, restored] of received) {
+          for (const [id, raw] of received) {
             const b = chunk.find((x) => x.id === id)
             if (!b) continue
-            const issues = checkTranslation(b, restored.text, restored, result.finishReason)
-            view.setTranslation(id, restored.text, 'engine', issues)
+            const accepted = acceptTranslation(b, raw, result.finishReason)
+            if (!accepted.accepted) {
+              markFailed(run, id, 'failed', accepted.reason)
+              continue
+            }
+            const { text, issues } = accepted
+            view.setTranslation(id, text, 'engine', issues)
             done.add(id)
             run.inflight.delete(id)
             failures.delete(id)
             const key = keys.get(id)
-            if (key)
-              void deps.store.putCached({ hash: key, text: restored.text, issues }).catch(() => {})
+            if (key) void deps.store.putCached({ hash: key, text, issues }).catch(() => {})
           }
           // 服务没回用量时：输入按提示词估算，输出按已收到的流式文本估算
           const usage = result.usage ?? {

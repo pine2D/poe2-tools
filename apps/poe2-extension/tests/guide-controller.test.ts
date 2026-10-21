@@ -566,7 +566,7 @@ it('请求估算包括完整提示、术语和语境，明确预留输出上限'
   expect(view.setUsage.mock.calls[0]?.[0]).toContain('输出预留')
 })
 
-it('截断响应的已返回段仍标为待核对，缓存保留截断问题', async () => {
+it('截断响应即使有闭合段也不显示或缓存', async () => {
   const run = vi.fn(async (_messages: readonly ChatMessage[], onText: (s: string) => void) => {
     onText('<t id="a">向整群怪物扩散瘟疫。</t>')
     return { finishReason: 'length', usage: { prompt: 10, completion: 5 } }
@@ -575,13 +575,9 @@ it('截断响应的已返回段仍标为待核对，缓存保留截断问题', a
   const { d, view, store } = deps({ engine: async () => ({ ...engine.handle, runner: { run } }) })
   const writes = vi.spyOn(store, 'putCached')
   await createController(d).start()
-  const last = view.setTranslation.mock.calls.filter((c) => c[0] === 'a').at(-1)
-  expect(last?.[3]).toEqual(
-    expect.arrayContaining([expect.objectContaining({ kind: 'truncated' })]),
-  )
-  expect(writes.mock.calls.at(-1)?.[0].issues).toEqual(
-    expect.arrayContaining([expect.objectContaining({ kind: 'truncated' })]),
-  )
+  expect(view.setTranslation.mock.calls.some((c) => c[0] === 'a')).toBe(false)
+  expect(view.setBlockState).toHaveBeenCalledWith('a', 'failed', expect.stringContaining('截断'))
+  expect(writes).not.toHaveBeenCalled()
 })
 
 it('停止时已闭合但请求未结束的旧段不会写缓存', async () => {
@@ -605,4 +601,43 @@ it('停止时已闭合但请求未结束的旧段不会写缓存', async () => {
   finish()
   await pending
   expect(writes).not.toHaveBeenCalled()
+})
+
+it.each([
+  '需支付 ⟦0⟧ <m zh="总增">总增</m>贡品。',
+  '需支付 ⟦0⟧ &lt;m zh="总增"&gt;总增&lt;/m&gt;贡品。',
+  '需支付 ⟦0⟧ 总增贡品 ⟦999⟧。',
+])('协议异常不能显示或缓存：%s', async (raw) => {
+  const engine = fakeEngine()
+  engine.run.mockImplementation(async (_messages, onText) => {
+    onText(`<t id="bad">${raw}</t>`)
+    return { finishReason: 'stop', usage: { prompt: 10, completion: 5 } }
+  })
+  const { d, store, view } = deps({
+    raw: doc([{ id: 'bad', kind: 'paragraph', text: 'Pay 500% more Tribute.' }]),
+    engine: async () => engine.handle,
+  })
+  const write = vi.spyOn(store, 'putCached')
+  await createController(d).start()
+  expect(view.setTranslation).not.toHaveBeenCalled()
+  expect(view.setBlockState).toHaveBeenCalledWith('bad', 'failed', expect.stringContaining('格式'))
+  expect(write).not.toHaveBeenCalled()
+  expect(engine.run).toHaveBeenCalledTimes(1)
+})
+
+it('坏缓存不显示，也不隐式发起付费替换', async () => {
+  const engine = fakeEngine()
+  const { d, store, view } = deps({
+    raw: doc([{ id: 'bad', kind: 'paragraph', text: 'Pay 500% more Tribute.' }]),
+    engine: async () => engine.handle,
+  })
+  vi.spyOn(store, 'getCached').mockImplementation(async (hash) => ({
+    hash,
+    text: '需支付 500% <m zh="总增">总增</m>贡品。',
+    issues: [],
+  }))
+  await createController(d).start()
+  expect(view.setTranslation).not.toHaveBeenCalled()
+  expect(view.setBlockState).toHaveBeenCalledWith('bad', 'failed', expect.stringContaining('格式'))
+  expect(engine.run).not.toHaveBeenCalled()
 })

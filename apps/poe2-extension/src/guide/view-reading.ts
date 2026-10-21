@@ -284,6 +284,13 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       item.node.dataset.state = state
       item.status.textContent = message ?? STATE[state]
       item.retry.hidden = !(state === 'failed' || state === 'missing')
+      if (state === 'failed' || state === 'missing') {
+        item.dst.textContent = ''
+        const copy = item.node.querySelector<HTMLButtonElement>('.copy-block')
+        if (copy) copy.hidden = true
+        item.issues.hidden = true
+        delete item.node.dataset.origin
+      }
     },
     setStageState(stageId, state) {
       const b = stageButtons.get(stageId)
