@@ -53,6 +53,24 @@ await build({
     },
   },
 })
+// 划词内容脚本和有界请求后台各自为独立入口，互不共享浏览器 chunk。
+for (const entry of ['selection', 'background']) {
+  await build({
+    configFile: false,
+    root,
+    publicDir: false,
+    build: {
+      outDir: 'dist',
+      emptyOutDir: false,
+      lib: {
+        entry: path.join(root, `src/${entry}/index.ts`),
+        name: `Poe2${entry}`,
+        formats: ['iife'],
+        fileName: () => `${entry}.js`,
+      },
+    },
+  })
+}
 // 侧边栏页面：单独一次 HTML 构建，产物 guide.html 与 assets/guide-*.js|css
 await build({
   configFile: false,

@@ -3,12 +3,11 @@ import type { GuideDictionary } from '@poe2-tools/guide-core'
 import { createGameLexicon, type Term } from '@poe2-tools/l10n-core'
 import { guideChrome } from './chrome'
 import { resolveConfig } from './config'
-import { type Controller, createController, type EngineHandle, type ReadScope } from './controller'
+import { type Controller, createController, type ReadScope } from './controller'
 import { streamChat } from './engines/openai'
-import { DEEPSEEK, deepseekPeak, estimateCost, REQUEST_PARAMS } from './engines/presets'
 import { prefsFrom } from './prefs'
+import { guideEngine } from './runtime'
 import { createIdbStore } from './store/idb'
-import { keyForConfig } from './store/keys'
 import { createReadingView } from './view-reading'
 import { createSettingsView } from './view-settings'
 
@@ -39,45 +38,7 @@ async function boot(root: Element) {
   )
   const lexicon = createGameLexicon(stats.terms)
 
-  const engine = async (): Promise<EngineHandle | null> => {
-    const record = await store.getKey()
-    const baseUrl = prefs.provider === 'custom' ? prefs.customBaseUrl : DEEPSEEK.baseUrl
-    const apiKey = keyForConfig(record, baseUrl)
-    if (!record || !apiKey) return null
-    const resolved = resolveConfig(
-      {
-        provider: prefs.provider,
-        baseUrl,
-        model: prefs.customModel,
-        apiKey,
-        extraBody: prefs.extraBody,
-        confirmOrigin: false,
-      },
-      record,
-      prefs.confirmedOrigins,
-    )
-    if (!resolved.ok) return null
-    const cfg = resolved.config
-    return {
-      provider: cfg.provider,
-      model: cfg.model,
-      params: JSON.stringify([REQUEST_PARAMS, cfg.extraBody ?? null]),
-      outputLimit: Math.max(
-        REQUEST_PARAMS.max_tokens,
-        ...[cfg.extraBody?.max_tokens, cfg.extraBody?.max_completion_tokens].filter(
-          (n): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n > 0,
-        ),
-      ),
-      runner: {
-        run: (messages, onText, signal) => streamChat(cfg, messages, { signal, onText }),
-      },
-      costText: (prompt, completion) => {
-        if (cfg.provider !== 'deepseek') return '费用以服务商账单为准'
-        const peak = deepseekPeak(new Date())
-        return `估算 ¥${estimateCost(prompt, completion, peak).cny.toFixed(4)}${peak ? '（高峰价）' : ''}`
-      },
-    }
-  }
+  const engine = () => guideEngine(prefs, store)
 
   // controller 在下方创建；这些回调只会在用户操作时执行，届时已经赋值。
   let controller: Controller

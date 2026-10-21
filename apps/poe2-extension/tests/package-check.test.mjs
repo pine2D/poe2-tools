@@ -30,6 +30,8 @@ async function fixture(terms) {
     'package.json': JSON.stringify({ version: manifest.version }),
     'dist/manifest.json': JSON.stringify(manifest),
     'dist/content.js': 'void 0;',
+    'dist/selection.js': 'void 0;',
+    'dist/background.js': 'void 0;',
     'dist/popup.html':
       '<script src="./assets/popup-test.js"></script><link href="./assets/popup-test.css">',
     'dist/assets/popup-test.js': 'void 0;',

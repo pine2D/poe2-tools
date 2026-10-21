@@ -63,7 +63,7 @@ export interface ControllerDeps {
   store: GuideStore
   prefs(): Promise<GuidePrefs>
   engine(): Promise<EngineHandle | null>
-  view: ReadingView
+  view: Omit<ReadingView, 'root' | 'showIntro' | 'showStage'>
   random(): string
 }
 

@@ -27,6 +27,8 @@ async function fixture() {
     'popup.html':
       '<script src="./assets/popup-test.js"></script><link href="./assets/popup-test.css">',
     'content.js': 'void 0;',
+    'selection.js': 'void 0;',
+    'background.js': 'void 0;',
     'assets/popup-test.js': 'void 0;',
     'assets/popup-test.css':
       'h1{font-family:x}@font-face{font-family:x;src:url(./serif-sc-popup-test.woff2)}',
@@ -91,14 +93,18 @@ it.each([
   await expect(check(root)).rejects.toThrow('缺少打包文件')
 })
 // 这几项在集合比对前就要读取内容，缺失时直接报 ENOENT
-it.each(['guide.html', 'assets/guide-test.css', 'extract.js', 'assets/guide-dictionary.json'])(
-  '拒绝缺少 %s（读取即失败）',
-  async (name) => {
-    const { root, dist } = await fixture()
-    await rm(path.join(dist, name))
-    await expect(check(root)).rejects.toThrow('ENOENT')
-  },
-)
+it.each([
+  'guide.html',
+  'assets/guide-test.css',
+  'extract.js',
+  'selection.js',
+  'background.js',
+  'assets/guide-dictionary.json',
+])('拒绝缺少 %s（读取即失败）', async (name) => {
+  const { root, dist } = await fixture()
+  await rm(path.join(dist, name))
+  await expect(check(root)).rejects.toThrow('ENOENT')
+})
 it('拒绝伪装为必需文件的符号链接', async () => {
   const { root, dist } = await fixture()
   await rm(path.join(dist, 'NOTICE.txt'))
@@ -238,4 +244,10 @@ it('攻略词缀的内容变更不能继续复用旧摘要', async () => {
   dict.terms[0].zh = '属性需求降低 #%'
   await writeFile(path.join(dist, 'assets/guide-stats.json'), JSON.stringify(dict))
   await expect(check(root)).rejects.toThrow('攻略词缀')
+})
+
+it('划词内容脚本不得直接请求服务，后台允许包内联网代码', async () => {
+  const { root, dist } = await fixture()
+  await writeFile(path.join(dist, 'selection.js'), 'fetch("https://example.com")')
+  await expect(check(root)).rejects.toThrow('划词脚本不得发网络请求')
 })

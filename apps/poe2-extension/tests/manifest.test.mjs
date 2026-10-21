@@ -17,6 +17,7 @@ const manifest = {
     extension_pages:
       "script-src 'self'; object-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
   },
+  background: { service_worker: 'background.js' },
   action: { default_popup: 'popup.html', default_icon: icons },
   content_scripts: [
     {
@@ -81,9 +82,8 @@ it('入库 manifest.json 的 permissions 恰为四项，没有 host 与可选权
   expect(real.optional_host_permissions).toBeUndefined()
 })
 
-it('禁止后台、侧边栏全局面板、快捷键与选项页；CSP 与最低版本必须精确', () => {
+it('后台入口固定，禁止侧边栏全局面板、快捷键与选项页；CSP 与最低版本必须精确', () => {
   for (const field of [
-    'background',
     'side_panel',
     'commands',
     'options_ui',
@@ -141,4 +141,14 @@ it('入库公钥推导出的 ID 与商店草稿一致', () => {
     .slice(0, 32)
     .replace(/[0-9a-f]/g, (digit) => String.fromCharCode(97 + Number.parseInt(digit, 16)))
   expect(id).toBe('chcijeghknaadobhcfdbfpdjppfimhkn')
+})
+
+it('后台只能使用包内固定入口，不允许静默移除或替换', () => {
+  for (const background of [
+    undefined,
+    {},
+    { service_worker: 'worker.js' },
+    { scripts: ['background.js'] },
+  ])
+    expect(() => validateManifest({ ...manifest, background }, '0.1.0')).toThrow('后台入口')
 })

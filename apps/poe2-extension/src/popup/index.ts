@@ -4,6 +4,7 @@ import { guidePlatform } from './guide-platform'
 import { stateIcon } from './icons'
 import { type PageProbe, watchPage } from './page-query'
 import { type PageView, pageView } from './page-view'
+import { setupSelectionButton } from './selection-button'
 import './popup.css'
 
 function required<T extends HTMLElement>(selector: string): T {
@@ -213,5 +214,11 @@ void setupGuideButton(
     writeGuidePrefs: (p) => guidePlatform.writeGuidePrefs(p),
     version: () => platform.version(),
   },
+  () => window.close(),
+).catch(() => {})
+
+void setupSelectionButton(
+  document,
+  { activeTab: () => platform.activeTab(), selection: guidePlatform.selection },
   () => window.close(),
 ).catch(() => {})

@@ -5,6 +5,7 @@
   "description": "非官方扩展：为新版 Craft of Exile 的 PoE2 页面提供国服简体术语显示，并可在攻略页按国服术语翻译正文。",
   "minimum_chrome_version": "116",
   "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
+  "background": { "service_worker": "background.js" },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

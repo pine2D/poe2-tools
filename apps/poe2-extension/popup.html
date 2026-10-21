@@ -13,7 +13,9 @@
     <button id="reload" class="pt-btn pt-btn--quiet page__action" type="button" hidden>刷新页面</button>
   </div>
   <button id="translate" class="pt-btn pt-btn--quiet translate" type="button" hidden>翻译此页</button>
-  <p id="guide-notice" class="guide-notice" hidden>攻略阅读：点“翻译此页”先预览范围，点击“开始翻译”后才发送所选正文。默认原文旁对照，可切到侧栏或恢复原文；整段翻译需要你自备服务 Key。</p>
+  <button id="selection" class="pt-btn pt-btn--quiet translate" type="button" hidden>启用本页划词</button>
+  <p id="selection-notice" class="guide-notice" role="status" hidden></p>
+  <p id="guide-notice" class="guide-notice" hidden>攻略阅读：点“翻译此页”先预览范围，点击“开始翻译”后才发送所选正文。默认原文旁对照，可切到侧栏或恢复原文；划词可独立使用，选中后点击才发送；整段翻译需要你自备服务 Key。</p>
   <div class="pt-divider popup-divider" aria-hidden="true"><span class="pt-motif pt-motif--knot pt-attr-ext"></span></div>
   <label class="setting">
     <!-- biome-ignore lint/a11y/useAriaPropsForRole: 原生 checkbox 自带勾选状态，ARIA in HTML 禁止再写 aria-checked -->

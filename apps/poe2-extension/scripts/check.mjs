@@ -134,7 +134,7 @@ export const MINIMUM_CHROME = '116'
 /** 商店草稿公钥：固定网站 ZIP 与商店版的扩展身份，不是 API Key 或私钥。 */
 export const MANIFEST_KEY =
   'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1+udQ+yQctJG1yVcov3wOXpooi1T7CRamhrl4L1uT7wOf+iZXqU0tPQoH80x5aS7VM2YBFYRIrZn533NS9hXMfo37hKmCgg8/Xz+GEXub2h3FxA4jzkZIw8BD+PCSWpCzLZmxpn40alhkqJjPbhRWChqJ9HOSTS8Ab43FqRgFuIFF50WoL3lbIvAjD8Y9qdeuHKsFJOmmZB5TxB1MNDb2Ri4CcGRsACO62DyYZDEaeLkKJfDpEt1K55IV7CJM91OE5CtPLZw6fyb4f8Bc8u/wsFHtZKbtbCxaHMKKxceZ7wxohuz+GbZh+3xHgBSLiXYYs7HpeCqAbrNU0V3HPg88wIDAQAB'
-/** 只有扩展页面（侧边栏）联网；脚本只能来自扩展自身 */
+/** 只有扩展页面及划词后台联网；脚本只能来自扩展自身 */
 export const EXTENSION_CSP = {
   extension_pages:
     "script-src 'self'; object-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
@@ -251,7 +251,6 @@ export function validateManifest(m, version) {
     'host_permissions',
     'optional_permissions',
     'optional_host_permissions',
-    'background',
     'externally_connectable',
     'devtools_page',
     'side_panel',
@@ -262,6 +261,8 @@ export function validateManifest(m, version) {
     'chrome_url_overrides',
   ])
     if (m[field]) throw new Error(`不允许 ${field}`)
+  if (!same(m.background, { service_worker: 'background.js' }))
+    throw new Error('后台入口不符合约定')
   const icons = Object.fromEntries(
     [16, 32, 48, 128].map((size) => [size, `icons/icon-${size}.png`]),
   )
@@ -316,6 +317,14 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   for (const marker of PROVIDER_MARKERS)
     if (extract.includes(marker) || content.includes(marker))
       throw new Error(`内容脚本或取文脚本含联网目标：${marker}`)
+  const selection = await readFile(path.join(dist, 'selection.js'), 'utf8')
+  new vm.Script(selection)
+  if (/^\s*(?:import|export)\s/m.test(selection)) throw new Error('划词脚本必须独立执行')
+  if (/\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource/.test(selection))
+    throw new Error('划词脚本不得发网络请求')
+  for (const marker of PROVIDER_MARKERS)
+    if (selection.includes(marker)) throw new Error('划词脚本含联网目标')
+  new vm.Script(await readFile(path.join(dist, 'background.js'), 'utf8'))
   const guide = await readFile(path.join(dist, 'guide.html'), 'utf8')
   const guideResources = popupReferences(guide)
   for (const file of guideResources) {
@@ -379,6 +388,8 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     ...popupResources,
     ...popupFonts,
     'extract.js',
+    'selection.js',
+    'background.js',
     'guide.html',
     'assets/guide-dictionary.json',
     'assets/guide-stats.json',

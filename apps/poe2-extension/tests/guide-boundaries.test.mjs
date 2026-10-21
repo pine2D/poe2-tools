@@ -17,7 +17,7 @@ const specifiers = (src) =>
 // 说明符里出现某个目录名（结尾带不带斜杠都算）
 const touches = (spec, dirs) => new RegExp(`(?:^|/)(?:${dirs.join('|')})(?:/|$)`).test(spec)
 const COE = ['content', 'adapters']
-const GUIDE = ['guide', 'extract', 'popup']
+const GUIDE = ['guide', 'extract', 'popup', 'selection', 'background']
 const NETWORK = /\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon/
 
 describe('边界检查器自测', () => {
@@ -44,14 +44,15 @@ describe('边界检查器自测', () => {
 
 describe('攻略翻译模块边界', () => {
   it('侧边栏与取文脚本不使用 innerHTML 类写法', () => {
-    for (const f of [...files('src/guide'), ...files('src/extract')])
+    for (const f of [...files('src/guide'), ...files('src/extract'), ...files('src/selection')])
       expect(read(f), f).not.toMatch(/\binnerHTML\b|\bouterHTML\b|insertAdjacentHTML/)
   })
   it('取文脚本不联网', () => {
-    for (const f of files('src/extract')) expect(read(f), f).not.toMatch(NETWORK)
+    for (const f of [...files('src/extract'), ...files('src/selection')])
+      expect(read(f), f).not.toMatch(NETWORK)
   })
   it('新模块不引用 CoE 内容脚本与适配层', () => {
-    for (const f of [...files('src/guide'), ...files('src/extract')])
+    for (const f of [...files('src/guide'), ...files('src/extract'), ...files('src/selection')])
       expect(
         specifiers(read(f)).filter((s) => touches(s, COE)),
         f,
