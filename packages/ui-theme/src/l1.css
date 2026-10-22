@@ -6,18 +6,18 @@
    只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮与角饰。衬线只经 --l1-serif 用于 L1_SERIF_SELECTORS（selectors.ts：面板标题与主次按钮，“第 N 行”定位按钮除外）；字体由内容脚本 serif.ts 以 FontFace 注册到文档，这里不写 @font-face。 */
 :host {
   --ext-ink: #9fe3dc;
-  --ink: #e9e0cd;
-  --ink-2: #c0b49d;
-  --ink-3: #9a8e79;
-  --line: #322a21;
-  --line-2: #473b2d;
-  --control-edge: #8a7a62;
-  --bg: #100e0c;
-  --bg-2: #14110e;
-  --mod: #8888ff;
-  --ok: #93c47d;
-  --miss: #f2a766;
-  --focus: #ffd48a;
+  --ink: #f2ead8;
+  --ink-2: #c9bba0;
+  --ink-3: #a38d6d;
+  --line: #1f2429;
+  --line-2: #2c333b;
+  --control-edge: #94a1ae;
+  --bg: #000000;
+  --bg-2: #121922;
+  --mod: #8f8fff;
+  --ok: #82cf90;
+  --miss: #ef90b8;
+  --focus: #b8cfff;
   --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
   /* 面板标题与主次按钮的中文衬线（扩展 0.4.0）：family 由内容脚本注册到文档，Shadow DOM 只引用名字 */

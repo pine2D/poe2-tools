@@ -243,7 +243,7 @@
   border: 1px solid var(--metal-edge);
   border-radius: 3px;
   background: color-mix(in srgb, var(--metal-line) 30%, transparent);
-  color: var(--bronze-hi);
+  color: var(--gold);
   font-size: var(--fs-micro);
   font-weight: 600;
   line-height: 1.5;

@@ -9,51 +9,55 @@ import { FORGE_COLORS, NAMEPLATE_VARIANTS, TAB_COLORS } from './testing/gate'
 const css = readFileSync(fileURLToPath(new URL('./tokens.css', import.meta.url)), 'utf8')
 const { count, tokens } = rootTokens(css)
 
-// 契约 §6.1 的 71 个令牌
+// v4 兼容接口的 75 个令牌
 const EXPECTED: Record<string, string> = {
-  '--page': '#17130f',
-  '--bg': '#100e0c',
-  '--bg-2': '#14110e',
-  '--surface': '#1a1612',
-  '--raised': '#211c16',
-  '--raised-2': '#2b241c',
-  '--frame-bg': '#15110d',
-  '--well': '#0b0908',
-  '--card': '#0f0c0a',
-  '--bar': '#120f0c',
-  '--miss-bg': 'rgba(242,167,102,.07)',
-  '--line': '#322a21',
-  '--line-2': '#473b2d',
-  '--control-edge': '#8a7a62',
-  '--metal-line': '#7a5530',
-  '--metal-edge': '#5d4229',
-  '--metal-bright': '#c89a5e',
-  '--ink': '#e9e0cd',
-  '--ink-2': '#c0b49d',
-  '--ink-3': '#9a8e79',
-  '--bronze-lo': '#6d4b27',
-  '--bronze': '#b98a50',
-  '--bronze-hi': '#e4bb7c',
-  '--gold': '#dcb877',
-  '--title-gold': '#e9c585',
-  '--mod': '#8888ff',
-  '--mod-hi': '#a9a9ff',
+  '--label': '#fff8e1',
+  '--steel': '#0f304d',
+  '--steel-hi': '#164a75',
+  '--steel-edge': '#4c4c7d',
+  '--page': '#0e1115',
+  '--bg': '#000000',
+  '--bg-2': '#121922',
+  '--surface': '#15181c',
+  '--raised': '#1e2124',
+  '--raised-2': '#262a2e',
+  '--frame-bg': '#000000',
+  '--well': '#000000',
+  '--card': '#000000',
+  '--bar': '#0e1115',
+  '--miss-bg': 'rgba(239,144,184,.07)',
+  '--line': '#1f2429',
+  '--line-2': '#2c333b',
+  '--control-edge': '#94a1ae',
+  '--metal-line': '#465260',
+  '--metal-edge': '#2c333b',
+  '--metal-bright': '#b08850',
+  '--ink': '#f2ead8',
+  '--ink-2': '#c9bba0',
+  '--ink-3': '#a38d6d',
+  '--bronze-lo': '#8a6a3e',
+  '--bronze': '#b08850',
+  '--bronze-hi': '#b08850',
+  '--gold': '#e9cf9f',
+  '--title-gold': '#fff8e1',
+  '--mod': '#8f8fff',
+  '--mod-hi': '#9a9aff',
   '--mod-num-zh': '#dcdcff',
-  '--prop': '#8c8c8c',
-  '--val': '#ffffff',
-  '--unique': '#ef6916',
-  '--unique-name': '#f27b2e',
+  '--prop': '#9d9282',
+  '--val': '#e2e2e2',
+  '--unique': '#e28a47',
+  '--unique-name': '#e28a47',
   '--unique-name-2': '#e7a070',
   '--unique-edge': '#af6025',
-  '--gem': '#1ba29b',
+  '--gem': '#43c1b5',
   '--gem-en': '#8cc5c1',
-  '--ok': '#93c47d',
-  '--miss': '#f2a766',
-  '--danger': '#f28e87',
-  '--focus': '#ffd48a',
+  '--ok': '#82cf90',
+  '--miss': '#ef90b8',
+  '--danger': '#f3806f',
+  '--focus': '#b8cfff',
   '--focus-ring': '2px solid var(--focus)',
-  '--selection-bg': '#e4bb7c',
-  '--selection-fg': '#100e0c',
+  '--selection-bg': '#b8cfff',
+  '--selection-fg': '#0e1115',
   '--mk-red': '#e8695c',
   '--mk-orange': '#e0904a',
   '--mk-yellow': '#e6d45a',
@@ -119,7 +123,7 @@ const TEXT = [
   '--ink-3',
   '--gold',
   '--title-gold',
-  '--bronze',
+  '--label',
   '--ok',
   '--miss',
   '--danger',
@@ -140,10 +144,10 @@ describe('令牌结构（spec §4.3）', () => {
     expect(root?.declarations.get('color-scheme')).toBe('dark')
   })
 
-  it('令牌集合与取值等于契约 §6.1 的 71 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
+  it('令牌集合与取值等于v4 兼容接口的 75 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
     const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
     expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(contract).toHaveLength(71)
+    expect(contract).toHaveLength(75)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }
@@ -186,7 +190,16 @@ describe('令牌结构（spec §4.3）', () => {
   })
 })
 
-describe('对比度门禁（spec §4.3）', () => {
+describe('对比度门禁（DESIGN.md v4）', () => {
+  it('主按钮文字对普通与悬停底 ≥4.5:1；外边对两侧背景 ≥3:1', () => {
+    for (const surface of ['--steel', '--steel-hi']) {
+      expect(contrastRatio(token('--label'), token(surface))).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(token('--control-edge'), token(surface))).toBeGreaterThanOrEqual(3)
+    }
+    // --steel-edge 只作内侧装饰；方形开关的青铜边面对面板，不用于正文。
+    expect(contrastRatio(token('--bronze-lo'), token('--bg'))).toBeGreaterThanOrEqual(3)
+  })
+
   it('文字令牌对全部表面 ≥4.5:1', () => {
     for (const text of TEXT) {
       for (const surface of SURFACES) {
@@ -199,7 +212,7 @@ describe('对比度门禁（spec §4.3）', () => {
   })
 
   it('控件边界、焦点与亮铜边对全部表面 ≥3:1', () => {
-    for (const edge of ['--control-edge', '--focus', '--metal-bright']) {
+    for (const edge of ['--control-edge', '--focus', '--metal-bright', '--bronze']) {
       for (const surface of SURFACES) {
         expect(
           contrastRatio(token(edge), token(surface)),

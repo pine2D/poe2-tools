@@ -94,9 +94,9 @@ export function markupClass(tags: readonly string[]): string {
 }
 
 const RGB = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i
-// 承载对照行与译文提示框的底里最亮的一档（= --raised #211c16）。--well、--surface 都不比它亮，
+// 承载对照行与译文提示框的底里最亮的一档（= --raised #1e2124）。--well、--surface 都不比它亮，
 // 按它算出的颜色在这些底上只会更易读；名称牌底比它亮，所以名称牌名称不用标记色（spec §6.4.3）。
-const TIP_BG_DARK = [0x21, 0x1c, 0x16] as const
+const TIP_BG_DARK = [0x1e, 0x21, 0x24] as const
 
 function channel(value: number): number {
   const c = value / 255

@@ -1,5 +1,4 @@
-/* pt-divider（spec §5.9）：14px 高；两侧 1px 渐隐线，中心 31×12 的 knot（左右外距 -2px）。
-   只用在 spec §5.9 列出的位置；--sep-c 可设成稀有度边色（译文提示框） */
+/* v4 分隔线：保留间距与稀有度颜色入口，移除中心菱结装饰。 */
 .pt-divider {
   display: flex;
   align-items: center;
@@ -10,13 +9,13 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--sep-c, #7a5530));
+  background: linear-gradient(90deg, transparent, var(--sep-c, var(--metal-line)));
 }
 .pt-divider::after {
-  background: linear-gradient(270deg, transparent, var(--sep-c, #7a5530));
+  background: linear-gradient(270deg, transparent, var(--sep-c, var(--metal-line)));
 }
 .pt-divider > .pt-motif {
-  margin: 0 -2px;
+  display: none;
 }
 /* 首页 hero 标题下：宽 440px 居中，上距 18px（mockup :415）；窄屏宽 100%、最大 440px */
 .pt-divider--hero {

@@ -19,7 +19,13 @@ import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 | `@poe2-tools/ui-theme/selectors` | `SERIF_SELECTORS`：组件 CSS 里用衬线的选择器 |
 | `@poe2-tools/ui-theme/compliance` | 合规判定（许可文件、素材白名单、CSS 外链），只在 Node 里用 |
 
-## 层级规则摘要
+## 迁移状态
+
+2026-10-23：共享颜色、通用按钮、分隔线与弹窗方形开关已迁移到 [v4 规范](../../DESIGN.md)。`pt-btn` 默认深灰，显式 `pt-btn--primary` 为钢蓝；边界统一使用可辨识的 `--control-edge`，钢蓝内边只作装饰。弹窗衬线字单独维护在 `scripts/popup-text.txt`，生成后覆盖静态标签及动态按钮文字。
+
+网站与阅读侧栏、站点设置的布局仍待后续迁移；下面的旧层级摘要只用于核对尚未迁移的组件，不指导新设计。
+
+## 未迁移组件的层级规则摘要
 
 - L3 沉浸：页头 `pt-header`、金属框 `pt-frame`（同一路由状态最多两扇、不嵌套、角饰最多 8 个）、金属主按钮 `pt-forge-btn`（每个路由状态最多一个，只用在规格白名单列出的位置）、构筑页的金属页签 `pt-tabs`、hero 标题与衬线。
 - 游戏对象：名称牌 `pt-nameplate` 与译文提示框。

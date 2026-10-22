@@ -1,38 +1,36 @@
-/* pt-switch（spec §5.13）：只用于扩展设置弹窗（§4.2 层级例外 3），网站不使用。
-   结构是 <input type="checkbox" role="switch">，外观全由本文件绘制；状态由 switch 语义播报，右侧文字 aria-hidden */
+/* v4 方形开关：原生 checkbox + role="switch"；整行 label 提供至少 44px 点击区。
+   状态由实心内方块与开关语义共同表示，右侧文字 aria-hidden。 */
 .pt-switch {
   appearance: none;
   position: relative;
   flex: none;
   box-sizing: border-box;
-  width: 40px;
+  width: 22px;
   height: 22px;
   margin: 0;
-  border: 1px solid var(--control-edge);
-  border-radius: 11px;
-  background: linear-gradient(180deg, #141009, #2a2119);
+  border: 2px solid var(--bronze-lo);
+  border-radius: 0;
+  background: var(--bg);
   cursor: pointer;
 }
 .pt-switch::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #e8d9bd, #8d7f68 60%, #4a4034);
-  transition: transform var(--dur-fast) var(--ease-out);
+  top: 4px;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  background: var(--label);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 .pt-switch:checked {
-  border-color: #e0b574;
-  background: linear-gradient(180deg, #a47645, #553619 60%, #3f2610);
+  border-color: var(--bronze-hi);
 }
 .pt-switch:checked::before {
-  transform: translateX(18px);
-  background: radial-gradient(circle at 35% 30%, #fff3d6, #e0b574 55%, #8a5e2e);
+  opacity: 1;
 }
-/* 读取设置完成前保持禁用（B.12 修订 3）：轨道边与旋钮降到 --ink-3 一档 */
+/* 读取设置完成前保持禁用（B.12 修订 3）：边框与内方块降到 --ink-3 一档 */
 .pt-switch:disabled {
   border-color: var(--line-2);
   cursor: default;
@@ -60,7 +58,7 @@
 
 @media (forced-colors: active) {
   .pt-switch {
-    border: 1px solid ButtonText;
+    border: 2px solid ButtonText;
     background: Canvas;
   }
   .pt-switch:checked {

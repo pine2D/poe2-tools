@@ -20,16 +20,36 @@ it('署名常量与网站完整声明一字不差', () => {
   expect(provenance.SHORT_PROVENANCE).toBe('PoE2 中文助手 · 非官方')
 })
 
-it('衬线文案只剩标题，全部在弹窗独立子集里，popup-text.txt 只收它（扩展 0.4.0）', async () => {
+it('标题、标签、按钮的静态与动态文案均由独立 popup 字体覆盖', async () => {
   const shard = coverage.shards.find((s) => s.file === 'serif-sc-popup.woff2')
   expect(shard?.group).toBe('sc-popup')
   const chars = new Set(shard?.chars ?? '')
-  const serif = [...html.matchAll(/<h1\b[^>]*class="titlebar__title"[^>]*>([^<]*)<\/h1>/g)].map(
-    (m) => m[1],
+  const serif = [
+    ...html.matchAll(
+      /<(?:h1|h2|span|button)\b[^>]*class="(?:titlebar__title|popup-heading|setting__label|pt-btn[^"<>]*)"[^>]*>([^<]*)<\/(?:h1|h2|span|button)>/g,
+    ),
+  ].map((m) => m[1])
+  expect(serif).toEqual([
+    'PoE2 中文助手',
+    'CoE 中文显示',
+    '刷新页面',
+    '启用简体中文',
+    '显示中英对照',
+    '重试读取',
+    '网页翻译',
+    '翻译此页',
+    '启用本页划词',
+  ])
+  const dynamic = ['关闭本页划词', '无法打开侧边栏，请更新 Chrome']
+  const controls = await Promise.all(
+    ['selection-button.ts', 'guide-button.ts'].map((file) =>
+      readFile(new URL(`../src/popup/${file}`, import.meta.url), 'utf8'),
+    ),
   )
-  expect(serif).toEqual(['PoE2 中文助手'])
-  for (const text of serif)
-    for (const ch of text.replace(/\s/g, '')) expect(chars.has(ch), ch).toBe(true)
+  for (const text of dynamic) expect(controls.join('\n')).toContain(text)
+  const text = [...serif, ...dynamic]
+  for (const value of text)
+    for (const ch of value.replace(/\s/g, '')) expect(chars.has(ch), ch).toBe(true)
   const popupText = await readFile(
     new URL('../../../packages/ui-theme/scripts/popup-text.txt', import.meta.url),
     'utf8',
@@ -37,17 +57,21 @@ it('衬线文案只剩标题，全部在弹窗独立子集里，popup-text.txt �
   const entries = popupText
     .split(/\r?\n/)
     .filter((line) => line.trim() !== '' && !line.startsWith('#'))
-  expect(entries).toEqual(serif)
-  for (const ch of '使用前') expect(chars.has(ch), ch).toBe(false)
+  expect(entries).toEqual(text)
 })
 
-it('弹窗样式里用衬线的只有标题：状态块与按钮不用衬线（新增衬线位置须同步 popup-text.txt）', () => {
+it('衬线限标题、分组、设置标签与按钮；长说明保留无衬线', () => {
   const serifSelectors = parseRules(css)
     .filter((r) =>
       /var\(--pt-serif/.test(r.declarations.get('font') ?? r.declarations.get('font-family') ?? ''),
     )
     .flatMap((r) => r.selectors)
-  expect(serifSelectors).toEqual(['.titlebar__title'])
+  expect(serifSelectors).toEqual([
+    '.titlebar__title',
+    '.popup-heading',
+    '.setting__label',
+    '.pt-btn',
+  ])
 })
 
 it('去掉副标题、“使用前”框、左侧色条与 ✓ 字形（第三期 A）', () => {
@@ -92,10 +116,21 @@ it('弹窗不套 pt-frame、没有 pt-forge-btn（spec §4.2 白名单）', () =
   expect(html).not.toMatch(/pt-frame|pt-forge-btn/)
 })
 
-it('弹窗定宽 340px，不用视口单位限宽（工具栏弹窗的视口随内容变化，用 100vw 会停在初始的 240px）', () => {
+it('根节点给出 360×600 自然尺寸，正文在较矮视口内滚动；不用视口单位决定窗口宽度', () => {
   const body = parseRules(css).findLast((r) => r.selectors.includes('body'))
-  expect(body?.declarations.get('width')).toBe('340px')
-  expect(css.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/\d(?:d|s|l)?v(?:w|h|i|b|min|max)\b/)
+  const root = parseRules(css).findLast((r) => r.selectors.includes(':root'))
+  expect(root?.declarations.get('width')).toBe('360px')
+  expect(root?.declarations.get('height')).toBe('600px')
+  expect(root?.declarations.has('max-height')).toBe(false)
+  expect(root?.declarations.get('overflow')).toBe('hidden')
+  expect(root?.declarations.get('scrollbar-width')).toBe('none')
+  expect(body?.declarations.get('width')).toBe('100%')
+  expect(body?.declarations.get('height')).toBe('100%')
+  expect(body?.declarations.get('max-height')).toBe('100vh')
+  expect(body?.declarations.get('overflow-y')).toBe('auto')
+  for (const rule of parseRules(css))
+    for (const prop of ['width', 'min-width', 'max-width'])
+      expect(rule.declarations.get(prop) ?? '').not.toMatch(/\d(?:d|s|l)?v(?:w|h|i|b|min|max)\b/)
 })
 
 it('“重试读取”在 hidden 时不被 pt-btn 的 display 覆盖', () => {
@@ -130,18 +165,18 @@ it('网页翻译与 CoE 中文显示独立分组，状态块和开关归于 CoE'
   expect(main).toContain('<section aria-labelledby="reading-heading">')
   expect(main).toContain('<section aria-labelledby="coe-heading">')
   const groupStyle = parseRules(css).findLast((r) => r.selectors.includes('.popup-heading'))
-  expect(groupStyle?.declarations.get('font')).toContain('var(--font-zh-cn)')
+  expect(groupStyle?.declarations.get('font')).toContain('var(--pt-serif)')
   const order = [
-    'id="reading-heading"',
-    'id="translate"',
-    'id="guide-notice"',
-    'class="pt-divider popup-divider"',
     'id="coe-heading"',
     'id="page"',
     'id="enabled"',
     'id="bilingual"',
     'id="status"',
     'id="retry"',
+    'class="pt-divider popup-divider"',
+    'id="reading-heading"',
+    'id="translate"',
+    'id="guide-notice"',
   ]
   const at = order.map((s) => main.indexOf(s))
   expect(at.every((i) => i >= 0)).toBe(true)
@@ -162,15 +197,18 @@ it('状态块是 polite 的 status 区域；唯一动作是默认隐藏的安静
   expect(css.replace(/\s+/g, '')).toContain('.page__action[hidden]{display:none')
 })
 
-it('同屏金属重点只有标题栏：弹窗里的按钮都是安静按钮', () => {
+it('主操作仅翻译此页使用钢蓝，其余保留次操作入口', () => {
   const buttons = [...html.matchAll(/<button\b[^>]*class="([^"]*)"/g)].map((m) => m[1])
   expect(buttons).toHaveLength(4)
-  for (const cls of buttons) expect(cls).toMatch(/\bpt-btn pt-btn--quiet\b/)
+  expect(buttons.filter((cls) => cls.includes('pt-btn--primary'))).toHaveLength(1)
+  expect(buttons.filter((cls) => cls.includes('pt-btn--quiet'))).toHaveLength(3)
+  expect(html).not.toContain('pt-motif--logo')
+  expect(html).not.toContain('pt-motif--knot')
 })
 
 it('翻译此页按钮与一次性说明默认隐藏；说明出现后仍默认折叠', () => {
   const translate = html.match(/<button[^>]*id="translate"[^>]*>/)?.[0] ?? ''
-  expect(translate).toContain('class="pt-btn pt-btn--quiet translate"')
+  expect(translate).toContain('class="pt-btn pt-btn--primary translate"')
   expect(translate).toMatch(/\shidden[\s>]/)
   expect(html).toMatch(/<details id="guide-notice"[^>]*\shidden[\s>]/)
   expect(html.match(/<details id="guide-notice"[^>]*>/)?.[0]).not.toMatch(/\sopen[\s>]/)

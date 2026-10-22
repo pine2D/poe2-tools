@@ -240,7 +240,13 @@ describe('pt-forge-btn（spec §5.5）', () => {
 describe('pt-btn（spec §5.6）', () => {
   it('默认、--quiet、--sm、--xs 的尺寸与配色；≤600 时 --sm、--xs 最小高 44px', () => {
     expect(declared('btn.css', '.pt-btn', 'height')).toBe('46px')
-    expect(declared('btn.css', '.pt-btn', 'border')).toBe('1px solid var(--bronze)')
+    expect(declared('btn.css', '.pt-btn', 'border')).toBe('1px solid var(--control-edge)')
+    expect(declared('btn.css', '.pt-btn', 'border-radius')).toBe('0')
+    expect(declared('btn.css', '.pt-btn--primary', 'background-color')).toBe('var(--steel)')
+    expect(declared('btn.css', '.pt-btn--primary:hover', 'background-color')).toBe(
+      'var(--steel-hi)',
+    )
+    expect(declared('btn.css', '.pt-btn--primary', 'color')).toBe('var(--label)')
     expect(declared('btn.css', '.pt-btn--quiet', 'border-color')).toBe('var(--control-edge)')
     expect(declared('btn.css', '.pt-btn--sm', 'height')).toBe('38px')
     expect(declared('btn.css', '.pt-btn--xs', 'height')).toBe('28px')
@@ -976,20 +982,19 @@ describe('subhead.css', () => {
 })
 
 describe('pt-switch（spec §5.13）', () => {
-  it('40×22、圆角 11；旋钮 16、开启右移 18px；开启边 #e0b574', () => {
-    expect(declared('switch.css', '.pt-switch', 'width')).toBe('40px')
+  it('方形开关保留独立焦点；选中以实心方块区分，减少动态效果不影响状态', () => {
+    expect(declared('switch.css', '.pt-switch', 'width')).toBe('22px')
     expect(declared('switch.css', '.pt-switch', 'height')).toBe('22px')
-    expect(declared('switch.css', '.pt-switch', 'border-radius')).toBe('11px')
-    expect(declared('switch.css', '.pt-switch::before', 'width')).toBe('16px')
-    expect(declared('switch.css', '.pt-switch:checked::before', 'transform')).toBe(
-      'translateX(18px)',
-    )
-    expect(declared('switch.css', '.pt-switch:checked', 'border-color')).toBe('#e0b574')
-    expect(declared('switch.css', '.pt-switch__state', 'font-size')).toBe('12px')
+    expect(declared('switch.css', '.pt-switch', 'border-radius')).toBe('0')
+    expect(declared('switch.css', '.pt-switch::before', 'opacity')).toBe('0')
+    expect(declared('switch.css', '.pt-switch:checked::before', 'opacity')).toBe('1')
+    expect(declared('switch.css', '.pt-switch:checked::before', 'transform')).toBeUndefined()
+    expect(declared('switch.css', '.pt-switch:checked', 'border-color')).toBe('var(--bronze-hi)')
+    expect(declared('switch.css', '.pt-switch:focus-visible', 'outline')).toBe('var(--focus-ring)')
   })
   it('强制色彩：轨道 1px ButtonText 边，旋钮 ButtonText', () => {
     const FORCED = /forced-colors:\s*active/
-    expect(declared('switch.css', '.pt-switch', 'border', FORCED)).toBe('1px solid ButtonText')
+    expect(declared('switch.css', '.pt-switch', 'border', FORCED)).toBe('2px solid ButtonText')
     expect(declared('switch.css', '.pt-switch::before', 'background', FORCED)).toBe('ButtonText')
     expect(declared('switch.css', '.pt-switch:checked', 'border-color', FORCED)).toBe('ButtonText')
     expect(declared('switch.css', '.pt-switch:checked', 'background', FORCED)).toBe('Canvas')
