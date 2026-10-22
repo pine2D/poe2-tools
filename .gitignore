@@ -1,6 +1,12 @@
 # superpowers 流程文档与底稿（research/specs/plans 等）仅本地保留，不入库
 /docs/superpowers/
 /.superpowers/
+# 会话交接底稿；正式产品与设计规范保留入库
+/HANDOFF.md
+
+# impeccable 的本机配置与问答日志；共享规范、配置和设计记录不整体忽略
+/.impeccable/config.local.json
+/.impeccable/questions/
 
 # Node / pnpm
 node_modules/

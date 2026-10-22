@@ -1,117 +1,53 @@
-# Chrome 扩展
+# PoE2 中文助手
 
-当前施工以[工程教训与收敛约定](engineering-lessons.md)为准：导入改为通用文本转换，逐基底验收记录仅作回归证据。
+在桌面 Chrome 中使用国服简体术语浏览 Craft of Exile，并对照阅读英文 PoE2 攻略。
 
-2026-10-02：扩展源码已合入主树 `apps/poe2-extension`，0.2.0 为首个公开下载版：普通用户在[网站介绍页](https://poe2-tools.pine2d.com/extension/)下载预构建 zip，推送 main 后同一文件由 CI 发布到 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases)（tag `ext-v<版本>`）；没有商店安装入口。支持范围、未验收部分见 [兼容性记录](compatibility.md)，使用细节与从源码构建见 [安装与使用](install.md)。六阶段完整路线尚未全部验收；Windows 原生输入法仍待对应环境验收。
+[下载扩展](https://poe2-tools.pine2d.com/extension/) · [安装与使用](install.md) · [更新日志](../../apps/poe2-extension/CHANGELOG.md) · [返回项目首页](../../README.md)
 
-## 当前 0.10.1 开发预览版（2026-10-22）
+## 能做什么？
 
-本版整合 CoE 兼容修复与攻略翻译，在 0.10.0 阅读重构上补齐章节范围保留、设置校验、阅读位置恢复及紧凑侧栏。工程与交互结果见[侧栏验收](validation-2026-10-22-sidebar-compact.md)、[范围验收](validation-2026-10-22-scope-selection.md)和[发布准备记录](release-readiness.md)。沿用 main 的 CI、网站下载及 GitHub Release 流程，未上架 Chrome 应用商店；此前整段译文语义质量未通过的结论保持，开发预览不代表译文准确性达标。
+| 功能 | 用法 | 是否需要翻译服务 Key |
+| --- | --- | --- |
+| CoE 中文显示 | 显示已收录的界面、词缀与名称，可切换中英对照 | 不需要 |
+| CoE 中文搜索 | 输入中文并选择英文候选，由原站继续查询 | 不需要 |
+| 中文装备文本转换 | 粘贴游戏内 Ctrl+Alt+C 高级文本，核对英文预览后再交给原站导入 | 不需要 |
+| 攻略对照阅读 | 预览正文，选择整页、章节、选中文字或指定区域，查看原文旁／侧栏译文 | 整段翻译需要 |
+| 划词翻译 | 临时启用当前页，或授权常用网站；选择文字后点击翻译 | 普通句子翻译需要 |
 
-## 前一 0.10.0 阅读重构候选（2026-10-21）
+Key 指翻译服务的 API 密钥，由你在对应服务商的控制台创建。完整且确定命中的词缀可以本地翻译；没有配置服务时，仍可查看提取的原文和术语标注，普通攻略正文需要你自己的 DeepSeek 或 OpenAI 兼容服务。
 
-新增常用 PoE2 攻略站点预设与自定义自动划词。用户授予具体站点访问权限后，后续访问自动激活，选中文字仍须点击翻译才发送。侧栏重构任务栏、范围/阅读位置、目录与当前段，气泡采用译文优先、统一图标与稳定展开。见[落地契约](reading-redesign-010.md)与[验收记录](validation-2026-10-21-reading-010.md)。本地候选，不等于已公开发布；未推送或更新 CWS，既有正文语义质量限制保持。
+## 第一次使用
 
-## 前一 0.9.0 跟进候选（2026-10-21）
+从[下载页](https://poe2-tools.pine2d.com/extension/)下载 ZIP 并解压，再到 Chrome 的 `chrome://extensions/` 开启“开发者模式”，通过“加载已解压的扩展程序”选择文件夹。无需安装开发工具或构建源码。
 
-依照[跟进契约](translation-followup-090.md)，补齐 CoE 字面换行与四条持续伤害展示模板、说明传奇原站导入限制，加入多个可置顶拖动的划词气泡，以及侧栏、原文旁与气泡共用的译文术语标注。工程与浏览器结果见[0.9.0 验收](validation-2026-10-21-followup.md)。未推送、部署或更新 CWS；旧正文语义质量未通过的结论保持。
+- 使用 CoE：打开 [Beta 的 PoE2 英文界面](https://beta.craftofexile.com/?game=poe2&language=us)，点击扩展图标查看是否生效。
+- 阅读攻略：在攻略页点扩展图标 → “翻译此页”，检查范围，在“设置”中配置服务后开始翻译。
+- 只翻译一小段：点“启用本页划词”，选中文字，再点击出现的翻译按钮。常用网站可在“管理自动划词站点”中逐站授权。
 
-## 前一阅读工作区候选（2026-10-21）
+详细步骤、关闭方法和更新方法见[安装与使用](install.md)。
 
-用户选定“目录＋当前段＋异常”与“侧栏关闭也可划词”，已按[0.8.0 契约](reading-workspace.md)依次实现并本地提交。补齐 CoE 分类来源与高级名称上下文，调整侧栏和原位展示，增加显式启用的独立划词；权限仍为四项。准确结果与限制见[0.8.0 验收](validation-2026-10-21-workspace.md)。本地候选不等于公开发行；不推送、部署或更新 CWS。
+## 当前版本与使用边界
 
-## 前一阅读候选（2026-10-21）
+**0.10.1 开发预览已于 2026-10-22 公开发布**，网站与 [GitHub Release](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 提供相同安装包；尚未上架 Chrome 应用商店。
 
-用户已批准[通用攻略阅读与范围契约](guide-reading.md)：先文档、格式与缓存门禁，再结构提取、范围选择、原文定位和页内对照。已完成实现、独立审查修复与本地 0.7.0 浏览器验收，准确工程结果见[阅读体验验收](validation-2026-10-21-reading.md)；0.6.0 的语义失败结论保留，不推送或更新 CWS。
+- CoE 适配限新版 Beta 的 PoE2、English 模式。未命中或有歧义的内容保留原文；装备是否合法、能否导入由 CoE 判断。
+- 攻略阅读支持 Mobalytics PoE2 构筑页、poe2.com 与通用正文提取，只处理当前已加载且可访问的内容；不能保证所有网站完整提取。自动划词预设不代表该站全部内容均已适配。
+- 整段译文语义质量尚未达标。请核对影响操作的动作、对象、条件和数值关系，保留原文对照。
+- 当前面向桌面 Chrome；手机、PoE1 及全部网页／装备格式不在支持承诺内。Windows 日常浏览器完整流程和真实中文输入法仍有待验收项。
 
-## 前一整合候选（2026-10-20）
+已测与未测范围见[兼容性记录](compatibility.md)。遇到 CoE 中英混排，可先看[与其他翻译扩展同时使用](install.md#与其他翻译扩展同时使用)。
 
-用户已批准 [CoE 与攻略翻译衔接契约](translation-bridge.md)，先更新文档再实施。CoE 参考为本地 0.4.4 / `378e0d5`，攻略参考为未通过整段质量门槛的 0.5.0 / `c1f2e10`；本轮独立整合，旧结果不改写。已构建 0.6.0 本地候选，真实正文同期对照未通过语义门槛；完整证据见[衔接验收](validation-2026-10-20-bridge.md)，工程检查与正文质量分别报告。CWS 暂缓，不把旧 0.4.1 字节相等门禁继续当作新整合基线。
+## 文字会发送到哪里？
 
-## 产品目标
+CoE 显示、搜索与装备文本转换不调用翻译服务。攻略翻译只向你选择的服务商发送所选文字、相关术语和同一范围内的必要语境；选择范围、切换阅读位置和移动气泡不会发送翻译请求。“测试连接”会发送简短测试消息。
 
-在成熟 PoE2 工具网站中直接使用国服简体中文：页面术语与操作文案可读，中文搜索能驱动原站查询，国服 Ctrl+Alt+C 装备文本可转换后导入。首站为 [CoE 新版介绍](https://beta.craftofexile.com/whats-new)所指的 Beta，实际制作入口为 [PoE2 模式](https://beta.craftofexile.com/?game=poe2)。新版 CoE 与游戏 PoE2 是两个不同维度，不将新版首页默认的 PoE1 当成目标。
+Key 与译文缓存保存在本机扩展存储，Key 未加密，网页脚本读不到。你可以在设置中清除；自动划词的网站授权需在站点管理中单独移除。完整说明见[隐私与权限](privacy.md)。
 
-0.10.1 开发预览版另含攻略翻译：用户在攻略页点扩展图标、再点“翻译此页”后，扩展先预览正文范围；明确开始后翻译，默认原文旁对照并保留侧栏管理，宝石、天赋、物品与机制术语按国服写法标注并约束译文。整段翻译由用户自备翻译服务的 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key；未配置时仍显示原文与术语标注，完整且确定命中的词缀可直接本地翻译。隐私与权限见[隐私说明](privacy.md)。
+## 帮助与维护资料
 
-用户实测：原站名为“简体中文”的选项实际显示繁体，并有大量英文遗漏。扩展以英文界面为基准，使用独立国服译名，不依赖原站繁体包、不做繁简转换。
+- [安装与使用](install.md)：下载、CoE 操作、攻略阅读、划词与更新。
+- [隐私与权限](privacy.md)：发送范围、Key、缓存和站点授权。
+- [问题反馈](https://github.com/pine2D/poe2-tools/issues)：提供版本、页面地址与复现步骤，隐去私人信息。
+- [开发与维护](development.md)：源码构建、发版步骤、数据开关和历史验收索引。
 
-本轮核心覆盖与集中验收见[发布准备记录](release-readiness.md)，其中区分实际通过与待验收项。
-
-## 文档导航
-
-| 文档 | 用途 |
-| --- | --- |
-| [0.9.0 跟进验收](validation-2026-10-21-followup.md) | 多气泡、译文术语和 CoE 漏译及导入边界 |
-| [0.9.0 跟进契约](translation-followup-090.md) | 本轮五项需求、实施顺序与验收边界 |
-| [0.8.0 工作区验收](validation-2026-10-21-workspace.md) | 本轮侧栏、原位、划词、CoE 与工程证据 |
-| [0.8.0 实施契约](reading-workspace.md) | 用户批准选择、顺序及后台边界 |
-| [阅读体验验收](validation-2026-10-21-reading.md) | 0.7.0 本地候选的浏览器、工程结果与未测范围 |
-| [阅读与范围契约](guide-reading.md) | 本轮范围预览、原文位置、页内对照、格式及缓存门禁 |
-| [衔接契约](translation-bridge.md) | 本轮数据、路由、语境缓存、预算与停止条件 |
-| [设计与文件安排](design.md) | 包边界、目录、数据流、权限、失败行为 |
-| [分阶段实施计划](plan.md) | 开发顺序、文件范围、验证及提交单元 |
-| [验收清单](acceptance.md) | 真实 Chrome、动态页面、中文输入和导入验收 |
-| [数据源登记](../data-sources.md) | 来源、风险、使用范围与构建期数据约束 |
-| [词缀翻译契约](translation-contract.md) | 原始模板、共用匹配、冲突诊断与扩展覆盖门禁 |
-| [原做装路线](../crafting-roadmap.md) | 已无限期搁置的历史，不作为扩展待办 |
-
-## 范围与交付
-
-- 首发支持桌面 Chrome、Manifest V3；产物为可加载的未打包目录和发行 ZIP。商店上架单独安排，不是当前已完成事项。
-- 首个端到端验证使用法器，但正式首版不能将法器试点当成全部装备导入完成。按页面与文本结构记录覆盖和未支持项。
-- 交付包括扩展包、国服术语资源及来源清单、安装说明、兼容性记录、隐私说明和验收结果。
-- 暂不适配旧版 `www.craftofexile.com`、PoE1、手机浏览器或其他工具站。后续站点复用术语核心，单独写站点适配器。
-- 攻略翻译首版支持 Mobalytics（PoE2 构筑页）、poe2.com 与通用正文提取；只支持桌面 Chrome；支持受限的原文旁对照和当前页划词；不支持手机、PoE1，无法保证所有网站自动完整提取。
-- 原制作网站无限期搁置；共用解析／词典的必要修正可以继续，但不能借此重启制作引擎开发。
-
-## 发版步骤
-
-扩展版本号独立于网站，唯一来源是 `apps/poe2-extension/package.json`（`manifest.json` 须一致，构建时核对）。任何改变扩展产物的改动都会让 `pnpm verify` 的发布闸门失败，必须显式发版。会改变产物的有：
-
-- 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`、`packages/guide-core`；
-- `packages/item-core`：网站工坊与扩展共用，只为网站改它也会改变扩展 zip；
-- `packages/ui-theme` 中扩展用到的部分：令牌（含尺寸阶梯）、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、注入衬线字体子集 `serif-sc-l1` 及其收字来源（`data/l10n/coe-beta/ui.zh-CN.json` 全部译文、`apps/poe2-extension/src/content/*.ts` 与 `src/provenance.ts` 的中文文案）、完整声明，只为网站改它也会改变扩展 zip。收字来源出现新字时 `packages/ui-theme` 的 coverage.test 会失败：运行 `pnpm ui-theme:fonts --offline` 重新生成（`serif-sc-l1` 超过 131,072 字节时脚本以退出码 4 终止），与扩展版本放进同一提交；
-- 数据：`data/dict/zh-CN/` 的 items/gems/passives、`data/dict/zh-TW/items.json`、`data/l10n/stats/` 两服原始词缀、`data/dict/_overrides/` 职业/升华、`data/l10n/`（含攻略术语、CoE 界面和裁决）、`data/craft/catalog.json`，以及根目录 `LICENSE`；
-- 依赖与 `pnpm-lock.yaml` 升级：Vite、Rolldown 等构建链版本变化会改变 `content.js` 与弹窗资源。
-
-只在 Linux（含 WSL）上发版：CI 在 Linux 上重新打包核对；Windows 原生检出若开启换行转换，数据文件的哈希会写进词典的 sources，产物随之不同。
-
-1. 升版本：同时改 `apps/poe2-extension/package.json` 与 `manifest.json` 的 `version`（修复、词典与依赖更新升补丁位，新功能升次版本位）。
-2. 在 `apps/poe2-extension/CHANGELOG.md` 顶部写 `## [<版本>] - <YYYY-MM-DD>` 一段；这个日期会写进 `release.json` 与 GitHub Release，写预计推送的日期。推送日晚于这个日期时，推送前把日期改成实际推送日，再运行 `EXTENSION_RELEASE_AMEND=1 pnpm extension:release`（产物不变，只改日期）。
-3. 运行 `pnpm extension:release`：重新构建、打包并改写 `apps/poe2-extension/release.json`（版本、文件名、字节数、SHA-256、日期）。同一版本已记录另一份产物时会拒绝；只有日期不同时也会拒绝，并单独提示。该版本尚未推送发布时可用 `EXTENSION_RELEASE_AMEND=1 pnpm extension:release` 覆盖；已发布则只能再升版本——CI 的 verify 会比对 GitHub 上已发布的同版本附件，内容不同即失败。同一个尚未推送的版本在功能分支上分几个提交改动产物时：第一个提交运行 `pnpm extension:release`，之后每个改动产物的提交都运行 `EXTENSION_RELEASE_AMEND=1 pnpm extension:release`，`release.json` 与改动放在同一提交；中间提交不能单独推上 main，否则会以半成品发布该版本，之后只能再升版本。
-4. 运行 `pnpm verify`，把 `release.json`、版本号与 CHANGELOG 和改动一起提交。
-5. 推送 main（由用户执行）：CI 验证后部署网站，`/downloads/<文件>` 随站发布；部署成功后 `release-extension` job 创建 tag `ext-v<版本>` 与同名 GitHub Release（不标为 Latest），附件是同一个 zip。已有一致的 Release 则跳过，缺附件会补传，草稿、多余附件或内容不一致则失败，需要在 GitHub 上人工检查。推送含 `.github/workflows/` 改动时，HTTPS 令牌需要 `workflow` 权限（SSH 不受影响）。经 PR 合入时，分支里若有合并提交（例如扩展合入主线的 `feat/extension-release`），合并 PR 只能选“Create a merge commit”，或在 PR 的 CI 通过后本地快进推送；Squash 与 Rebase 会丢掉被合并分支的历史。
-
-### 下线 gray 来源
-
-`apps/poe2-extension/scripts/build.mjs` 的 `--no-gray` 会去掉所有 gray 来源的词条（poe2db 派生的物品名与石板名，以及攻略词典中的宝石与天赋名（`gems.json`、`passives.json`）），primary 与 manual 来源不受影响。根脚本与 `extension:*` 都不传这个参数，而 `pnpm verify` 与 CI 每次都按扩展 `package.json` 的 `build` 脚本重建，所以一次性带参数构建过不了发布闸门。长期下线：
-
-1. 把 `apps/poe2-extension/package.json` 的 `build` 脚本改为 `node scripts/build.mjs --no-gray`。
-2. 按上面的步骤升补丁版本、在 CHANGELOG 写明去掉了哪些来源、运行 `pnpm extension:release`、`pnpm verify` 后一起提交。
-
-只想在本机看效果时运行 `node apps/poe2-extension/scripts/build.mjs --no-gray`，不要拿它的产物发版。
-
-## 已知证据与待验证项
-
-冻结攻略 0.5.0 仍未通过发布验收，Windows 攻略入口、设置／存储和真实翻译小样的通过与未通过项见 [兼容性记录](compatibility.md)。商店固定身份已取得，真实翻译质量与完整验收尚未通过；0.4.1 的稳定版 Chrome 代表流程与复制保护修复见 [2026-10-06 验收记录](validation-2026-10-06.md)，公开版本以实际分发结果为准。
-
-CoE 开发者文档公开 `game=poe2&eimport=...`，没有公开 API。既有 `docs/coe-focus-bridge-research.md` 仅验收了部分普通法器导入，不能外推全部装备。上一轮隔离浏览器观察到基底搜索异步更新；填值后的即时快照不代表最终结果。现已实际装载扩展并核对首页基底检索、制作页词缀查询、中文导入和 popup 关闭恢复；并不等于所有搜索框、模拟流程或真实中文输入法均已验收。
-
-安装、兼容性和隐私文档已提供；版本证据与剩余验收项分别记录。公开下载版能安装，不等于所有页面、装备格式与输入法都已验收。
-
-## 施工入口
-
-0.2.0 起为公开下载版；安装见 [安装与使用](install.md)，权限见 [隐私说明](privacy.md)，实测和未验收范围见 [兼容性记录](compatibility.md)。完整路线仍以 plan.md 为准，未勾选项不是已交付承诺。
-
-阶段完成证据与下一轮施工顺序见 [阶段审计](stage-audit.md)。
-
-权杖的原站输入、复合词缀与技能等级差异见[权杖导入核对](sceptre-import-audit.md)；不能将英文导入无报错等同于值完整保留。
-
-迭代命令、样本格式门禁及包管理器故障排查见[验证说明](validation.md)。
-
-Linux Fcitx5真实拼音输入的已验收路径及平台边界见[IME验收记录](ime-audit.md)。
-
-## 0.5.0 草稿进度（2026-10-19）
-
-已创建 Chrome 商店未发布草稿，并取得固定扩展身份。构建门禁校验公钥，冻结的 0.5.0 分支中，`pnpm extension:coe-unchanged` 核对 CoE 三个产物与 0.4.1 基线一致；新整合分支按衔接契约迁移到本地 0.4.4 参考。真实翻译质量和完整浏览器验收仍未通过，尚未送审或公开发布。草稿材料与当前包见 [商店草稿](store-draft.md)，具体实测边界见 [兼容性记录](compatibility.md)。
+本扩展与 Grinding Gear Games、腾讯及 Craft of Exile 无关联，也未获其认可。
