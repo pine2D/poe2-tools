@@ -143,7 +143,7 @@ export function ExtensionPage(): ReactElement {
                 <li>
                   发布于 <b>{date}</b>
                 </li>
-                <li>只申请“存储”权限，用来在本机保存设置</li>
+                <li>申请存储、读取当前页与侧边栏权限，用来保存设置和翻译攻略</li>
                 <li>
                   <a className="text-link" href="#update">
                     已装旧版？看更新方法
@@ -305,6 +305,10 @@ export function ExtensionPage(): ReactElement {
           <section id="update" aria-labelledby="update-title">
             <h2 id="update-title">更新与恢复</h2>
             <p>
+              0.5.0 起扩展身份固定。从 0.4.x 升级时，请先在扩展管理页移除旧版，再加载新版；CoE
+              里的开关会恢复默认，需要重新设置一次。同时启用旧版和新版可能重复显示中文。
+            </p>
+            <p>
               下载新版
               zip，解压覆盖原文件夹里的文件，在扩展页点该扩展的“重新加载”（圆形箭头），再刷新 CoE
               页面；弹窗里的“检查更新”会打开本页对比版本。
@@ -314,12 +318,12 @@ export function ExtensionPage(): ReactElement {
           <section id="privacy" aria-labelledby="privacy-title">
             <h2 id="privacy-title">文本处理与隐私</h2>
             <p>
-              汉化和文本转换都在你的浏览器里完成，设置也保存在本机。填入英文并在 CoE
-              点击继续后，由原站处理后续操作。
+              术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。
             </p>
             <p>
-              扩展仅面向 CoE Beta，不需要游戏账号登录，也不<span className="nw">代替</span>
-              你执行原站导入。
+              扩展不内置任何 Key，Key
+              与译文缓存只保存在本机，可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不
+              <span className="nw">代替</span>你执行原站导入。
             </p>
             <a
               className="text-link"
@@ -327,6 +331,20 @@ export function ExtensionPage(): ReactElement {
             >
               查看权限与隐私说明
             </a>
+          </section>
+          <section id="guide" aria-labelledby="guide-title">
+            <h2 id="guide-title">攻略翻译</h2>
+            <p>
+              在攻略页点扩展图标，再点“翻译此页”，先预览正文、选区或点选区域，核对章节和用量后点“开始翻译”。译文默认放在原文旁，也可仅在侧栏阅读、定位原文或恢复页面。
+            </p>
+            <p>
+              整段翻译需要你自备翻译服务的 Key：默认 DeepSeek，也可以填写 OpenAI
+              兼容接口。没有配置时，侧边栏仍会显示原文和术语标注。
+            </p>
+            <p>
+              首版适配 Mobalytics 的 PoE2 构筑页与 poe2.com，其他网站使用通用正文读取；只支持桌面
+              Chrome，不支持 PoE1。
+            </p>
           </section>
           {/* 首页“支持范围见介绍页”的落点；按钮名逐字取自扩展实际渲染的文字与扩展对原站按钮的译名 */}
           <section id="convert" aria-labelledby="convert-title">
@@ -340,10 +358,10 @@ export function ExtensionPage(): ReactElement {
                 点“<strong>预览中文转换</strong>”，对照原文与英文两栏核对。
               </li>
               <li>
-                预览后显示“可以填入”（译文完整）时，核对两栏后点“
+                预览后显示“可以填入”（机制内容已转换）时，核对两栏后点“
                 <strong>填入英文到原站导入框</strong>
-                ”；显示“需先改正 N 行”时这个按钮不能用，点问题前面的“<strong>第 N 行</strong>
-                ”会选中原文里的这一行，改正后重新预览。
+                ”；显示“需先核对 N 行”时这个按钮不能用，点问题前面的“<strong>第 N 行</strong>
+                ”会选中原文里的这一行，核对后重新预览。
               </li>
               <li>
                 最后由你自己点原站的“<strong>继续</strong>

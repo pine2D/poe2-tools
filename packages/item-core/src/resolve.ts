@@ -145,21 +145,24 @@ export function resolveBase(
   names: readonly string[],
   rarity: string,
   bases: Record<string, string>,
+  inputNames: Record<string, readonly string[]> = {},
 ): Resolution {
   const source = names.at(-1)?.trim() ?? ''
-  const matches = Object.entries(bases).flatMap(([english, local]) =>
-    [...new Set([local, english])].flatMap((name) => {
-      if (source === name) return [{ id: english, english, start: 0, end: source.length }]
-      if (rarity !== 'magic' || name === '') return []
-      return [...source.matchAll(new RegExp(`(?<!\\S)${escapeRegex(name)}(?!\\S)`, 'gi'))].map(
-        (match) => ({
-          id: english,
-          english,
-          start: match.index,
-          end: match.index + match[0].length,
-        }),
-      )
-    }),
+  const matches = [...new Set([...Object.keys(bases), ...Object.keys(inputNames)])].flatMap(
+    (english) =>
+      [...new Set([bases[english], english, ...(inputNames[english] ?? [])])].flatMap((name) => {
+        if (name === undefined) return []
+        if (source === name) return [{ id: english, english, start: 0, end: source.length }]
+        if (rarity !== 'magic' || name === '') return []
+        return [...source.matchAll(new RegExp(`(?<!\\S)${escapeRegex(name)}(?!\\S)`, 'gi'))].map(
+          (match) => ({
+            id: english,
+            english,
+            start: match.index,
+            end: match.index + match[0].length,
+          }),
+        )
+      }),
   )
   // 只排除同一位置被更长名称包含的短命中，不能吞掉其他位置的独立基底。
   return result(

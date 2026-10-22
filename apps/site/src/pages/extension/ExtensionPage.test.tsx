@@ -182,7 +182,7 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     )
     expect(texts(download.querySelectorAll('.ext-facts > li'))).toEqual([
       `发布于 ${EXTENSION_RELEASE.date}`,
-      '只申请“存储”权限，用来在本机保存设置',
+      '申请存储、读取当前页与侧边栏权限，用来保存设置和翻译攻略',
       '已装旧版？看更新方法',
     ])
     expect(
@@ -377,36 +377,45 @@ describe('安装与确认生效（L0）', () => {
 })
 
 describe('参考信息与删除项', () => {
-  it('更新、隐私、装备文本转换、支持范围、反馈五节，各自带 aria-labelledby；其余标题保持 L0', () => {
+  it('更新、隐私、攻略翻译、装备文本转换、支持范围、反馈六节，各自带 aria-labelledby；其余标题保持 L0', () => {
     const { container } = setup()
     const details = [...container.querySelectorAll('.ext-details > section')]
     expect(details.map((section) => labelOf(container, section))).toEqual([
       '更新与恢复',
       '文本处理与隐私',
+      '攻略翻译',
       '装备文本转换',
       '支持范围与已知限制',
       '遇到问题？',
     ])
-    expect(details.map((section) => section.id)).toEqual(['update', 'privacy', 'convert', '', ''])
+    expect(details.map((section) => section.id)).toEqual([
+      'update',
+      'privacy',
+      'guide',
+      'convert',
+      '',
+      '',
+    ])
     expect(texts(container.querySelectorAll('#update p'))).toEqual([
+      '0.5.0 起扩展身份固定。从 0.4.x 升级时，请先在扩展管理页移除旧版，再加载新版；CoE 里的开关会恢复默认，需要重新设置一次。同时启用旧版和新版可能重复显示中文。',
       '下载新版 zip，解压覆盖原文件夹里的文件，在扩展页点该扩展的“重新加载”（圆形箭头），再刷新 CoE 页面；弹窗里的“检查更新”会打开本页对比版本。',
       '关闭汉化可恢复原文。禁用或卸载扩展后，也请刷新原站页面。',
     ])
     expect(texts(container.querySelectorAll('#privacy p'))).toEqual([
-      '汉化和文本转换都在你的浏览器里完成，设置也保存在本机。填入英文并在 CoE 点击继续后，由原站处理后续操作。',
-      '扩展仅面向 CoE Beta，不需要游戏账号登录，也不代替你执行原站导入。',
+      '术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。',
+      '扩展不内置任何 Key，Key 与译文缓存只保存在本机，可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不代替你执行原站导入。',
     ])
     expect(screen.getByRole('link', { name: '查看权限与隐私说明' }).getAttribute('href')).toBe(
       'https://github.com/pine2D/poe2-tools/blob/main/docs/chrome-extension/privacy.md',
     )
-    expect((details[3] as Element).querySelector('p')?.textContent).toBe(
+    expect((details[4] as Element).querySelector('p')?.textContent).toBe(
       '当前版本不保证支持所有页面和装备格式。遇到未收录的内容、有歧义的译文或损坏的数值时，会提示你检查，不会猜译。Windows 自带的中文输入法尚未完成验证，遇到输入问题请反馈。',
     )
-    expect((details[4] as Element).querySelector('p')?.textContent).toBe(
+    expect((details[5] as Element).querySelector('p')?.textContent).toBe(
       '可以先关闭扩展，看看原站是否也有同样的问题。反馈时请说明页面、操作步骤和扩展版本；如果附上装备样本，请先删去私人信息。',
     )
     expect(
-      within(details[4] as HTMLElement)
+      within(details[5] as HTMLElement)
         .getByRole('link', { name: '反馈问题' })
         .getAttribute('href'),
     ).toBe('https://github.com/pine2D/poe2-tools/issues')
@@ -415,6 +424,7 @@ describe('参考信息与删除项', () => {
       '确认生效',
       '更新与恢复',
       '文本处理与隐私',
+      '攻略翻译',
       '装备文本转换',
       '支持范围与已知限制',
       '遇到问题？',
@@ -439,7 +449,7 @@ describe('参考信息与删除项', () => {
     expect(steps).toEqual([
       '在 CoE Beta 点原站的“导入装备”，粘贴在游戏里按 Ctrl+Alt+C 复制的国服装备文本。',
       '点“预览中文转换”，对照原文与英文两栏核对。',
-      '预览后显示“可以填入”（译文完整）时，核对两栏后点“填入英文到原站导入框”；显示“需先改正 N 行”时这个按钮不能用，点问题前面的“第 N 行”会选中原文里的这一行，改正后重新预览。',
+      '预览后显示“可以填入”（机制内容已转换）时，核对两栏后点“填入英文到原站导入框”；显示“需先核对 N 行”时这个按钮不能用，点问题前面的“第 N 行”会选中原文里的这一行，核对后重新预览。',
       '最后由你自己点原站的“继续”（Proceed）完成导入。扩展不会替你提交，导入结果以原站为准。',
     ])
     expect(texts(section.querySelectorAll('ol > li:nth-child(3) strong'))).toEqual([
@@ -451,7 +461,7 @@ describe('参考信息与删除项', () => {
       resolve(here, '../../../../poe2-extension/src/content/import-controller.ts'),
       'utf8',
     )
-    for (const text of ['预览中文转换', '填入英文到原站导入框', '可以填入', '需先改正']) {
+    for (const text of ['预览中文转换', '填入英文到原站导入框', '可以填入', '需先核对']) {
       expect(controller, text).toContain(text)
     }
     // 定位按钮的文字是模板串 `第 ${行号} 行`；用正则字面量，避免字符串里出现 ${ 触发 Biome 报警

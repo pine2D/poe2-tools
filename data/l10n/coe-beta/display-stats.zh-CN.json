@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "tier": "manual",
+    "source": "https://beta.craftofexile.com/?game=poe2",
+    "gameVersion": "unknown",
+    "updatedAt": "2026-10-21",
+    "purpose": "display-only"
+  },
+  "entries": [
+    {
+      "id": "cold-dot-multiplier",
+      "en": "+#% to Cold Damage over Time Multiplier",
+      "zh": "冰霜持续伤害加成 +#%",
+      "reason": "原站条件菜单可见；当前国服原始词缀无对应，人工译文只供展示。"
+    },
+    {
+      "id": "fire-dot-multiplier",
+      "en": "+#% to Fire Damage over Time Multiplier",
+      "zh": "火焰持续伤害加成 +#%",
+      "reason": "原站条件菜单可见；当前国服原始词缀无对应，人工译文只供展示。"
+    },
+    {
+      "id": "chaos-dot-multiplier",
+      "en": "+#% to Chaos Damage over Time Multiplier",
+      "zh": "混沌持续伤害加成 +#%",
+      "reason": "原站条件菜单可见；当前国服原始词缀无对应，人工译文只供展示。"
+    },
+    {
+      "id": "physical-dot-multiplier",
+      "en": "+#% to Physical Damage over Time Multiplier",
+      "zh": "物理持续伤害加成 +#%",
+      "reason": "原站条件菜单可见；当前国服原始词缀无对应，人工译文只供展示。"
+    }
+  ]
+}

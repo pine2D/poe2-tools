@@ -18,6 +18,27 @@ describe('parseTrade2Stats', () => {
 })
 
 describe('buildStatsDict', () => {
+  it('展示投影只将源 # 当变量，固定条件和原变量顺序不泛化', () => {
+    const { dict, audit } = buildStatsDict({
+      en,
+      target: zh,
+      locale: 'zh-CN',
+      orderOverrides: { 'explicit.stat_recover': [1, 0] },
+      winners: {},
+      meta,
+      preserveLiteralNumbers: true,
+    })
+    expect(dict.entries.find((entry) => entry.id === 'explicit.stat_literal')).toEqual({
+      id: 'explicit.stat_literal',
+      en: 'Recover #% of Life every 4 seconds',
+      text: '每 4 秒回复 #% 生命',
+    })
+    expect(dict.entries.find((entry) => entry.id === 'explicit.stat_recover')?.order).toEqual([
+      1, 0,
+    ])
+    expect(audit.literalVariant).toBe(0)
+  })
+
   const { dict, audit } = buildStatsDict({
     en,
     target: zh,

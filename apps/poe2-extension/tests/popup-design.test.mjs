@@ -24,7 +24,9 @@ it('衬线文案只剩标题，全部在弹窗独立子集里，popup-text.txt �
   const shard = coverage.shards.find((s) => s.file === 'serif-sc-popup.woff2')
   expect(shard?.group).toBe('sc-popup')
   const chars = new Set(shard?.chars ?? '')
-  const serif = [...html.matchAll(/<(h1|h2|h3)\b[^>]*>([^<]*)<\/\1>/g)].map((m) => m[2])
+  const serif = [...html.matchAll(/<h1\b[^>]*class="titlebar__title"[^>]*>([^<]*)<\/h1>/g)].map(
+    (m) => m[1],
+  )
   expect(serif).toEqual(['PoE2 中文助手'])
   for (const text of serif)
     for (const ch of text.replace(/\s/g, '')) expect(chars.has(ch), ch).toBe(true)
@@ -122,13 +124,20 @@ it('开关禁用时右侧状态文字也降到 --ink-3（B.12 修订 3）', () =
   expect(rule?.declarations.get('color')).toBe('var(--ink-3)')
 })
 
-// ---- 第三期 A「状态置顶」（方向约定 apps-poe2-extension-src-popup.md） ----
-it('标题栏下第一块是状态块 #page，随后依次是菱结分隔、两个开关、设置提示行与“重试读取”', () => {
+// ---- 0.10.1：网页翻译与 CoE 中文显示分别命名 ----
+it('网页翻译与 CoE 中文显示独立分组，状态块和开关归于 CoE', () => {
   const main = html.slice(html.indexOf('<main>') + '<main>'.length, html.indexOf('</main>'))
-  expect(main.trimStart().startsWith('<div id="page"')).toBe(true)
+  expect(main).toContain('<section aria-labelledby="reading-heading">')
+  expect(main).toContain('<section aria-labelledby="coe-heading">')
+  const groupStyle = parseRules(css).findLast((r) => r.selectors.includes('.popup-heading'))
+  expect(groupStyle?.declarations.get('font')).toContain('var(--font-zh-cn)')
   const order = [
-    'id="page"',
+    'id="reading-heading"',
+    'id="translate"',
+    'id="guide-notice"',
     'class="pt-divider popup-divider"',
+    'id="coe-heading"',
+    'id="page"',
     'id="enabled"',
     'id="bilingual"',
     'id="status"',
@@ -149,14 +158,27 @@ it('状态块是 polite 的 status 区域；唯一动作是默认隐藏的安静
   expect(reload?.[0]).toMatch(/\shidden[\s>]/)
   expect(reload?.[1]).toBe('刷新页面')
   expect(html).not.toContain('<svg')
-  expect(html).not.toMatch(/<h2\b/)
+  expect(html.match(/<h2\b/g)).toHaveLength(2)
   expect(css.replace(/\s+/g, '')).toContain('.page__action[hidden]{display:none')
 })
 
 it('同屏金属重点只有标题栏：弹窗里的按钮都是安静按钮', () => {
   const buttons = [...html.matchAll(/<button\b[^>]*class="([^"]*)"/g)].map((m) => m[1])
-  expect(buttons).toHaveLength(2)
+  expect(buttons).toHaveLength(4)
   for (const cls of buttons) expect(cls).toMatch(/\bpt-btn pt-btn--quiet\b/)
+})
+
+it('翻译此页按钮与一次性说明默认隐藏；说明出现后仍默认折叠', () => {
+  const translate = html.match(/<button[^>]*id="translate"[^>]*>/)?.[0] ?? ''
+  expect(translate).toContain('class="pt-btn pt-btn--quiet translate"')
+  expect(translate).toMatch(/\shidden[\s>]/)
+  expect(html).toMatch(/<details id="guide-notice"[^>]*\shidden[\s>]/)
+  expect(html.match(/<details id="guide-notice"[^>]*>/)?.[0]).not.toMatch(/\sopen[\s>]/)
+  const rules = parseRules(css)
+  for (const selector of ['.translate[hidden]', '.guide-notice[hidden]']) {
+    const rule = rules.find((r) => r.selectors.includes(selector))
+    expect(rule?.declarations.get('display')).toBe('none')
+  }
 })
 
 it('状态图标颜色：生效中 --ok、部分生效 --miss、未生效 --danger、已关闭 --ink-2、读取中 --ink-3（形状另行区分）', () => {

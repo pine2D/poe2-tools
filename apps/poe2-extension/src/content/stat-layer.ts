@@ -1,9 +1,12 @@
 import type { Lexicon } from '@poe2-tools/l10n-core'
 import { boundaryAttributes, boundaryChanged } from '../adapters/coe-beta/boundaries'
+import { compoundStat } from '../adapters/coe-beta/compound-stat'
+import { displayText } from '../adapters/coe-beta/display-text'
 import { materialDescription } from '../adapters/coe-beta/material-descriptions'
 import { contextualText, textContext } from '../adapters/coe-beta/regions'
 import {
   isSupportedStat,
+  itemNameSelector,
   materialDescriptionSelector,
   modifierDetailsSelector,
   propertySelector,
@@ -13,9 +16,25 @@ import { adoptL1 } from './l1'
 import type { CountedStop } from './text-layer'
 
 export type { CountedStop } from './text-layer'
-export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
+
+/** textContent 会吞掉 br 的词边界；只读取显式换行，不依赖布局或改写原站 DOM。 */
+function statText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
+  if (node.nodeName === 'BR') return '\n'
+  return Array.from(node.childNodes, statText).join('')
+}
+
+export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false): CountedStop {
   const hosts = new Map<Element, HTMLElement>()
   const cache = new Map<string, string | null>()
+  const originalAttribute = 'data-poe2-l10n-original'
+  const diagnosticAttribute = 'data-poe2-l10n-stat-status'
+  const diagnosed = new Set<Element>()
+  const style = doc.createElement('style')
+  style.dataset.poe2L10nStyle = 'stat-visibility'
+  // 仅隐藏已译出的视觉原文；原站读取、复制与更新仍使用同一套英文节点。
+  style.textContent = `[${originalAttribute}="stat"] { display: none !important; }`
+  if (!bilingual) doc.head.append(style)
   function modifierDetailsText(details: Element): string | null {
     let changed = false
     let result = ''
@@ -23,7 +42,7 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
     let node = walker.nextNode()
     while (node) {
       const text = node as Text
-      const translated = contextualText(text.data, textContext(text)) ?? text.data
+      const translated = contextualText(text.data, textContext(text), lex) ?? text.data
       if (translated !== text.data) changed = true
       result += translated
       node = walker.nextNode()
@@ -57,32 +76,52 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
   }
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
-    const original = stat.textContent ?? ''
-    const kind = stat.matches(propertySelector)
-      ? 'property'
-      : stat.matches(modifierDetailsSelector)
-        ? 'details'
-        : stat.matches(materialDescriptionSelector)
-          ? 'material'
-          : 'stat'
+    const original = statText(stat)
+    const canonical = displayText(original)
+    const kind = stat.matches(itemNameSelector)
+      ? 'name'
+      : stat.matches(propertySelector)
+        ? 'property'
+        : stat.matches(modifierDetailsSelector)
+          ? 'details'
+          : stat.matches(materialDescriptionSelector)
+            ? 'material'
+            : stat.matches('.modifierTable .row > .label .text')
+              ? 'data-stat'
+              : 'stat'
     const key = `${kind}\0${original}`
     let translated = cache.get(key)
     if (translated === undefined) {
       translated =
-        kind === 'property'
-          ? propertyText(stat)
-          : kind === 'details'
-            ? modifierDetailsText(stat)
-            : kind === 'material'
-              ? materialDescription(original)
-              : lex.translate(original, 'stat')
+        kind === 'name'
+          ? original.trim() === 'New Item'
+            ? '新物品'
+            : null
+          : kind === 'property'
+            ? propertyText(stat)
+            : kind === 'details'
+              ? modifierDetailsText(stat)
+              : kind === 'material'
+                ? materialDescription(original)
+                : kind === 'data-stat'
+                  ? compoundStat(canonical, lex)
+                  : lex.translate(canonical, 'stat')
       if (cache.size > 2000) cache.clear()
       cache.set(key, translated)
+    }
+    if (kind === 'stat' || kind === 'data-stat') {
+      const status =
+        translated && translated !== original
+          ? 'translated'
+          : (lex.resolveStat?.(canonical).status ?? 'unmatched')
+      stat.setAttribute(diagnosticAttribute, status)
+      diagnosed.add(stat)
     }
     let host = hosts.get(stat)
     if (!translated || translated === original) {
       host?.remove()
       hosts.delete(stat)
+      stat.removeAttribute(originalAttribute)
       return
     }
     if (!host?.isConnected) {
@@ -94,6 +133,8 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
       hosts.set(stat, host)
     }
     if (stat.nextSibling !== host) stat.after(host)
+    if (!bilingual) stat.setAttribute(originalAttribute, 'stat')
+    host.title = original
     if (host.shadowRoot && host.shadowRoot.textContent !== translated)
       host.shadowRoot.textContent = translated
   }
@@ -102,6 +143,14 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
     const selector = '[data-poe2-l10n="stat"]'
     if (root.matches(selector) && !root.shadowRoot) root.remove()
     for (const host of root.querySelectorAll(selector)) if (!host.shadowRoot) host.remove()
+    const originals = `[${originalAttribute}="stat"]`
+    if (root.matches(originals) && !hosts.has(root)) root.removeAttribute(originalAttribute)
+    for (const original of root.querySelectorAll(originals))
+      if (!hosts.has(original)) original.removeAttribute(originalAttribute)
+    if (root.hasAttribute(diagnosticAttribute) && !diagnosed.has(root))
+      root.removeAttribute(diagnosticAttribute)
+    for (const original of root.querySelectorAll(`[${diagnosticAttribute}]`))
+      if (!diagnosed.has(original)) original.removeAttribute(diagnosticAttribute)
   }
   function scan(root: Node) {
     const element = root instanceof Element ? root : root.parentElement
@@ -129,6 +178,12 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
       if (!isSupportedStat(stat)) {
         host.remove()
         hosts.delete(stat)
+        stat.removeAttribute(originalAttribute)
+      }
+    for (const stat of diagnosed)
+      if (!isSupportedStat(stat)) {
+        stat.removeAttribute(diagnosticAttribute)
+        diagnosed.delete(stat)
       }
   })
   observer.observe(doc.body, {
@@ -142,9 +197,15 @@ export function attachStatLayer(doc: Document, lex: Lexicon): CountedStop {
   return Object.assign(
     () => {
       observer.disconnect()
-      for (const host of hosts.values()) host.remove()
-      removeClonedHosts(doc.body)
+      for (const [stat, host] of hosts) {
+        host.remove()
+        stat.removeAttribute(originalAttribute)
+      }
       hosts.clear()
+      for (const stat of diagnosed) stat.removeAttribute(diagnosticAttribute)
+      diagnosed.clear()
+      removeClonedHosts(doc.body)
+      style.remove()
       cache.clear()
     },
     // 每个宿主是一条用户可见的中文词缀行；不再受支持的词缀在变更回调末尾剔除（上方 MutationObserver 回调）

@@ -8,6 +8,7 @@ export const RUNE_SUFFIX = /\s+\(rune\)\s*$/
 
 const STATE_SUFFIX = /\s*\((crafted|desecrated|fractured)\)\s*$/i
 export const FRACTURED_ITEM = /^Fractured Item$/i
+export const HEADER_STATE = /^(?:crafted|desecrated|fractured|打造的|破碎的)\s+/i
 
 /** 仅消费连续的已知尾注；未知括号及其左侧文本始终保留。 */
 export function readStatAnnotations(raw: string): {
@@ -32,10 +33,15 @@ export function readStatAnnotations(raw: string): {
 }
 
 export function readHeaderStates(raw: string): ModifierState[] {
-  const state = raw.match(
-    /^\s*\{\s*(crafted|desecrated|fractured)\s+(?:Prefix|Suffix) Modifier\b/i,
-  )?.[1]
-  return state ? [state.toLowerCase() as ModifierState] : []
+  const state = raw
+    .replace(/^\s*\{\s*/, '')
+    .match(HEADER_STATE)?.[0]
+    .trim()
+    .toLowerCase()
+  if (!state) return []
+  return [
+    state === '打造的' ? 'crafted' : state === '破碎的' ? 'fractured' : (state as ModifierState),
+  ]
 }
 
 /** 只剥除已知来源状态，不改写同时存在的不可缩放尾注排版。 */

@@ -23,6 +23,9 @@ importers:
 
   apps/poe2-extension:
     dependencies:
+      '@poe2-tools/guide-core':
+        specifier: workspace:*
+        version: link:../../packages/guide-core
       '@poe2-tools/item-core':
         specifier: workspace:*
         version: link:../../packages/item-core
@@ -32,6 +35,9 @@ importers:
       '@poe2-tools/ui-theme':
         specifier: workspace:*
         version: link:../../packages/ui-theme
+      lucide:
+        specifier: 1.61.0
+        version: 1.61.0
     devDependencies:
       '@types/node':
         specifier: 26.4.1
@@ -107,6 +113,8 @@ importers:
       tsx:
         specifier: 4.23.13
         version: 4.23.13
+
+  packages/guide-core: {}
 
   packages/item-core:
     devDependencies:
@@ -825,6 +833,9 @@ packages:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
 
+  lucide@1.61.0:
+    resolution: {integrity: sha512-RPNMBgej6WjPKuCNEODg83CF8lnraCeDOsZ3HZ7KvUYf0O5hdJBzer/Ax/meBHl3xvrp5NmKX0IDA5myyzlvGw==}
+
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -1493,6 +1504,8 @@ snapshots:
       lightningcss-linux-x64-musl: 1.33.0
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
+
+  lucide@1.61.0: {}
 
   lz-string@1.5.0: {}
 

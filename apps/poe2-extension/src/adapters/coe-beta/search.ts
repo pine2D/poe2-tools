@@ -1,5 +1,6 @@
 import type { Lexicon, Term } from '@poe2-tools/l10n-core'
 import type { SearchArea } from '../../protocol'
+import { displayText } from './display-text'
 
 const controls: readonly [string, Term['domain']][] = [
   // 价格页复用词缀框ID，必须先按公开父容器识别材料用途。
@@ -16,6 +17,40 @@ export function isConditionSearch(input: HTMLInputElement): boolean {
     ) && !input.closest('.dropdown')?.classList.contains('hidden')
   )
 }
+/** 只消费当前页面原生的英文搜索集合；缺失时可明确回退全局词典。 */
+export function searchContext(input: HTMLInputElement): string[] | null {
+  if (isConditionSearch(input))
+    return [...(input.closest('.dropdown')?.querySelectorAll('li[search]') ?? [])].map(
+      (option) => option.getAttribute('search')?.toLowerCase() ?? '',
+    )
+  if (!input.closest('#searchInput') || input.closest('#customPriceSearchHolder')) return null
+  const groups = input.ownerDocument.querySelectorAll('#output .modGroup[search]')
+  return groups.length
+    ? [...groups].map((group) => (group.getAttribute('search') ?? '').toLowerCase())
+    : null
+}
+function searchPattern(template: string): RegExp {
+  const number = String.raw`[+-]?\d+(?:\.\d+)?`
+  const range = String.raw`\(${number}[-–—]${number}\)`
+  const value = `(?:#|${number}(?:${range})?|${range})`
+  const pattern = displayText(template)
+    .split('#')
+    .map((part) =>
+      part
+        .split(/\s+/)
+        .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join(String.raw`(?:\s|\\n|\\r\\n)+`),
+    )
+    .join(value)
+  return new RegExp(pattern, 'i')
+}
+export function usesGlobalStatFallback(input: HTMLInputElement): boolean {
+  return (
+    !!input.closest('#searchInput') &&
+    !input.closest('#customPriceSearchHolder') &&
+    searchContext(input) === null
+  )
+}
 export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
   const domain = searchDomain(input)
   if (!domain) return []
@@ -23,15 +58,13 @@ export function searchCandidates(input: HTMLInputElement, lexicon: Lexicon) {
     // Data 物品列表包含通货；制作页的基底选择器仍只查询 base。
     return lexicon.search(input.value, [domain, 'item'])
   }
-  if (!isConditionSearch(input)) return lexicon.search(input.value, domain)
   // 只使用原站保留的英文搜索属性，不读取已经叠加中文的可见文本。
-  const options = [...(input.closest('.dropdown')?.querySelectorAll('li[search]') ?? [])].map(
-    (option) => option.getAttribute('search')?.toLowerCase() ?? '',
-  )
-  const accept = (term: Term) => options.some((option) => option.includes(term.en.toLowerCase()))
+  const options = searchContext(input)
+  if (options === null) return lexicon.search(input.value, domain)
+  const accept = (term: Term) => options.some((option) => searchPattern(term.en).test(option))
   return [
     ...lexicon.search(input.value, domain, accept),
-    ...lexicon.search(input.value, 'ui', accept),
+    ...(isConditionSearch(input) ? lexicon.search(input.value, 'ui', accept) : []),
   ]
 }
 export function searchDomain(input: HTMLInputElement): Term['domain'] | null {
@@ -50,7 +83,15 @@ export function searchLabel(input: HTMLInputElement): readonly [string, string] 
   return ['搜索词缀', 'Search modifiers']
 }
 export function submitSearch(input: HTMLInputElement, english: string) {
-  input.value = english
+  const native = searchContext(input)
+    ?.map((option) => searchPattern(english).exec(option)?.[0])
+    .find(Boolean)
+  // 单行 input 会吞掉真实 CR/LF；退回原生搜索集合里最长的连续片段，不拼出新词。
+  const query = native
+    ?.split(/[\r\n]+/)
+    .map((part) => part.trim())
+    .sort((a, b) => b.length - a.length)[0]
+  input.value = native && /\\n|[\r\n]/.test(native) ? (query ?? english) : english
   input.dispatchEvent(new Event('input', { bubbles: true }))
   input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Unidentified', bubbles: true }))
 }

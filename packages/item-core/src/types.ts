@@ -73,6 +73,7 @@ export interface ItemDocument {
   twiceCorrupted?: true
   mirrored: boolean
   unidentified: boolean
+  split?: true
   diagnostics: ItemDiagnostic[]
 }
 

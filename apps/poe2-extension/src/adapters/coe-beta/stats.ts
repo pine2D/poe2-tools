@@ -10,7 +10,13 @@ export const propertySelector = '.item .property'
 export const modifierDetailsSelector = '.item .modifierDetails'
 // 经典词缀没有 .stat，原站POB复制读取这套节点；有高级子节点时不重复叠加。
 export const classicModifierSelector = '.item:not(.currency) .modifier'
-export const statSelector = `.stat, .modifierTable .row > .label .text, ${materialDescriptionSelector}, ${propertySelector}, ${modifierDetailsSelector}, ${classicModifierSelector}`
+export const itemNameSelector = '.item:not(.currency) .header .name'
+export const statSelector = `${itemNameSelector}, .stat, .modifierTable .row > .label .text, ${materialDescriptionSelector}, ${propertySelector}, ${modifierDetailsSelector}, ${classicModifierSelector}`
+// 文字节点或内部类名变化时，整块词缀仍属于词缀层；独立的标签继续归 UI 层。
+export const statRegionSelector = '.modGroup, .modifierTable .row > .label'
+export function inStatRegion(element: Element): boolean {
+  return !!element.closest(statRegionSelector) && !element.closest('.modTag, .tag')
+}
 export function isSupportedStat(element: Element): boolean {
   return (
     element.isConnected &&

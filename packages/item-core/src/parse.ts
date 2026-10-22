@@ -1,6 +1,8 @@
 import { CATALYST_QUALITY_HEADER } from './catalystQuality'
+import { isCharmUsage, translateCharmProperty } from './charmText'
 import { isFlaskProperty, isFlaskUsage } from './flaskText'
 import { JEWEL_RADIUS_HEADER } from './jewelRadius'
+import { readModifierHeader } from './modifierHeaders'
 import type {
   ItemBlock,
   ItemDiagnostic,
@@ -22,14 +24,16 @@ const JEWEL_USAGE_LINES = new Set([
   '放置到一个天赋树的珠宝插槽中以产生效果。右键点击以移出插槽。',
   '放置到一個天賦樹的珠寶插槽中以產生效果。右鍵點擊以移出插槽。',
 ])
+// 已确认的独立风味行；不凭尾段位置、标点或“没有数字”猜测其他句子的用途。
+const FLAVOUR_LINES = new Set(['我们触及遗失的誓约……', '如果恐惧杀不死你，我也会亲手杀了你。'])
 // 中文标题是工具支持语法，实际客户端标题仍待真机验收；这里只分类，不推导范围。
 export const CHARM_SLOTS_PROPERTY_HEADER = /^(?:Charm Slots|咒符栏|護符欄位)\s*[:：]/i
 export const CHARM_SLOTS_PROPERTY =
   /^(?:Charm Slots|咒符栏|護符欄位)\s*[:：]\s*(\d+)(?:\s+\(augmented\))?$/i
 
 const LABELS = {
-  itemClass: /^(?:物品类别|物品種類|Item Class)\s*:\s*(.+)$/i,
-  rarity: /^(?:稀有度|Rarity)\s*:\s*(.+)$/i,
+  itemClass: /^(?:物品类别|物品種類|Item Class)\s*[:：]\s*(.+)$/i,
+  rarity: /^(?:稀有度|Rarity)\s*[:：]\s*(.+)$/i,
   itemLevel: /^(?:物品等级|物品等級|Item Level)\s*[:：]\s*(\d+)\s*$/i,
   properties: /^(?:属性|屬性|Properties)\s*[:：]/i,
   requirements: /^(?:需求|Requirements|Requires)\s*[:：]/i,
@@ -45,6 +49,7 @@ const FLAG_PATTERNS = {
   corrupted: /^(?:已腐化|被腐化|腐化|Corrupted)$/i,
   mirrored: /^(?:镜像|鏡像|Mirrored)$/i,
   unidentified: /^(?:未鉴定|未鑑定|Unidentified)$/i,
+  split: /^(?:分裂之物|Split)$/i,
 }
 
 type ItemFlag = keyof typeof FLAG_PATTERNS
@@ -105,6 +110,7 @@ function isKnownProperty(text: string, itemClass: string): boolean {
     return true
   if (isKnownWeaponProperty(text)) return true
   if (isFlaskProperty(text, itemClass)) return true
+  if (translateCharmProperty(text, itemClass)) return true
   const numericValue = String.raw`[+-]?\d+(?:\.\d+)?(?:\([+-]?\d+(?:\.\d+)?-[+-]?\d+(?:\.\d+)?\))?`
   const standardProperty = new RegExp(
     String.raw`^(?:品质|品質|Quality|护甲|護甲|Armour|闪避值|閃避值|Evasion Rating|能量护盾|能量護盾|精魂|护盾|護盾|Energy Shield|Spirit|Runic Ward|Ward|符文结界|符文結界)\s*[:：]\s*${numericValue}%?(?:\s+\(augmented\))?$`,
@@ -157,6 +163,18 @@ function modKind(header: string): ModKind {
 }
 
 function parseModHeader(line: SourceLine, diagnostics: ItemDiagnostic[]): ItemMod {
+  const known = readModifierHeader(line.raw)
+  if (known)
+    return {
+      kind: known.kind,
+      name: known.name,
+      tier: known.tier,
+      tags: known.tags,
+      ...(known.states ? { states: known.states } : {}),
+      ...(known.magnitude === undefined ? {} : { magnitude: known.magnitude }),
+      header: line,
+      stats: [],
+    }
   const kind = modKind(line.raw)
   const named = line.raw.match(/[“"]([^”"]+)[”"]/)
   const name = named?.[1] ?? null
@@ -270,6 +288,7 @@ export function parseItem(text: string): ParseItemResult {
   let twiceCorrupted = false
   let mirrored = false
   let unidentified = false
+  let split = false
   let currentSection: ItemBlock['kind'] | null = null
   let currentMod: ItemMod | null = null
 
@@ -295,6 +314,7 @@ export function parseItem(text: string): ParseItemResult {
     }
     if (flag === 'mirrored') mirrored = true
     if (flag === 'unidentified') unidentified = true
+    if (flag === 'split') split = true
     closeCurrentMod()
     currentSection = null
     appendBlock(blocks, 'flags', line)
@@ -421,6 +441,14 @@ export function parseItem(text: string): ParseItemResult {
       appendBlock(blocks, 'description', line)
       continue
     }
+    if (
+      currentMod === null &&
+      currentSection === null &&
+      (isCharmUsage(trimmed, classMatch[1]) || FLAVOUR_LINES.has(trimmed))
+    ) {
+      appendBlock(blocks, 'description', line)
+      continue
+    }
 
     if (currentMod === null && currentSection === null && RUNE_SUFFIX.test(trimmed)) {
       appendBlock(blocks, 'runes', line)
@@ -480,6 +508,7 @@ export function parseItem(text: string): ParseItemResult {
       ...(twiceCorrupted ? { twiceCorrupted: true as const } : {}),
       mirrored,
       unidentified,
+      ...(split ? { split: true as const } : {}),
       diagnostics,
     },
   }

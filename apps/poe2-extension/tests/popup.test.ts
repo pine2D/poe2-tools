@@ -21,6 +21,8 @@ const query = vi.hoisted(() => ({
   dispose: vi.fn(),
 }))
 vi.mock('../src/platform', () => ({ platform: storage }))
+// 攻略翻译入口（0.5.0）整体换成空实现：入口行为由 guide-button 测试负责，旧用例只测 CoE 状态与设置
+vi.mock('../src/popup/guide-button', () => ({ setupGuideButton: async () => {} }))
 vi.mock('../src/popup/page-query', () => ({ watchPage: query.watchPage }))
 beforeEach(() => {
   query.watchPage.mockImplementation(() => ({
@@ -447,13 +449,13 @@ it.each<
     },
   ],
   [
-    '本页没有中文助手',
+    'CoE 未连接不代表网页翻译失败',
     { status: 'none' },
     true,
     {
-      kind: 'off',
-      head: '未生效 · 本页没有中文助手',
-      hint: '两种可能：这不是 beta.craftofexile.com 页面（旧版 www 站不支持）；或页面在安装、更新扩展前就已打开，刷新即可。',
+      kind: 'mute',
+      head: '未连接',
+      hint: '仅在 beta.craftofexile.com 的 PoE2 英文界面生效；若你已在该页面，请刷新后重试。',
       reload: false,
     },
   ],

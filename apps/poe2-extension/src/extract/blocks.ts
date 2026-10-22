@@ -1,0 +1,305 @@
+import type {
+  BlockContextRef,
+  BlockKind,
+  ExtractionDiagnostic,
+  GuideBlock,
+  Range,
+} from '@poe2-tools/guide-core'
+
+import { type CaptureBlock, captureSource } from './source'
+import { excluded, headingLevel, BASE_SKIP as SKIP } from './visibility'
+
+// 只读遍历：不改 DOM；可将本地原文边界交给页面会话。
+const BLOCKS: Readonly<Record<string, BlockKind>> = {
+  H1: 'heading',
+  H2: 'heading',
+  H3: 'heading',
+  H4: 'heading',
+  H5: 'heading',
+  H6: 'heading',
+  P: 'paragraph',
+  BLOCKQUOTE: 'paragraph',
+  DT: 'paragraph',
+  DD: 'paragraph',
+  LI: 'list-item',
+  TD: 'table-cell',
+  TH: 'table-cell',
+  PRE: 'verbatim',
+}
+const BLOCK_SELECTOR = Object.keys(BLOCKS).join(',').toLowerCase()
+const PROTECTED = 'code,kbd,samp,[translate="no"]'
+const EMPHASIS = new Set(['STRONG', 'B', 'EM', 'A', 'CODE'])
+const MAX_BLOCKS = 5000
+type EntityMarker = (element: Element, text: string) => boolean
+
+export interface BlockSink {
+  blocks: GuideBlock[]
+  diagnostics: ExtractionDiagnostic[]
+  add(kind: BlockKind, text: string, extra?: Omit<GuideBlock, 'id' | 'kind' | 'text'>): void
+}
+
+export function createSink(diagnostics: ExtractionDiagnostic[] = []): BlockSink {
+  const blocks: GuideBlock[] = []
+  return {
+    blocks,
+    diagnostics,
+    add(kind, text, extra = {}) {
+      if (!text.trim()) return
+      if (blocks.length >= MAX_BLOCKS) {
+        if (!diagnostics.some((d) => d.kind === 'block-limit'))
+          diagnostics.push({ kind: 'block-limit' })
+        return
+      }
+      const block: GuideBlock = { id: `b${blocks.length}`, kind, text: text.slice(0, 20000) }
+      if (extra.stageId !== undefined) block.stageId = extra.stageId
+      if (extra.context) block.context = extra.context
+      if (text.length > block.text.length) {
+        block.truncated = true
+        diagnostics.push({ kind: 'text-truncated', blockId: block.id })
+      }
+      const breaks = extra.breaks?.filter((n) => n > 0 && n < block.text.length)
+      if (breaks?.length) block.breaks = [...new Set(breaks)].sort((a, b) => a - b)
+      // 只留非空且不越界的范围（零长度范围会让 parseExtractResult 拒收整页）
+      const fit = (rs: Range[] | undefined) =>
+        rs?.filter(([a, b]) => a >= 0 && a < b && b <= block.text.length)
+      const entities = fit(extra.entities)
+      const emphasis = fit(extra.emphasis)
+      const verbatim = fit(extra.verbatim)
+      if (entities?.length) block.entities = entities
+      if (emphasis?.length) block.emphasis = emphasis
+      if (verbatim?.length) block.verbatim = verbatim
+      blocks.push(block)
+    },
+  }
+}
+
+// 块级标签：在块文字里与相邻文字之间要隔开
+const BLOCK_LEVEL = new Set([
+  'DIV',
+  'P',
+  'LI',
+  'UL',
+  'OL',
+  'SECTION',
+  'ARTICLE',
+  'TABLE',
+  'TR',
+  'TD',
+  'TH',
+  'DL',
+  'DT',
+  'DD',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'BLOCKQUOTE',
+  'PRE',
+  'FIGURE',
+  'FIGCAPTION',
+  'HR',
+  'DETAILS',
+  'SUMMARY',
+])
+
+// 块级标签，或页面样式把它显示成块（只读 getComputedStyle）。
+// 未渲染的文档（DOMParser、测试环境）对行内元素给出空字符串，按行内处理。
+function isBlockLevel(el: Element): boolean {
+  if (BLOCK_LEVEL.has(el.tagName)) return true
+  const display = el.ownerDocument.defaultView?.getComputedStyle(el).display ?? ''
+  return display !== '' && !display.startsWith('inline') && display !== 'contents'
+}
+
+// 拼接一串节点的文字并合并空白，同时记录强调元素的范围；块级子元素前后补空格。
+function textWithEmphasis(
+  nodes: readonly Node[],
+  skip: string = SKIP,
+  entityMarker?: EntityMarker,
+): { text: string; emphasis: Range[]; entities: Range[]; breaks: number[]; verbatim: Range[] } {
+  let text = ''
+  const emphasis: Range[] = []
+  const entities: Range[] = []
+  const breaks: number[] = []
+  const verbatim: Range[] = []
+  const gap = () => {
+    if (text && !text.endsWith(' ')) text += ' '
+  }
+  const visit = (node: Node, keepSpace = false) => {
+    if (node.nodeType === 3) {
+      const raw = node.nodeValue ?? ''
+      const piece = keepSpace ? raw : raw.replace(/\s+/g, ' ')
+      text += !keepSpace && text.endsWith(' ') && piece.startsWith(' ') ? piece.slice(1) : piece
+      return
+    }
+    if (node.nodeType !== 1) return
+    const child = node as Element
+    if (excluded(child, skip)) return
+    if (child.tagName === 'BR') {
+      gap()
+      breaks.push(text.length)
+      return
+    }
+    const block = isBlockLevel(child)
+    if (block) gap()
+    const start = text.length
+    const protectedElement = child.matches(PROTECTED)
+    for (const n of Array.from(child.childNodes)) visit(n, keepSpace || protectedElement)
+    if (protectedElement && text.length > start) verbatim.push([start, text.length])
+    if (EMPHASIS.has(child.tagName) || entityMarker) {
+      const lead = text.slice(start).length - text.slice(start).trimStart().length
+      const end = text.trimEnd().length
+      if (end > start + lead) {
+        if (EMPHASIS.has(child.tagName)) emphasis.push([start + lead, end])
+        if (entityMarker?.(child, text.slice(start + lead, end))) entities.push([start + lead, end])
+      }
+    }
+    if (block) gap()
+  }
+  for (const n of nodes) visit(n)
+  // 只裁去保护范围之外的边界空白；代码自身的空格/换行属于原文。
+  const lead = Math.min(text.length - text.trimStart().length, ...verbatim.map(([a]) => a))
+  const end = Math.max(text.trimEnd().length, ...verbatim.map(([, b]) => b))
+  const trimmed = text.slice(lead, end)
+  return {
+    text: trimmed,
+    breaks: [...new Set(breaks.map((n) => n - lead).filter((n) => n > 0 && n < trimmed.length))],
+    verbatim: verbatim
+      .map(([a, b]): Range => [a - lead, b - lead])
+      .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
+    emphasis: emphasis
+      .map(([a, b]): Range => [a - lead, b - lead])
+      .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
+    entities: entities
+      .map(([a, b]): Range => [a - lead, b - lead])
+      .filter(([a, b]) => a >= 0 && b <= trimmed.length && a < b),
+  }
+}
+
+const directText = (nodes: readonly Node[]) =>
+  nodes
+    .filter((n) => n.nodeType === 3)
+    .map((n) => n.nodeValue ?? '')
+    .join(' ')
+
+export function collectBlocks(
+  root: Element,
+  sink: BlockSink,
+  extraSkip = '',
+  entityMarker?: EntityMarker,
+  allowShort = false,
+  onBlock?: CaptureBlock,
+): void {
+  const skip = extraSkip ? `${SKIP},${extraSkip}` : SKIP
+  const nested = (el: Element) => el.querySelector(BLOCK_SELECTOR) !== null
+  const ids = new WeakMap<Element, string>()
+  let nextId = 0
+  const id = (el: Element) => {
+    let found = ids.get(el)
+    if (!found) {
+      found = `c${nextId++}`
+      ids.set(el, found)
+    }
+    return found
+  }
+  const headings: { id: string; level: number }[] = []
+  const add = (
+    el: Element,
+    kind: BlockKind,
+    text: string,
+    extra: Omit<GuideBlock, 'id' | 'kind' | 'text'> = {},
+    nodes: readonly Node[] = Array.from(el.childNodes),
+  ) => {
+    const context: BlockContextRef = {}
+    const level = headingLevel(el)
+    if (level) {
+      while (headings.length && (headings.at(-1)?.level ?? 0) >= level) headings.pop()
+      context.headingLevel = level
+    }
+    if (headings.length) context.headingIds = headings.map((h) => h.id)
+    const list = el.closest('ul,ol')
+    if (list && root.contains(list)) context.listId = id(list)
+    const table = el.closest('table')
+    const cell = el.closest('td,th')
+    const row = el.closest('tr')
+    if (table && root.contains(table)) context.tableId = id(table)
+    if (row && root.contains(row)) context.rowId = id(row)
+    if (cell && row) {
+      context.column = Array.from(row.children)
+        .filter((c) => c.matches('td,th'))
+        .indexOf(cell)
+      context.header = cell.tagName === 'TH'
+    }
+    const previous = sink.blocks.length
+    sink.add(kind, text, { ...extra, ...(Object.keys(context).length ? { context } : {}) })
+    const added = sink.blocks[previous]
+    if (level && added) headings.push({ id: added.id, level })
+    if (added && onBlock) {
+      const source = captureSource(el, nodes, skip)
+      if (source) onBlock(added, source)
+    }
+  }
+  // 含块级后代的元素：子块之间连续的行内内容（文字与行内元素）单独成块。
+  // 本身是块标签（如 li）时照收；其他容器（div 等）沿用“直接文字满 40 字才算段落”，
+  // 不够时零碎文字丢弃，但行内包装元素（span、a、自定义元素）里可能还有 div 正文，照常递归。
+  const flush = (parent: Element, run: Node[]) => {
+    if (!run.length) return
+    const own = BLOCKS[parent.tagName]
+    if (!own && !allowShort && directText(run).trim().length < 40) {
+      for (const node of run) if (node.nodeType === 1) visit(node as Element)
+      return
+    }
+    const { text, ...extra } = textWithEmphasis(run, skip, entityMarker)
+    add(parent, parent.tagName === 'LI' ? 'list-item' : 'paragraph', text, extra, run)
+  }
+  const visit = (el: Element) => {
+    if (excluded(el, skip)) return
+    const kind = headingLevel(el) ? 'heading' : BLOCKS[el.tagName]
+    // 选区可能只留下代码元素的浅包装，必须把该包装本身交给范围收集器。
+    if (el.matches(PROTECTED)) {
+      const { text, ...extra } = textWithEmphasis([el], skip, entityMarker)
+      add(el, 'paragraph', text, extra)
+      return
+    }
+    if (!nested(el) && !(allowShort && !kind && Array.from(el.children).some(isBlockLevel))) {
+      if (kind) {
+        if (kind === 'verbatim') add(el, 'verbatim', el.textContent ?? '')
+        else {
+          const { text, ...extra } = textWithEmphasis(Array.from(el.childNodes), skip, entityMarker)
+          add(el, kind, text, extra)
+        }
+        return
+      }
+      if (
+        (el.tagName === 'DIV' && directText(Array.from(el.childNodes)).trim().length >= 40) ||
+        (allowShort && !Array.from(el.children).some(isBlockLevel))
+      ) {
+        const { text, ...extra } = textWithEmphasis(Array.from(el.childNodes), skip, entityMarker)
+        add(el, 'paragraph', text, extra)
+        return
+      }
+      for (const child of Array.from(el.children)) visit(child)
+      return
+    }
+    let run: Node[] = []
+    for (const node of Array.from(el.childNodes)) {
+      if (node.nodeType === 3) {
+        run.push(node)
+        continue
+      }
+      if (node.nodeType !== 1) continue
+      const child = node as Element
+      if (excluded(child, skip)) continue
+      if (!nested(child) && !child.matches(BLOCK_SELECTOR) && !isBlockLevel(child)) {
+        run.push(child)
+        continue
+      }
+      flush(el, run)
+      run = []
+      visit(child)
+    }
+    flush(el, run)
+  }
+  visit(root)
+}

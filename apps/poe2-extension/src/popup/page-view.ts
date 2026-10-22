@@ -1,6 +1,6 @@
 // 弹窗当前页状态的唯一推导（第三期 A「状态置顶」；计划裁定 4–7）：输入是 watchPage 的探测结果与弹窗自己的
 // 已保存设置，输出状态词、原因、做法句与可选的“刷新页面”。内容脚本只回事实，展示规则全在这里，便于表驱动测试。
-// 文案与网站扩展介绍页同词：状态词只有“生效中／部分生效／未生效”，“未生效”的原因写在状态词后。
+// 这里只描述 CoE 中文显示；无应答不代表网页翻译或划词不可用。
 import type { Settings } from '../platform'
 import type { PageStateReply } from '../protocol'
 import type { PageProbe } from './page-query'
@@ -8,7 +8,7 @@ import type { PageProbe } from './page-query'
 export type PageKind = 'ok' | 'part' | 'off' | 'mute' | 'reading'
 export interface PageView {
   kind: PageKind
-  word: '生效中' | '部分生效' | '未生效' | null
+  word: '生效中' | '部分生效' | '未生效' | '未连接' | null
   reason: string | null
   hint: string
   action: 'reload' | null
@@ -32,10 +32,13 @@ function searchName(missing: PageStateReply['searchMissing']): string {
 export function pageView(probe: PageProbe, saved: Settings): PageView {
   if (probe.status === 'reading') return reading()
   if (probe.status === 'none')
-    return blocked(
-      '本页没有中文助手',
-      '两种可能：这不是 beta.craftofexile.com 页面（旧版 www 站不支持）；或页面在安装、更新扩展前就已打开，刷新即可。',
-    )
+    return {
+      kind: 'mute',
+      word: '未连接',
+      reason: null,
+      hint: '仅在 beta.craftofexile.com 的 PoE2 英文界面生效；若你已在该页面，请刷新后重试。',
+      action: null,
+    }
   const { reply, settled } = probe
   if (!settled && (reply.phase === 'starting' || reply.page === 'unknown')) return reading()
   // 到重查上限内容脚本仍在启动：启动挂起，刷新是唯一可做的事；极慢的词典加载也会误报于此，刷新即恢复（R-T3d）

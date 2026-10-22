@@ -8,6 +8,12 @@ const active = new WeakMap<Document, () => void>()
 
 export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = false): CountedStop {
   active.get(doc)?.()
+  const style = doc.createElement('style')
+  style.dataset.poe2L10nStyle = 'bilingual-headers'
+  // 数值列仍用原站 nowrap；只让双语表头换行，避免挤占词缀列。
+  style.textContent =
+    '.modInfluenceGroup > .header > :is(.tiers, .weight-col) { white-space: pre; }'
+  if (bilingual) doc.head.append(style)
   const state = new WeakMap<Text, { original: string; written: string; context: string }>()
   const owned = new Set<Text>()
   const cache = new Map<string, string | null>()
@@ -37,7 +43,7 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
     const cacheKey = `${context}\0${original}`
     let translated = cache.get(cacheKey)
     if (translated === undefined) {
-      translated = contextualText(original, context) ?? lexicon.translate(original)
+      translated = contextualText(original, context, lexicon) ?? lexicon.translate(original)
       if (cache.size >= 2000) cache.clear()
       cache.set(cacheKey, translated)
     }
@@ -47,8 +53,12 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
       owned.delete(node)
       return
     }
+    const separator = context === 'modifier-table-header' ? '\n' : ' · '
     const written = bilingual
-      ? original.replace(/\S[\s\S]*\S|\S/, () => `${translated.trim()} · ${original.trim()}`)
+      ? original.replace(
+          /\S[\s\S]*\S|\S/,
+          () => `${translated.trim()}${separator}${original.trim()}`,
+        )
       : translated
     state.set(node, { original, written, context })
     owned.add(node)
@@ -106,6 +116,7 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
       }
       owned.clear()
       cache.clear()
+      style.remove()
       active.delete(doc)
     },
     // 断开的节点在下一次变更回调末尾剔除（上方 MutationObserver 回调），计数随之减少

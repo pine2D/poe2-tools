@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { check } from '../scripts/check.mjs'
 import { noticeText } from '../scripts/notice.mjs'
+import { guideStatsFixture } from './fixtures/guide-stats.mjs'
 
 const roots = []
 afterEach(async () => {
@@ -29,11 +30,26 @@ async function fixture(terms) {
     'package.json': JSON.stringify({ version: manifest.version }),
     'dist/manifest.json': JSON.stringify(manifest),
     'dist/content.js': 'void 0;',
+    'dist/sites.html':
+      '<link rel="stylesheet" href="./assets/sites-test.css"><script src="./assets/sites-test.js"></script>',
+    'dist/assets/sites-test.css': '',
+    'dist/assets/sites-test.js': '',
+    'dist/Lucide-LICENSE.txt': 'ISC License Cole Bemis',
+    'dist/selection.js': 'void 0;',
+    'dist/background.js': 'void 0;',
     'dist/popup.html':
       '<script src="./assets/popup-test.js"></script><link href="./assets/popup-test.css">',
     'dist/assets/popup-test.js': 'void 0;',
     // 弹窗恰好引用一个字体：扩展弹窗独立子集（扩展 0.3.2 起由 check.mjs 强制）
     'dist/assets/popup-test.css': '@font-face{src:url(./serif-sc-popup-test.woff2)}',
+    'dist/guide.html':
+      '<!doctype html><html><head><link rel="stylesheet" href="./assets/guide-test.css"></head><body><script type="module" src="./assets/guide-test.js"></script></body></html>',
+    'dist/assets/guide-test.js': 'console.log(1)',
+    'dist/assets/guide-test.css': 'body{margin:0}',
+    'dist/extract.js': '(function(){globalThis.__poe2GuideExtract=function(){return null}})();',
+    'dist/assets/guide-stats.json': JSON.stringify(guideStatsFixture()),
+    'dist/assets/guide-dictionary.json':
+      '{"schemaVersion":1,"locale":"zh-CN","hash":"0123456789abcdef","entries":[{"id":"gem:a","en":"A","zh":"甲","kind":"gem","tier":"gray"}],"abbreviations":[],"sources":[],"allowGray":true}',
     'dist/LICENSE.txt': 'fixture license',
     'dist/NOTICE.txt': noticeText(manifest.version),
     'dist/assets/dictionary.json': JSON.stringify({ schemaVersion: 1, locale: 'zh-CN', terms }),

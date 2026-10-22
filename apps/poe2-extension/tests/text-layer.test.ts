@@ -64,6 +64,25 @@ it('新增节点被翻译且双语不会无限重复', async () => {
   await settle()
   expect(document.querySelector('button')?.textContent).toBe('符文法器 · Runed Focus')
 })
+it('双语词缀表的数值表头分行，原站 nowrap 不再把两种语言锁在同一行', () => {
+  const dictionary = createLexicon([
+    { id: 't', en: 'Type %', zh: '类型占比', domain: 'ui', source: 'test', version: 'test' },
+  ])
+  document.body.innerHTML =
+    '<style>.nowrap { white-space: nowrap; }</style><main><div class="modInfluenceGroup"><div class="header"><div class="weight-col nowrap">Type %</div></div><div class="modGroup"><div class="weight-col nowrap">11.547%</div></div></div><button>Type %</button></main>'
+  const header = document.querySelector('.header .weight-col') as HTMLElement
+  const value = document.querySelector('.modGroup .weight-col') as HTMLElement
+  const stop = attachTextLayer(document, dictionary, true)
+  stops.push(stop)
+  expect(header.textContent).toBe('类型占比\nType %')
+  expect(getComputedStyle(header).whiteSpace).toBe('pre')
+  expect(value.textContent).toBe('11.547%')
+  expect(getComputedStyle(value).whiteSpace).toBe('nowrap')
+  expect(document.querySelector('button')?.textContent).toBe('类型占比 · Type %')
+  stop()
+  expect(header.textContent).toBe('Type %')
+  expect(getComputedStyle(header).whiteSpace).toBe('nowrap')
+})
 it('不修改输入、备注、代码、扩展自身、广告和业务属性', () => {
   document.body.innerHTML =
     '<main><input value="Runed Focus"><textarea>Runed Focus</textarea><code>Runed Focus</code><span contenteditable="true">Runed Focus</span><div data-poe2-l10n>Runed Focus</div><div id="coe_ad_zone">Runed Focus</div><button data-key="Runed Focus">Runed Focus</button></main>'

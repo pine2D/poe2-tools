@@ -1,0 +1,22 @@
+{
+  "version": "0.4.4",
+  "status": "local-unpublished",
+  "commit": "378e0d5",
+  "zipSha256": "d93a643167ec9fa942cbfdbb9edf34289265ca03c742a215997308c18b4ac8a1",
+  "files": {
+    "content.js": {
+      "baselineSha256": "d1c000a94e4e0dc837c919d6d18fb3be77f498ad2daccbc3528abeaeacfcc65c",
+      "expectedSha256": "b254c8694436bd18e91aee2cdc21f564b2a55b13247249b163ca0224706dbaea",
+      "reason": "0.9.0 用户批准的 CoE 跟进：延续 0.8.0 上下文显示，补字面换行展示/中文搜索、真实换行单行检索边界及导入限制说明；原站文本和 search/value 保留，两个当前菜单及搜索已有实测。"
+    },
+    "assets/dictionary.json": {
+      "baselineSha256": "3be118370f481468daf927eec6c2d206c46d779e55e6146fbb82744de18bb531",
+      "expectedSha256": "eb9dfaa575f8b49368320ce6dd534f1a2ca1d3c2795b7b94326b3e808e501d16",
+      "reason": "0.9.0 在 0.8.0 的 12676 条上新增 4 项 manual 展示专用持续伤害模板及 Unsupported rarity 提示，共 12681 条；displayOnly 禁止反向导入和攻略官方机制投影，来源见数据登记及 translation-followup-090.md。"
+    },
+    "assets/serif-sc-l1.woff2": {
+      "baselineSha256": "cd1886e9f6e7970e017928406b12367e33f571270838e8365283ab4edc655703",
+      "expectedSha256": "cd1886e9f6e7970e017928406b12367e33f571270838e8365283ab4edc655703"
+    }
+  }
+}

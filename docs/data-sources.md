@@ -1,3 +1,13 @@
+# 扩展原始词缀投影（2026-10-20）
+
+`data/l10n/stats/{zh-CN,zh-TW}.json` 复用已登记的官方三服 `/api/trade2/data/stats`（primary），由 `packages/dict-builder/src/build-stat-catalog.ts` 经唯一网络模块 `cache.ts` 独立对齐英文与目标语言。使用与旧词典相同的版权与风险边界，不引入新第三方数据源。只折叠换行、剥离交易标识、合并同模板同译文；固定数字不泛化。旧 `data/dict/*/stats.json` 保持 `.build` 兼容格式。
+
+每份投影记录两侧 URL、抓取时间、SHA-256 和语种。官方静态端点未声明游戏版本，明确记录 `unknown`；抓取日期不等于游戏补丁版本，也不改变天赋、宝石或制作目录快照。`data/l10n/stat-decisions.json`（manual）记录同英文多译名的逐项裁决理由；构建产物保留未选中的原译文供反向输入，未裁决冲突仍保留。
+
+`data/l10n/coe-beta/stat-variants.zh-CN.json`（manual）记录交易筛选与公开展示的句式差异；当前为恍惚、创口的概率句，英文来自 CoE 公开页面观察，中文使用官方同 ID 的术语并手工补足句法。每项记录原始两侧文本、页面链接和理由；上游文本改变即阻断构建待复核。只维护显示文本，不复制原站实现、权重、词缀范围或规则数据。共用匹配器另延续已有咒符栏／位输入别名、猛攻 second／seconds 规范，以及受限的 increased／reduced 语法派生；没有泛化 same/more/less 或推断缺失概率。
+
+手动刷新：`pnpm --filter @poe2-tools/dict-builder exec tsx src/build-stat-catalog.ts`，可加 `--offline` 复用缓存。更新前审查各侧快照与裁决是否仍适用；普通构建和浏览器不联网刷新。不得把这一数据覆盖统计称为 CoE 全站覆盖率。
+
 # 界面字体与素材（2026-09-28 登记）
 
 网站界面改版（PoE2 设计语言，一期）使用的字体与视觉素材。只用自绘 SVG/CSS 与 SIL OFL 1.1 字体；不使用、不热链、不描摹 Grinding Gear Games、腾讯、Craft of Exile 的任何素材或纹样，也不使用 Fontin（exljbris 许可禁止再分发，而且不含中文）。
@@ -59,6 +69,19 @@
 沿用已登记固定 MIT PoB2 `ModRunes.lua` / `ModScalability.lua` 及普通手套目录，不新增抓取适配器或第三方数据文件。人工核对 PoE2DB 的 [Carved Majesty](https://poe2db.tw/us/Carved_Majesty)、[Carved Mischief](https://poe2db.tw/us/Carved_Mischief)、[Carved Tenacity](https://poe2db.tw/us/Carved_Tenacity)、[Snake Idol](https://poe2db.tw/us/Snake_Idol)、[Sirrius](https://poe2db.tw/us/Idol_of_Sirrius)、[Kraityn](https://poe2db.tw/us/Idol_of_Kraityn) 公开说明，只作 gray 交叉证据；9个手套分支保持独立，三种 Carved 共用 AncientAugment 限量1。持续时间是否增效按既有逐占位来源，不以文本中出现数字推断。CoE 公开路线图用于流程参考，不使用其实现、数据或权重；国服原生文本和精度仍待游戏验收。
 
 # 数据源登记表
+
+## 2026-10-20 翻译质量封存样本
+
+以下六篇公开攻略沿用 gray 阅读测试边界，仅在用户已批准的质量周期中取文和调用自备服务。原文、网页快照和译文只放本地忽略目录，不入库、不分发、不用于训练；评估译文是否忠于原文，不据此更新游戏制作规则或声明攻略机制正确。登记先于抓取。
+
+- [PoE2 Directory / Ritual City](https://www.poe2.com/juice-box/ritual-city)
+- [PoE2 Directory / Grand Expedition](https://www.poe2.com/juice-box/grand-expedition)
+- [PoE2 Directory / Negative Rarity T16](https://www.poe2.com/juice-box/negative-rarity)
+- [GuyThatDies / Huntress-Ranger Grenades Leveling](https://mobalytics.gg/poe-2/profile/guythatdies/builds/0-4-huntress-ranger-grenades-leveling)
+- [imexile / Lightning Arrow Leveling](https://mobalytics.gg/poe-2/profile/imexile/builds/0-3-imexile-leveling-fubgun-lite)
+- [Fubgun / Lightning Arrow Farmer](https://mobalytics.gg/poe-2/builds/lightning-arrow-farmer-fubgun)
+
+每篇预先按正文顺序选择十段，采样规则与哈希封存；不同页面的实际作者元数据保存在本地快照。此记录不代表已调用服务、通过语义验收或新增运行时站点支持。
 
 ## 专属攻击武器符文（2026-09-17，v108实施前登记）
 
@@ -351,6 +374,8 @@ v76 执行范围补充：仅使用本节材料升级至 20 的确定性说明和
 | `data/dict/_overrides/versions.json` | 各服当前内容版本，写入 meta.json 的 gameVersion |
 | `data/dict/_overrides/stat-winners.json` | 同一模板键多条译文时的取舍（模板键 → stat id，按 locale 分节） |
 | `data/fixtures/synthetic/*.build` | 合成语料（覆盖率度量），只含公开的英文词缀模板与基底名 |
+| `data/l10n/guide/terms.zh-CN.json` | 攻略正文术语（机制关键词与制作行话）人工审定表；中文写法以国服交易站词缀模板（primary）为准，一词多译由维护者拍板 |
+| `data/l10n/guide/abbreviations.zh-CN.json` | 攻略常见简称（ES、DoT 等）的人工说明，只用于悬停提示，不替换原文 |
 | `packages/dict-builder/fixtures/*` | 手写的迷你测试数据（非抓取产物）；只含极少量真实名称用于 join 用例，不作为词典来源 |
 | `packages/item-core/src/*test.ts`、`apps/site/src/features/craft/*test.ts` | 自造装备文本测试，验证分组、范围、逆向模板和导出门禁；真实用户样本仅保存在 `data/fixtures/local/`，不入库 |
 | `packages/item-core/src/export.ts` 中的类别标题对照和转接白名单 | 手工适配装备剪贴板标题；白名单来自公开 CoE 界面中的合成法器黑盒验收，2026-09-18 扩展至固定 MIT 目录的23种普通法器、魔法与稀有输入，仅作兼容范围标记，不含第三方 mod 数据或权重；见[转接核对](coe-focus-bridge-research.md) |
@@ -573,6 +598,16 @@ v115 接入采用的规则推导：以原作者单防御／双防御实际产物
 
 仅入库自写证据边界与链接，视频、字幕、帧图留在本机临时目录，不复制作者配方、价格、权重或完整装备。无新增抓取适配器、客户端解包或浏览器第三方请求；本次登记不直接授权新操作。实现缺口和验收见 [未揭示亵渎核对](pending-desecration-research.md)。
 
+### 攻略术语表（2026-10-07）
+
+2026-10-19 质量回归补录：手工表补充 Maximum Life＝生命上限（已有 primary `stats.json` 的 `explicit.stat_3299347043`）、Expedition＝先祖秘藏（`explicit.stat_3039133122`），以及 Craiceann's Rune of Warding＝克林斯昂的守护符文（已有 `data/craft/catalog.json` 的 `localizedNames["zh-CN"]`）。仅复用已登记来源的国服名称，不新增数据抓取或制作规则；这次补词未改变单词型术语的确认门槛。
+
+2026-10-19 后续修复：既有 Waystone＝引路石词条增加 `matchWithoutContext: true`，只将其人工审定的原形／复数确认为术语，不扩大普通词或派生形的确认范围。该标记只准用于 manual keyword；这是既有译名的匹配策略调整，不新增数据来源。
+
+攻略翻译用的 `assets/guide-dictionary.json` 由 `apps/poe2-extension/scripts/build-guide-dictionary.mjs` 在构建扩展时生成：合并已登记的 gems、passives、items（gray，可随 `--no-gray` 整体去掉）、`_overrides` 升华与职业（manual）以及上表两份手工文件，不发网络请求。手工术语表的中文先查 `stats.json`（primary）的模板写法；RePoE 关键词表如需使用，只在起草时用作英文核对，不入库、不分发。2026-10-09 审定版在人工审阅时只把 poe2db.tw（上文已登记的 gray 来源）用作写法交叉核对，构建期与扩展运行时都不抓取它；术语表的 `exclude` 名单会把列出的英文名称（忽略大小写）从攻略词典的非手工条目中去掉。
+
+RePoE 两处说法的核对（2026-10-07）：`## primary` 表的 `repoe-fork/poe2` 条目把它列为构建期来源，“2026-09-16 制作步骤清单与权重来源复查”一节则说 RePoE-fork 的客户端导出不符合禁止入库客户端解包产物的约束、未作为新来源接入。两处字面上看似冲突，以下述范围为准：已接入的只有 primary 表列出的 `data/passive_skill_trees/Default.json` 与 `data/skill_gems.json` 两个文件，构建期获取、原始响应只留在不入库的 `data/cache/`，入库词典只用其中的 id 与英文名作键和 poe2db 校验锚点；复查一节的结论针对制作词缀与权重数据，RePoE 不作为制作目录来源，primary 表以外的文件（含关键词表）不接入、不入库、不分发。攻略术语表只把 RePoE 用作起草时的英文核对。
+
 ## 2026-09-16 分类注能器原始画面核对
 
 [Diztoh 0.5 铁匠注能器实操](https://www.youtube.com/watch?v=KRrvAvt7Azo)（2026-06-10）作为 gray 人工机制参考，核对材料身份、单颗消耗、品质变化与腐化同次发生。只记录机制观察，不入库作者装备、完整文本、视频、截图、字幕、价格或概率。另读 [旧 Vaal Infuser Wiki 正文](https://www.poe2wiki.net/wiki/Vaal_Infuser)及其引用，明确旧名称和统计推论不能直接授权当前四分类材料。与 [CoE 更新说明](https://beta.craftofexile.com/changelog)核对品质导入和条件衔接，只读公开文字。没有新增适配器、执行参数或浏览器外站请求；详细范围见 [品质实验审计](quality-infuser-research.md)。
@@ -671,7 +706,15 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 ## Chrome 扩展适配参考（2026-09-24）
 
-本轮新增的是规划与人工参考登记，不新增抓取适配器、词典或运行时请求。已有制作研究的登记保留，但原独立制作模拟器计划无限期搁置。
+2026-10-20 装备文本兼容修复：扩展额外打包已登记的 `data/dict/zh-TW/items.json` 与
+`stats.json`，保留各自来源、版本与哈希，仅用于反查英文输入，不用于替换国服页面译名。
+两服词条独立，不做繁简转换；gray 总开关同时作用于两服物品表。
+高级复制的破碎／打造标题、增效、S/J 插槽、分裂状态和咒符面板语法，来自用户提供的
+游戏复制样本与既有英文语法的人工核对。两条无引号风味句和一条咒符使用说明仅作精确
+非机制文本分类，不将其他尾段自动删除。不下载或复制用户所用汉化补丁的文件或词库，
+不宣称已逐项确认标注由客户端还是补丁生成；玩家原始装备仅在本地验收，不入库。
+
+以下为 2026-09-24 的规划与人工参考登记，当时未新增抓取适配器、词典或运行时请求。已有制作研究的登记保留，但原独立制作模拟器计划无限期搁置。
 
 | 来源 | 用途与等级 | 使用范围与边界 |
 | --- | --- | --- |
@@ -774,3 +817,30 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 
 
 0.1.98粗制弓攻击组合沿primary国服交易词典explicit.stat_1940865751（附加物理伤害）和explicit.stat_210067635（攻击速度）进行文字映射。既有MIT目录仅用于设计LocalAddedPhysicalDamage1、LocalIncreasedAttackSpeed1样本；原站公开高级说明独立确认粗制弓上分别为T9、T5，数值范围分别1–2／4–5、5–7。不导入原站内部数据，不增加制作规则或新数据来源。
+
+
+### CoE 与攻略衔接（2026-10-20，实施中）
+
+[衔接契约](chrome-extension/translation-bridge.md)沿用已登记的官方交易词缀快照、独立国服名称、gray 词表与手工攻略规则；不把旧 `.build` 归一化模板当作新原始词缀源，不将模型译文写入词库。CoE 0.4.4 来源登记随整合保留，人工裁决现绑定审阅文本及占位顺序签名；`guide-stats.json` 仅投影国服原始词缀，不采用 CoE 展示优选或变体，原始两服词条内容保持不变。
+
+本轮新增两篇通用网页仅作公开攻略本地验收材料，须在采集前逐一登记 URL、所有者及 gray 风险，在首次开发前固定采样与哈希。正文/截图/完整译文只存忽略目录，不作为可再分发词典或提交整页；此段不等于已登记任意站点，未登记不得采集入集。旧六篇封存集及其原文不因本次文档调整解封用于调试。
+
+本轮通用网页封存来源（采集前登记）：
+
+| 来源 | 风险与用途 | 保存/版本边界 |
+| --- | --- | --- |
+| [PoE Vault：Beginner’s Guide to Path of Exile 2](https://www.poe-vault.com/poe2/guides/beginners-guide-to-path-of-exile-2) | gray；PoE Vault 作者正文，仅翻译验收样本 | 只在本地保存可见正文快照，按顺序选首十个 50–500 字符段落/列表项；不进入词典，不提交全文；文本中的机制不作为当前游戏规则证据 |
+| [PoE2 Compass：Beginner Guide](https://poe2compass.wiki/guides/beginners/) | gray；PoE2 Compass 页面作者正文，仅翻译验收样本 | 同上；无明确再分发授权，不采集同行源码或数据文件；页面时间不充当游戏版本 |
+
+两个页面用通用提取入口，不新增站点适配器。先核对页面可读取且至少十个合格文本块，再固定摘要；若来源不可用，记录失败并重新登记替代来源，不静默换样本。
+
+
+## CoE 分类与高级名称投影（2026-10-21）
+
+- `scripts/build-dictionary.mjs` 从既有 primary 国服原始交易词缀的 `Can roll … modifiers` 与 `souls in tribute to …` 固定结构提取特殊词缀分类和渎灵名称。保留原始 sourceId 和文件哈希；只处理国服显示条目，不将台服输入词条混用，不扩写机制。分类覆盖以实际来源解析为准。
+- `data/l10n/coe-beta/affix-names.zh-CN.json`：manual，用户授权提供的高级装备样本中的名称，按既有 MIT catalog 的词缀 ID、英文名称和效果/数值交叉核对；19 条名称仅作为已核对补丁输入的对照，不声称完整官方名称表。生成时验证 ID、前后缀和英文名，缺失或漂移即失败；展示使用带前后缀的独立身份，不调用同名天赋或技能译文。未收录名称仍保留原文。
+- Ailment/Aura/Charm 等标签与属性缩写、固定操作文案属于既有 CoE 公共 DOM 人工 UI 来源。`New Item` 是原站默认显示文本，不写回物品名；用户改名按原文显示。`Paste` 按原站 `Item paste data format` 导出入口标为“导出文本”。
+
+### CoE 人工展示词缀（2026-10-21）
+
+`data/l10n/coe-beta/display-stats.zh-CN.json`：manual，本项目对公开 CoE 菜单短语独立翻译，来源页面 https://beta.craftofexile.com/?game=poe2 。初始四条持续伤害加成没有当前国服交易 API 对应身份，保留该不确定性；只参与展示和中文检索，标记 `displayOnly`，不参与反向导入或攻略词缀事实表，不宣称当前游戏可生成。原站 undefined 分类不据此猜测。

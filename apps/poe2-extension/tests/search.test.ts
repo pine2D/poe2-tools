@@ -660,3 +660,139 @@ it('searchPresence：条件下拉里的搜索框不计入', () => {
     '<main><div id="simulatorConditionRequirements"><div class="dropdown"><div class="editing"><input type="text"></div></div></div></main>'
   expect(searchPresence(document)).toEqual({ search: 'none', missing: [] })
 })
+
+const manaLex = createLexicon([
+  {
+    id: 'a',
+    en: 'Eldritch Battery',
+    zh: '异能魔力',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'b',
+    en: '+# to maximum Mana',
+    zh: '+# 魔力上限',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+  {
+    id: 'c',
+    en: '#% increased Mana Regeneration Rate',
+    zh: '魔力再生率提高 #%',
+    domain: 'stat',
+    source: 'test',
+    version: 'test',
+  },
+])
+it('制作搜索按当前原生词缀集合过滤，基底切换立即撤下旧候选', async () => {
+  document.body.innerHTML =
+    '<main><div id="searchInput"><input></div><div id="output"><div class="modGroup" search="+# to maximum mana"></div></div></main>'
+  stop = attachSearch(document, manaLex)
+  const input = document.querySelector('input') as HTMLInputElement
+  type(input, '魔力')
+  const old = document.querySelector<HTMLButtonElement>('[data-poe2-l10n] button')
+  expect(old?.textContent).toContain('+# to maximum Mana')
+  expect(document.querySelectorAll('[data-poe2-l10n] button')).toHaveLength(1)
+  document.querySelector('.modGroup')?.setAttribute('search', '#% increased mana regeneration rate')
+  old?.click()
+  expect(input.value).toBe('魔力')
+  await new Promise((resolve) => setTimeout(resolve, 30))
+  expect(document.querySelector('[data-poe2-l10n] button')?.textContent).toContain('Regeneration')
+})
+it('词缀集合缺失时明确显示全局候选降级，Data 查询不受制作上下文影响', () => {
+  document.body.innerHTML = '<main><div id="searchInput"><input></div></main>'
+  stop = attachSearch(document, manaLex)
+  type(document.querySelector('input') as HTMLInputElement, '魔力')
+  expect(document.querySelector('[data-poe2-l10n]')?.textContent).toContain('全局词典候选')
+  stop()
+  document.body.innerHTML =
+    '<main><div id="dataModSearchInput"><input></div><div id="output"><div class="modGroup" search="+# to maximum mana"></div></div></main>'
+  stop = attachSearch(document, manaLex)
+  type(document.querySelector('input') as HTMLInputElement, '魔力')
+  expect(document.querySelectorAll('[data-poe2-l10n] button')).toHaveLength(3)
+})
+
+it('制作搜索保留固定数字语义，仅模板占位符匹配原生数值或范围', () => {
+  const fixed = createLexicon([
+    {
+      id: 'fixed',
+      en: 'Gain 1 Charge every # Hits for 10 Seconds',
+      zh: '每 # 次击中获得 1 充能，持续 10 秒',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+    {
+      id: 'other',
+      en: 'Gain 2 Charge every # Hits for 20 Seconds',
+      zh: '每 # 次击中获得 2 充能，持续 20 秒',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  document.body.innerHTML =
+    '<main><div id="searchInput"><input></div><div id="output"><div class="modGroup"></div></div></main>'
+  stop = attachSearch(document, fixed)
+  const group = document.querySelector('.modGroup') as HTMLElement
+  for (const value of ['#', '3', '(2-4)']) {
+    group.setAttribute('search', `Gain 1 Charge every ${value} Hits for 10 Seconds`)
+    type(document.querySelector('input') as HTMLInputElement, '充能')
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-poe2-l10n] button')
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0]?.textContent).toContain('Gain 1 Charge')
+  }
+})
+
+it('转义换行候选可用中文检索，提交原站能匹配的英文片段且不改 search', () => {
+  const en = '#% chance to gain an additional Infusion'
+  const raw = String.raw`suffix#% chance to gain an\nadditional Infusion`
+  document.body.innerHTML = `<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><div class="editing"><input type="text"></div><li search="${raw}"></li></div></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  const lexicon = createLexicon([
+    {
+      id: 'infusion',
+      en,
+      zh: '额外获得灌注的几率 #%',
+      domain: 'stat',
+      source: 'test',
+      version: 'test',
+    },
+  ])
+  stop = attachSearch(document, lexicon)
+  type(input, '灌注')
+  const button = document.querySelector('[data-poe2-l10n] button') as HTMLButtonElement
+  expect(button).not.toBeNull()
+  button.click()
+  expect(input.value).toBe(String.raw`#% chance to gain an\nadditional infusion`)
+  expect(document.querySelector('li')?.getAttribute('search')).toBe(raw)
+})
+
+it('真实换行的搜索属性使用连续片段，不让单行输入吞掉词边界', () => {
+  const raw = 'suffix#% chance to gain an\nadditional Infusion'
+  document.body.innerHTML = `<main><div id="calculatorZone"><div class="requirements"><div class="dropdown"><div class="editing"><input type="text"></div><li search="${raw}"></li></div></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 's',
+        en: '#% chance to gain an additional Infusion',
+        zh: '额外获得灌注几率 #%',
+        domain: 'stat',
+        source: 'test',
+        version: 'test',
+      },
+    ]),
+  )
+  type(input, '灌注')
+  const button = document.querySelector('[data-poe2-l10n] button') as HTMLButtonElement
+  expect(button).not.toBeNull()
+  button.click()
+  expect(input.value).not.toMatch(/[\r\n]/)
+  expect(raw.toLowerCase()).toContain(input.value)
+  expect(input.value.length).toBeGreaterThan(10)
+})

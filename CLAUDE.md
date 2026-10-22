@@ -4,7 +4,9 @@
 
 ### 当前优先级（2026-09-24）
 
-用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。规划入口为 `docs/chrome-extension/README.md`。扩展源码已于 2026-10-02 合入主树 `apps/poe2-extension`，0.2.0 起随网站同一流程发布：网站 `/extension/` 提供预构建 zip 下载，推送 main 后同一文件由 CI 发布为 GitHub Release（tag `ext-v<版本>`）；未上架 Chrome 应用商店。具体通过／未测范围见 `docs/chrome-extension/compatibility.md`。未经实际浏览器验收不得扩大页面或装备兼容性声明；公开发行与源码、验收状态应分别说明。
+用户已将独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现和回归，不再自动推进其权重、品质、特殊制作或路线研究。此决定不等于原目标完成，也不删除已有网站。新主线为 Chrome 扩展，首站仅支持 `beta.craftofexile.com` 新版的 PoE2 模式，以英文界面映射国服简体术语，同时支持中文搜索及高级装备文本转换。0.5.0 起扩展另含攻略翻译：用户点击后读取当前页正文，在侧边栏按国服术语显示中英对照；翻译服务由用户自备 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key。规划入口为 `docs/chrome-extension/README.md`。扩展源码已于 2026-10-02 合入主树 `apps/poe2-extension`，0.2.0 起随网站同一流程发布：网站 `/extension/` 提供预构建 zip 下载，推送 main 后同一文件由 CI 发布为 GitHub Release（tag `ext-v<版本>`）；未上架 Chrome 应用商店。具体通过／未测范围见 `docs/chrome-extension/compatibility.md`。未经实际浏览器验收不得扩大页面或装备兼容性声明；公开发行与源码、验收状态应分别说明。
+
+2026-10-20：独立 `feat/translation-bridge` 分支已整合 CoE 0.4.4 与攻略衔接工程，生成 0.6.0 本地候选。正文开发对照仍未达到零重大错误门槛；封存、重复和付费浏览器已按契约停止。未推送、部署或提交 CWS，当前证据见 `docs/chrome-extension/validation-2026-10-20-bridge.md`；不得将工程门禁通过写成整段质量通过。
 
 poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：pnpm monorepo，TypeScript 单语言，
 纯静态前端 + 构建期脚本，不部署服务端。
@@ -18,9 +20,15 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.9.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.9.1）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
+
+## 当前阅读整改（2026-10-21）
+
+用户已批准 `docs/chrome-extension/guide-reading.md`，在现有独立分支完成范围预览、结构提取、原文定位、页内对照及格式/缓存门禁。已生成本地 0.7.0 候选，范围、页内对照与生命周期的本机合成浏览器流程通过；保留 0.6.0 语义失败结论，本轮不重开付费质量试验，不推送、部署或更新 CWS。最终证据见 `docs/chrome-extension/validation-2026-10-21-reading.md`。
+
+2026-10-21：用户批准 0.8.0 阅读整改，见 `docs/chrome-extension/reading-workspace.md`。允许为侧栏关闭后的主动划词翻译增加扩展内 service worker，复用 Key/缓存/接纳规则；页面不联网、不读取 Key，无新增 host 权限。已完成实现与本地浏览器验收，0.8.0 最终结果见 `docs/chrome-extension/validation-2026-10-21-workspace.md`；旧语义质量失败结论保持。
 
 ## 扩展工程收敛（2026-09-26）
 
@@ -39,9 +47,10 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   是 `pt-*` 组件样式（`switch.css`、`provenance.css` 只用于扩展弹窗；`stagehead.css` 是阶段名衬线（阶段看板与首页对照带示例），由构筑页与首页入口引入）；`src/l1.css` 是 CoE 注入 UI 的 L1 样式，扩展内容脚本以 adoptedStyleSheets 挂进各 Shadow DOM；`fonts/popup.css` 是扩展弹窗的字体声明，只指向弹窗独立子集 `serif-sc-popup.woff2`（收字见 `scripts/popup-text.txt`，不进 `fonts.css`，网站不下载）；`fonts/serif-sc-l1.woff2` 是 CoE 注入界面的衬线子集（family “PoE2 Serif SC L1”，收 `data/l10n/coe-beta/ui.zh-CN.json` 全部译文与 `apps/poe2-extension/src/content/*.ts`、`src/provenance.ts` 的中文文案，不含 ASCII，预算 131,072 字节；不进 `fonts.css`，网站不下载）；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
   `scripts/compliance.mjs` 是许可文件与素材白名单判定的唯一实现。`fonts/` 与 `src/generated/` 是生成物：入库、不手改、Biome 排除。
 - `apps/site/`：Vite + React 静态站。拖入或粘贴 `.build` → 对照预览 → 下载中文 `.build`。首页与扩展说明在 `src/pages/`，构筑和历史工坊在 `src/features/`（构筑页导入后默认显示阶段看板 `build-l10n/stages/`，逐项核对沿用 `build-l10n/preview/`）；令牌与组件样式来自 `@poe2-tools/ui-theme`，页面专属样式在 `src/shared/styles/`，由各页面入口按级联顺序引入（首页与扩展介绍页共用的 CoE 搜索候选示意样式在 `src/shared/styles/l1-demo.css`，类前缀 `l1demo__`，门禁 `src/testing/l1-demo.test.ts`；历史工坊只引入冻结的 `src/features/craft/legacy-*.css`，不接入 ui-theme）。词典由 `scripts/sync-dict.mjs` 从 `data/dict/` 复制到 `public/dict/`（不入库）随站发布；`scripts/sync-fonts.mjs` 把字体许可文件与根目录 `NOTICE` 复制到 `public/fonts/`、`public/NOTICE.txt`（不入库）；`scripts/sync-extension.mjs` 按 `apps/poe2-extension/release.json` 把扩展 zip 复制到 `public/downloads/`（不入库）；测试用 happy-dom。
-- `apps/poe2-extension/`：Chrome 扩展（Manifest V3，只申请 `storage` 权限，内容脚本只匹配 `https://beta.craftofexile.com/*`）。`scripts/build.mjs` 构建 `dist/`（content.js、popup 及其弹窗字体子集 `serif-sc-popup`、注入衬线字体 `assets/serif-sc-l1.woff2`、词典、LICENSE、NOTICE、NotoSerifSC-OFL.txt、图标；manifest 的 `web_accessible_resources` 只向 beta 页开放词典与这个字体），`scripts/check.mjs` 校验 manifest、产物白名单、字体许可与素材白名单，`scripts/generate-icons.mjs` 手动重新生成图标，`scripts/package.mjs` 打包到 `artifacts/`（不入库）。版本号独立于网站，唯一来源是该目录的 `package.json`（`manifest.json` 的 `version` 须一致，构建时核对）；发布记录 `release.json` 入库。
+- `apps/poe2-extension/`：Chrome 扩展（Manifest V3，权限为 `storage`、`activeTab`、`scripting`、`sidePanel`，无 host 权限；划词使用固定有界请求后台，常驻内容脚本只匹配 `https://beta.craftofexile.com/*`）。`scripts/build.mjs` 构建 `dist/`（content.js、`selection.js`（按需划词，不联网）、`background.js`（核对当前文档授权、执行有界请求）、`extract.js`（按需注入的页面会话：提取、原文定位与自有译文容器，不联网）、`guide.html`（攻略翻译侧边栏）与 `assets/guide-dictionary.json`、`assets/guide-stats.json`（国服原始词缀独立投影）、popup 及其弹窗字体子集 `serif-sc-popup`、注入衬线字体 `assets/serif-sc-l1.woff2`、词典、LICENSE、NOTICE、NotoSerifSC-OFL.txt、图标；manifest 的 `web_accessible_resources` 只向 beta 页开放词典与这个字体），`scripts/check.mjs` 校验 manifest、产物白名单、字体许可与素材白名单，`scripts/generate-icons.mjs` 手动重新生成图标，`scripts/package.mjs` 打包到 `artifacts/`（不入库）。版本号独立于网站，唯一来源是该目录的 `package.json`（`manifest.json` 的 `version` 须一致，构建时核对）；发布记录 `release.json` 入库。
 - `packages/l10n-core/`：扩展的术语匹配核心，纯 TypeScript、无 DOM、无 Chrome API；扩展运行时与打包校验共用。
-- `data/l10n/`：扩展专用数据——`coe-beta/ui.zh-CN.json`（manual 界面译文）、`aliases.zh-CN.json`（manual 别名）、`coe-beta/tablets.zh-CN.json`（gray 石板名）；构建扩展时与 `data/dict/zh-CN/items.json`、`stats.json` 及 `data/craft/catalog.json`（名称对照）一起裁剪进 `assets/dictionary.json`。
+- `packages/guide-core/`：攻略翻译核心，纯 TypeScript、无 DOM：文档契约、正文术语识别、修饰词、占位保护、提示词、流式拆分、译后核对、缓存键。
+- `data/l10n/`：扩展专用数据——`coe-beta/ui.zh-CN.json`（manual 界面译文）、`aliases.zh-CN.json`（manual 别名）、`coe-beta/tablets.zh-CN.json`（gray 石板名）；构建扩展时与 `data/dict/zh-CN/items.json`、独立 `data/l10n/stats/` 两服原始词缀及 `data/craft/catalog.json`（名称对照）一起裁剪进 `assets/dictionary.json`。`guide/terms.zh-CN.json`（manual 攻略术语表）、`guide/abbreviations.zh-CN.json`（manual 简称表）与 `data/dict/zh-CN/gems.json`、`passives.json`、`items.json`、`data/dict/_overrides/ascendancies.json`、`classes.json` 一起生成 `assets/guide-dictionary.json`。
 - `data/dict/<locale>/`：生成的词典，入库并标注 generated；按表分文件（`stats.json`、`passives.json`、
   `gems.json`、`items.json`、`ascendancies.json`、`classes.json`、`inventories.json`），来源等级记在每张表的
   `_meta.tier`，灰区表可整体删除而不影响 primary 表；`meta.json` 记录各服版本、来源哈希、审计计数与覆盖率
@@ -70,8 +79,9 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   `_meta.tier`。灰区适配器必须带总开关、限速与标识性 User-Agent，能整体下线而不影响 primary 覆盖的功能。
 - 禁止把专有或无授权数据文件放进仓库：「PoE2'说'中文」浏览器扩展（All Rights Reserved）、
   PoeCharm2 的 CSV（无 LICENSE）、PobTools-zh 数据包、任何客户端解包产物。只允许学习其结构。
-- 不解包游戏客户端；不调用需要 OAuth 的 GGG API；官方交易站静态端点只在构建期抓取并缓存，
-  用户浏览器里不向第三方站点发请求。
+- 不解包游戏客户端；不调用需要 OAuth 的 GGG API；官方交易站静态端点只在构建期抓取并缓存。
+  网站在用户浏览器里不向第三方站点发请求。扩展只有攻略翻译侧边栏可以在用户点击翻译后，把选中段落发往用户自选的服务商；
+  CoE 内容脚本与取文脚本不发网络请求；扩展不内置任何 API Key。
 - zh-CN 与 zh-TW 词典平行生成，绝不用 OpenCC 之类工具互转填充空缺。
 - 天赋与宝石表随游戏版本快照，`meta.json` 必须记录对应版本；不同版本的表不混用。
 - 未经用户明确要求，不执行 commit、push、rebase、reset，也不创建或切换分支。
@@ -87,7 +97,7 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   审计计数与覆盖率。若 `packages/ui-theme` 的 coverage.test 因新名称字符失败，运行 `pnpm ui-theme:fonts`，先用独立提交
   `chore(ui-theme): 更新字体分片` 提交 `packages/ui-theme/fonts/`（覆盖只增不减，旧词典在这个提交下仍能通过测试），再用独立提交
   `chore(dict): 更新词典至 <游戏版本>` 提交词典；两个提交各自都要能通过 `pnpm verify`。覆盖率下降需先查原因，不要直接
-  `--allow-regression`。`data/dict/zh-CN/items.json`、`stats.json`、`data/l10n/` 或 `data/craft/catalog.json` 的变化会改变扩展 zip，`pnpm verify` 的
+  `--allow-regression`。`data/dict/zh-CN/items.json`、`stats.json`、`gems.json`、`passives.json`、`data/dict/_overrides/ascendancies.json`、`classes.json`、`data/l10n/`（含 `data/l10n/guide/`）或 `data/craft/catalog.json` 的变化会改变扩展 zip，`pnpm verify` 的
   扩展发布闸门随之失败：在同一个 `chore(dict)` 提交里升扩展补丁版本（`apps/poe2-extension/package.json` 与 `manifest.json`），
   在 `apps/poe2-extension/CHANGELOG.md` 写一段“词典更新至 <游戏版本>”，运行 `pnpm extension:release` 并一起提交 `release.json`，
   保证该提交单独通过 `pnpm verify`。
@@ -131,7 +141,7 @@ pnpm ui-theme:motif # 手动运行：由 motif.ts 重新生成母题 CSS 与 SVG
 - 词典更新不单独发网站版本；网站行为变化才升网站版本。词典更新会改变扩展产物，扩展要随之发补丁版（见“开发工作流”的词典更新）。
 - 扩展 `apps/poe2-extension` 版本独立于网站：唯一来源是它的 `package.json`（`manifest.json` 须一致，构建时核对），更新日志在
   `apps/poe2-extension/CHANGELOG.md`。入库的 `apps/poe2-extension/release.json` 是发布闸门：`pnpm verify` 与 CI 重新打包后核对
-  版本、文件名、字节数与 SHA-256，不一致即失败。会改变扩展 zip 的改动：扩展源码、`packages/l10n-core`、网站与扩展共用的
+  版本、文件名、字节数与 SHA-256，不一致即失败。会改变扩展 zip 的改动：扩展源码、`packages/l10n-core`、`packages/guide-core`、`data/l10n/guide/`、`data/dict/zh-CN/gems.json`、`passives.json`、`data/dict/_overrides/ascendancies.json`、`classes.json`、网站与扩展共用的
   `packages/item-core`（只为网站改它也算）、`packages/ui-theme` 中扩展用到的部分（令牌、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、注入衬线字体子集 `serif-sc-l1` 及其收字来源（`data/l10n/coe-beta/ui.zh-CN.json`、内容脚本中文文案）、完整声明；只为网站改它也算）、扩展用到的数据、根目录 `LICENSE`、依赖与 `pnpm-lock.yaml` 升级（构建链版本）。
   有意发版：升版本 → 写扩展 CHANGELOG → `pnpm extension:release` → 提交；只在 Linux（含 WSL）上发版；
   步骤见 `docs/chrome-extension/README.md` 的“发版步骤”。

@@ -12,11 +12,13 @@ export function noticeText(version) {
 ${FULL_DISCLAIMER}
 ${NOTICE_EN}
 ${FONT_NOTICE}
+通用交互图标 Lucide（ISC）及 Feather 衍生部分（MIT），完整许可见 Lucide-LICENSE.txt。
 MIT 仅覆盖自有代码；游戏文本权利归相应权利人。
 术语来源、快照版本与哈希见 assets/dictionary.json 的 sources。
 数据来源登记：https://github.com/pine2D/poe2-tools/blob/main/docs/data-sources.md
 安装与更新：https://poe2-tools.pine2d.com/extension/
-仅保存本机开关，不保存装备全文或搜索记录；不读取剪贴板、不向第三方请求词典。
+CoE 不保存装备全文或搜索记录，不读取剪贴板、不向第三方请求词典。
+攻略设置、Key、译文缓存及划词站点规则保存在本机；自动划词须获得所选站点权限，点击翻译才发送选中文字。
 Chrome 管理页禁用/卸载后，请刷新已有 CoE 标签页。
 `
 }

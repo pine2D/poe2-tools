@@ -25,6 +25,7 @@ vi.mock('../src/content/stat-layer', () => ({ attachStatLayer: mocks.stat }))
 vi.mock('../src/content/search-controller', () => ({ attachSearch: () => () => {} }))
 vi.mock('../src/content/import-controller', () => ({ attachImport: () => () => {} }))
 vi.mock('../src/content/instruction-layout', () => ({ attachInstructionLayout: () => () => {} }))
+vi.mock('../src/content/modifier-layout', () => ({ attachModifierLayout: () => () => {} }))
 vi.mock('../src/content/page-labels', () => ({ attachPageLabels: () => () => {} }))
 vi.mock('../src/content/serif', () => ({ attachSerif: mocks.serif }))
 vi.mock('../src/content/language-notice', () => ({ createLanguageNotice: () => ({ update() {} }) }))
@@ -89,6 +90,9 @@ it('初始读取未完成时收到停用事件，不被随后返回的旧启用�
   changed({ enabled: true, bilingual: true })
   expect(mocks.attach).toHaveBeenCalledOnce()
   expect(mocks.attach.mock.calls[0]?.[2]).toBe(true)
+  expect(mocks.stat.mock.calls[0]?.[2]).toBe(true)
+  changed({ enabled: true, bilingual: false })
+  expect(mocks.stat.mock.lastCall?.[2]).toBe(false)
 })
 
 it.each([true, false])('无并发变化时使用初始 enabled=%s 设置', async (enabled) => {

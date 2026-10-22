@@ -34,7 +34,7 @@ it.each([false, true])('经典词缀不污染POB原文，保留数字更新和�
   const keyword = document.querySelector('#EnergyShield')
   const original = item.textContent
   const text = attachTextLayer(document, lex, bilingual)
-  const stats = attachStatLayer(document, lex)
+  const stats = attachStatLayer(document, lex, bilingual)
   stop = () => {
     stats()
     text()
@@ -48,6 +48,7 @@ it.each([false, true])('经典词缀不污染POB原文，保留数字更新和�
   await new Promise((resolve) => setTimeout(resolve, 0))
   expect(classic.nextElementSibling?.shadowRoot?.textContent).toBe('+45 能量护盾上限')
   expect(classic.textContent).toBe('+45 to maximum Energy Shield')
+  expect(getComputedStyle(classic).display === 'none').toBe(!bilingual)
   const advanced = item.querySelector('.stat') as HTMLElement
   advanced.className = ''
   await new Promise((resolve) => setTimeout(resolve, 0))

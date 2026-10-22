@@ -1,4 +1,8 @@
-import type { ItemDocument, ItemInspection } from '@poe2-tools/item-core/text'
+import {
+  canonicalItemClass,
+  type ItemDocument,
+  type ItemInspection,
+} from '@poe2-tools/item-core/text'
 import type { Term } from '@poe2-tools/l10n-core'
 
 // 字段名称是输入语法，不限制基底或词缀资格；译名复用随包词典。
@@ -70,9 +74,23 @@ export function completeItemFields(
     }
   }
   const header = inspection.exportText.split('\n').slice(0, 2 + item.nameLines.length)
-  const translatedClass = item.locale === 'zh-CN' ? resolve(item.itemClass, classes) : undefined
-  if (translatedClass) header[0] = `Item Class: ${translatedClass}`
-  else if (translatedClass === null) header[0] = `Item Class: ${item.itemClass}`
+  // 输入可能混用两服：类别独立比较候选，不能由整件标题消除同形歧义。
+  const classCandidates = new Set(
+    [
+      ...terms
+        .filter(
+          (term) =>
+            term.domain === 'ui' &&
+            classes.has(term.en) &&
+            (term.zh === item.itemClass || term.en === item.itemClass),
+        )
+        .map((term) => term.en),
+      ...(['zh-CN', 'zh-TW'] as const).map((locale) => canonicalItemClass(item.itemClass, locale)),
+    ].filter((value) => classes.has(value)),
+  )
+  const ambiguousClass = classCandidates.size > 1
+  if (classCandidates.size === 1) header[0] = `Item Class: ${[...classCandidates][0]}`
+  else if (ambiguousClass) header[0] = `Item Class: ${item.itemClass}`
   const output = [...header]
   for (const block of item.blocks) {
     if (['note', 'description'].includes(block.kind)) continue
@@ -84,5 +102,5 @@ export function completeItemFields(
         ),
       )
   }
-  return { english: output.join('\n'), fields }
+  return { english: output.join('\n'), fields, ambiguousClass }
 }
