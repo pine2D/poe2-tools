@@ -68,3 +68,16 @@
     flex-direction: column;
   }
 }
+
+.site-batch {
+  margin-top: var(--sp-3);
+}
+.site-batch summary {
+  min-height: 44px;
+  padding-block: var(--sp-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.site-batch button {
+  margin-top: var(--sp-2);
+}

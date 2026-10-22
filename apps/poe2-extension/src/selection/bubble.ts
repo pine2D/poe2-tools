@@ -3,6 +3,7 @@ import { el } from '../guide/dom'
 import { TERM_STYLE, translatedText } from '../guide/translated-text'
 import { disclosure, icon, labelIcon } from '../ui/icons'
 import { captureSelection } from './capture'
+import { entryPosition } from './entry-position'
 import { MAX_SELECTION_CHARS, type SelectionResult } from './protocol'
 
 export type SelectionTranslator = (
@@ -31,7 +32,7 @@ button.icon-button { width: 44px; height: 44px; flex: 0 0 44px; padding: 0; colo
 button[aria-pressed=true] { color: var(--accent); background: var(--hover); }
 button[data-action=translate] { background: var(--accent); color: var(--paper); }
 button:hover { background: var(--hover); }
-button[data-action=translate]:hover { filter: brightness(1.12); }
+button[data-action=translate]:hover { background: var(--accent); color: var(--paper); filter: brightness(1.12); }
 button:disabled { opacity: .6; cursor: default; }
 button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .actions { display: flex; gap: 8px; align-items: center; }
@@ -59,6 +60,7 @@ interface Bubble {
   range?: Range
   persistent: boolean
   pinned: boolean
+  entry: boolean
   position(): void
   close(): void
   notify(message: string): void
@@ -72,7 +74,9 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     cards.delete(card)
     cards.add(card)
     active = card
-    const ordered = [...cards].sort((a, b) => Number(a.pinned) - Number(b.pinned))
+    // 新入口必须能点击；展开为结果后仍遵循用户的置顶顺序。
+    const rank = (item: Bubble) => (item.entry ? 2 : Number(item.pinned))
+    const ordered = [...cards].sort((a, b) => rank(a) - rank(b))
     ordered.forEach((c, i) => {
       c.host.style.zIndex = String(2147483647 - MAX_BUBBLES + i)
     })
@@ -123,6 +127,7 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
       ...(range ? { range } : {}),
       persistent: false,
       pinned: false,
+      entry: false,
       cleanup() {},
       notify(message) {
         notice.textContent = message
@@ -137,7 +142,7 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         const below = (rect?.bottom ?? 12) + 8
         const wasExpanded = expanded
         expanded = panel.classList.contains('expanded')
-        const x = positioned
+        let x = positioned
           ? parseFloat(host.style.left)
           : (rect?.left ?? win.innerWidth - size.width - 20)
         let y = positioned
@@ -148,6 +153,18 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         // 首次展开为译文留足空间；之后原文/详情只在面板内生长，标题位置保持。
         if (expanded && !wasExpanded && !moved) y = Math.min(y, win.innerHeight - 300)
         y = Math.max(12, Math.min(y, win.innerHeight - (expanded ? 180 : 72)))
+        if (card.entry && !moved) {
+          const point = entryPosition(
+            { x, y },
+            size,
+            { width, height: win.innerHeight },
+            [...cards]
+              .filter((other) => other !== card)
+              .map((other) => other.host.getBoundingClientRect()),
+          )
+          x = point.x
+          y = point.y
+        }
         host.style.left = `${Math.max(12, Math.min(x, width - size.width - 12))}px`
         host.style.top = `${y}px`
         panel.style.maxHeight = `${Math.max(60, win.innerHeight - y - 12)}px`
@@ -264,6 +281,8 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
     const quote = range.toString(),
       href = win.location.href
     const card = shell(range)
+    card.entry = true
+    raise(card)
     const { host, panel, position } = card
     let abort: AbortController | null = null
     const valid = () =>
@@ -326,6 +345,8 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
         return
       }
       card.persistent = true
+      card.entry = false
+      raise(card)
       abort?.abort()
       const request = new AbortController()
       abort = request

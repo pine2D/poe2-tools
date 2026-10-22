@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { createMatcher, type GuideDocument, prepareBlock } from '@poe2-tools/guide-core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createReadingView, type ReadingHandlers } from '../src/guide/view-reading'
@@ -55,6 +56,131 @@ afterEach(() => {
 })
 
 describe('createReadingView', () => {
+  it('确认限额期间显示等待确认，确认后才显示翻译中', async () => {
+    const { v } = mount()
+    v.setReady(true)
+    v.setBusy(true)
+    const response = v.ask('超过限额', '继续翻译')
+    expect(document.querySelector('.guide-begin')?.textContent).toBe('等待确认…')
+    document.querySelector<HTMLButtonElement>('.ask-ok')?.click()
+    await expect(response).resolves.toBe(true)
+    expect(document.querySelector('.guide-begin')?.textContent).toBe('正在翻译…')
+  })
+  it.each(['waiting', 'complete'])('主按钮 %s 禁用状态悬停时仍保留可读实色背景', (state) => {
+    const style = document.createElement('style')
+    // happy-dom 无鼠标伪类，把 :hover 等价替换为同 specificity 的测试类，验证真实级联。
+    style.textContent = [
+      'packages/ui-theme/src/tokens.css',
+      'packages/ui-theme/src/components/btn.css',
+      'apps/poe2-extension/src/guide/guide.css',
+    ]
+      .map((file) => readFileSync(file, 'utf8').replaceAll(':hover', '.test-hover'))
+      .join('\n')
+    document.head.append(style)
+    try {
+      const { v } = mount()
+      v.setReady(true)
+      if (state === 'waiting') {
+        v.setBusy(true)
+        void v.ask('超过限额', '继续翻译')
+      } else {
+        v.setProgress({ selected: 1, completed: 1, preserved: 0, failed: 0, characters: 100 })
+      }
+      const button = document.querySelector<HTMLButtonElement>('.guide-begin')
+      if (!button) throw Error('missing begin button')
+      expect(button.disabled).toBe(true)
+      const normal = getComputedStyle(button).backgroundColor
+      expect(normal).not.toBe('rgba(0, 0, 0, 0)')
+      button.classList.add('test-hover')
+      expect(getComputedStyle(button).backgroundColor).toBe(normal)
+      expect(getComputedStyle(button).color).not.toBe(normal)
+      document.querySelector<HTMLButtonElement>('.ask-cancel')?.click()
+    } finally {
+      style.remove()
+    }
+  })
+  it('仅侧栏收起常态工具，失败原因和重试仍常驻，恢复后归回工具区', () => {
+    const { v } = mount()
+    document.querySelector<HTMLButtonElement>('[data-mode=sidebar]')?.click()
+    v.setTranslation('b0', '正文译文', 'engine', [])
+    const tools = document.querySelector<HTMLElement>('[data-id=b0] .block-tools')
+    expect(tools?.hidden).toBe(true)
+    expect(tools?.querySelector('.block-status')?.textContent).toBe('机器译文')
+    v.setBlockState('b0', 'failed', '网络断开，请重试')
+    expect(document.querySelector('.block-notices .block-status')?.textContent).toContain(
+      '网络断开',
+    )
+    expect(document.querySelector('.block-notices .retry-block')).not.toBeNull()
+    v.setTranslation('b0', '恢复译文', 'engine', [])
+    expect(tools?.querySelector('.retry-block')).not.toBeNull()
+    expect(tools?.hidden).toBe(true)
+  })
+  it('失败重试进入等待时，焦点回到可见工具按钮，不藏进折叠内容', () => {
+    const { v } = mount()
+    document.querySelector<HTMLButtonElement>('[data-mode=sidebar]')?.click()
+    v.setBlockState('b0', 'failed', '请求失败')
+    document.querySelector<HTMLButtonElement>('.retry-block')?.focus()
+    v.setBlockState('b0', 'pending')
+    expect(document.activeElement).toBe(document.querySelector('.block-tools-toggle'))
+    v.setTranslation('b0', '完成译文', 'engine', [])
+    expect(document.activeElement).toBe(document.querySelector('.block-tools-toggle'))
+  })
+  it('目录保留标题层级和父级语境，译文同步中文标签且可核对英文', () => {
+    const { v, h } = mount()
+    const blocks: GuideDocument['blocks'] = [
+      { id: 'a', kind: 'heading', text: 'Act one', context: { headingLevel: 1 } },
+      { id: 'a1', kind: 'heading', text: 'Route notes', context: { headingLevel: 2 } },
+      { id: 'b', kind: 'heading', text: 'Act two', context: { headingLevel: 1 } },
+      { id: 'b1', kind: 'heading', text: 'Route notes', context: { headingLevel: 2 } },
+    ]
+    v.showDocument(
+      { ...doc, blocks, stages: [] },
+      blocks.map((b) => prepareBlock(b, matcher)),
+      null,
+    )
+    v.setTranslation('a', '第一章', 'engine', [])
+    v.setTranslation('a1', '路线要点', 'engine', [])
+    const first = document.querySelector<HTMLButtonElement>('.guide-directory-link[data-target=a1]')
+    expect(first?.dataset.level).toBe('2')
+    expect(first?.textContent).toContain('第一章')
+    expect(first?.querySelector('.directory-title')?.textContent).toBe('路线要点')
+    expect(first?.title).toContain('Route notes')
+    expect(document.querySelector('.guide-directory-link[data-target=b1]')?.textContent).toContain(
+      'Act two',
+    )
+    v.setBlockState('a1', 'failed')
+    expect(first?.querySelector('.directory-title')?.textContent).toBe('Route notes')
+    first?.click()
+    expect(h.onBegin).not.toHaveBeenCalled()
+  })
+  it('关闭首次说明后将键盘焦点交给可用的阅读操作', () => {
+    const { v, h } = mount()
+    v.showIntro(true)
+    const dismiss = document.querySelector<HTMLButtonElement>('.guide-intro button')
+    if (!dismiss) throw Error('missing intro action')
+    dismiss.focus()
+    dismiss.click()
+    expect(h.onIntroSeen).toHaveBeenCalledOnce()
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('设置翻译服务')
+  })
+
+  it('待译状态的复制和重试按钮在实际样式下不可见', () => {
+    const style = document.createElement('style')
+    style.textContent = readFileSync('apps/poe2-extension/src/guide/guide.css', 'utf8')
+    document.head.append(style)
+    try {
+      mount()
+      for (const selector of ['.copy-block', '.retry-block']) {
+        const button = document.querySelector<HTMLElement>(selector)
+        if (!button) throw Error('missing action')
+        expect(button.hidden).toBe(true)
+        expect(getComputedStyle(button).display).toBe('none')
+      }
+    } finally {
+      style.remove()
+    }
+  })
+
   it('标题、阶段条与当前阶段的段落', () => {
     mount()
     expect(document.querySelector('.guide-title')?.textContent).toBe('Build X')
@@ -341,12 +467,12 @@ it('原文旁工作区只挂载当前段，目录与异常跳转不发翻译请�
 })
 it('目录默认收起，用户展开后译文更新保留展开状态', () => {
   const { v } = mount()
-  const directory = document.querySelector<HTMLDetailsElement>('.guide-directory details')
-  expect(directory?.open).toBe(false)
+  const directory = document.querySelector<HTMLElement>('.guide-directory')
+  expect(directory?.hidden).toBe(true)
   if (!directory) throw Error('缺少目录')
-  directory.open = true
+  document.querySelector<HTMLButtonElement>('.guide-directory-toggle')?.click()
   v.setTranslation('b0', '配合 ES 使用瘟疫。', 'engine', [])
-  expect(directory.open).toBe(true)
+  expect(directory.hidden).toBe(false)
 })
 
 it('完成状态禁用主操作且用量位于工具区，确认可 Esc 取消并返回焦点', async () => {
@@ -400,4 +526,125 @@ it('译文也标注本段术语，复制和重译更新不残留旧标注', () =
   expect(dst?.querySelector('.poe2-term')?.getAttribute('title')).toContain('Contagion')
   v.setTranslation('b0', '无术语的新译文。', 'cache', [])
   expect(dst?.querySelector('.poe2-term')).toBeNull()
+})
+
+it('重名章节的可见标签包含父章节，不依赖缩进识别', () => {
+  const { v, h } = mount()
+  const blocks: GuideDocument['blocks'] = [
+    { id: 'act1', kind: 'heading', text: 'Act I', context: { headingLevel: 2 } },
+    { id: 'notes1', kind: 'heading', text: 'Route notes', context: { headingLevel: 3 } },
+    { id: 'act2', kind: 'heading', text: 'Act II', context: { headingLevel: 2 } },
+    { id: 'notes2', kind: 'heading', text: 'Route notes', context: { headingLevel: 3 } },
+  ]
+  v.showDocument(
+    { ...doc, stages: [], blocks },
+    blocks.map((b) => prepareBlock(b, matcher)),
+    null,
+  )
+  const rows = [...document.querySelectorAll<HTMLLabelElement>('.guide-chapter')]
+  expect(rows.map((row) => row.textContent)).toEqual([
+    'Act I · 1 段',
+    'Act I › Route notes · 1 段',
+    'Act II · 1 段',
+    'Act II › Route notes · 1 段',
+  ])
+  const first = rows[1]?.querySelector('input')
+  if (!first) throw new Error('missing chapter')
+  first.checked = false
+  first.dispatchEvent(new Event('change'))
+  expect(h.onSelection).toHaveBeenCalledWith(['act1', 'act2', 'notes2'])
+})
+
+describe('紧凑阅读工具区', () => {
+  it('范围与目录按钮互斥展开，Escape 收回面板并恢复入口焦点', () => {
+    mount()
+    const scope = document.querySelector<HTMLButtonElement>('.guide-scope-toggle')
+    const directory = document.querySelector<HTMLButtonElement>('.guide-directory-toggle')
+    if (!scope || !directory) throw Error('缺少阅读工具按钮')
+    const panel = document.getElementById(scope.getAttribute('aria-controls') ?? '')
+    const nav = document.getElementById(directory.getAttribute('aria-controls') ?? '')
+    expect(panel?.hidden).toBe(true)
+    expect(nav?.hidden).toBe(true)
+    scope.click()
+    expect(scope.getAttribute('aria-expanded')).toBe('true')
+    expect(panel?.hidden).toBe(false)
+    directory.click()
+    expect(scope.getAttribute('aria-expanded')).toBe('false')
+    expect(panel?.hidden).toBe(true)
+    expect(nav?.hidden).toBe(false)
+    const link = nav?.querySelector<HTMLButtonElement>('button')
+    link?.focus()
+    link?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(nav?.hidden).toBe(true)
+    expect(directory.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(directory)
+  })
+
+  it('目录跳转收回面板并聚焦正文，切换不发送翻译', () => {
+    const { h } = mount()
+    document.querySelector<HTMLButtonElement>('[data-mode=sidebar]')?.click()
+    const trigger = document.querySelector<HTMLButtonElement>('.guide-directory-toggle')
+    if (!trigger) throw Error('缺少目录按钮')
+    trigger.click()
+    document.querySelector<HTMLButtonElement>('.guide-directory-link')?.click()
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.querySelector<HTMLElement>('.guide-directory')?.hidden).toBe(true)
+    expect(document.activeElement).toBe(document.querySelector('.block'))
+    expect(h.onLocate).toHaveBeenCalledWith('b0')
+    expect(h.onBegin).not.toHaveBeenCalled()
+  })
+
+  it('段落工具独立展开，Escape 收回并恢复按钮焦点，异常与重试保持可达', () => {
+    const { v, h } = mount()
+    document.querySelector<HTMLButtonElement>('[data-mode=sidebar]')?.click()
+    v.setTranslation('b0', '正文译文', 'engine', [])
+    const trigger = document.querySelector<HTMLButtonElement>('.block-tools-toggle')
+    if (!trigger) throw Error('缺少段落工具按钮')
+    const panel = document.getElementById(trigger.getAttribute('aria-controls') ?? '')
+    expect(panel?.hidden).toBe(true)
+    trigger.click()
+    expect(panel?.hidden).toBe(false)
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    const locate = panel?.querySelector<HTMLButtonElement>('.locate-block')
+    locate?.click()
+    expect(h.onLocate).toHaveBeenCalledWith('b0')
+    locate?.focus()
+    locate?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(panel?.hidden).toBe(true)
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(trigger)
+    v.setBlockState('b0', 'failed', '网络断开')
+    expect(document.querySelector('.block-notices .block-status')?.textContent).toBe('网络断开')
+    document.querySelector<HTMLButtonElement>('.block-notices .retry-block')?.click()
+    expect(h.onRetryBlock).toHaveBeenCalledWith('b0')
+  })
+})
+
+it('重名章节显示足以区分的最近父路径，完整路径仍可核对', () => {
+  const { v } = mount()
+  const blocks: GuideDocument['blocks'] = [
+    { id: 'root', kind: 'heading', text: 'Campaign guide', context: { headingLevel: 1 } },
+    { id: 'act1', kind: 'heading', text: 'Act I', context: { headingLevel: 2 } },
+    { id: 'route1', kind: 'heading', text: 'Route notes', context: { headingLevel: 3 } },
+    { id: 'gear1', kind: 'heading', text: 'Equipment', context: { headingLevel: 3 } },
+    { id: 'tip1', kind: 'heading', text: 'Tips', context: { headingLevel: 4 } },
+    { id: 'act2', kind: 'heading', text: 'Act II', context: { headingLevel: 2 } },
+    { id: 'route2', kind: 'heading', text: 'Route notes', context: { headingLevel: 3 } },
+    { id: 'gear2', kind: 'heading', text: 'Equipment', context: { headingLevel: 3 } },
+    { id: 'tip2', kind: 'heading', text: 'Tips', context: { headingLevel: 4 } },
+  ]
+  v.showDocument(
+    { ...doc, stages: [], blocks },
+    blocks.map((b) => prepareBlock(b, matcher)),
+    null,
+  )
+  const rows = [...document.querySelectorAll<HTMLLabelElement>('.guide-chapter')]
+  expect(rows[2]?.textContent).toBe('Act I › Route notes · 1 段')
+  expect(rows[6]?.textContent).toBe('Act II › Route notes · 1 段')
+  expect(rows[4]?.textContent).toBe('Act I › Equipment › Tips · 1 段')
+  expect(rows[8]?.textContent).toBe('Act II › Equipment › Tips · 1 段')
+  expect(rows[2]?.title).toBe('Campaign guide › Act I › Route notes')
+  expect(rows[2]?.querySelector('input')?.getAttribute('aria-description')).toContain(
+    'Campaign guide › Act I › Route notes',
+  )
 })

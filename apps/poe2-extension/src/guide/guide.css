@@ -3,6 +3,7 @@
 
 :root {
   color-scheme: dark;
+  scrollbar-color: var(--control-edge) var(--surface);
 }
 * {
   box-sizing: border-box;
@@ -17,8 +18,8 @@ body {
 .guide {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
+  gap: var(--sp-2);
+  padding: var(--sp-3);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -59,8 +60,8 @@ body {
   z-index: 2;
   background: var(--bg);
   display: grid;
-  gap: var(--sp-2);
-  padding-block: var(--sp-2) var(--sp-3);
+  gap: var(--sp-1);
+  padding-block: var(--sp-1) var(--sp-2);
   border-bottom: 1px solid var(--line);
 }
 .guide-taskbar,
@@ -71,6 +72,9 @@ body {
   align-items: center;
   gap: var(--sp-2);
   flex-wrap: wrap;
+}
+.guide-taskbar {
+  gap: var(--sp-1);
 }
 .guide button,
 .guide-settings button {
@@ -97,7 +101,12 @@ body {
   opacity: 0.55;
   cursor: default;
 }
-.guide .icon-button {
+.guide .guide-begin:disabled,
+.guide .guide-begin:disabled:hover {
+  background: var(--gold);
+  opacity: 0.7;
+}
+.guide .icon-button:not([hidden]) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -122,14 +131,15 @@ body {
   color: var(--bg);
 }
 .guide :is(button, summary, input, a, [tabindex]):focus-visible,
-.guide-settings :is(button, a):focus-visible {
+.guide-settings :is(button, a, summary, [tabindex]):focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
 .guide-meter {
   appearance: none;
   display: block;
-  width: 100%;
+  flex: 0 0 20%;
+  width: 20%;
   height: 3px;
   border: 0;
   overflow: hidden;
@@ -141,14 +151,21 @@ body {
 .guide-meter::-webkit-progress-value {
   background: var(--gold);
 }
+.guide-progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
 .guide-progress {
+  flex: 1;
+  min-width: 0;
   font-size: var(--fs-small);
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 .reading-mode {
   display: flex;
-  padding: var(--sp-1);
+  padding: 0;
   border-radius: 7px;
   background: var(--surface);
   gap: var(--sp-1);
@@ -185,16 +202,53 @@ body {
 .guide summary::-webkit-details-marker {
   display: none;
 }
+.guide-controls {
+  display: grid;
+  gap: var(--sp-2);
+}
+.guide-controlbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.guide-controlbar .reading-mode {
+  flex: 1 0 auto;
+}
+.guide-controlbar > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding-inline: var(--sp-2);
+  border: 0;
+  color: var(--ink-2);
+  background: transparent;
+}
+.guide-controlbar > button[aria-expanded="true"] {
+  background: var(--raised-2);
+  color: var(--title-gold);
+}
+.guide-controlbar > button[aria-expanded="true"] > .ui-icon,
 .guide details[open] > summary > .ui-icon {
   transform: rotate(180deg);
 }
-.guide-options {
-  border-bottom: 1px solid var(--line);
+.guide-options,
+.guide-directory {
+  padding-block: var(--sp-2);
+  border-block: 1px solid var(--line);
+}
+@media (max-width: 360px) {
+  .guide-controlbar .reading-mode {
+    flex-basis: 100%;
+  }
+  .guide-controlbar > button {
+    flex: 1;
+  }
 }
 .scope-content {
-  padding-bottom: var(--sp-3);
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
 .scope-choices {
   display: flex;
@@ -210,7 +264,13 @@ body {
 }
 .guide-chapters {
   display: grid;
+}
+.chapter-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--sp-2);
+  flex-wrap: wrap;
 }
 .chapter-label {
   color: var(--ink-2);
@@ -220,24 +280,25 @@ body {
   display: flex;
   align-items: start;
   gap: var(--sp-2);
+  padding-block: var(--sp-2);
   font-size: var(--fs-body);
   min-height: 44px;
+  cursor: pointer;
 }
 .guide-chapter input {
-  margin-top: var(--sp-1);
+  margin: var(--sp-1) 0 0;
+  flex-shrink: 0;
   accent-color: var(--gold);
 }
 .chapter-actions {
   display: flex;
-  gap: var(--sp-3);
+  gap: var(--sp-1);
 }
 .chapter-actions > button {
   justify-self: start;
   border: 0;
-  padding-inline: 0;
-}
-.guide-directory {
-  border-bottom: 1px solid var(--line);
+  min-width: 44px;
+  padding-inline: var(--sp-2);
 }
 .guide-directory-items {
   max-height: 200px;
@@ -260,13 +321,27 @@ body {
   background: var(--surface);
   color: var(--title-gold);
 }
+.guide .guide-directory-link {
+  padding-block: var(--sp-1);
+  padding-inline-start: calc(var(--sp-2) + var(--directory-depth, 0) * var(--sp-3));
+}
+.directory-context {
+  display: block;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+.directory-count {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
 .guide-current-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--sp-2);
   border-top: 1px solid var(--line);
-  padding-top: var(--sp-3);
+  padding-top: var(--sp-1);
 }
 .guide-current-title {
   margin: 0;
@@ -279,9 +354,28 @@ body {
 }
 .block {
   display: grid;
-  gap: var(--sp-3);
-  padding-block: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: start;
+  gap: var(--sp-2);
+  padding-block: var(--sp-3);
   border-bottom: 1px solid var(--line);
+}
+.block > * {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+.guide .block-tools-toggle {
+  grid-column: 2;
+  grid-row: 1;
+  width: 44px;
+  padding-inline: var(--sp-1);
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+}
+.guide .block-tools-toggle[aria-expanded="true"] {
+  background: var(--surface);
+  color: var(--gold);
 }
 .block .src,
 .block .dst {
@@ -307,8 +401,85 @@ body {
   padding: 0;
 }
 .block-actions {
+  flex: 1 1 auto;
+  gap: var(--sp-1);
+}
+.block-heading {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  text-wrap: balance;
+}
+.block > .src,
+.block > .block-heading {
+  grid-column: 1;
+  grid-row: 1;
+}
+.block .block-heading .src {
+  font-size: var(--fs-data);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.block .block-heading .dst {
+  font-weight: 600;
+  line-height: 1.45;
+}
+.block[data-heading-level="1"] .block-heading .dst {
+  font-size: var(--fs-display-s);
+}
+.block[data-heading-level="2"] .block-heading .dst {
+  font-size: var(--fs-title);
+}
+.block:is([data-heading-level="1"], [data-heading-level="2"]) .block-heading .src {
+  font-size: var(--fs-lead);
+}
+.guide[data-mode="sidebar"] .block[data-kind="heading"] {
+  padding-top: var(--sp-4);
+}
+.block-notices:empty,
+.block-status:empty {
+  display: none;
+}
+.block-notices,
+.block-meta {
+  display: grid;
+  gap: var(--sp-2);
+}
+.block-notices .retry-block {
+  justify-self: start;
+}
+.block-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
   border-top: 1px solid var(--line);
-  padding-top: var(--sp-2);
+  padding-top: var(--sp-1);
+}
+.block-meta {
+  flex: 1 1 120px;
+}
+.guide-reading-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+}
+.guide-placement {
+  flex: 1;
+}
+.guide-placement > span {
+  display: inline-block;
+  white-space: nowrap;
+}
+.guide-placement:empty {
+  display: none;
+}
+.guide-reading-status:has(> .guide-placement:empty):has(> .guide-exceptions[hidden]) {
+  display: none;
+}
+.guide-exceptions[open] {
+  flex-basis: 100%;
 }
 .guide .locate-block {
   margin-right: auto;
@@ -348,8 +519,16 @@ body {
   color: var(--ink-3);
 }
 .guide-bottom {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2);
   border-top: 1px solid var(--line);
-  padding-top: var(--sp-3);
+  padding-top: var(--sp-1);
+}
+.guide-usage-details[open] {
+  flex-basis: 100%;
 }
 .guide .guide-restore {
   border: 0;
@@ -427,6 +606,12 @@ abbr:focus-visible::after {
 .site-settings-link {
   color: var(--ink-2);
 }
+.guide-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--sp-2);
+}
 .guide-table-wrap {
   max-width: 100%;
   overflow-x: auto;
@@ -453,6 +638,8 @@ abbr:focus-visible::after {
 /* 设置视图：与阅读视图同样留边；字段标签在上、控件在下，控件占满宽 */
 .guide-settings {
   padding: var(--sp-3);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .guide-settings[hidden],
 .guide-settings [hidden] {
@@ -474,6 +661,8 @@ abbr:focus-visible::after {
 }
 .settings-form,
 .custom-fields {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: var(--sp-3);
 }
@@ -493,11 +682,13 @@ abbr:focus-visible::after {
 .guide-settings .provider,
 .guide-settings .field-check {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  min-height: 44px;
   gap: var(--sp-2);
   cursor: pointer;
 }
 .guide-settings .field {
+  min-width: 0;
   display: grid;
   gap: var(--sp-1);
 }
@@ -508,6 +699,10 @@ abbr:focus-visible::after {
 .guide-settings input:not([type="radio"]):not([type="checkbox"]),
 .guide-settings textarea {
   width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: 6px;
+  caret-color: var(--gold);
   box-sizing: border-box;
   padding: var(--sp-1) var(--sp-2);
   border: 1px solid var(--control-edge);
@@ -536,7 +731,11 @@ abbr:focus-visible::after {
 .guide-settings button {
   min-height: 44px;
 }
-.site-settings-link {
+.site-settings-link,
+.key-help-link {
+  min-height: 44px;
+  color: var(--gold);
+  text-underline-offset: 3px;
   display: inline-block;
   padding-block: var(--sp-2);
   font-size: var(--fs-body);
@@ -546,4 +745,79 @@ abbr:focus-visible::after {
   .scope-choices button[aria-pressed="true"] {
     outline: 2px solid Highlight;
   }
+}
+
+.guide-settings .provider > span,
+.guide-settings .field-check > span {
+  min-width: 0;
+}
+.guide-settings :is(input[type="radio"], input[type="checkbox"]) {
+  flex-shrink: 0;
+  accent-color: var(--gold);
+}
+.settings-details summary {
+  min-height: 44px;
+  padding-block: var(--sp-2);
+  cursor: pointer;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+}
+.settings-details p + p {
+  margin-top: var(--sp-2);
+}
+.guide-settings .field-error,
+.settings-message[data-tone="error"] {
+  color: var(--danger);
+  font-size: var(--fs-small);
+  margin: 0;
+}
+.guide-settings [aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.guide-settings .danger-action {
+  color: var(--danger);
+  border-color: var(--control-edge);
+}
+.guide-settings .danger-action:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--raised);
+}
+.clear-confirmation,
+.leave-confirmation {
+  padding: var(--sp-3);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+}
+.leave-confirmation {
+  border-color: var(--control-edge);
+}
+.guide-settings :is(.clear-confirmation, .leave-confirmation) p {
+  margin: var(--sp-2) 0;
+}
+.clear-confirmation .settings-actions,
+.leave-confirmation .settings-actions {
+  margin-top: var(--sp-3);
+}
+.guide-settings button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.intro-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+.intro-actions details {
+  flex: 1;
+}
+.intro-actions button {
+  flex-shrink: 0;
+}
+.intro-actions:has(details[open]) {
+  display: block;
+}
+.intro-actions details[open] {
+  margin-bottom: var(--sp-2);
 }

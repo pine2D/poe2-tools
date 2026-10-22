@@ -247,6 +247,44 @@ describe('createController', () => {
     expect(view.ask).toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
   })
+  it('取消超限发送后重新开始，完成时不残留上一次的取消横幅', async () => {
+    const { run, handle } = fakeEngine()
+    const { d, view } = deps({
+      engine: async () => handle,
+      prefs: async () => ({ ...DEFAULT_PREFS, charLimit: 1000 }),
+      raw: doc([{ id: 'x', kind: 'paragraph', text: `Contagion ${'word '.repeat(300)}` }]),
+    })
+    const controller = createController(d)
+    view.ask.mockResolvedValueOnce(false)
+    await readAndBegin(controller)
+    expect(run).not.toHaveBeenCalled()
+    expect(view.setBanner).toHaveBeenLastCalledWith('info', expect.stringContaining('已取消'))
+    await controller.begin()
+    expect(run).toHaveBeenCalledOnce()
+    expect(view.setProgress).toHaveBeenLastCalledWith(expect.objectContaining({ completed: 1 }))
+    expect(view.setBanner).toHaveBeenLastCalledWith('none', '')
+  })
+  it('新任务清理旧取消提示后，仍显示本次服务错误', async () => {
+    let broken = false
+    const { handle } = fakeEngine()
+    const { d, view } = deps({
+      engine: async () => {
+        if (broken) throw new Error('unavailable')
+        return handle
+      },
+      prefs: async () => ({ ...DEFAULT_PREFS, charLimit: 1000 }),
+      raw: doc([{ id: 'x', kind: 'paragraph', text: `Contagion ${'word '.repeat(300)}` }]),
+    })
+    const controller = createController(d)
+    view.ask.mockResolvedValueOnce(false)
+    await readAndBegin(controller)
+    broken = true
+    await controller.begin()
+    expect(view.setBanner).toHaveBeenLastCalledWith(
+      'error',
+      expect.stringContaining('读取翻译服务'),
+    )
+  })
   it('模型漏段时标记未返回', async () => {
     const { handle } = fakeEngine({ drop: 'a' })
     const { d, calls } = deps({ engine: async () => handle })
@@ -830,4 +868,105 @@ it('带页面快照的翻译失败仍发送失败提示并正常结束忙碌状�
     expect.objectContaining({ id: 'a', message: expect.stringContaining('翻译失败') }),
   )
   expect(view.setBusy.mock.calls.at(-1)).toEqual([false])
+})
+
+describe('保存服务后的翻译范围', () => {
+  const source = () =>
+    doc([
+      { id: 'h1', kind: 'heading', text: 'Excluded heading', context: { headingLevel: 2 } },
+      {
+        id: 'a',
+        kind: 'paragraph',
+        text: 'Excluded instructions.',
+        context: { headingIds: ['h1'] },
+      },
+      { id: 'h2', kind: 'heading', text: 'Selected heading', context: { headingLevel: 2 } },
+      {
+        id: 'b',
+        kind: 'paragraph',
+        text: 'Selected instructions.',
+        context: { headingIds: ['h2'] },
+      },
+    ])
+
+  it('重读同一正文保留章节子集，开始后请求和语境都不包含排除章节', async () => {
+    const engine = fakeEngine()
+    const { d, view } = deps({ extract: async () => source(), engine: async () => engine.handle })
+    const c = createController(d)
+    await c.start()
+    await c.preview(['h2', 'b'])
+    await c.start('full', { preserveSelection: true })
+    expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual(['h2', 'b'])
+    expect(engine.run).not.toHaveBeenCalled()
+    await c.begin()
+    const request = engine.run.mock.calls[0]?.[0][1]?.content ?? ''
+    expect(request).toContain('Selected instructions.')
+    expect(request).not.toContain('Excluded')
+    expect(view.setProgress.mock.calls.at(-1)?.[0]).toMatchObject({ selected: 2, completed: 2 })
+  })
+
+  it('保留用户切换后的阶段，不回到页面默认阶段', async () => {
+    const { d, view } = deps()
+    const c = createController(d)
+    await c.start()
+    await c.selectStage('s2')
+    await c.start('full', { preserveSelection: true })
+    expect(view.showDocument.mock.calls.at(-1)?.slice(2)).toEqual(['s2', ['b']])
+  })
+
+  it('全不选在保存后仍为空，不能开始任何模型请求', async () => {
+    const engine = fakeEngine()
+    const { d, view } = deps({ raw: source(), engine: async () => engine.handle })
+    const c = createController(d)
+    await c.start()
+    await c.preview([])
+    await c.start('full', { preserveSelection: true })
+    expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual([])
+    expect(view.setReady).toHaveBeenLastCalledWith(false)
+    await c.begin()
+    expect(engine.run).not.toHaveBeenCalled()
+  })
+
+  it.each(['text', 'structure', 'url'] as const)(
+    '原文%s变化时提示重新选择，不能按复用编号扩大范围',
+    async (change) => {
+      const engine = fakeEngine()
+      let raw = source()
+      const { d, view } = deps({ extract: async () => raw, engine: async () => engine.handle })
+      const c = createController(d)
+      await c.start()
+      await c.preview(['h2', 'b'])
+      raw = source()
+      if (change === 'url') raw.doc.source.url += '/another'
+      if (change === 'text')
+        raw.doc.blocks[3] = { id: 'b', kind: 'paragraph', text: 'Replacement text.' }
+      if (change === 'structure')
+        raw.doc.blocks[3] = {
+          id: 'b',
+          kind: 'paragraph',
+          text: 'Selected instructions.',
+          context: { headingIds: ['h1'] },
+        }
+      await c.start('full', { preserveSelection: true })
+      expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual([])
+      expect(view.setBanner).toHaveBeenCalledWith('info', expect.stringContaining('重新选择章节'))
+      expect(engine.run).not.toHaveBeenCalled()
+      await c.preview(['h2', 'b'])
+      expect(view.setBanner).toHaveBeenLastCalledWith('none', '')
+      await c.begin()
+      expect(engine.run).toHaveBeenCalledOnce()
+    },
+  )
+
+  it('旧会话失效后保存服务仍要求重新选择，而显式重读可以重置范围', async () => {
+    const { d, view } = deps({ raw: source() })
+    const c = createController(d)
+    await c.start()
+    await c.preview(['h2', 'b'])
+    await c.restore()
+    await c.start('full', { preserveSelection: true })
+    expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual([])
+    await c.start('full')
+    expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual(['h1', 'a', 'h2', 'b'])
+  })
 })

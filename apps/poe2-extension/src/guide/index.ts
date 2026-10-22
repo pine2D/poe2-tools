@@ -5,7 +5,7 @@ import { guideChrome } from './chrome'
 import { resolveConfig } from './config'
 import { type Controller, createController, type ReadScope } from './controller'
 import { streamChat } from './engines/openai'
-import { prefsFrom } from './prefs'
+import { limitError } from './prefs'
 import { guideEngine } from './runtime'
 import { createIdbStore } from './store/idb'
 import { createReadingView } from './view-reading'
@@ -44,8 +44,8 @@ async function boot(root: Element) {
   let controller: Controller
   let readScope: ReadScope = 'full'
   const savePrefs = async (next: typeof prefs) => {
+    await guideChrome.writePrefs(next)
     prefs = next
-    await guideChrome.writePrefs(prefs)
   }
 
   const settings = createSettingsView(document, {
@@ -61,30 +61,30 @@ async function boot(root: Element) {
         extraBody: values.extraBody,
         confirmedOrigins: [...new Set([...prefs.confirmedOrigins, resolved.origin])],
       })
+      // 重读会移除首次配置提示，保存后把焦点交给常驻的设置入口。
+      settingsTrigger = null
+      await controller.start(readScope, { preserveSelection: true })
       showReading()
-      void controller.start(readScope)
       return null
     },
     async onSaveLimits(charLimit, cacheLimitMb) {
-      // 经 prefsFrom 校验范围，非法值回到默认
-      const checked = prefsFrom({ ...prefs, charLimit, cacheLimitMb })
-      await savePrefs({
-        ...prefs,
-        charLimit: checked.charLimit,
-        cacheLimitMb: checked.cacheLimitMb,
-      })
+      const error = limitError('charLimit', charLimit) ?? limitError('cacheLimitMb', cacheLimitMb)
+      if (error) throw new Error(error)
+      await savePrefs({ ...prefs, charLimit, cacheLimitMb })
     },
-    async onTest(values) {
+    async onTest(values, signal) {
       const resolved = resolveConfig(values, await store.getKey(), prefs.confirmedOrigins)
-      if (!resolved.ok) return resolved.error
+      if (signal.aborted) throw signal.reason
+      if (!resolved.ok) throw new Error(resolved.error)
       try {
         await streamChat(resolved.config, [{ role: 'user', content: 'Reply with OK.' }], {
-          signal: AbortSignal.timeout(20000),
+          signal,
           onText: () => {},
         })
         return '连接正常。'
       } catch (error) {
-        return error instanceof Error ? error.message : '连接失败。'
+        if (signal.aborted) throw signal.reason
+        throw error
       }
     },
     async onClearCache() {
@@ -131,9 +131,19 @@ async function boot(root: Element) {
     },
     guideChrome.version(),
   )
+  let settingsTrigger: HTMLElement | null = null
+  let restoreReadingPosition: (() => void) | null = null
+  let openingSettings = false
   const showReading = () => {
     settings.root.hidden = true
     reading.root.hidden = false
+    const target =
+      settingsTrigger?.isConnected && !settingsTrigger.closest('[hidden]')
+        ? settingsTrigger
+        : reading.root.querySelector<HTMLElement>('[aria-label="设置翻译服务"]')
+    target?.focus({ preventScroll: true })
+    restoreReadingPosition?.()
+    restoreReadingPosition = null
   }
   // 用当前偏好、Key 状态与缓存占用回填设置表单（打开设置、清除数据后都会调用）
   const fillSettings = async () => {
@@ -150,11 +160,22 @@ async function boot(root: Element) {
     )
   }
   const showSettings = async () => {
+    if (openingSettings) return
+    openingSettings = true
+    restoreReadingPosition = reading.rememberPosition()
+    settingsTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null
     controller.stop()
     void guideChrome.cancelPicker(tabId).catch(() => {})
-    await fillSettings()
+    try {
+      await fillSettings()
+    } catch {
+      settings.setMessage('无法读取本机设置，请返回后重试。')
+    } finally {
+      openingSettings = false
+    }
     reading.root.hidden = true
     settings.root.hidden = false
+    settings.root.querySelector<HTMLElement>('h1')?.focus()
   }
   root.replaceChildren(reading.root, settings.root)
   reading.showIntro(!prefs.introSeen)

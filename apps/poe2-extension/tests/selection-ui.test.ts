@@ -183,6 +183,21 @@ it('拖动/键盘移动后调整视口仍保留气泡，位置受约束且不发
   expect(host.isConnected).toBe(true)
   expect(run).not.toHaveBeenCalled()
 })
+it('新划词入口可在置顶结果前操作，展开后恢复结果的置顶顺序', () => {
+  const { root } = setup()
+  required(root.querySelector('[data-action=translate]')).dispatchEvent(
+    trusted(new MouseEvent('click')),
+  )
+  required(root.querySelector('[data-action=pin]')).dispatchEvent(trusted(new MouseEvent('click')))
+  const second = selectMore('Another passage to translate.')
+  const firstZ = () => Number((root.host as HTMLElement).style.zIndex)
+  const secondZ = () => Number((second.host as HTMLElement).style.zIndex)
+  expect(secondZ()).toBeGreaterThan(firstZ())
+  required(second.querySelector('[data-action=translate]')).dispatchEvent(
+    trusted(new MouseEvent('click')),
+  )
+  expect(firstZ()).toBeGreaterThan(secondZ())
+})
 it('6 个置顶气泡满额时不删除旧结果；关闭后才接受新选区', () => {
   const { root, run } = setup()
   let current = root

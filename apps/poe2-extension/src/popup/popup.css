@@ -10,6 +10,10 @@
 @import "@poe2-tools/ui-theme/components/provenance.css";
 @import "@poe2-tools/ui-theme/popup-fonts.css";
 
+:root {
+  color-scheme: dark;
+  scrollbar-color: var(--control-edge) var(--surface);
+}
 * {
   box-sizing: border-box;
 }
@@ -103,10 +107,11 @@ main {
   color: var(--ink-2);
   overflow-wrap: anywhere;
 }
-/* 尺寸沿用“重试读取”：高 40、字号 14 */
+/* 与其他操作一致：至少 44px 点击区、字号 14 */
 .page__action {
   justify-self: start;
-  height: 40px;
+  min-height: 44px;
+  height: auto;
   margin-top: var(--sp-1);
   padding: 0 var(--sp-4);
   font-size: var(--fs-body);
@@ -187,7 +192,8 @@ main {
   color: var(--miss);
 }
 .retry {
-  height: 40px;
+  min-height: 44px;
+  height: auto;
   margin-top: var(--sp-2);
   padding: 0 var(--sp-4);
   font-size: var(--fs-body);
@@ -209,6 +215,10 @@ footer p {
   margin: 0;
 }
 footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--sp-2);
   color: var(--gold);
   text-underline-offset: 3px;
 }
@@ -255,4 +265,37 @@ footer .pt-disclaimer {
   footer a:focus-visible {
     outline-color: Highlight;
   }
+}
+
+.popup-heading {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-2);
+  font: 600 var(--fs-body) / 1.5 var(--font-zh-cn);
+}
+.site-settings-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--gold);
+  text-underline-offset: 3px;
+}
+.site-settings-link:hover {
+  color: var(--ink);
+}
+main :is(a, summary):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.translate {
+  min-height: 44px;
+  height: auto;
+  white-space: normal;
+}
+.guide-notice summary {
+  min-height: 44px;
+  padding-block: var(--sp-2);
+  cursor: pointer;
+}
+.guide-notice p {
+  margin: 0 0 var(--sp-2);
 }

@@ -33,7 +33,7 @@ const HINT = {
     `界面已翻译，但${where}没接上，暂时不能用中文搜索。先刷新页面；仍不行请反馈。`,
   lang: '中文助手只在 English 界面上工作。请在原站右上角切到 English，再刷新页面。',
   poe1: '中文助手只支持 PoE2。在原站把游戏切到 PoE2。',
-  none: '两种可能：这不是 beta.craftofexile.com 页面（旧版 www 站不支持）；或页面在安装、更新扩展前就已打开，刷新即可。',
+  none: '仅在 beta.craftofexile.com 的 PoE2 英文界面生效；若你已在该页面，请刷新后重试。',
   mute: '本页显示原站英文。在下方打开“启用简体中文”即可，不用刷新。',
   dictionary: '词典没能加载，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。',
   failed: '中文助手没能启动，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。',
@@ -113,7 +113,12 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       off('原站语言不是 English', HINT.lang),
     ],
     ['4 原站选的是 PoE1', answered({ page: 'unsupported' }), ON, off('原站选的是 PoE1', HINT.poe1)],
-    ['5 无应答', { status: 'none' }, ON, off('本页没有中文助手', HINT.none)],
+    [
+      '5 无应答',
+      { status: 'none' },
+      ON,
+      { kind: 'mute', word: '未连接', reason: null, hint: HINT.none, action: null },
+    ],
     [
       '6 简体中文已关闭',
       answered({ enabled: false }),
@@ -190,7 +195,7 @@ describe('pageView：优先级（计划裁定 7）', () => {
     expect(pageView(answered({ ...missing, page: 'unsupported' }), ON).kind).toBe('off')
   })
 
-  it('状态词只有三个，“刷新页面”只在部分生效与初始化失败出现', () => {
+  it('CoE 无应答为中性未连接，“刷新页面”只在部分生效与初始化失败出现', () => {
     const views = [
       pageView(answered(), ON),
       pageView(answered({ search: 'missing', searchMissing: ['base'] }), ON),
@@ -203,7 +208,7 @@ describe('pageView：优先级（计划裁定 7）', () => {
       pageView({ status: 'reading' }, ON),
     ]
     expect(new Set(views.map((view) => view.word))).toEqual(
-      new Set(['生效中', '部分生效', '未生效', null]),
+      new Set(['生效中', '部分生效', '未生效', '未连接', null]),
     )
     expect(views.filter((view) => view.action === 'reload').map((view) => view.kind)).toEqual([
       'part',

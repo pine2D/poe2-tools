@@ -26,7 +26,11 @@ const mountSettings = (h: SettingsHandlers, provider: 'deepseek' | 'custom' = 'd
 }
 const text = (selector: string) => document.querySelector(selector)?.textContent
 const click = (selector: string) => document.querySelector<HTMLElement>(selector)?.click()
-const message = () => text('.settings-message')
+const message = () =>
+  [...document.querySelectorAll('.settings-message')]
+    .map((p) => p.textContent)
+    .filter(Boolean)
+    .join('')
 
 afterEach(() => {
   document.body.textContent = ''
@@ -129,20 +133,22 @@ describe('设置页文案（M2）', () => {
 })
 
 describe('设置页按钮（S2、S3）', () => {
-  it('清除缓存或全部数据后刷新表单，提示如实列出清掉的内容', async () => {
+  it('仅清除翻译数据后刷新服务表单，清缓存保留草稿，提示如实列出清掉的内容', async () => {
     const h = handlers()
     mountSettings(h)
     click('.clear-cache')
     await vi.waitFor(() => expect(message()).toBe('缓存已清除。'))
-    expect(h.onRefresh).toHaveBeenCalledTimes(1)
+    expect(h.onRefresh).not.toHaveBeenCalled()
     click('.clear-all')
+    expect(h.onClearAll).not.toHaveBeenCalled()
+    click('.confirm-clear')
     await vi.waitFor(() =>
       expect(message()).toBe(
         '已清除 Key、译文缓存、自定义接口的地址、模型与额外参数，以及已确认的发送地址。',
       ),
     )
     expect(h.onClearAll).toHaveBeenCalledTimes(1)
-    expect(h.onRefresh).toHaveBeenCalledTimes(2)
+    expect(h.onRefresh).toHaveBeenCalledTimes(1)
   })
   it('按钮操作失败时显示“操作失败：原因”', async () => {
     const boom = () => Promise.reject(new Error('IndexedDB 不可用'))
@@ -156,9 +162,9 @@ describe('设置页按钮（S2、S3）', () => {
       }),
     )
     for (const selector of ['.test', '.save', '.save-limits', '.clear-cache', '.clear-all']) {
-      const messageNode = document.querySelector('.settings-message')
-      if (messageNode) messageNode.textContent = ''
+      for (const node of document.querySelectorAll('.settings-message')) node.textContent = ''
       click(selector)
+      if (selector === '.clear-all') click('.confirm-clear')
       await vi.waitFor(() => expect(message()).toBe('操作失败：IndexedDB 不可用'))
     }
   })

@@ -180,8 +180,15 @@ export function createSitesView(doc: Document, api: SitesApi) {
       {},
       el(doc, 'h2', {}, '常用 PoE2 攻略'),
       el(doc, 'p', { class: 'note' }, '仅在对应 PoE2 目录生效。'),
-      button('启用全部常用站点', () => enable([...PRESET_SITES])),
       presets,
+      el(
+        doc,
+        'details',
+        { class: 'site-batch' },
+        el(doc, 'summary', {}, '批量启用'),
+        el(doc, 'p', { class: 'note' }, '同时申请上方四个常用站点的访问权限。'),
+        button('启用全部常用站点', () => enable([...PRESET_SITES])),
+      ),
     ),
     el(
       doc,

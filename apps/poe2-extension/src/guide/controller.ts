@@ -64,12 +64,12 @@ export interface ControllerDeps {
   store: GuideStore
   prefs(): Promise<GuidePrefs>
   engine(): Promise<EngineHandle | null>
-  view: Omit<ReadingView, 'root' | 'showIntro' | 'showStage'>
+  view: Omit<ReadingView, 'root' | 'showIntro' | 'showStage' | 'rememberPosition'>
   random(): string
 }
 
 export interface Controller {
-  start(scope?: ReadScope): Promise<void>
+  start(scope?: ReadScope, options?: { preserveSelection: boolean }): Promise<void>
   selectStage(stageId: string | null): Promise<void>
   preview(ids?: readonly string[]): Promise<void>
   begin(): Promise<void>
@@ -273,6 +273,7 @@ export function createController(deps: ControllerDeps): Controller {
     const { signal } = run.controller
     const live = () => !signal.aborted
     view.setBusy(true)
+    if (!previewOnly) view.setBanner('none', '')
     try {
       if (!targets.length) {
         view.setUsage('所选范围无需新增模型请求。')
@@ -486,6 +487,7 @@ export function createController(deps: ControllerDeps): Controller {
     cancelRun()
     view.setBusy(true)
     view.setReady(false)
+    view.setBanner('none', '')
     const current = guide
     const allowed = ids ? new Set(ids) : null
     const raw = current.blocks.filter(
@@ -529,7 +531,11 @@ export function createController(deps: ControllerDeps): Controller {
   }
 
   return {
-    async start(scope = 'full') {
+    async start(scope = 'full', options) {
+      const previous =
+        options?.preserveSelection && guide
+          ? { guide, stage: currentStage, ids: blocks.map((b) => b.id) }
+          : null
       const gen = ++generation
       dropQueued()
       cancelRun()
@@ -578,7 +584,17 @@ export function createController(deps: ControllerDeps): Controller {
       dictHash = dictionary.hash
       tokens = { prompt: 0, completion: 0 }
       cacheHits = 0
-      currentStage = guide.stages.find((s) => s.current)?.id ?? null
+      // 重读会生成新快照，段落编号也可能被复用；只恢复正文与结构都一致的范围。
+      // 不比较提取时间、快照号或站点默认阶段，保留用户自己的阶段选择。
+      const unchanged =
+        previous &&
+        previous.guide.source.url === guide.source.url &&
+        previous.guide.source.scope === guide.source.scope &&
+        previous.guide.source.siteId === guide.source.siteId &&
+        JSON.stringify(previous.guide.blocks) === JSON.stringify(guide.blocks) &&
+        JSON.stringify(previous.guide.stages.map(({ id, name }) => ({ id, name }))) ===
+          JSON.stringify(guide.stages.map(({ id, name }) => ({ id, name })))
+      currentStage = unchanged ? previous.stage : (guide.stages.find((s) => s.current)?.id ?? null)
       try {
         await deps.page?.mode(mode)
       } catch {
@@ -586,7 +602,10 @@ export function createController(deps: ControllerDeps): Controller {
         return
       }
       if (gen !== generation) return
-      await preview()
+      const previewGeneration = generation + 1
+      await preview(options?.preserveSelection ? (unchanged ? previous.ids : []) : undefined)
+      if (options?.preserveSelection && !unchanged && generation === previewGeneration)
+        view.setBanner('info', '原文或读取范围已变化，请在“翻译范围”中重新选择章节。')
     },
     preview,
     async selectStage(stageId) {
