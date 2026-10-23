@@ -38,7 +38,7 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
 
 ## v4 设计与工具边界（2026-10-23）
 
-- v4 设计已由用户确认；共享颜色、通用按钮、方形开关、真实弹窗、阅读侧栏、翻译设置与站点管理已进入 0.11.0 本地候选；CoE 浮层和网站布局继续分批迁移。根 `PRODUCT.md` 维护产品事实，`DESIGN.md` 维护已确认目标并单列现有生产基线，`docs/ui-copy.md` 维护文案规则；旧视觉规范保留在 `docs/design-system-pre-v4.md`，不再作为新设计依据。
+- v4 设计已由用户确认；共享颜色、通用按钮、方形开关、真实弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层已进入 0.11.0 本地候选；网站布局继续分批迁移。根 `PRODUCT.md` 维护产品事实，`DESIGN.md` 维护已确认目标并单列现有生产基线，`docs/ui-copy.md` 维护文案规则；旧视觉规范保留在 `docs/design-system-pre-v4.md`，不再作为新设计依据。
 - 设计主工作目录为 `docs/superpowers/design/poe2-tools-v4/`，已原地导入 OpenDesign；它与代理直接编辑的是同一份文件，不是备份。该目录与根 `HANDOFF.md` 只在本地保留，不入库；不自动删除，也不另起活动副本。
 - OpenDesign 负责原型与预览；impeccable 用于按已确认规范检查和精修。两者的文件优先级、技能安装层级与同步规则见 `docs/design-skills.md`。不并发修改同一设计，不因工具的通用偏好推翻已确认方向，不自动重建已删除的 impeccable 侧车。
 - 原型 token 只作目标参考，生产令牌仍统一在 `packages/ui-theme`；不直接把原型 `:root` 样式注入产品或 CoE。原型测试与真实产品验收分别记录。

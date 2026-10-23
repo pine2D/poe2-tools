@@ -66,6 +66,42 @@ function readyPreview() {
   expect(fill.disabled).toBe(false)
   return { input, preview, fill }
 }
+it('步骤随预览、编辑失效、填入和恢复变化，原站确认始终由用户完成', () => {
+  const { input, preview, fill } = readyPreview()
+  const current = () => ui().querySelector('.steps [aria-current="step"] b')?.textContent
+  expect(current()).toBe('填入英文')
+  expect(ui().querySelectorAll('.steps [aria-current="step"]')).toHaveLength(1)
+  const proceed = document.createElement('button')
+  const nativeSubmit = vi.fn()
+  proceed.addEventListener('click', nativeSubmit)
+  input.closest('dialog')?.append(proceed)
+  input.value = source.replace('+40', '+39')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(current()).toBe('预览核对')
+  expect(fill.disabled).toBe(true)
+  preview.click()
+  expect(current()).toBe('填入英文')
+  ui().querySelector<HTMLButtonElement>('.result > button')?.click()
+  expect(current()).toBe('原站确认')
+  expect(ui().querySelector('.steps li:last-child')?.getAttribute('data-state')).not.toBe('done')
+  expect(ui().querySelector('[role="status"]')?.textContent).toContain('尚未导入')
+  expect(nativeSubmit).not.toHaveBeenCalled()
+  const restore = [...ui().querySelectorAll('button')].find((b) => b.textContent === '恢复粘贴原文')
+  restore?.click()
+  expect(current()).toBe('预览核对')
+  expect(input.value).toBe(source.replace('+40', '+39'))
+})
+it('初始和待核对的原文停留在预览步骤，不暗示未知行可以填入', () => {
+  document.body.innerHTML =
+    '<dialog open><textarea id="importerInput">未知装备文本</textarea></dialog>'
+  stop = attachImport(document, [])
+  const current = () => ui().querySelector('.steps [aria-current="step"] b')?.textContent
+  expect(current()).toBe('预览核对')
+  ui().querySelector<HTMLButtonElement>('.body > button')?.click()
+  expect(current()).toBe('预览核对')
+  expect(ui().querySelector<HTMLButtonElement>('.result > button')?.disabled).toBe(true)
+  expect(document.querySelector<HTMLTextAreaElement>('#importerInput')?.value).toBe('未知装备文本')
+})
 it('重复预览使旧填入按钮失效，当前预览仍可填入', () => {
   const { input, preview, fill } = readyPreview()
   preview.click()
@@ -415,7 +451,10 @@ it('① 可以填入：唯一 live region 是结论行；已识别 6 / 6 行；�
     ],
   })
   expect(ui().querySelector('li[data-kind="clear"]')).not.toBeNull()
-  expect([...ui().querySelectorAll('.who')].map((tag) => tag.textContent)).toEqual(['你', '原站'])
+  expect([...ui().querySelectorAll('.check .who')].map((tag) => tag.textContent)).toEqual([
+    '你',
+    '原站',
+  ])
   expect(primary()).toEqual([fill])
   expect(preview.hasAttribute('data-primary')).toBe(false)
 })

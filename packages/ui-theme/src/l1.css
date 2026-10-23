@@ -3,7 +3,7 @@
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
    令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
    尺寸阶梯只声明本文件用到的档；字号与间距一律取阶梯，例外逐条登记在 extension-sizes.test.ts 的 ALLOW。
-   只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮与角饰。衬线只经 --l1-serif 用于 L1_SERIF_SELECTORS（selectors.ts：面板标题与主次按钮，“第 N 行”定位按钮除外）；字体由内容脚本 serif.ts 以 FontFace 注册到文档，这里不写 @font-face。 */
+   v4 使用黑底直角、钢蓝主操作与青色 gem；青铜渐变只标记当前候选／步骤，不加角饰。固定标签通过 --l1-serif 使用独立子集，任意候选保持无衬线；字体由 serif.ts 以 FontFace 注册，这里不写 @font-face。 */
 :host {
   --ext-ink: #9fe3dc;
   --ink: #f2ead8;
@@ -14,6 +14,16 @@
   --control-edge: #94a1ae;
   --bg: #000000;
   --bg-2: #121922;
+  --surface: #15181c;
+  --raised: #1e2124;
+  --raised-2: #262a2e;
+  --metal-line: #465260;
+  --label: #fff8e1;
+  --steel-hi: #164a75;
+  --steel-edge: #4c4c7d;
+  --bronze-lo: #8a6a3e;
+  --tab-start: #5c3d16;
+  --tab-end: #3a2810;
   --mod: #8f8fff;
   --ok: #82cf90;
   --miss: #ef90b8;
@@ -32,12 +42,12 @@
   --sp-3: 12px;
   --sp-4: 16px;
   /* L1 专用（spec §6.9 视觉） */
-  --l1-panel: #15120f;
-  --l1-edge: #8a6a40;
+  --l1-panel: #000000;
+  --l1-edge: #465260;
   --l1-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --l1-primary-bg: #2a2118;
-  --l1-primary-edge: #c79a5e;
-  --l1-primary-ink: #f2dcb3;
+  --l1-primary-bg: #0f304d;
+  --l1-primary-edge: #94a1ae;
+  --l1-primary-ink: #fff8e1;
 }
 
 /* 叠加译文：只换字色；字号与排版由宿主内联布局决定 */
@@ -74,7 +84,7 @@
   min-width: 0;
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
 .head {
@@ -83,15 +93,50 @@
   gap: var(--sp-2);
   min-height: 46px;
   padding: 0 var(--sp-4);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--metal-line);
 }
 .title {
   font-weight: 700;
   font-size: var(--fs-data);
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
+  color: var(--label);
 }
 .head .by {
   margin-left: auto;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4) 0;
+  list-style: none;
+}
+.steps li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 var(--sp-2);
+  align-items: center;
+  padding: var(--sp-2);
+  background: var(--surface);
+  border-left: 1px solid var(--bronze-lo);
+}
+:where(.steps) .who {
+  grid-row: span 2;
+}
+.steps b {
+  font-size: var(--fs-small);
+  color: var(--label);
+}
+.steps small {
+  font-size: var(--fs-micro);
+  color: var(--ink-2);
+}
+.steps :where([data-state="done"]) small {
+  color: var(--ok);
+}
+.steps [aria-current="step"] {
+  background: linear-gradient(90deg, var(--tab-start), var(--tab-end));
 }
 .body {
   padding: var(--sp-3) var(--sp-4) var(--sp-1);
@@ -113,6 +158,13 @@ label {
   font-size: var(--fs-small);
   color: var(--ink-2);
 }
+.column-label {
+  display: block;
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--metal-line);
+  color: var(--label);
+  font-weight: 700;
+}
 textarea {
   display: block;
   box-sizing: border-box;
@@ -124,7 +176,7 @@ textarea {
   margin-top: var(--sp-1);
   padding: var(--sp-3);
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg);
   color: var(--ink);
   caret-color: var(--focus);
@@ -132,7 +184,7 @@ textarea {
   scrollbar-color: var(--control-edge) var(--bg);
 }
 textarea[data-preview] {
-  background: var(--bg-2);
+  background: var(--bg);
   color: var(--mod);
 }
 /* 结论行（唯一 live region）：图标 + 结论 + 副句；未预览时为空并隐藏 */
@@ -168,10 +220,14 @@ textarea[data-preview] {
   grid-template-columns: 56px minmax(0, 1fr);
   gap: 0 var(--sp-3);
   padding: var(--sp-2) 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--bg);
+  background: var(--surface);
 }
 .group h3 {
   margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 1px solid var(--bronze-lo);
+  background: var(--raised);
   font-size: var(--fs-small);
   font-weight: 400;
   line-height: 1.8;
@@ -203,7 +259,7 @@ textarea[data-preview] {
   display: inline-block;
   padding: 0 var(--sp-1);
   border: 1px solid var(--line-2);
-  border-radius: 3px;
+  border-radius: 0;
   font-size: var(--fs-micro);
   line-height: 1.6;
   color: var(--ink);
@@ -240,6 +296,9 @@ textarea[data-preview] {
    标题不在词中断开，署名整体换到标题下一行并与标题左对齐（gem 16px + 间距 --sp-2）；
    组名放到条目上方；条目改成行内流，“第 N 行”与“你／原站”在文字开头，图标左浮，问题原文绕排占满整行 */
 @container import-panel (width < 480px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .head {
     flex-wrap: wrap;
     gap: 0 var(--sp-2);
@@ -274,8 +333,8 @@ button {
   padding: var(--sp-2) var(--sp-3);
   margin: var(--sp-1) var(--sp-2) var(--sp-1) 0;
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
-  background: transparent;
+  border-radius: 0;
+  background: var(--raised);
   color: var(--ink);
   font: inherit;
   white-space: normal;
@@ -285,9 +344,11 @@ button[data-primary] {
   border-color: var(--l1-primary-edge);
   background: var(--l1-primary-bg);
   color: var(--l1-primary-ink);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--steel-edge);
+  font-weight: 700;
 }
 button[data-tertiary] {
+  background: transparent;
   border-color: transparent;
   padding-inline: var(--sp-1);
   color: var(--ink-2);
@@ -299,6 +360,7 @@ button:disabled {
   background: transparent;
   color: var(--ink-3);
   cursor: not-allowed;
+  box-shadow: none;
 }
 button[data-tertiary]:disabled {
   border-color: transparent;
@@ -307,7 +369,10 @@ button[data-tertiary]:disabled {
    400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响 */
 .title,
 .body > button,
-.result > button {
+.result > button,
+.steps b,
+.column-label,
+.group h3 {
   font-family: var(--l1-serif);
 }
 button:focus-visible,
@@ -326,7 +391,7 @@ textarea:focus-visible {
   scroll-padding-block: var(--sp-2) 42px;
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
 ::slotted(div) {
@@ -338,12 +403,12 @@ textarea:focus-visible {
   display: block !important;
   box-sizing: border-box !important;
   width: 100% !important;
-  min-height: 32px !important;
+  min-height: 44px !important;
   margin: 2px 0 !important;
   padding: var(--sp-1) var(--sp-2) !important;
   border: 1px solid transparent !important;
-  border-radius: 4px !important;
-  background: transparent !important;
+  border-radius: 0 !important;
+  background: var(--surface) !important;
   box-shadow: none !important;
   color: var(--ink) !important;
   font: inherit !important;
@@ -353,13 +418,34 @@ textarea:focus-visible {
 }
 ::slotted(button[aria-selected="true"]) {
   border-color: var(--l1-edge) !important;
-  background: var(--bg-2) !important;
+  background: linear-gradient(90deg, var(--tab-start), var(--tab-end)) !important;
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
 }
 ::slotted(button:focus-visible) {
+  background: linear-gradient(90deg, var(--tab-start), var(--tab-end)) !important;
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
+}
+/* 双语文字由内部 slot 排成两行；按钮仍是外层 light DOM 节点，保留输入框的 ARIA 引用。 */
+:host([data-candidate]) {
+  display: block;
+  min-width: 0;
+}
+::slotted([slot="candidate-zh"]),
+::slotted([slot="candidate-en"]) {
+  all: unset !important;
+  display: block !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  text-align: left !important;
+  font: var(--fs-small) / 1.5 var(--font-zh-cn) !important;
+  color: var(--ink-2) !important;
+}
+::slotted([slot="candidate-zh"]) {
+  font-size: var(--fs-body) !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
 }
 /* 署名固定在列表底部一行（spec §6.9）：sticky 的约束矩形是滚动容器的内容框（已扣 --sp-2 内边距），
    bottom 取负的 --sp-2 才贴住边框内侧；署名用 padding-bottom --sp-2 + margin-bottom 负 --sp-2 吃掉宿主底部内边距，
@@ -392,11 +478,12 @@ textarea:focus-visible {
   padding: var(--sp-2) var(--sp-3) var(--sp-3) var(--sp-4);
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
 .notice header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
 }
@@ -413,7 +500,10 @@ textarea:focus-visible {
 
 @media (hover: hover) and (pointer: fine) {
   button:hover:not(:disabled) {
-    border-color: var(--l1-primary-edge);
+    background: var(--raised-2);
+  }
+  button[data-primary]:hover:not(:disabled) {
+    background: var(--steel-hi);
   }
   button[data-tertiary]:hover:not(:disabled) {
     border-color: transparent;
@@ -421,6 +511,13 @@ textarea:focus-visible {
   }
   ::slotted(button:hover) {
     border-color: var(--control-edge) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  button,
+  .check li button {
+    min-height: 44px;
   }
 }
 

@@ -120,6 +120,32 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
     by.className = 'by'
     by.textContent = SHORT_PROVENANCE
     head.append(createGem(doc, 16), heading, by)
+    const steps = doc.createElement('ol')
+    steps.className = 'steps'
+    steps.setAttribute('aria-label', '装备转换步骤')
+    for (const [index, text] of ['预览核对', '填入英文', '原站确认'].entries()) {
+      const step = doc.createElement('li')
+      const who = doc.createElement('span')
+      who.className = 'who'
+      who.textContent = index === 2 ? '原站' : '你'
+      const title = doc.createElement('b')
+      title.textContent = text
+      const state = doc.createElement('small')
+      step.append(who, title, state)
+      steps.append(step)
+    }
+    // 只投影扩展实际完成的步骤；第三步永不标为已完成，导入结果留给原站。
+    const setStep = (current: 0 | 1 | 2) => {
+      for (const [index, step] of [...steps.children].entries()) {
+        step.setAttribute('data-state', index < current ? 'done' : 'pending')
+        if (index === current) step.setAttribute('aria-current', 'step')
+        else step.removeAttribute('aria-current')
+        const state = step.querySelector('small')
+        if (state)
+          state.textContent = index < current ? '已完成' : index === current ? '下一步' : '待完成'
+      }
+    }
+    setStep(0)
     const body = doc.createElement('div')
     body.className = 'body'
     const disclaimer = doc.createElement('p')
@@ -193,6 +219,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       invalidate = null
       result.replaceChildren()
       const converted = prepareImport(input.value, terms)
+      setStep(converted.ready ? 1 : 0)
       const { lines, warnings, comparisonOnly } = converted
       // 仅供对照：issues[0] 是对照原因，已作结论副句，不在待核对里重复
       const items = checklist(comparisonOnly ? converted.issues.slice(1) : converted.issues)
@@ -254,7 +281,10 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         ['英文预览（不提交交易备注／描述）', converted.english],
       ].entries()) {
         const label = doc.createElement('label')
-        label.textContent = title ?? ''
+        const caption = doc.createElement('span')
+        caption.className = 'column-label'
+        caption.textContent = title ?? ''
+        label.append(caption)
         const area = doc.createElement('textarea')
         area.readOnly = true
         area.value = value ?? ''
@@ -328,6 +358,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       }
       /** ④ 原文已改变：旧结果降级保留，定位与填入停用，预览成为主按钮 */
       const markStale = (note: string) => {
+        setStep(0)
         // 已失效且副句不变：不重写结论行（live region）与清单，避免重复播报
         if (
           check.classList.contains('stale') &&
@@ -392,6 +423,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         copy.disabled = true
         // ③ 已填入：导入仍由原站完成，扩展不提交
         say('fill', 'ok', '已填入英文', '尚未导入，导入结果由原站确认')
+        setStep(2)
         done.list.replaceChildren(
           entry(icon(doc, 'fill', 'ok'), `英文已写入原站导入框（${lines?.total ?? 0} 行）`),
         )
@@ -428,6 +460,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           input.dispatchEvent(new Event('input', { bubbles: true }))
           restore.disabled = true
           say('stale', 'dim', '已恢复粘贴原文。修改后请重新预览。')
+          setStep(0)
           check.classList.remove('stale')
           check.replaceChildren()
           setPrimary(preview)
@@ -438,7 +471,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       })
     })
     body.append(preview, message, result)
-    panel.append(head, body, disclaimer)
+    panel.append(head, steps, body, disclaimer)
     shadow.append(panel)
     setPrimary(preview)
     input.after(dialogStyle, host)

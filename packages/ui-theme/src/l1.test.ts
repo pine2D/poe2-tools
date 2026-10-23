@@ -30,7 +30,7 @@ const COE_BACKGROUNDS = [
   '#101010',
   '#2d2d2d',
 ]
-const PANEL = '#15120f'
+const PANEL = '#000000'
 const L1_ONLY = [
   '--ext-ink',
   '--l1-panel',
@@ -60,8 +60,16 @@ describe('l1.css 令牌（spec §6.9 样式注入）', () => {
 })
 
 describe('L1 禁用项（spec §4.2）', () => {
-  it('不用渐变、网站衬线栈（--pt-serif、--pt-cinzel）、外部或内嵌 url()', () => {
-    expect(l1).not.toMatch(/gradient\(/)
+  it('渐变只用于当前候选或步骤，不加载网站字体栈或外部资源', () => {
+    for (const rule of rules.filter((r) =>
+      [...r.declarations.values()].some((v) => /gradient\(/.test(v)),
+    ))
+      for (const selector of rule.selectors)
+        expect([
+          '::slotted(button[aria-selected="true"])',
+          '::slotted(button:focus-visible)',
+          '.steps [aria-current="step"]',
+        ]).toContain(selector)
     expect(l1).not.toMatch(/--pt-serif|--pt-cinzel/)
     expect(l1).not.toMatch(/url\(/i)
   })
@@ -199,6 +207,21 @@ describe('次级按钮禁用态（spec §6.9）', () => {
 })
 
 describe('对比度（spec §6.9、§4.3）', () => {
+  it('v4 主操作有清晰边界，黑底面板与控件为直角', () => {
+    const at = (selector: string) => rules.find((r) => r.selectors.join(', ') === selector)
+    for (const selector of [
+      '.panel',
+      '.notice',
+      'button',
+      'textarea',
+      ':host([data-poe2-l10n="search"])',
+    ])
+      expect(at(selector)?.declarations.get('border-radius'), selector).toBe('0')
+    expect(token('--l1-primary-bg')).toBe('#0f304d')
+    expect(
+      contrastRatio(token('--l1-primary-edge'), token('--l1-primary-bg')),
+    ).toBeGreaterThanOrEqual(3)
+  })
   it('--ext-ink 对 CoE 全部实测底色 ≥4.5:1', () => {
     for (const bg of COE_BACKGROUNDS)
       expect(contrastRatio(token('--ext-ink'), bg), bg).toBeGreaterThanOrEqual(4.5)

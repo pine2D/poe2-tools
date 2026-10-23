@@ -147,7 +147,26 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     for (const term of unique.values()) {
       const button = doc.createElement('button')
       button.type = 'button'
-      button.textContent = `${term.zh} → ${term.en}`
+      button.setAttribute('aria-label', `${term.zh}，${term.en}`)
+      // 按钮与中英文仍留在 document 内；标签的 slot 用共享样式隔离原站 * 规则，
+      // 不移动按钮本身，条件输入的 aria-activedescendant 仍能直接引用它。
+      const label = doc.createElement('span')
+      label.dataset.candidate = ''
+      const labels = label.attachShadow({ mode: 'open' })
+      adoptL1(labels)
+      for (const [name, text] of [
+        ['candidate-zh', term.zh],
+        ['candidate-en', term.en],
+      ]) {
+        const value = doc.createElement('span')
+        value.slot = name ?? ''
+        value.textContent = text ?? ''
+        const slot = doc.createElement('slot')
+        slot.name = value.slot
+        label.append(value)
+        labels.append(slot)
+      }
+      button.append(label)
       if (keepFocus) {
         button.id = `${panel.id}-option-${unique.size}-${panel.children.length}`
         button.tabIndex = -1

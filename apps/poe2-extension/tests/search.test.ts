@@ -42,6 +42,25 @@ it('中文精确候选经选择后触发一次英文查询，保留查询提示'
   expect(submitted).toEqual(['Runed Focus'])
   expect(document.querySelector('[data-poe2-l10n]')?.textContent).toContain('符文法器')
 })
+it('双语候选保留完整按钮名称，标签分层后点击英文仍只提交一次', () => {
+  const { input, submitted } = setup()
+  type(input, '符文法器')
+  const button = document.querySelector<HTMLButtonElement>('[data-poe2-l10n="search"] button')
+  expect(button?.getAttribute('aria-label')).toBe('符文法器，Runed Focus')
+  const label = button?.querySelector<HTMLElement>('[data-candidate]')
+  const slots = [...(label?.shadowRoot?.querySelectorAll('slot') ?? [])]
+  expect(
+    slots.map((slot) =>
+      slot
+        .assignedNodes()
+        .map((node) => node.textContent)
+        .join(''),
+    ),
+  ).toEqual(['符文法器', 'Runed Focus'])
+  button?.querySelector<HTMLElement>('[slot="candidate-en"]')?.click()
+  expect(input.value).toBe('Runed Focus')
+  expect(submitted).toEqual(['Runed Focus'])
+})
 it('输入法组词不展示或提交中间值，结束后才给候选', () => {
   const { input, submitted } = setup()
   input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
@@ -256,6 +275,10 @@ it('模拟器条件仅提供当前下拉框存在的术语，键盘选择保持�
   expect(document.activeElement).toBe(input)
   expect(blurred).toBe(false)
   expect(input.getAttribute('aria-activedescendant')).toBe(buttons[0]?.id)
+  expect(document.getElementById(input.getAttribute('aria-activedescendant') ?? '')).toBe(
+    buttons[0],
+  )
+  expect(buttons[0]?.getAttribute('aria-label')).toBe('词缀数量，Number of Affixes')
   expect(buttons[0]?.getAttribute('aria-selected')).toBe('true')
   input.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
@@ -492,7 +515,7 @@ it('价格搜索复用searchInput时查询材料，制作词缀与价格数值�
   const buttons = [
     ...document.querySelectorAll<HTMLButtonElement>('[data-poe2-l10n=search] button'),
   ]
-  expect(buttons.map((b) => b.textContent)).toEqual(['崇高石 → Exalted Orb'])
+  expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(['崇高石，Exalted Orb'])
   buttons[0]?.click()
   expect(submitted).toEqual(['Exalted Orb'])
   expect(price.value).toBe('12.5')
