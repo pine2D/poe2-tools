@@ -51,3 +51,7 @@
 - **验证路径**：本地门禁结果在这种波动下不具判别力。权威完整门禁应在干净环境运行：本分支提交后由 CI 的 `workflow_dispatch`（`deploy=none`，只跑 verify，不部署、不发布）执行，或在宿主空闲时本地重跑并同时记录基准。CI 需要分支提交与 `release.json` 一致，当前 `release.json` 对应含未提交解析器改动的源码。
 
 按用户 2026-10-23 的决定：解析器缓存与词缀池改动连同当前 `release.json` 一起本地提交，推送 `feat/v4-ui-migration`（不推 main），以 `workflow_dispatch`、`deploy=none` 触发 CI 只跑完整 verify；不部署、不发布。CI 结果另行记录。
+
+## CI 完整门禁结果（2026-10-23）
+
+GitHub Actions 运行 `39953492098`（`workflow_dispatch`，`deploy=none`，HEAD `032b586`）：`verify` 作业成功，耗时约 14 分 42 秒；`deploy` 与 `release-extension` 按条件跳过。完整 `pnpm verify` 全部通过：709 个测试文件通过、1 个原有跳过；类型检查、Biome（11 条既有 warning）、扩展打包与发布闸门（0.11.0，7,371,771 字节，SHA-256 `343a74227b653159234cba733bf7063793e302a92ff3065ddeabd4152b5ad482`）、网站构建、`dict:check`、`craft:check` 通过。本地曾超时的四个文件在 CI 上均通过：`gloveIdolProjectVersion` 2683ms、`ExtendedInfluenceBones` 29313ms、`CorruptionStrategy` 21341ms、`SerleCrafting` 30142ms，门槛与断言未改。本地超时为环境因素的结论由此得到印证；完整门禁已放行，合并与发布仍需另行授权。
