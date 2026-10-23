@@ -61,6 +61,10 @@
   --ok: #82cf90;
   --miss: #ef90b8;
   --danger: #f3806f;
+  /* 危险确认按钮（DESIGN 色彩表“危险确认”）：底／边／字 */
+  --danger-bg: #5a1d17;
+  --danger-edge: #9b3a2e;
+  --danger-ink: #ffd9d2;
   --focus: #b8cfff;
   --focus-ring: 2px solid var(--focus);
   --selection-bg: #b8cfff;

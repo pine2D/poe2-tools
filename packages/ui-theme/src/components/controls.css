@@ -73,11 +73,43 @@
   gap: 2px 10px;
   font-size: 14px;
 }
+/* v4 方形青铜框（与 switch.css 同一画法）：18px 图形，选中时 --label 内方块；≤600px 增至 22px 并抬高点击行 */
 .pt-check input {
-  width: 16px;
-  height: 16px;
-  margin: 3px 0 0;
-  accent-color: var(--bronze);
+  appearance: none;
+  position: relative;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  border: 2px solid var(--bronze-lo);
+  border-radius: 0;
+  background: var(--bg);
+  cursor: pointer;
+}
+.pt-check input::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: var(--label);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.pt-check input:checked {
+  border-color: var(--bronze-hi);
+}
+.pt-check input:checked::before {
+  opacity: 1;
+}
+.pt-check input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.pt-check input:disabled {
+  border-color: var(--ink-3);
+  cursor: default;
+}
+.pt-check input:disabled::before {
+  background: var(--ink-3);
 }
 .pt-check label {
   color: var(--ink);
@@ -90,7 +122,7 @@
   font-size: 13px;
 }
 
-/* 文本框（粘贴）：底 --bg，1px --control-edge，圆角 4px */
+/* 文本框（粘贴）：底 --bg，1px --control-edge，直角 */
 .pt-textarea {
   display: block;
   width: 100%;
@@ -369,6 +401,23 @@ details[open] > .pt-textbtn svg {
   .pt-textbtn {
     min-height: 44px;
   }
+  /* 复选框行：图形 22px，label 撑满行高，整行至少 44px 可点 */
+  .pt-check {
+    align-items: center;
+  }
+  .pt-check input {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+  }
+  .pt-check input::before {
+    inset: 4px;
+  }
+  .pt-check label {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
   .pt-file {
     padding-right: 48px;
   }
@@ -383,7 +432,8 @@ details[open] > .pt-textbtn svg {
   .pt-seg__item,
   .pt-trigger,
   .pt-trigger svg,
-  .pt-textbtn svg {
+  .pt-textbtn svg,
+  .pt-check input::before {
     transition: none;
   }
 }
@@ -425,6 +475,19 @@ details[open] > .pt-textbtn svg {
   .pt-dictbar__dot--failed {
     border-color: Highlight;
     background: Highlight;
+  }
+  .pt-check input {
+    border-color: ButtonText;
+    background: Canvas;
+  }
+  .pt-check input::before {
+    background: ButtonText;
+  }
+  .pt-check input:disabled {
+    border-color: GrayText;
+  }
+  .pt-check input:disabled::before {
+    background: GrayText;
   }
   /* svg 默认 forced-color-adjust: preserve-parent-color，写在 svg 上的 --ok 会原样保留；改为继承宿主的系统色 */
   .pt-toast > svg {

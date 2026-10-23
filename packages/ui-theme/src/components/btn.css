@@ -45,6 +45,16 @@
 .pt-btn--primary:hover {
   background-color: var(--steel-hi);
 }
+/* 危险确认（DESIGN 色彩表）：只用于行内二次确认的“确认删除／确认清除” */
+.pt-btn--danger {
+  border-color: var(--danger-edge);
+  background-color: var(--danger-bg);
+  color: var(--danger-ink);
+}
+.pt-btn--danger:hover {
+  border-color: var(--danger-ink);
+  background-color: var(--danger-bg);
+}
 /* --sm：工具栏“下一项”“仅看待核对”，底改为 --bar（悬停也保持 --bar，只换边色） */
 .pt-btn--sm {
   height: 38px;
@@ -94,8 +104,12 @@
   border-color: var(--control-edge);
   background-color: var(--raised);
 }
+/* 主操作禁用：去掉钢蓝底与内边，改为中性底，避免与可用态混淆 */
+.pt-btn--primary:disabled,
 .pt-btn--primary:disabled:hover {
-  background-color: var(--steel);
+  background-color: var(--raised);
+  box-shadow: none;
+  color: var(--ink-2);
 }
 /* 与上一条同为 (0,3,0)，必须排在其后：--quiet --sm 禁用时悬停仍是 --bar，不出现悬停反馈 */
 .pt-btn--sm:disabled:hover {

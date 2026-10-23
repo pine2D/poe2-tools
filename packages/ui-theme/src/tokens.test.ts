@@ -58,6 +58,9 @@ const EXPECTED: Record<string, string> = {
   '--ok': '#82cf90',
   '--miss': '#ef90b8',
   '--danger': '#f3806f',
+  '--danger-bg': '#5a1d17',
+  '--danger-edge': '#9b3a2e',
+  '--danger-ink': '#ffd9d2',
   '--focus': '#b8cfff',
   '--focus-ring': '2px solid var(--focus)',
   '--selection-bg': '#b8cfff',
@@ -151,7 +154,7 @@ describe('令牌结构（spec §4.3）', () => {
   it('令牌集合与取值等于v4 兼容接口的 79 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
     const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
     expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(contract).toHaveLength(79)
+    expect(contract).toHaveLength(82)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }
@@ -202,6 +205,11 @@ describe('对比度门禁（DESIGN.md v4）', () => {
     }
     // --steel-edge 只作内侧装饰；方形开关的青铜边面对面板，不用于正文。
     expect(contrastRatio(token('--bronze-lo'), token('--bg'))).toBeGreaterThanOrEqual(3)
+  })
+
+  it('危险确认按钮文字对底 ≥4.5:1；边框对所在面板 ≥3:1', () => {
+    expect(contrastRatio(token('--danger-ink'), token('--danger-bg'))).toBeGreaterThanOrEqual(4.5)
+    expect(contrastRatio(token('--danger-edge'), token('--bg'))).toBeGreaterThanOrEqual(3)
   })
 
   it('文字令牌对全部表面 ≥4.5:1', () => {

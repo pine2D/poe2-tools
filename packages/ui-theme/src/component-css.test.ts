@@ -1022,11 +1022,11 @@ describe('pt-switch（spec §5.13）', () => {
 })
 
 describe('pt-provenance（spec §5.14）', () => {
-  it('短署名 12.5px --ink-3，gem 16px；完整声明 12px --ink-2', () => {
+  it('短署名 12.5px --ink-3，gem 16px；完整声明 --fs-micro（12px，随字号阶梯缩放）--ink-2', () => {
     expect(declared('provenance.css', '.pt-provenance', 'font-size')).toBe('12.5px')
     expect(declared('provenance.css', '.pt-provenance', 'color')).toBe('var(--ink-3)')
     expect(declared('provenance.css', '.pt-provenance > .pt-motif--gem', '--ptm-w')).toBe('16px')
-    expect(declared('provenance.css', '.pt-disclaimer', 'font-size')).toBe('12px')
+    expect(declared('provenance.css', '.pt-disclaimer', 'font-size')).toBe('var(--fs-micro)')
     expect(declared('provenance.css', '.pt-disclaimer', 'color')).toBe('var(--ink-2)')
   })
 })
