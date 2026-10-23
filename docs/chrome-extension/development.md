@@ -8,7 +8,7 @@
 
 `apps/poe2-extension/release.json` 是产物核对依据。已发布的同版本 ZIP 不得替换内容；后续改变扩展包须升版本并更新发布记录。
 
-2026-10-23：开发分支的 0.11.0 为本地候选，当前包含 v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层；网站布局继续分批迁移。该分支的 `release.json` 核对候选包，公开版本仍为 0.10.1。证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)、[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)和[CoE 浮层验收](validation-2026-10-23-v4-coe-overlays.md)，中间提交不直接合入 main 或公开发布。
+2026-10-23：开发分支的 0.11.0 为本地候选，当前包含 v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层；网站已迁移至 0.10.0 本地候选，四批界面复盘后的修正见[v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md)。该分支的 `release.json` 核对候选包，公开版本仍为 0.10.1。证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)、[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)和[CoE 浮层验收](validation-2026-10-23-v4-coe-overlays.md)，中间提交不直接合入 main 或公开发布。
 
 工程与阅读交互已通过对应门禁，旧整段语义质量失败结论保持。0.5.0 与 0.6.0 的付费质量周期已结束，封存、重复和最终付费浏览器未因后续 UI 改进而自动重启；不可复用旧剩余额度。具体证据见[发布与验收状态](release-readiness.md)和[兼容性记录](compatibility.md)。
 
@@ -88,6 +88,7 @@ pnpm extension:check
 | [v4 弹窗与共享样式](validation-2026-10-23-v4-popup.md) | 0.11.0 本地候选第一批的实际弹窗、跨界面冒烟与工程门禁 |
 | [v4 CoE 自有浮层](validation-2026-10-23-v4-coe-overlays.md) | 第三批双语候选、装备步骤、语言提示、字体后备与原站实际导入 |
 | [v4 阅读侧栏、设置与站点](validation-2026-10-23-v4-reading-sites.md) | 第二批字体隔离、真实侧栏、合成阅读流程和站点授权／删除验收 |
+| [v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md) | 四批真实界面复盘、问题清单、修正与复验，含待裁定项 |
 | [侧栏紧凑布局](validation-2026-10-22-sidebar-compact.md) | 阅读密度、键盘与窄窗口 |
 | [范围与空态](validation-2026-10-22-scope-selection.md) | 保存服务后的章节子集、零选择与重名章节 |
 | [阅读重构与自动划词](validation-2026-10-21-reading-010.md) | 0.10.0 对应的授权、侧栏与气泡流程 |
