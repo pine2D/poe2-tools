@@ -137,8 +137,70 @@ export function createStatResolver(
   }
 }
 
+type Mode = 'localized' | 'english' | 'mixed'
+type Resolver = ReturnType<typeof createStatResolver>
+interface CachedDictionary {
+  snapshot: readonly StatTemplate[]
+  modes: Map<Mode, Resolver>
+}
+
+const EMPTY_ENTRIES: readonly StatTemplate[] = []
+const dictionaries = new WeakMap<readonly StatTemplate[], CachedDictionary>()
+
+function unchanged(entries: readonly StatTemplate[], snapshot: readonly StatTemplate[]): boolean {
+  return (
+    entries.length === snapshot.length &&
+    entries.every((entry, index) => {
+      const previous = snapshot[index]
+      return (
+        previous !== undefined &&
+        entry.id === previous.id &&
+        entry.en === previous.en &&
+        entry.text === previous.text &&
+        entry.order?.length === previous.order?.length &&
+        (entry.order === undefined ||
+          entry.order.every((value, i) => value === previous.order?.[i]))
+      )
+    })
+  )
+}
+
+/** 检查与复核共用同一词典的解析器；核对内容快照，原地改词条或顺序也会失效。 */
+export function getStatResolver(
+  input: readonly StatTemplate[] | undefined,
+  mode: Mode = 'localized',
+): Resolver {
+  const entries = input ?? EMPTY_ENTRIES
+  let cached = dictionaries.get(entries)
+  if (cached === undefined || !unchanged(entries, cached.snapshot)) {
+    cached = {
+      snapshot: entries.map(({ id, en, text, order }) => ({
+        id,
+        en,
+        text,
+        ...(order === undefined ? {} : { order: [...order] }),
+      })),
+      modes: new Map(),
+    }
+    dictionaries.set(entries, cached)
+  }
+  let resolver = cached.modes.get(mode)
+  if (resolver === undefined) {
+    const english = () => cached.snapshot.map(({ id, en }) => ({ id, en, text: en }))
+    resolver = createStatResolver(
+      mode === 'mixed'
+        ? [...cached.snapshot, ...english()]
+        : mode === 'english'
+          ? english()
+          : cached.snapshot,
+    )
+    cached.modes.set(mode, resolver)
+  }
+  return resolver
+}
+
 export function resolveStat(text: string, entries: readonly StatTemplate[]): Resolution {
-  return createStatResolver(entries)(text)
+  return getStatResolver(entries)(text)
 }
 
 export function resolveBase(

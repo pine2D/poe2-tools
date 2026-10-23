@@ -8,7 +8,7 @@ import { canonicalItemClass } from './itemClasses'
 import { readModifierHeader } from './modifierHeaders'
 import { hasSpecialModifierSource } from './modifierSource'
 import { isKnownWeaponProperty } from './parse'
-import { createStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
+import { getStatResolver, type Resolution, resolveBase, type StatTemplate } from './resolve'
 import type { ItemDocument, ItemMod, ItemStat, SourceLine } from './types'
 
 export interface ItemDictionary {
@@ -223,12 +223,9 @@ export function inspectItem(
           candidates: resolved.candidates.map((c) => ({ ...c, english: c.english + suffix })),
         }
       }
-    : createStatResolver(
-        dictionary.mixedInput
-          ? [...entries, ...entries.map(({ id, en }) => ({ id, en, text: en }))]
-          : item.locale === 'en'
-            ? entries.map(({ id, en }) => ({ id, en, text: en }))
-            : entries,
+    : getStatResolver(
+        dictionary.stats?.entries,
+        dictionary.mixedInput ? 'mixed' : item.locale === 'en' ? 'english' : 'localized',
       )
   const englishByLine: Record<number, string> = {}
   const mods = item.mods.map((mod) => {
