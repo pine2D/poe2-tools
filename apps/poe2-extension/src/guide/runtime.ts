@@ -32,6 +32,7 @@ export async function guideEngine(
     provider: cfg.provider,
     model: cfg.model,
     params: JSON.stringify([REQUEST_PARAMS, cfg.extraBody ?? null]),
+    host: new URL(cfg.baseUrl).host,
     outputLimit: Math.max(
       REQUEST_PARAMS.max_tokens,
       ...[cfg.extraBody?.max_tokens, cfg.extraBody?.max_completion_tokens].filter(

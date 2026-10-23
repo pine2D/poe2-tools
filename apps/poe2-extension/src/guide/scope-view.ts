@@ -16,13 +16,19 @@ export function scopeChapters(blocks: readonly GuideBlock[]) {
   return groups
 }
 
+export interface ChapterPicker {
+  root: HTMLElement
+  /** 选择变化后原地更新勾选与半选状态，不重建控件，键盘焦点留在原处。 */
+  update(selected: readonly string[]): void
+}
+
 export function chapterPicker(
   doc: Document,
   guide: GuideDocument,
   stage: string | null,
   selected: readonly string[],
   change: (ids: string[]) => void,
-) {
+): ChapterPicker {
   const blocks = guide.blocks.filter((b) => stage === null || !b.stageId || b.stageId === stage)
   const groups = scopeChapters(blocks)
   const parents: { title: string; level: number }[] = []
@@ -36,7 +42,6 @@ export function chapterPicker(
     parents.push(group)
     return { group, path }
   })
-  const chosen = new Set(selected)
   const details = el(doc, 'div', { class: 'guide-chapters' })
   const label = el(doc, 'p', { class: 'chapter-label' }, `章节 · ${groups.length} 节`)
   const checks: { input: HTMLInputElement; ids: string[] }[] = []
@@ -55,9 +60,11 @@ export function chapterPicker(
     )
       depth++
     const title = path.slice(-depth).join(' › ')
-    const input = el(doc, 'input', { type: 'checkbox', class: 'chapter-check pt-switch' })
-    input.checked = group.ids.every((id) => chosen.has(id))
-    input.indeterminate = !input.checked && group.ids.some((id) => chosen.has(id))
+    const input = el(doc, 'input', {
+      type: 'checkbox',
+      class: 'chapter-check pt-switch',
+      'data-chapter': group.ids[0],
+    })
     input.addEventListener('change', emit)
     const row = el(
       doc,
@@ -79,13 +86,29 @@ export function chapterPicker(
     ['全选', true],
     ['全不选', false],
   ] as const) {
-    const button = el(doc, 'button', { type: 'button', class: 'pt-btn pt-btn--quiet' }, label)
+    const button = el(
+      doc,
+      'button',
+      { type: 'button', class: 'pt-btn pt-btn--quiet', 'data-action': value ? 'all' : 'none' },
+      label,
+    )
     button.addEventListener('click', () => {
-      for (const c of checks) c.input.checked = value
+      for (const c of checks) {
+        c.input.checked = value
+        c.input.indeterminate = false
+      }
       emit()
     })
     actions.append(button)
   }
   details.prepend(el(doc, 'div', { class: 'chapter-heading' }, label, actions))
-  return details
+  const update = (ids: readonly string[]) => {
+    const chosen = new Set(ids)
+    for (const { input, ids: group } of checks) {
+      input.checked = group.every((id) => chosen.has(id))
+      input.indeterminate = !input.checked && group.some((id) => chosen.has(id))
+    }
+  }
+  update(selected)
+  return { root: details, update }
 }

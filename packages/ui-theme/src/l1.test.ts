@@ -103,8 +103,13 @@ describe('L1 衬线（扩展 0.4.0，DESIGN.md L1 白名单）', () => {
       expect(rule.declarations.get('font-family')).toBe('var(--l1-serif)')
       for (const selector of rule.selectors)
         expect(selector).not.toMatch(
-          /data-tertiary|::slotted|textarea|\.disclaimer|\.notice|\.check|\.by/,
+          /data-tertiary|::slotted|textarea|\.disclaimer|\.notice p|\.check|\.by/,
         )
+      // 语言提示只有标题与“关闭”用固定子集，正文保持无衬线（B3-07）
+      expect(rule.selectors.filter((selector) => selector.startsWith('.notice'))).toEqual([
+        '.notice strong',
+        '.notice header button',
+      ])
     }
   })
 })
@@ -315,5 +320,32 @@ describe('导入面板核对清单（方案 §4 第三期；裁定 25）', () =>
     expect(rules[stale]?.declarations.get('color')).toBe('var(--ink-3)')
     expect(rules.some((r) => r.selectors.join(', ').includes('[data-group="next"]'))).toBe(false)
     expect(at('.check.stale li, .check.stale .ico')).toBe(-1)
+  })
+})
+
+describe('v4 复盘第 3 组', () => {
+  const byExact = (selector: string, atRules = '') =>
+    rules.find((r) => r.selectors.join(', ') === selector && r.atRules.join(' ') === atRules)
+  it('B3-06：搜索说明行用 !important 的 font 简写压回系统无衬线与无单位行高', () => {
+    const font = byExact('::slotted(div)')?.declarations.get('font')
+    expect(font).toBe('var(--fs-small) / 1.6 var(--font-zh-cn) !important')
+    expect(byExact('::slotted(div)')?.declarations.has('font-size')).toBe(false)
+  })
+  it('B3-10：强制色彩下当前步骤用系统色内描边标出；窄面板署名在 gem 隐藏后不再缩进', () => {
+    const step = byExact('.steps [aria-current="step"]', '@media (forced-colors: active)')
+    expect(step?.declarations.get('outline')).toBe('2px solid Highlight')
+    expect(step?.declarations.get('outline-offset')).toBe('-2px')
+    const by = byExact(
+      '.head .by',
+      '@media (forced-colors: active) @container import-panel (width < 480px)',
+    )
+    expect(by?.declarations.get('margin-left')).toBe('0')
+  })
+})
+
+describe('顶层候选浮层（复盘 B3-01）', () => {
+  it('搜索宿主以 all: initial 复位 [popover] 的浏览器默认 inset、margin、边框与底色，定位只由内联样式决定', () => {
+    const host = rules.find((rule) => rule.selectors.includes(':host([data-poe2-l10n="search"])'))
+    expect(host?.declarations.get('all')).toBe('initial')
   })
 })

@@ -29,9 +29,18 @@ function say(text: string, tone: Tone) {
   status.textContent = text
   status.dataset.tone = tone
 }
+// 设置没读到之前（含读取失败）状态字写“未读取”，不假装是“关闭”
+let settingsLoaded = false
 function syncStates() {
+  if (!settingsLoaded) {
+    if (enabledState) enabledState.textContent = '未读取'
+    if (bilingualState) bilingualState.textContent = '未读取'
+    return
+  }
   if (enabledState) enabledState.textContent = enabled.checked ? '开启' : '关闭'
-  if (bilingualState) bilingualState.textContent = bilingual.checked ? '开启' : '关闭'
+  // 主开关关闭时对照开关被停用，不再写“开启”
+  if (bilingualState)
+    bilingualState.textContent = bilingual.disabled ? '已停用' : bilingual.checked ? '开启' : '关闭'
 }
 // 页脚版本号读自 manifest；测试替身页面没有页脚时跳过
 const versionLabel = document.querySelector<HTMLElement>('#version')
@@ -133,15 +142,20 @@ platform.subscribe((settings) => {
 })
 let loading = false
 let ready = false
+// 读取失败的延时报错；新一轮读取开始时取消，避免旧错误盖住随后成功的读取
+let failTimer: ReturnType<typeof setTimeout> | undefined
 function readSettings() {
   if (loading || ready) return
   loading = true
+  clearTimeout(failTimer)
+  const retryHadFocus = document.activeElement === retry
   retry.hidden = true
   say('', 'idle')
   void platform
     .read()
     .then((settings) => {
       ready = true
+      settingsLoaded = true
       let saved = latest ?? settings
       let saving = false
       function render() {
@@ -156,6 +170,8 @@ function readSettings() {
         checkEnabled()
       }
       render()
+      // 重试按钮带着焦点被隐藏时，把焦点交给“启用简体中文”
+      if (retryHadFocus && !enabled.disabled) enabled.focus({ preventScroll: true })
       receive = (current) => {
         saved = current
         if (saving) return
@@ -189,13 +205,17 @@ function readSettings() {
             }
           }
           // 保存成功不说话：状态块随后重查当前页，由它的变化代替“已保存”（裁定 9）
-          if (stored) refreshPage()
+          // 保存会触发 storage.onChanged，订阅里已经重查过一次，这里不再重复
+          if (stored && revision === startedAt) refreshPage()
         })
       }
     })
     .catch(() => {
-      say('无法读取设置，请重试。', 'error')
+      syncStates()
       retry.hidden = false
+      if (retryHadFocus) retry.focus({ preventScroll: true })
+      // 先清空再写，连续失败时状态行内容虽相同也会被读屏重新播报
+      failTimer = setTimeout(() => say('无法读取设置，请重试。', 'error'), 50)
     })
     .finally(() => {
       loading = false
@@ -209,6 +229,8 @@ void setupGuideButton(
   document,
   {
     activeTab: () => platform.activeTab(),
+    activeUrl: () => guidePlatform.activeUrl(),
+    hasSidePanel: () => guidePlatform.hasSidePanel(),
     openGuide: (id) => guidePlatform.openGuide(id),
     readGuidePrefs: () => guidePlatform.readGuidePrefs(),
     writeGuidePrefs: (p) => guidePlatform.writeGuidePrefs(p),

@@ -99,6 +99,7 @@ async function boot(root: Element) {
         customModel: '',
         extraBody: '',
       })
+      controller.forgetEngine()
     },
     onRefresh: () => fillSettings(),
     onClose: () => showReading(),
@@ -157,6 +158,7 @@ async function boot(root: Element) {
       { charLimit: prefs.charLimit, cacheLimitMb: prefs.cacheLimitMb },
       !!(await store.getKey()),
       await store.usage(),
+      prefs.confirmedOrigins,
     )
   }
   const showSettings = async () => {

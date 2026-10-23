@@ -15,6 +15,12 @@ export interface SitesApi {
   contains(origin: string): Promise<boolean>
   remove(origin: string): Promise<boolean>
 }
+const READ_ERROR = '无法读取站点设置，请重新读取后重试。'
+/** 规则的完整网址；根目录不重复写斜杠 */
+const siteUrl = (site: SelectionSite) => `${site.origin}${site.path === '/' ? '' : site.path}`
+/** 确认框里的长网址只截中间，完整内容放在悬停提示 */
+const shortUrl = (url: string) => (url.length > 80 ? `${url.slice(0, 52)}…${url.slice(-24)}` : url)
+
 export function createSitesView(doc: Document, api: SitesApi) {
   const state = el(doc, 'p', { role: 'status', class: 'settings-message', id: 'site-message' })
   const list = el(doc, 'div', { class: 'site-list' })
@@ -49,10 +55,13 @@ export function createSitesView(doc: Document, api: SitesApi) {
     busy = value
     for (const b of root.querySelectorAll<HTMLButtonElement>('button')) b.disabled = value
   }
+  // 刷新列表时把焦点交还给新行里的同一操作，这次聚焦不算用户移开焦点。
+  let refocusing = false
   // 禁用按钮可能让浏览器将焦点放回body；用户主动移开后，异步结束不得抢回来。
   const retainFocus = (owner: HTMLElement) => {
     let moved = false
     const track = (event: FocusEvent) => {
+      if (refocusing) return
       if (event.target !== doc.body && !owner.contains(event.target as Node)) moved = true
     }
     doc.addEventListener('focusin', track)
@@ -78,6 +87,8 @@ export function createSitesView(doc: Document, api: SitesApi) {
       (s) => siteKey(s) !== siteKey(site) && sitePermission(s) === permission,
     )
     const cancel = button('取消', () => closeConfirmation(true), 'cancel-delete')
+    const url = siteUrl(site)
+    const urlText = el(doc, 'span', { class: 'site-confirmation-url', title: url }, shortUrl(url))
     const confirm = button(
       '确认删除',
       () => {
@@ -120,7 +131,7 @@ export function createSitesView(doc: Document, api: SitesApi) {
       },
       'confirm-delete',
     )
-    confirm.classList.add('danger-action')
+    confirm.classList.replace('pt-btn--quiet', 'pt-btn--danger')
     const box = el(
       doc,
       'div',
@@ -129,9 +140,11 @@ export function createSitesView(doc: Document, api: SitesApi) {
         doc,
         'p',
         {},
+        '删除 ',
+        urlText,
         shared
-          ? '删除这条规则；同一网站还有其他网址或目录在用，权限保留。'
-          : `删除后收回 ${new URL(site.origin).hostname} 的网站访问权限。`,
+          ? ' 这条规则；同一网站还有其他网址或目录在用，权限保留。'
+          : ` 这条规则，并收回 ${new URL(site.origin).hostname} 的网站访问权限。`,
       ),
       ...(preset ? [el(doc, 'p', { class: 'note' }, '常用站仍留在列表，可以重新开启。')] : []),
       el(doc, 'div', { class: 'settings-actions' }, cancel, confirm),
@@ -155,10 +168,12 @@ export function createSitesView(doc: Document, api: SitesApi) {
   ) => {
     const key = siteKey(site)
     const row = el(doc, 'div', { class: 'site-row', 'data-key': key })
+    // 自定义规则可能同主机多条，可访问名写完整网址以便区分。
+    const label = preset ? name : siteUrl(site)
     const enableButton = button(active ? '重新启用' : '开启', () => enable([site], row), 'enable')
-    enableButton.setAttribute('aria-label', `${active ? '重新启用' : '开启'} ${name}`)
+    enableButton.setAttribute('aria-label', `${active ? '重新启用' : '开启'} ${label}`)
     const remove = button('删除', () => requestDelete(site, row, remove, preset), 'delete')
-    remove.setAttribute('aria-label', `删除 ${name}`)
+    remove.setAttribute('aria-label', `删除 ${label}`)
     remove.setAttribute('aria-expanded', 'false')
     const status = active ? (granted ? '已开启' : '权限已撤销，请重新启用') : '未开启'
     row.append(
@@ -215,6 +230,11 @@ export function createSitesView(doc: Document, api: SitesApi) {
       )
       if (id !== refreshId) return
       savedSites = sites
+      // 任何一次刷新（含权限撤销事件触发的）都会重建行；记下焦点所在行与操作，重建后找回。
+      const focused = doc.activeElement instanceof HTMLElement ? doc.activeElement : null
+      const focusedRow = focused?.closest<HTMLElement>('.site-row')
+      const focusKey = focusedRow && root.contains(focusedRow) ? focusedRow.dataset.key : undefined
+      const focusAction = focused?.dataset.action
       closeConfirmation()
       presets.replaceChildren(...rows.filter((r) => r.preset).map((r) => r.node))
       const custom = rows.filter((r) => !r.preset).map((r) => r.node)
@@ -230,11 +250,34 @@ export function createSitesView(doc: Document, api: SitesApi) {
               ),
             ]),
       )
+      // 重新读取成功：清掉读取失败提示；隐藏的重试按钮若有焦点，交给第一条站点的操作。
+      if (state.textContent === READ_ERROR) state.textContent = ''
+      const retryFocused = doc.activeElement === retry
       retry.hidden = true
       lock(busy)
+      // 忙碌时按钮仍禁用，由发起操作的流程在结束后恢复焦点。
+      const next = busy
+        ? null
+        : retryFocused
+          ? presets.querySelector<HTMLButtonElement>('button')
+          : focusKey !== undefined && !focused?.isConnected
+            ? (() => {
+                const row = findRow(focusKey)
+                return (
+                  row?.querySelector<HTMLButtonElement>(`[data-action="${focusAction}"]`) ??
+                  row?.querySelector<HTMLButtonElement>('button') ??
+                  null
+                )
+              })()
+            : null
+      if (next) {
+        refocusing = true
+        next.focus()
+        refocusing = false
+      }
     } catch {
       if (id !== refreshId) return
-      state.textContent = '无法读取站点设置，请重新读取后重试。'
+      state.textContent = READ_ERROR
       retry.hidden = false
     }
   }
@@ -272,7 +315,8 @@ export function createSitesView(doc: Document, api: SitesApi) {
           state.textContent = '未授予访问权限，自动划词未启用。'
           return
         }
-        const merged = readSites([...(await api.read()), ...added])
+        const existing = await api.read()
+        const merged = readSites([...existing, ...added])
         if (!added.every((s) => merged.some((m) => siteKey(s) === siteKey(m)))) {
           await rollback()
           state.textContent = '最多添加 100 个网址，请先移除不再使用的条目。'
@@ -280,7 +324,15 @@ export function createSitesView(doc: Document, api: SitesApi) {
         }
         await api.write(merged)
         if (clearDraft !== undefined && input.value === clearDraft) input.value = ''
-        state.textContent = '已启用。以后访问这些网址即可划词；点击翻译后才会发送文字。'
+        // 与已有规则范围重叠时说明后果：删除其中一条，另一条覆盖的网址仍会自动划词。
+        const overlaps = existing.filter((s) =>
+          added.some(
+            (a) =>
+              siteKey(a) !== siteKey(s) &&
+              (siteMatches(a, siteKey(s)) || siteMatches(s, siteKey(a))),
+          ),
+        ).length
+        state.textContent = `已启用。以后访问这些网址即可划词；点击翻译后才会发送文字。${overlaps ? `${added.length > 1 ? '新增规则中有的' : '这条规则'}与已有的 ${overlaps} 条规则范围重叠，删除其中一条时，另一条覆盖的网址仍会自动划词。` : ''}`
         await refresh()
       })
       .catch(async () => {

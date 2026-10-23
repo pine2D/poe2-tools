@@ -30,4 +30,6 @@ export const L1_SERIF_SELECTORS: readonly string[] = [
   '.steps b',
   '.column-label',
   '.group h3',
+  '.notice strong',
+  '.notice header button',
 ]

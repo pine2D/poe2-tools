@@ -23,6 +23,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   let sequence = 0
   let selectOption = (_button: HTMLButtonElement) => {}
   let context = ''
+  // 因输入框滚出视口而撤下候选时记住它；仍聚焦且滚回视口即重建（B3-12）
+  let parked: HTMLInputElement | null = null
   // 候选宿主（spec §6.9、B.12 修订 10）：说明行与候选按钮留在 light DOM，经 slot 显示，
   // 输入框的 aria-describedby / aria-controls / aria-activedescendant 才能在 document 里解析；署名在 shadow 内且不读出
   function createPanel(): HTMLElement {
@@ -37,21 +39,53 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     root.append(doc.createElement('slot'), by)
     return host
   }
+  // 固定浮层进入顶层（top layer）：原站结果卡片是 z-index 999 的 flex 项，各页搜索框祖先的层叠上下文也不可控（B3-01）。
+  // popover="manual" 不抢焦点、不轻触关闭；宿主仍挂在输入框旁，ARIA 引用与父节点校验不变。不支持时退回高 z-index。
+  function mount(host: HTMLElement, input: HTMLInputElement) {
+    input.parentElement?.append(host)
+    if (host.style.position !== 'fixed' || !host.isConnected) return
+    if (typeof host.showPopover !== 'function') return
+    host.popover = 'manual'
+    try {
+      host.showPopover()
+    } catch {
+      host.removeAttribute('popover')
+    }
+  }
+  function inView(input: HTMLInputElement) {
+    const rect = input.getBoundingClientRect()
+    const view = doc.defaultView
+    if (!view || rect.width <= 0 || rect.height <= 0) return true
+    return (
+      rect.bottom > 0 &&
+      rect.top < view.innerHeight &&
+      rect.right > 0 &&
+      rect.left < view.innerWidth
+    )
+  }
+  function onScroll() {
+    if (panel) {
+      positionPanel()
+      return
+    }
+    const input = parked
+    if (!input) return
+    if (!input.isConnected || doc.activeElement !== input || !searchDomain(input)) {
+      parked = null
+      return
+    }
+    if (inView(input)) show(input)
+  }
   function positionPanel() {
     if (!panel || !active || panel.style.position !== 'fixed') return
     const rect = active.getBoundingClientRect()
     const view = doc.defaultView
     if (!view) return
-    // 有效布局下，输入框完全离开视口时撤下失去锚点的固定浮层。
-    if (
-      rect.width > 0 &&
-      rect.height > 0 &&
-      (rect.bottom <= 0 ||
-        rect.top >= view.innerHeight ||
-        rect.right <= 0 ||
-        rect.left >= view.innerWidth)
-    ) {
+    // 有效布局下，输入框完全离开视口时撤下失去锚点的固定浮层；滚回时由 onScroll 重建。
+    if (!inView(active)) {
+      const input = active
       clear()
+      parked = input
       return
     }
     const width = Math.min(rect.width, view.innerWidth - 16)
@@ -66,6 +100,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   }
   function clear() {
     revision++
+    parked = null
     restoreInput()
     restoreInput = () => {}
     selected = null
@@ -87,11 +122,13 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     context = JSON.stringify(searchContext(input))
     const keepFocus = isConditionSearch(input)
     panel = createPanel()
+    // 普通搜索是一组按钮（group 才能带名称）；条件搜索在下方改为 listbox（B3-11）
+    panel.setAttribute('role', 'group')
     panel.setAttribute('aria-label', '中文搜索候选')
     // 原站输入容器会裁剪溢出；使用视口浮层，避免提示撑宽控件或失焦时移动清空按钮。颜色与边框在 l1.css 的 :host 规则里
     const panelStyle =
       `${keepFocus ? 'position:relative;' : 'position:fixed;'}` +
-      'display:block;box-sizing:border-box;z-index:20;max-height:240px;overflow:auto'
+      'display:block;box-sizing:border-box;z-index:2147483647;max-height:240px;overflow:auto'
     panel.style.cssText = panelStyle
     const label = doc.createElement('div')
     label.textContent = candidates.length
@@ -133,7 +170,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     if (keepFocus) {
       panel.id = `poe2-l10n-conditions-${++sequence}`
       panel.setAttribute('role', 'listbox')
-      label.setAttribute('role', 'presentation')
+      // listbox 只能含选项：说明行对读屏隐藏，仍由输入框的 aria-describedby 直接引用读出（B3-11）
+      label.setAttribute('aria-hidden', 'true')
       setInput('role', 'combobox')
       setInput('aria-expanded', 'true')
       setInput('aria-controls', panel.id)
@@ -190,7 +228,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
         panel = createPanel()
         panel.style.cssText = panelStyle
         panel.textContent = `中文查询：${query} → ${term.en}。可在上方继续输入中文。`
-        input.parentElement?.append(panel)
+        mount(panel, input)
         active = input
         positionPanel()
         input.focus()
@@ -198,7 +236,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       if (exact.size === 1 && exact.has(term.en)) exactButton = button
       panel.append(button)
     }
-    input.parentElement?.append(panel)
+    mount(panel, input)
     positionPanel()
   }
   function handle(event: Event) {
@@ -302,7 +340,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     attributes: true,
     attributeFilter: ['class', 'id', 'type', 'readonly', 'disabled', 'search'],
   })
-  doc.addEventListener('scroll', positionPanel, true)
+  doc.addEventListener('scroll', onScroll, true)
   doc.defaultView?.addEventListener('resize', positionPanel)
   doc.addEventListener('focusout', focusOut, true)
   for (const type of ['input', 'keyup', 'compositionstart', 'compositionend', 'focusin'])
@@ -311,7 +349,7 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   return () => {
     closed = true
     observer.disconnect()
-    doc.removeEventListener('scroll', positionPanel, true)
+    doc.removeEventListener('scroll', onScroll, true)
     doc.defaultView?.removeEventListener('resize', positionPanel)
     doc.removeEventListener('focusout', focusOut, true)
     clear()

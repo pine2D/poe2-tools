@@ -602,3 +602,90 @@ it('弹窗关闭（pagehide）时停止查询当前页', async () => {
   window.dispatchEvent(new Event('pagehide'))
   expect(dispose).toHaveBeenCalledOnce()
 })
+
+// ---- 复盘修复：读取失败状态、焦点、对照状态字、重复重查 ----
+const STATES = `${FIXTURE}<span id="enabled-state">未读取</span><span id="bilingual-state">未读取</span>`
+
+it('读取失败时开关状态字写“未读取”，不写“关闭”；重试成功后状态字跟随设置、焦点交给 #enabled', async () => {
+  document.body.innerHTML = STATES
+  storage.read.mockRejectedValueOnce(new Error('no storage'))
+  await import('../src/popup/index')
+  const retry = document.querySelector('#retry') as HTMLButtonElement
+  const enabled = document.querySelector('#enabled') as HTMLInputElement
+  await vi.waitFor(() => expect(retry.hidden).toBe(false))
+  expect(document.querySelector('#enabled-state')?.textContent).toBe('未读取')
+  expect(document.querySelector('#bilingual-state')?.textContent).toBe('未读取')
+  retry.focus()
+  storage.read.mockResolvedValueOnce({ enabled: true, bilingual: true })
+  retry.click()
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(document.activeElement).toBe(enabled)
+  expect(document.querySelector('#enabled-state')?.textContent).toBe('开启')
+  expect(document.querySelector('#bilingual-state')?.textContent).toBe('开启')
+})
+
+it('连续读取失败：每次重试都先清空状态行再重写，焦点留在重试按钮', async () => {
+  document.body.innerHTML = STATES
+  storage.read.mockRejectedValue(new Error('no storage'))
+  await import('../src/popup/index')
+  const retry = document.querySelector('#retry') as HTMLButtonElement
+  const status = document.querySelector('#status') as HTMLElement
+  await vi.waitFor(() => expect(status.textContent).toBe('无法读取设置，请重试。'))
+  retry.focus()
+  retry.click()
+  expect(status.textContent).toBe('')
+  await vi.waitFor(() => expect(status.textContent).toBe('无法读取设置，请重试。'))
+  expect(retry.hidden).toBe(false)
+  expect(document.activeElement).toBe(retry)
+})
+
+it('失败后立刻重试并成功：旧的延时报错不会盖住成功结果', async () => {
+  document.body.innerHTML = STATES
+  storage.read.mockRejectedValueOnce(new Error('no storage'))
+  await import('../src/popup/index')
+  const retry = document.querySelector('#retry') as HTMLButtonElement
+  const status = document.querySelector('#status') as HTMLElement
+  const enabled = document.querySelector('#enabled') as HTMLInputElement
+  await vi.waitFor(() => expect(retry.hidden).toBe(false))
+  // 延时报错尚未写出时再次重试
+  storage.read.mockResolvedValueOnce({ enabled: true, bilingual: false })
+  retry.click()
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  expect(status.textContent).toBe('')
+})
+
+it('主开关关闭时“中英对照”状态字写“已停用”，不再写“开启”', async () => {
+  document.body.innerHTML = STATES
+  storage.read.mockResolvedValue({ enabled: false, bilingual: true })
+  await import('../src/popup/index')
+  await vi.waitFor(() =>
+    expect(document.querySelector<HTMLInputElement>('#enabled')?.disabled).toBe(false),
+  )
+  expect(document.querySelector('#enabled-state')?.textContent).toBe('关闭')
+  expect(document.querySelector('#bilingual-state')?.textContent).toBe('已停用')
+})
+
+it('一次切换只重查一次当前页：storage 变化已触发重查时保存成功后不再重复', async () => {
+  const { enabled } = await setup()
+  query.refresh.mockClear()
+  storage.write.mockImplementationOnce(async () => {
+    storage.subscribe.mock.calls[0]?.[0]({ enabled: false, bilingual: false })
+  })
+  enabled.checked = false
+  enabled.dispatchEvent(new Event('change'))
+  await vi.waitFor(() => expect(enabled.disabled).toBe(false))
+  expect(query.refresh).toHaveBeenCalledTimes(1)
+})
+
+it('弹窗开关的可访问名不含说明，说明走 aria-describedby', () => {
+  for (const id of ['enabled', 'bilingual']) {
+    const input = POPUP.match(new RegExp(`<input[^>]*id="${id}"[^>]*>`))?.[0] ?? ''
+    const labelledby = input.match(/aria-labelledby="([^"]+)"/)?.[1] ?? ''
+    const describedby = input.match(/aria-describedby="([^"]+)"/)?.[1] ?? ''
+    expect(labelledby).toBe(`${id}-label`)
+    expect(describedby).toBe(`${id}-desc`)
+    expect(POPUP).toContain(`id="${labelledby}"`)
+    expect(POPUP).toContain(`id="${describedby}"`)
+  }
+})

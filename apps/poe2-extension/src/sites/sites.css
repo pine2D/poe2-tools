@@ -1,3 +1,7 @@
+/* 独立页面：页面底用冷蓝黑，内容面板保持纯黑 */
+body {
+  background: var(--page);
+}
 .sites-settings {
   max-width: 840px;
   margin: var(--sp-5) auto var(--sp-7);
@@ -114,8 +118,9 @@
 .site-confirmation p {
   margin: 0 0 var(--sp-2);
 }
-.site-confirmation .danger-action {
-  background: color-mix(in srgb, var(--danger) 20%, var(--bg));
+.site-confirmation-url {
+  color: var(--ink);
+  overflow-wrap: anywhere;
 }
 .sites-empty {
   padding: var(--sp-4) var(--sp-3);

@@ -10,7 +10,7 @@ import { attachModifierLayout } from './modifier-layout'
 import { attachPageLabels } from './page-labels'
 import { snapshot } from './page-state'
 import { attachSearch } from './search-controller'
-import { attachSerif } from './serif'
+import { attachSerif, holdSerifFont } from './serif'
 import { attachStatLayer } from './stat-layer'
 import { attachTextLayer } from './text-layer'
 
@@ -51,7 +51,8 @@ async function start() {
   step = 'other'
   const lexicon = createGameLexicon(data.terms)
   let stop: (() => void) | undefined
-  const languageNotice = createLanguageNotice(document)
+  // 非英文状态下原站衬线层未挂载：语言提示自己持有 L1 子集，标题与“关闭”才能用固定衬线
+  const languageNotice = createLanguageNotice(document, { holdFont: () => holdSerifFont(document) })
   const reconcile = () => {
     try {
       const status = pageStatus(document, location.href)

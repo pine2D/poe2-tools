@@ -54,6 +54,8 @@ export interface EngineHandle {
   params: string
   costText(prompt: number, completion: number): string
   outputLimit?: number
+  /** 发送目标主机，用于开始翻译旁的发送摘要与超限确认 */
+  host?: string
 }
 
 export interface ControllerDeps {
@@ -69,6 +71,8 @@ export interface ControllerDeps {
 }
 
 export interface Controller {
+  /** 清除服务设置后调用：不再显示发往旧服务的发送摘要 */
+  forgetEngine(): void
   start(scope?: ReadScope, options?: { preserveSelection: boolean }): Promise<void>
   selectStage(stageId: string | null): Promise<void>
   preview(ids?: readonly string[]): Promise<void>
@@ -139,6 +143,11 @@ export function createController(deps: ControllerDeps): Controller {
   let generation = 0
   let tokens = { prompt: 0, completion: 0 }
   let cacheHits = 0
+  // 最近一次读取到的服务；未配置时为 null，发送摘要随之隐藏
+  let lastEngine: EngineHandle | null = null
+  // 与超限检查同一口径：正文加本段携带的原文语境
+  const sendChars = (list: readonly PreparedBlock[]) =>
+    list.reduce((n, b) => n + b.source.length + (b.context?.text.length ?? 0), 0)
   const usageText = (engine: EngineHandle) =>
     `本次约 ${tokens.prompt}+${tokens.completion} tokens · ${engine.costText(tokens.prompt, tokens.completion)} · 缓存命中 ${cacheHits} 段`
 
@@ -193,14 +202,28 @@ export function createController(deps: ControllerDeps): Controller {
     queued.clear()
   }
 
-  const progress = () =>
+  const progress = () => {
+    const preserved = blocks.filter((b) => b.route?.kind === 'preserved').length
     view.setProgress({
       selected: blocks.length,
       completed: done.size,
       failed: failures.size,
-      preserved: blocks.filter((b) => b.route?.kind === 'preserved').length,
+      preserved,
       characters: blocks.reduce((n, b) => n + b.source.length, 0),
     })
+    // 摘要只统计点击开始后会发送的段落（已缓存、词典直译与原样保留的不算）。
+    const pending = guide ? stageTargets(currentStage) : []
+    view.setSendSummary?.(
+      lastEngine && pending.length
+        ? {
+            blocks: pending.length,
+            chars: sendChars(pending),
+            host: lastEngine.host ?? lastEngine.provider,
+            preserved,
+          }
+        : null,
+    )
+  }
   const invalidate = () => {
     generation++
     dropQueued()
@@ -283,9 +306,11 @@ export function createController(deps: ControllerDeps): Controller {
       try {
         engine = await deps.engine()
       } catch {
+        lastEngine = null
         if (live()) view.setBanner('error', '读取翻译服务设置失败，请重新打开侧边栏。')
         return
       }
+      lastEngine = engine
       if (!(await validPage(live))) return
       if (!engine) {
         view.setBanner('setup', '配置翻译服务后即可整段翻译；现在显示原文与术语标注。')
@@ -325,7 +350,7 @@ export function createController(deps: ControllerDeps): Controller {
         chunk,
         messages: buildMessages(chunk, deps.random()),
       }))
-      const chars = pending.reduce((n, b) => n + b.source.length + (b.context?.text.length ?? 0), 0)
+      const chars = sendChars(pending)
       const promptEstimate = requests.reduce(
         (n, r) =>
           n + Math.ceil(estimateTokens(r.messages.map((m) => m.content).join('\n')) * 1.3) + 16,
@@ -348,7 +373,7 @@ export function createController(deps: ControllerDeps): Controller {
       if (!live()) return
       if (chars > prefs.charLimit) {
         const ok = await view.ask(
-          `本次正文和原文语境约 ${chars} 个字符，超过设定的 ${prefs.charLimit}，继续吗？`,
+          `本次将发送 ${pending.length} 段到 ${engine.host ?? engine.provider}，正文和原文语境约 ${chars} 个字符，超过设定的 ${prefs.charLimit}，继续吗？`,
           '继续翻译',
           signal,
         )
@@ -531,6 +556,10 @@ export function createController(deps: ControllerDeps): Controller {
   }
 
   return {
+    forgetEngine() {
+      lastEngine = null
+      progress()
+    },
     async start(scope = 'full', options) {
       const previous =
         options?.preserveSelection && guide

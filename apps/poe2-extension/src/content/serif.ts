@@ -3,7 +3,7 @@
 // （特异性 +0,1,0，不依赖插入顺序），不写 !important、url()、@font-face；由 content/index.ts 的 reconcile 在 stop 时移除。
 // 字体：包内 assets/serif-sc-l1.woff2 经 fetch → ArrayBuffer → FontFace 注册到 document.fonts。隔离世界注册的 face，
 // 原站样式与各 shadow root 都能用（2026-10-04 无头 Chromium 实测）；ArrayBuffer 源不经过页面 CSP 的 font-src。
-// 首次挂载时读取一次并在模块内记住（失败也记住）；停用时从 document.fonts 删除，再启用只重新 add。
+// 首次挂载时读取一次并在模块内记住（失败也记住）；最后一个持有者释放时从 document.fonts 删除，再启用只重新 add。
 // 失败（没有 FontFace 或 document.fonts、读取失败、load 被拒）只 warn 一行，不算初始化失败：栈里的下一个字体接手。
 import { HOST_SERIF_FALLBACK, HOST_SERIF_SELECTORS } from '../adapters/coe-beta/serif'
 import { platform } from '../platform'
@@ -41,20 +41,16 @@ async function load(doc: Document): Promise<FontFace | null> {
   return face.load()
 }
 
-// 同一文档只读一次字体（含失败）；current 是最近一次挂载的令牌，被取代的旧挂载 stop 时不动字体
+// 同一文档只读一次字体（含失败）。原站衬线层与语言提示各自持有一份引用（B3-07）：任一持有者在时字体留在
+// document.fonts，最后一个释放时删除；释放幂等，被取代的旧挂载 stop 只释放自己那份
 let pending: Promise<FontFace | null> | undefined
-let current: symbol | null = null
+let holders = 0
+let added: FontFace | null = null
 
-/** 挂上原站 Fontin 位置的字体规则并注册 L1 子集；返回的 stop 移除规则、从 document.fonts 删除字体 */
-export function attachSerif(doc: Document): () => void {
-  for (const old of doc.querySelectorAll('style[data-poe2-l10n="serif"]')) old.remove()
-  const style = doc.createElement('style')
-  style.dataset.poe2L10n = 'serif'
-  style.textContent = serifCss()
-  doc.head.append(style)
-  const token = Symbol('serif')
-  current = token
-  let added: FontFace | null = null
+/** 注册 L1 子集并持有一份引用；返回的释放函数只生效一次 */
+export function holdSerifFont(doc: Document): () => void {
+  holders++
+  let held = true
   pending ??= load(doc)
     .catch(() => null)
     .then((face) => {
@@ -62,14 +58,30 @@ export function attachSerif(doc: Document): () => void {
       return face
     })
   void pending.then((face) => {
-    if (face === null || current !== token) return
+    if (face === null || holders === 0 || added === face) return
     fontsOf(doc)?.add(face)
     added = face
   })
   return () => {
+    if (!held) return
+    held = false
+    holders--
+    if (holders > 0 || added === null) return
+    fontsOf(doc)?.delete(added)
+    added = null
+  }
+}
+
+/** 挂上原站 Fontin 位置的字体规则并注册 L1 子集；返回的 stop 移除规则并释放字体引用 */
+export function attachSerif(doc: Document): () => void {
+  for (const old of doc.querySelectorAll('style[data-poe2-l10n="serif"]')) old.remove()
+  const style = doc.createElement('style')
+  style.dataset.poe2L10n = 'serif'
+  style.textContent = serifCss()
+  doc.head.append(style)
+  const release = holdSerifFont(doc)
+  return () => {
     style.remove()
-    if (current !== token) return
-    current = null
-    if (added !== null) fontsOf(doc)?.delete(added)
+    release()
   }
 }

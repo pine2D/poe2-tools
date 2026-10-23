@@ -291,3 +291,22 @@ it('导入面板：L1_SERIF_SELECTORS 命中标题与全部非定位按钮，不
     expect.arrayContaining(['预览中文转换', '填入英文到原站导入框']),
   )
 })
+
+it('B3-07：语言提示另持一份字体引用；原站衬线层停用时字体保留，最后一个释放才删除，释放幂等', async () => {
+  const release = serif.holdSerifFont(document)
+  await vi.waitFor(() => expect(fonts.size).toBe(1))
+  expect(styles()).toHaveLength(0)
+  const stop = attach()
+  stop()
+  expect(fonts.size).toBe(1)
+  release()
+  release()
+  expect(fonts.size).toBe(0)
+  const again = attach()
+  await vi.waitFor(() => expect(fonts.size).toBe(1))
+  release()
+  expect(fonts.size).toBe(1)
+  again()
+  expect(fonts.size).toBe(0)
+  expect(fetch).toHaveBeenCalledOnce()
+})

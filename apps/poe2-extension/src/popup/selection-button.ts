@@ -19,14 +19,18 @@ export async function setupSelectionButton(
     const status = await api.selection(tab.id, 'status')
     if (!status.ok) return
     let enabled = status.enabled === true
+    // 按钮文字随状态变化，所以不再写 aria-pressed，避免读成“关闭本页划词，已按下”
     const render = () => {
       button.textContent = enabled ? '关闭本页划词' : '启用本页划词'
-      button.setAttribute('aria-pressed', String(enabled))
     }
     button.hidden = false
     render()
+    let busy = false
     button.addEventListener('click', () => {
-      button.disabled = true
+      // 请求期间用 aria-disabled 而非 disabled，焦点留在按钮上；重复点击忽略
+      if (busy) return
+      busy = true
+      button.setAttribute('aria-disabled', 'true')
       void api
         .selection(tab.id, enabled ? 'disable' : 'enable')
         .then(
@@ -50,7 +54,8 @@ export async function setupSelectionButton(
           },
         )
         .finally(() => {
-          button.disabled = false
+          busy = false
+          button.removeAttribute('aria-disabled')
         })
     })
   } catch {

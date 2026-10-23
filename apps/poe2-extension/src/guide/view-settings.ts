@@ -1,3 +1,4 @@
+import { disclosure } from '../ui/icons'
 import type { SettingsValues } from './config'
 import { el } from './dom'
 import type { Provider } from './engines/openai'
@@ -25,6 +26,8 @@ export interface SettingsView {
     limits: Limits,
     hasKey: boolean,
     usageBytes: number,
+    /** 已确认过的发送地址；当前地址在内时确认框显示为已确认 */
+    confirmedOrigins?: readonly string[],
   ): void
   setMessage(text: string): void
 }
@@ -68,7 +71,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     rows: '3',
     placeholder: '可选，例如 {"top_p": 0.9}',
   })
-  const extraSummary = el(doc, 'summary', {}, '高级参数（可选）')
+  const extraSummary = disclosure(doc, '高级参数（可选）')
   const extraDetails = el(
     doc,
     'details',
@@ -78,9 +81,16 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
   )
   const confirm = el(doc, 'input', { type: 'checkbox', name: 'confirmOrigin', class: 'pt-switch' })
   const confirmText = el(doc, 'span')
+  let confirmedOrigins: readonly string[] = []
+  // 已确认的地址显示为已勾选且不可取消（取消也不会撤销确认）；改到新地址后重新要求确认。
   const updateConfirm = () => {
     const origin = originOf(baseUrl.value.trim())
-    confirmText.textContent = `我确认把选中的攻略段落发送到${origin ? ` ${origin}` : '（地址无效）'}`
+    const confirmed = Boolean(origin && confirmedOrigins.includes(origin))
+    if (confirmed) confirm.checked = true
+    confirm.disabled = confirmed || Boolean(running)
+    confirmText.textContent = confirmed
+      ? `已确认把选中的攻略段落发送到 ${origin}`
+      : `我确认把选中的攻略段落发送到${origin ? ` ${origin}` : '（地址无效）'}`
   }
   baseUrl.addEventListener('input', () => {
     confirm.checked = false
@@ -217,6 +227,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement
     >('input, textarea, button'))
       control.disabled = locked
+    if (!locked) updateConfirm()
     if (locked && running?.abort) {
       cancelTest.disabled = false
       back.disabled = false
@@ -381,7 +392,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     hideConfirmation()
     clearAll.focus()
   })
-  const confirmClear = button('确认清除', 'pt-btn--quiet confirm-clear danger-action', () => {
+  const confirmClear = button('确认清除', 'pt-btn--danger confirm-clear', () => {
     if (confirmation.hidden) return
     run(confirmClear, dataMessage, '正在清除…', async () => {
       const draftLimits = [chars.input.value, cache.input.value] as const
@@ -442,26 +453,28 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     ),
     customFields,
     field('服务 Key', apiKey),
+    // 未加密存储与测试会发送消息属于需要知道的事实，常驻显示在 Key 与测试按钮旁。
+    el(
+      doc,
+      'p',
+      { class: 'note key-note' },
+      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。建议为本扩展单独创建 Key 并设置额度上限。',
+    ),
     el(
       doc,
       'details',
       { class: 'settings-details' },
-      el(doc, 'summary', {}, 'Key 从哪里来？'),
+      disclosure(doc, 'Key 从哪里来？'),
       keyHelp,
       el(
         doc,
         'p',
         { class: 'note' },
-        '在所选服务商的控制台创建 API Key，粘贴到上方。自定义接口还需填写服务商提供的地址和模型名；然后测试连接，再保存。测试仅发送一条简短测试消息。',
-      ),
-      el(
-        doc,
-        'p',
-        { class: 'note key-note' },
-        '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。建议为本扩展单独创建 Key 并设置额度上限。',
+        '在所选服务商的控制台创建 API Key，粘贴到上方。自定义接口还需填写服务商提供的地址和模型名；然后测试连接，再保存。',
       ),
     ),
     serviceDirty,
+    el(doc, 'p', { class: 'note test-note' }, '测试连接只发送一条简短测试消息。'),
     el(doc, 'div', { class: 'settings-actions' }, test, cancelTest, save, back),
     leaveConfirmation,
     message,
@@ -505,7 +518,8 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
   )
   return {
     root,
-    fill(v, limits, hasKey, usageBytes) {
+    fill(v, limits, hasKey, usageBytes, confirmed = []) {
+      confirmedOrigins = confirmed
       hideConfirmation()
       pendingLeave = null
       leaveConfirmation.hidden = true
@@ -524,15 +538,18 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       baseUrl.value = v.baseUrl
       model.value = v.model
       extra.value = v.extraBody
-      extraSummary.textContent = v.extraBody.trim() ? '高级参数（已配置）' : '高级参数（可选）'
+      const extraLabel = extraSummary.querySelector('span')
+      if (extraLabel)
+        extraLabel.textContent = v.extraBody.trim() ? '高级参数（已配置）' : '高级参数（可选）'
       confirm.checked = false
+      // 先按已确认地址回填确认框，再记录“已保存”快照，避免误报未保存修改。
+      updateConfirm()
       apiKey.value = ''
       apiKey.placeholder = hasKey ? '已保存，留空表示不修改' : '粘贴你的 Key'
       savedService = serviceSnapshot()
       savedLimits = limitsSnapshot()
       updateDirty()
       updateProvider()
-      updateConfirm()
       usage.textContent = `译文缓存约 ${Math.ceil(usageBytes / 1024)} KB`
     },
     setMessage(text) {

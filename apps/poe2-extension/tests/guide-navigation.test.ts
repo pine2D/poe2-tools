@@ -171,3 +171,30 @@ it('全不选显示选择提示，重新勾选后恢复开始入口', async () =
   expect(node('.guide-begin').textContent).toBe('开始翻译')
   expect(node('.guide-progress').textContent).toContain('0 / 1')
 })
+
+it('章节复选框键盘连按两次：真实预览不重建控件，焦点与状态都留在原处', async () => {
+  const first = node<HTMLInputElement>('.chapter-check')
+  first.focus()
+  first.click()
+  await vi.waitFor(() => expect(document.querySelectorAll('.block')).toHaveLength(2))
+  await vi.waitFor(() => expect(node('.guide').getAttribute('aria-busy')).toBe('false'))
+  expect(node('.chapter-check')).toBe(first)
+  expect(document.activeElement).toBe(first)
+  first.click()
+  await vi.waitFor(() => expect(document.querySelectorAll('.block')).toHaveLength(3))
+  await vi.waitFor(() => expect(node('.guide').getAttribute('aria-busy')).toBe('false'))
+  expect(first.checked).toBe(true)
+  expect(document.activeElement).toBe(first)
+})
+
+it('无选区读取失败后，选中态与“重新读取”使用同一范围', async () => {
+  vi.mocked(guideChrome.extract).mockImplementation(async (_tab, scope) =>
+    scope === 'selection' ? { ok: false, reason: 'empty' } : source(),
+  )
+  node<HTMLButtonElement>('[data-scope="selection"]').click()
+  await vi.waitFor(() => expect(node('.guide-banner').textContent).toContain('没有读到'))
+  expect(node('[data-scope="selection"]').getAttribute('aria-pressed')).toBe('true')
+  expect(node('[data-scope="full"]').getAttribute('aria-pressed')).toBe('false')
+  node<HTMLButtonElement>('[aria-label="重新读取当前页"]').click()
+  await vi.waitFor(() => expect(guideChrome.extract).toHaveBeenLastCalledWith(1, 'selection'))
+})

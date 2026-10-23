@@ -366,13 +366,16 @@ button[data-tertiary]:disabled {
   border-color: transparent;
 }
 /* 面板标题与主次按钮用中文衬线（DESIGN.md L1 白名单）。只换字族，字重沿用各自规则：字体只有 700 一档，
-   400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响 */
+   400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响。
+   语言提示的标题与“关闭”同属自有浮层固定标签（B3-07）；提示正文保持无衬线 */
 .title,
 .body > button,
 .result > button,
 .steps b,
 .column-label,
-.group h3 {
+.group h3,
+.notice strong,
+.notice header button {
   font-family: var(--l1-serif);
 }
 button:focus-visible,
@@ -394,10 +397,11 @@ textarea:focus-visible {
   border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
+/* 说明行是 light DOM 节点，原站 `* { font-family; line-height }` 直接命中它：整组 font 一并压回系统无衬线（B3-06） */
 ::slotted(div) {
   margin: 0 0 var(--sp-1) !important;
   color: var(--ink-2) !important;
-  font-size: var(--fs-small) !important;
+  font: var(--fs-small) / 1.6 var(--font-zh-cn) !important;
 }
 ::slotted(button) {
   display: block !important;
@@ -541,7 +545,20 @@ textarea:focus-visible {
   ::slotted(button:focus-visible) {
     outline-color: Highlight !important;
   }
+  /* 渐变在强制色彩下消失：当前步骤改用系统色内描边标出，不改盒尺寸（B3-10） */
+  .steps [aria-current="step"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
   .gem {
     display: none;
+  }
+}
+/* gem 隐藏后窄面板署名不再按 gem 缩进，与标题左对齐（B3-10） */
+@media (forced-colors: active) {
+  @container import-panel (width < 480px) {
+    .head .by {
+      margin-left: 0;
+    }
   }
 }

@@ -11,6 +11,7 @@ interface GuideChromeApi {
       set(value: Record<string, unknown>): Promise<void>
     }
   }
+  tabs?: { query(info: { active: boolean; currentWindow: boolean }): Promise<{ url?: string }[]> }
   // 扩展 0.5.0：攻略翻译侧边栏。只在扩展页面（弹窗）调用。
   sidePanel?: {
     setOptions(options: { tabId: number; path: string; enabled: boolean }): Promise<void>
@@ -22,6 +23,16 @@ declare const chrome: GuideChromeApi
 export const guidePlatform = {
   selection: (tabId: number, action: 'status' | 'enable' | 'disable') =>
     chrome.runtime.sendMessage({ type: `selection-${action}`, tabId }),
+  /** 当前活动标签页地址；没有 activeTab 授权或拿不到时为 undefined */
+  activeUrl: async (): Promise<string | undefined> => {
+    try {
+      const [tab] = (await chrome.tabs?.query({ active: true, currentWindow: true })) ?? []
+      return tab?.url
+    } catch {
+      return undefined
+    }
+  },
+  hasSidePanel: (): boolean => Boolean(chrome.sidePanel),
   // 必须在点击回调里同步发出两次调用：await 之后会丢失用户手势，sidePanel.open 会被拒绝。
   openGuide: (tabId: number): Promise<boolean> => {
     const panel = chrome.sidePanel

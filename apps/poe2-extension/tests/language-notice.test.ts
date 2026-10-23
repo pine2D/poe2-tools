@@ -58,3 +58,71 @@ it('语言提示条首行：gem + “PoE2 中文助手” + “· 非官方”�
   expect(root.adoptedStyleSheets).toHaveLength(1)
   notice.update(false)
 })
+
+it('B3-07：提示显示期间持有 L1 衬线子集，关闭或离开非英文状态即释放', () => {
+  context('cn')
+  const releases: string[] = []
+  let held = 0
+  const notice = createLanguageNotice(document, {
+    holdFont: () => {
+      held++
+      return () => releases.push('released')
+    },
+  })
+  notice.update(true)
+  notice.update(true)
+  expect(held).toBe(1)
+  notice.update(false)
+  expect(releases).toEqual(['released'])
+  notice.update(true)
+  const host = document.querySelector('[data-poe2-l10n="language-notice"]') as HTMLElement
+  host.shadowRoot?.querySelector('button')?.click()
+  expect(held).toBe(2)
+  expect(releases).toEqual(['released', 'released'])
+  notice.update(false)
+  expect(releases).toHaveLength(2)
+})
+
+it('宿主被原站移除后重建：先释放旧宿主的字体引用，持有与释放次数相等', () => {
+  context('cn')
+  let held = 0
+  let released = 0
+  const notice = createLanguageNotice(document, {
+    holdFont: () => {
+      held++
+      return () => released++
+    },
+  })
+  notice.update(true)
+  document.querySelector('[data-poe2-l10n="language-notice"]')?.remove()
+  notice.update(true)
+  notice.update(false)
+  expect(held).toBe(2)
+  expect(released).toBe(2)
+})
+
+it('B3-08：live region 只含提示正文；键盘关闭后焦点回到进入提示前的原站元素', () => {
+  context('cn')
+  const before = document.createElement('button')
+  before.textContent = 'English'
+  document.body.prepend(before)
+  const notice = createLanguageNotice(document)
+  notice.update(true)
+  const host = document.querySelector('[data-poe2-l10n="language-notice"]') as HTMLElement
+  const root = host.shadowRoot as ShadowRoot
+  expect(host.hasAttribute('role')).toBe(false)
+  expect(host.getAttribute('aria-label')).toBe('PoE2 中文助手语言提示')
+  const status = root.querySelectorAll('[role="status"]')
+  expect(status).toHaveLength(1)
+  expect(status[0]?.tagName).toBe('P')
+  expect(status[0]?.querySelector('button')).toBeNull()
+  const close = root.querySelector('button') as HTMLButtonElement
+  before.focus()
+  close.focus()
+  host.dispatchEvent(
+    new FocusEvent('focusin', { bubbles: true, composed: true, relatedTarget: before }),
+  )
+  close.click()
+  expect(document.querySelector('[data-poe2-l10n="language-notice"]')).toBeNull()
+  expect(document.activeElement).toBe(before)
+})

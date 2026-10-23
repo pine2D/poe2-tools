@@ -10,7 +10,7 @@ import { disclosure, icon, labelIcon } from '../ui/icons'
 import { annotate } from './annotate'
 import type { ReadScope } from './controller'
 import { el } from './dom'
-import { chapterPicker, scopeChapters } from './scope-view'
+import { type ChapterPicker, chapterPicker, scopeChapters } from './scope-view'
 import { blockLayout } from './structure-view'
 import { TERM_STYLE, translatedText } from './translated-text'
 
@@ -41,6 +41,14 @@ export interface ReadingProgress {
   characters: number
 }
 
+/** 开始翻译前的发送摘要；数值来自 controller 按当前选择算出的待发送段落。 */
+export interface SendSummary {
+  blocks: number
+  chars: number
+  host: string
+  preserved: number
+}
+
 export interface ReadingView {
   root: HTMLElement
   showIntro(show: boolean): void
@@ -62,6 +70,8 @@ export interface ReadingView {
   /** signal 中止或被新的确认框取代时按“取消”（false）结束 */
   ask(message: string, okLabel: string, signal?: AbortSignal): Promise<boolean>
   setUsage(text: string): void
+  /** null 表示当前没有要发送的段落或尚未配置服务 */
+  setSendSummary?(summary: SendSummary | null): void
   setBusy(busy: boolean): void
   setReady(ready: boolean): void
   setProgress(progress: ReadingProgress): void
@@ -127,7 +137,12 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     ['selection', '选中文字'],
     ['region', '点选区域'],
   ] as const) {
-    const button = btn(text, () => h.onScope(value))
+    const button = btn(text, () => {
+      // 先同步选中态：读取失败时界面与“重新读取”沿用的范围一致。
+      for (const b of scopeChoice.querySelectorAll('button'))
+        b.setAttribute('aria-pressed', String(b.dataset.scope === value))
+      h.onScope(value)
+    })
     button.dataset.scope = value
     scopeChoice.append(button)
   }
@@ -146,7 +161,10 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       mode = value
       for (const b of modeChoice.querySelectorAll('button'))
         b.setAttribute('aria-pressed', String(b.dataset.mode === value))
-      for (const item of items.values()) item.setToolsOpen(value === 'inline')
+      for (const item of items.values()) {
+        item.setToolsOpen(value === 'inline')
+        syncDetails(item)
+      }
       mountBlocks()
       refreshSummary()
       h.onMode(mode)
@@ -160,12 +178,15 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
   begin.classList.remove('pt-btn--quiet')
   let ready = false,
     busy = false,
-    awaitingConfirmation = false
+    awaitingConfirmation = false,
+    sendSummary: SendSummary | null = null
+  const summary = el(doc, 'p', { class: 'guide-send-summary', hidden: true })
   const updateBegin = () => {
     const left = lastProgress
       ? lastProgress.selected - lastProgress.completed - lastProgress.preserved
       : null
     begin.disabled = !ready || busy || left === 0
+    // 禁用时按钮文字写原因：恢复原文、页面变化或读取失败后需要先重新读取。
     begin.textContent = awaitingConfirmation
       ? '等待确认…'
       : busy
@@ -174,11 +195,16 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           ? '先选择章节'
           : left === 0
             ? '翻译完成'
-            : lastProgress?.failed && left === lastProgress.failed
-              ? `重试失败段（${left}）`
-              : lastProgress?.completed
-                ? `继续翻译（${left}）`
-                : '开始翻译'
+            : !ready
+              ? '先重新读取'
+              : lastProgress?.failed && left === lastProgress.failed
+                ? `重试失败段（${left}）`
+                : lastProgress?.completed
+                  ? `继续翻译（${left}）`
+                  : '开始翻译'
+    summary.hidden = !sendSummary || begin.disabled || begin.hidden
+    if (sendSummary)
+      summary.textContent = `点击后发送 ${sendSummary.blocks} 段到 ${sendSummary.host}，正文和原文语境约 ${sendSummary.chars} 字符。${sendSummary.preserved ? `另有 ${sendSummary.preserved} 段原样保留，不发送。` : ''}`
   }
   updateBegin()
   const progress = el(doc, 'p', { class: 'guide-progress', role: 'status' })
@@ -211,6 +237,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     'header',
     { class: 'guide-header' },
     el(doc, 'div', { class: 'guide-taskbar' }, begin, stop, reload, settings),
+    summary,
     el(doc, 'div', { class: 'guide-progress-row' }, progress, progressMeter),
   )
   const documentHeader = el(doc, 'div', { class: 'guide-document-header' }, title, site)
@@ -371,12 +398,15 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     actions: HTMLElement
   }
   const items = new Map<string, ReadingItem>()
+  let picker: (ChapterPicker & { guide: GuideDocument; stage: string | null }) | null = null
   const stageButtons = new Map<string, HTMLButtonElement>()
   interface DirectoryEntry {
     target: string
     original: string
     level: number
     parents: DirectoryEntry[]
+    /** 需要显示的最近父级数量；不重名为 0，缩进已表示层级 */
+    contextDepth: number
     button: HTMLButtonElement
     label: HTMLElement
     context: HTMLElement
@@ -392,8 +422,11 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     for (const entry of directoryEntries) {
       const text = directoryTitle(entry)
       entry.label.textContent = text
-      entry.context.textContent = entry.parents.map(directoryTitle).join(' / ')
-      entry.context.hidden = entry.parents.length === 0
+      entry.context.textContent = entry.parents
+        .slice(entry.parents.length - entry.contextDepth)
+        .map(directoryTitle)
+        .join(' / ')
+      entry.context.hidden = entry.contextDepth === 0
       entry.button.title = text === entry.original ? entry.original : `原文：${entry.original}`
     }
   }
@@ -402,7 +435,10 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     const state = item.node.dataset.state
     const failed = state === 'failed' || state === 'missing'
     const showStatus = failed || state === 'pending' || state === 'skipped' || item.warning
-    const showPage = item.page.dataset.state === 'sidebar' || item.page.dataset.state === 'stale'
+    // 仅侧栏模式本来就在侧栏阅读，“只能在侧栏阅读”收进工具区，不在每段重复。
+    const showPage =
+      item.page.dataset.state === 'stale' ||
+      (item.page.dataset.state === 'sidebar' && mode === 'inline')
     ;(showStatus ? item.notices : item.meta).append(item.status)
     ;(showPage ? item.notices : item.meta).append(item.page)
     if (failed) item.notices.append(item.retry)
@@ -473,7 +509,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     let inline = 0,
       fallback = 0,
       stale = 0
-    const rows: HTMLElement[] = []
+    const rows: { rank: number; node: HTMLElement }[] = []
     for (const item of visibleItems()) {
       const state = item.node.dataset.state
       const failed = state === 'failed' || state === 'missing'
@@ -484,10 +520,12 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         if (pageState === 'sidebar') fallback++
       }
       if (pageState === 'stale') stale++
+      // 仅侧栏模式下“只能在侧栏阅读”不算异常，避免盖住真实失败。
+      const sidebarOnly = pageState === 'sidebar' && mode === 'inline'
       const reason =
         failed || preserved
           ? item.status.textContent
-          : pageState === 'stale' || pageState === 'sidebar'
+          : pageState === 'stale' || sidebarOnly
             ? item.page.textContent
             : item.warning
               ? '译文待核对'
@@ -496,35 +534,38 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       const button = btn('', () => focusBlock(item.block.id))
       button.className = 'guide-exception'
       button.dataset.target = item.block.id
+      // 失败用危险色、待核对用玫红，其余是位置与保留说明，保持中性。
+      const label = failed
+        ? '翻译失败'
+        : preserved
+          ? '原样保留'
+          : sidebarOnly
+            ? '仅侧栏显示'
+            : pageState === 'stale'
+              ? '位置失效'
+              : '待核对'
+      const kind = failed ? 'failed' : label === '待核对' ? 'warning' : 'info'
+      button.dataset.kind = kind
       button.append(
-        el(
-          doc,
-          'strong',
-          {},
-          failed
-            ? '翻译失败'
-            : preserved
-              ? '原样保留'
-              : pageState === 'sidebar'
-                ? '仅侧栏显示'
-                : pageState === 'stale'
-                  ? '位置失效'
-                  : '待核对',
-        ),
+        el(doc, 'strong', {}, label),
         el(doc, 'span', {}, item.block.source.slice(0, 100)),
         el(doc, 'small', {}, reason),
       )
-      rows.push(button)
+      rows.push({ rank: kind === 'failed' ? 0 : kind === 'warning' ? 1 : 2, node: button })
     }
+    // 分隔符放在 inline-block 片段之间，片段开头的空格不会被折叠掉。
+    const counts = [
+      `${mode === 'sidebar' ? '可在原文旁显示' : '原文旁'} ${inline}`,
+      `仅侧栏 ${fallback}`,
+      ...(stale ? [`位置失效 ${stale}`] : []),
+    ]
     placement.replaceChildren(
-      el(doc, 'span', {}, `${mode === 'sidebar' ? '可在原文旁显示' : '原文旁'} ${inline}`),
-      el(doc, 'span', {}, ` · 仅侧栏 ${fallback}`),
-      ...(stale ? [el(doc, 'span', {}, ` · 位置失效 ${stale}`)] : []),
+      ...counts.flatMap((text, i) => [...(i ? [' · '] : []), el(doc, 'span', {}, text)]),
     )
     const countLabel = exceptionSummary.querySelector('span')
     if (countLabel) countLabel.textContent = `异常与保留 ${rows.length}`
     exceptions.hidden = rows.length === 0
-    exceptionItems.replaceChildren(...rows)
+    exceptionItems.replaceChildren(...rows.sort((a, b) => a.rank - b.rank).map((r) => r.node))
   }
   const showStage = (stageId: string) => {
     activeStage = stageId
@@ -569,6 +610,8 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     showDocument(guide, blocks, stageId, selectedIds = blocks.map((b) => b.id)) {
       sourceUrl = guide.source.url
       title.textContent = guide.source.title
+      // 标题最多显示两行，完整标题放在悬停提示里。
+      title.title = guide.source.title
       // 常驻说明写在站点行，不占横幅（横幅会被“配置服务”“出错”覆盖）
       const notes = [
         guide.source.siteId === 'generic' || guide.source.fallback
@@ -581,8 +624,25 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       for (const button of scopeChoice.querySelectorAll('button'))
         button.setAttribute('aria-pressed', String(button.dataset.scope === guide.source.scope))
       scopeText.textContent = `${{ full: '当前页正文', selection: '仅选中文字', region: '仅点选区域' }[guide.source.scope]} · 仅已加载的可访问正文，不含隐藏/折叠内容和子页`
-      const picker = chapterPicker(doc, guide, stageId, selectedIds, h.onSelection)
-      chapters.replaceChildren(picker)
+      // 同一文档同一阶段只改勾选状态；换文档或阶段才重建，并按章节编号找回焦点。
+      if (picker && picker.guide === guide && picker.stage === stageId) picker.update(selectedIds)
+      else {
+        const focused = doc.activeElement
+        const key =
+          focused instanceof HTMLElement && chapters.contains(focused)
+            ? (focused.dataset.chapter ?? focused.dataset.action)
+            : undefined
+        picker = {
+          ...chapterPicker(doc, guide, stageId, selectedIds, h.onSelection),
+          guide,
+          stage: stageId,
+        }
+        chapters.replaceChildren(picker.root)
+        if (key)
+          [...chapters.querySelectorAll<HTMLElement>('[data-chapter], [data-action]')]
+            .find((n) => (n.dataset.chapter ?? n.dataset.action) === key)
+            ?.focus({ preventScroll: true })
+      }
       stagesBar.replaceChildren()
       stageButtons.clear()
       stagesBar.hidden = guide.stages.length === 0
@@ -635,6 +695,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           original: chapter.title,
           level: chapter.level,
           parents: [...parents],
+          contextDepth: 0,
           button,
           label,
           context,
@@ -642,6 +703,29 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         directoryEntries.push(entry)
         parents.push(entry)
         directoryItems.append(button)
+      }
+      // 只在重名时显示足以区分的最近父级，作为页面标题的根节点因此通常省略。
+      const pathOf = (entry: DirectoryEntry) => [
+        ...entry.parents.map((p) => p.original),
+        entry.original,
+      ]
+      for (const entry of directoryEntries) {
+        const others = directoryEntries.filter(
+          (other) => other !== entry && other.original === entry.original,
+        )
+        if (!others.length) continue
+        const path = pathOf(entry)
+        let depth = 1
+        while (
+          depth < entry.parents.length &&
+          others.some(
+            (other) =>
+              JSON.stringify(pathOf(other).slice(-(depth + 1))) ===
+              JSON.stringify(path.slice(-(depth + 1))),
+          )
+        )
+          depth++
+        entry.contextDepth = Math.min(depth, entry.parents.length)
       }
       for (const b of blocks) {
         const heading = b.kind === 'heading'
@@ -756,6 +840,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       site.textContent = ''
       scopeText.textContent = ''
       chapters.replaceChildren()
+      picker = null
       progress.textContent = ''
       ready = false
       lastProgress = null
@@ -830,6 +915,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       bannerText.textContent = message
       bannerAction.hidden = kind !== 'setup'
       begin.hidden = kind === 'setup'
+      updateBegin()
     },
     ask(message, okLabel, signal) {
       // 同一时间只有一个确认框：旧的先按取消结束，避免其 Promise 永远挂起
@@ -879,6 +965,10 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     setUsage(text) {
       usage.textContent = text
     },
+    setSendSummary(value) {
+      sendSummary = value
+      updateBegin()
+    },
     setReady(value) {
       ready = value
       updateBegin()
@@ -908,10 +998,17 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       }
     },
     setBusy(value) {
+      // 忙碌时开始按钮禁用；焦点原在开始或停止上时交给停止，结束后交回开始。
+      const active = doc.activeElement
+      const fromBegin = active === begin
+      const fromStop = active === stop
       busy = value
       updateBegin()
       stop.hidden = !busy
       root.setAttribute('aria-busy', String(busy))
+      if (busy && fromBegin && begin.disabled) stop.focus({ preventScroll: true })
+      else if (!busy && fromStop && !root.hidden)
+        (begin.hidden || begin.disabled ? reload : begin).focus({ preventScroll: true })
     },
   }
 }

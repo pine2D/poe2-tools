@@ -70,6 +70,10 @@ function icon(doc: Document, kind: IconKind, tone: Tone): SVGSVGElement {
   return svg
 }
 
+/** 同一行合并多条消息时补句号，避免“已保留 该行……”直接相连（B3-05）；单条消息原样保留。
+    句末标点写转义（。！？），免得正则字面量把新字符带进 L1 收字 */
+const sentence = (text: string) => (/[\u3002\uff01\uff1f]$/.test(text) ? text : `${text}。`)
+
 /** 待核对条目（裁定 25）：无行号问题各占一条、排在前；同一行号的问题合并为一条，行号升序 */
 function checklist(issues: PreparedImport['issues']): { line: number | null; text: string }[] {
   const byLine = new Map<number, string[]>()
@@ -81,7 +85,10 @@ function checklist(issues: PreparedImport['issues']): { line: number | null; tex
       .map(({ message }) => ({ line: null, text: message })),
     ...[...byLine]
       .sort(([a], [b]) => a - b)
-      .map(([line, messages]) => ({ line, text: messages.join(' ') })),
+      .map(([line, messages]) => ({
+        line,
+        text: messages.length > 1 ? messages.map(sentence).join('') : (messages[0] ?? ''),
+      })),
   ]
 }
 
@@ -213,11 +220,24 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
       box.append(caption, list)
       return { box, list }
     }
-    preview.addEventListener('click', () => {
+    /** 生成预览；restored 为真表示刚恢复粘贴原文，回到“可以填入”并在副句说明（B3-03） */
+    const runPreview = (restored = false) => {
       if (!isActive() || !preview.isConnected) return
       const current = ++revision
       invalidate = null
       result.replaceChildren()
+      // 导入框为空：没有可对照的两栏，只提示粘贴；之后输入回到未预览状态，不显示失效（B3-04）
+      if (input.value.trim() === '') {
+        setStep(0)
+        say('alert', 'miss', '导入框为空', '粘贴游戏里按 Ctrl+Alt+C 复制的完整装备文本')
+        setPrimary(preview)
+        invalidate = () => {
+          revision++
+          invalidate = null
+          message.replaceChildren()
+        }
+        return
+      }
       const converted = prepareImport(input.value, terms)
       setStep(converted.ready ? 1 : 0)
       const { lines, warnings, comparisonOnly } = converted
@@ -330,12 +350,11 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         )
         setPrimary(null)
       } else if (converted.ready) {
-        say(
-          'done',
-          'ok',
-          '可以填入',
-          warnings.length ? `${warnings.length} 条原站兼容性提示需在导入后核对` : null,
-        )
+        const notes = [
+          ...(restored ? ['已恢复粘贴原文'] : []),
+          ...(warnings.length ? [`${warnings.length} 条原站兼容性提示需在导入后核对`] : []),
+        ]
+        say('done', 'ok', '可以填入', notes.length ? notes.join('；') : null)
         next.list.append(
           entry(actor('你'), '核对两栏后，点“填入英文到原站导入框”'),
           entry(actor('原站'), '填入后点“继续”（Proceed），能否导入由原站判断'),
@@ -356,9 +375,10 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         )
         setPrimary(preview)
       }
-      /** ④ 原文已改变：旧结果降级保留，定位与填入停用，预览成为主按钮 */
-      const markStale = (note: string) => {
-        setStep(0)
+      /** ④ 原文已改变：旧结果降级保留，定位与填入停用，预览成为主按钮。
+          afterFill：填入后用户在原站框里改动，仍可直接交原站“继续”，不退回预览步骤（B3-13） */
+      const markStale = (note: string, afterFill = false) => {
+        setStep(afterFill ? 2 : 0)
         // 已失效且副句不变：不重写结论行（live region）与清单，避免重复播报
         if (
           check.classList.contains('stale') &&
@@ -375,6 +395,15 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         done.list.replaceChildren(
           entry(icon(doc, 'stale', 'dim'), '上次预览已失效，两栏为改动前内容'),
         )
+        if (afterFill) {
+          next.list.replaceChildren(
+            entry(actor('原站'), '可直接点原站的“继续”（Proceed），由原站判断导入框当前内容'),
+            entry(actor('你'), '需要核对时，点“预览中文转换”重新生成'),
+          )
+          say('stale', 'miss', '导入框内容已改变', note)
+          setPrimary(null)
+          return
+        }
         next.list.replaceChildren(entry(actor('你'), '点“预览中文转换”重新生成'))
         say('stale', 'miss', '原文已改变，请重新预览', note)
         setPrimary(preview)
@@ -389,6 +418,18 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           markStale('以下为改动前的结果')
           return
         }
+        // 等待期间按钮禁用会让焦点落到 body；结束后归还给复制按钮，失效则交给预览（B3-02）
+        const hadFocus = shadow.activeElement === copy
+        const giveFocus = (button: HTMLButtonElement) => {
+          if (
+            hadFocus &&
+            isActive() &&
+            button.isConnected &&
+            !button.disabled &&
+            (doc.activeElement === doc.body || shadow.activeElement === copy)
+          )
+            button.focus()
+        }
         copy.disabled = true
         copyStatus.remove()
         let text: string
@@ -399,14 +440,19 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         } catch {
           text = '复制失败，请从英文预览框手动复制。'
         }
-        if (!isActive() || current !== revision || !copy.isConnected) return
+        if (!isActive() || current !== revision || !copy.isConnected) {
+          giveFocus(preview)
+          return
+        }
         if (input.value !== converted.original) {
           markStale('以下为改动前的结果')
+          giveFocus(preview)
           return
         }
         copy.disabled = false
         copyStatus.textContent = text
         message.append(copyStatus)
+        giveFocus(copy)
       })
       fill.addEventListener('click', () => {
         if (!isActive() || current !== revision || !fill.isConnected) return
@@ -444,7 +490,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         const invalidateRestore = () => {
           revision++
           restore.disabled = true
-          markStale('导入框内容已改变，以下为填入前的结果')
+          markStale('以下为填入前的结果', true)
         }
         invalidate = invalidateRestore
         restore.addEventListener('click', () => {
@@ -458,18 +504,16 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
           invalidate = null
           input.value = converted.original
           input.dispatchEvent(new Event('input', { bubbles: true }))
-          restore.disabled = true
-          say('stale', 'dim', '已恢复粘贴原文。修改后请重新预览。')
-          setStep(0)
-          check.classList.remove('stale')
-          check.replaceChildren()
-          setPrimary(preview)
+          // 导入框与本次预览的原文一致：直接回到“可以填入”，重新挂上失效监听，之后编辑照常标失效
+          if (input.value === converted.original) runPreview(true)
+          else markStale('以下为改动前的结果')
           returnInputFocus(restore, hadRestoreFocus)
         })
         result.append(restore)
         returnInputFocus(fill, hadFocus)
       })
-    })
+    }
+    preview.addEventListener('click', () => runPreview())
     body.append(preview, message, result)
     panel.append(head, steps, body, disclaimer)
     shadow.append(panel)

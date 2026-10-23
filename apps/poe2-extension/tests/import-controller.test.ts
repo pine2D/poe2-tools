@@ -88,8 +88,10 @@ it('步骤随预览、编辑失效、填入和恢复变化，原站确认始终�
   expect(nativeSubmit).not.toHaveBeenCalled()
   const restore = [...ui().querySelectorAll('button')].find((b) => b.textContent === '恢复粘贴原文')
   restore?.click()
-  expect(current()).toBe('预览核对')
+  // B3-03：恢复后导入框与本次预览一致，直接回到“填入英文”
+  expect(current()).toBe('填入英文')
   expect(input.value).toBe(source.replace('+40', '+39'))
+  expect(nativeSubmit).not.toHaveBeenCalled()
 })
 it('初始和待核对的原文停留在预览步骤，不暗示未知行可以填入', () => {
   document.body.innerHTML =
@@ -232,8 +234,8 @@ it('关闭后旧诊断不能改变选择区', () => {
   expect(input.selectionEnd).toBe(0)
 })
 
-it('英文回填后可恢复原始中文，恢复后需重新预览', () => {
-  const { input, preview, fill } = readyPreview()
+it('英文回填后可恢复原始中文，恢复后直接可再填入；之后编辑照常标失效（B3-03）', () => {
+  const { input, fill } = readyPreview()
   fill.click()
   const restore = [...ui().querySelectorAll('button')].find(
     (button) => button.textContent === '恢复粘贴原文',
@@ -242,12 +244,19 @@ it('英文回填后可恢复原始中文，恢复后需重新预览', () => {
   expect(restore.disabled).toBe(false)
   restore.click()
   expect(input.value).toBe(source)
-  expect(restore.disabled).toBe(true)
-  expect(fill.disabled).toBe(true)
-  expect(ui().querySelector('[role="status"]')?.textContent).toContain('重新预览')
-  preview.click()
-  const current = ui().querySelector('.body > div > button') as HTMLButtonElement
-  expect(current.disabled).toBe(false)
+  // 旧按钮随结果一起换掉，不能再操作
+  expect(restore.isConnected).toBe(false)
+  expect(fill.isConnected).toBe(false)
+  const again = ui().querySelector('.body > div > button') as HTMLButtonElement
+  expect(again.disabled).toBe(false)
+  expect(ui().querySelector('[role="status"]')?.textContent).toBe('可以填入已恢复粘贴原文')
+  input.value = source.replace('+40', '+39')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(again.disabled).toBe(true)
+  expect(ui().querySelector('.check')?.classList.contains('stale')).toBe(true)
+  expect(ui().querySelector('[role="status"]')?.textContent).toContain('原文已改变，请重新预览')
+  again.click()
+  expect(input.value).toBe(source.replace('+40', '+39'))
 })
 it('恢复原文不覆盖后续程序化编辑，重新预览后的旧恢复按钮不能操作', () => {
   const { input, preview, fill } = readyPreview()
@@ -484,7 +493,7 @@ it('同一行两条问题只出一条、一个定位按钮；处数与分数都�
   expect(issues).toHaveLength(1)
   expect(issues[0]?.querySelectorAll('button')).toHaveLength(1)
   expect(issues[0]?.querySelector('button')?.getAttribute('aria-label')).toBe('定位第 10 行')
-  expect(issues[0]?.textContent).toBe('第 10 行无法分类的原文已保留 该行尚未完整识别或翻译。')
+  expect(issues[0]?.textContent).toBe('第 10 行无法分类的原文已保留。该行尚未完整识别或翻译。')
   expect(verdict()?.querySelector('span')?.textContent).toBe('需先核对 1 行')
   expect(groups().已完成).toEqual(['已识别 6 / 7 行，生成英文预览'])
   expect(groups().下一步).toEqual([
@@ -611,10 +620,17 @@ it('④ 原文已改变：清单降级、定位停用，预览是唯一主按钮
   preview.click()
   ;(ui().querySelector('.result > button') as HTMLButtonElement).click()
   input.dispatchEvent(new Event('input', { bubbles: true }))
-  expect(verdict()?.querySelector('small')?.textContent).toBe(
-    '导入框内容已改变，以下为填入前的结果',
-  )
-  expect(primary()).toEqual([preview])
+  // B3-13：填入后在原站框里改动，仍可直接点原站“继续”，不退回预览步骤
+  expect(verdict()?.querySelector('span')?.textContent).toBe('导入框内容已改变')
+  expect(verdict()?.querySelector('small')?.textContent).toBe('以下为填入前的结果')
+  expect(ui().querySelector('.steps [aria-current="step"] b')?.textContent).toBe('原站确认')
+  expect(ui().querySelector('.steps li:last-child')?.getAttribute('data-state')).not.toBe('done')
+  expect(groups().下一步).toEqual([
+    '原站可直接点原站的“继续”（Proceed），由原站判断导入框当前内容',
+    '你需要核对时，点“预览中文转换”重新生成',
+  ])
+  expect(primary()).toEqual([])
+  expect(preview.disabled).toBe(false)
 })
 
 it('R-T4a 清单三组带 data-group，失效态选择器据此只降前两组', () => {
@@ -641,13 +657,18 @@ it('R-T4a 已失效且副句不变时，后续 input 不重写结论行与清单
   })
 })
 
-it('已恢复：结论行沿用原句，三组清空，预览是唯一主按钮', () => {
-  const { preview, fill } = readyPreview()
+it('已恢复：回到“可以填入”，清单与刚预览时一致，填入是唯一主按钮（B3-03）', () => {
+  const { fill } = readyPreview()
+  const before = groups()
   fill.click()
   ;(ui().querySelector('.result > button[data-tertiary]') as HTMLButtonElement).click()
-  expect(verdict()?.textContent).toBe('已恢复粘贴原文。修改后请重新预览。')
-  expect(ui().querySelector('.check')?.childElementCount).toBe(0)
-  expect(primary()).toEqual([preview])
+  expect(verdict()?.querySelector('span')?.textContent).toBe('可以填入')
+  expect(verdict()?.querySelector('small')?.textContent).toBe('已恢复粘贴原文')
+  expect(groups()).toEqual(before)
+  expect(ui().querySelector('.steps [aria-current="step"] b')?.textContent).toBe('填入英文')
+  const again = ui().querySelector('.body > div > button') as HTMLButtonElement
+  expect(primary()).toEqual([again])
+  expect(ui().querySelector('.result > button[data-tertiary]')).toBeNull()
 })
 
 it('“继续”与原站按钮译名一致（ui.zh-CN.json 的 Proceed）', () => {
@@ -719,4 +740,68 @@ it('复制前检查未触发input的程序改动及已关闭的对话框', async
   old?.click()
   expect(write).not.toHaveBeenCalled()
   vi.restoreAllMocks()
+})
+
+it('B3-02：键盘复制成功或失败后焦点回到复制按钮；复制期间原文改变则交给预览', async () => {
+  const write = vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(async () => {
+    // Chrome 禁用聚焦按钮时焦点落到 body；替身显式复现
+    ;(ui().activeElement as HTMLElement | null)?.blur()
+  })
+  const { input, preview } = readyPreview()
+  copyButton()?.focus()
+  copyButton()?.click()
+  await settle()
+  expect(ui().textContent).toContain('已复制英文装备文本')
+  expect(ui().activeElement).toBe(copyButton())
+  write.mockImplementation(async () => {
+    ;(ui().activeElement as HTMLElement | null)?.blur()
+    throw new Error('denied')
+  })
+  copyButton()?.click()
+  await settle()
+  expect(ui().textContent).toContain('复制失败')
+  expect(ui().activeElement).toBe(copyButton())
+  write.mockImplementation(async () => {
+    ;(ui().activeElement as HTMLElement | null)?.blur()
+    input.value += '\n未知'
+  })
+  copyButton()?.click()
+  await settle()
+  expect(copyButton()?.disabled).toBe(true)
+  expect(ui().activeElement).toBe(preview)
+  vi.restoreAllMocks()
+})
+
+it('B3-02：鼠标点击复制（按钮原本未聚焦）不移动焦点', async () => {
+  vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+  const { input } = readyPreview()
+  input.focus()
+  copyButton()?.click()
+  await settle()
+  expect(document.activeElement).toBe(input)
+  vi.restoreAllMocks()
+})
+
+it('B3-04：空导入框预览只提示粘贴，不出两栏与“仅供对照”；随后粘贴回到未预览状态而非失效', () => {
+  const { input, preview } = previewWith('  \n', [BASE, STAT])
+  expect(verdict()?.querySelector('span')?.textContent).toBe('导入框为空')
+  expect(verdict()?.textContent).not.toContain('仅供对照')
+  expect(ui().querySelector('.columns')).toBeNull()
+  expect(ui().querySelector('.check')).toBeNull()
+  expect(primary()).toEqual([preview])
+  input.value = source
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(verdict()?.childElementCount).toBe(0)
+  expect(ui().textContent).not.toContain('已失效')
+  preview.click()
+  expect(verdict()?.querySelector('span')?.textContent).toBe('可以填入')
+})
+
+it('B3-05：同一行多条消息合并时补句号，不用空格相连', () => {
+  previewWith(`${source}\n--------\n未知效果`, [BASE, STAT])
+  const rows = groups().待核对 ?? []
+  const row = rows.find((text) => text?.includes('无法分类的原文已保留'))
+  expect(row).toBeDefined()
+  expect(row).not.toMatch(/保留 /)
+  expect(row).toContain('无法分类的原文已保留。')
 })

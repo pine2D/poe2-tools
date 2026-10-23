@@ -107,10 +107,17 @@ body {
   opacity: 0.55;
   cursor: default;
 }
+/* 禁用主操作改中性底、去钢蓝内边，与可用态明显区分；按钮文字写出原因。 */
 .guide .guide-begin:disabled,
 .guide .guide-begin:disabled:hover {
-  background: var(--steel);
-  opacity: 0.7;
+  background: var(--raised);
+  box-shadow: none;
+  color: var(--ink-2);
+  opacity: 1;
+}
+.guide-send-summary {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
 }
 .guide .icon-button:not([hidden]) {
   display: inline-flex;
@@ -185,6 +192,13 @@ body {
 }
 .reading-mode button[aria-pressed="true"],
 .scope-choices button[aria-pressed="true"] {
+  color: var(--label);
+  background: linear-gradient(180deg, var(--tab-start), var(--tab-end));
+  box-shadow: inset 0 0 0 1px var(--control-edge);
+}
+/* 悬停已选分段仍保留选中底，不被通用按钮悬停覆盖 */
+.guide .reading-mode button[aria-pressed="true"]:hover:not(:disabled),
+.guide .scope-choices button[aria-pressed="true"]:hover:not(:disabled) {
   color: var(--label);
   background: linear-gradient(180deg, var(--tab-start), var(--tab-end));
   box-shadow: inset 0 0 0 1px var(--control-edge);
@@ -307,7 +321,7 @@ body {
   padding-inline: var(--sp-2);
 }
 .guide-directory-items {
-  max-height: 200px;
+  max-height: min(50vh, 320px);
   overflow: auto;
   scrollbar-width: thin;
 }
@@ -320,6 +334,7 @@ body {
   background: transparent;
   color: var(--ink-2);
   font-size: var(--fs-body);
+  font-weight: 400;
   padding: var(--sp-2);
   border-radius: 0;
 }
@@ -501,9 +516,11 @@ body {
   display: none;
 }
 .guide .block[data-state="failed"] .block-status,
-.guide .block[data-state="missing"] .block-status,
-.issues summary {
+.guide .block[data-state="missing"] .block-status {
   color: var(--danger);
+}
+.guide .issues summary {
+  color: var(--miss);
 }
 .guide-exceptions {
   padding: 0 var(--sp-3);
@@ -518,8 +535,14 @@ body {
   display: block;
 }
 .guide-exception strong {
-  color: var(--miss);
+  color: var(--ink-2);
   font-weight: 500;
+}
+.guide-exception[data-kind="failed"] strong {
+  color: var(--danger);
+}
+.guide-exception[data-kind="warning"] strong {
+  color: var(--miss);
 }
 .guide-exception small {
   color: var(--ink-3);
@@ -760,6 +783,12 @@ abbr:focus-visible::after {
   font-size: var(--fs-body);
 }
 @media (forced-colors: active) {
+  /* 强制色彩下透明底的分段与展开按钮需要可见边界 */
+  .reading-mode button,
+  .scope-choices button,
+  .guide-controlbar > button {
+    border: 1px solid ButtonText;
+  }
   .reading-mode button[aria-pressed="true"],
   .scope-choices button[aria-pressed="true"] {
     outline: 2px solid Highlight;
@@ -774,12 +803,23 @@ abbr:focus-visible::after {
   flex-shrink: 0;
   accent-color: var(--gold);
 }
-.settings-details summary {
+.guide-settings .settings-details summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
   min-height: 44px;
   padding-block: var(--sp-2);
   cursor: pointer;
   color: var(--ink-2);
   font-size: var(--fs-body);
+}
+.guide-settings .settings-details summary::-webkit-details-marker {
+  display: none;
+}
+.guide-settings .settings-details[open] > summary > .ui-icon {
+  transform: rotate(180deg);
 }
 .settings-details p + p {
   margin-top: var(--sp-2);
@@ -800,6 +840,13 @@ abbr:focus-visible::after {
 .guide-settings .danger-action:hover:not(:disabled) {
   border-color: var(--danger);
   background: var(--raised);
+}
+/* 行内二次确认用共享危险样式；禁用（进行中）保留同色系，文字说明进度 */
+.guide-settings .pt-btn--danger:disabled,
+.guide-settings .pt-btn--danger:disabled:hover {
+  border-color: var(--danger-edge);
+  background-color: var(--danger-bg);
+  color: var(--danger-ink);
 }
 .clear-confirmation,
 .leave-confirmation {
