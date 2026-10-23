@@ -1,184 +1,220 @@
-/* 扩展介绍页（二期重排；样稿 2026-10-03-extension，本地留存，用户已确认）。
-   阅读顺序：确认环境 → 下载 → 四步安装 → 确认生效 → 更新、隐私、支持范围、反馈。
-   唯一的金属重点是下载区那扇 pt-frame（4 个角饰）与框内唯一的 pt-forge-btn；中缝铜线与菱结属于这扇框，不另算落点；其余各区都是 L0。
-   字号与间距（font-size、margin、padding、gap）只取 tokens.css 的 --fs-*／--sp-* 尺寸阶梯令牌；px 只用于几何：
-   边框与轮廓线宽、圆角、下划线偏移、图标／母题／步号方块与插入光标的宽高、44px／46px 点击高度。
-   颜色只取 ui-theme 令牌，不写字面颜色；衬线只经 ui-theme 组件类（pt-hero-title、pt-subhead、pt-forge-btn）。
-   “确认生效”里的搜索候选示意用共用的 l1-demo.css（l1demo__ 类，首页对照带同用；main.tsx 先于本文件引入），
-   本文件只管它的外框留白和选中项放大。 */
-
+/* v4 扩展入口：下载/环境清单与静态弹窗示意并列，事实取真实发布记录。 */
 .ext-main {
-  /* 步号方块边长；≤620px 竖排时的轨线位置与缩进都由它推出 */
   --ext-mark: 30px;
   --ext-rail: calc(var(--ext-mark) / 2);
-  padding-block: var(--sp-5) var(--sp-7);
+  padding-block: var(--sp-8);
 }
-
-/* ---------- 下载区：本页唯一一扇 pt-frame（无标题栏 hero） ---------- */
+.ext-gate {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--sp-7);
+  align-items: center;
+}
+.ext-gate__copy {
+  min-width: 0;
+}
 .ext-gate__hero {
-  text-align: center;
+  text-align: left;
+}
+.ext-gate__hero .hero-clause {
+  display: block;
+}
+.ext-gate__hero .mobile-break {
+  display: none;
 }
 .ext-gate__lead {
-  max-width: 46em;
-  margin: var(--sp-3) auto 0;
+  margin: var(--sp-5) 0;
   color: var(--ink-2);
   font-size: var(--fs-lead);
-  text-wrap: balance;
+  line-height: 1.9;
 }
-/* 安装路线：四站页内链接，顺序即操作顺序；只是目录，没有“已完成”状态 */
-.ext-route {
-  margin: var(--sp-4) 0 0;
+.ext-gate__lead .nw {
+  white-space: normal;
 }
-.ext-route ol {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-1) var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--fs-small);
-}
-.ext-route li {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-/* 箭头只是视觉连接，替代文本为空，读屏不读 */
-.ext-route li + li::before {
-  content: "→" / "";
-  color: var(--ink-3);
-}
-.ext-route a {
-  padding-block: var(--sp-1);
-  color: var(--gold);
-  text-underline-offset: 3px;
-}
-
-/* 下半：左“先确认环境” | 中缝 | 右“再下载” */
 .ext-gate__split {
-  --seam-w: calc(var(--sp-8) + var(--sp-4));
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--seam-w) minmax(0, 1fr);
-  column-gap: var(--sp-3);
-  margin-block-start: var(--sp-6);
-  padding-block-start: var(--sp-5);
-  border-block-start: 1px solid var(--line);
+  gap: var(--sp-5);
 }
 .ext-gate__col {
   min-width: 0;
   scroll-margin-top: var(--sp-5);
 }
 .ext-gate__note {
-  margin: var(--sp-2) 0 0;
+  margin: var(--sp-2) 0;
   color: var(--ink-2);
+  font-size: var(--fs-small);
 }
-
-/* 环境清单：dl 两列，行间 1px 分隔（L0，不再套 pt-panel） */
 .ext-env {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: var(--sp-5);
+  gap: var(--sp-1);
   margin: var(--sp-3) 0 0;
 }
-.ext-env dt,
-.ext-env dd {
-  padding-block: var(--sp-2);
-  border-block-start: 1px solid var(--line);
-}
 .ext-env dt {
-  color: var(--ink-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-start: 1px solid var(--bronze-lo);
+  background: var(--raised);
+  color: var(--label);
   font-size: var(--fs-small);
-  line-height: 1.9;
 }
 .ext-env dd {
   margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface);
   color: var(--ink);
-  font-size: var(--fs-data);
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
-.ext-env dd small {
+.ext-popup__brand small {
+  margin-left: auto;
   color: var(--ink-3);
-  font-size: var(--fs-small);
+  font-size: var(--fs-micro);
 }
-.ext-env__not {
-  margin: 0;
-  padding-block-start: var(--sp-2);
-  border-block-start: 1px solid var(--line);
+.ext-env dd small {
+  display: block;
   color: var(--ink-2);
   font-size: var(--fs-small);
 }
-/* 文字与外链箭头图标（Icon external）垂直居中，间距与图标走同一条基线 */
+.ext-env__not {
+  margin: var(--sp-3) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
 .ext-env__link {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  margin-block-start: var(--sp-1);
+  font-size: var(--fs-small);
 }
-
-/* 中缝：上下两段铜线，菱结落在两侧小标题之下的同一水平线 */
-.ext-seam {
-  display: grid;
-  grid-template-rows: var(--sp-7) auto minmax(0, 1fr);
-  justify-items: center;
-}
-.ext-seam__line {
-  width: 1px;
-  background: linear-gradient(180deg, transparent, var(--metal-line) 40%, var(--metal-edge));
-}
-.ext-seam__line--bottom {
-  background: linear-gradient(0deg, transparent, var(--metal-line) 40%, var(--metal-edge));
-}
-.ext-seam__knot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-block: var(--sp-1);
-}
-/* 菱结尺寸（含 ≤620 档）与首页（home.css）中缝的菱结同值，改动时两处同改；两页中缝几何不同，不抽共用样式 */
-.ext-seam__knot > .pt-motif--knot {
-  --ptm-w: 72px;
-  --ptm-h: 28px;
-  --ptm-u: calc(28px / 25);
-}
-
-/* 下载列：说明 → 唯一的金属主按钮 → 版本事实 → 完整声明 */
 .ext-download {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2) var(--sp-5);
-  margin-block-start: var(--sp-5);
+  margin-top: var(--sp-3);
 }
 .ext-download__btn {
-  gap: 0;
+  gap: var(--sp-2);
+  width: 100%;
+}
+.ext-download__meta {
+  color: var(--ink-2);
+  font-size: var(--fs-small);
 }
 .ext-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--sp-4);
-  margin: var(--sp-4) 0 0;
+  gap: var(--sp-2) var(--sp-4);
   padding: 0;
+  margin: var(--sp-3) 0 0;
+  list-style: none;
   color: var(--ink-3);
   font-size: var(--fs-small);
-  list-style: none;
-}
-.ext-facts .text-link {
-  padding-block: 0;
 }
 .ext-facts b {
+  font-weight: 400;
   color: var(--ink-2);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+}
+.ext-facts .text-link {
+  padding: 0;
 }
 .ext-gate__legal {
-  margin: var(--sp-4) 0 0;
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--line);
+  margin: var(--sp-3) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+.ext-gate__legal .nw {
+  white-space: normal;
+}
+.ext-route {
+  grid-column: 1 / -1;
+  padding-block: var(--sp-3);
+  border-block: 1px solid var(--line-2);
+}
+.ext-route ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.ext-route a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--ink-2);
-  font-size: var(--fs-small);
+  text-decoration: none;
+}
+.ext-route a:hover {
+  color: var(--label);
+  text-decoration: underline;
+}
+.ext-popup {
+  min-width: 0;
+  margin: 0;
+}
+.ext-popup__panel {
+  padding: var(--sp-5);
+  border: 1px solid var(--metal-line);
+  background: var(--bg);
+}
+.ext-popup__brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-4);
+  border-bottom: 2px solid var(--metal-line);
+  color: var(--label);
+  font-size: var(--fs-lead);
 }
 
+.ext-popup__status {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block: var(--sp-5);
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+.ext-popup__status span {
+  color: var(--ok);
+}
+.ext-popup__status p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.ext-popup__rows {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+}
+.ext-popup__rows > div {
+  border-inline-start: 1px solid var(--bronze-lo);
+  padding: var(--sp-3);
+  background: var(--surface);
+}
+.ext-popup__rows dt {
+  color: var(--label);
+  font-weight: 600;
+}
+.ext-popup__rows dd {
+  margin: var(--sp-2) 0 0;
+  color: var(--gem);
+  font-size: var(--fs-small);
+}
+.ext-popup__rows dd span {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--ink-2);
+}
+.ext-popup__foot {
+  margin: var(--sp-5) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+.ext-popup figcaption {
+  margin-top: var(--sp-4);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+  text-align: center;
+}
 /* ---------- 安装：四步横排（L0），步号压在一条细轨上 ---------- */
 .ext-guide {
   margin-block-start: var(--sp-7);
@@ -194,7 +230,7 @@
 .ext-verify h2 {
   margin: 0;
   color: var(--ink);
-  font-size: var(--fs-display-s);
+  font-size: var(--fs-section);
   line-height: 1.3;
 }
 .ext-guide__head p {
@@ -228,7 +264,7 @@
   width: var(--ext-mark);
   height: var(--ext-mark);
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--page);
   color: var(--gold);
   font-size: var(--fs-data);
@@ -259,7 +295,7 @@
 .ext-main kbd {
   padding: 0 var(--sp-1);
   border: 1px solid var(--line-2);
-  border-radius: 3px;
+  border-radius: 0;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-code);
@@ -330,7 +366,7 @@
 .ext-demo {
   margin: var(--sp-3) 0 0;
   padding: var(--sp-4);
-  border-radius: 6px;
+  border-radius: 0;
 }
 .ext-demo .l1demo__opt--selected {
   margin-block: var(--sp-1);
@@ -384,7 +420,7 @@
   padding: 0;
   list-style: none;
   border: 1px solid var(--line-2);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--surface);
 }
 .ext-cause {
@@ -441,8 +477,15 @@
   font-weight: 600;
 }
 
-/* 621–1099px：环境与下载仍左右分；安装四步改 2×2，确认生效改单列 */
-@media (max-width: 1099px) {
+@media (max-width: 980px) {
+  .ext-gate {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ext-popup {
+    max-width: 460px;
+    width: 100%;
+    justify-self: center;
+  }
   .ext-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: var(--sp-7);
@@ -451,140 +494,37 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-@media (max-width: 850px) {
-  .ext-gate__split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .ext-seam {
-    grid-template-rows: none;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    margin-block: var(--sp-5);
-  }
-  .ext-seam__line {
-    width: auto;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--metal-edge));
-  }
-  .ext-seam__line--bottom {
-    background: linear-gradient(270deg, transparent, var(--metal-edge));
-  }
-  .ext-seam__knot {
-    padding-inline: var(--sp-2);
-  }
-  .ext-details {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* ≤620px：页边 16px（site.css）；按钮通栏、版本与大小换第二行；步骤竖排，轨线改到左侧；页内链接可点高 ≥44px */
 @media (max-width: 620px) {
   .ext-main {
-    padding-block: var(--sp-4) var(--sp-6);
+    padding-block: var(--sp-6);
   }
-  .ext-gate__lead {
-    font-size: var(--fs-data);
-  }
-  .ext-gate__split {
-    margin-block-start: var(--sp-5);
-    padding-block-start: var(--sp-4);
-  }
-  .ext-seam__knot > .pt-motif--knot {
-    --ptm-w: 52px;
-    --ptm-h: 20px;
-    --ptm-u: calc(20px / 25);
-  }
-  .ext-env {
-    column-gap: var(--sp-4);
-  }
-  .ext-download .pt-forge-btn {
-    flex-direction: column;
-    gap: 0;
-    width: 100%;
-    height: auto;
-    min-height: 46px;
-    padding: var(--sp-2) var(--sp-6);
-  }
-  .ext-download__meta {
-    font-size: var(--fs-micro);
-    letter-spacing: 0.02em;
-  }
-  .ext-route a,
-  .ext-env__link,
-  .ext-facts .text-link,
-  .ext-details .text-link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-  .ext-guide {
-    margin-block-start: var(--sp-6);
-  }
-  .ext-guide h2,
-  .ext-verify h2 {
-    font-size: var(--fs-title);
+  .ext-details,
+  .ext-steps,
+  .ext-cause {
+    grid-template-columns: minmax(0, 1fr);
   }
   .ext-steps {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    margin-block-start: var(--sp-4);
-  }
-  .ext-step {
-    margin-inline-start: var(--ext-rail);
-    padding: 0 0 var(--sp-5) calc(var(--ext-mark) + var(--sp-3));
-    border-block-start: 0;
-    border-inline-start: 1px solid var(--line-2);
-  }
-  .ext-step:last-child {
-    border-inline-start-color: transparent;
-  }
-  .ext-step::before {
-    top: 0;
-    left: calc(var(--ext-rail) * -1);
-  }
-  .ext-step h3 {
-    margin-block-start: var(--sp-1);
-  }
-  .ext-verify {
-    margin-block-start: var(--sp-5);
-    padding: 0 0 0 calc(var(--ext-mark) + var(--sp-3) + var(--ext-rail));
-    border-block-start: 0;
-  }
-  .ext-verify__mark {
-    top: 0;
-    left: 0;
-  }
-  .ext-verify h2 {
-    margin-block-start: var(--sp-1);
-  }
-  .ext-verify__grid {
-    margin-inline-start: calc(-1 * (var(--ext-mark) + var(--sp-3) + var(--ext-rail)));
+    row-gap: var(--sp-6);
   }
   .ext-demo {
     padding: var(--sp-3);
   }
-  .ext-cause {
-    grid-template-columns: minmax(0, 1fr);
-    padding: var(--sp-3);
+  .ext-popup__panel {
+    padding: var(--sp-4);
   }
-  .ext-details {
-    margin-block-start: var(--sp-6);
-    padding-block-start: var(--sp-5);
-  }
-  .ext-details h2 {
-    font-size: var(--fs-lead);
+  .ext-details .text-link,
+  .ext-facts .text-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }
-
-/* 强制色彩：中缝退回系统文字色；svg 默认保留父元素颜色，写了颜色的图标改为 inherit 跟随系统色
-   （搜索框图标 .l1demo__field .icon 的 inherit 在 l1-demo.css） */
 @media (forced-colors: active) {
-  .ext-seam__line {
-    background: CanvasText;
-  }
   .ext-step::before,
   .ext-verify__mark,
-  .ext-causes {
+  .ext-causes,
+  .ext-env dt,
+  .ext-popup__rows > div {
     border-color: CanvasText;
   }
   .ext-see .icon {

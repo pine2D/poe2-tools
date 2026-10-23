@@ -65,9 +65,9 @@ describe('扩展介绍页：面向普通用户', () => {
     expect(container.querySelector('main#main')?.className).toBe('portal-main ext-main')
   })
 
-  it('阅读顺序：先确认环境，再出现下载按钮，然后是安装、确认生效与更新说明', () => {
+  it('阅读顺序：下载紧接能力说明，环境清单与安装指引紧随其后', () => {
     const { container } = setup()
-    const order = ['#env', '.pt-forge-btn', '#install', '#verify', '#update'].map(
+    const order = ['.pt-plaque', '#env', '#install', '#verify', '#update'].map(
       (selector) => container.querySelector(selector) as Element,
     )
     for (const node of order) expect(node).not.toBeNull()
@@ -77,18 +77,17 @@ describe('扩展介绍页：面向普通用户', () => {
       expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     }
     const env = container.querySelector('#env') as HTMLElement
-    expect(env.contains(container.querySelector('.pt-forge-btn'))).toBe(false)
+    expect(env.contains(container.querySelector('.pt-plaque'))).toBe(false)
   })
 })
 
 describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
-  it('只有一扇无标题栏的 pt-frame--hero，框内只有一个金属主按钮，就是下载按钮', () => {
+  it('主视觉提供唯一下载入口，示意不冒充当前浏览器状态', () => {
     const { container } = setup()
-    const frames = container.querySelectorAll('.pt-frame')
-    expect(frames).toHaveLength(1)
-    const gate = frames[0] as HTMLElement
+    const gate = container.querySelector('.ext-gate') as HTMLElement
+    expect(container.querySelectorAll('.pt-frame')).toHaveLength(0)
     expect(gate.tagName).toBe('DIV')
-    expect(gate.className).toBe('pt-frame pt-frame--hero ext-gate')
+    expect(gate.className).toBe('ext-gate')
     expect(container.querySelector('.pt-titlebar')).toBeNull()
     const title = screen.getByRole('heading', { level: 1 })
     expect(gate.contains(title)).toBe(true)
@@ -96,11 +95,11 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     expect(title.textContent).toBe('熟悉的术语，就在原来的工具里。')
     expect(title.querySelector('br')?.className).toBe('mobile-break')
     expect(title.querySelector('.pt-hero-title__gold')?.textContent).toBe('就在原来的工具里。')
-    const forge = container.querySelectorAll('.pt-forge-btn')
+    const forge = container.querySelectorAll('.pt-plaque')
     expect(forge).toHaveLength(1)
     const download = screen.getByRole('link', { name: isDownloadName })
     expect(download).toBe(forge[0])
-    expect(download.className).toBe('pt-forge-btn ext-download__btn')
+    expect(download.className).toBe('pt-plaque ext-download__btn')
     expect(download.querySelector('.ext-download__meta')?.textContent).toBe(META)
     expect(container.querySelector('#download')?.contains(download)).toBe(true)
     expect(gate.contains(download)).toBe(true)
@@ -173,10 +172,10 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
   it('右栏“再下载”：说明 → 下载按钮 → 发布日期、权限、更新入口 → 完整声明；中间的中缝只是装饰', () => {
     const { container } = setup()
     const download = container.querySelector('section#download') as HTMLElement
-    expect(labelOf(container, download)).toBe('再下载')
+    expect(labelOf(container, download)).toBe('下载扩展')
     const heading = within(download).getByRole('heading', { level: 2 })
-    expect(heading.className).toBe('pt-subhead')
-    expect(heading.textContent).toBe('再下载')
+    expect(heading.className).toBe('visually-hidden')
+    expect(heading.textContent).toBe('下载扩展')
     expect(download.querySelector('.ext-gate__note')?.textContent).toBe(
       '扩展还没有上架 Chrome 应用商店。从本站下载 zip，再按下面四步安装，只需操作一次。',
     )
@@ -191,12 +190,9 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     const legal = download.querySelector('.ext-gate__legal') as HTMLElement
     expect(legal.textContent).toBe(FULL_DISCLAIMER)
     expect(legal.querySelectorAll(FOCUSABLE)).toHaveLength(0)
-    const seam = container.querySelector('.ext-seam') as HTMLElement
-    expect(seam.getAttribute('aria-hidden')).toBe('true')
-    expect(seam.querySelector('.pt-motif.pt-motif--knot')).not.toBeNull()
-    expect(seam.previousElementSibling?.id).toBe('env')
-    expect(seam.nextElementSibling?.id).toBe('download')
-    expect(container.querySelectorAll('.pt-subhead')).toHaveLength(2)
+    const demo = screen.getByRole('figure', { name: /扩展弹窗示意/ })
+    expect(demo.querySelectorAll(FOCUSABLE)).toHaveLength(0)
+    expect(container.querySelectorAll('.pt-subhead')).toHaveLength(1)
   })
 })
 
@@ -403,7 +399,7 @@ describe('参考信息与删除项', () => {
     ])
     expect(texts(container.querySelectorAll('#privacy p'))).toEqual([
       '术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。',
-      '扩展不内置任何 Key，Key 与译文缓存只保存在本机，可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不代替你执行原站导入。',
+      '扩展不内置任何 Key，Key 与译文缓存只保存在本机，Key 未加密保存；可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不代替你执行原站导入。',
     ])
     expect(screen.getByRole('link', { name: '查看权限与隐私说明' }).getAttribute('href')).toBe(
       'https://github.com/pine2D/poe2-tools/blob/main/docs/chrome-extension/privacy.md',
@@ -527,41 +523,28 @@ describe('extension.css（二期样稿，令牌化）', () => {
     expect(bare).not.toMatch(/url\(/)
   })
 
-  it('环境与下载左右分、中缝居中；≤850px 改单列，中缝变横线', () => {
-    expect(decls('.ext-gate__split').get('grid-template-columns')).toBe(
-      'minmax(0, 1fr) var(--seam-w) minmax(0, 1fr)',
-    )
-    expect(decls('.ext-gate__split').get('--seam-w')).toBe('calc(var(--sp-8) + var(--sp-4))')
-    expect(decls('.ext-gate__split', ['max-width: 850px']).get('grid-template-columns')).toBe(
+  it('主视觉宽屏并列、窄屏按阅读顺序排列', () => {
+    expect(decls('.ext-gate').get('grid-template-columns')).toBe('minmax(0, 7fr) minmax(0, 5fr)')
+    expect(decls('.ext-gate', ['max-width: 980px']).get('grid-template-columns')).toBe(
       'minmax(0, 1fr)',
     )
-    expect(decls('.ext-seam__line', ['max-width: 850px']).get('height')).toBe('1px')
   })
 
   it('安装四步：宽屏四列，≤1099px 两列，≤620px 单列竖排、轨线在左', () => {
     expect(decls('.ext-steps').get('grid-template-columns')).toBe('repeat(4, minmax(0, 1fr))')
-    expect(decls('.ext-steps', ['max-width: 1099px']).get('grid-template-columns')).toBe(
+    expect(decls('.ext-steps', ['max-width: 980px']).get('grid-template-columns')).toBe(
       'repeat(2, minmax(0, 1fr))',
     )
     expect(decls('.ext-steps', NARROW).get('grid-template-columns')).toBe('minmax(0, 1fr)')
-    expect(decls('.ext-step', NARROW).get('border-inline-start')).toBe('1px solid var(--line-2)')
-    expect(decls('.ext-verify__grid', ['max-width: 1099px']).get('grid-template-columns')).toBe(
+    expect(decls('.ext-verify__grid', ['max-width: 980px']).get('grid-template-columns')).toBe(
       'minmax(0, 1fr)',
     )
   })
 
   it('≤620px：下载按钮通栏、版本与大小换到第二行；页内链接可点高 ≥44px', () => {
-    const button = decls('.ext-download .pt-forge-btn', NARROW)
-    expect(button.get('width')).toBe('100%')
-    expect(button.get('flex-direction')).toBe('column')
-    expect(button.get('min-height')).toBe('46px')
-    expect(decls('.ext-download__meta', NARROW).get('font-size')).toBe('var(--fs-micro)')
-    for (const selector of [
-      '.ext-route a',
-      '.ext-env__link',
-      '.ext-facts .text-link',
-      '.ext-details .text-link',
-    ]) {
+    expect(decls('.ext-download__btn').get('width')).toBe('100%')
+    expect(decls('.ext-route a').get('min-height')).toBe('44px')
+    for (const selector of ['.ext-facts .text-link', '.ext-details .text-link']) {
       expect(decls(selector, NARROW).get('min-height'), selector).toBe('44px')
     }
   })
@@ -572,7 +555,6 @@ describe('extension.css（二期样稿，令牌化）', () => {
     expect(decls('.ext-state--off dt').get('color')).toBe('var(--danger)')
     expect(decls('.ext-see .icon').get('color')).toBe('var(--ok)')
     expect(decls('.ext-see .icon', FORCED).get('color')).toBe('inherit')
-    expect(decls('.ext-seam__line', FORCED).get('background')).toBe('CanvasText')
   })
 
   it('候选下拉示意的样式来自共用的 l1-demo.css：本页不重复写，只放大选中项', () => {

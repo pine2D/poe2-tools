@@ -6,7 +6,7 @@
   display: inline-flex;
   padding: 3px;
   border: 1px solid var(--control-edge);
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--bar);
 }
 .pt-seg__item {
@@ -15,7 +15,7 @@
   justify-content: center;
   padding: 8px 12px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 0;
   background: transparent;
   color: var(--ink-2);
   font: 400 13.5px / 1 var(--font-zh-cn);
@@ -50,7 +50,7 @@
   height: 38px;
   padding: 0 8px;
   border: 1px solid var(--control-edge);
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--bar);
   color: var(--ink-2);
   font: 400 13.5px / 1 var(--font-zh-cn);
@@ -97,7 +97,7 @@
   min-height: 90px;
   padding: 10px 12px;
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg);
   color: var(--ink);
   caret-color: var(--gold);
@@ -111,7 +111,7 @@
 /* 拖放区（§6.4.1）：1px 虚线 --control-edge，拖入时边色 --bronze；圆角 6px（M0 self-decided K13） */
 .pt-dropzone {
   border: 1px dashed var(--control-edge);
-  border-radius: 6px;
+  border-radius: 0;
 }
 .pt-dropzone--over {
   border-color: var(--bronze);
@@ -134,7 +134,7 @@
   position: relative;
   padding: 12px 38px 12px 13px;
   border: 1px solid var(--control-edge);
-  border-radius: 6px;
+  border-radius: 0;
   background: #0e0b09;
 }
 .pt-file:has(> [aria-current="true"]) {
@@ -194,7 +194,7 @@
   height: 28px;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: 0;
   background: none;
   color: var(--ink-3);
   cursor: pointer;
@@ -242,7 +242,7 @@
   max-width: calc(100vw - 24px);
   padding: 20px;
   border: 1px solid var(--metal-line);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--raised);
   box-shadow: 0 12px 36px #0003;
   color: var(--ink);
@@ -264,7 +264,7 @@
   max-width: calc(100% - 32px);
   padding: 12px 16px;
   border: 1px solid var(--metal-line);
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--raised);
   box-shadow: 0 8px 28px #0003;
   color: var(--ink);
@@ -275,7 +275,7 @@
 /* L0 面板：待核对清单（spec §6.4.2 第 2 项） */
 .pt-l0-panel {
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--surface);
 }
 
@@ -332,7 +332,7 @@
 .pt-kbd {
   padding: 3px 5px;
   border: 1px solid var(--line-2);
-  border-radius: 3px;
+  border-radius: 0;
   background: var(--bg-2);
   color: var(--ink-3);
   font: 600 11px / 1 var(--font-zh-cn);

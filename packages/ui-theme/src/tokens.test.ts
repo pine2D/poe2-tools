@@ -12,6 +12,8 @@ const { count, tokens } = rootTokens(css)
 // v4 兼容接口及分段控件令牌
 const EXPECTED: Record<string, string> = {
   '--label': '#fff8e1',
+  '--plaque-bg': '#07080a',
+  '--plaque-ink': '#f5e8b3',
   '--steel': '#0f304d',
   '--steel-hi': '#164a75',
   '--steel-edge': '#4c4c7d',
@@ -146,10 +148,10 @@ describe('令牌结构（spec §4.3）', () => {
     expect(root?.declarations.get('color-scheme')).toBe('dark')
   })
 
-  it('令牌集合与取值等于v4 兼容接口的 77 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
+  it('令牌集合与取值等于v4 兼容接口的 79 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
     const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
     expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(contract).toHaveLength(77)
+    expect(contract).toHaveLength(79)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }

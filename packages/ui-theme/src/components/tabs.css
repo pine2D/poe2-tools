@@ -16,7 +16,7 @@
   right: 0;
   bottom: -2px;
   height: 2px;
-  background: linear-gradient(180deg, #c89a5e, #5d4229);
+  background: var(--metal-line);
 }
 /* M0 Ruling 11-1：“仅看待核对”加了“仅看”后，中等宽度下工具组会横向溢出。工具组放不下时换行、靠右，
    页签仍贴基线；放得下时 wrap 与 flex-end 都不起作用，渲染不变。沿革：Ruling 11-1 定 601–700px →
@@ -55,11 +55,11 @@
   white-space: nowrap;
   margin: 0 0 2px;
   padding: 9px 18px 10px;
-  border: 1px solid #5d4229;
+  border: 1px solid var(--control-edge);
   border-bottom: 0;
-  border-radius: 5px 5px 0 0;
-  background: linear-gradient(180deg, #2d241b, #1a1511);
-  box-shadow: inset 0 1px 0 rgba(255, 222, 165, 0.1);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: none;
   color: var(--ink-2);
   font: 700 15px / 1.6 var(--pt-serif);
   letter-spacing: 0.06em;
@@ -81,10 +81,10 @@
 .pt-tab[aria-selected="true"] {
   margin-bottom: 0;
   padding-bottom: 12px;
-  border-color: #c89a5e;
-  background: linear-gradient(180deg, #6b4a26, #3a2712 60%, #231911);
-  box-shadow: inset 0 1px 0 rgba(255, 228, 176, 0.45);
-  color: #fbe4b8;
+  border-color: var(--bronze-lo);
+  background: linear-gradient(180deg, var(--tab-start), var(--tab-end));
+  box-shadow: none;
+  color: var(--label);
 }
 .pt-tab[aria-selected="true"] .pt-tab__count {
   color: inherit;
@@ -117,7 +117,7 @@
     right: 0;
     bottom: -2px;
     height: 2px;
-    background: linear-gradient(180deg, #c89a5e, #5d4229);
+    background: var(--metal-line);
   }
   /* 基础规则的靠右在这一档改回靠左，保持窄屏原排布（视图分段由 responsive.css 的 margin-left:auto 推到右侧） */
   .pt-tabs-row__tools {

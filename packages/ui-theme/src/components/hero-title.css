@@ -1,36 +1,63 @@
-/* hero 标题（spec §4.4、§6.2、§6.3、§6.4.1）：衬线 700、字距 .02em；金色纵向渐变字只用于 hero 标题 */
+/* v4 营销标题；工具空态使用紧凑字号，字体后备保持可读。 */
 .pt-hero-title {
   margin: 0;
-  color: var(--ink);
-  font: 700 54px / 1.2 var(--pt-serif);
+  color: var(--plaque-ink);
+  font: 700 var(--fs-hero) / 1.18 var(--pt-serif);
   letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
 }
 .pt-hero-title--extension {
-  font-size: 44px;
+  font-size: var(--fs-hero-extension);
 }
 .pt-hero-title--build {
-  font-size: 36px;
+  font-size: var(--fs-display);
 }
 .pt-hero-title__gold {
-  background: linear-gradient(180deg, #fbe9c2 8%, #e0b46e 50%, #a8733a 92%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: inherit;
 }
 @media (max-width: 620px) {
-  .pt-hero-title,
-  .pt-hero-title--extension {
-    font-size: 34px;
-  }
   .pt-hero-title--build {
-    font-size: 28px;
+    font-size: var(--fs-display-s);
   }
 }
-
-/* 强制色彩：渐变字退回 CanvasText */
 @media (forced-colors: active) {
+  .pt-hero-title,
   .pt-hero-title__gold {
-    background: none;
     color: CanvasText;
+  }
+}
+/* 营销入口使用暗底双线铭牌，与工具钢蓝主操作分开。 */
+.pt-plaque {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  min-height: 54px;
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--bronze-lo);
+  border-radius: 0;
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 0 0 0 3px var(--plaque-bg),
+    inset 0 0 0 4px var(--bronze-lo);
+  color: var(--plaque-ink);
+  font: 700 var(--fs-lead) / 1.5 var(--pt-serif);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.pt-plaque:hover {
+  background: linear-gradient(180deg, var(--tab-start), var(--tab-end));
+}
+.pt-plaque:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+@media (forced-colors: active) {
+  .pt-plaque {
+    border: 2px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
   }
 }

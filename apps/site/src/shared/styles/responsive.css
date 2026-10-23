@@ -1,43 +1,37 @@
 /* 构筑页 ≤1099 / ≤620 / ≤600 的页面规则；组件外观来自 @poe2-tools/ui-theme（spec §6.4、§6.7） */
 /* spec §6.7 ≤1099px（构筑页）：侧栏不再用 pt-frame，折叠为 L0 抽屉；主区保留唯一一扇 pt-frame */
-@media (max-width: 1099px) {
+@media (max-width: 1199px) {
   .app__body {
-    display: block;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .app__sidetoggle {
-    display: flex;
-  }
-  .app__sidechev {
-    transition: transform var(--dur-fast) var(--ease-out);
-  }
-  .app__sidetoggle[aria-expanded="true"] .app__sidechev {
-    transform: rotate(180deg);
-  }
-  .app__sidecount {
-    margin-left: auto;
-    color: var(--ink-2);
-    font-variant-numeric: tabular-nums;
-  }
-  /* 展开后是 L0 通栏面板：底 --surface，下边 1px --line；上边由折叠条界定，左右贴视口不画边（spec §6.7 R16） */
   .app__side {
-    display: none;
-    padding: 0;
-    border-bottom: 1px solid var(--line);
-    background: var(--surface);
+    padding: var(--sp-4);
   }
-  .app__side--open {
-    display: block;
+  .app__side-inner {
+    padding: 0;
+  }
+  .app__files {
+    display: flex;
+    overflow-x: auto;
+    padding-block: var(--sp-2);
+    gap: var(--sp-3);
+  }
+  .app__files > li {
+    flex: 0 0 220px;
   }
   .app__side-note {
-    margin: 0;
-    padding: 0 var(--sp-4) var(--sp-4);
+    margin: var(--sp-2) 0 0;
+    padding: 0;
   }
   .app__main {
-    --main-pad-top: var(--sp-5);
-    padding: var(--main-pad-top) var(--sp-5) var(--sp-5);
+    --main-pad-top: var(--sp-4);
+    padding: var(--main-pad-top) var(--sp-4);
   }
   .app__main:only-child {
     padding: var(--sp-5);
+  }
+  .app__export {
+    margin: var(--sp-4);
   }
 }
 /* ≤620px：页面左右外距 16px（spec §6.7） */

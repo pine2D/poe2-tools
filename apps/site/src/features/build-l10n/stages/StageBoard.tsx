@@ -25,7 +25,7 @@ export interface StageBoardProps {
   locale: Locale
   bilingual: boolean
   onSeries(key: string): void
-  onDownload(): void
+  onDownload?: (() => void) | undefined
   onReview(fileId: string): void
   onOrder(ids: readonly string[] | null): void
 }

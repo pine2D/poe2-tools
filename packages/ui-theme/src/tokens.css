@@ -26,6 +26,8 @@
 
   /* 标签与主操作：钢蓝内边只作装饰，外边沿用 --control-edge */
   --label: #fff8e1;
+  --plaque-bg: #07080a;
+  --plaque-ink: #f5e8b3;
   --steel: #0f304d;
   --steel-hi: #164a75;
   --steel-edge: #4c4c7d;
@@ -106,6 +108,9 @@
   --fs-display-s: 28px;
   --fs-display: 36px;
   --fs-display-l: 54px;
+  --fs-hero: clamp(44px, 6.4vw, 84px);
+  --fs-hero-extension: clamp(38px, 5.2vw, 66px);
+  --fs-section: clamp(30px, 3.4vw, 42px);
 
   --sp-1: 4px;
   --sp-2: 8px;

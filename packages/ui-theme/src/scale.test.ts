@@ -19,6 +19,11 @@ const FONT = {
   '--fs-display': '36px',
   '--fs-display-l': '54px',
 }
+const FLUID = {
+  '--fs-hero': 'clamp(44px, 6.4vw, 84px)',
+  '--fs-hero-extension': 'clamp(38px, 5.2vw, 66px)',
+  '--fs-section': 'clamp(30px, 3.4vw, 42px)',
+}
 const SPACE = {
   '--sp-1': '4px',
   '--sp-2': '8px',
@@ -40,9 +45,9 @@ describe('尺寸阶梯（tokens.css）', () => {
   const { count, tokens } = rootTokens(read('./tokens.css'))
   const ladder = Object.fromEntries([...tokens].filter(([name]) => LADDER.test(name)))
 
-  it('tokens.css 只有一个 :root，其中的 --fs-* / --sp-* 恰好是字号 9 档与间距 8 档', () => {
+  it('tokens.css 只有一个 :root，其中的 --fs-* / --sp-* 包含固定字号 9 档、营销流体字号与间距 8 档', () => {
     expect(count).toBe(1)
-    expect(ladder).toEqual({ ...FONT, ...SPACE })
+    expect(ladder).toEqual({ ...FONT, ...FLUID, ...SPACE })
   })
 
   it('两组阶梯都严格递增，间距是 4 的倍数', () => {

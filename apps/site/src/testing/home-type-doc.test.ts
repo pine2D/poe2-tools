@@ -10,7 +10,6 @@ const read = (rel: string): string => readFileSync(new URL(rel, repo), 'utf8')
 
 const tokens = rootTokens(read('packages/ui-theme/src/tokens.css')).tokens
 const homeRules = parseRules(read('apps/site/src/shared/styles/home.css'))
-const subheadRules = parseRules(read('packages/ui-theme/src/components/subhead.css'))
 
 /** 取某选择器在指定媒体条件下（null 为无媒体条件）的 font-size，并把 var(--fs-*) 解析成 px */
 function fontSize(
@@ -38,18 +37,12 @@ function designRow(place: string): string {
   return row
 }
 
-describe('DESIGN.md 首页字号与 home.css 一致', () => {
-  it('首页 hero 标题：页面层令牌覆盖，宽屏与 ≤620px 两档', () => {
-    const wide = fontSize(homeRules, '.band__hero .pt-hero-title', null)
-    const narrow = fontSize(homeRules, '.band__hero .pt-hero-title', '(max-width: 620px)')
-    expect([wide, narrow]).toEqual(['36px', '28px'])
-    expect(designRow('首页 hero 标题')).toContain(`| ${wide}（≤620px ${narrow}，`)
-  })
-
-  it('首页场景标题：宽屏取组件 .pt-subhead--lg，≤1099px 由页面层改为 --fs-title', () => {
-    const wide = fontSize(subheadRules, '.pt-subhead--lg', null)
-    const tablet = fontSize(homeRules, '.entry__head .pt-subhead--lg', '(max-width: 1099px)')
-    expect([wide, tablet]).toEqual(['28px', '21px'])
-    expect(designRow('首页场景标题')).toContain(`| ${wide}（≤1099px ${tablet}，`)
+describe('DESIGN.md 首页字号与实际流体令牌一致', () => {
+  it.each([
+    ['首页 hero 标题', '.home-hero .pt-hero-title', 'clamp(44px, 6.4vw, 84px)'],
+    ['首页场景标题', '.entry__head .pt-subhead--lg', 'clamp(30px, 3.4vw, 42px)'],
+  ])('%s', (place, selector, expected) => {
+    expect(fontSize(homeRules, selector, null)).toBe(expected)
+    expect(designRow(place)).toContain(expected)
   })
 })

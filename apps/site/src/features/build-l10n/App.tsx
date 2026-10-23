@@ -1,6 +1,7 @@
 import type { Locale } from '@poe2-tools/build-core'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../../shared/components/Icon'
+import { PtForgeButton } from '../../shared/components/PtForgeButton'
 import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteHeader } from '../../shared/components/SiteHeader'
@@ -8,7 +9,7 @@ import { createDictLoader, type FetchJson, type LoadedDict } from '../../shared/
 import { DropZone } from './components/DropZone'
 import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
-import { OptionsBar } from './components/OptionsBar'
+import { ExportOptions, LocalePicker, OptionsBar } from './components/OptionsBar'
 import { Toast } from './components/Toast'
 import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
 import { EXAMPLE_SERIES } from './example'
@@ -143,14 +144,11 @@ export function App({ fetchImpl }: AppProps) {
   const closeToast = useCallback(() => {
     setToast(null)
   }, [])
-  // ≤1099px 侧栏折叠为抽屉（spec §6.7）；抽屉按需展开，切换文件后归还焦点
-  const [sideOpen, setSideOpen] = useState(false)
   // 导入后默认看阶段看板；“逐项核对”进入单阶段 Preview
   const [mode, setMode] = useState<'board' | 'detail'>('board')
   const [stageOrders, setStageOrders] = useState<ReadonlyMap<string, readonly string[]>>(
     () => new Map(),
   )
-  const sideToggle = useRef<HTMLButtonElement>(null)
   // 看板与逐项核对互换时旧视图整块卸载，焦点会掉回 <body>：切换前记下要交给谁，提交 DOM 后再聚焦。
   // 进入逐项核对落在构筑标题；返回看板落回刚才那一列的“逐项核对”按钮。
   const handoff = useRef<{ mode: 'board' | 'detail'; label?: string | undefined } | null>(null)
@@ -305,17 +303,10 @@ export function App({ fetchImpl }: AppProps) {
       handoff.current = { mode: 'detail' }
       setSelectedId(id)
       setMode('detail')
-      setSideOpen(false)
       return
     }
     setSelectedId(id)
     setMode('board')
-    // 抽屉开着才收起并交还焦点：≤1099px 收起后 <aside> 会 display:none，刚被点击的文件按钮随之消失，
-    // 焦点会被重置到 <body>——键盘与读屏用户正好在「选文件 → 看概览」的中间丢掉光标。
-    if (sideOpen) {
-      setSideOpen(false)
-      sideToggle.current?.focus()
-    }
   }
   const remove = (id: string) => {
     const index = sources.findIndex((source) => source.id === id)
@@ -329,8 +320,6 @@ export function App({ fetchImpl }: AppProps) {
     requestAnimationFrame(() => {
       if (remaining.length === 0) {
         document.getElementById('file-input')?.focus()
-      } else if (sideOpen) {
-        sideToggle.current?.focus()
       } else {
         // 紧凑行（看板多阶段）没有 aria-current，退到移除位置上的相邻文件
         const picks = document.querySelectorAll<HTMLButtonElement>('.pt-file__pick')
@@ -340,6 +329,15 @@ export function App({ fetchImpl }: AppProps) {
         ;(current ?? picks[Math.min(index, picks.length - 1)])?.focus()
       }
     })
+  }
+  const [exportError, setExportError] = useState(false)
+  const attemptDownload = (action: () => void) => {
+    try {
+      action()
+      setExportError(false)
+    } catch {
+      setExportError(true)
+    }
   }
   const downloadOne = (id: string) => {
     const result = results.find((item) => item.id === id)
@@ -460,7 +458,6 @@ export function App({ fetchImpl }: AppProps) {
               seriesHandoff.current = key
               setSelectedId(first.file.id)
             }}
-            onDownload={() => downloadSeries(currentSeries)}
             onOrder={(ids) =>
               setStageOrders((previous) => {
                 const next = new Map(previous)
@@ -484,7 +481,6 @@ export function App({ fetchImpl }: AppProps) {
           fields={fieldsById.get(selected.id) ?? []}
           locale={locale}
           bilingual={options.bilingual}
-          onDownload={() => downloadOne(selected.id)}
           onBack={() => {
             const label = currentSeries?.stages.find(
               (stage) => stage.file.id === selected.id,
@@ -505,7 +501,7 @@ export function App({ fetchImpl }: AppProps) {
     )
   }
 
-  // 侧栏内容（spec §6.4.2）：DropZone rail、本次文件、文件列表、批量下载、失败提示、下载帮助
+  // 文件区负责导入与切换，导出选项和操作集中在主区之后的独立区域。
   const side = (
     <>
       <DropZone onFiles={onFiles} onPaste={onPaste} />
@@ -522,31 +518,6 @@ export function App({ fetchImpl }: AppProps) {
         onSelect={selectFile}
         onRemove={remove}
       />
-      <button
-        type="button"
-        className="pt-btn pt-btn--quiet pt-btn--block"
-        title={downloadTitle}
-        disabled={translated.length === 0}
-        onClick={downloadAll}
-      >
-        <Icon name="download" size={18} />
-        <span>
-          {translated.length < sources.length && dictState.status === 'ready'
-            ? `下载成功的 ${translated.length} 份`
-            : `下载全部 ${translated.length} 份`}
-        </span>
-      </button>
-      {results.some((result) => !result.ok) && (
-        <p className="app__side-warn">解析失败的文件不会导出。</p>
-      )}
-      <details className="app__download-help">
-        <summary className="pt-textbtn pt-textbtn--underline">下载后怎么使用？</summary>
-        <p>
-          将 .build 文件放进文档目录下的 My Games / Path of Exile 2 /
-          BuildPlanner。同名替换前请保留原文件备份。
-        </p>
-        <p>多文件包先解压。同名文件会加序号区分，按需要选用。</p>
-      </details>
     </>
   )
 
@@ -556,43 +527,107 @@ export function App({ fetchImpl }: AppProps) {
         跳到主要内容
       </a>
       <SiteHeader active="build">
-        <OptionsBar locale={locale} options={options} onLocale={setLocale} onOptions={setOptions} />
+        {empty ? (
+          <OptionsBar
+            locale={locale}
+            options={options}
+            onLocale={setLocale}
+            onOptions={setOptions}
+          />
+        ) : (
+          <LocalePicker locale={locale} onLocale={setLocale} />
+        )}
       </SiteHeader>
       <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
       <div className="app__body">
         {!empty && (
-          <>
-            {/* ≤1099px 才出现的抽屉开关；桌面由 CSS 隐藏，不占网格单元。放在 {!empty} 分支里也是硬要求：
-                空态时 <main> 必须仍是 .app__body 的唯一子元素，:only-child 才成立。 */}
-            <button
-              type="button"
-              className="pt-sidetoggle app__sidetoggle"
-              ref={sideToggle}
-              aria-controls="app-side"
-              aria-expanded={sideOpen}
-              onClick={() => setSideOpen((open) => !open)}
-            >
-              <Icon name="chevron-down" size={14} className="app__sidechev" />
-              {stagesList ? (
-                `文件 · ${sources.length} 份`
-              ) : (
-                <>
-                  文件 · {selected?.name ?? sources[0]?.name ?? '未选择'}
-                  <span className="app__sidecount">{sources.length}</span>
-                </>
-              )}
-            </button>
-            <aside id="app-side" className={sideOpen ? 'app__side app__side--open' : 'app__side'}>
-              {/* 侧栏是 L0 面板：每个路由状态只留主区一处金属重点（2026-10-03 方案 §3.3） */}
-              <div className="app__side-inner">{side}</div>
-              <p className="app__side-note">未命中的行保留原文，不做猜测替换</p>
-            </aside>
-          </>
+          <aside id="app-side" className="app__side" aria-label="导入文件">
+            <div className="app__side-inner">{side}</div>
+            <p className="app__side-note">未命中的行保留原文，不做猜测替换</p>
+          </aside>
         )}
         <main id="build-main" tabIndex={-1} className="app__main">
           <h1 className="visually-hidden">PoE2 构筑汉化</h1>
           {renderMain()}
         </main>
+        {!empty && (
+          <aside className="app__export" aria-label="导出构筑">
+            <h2 className="pt-subhead">导出构筑</h2>
+            <p className="app__export-scope">
+              {selected?.ok
+                ? mode === 'board' && currentSeries !== null
+                  ? `当前构筑 · ${currentSeries.stages.length} 个阶段`
+                  : `当前文件 · ${selected.name}`
+                : '请先选择可翻译的文件'}
+            </p>
+            <ExportOptions options={options} onOptions={setOptions} />
+            <p className="app__export-note">预览中的“对照 / 译文”只改变阅读方式。</p>
+            {selected?.ok && (
+              <>
+                <details className="app__output">
+                  <summary>查看实际导出内容</summary>
+                  <p>{selected.file.name}</p>
+                  <textarea
+                    readOnly
+                    rows={12}
+                    aria-label="下载文件内容"
+                    value={selected.file.output}
+                  />
+                </details>
+                <PtForgeButton
+                  aria-label={
+                    mode === 'board' && currentSeries !== null && currentSeries.stages.length > 1
+                      ? `打包下载 ${currentSeries.stages.length} 个阶段`
+                      : `下载 ${selected.name}`
+                  }
+                  onClick={() =>
+                    attemptDownload(() =>
+                      mode === 'board' && currentSeries !== null
+                        ? downloadSeries(currentSeries)
+                        : downloadOne(selected.id),
+                    )
+                  }
+                >
+                  <Icon name="download" size={18} />
+                  {mode === 'board' && currentSeries !== null && currentSeries.stages.length > 1
+                    ? '下载当前构筑'
+                    : '下载中文 .build'}
+                </PtForgeButton>
+              </>
+            )}
+            <p className="app__export-note">尚未在游戏里实测加载。请保留原文件备份。</p>
+            {exportError && (
+              <p className="app__export-error" role="alert">
+                下载未能开始。文件和设置已保留，请再次点击下载。
+              </p>
+            )}
+            <button
+              type="button"
+              className="pt-btn pt-btn--quiet pt-btn--block"
+              title={downloadTitle}
+              disabled={translated.length === 0}
+              onClick={() => attemptDownload(downloadAll)}
+            >
+              <Icon name="download" size={18} />
+              <span>
+                {translated.length < sources.length && dictState.status === 'ready'
+                  ? `下载成功的 ${translated.length} 份`
+                  : `下载全部 ${translated.length} 份`}
+              </span>
+            </button>
+            {results.some((result) => !result.ok) && (
+              <p className="app__side-warn">解析失败的文件不会导出。</p>
+            )}
+            <details className="app__download-help">
+              <summary className="pt-textbtn pt-textbtn--underline">下载后怎么使用？</summary>
+              <p>
+                将 .build 文件放进文档目录下的 My Games / Path of Exile 2 /
+                BuildPlanner。同名替换前请保留原文件备份。
+              </p>
+              <p>多文件包先解压。同名文件会加序号区分，按需要选用。</p>
+            </details>
+          </aside>
+        )}
       </div>
       {/* Toast 自带一个始终渲染的空容器承载 role="status"，这里不再按 toast !== null 整体卸载/挂载——
           那样每次都是一个新 live region，读屏不保证追踪到。 */}

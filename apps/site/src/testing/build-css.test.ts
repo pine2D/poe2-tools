@@ -68,24 +68,24 @@ const px = (value: string): number => {
 
 describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
   const rules = buildCss()
-  it('--main-pad-top 三档取间距令牌：桌面与 ≤1099px --sp-5、≤600px --sp-4，都不小于角饰外伸 12px', () => {
+  it('--main-pad-top 三档取间距令牌，阅读面板保持留白', () => {
     expect(finalValue(rules, '.app__main', '--main-pad-top')).toBe('var(--sp-5)')
-    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 1099px')).toBe(
-      'var(--sp-5)',
+    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 1199px')).toBe(
+      'var(--sp-4)',
     )
     expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 600px')).toBe(
       'var(--sp-4)',
     )
-    for (const media of [undefined, 'max-width: 1099px', 'max-width: 600px']) {
+    for (const media of [undefined, 'max-width: 1199px', 'max-width: 600px']) {
       expect(px(finalValue(rules, '.app__main', '--main-pad-top', media))).toBeGreaterThanOrEqual(
         12,
       )
     }
   })
-  it('主区上内边距就是 --main-pad-top，左右内边距不小于角饰外伸（桌面 12px，≤620px 9px）', () => {
+  it('主区上内边距就是 --main-pad-top，左右保留阅读与焦点留白', () => {
     for (const [media, least] of [
       [undefined, 12],
-      ['max-width: 1099px', 12],
+      ['max-width: 1199px', 12],
       ['max-width: 600px', 9],
     ] as const) {
       const [top, right, , left] = box(finalValue(rules, '.app__main', 'padding', media))
@@ -95,9 +95,9 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
     }
   })
   // 2026-10-03 起侧栏是 L0 面板、没有角饰，外距改用间距令牌（方案 §3.3）
-  it('侧栏内边距取间距令牌 --sp-5 / --sp-3 / --sp-5 / --sp-5', () => {
+  it('侧栏内边距使用间距令牌', () => {
     const sides = box(finalValue(rules, '.app__side', 'padding'))
-    expect(sides).toEqual(['var(--sp-5)', 'var(--sp-3)', 'var(--sp-5)', 'var(--sp-5)'])
+    expect(sides).toEqual(['var(--sp-4)', 'var(--sp-4)', 'var(--sp-4)', 'var(--sp-4)'])
   })
   it('词典失败且没有文件：ErrorCard 与下方“导入 .build”框同宽 820px 居中，左缘对齐', () => {
     expect(finalValue(rules, '.app__import', 'max-width')).toBe('820px')

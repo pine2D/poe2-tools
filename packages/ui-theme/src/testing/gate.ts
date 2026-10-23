@@ -29,12 +29,12 @@ export const NAMEPLATE_VARIANTS = {
 } as const
 
 export const TAB_COLORS = {
-  idleStops: ['#2d241b', '#1a1511'],
-  selectedStops: ['#6b4a26', '#3a2712', '#231911'],
-  selectedText: '#fbe4b8',
+  idleStops: ['#15181c'],
+  selectedStops: ['#5c3d16', '#3a2810'],
+  selectedText: '#fff8e1',
 } as const
 
 export const FORGE_COLORS = {
-  text: '#fbe7c1',
-  midStops: ['#75502a', '#553619', '#3f2610'],
+  text: '#fff8e1',
+  midStops: ['#0f304d', '#164a75'],
 } as const

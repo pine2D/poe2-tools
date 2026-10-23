@@ -46,7 +46,16 @@
   color: var(--ink-3);
 }
 .stageboard__switch {
+  max-width: 100%;
+  flex-wrap: wrap;
   margin-block-end: var(--sp-4);
+}
+.stageboard__switch .pt-seg__item {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
 }
 .stageboard__groupnote,
 .stageboard__order {

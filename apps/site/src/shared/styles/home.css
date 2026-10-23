@@ -1,507 +1,311 @@
-/* 首页“对照长带”（2026-10-03 设计系统提升方案 §3.2；样稿 2026-10-03-home-b，本地留存）。
-   一扇无标题栏的 pt-frame--hero（.band）是本页唯一的金属重点：三列（左段 | 中缝 | 右段）× 四行
-   （hero → 场景句 → 示例带 → 按钮）；示例带用 subgrid 继承这三列，左右两条放大行落在同一水平线上，中缝菱结正落在这一行。
-   DOM 顺序是 hero → 构筑入口 → 中文助手入口 → 示例带；宽屏靠 grid-row 把按钮排到带子下方，≤1099px 回到 DOM 顺序，不用 order。
-   字号与间距只取 tokens.css 的尺寸阶梯令牌；px 只用于边框、圆角、列宽、控件高度、阴影与母题尺寸这类几何值；颜色只用 tokens.css 的颜色令牌。
-   “示例”图注、尾注与右段的搜索框、L1 候选框用共用的 l1-demo.css（l1demo__ 类，扩展介绍页同用，入口里先于本文件引入）；
-   这里只写首页自己的排版：放大行、尾注贴底与“选中后”一行。 */
-
+/* v4 首页：大标题、主动中英翻面与两个完整工具区。尺寸与色彩来自共享令牌。 */
 .home-main {
-  padding-block: var(--sp-5) var(--sp-6);
+  padding-block: var(--sp-8);
 }
-
-.band {
-  --seam-w: calc(var(--sp-8) + var(--sp-4));
+.home-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--seam-w) minmax(0, 1fr);
-  column-gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-7);
+  min-height: 600px;
+  padding-block: var(--sp-6) var(--sp-8);
 }
-.band__hero {
-  grid-column: 1 / -1;
-  margin-block-end: var(--sp-4);
-  text-align: center;
+.home-eyebrow {
+  margin: 0 0 var(--sp-5);
+  color: var(--gem);
+  font-size: var(--fs-small);
+  letter-spacing: 0.12em;
 }
-.band__hero .pt-hero-title {
-  font-size: var(--fs-display);
+.home-hero .pt-hero-title {
+  font-size: var(--fs-hero);
 }
-.band__hero p {
-  margin: var(--sp-2) 0 0;
+.home-lead {
+  margin: var(--sp-5) 0;
   color: var(--ink-2);
   font-size: var(--fs-lead);
-  text-wrap: balance;
+  line-height: 1.9;
+  max-width: 32em;
 }
-
-/* 两个入口：宽屏下 section 只做语义容器，场景句排在带子上方、按钮排在带子下方，各贴自己那一端 */
-.entry {
-  display: contents;
-}
-.entry__head,
-.entry__act {
-  min-width: 0;
-  padding-inline: var(--sp-4);
-}
-.entry__head {
-  grid-row: 2;
-  margin-block-end: var(--sp-3);
-}
-.entry__act {
+.home-actions {
   display: flex;
   flex-wrap: wrap;
-  grid-row: 4;
-  align-items: center;
-  gap: var(--sp-2) var(--sp-4);
-  margin-block-start: var(--sp-3);
+  gap: var(--sp-4);
 }
-.entry--build > * {
-  grid-column: 1;
-}
-.entry--coe > * {
-  grid-column: 3;
-}
-.entry--coe .entry__head,
-.entry--coe .entry__act {
-  text-align: end;
-}
-.entry--coe .entry__act {
-  flex-direction: row-reverse;
-}
-/* 场景标题的衬线、金字与宽屏 28px 来自 ui-theme 的 .pt-subhead--lg；≤1099px 的字号见下方媒体查询 */
-.entry__head h2 {
-  text-wrap: balance;
-}
-.entry__head p {
-  max-width: 32em;
-  margin: var(--sp-2) 0 0;
-  color: var(--ink-2);
-}
-.entry--coe .entry__head p {
-  margin-inline-start: auto;
-}
-.entry__act .pt-btn {
-  min-width: 200px;
-  justify-content: space-between;
-}
-.entry__facts {
-  flex: 1 1 200px;
-  margin: 0;
+.home-hero__note {
+  margin: var(--sp-5) 0 0;
   color: var(--ink-3);
   font-size: var(--fs-small);
 }
-
-/* —— 示例带：一整条 pt-panel--inset，五行（说明 → 上文 → 放大行 → 下文 → 尾注）。
-   左右两段各是 subgrid，共享这五行；上文贴底、下文贴顶，内容向放大行聚拢；
-   每段“上文框顶 → 放大行框腰 → 下文框底”三块边框首尾相接，读作一个完整的框 —— */
-.strip {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-row: 3;
-  grid-template-columns: subgrid;
-  grid-template-rows: repeat(5, auto);
-  margin: 0;
-  padding: var(--sp-4);
-  border-radius: 6px;
-}
-.strip__side {
-  display: grid;
-  grid-row: 1 / -1;
-  grid-template-rows: subgrid;
+.home-item {
+  position: relative;
   min-width: 0;
   margin: 0;
+  padding: var(--sp-7) 0 var(--sp-5) var(--sp-5);
 }
-.strip__side--build {
-  grid-column: 1;
+.home-item__back {
+  position: absolute;
+  inset: 0 var(--sp-6) auto 0;
+  min-height: 220px;
+  padding: var(--sp-5);
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  color: var(--ink-2);
+  transform: rotate(-5deg);
 }
-.strip__side--coe {
-  grid-column: 3;
-}
-.strip__above {
-  align-self: end;
-}
-.strip__below {
-  align-self: start;
-}
-
-/* 尾注（l1demo__foot）落在第 5 行，贴底对齐 */
-.strip__side > .l1demo__foot {
-  align-self: end;
-}
-/* 两段的放大行：字号升到 --fs-title；左边 1px 分隔线 + sp-2，与右边选中项的 1px 边框 + sp-2 同一基线 */
-.demo__spot {
-  padding-block: var(--sp-2);
+.home-item__back b {
+  display: block;
   font-size: var(--fs-title);
-  line-height: 1.5;
+  font-weight: 400;
 }
-.demo__spot .pt-pair__no {
+.home-item__front {
+  position: relative;
+  display: grid;
+  gap: var(--sp-4);
+  width: 100%;
+  min-height: 300px;
+  padding: var(--sp-5);
+  border: 1px solid var(--bronze-lo);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.home-item__front:hover {
+  border-color: var(--control-edge);
+}
+.home-item__front:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+}
+.home-item__front .pt-subhead,
+.home-item__front .pt-nameplate__en {
+  display: block;
+  padding-bottom: var(--sp-4);
+  border-bottom: 2px solid var(--metal-line);
+}
+.home-item__lang {
+  display: block;
+  color: var(--ink-3);
   font-size: var(--fs-small);
 }
-
-/* 中缝：带子内部的接缝。上下两条铜线接满带高（抵消带子的上下内边距），菱结放大后横卧在放大行上 */
-.seam {
+.home-item__stats {
   display: grid;
-  grid-column: 2;
-  grid-row: 1 / -1;
-  grid-template-rows: subgrid;
-  justify-items: center;
-}
-.seam__line {
-  width: 1px;
-  background: linear-gradient(180deg, transparent, var(--metal-line) 30%, var(--metal-edge));
-}
-.seam__line--top {
-  grid-row: 1 / 3;
-  margin-block-start: calc(-1 * var(--sp-4));
-}
-.seam__line--bottom {
-  grid-row: 4 / 6;
-  margin-block-end: calc(-1 * var(--sp-4));
-  background: linear-gradient(0deg, transparent, var(--metal-line) 30%, var(--metal-edge));
-}
-.seam__knot {
-  display: flex;
-  grid-row: 3;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  /* 铜线从菱结两端穿过时不断开：用同色细线把上下两条连起来 */
-  background: linear-gradient(
-    90deg,
-    transparent calc(50% - 0.5px),
-    var(--metal-edge) calc(50% - 0.5px),
-    var(--metal-edge) calc(50% + 0.5px),
-    transparent calc(50% + 0.5px)
-  );
-}
-/* 菱结尺寸（含 ≤620 档）与扩展介绍页（extension.css）中缝的菱结同值，改动时两处同改；两页中缝几何不同，不抽共用样式 */
-.seam__knot > .pt-motif--knot {
-  --ptm-w: 72px;
-  --ptm-h: 28px;
-  --ptm-u: calc(28px / 25);
-}
-
-/* —— 左段：阶段看板片段。格子是静态示意（不是按钮），取值同构筑页 stageboard.css 的格子 —— */
-.mini-board {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: var(--fs-data);
-  line-height: 1.5;
-  table-layout: fixed;
-}
-.mini-board col.mini-board__slot {
-  width: 64px;
-}
-.mini-board :is(th, td) {
-  padding: var(--sp-1);
-  border-block-end: 1px solid var(--line);
-  text-align: start;
-  vertical-align: top;
-}
-.mini-board--cont tr:last-child :is(th, td) {
-  border-block-end: 0;
-}
-/* 列头：阶段名用衬线（pt-stagehead），只留一道细铜线；粗阶段带是工作台的落点，首页不复用。
-   左内边距 = 单元格 sp-1 + 格子 sp-3 + 格子 1px 边框，与格子里的名称左对齐 */
-.mini-board thead th {
-  padding: 0 var(--sp-1) var(--sp-2) calc(var(--sp-1) + var(--sp-3) + 1px);
-  border-block-end-color: var(--metal-edge);
-  color: var(--title-gold);
+  gap: var(--sp-3);
+  color: var(--mod-hi);
   font-size: var(--fs-lead);
-  letter-spacing: 0.04em;
+  line-height: 1.7;
 }
-.mini-board tbody th[scope="row"] {
-  padding-block-start: calc(var(--sp-1) + var(--sp-2) + 1px);
+.home-item__flip {
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-2);
   color: var(--ink-2);
   font-size: var(--fs-small);
-  font-weight: 500;
+}
+.home-item figcaption {
+  margin-top: var(--sp-4);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+}
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  column-gap: var(--sp-8);
+  row-gap: var(--sp-5);
+  align-content: center;
+  padding-block: var(--sp-8);
+  border-top: 1px solid var(--line-2);
+}
+.entry__head {
+  grid-column: 1;
+  align-self: end;
+}
+.entry__head .pt-subhead--lg {
+  font-size: var(--fs-section);
+  line-height: 1.4;
+}
+.entry__head p {
+  margin: var(--sp-5) 0 0;
+  color: var(--ink-2);
+  line-height: 1.9;
+}
+.entry__act {
+  grid-column: 1;
+  align-self: start;
+}
+.entry__facts {
+  margin: var(--sp-4) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.8;
+}
+.strip__side {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-5);
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+}
+.mini-board {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--fs-small);
+}
+.mini-board col.mini-board__slot {
+  width: 52px;
+}
+.mini-board th {
+  padding: var(--sp-3) var(--sp-2);
+  text-align: left;
+  color: var(--ink-2);
+  font-weight: 400;
+}
+.mini-board .pt-stagehead {
+  font-size: var(--fs-lead);
+  color: var(--label);
+  font-weight: 700;
+  border-bottom: 2px solid var(--metal-line);
+}
+.mini-board td {
+  padding: 0;
+  border-bottom: 1px solid var(--line);
 }
 .mini-cell {
   display: grid;
-  min-height: 44px;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid transparent;
-  border-radius: 4px;
-}
-/* 展开中的格子（示意，不是交互状态） */
-.mini-cell--open {
-  border-color: var(--control-edge);
-  background: var(--raised-2);
-}
-/* 刻痕：只给“新”与“换” */
-.mini-cell--added,
-.mini-cell--changed {
-  box-shadow: inset 3px 0 0 var(--metal-bright);
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-2);
 }
 .mini-cell__title {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-.mini-cell__mark {
-  flex: none;
-  padding-inline: var(--sp-1);
-  border: 1px solid var(--metal-edge);
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--metal-line) 30%, transparent);
-  color: var(--gold);
-  font-size: var(--fs-micro);
-  font-weight: 600;
-  line-height: 1.5;
+  gap: var(--sp-1);
 }
 .mini-cell__zh {
   color: var(--ink);
   font-weight: 600;
 }
 .mini-cell__en {
-  overflow: hidden;
   color: var(--ink-3);
   font-size: var(--fs-micro);
-  font-variant-numeric: tabular-nums;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
-
-/* 展开的对照：拆成框顶（标题）、框腰（放大的第 1 条）、框底（第 2 条）三块，跨三行首尾相接 */
-.mini-detail {
+.mini-cell__mark {
+  background: color-mix(in srgb, var(--metal-line) 30%, transparent);
   border: 1px solid var(--control-edge);
-  background: var(--raised-2);
+  padding-inline: var(--sp-1);
+  color: var(--label);
+  font-size: var(--fs-micro);
 }
-.mini-detail--top {
-  margin-block-start: var(--sp-2);
-  border-block-end: 0;
-  border-radius: 4px 4px 0 0;
+.mini-cell--added,
+.mini-cell--changed {
+  border-inline-start: 2px solid var(--bronze-lo);
+  background: var(--surface);
+}
+.mini-detail {
+  padding: var(--sp-3);
+  background: var(--surface);
 }
 .mini-detail--mid {
-  border-block: 0;
-}
-.mini-detail--bottom {
-  margin-block-end: var(--sp-1);
-  border-block-start: 0;
-  border-radius: 0 0 4px 4px;
+  padding-block: 0;
 }
 .mini-detail__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--sp-2);
-  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-small);
   color: var(--ink-2);
-  font-size: var(--fs-micro);
 }
 .mini-detail__head b {
   color: var(--ink);
-  font-size: var(--fs-small);
-  font-weight: 600;
 }
 .mini-detail__ok {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  margin-inline-start: auto;
-  color: var(--ok);
-  font-variant-numeric: tabular-nums;
 }
-/* 英文栏通常比中文长：两栏按 5:4 分，放大行与常规行共用这组列宽 */
 .mini-detail .pt-pair {
-  grid-template-columns: 20px minmax(0, 5fr) minmax(0, 4fr);
-  padding-inline-end: var(--sp-3);
+  grid-template-columns: 20px minmax(0, 1fr);
 }
-.mini-detail .demo__spot {
-  border-block: 1px solid var(--line);
+.mini-detail .pt-pair__zh {
+  grid-column: 2;
 }
-
-/* —— 右段：CoE 的搜索框（自绘）+ 扩展注入的 L1 候选框。样式全部在共用的 l1-demo.css，
-   候选框在这里拆成框顶（提示）、框腰（选中项，放大）、框底（其余候选 + 署名）三段（l1demo__box--top|mid|bottom）。
-   页面层只让放大行在框腰里按基线排、不留外边距 —— */
-.l1demo__box .demo__spot {
-  align-items: baseline;
-  margin-block: 0;
+.demo__spot {
+  font-size: var(--fs-lead);
 }
-/* 选中后：搜索框里已是英文，结果仍由原站给出；与左段尾注同为示例的最后一行（l1demo__foot） */
 .coe-after {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-1) var(--sp-3);
-  color: var(--ink-3);
-  font-size: var(--fs-micro);
+  gap: var(--sp-2);
 }
-
-/* 带下：两件工具的共同点，一行 L0 说明 */
 .home-common {
-  margin: var(--sp-4) 0 0;
+  margin: 0;
+  padding-block: var(--sp-5);
+  border-top: 1px solid var(--line);
   color: var(--ink-3);
   font-size: var(--fs-small);
 }
-
-/* ≤1099px：先放两个入口（场景句 + 按钮，两列并排），示例带整体移到入口之后，带内两段上下排，中缝转为横线 */
-@media (max-width: 1099px) {
-  .band {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: var(--sp-5);
+@media (max-width: 980px) {
+  .home-main {
+    padding-block: var(--sp-6);
+  }
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .home-item {
+    width: min(100%, 500px);
+    justify-self: center;
   }
   .entry {
-    display: grid;
-    grid-template-rows: subgrid;
-    grid-row: 2 / span 2;
-    align-content: start;
-  }
-  .entry--build {
-    grid-column: 1;
-  }
-  .entry--coe {
-    grid-column: 2;
-  }
-  .entry > * {
-    grid-column: auto;
-  }
-  .entry__head,
-  .entry__act {
-    grid-row: auto;
-    padding-inline: 0;
-  }
-  .entry__head {
-    margin-block-end: 0;
-  }
-  .entry__act {
-    align-self: start;
-    align-items: start;
-    margin-block-start: var(--sp-4);
-  }
-  .entry--coe .entry__head,
-  .entry--coe .entry__act {
-    text-align: start;
-  }
-  .entry--coe .entry__head p {
-    margin-inline-start: 0;
-  }
-  .entry--coe .entry__act {
-    flex-direction: row;
-  }
-  .entry__head .pt-subhead--lg {
-    font-size: var(--fs-title);
-  }
-  .strip {
-    grid-row: 4;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: none;
-    margin-block-start: var(--sp-6);
-  }
-  .strip__side,
-  .seam {
-    grid-column: 1;
-    grid-row: auto;
+    gap: var(--sp-5);
+    padding-block: var(--sp-7);
   }
   .strip__side {
-    grid-template-rows: none;
-  }
-  .seam {
-    grid-template-rows: none;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    margin-block: var(--sp-4);
-  }
-  .seam__line {
-    grid-row: 1;
-    width: auto;
-    height: 1px;
-    margin: 0;
-  }
-  .seam__line--top {
     grid-column: 1;
-    margin-inline-start: calc(-1 * var(--sp-4));
-    background: linear-gradient(90deg, transparent, var(--metal-edge));
-  }
-  .seam__line--bottom {
-    grid-column: 3;
-    margin-inline-end: calc(-1 * var(--sp-4));
-    background: linear-gradient(270deg, transparent, var(--metal-edge));
-  }
-  .seam__knot {
-    grid-row: 1;
-    grid-column: 2;
-    width: auto;
-    background: none;
-  }
-  .strip__above,
-  .strip__below {
-    align-self: auto;
+    grid-row: auto;
   }
 }
-
-/* ≤620px：两个入口上下排（场景句 + 按钮），示例带随后；场景标题沿用 ≤1099px 的 --fs-title */
 @media (max-width: 620px) {
-  .home-main {
-    padding-block: var(--sp-4) var(--sp-6);
+  .home-actions {
+    flex-direction: column;
   }
-  .band {
-    grid-template-columns: minmax(0, 1fr);
+  .home-item {
+    padding-inline-start: var(--sp-3);
   }
-  .band__hero .pt-hero-title {
-    font-size: var(--fs-display-s);
-  }
-  .band__hero p {
-    font-size: var(--fs-data);
-  }
-  .entry {
-    display: contents;
-  }
-  .entry--build > *,
-  .entry--coe > * {
-    grid-column: 1;
-  }
-  .entry__act {
-    margin-block: var(--sp-3) 0;
-  }
-  .entry--coe .entry__head {
-    margin-block-start: var(--sp-4);
-    padding-block-start: var(--sp-4);
-    border-block-start: 1px solid var(--line);
-  }
-  .entry__head p {
-    font-size: var(--fs-body);
+  .home-item__front,
+  .strip__side {
+    padding: var(--sp-4);
   }
   .entry__act .pt-btn {
     width: 100%;
   }
-  .strip {
-    grid-row: auto;
-    margin-block-start: var(--sp-5);
-    padding: var(--sp-3);
-  }
-  .seam__line--top {
-    margin-inline-start: calc(-1 * var(--sp-3));
-  }
-  .seam__line--bottom {
-    margin-inline-end: calc(-1 * var(--sp-3));
-  }
-  .seam__knot > .pt-motif--knot {
-    --ptm-w: 52px;
-    --ptm-h: 20px;
-    --ptm-u: calc(20px / 25);
-  }
-  .mini-board col.mini-board__slot {
-    width: 48px;
+  .entry .nw {
+    white-space: normal;
   }
   .demo__spot {
-    font-size: var(--fs-lead);
+    font-size: var(--fs-data);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-item__back {
+    transform: none;
+  }
+}
+@media (forced-colors: active) {
+  .home-item__front,
+  .mini-cell--added,
+  .mini-cell--changed {
+    border-color: CanvasText;
   }
 }
 
-/* 强制色彩：渐变铜线退回系统文字色；刻痕（box-shadow）不绘制，改用左边框（搜索框图标的 inherit 在 l1-demo.css） */
-@media (forced-colors: active) {
-  .seam__line {
-    background: CanvasText;
-  }
-  .seam__knot {
-    background: none;
-  }
-  .mini-cell--added,
-  .mini-cell--changed {
-    box-shadow: none;
-    border-inline-start: 3px solid CanvasText;
-  }
-  .mini-cell__mark {
-    border-color: CanvasText;
-  }
+.home-item__front .pt-nameplate__en {
+  font-size: var(--fs-title);
 }

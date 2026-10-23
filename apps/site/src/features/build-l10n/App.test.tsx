@@ -60,6 +60,48 @@ function enterReview() {
 const HERO = /^英文构筑，\s*中文读懂。$/
 
 describe('App', () => {
+  it('导出栏预览随选项更新，与实际下载内容逐字一致', async () => {
+    await renderReady()
+    const blobs = interceptDownloads()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const panel = within(screen.getByRole('complementary', { name: '导出构筑' }))
+    fireEvent.click(panel.getByText('查看实际导出内容'))
+    expect(
+      (panel.getByRole('textbox', { name: '下载文件内容' }) as HTMLTextAreaElement).readOnly,
+    ).toBe(true)
+    expect(
+      (panel.getByRole('textbox', { name: '下载文件内容' }) as HTMLTextAreaElement).value,
+    ).toBe(expected)
+    fireEvent.click(panel.getByLabelText('导出时保留英文原行'))
+    fireEvent.click(panel.getByRole('button', { name: '下载 rich.build' }))
+    expect(
+      (panel.getByRole('textbox', { name: '下载文件内容' }) as HTMLTextAreaElement).value,
+    ).toBe(await blobs[0]?.text())
+    expect(
+      (panel.getByRole('textbox', { name: '下载文件内容' }) as HTMLTextAreaElement).value,
+    ).toContain('149% increased Spell Damage')
+  })
+
+  it('下载失败后保留文件和选项，修复下载环境后可再次导出', async () => {
+    await renderReady()
+    const blobs = interceptDownloads()
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: 'rich.build' })
+    const panel = within(screen.getByRole('complementary', { name: '导出构筑' }))
+    fireEvent.click(panel.getByLabelText('导出时保留英文原行'))
+    vi.mocked(URL.createObjectURL).mockImplementationOnce(() => {
+      throw new Error('浏览器拒绝创建下载')
+    })
+    fireEvent.click(panel.getByRole('button', { name: '下载 rich.build' }))
+    expect(panel.getByRole('alert').textContent).toContain('下载未能开始')
+    expect((panel.getByLabelText('导出时保留英文原行') as HTMLInputElement).checked).toBe(true)
+    expect(inFileList().getByRole('button', { name: 'rich.build' })).toBeDefined()
+    fireEvent.click(panel.getByRole('button', { name: '下载 rich.build' }))
+    expect(panel.queryByRole('alert')).toBeNull()
+    expect(await blobs[0]?.text()).toContain('149% increased Spell Damage')
+  })
+
   it('上传文件 → 列表显示覆盖率 → 下载得到译文', async () => {
     await renderReady()
     const blobs = interceptDownloads()
@@ -70,6 +112,9 @@ describe('App', () => {
     upload('rich.build', rich)
     // 文件名在列表按钮与（Task 5 起）概览里都会出现：按角色找列表按钮
     await screen.findByRole('button', { name: 'rich.build' })
+    const exportPanel = screen.getByRole('complementary', { name: '导出构筑' })
+    const loadingLimit = within(exportPanel).getByText('尚未在游戏里实测加载。请保留原文件备份。')
+    expect(loadingLimit.closest('details')).toBeNull()
     // 侧栏文件项：有待核对项时显示“待核对 n”，与信息行同一口径（spec §5.12，B1）
     expect(inFileList().getByText('待核对 1')).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '下载 rich.build' }))
@@ -183,21 +228,17 @@ describe('App', () => {
     expect(screen.queryByRole('heading', { level: 2, name: HERO })).toBeNull()
   })
 
-  it('侧栏抽屉：开关声明了它控制谁，点一次展开、选中文件后自动收起', async () => {
+  it('窄屏文件清单持续可用，切换文件不依赖隐藏抽屉', async () => {
     await renderReady()
-    upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
-    const toggle = screen.getByRole('button', { name: /^文件 · / })
-    expect(toggle.getAttribute('aria-controls')).toBe('app-side')
-    expect(toggle.getAttribute('aria-expanded')).toBe('false')
-    fireEvent.click(toggle)
-    expect(toggle.getAttribute('aria-expanded')).toBe('true')
-    // 选一份文件之后抽屉收起，主区立刻露出来（≤560 的核心动线）
-    fireEvent.click(screen.getByRole('button', { name: 'rich.build' }))
-    expect(toggle.getAttribute('aria-expanded')).toBe('false')
-    // 焦点必须交还给开关：≤560 下 <aside> 随即 display:none，刚被点击的文件按钮
-    // 连同它一起消失，不接住的话焦点掉回 <body>，键盘与读屏用户在核心动线正中间丢掉光标
-    expect(document.activeElement).toBe(toggle)
+    upload('a.build', rich)
+    await screen.findByRole('button', { name: 'a.build' })
+    upload('b.build', JSON.stringify({ name: '另一个构筑' }))
+    const pick = await screen.findByRole('button', { name: 'b.build' })
+    pick.focus()
+    fireEvent.click(pick)
+    expect(screen.getByRole('heading', { name: '另一个构筑' })).toBeDefined()
+    expect(document.activeElement).toBe(pick)
+    expect(screen.getByRole('complementary', { name: '导入文件' }).contains(pick)).toBe(true)
   })
 
   it('词典状态是一条礼貌播报，读屏听得到三态切换（M-1）', async () => {
@@ -291,7 +332,7 @@ const failingDict = () => {
 }
 
 describe('构筑页骨架（M2）', () => {
-  it('宽屏：侧栏是 L0 面板，含 rail、本次文件、文件列表、批量下载与下载帮助', async () => {
+  it('宽屏：文件区负责导入，导出区提供批量下载与下载帮助', async () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
@@ -299,17 +340,16 @@ describe('构筑页骨架（M2）', () => {
     const side = document.querySelector('#app-side .app__side-inner') as HTMLElement
     expect(side.closest('aside')?.id).toBe('app-side')
     expect(within(side).getByText('本次文件')).toBeDefined()
-    const all = within(side).getByRole('button', { name: '下载全部 1 份' })
+    const exports = within(screen.getByRole('complementary', { name: '导出构筑' }))
+    const all = exports.getByRole('button', { name: '下载全部 1 份' })
     expect(all.className).toBe('pt-btn pt-btn--quiet pt-btn--block')
     // 图标与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
     expect(all.querySelector('svg')?.getAttribute('width')).toBe('18')
-    expect(within(side).getByText('下载后怎么使用？').className).toBe(
-      'pt-textbtn pt-textbtn--underline',
-    )
+    expect(exports.getByText('下载后怎么使用？').className).toBe('pt-textbtn pt-textbtn--underline')
     expect(document.querySelectorAll('.pt-frame .pt-frame')).toHaveLength(0)
   })
 
-  it('宽屏已导入：只有主区一扇框（角饰 4 个），唯一的 pt-forge-btn 是下载（spec §4.2）', async () => {
+  it('宽屏已导入：主区阶段对照，右栏提供唯一主下载操作', async () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
@@ -332,16 +372,14 @@ describe('构筑页骨架（M2）', () => {
     expect(forges()).toHaveLength(1)
   })
 
-  it('≤1099px：侧栏不渲染 pt-frame，内容直接排在抽屉里；抽屉开关是 L0 折叠条', async () => {
+  it('窄屏：导入文件保留独立语义区域，不嵌套工作面板', async () => {
     mockMatchMedia(true)
     await renderReady()
     upload('rich.build', rich)
     await screen.findByRole('button', { name: 'rich.build' })
     expect(document.querySelector('.pt-frame--side')).toBeNull()
     expect(document.querySelector('#app-side > .app__side-inner')).not.toBeNull()
-    expect(screen.getByRole('button', { name: /^文件 · / }).className).toBe(
-      'pt-sidetoggle app__sidetoggle',
-    )
+    expect(screen.getByRole('complementary', { name: '导入文件' })).toBeDefined()
   })
 
   it('断点跨越时侧栏都是 L0 面板，文件列表保持', async () => {
@@ -364,7 +402,9 @@ describe('构筑页骨架（M2）', () => {
     const note = screen.getByText('未命中的行保留原文，不做猜测替换')
     expect(note.className).toBe('app__side-note')
     expect(note.closest('.pt-frame')).toBeNull()
-    expect(within(screen.getByRole('complementary')).queryByText(/^词典 /)).toBeNull()
+    expect(
+      within(screen.getByRole('complementary', { name: '导入文件' })).queryByText(/^词典 /),
+    ).toBeNull()
   })
 
   it('词典状态条：pt-dictbar 常驻 role=status，就绪时圆点、“词典就绪”与版本号', async () => {
@@ -479,7 +519,6 @@ it('构筑页各状态都不再使用改版前的类名', async () => {
   await screen.findByRole('button', { name: 'rich.build' })
   expect(oldClasses()).toEqual([])
   enterReview()
-  fireEvent.click(screen.getByRole('button', { name: '设置' }))
   expect(oldClasses()).toEqual([])
   fireEvent.click(screen.getByRole('radio', { name: '译文' }))
   expect(oldClasses()).toEqual([])
@@ -618,16 +657,14 @@ describe('阶段看板（第一期）', () => {
   })
 
   // 修订 1（侧栏让位）：看板同时展示多个阶段，侧栏文件降为紧凑行，没有单选语义
-  it('看板显示多个阶段时侧栏降为紧凑行：不标当前文件，抽屉开关写份数', async () => {
+  it('看板显示多个阶段时文件清单不误标单份选中，导出说明阶段范围', async () => {
     await renderReady()
     fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
     await screen.findByRole('heading', { name: '示例构筑（自造）' })
     const list = screen.getByRole('list', { name: '已导入文件' })
     expect(list.className).toBe('app__files app__files--stages')
     expect(list.querySelector('[aria-current]')).toBeNull()
-    const toggle = screen.getByRole('button', { name: /^文件 · / })
-    expect(toggle.textContent).toBe('文件 · 3 份')
-    expect(toggle.querySelector('.app__sidecount')).toBeNull()
+    expect(screen.getByText('当前构筑 · 3 个阶段')).toBeDefined()
     // 逐项核对是单文件视图：恢复普通文件项与当前项标记
     fireEvent.click(screen.getByRole('button', { name: '逐项核对 1–30 级' }))
     expect(list.className).toBe('app__files')
