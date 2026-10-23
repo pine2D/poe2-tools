@@ -28,6 +28,12 @@ const base: CacheKeyParts = {
 }
 
 describe('cacheKey', () => {
+  it('术语类型只影响侧栏显示，不改变缓存键，旧缓存继续命中', async () => {
+    const k = await cacheKey(base)
+    expect(
+      await cacheKey({ ...base, terms: [{ ...(base.terms[0] as TermSpan), kind: 'gem' }] }),
+    ).toBe(k)
+  })
   it('64 位十六进制，空白差异不影响', async () => {
     const k = await cacheKey(base)
     expect(k).toMatch(/^[0-9a-f]{64}$/)

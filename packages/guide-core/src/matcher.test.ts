@@ -41,6 +41,29 @@ const brief = (text: string, ctx?: Parameters<typeof m.find>[1]) =>
   m.find(text, ctx).map((s) => `${text.slice(s.start, s.end)}:${s.zh}:${s.status}`)
 
 describe('createMatcher', () => {
+  it('命中带出条目类型；同名条目类型不一致时不给类型', () => {
+    const [gem] = m.find('Use Contagion now')
+    expect(gem?.kind).toBe('gem')
+    const mixed = createMatcher({
+      ...dict,
+      entries: [
+        e('passive:X', 'Unbreakable', '坚韧', 'passive'),
+        e('gem:X', 'Unbreakable', '坚韧', 'gem'),
+      ],
+    }).find('Take Unbreakable early')
+    expect(mixed).toHaveLength(1)
+    expect(mixed[0]?.status).toBe('confirmed')
+    expect(mixed[0] && 'kind' in mixed[0]).toBe(false)
+    // 词典里升华名（manual）与同名升华起点天赋（gray）并存
+    const asc = createMatcher({
+      ...dict,
+      entries: [
+        e('asc:Ranger1', 'Deadeye', '锐眼', 'ascendancy', 'manual'),
+        e('passive:AscendancyRanger1Start', 'Deadeye', '锐眼', 'passive'),
+      ],
+    }).find('Play a Deadeye now')
+    expect(asc.map((s) => [s.status, s.kind])).toEqual([['confirmed', 'ascendancy']])
+  })
   it('最长匹配优先并给出正确偏移', () => {
     const text = 'Use Essence Drain and Contagion.'
     const spans = m.find(text)

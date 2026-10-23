@@ -8,21 +8,22 @@ import { parseRules, rootTokens } from './testing/css'
 const at = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 const read = (path: string) => readFileSync(at(path), 'utf8')
 
+// 字号写 rem（2026-10-23 迁移，= 原 px / 16）：12／13／14／15／17／21／28／36／54px 与三档流体端点，换算由 rem.test.ts 断言
 const FONT = {
-  '--fs-micro': '12px',
-  '--fs-small': '13px',
-  '--fs-body': '14px',
-  '--fs-data': '15px',
-  '--fs-lead': '17px',
-  '--fs-title': '21px',
-  '--fs-display-s': '28px',
-  '--fs-display': '36px',
-  '--fs-display-l': '54px',
+  '--fs-micro': '0.75rem',
+  '--fs-small': '0.8125rem',
+  '--fs-body': '0.875rem',
+  '--fs-data': '0.9375rem',
+  '--fs-lead': '1.0625rem',
+  '--fs-title': '1.3125rem',
+  '--fs-display-s': '1.75rem',
+  '--fs-display': '2.25rem',
+  '--fs-display-l': '3.375rem',
 }
 const FLUID = {
-  '--fs-hero': 'clamp(44px, 6.4vw, 84px)',
-  '--fs-hero-extension': 'clamp(38px, 5.2vw, 66px)',
-  '--fs-section': 'clamp(30px, 3.4vw, 42px)',
+  '--fs-hero': 'clamp(2.75rem, 6.4vw, 5.25rem)',
+  '--fs-hero-extension': 'clamp(2.375rem, 5.2vw, 4.125rem)',
+  '--fs-section': 'clamp(1.875rem, 3.4vw, 2.625rem)',
 }
 const SPACE = {
   '--sp-1': '4px',
@@ -51,13 +52,15 @@ describe('尺寸阶梯（tokens.css）', () => {
   })
 
   it('两组阶梯都严格递增，间距是 4 的倍数', () => {
+    // rem 按默认 16px 根字号换算后比较
     const px = (list: Record<string, string>) =>
-      Object.values(list).map((v) => Number.parseInt(v, 10))
+      Object.values(list).map((v) => Number.parseFloat(v) * (v.endsWith('rem') ? 16 : 1))
     for (const list of [px(FONT), px(SPACE)]) {
       expect(list).toEqual([...list].sort((a, b) => a - b))
       expect(new Set(list).size).toBe(list.length)
     }
     expect(px(SPACE).every((v) => v % 4 === 0)).toBe(true)
+    expect(px(FONT).every(Number.isInteger)).toBe(true)
   })
 
   it('scale.css 已并入 tokens.css：文件与 ./scale.css 导出都不存在，源码与脚本里没有任何引用', () => {
@@ -89,7 +92,7 @@ describe('尺寸阶梯（tokens.css）', () => {
     for (const name of ladderRefs(popup)) expect(tokens.has(name), name).toBe(true)
   })
 
-  it('L1 在 :host 恰好声明它用到的阶梯令牌（不多不少；值与 tokens.css 相同由 l1.test.ts 断言）', () => {
+  it('L1 在 :host 恰好声明它用到的阶梯令牌（不多不少；字号为 px、与 tokens.css 按 16px 换算等值由 l1.test.ts 断言）', () => {
     const l1 = read('./l1.css')
     const host = parseRules(l1).find(
       (rule) => rule.selectors.length === 1 && rule.selectors[0] === ':host',

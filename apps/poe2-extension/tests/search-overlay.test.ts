@@ -1,7 +1,7 @@
-// CoE 搜索候选浮层的层级、可访问角色与滚动恢复（v4 复盘第 3 组 B3-01、B3-11、B3-12）
-import { createLexicon } from '@poe2-tools/l10n-core'
+// CoE 搜索候选浮层的层级、可访问角色、滚动恢复与候选细节（v4 复盘第 3 组 B3-01、B3-09、B3-11、B3-12）
+import { createLexicon, type Term } from '@poe2-tools/l10n-core'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { attachSearch } from '../src/content/search-controller'
+import { attachSearch, candidateKind } from '../src/content/search-controller'
 
 const lex = createLexicon([
   {
@@ -139,4 +139,127 @@ it('B3-12：输入框仍聚焦时滚出视口撤下候选，滚回视口重建�
   rect = new DOMRect(20, 80, 240, 42)
   document.dispatchEvent(new Event('scroll'))
   expect(host()).toBeNull()
+})
+
+// ---- B3-09：候选数量、类别与匹配高亮 ----
+const multi = createLexicon([
+  { id: 'a', en: 'Crystal Focus', zh: '水晶法器', domain: 'base', source: 't', version: 't' },
+  {
+    id: 'b',
+    en: 'Runeforged Crystal Focus',
+    zh: '符文水晶法器',
+    domain: 'base',
+    source: 't',
+    version: 't',
+  },
+])
+function setupMulti() {
+  document.body.innerHTML = '<main><div id="searchItemInput"><input></div></main>'
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachSearch(document, multi)
+  return input
+}
+const help = (input: HTMLInputElement) =>
+  (input.getAttribute('aria-describedby') ?? '')
+    .split(/\s+/)
+    .map((id) => document.getElementById(id))
+    .find((el) => el?.parentElement === host()) as HTMLElement
+
+it('B3-09：说明行显示“N 项”，数量在输入框引用的说明里，不另加描述引用', () => {
+  const input = setupMulti()
+  type(input, '水晶')
+  const label = help(input)
+  expect(label).toBeDefined()
+  expect(input.getAttribute('aria-describedby')?.split(/\s+/)).toHaveLength(1)
+  const count = label.querySelector('[slot="help-count"]')
+  expect(count?.textContent).toBe('2 项')
+  expect(label.textContent).toContain('方向键')
+  // 说明与数量分进两个 slot，排版在说明行自己的 shadow 里
+  const slots = [...(label.shadowRoot?.querySelectorAll('slot') ?? [])].map((slot) => slot.name)
+  expect(slots).toEqual(['help-text', 'help-count'])
+  // 无候选时不显示数量
+  type(input, '不存在')
+  expect(help(input).querySelector('[slot="help-count"]')).toBeNull()
+  expect(help(input).textContent).toContain('未找到术语')
+})
+
+it('B3-09：每个候选标出数据类别，用 aria-describedby 引用；可访问名称仍是完整中英文', () => {
+  const input = setupMulti()
+  type(input, '水晶')
+  const buttons = [...(host()?.querySelectorAll('button') ?? [])]
+  expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+    '水晶法器，Crystal Focus',
+    '符文水晶法器，Runeforged Crystal Focus',
+  ])
+  for (const button of buttons) {
+    const kind = document.getElementById(button.getAttribute('aria-describedby') ?? '')
+    expect(kind?.textContent).toBe('基底')
+    expect(button.contains(kind)).toBe(true)
+    expect(kind?.getAttribute('slot')).toBe('candidate-kind')
+  }
+})
+
+it('B3-09：类别取自词条数据，不编造', () => {
+  const term = (domain: Term['domain'], id = 'x') => ({
+    id,
+    en: 'X',
+    zh: '某',
+    domain,
+    source: 't',
+    version: 't',
+  })
+  expect(candidateKind(term('base'))).toBe('基底')
+  expect(candidateKind(term('stat'))).toBe('词缀')
+  expect(candidateKind(term('item'))).toBe('物品')
+  expect(candidateKind(term('ui', 'affix-name:x'))).toBe('词缀名称')
+  expect(candidateKind(term('ui', 'ui-label:x'))).toBe('词缀分类')
+  expect(candidateKind(term('ui', 'ui:Number of Affixes'))).toBe('条件')
+  // 搜索不会出现的域不给类别
+  expect(candidateKind(term('gem'))).toBeNull()
+})
+
+it('B3-09：名称里与输入相同的字成段加重，拼起来仍是完整名称', () => {
+  const input = setupMulti()
+  type(input, '水晶 器')
+  const button = [...(host()?.querySelectorAll('button') ?? [])][1] as HTMLButtonElement
+  const pieces = [...button.querySelectorAll<HTMLElement>('[slot="candidate-zh"]')]
+  expect(pieces.map((piece) => piece.textContent).join('')).toBe('符文水晶法器')
+  expect(
+    pieces.filter((piece) => piece.hasAttribute('data-hit')).map((p) => p.textContent),
+  ).toEqual(['水晶', '器'])
+  expect(button.getAttribute('aria-label')).toBe('符文水晶法器，Runeforged Crystal Focus')
+})
+
+it('B3-09：条件 listbox 内说明行（含数量）仍对读屏隐藏，类别作选项描述', () => {
+  document.body.innerHTML = `<main><div id="simulatorConditionRequirements"><div class="dropdown editing"><label><div class="editing"><div><input type="text"></div></div></label><ul><li search="metanumber of affixes"></li></ul></div></div></main>`
+  const input = document.querySelector('input') as HTMLInputElement
+  stop = attachSearch(
+    document,
+    createLexicon([
+      {
+        id: 'ui:n',
+        en: 'Number of Affixes',
+        zh: '词缀数量',
+        domain: 'ui',
+        source: 't',
+        version: 't',
+      },
+    ]),
+  )
+  input.focus()
+  type(input, '词缀')
+  const label = help(input)
+  expect(label.getAttribute('aria-hidden')).toBe('true')
+  expect(label.querySelector('[slot="help-count"]')?.textContent).toBe('1 项')
+  const option = host()?.querySelector('[role="option"]') as HTMLElement
+  expect(document.getElementById(option.getAttribute('aria-describedby') ?? '')?.textContent).toBe(
+    '条件',
+  )
+})
+
+it('B3-09：固定面板至少 360px 宽（视口允许时），不再等于窄输入框', () => {
+  const input = setupMulti()
+  input.getBoundingClientRect = () => new DOMRect(20, 80, 240, 42)
+  type(input, '水晶')
+  expect(host()?.style.width).toBe('360px')
 })

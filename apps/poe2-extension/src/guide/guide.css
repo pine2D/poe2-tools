@@ -413,6 +413,10 @@ body {
   font-size: var(--fs-lead);
   line-height: 1.85;
 }
+/* 词典整句译出的词缀行用词缀色（术语分类色见 .poe2-term[data-kind]） */
+.block[data-origin="dictionary"] .dst {
+  color: var(--mod);
+}
 .block .dst:empty,
 .page-status:empty {
   display: none;
@@ -620,6 +624,47 @@ body {
 }
 .term[data-status="hint"] {
   text-decoration-color: var(--line-2);
+}
+/* 侧栏译文术语分类色（DESIGN 游戏色）；只表示术语类别，不表示整句准确。
+   普通物品与天赋／升华用 --normal-item、--passive。
+   页内对照与划词气泡不写 data-kind，继承宿主文字色。 */
+.guide-term-legend [data-kind="gem"],
+.dst .poe2-term[data-kind="gem"] {
+  color: var(--gem);
+}
+.guide-term-legend [data-kind="unique"],
+.dst .poe2-term[data-kind="unique"] {
+  color: var(--unique);
+}
+.guide-term-legend [data-kind="base"],
+.dst .poe2-term[data-kind="base"] {
+  color: var(--normal-item);
+}
+.guide-term-legend [data-kind="passive"],
+.dst .poe2-term:is([data-kind="passive"], [data-kind="ascendancy"]) {
+  color: var(--passive);
+}
+.guide-term-legend [data-kind="stat"],
+.dst .poe2-term[data-kind="stat"] {
+  color: var(--mod);
+}
+.dst
+  .poe2-term:is(
+    [data-kind="gem"],
+    [data-kind="unique"],
+    [data-kind="base"],
+    [data-kind="passive"],
+    [data-kind="ascendancy"]
+  ),
+.guide-term-legend [data-kind] {
+  font-weight: 600;
+}
+.guide-term-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+  font-size: var(--fs-small);
+  color: var(--ink-3);
 }
 .term:focus-visible::after,
 abbr:focus-visible::after {
@@ -951,5 +996,16 @@ abbr:focus-visible::after {
 @media (forced-colors: active) {
   .guide .pt-switch:indeterminate::before {
     background: ButtonText;
+  }
+  /* 强制色彩下术语分类色失效，只保留下划线；图例无意义，隐藏 */
+  .dst .poe2-term[data-kind] {
+    color: inherit;
+    font-weight: inherit;
+  }
+  .block[data-origin="dictionary"] .dst {
+    color: inherit;
+  }
+  .guide-term-legend {
+    display: none;
   }
 }

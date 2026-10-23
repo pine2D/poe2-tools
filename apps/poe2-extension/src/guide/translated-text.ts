@@ -1,4 +1,17 @@
-import type { TranslatedTerm } from '@poe2-tools/guide-core'
+import type { TranslatedTerm, TranslatedTermKind } from '@poe2-tools/guide-core'
+
+// 消息边界只认已知类型；未知值不写入属性，退回下划线。
+const KINDS: ReadonlySet<string> = new Set<TranslatedTermKind>([
+  'gem',
+  'passive',
+  'ascendancy',
+  'class',
+  'base',
+  'unique',
+  'keyword',
+  'jargon',
+  'stat',
+])
 
 // 与原文标注同样克制；鼠标 title，键盘展开英文。伪元素不进入复制文本。
 export const TERM_STYLE = `
@@ -6,12 +19,14 @@ export const TERM_STYLE = `
 .poe2-term:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 2px; }
 .poe2-term:focus-visible::after { content: "（" attr(data-en) "）"; font-size: .9em; font-weight: 400; }
 `
-/** 消息边界再次校验偏移，始终构造文本节点，不能引入 HTML 或改写译文。 */
+/** 消息边界再次校验偏移，始终构造文本节点，不能引入 HTML 或改写译文。
+ *  withKind 只给侧栏用：写入 data-kind 供 guide.css 着色；页内对照与划词气泡继承宿主文字色。 */
 export function translatedText(
   doc: Document,
   text: string,
   terms: readonly TranslatedTerm[] = [],
   focusable = true,
+  withKind = false,
 ): DocumentFragment {
   const fragment = doc.createDocumentFragment()
   let cursor = 0
@@ -37,6 +52,7 @@ export function translatedText(
       span.textContent = t.zh
       span.title = `${t.zh} · ${t.en}`
       span.dataset.en = t.en
+      if (withKind && typeof t.kind === 'string' && KINDS.has(t.kind)) span.dataset.kind = t.kind
       if (focusable) {
         span.tabIndex = 0
         span.setAttribute('aria-label', span.title)

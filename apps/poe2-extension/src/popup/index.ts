@@ -60,6 +60,8 @@ let recheckTimer: ReturnType<typeof setTimeout> | undefined
 
 function paint(block: HTMLElement, view: PageView) {
   block.dataset.kind = view.kind
+  // 不在 CoE 页面时压缩 CoE 区（复盘 B1-01）：开关保留可用，只隐藏说明、降低行高
+  block.dataset.scope = view.word === '未连接' ? 'elsewhere' : 'coe'
   const icon = stateIcon(document, view.kind)
   icon.classList.add('page__icon')
   const previous = block.querySelector('.page__icon')

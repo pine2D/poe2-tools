@@ -56,7 +56,7 @@ it('双语候选保留完整按钮名称，标签分层后点击英文仍只提�
         .map((node) => node.textContent)
         .join(''),
     ),
-  ).toEqual(['符文法器', 'Runed Focus'])
+  ).toEqual(['符文法器', 'Runed Focus', '基底'])
   button?.querySelector<HTMLElement>('[slot="candidate-en"]')?.click()
   expect(input.value).toBe('Runed Focus')
   expect(submitted).toEqual(['Runed Focus'])

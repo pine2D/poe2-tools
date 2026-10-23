@@ -61,7 +61,7 @@
   background: var(--surface);
   box-shadow: none;
   color: var(--ink-2);
-  font: 700 15px / 1.6 var(--pt-serif);
+  font: 700 var(--fs-data) / 1.6 var(--pt-serif);
   letter-spacing: 0.06em;
   cursor: pointer;
   transition:
@@ -74,7 +74,7 @@
 /* 计数：无衬线 500 13px，字距 0；未选中 --ink-2（对 #2d241b 7.43:1），选中继承 #fbe4b8（对 #6b4a26 6.42:1） */
 .pt-tab__count {
   color: var(--ink-2);
-  font: 500 13px / 1 var(--font-zh-cn);
+  font: 500 var(--fs-small) / 1 var(--font-zh-cn);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }

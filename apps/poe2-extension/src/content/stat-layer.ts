@@ -74,6 +74,14 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
     }).filter(Boolean)
     return changed ? parts.join(' ') : null
   }
+  /** 原站自身是否不显示该节点；先撤下本层的隐藏标记再读计算样式，避免把自己的隐藏当成原站规则。 */
+  function hiddenBySite(stat: Element): boolean {
+    const marked = stat.getAttribute(originalAttribute)
+    if (marked) stat.removeAttribute(originalAttribute)
+    const hidden = doc.defaultView?.getComputedStyle(stat).display === 'none'
+    if (marked) stat.setAttribute(originalAttribute, marked)
+    return hidden
+  }
   function render(stat: Element) {
     if (!isSupportedStat(stat)) return
     const original = statText(stat)
@@ -118,7 +126,8 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
       diagnosed.add(stat)
     }
     let host = hosts.get(stat)
-    if (!translated || translated === original) {
+    // 普通／魔法物品的默认名由原站样式隐藏；中文层若照常显示，会把基底名挤出标题栏与属性叠字。
+    if (!translated || translated === original || (kind === 'name' && hiddenBySite(stat))) {
       host?.remove()
       hosts.delete(stat)
       stat.removeAttribute(originalAttribute)
@@ -166,6 +175,12 @@ export function attachStatLayer(doc: Document, lex: Lexicon, bilingual = false):
     for (const record of records) {
       if (record.type === 'attributes') {
         if (boundaryChanged(record)) scan(record.target)
+        // 稀有度等类名会改变原站是否显示默认名，只重判该物品的名称节点。
+        else if (record.attributeName === 'class' && record.target instanceof Element)
+          for (const name of record.target.matches('.item')
+            ? record.target.querySelectorAll(itemNameSelector)
+            : [])
+            render(name)
         continue
       }
       // 只检查发生变化的词缀与新增子树，不因插入中文层重扫整个结果表。

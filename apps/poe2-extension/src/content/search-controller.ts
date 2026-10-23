@@ -1,4 +1,4 @@
-import type { Lexicon } from '@poe2-tools/l10n-core'
+import type { Lexicon, Term } from '@poe2-tools/l10n-core'
 import {
   isConditionSearch,
   searchCandidates,
@@ -11,6 +11,28 @@ import { SHORT_PROVENANCE } from '../provenance'
 import { adoptL1, createGem } from './l1'
 
 const chinese = /\p{Script=Han}/u
+const hanChars = /\p{Script=Han}/gu
+// 候选类别只取词条自身的数据域与来源前缀（B3-09）；搜索不会出现的域不给类别，不按名称猜物品类别
+const KINDS: Partial<Record<Term['domain'], string>> = { base: '基底', stat: '词缀', item: '物品' }
+export function candidateKind(term: Term): string | null {
+  if (term.domain !== 'ui') return KINDS[term.domain] ?? null
+  if (term.id.startsWith('affix-name:')) return '词缀名称'
+  if (term.id.startsWith('ui-label:')) return '词缀分类'
+  // 界面词条只在条件下拉里参与搜索，且须与原站条件选项吻合
+  return '条件'
+}
+/** 把中文名切成“命中／未命中”的连续段：命中 = 与输入相同的汉字 */
+function highlight(name: string, query: string): { text: string; hit: boolean }[] {
+  const typed = new Set(query.match(hanChars) ?? [])
+  const pieces: { text: string; hit: boolean }[] = []
+  for (const char of name) {
+    const hit = typed.has(char)
+    const last = pieces.at(-1)
+    if (last && last.hit === hit) last.text += char
+    else pieces.push({ text: char, hit })
+  }
+  return pieces
+}
 export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
   const composing = new WeakSet<HTMLInputElement>()
   let panel: HTMLElement | null = null
@@ -88,7 +110,8 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       parked = input
       return
     }
-    const width = Math.min(rect.width, view.innerWidth - 16)
+    // 至少 360px（视口允许时）：类别占右列后，长词缀不至于每行只剩几个字（B3-09）
+    const width = Math.min(Math.max(rect.width, 360), view.innerWidth - 16)
     panel.style.width = `${Math.max(0, width)}px`
     panel.style.left = `${Math.max(8, Math.min(rect.left, view.innerWidth - width - 8))}px`
     const below = view.innerHeight - rect.bottom - 8
@@ -130,12 +153,32 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       `${keepFocus ? 'position:relative;' : 'position:fixed;'}` +
       'display:block;box-sizing:border-box;z-index:2147483647;max-height:240px;overflow:auto'
     panel.style.cssText = panelStyle
+    const unique = new Map(candidates.map((c) => [c.term.en, c.term]))
+    // 说明行：说明与“N 项”是两个 slotted 片段，由说明行自己的 shadow 排成一行（B3-09）；
+    // 两者都在同一个被 aria-describedby 引用的节点里，读屏照常读出，不另加描述引用
     const label = doc.createElement('div')
-    label.textContent = candidates.length
+    label.dataset.searchHelp = ''
+    const helpRoot = label.attachShadow({ mode: 'open' })
+    adoptL1(helpRoot)
+    const helpText = doc.createElement('span')
+    helpText.slot = 'help-text'
+    helpText.textContent = candidates.length
       ? `“${query}”：选择英文查询（方向键移动，Enter 选择，Escape 取消）`
       : `“${query}”：未找到术语，请缩短关键词或输入英文。`
     if (usesGlobalStatFallback(input))
-      label.textContent += ' 当前词缀列表未就绪，以下为全局词典候选。'
+      helpText.textContent += ' 当前词缀列表未就绪，以下为全局词典候选。'
+    label.append(helpText)
+    for (const name of ['help-text', 'help-count']) {
+      const slot = doc.createElement('slot')
+      slot.name = name
+      helpRoot.append(slot)
+    }
+    if (unique.size) {
+      const count = doc.createElement('span')
+      count.slot = 'help-count'
+      count.textContent = `${unique.size} 项`
+      label.append(count)
+    }
     panel.append(label)
     const owned = new Map<string, { original: string | null; written: string }>()
     const setInput = (name: string, value: string) => {
@@ -181,7 +224,6 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
     const exact = new Set(
       candidates.filter((candidate) => candidate.exact).map((candidate) => candidate.term.en),
     )
-    const unique = new Map(candidates.map((c) => [c.term.en, c.term]))
     for (const term of unique.values()) {
       const button = doc.createElement('button')
       button.type = 'button'
@@ -192,17 +234,39 @@ export function attachSearch(doc: Document, lexicon: Lexicon): () => void {
       label.dataset.candidate = ''
       const labels = label.attachShadow({ mode: 'open' })
       adoptL1(labels)
-      for (const [name, text] of [
-        ['candidate-zh', term.zh],
-        ['candidate-en', term.en],
-      ]) {
-        const value = doc.createElement('span')
-        value.slot = name ?? ''
-        value.textContent = text ?? ''
-        const slot = doc.createElement('slot')
-        slot.name = value.slot
-        label.append(value)
-        labels.append(slot)
+      // 中文名按与输入相同的字切段，命中段带 data-hit 加重；名称由 aria-label 整体给出，读屏不拆读（B3-09）
+      for (const { text, hit } of highlight(term.zh, query)) {
+        const piece = doc.createElement('span')
+        piece.slot = 'candidate-zh'
+        piece.textContent = text
+        if (hit) piece.dataset.hit = ''
+        label.append(piece)
+      }
+      const zh = doc.createElement('span')
+      zh.className = 'candidate-zh'
+      const zhSlot = doc.createElement('slot')
+      zhSlot.name = 'candidate-zh'
+      zh.append(zhSlot)
+      labels.append(zh)
+      const en = doc.createElement('span')
+      en.slot = 'candidate-en'
+      en.textContent = term.en
+      const enSlot = doc.createElement('slot')
+      enSlot.name = 'candidate-en'
+      label.append(en)
+      labels.append(enSlot)
+      // 类别作按钮的描述：节点在按钮内的 light DOM，aria-describedby 能在 document 里解析
+      const kindText = candidateKind(term)
+      if (kindText) {
+        const kind = doc.createElement('span')
+        kind.slot = 'candidate-kind'
+        kind.id = `poe2-l10n-search-kind-${++sequence}`
+        kind.textContent = kindText
+        const kindSlot = doc.createElement('slot')
+        kindSlot.name = 'candidate-kind'
+        label.append(kind)
+        labels.append(kindSlot)
+        button.setAttribute('aria-describedby', kind.id)
       }
       button.append(label)
       if (keepFocus) {

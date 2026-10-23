@@ -240,3 +240,23 @@ it('设置提示行平时不占高度：不设 min-height，只在有字时留�
   expect(css).not.toMatch(/data-tone="(?:ok|off)"/)
   expect(html).toMatch(/<p id="status"[^>]*data-tone="idle"[^>]*><\/p>/)
 })
+
+it('复盘 B1-01：开关行最小 48px（仍 ≥44px 点击区）；非 CoE 页隐藏开关说明并降到 44px；正文滚动条细窄低调', () => {
+  const rules = parseRules(css)
+  const last = (selector) => rules.findLast((r) => r.selectors.includes(selector))
+  expect(last('.setting')?.declarations.get('min-height')).toBe('48px')
+  const compactSmall = last('section:has(.page[data-scope="elsewhere"]) .setting small')
+  expect(compactSmall?.declarations.get('display')).toBe('none')
+  expect(
+    last('section:has(.page[data-scope="elsewhere"]) .setting')?.declarations.get('min-height'),
+  ).toBe('44px')
+  const body = rules.findLast(
+    (r) => r.selectors.includes('body') && r.declarations.has('scrollbar-width'),
+  )
+  expect(body?.declarations.get('scrollbar-width')).toBe('thin')
+  expect(body?.declarations.get('scrollbar-color')).toBe('var(--line-2) transparent')
+  // “管理自动划词站点”与“首次使用说明”同一行，省一行高度
+  expect(html).toMatch(
+    /<div class="popup-links">\s*<a class="site-settings-link"[\s\S]*?<details id="guide-notice"/,
+  )
+})

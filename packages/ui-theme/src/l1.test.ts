@@ -1,4 +1,4 @@
-// L1 点缀（spec §4.2、§6.9）门禁：令牌与 tokens.css 一致；禁用项；对 CoE 实测底色与面板底的对比度
+// L1 点缀（spec §4.2、§6.9）门禁：令牌与 tokens.css 一致（字号 px 与 rem 等值）；禁用项；对 CoE 实测底色与面板底的对比度
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -47,11 +47,19 @@ describe('l1.css 令牌（spec §6.9 样式注入）', () => {
     expect(host).toBeDefined()
     expect(rules.some((rule) => rule.selectors.some((s) => s.includes(':root')))).toBe(false)
   })
-  it('与 tokens.css 同名的令牌取值相同；其余只能是 L1 专用令牌', () => {
+  it('与 tokens.css 同名的令牌取值相同（字号按 px 等值比较）；其余只能是 L1 专用令牌', () => {
     for (const [name, value] of tokens) {
       if (!name.startsWith('--')) continue
       if (L1_ONLY.includes(name)) continue
       expect(site.has(name), `${name} 不在 tokens.css`).toBe(true)
+      if (name.startsWith('--fs-')) {
+        // tokens.css 字号写 rem（随浏览器字号缩放）；CoE Shadow DOM 里 rem 取原站根字号，L1 保持 px，按 16px 根字号等值
+        expect(value, name).toMatch(/^\d+px$/)
+        const rem = /^(\d*\.?\d+)rem$/.exec(site.get(name) ?? '')?.[1]
+        expect(rem, `${name} 在 tokens.css 不是 rem`).toBeDefined()
+        expect(Number.parseFloat(value), name).toBe(Number(rem) * 16)
+        continue
+      }
       expect(norm(value), name).toBe(norm(site.get(name)))
     }
     expect(token('--ext-ink')).toBe('#9fe3dc')
@@ -133,8 +141,9 @@ describe('L1 宿主压过原站全局样式（CoE `* { color; font }`）', () =>
 })
 
 describe('导入面板文本框随视口收缩（spec §8.8 声明须在视口内）', () => {
-  it('textarea 高度 clamp(120px, 20vh, 240px)，最小 120px', () => {
-    const rule = rules.find((r) => r.selectors.join(', ') === 'textarea')
+  // B3-09：两栏由只读 textarea 改为带行号的行列表 .lines，高度约束原样沿用
+  it('.lines 高度 clamp(120px, 20vh, 240px)，最小 120px', () => {
+    const rule = rules.find((r) => r.selectors.join(', ') === '.lines')
     expect(norm(rule?.declarations.get('height'))).toBe('clamp(120px, 20vh, 240px)')
     expect(rule?.declarations.get('min-height')).toBe('120px')
   })
@@ -218,7 +227,7 @@ describe('对比度（spec §6.9、§4.3）', () => {
       '.panel',
       '.notice',
       'button',
-      'textarea',
+      '.lines',
       ':host([data-poe2-l10n="search"])',
     ])
       expect(at(selector)?.declarations.get('border-radius'), selector).toBe('0')
@@ -347,5 +356,51 @@ describe('顶层候选浮层（复盘 B3-01）', () => {
   it('搜索宿主以 all: initial 复位 [popover] 的浏览器默认 inset、margin、边框与底色，定位只由内联样式决定', () => {
     const host = rules.find((rule) => rule.selectors.includes(':host([data-poe2-l10n="search"])'))
     expect(host?.declarations.get('all')).toBe('initial')
+  })
+})
+
+describe('B3-09：候选数量、类别、匹配高亮与导入两栏行号', () => {
+  const byExact = (selector: string, atRules = '') =>
+    rules.find((r) => r.selectors.join(', ') === selector && r.atRules.join(' ') === atRules)
+  const decl = (selector: string, name: string, atRules = '') =>
+    byExact(selector, atRules)?.declarations.get(name)
+  it('说明行自带 shadow 排成一行：说明伸缩，“N 项”不换行、用无衬线小字', () => {
+    expect(decl(':host([data-search-help])', 'display')).toBe('flex')
+    // 不换行：数量固定在首行右端，说明文字自己折行
+    expect(decl(':host([data-search-help])', 'flex-wrap')).toBeUndefined()
+    const count = '::slotted([slot="help-count"])'
+    expect(decl(count, 'white-space')).toBe('nowrap !important')
+    expect(decl(count, 'font')).toBe('var(--fs-micro) / 1.6 var(--font-zh-cn) !important')
+  })
+  it('候选标签是两列网格：中英文在左，类别占右列跨两行，用无衬线小字并带边框（不只靠颜色）', () => {
+    expect(decl(':host([data-candidate])', 'display')).toBe('grid')
+    const kind = '::slotted([slot="candidate-kind"])'
+    expect(decl(kind, 'grid-row')).toBe('1 / span 2 !important')
+    expect(decl(kind, 'font')).toBe('var(--fs-micro) / 1.5 var(--font-zh-cn) !important')
+    expect(decl(kind, 'border')).toBe('1px solid var(--line-2) !important')
+  })
+  it('命中字加重并加下划线，非命中字为常规字重：差别不只靠颜色', () => {
+    expect(decl('::slotted([slot="candidate-zh"])', 'font')).toBe(
+      '400 var(--fs-body) / 1.5 var(--font-zh-cn) !important',
+    )
+    const hit = '::slotted([data-hit])'
+    expect(decl(hit, 'font-weight')).toBe('700 !important')
+    expect(decl(hit, 'text-decoration-line')).toBe('underline !important')
+  })
+  it('行号不可选中、右对齐；待核对行有左边条与粗行号；定位行有描边；强制色彩下边条改系统色', () => {
+    expect(decl('.lines .ln', 'user-select')).toBe('none')
+    expect(decl('.lines li[data-issue]', 'border-left-color')).toBe('var(--miss)')
+    expect(decl('.lines li[data-issue] .ln', 'font-weight')).toBe('700')
+    expect(decl('.lines li[data-focus]', 'outline')).toBe('1px solid var(--miss)')
+    expect(
+      decl('.lines li[data-issue]', 'border-left-color', '@media (forced-colors: active)'),
+    ).toBe('Highlight')
+    // 透明边条在强制色彩下会变成文字色：普通行须显式改为底色，否则每行都像待核对
+    expect(decl('.lines li', 'border-left-color', '@media (forced-colors: active)')).toBe('Canvas')
+    expect(decl('.lines li[data-focus]', 'outline-color', '@media (forced-colors: active)')).toBe(
+      'Highlight',
+    )
+    // 读屏提示只在视觉上隐藏
+    expect(decl('.sr', 'clip-path')).toBe('inset(50%)')
   })
 })

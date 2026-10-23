@@ -157,6 +157,11 @@ export function createMatcher(dict: GuideDictionary): Matcher {
       status,
     }
     if (zhs.length > 1) span.candidates = zhs
+    // 类型须唯一；升华名与其起点天赋同名同色，按升华处理。
+    const kinds = new Set(pool.map((e) => e.kind))
+    if (kinds.size === 1) span.kind = head.kind
+    else if (kinds.size === 2 && kinds.has('ascendancy') && kinds.has('passive'))
+      span.kind = 'ascendancy'
     return span
   }
 

@@ -124,6 +124,8 @@ export interface TermSpan {
   en: string
   zh: string
   entryId: string
+  // 命中条目的类型；同名条目类型不一致时省略。只用于显示，不进入缓存键与提示词。
+  kind?: EntryKind
   tier: Tier
   status: TermStatus
   candidates?: string[]

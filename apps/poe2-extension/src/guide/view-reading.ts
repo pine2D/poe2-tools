@@ -90,6 +90,22 @@ const STATE: Record<BlockState, string> = {
   missing: '模型没有返回这一段',
   skipped: '原样保留',
 }
+// 图例只列会着色的类型；关键词、行话与职业只保留下划线。
+const LEGEND = [
+  ['gem', '宝石'],
+  ['unique', '传奇'],
+  ['base', '基底'],
+  ['passive', '天赋·升华'],
+  ['stat', '词缀'],
+] as const
+const COLORED: ReadonlySet<string> = new Set([
+  'gem',
+  'unique',
+  'base',
+  'passive',
+  'ascendancy',
+  'stat',
+])
 const STAGE: Record<StageState, string> = { idle: '未翻译', translating: '翻译中', done: '已翻译' }
 const UPDATE_URL = 'https://poe2-tools.pine2d.com/extension/'
 
@@ -232,6 +248,14 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     value: '0',
     'aria-label': '翻译进度',
   })
+  // 侧栏译文出现着色术语后才显示；颜色只区分术语类别，不表示译文准确。
+  const termLegend = el(
+    doc,
+    'p',
+    { class: 'guide-term-legend', hidden: true },
+    el(doc, 'span', { class: 'guide-term-legend-label' }, '颜色只表示术语类别：'),
+    ...LEGEND.map(([kind, label]) => el(doc, 'span', { 'data-kind': kind }, label)),
+  )
   const header = el(
     doc,
     'header',
@@ -239,6 +263,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     el(doc, 'div', { class: 'guide-taskbar' }, begin, stop, reload, settings),
     summary,
     el(doc, 'div', { class: 'guide-progress-row' }, progress, progressMeter),
+    termLegend,
   )
   const documentHeader = el(doc, 'div', { class: 'guide-document-header' }, title, site)
   const usageDetails = el(
@@ -504,6 +529,15 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     const index = visible.findIndex((i) => i.block.id === currentId)
     const item = visible[index + delta]
     if (item) focusBlock(item.block.id)
+  }
+  function refreshLegend() {
+    termLegend.hidden = ![...items.values()].some(
+      (i) =>
+        i.node.dataset.origin === 'dictionary' ||
+        [...i.dst.querySelectorAll<HTMLElement>('.poe2-term[data-kind]')].some((t) =>
+          COLORED.has(t.dataset.kind ?? ''),
+        ),
+    )
   }
   function refreshSummary() {
     let inline = 0,
@@ -828,6 +862,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         })
       }
       refreshDirectory()
+      refreshLegend()
       if (stageId) showStage(stageId)
       else {
         mountBlocks()
@@ -852,6 +887,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       items.clear()
       directoryItems.replaceChildren()
       directoryEntries.length = 0
+      termLegend.hidden = true
       directoryControl.setOpen(false)
       directoryControl.button.hidden = true
       exceptions.hidden = true
@@ -863,7 +899,15 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       const item = items.get(blockId)
       if (!item) return
       const retryFocused = doc.activeElement === item.retry
-      item.dst.replaceChildren(translatedText(doc, text, translatedTerms(text, item.block.terms)))
+      item.dst.replaceChildren(
+        translatedText(
+          doc,
+          text,
+          translatedTerms(text, item.block.terms, item.block.statEvidence),
+          true,
+          true,
+        ),
+      )
       item.status.textContent = `${issueList.length ? '待核对 · ' : ''}${ORIGIN[origin]}`
       item.node.dataset.origin = origin
       item.node.dataset.state = 'complete'
@@ -879,6 +923,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       }
       syncDetails(item, retryFocused)
       if (item.block.kind === 'heading') refreshDirectory()
+      refreshLegend()
       refreshSummary()
     },
     setBlockState(blockId, state, message) {
@@ -900,6 +945,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       }
       syncDetails(item, retryFocused)
       if (item.block.kind === 'heading') refreshDirectory()
+      refreshLegend()
       refreshSummary()
     },
     setStageState(stageId, state) {

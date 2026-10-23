@@ -1,7 +1,7 @@
 // 扩展尺寸阶梯门禁（2026-10-03 方案 §3.3、第三期）：扩展设置弹窗（apps/poe2-extension/src/popup/popup.css，
 // 经 tokens.css 的 :root 取阶梯）、攻略翻译侧边栏（src/guide/guide.css）与 CoE 注入界面（l1.css，在 :host 声明阶梯子集）的字号与间距只取 --fs-* / --sp-*，
 // 不写 px/rem 字面值。检查器与网站页面层门禁共用（testing/size-gate.ts），默认规则相同（网站对三个页面文件另加严格档）。
-// 偏离阶梯的值逐条登记在 ALLOW 并写明理由，恰好三条（第三期计划裁定 12）；新增例外先改计划与 DESIGN.md。
+// 偏离阶梯的值逐条登记在 ALLOW 并写明理由：第三期计划裁定 12 的三条，加 2026-10-23 rem 迁移的弹窗根字号一条（DESIGN.md“字体与可读性”）；新增例外先改计划与 DESIGN.md。
 // 几何尺寸（宽高、圆角、边框、outline、下划线偏移、logo 的 --ptm-*）不在受检属性里，门禁不看。
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -23,6 +23,8 @@ const ALLOW: SizeAllow = {
   'l1.css|:host([data-poe2-l10n="search"])|scroll-padding-block': ['42px'],
   // 候选按钮上下各 2px：改成 --sp-1 会让候选变疏，不在本期
   'l1.css|::slotted(button)|margin': ['2px'],
+  // 字号令牌改 rem 后，弹窗固定根字号 16px：不随浏览器“字体大小”变化，360×600 内容高度不变（rem.test.ts 断言）
+  'popup.css|:root|font-size': ['16px'],
 }
 
 describe('扩展尺寸阶梯门禁（方案 §3.3）', () => {
@@ -33,8 +35,8 @@ describe('扩展尺寸阶梯门禁（方案 §3.3）', () => {
     expect(results.flatMap((result) => result.violations)).toEqual([])
   })
 
-  it('ALLOW 恰好三条，且每一条都还能在对应文件里命中', () => {
-    expect(Object.keys(ALLOW)).toHaveLength(3)
+  it('ALLOW 恰好四条，且每一条都还能在对应文件里命中', () => {
+    expect(Object.keys(ALLOW)).toHaveLength(4)
     expect(Object.keys(ALLOW).filter((key) => !used.has(key))).toEqual([])
   })
 })

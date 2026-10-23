@@ -55,3 +55,36 @@ it('同段普通含义和技能名同译名时不凭首次出现推断对应，�
     ]),
   ).toEqual([])
 })
+
+it('带出命中条目的类型；旧数据缺少类型时不补猜', () => {
+  expect(
+    translatedTerms('用瘟疫搭配凯拉里的残暴。', [
+      { ...term('Contagion', '瘟疫'), kind: 'gem' },
+      term("Kelari's Brutality", '凯拉里的残暴'),
+    ]),
+  ).toEqual([
+    { start: 1, end: 3, en: 'Contagion', zh: '瘟疫', kind: 'gem' },
+    { start: 5, end: 11, en: "Kelari's Brutality", zh: '凯拉里的残暴' },
+  ])
+  const [old] = translatedTerms('瘟疫', [term('Contagion', '瘟疫')])
+  expect(old && 'kind' in old).toBe(false)
+})
+it('同一译名在本段对应不同类型时不着色，只保留标注', () => {
+  const [hit] = translatedTerms('坚韧', [
+    { ...term('Unbreakable', '坚韧'), kind: 'passive' },
+    { ...term('Unbreakable', '坚韧'), kind: 'gem' },
+  ])
+  expect(hit).toEqual({ start: 0, end: 2, en: 'Unbreakable', zh: '坚韧' })
+})
+it('引号内整句词缀按词典译名标为词缀类型，长于其中的术语', () => {
+  expect(
+    translatedTerms(
+      '优先找 +60 最大生命 的装备，生命越高越好。',
+      [term('Life', '生命')],
+      [{ en: '+60 to maximum Life', zh: '+60 最大生命' }],
+    ),
+  ).toEqual([
+    { start: 4, end: 12, en: '+60 to maximum Life', zh: '+60 最大生命', kind: 'stat' },
+    { start: 17, end: 19, en: 'Life', zh: '生命' },
+  ])
+})

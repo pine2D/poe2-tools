@@ -1,7 +1,7 @@
 /* biome-ignore-all lint/complexity/noImportantStyles: ::slotted() 声明与宿主的 color、font 需 !important 才能压过原站样式（spec B.12 修订 10；原站 `* { color; font }` 会压过 :host 的普通声明） */
 /* L1 点缀（spec §4.2、§6.9）：CoE 注入 UI 的唯一样式表。内容脚本用 ?inline 读成字符串，构造一份 CSSStyleSheet，
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
-   令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
+   令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同（字号例外：此处写 px，tokens.css 写 rem，按 16px 换算等值），由 l1.test.ts 断言。
    尺寸阶梯只声明本文件用到的档；字号与间距一律取阶梯，例外逐条登记在 extension-sizes.test.ts 的 ALLOW。
    v4 使用黑底直角、钢蓝主操作与青色 gem；青铜渐变只标记当前候选／步骤，不加角饰。固定标签通过 --l1-serif 使用独立子集，任意候选保持无衬线；字体由 serif.ts 以 FontFace 注册，这里不写 @font-face。 */
 :host {
@@ -32,7 +32,8 @@
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
   /* 面板标题与主次按钮的中文衬线（扩展 0.4.0）：family 由内容脚本注册到文档，Shadow DOM 只引用名字 */
   --l1-serif: "PoE2 Serif SC L1", var(--font-zh-cn);
-  /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档，取值同 tokens.css */
+  /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档。字号保持 px：Shadow DOM 里 rem 取原站根字号，不可控；
+     数值等于 tokens.css 的 rem × 16 */
   --fs-micro: 12px;
   --fs-small: 13px;
   --fs-body: 14px;
@@ -152,7 +153,8 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: var(--sp-3);
 }
-label {
+/* 两栏（B3-09）：带行号的只读行列表，替代原来的只读 textarea；高度约束沿用 */
+.column {
   display: block;
   min-width: 0;
   font-size: var(--fs-small);
@@ -165,7 +167,8 @@ label {
   color: var(--label);
   font-weight: 700;
 }
-textarea {
+.lines {
+  position: relative;
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -173,19 +176,62 @@ textarea {
   height: clamp(120px, 20vh, 240px);
   min-height: 120px;
   resize: vertical;
-  margin-top: var(--sp-1);
-  padding: var(--sp-3);
+  overflow: auto;
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-2) 0;
+  list-style: none;
   border: 1px solid var(--control-edge);
   border-radius: 0;
   background: var(--bg);
   color: var(--ink);
-  caret-color: var(--focus);
   font: var(--fs-micro) / 1.5 var(--font-code);
   scrollbar-color: var(--control-edge) var(--bg);
 }
-textarea[data-preview] {
-  background: var(--bg);
+.lines[data-preview] {
   color: var(--mod);
+}
+.lines li {
+  display: grid;
+  grid-template-columns: 3ch minmax(0, 1fr);
+  gap: 0 var(--sp-2);
+  padding: 0 var(--sp-2) 0 0;
+  border-left: 3px solid transparent;
+}
+.lines .ln {
+  text-align: right;
+  color: var(--ink-3);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.lines .text {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* 待核对行：左边条 + 浅底 + 粗行号，读屏另有“待核对：”文字，不只靠颜色 */
+.lines li[data-issue] {
+  border-left-color: var(--miss);
+  background: color-mix(in srgb, var(--miss) 14%, transparent);
+}
+.lines li[data-issue] .ln,
+.lines li[data-issue] .text {
+  color: var(--miss);
+}
+.lines li[data-issue] .ln {
+  font-weight: 700;
+}
+.lines li[data-focus] {
+  outline: 1px solid var(--miss);
+  outline-offset: -1px;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  user-select: none;
 }
 /* 结论行（唯一 live region）：图标 + 结论 + 副句；未预览时为空并隐藏 */
 .verdict {
@@ -379,7 +425,7 @@ button[data-tertiary]:disabled {
   font-family: var(--l1-serif);
 }
 button:focus-visible,
-textarea:focus-visible {
+.lines:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -431,25 +477,76 @@ textarea:focus-visible {
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
 }
-/* 双语文字由内部 slot 排成两行；按钮仍是外层 light DOM 节点，保留输入框的 ARIA 引用。 */
+/* 说明行（B3-09）：说明与“N 项”经说明行自己的 shadow 排成一行，数量不换行、固定在首行右端；数量用无衬线小字 */
+:host([data-search-help]) {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--sp-2);
+}
+::slotted([slot="help-text"]) {
+  all: unset !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+::slotted([slot="help-count"]) {
+  all: unset !important;
+  flex: none !important;
+  white-space: nowrap !important;
+  font: var(--fs-micro) / 1.6 var(--font-zh-cn) !important;
+  color: var(--ink-3) !important;
+}
+/* 双语文字由内部 slot 排成两行，类别占右列；按钮仍是外层 light DOM 节点，保留输入框的 ARIA 引用。 */
 :host([data-candidate]) {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--sp-2);
+  align-items: center;
   min-width: 0;
 }
-::slotted([slot="candidate-zh"]),
+.candidate-zh {
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: var(--fs-body) / 1.5 var(--font-zh-cn);
+}
+/* 中文名按命中切成多段，段内联排；非命中常规字重，命中段加重并加下划线（B3-09） */
+::slotted([slot="candidate-zh"]) {
+  all: unset !important;
+  display: inline !important;
+  font: 400 var(--fs-body) / 1.5 var(--font-zh-cn) !important;
+  color: var(--ink) !important;
+}
+::slotted([data-hit]) {
+  font-weight: 700 !important;
+  color: var(--label) !important;
+  text-decoration-line: underline !important;
+  text-decoration-color: var(--bronze-lo) !important;
+  text-underline-offset: 3px !important;
+}
 ::slotted([slot="candidate-en"]) {
   all: unset !important;
   display: block !important;
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  min-width: 0 !important;
   overflow-wrap: anywhere !important;
   white-space: normal !important;
   text-align: left !important;
   font: var(--fs-small) / 1.5 var(--font-zh-cn) !important;
   color: var(--ink-2) !important;
 }
-::slotted([slot="candidate-zh"]) {
-  font-size: var(--fs-body) !important;
-  font-weight: 600 !important;
-  color: var(--ink) !important;
+::slotted([slot="candidate-kind"]) {
+  all: unset !important;
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  padding: 0 var(--sp-1) !important;
+  border: 1px solid var(--line-2) !important;
+  white-space: nowrap !important;
+  font: var(--fs-micro) / 1.5 var(--font-zh-cn) !important;
+  color: var(--ink-2) !important;
 }
 /* 署名固定在列表底部一行（spec §6.9）：sticky 的约束矩形是滚动容器的内容框（已扣 --sp-2 内边距），
    bottom 取负的 --sp-2 才贴住边框内侧；署名用 padding-bottom --sp-2 + margin-bottom 负 --sp-2 吃掉宿主底部内边距，
@@ -535,7 +632,17 @@ textarea:focus-visible {
     border-color: ButtonText;
   }
   button:focus-visible,
-  textarea:focus-visible {
+  .lines:focus-visible {
+    outline-color: Highlight;
+  }
+  /* 浅底在强制色彩下消失：透明边条会被强制成文字色，普通行改为底色，只留待核对行的系统色边条与定位描边 */
+  .lines li {
+    border-left-color: Canvas;
+  }
+  .lines li[data-issue] {
+    border-left-color: Highlight;
+  }
+  .lines li[data-focus] {
     outline-color: Highlight;
   }
   ::slotted(button[aria-selected="true"]) {

@@ -72,7 +72,7 @@
 .pt-nameplate__name {
   margin: 0;
   color: var(--np-name);
-  font: 700 20px / 1.25 var(--pt-serif);
+  font: 700 1.25rem / 1.25 var(--pt-serif);
   letter-spacing: 0.03em;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
   overflow-wrap: anywhere;
@@ -90,7 +90,7 @@
 }
 .pt-nameplate__en {
   color: var(--np-name-2);
-  font: 400 13px / 1.2 var(--pt-cinzel);
+  font: 400 var(--fs-small) / 1.2 var(--pt-cinzel);
   letter-spacing: 0.04em;
 }
 /* “基底名未收录 / 传奇名未收录”：状态文字 --miss（对 #31291d 7.16:1），虚线框同“未命中 · 保留原文” */
@@ -102,7 +102,7 @@
   border: 1px dashed var(--miss);
   border-radius: 0;
   color: var(--miss);
-  font: 12px / 1.2 var(--font-zh-cn);
+  font: var(--fs-micro) / 1.2 var(--font-zh-cn);
   letter-spacing: 0;
   white-space: nowrap;
 }
@@ -117,7 +117,7 @@
   justify-content: center;
   gap: 7px;
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.6;
   white-space: nowrap;
 }
@@ -153,7 +153,7 @@
   border-radius: 0;
   background: rgba(0, 0, 0, 0.22);
   color: var(--np-name-2);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1;
 }
 .pt-nameplate__tag[title] {
@@ -168,7 +168,7 @@
   border: 0;
   background: none;
   color: var(--gold);
-  font-size: 13px;
+  font-size: var(--fs-small);
   text-decoration: underline 1px;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -190,7 +190,7 @@
   box-shadow: none;
 }
 .pt-nameplate--tooltip .pt-nameplate__name {
-  font-size: 21px;
+  font-size: var(--fs-title);
   letter-spacing: 0.04em;
 }
 /* 名称回退为英文时，“基底名未收录”接在名称下方居中（M0 self-decided B20） */
@@ -238,7 +238,7 @@
     width: 17.5px;
     transform: translateY(-50%);
     color: var(--ink-2);
-    font-size: 13px;
+    font-size: var(--fs-small);
     font-style: normal;
     font-weight: 400;
     line-height: 1.6;

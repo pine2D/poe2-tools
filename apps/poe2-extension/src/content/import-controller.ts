@@ -74,6 +74,14 @@ function icon(doc: Document, kind: IconKind, tone: Tone): SVGSVGElement {
     句末标点写转义（。！？），免得正则字面量把新字符带进 L1 收字 */
 const sentence = (text: string) => (/[\u3002\uff01\uff1f]$/.test(text) ? text : `${text}。`)
 
+const chinese = /\p{Script=Han}/u
+/** 两栏的行：去掉行尾 CR；末尾换行不多出一个空行号 */
+const splitRows = (text: string) => {
+  const rows = text.split('\n').map((row) => row.replace(/\r$/, ''))
+  if (rows.length > 1 && rows.at(-1) === '') rows.pop()
+  return text === '' ? [] : rows
+}
+
 /** 待核对条目（裁定 25）：无行号问题各占一条、排在前；同一行号的问题合并为一条，行号升序 */
 function checklist(issues: PreparedImport['issues']): { line: number | null; text: string }[] {
   const byLine = new Map<number, string[]>()
@@ -288,35 +296,91 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             const length = (rows[line - 1] ?? '').replace(/\r$/, '').length
             input.focus()
             input.setSelectionRange(start, start + length)
+            showLine(line)
           })
           row.insertBefore(locate, row.lastChild)
         }
         pending.list.append(row)
       }
       pending.list.append(...warningRows())
+      // 两栏改为带行号的只读行列表（B3-09）：原文栏按待核对行号整行标出；英文栏不与原文逐行对应，
+      // 只按顺序标出与待核对原文完全相同、仍含中文的保留行（未转换的行原样留在英文里）
+      const flagged = new Set(items.flatMap((item) => (item.line === null ? [] : [item.line])))
+      const sourceRows = splitRows(converted.original)
+      const englishRows = splitRows(converted.english)
+      const englishOf = new Map<number, number>()
+      let from = 0
+      for (const line of [...flagged].sort((a, b) => a - b)) {
+        const text = sourceRows[line - 1]?.trim()
+        if (!text || !chinese.test(text)) continue
+        const at = englishRows.findIndex((row, i) => i >= from && row.trim() === text)
+        if (at < 0) continue
+        englishOf.set(line, at + 1)
+        from = at + 1
+      }
+      const englishFlagged = new Set(englishOf.values())
       const columns = doc.createElement('div')
       columns.className = 'columns'
-      for (const [index, [title, value]] of [
-        ['粘贴原文（含备注）', converted.original],
-        ['英文预览（不提交交易备注／描述）', converted.english],
-      ].entries()) {
-        const label = doc.createElement('label')
+      const lists: HTMLOListElement[] = []
+      for (const [index, [title, rowsOf, marks]] of (
+        [
+          ['粘贴原文（含备注）', sourceRows, flagged],
+          ['英文预览（不提交交易备注／描述）', englishRows, englishFlagged],
+        ] as const
+      ).entries()) {
+        const column = doc.createElement('div')
+        column.className = 'column'
         const caption = doc.createElement('span')
         caption.className = 'column-label'
-        caption.textContent = title ?? ''
-        label.append(caption)
-        const area = doc.createElement('textarea')
-        area.readOnly = true
-        area.value = value ?? ''
-        if (index === 1) area.dataset.preview = ''
-        label.append(area)
+        caption.id = `column-${current}-${index}`
+        caption.textContent = title
+        const list = doc.createElement('ol')
+        list.className = 'lines'
+        list.tabIndex = 0
+        list.setAttribute('aria-labelledby', caption.id)
+        if (index === 1) list.dataset.preview = ''
+        for (const [i, text] of rowsOf.entries()) {
+          const row = doc.createElement('li')
+          row.dataset.line = String(i + 1)
+          const no = doc.createElement('span')
+          no.className = 'ln'
+          no.setAttribute('aria-hidden', 'true')
+          no.textContent = String(i + 1)
+          const content = doc.createElement('span')
+          content.className = 'text'
+          content.textContent = text
+          row.append(no)
+          if (marks.has(i + 1)) {
+            row.dataset.issue = ''
+            const hint = doc.createElement('span')
+            hint.className = 'sr'
+            hint.textContent = '待核对：'
+            row.append(hint)
+          }
+          row.append(content)
+          list.append(row)
+        }
+        lists.push(list)
+        column.append(caption, list)
         if (index === 1) {
           const note = doc.createElement('small')
           note.textContent =
             '稀有装备名称、词缀名称及标签可保留中文；原站使用英文基底、属性正文和数值。已识别不等于能导入。'
-          label.append(note)
+          column.append(note)
         }
-        columns.append(label)
+        columns.append(column)
+      }
+      /** 定位：两栏对应行标为当前定位行，只在各自列表内滚动，不带动对话框 */
+      const showLine = (line: number) => {
+        for (const [index, list] of lists.entries()) {
+          for (const old of list.querySelectorAll('li[data-focus]'))
+            old.removeAttribute('data-focus')
+          const target = index === 0 ? line : englishOf.get(line)
+          const row = target ? list.children[target - 1] : undefined
+          if (!(row instanceof HTMLElement)) continue
+          row.dataset.focus = ''
+          list.scrollTop = Math.max(0, row.offsetTop - (list.clientHeight - row.offsetHeight) / 2)
+        }
       }
       const fill = doc.createElement('button')
       fill.type = 'button'

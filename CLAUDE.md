@@ -56,7 +56,7 @@ Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结
   `data/cache/`，`--offline` 复用）；界面字体源由 `packages/ui-theme/scripts/build-fonts.mjs` 手动下载（唯一另一处联网脚本）。
   `adapters/` 是"已解析 JSON → 词典类型"的纯函数；`build.ts` 编排并写 `data/dict/<locale>/`，`check.ts` 做结构校验、
   审计与覆盖率回归门禁。
-- `packages/ui-theme/`：设计语言共享包 `@poe2-tools/ui-theme`（私有，不单独计版本）。`src/tokens.css` 是唯一的令牌块（颜色、字体、尺寸阶梯 `--fs-*`／`--sp-*` 与动效，只有深色；CoE 注入样式不往原站文档写令牌，在 `l1.css` 的 `:host` 声明所用阶梯子集），`src/testing/` 是只供测试用的辅助（CSS 解析、对比度、尺寸门禁检查器 `size-gate.ts`），不进任何产物；
+- `packages/ui-theme/`：设计语言共享包 `@poe2-tools/ui-theme`（私有，不单独计版本）。`src/tokens.css` 是唯一的令牌块（颜色、字体、尺寸阶梯 `--fs-*`／`--sp-*` 与动效，只有深色；CoE 注入样式不往原站文档写令牌，在 `l1.css` 的 `:host` 以 px 声明所用阶梯子集，与 tokens.css 的 rem 值按 16px 等值；`--fs-*` 为 rem，弹窗根字号固定 16px，网站与侧栏随浏览器字号缩放），`src/testing/` 是只供测试用的辅助（CSS 解析、对比度、尺寸门禁检查器 `size-gate.ts`），不进任何产物；
   `src/motif.ts`、`src/noise.ts` 是母题与颗粒的唯一源，`scripts/build-motif-css.mjs` 生成 `src/generated/`；`src/components/*.css`
   是 `pt-*` 组件样式（`switch.css` 用于扩展弹窗及侧栏方形复选框、`provenance.css` 只用于弹窗；`stagehead.css` 是阶段名衬线（阶段看板与首页对照带示例），由构筑页与首页入口引入）；`src/l1.css` 是 CoE 注入 UI 的 L1 样式，扩展内容脚本以 adoptedStyleSheets 挂进各 Shadow DOM；`fonts/popup.css` 是扩展弹窗的字体声明，只指向弹窗独立子集 `serif-sc-popup.woff2`（收字见 `scripts/popup-text.txt`，不进 `fonts.css`，网站不下载）；`fonts/guide.css` 为阅读侧栏、设置和站点管理声明独立 `serif-sc-guide.woff2`（收字 `scripts/guide-text.txt`，预算 98,304 字节，只用于固定标签，不进网站 fonts.css）；`fonts/serif-sc-l1.woff2` 是 CoE 注入界面的衬线子集（family “PoE2 Serif SC L1”，收 `data/l10n/coe-beta/ui.zh-CN.json` 全部译文与 `apps/poe2-extension/src/content/*.ts`、`src/provenance.ts` 的中文文案，不含 ASCII，预算 131,072 字节；不进 `fonts.css`，网站不下载）；`scripts/build-fonts.mjs` 生成 `fonts/` 下的字体分片、`fonts.css`、`coverage.json` 与 `LICENSES/`；
   `scripts/compliance.mjs` 是许可文件与素材白名单判定的唯一实现。`fonts/` 与 `src/generated/` 是生成物：入库、不手改、Biome 排除。

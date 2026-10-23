@@ -8,7 +8,9 @@
 @import "@poe2-tools/ui-theme/components/provenance.css";
 @import "@poe2-tools/ui-theme/popup-fonts.css";
 
+/* 共享字号令牌写 rem；弹窗固定根字号 16px，不随浏览器“字体大小”变化，360×600 内容高度保持不变 */
 :root {
+  font-size: 16px;
   width: 360px;
   height: 600px;
   overflow: hidden;
@@ -31,6 +33,12 @@ body {
   color: var(--ink);
   font: var(--fs-body) / 1.6 var(--font-zh-cn);
   -webkit-font-smoothing: antialiased;
+  /* 矮屏或说明展开时才出现的正文滚动条：细窄、低对比，悬停时略亮（复盘 B1-01） */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+body:hover {
+  scrollbar-color: var(--metal-line) transparent;
 }
 .titlebar {
   display: flex;
@@ -151,12 +159,15 @@ main > section {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  min-height: 56px;
+  min-height: 48px;
   padding: var(--sp-2) 0;
   cursor: pointer;
 }
 .setting + .setting {
   border-top: 1px solid var(--line);
+}
+.page[data-scope="elsewhere"] {
+  padding-block: var(--sp-2);
 }
 .setting__text {
   flex: 1;
@@ -175,6 +186,14 @@ main > section {
 .setting:has(.pt-switch:disabled) small,
 .setting:has(.pt-switch:disabled) .pt-switch__state {
   color: var(--ink-3);
+}
+/* 不在 CoE 页面：开关仍可切换，说明经 aria-describedby 保留给读屏，视觉上收起 */
+section:has(.page[data-scope="elsewhere"]) .setting {
+  min-height: 44px;
+  padding-block: 0;
+}
+section:has(.page[data-scope="elsewhere"]) .setting small {
+  display: none;
 }
 #status {
   margin: 0;
@@ -234,6 +253,17 @@ footer p {
 .guide-notice p {
   margin: 0 0 var(--sp-2);
 }
+/* 站点管理与首次说明同一行；说明展开后正文占满整行 */
+.popup-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: var(--sp-3);
+}
+.popup-links .guide-notice[open] {
+  flex-basis: 100%;
+}
 .site-settings-link {
   display: inline-flex;
   align-items: center;
@@ -254,7 +284,7 @@ footer {
   border-top: 1px solid var(--line-2);
   background: var(--page);
   font-size: var(--fs-micro);
-  line-height: 1.8;
+  line-height: 1.7;
   color: var(--ink-3);
   overflow-wrap: anywhere;
 }

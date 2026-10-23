@@ -11,7 +11,7 @@
   border-radius: 0;
   background: var(--raised);
   color: var(--ink);
-  font: 600 15.5px / 1 var(--font-zh-cn);
+  font: 600 0.96875rem / 1 var(--font-zh-cn);
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
@@ -60,7 +60,7 @@
   height: 38px;
   padding: 0 12px;
   background-color: var(--bar);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 .pt-btn--sm:hover {
   background-color: var(--bar);
@@ -70,7 +70,7 @@
   height: 28px;
   padding: 0 10px;
   border-radius: 0;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }
 /* --wide：通栏，文字靠左、箭头靠右（mockup :156；C 档通栏按钮内边距 36px，:174；只用于首页入口卡） */
 .pt-btn--wide {

@@ -2,7 +2,7 @@
 .pt-subhead {
   margin: 0;
   color: var(--title-gold);
-  font: 700 21px / 1.35 var(--pt-serif);
+  font: 700 var(--fs-title) / 1.35 var(--pt-serif);
   letter-spacing: 0.06em;
 }
 
@@ -16,10 +16,10 @@
 /* 首页场景标题（二期）：沿用 .pt-subhead 的衬线、金字与字距，只把字号升到 28px；≤620px 回到 21px。
    只写 font-size，所以不进 SERIF_SELECTORS（衬线由 .pt-subhead 给出）；扩展不引入本文件，扩展 zip 不变 */
 .pt-subhead--lg {
-  font-size: 28px;
+  font-size: var(--fs-display-s);
 }
 @media (max-width: 620px) {
   .pt-subhead--lg {
-    font-size: 21px;
+    font-size: var(--fs-title);
   }
 }

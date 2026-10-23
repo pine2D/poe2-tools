@@ -12,6 +12,11 @@ const rulesOf = (file: string): CssRule[] => parseRules(readFileSync(`${dir}${fi
 const palette = rootTokens(readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')).tokens
 const resolveColors = (value: string | undefined) =>
   value?.replace(/var\((--[\w-]+)\)/g, (_all, token: string) => palette.get(token) ?? token)
+// 字号写 --fs-* 令牌或 rem（2026-10-23 迁移）：按默认 16px 根字号换回 px 再比对，视觉取值不变；“不写 px”由 rem.test.ts 断言
+const asPx = (value: string | undefined) =>
+  value
+    ?.replace(/var\((--fs-[\w-]+)\)/g, (all, token: string) => palette.get(token) ?? all)
+    .replace(/(?<![\w.])(\d*\.?\d+)rem\b/g, (_all, n: string) => `${Number(n) * 16}px`)
 
 const inMedia = (rule: CssRule, pattern: RegExp) => rule.atRules.some((at) => pattern.test(at))
 const FORCED = /forced-colors:\s*active/
@@ -117,7 +122,7 @@ describe('pt-header（spec §5.2）', () => {
     expect(declared('header.css', '.pt-header__inner', 'padding')).toBe('0 var(--sp-5)')
     expect(declared('header.css', '.pt-header__inner', 'gap')).toBe('var(--sp-6)')
     expect(declared('header.css', '.pt-nav', 'gap')).toBe('var(--sp-5)')
-    expect(declared('header.css', '.pt-nav a', 'font')).toBe('700 15px / 1 var(--pt-serif)')
+    expect(asPx(declared('header.css', '.pt-nav a', 'font'))).toBe('700 15px / 1 var(--pt-serif)')
     expect(declared('header.css', '.pt-header__end', 'margin-left')).toBe('auto')
   })
 
@@ -132,7 +137,7 @@ describe('pt-header（spec §5.2）', () => {
     expect(declared('header.css', '.pt-nav', 'width', at620)).toBe('100%')
     expect(declared('header.css', '.pt-nav', 'gap', at620)).toBe('24px')
     expect(declared('header.css', '.pt-brand', 'min-height', at620)).toBe('44px')
-    expect(declared('header.css', '.pt-brand', 'font-size', at620)).toBe('18px')
+    expect(asPx(declared('header.css', '.pt-brand', 'font-size', at620))).toBe('18px')
     expect(declared('header.css', '.pt-nav a', 'min-height', at620)).toBe('44px')
   })
 
@@ -436,6 +441,14 @@ function m2Value(
   }
   return m2Norm(last)
 }
+/** 同 m2Value，但先把字号令牌与 rem 换回 px（asPx）再归一 */
+function m2Px(rules: readonly CssRule[], selector: string, prop: string, media?: string): string {
+  const raw = m2Rules(rules, selector, media)
+    .flatMap((rule) => rule.declarations.get(prop) ?? [])
+    .at(-1)
+  if (raw === undefined) throw new Error(`${selector} 缺少 ${prop}`)
+  return m2Norm(asPx(raw) ?? raw)
+}
 
 describe('M2 组件文件接入 index.css（契约 §3.3）', () => {
   it('已建的 M2 组件文件按固定顺序跟在 hero-title.css 之后', () => {
@@ -550,7 +563,7 @@ describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
     expect(m2Value(rules, '.pt-file', 'border')).toBe(m2Norm('1px solid var(--control-edge)'))
   })
   it('kbd 键帽 11px --ink-3，边 --line-2，底 --bg-2', () => {
-    expect(m2Value(rules, '.pt-kbd', 'font')).toContain('11px')
+    expect(m2Px(rules, '.pt-kbd', 'font')).toContain('11px')
     expect(m2Value(rules, '.pt-kbd', 'color')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-kbd', 'border')).toBe(m2Norm('1px solid var(--line-2)'))
     expect(m2Value(rules, '.pt-kbd', 'background')).toBe('var(--bg-2)')
@@ -578,9 +591,9 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(m2Value(rules, '.pt-tab[aria-selected="true"] .pt-tab__count', 'color')).toBe('inherit')
   })
   it('页签字形：衬线 700 15px、字距 .06em；计数无衬线 500 13px、字距 0', () => {
-    expect(m2Value(rules, '.pt-tab', 'font')).toBe(m2Norm('700 15px/1.6 var(--pt-serif)'))
+    expect(m2Px(rules, '.pt-tab', 'font')).toBe(m2Norm('700 15px/1.6 var(--pt-serif)'))
     expect(m2Value(rules, '.pt-tab', 'letter-spacing')).toBe('0.06em')
-    expect(m2Value(rules, '.pt-tab__count', 'font')).toBe(m2Norm('500 13px/1 var(--font-zh-cn)'))
+    expect(m2Px(rules, '.pt-tab__count', 'font')).toBe(m2Norm('500 13px/1 var(--font-zh-cn)'))
     expect(m2Value(rules, '.pt-tab__count', 'letter-spacing')).toBe('0')
   })
   it('基线画在整行外下方；未选中页签留 2px 缝，选中页签接通基线', () => {
@@ -736,20 +749,16 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, unique, '--gem-2')).toBe('#f07a2c')
     expect(m2Value(rules, unique, '--gem-3')).toBe('#6e2405')
     expect(m2Value(rules, unique, '--gem-4')).toBe('#b44f19')
-    expect(m2Value(rules, '.pt-nameplate__name', 'font')).toBe(
-      m2Norm('700 20px/1.25 var(--pt-serif)'),
-    )
+    expect(m2Px(rules, '.pt-nameplate__name', 'font')).toBe(m2Norm('700 20px/1.25 var(--pt-serif)'))
     expect(m2Value(rules, '.pt-nameplate__name', 'letter-spacing')).toBe('0.03em')
-    expect(m2Value(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'font-size')).toBe('21px')
+    expect(m2Px(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'font-size')).toBe('21px')
     expect(m2Value(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'letter-spacing')).toBe(
       '0.04em',
     )
     expect(m2Value(rules, '.pt-nameplate__name:lang(zh-TW)', 'font-family')).toBe(
       'var(--pt-serif-tc)',
     )
-    expect(m2Value(rules, '.pt-nameplate__en', 'font')).toBe(
-      m2Norm('400 13px/1.2 var(--pt-cinzel)'),
-    )
+    expect(m2Px(rules, '.pt-nameplate__en', 'font')).toBe(m2Norm('400 13px/1.2 var(--pt-cinzel)'))
   })
   it('名称牌保留内容留白、折叠边界，隐藏旧装饰扣', () => {
     expect(m2Value(rules, '.pt-nameplate', 'min-height')).toBe('62px')
@@ -764,7 +773,7 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, '.pt-nameplate__toggle', 'color')).toBe('var(--gold)')
     expect(m2Value(rules, '.pt-nameplate__toggle', 'text-decoration')).toBe(m2Norm('underline 1px'))
     expect(m2Value(rules, '.pt-nameplate__toggle', 'text-underline-offset')).toBe('3px')
-    expect(m2Value(rules, '.pt-nameplate__toggle', 'font-size')).toBe('13px')
+    expect(m2Px(rules, '.pt-nameplate__toggle', 'font-size')).toBe('13px')
     expect(m2Value(rules, '.pt-nameplate__toggle:hover', 'color')).toBe('var(--ink)')
     expect(m2Value(rules, '.pt-nameplate__toggle:hover', 'text-decoration-thickness')).toBe('2px')
   })
@@ -772,7 +781,7 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, '.pt-nameplate__count', 'color')).toBe('var(--ink-2)')
     expect(m2Value(rules, '.pt-nameplate__miss', 'border')).toBe(m2Norm('1px dashed var(--miss)'))
     expect(m2Value(rules, '.pt-nameplate__miss', 'color')).toBe('var(--miss)')
-    expect(m2Value(rules, '.pt-nameplate__tag', 'font-size')).toBe('12px')
+    expect(m2Px(rules, '.pt-nameplate__tag', 'font-size')).toBe('12px')
     expect(m2Value(rules, '.pt-nameplate__tag', 'border-radius')).toBe('0')
   })
   it('≤600px：左右内边距 12px；第二行可在组间换行，各项自身不换行', () => {
@@ -823,7 +832,7 @@ describe('tooltip.css（spec §6.4.4）', () => {
     expect(m2Value(rules, '.pt-tooltip-wrap', 'container-type')).toBe('inline-size')
   })
   it('顶部说明 12.5px --ink-3 右对齐，后半句不拆开', () => {
-    expect(m2Value(rules, '.pt-tooltip-note', 'font-size')).toBe('12.5px')
+    expect(m2Px(rules, '.pt-tooltip-note', 'font-size')).toBe('12.5px')
     expect(m2Value(rules, '.pt-tooltip-note', 'color')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-tooltip-note', 'text-align')).toBe('right')
     expect(m2Value(rules, '.pt-tooltip-note__tail', 'display')).toBe('inline-block')
@@ -831,7 +840,7 @@ describe('tooltip.css（spec §6.4.4）', () => {
   it('正文居中；属性行 14px --prop，数值 --val 500；分隔线取卡片边色、左右外距 20px', () => {
     expect(m2Value(rules, '.pt-tooltip__body', 'padding')).toBe(m2Norm('12px 24px 16px'))
     expect(m2Value(rules, '.pt-tooltip__body', 'text-align')).toBe('center')
-    expect(m2Value(rules, '.pt-tooltip__prop', 'font-size')).toBe('14px')
+    expect(m2Px(rules, '.pt-tooltip__prop', 'font-size')).toBe('14px')
     expect(m2Value(rules, '.pt-tooltip__prop', 'color')).toBe('var(--prop)')
     expect(m2Value(rules, '.pt-tooltip__prop .pt-num', 'color')).toBe('var(--val)')
     expect(m2Value(rules, '.pt-tooltip__prop .pt-num', 'font-weight')).toBe('500')
@@ -849,7 +858,7 @@ describe('tooltip.css（spec §6.4.4）', () => {
   })
   it('中文词缀 15.5px/1.5 --mod-hi，数值 --mod-num-zh 700', () => {
     expect(m2Value(rules, '.pt-tooltip__mod', 'color')).toBe('var(--mod-hi)')
-    expect(m2Value(rules, '.pt-tooltip__mod', 'font-size')).toBe('15.5px')
+    expect(m2Px(rules, '.pt-tooltip__mod', 'font-size')).toBe('15.5px')
     expect(m2Value(rules, '.pt-tooltip__mod', 'line-height')).toBe('1.5')
     expect(m2Value(rules, '.pt-tooltip__mod .pt-num', 'color')).toBe('var(--mod-num-zh)')
     expect(m2Value(rules, '.pt-tooltip__mod .pt-num', 'font-weight')).toBe('700')
@@ -871,14 +880,14 @@ describe('pairs.css（spec §5.11）', () => {
     )
     expect(m2Value(rules, '.pt-pair', 'column-gap')).toBe('24px')
     expect(m2Value(rules, '.pt-pair', 'padding')).toBe(m2Norm('8px 22px 8px 6px'))
-    expect(m2Value(rules, '.pt-pair', 'font-size')).toBe('15px')
+    expect(m2Px(rules, '.pt-pair', 'font-size')).toBe('15px')
     expect(m2Value(rules, '.pt-pair', 'line-height')).toBe('1.6')
     expect(m2Value(rules, '.pt-pair + .pt-pair', 'border-top')).toBe(
       m2Norm('1px solid rgba(255, 255, 255, 0.045)'),
     )
   })
   it('编号 12px --ink-3；英文 --mod（数值 --mod-hi）；中文 --ink（数值 --val 600）', () => {
-    expect(m2Value(rules, '.pt-pair__no', 'font-size')).toBe('12px')
+    expect(m2Px(rules, '.pt-pair__no', 'font-size')).toBe('12px')
     expect(m2Value(rules, '.pt-pair__no', 'color')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-pair__en', 'color')).toBe('var(--mod)')
     expect(m2Value(rules, '.pt-pair__en .pt-num', 'color')).toBe('var(--mod-hi)')
@@ -901,7 +910,7 @@ describe('pairs.css（spec §5.11）', () => {
     expect(m2Value(rules, '.pt-pair--miss .pt-pair__en', 'text-underline-offset')).toBe('4px')
     expect(m2Value(rules, '.pt-tag-miss', 'border')).toBe(m2Norm('1px dashed var(--miss)'))
     expect(m2Value(rules, '.pt-tag-miss', 'border-radius')).toBe('0')
-    expect(m2Value(rules, '.pt-tag-miss', 'font')).toContain('12.5px')
+    expect(m2Px(rules, '.pt-tag-miss', 'font')).toContain('12.5px')
   })
   it('solo 不留编号列、左缘 20px；译文视图只剩编号与中文两列', () => {
     expect(m2Value(rules, '.pt-pair--solo', 'grid-template-columns')).toBe(m2Norm('minmax(0, 1fr)'))
@@ -942,7 +951,7 @@ describe('subhead.css', () => {
     const top = subheadRules.filter((rule) => rule.atRules.length === 0)
     expect(top).toHaveLength(1)
     const decl = top[0]?.declarations
-    expect(tidy(decl?.get('font'))).toBe('700 21px/1.35 var(--pt-serif)')
+    expect(tidy(asPx(decl?.get('font')))).toBe('700 21px/1.35 var(--pt-serif)')
     expect(tidy(decl?.get('color'))).toBe('var(--title-gold)')
     expect(tidy(decl?.get('letter-spacing'))).toBe('0.06em')
     expect(tidy(decl?.get('margin'))).toBe('0')
@@ -967,12 +976,13 @@ describe('subhead.css', () => {
     expect(lg).toHaveLength(2)
     expect(top).toHaveLength(1)
     expect(narrow).toHaveLength(1)
-    expect([...(top[0]?.declarations ?? new Map<string, string>())]).toEqual([
-      ['font-size', '28px'],
-    ])
-    expect([...(narrow[0]?.declarations ?? new Map<string, string>())]).toEqual([
-      ['font-size', '21px'],
-    ])
+    const px = (rule: CssRule | undefined) =>
+      [...(rule?.declarations ?? new Map<string, string>())].map(([name, value]) => [
+        name,
+        asPx(value),
+      ])
+    expect(px(top[0])).toEqual([['font-size', '28px']])
+    expect(px(narrow[0])).toEqual([['font-size', '21px']])
   })
 
   it('index.css 的最后一行引入 subhead.css（契约 §3.3 的 M3 行）', () => {
@@ -1023,7 +1033,7 @@ describe('pt-switch（spec §5.13）', () => {
 
 describe('pt-provenance（spec §5.14）', () => {
   it('短署名 12.5px --ink-3，gem 16px；完整声明 --fs-micro（12px，随字号阶梯缩放）--ink-2', () => {
-    expect(declared('provenance.css', '.pt-provenance', 'font-size')).toBe('12.5px')
+    expect(asPx(declared('provenance.css', '.pt-provenance', 'font-size'))).toBe('12.5px')
     expect(declared('provenance.css', '.pt-provenance', 'color')).toBe('var(--ink-3)')
     expect(declared('provenance.css', '.pt-provenance > .pt-motif--gem', '--ptm-w')).toBe('16px')
     expect(declared('provenance.css', '.pt-disclaimer', 'font-size')).toBe('var(--fs-micro)')

@@ -394,7 +394,8 @@ it('对话框放宽规则单独放在宿主之前的 import-dialog 样式里，�
 
 it('英文预览框带 data-preview，填入按钮为主操作、恢复为第三级', () => {
   const { fill } = readyPreview()
-  const areas = [...ui().querySelectorAll('textarea')]
+  // B3-09：两栏由只读文本框改为带行号的行列表
+  const areas = [...ui().querySelectorAll('.columns ol.lines')]
   expect(areas.map((a) => a.hasAttribute('data-preview'))).toEqual([false, true])
   expect(ui().querySelector('button[data-primary]')).toBe(fill)
   expect(fill.textContent).toBe('填入英文到原站导入框')
@@ -688,8 +689,9 @@ it('完整预览可复制，原框及原站提交保持不变', async () => {
   expect(copyButton()?.disabled).toBe(false)
   copyButton()?.click()
   await settle()
+  // B3-09：英文栏是行列表，按行拼回全文比对
   expect(writeText).toHaveBeenCalledWith(
-    ui().querySelector<HTMLTextAreaElement>('[data-preview]')?.value,
+    [...ui().querySelectorAll('[data-preview] > li > .text')].map((t) => t.textContent).join('\n'),
   )
   expect(input.value).toBe(source)
   expect(ui().textContent).toContain('已复制英文装备文本')

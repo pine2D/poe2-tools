@@ -501,6 +501,15 @@ it.each<
   expect(icon?.classList.contains('page__icon')).toBe(true)
 })
 
+it('不在 CoE 的页面把 CoE 区标为 elsewhere（压缩显示）；在 CoE 页面为 coe', async () => {
+  await setup(undefined, POPUP)
+  const block = document.querySelector('#page') as HTMLElement
+  emit({ status: 'none' })
+  expect(block.dataset.scope).toBe('elsewhere')
+  emit(answered())
+  expect(block.dataset.scope).toBe('coe')
+})
+
 it('同一结果重复到达时不重写状态块：live region 不重复播报', async () => {
   await setup(undefined, POPUP)
   const icon = document.querySelector('#page svg')

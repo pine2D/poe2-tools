@@ -50,6 +50,10 @@ const EXPECTED: Record<string, string> = {
   '--prop': '#9d9282',
   '--val': '#e2e2e2',
   '--unique': '#e28a47',
+  '--normal-item': '#e8e3d8',
+  '--passive': '#e3c463',
+  '--rarity-magic': '#8888ff',
+  '--rarity-rare': '#ffff77',
   '--unique-name': '#e28a47',
   '--unique-name-2': '#e7a070',
   '--unique-edge': '#af6025',
@@ -154,7 +158,7 @@ describe('令牌结构（spec §4.3）', () => {
   it('令牌集合与取值等于v4 兼容接口的 79 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
     const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
     expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(contract).toHaveLength(82)
+    expect(contract).toHaveLength(86)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }
@@ -205,6 +209,15 @@ describe('对比度门禁（DESIGN.md v4）', () => {
     }
     // --steel-edge 只作内侧装饰；方形开关的青铜边面对面板，不用于正文。
     expect(contrastRatio(token('--bronze-lo'), token('--bg'))).toBeGreaterThanOrEqual(3)
+  })
+
+  it('稀有度与游戏名称色（魔法、稀有、普通物品、天赋）对面板与提示框顶栏底 ≥4.5:1', () => {
+    for (const name of ['--rarity-magic', '--rarity-rare', '--normal-item', '--passive'])
+      for (const surface of ['--bg', '--raised-2'])
+        expect(
+          contrastRatio(token(name), token(surface)),
+          `${name}@${surface}`,
+        ).toBeGreaterThanOrEqual(4.5)
   })
 
   it('危险确认按钮文字对底 ≥4.5:1；边框对所在面板 ≥3:1', () => {
