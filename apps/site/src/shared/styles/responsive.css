@@ -21,6 +21,39 @@
     flex: 0 0 220px;
     min-width: 0;
   }
+  /* 系列条按构筑分组（B4-15）：只有外层一个横向滚动容器；每组标题跨在本组文件上方，
+     组宽由文件决定（标题 width 0 + min-width 100%，不按长构筑名撑宽），组内文件横排、不再各自滚动 */
+  .app__groups {
+    display: flex;
+    align-items: flex-start;
+    overflow-x: auto;
+    gap: var(--sp-4);
+    padding-block: var(--sp-2);
+  }
+  .app__group {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .app__group-h {
+    width: 0;
+    min-width: 100%;
+  }
+  /* 组宽常大于视口：阶段数紧跟名称，不被推到组的最右端滚出视野 */
+  .app__group-title {
+    flex: 0 1 auto;
+  }
+  .app__files--group {
+    overflow: visible;
+    gap: 0;
+    padding-block: 0;
+    margin-inline-start: 0;
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--bronze-lo);
+  }
+  .app__files--group > li + li {
+    border-inline-start: 1px solid var(--line-2);
+  }
   .app__side-note {
     margin: var(--sp-2) 0 0;
     padding: 0;
@@ -53,6 +86,18 @@
   }
   .app__error-detail > summary {
     min-height: 44px;
+  }
+  /* 组内文件：选择按钮本身至少 44px 高（伪元素已铺满整条），移除按钮 44×44，右内边距随之让位 */
+  .app__files--group .pt-file {
+    padding-inline-end: var(--sp-7);
+  }
+  .app__files--group .pt-file__pick {
+    min-height: 44px;
+  }
+  .app__files--group .pt-file__remove {
+    width: 44px;
+    height: 44px;
+    right: 0;
   }
 }
 /* ≤600px：Toast 关闭按钮可点目标 ≥44px */

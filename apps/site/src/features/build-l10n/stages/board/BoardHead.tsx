@@ -3,7 +3,7 @@ import type { Locale } from '@poe2-tools/build-core'
 import { useEffect, useRef } from 'react'
 import { Icon } from '../../../../shared/components/Icon'
 import { PtForgeButton } from '../../../../shared/components/PtForgeButton'
-import type { Series } from '../stages'
+import { type Series, seriesLabel } from '../stages'
 
 export interface BoardFactsProps {
   series: Series
@@ -79,10 +79,8 @@ export function SeriesSwitch({ allSeries, currentKey, onSeries }: SeriesSwitchPr
             checked={item.key === currentKey}
             onChange={() => onSeries(item.key)}
           />
-          <span data-user-text="">
-            {item.title}
-            {item.separated &&
-              ` · ${item.author ?? '作者未填写'} · ${item.stages[0]?.file.preview.ascendancy?.text ?? item.stages[0]?.file.input.ascendancy ?? '升华未填写'}`}
+          <span data-user-text="" title={seriesLabel(item)}>
+            {seriesLabel(item)}
           </span>
         </label>
       ))}

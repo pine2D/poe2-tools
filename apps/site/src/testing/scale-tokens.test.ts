@@ -34,7 +34,7 @@ const ALLOW: SizeAllow = {
   // 56px 是示例行标签列宽（.app__ex-line 的 grid-template-columns）：分隔线左缘 = 标签列 + 列距
   'empty.css|.app__ex-divider|margin': ['56px'],
   // ui-theme .pt-file__remove 的 right 6px 与 width 28px：紧凑文件行让出移除按钮（build-css.test 钉住整串）
-  'sidebar.css|.app__files--stages .pt-file|padding': ['6px', '28px'],
+  'sidebar.css|.app__files--group .pt-file|padding': ['6px', '28px'],
 }
 
 function scan(): { violations: string[]; used: Set<string> } {

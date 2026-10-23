@@ -9,6 +9,7 @@ import { createDictLoader, type FetchJson, type LoadedDict } from '../../shared/
 import { DropZone } from './components/DropZone'
 import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
+import { displayOrder, fileGroups } from './components/fileGroups'
 import { ExportOptions, LocalePicker, OptionsBar } from './components/OptionsBar'
 import { Toast } from './components/Toast'
 import { saveBlob, textBlob, uniqueNames, zipBlob, zipName } from './download/download'
@@ -298,7 +299,12 @@ export function App({ fetchImpl }: AppProps) {
     seriesHandoff.current = null
     document.querySelector<HTMLInputElement>('input[name="stage-series"]:checked')?.focus()
   }, [currentKey])
-  // 看板同时展示多个阶段：侧栏文件只是阶段来源清单，降为紧凑行、不标当前项（修订 1：侧栏让位）
+  // 左列按构筑分组，组序与组内顺序同看板（B4-15）；词典未就绪时为 null，平铺
+  const groups = useMemo(
+    () => fileGroups(sources, results, seriesList),
+    [sources, results, seriesList],
+  )
+  // 看板同时展示多个阶段：侧栏文件只是阶段来源清单，不标单份当前项（修订 1：侧栏让位）
   const boardStages =
     selected?.ok === true && mode === 'board' && currentSeries !== null
       ? currentSeries.stages.length
@@ -332,19 +338,22 @@ export function App({ fetchImpl }: AppProps) {
     setMode('board')
   }
   const remove = (id: string) => {
-    const index = sources.findIndex((source) => source.id === id)
+    // 相邻文件按左列的显示顺序（分组后与导入顺序不同）
+    const order = displayOrder(groups, sources)
+    const index = Math.max(0, order.indexOf(id))
+    const rest = order.filter((item) => item !== id)
     const remaining = sources.filter((source) => source.id !== id)
     setSources(remaining)
     if (remaining.length === 0) setMode('board')
     if (selectedId === id) {
-      setSelectedId(remaining[Math.min(index, remaining.length - 1)]?.id ?? null)
+      setSelectedId(rest[Math.min(index, rest.length - 1)] ?? null)
     }
     // 移除按钮即将消失，提交 DOM 后交给相邻文件；最后一份回到导入入口。
     requestAnimationFrame(() => {
       if (remaining.length === 0) {
         document.getElementById('file-input')?.focus()
       } else {
-        // 紧凑行（看板多阶段）没有 aria-current，退到移除位置上的相邻文件
+        // 看板多阶段时没有 aria-current，退到移除位置上的相邻文件（DOM 顺序即显示顺序）
         const picks = document.querySelectorAll<HTMLButtonElement>('.pt-file__pick')
         const current = document.querySelector<HTMLButtonElement>(
           '.pt-file__pick[aria-current="true"]',
@@ -568,6 +577,8 @@ export function App({ fetchImpl }: AppProps) {
         misses={missCounts}
         selectedId={selectedId}
         stages={stagesList}
+        groups={groups}
+        currentKey={currentKey}
         onSelect={selectFile}
         onRemove={remove}
       />

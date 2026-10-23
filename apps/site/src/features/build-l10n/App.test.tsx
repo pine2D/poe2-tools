@@ -665,13 +665,15 @@ describe('阶段看板（第一期）', () => {
     await renderReady()
     fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
     await screen.findByRole('heading', { name: '示例构筑（自造）' })
+    // B4-15 起左列按构筑分组：看板多阶段时只标当前构筑组，不标单份文件
     const list = screen.getByRole('list', { name: '已导入文件' })
-    expect(list.className).toBe('app__files app__files--stages')
+    expect(list.className).toBe('app__groups')
+    expect(list.querySelector('.app__group[data-current="true"]')).not.toBeNull()
     expect(list.querySelector('[aria-current]')).toBeNull()
     expect(screen.getByText('当前构筑 · 3 个阶段')).toBeDefined()
-    // 逐项核对是单文件视图：恢复普通文件项与当前项标记
+    // 逐项核对是单文件视图：恢复当前项标记
     fireEvent.click(screen.getByRole('button', { name: '逐项核对 1–30 级' }))
-    expect(list.className).toBe('app__files')
+    expect(list.className).toBe('app__groups')
     expect(
       within(list)
         .getByRole('button', { name: pickName('example-1.build') })
@@ -711,9 +713,9 @@ describe('阶段看板（第一期）', () => {
     fireEvent.click(await screen.findByRole('button', { name: '试用示例构筑' }))
     await screen.findByRole('heading', { name: '示例构筑（自造）' })
     expect(screen.getByRole('region', { name: '阶段对照表' })).toBeDefined()
-    expect(screen.getByRole('list', { name: '已导入文件' }).className).toBe(
-      'app__files app__files--stages',
-    )
+    const list = screen.getByRole('list', { name: '已导入文件' })
+    expect(list.querySelector('.app__group[data-current="true"]')).not.toBeNull()
+    expect(list.querySelector('[aria-current]')).toBeNull()
   })
 })
 
@@ -829,5 +831,84 @@ describe('导出栏反映全部导出（B4-02、B4-03、B4-06、B4-14）', () =>
     fireEvent.click(screen.getByRole('button', { name: '重试加载词典' }))
     await screen.findByText('词典就绪')
     await waitFor(() => expect(document.activeElement?.id).toBe('empty-hero'))
+  })
+})
+
+// B4-15：左列“构筑 → 阶段”分组，组序与组内顺序与看板一致；移除后焦点按显示顺序交给相邻文件
+describe('左列按构筑分组（B4-15）', () => {
+  const picksIn = (list: HTMLElement) =>
+    within(list)
+      .getAllByRole('button')
+      .filter((button) => button.className === 'pt-file__pick')
+      .map((button) => button.getAttribute('aria-label'))
+
+  async function importMixed() {
+    const [a, b, c] = EXAMPLE_SERIES as [
+      { name: string; text: string },
+      { name: string; text: string },
+      { name: string; text: string },
+    ]
+    fireEvent.change(screen.getByLabelText('选择 .build 文件'), {
+      target: {
+        files: [
+          new File([c.text], c.name),
+          new File(['{ not json'], 'bad.build'),
+          new File([rich], 'rich.build'),
+          new File([a.text], a.name),
+          new File([b.text], b.name),
+        ],
+      },
+    })
+    await screen.findByRole('button', { name: '逐项核对 终局' })
+  }
+
+  it('多阶段构筑组内按阶段顺序，单文件构筑自成一组，解析失败的文件排在最后', async () => {
+    await renderReady()
+    await importMixed()
+    const all = screen.getByRole('list', { name: '已导入文件' })
+    expect(all.className).toBe('app__groups')
+    const groups = [...all.querySelectorAll(':scope > .app__group')]
+    expect(groups.map((group) => group.querySelector('.app__group-title')?.textContent)).toEqual([
+      '示例构筑（自造）',
+      'Synthetic Rich - 0.5.5',
+      '无法解析',
+    ])
+    expect(picksIn(screen.getByRole('list', { name: '示例构筑（自造） 3 个阶段' }))).toEqual([
+      '1–30 级 - 示例构筑（自造），example-1.build',
+      '31–60 级 - 示例构筑（自造），example-2.build',
+      '终局 - 示例构筑（自造），example-3.build',
+    ])
+    expect(picksIn(screen.getByRole('list', { name: 'Synthetic Rich - 0.5.5 1 个文件' }))).toEqual([
+      'Synthetic Rich - 0.5.5，rich.build',
+    ])
+    expect(picksIn(screen.getByRole('list', { name: '无法解析 1 个文件 · 不导出' }))).toEqual([
+      'bad.build',
+    ])
+    // 看板展示示例构筑：组被标为当前，文件不标单份选中
+    expect(all.querySelector('[aria-current]')).toBeNull()
+    expect(
+      all.querySelector('.app__group[data-current="true"] .app__group-title')?.textContent,
+    ).toBe('示例构筑（自造）')
+    // 手动调序后左列跟着看板改顺序，焦点留在调序按钮
+    fireEvent.click(screen.getByText('调整阶段顺序'))
+    fireEvent.click(screen.getByRole('button', { name: '将终局上移' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '将终局上移' }))
+    expect(picksIn(screen.getByRole('list', { name: '示例构筑（自造） 3 个阶段' }))).toEqual([
+      '1–30 级 - 示例构筑（自造），example-1.build',
+      '终局 - 示例构筑（自造），example-3.build',
+      '31–60 级 - 示例构筑（自造），example-2.build',
+    ])
+  })
+
+  it('移除文件后焦点按左列显示顺序交给相邻文件', async () => {
+    await renderReady()
+    await importMixed()
+    // 导入顺序是 终局、bad、rich、1–30、31–60；左列顺序是 1–30、31–60、终局、rich、bad
+    fireEvent.click(inFileList().getByRole('button', { name: '移除 example-2.build' }))
+    await waitFor(() =>
+      expect(document.activeElement?.getAttribute('aria-label')).toBe(
+        '终局 - 示例构筑（自造），example-3.build',
+      ),
+    )
   })
 })

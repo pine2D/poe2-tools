@@ -68,3 +68,21 @@ it('旧菱形徽标与实现历史文案已移除', () => {
   expect(html).toContain('<h1>这里没有找到页面。</h1>')
   for (const href of ['/', '/build/', '/extension/']) expect(html).toContain(`href="${href}"`)
 })
+
+// 2026-10-23 字号 rem 迁移：随浏览器“字体大小”缩放，默认 16px 根字号下与原 16／13／28／24px 一致；不固定根字号
+it('字号写 rem、不写 px，也不在 html／:root 固定根字号', () => {
+  const rules = parseRules(style)
+  const sizes = rules.flatMap((rule) =>
+    [...rule.declarations]
+      .filter(([name]) => name === 'font' || name === 'font-size')
+      .map(([, value]) => value),
+  )
+  expect(sizes.length).toBeGreaterThan(0)
+  for (const value of sizes) expect(value).not.toMatch(/\dpx\b/)
+  expect(sizes).toEqual(
+    expect.arrayContaining([expect.stringMatching(/^1rem\/1\.8 /), '0.8125rem', '1.5rem']),
+  )
+  expect(sizes.some((value) => value.startsWith('700 1.75rem/1.35 '))).toBe(true)
+  for (const rule of rules.filter((r) => r.selectors.some((s) => /^(html|:root)$/.test(s))))
+    expect(rule.declarations.has('font-size')).toBe(false)
+})

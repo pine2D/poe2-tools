@@ -50,11 +50,10 @@
   flex-wrap: wrap;
   margin-block-end: var(--sp-4);
 }
+/* 构筑名是任意文本：单项最宽 20em、单行省略，完整名在 title 与可访问名里（左列分组也能切换构筑） */
 .stageboard__switch .pt-seg__item {
   min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  max-width: min(100%, 20em);
   line-height: 1.5;
 }
 .stageboard__groupnote,
@@ -572,4 +571,10 @@
   .stageboard__table thead .stageboard__corner {
     border-block-end-color: CanvasText;
   }
+}
+/* “切换构筑”长名单行省略（复盘 B4-15；放在文末，避免与其他 > span 规则的特异度倒序） */
+.stageboard__switch .pt-seg__item > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

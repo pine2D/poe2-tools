@@ -28,6 +28,8 @@ describe('v4 首页', () => {
     )
     // 两端渐隐分隔线与居中：每面都有顶栏、分隔线与词缀区
     for (const tip of figure.querySelectorAll('.home-tip')) {
+      // 带两条词缀的戒指按游戏规则是魔法稀有度
+      expect(tip.getAttribute('data-rarity')).toBe('magic')
       expect([...tip.children].map((child) => child.className)).toEqual([
         'home-tip__head',
         'home-tip__sep',

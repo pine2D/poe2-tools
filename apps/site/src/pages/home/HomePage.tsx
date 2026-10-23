@@ -15,7 +15,8 @@ import { L1_DEMO_CANDIDATES, L1_DEMO_CAPTION } from '../../shared/l1Demo'
 // 候选示意的数据与扩展介绍页共用（shared/l1Demo.ts）；第一项是选中项，放进框腰作为放大行
 const [SELECTED, ...REST] = L1_DEMO_CANDIDATES
 
-// 示例物品：名称与词缀逐字取自正式国服词典（items.json、stats.json），类别名取自 CoE 界面译名（HomePage.test 核对）
+// 示例物品：名称与词缀逐字取自正式国服词典（items.json、stats.json），类别名取自 CoE 界面译名（HomePage.test 核对）。
+// 两条词缀按游戏规则是魔法稀有度；词典没有核实过的国服词缀名，名称只写基底名（简化示意）
 const ITEM = {
   'zh-CN': {
     name: '蓝玉戒指',
@@ -35,6 +36,7 @@ function ItemTip({ lang, front }: { lang: 'zh-CN' | 'en'; front: boolean }) {
     <div
       className={`home-tip ${front ? 'home-tip--front' : 'home-tip--back'}`}
       lang={lang}
+      data-rarity="magic"
       aria-hidden={front ? undefined : true}
     >
       <div className="home-tip__head">

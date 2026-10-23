@@ -216,6 +216,14 @@ export function groupSeries(files: readonly TranslatedFile[]): Series[] {
   })
 }
 
+/** 构筑的显示名：同一链接被作者／升华拆开时追加二者区分（看板“切换构筑”与左列组标题共用） */
+export function seriesLabel(series: Series): string {
+  if (!series.separated) return series.title
+  const first = series.stages[0]?.file
+  const ascendancy = first?.preview.ascendancy?.text ?? first?.input.ascendancy ?? '升华未填写'
+  return `${series.title} · ${series.author ?? '作者未填写'} · ${ascendancy}`
+}
+
 /** 手动顺序只作用于当前构筑：已移除的文件忽略，新导入的阶段追加，翻译与文件内容不变。 */
 export function applyStageOrder(series: Series, ids: readonly string[]): Series {
   const remaining = new Map(series.stages.map((stage) => [stage.file.id, stage]))

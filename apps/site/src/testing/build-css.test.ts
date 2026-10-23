@@ -353,9 +353,40 @@ describe('阶段看板与紧凑文件行的几何（阶段看板验收修正第 
     expect(finalValue(rules, '.pt-file__pick::after', 'content')).toBe('""')
     expect(finalValue(rules, '.pt-file__remove', 'z-index')).toBe('1')
   })
-  it('紧凑文件行右内边距让出移除按钮（right 6px + 28px）再留 --sp-1', () => {
-    expect(finalValue(side, '.app__files--stages .pt-file', 'padding')).toBe(
-      'var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-1)',
+  // B4-15 起分组列表取代看板模式的紧凑行：组内文件行同样让出移除按钮
+  it('组内文件行右内边距让出移除按钮（right 6px + 28px）再留 --sp-1', () => {
+    expect(finalValue(side, '.app__files--group .pt-file', 'padding')).toBe(
+      'var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-3)',
+    )
+  })
+  it('组标题单行省略，不把侧栏或系列条撑宽', () => {
+    const rules = buildCss()
+    expect(finalValue(rules, '.app__group-h', 'min-width')).toBe('0')
+    expect(finalValue(rules, '.app__group-h', 'flex-wrap')).toBe('wrap')
+    expect(finalValue(rules, '.app__group-title', 'min-width')).toBe('min(100%, max-content)')
+    expect(finalValue(rules, '.app__group-title', 'text-overflow')).toBe('ellipsis')
+    expect(finalValue(rules, '.app__group-title', 'white-space')).toBe('nowrap')
+    expect(finalValue(rules, '.app__group-title', 'overflow')).toBe('hidden')
+  })
+  // ≤1199 系列条：整条只有外层一个横向滚动容器，组标题跨在本组文件上方，组宽由文件决定
+  it('≤1199px 系列条按组横排、只在外层横向滚动，组标题不按长名撑宽', () => {
+    const rules = buildCss()
+    const m = 'max-width: 1199px'
+    expect(finalValue(rules, '.app__groups', 'display', m)).toBe('flex')
+    expect(finalValue(rules, '.app__groups', 'overflow-x', m)).toBe('auto')
+    expect(finalValue(rules, '.app__group', 'flex', m)).toBe('0 0 auto')
+    expect(finalValue(rules, '.app__files--group', 'overflow', m)).toBe('visible')
+    expect(finalValue(rules, '.app__group-h', 'width', m)).toBe('0')
+    expect(finalValue(rules, '.app__group-h', 'min-width', m)).toBe('100%')
+  })
+  it('≤600px 组内文件的选择与移除点击区不小于 44px', () => {
+    const rules = buildCss()
+    const m = 'max-width: 600px'
+    expect(finalValue(rules, '.app__files--group .pt-file__pick', 'min-height', m)).toBe('44px')
+    expect(finalValue(rules, '.app__files--group .pt-file__remove', 'width', m)).toBe('44px')
+    expect(finalValue(rules, '.app__files--group .pt-file__remove', 'height', m)).toBe('44px')
+    expect(finalValue(rules, '.app__files--group .pt-file', 'padding-inline-end', m)).toBe(
+      'var(--sp-7)',
     )
   })
   it('吸附栏位列与角格有最小宽度 --slot-w，不被长名称的阶段列挤窄', () => {
@@ -371,5 +402,15 @@ describe('阶段看板与紧凑文件行的几何（阶段看板验收修正第 
     expect(finalValue(board, '.stageboard__ghost-corner', 'inline-size')).toBe(
       'var(--ghost-corner, var(--slot-w))',
     )
+  })
+})
+
+describe('看板“切换构筑”长名（复盘 B4-15）', () => {
+  it('单项限宽并单行省略，不再整段铺开', () => {
+    const css = readFileSync(new URL('../shared/styles/stageboard.css', import.meta.url), 'utf8')
+    expect(css).toMatch(
+      /\.stageboard__switch \.pt-seg__item > span \{[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;/,
+    )
+    expect(css).toMatch(/\.stageboard__switch \.pt-seg__item \{[^}]*max-width: min\(100%, 20em\);/)
   })
 })

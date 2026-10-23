@@ -11,7 +11,7 @@ const read = (rel: string): string => readFileSync(new URL(rel, repo), 'utf8')
 const tokens = rootTokens(read('packages/ui-theme/src/tokens.css')).tokens
 const homeRules = parseRules(read('apps/site/src/shared/styles/home.css'))
 
-/** 取某选择器在指定媒体条件下（null 为无媒体条件）的 font-size，并把 var(--fs-*) 解析成 px */
+/** 取某选择器在指定媒体条件下（null 为无媒体条件）的 font-size，并把 var(--fs-*) 解析成令牌取值（rem） */
 function fontSize(
   rules: ReturnType<typeof parseRules>,
   selector: string,
@@ -39,8 +39,8 @@ function designRow(place: string): string {
 
 describe('DESIGN.md 首页字号与实际流体令牌一致', () => {
   it.each([
-    ['首页 hero 标题', '.home-hero .pt-hero-title', 'clamp(44px, 6.4vw, 84px)'],
-    ['首页场景标题', '.entry__head .pt-subhead--lg', 'clamp(30px, 3.4vw, 42px)'],
+    ['首页 hero 标题', '.home-hero .pt-hero-title', 'clamp(2.75rem, 6.4vw, 5.25rem)'],
+    ['首页场景标题', '.entry__head .pt-subhead--lg', 'clamp(1.875rem, 3.4vw, 2.625rem)'],
   ])('%s', (place, selector, expected) => {
     expect(fontSize(homeRules, selector, null)).toBe(expected)
     expect(designRow(place)).toContain(expected)

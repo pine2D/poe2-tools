@@ -75,7 +75,7 @@
   translate: var(--sp-3) 0;
   rotate: 1deg;
 }
-/* 稀有度顶栏：普通物品的灰阶渐变，上缘一条亮线 */
+/* 稀有度顶栏：深灰渐变，上缘一条亮线；稀有度由 data-rarity 给出名称色与上缘色 */
 .home-tip__head {
   display: grid;
   align-content: center;
@@ -94,6 +94,15 @@
   font-size: var(--fs-display-s);
   line-height: 1.25;
   letter-spacing: 0.04em;
+}
+/* 魔法稀有度：名称与上缘取游戏魔法蓝；底保持深灰，保证英文 21px 名称对比度 ≥4.5:1 */
+.home-tip[data-rarity="magic"] .home-tip__head {
+  box-shadow:
+    inset 0 1px 0 var(--rarity-magic),
+    inset 0 -1px 0 var(--line-2);
+}
+.home-tip[data-rarity="magic"] .home-tip__name {
+  color: var(--rarity-magic);
 }
 .home-tip[lang="en"] .home-tip__name {
   font-size: var(--fs-title);
