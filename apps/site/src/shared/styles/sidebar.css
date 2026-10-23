@@ -24,13 +24,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-4);
+  padding: var(--sp-3);
 }
 @media (min-width: 1100px) {
   .app__side-inner {
     border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--surface);
+    border-radius: 0;
+    background: var(--bg);
   }
 }
 /* 侧栏 DropZone rail：拖入时整块加 --bronze 虚线外框；“或粘贴内容”居中通栏 */
@@ -60,36 +60,105 @@
   padding: 0;
   list-style: none;
 }
-/* 修订 1（侧栏让位）：多文件即多阶段时，文件只是阶段带的来源清单，降为紧凑 L0 行：
-   无卡片边框、无“当前文件”金线（看板同时展示所有阶段，没有单选语义），名称单行省略 */
-.app__files--stages {
+/* 整条可点（B4-04）：选择按钮只包住名称，用铺满文件项（.pt-file 为定位容器）的伪元素扩大点击区；
+   状态行点了同样是选择。移除按钮叠在上方，仍单独可点 */
+.pt-file__pick::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.pt-file__remove {
+  z-index: 1;
+}
+/* 按构筑分组（B4-15，原型 .series / .files）：组标题是构筑名与阶段数，组内文件挂在青铜竖线下，
+   是 L0 行：无卡片边框，当前文件用浅底与青铜内线标出。构筑名是任意文本，保持无衬线 */
+.app__groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.app__group {
+  min-width: 0;
+}
+.app__group-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+}
+/* 看板正在展示这一组（原型 .series__name[aria-current]）：标题行左起的暗金渐变 */
+.app__group[data-current="true"] > .app__group-h {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tab-start) 55%, transparent),
+    transparent 85%
+  );
+}
+/* 名称放得下时与阶段数同行；放不下时独占一行按省略号截断，阶段数换到下一行（侧栏只有约 190px） */
+.app__group-title {
+  flex: 1 1 auto;
+  min-width: min(100%, max-content);
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--fs-data);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app__group-meta {
+  flex: 0 0 auto;
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+}
+.app__group--failed > .app__group-h .app__group-title {
+  color: var(--danger);
+}
+.app__files--group {
   gap: 0;
+  margin-inline-start: var(--sp-2);
+  border-inline-start: 1px solid var(--bronze-lo);
 }
 /* 右内边距让出移除按钮（right 6px + 28px）再留 --sp-1，与 pt-file 原 38px 一致 */
-.app__files--stages .pt-file {
-  padding: var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-1);
+.app__files--group .pt-file {
+  padding: var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-3);
   border: 0;
-  border-block-end: 1px solid var(--line);
   border-radius: 0;
   background: none;
   box-shadow: none;
 }
-.app__files--stages .pt-file__name {
+.app__files--group .pt-file:has(> [aria-current="true"]) {
+  background: var(--raised);
+  box-shadow: inset 2px 0 0 var(--bronze);
+}
+.app__files--group .pt-file:hover {
+  background: var(--raised);
+}
+.app__files--group .pt-file__name {
   overflow: hidden;
-  color: var(--ink-2);
-  font-size: var(--fs-small);
+  font-size: var(--fs-body);
   font-weight: 400;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.app__files--stages .pt-file__orig {
-  display: none;
+.app__files--group .pt-file__orig {
+  overflow: hidden;
+  font-family: var(--font-code);
+  font-size: var(--fs-micro);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.app__files--stages .pt-file__status {
-  margin: 0;
+.app__files--group .pt-file__status {
+  margin-top: var(--sp-1);
   font-size: var(--fs-micro);
 }
-.app__files--stages .pt-file__remove {
+.app__files--group .pt-file__remove {
   top: 50%;
   translate: 0 -50%;
 }

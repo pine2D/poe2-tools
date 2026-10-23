@@ -64,6 +64,7 @@ function fakeView() {
     setBanner: vi.fn((kind: string, msg: string) => calls.push(`B ${kind} ${msg}`)),
     ask: vi.fn(async (_message: string, _okLabel: string, _signal?: AbortSignal) => true),
     setUsage: vi.fn(),
+    setSendSummary: vi.fn(),
     setBusy: vi.fn(),
     setReady: vi.fn(),
     setProgress: vi.fn(),
@@ -968,5 +969,64 @@ describe('保存服务后的翻译范围', () => {
     expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual([])
     await c.start('full')
     expect(view.showDocument.mock.calls.at(-1)?.[3]).toEqual(['h1', 'a', 'h2', 'b'])
+  })
+})
+
+describe('发送摘要（复盘 B2-08）', () => {
+  it('预览后按待发送段落给出段数、字符与目标主机，翻译完成后清空', async () => {
+    const { handle } = fakeEngine()
+    const { d, view } = deps({ engine: async () => ({ ...handle, host: 'api.example.com' }) })
+    const controller = createController(d)
+    await controller.start()
+    // 阶段 s1：词条行走词典不发送，只剩一段正文
+    expect(view.setSendSummary).toHaveBeenLastCalledWith({
+      blocks: 1,
+      chars: expect.any(Number),
+      host: 'api.example.com',
+      preserved: 0,
+    })
+    // 与超限检查同一口径：正文加上随段发送的原文语境
+    const summary = view.setSendSummary.mock.calls.at(-1)?.[0] as { chars: number }
+    expect(summary.chars).toBeGreaterThan(longText.length)
+    await controller.begin()
+    expect(view.setSendSummary).toHaveBeenLastCalledWith(null)
+  })
+  it('清除服务设置后不再显示发往旧主机的摘要，且不重读页面', async () => {
+    const { handle } = fakeEngine()
+    const { d, view } = deps({ engine: async () => ({ ...handle, host: 'api.example.com' }) })
+    const controller = createController(d)
+    await controller.start()
+    expect(view.setSendSummary).toHaveBeenLastCalledWith(
+      expect.objectContaining({ host: 'api.example.com' }),
+    )
+    const reads = view.showDocument.mock.calls.length
+    controller.forgetEngine()
+    expect(view.setSendSummary).toHaveBeenLastCalledWith(null)
+    expect(view.showDocument.mock.calls.length).toBe(reads)
+  })
+  it('未配置服务时不给摘要；超限确认写明段数与目标主机', async () => {
+    const unconfigured = deps()
+    await createController(unconfigured.d).start()
+    expect(unconfigured.view.setSendSummary).not.toHaveBeenCalledWith(
+      expect.objectContaining({ blocks: expect.any(Number) }),
+    )
+    const { handle } = fakeEngine()
+    const { d, view } = deps({
+      engine: async () => ({ ...handle, host: 'api.example.com' }),
+      prefs: async () => ({ ...DEFAULT_PREFS, charLimit: 1000 }),
+      raw: doc([{ id: 'x', kind: 'paragraph', text: `Contagion ${'word '.repeat(300)}` }]),
+    })
+    view.ask.mockResolvedValueOnce(false)
+    await readAndBegin(createController(d))
+    const message = String(view.ask.mock.calls[0]?.[0])
+    // 摘要与超限确认同一口径：两处字符数相等
+    const summary = view.setSendSummary.mock.calls
+      .map((call) => call[0] as { chars: number } | null)
+      .filter(Boolean)
+      .at(-1)
+    expect(message).toContain(`约 ${summary?.chars} 个字符`)
+    expect(message).toContain('1 段')
+    expect(message).toContain('api.example.com')
+    expect(message).toContain('超过设定的 1000')
   })
 })

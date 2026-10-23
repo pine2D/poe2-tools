@@ -7,7 +7,7 @@
   border: 1px solid var(--line-2);
   border-radius: 4px;
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   line-height: 1;
   white-space: nowrap;
 }

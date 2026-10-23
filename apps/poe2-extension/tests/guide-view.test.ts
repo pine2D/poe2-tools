@@ -56,6 +56,32 @@ afterEach(() => {
 })
 
 describe('createReadingView', () => {
+  it('主操作采用钢蓝且直角，译文保持可读字号与无衬线', () => {
+    const style = document.createElement('style')
+    style.textContent = [
+      'packages/ui-theme/src/tokens.css',
+      'packages/ui-theme/src/components/btn.css',
+      'apps/poe2-extension/src/guide/guide.css',
+    ]
+      .map((file) => readFileSync(file, 'utf8'))
+      .join('\n')
+    document.head.append(style)
+    try {
+      const { v } = mount()
+      v.setReady(true)
+      v.setTranslation('b0', '保留任意攻略正文', 'engine', [])
+      const button = document.querySelector<HTMLElement>('.guide-begin')
+      const dst = document.querySelector<HTMLElement>('.dst')
+      if (!button || !dst) throw Error('missing reading controls')
+      expect(getComputedStyle(button).backgroundColor).toBe('#0f304d')
+      expect(Number.parseFloat(getComputedStyle(button).borderRadius)).toBe(0)
+      expect(getComputedStyle(dst).fontSize).toBe('17px')
+      expect(getComputedStyle(dst).lineHeight).toBe('1.85')
+      expect(getComputedStyle(dst).fontFamily).toContain('system-ui')
+    } finally {
+      style.remove()
+    }
+  })
   it('确认限额期间显示等待确认，确认后才显示翻译中', async () => {
     const { v } = mount()
     v.setReady(true)

@@ -239,7 +239,7 @@ describe('素材白名单（spec §8.6）', () => {
     expect(L1_FONT_FILE).toBe('serif-sc-l1.woff2')
     expect(L1_FONT_FAMILY).toBe('PoE2 Serif SC L1')
     expect(L1_FONT_BUDGET).toBe(131_072)
-    expect(EXTENSION_FONT_FILES).toEqual([POPUP_FONT_FILE, L1_FONT_FILE])
+    expect(EXTENSION_FONT_FILES).toEqual([POPUP_FONT_FILE, L1_FONT_FILE, 'serif-sc-guide.woff2'])
     const withExtension: Whitelist = {
       ...whitelist,
       fontShards: new Map([

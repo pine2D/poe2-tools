@@ -65,9 +65,9 @@ describe('扩展介绍页：面向普通用户', () => {
     expect(container.querySelector('main#main')?.className).toBe('portal-main ext-main')
   })
 
-  it('阅读顺序：先确认环境，再出现下载按钮，然后是安装、确认生效与更新说明', () => {
+  it('阅读顺序：下载紧接能力说明，环境清单与安装指引紧随其后', () => {
     const { container } = setup()
-    const order = ['#env', '.pt-forge-btn', '#install', '#verify', '#update'].map(
+    const order = ['.pt-plaque', '#env', '#install', '#verify', '#update'].map(
       (selector) => container.querySelector(selector) as Element,
     )
     for (const node of order) expect(node).not.toBeNull()
@@ -77,18 +77,17 @@ describe('扩展介绍页：面向普通用户', () => {
       expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     }
     const env = container.querySelector('#env') as HTMLElement
-    expect(env.contains(container.querySelector('.pt-forge-btn'))).toBe(false)
+    expect(env.contains(container.querySelector('.pt-plaque'))).toBe(false)
   })
 })
 
 describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
-  it('只有一扇无标题栏的 pt-frame--hero，框内只有一个金属主按钮，就是下载按钮', () => {
+  it('主视觉提供唯一下载入口，示意不冒充当前浏览器状态', () => {
     const { container } = setup()
-    const frames = container.querySelectorAll('.pt-frame')
-    expect(frames).toHaveLength(1)
-    const gate = frames[0] as HTMLElement
+    const gate = container.querySelector('.ext-gate') as HTMLElement
+    expect(container.querySelectorAll('.pt-frame')).toHaveLength(0)
     expect(gate.tagName).toBe('DIV')
-    expect(gate.className).toBe('pt-frame pt-frame--hero ext-gate')
+    expect(gate.className).toBe('ext-gate')
     expect(container.querySelector('.pt-titlebar')).toBeNull()
     const title = screen.getByRole('heading', { level: 1 })
     expect(gate.contains(title)).toBe(true)
@@ -96,11 +95,11 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     expect(title.textContent).toBe('熟悉的术语，就在原来的工具里。')
     expect(title.querySelector('br')?.className).toBe('mobile-break')
     expect(title.querySelector('.pt-hero-title__gold')?.textContent).toBe('就在原来的工具里。')
-    const forge = container.querySelectorAll('.pt-forge-btn')
+    const forge = container.querySelectorAll('.pt-plaque')
     expect(forge).toHaveLength(1)
     const download = screen.getByRole('link', { name: isDownloadName })
     expect(download).toBe(forge[0])
-    expect(download.className).toBe('pt-forge-btn ext-download__btn')
+    expect(download.className).toBe('pt-plaque ext-download__btn')
     expect(download.querySelector('.ext-download__meta')?.textContent).toBe(META)
     expect(container.querySelector('#download')?.contains(download)).toBe(true)
     expect(gate.contains(download)).toBe(true)
@@ -149,7 +148,8 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     const heading = within(env).getByRole('heading', { level: 2 })
     expect(heading.className).toBe('pt-subhead')
     expect(heading.textContent).toBe('先确认环境')
-    expect(env.querySelector('.ext-gate__note')?.textContent).toBe('以下几项都符合再下载。')
+    // ui-copy 7：不写“以下几项”铺垫，标题已说明这一栏做什么
+    expect(env.querySelector('.ext-gate__note')).toBeNull()
     expect(texts(env.querySelectorAll('dt'))).toEqual(['浏览器', '站点', '原站设置', '术语'])
     expect(texts(env.querySelectorAll('dd'))).toEqual([
       '电脑上的 Chrome',
@@ -173,16 +173,17 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
   it('右栏“再下载”：说明 → 下载按钮 → 发布日期、权限、更新入口 → 完整声明；中间的中缝只是装饰', () => {
     const { container } = setup()
     const download = container.querySelector('section#download') as HTMLElement
-    expect(labelOf(container, download)).toBe('再下载')
+    expect(labelOf(container, download)).toBe('下载扩展')
     const heading = within(download).getByRole('heading', { level: 2 })
-    expect(heading.className).toBe('pt-subhead')
-    expect(heading.textContent).toBe('再下载')
+    expect(heading.className).toBe('visually-hidden')
+    expect(heading.textContent).toBe('下载扩展')
     expect(download.querySelector('.ext-gate__note')?.textContent).toBe(
-      '扩展还没有上架 Chrome 应用商店。从本站下载 zip，再按下面四步安装，只需操作一次。',
+      '扩展尚未上架 Chrome 应用商店，从本站下载 zip，按下面四步安装。',
     )
     expect(texts(download.querySelectorAll('.ext-facts > li'))).toEqual([
       `发布于 ${EXTENSION_RELEASE.date}`,
-      '申请存储、读取当前页与侧边栏权限，用来保存设置和翻译攻略',
+      '固定权限：存储、当前页、页面脚本与侧边栏（storage、activeTab、scripting、sidePanel）',
+      '自动划词只在你授权的站点申请访问，安装时不取得全站权限',
       '已装旧版？看更新方法',
     ])
     expect(
@@ -191,12 +192,21 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     const legal = download.querySelector('.ext-gate__legal') as HTMLElement
     expect(legal.textContent).toBe(FULL_DISCLAIMER)
     expect(legal.querySelectorAll(FOCUSABLE)).toHaveLength(0)
-    const seam = container.querySelector('.ext-seam') as HTMLElement
-    expect(seam.getAttribute('aria-hidden')).toBe('true')
-    expect(seam.querySelector('.pt-motif.pt-motif--knot')).not.toBeNull()
-    expect(seam.previousElementSibling?.id).toBe('env')
-    expect(seam.nextElementSibling?.id).toBe('download')
-    expect(container.querySelectorAll('.pt-subhead')).toHaveLength(2)
+    const demo = screen.getByRole('figure', { name: /扩展弹窗示意/ })
+    expect(demo.querySelectorAll(FOCUSABLE)).toHaveLength(0)
+    expect(download.querySelectorAll('.pt-subhead')).toHaveLength(0)
+  })
+
+  // B4-10：权限与 manifest 逐项一致（固定四项 + 按站授予的可选 host 权限）
+  it('下载区写全 manifest 的固定权限，并说明按站授予的可选权限', () => {
+    const { container } = setup()
+    const manifest = JSON.parse(
+      readFileSync(resolve(here, '../../../../poe2-extension/manifest.json'), 'utf8'),
+    ) as { permissions: string[]; optional_host_permissions: string[] }
+    const facts = container.querySelector('#download .ext-facts')?.textContent ?? ''
+    for (const permission of manifest.permissions) expect(facts, permission).toContain(permission)
+    expect(manifest.optional_host_permissions.length).toBeGreaterThan(0)
+    expect(facts).toContain('自动划词只在你授权的站点申请访问')
   })
 })
 
@@ -207,7 +217,7 @@ describe('安装与确认生效（L0）', () => {
     expect(labelOf(container, install)).toBe('安装')
     expect(install.closest('.pt-frame')).toBeNull()
     expect(install.querySelector('.ext-guide__head p')?.textContent).toBe(
-      `当前版本 v${EXTENSION_RELEASE.version}。下载后按顺序做一次，之后不用重复。`,
+      `当前版本 v${EXTENSION_RELEASE.version}。已装旧版时按“更新与恢复”操作。`,
     )
     const steps = [...install.querySelectorAll('.ext-steps > li.ext-step')]
     expect(texts(steps.map((li) => li.querySelector('h3') as Element))).toEqual([
@@ -226,7 +236,7 @@ describe('安装与确认生效（L0）', () => {
       ],
     ])
     expect(install.querySelector('.ext-guide__note')?.textContent).toBe(
-      'Chrome 会提示扩展不是来自应用商店，这是正常的。开发者模式需要一直开着，关掉后扩展会停用；Chrome 更新后如果扩展被停用，回到扩展页重新打开即可。',
+      'Chrome 会提示扩展不是来自应用商店。开发者模式需要一直开着，关掉后扩展会停用；Chrome 更新后如果扩展被停用，回到扩展页重新打开。',
     )
     for (const h3 of install.querySelectorAll('h3')) expect(h3.className).toBe('')
   })
@@ -247,11 +257,11 @@ describe('安装与确认生效（L0）', () => {
     expect(see).toEqual([
       [
         '导航、按钮等已收录的界面文字显示为中文',
-        '装备属性保留英文对照；词典没收录的内容保持英文、不猜译，这是正常现象。弹窗里打开“显示中英对照”可同时看到英文。',
+        '装备属性保留英文对照；词典没收录的内容保持英文，不猜译。在弹窗里打开“显示中英对照”可同时看到英文。',
       ],
       [
         '首页的基底搜索框输入“水晶”，出现中英对照的候选',
-        '如下图：选“水晶法器 → Crystal Focus”，原站照常用英文搜索。',
+        '选“水晶法器”后搜索框填入 Crystal Focus，原站照常用英文搜索。',
       ],
     ])
     const demo = verify.querySelector('figure') as HTMLElement
@@ -318,6 +328,31 @@ describe('安装与确认生效（L0）', () => {
     for (const label of ['启用简体中文', '显示中英对照', '检查更新']) expect(popup).toContain(label)
   })
 
+  // B4-16：弹窗示意的开关名、副文案与状态字和真实弹窗一致
+  it('弹窗示意的开关行逐字对应真实弹窗', () => {
+    const { container } = setup()
+    const rows = [...container.querySelectorAll('.ext-popup__rows > div')].map((row) => [
+      row.querySelector('dt')?.textContent,
+      row.querySelector('dd')?.firstChild?.textContent,
+      row.querySelector('dd span')?.textContent,
+    ])
+    expect(rows).toEqual([
+      ['启用简体中文', '开启', '国服术语显示与中文搜索'],
+      ['显示中英对照', '关闭', '保留英文，方便核对术语'],
+    ])
+    const popup = readFileSync(resolve(here, '../../../../poe2-extension/popup.html'), 'utf8')
+    const script = readFileSync(
+      resolve(here, '../../../../poe2-extension/src/popup/index.ts'),
+      'utf8',
+    )
+    for (const [label, state, desc] of rows) {
+      expect(popup).toContain(`>${label}</span>`)
+      expect(popup).toContain(`>${desc}</small>`)
+      expect(script).toContain(`'${state}'`)
+    }
+    expect(popup).toContain('CoE 中文显示')
+  })
+
   it('三种状态与 0.4.0 弹窗同词：判据用弹窗状态词与带署名的候选，未生效三个原因的做法与弹窗状态 5、3、6 一致', () => {
     const { container } = setup()
     const states = [...container.querySelectorAll('#verify .ext-states > .ext-state')]
@@ -336,7 +371,7 @@ describe('安装与确认生效（L0）', () => {
     }
     const [ok, part, off] = states as [Element, Element, Element]
     expect(ok.querySelector('dd')?.textContent).toBe(
-      '两处都对上了。页面上仍有一些英文是正常的：未收录的内容保持原文。转换装备文本后，仍要在原站核对导入结果。',
+      '两处都对上了。未收录的内容保持英文原文。转换装备文本后，仍要在原站核对导入结果。',
     )
     expect(part.querySelector('dd')?.textContent).toBe(
       '弹窗显示“部分生效”，或界面已有中文但基底搜索框输入“水晶”不出候选，或某一整块区域的界面文字仍全是英文。先刷新页面；仍不行请反馈，并写明是哪个区域。',
@@ -377,13 +412,14 @@ describe('安装与确认生效（L0）', () => {
 })
 
 describe('参考信息与删除项', () => {
-  it('更新、隐私、攻略翻译、装备文本转换、支持范围、反馈六节，各自带 aria-labelledby；其余标题保持 L0', () => {
+  it('更新、隐私、攻略翻译、划词翻译、装备文本转换、支持范围、反馈七节，各自带 aria-labelledby；章节标题用衬线', () => {
     const { container } = setup()
     const details = [...container.querySelectorAll('.ext-details > section')]
     expect(details.map((section) => labelOf(container, section))).toEqual([
       '更新与恢复',
       '文本处理与隐私',
       '攻略翻译',
+      '划词翻译',
       '装备文本转换',
       '支持范围与已知限制',
       '遇到问题？',
@@ -392,6 +428,7 @@ describe('参考信息与删除项', () => {
       'update',
       'privacy',
       'guide',
+      'selection',
       'convert',
       '',
       '',
@@ -403,19 +440,32 @@ describe('参考信息与删除项', () => {
     ])
     expect(texts(container.querySelectorAll('#privacy p'))).toEqual([
       '术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。',
-      '扩展不内置任何 Key，Key 与译文缓存只保存在本机，可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不代替你执行原站导入。',
+      '划词翻译在你点“翻译”后，由扩展后台发送选中的文字和相关术语，不附带页面地址。设置里的“测试连接”只发送一句简短的测试消息，不含攻略文字。',
+      '扩展不内置任何 Key，Key 与译文缓存只保存在本机，Key 未加密保存；可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不代替你执行原站导入。',
     ])
+    // B4-10：划词翻译写明发送时机、单次上限、按站授权与 CoE 不启用
+    const selection = texts(container.querySelectorAll('#selection p')).join('')
+    for (const fact of [
+      '整句要点“翻译”才会发送',
+      '6000',
+      '启用本页划词',
+      '管理自动划词站点',
+      '撤回',
+    ])
+      expect(selection, fact).toContain(fact)
+    const popup = readFileSync(resolve(here, '../../../../poe2-extension/popup.html'), 'utf8')
+    for (const label of ['启用本页划词', '管理自动划词站点']) expect(popup).toContain(label)
     expect(screen.getByRole('link', { name: '查看权限与隐私说明' }).getAttribute('href')).toBe(
       'https://github.com/pine2D/poe2-tools/blob/main/docs/chrome-extension/privacy.md',
     )
-    expect((details[4] as Element).querySelector('p')?.textContent).toBe(
+    expect((details[5] as Element).querySelector('p')?.textContent).toBe(
       '当前版本不保证支持所有页面和装备格式。遇到未收录的内容、有歧义的译文或损坏的数值时，会提示你检查，不会猜译。Windows 自带的中文输入法尚未完成验证，遇到输入问题请反馈。',
     )
-    expect((details[5] as Element).querySelector('p')?.textContent).toBe(
+    expect((details[6] as Element).querySelector('p')?.textContent).toBe(
       '可以先关闭扩展，看看原站是否也有同样的问题。反馈时请说明页面、操作步骤和扩展版本；如果附上装备样本，请先删去私人信息。',
     )
     expect(
-      within(details[5] as HTMLElement)
+      within(details[6] as HTMLElement)
         .getByRole('link', { name: '反馈问题' })
         .getAttribute('href'),
     ).toBe('https://github.com/pine2D/poe2-tools/issues')
@@ -425,11 +475,15 @@ describe('参考信息与删除项', () => {
       '更新与恢复',
       '文本处理与隐私',
       '攻略翻译',
+      '划词翻译',
       '装备文本转换',
       '支持范围与已知限制',
       '遇到问题？',
     ]) {
-      expect(screen.getByRole('heading', { name }).className, name).toBe('')
+      // B4-07：章节标题用衬线（ui-theme 的 .pt-subhead），安装与确认生效用宣传面大号
+      expect(screen.getByRole('heading', { name }).className, name).toBe(
+        name === '安装' || name === '确认生效' ? 'pt-subhead pt-subhead--lg' : 'pt-subhead',
+      )
     }
   })
 
@@ -442,7 +496,7 @@ describe('参考信息与删除项', () => {
     expect(section.tagName).toBe('SECTION')
     expect(labelOf(container, section)).toBe('装备文本转换')
     const heading = within(section).getByRole('heading', { level: 2, name: '装备文本转换' })
-    expect(heading.className).toBe('')
+    expect(heading.className).toBe('pt-subhead')
     const verify = container.querySelector('#verify') as Element
     expect(verify.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     const steps = texts(section.querySelectorAll('ol > li'))
@@ -527,42 +581,38 @@ describe('extension.css（二期样稿，令牌化）', () => {
     expect(bare).not.toMatch(/url\(/)
   })
 
-  it('环境与下载左右分、中缝居中；≤850px 改单列，中缝变横线', () => {
-    expect(decls('.ext-gate__split').get('grid-template-columns')).toBe(
-      'minmax(0, 1fr) var(--seam-w) minmax(0, 1fr)',
-    )
-    expect(decls('.ext-gate__split').get('--seam-w')).toBe('calc(var(--sp-8) + var(--sp-4))')
-    expect(decls('.ext-gate__split', ['max-width: 850px']).get('grid-template-columns')).toBe(
+  it('主视觉宽屏并列、窄屏按阅读顺序排列', () => {
+    expect(decls('.ext-gate').get('grid-template-columns')).toBe('minmax(0, 7fr) minmax(0, 5fr)')
+    expect(decls('.ext-gate', ['max-width: 980px']).get('grid-template-columns')).toBe(
       'minmax(0, 1fr)',
     )
-    expect(decls('.ext-seam__line', ['max-width: 850px']).get('height')).toBe('1px')
   })
 
   it('安装四步：宽屏四列，≤1099px 两列，≤620px 单列竖排、轨线在左', () => {
     expect(decls('.ext-steps').get('grid-template-columns')).toBe('repeat(4, minmax(0, 1fr))')
-    expect(decls('.ext-steps', ['max-width: 1099px']).get('grid-template-columns')).toBe(
+    expect(decls('.ext-steps', ['max-width: 980px']).get('grid-template-columns')).toBe(
       'repeat(2, minmax(0, 1fr))',
     )
     expect(decls('.ext-steps', NARROW).get('grid-template-columns')).toBe('minmax(0, 1fr)')
-    expect(decls('.ext-step', NARROW).get('border-inline-start')).toBe('1px solid var(--line-2)')
-    expect(decls('.ext-verify__grid', ['max-width: 1099px']).get('grid-template-columns')).toBe(
+    expect(decls('.ext-verify__grid', ['max-width: 980px']).get('grid-template-columns')).toBe(
       'minmax(0, 1fr)',
     )
   })
 
   it('≤620px：下载按钮通栏、版本与大小换到第二行；页内链接可点高 ≥44px', () => {
-    const button = decls('.ext-download .pt-forge-btn', NARROW)
-    expect(button.get('width')).toBe('100%')
-    expect(button.get('flex-direction')).toBe('column')
-    expect(button.get('min-height')).toBe('46px')
-    expect(decls('.ext-download__meta', NARROW).get('font-size')).toBe('var(--fs-micro)')
-    for (const selector of [
-      '.ext-route a',
-      '.ext-env__link',
-      '.ext-facts .text-link',
-      '.ext-details .text-link',
-    ]) {
+    expect(decls('.ext-download__btn').get('width')).toBe('100%')
+    expect(decls('.ext-route a').get('min-height')).toBe('44px')
+    // B4-04：最短的“下载”也要 ≥44px 宽
+    expect(decls('.ext-route a').get('min-width')).toBe('44px')
+    for (const selector of ['.ext-facts .text-link', '.ext-details .text-link']) {
       expect(decls(selector, NARROW).get('min-height'), selector).toBe('44px')
+    }
+  })
+
+  // B4-07：章节标题下方一条板岩色细线（--metal-line）
+  it('章节标题下方是板岩色细线', () => {
+    for (const selector of ['.ext-guide h2', '.ext-verify h2', '.ext-details h2']) {
+      expect(decls(selector).get('border-block-end'), selector).toBe('1px solid var(--metal-line)')
     }
   })
 
@@ -572,7 +622,6 @@ describe('extension.css（二期样稿，令牌化）', () => {
     expect(decls('.ext-state--off dt').get('color')).toBe('var(--danger)')
     expect(decls('.ext-see .icon').get('color')).toBe('var(--ok)')
     expect(decls('.ext-see .icon', FORCED).get('color')).toBe('inherit')
-    expect(decls('.ext-seam__line', FORCED).get('background')).toBe('CanvasText')
   })
 
   it('候选下拉示意的样式来自共用的 l1-demo.css：本页不重复写，只放大选中项', () => {

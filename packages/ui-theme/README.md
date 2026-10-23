@@ -19,7 +19,13 @@ import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 | `@poe2-tools/ui-theme/selectors` | `SERIF_SELECTORS`：组件 CSS 里用衬线的选择器 |
 | `@poe2-tools/ui-theme/compliance` | 合规判定（许可文件、素材白名单、CSS 外链），只在 Node 里用 |
 
-## 层级规则摘要
+## 迁移状态
+
+2026-10-23：共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层已迁移到 [v4 规范](../../DESIGN.md)。`pt-btn` 默认深灰，显式 `pt-btn--primary` 为钢蓝；边界统一使用可辨识的 `--control-edge`，钢蓝内边只作装饰。弹窗衬线字单独维护在 `scripts/popup-text.txt`，生成后覆盖静态标签及动态按钮文字。
+
+网站布局仍待后续迁移；下面的旧层级摘要只用于核对尚未迁移的组件，不指导新设计。
+
+## 未迁移组件的层级规则摘要
 
 - L3 沉浸：页头 `pt-header`、金属框 `pt-frame`（同一路由状态最多两扇、不嵌套、角饰最多 8 个）、金属主按钮 `pt-forge-btn`（每个路由状态最多一个，只用在规格白名单列出的位置）、构筑页的金属页签 `pt-tabs`、hero 标题与衬线。
 - 游戏对象：名称牌 `pt-nameplate` 与译文提示框。
@@ -44,3 +50,7 @@ import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 ## 字体许可
 
 `fonts/` 下的分片是 Noto Serif SC、Noto Serif TC、Cinzel 的子集，以 SIL Open Font License 1.1 授权，项目的 MIT 许可不覆盖该目录。每个家族的许可全文在 `fonts/LICENSES/`，网站发布为 `/fonts/<Family>-OFL.txt`；来源、固定提交与哈希登记在 `docs/data-sources.md` 的“界面字体与素材”一节。
+
+侧栏、翻译设置和站点管理通过 `guide-fonts.css` 只加载 `serif-sc-guide.woff2`，固定标签收字维护在 `scripts/guide-text.txt`。运行 `pnpm ui-theme:fonts --offline` 生成；预算 98,304 字节，超限退出码 5。任意攻略标题、章节、正文和站点名用无衬线，网站与弹窗不下载该子集。新增分段控件色 `--tab-start`／`--tab-end` 来自 v4 已确认目标。
+
+CoE 自有浮层共用 `l1.css`：候选按钮保留在文档中，内部 Shadow DOM 排版中文／英文两行，完整可访问名称由按钮提供。任意候选保持系统无衬线；标题、按钮、步骤、列标题和清单标签使用 L1 固定子集（104,228 字节，预算 131,072 字节），选择器登记在 `L1_SERIF_SELECTORS`。

@@ -46,7 +46,15 @@
   color: var(--ink-3);
 }
 .stageboard__switch {
+  max-width: 100%;
+  flex-wrap: wrap;
   margin-block-end: var(--sp-4);
+}
+/* 构筑名是任意文本：单项最宽 20em、单行省略，完整名在 title 与可访问名里（左列分组也能切换构筑） */
+.stageboard__switch .pt-seg__item {
+  min-width: 0;
+  max-width: min(100%, 20em);
+  line-height: 1.5;
 }
 .stageboard__groupnote,
 .stageboard__order {
@@ -331,7 +339,7 @@
 .stageboard__section > th {
   padding-block: var(--sp-4) var(--sp-2);
   border-block-end-color: var(--line-2);
-  color: var(--bronze-hi);
+  color: var(--gold);
   font-size: var(--fs-small);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -376,7 +384,7 @@
   border-color: var(--control-edge);
   background: var(--raised-2);
 }
-/* 刻痕：只给“新”与“换”（基底或传奇不同）；同一件只改词缀记“改”，不画刻痕，只把词缀数写成铜色 */
+/* 刻痕：只给“新”与“换”（基底或传奇不同）；同一件只改词缀记“改”，不画刻痕，只提亮词缀数 */
 .stageboard__cell--added,
 .stageboard__cell--changed {
   box-shadow: inset 3px 0 0 var(--metal-bright);
@@ -400,7 +408,7 @@
   border: 1px solid var(--metal-edge);
   border-radius: 3px;
   background: color-mix(in srgb, var(--metal-line) 30%, transparent);
-  color: var(--bronze-hi);
+  color: var(--gold);
   font-size: var(--fs-micro);
   font-weight: 600;
   line-height: 1.5;
@@ -420,7 +428,7 @@
   white-space: nowrap;
 }
 .stageboard__delta {
-  color: var(--bronze-hi);
+  color: var(--gold);
 }
 .stageboard__meta--miss {
   color: var(--miss);
@@ -441,7 +449,7 @@
   color: var(--ink-3);
 }
 .stageboard__supports--modded {
-  color: var(--bronze-hi);
+  color: var(--gold);
 }
 .stageboard__none {
   display: block;
@@ -563,4 +571,10 @@
   .stageboard__table thead .stageboard__corner {
     border-block-end-color: CanvasText;
   }
+}
+/* “切换构筑”长名单行省略（复盘 B4-15；放在文末，避免与其他 > span 规则的特异度倒序） */
+.stageboard__switch .pt-seg__item > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

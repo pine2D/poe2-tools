@@ -11,6 +11,7 @@
     "./components/*": "./src/components/*",
     "./fonts.css": "./fonts/fonts.css",
     "./popup-fonts.css": "./fonts/popup.css",
+    "./guide-fonts.css": "./fonts/guide.css",
     "./motif": "./src/motif.ts",
     "./selectors": "./src/selectors.ts",
     "./compliance": {

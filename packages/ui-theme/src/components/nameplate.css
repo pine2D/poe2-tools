@@ -18,26 +18,9 @@
   min-height: 62px;
   padding: 9px 40px 8px;
   border-bottom: 1px solid var(--np-edge);
-  background: linear-gradient(180deg, var(--np-p1), var(--np-p2) 55%, var(--np-p3));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+  background: var(--frame-bg);
+  box-shadow: none;
   text-align: center;
-}
-/* 0.05 颗粒（§5.1 同一颗粒） */
-.pt-nameplate::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--pt-grain);
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-/* 内容压过颗粒；pt-frame 子孙不得 ≥3，也要低于吸顶页签行的 2（§4.5） */
-.pt-nameplate > * {
-  position: relative;
-  z-index: 1;
 }
 /* 卡内没有对照行或已折叠时去掉底边 */
 .pt-nameplate--shut {
@@ -78,10 +61,7 @@
 }
 /* 顶边中央 36×14 的 knot 扣（§5.8，:448） */
 .pt-nameplate__clasp {
-  position: absolute;
-  top: -7px;
-  left: 50%;
-  margin-left: -18px;
+  display: none;
 }
 .pt-nameplate__row1 {
   display: flex;
@@ -92,7 +72,7 @@
 .pt-nameplate__name {
   margin: 0;
   color: var(--np-name);
-  font: 700 20px / 1.25 var(--pt-serif);
+  font: 700 1.25rem / 1.25 var(--pt-serif);
   letter-spacing: 0.03em;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
   overflow-wrap: anywhere;
@@ -110,7 +90,7 @@
 }
 .pt-nameplate__en {
   color: var(--np-name-2);
-  font: 400 13px / 1.2 var(--pt-cinzel);
+  font: 400 var(--fs-small) / 1.2 var(--pt-cinzel);
   letter-spacing: 0.04em;
 }
 /* “基底名未收录 / 传奇名未收录”：状态文字 --miss（对 #31291d 7.16:1），虚线框同“未命中 · 保留原文” */
@@ -120,9 +100,9 @@
   gap: 4px;
   padding: 2px 6px;
   border: 1px dashed var(--miss);
-  border-radius: 3px;
+  border-radius: 0;
   color: var(--miss);
-  font: 12px / 1.2 var(--font-zh-cn);
+  font: var(--fs-micro) / 1.2 var(--font-zh-cn);
   letter-spacing: 0;
   white-space: nowrap;
 }
@@ -137,7 +117,7 @@
   justify-content: center;
   gap: 7px;
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.6;
   white-space: nowrap;
 }
@@ -170,10 +150,10 @@
 .pt-nameplate__tag {
   padding: 3px 6px;
   border: 1px solid var(--np-tag-edge);
-  border-radius: 3px;
+  border-radius: 0;
   background: rgba(0, 0, 0, 0.22);
   color: var(--np-name-2);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1;
 }
 .pt-nameplate__tag[title] {
@@ -188,7 +168,7 @@
   border: 0;
   background: none;
   color: var(--gold);
-  font-size: 13px;
+  font-size: var(--fs-small);
   text-decoration: underline 1px;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -207,10 +187,10 @@
 .pt-nameplate--tooltip {
   min-height: 0;
   padding: 12px 30px 10px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 .pt-nameplate--tooltip .pt-nameplate__name {
-  font-size: 21px;
+  font-size: var(--fs-title);
   letter-spacing: 0.04em;
 }
 /* 名称回退为英文时，“基底名未收录”接在名称下方居中（M0 self-decided B20） */
@@ -258,7 +238,7 @@
     width: 17.5px;
     transform: translateY(-50%);
     color: var(--ink-2);
-    font-size: 13px;
+    font-size: var(--fs-small);
     font-style: normal;
     font-weight: 400;
     line-height: 1.6;

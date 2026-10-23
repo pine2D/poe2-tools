@@ -29,14 +29,12 @@ const STRICT = new Set(['home.css', 'l1-demo.css', 'extension.css'])
 const ALLOW: SizeAllow = {
   // 视觉隐藏的标准写法（1px 盒子外移 1px），不是间距
   'base.css|.visually-hidden|margin': ['-1px'],
-  // 1280px 是内容最大宽（.app__body 的 max-width）：词典条文字与内容区左缘对齐
-  'layout.css|.app__dictbar|padding-inline': ['1280px'],
   // 40px 是拖放区图标宽（DropZone.tsx 的 Icon size={40}）：正文左缘 = 图标宽 + 标题行间距
   'empty.css|.app__drop-body|margin': ['40px'],
   // 56px 是示例行标签列宽（.app__ex-line 的 grid-template-columns）：分隔线左缘 = 标签列 + 列距
   'empty.css|.app__ex-divider|margin': ['56px'],
   // ui-theme .pt-file__remove 的 right 6px 与 width 28px：紧凑文件行让出移除按钮（build-css.test 钉住整串）
-  'sidebar.css|.app__files--stages .pt-file|padding': ['6px', '28px'],
+  'sidebar.css|.app__files--group .pt-file|padding': ['6px', '28px'],
 }
 
 function scan(): { violations: string[]; used: Set<string> } {

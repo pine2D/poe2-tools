@@ -25,7 +25,7 @@ export interface PreviewProps {
   fields: readonly FieldWithRows[]
   locale: Locale
   bilingual: boolean
-  onDownload(): void
+  onDownload?: (() => void) | undefined
   /** 从阶段看板进入时提供：回到看板 */
   onBack?: (() => void) | undefined
 }
@@ -204,12 +204,14 @@ export function Preview({ file, fields, locale, bilingual, onDownload, onBack }:
           </ul>
         </div>
         <div className="whead-r">
-          <PtForgeButton aria-label={`下载 ${file.name}`} onClick={onDownload}>
-            <Icon name="download" size={18} />
-            <span>
-              下载中文 <span className="pt-ext">.build</span>
-            </span>
-          </PtForgeButton>
+          {onDownload && (
+            <PtForgeButton aria-label={`下载 ${file.name}`} onClick={onDownload}>
+              <Icon name="download" size={18} />
+              <span>
+                下载中文 <span className="pt-ext">.build</span>
+              </span>
+            </PtForgeButton>
+          )}
           {hasDetails && (
             <button
               type="button"

@@ -6,7 +6,7 @@
   display: inline-flex;
   padding: 3px;
   border: 1px solid var(--control-edge);
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--bar);
 }
 .pt-seg__item {
@@ -15,10 +15,10 @@
   justify-content: center;
   padding: 8px 12px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 0;
   background: transparent;
   color: var(--ink-2);
-  font: 400 13.5px / 1 var(--font-zh-cn);
+  font: 400 0.84375rem / 1 var(--font-zh-cn);
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -50,10 +50,10 @@
   height: 38px;
   padding: 0 8px;
   border: 1px solid var(--control-edge);
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--bar);
   color: var(--ink-2);
-  font: 400 13.5px / 1 var(--font-zh-cn);
+  font: 400 0.84375rem / 1 var(--font-zh-cn);
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -71,13 +71,45 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 2px 10px;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
+/* v4 方形青铜框（与 switch.css 同一画法）：18px 图形，选中时 --label 内方块；≤600px 增至 22px 并抬高点击行 */
 .pt-check input {
-  width: 16px;
-  height: 16px;
-  margin: 3px 0 0;
-  accent-color: var(--bronze);
+  appearance: none;
+  position: relative;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  border: 2px solid var(--bronze-lo);
+  border-radius: 0;
+  background: var(--bg);
+  cursor: pointer;
+}
+.pt-check input::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: var(--label);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.pt-check input:checked {
+  border-color: var(--bronze-hi);
+}
+.pt-check input:checked::before {
+  opacity: 1;
+}
+.pt-check input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.pt-check input:disabled {
+  border-color: var(--ink-3);
+  cursor: default;
+}
+.pt-check input:disabled::before {
+  background: var(--ink-3);
 }
 .pt-check label {
   color: var(--ink);
@@ -87,21 +119,21 @@
   grid-column: 2;
   margin: 0;
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
-/* 文本框（粘贴）：底 --bg，1px --control-edge，圆角 4px */
+/* 文本框（粘贴）：底 --bg，1px --control-edge，直角 */
 .pt-textarea {
   display: block;
   width: 100%;
   min-height: 90px;
   padding: 10px 12px;
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg);
   color: var(--ink);
   caret-color: var(--gold);
-  font: 13px / 1.6 var(--font-code);
+  font: var(--fs-small) / 1.6 var(--font-code);
   resize: vertical;
 }
 .pt-textarea::placeholder {
@@ -111,7 +143,7 @@
 /* 拖放区（§6.4.1）：1px 虚线 --control-edge，拖入时边色 --bronze；圆角 6px（M0 self-decided K13） */
 .pt-dropzone {
   border: 1px dashed var(--control-edge);
-  border-radius: 6px;
+  border-radius: 0;
 }
 .pt-dropzone--over {
   border-color: var(--bronze);
@@ -134,7 +166,7 @@
   position: relative;
   padding: 12px 38px 12px 13px;
   border: 1px solid var(--control-edge);
-  border-radius: 6px;
+  border-radius: 0;
   background: #0e0b09;
 }
 .pt-file:has(> [aria-current="true"]) {
@@ -154,14 +186,14 @@
 .pt-file__name {
   display: block;
   color: var(--ink);
-  font-size: 15px;
+  font-size: var(--fs-data);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 .pt-file__orig {
   display: block;
   color: var(--ink-3);
-  font-size: 13px;
+  font-size: var(--fs-small);
   overflow-wrap: anywhere;
 }
 .pt-file__status {
@@ -170,7 +202,7 @@
   align-items: center;
   gap: 4px 12px;
   margin-top: 6px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }
 .pt-file__ok,
 .pt-file__warn {
@@ -194,7 +226,7 @@
   height: 28px;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: 0;
   background: none;
   color: var(--ink-3);
   cursor: pointer;
@@ -214,7 +246,7 @@
   border: 0;
   background: none;
   color: var(--ink-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
   list-style: none;
   cursor: pointer;
 }
@@ -228,7 +260,7 @@
   justify-content: flex-start;
   min-height: 0;
   padding: 2px 6px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   text-decoration: underline;
   text-decoration-color: var(--line-2);
   text-underline-offset: 3px;
@@ -242,19 +274,19 @@
   max-width: calc(100vw - 24px);
   padding: 20px;
   border: 1px solid var(--metal-line);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--raised);
   box-shadow: 0 12px 36px #0003;
   color: var(--ink);
 }
 .pt-popover h2 {
   margin: 0;
-  font: 600 16px / 1.4 var(--font-zh-cn);
+  font: 600 1rem / 1.4 var(--font-zh-cn);
 }
 .pt-popover > p {
   margin: 0;
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .pt-toast {
   display: flex;
@@ -264,18 +296,18 @@
   max-width: calc(100% - 32px);
   padding: 12px 16px;
   border: 1px solid var(--metal-line);
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--raised);
   box-shadow: 0 8px 28px #0003;
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--fs-small);
   overflow-wrap: anywhere;
 }
 
 /* L0 面板：待核对清单（spec §6.4.2 第 2 项） */
 .pt-l0-panel {
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--surface);
 }
 
@@ -291,7 +323,7 @@
   border-bottom: 1px solid var(--control-edge);
   background: var(--bar);
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--fs-body);
   text-align: left;
   cursor: pointer;
 }
@@ -307,7 +339,7 @@
   border-bottom: 1px solid var(--line);
   background: var(--bg-2);
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 .pt-dictbar b {
   color: var(--ink);
@@ -332,10 +364,10 @@
 .pt-kbd {
   padding: 3px 5px;
   border: 1px solid var(--line-2);
-  border-radius: 3px;
+  border-radius: 0;
   background: var(--bg-2);
   color: var(--ink-3);
-  font: 600 11px / 1 var(--font-zh-cn);
+  font: 600 0.6875rem / 1 var(--font-zh-cn);
 }
 
 /* 组件内的图标（契约 C3：网站用 Icon.tsx 的 svg.icon，这里按 svg 后代选择器；按特异性升序排列） */
@@ -369,6 +401,23 @@ details[open] > .pt-textbtn svg {
   .pt-textbtn {
     min-height: 44px;
   }
+  /* 复选框行：图形 22px，label 撑满行高，整行至少 44px 可点 */
+  .pt-check {
+    align-items: center;
+  }
+  .pt-check input {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+  }
+  .pt-check input::before {
+    inset: 4px;
+  }
+  .pt-check label {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
   .pt-file {
     padding-right: 48px;
   }
@@ -383,7 +432,8 @@ details[open] > .pt-textbtn svg {
   .pt-seg__item,
   .pt-trigger,
   .pt-trigger svg,
-  .pt-textbtn svg {
+  .pt-textbtn svg,
+  .pt-check input::before {
     transition: none;
   }
 }
@@ -425,6 +475,19 @@ details[open] > .pt-textbtn svg {
   .pt-dictbar__dot--failed {
     border-color: Highlight;
     background: Highlight;
+  }
+  .pt-check input {
+    border-color: ButtonText;
+    background: Canvas;
+  }
+  .pt-check input::before {
+    background: ButtonText;
+  }
+  .pt-check input:disabled {
+    border-color: GrayText;
+  }
+  .pt-check input:disabled::before {
+    background: GrayText;
   }
   /* svg 默认 forced-color-adjust: preserve-parent-color，写在 svg 上的 --ok 会原样保留；改为继承宿主的系统色 */
   .pt-toast > svg {

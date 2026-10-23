@@ -1,6 +1,4 @@
-/* 扩展设置弹窗（spec §6.8；第三期 A「状态置顶」，方向约定 .impeccable/surfaces/apps-poe2-extension-src-popup.md）：
-   令牌、母题与组件来自 ui-theme；不套 pt-frame、不加角饰。字号与间距只用 tokens.css 的尺寸阶梯，
-   偏离阶梯的值逐条登记在 packages/ui-theme/src/extension-sizes.test.ts 的 ALLOW */
+/* v4 真实扩展弹窗；尺寸取共享阶梯，衬线文案与 popup-text.txt 一起维护。 */
 @import "@poe2-tools/ui-theme/tokens.css";
 @import "@poe2-tools/ui-theme/motif.css";
 @import "@poe2-tools/ui-theme/components/motif.css";
@@ -10,59 +8,77 @@
 @import "@poe2-tools/ui-theme/components/provenance.css";
 @import "@poe2-tools/ui-theme/popup-fonts.css";
 
+/* 共享字号令牌写 rem；弹窗固定根字号 16px，不随浏览器“字体大小”变化，360×600 内容高度保持不变 */
 :root {
+  font-size: 16px;
+  width: 360px;
+  height: 600px;
+  overflow: hidden;
+  scrollbar-width: none;
   color-scheme: dark;
-  scrollbar-color: var(--control-edge) var(--surface);
+  scrollbar-color: var(--control-edge) var(--bg);
 }
 * {
   box-sizing: border-box;
 }
-/* 工具栏弹窗的窗口宽度由内容决定，初始视口很窄：不能用 vw／vh 限宽，否则弹窗会停在初始宽度（实测 240px） */
+/* 根节点提供稳定的 360×600 自然尺寸；不能用 vh 限根高度，否则 Chrome 初始 25px 会锁住窗口。
+   正文按实际高度滚动。根节点不留滚动条槽位（正文保留），避免矮屏时窗口额外增宽 15px。 */
 body {
   margin: 0;
-  width: 340px;
-  background: var(--frame-bg);
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  overflow-y: auto;
+  background: var(--bg);
   color: var(--ink);
   font: var(--fs-body) / 1.6 var(--font-zh-cn);
   -webkit-font-smoothing: antialiased;
+  /* 矮屏或说明展开时才出现的正文滚动条：细窄、低对比，悬停时略亮（复盘 B1-01） */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
 }
-
-/* 标题栏（spec §6.8）：高 56，金属底，居中 40×21 的扩展青 logo 与衬线标题；两端不加端饰。
-   全弹窗唯一的金属重点（开关金属轨道是 DESIGN.md 已登记的层级例外） */
+body:hover {
+  scrollbar-color: var(--metal-line) transparent;
+}
 .titlebar {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--sp-2);
-  height: 56px;
-  padding: 0 var(--sp-4);
-  background: linear-gradient(180deg, #2d241a, #17130f);
-  border-bottom: 1px solid #7a5530;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 222, 165, 0.14),
-    0 1px 0 #0b0806,
-    0 2px 0 #3b2510;
+  min-height: 48px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--metal-line);
 }
 .titlebar__logo {
-  --ptm-w: 40px;
-  --ptm-h: 21px;
-  --ptm-u: calc(40px / 48);
+  --ptm-w: 20px;
+  --ptm-h: 20px;
+  --ptm-u: calc(20px / 25);
 }
-/* 19px 与 pt-frame 标题栏同值（尺寸门禁 ALLOW 登记）；弹窗里唯一的衬线位置，收字见 popup-text.txt */
 .titlebar__title {
   margin: 0;
-  font: 700 19px / 1 var(--pt-serif);
+  color: var(--label);
+  font: 700 var(--fs-lead) / 1.4 var(--pt-serif);
+  letter-spacing: 0.04em;
+}
+main > section {
+  padding: var(--sp-3) var(--sp-4);
+}
+.popup-heading {
+  margin: 0 0 var(--sp-2);
+  color: var(--label);
+  font: 700 var(--fs-body) / 1.5 var(--pt-serif);
+  letter-spacing: 0.04em;
+}
+.setting__label {
+  color: var(--label);
+  font: 700 var(--fs-body) / 1.5 var(--pt-serif);
+  letter-spacing: 0.04em;
+}
+.pt-btn {
+  font: 700 var(--fs-body) / 1.5 var(--pt-serif);
   letter-spacing: 0.08em;
-  color: #eac78a;
-  text-shadow: 0 1px 1px #000;
 }
-
-main {
-  padding: var(--sp-3) var(--sp-5) var(--sp-4);
-}
-
-/* 当前页状态块（第三期 A）：L0 平涂，无左侧色条、无字形图标。两列 grid：第一列 18px 是脚本插入的内联 SVG 图标，
-   第二列依次是“状态词 · 原因”、做法句与至多一个安静按钮“刷新页面”。颜色只是第二信号，形状已区分状态 */
+/* 状态由实际页面快照决定；文字与图标同时说明结果。 */
 .page {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
@@ -71,8 +87,7 @@ main {
   align-items: start;
   padding: var(--sp-3);
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 4px;
+  border: 1px solid var(--line-2);
 }
 .page__icon {
   grid-area: 1 / 1;
@@ -107,14 +122,13 @@ main {
   color: var(--ink-2);
   overflow-wrap: anywhere;
 }
-/* 与其他操作一致：至少 44px 点击区、字号 14 */
 .page__action {
   justify-self: start;
   min-height: 44px;
   height: auto;
   margin-top: var(--sp-1);
-  padding: 0 var(--sp-4);
-  font-size: var(--fs-body);
+  padding: var(--sp-2) var(--sp-3);
+  white-space: normal;
 }
 .page__action[hidden] {
   display: none;
@@ -137,25 +151,23 @@ main {
 .page[data-kind="reading"] .page__hint {
   color: var(--ink-3);
 }
-
 .popup-divider {
-  margin: var(--sp-3) 0 var(--sp-1);
+  height: 1px;
+  margin: 0 var(--sp-4);
 }
-
-/* 设置行：开关在左、说明居中、状态文字在右；两行之间 1px 渐隐线 */
 .setting {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  min-height: 64px;
+  min-height: 48px;
   padding: var(--sp-2) 0;
-  font-size: var(--fs-data);
   cursor: pointer;
 }
 .setting + .setting {
-  background:
-    linear-gradient(90deg, transparent, #4a3a28 20%, #4a3a28 80%, transparent) top / 100% 1px
-    no-repeat;
+  border-top: 1px solid var(--line);
+}
+.page[data-scope="elsewhere"] {
+  padding-block: var(--sp-2);
 }
 .setting__text {
   flex: 1;
@@ -163,21 +175,26 @@ main {
 }
 .setting small {
   display: block;
-  font-size: var(--fs-micro);
+  font-size: var(--fs-small);
   line-height: 1.6;
   color: var(--ink-2);
 }
 .setting:has(.pt-switch:disabled) {
   cursor: default;
-  color: var(--ink-3);
 }
+.setting:has(.pt-switch:disabled) .setting__label,
 .setting:has(.pt-switch:disabled) small,
 .setting:has(.pt-switch:disabled) .pt-switch__state {
   color: var(--ink-3);
 }
-
-/* 设置提示行（计划裁定 9）：平时为空、不占高度；只说“正在保存…”（--ink-2）与读取、保存失败（--miss）。
-   结果由文字本身说明，不加字形 */
+/* 不在 CoE 页面：开关仍可切换，说明经 aria-describedby 保留给读屏，视觉上收起 */
+section:has(.page[data-scope="elsewhere"]) .setting {
+  min-height: 44px;
+  padding-block: 0;
+}
+section:has(.page[data-scope="elsewhere"]) .setting small {
+  display: none;
+}
 #status {
   margin: 0;
   font-size: var(--fs-small);
@@ -189,37 +206,94 @@ main {
   margin-top: var(--sp-2);
 }
 #status[data-tone="error"] {
-  color: var(--miss);
+  color: var(--danger);
 }
 .retry {
   min-height: 44px;
   height: auto;
   margin-top: var(--sp-2);
-  padding: 0 var(--sp-4);
-  font-size: var(--fs-body);
+  padding: var(--sp-2) var(--sp-3);
 }
 .retry[hidden] {
   display: none;
 }
-
-/* 页脚居中（spec §4.2 层级例外 2；第三期 A）：“版本 · 检查更新”一行；宝石母题 + 完整声明与版权句一段 */
-footer {
-  padding: 0 var(--sp-5) var(--sp-4);
-  text-align: center;
-  font-size: var(--fs-micro);
-  line-height: 1.8;
-  color: var(--ink-3);
-  overflow-wrap: anywhere;
+.translate {
+  width: 100%;
+  min-height: 44px;
+  height: auto;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  white-space: normal;
+}
+.translate[hidden],
+.guide-notice[hidden] {
+  display: none;
+}
+.guide-notice {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.guide-notice--error {
+  margin-top: var(--sp-2);
+  color: var(--danger);
+}
+.translate[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.7;
+}
+.guide-notice summary {
+  min-height: 44px;
+  padding-block: var(--sp-2);
+  cursor: pointer;
 }
 footer p {
   margin: 0;
+}
+.guide-notice p {
+  margin: 0 0 var(--sp-2);
+}
+/* 站点管理与首次说明同一行；说明展开后正文占满整行 */
+.popup-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: var(--sp-3);
+}
+.popup-links .guide-notice[open] {
+  flex-basis: 100%;
+}
+.site-settings-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink-2);
+  text-underline-offset: 3px;
+}
+.site-settings-link:hover {
+  color: var(--label);
+}
+main :is(a, summary):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+/* 保留实际版本、更新入口、完整声明与版权。 */
+footer {
+  padding: 0 var(--sp-4) var(--sp-3);
+  border-top: 1px solid var(--line-2);
+  background: var(--page);
+  font-size: var(--fs-micro);
+  line-height: 1.7;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
 }
 footer a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   padding-inline: var(--sp-2);
-  color: var(--gold);
+  color: var(--ink-2);
   text-underline-offset: 3px;
 }
 footer a:focus-visible {
@@ -227,7 +301,6 @@ footer a:focus-visible {
   outline-offset: 3px;
 }
 footer .pt-disclaimer {
-  margin-top: var(--sp-1);
   color: var(--ink-3);
 }
 .footer__gem {
@@ -236,66 +309,19 @@ footer .pt-disclaimer {
   --ptm-u: calc(12px / 25);
   margin-inline-end: var(--sp-1);
 }
-
-.translate {
-  width: 100%;
-  margin-top: var(--sp-2);
-}
-.translate[hidden],
-.guide-notice[hidden] {
-  display: none;
-}
-.guide-notice {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-small);
-  color: var(--ink-2);
-}
 ::selection {
   color: var(--selection-fg);
   background: var(--selection-bg);
 }
-
 @media (forced-colors: active) {
-  .titlebar {
-    border-bottom-color: CanvasText;
-  }
-  .page {
+  .titlebar,
+  .page,
+  footer,
+  .setting + .setting {
     border-color: CanvasText;
   }
-  footer a:focus-visible {
+  footer a:focus-visible,
+  main :is(a, summary):focus-visible {
     outline-color: Highlight;
   }
-}
-
-.popup-heading {
-  margin: 0 0 var(--sp-2);
-  color: var(--ink-2);
-  font: 600 var(--fs-body) / 1.5 var(--font-zh-cn);
-}
-.site-settings-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--gold);
-  text-underline-offset: 3px;
-}
-.site-settings-link:hover {
-  color: var(--ink);
-}
-main :is(a, summary):focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: 3px;
-}
-.translate {
-  min-height: 44px;
-  height: auto;
-  white-space: normal;
-}
-.guide-notice summary {
-  min-height: 44px;
-  padding-block: var(--sp-2);
-  cursor: pointer;
-}
-.guide-notice p {
-  margin: 0 0 var(--sp-2);
 }

@@ -7,13 +7,11 @@ import {
   L1DemoOption,
   L1DemoSearch,
 } from '../../shared/components/L1Demo'
-import { Motif } from '../../shared/components/Motif'
-import { PtForgeButton } from '../../shared/components/PtForgeButton'
-import { PtFrame } from '../../shared/components/PtFrame'
 import { PtPanel } from '../../shared/components/PtPanel'
 import { SiteFooter } from '../../shared/components/SiteFooter'
 import { SiteHeader } from '../../shared/components/SiteHeader'
 import { L1_DEMO_CANDIDATES, L1_DEMO_CAPTION } from '../../shared/l1Demo'
+import { PopupIllustration } from './PopupIllustration'
 import { downloadHref, EXTENSION_RELEASE, formatSize } from './release'
 
 const { version, date, bytes } = EXTENSION_RELEASE
@@ -49,9 +47,7 @@ function StateIcon({ kind }: { kind: StateKind }): ReactElement {
   )
 }
 
-// 扩展介绍页（二期重排，样稿 2026-10-03-extension，本地留存）：面向普通用户，不写开发向内容。
-// 阅读顺序 = 确认环境 → 下载 → 四步安装 → 确认生效。唯一的金属重点是下载区那扇 pt-frame 与框内唯一的 pt-forge-btn；
-// 安装、确认生效与参考信息都是 L0。“确认生效”的三种状态与第三期弹窗的当前页状态同词。
+// v4 入口：下载与适用环境紧邻，弹窗仅作示意；安装和支持范围保留真实产品事实。
 export function ExtensionPage(): ReactElement {
   return (
     <div className="pt-backdrop portal">
@@ -60,109 +56,109 @@ export function ExtensionPage(): ReactElement {
       </a>
       <SiteHeader active="extension" />
       <main id="main" tabIndex={-1} className="portal-main ext-main">
-        <PtFrame as="div" variant="hero" className="ext-gate">
-          <header className="ext-gate__hero">
-            <h1 className="pt-hero-title pt-hero-title--extension">
-              <span className="hero-clause">熟悉的术语，</span>
-              <br className="mobile-break" />
-              <span className="pt-hero-title__gold hero-clause">就在原来的工具里。</span>
-            </h1>
-            <p className="ext-gate__lead">
-              PoE2 中文助手在 <span className="nw">Craft of Exile</span>
-              {' 的英文界面上显示国服简体术语，可以用中文搜基底和词缀；'}
-              <span className="nw">部分装备的国服文本</span>
-              <span className="nw">可转成英文导入。</span>
-            </p>
-            <nav className="ext-route" aria-label="安装路线">
-              <ol>
-                <li>
-                  <a href="#env">确认环境</a>
-                </li>
-                <li>
-                  <a href="#download">下载</a>
-                </li>
-                <li>
-                  <a href="#install">安装（四步）</a>
-                </li>
-                <li>
-                  <a href="#verify">确认生效</a>
-                </li>
-              </ol>
-            </nav>
-          </header>
-          <div className="ext-gate__split">
-            <section className="ext-gate__col" id="env" aria-labelledby="env-title">
-              <h2 className="pt-subhead" id="env-title">
-                先确认环境
-              </h2>
-              <p className="ext-gate__note">以下几项都符合再下载。</p>
-              <dl className="ext-env">
-                <dt>浏览器</dt>
-                <dd>电脑上的 Chrome</dd>
-                <dt>站点</dt>
-                <dd>
-                  beta.craftofexile.com <small>新版 Beta</small>
-                </dd>
-                <dt>原站设置</dt>
-                <dd>PoE2 → English</dd>
-                <dt>术语</dt>
-                <dd>
-                  国服简体中文 <small>暂无台服繁体</small>
-                </dd>
-              </dl>
-              <p className="ext-env__not">
-                不支持旧版 www 站和 PoE1，也不会翻译所有<span className="nw">英文段落</span>。
+        <div className="ext-gate">
+          <div className="ext-gate__copy">
+            <header className="ext-gate__hero">
+              <h1 className="pt-hero-title pt-hero-title--extension">
+                <span className="hero-clause">熟悉的术语，</span>
+                <br className="mobile-break" />
+                <span className="pt-hero-title__gold hero-clause">就在原来的工具里。</span>
+              </h1>
+              <p className="ext-gate__lead">
+                PoE2 中文助手在 <span className="nw">Craft of Exile</span>
+                {' 的英文界面上显示国服简体术语，可以用中文搜基底和词缀；'}
+                <span className="nw">部分装备的国服文本</span>
+                <span className="nw">可转成英文导入。</span>
               </p>
-              <a className="text-link ext-env__link" href={COE_BETA}>
-                打开 CoE Beta <Icon name="external" size={14} />
-              </a>
-            </section>
-            {/* 中缝：从“确认环境”指向“下载”；铜线与菱结属于这扇框，不另算落点 */}
-            <div className="ext-seam" aria-hidden="true">
-              <span className="ext-seam__line" />
-              <span className="ext-seam__knot">
-                <Motif symbol="knot" />
-              </span>
-              <span className="ext-seam__line ext-seam__line--bottom" />
-            </div>
-            <section className="ext-gate__col" id="download" aria-labelledby="download-title">
-              <h2 className="pt-subhead" id="download-title">
-                再下载
-              </h2>
-              <p className="ext-gate__note">
-                扩展还没有上架 Chrome 应用商店。从本站下载 zip，再按下面四步安装，只需操作一次。
-              </p>
-              <div className="ext-download">
-                {/* ≤620px 时版本与大小换到第二行（extension.css），可访问名称仍是整句 */}
-                <PtForgeButton as="a" href={downloadHref} download className="ext-download__btn">
+            </header>
+            <div className="ext-gate__split">
+              <section className="ext-gate__col" id="download" aria-labelledby="download-title">
+                <h2 className="visually-hidden" id="download-title">
                   下载扩展
-                  <span className="ext-download__meta">{`（v${version}，zip，${formatSize(bytes)}）`}</span>
-                </PtForgeButton>
-              </div>
-              <ul className="ext-facts">
-                <li>
-                  发布于 <b>{date}</b>
-                </li>
-                <li>申请存储、读取当前页与侧边栏权限，用来保存设置和翻译攻略</li>
-                <li>
-                  <a className="text-link" href="#update">
-                    已装旧版？看更新方法
+                </h2>
+                <p className="ext-gate__note">
+                  扩展尚未上架 Chrome 应用商店，从本站下载 zip，按下面四步安装。
+                </p>
+                <div className="ext-download">
+                  {/* ≤620px 时版本与大小换到第二行（extension.css），可访问名称仍是整句 */}
+                  <a href={downloadHref} download className="pt-plaque ext-download__btn">
+                    下载扩展
+                    <span className="ext-download__meta">{`（v${version}，zip，${formatSize(bytes)}）`}</span>
                   </a>
-                </li>
-              </ul>
-              <p className="ext-gate__legal">
-                非官方工具，与 Grinding Gear Games、腾讯及{' '}
-                <span className="nw">Craft of Exile</span> <span className="nw">无关联</span>
-                ，也未获其认可。
-              </p>
-            </section>
+                </div>
+                <ul className="ext-facts">
+                  <li>
+                    发布于 <b>{date}</b>
+                  </li>
+                  {/* 权限逐项对应 manifest.json 的 permissions 与 optional_host_permissions */}
+                  <li>
+                    固定权限：存储、当前页、页面脚本与侧边栏（storage、activeTab、scripting、sidePanel）
+                  </li>
+                  <li>自动划词只在你授权的站点申请访问，安装时不取得全站权限</li>
+                  <li>
+                    <a className="text-link" href="#update">
+                      已装旧版？看更新方法
+                    </a>
+                  </li>
+                </ul>
+                <p className="ext-gate__legal">
+                  非官方工具，与 Grinding Gear Games、腾讯及{' '}
+                  <span className="nw">Craft of Exile</span> <span className="nw">无关联</span>
+                  ，也未获其认可。
+                </p>
+              </section>
+              <section className="ext-gate__col" id="env" aria-labelledby="env-title">
+                <h2 className="pt-subhead" id="env-title">
+                  先确认环境
+                </h2>
+                <dl className="ext-env">
+                  <dt>浏览器</dt>
+                  <dd>电脑上的 Chrome</dd>
+                  <dt>站点</dt>
+                  <dd>
+                    beta.craftofexile.com <small>新版 Beta</small>
+                  </dd>
+                  <dt>原站设置</dt>
+                  <dd>PoE2 → English</dd>
+                  <dt>术语</dt>
+                  <dd>
+                    国服简体中文 <small>暂无台服繁体</small>
+                  </dd>
+                </dl>
+                <p className="ext-env__not">
+                  不支持旧版 www 站和 PoE1，也不会翻译所有<span className="nw">英文段落</span>。
+                </p>
+                <a className="text-link ext-env__link" href={COE_BETA}>
+                  打开 CoE Beta <Icon name="external" size={14} />
+                </a>
+              </section>
+            </div>
           </div>
-        </PtFrame>
+          <PopupIllustration version={version} />
+          <nav className="ext-route" aria-label="安装路线">
+            <ol>
+              <li>
+                <a href="#env">确认环境</a>
+              </li>
+              <li>
+                <a href="#download">下载</a>
+              </li>
+              <li>
+                <a href="#install">安装（四步）</a>
+              </li>
+              <li>
+                <a href="#verify">确认生效</a>
+              </li>
+            </ol>
+          </nav>
+        </div>
 
         <section id="install" className="ext-guide" aria-labelledby="install-title">
           <header className="ext-guide__head">
-            <h2 id="install-title">安装</h2>
-            <p>当前版本 v{version}。下载后按顺序做一次，之后不用重复。</p>
+            <h2 className="pt-subhead pt-subhead--lg" id="install-title">
+              安装
+            </h2>
+            <p>当前版本 v{version}。已装旧版时按“更新与恢复”操作。</p>
           </header>
           <ol className="ext-steps">
             <li className="ext-step">
@@ -195,9 +191,8 @@ export function ExtensionPage(): ReactElement {
             </li>
           </ol>
           <p className="ext-guide__note">
-            Chrome
-            会提示扩展不是来自应用商店，这是正常的。开发者模式需要一直开着，关掉后扩展会停用；Chrome
-            更新后如果扩展被停用，回到扩展页重新打开即可。
+            Chrome 会提示扩展不是来自应用商店。开发者模式需要一直开着，关掉后扩展会停用；Chrome
+            更新后如果扩展被停用，回到扩展页重新打开。
           </p>
         </section>
 
@@ -205,7 +200,9 @@ export function ExtensionPage(): ReactElement {
           <span className="ext-verify__mark" aria-hidden="true">
             <Icon name="check" />
           </span>
-          <h2 id="verify-title">确认生效</h2>
+          <h2 className="pt-subhead pt-subhead--lg" id="verify-title">
+            确认生效
+          </h2>
           <p className="ext-verify__intro">装好后回到 CoE Beta 刷新页面，看下面两处。</p>
           <div className="ext-verify__grid">
             <div>
@@ -215,7 +212,7 @@ export function ExtensionPage(): ReactElement {
                   <span>
                     导航、按钮等已收录的界面文字显示为中文
                     <small>
-                      装备属性保留英文对照；词典没收录的内容保持英文、不猜译，这是正常现象。弹窗里打开“显示中英对照”可同时看到英文。
+                      装备属性保留英文对照；词典没收录的内容保持英文，不猜译。在弹窗里打开“显示中英对照”可同时看到英文。
                     </small>
                   </span>
                 </li>
@@ -223,7 +220,7 @@ export function ExtensionPage(): ReactElement {
                   <Icon name="check" />
                   <span>
                     首页的基底搜索框输入“水晶”，出现中英对照的候选
-                    <small>如下图：选“水晶法器 → Crystal Focus”，原站照常用英文搜索。</small>
+                    <small>选“水晶法器”后搜索框填入 Crystal Focus，原站照常用英文搜索。</small>
                   </span>
                 </li>
               </ul>
@@ -252,7 +249,7 @@ export function ExtensionPage(): ReactElement {
                   <span className="ext-state__name">生效中</span>
                 </dt>
                 <dd>
-                  两处都对上了。页面上仍有一些英文是正常的：未收录的内容保持原文。转换装备文本后，仍要在原站核对导入结果。
+                  两处都对上了。未收录的内容保持英文原文。转换装备文本后，仍要在原站核对导入结果。
                 </dd>
               </div>
               <div className="ext-state ext-state--part">
@@ -303,7 +300,9 @@ export function ExtensionPage(): ReactElement {
 
         <div className="ext-details">
           <section id="update" aria-labelledby="update-title">
-            <h2 id="update-title">更新与恢复</h2>
+            <h2 className="pt-subhead" id="update-title">
+              更新与恢复
+            </h2>
             <p>
               0.5.0 起扩展身份固定。从 0.4.x 升级时，请先在扩展管理页移除旧版，再加载新版；CoE
               里的开关会恢复默认，需要重新设置一次。同时启用旧版和新版可能重复显示中文。
@@ -316,13 +315,18 @@ export function ExtensionPage(): ReactElement {
             <p>关闭汉化可恢复原文。禁用或卸载扩展后，也请刷新原站页面。</p>
           </section>
           <section id="privacy" aria-labelledby="privacy-title">
-            <h2 id="privacy-title">文本处理与隐私</h2>
+            <h2 className="pt-subhead" id="privacy-title">
+              文本处理与隐私
+            </h2>
             <p>
               术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。
             </p>
             <p>
-              扩展不内置任何 Key，Key
-              与译文缓存只保存在本机，可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不
+              划词翻译在你点“翻译”后，由扩展后台发送选中的文字和相关术语，不附带页面地址。设置里的“测试连接”只发送一句简短的测试消息，不含攻略文字。
+            </p>
+            <p>
+              扩展不内置任何 Key，Key 与译文缓存只保存在本机，Key
+              未加密保存；可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不
               <span className="nw">代替</span>你执行原站导入。
             </p>
             <a
@@ -333,7 +337,9 @@ export function ExtensionPage(): ReactElement {
             </a>
           </section>
           <section id="guide" aria-labelledby="guide-title">
-            <h2 id="guide-title">攻略翻译</h2>
+            <h2 className="pt-subhead" id="guide-title">
+              攻略翻译
+            </h2>
             <p>
               在攻略页点扩展图标，再点“翻译此页”，先预览正文、选区或点选区域，核对章节和用量后点“开始翻译”。译文默认放在原文旁，也可仅在侧栏阅读、定位原文或恢复页面。
             </p>
@@ -346,9 +352,24 @@ export function ExtensionPage(): ReactElement {
               Chrome，不支持 PoE1。
             </p>
           </section>
+          <section id="selection" aria-labelledby="selection-title">
+            <h2 className="pt-subhead" id="selection-title">
+              划词翻译
+            </h2>
+            <p>
+              在已启用划词的网页上选中一段文字，会出现“翻译”入口。术语先按国服词典对照，整句要点“翻译”才会发送；单次最多
+              6000 字符，输入框和密码框里的文字不会被选用。
+            </p>
+            <p>
+              在弹窗里点“启用本页划词”可临时开启当前页；在“管理自动划词站点”里添加常用站点并授予该站访问权限后，打开这些站点会自动启用。移除站点会撤回只供它使用的权限。Craft
+              of Exile 页面不启用划词。
+            </p>
+          </section>
           {/* 首页“支持范围见介绍页”的落点；按钮名逐字取自扩展实际渲染的文字与扩展对原站按钮的译名 */}
           <section id="convert" aria-labelledby="convert-title">
-            <h2 id="convert-title">装备文本转换</h2>
+            <h2 className="pt-subhead" id="convert-title">
+              装备文本转换
+            </h2>
             <ol className="ext-convert">
               <li>
                 在 CoE Beta 点原站的“<strong>导入装备</strong>”，粘贴在游戏里按{' '}
@@ -373,14 +394,18 @@ export function ExtensionPage(): ReactElement {
             </p>
           </section>
           <section aria-labelledby="scope-title">
-            <h2 id="scope-title">支持范围与已知限制</h2>
+            <h2 className="pt-subhead" id="scope-title">
+              支持范围与已知限制
+            </h2>
             <p>
               当前版本不保证支持所有页面和装备格式。遇到未收录的内容、有歧义的译文或损坏的数值时，会提示你检查，不会猜译。Windows
               自带的中文输入法尚未完成验证，遇到输入问题请反馈。
             </p>
           </section>
           <section aria-labelledby="help-title">
-            <h2 id="help-title">遇到问题？</h2>
+            <h2 className="pt-subhead" id="help-title">
+              遇到问题？
+            </h2>
             <p>
               可以先关闭扩展，看看原站是否也有同样的问题。反馈时请说明页面、操作步骤和扩展版本；如果附上装备样本，请先删去私人信息。
             </p>

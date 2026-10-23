@@ -1,4 +1,4 @@
-// L1 点缀（spec §4.2、§6.9）门禁：令牌与 tokens.css 一致；禁用项；对 CoE 实测底色与面板底的对比度
+// L1 点缀（spec §4.2、§6.9）门禁：令牌与 tokens.css 一致（字号 px 与 rem 等值）；禁用项；对 CoE 实测底色与面板底的对比度
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -30,7 +30,7 @@ const COE_BACKGROUNDS = [
   '#101010',
   '#2d2d2d',
 ]
-const PANEL = '#15120f'
+const PANEL = '#000000'
 const L1_ONLY = [
   '--ext-ink',
   '--l1-panel',
@@ -47,11 +47,19 @@ describe('l1.css 令牌（spec §6.9 样式注入）', () => {
     expect(host).toBeDefined()
     expect(rules.some((rule) => rule.selectors.some((s) => s.includes(':root')))).toBe(false)
   })
-  it('与 tokens.css 同名的令牌取值相同；其余只能是 L1 专用令牌', () => {
+  it('与 tokens.css 同名的令牌取值相同（字号按 px 等值比较）；其余只能是 L1 专用令牌', () => {
     for (const [name, value] of tokens) {
       if (!name.startsWith('--')) continue
       if (L1_ONLY.includes(name)) continue
       expect(site.has(name), `${name} 不在 tokens.css`).toBe(true)
+      if (name.startsWith('--fs-')) {
+        // tokens.css 字号写 rem（随浏览器字号缩放）；CoE Shadow DOM 里 rem 取原站根字号，L1 保持 px，按 16px 根字号等值
+        expect(value, name).toMatch(/^\d+px$/)
+        const rem = /^(\d*\.?\d+)rem$/.exec(site.get(name) ?? '')?.[1]
+        expect(rem, `${name} 在 tokens.css 不是 rem`).toBeDefined()
+        expect(Number.parseFloat(value), name).toBe(Number(rem) * 16)
+        continue
+      }
       expect(norm(value), name).toBe(norm(site.get(name)))
     }
     expect(token('--ext-ink')).toBe('#9fe3dc')
@@ -60,8 +68,16 @@ describe('l1.css 令牌（spec §6.9 样式注入）', () => {
 })
 
 describe('L1 禁用项（spec §4.2）', () => {
-  it('不用渐变、网站衬线栈（--pt-serif、--pt-cinzel）、外部或内嵌 url()', () => {
-    expect(l1).not.toMatch(/gradient\(/)
+  it('渐变只用于当前候选或步骤，不加载网站字体栈或外部资源', () => {
+    for (const rule of rules.filter((r) =>
+      [...r.declarations.values()].some((v) => /gradient\(/.test(v)),
+    ))
+      for (const selector of rule.selectors)
+        expect([
+          '::slotted(button[aria-selected="true"])',
+          '::slotted(button:focus-visible)',
+          '.steps [aria-current="step"]',
+        ]).toContain(selector)
     expect(l1).not.toMatch(/--pt-serif|--pt-cinzel/)
     expect(l1).not.toMatch(/url\(/i)
   })
@@ -95,8 +111,13 @@ describe('L1 衬线（扩展 0.4.0，DESIGN.md L1 白名单）', () => {
       expect(rule.declarations.get('font-family')).toBe('var(--l1-serif)')
       for (const selector of rule.selectors)
         expect(selector).not.toMatch(
-          /data-tertiary|::slotted|textarea|\.disclaimer|\.notice|\.check|\.by/,
+          /data-tertiary|::slotted|textarea|\.disclaimer|\.notice p|\.check|\.by/,
         )
+      // 语言提示只有标题与“关闭”用固定子集，正文保持无衬线（B3-07）
+      expect(rule.selectors.filter((selector) => selector.startsWith('.notice'))).toEqual([
+        '.notice strong',
+        '.notice header button',
+      ])
     }
   })
 })
@@ -120,8 +141,9 @@ describe('L1 宿主压过原站全局样式（CoE `* { color; font }`）', () =>
 })
 
 describe('导入面板文本框随视口收缩（spec §8.8 声明须在视口内）', () => {
-  it('textarea 高度 clamp(120px, 20vh, 240px)，最小 120px', () => {
-    const rule = rules.find((r) => r.selectors.join(', ') === 'textarea')
+  // B3-09：两栏由只读 textarea 改为带行号的行列表 .lines，高度约束原样沿用
+  it('.lines 高度 clamp(120px, 20vh, 240px)，最小 120px', () => {
+    const rule = rules.find((r) => r.selectors.join(', ') === '.lines')
     expect(norm(rule?.declarations.get('height'))).toBe('clamp(120px, 20vh, 240px)')
     expect(rule?.declarations.get('min-height')).toBe('120px')
   })
@@ -199,6 +221,21 @@ describe('次级按钮禁用态（spec §6.9）', () => {
 })
 
 describe('对比度（spec §6.9、§4.3）', () => {
+  it('v4 主操作有清晰边界，黑底面板与控件为直角', () => {
+    const at = (selector: string) => rules.find((r) => r.selectors.join(', ') === selector)
+    for (const selector of [
+      '.panel',
+      '.notice',
+      'button',
+      '.lines',
+      ':host([data-poe2-l10n="search"])',
+    ])
+      expect(at(selector)?.declarations.get('border-radius'), selector).toBe('0')
+    expect(token('--l1-primary-bg')).toBe('#0f304d')
+    expect(
+      contrastRatio(token('--l1-primary-edge'), token('--l1-primary-bg')),
+    ).toBeGreaterThanOrEqual(3)
+  })
   it('--ext-ink 对 CoE 全部实测底色 ≥4.5:1', () => {
     for (const bg of COE_BACKGROUNDS)
       expect(contrastRatio(token('--ext-ink'), bg), bg).toBeGreaterThanOrEqual(4.5)
@@ -292,5 +329,78 @@ describe('导入面板核对清单（方案 §4 第三期；裁定 25）', () =>
     expect(rules[stale]?.declarations.get('color')).toBe('var(--ink-3)')
     expect(rules.some((r) => r.selectors.join(', ').includes('[data-group="next"]'))).toBe(false)
     expect(at('.check.stale li, .check.stale .ico')).toBe(-1)
+  })
+})
+
+describe('v4 复盘第 3 组', () => {
+  const byExact = (selector: string, atRules = '') =>
+    rules.find((r) => r.selectors.join(', ') === selector && r.atRules.join(' ') === atRules)
+  it('B3-06：搜索说明行用 !important 的 font 简写压回系统无衬线与无单位行高', () => {
+    const font = byExact('::slotted(div)')?.declarations.get('font')
+    expect(font).toBe('var(--fs-small) / 1.6 var(--font-zh-cn) !important')
+    expect(byExact('::slotted(div)')?.declarations.has('font-size')).toBe(false)
+  })
+  it('B3-10：强制色彩下当前步骤用系统色内描边标出；窄面板署名在 gem 隐藏后不再缩进', () => {
+    const step = byExact('.steps [aria-current="step"]', '@media (forced-colors: active)')
+    expect(step?.declarations.get('outline')).toBe('2px solid Highlight')
+    expect(step?.declarations.get('outline-offset')).toBe('-2px')
+    const by = byExact(
+      '.head .by',
+      '@media (forced-colors: active) @container import-panel (width < 480px)',
+    )
+    expect(by?.declarations.get('margin-left')).toBe('0')
+  })
+})
+
+describe('顶层候选浮层（复盘 B3-01）', () => {
+  it('搜索宿主以 all: initial 复位 [popover] 的浏览器默认 inset、margin、边框与底色，定位只由内联样式决定', () => {
+    const host = rules.find((rule) => rule.selectors.includes(':host([data-poe2-l10n="search"])'))
+    expect(host?.declarations.get('all')).toBe('initial')
+  })
+})
+
+describe('B3-09：候选数量、类别、匹配高亮与导入两栏行号', () => {
+  const byExact = (selector: string, atRules = '') =>
+    rules.find((r) => r.selectors.join(', ') === selector && r.atRules.join(' ') === atRules)
+  const decl = (selector: string, name: string, atRules = '') =>
+    byExact(selector, atRules)?.declarations.get(name)
+  it('说明行自带 shadow 排成一行：说明伸缩，“N 项”不换行、用无衬线小字', () => {
+    expect(decl(':host([data-search-help])', 'display')).toBe('flex')
+    // 不换行：数量固定在首行右端，说明文字自己折行
+    expect(decl(':host([data-search-help])', 'flex-wrap')).toBeUndefined()
+    const count = '::slotted([slot="help-count"])'
+    expect(decl(count, 'white-space')).toBe('nowrap !important')
+    expect(decl(count, 'font')).toBe('var(--fs-micro) / 1.6 var(--font-zh-cn) !important')
+  })
+  it('候选标签是两列网格：中英文在左，类别占右列跨两行，用无衬线小字并带边框（不只靠颜色）', () => {
+    expect(decl(':host([data-candidate])', 'display')).toBe('grid')
+    const kind = '::slotted([slot="candidate-kind"])'
+    expect(decl(kind, 'grid-row')).toBe('1 / span 2 !important')
+    expect(decl(kind, 'font')).toBe('var(--fs-micro) / 1.5 var(--font-zh-cn) !important')
+    expect(decl(kind, 'border')).toBe('1px solid var(--line-2) !important')
+  })
+  it('命中字加重并加下划线，非命中字为常规字重：差别不只靠颜色', () => {
+    expect(decl('::slotted([slot="candidate-zh"])', 'font')).toBe(
+      '400 var(--fs-body) / 1.5 var(--font-zh-cn) !important',
+    )
+    const hit = '::slotted([data-hit])'
+    expect(decl(hit, 'font-weight')).toBe('700 !important')
+    expect(decl(hit, 'text-decoration-line')).toBe('underline !important')
+  })
+  it('行号不可选中、右对齐；待核对行有左边条与粗行号；定位行有描边；强制色彩下边条改系统色', () => {
+    expect(decl('.lines .ln', 'user-select')).toBe('none')
+    expect(decl('.lines li[data-issue]', 'border-left-color')).toBe('var(--miss)')
+    expect(decl('.lines li[data-issue] .ln', 'font-weight')).toBe('700')
+    expect(decl('.lines li[data-focus]', 'outline')).toBe('1px solid var(--miss)')
+    expect(
+      decl('.lines li[data-issue]', 'border-left-color', '@media (forced-colors: active)'),
+    ).toBe('Highlight')
+    // 透明边条在强制色彩下会变成文字色：普通行须显式改为底色，否则每行都像待核对
+    expect(decl('.lines li', 'border-left-color', '@media (forced-colors: active)')).toBe('Canvas')
+    expect(decl('.lines li[data-focus]', 'outline-color', '@media (forced-colors: active)')).toBe(
+      'Highlight',
+    )
+    // 读屏提示只在视觉上隐藏
+    expect(decl('.sr', 'clip-path')).toBe('inset(50%)')
   })
 })

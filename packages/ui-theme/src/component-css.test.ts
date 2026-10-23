@@ -2,12 +2,21 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { type CssRule, parseRules } from './testing/css'
+import { type CssRule, parseRules, rootTokens } from './testing/css'
 import { FORGE_COLORS, NAMEPLATE_VARIANTS, TAB_COLORS } from './testing/gate'
 
 const dir = fileURLToPath(new URL('./components/', import.meta.url))
 const files = readdirSync(dir).filter((name) => name.endsWith('.css'))
 const rulesOf = (file: string): CssRule[] => parseRules(readFileSync(`${dir}${file}`, 'utf8'))
+
+const palette = rootTokens(readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')).tokens
+const resolveColors = (value: string | undefined) =>
+  value?.replace(/var\((--[\w-]+)\)/g, (_all, token: string) => palette.get(token) ?? token)
+// 字号写 --fs-* 令牌或 rem（2026-10-23 迁移）：按默认 16px 根字号换回 px 再比对，视觉取值不变；“不写 px”由 rem.test.ts 断言
+const asPx = (value: string | undefined) =>
+  value
+    ?.replace(/var\((--fs-[\w-]+)\)/g, (all, token: string) => palette.get(token) ?? all)
+    .replace(/(?<![\w.])(\d*\.?\d+)rem\b/g, (_all, n: string) => `${Number(n) * 16}px`)
 
 const inMedia = (rule: CssRule, pattern: RegExp) => rule.atRules.some((at) => pattern.test(at))
 const FORCED = /forced-colors:\s*active/
@@ -107,13 +116,13 @@ describe('通用门禁（全部组件文件）', () => {
 })
 
 describe('pt-header（spec §5.2）', () => {
-  it('桌面：高 74、内容最大宽 1280、左右 56、间距 40；导航衬线 15px、间距 30', () => {
-    expect(declared('header.css', '.pt-header__inner', 'height')).toBe('74px')
+  it('桌面页头尺寸、令牌留白与导航字形', () => {
+    expect(declared('header.css', '.pt-header__inner', 'height')).toBe('64px')
     expect(declared('header.css', '.pt-header__inner', 'max-width')).toBe('1280px')
-    expect(declared('header.css', '.pt-header__inner', 'padding')).toBe('0 56px')
-    expect(declared('header.css', '.pt-header__inner', 'gap')).toBe('40px')
-    expect(declared('header.css', '.pt-nav', 'gap')).toBe('30px')
-    expect(declared('header.css', '.pt-nav a', 'font')).toBe('700 15px / 1 var(--pt-serif)')
+    expect(declared('header.css', '.pt-header__inner', 'padding')).toBe('0 var(--sp-5)')
+    expect(declared('header.css', '.pt-header__inner', 'gap')).toBe('var(--sp-6)')
+    expect(declared('header.css', '.pt-nav', 'gap')).toBe('var(--sp-5)')
+    expect(asPx(declared('header.css', '.pt-nav a', 'font'))).toBe('700 15px / 1 var(--pt-serif)')
     expect(declared('header.css', '.pt-header__end', 'margin-left')).toBe('auto')
   })
 
@@ -128,7 +137,7 @@ describe('pt-header（spec §5.2）', () => {
     expect(declared('header.css', '.pt-nav', 'width', at620)).toBe('100%')
     expect(declared('header.css', '.pt-nav', 'gap', at620)).toBe('24px')
     expect(declared('header.css', '.pt-brand', 'min-height', at620)).toBe('44px')
-    expect(declared('header.css', '.pt-brand', 'font-size', at620)).toBe('18px')
+    expect(asPx(declared('header.css', '.pt-brand', 'font-size', at620))).toBe('18px')
     expect(declared('header.css', '.pt-nav a', 'min-height', at620)).toBe('44px')
   })
 
@@ -160,12 +169,9 @@ describe('母题 span（spec §4.5）', () => {
 })
 
 describe('pt-backdrop（spec §5.1）', () => {
-  it('底色 --page，颗粒 0.05 overlay，不用 background-attachment: fixed', () => {
-    expect(declared('backdrop.css', '.pt-backdrop', 'background')).toContain('var(--page)')
-    expect(declared('backdrop.css', '.pt-backdrop::before', 'background')).toBe('var(--pt-grain)')
-    expect(declared('backdrop.css', '.pt-backdrop::before', 'opacity')).toBe('0.05')
-    expect(declared('backdrop.css', '.pt-backdrop::before', 'mix-blend-mode')).toBe('overlay')
-    expect(readFileSync(`${dir}backdrop.css`, 'utf8')).not.toContain('fixed')
+  it('页面使用纯色底，不覆盖阅读面板', () => {
+    expect(declared('backdrop.css', '.pt-backdrop', 'background')).toBe('var(--page)')
+    expect(declared('backdrop.css', '.pt-backdrop::before', 'content')).toBeUndefined()
   })
 })
 
@@ -178,15 +184,10 @@ function isFrameSubject(selector: string): boolean {
 }
 
 describe('pt-frame 与标题栏（spec §4.5、§5.3）', () => {
-  it('角饰伪元素 z-index 3，inset 为负外伸量；桌面 40/12px，≤620 为 28/9px', () => {
-    for (const pseudo of ['.pt-frame::before', '.pt-frame::after']) {
-      expect(declared('frame.css', pseudo, 'z-index')).toBe('3')
-      expect(declared('frame.css', pseudo, 'inset')).toBe('calc(-1 * var(--pt-co))')
-    }
-    expect(declared('frame.css', '.pt-frame', '--pt-cs')).toBe('40px')
-    expect(declared('frame.css', '.pt-frame', '--pt-co')).toBe('12px')
-    expect(declared('frame.css', '.pt-frame', '--pt-cs', /max-width:\s*620px/)).toBe('28px')
-    expect(declared('frame.css', '.pt-frame', '--pt-co', /max-width:\s*620px/)).toBe('9px')
+  it('工作面板使用细边黑底，不让装饰覆盖焦点', () => {
+    expect(declared('frame.css', '.pt-frame', 'background')).toBe('var(--frame-bg)')
+    expect(declared('frame.css', '.pt-frame', 'border')).toBe('1px solid var(--line-2)')
+    expect(declared('frame.css', '.pt-frame::before', 'content')).toBeUndefined()
   })
 
   it('pt-frame 自身的规则没有 overflow: hidden / clip 与 contain: paint', () => {
@@ -206,41 +207,52 @@ describe('pt-frame 与标题栏（spec §4.5、§5.3）', () => {
   it('pt-frame 与带标题栏的 pt-panel 是容器查询挂载点；标题栏按容器宽度取内边距', () => {
     expect(declared('frame.css', '.pt-frame', 'container-type')).toBe('inline-size')
     expect(declared('panel.css', '.pt-panel--titled', 'container-type')).toBe('inline-size')
-    expect(declared('frame.css', '.pt-titlebar', 'height')).toBe('46px')
-    expect(declared('frame.css', '.pt-titlebar', 'padding')).toBe('0 110px')
-    expect(declared('frame.css', '.pt-titlebar', 'padding', /width < 480px/)).toBe('0 20px')
+    expect(declared('frame.css', '.pt-titlebar', 'min-height')).toBe('46px')
+    expect(declared('frame.css', '.pt-titlebar', 'padding')).toBe('var(--sp-3) var(--sp-4)')
+    expect(declared('frame.css', '.pt-titlebar', 'padding', /width < 480px/)).toBe(
+      'var(--sp-3) var(--sp-4)',
+    )
     expect(declared('frame.css', '.pt-titlebar > .pt-chip', 'display', /width < 480px/)).toBe(
       'none',
     )
     expect(declared('frame.css', '.pt-chip.pt-chip--body', 'display', /width < 480px/)).toBe('flex')
-    expect(declared('frame.css', '.pt-titlebar__title', 'text-overflow')).toBe('ellipsis')
-    expect(declared('frame.css', '.pt-titlebar__title', 'white-space')).toBe('nowrap')
+    expect(declared('frame.css', '.pt-titlebar__title', 'overflow-wrap')).toBe('anywhere')
   })
 })
 
 describe('pt-forge-btn（spec §5.5）', () => {
-  it('文字色与渐变中段三个色标等于门禁用的 FORGE_COLORS', () => {
-    expect(declared('forge-btn.css', '.pt-forge-btn', 'color')).toBe(FORGE_COLORS.text)
-    const stops = declared('forge-btn.css', '.pt-forge-btn', 'background')?.match(/#[0-9a-f]{6}/g)
-    expect(stops?.slice(1, 4)).toEqual([...FORGE_COLORS.midStops])
+  it('主操作各状态文字与底色纳入对比度门禁', () => {
+    expect(resolveColors(declared('forge-btn.css', '.pt-forge-btn', 'color'))).toBe(
+      FORGE_COLORS.text,
+    )
+    expect(resolveColors(declared('forge-btn.css', '.pt-forge-btn', 'background'))).toBe(
+      FORGE_COLORS.midStops[0],
+    )
+    expect(resolveColors(declared('forge-btn.css', '.pt-forge-btn:hover', 'background'))).toBe(
+      FORGE_COLORS.midStops[1],
+    )
   })
-
-  it('按下下压 1px，减少动态效果时取消；焦点环 2px --focus 外偏移 3px', () => {
-    expect(declared('forge-btn.css', '.pt-forge-btn:active', 'transform')).toBe('translateY(1px)')
-    expect(
-      declared('forge-btn.css', '.pt-forge-btn:active', 'transform', /prefers-reduced-motion/),
-    ).toBe('none')
+  it('主操作保留外焦点环与强制色彩边界', () => {
     expect(declared('forge-btn.css', '.pt-forge-btn:focus-visible', 'outline')).toBe(
-      '2px solid var(--focus)',
+      'var(--focus-ring)',
     )
     expect(declared('forge-btn.css', '.pt-forge-btn:focus-visible', 'outline-offset')).toBe('3px')
+    expect(declared('forge-btn.css', '.pt-forge-btn', 'border', FORCED)).toBe(
+      '2px solid ButtonText',
+    )
   })
 })
 
 describe('pt-btn（spec §5.6）', () => {
   it('默认、--quiet、--sm、--xs 的尺寸与配色；≤600 时 --sm、--xs 最小高 44px', () => {
     expect(declared('btn.css', '.pt-btn', 'height')).toBe('46px')
-    expect(declared('btn.css', '.pt-btn', 'border')).toBe('1px solid var(--bronze)')
+    expect(declared('btn.css', '.pt-btn', 'border')).toBe('1px solid var(--control-edge)')
+    expect(declared('btn.css', '.pt-btn', 'border-radius')).toBe('0')
+    expect(declared('btn.css', '.pt-btn--primary', 'background-color')).toBe('var(--steel)')
+    expect(declared('btn.css', '.pt-btn--primary:hover', 'background-color')).toBe(
+      'var(--steel-hi)',
+    )
+    expect(declared('btn.css', '.pt-btn--primary', 'color')).toBe('var(--label)')
     expect(declared('btn.css', '.pt-btn--quiet', 'border-color')).toBe('var(--control-edge)')
     expect(declared('btn.css', '.pt-btn--sm', 'height')).toBe('38px')
     expect(declared('btn.css', '.pt-btn--xs', 'height')).toBe('28px')
@@ -349,19 +361,20 @@ describe('pt-divider、pt-chip、hero 标题（spec §4.4、§5.9、§5.10）', 
     expect(declared('chip.css', '.pt-chip--body', 'display')).toBe('none')
   })
 
-  it('hero 标题三种字号一次写全，≤620 缩小；渐变字在强制色彩下退回 CanvasText', () => {
+  it('营销标题使用流体字号，工具空态保持阅读密度，强制色彩可读', () => {
     expect(declared('hero-title.css', '.pt-hero-title', 'font')).toBe(
-      '700 54px / 1.2 var(--pt-serif)',
+      '700 var(--fs-hero) / 1.18 var(--pt-serif)',
     )
-    expect(declared('hero-title.css', '.pt-hero-title--extension', 'font-size')).toBe('44px')
-    expect(declared('hero-title.css', '.pt-hero-title--build', 'font-size')).toBe('36px')
-    const narrow = /max-width:\s*620px/
-    expect(declared('hero-title.css', '.pt-hero-title', 'font-size', narrow)).toBe('34px')
-    expect(declared('hero-title.css', '.pt-hero-title--extension', 'font-size', narrow)).toBe(
-      '34px',
+    expect(declared('hero-title.css', '.pt-hero-title--extension', 'font-size')).toBe(
+      'var(--fs-hero-extension)',
     )
-    expect(declared('hero-title.css', '.pt-hero-title--build', 'font-size', narrow)).toBe('28px')
-    expect(declared('hero-title.css', '.pt-hero-title__gold', 'color', FORCED)).toBe('CanvasText')
+    expect(declared('hero-title.css', '.pt-hero-title--build', 'font-size')).toBe(
+      'var(--fs-display)',
+    )
+    expect(
+      declared('hero-title.css', '.pt-hero-title--build', 'font-size', /max-width:\s*620px/),
+    ).toBe('var(--fs-display-s)')
+    expect(declared('hero-title.css', '.pt-hero-title', 'color', FORCED)).toBe('CanvasText')
   })
 
   it('index.css 前 13 条 @import 与 M1 顺序一致（M2 在其后追加，不打乱）', () => {
@@ -427,6 +440,14 @@ function m2Value(
     throw new Error(`${selector} 缺少 ${prop}${media === undefined ? '' : `（${media}）`}`)
   }
   return m2Norm(last)
+}
+/** 同 m2Value，但先把字号令牌与 rem 换回 px（asPx）再归一 */
+function m2Px(rules: readonly CssRule[], selector: string, prop: string, media?: string): string {
+  const raw = m2Rules(rules, selector, media)
+    .flatMap((rule) => rule.declarations.get(prop) ?? [])
+    .at(-1)
+  if (raw === undefined) throw new Error(`${selector} 缺少 ${prop}`)
+  return m2Norm(asPx(raw) ?? raw)
 }
 
 describe('M2 组件文件接入 index.css（契约 §3.3）', () => {
@@ -542,7 +563,7 @@ describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
     expect(m2Value(rules, '.pt-file', 'border')).toBe(m2Norm('1px solid var(--control-edge)'))
   })
   it('kbd 键帽 11px --ink-3，边 --line-2，底 --bg-2', () => {
-    expect(m2Value(rules, '.pt-kbd', 'font')).toContain('11px')
+    expect(m2Px(rules, '.pt-kbd', 'font')).toContain('11px')
     expect(m2Value(rules, '.pt-kbd', 'color')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-kbd', 'border')).toBe(m2Norm('1px solid var(--line-2)'))
     expect(m2Value(rules, '.pt-kbd', 'background')).toBe('var(--bg-2)')
@@ -560,19 +581,19 @@ describe('controls.css（spec §5.12、§6.4.1、§6.7）', () => {
 describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
   const rules = m2Css('tabs.css')
   it('页签渐变色标与计数色等于 TAB_COLORS（§4.3 门禁的组件色值）', () => {
-    const idle = m2Value(rules, '.pt-tab', 'background')
+    const idle = resolveColors(m2Value(rules, '.pt-tab', 'background'))
     for (const stop of TAB_COLORS.idleStops) expect(idle).toContain(stop)
     const selected = '.pt-tab[aria-selected="true"]'
-    const on = m2Value(rules, selected, 'background')
+    const on = resolveColors(m2Value(rules, selected, 'background'))
     for (const stop of TAB_COLORS.selectedStops) expect(on).toContain(stop)
-    expect(m2Value(rules, selected, 'color')).toBe(TAB_COLORS.selectedText)
+    expect(resolveColors(m2Value(rules, selected, 'color'))).toBe(TAB_COLORS.selectedText)
     expect(m2Value(rules, '.pt-tab__count', 'color')).toBe('var(--ink-2)')
     expect(m2Value(rules, '.pt-tab[aria-selected="true"] .pt-tab__count', 'color')).toBe('inherit')
   })
   it('页签字形：衬线 700 15px、字距 .06em；计数无衬线 500 13px、字距 0', () => {
-    expect(m2Value(rules, '.pt-tab', 'font')).toBe(m2Norm('700 15px/1.6 var(--pt-serif)'))
+    expect(m2Px(rules, '.pt-tab', 'font')).toBe(m2Norm('700 15px/1.6 var(--pt-serif)'))
     expect(m2Value(rules, '.pt-tab', 'letter-spacing')).toBe('0.06em')
-    expect(m2Value(rules, '.pt-tab__count', 'font')).toBe(m2Norm('500 13px/1 var(--font-zh-cn)'))
+    expect(m2Px(rules, '.pt-tab__count', 'font')).toBe(m2Norm('500 13px/1 var(--font-zh-cn)'))
     expect(m2Value(rules, '.pt-tab__count', 'letter-spacing')).toBe('0')
   })
   it('基线画在整行外下方；未选中页签留 2px 缝，选中页签接通基线', () => {
@@ -728,35 +749,31 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, unique, '--gem-2')).toBe('#f07a2c')
     expect(m2Value(rules, unique, '--gem-3')).toBe('#6e2405')
     expect(m2Value(rules, unique, '--gem-4')).toBe('#b44f19')
-    expect(m2Value(rules, '.pt-nameplate__name', 'font')).toBe(
-      m2Norm('700 20px/1.25 var(--pt-serif)'),
-    )
+    expect(m2Px(rules, '.pt-nameplate__name', 'font')).toBe(m2Norm('700 20px/1.25 var(--pt-serif)'))
     expect(m2Value(rules, '.pt-nameplate__name', 'letter-spacing')).toBe('0.03em')
-    expect(m2Value(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'font-size')).toBe('21px')
+    expect(m2Px(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'font-size')).toBe('21px')
     expect(m2Value(rules, '.pt-nameplate--tooltip .pt-nameplate__name', 'letter-spacing')).toBe(
       '0.04em',
     )
     expect(m2Value(rules, '.pt-nameplate__name:lang(zh-TW)', 'font-family')).toBe(
       'var(--pt-serif-tc)',
     )
-    expect(m2Value(rules, '.pt-nameplate__en', 'font')).toBe(
-      m2Norm('400 13px/1.2 var(--pt-cinzel)'),
-    )
+    expect(m2Px(rules, '.pt-nameplate__en', 'font')).toBe(m2Norm('400 13px/1.2 var(--pt-cinzel)'))
   })
-  it('牌本体：最小高 62px、内边距 9px 40px 8px、顶边扣 top -7px；shut 去掉底边', () => {
+  it('名称牌保留内容留白、折叠边界，隐藏旧装饰扣', () => {
     expect(m2Value(rules, '.pt-nameplate', 'min-height')).toBe('62px')
     expect(m2Value(rules, '.pt-nameplate', 'padding')).toBe(m2Norm('9px 40px 8px'))
     expect(m2Value(rules, '.pt-nameplate', 'border-bottom')).toBe(
       m2Norm('1px solid var(--np-edge)'),
     )
-    expect(m2Value(rules, '.pt-nameplate__clasp', 'top')).toBe('-7px')
+    expect(m2Value(rules, '.pt-nameplate__clasp', 'display')).toBe('none')
     expect(m2Value(rules, '.pt-nameplate--shut', 'border-bottom')).toBe('0')
   })
   it('展开控件（B15）：--gold、1px 下划线偏移 3px、13px；悬停 --ink、下划线 2px', () => {
     expect(m2Value(rules, '.pt-nameplate__toggle', 'color')).toBe('var(--gold)')
     expect(m2Value(rules, '.pt-nameplate__toggle', 'text-decoration')).toBe(m2Norm('underline 1px'))
     expect(m2Value(rules, '.pt-nameplate__toggle', 'text-underline-offset')).toBe('3px')
-    expect(m2Value(rules, '.pt-nameplate__toggle', 'font-size')).toBe('13px')
+    expect(m2Px(rules, '.pt-nameplate__toggle', 'font-size')).toBe('13px')
     expect(m2Value(rules, '.pt-nameplate__toggle:hover', 'color')).toBe('var(--ink)')
     expect(m2Value(rules, '.pt-nameplate__toggle:hover', 'text-decoration-thickness')).toBe('2px')
   })
@@ -764,8 +781,8 @@ describe('nameplate.css（spec §5.8、§6.4.3、§6.7；B1、B7、B8、B15）',
     expect(m2Value(rules, '.pt-nameplate__count', 'color')).toBe('var(--ink-2)')
     expect(m2Value(rules, '.pt-nameplate__miss', 'border')).toBe(m2Norm('1px dashed var(--miss)'))
     expect(m2Value(rules, '.pt-nameplate__miss', 'color')).toBe('var(--miss)')
-    expect(m2Value(rules, '.pt-nameplate__tag', 'font-size')).toBe('12px')
-    expect(m2Value(rules, '.pt-nameplate__tag', 'border-radius')).toBe('3px')
+    expect(m2Px(rules, '.pt-nameplate__tag', 'font-size')).toBe('12px')
+    expect(m2Value(rules, '.pt-nameplate__tag', 'border-radius')).toBe('0')
   })
   it('≤600px：左右内边距 12px；第二行可在组间换行，各项自身不换行', () => {
     const narrow = 'max-width: 600px'
@@ -815,7 +832,7 @@ describe('tooltip.css（spec §6.4.4）', () => {
     expect(m2Value(rules, '.pt-tooltip-wrap', 'container-type')).toBe('inline-size')
   })
   it('顶部说明 12.5px --ink-3 右对齐，后半句不拆开', () => {
-    expect(m2Value(rules, '.pt-tooltip-note', 'font-size')).toBe('12.5px')
+    expect(m2Px(rules, '.pt-tooltip-note', 'font-size')).toBe('12.5px')
     expect(m2Value(rules, '.pt-tooltip-note', 'color')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-tooltip-note', 'text-align')).toBe('right')
     expect(m2Value(rules, '.pt-tooltip-note__tail', 'display')).toBe('inline-block')
@@ -823,7 +840,7 @@ describe('tooltip.css（spec §6.4.4）', () => {
   it('正文居中；属性行 14px --prop，数值 --val 500；分隔线取卡片边色、左右外距 20px', () => {
     expect(m2Value(rules, '.pt-tooltip__body', 'padding')).toBe(m2Norm('12px 24px 16px'))
     expect(m2Value(rules, '.pt-tooltip__body', 'text-align')).toBe('center')
-    expect(m2Value(rules, '.pt-tooltip__prop', 'font-size')).toBe('14px')
+    expect(m2Px(rules, '.pt-tooltip__prop', 'font-size')).toBe('14px')
     expect(m2Value(rules, '.pt-tooltip__prop', 'color')).toBe('var(--prop)')
     expect(m2Value(rules, '.pt-tooltip__prop .pt-num', 'color')).toBe('var(--val)')
     expect(m2Value(rules, '.pt-tooltip__prop .pt-num', 'font-weight')).toBe('500')
@@ -841,7 +858,7 @@ describe('tooltip.css（spec §6.4.4）', () => {
   })
   it('中文词缀 15.5px/1.5 --mod-hi，数值 --mod-num-zh 700', () => {
     expect(m2Value(rules, '.pt-tooltip__mod', 'color')).toBe('var(--mod-hi)')
-    expect(m2Value(rules, '.pt-tooltip__mod', 'font-size')).toBe('15.5px')
+    expect(m2Px(rules, '.pt-tooltip__mod', 'font-size')).toBe('15.5px')
     expect(m2Value(rules, '.pt-tooltip__mod', 'line-height')).toBe('1.5')
     expect(m2Value(rules, '.pt-tooltip__mod .pt-num', 'color')).toBe('var(--mod-num-zh)')
     expect(m2Value(rules, '.pt-tooltip__mod .pt-num', 'font-weight')).toBe('700')
@@ -863,14 +880,14 @@ describe('pairs.css（spec §5.11）', () => {
     )
     expect(m2Value(rules, '.pt-pair', 'column-gap')).toBe('24px')
     expect(m2Value(rules, '.pt-pair', 'padding')).toBe(m2Norm('8px 22px 8px 6px'))
-    expect(m2Value(rules, '.pt-pair', 'font-size')).toBe('15px')
+    expect(m2Px(rules, '.pt-pair', 'font-size')).toBe('15px')
     expect(m2Value(rules, '.pt-pair', 'line-height')).toBe('1.6')
     expect(m2Value(rules, '.pt-pair + .pt-pair', 'border-top')).toBe(
       m2Norm('1px solid rgba(255, 255, 255, 0.045)'),
     )
   })
   it('编号 12px --ink-3；英文 --mod（数值 --mod-hi）；中文 --ink（数值 --val 600）', () => {
-    expect(m2Value(rules, '.pt-pair__no', 'font-size')).toBe('12px')
+    expect(m2Px(rules, '.pt-pair__no', 'font-size')).toBe('12px')
     expect(m2Value(rules, '.pt-pair__no', 'color')).toBe('var(--ink-3)')
     expect(m2Value(rules, '.pt-pair__en', 'color')).toBe('var(--mod)')
     expect(m2Value(rules, '.pt-pair__en .pt-num', 'color')).toBe('var(--mod-hi)')
@@ -886,14 +903,14 @@ describe('pairs.css（spec §5.11）', () => {
     expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'border')).toBe(
       m2Norm('1px solid var(--miss)'),
     )
-    expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'border-radius')).toBe('3px')
+    expect(m2Value(rules, '.pt-pair--miss .pt-pair__no', 'border-radius')).toBe('0')
     expect(m2Value(rules, '.pt-pair--miss .pt-pair__en', 'text-decoration')).toBe(
       m2Norm('underline dashed rgba(242, 167, 102, 0.7)'),
     )
     expect(m2Value(rules, '.pt-pair--miss .pt-pair__en', 'text-underline-offset')).toBe('4px')
     expect(m2Value(rules, '.pt-tag-miss', 'border')).toBe(m2Norm('1px dashed var(--miss)'))
-    expect(m2Value(rules, '.pt-tag-miss', 'border-radius')).toBe('4px')
-    expect(m2Value(rules, '.pt-tag-miss', 'font')).toContain('12.5px')
+    expect(m2Value(rules, '.pt-tag-miss', 'border-radius')).toBe('0')
+    expect(m2Px(rules, '.pt-tag-miss', 'font')).toContain('12.5px')
   })
   it('solo 不留编号列、左缘 20px；译文视图只剩编号与中文两列', () => {
     expect(m2Value(rules, '.pt-pair--solo', 'grid-template-columns')).toBe(m2Norm('minmax(0, 1fr)'))
@@ -934,7 +951,7 @@ describe('subhead.css', () => {
     const top = subheadRules.filter((rule) => rule.atRules.length === 0)
     expect(top).toHaveLength(1)
     const decl = top[0]?.declarations
-    expect(tidy(decl?.get('font'))).toBe('700 21px/1.35 var(--pt-serif)')
+    expect(tidy(asPx(decl?.get('font')))).toBe('700 21px/1.35 var(--pt-serif)')
     expect(tidy(decl?.get('color'))).toBe('var(--title-gold)')
     expect(tidy(decl?.get('letter-spacing'))).toBe('0.06em')
     expect(tidy(decl?.get('margin'))).toBe('0')
@@ -959,12 +976,13 @@ describe('subhead.css', () => {
     expect(lg).toHaveLength(2)
     expect(top).toHaveLength(1)
     expect(narrow).toHaveLength(1)
-    expect([...(top[0]?.declarations ?? new Map<string, string>())]).toEqual([
-      ['font-size', '28px'],
-    ])
-    expect([...(narrow[0]?.declarations ?? new Map<string, string>())]).toEqual([
-      ['font-size', '21px'],
-    ])
+    const px = (rule: CssRule | undefined) =>
+      [...(rule?.declarations ?? new Map<string, string>())].map(([name, value]) => [
+        name,
+        asPx(value),
+      ])
+    expect(px(top[0])).toEqual([['font-size', '28px']])
+    expect(px(narrow[0])).toEqual([['font-size', '21px']])
   })
 
   it('index.css 的最后一行引入 subhead.css（契约 §3.3 的 M3 行）', () => {
@@ -976,20 +994,19 @@ describe('subhead.css', () => {
 })
 
 describe('pt-switch（spec §5.13）', () => {
-  it('40×22、圆角 11；旋钮 16、开启右移 18px；开启边 #e0b574', () => {
-    expect(declared('switch.css', '.pt-switch', 'width')).toBe('40px')
+  it('方形开关保留独立焦点；选中以实心方块区分，减少动态效果不影响状态', () => {
+    expect(declared('switch.css', '.pt-switch', 'width')).toBe('22px')
     expect(declared('switch.css', '.pt-switch', 'height')).toBe('22px')
-    expect(declared('switch.css', '.pt-switch', 'border-radius')).toBe('11px')
-    expect(declared('switch.css', '.pt-switch::before', 'width')).toBe('16px')
-    expect(declared('switch.css', '.pt-switch:checked::before', 'transform')).toBe(
-      'translateX(18px)',
-    )
-    expect(declared('switch.css', '.pt-switch:checked', 'border-color')).toBe('#e0b574')
-    expect(declared('switch.css', '.pt-switch__state', 'font-size')).toBe('12px')
+    expect(declared('switch.css', '.pt-switch', 'border-radius')).toBe('0')
+    expect(declared('switch.css', '.pt-switch::before', 'opacity')).toBe('0')
+    expect(declared('switch.css', '.pt-switch:checked::before', 'opacity')).toBe('1')
+    expect(declared('switch.css', '.pt-switch:checked::before', 'transform')).toBeUndefined()
+    expect(declared('switch.css', '.pt-switch:checked', 'border-color')).toBe('var(--bronze-hi)')
+    expect(declared('switch.css', '.pt-switch:focus-visible', 'outline')).toBe('var(--focus-ring)')
   })
   it('强制色彩：轨道 1px ButtonText 边，旋钮 ButtonText', () => {
     const FORCED = /forced-colors:\s*active/
-    expect(declared('switch.css', '.pt-switch', 'border', FORCED)).toBe('1px solid ButtonText')
+    expect(declared('switch.css', '.pt-switch', 'border', FORCED)).toBe('2px solid ButtonText')
     expect(declared('switch.css', '.pt-switch::before', 'background', FORCED)).toBe('ButtonText')
     expect(declared('switch.css', '.pt-switch:checked', 'border-color', FORCED)).toBe('ButtonText')
     expect(declared('switch.css', '.pt-switch:checked', 'background', FORCED)).toBe('Canvas')
@@ -1015,11 +1032,11 @@ describe('pt-switch（spec §5.13）', () => {
 })
 
 describe('pt-provenance（spec §5.14）', () => {
-  it('短署名 12.5px --ink-3，gem 16px；完整声明 12px --ink-2', () => {
-    expect(declared('provenance.css', '.pt-provenance', 'font-size')).toBe('12.5px')
+  it('短署名 12.5px --ink-3，gem 16px；完整声明 --fs-micro（12px，随字号阶梯缩放）--ink-2', () => {
+    expect(asPx(declared('provenance.css', '.pt-provenance', 'font-size'))).toBe('12.5px')
     expect(declared('provenance.css', '.pt-provenance', 'color')).toBe('var(--ink-3)')
     expect(declared('provenance.css', '.pt-provenance > .pt-motif--gem', '--ptm-w')).toBe('16px')
-    expect(declared('provenance.css', '.pt-disclaimer', 'font-size')).toBe('12px')
+    expect(declared('provenance.css', '.pt-disclaimer', 'font-size')).toBe('var(--fs-micro)')
     expect(declared('provenance.css', '.pt-disclaimer', 'color')).toBe('var(--ink-2)')
   })
 })

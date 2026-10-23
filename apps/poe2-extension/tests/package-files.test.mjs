@@ -29,7 +29,7 @@ async function fixture() {
     'content.js': 'void 0;',
     'sites.html':
       '<link href="./assets/sites-test.css"><script src="./assets/sites-test.js"></script>',
-    'assets/sites-test.css': '',
+    'assets/sites-test.css': '@font-face{font-family:x;src:url(./serif-sc-guide-test.woff2)}',
     'assets/sites-test.js': '',
     'Lucide-LICENSE.txt': 'ISC License Cole Bemis',
     'selection.js': 'void 0;',
@@ -40,7 +40,8 @@ async function fixture() {
     'guide.html':
       '<!doctype html><html><head><link rel="stylesheet" href="./assets/guide-test.css"></head><body><script type="module" src="./assets/guide-test.js"></script></body></html>',
     'assets/guide-test.js': 'console.log(1)',
-    'assets/guide-test.css': 'body{margin:0}',
+    'assets/guide-test.css':
+      'body{margin:0}@font-face{font-family:x;src:url(./serif-sc-guide-test.woff2)}',
     'extract.js': '(function(){globalThis.__poe2GuideExtract=function(){return null}})();',
     'assets/guide-stats.json': JSON.stringify(guideStatsFixture()),
     'assets/guide-dictionary.json':
@@ -68,6 +69,10 @@ async function fixture() {
   await copyFile(
     new URL('fonts/serif-sc-l1.woff2', theme),
     path.join(dist, 'assets/serif-sc-l1.woff2'),
+  )
+  await copyFile(
+    new URL('fonts/serif-sc-guide.woff2', theme),
+    path.join(dist, 'assets/serif-sc-guide-test.woff2'),
   )
   for (const icon of Object.values(manifest.icons))
     await copyFile(new URL(`../public/${icon}`, import.meta.url), path.join(dist, icon))
@@ -255,4 +260,13 @@ it('划词内容脚本不得直接请求服务，后台允许包内联网代码'
   const { root, dist } = await fixture()
   await writeFile(path.join(dist, 'selection.js'), 'fetch("https://example.com")')
   await expect(check(root)).rejects.toThrow('划词脚本不得发网络请求')
+})
+
+it('侧栏和站点只允许预算内的已登记固定标签子集', async () => {
+  const { root, dist } = await fixture()
+  await copyFile(
+    new URL('../../../packages/ui-theme/fonts/serif-sc-popup.woff2', import.meta.url),
+    path.join(dist, 'assets/serif-sc-guide-test.woff2'),
+  )
+  await expect(check(root)).rejects.toThrow('固定标签字体必须恰好是 serif-sc-guide.woff2')
 })

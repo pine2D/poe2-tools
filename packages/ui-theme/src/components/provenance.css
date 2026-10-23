@@ -4,7 +4,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--ink-3);
 }
 .pt-provenance > .pt-motif--gem {
@@ -13,6 +13,6 @@
   --ptm-u: calc(16px / 25);
 }
 .pt-disclaimer {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--ink-2);
 }

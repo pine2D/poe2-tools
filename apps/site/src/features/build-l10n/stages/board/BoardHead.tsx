@@ -3,13 +3,13 @@ import type { Locale } from '@poe2-tools/build-core'
 import { useEffect, useRef } from 'react'
 import { Icon } from '../../../../shared/components/Icon'
 import { PtForgeButton } from '../../../../shared/components/PtForgeButton'
-import type { Series } from '../stages'
+import { type Series, seriesLabel } from '../stages'
 
 export interface BoardFactsProps {
   series: Series
   locale: Locale
   totalMisses: number
-  onDownload(): void
+  onDownload?: (() => void) | undefined
 }
 
 export function BoardFacts({ series, locale, totalMisses, onDownload }: BoardFactsProps) {
@@ -44,17 +44,19 @@ export function BoardFacts({ series, locale, totalMisses, onDownload }: BoardFac
         </li>
         <li className="stageboard__hint">点格子看中英词缀；“逐项核对”可定位每一处待核对</li>
       </ul>
-      <PtForgeButton
-        aria-label={
-          single === undefined ? `打包下载 ${stages.length} 个阶段` : `下载 ${single.file.name}`
-        }
-        onClick={onDownload}
-      >
-        <Icon name="download" size={18} />
-        <span>
-          下载中文 <span className="pt-ext">.build</span>
-        </span>
-      </PtForgeButton>
+      {onDownload && (
+        <PtForgeButton
+          aria-label={
+            single === undefined ? `打包下载 ${stages.length} 个阶段` : `下载 ${single.file.name}`
+          }
+          onClick={onDownload}
+        >
+          <Icon name="download" size={18} />
+          <span>
+            下载中文 <span className="pt-ext">.build</span>
+          </span>
+        </PtForgeButton>
+      )}
     </div>
   )
 }
@@ -77,10 +79,8 @@ export function SeriesSwitch({ allSeries, currentKey, onSeries }: SeriesSwitchPr
             checked={item.key === currentKey}
             onChange={() => onSeries(item.key)}
           />
-          <span data-user-text="">
-            {item.title}
-            {item.separated &&
-              ` · ${item.author ?? '作者未填写'} · ${item.stages[0]?.file.preview.ascendancy?.text ?? item.stages[0]?.file.input.ascendancy ?? '升华未填写'}`}
+          <span data-user-text="" title={seriesLabel(item)}>
+            {seriesLabel(item)}
           </span>
         </label>
       ))}

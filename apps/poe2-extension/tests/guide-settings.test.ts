@@ -219,3 +219,53 @@ describe('guide.css', () => {
     style.remove()
   })
 })
+
+describe('复盘第二批：设置页', () => {
+  const custom = (confirmed: string[]) => {
+    const v = createSettingsView(document, handlers())
+    document.body.append(v.root)
+    v.fill(
+      { provider: 'custom', baseUrl: 'https://a.example/v1', model: 'm', extraBody: '' },
+      { charLimit: 20000, cacheLimitMb: 50 },
+      true,
+      0,
+      confirmed,
+    )
+    return v
+  }
+  const confirm = () => document.querySelector<HTMLInputElement>('input[name="confirmOrigin"]')
+  it('B2-07 已确认地址显示已确认且不误报未保存；改到新地址后重新要求确认', () => {
+    custom(['https://a.example'])
+    expect(confirm()?.checked).toBe(true)
+    expect(confirm()?.disabled).toBe(true)
+    expect(text('.field-check')).toBe('已确认把选中的攻略段落发送到 https://a.example')
+    expect(document.querySelector<HTMLElement>('.unsaved-service')?.hidden).toBe(true)
+    const url = document.querySelector<HTMLInputElement>('input[name="baseUrl"]')
+    if (url) url.value = 'https://b.example/v1'
+    url?.dispatchEvent(new Event('input', { bubbles: true }))
+    expect(confirm()?.checked).toBe(false)
+    expect(confirm()?.disabled).toBe(false)
+    expect(text('.field-check')).toBe('我确认把选中的攻略段落发送到 https://b.example')
+  })
+  it('B2-07 测试或保存结束解锁后，已确认地址的确认框仍保持已确认', async () => {
+    custom(['https://a.example'])
+    click('.test')
+    await vi.waitFor(() => expect(message()).toContain('连接正常'))
+    expect(confirm()?.checked).toBe(true)
+    expect(confirm()?.disabled).toBe(true)
+  })
+  it('B2-10 确认清除使用共享危险按钮样式', () => {
+    mountSettings(handlers())
+    const button = document.querySelector('.confirm-clear')
+    expect(button?.classList.contains('pt-btn--danger')).toBe(true)
+    expect(button?.classList.contains('pt-btn--quiet')).toBe(false)
+  })
+  it('B2-18 Key 未加密与测试发送说明常驻可见，折叠标记与阅读页一致', () => {
+    mountSettings(handlers())
+    expect(document.querySelector('.key-note')?.closest('details')).toBeNull()
+    expect(text('.test-note')).toBe('测试连接只发送一条简短测试消息。')
+    expect(document.querySelector('.test-note')?.closest('details')).toBeNull()
+    for (const summary of document.querySelectorAll('.settings-details summary'))
+      expect(summary.querySelector('.ui-icon')).not.toBeNull()
+  })
+})

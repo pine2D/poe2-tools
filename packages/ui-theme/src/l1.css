@@ -1,28 +1,39 @@
 /* biome-ignore-all lint/complexity/noImportantStyles: ::slotted() 声明与宿主的 color、font 需 !important 才能压过原站样式（spec B.12 修订 10；原站 `* { color; font }` 会压过 :host 的普通声明） */
 /* L1 点缀（spec §4.2、§6.9）：CoE 注入 UI 的唯一样式表。内容脚本用 ?inline 读成字符串，构造一份 CSSStyleSheet，
    经 adoptedStyleSheets 挂到各 shadow root；不进入 document。
-   令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同，由 l1.test.ts 断言。
+   令牌写在 :host（shadow tree 里 :root 匹配不到元素）；与 tokens.css 同名的令牌取值必须相同（字号例外：此处写 px，tokens.css 写 rem，按 16px 换算等值），由 l1.test.ts 断言。
    尺寸阶梯只声明本文件用到的档；字号与间距一律取阶梯，例外逐条登记在 extension-sizes.test.ts 的 ALLOW。
-   只用扁平深底、1px 金线、青色 gem；禁止渐变、金属按钮与角饰。衬线只经 --l1-serif 用于 L1_SERIF_SELECTORS（selectors.ts：面板标题与主次按钮，“第 N 行”定位按钮除外）；字体由内容脚本 serif.ts 以 FontFace 注册到文档，这里不写 @font-face。 */
+   v4 使用黑底直角、钢蓝主操作与青色 gem；青铜渐变只标记当前候选／步骤，不加角饰。固定标签通过 --l1-serif 使用独立子集，任意候选保持无衬线；字体由 serif.ts 以 FontFace 注册，这里不写 @font-face。 */
 :host {
   --ext-ink: #9fe3dc;
-  --ink: #e9e0cd;
-  --ink-2: #c0b49d;
-  --ink-3: #9a8e79;
-  --line: #322a21;
-  --line-2: #473b2d;
-  --control-edge: #8a7a62;
-  --bg: #100e0c;
-  --bg-2: #14110e;
-  --mod: #8888ff;
-  --ok: #93c47d;
-  --miss: #f2a766;
-  --focus: #ffd48a;
+  --ink: #f2ead8;
+  --ink-2: #c9bba0;
+  --ink-3: #a38d6d;
+  --line: #1f2429;
+  --line-2: #2c333b;
+  --control-edge: #94a1ae;
+  --bg: #000000;
+  --bg-2: #121922;
+  --surface: #15181c;
+  --raised: #1e2124;
+  --raised-2: #262a2e;
+  --metal-line: #465260;
+  --label: #fff8e1;
+  --steel-hi: #164a75;
+  --steel-edge: #4c4c7d;
+  --bronze-lo: #8a6a3e;
+  --tab-start: #5c3d16;
+  --tab-end: #3a2810;
+  --mod: #8f8fff;
+  --ok: #82cf90;
+  --miss: #ef90b8;
+  --focus: #b8cfff;
   --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
   /* 面板标题与主次按钮的中文衬线（扩展 0.4.0）：family 由内容脚本注册到文档，Shadow DOM 只引用名字 */
   --l1-serif: "PoE2 Serif SC L1", var(--font-zh-cn);
-  /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档，取值同 tokens.css */
+  /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档。字号保持 px：Shadow DOM 里 rem 取原站根字号，不可控；
+     数值等于 tokens.css 的 rem × 16 */
   --fs-micro: 12px;
   --fs-small: 13px;
   --fs-body: 14px;
@@ -32,12 +43,12 @@
   --sp-3: 12px;
   --sp-4: 16px;
   /* L1 专用（spec §6.9 视觉） */
-  --l1-panel: #15120f;
-  --l1-edge: #8a6a40;
+  --l1-panel: #000000;
+  --l1-edge: #465260;
   --l1-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --l1-primary-bg: #2a2118;
-  --l1-primary-edge: #c79a5e;
-  --l1-primary-ink: #f2dcb3;
+  --l1-primary-bg: #0f304d;
+  --l1-primary-edge: #94a1ae;
+  --l1-primary-ink: #fff8e1;
 }
 
 /* 叠加译文：只换字色；字号与排版由宿主内联布局决定 */
@@ -74,7 +85,7 @@
   min-width: 0;
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
 .head {
@@ -83,15 +94,50 @@
   gap: var(--sp-2);
   min-height: 46px;
   padding: 0 var(--sp-4);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--metal-line);
 }
 .title {
   font-weight: 700;
   font-size: var(--fs-data);
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
+  color: var(--label);
 }
 .head .by {
   margin-left: auto;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4) 0;
+  list-style: none;
+}
+.steps li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 var(--sp-2);
+  align-items: center;
+  padding: var(--sp-2);
+  background: var(--surface);
+  border-left: 1px solid var(--bronze-lo);
+}
+:where(.steps) .who {
+  grid-row: span 2;
+}
+.steps b {
+  font-size: var(--fs-small);
+  color: var(--label);
+}
+.steps small {
+  font-size: var(--fs-micro);
+  color: var(--ink-2);
+}
+.steps :where([data-state="done"]) small {
+  color: var(--ok);
+}
+.steps [aria-current="step"] {
+  background: linear-gradient(90deg, var(--tab-start), var(--tab-end));
 }
 .body {
   padding: var(--sp-3) var(--sp-4) var(--sp-1);
@@ -107,13 +153,22 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: var(--sp-3);
 }
-label {
+/* 两栏（B3-09）：带行号的只读行列表，替代原来的只读 textarea；高度约束沿用 */
+.column {
   display: block;
   min-width: 0;
   font-size: var(--fs-small);
   color: var(--ink-2);
 }
-textarea {
+.column-label {
+  display: block;
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--metal-line);
+  color: var(--label);
+  font-weight: 700;
+}
+.lines {
+  position: relative;
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -121,19 +176,62 @@ textarea {
   height: clamp(120px, 20vh, 240px);
   min-height: 120px;
   resize: vertical;
-  margin-top: var(--sp-1);
-  padding: var(--sp-3);
+  overflow: auto;
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-2) 0;
+  list-style: none;
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg);
   color: var(--ink);
-  caret-color: var(--focus);
   font: var(--fs-micro) / 1.5 var(--font-code);
   scrollbar-color: var(--control-edge) var(--bg);
 }
-textarea[data-preview] {
-  background: var(--bg-2);
+.lines[data-preview] {
   color: var(--mod);
+}
+.lines li {
+  display: grid;
+  grid-template-columns: 3ch minmax(0, 1fr);
+  gap: 0 var(--sp-2);
+  padding: 0 var(--sp-2) 0 0;
+  border-left: 3px solid transparent;
+}
+.lines .ln {
+  text-align: right;
+  color: var(--ink-3);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.lines .text {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* 待核对行：左边条 + 浅底 + 粗行号，读屏另有“待核对：”文字，不只靠颜色 */
+.lines li[data-issue] {
+  border-left-color: var(--miss);
+  background: color-mix(in srgb, var(--miss) 14%, transparent);
+}
+.lines li[data-issue] .ln,
+.lines li[data-issue] .text {
+  color: var(--miss);
+}
+.lines li[data-issue] .ln {
+  font-weight: 700;
+}
+.lines li[data-focus] {
+  outline: 1px solid var(--miss);
+  outline-offset: -1px;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  user-select: none;
 }
 /* 结论行（唯一 live region）：图标 + 结论 + 副句；未预览时为空并隐藏 */
 .verdict {
@@ -168,10 +266,14 @@ textarea[data-preview] {
   grid-template-columns: 56px minmax(0, 1fr);
   gap: 0 var(--sp-3);
   padding: var(--sp-2) 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--bg);
+  background: var(--surface);
 }
 .group h3 {
   margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 1px solid var(--bronze-lo);
+  background: var(--raised);
   font-size: var(--fs-small);
   font-weight: 400;
   line-height: 1.8;
@@ -203,7 +305,7 @@ textarea[data-preview] {
   display: inline-block;
   padding: 0 var(--sp-1);
   border: 1px solid var(--line-2);
-  border-radius: 3px;
+  border-radius: 0;
   font-size: var(--fs-micro);
   line-height: 1.6;
   color: var(--ink);
@@ -240,6 +342,9 @@ textarea[data-preview] {
    标题不在词中断开，署名整体换到标题下一行并与标题左对齐（gem 16px + 间距 --sp-2）；
    组名放到条目上方；条目改成行内流，“第 N 行”与“你／原站”在文字开头，图标左浮，问题原文绕排占满整行 */
 @container import-panel (width < 480px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .head {
     flex-wrap: wrap;
     gap: 0 var(--sp-2);
@@ -274,8 +379,8 @@ button {
   padding: var(--sp-2) var(--sp-3);
   margin: var(--sp-1) var(--sp-2) var(--sp-1) 0;
   border: 1px solid var(--control-edge);
-  border-radius: 4px;
-  background: transparent;
+  border-radius: 0;
+  background: var(--raised);
   color: var(--ink);
   font: inherit;
   white-space: normal;
@@ -285,9 +390,11 @@ button[data-primary] {
   border-color: var(--l1-primary-edge);
   background: var(--l1-primary-bg);
   color: var(--l1-primary-ink);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--steel-edge);
+  font-weight: 700;
 }
 button[data-tertiary] {
+  background: transparent;
   border-color: transparent;
   padding-inline: var(--sp-1);
   color: var(--ink-2);
@@ -299,19 +406,26 @@ button:disabled {
   background: transparent;
   color: var(--ink-3);
   cursor: not-allowed;
+  box-shadow: none;
 }
 button[data-tertiary]:disabled {
   border-color: transparent;
 }
 /* 面板标题与主次按钮用中文衬线（DESIGN.md L1 白名单）。只换字族，字重沿用各自规则：字体只有 700 一档，
-   400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响 */
+   400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响。
+   语言提示的标题与“关闭”同属自有浮层固定标签（B3-07）；提示正文保持无衬线 */
 .title,
 .body > button,
-.result > button {
+.result > button,
+.steps b,
+.column-label,
+.group h3,
+.notice strong,
+.notice header button {
   font-family: var(--l1-serif);
 }
 button:focus-visible,
-textarea:focus-visible {
+.lines:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -326,24 +440,25 @@ textarea:focus-visible {
   scroll-padding-block: var(--sp-2) 42px;
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
+/* 说明行是 light DOM 节点，原站 `* { font-family; line-height }` 直接命中它：整组 font 一并压回系统无衬线（B3-06） */
 ::slotted(div) {
   margin: 0 0 var(--sp-1) !important;
   color: var(--ink-2) !important;
-  font-size: var(--fs-small) !important;
+  font: var(--fs-small) / 1.6 var(--font-zh-cn) !important;
 }
 ::slotted(button) {
   display: block !important;
   box-sizing: border-box !important;
   width: 100% !important;
-  min-height: 32px !important;
+  min-height: 44px !important;
   margin: 2px 0 !important;
   padding: var(--sp-1) var(--sp-2) !important;
   border: 1px solid transparent !important;
-  border-radius: 4px !important;
-  background: transparent !important;
+  border-radius: 0 !important;
+  background: var(--surface) !important;
   box-shadow: none !important;
   color: var(--ink) !important;
   font: inherit !important;
@@ -353,13 +468,85 @@ textarea:focus-visible {
 }
 ::slotted(button[aria-selected="true"]) {
   border-color: var(--l1-edge) !important;
-  background: var(--bg-2) !important;
+  background: linear-gradient(90deg, var(--tab-start), var(--tab-end)) !important;
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
 }
 ::slotted(button:focus-visible) {
+  background: linear-gradient(90deg, var(--tab-start), var(--tab-end)) !important;
   outline: 2px solid var(--focus) !important;
   outline-offset: 2px !important;
+}
+/* 说明行（B3-09）：说明与“N 项”经说明行自己的 shadow 排成一行，数量不换行、固定在首行右端；数量用无衬线小字 */
+:host([data-search-help]) {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--sp-2);
+}
+::slotted([slot="help-text"]) {
+  all: unset !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+::slotted([slot="help-count"]) {
+  all: unset !important;
+  flex: none !important;
+  white-space: nowrap !important;
+  font: var(--fs-micro) / 1.6 var(--font-zh-cn) !important;
+  color: var(--ink-3) !important;
+}
+/* 双语文字由内部 slot 排成两行，类别占右列；按钮仍是外层 light DOM 节点，保留输入框的 ARIA 引用。 */
+:host([data-candidate]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--sp-2);
+  align-items: center;
+  min-width: 0;
+}
+.candidate-zh {
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: var(--fs-body) / 1.5 var(--font-zh-cn);
+}
+/* 中文名按命中切成多段，段内联排；非命中常规字重，命中段加重并加下划线（B3-09） */
+::slotted([slot="candidate-zh"]) {
+  all: unset !important;
+  display: inline !important;
+  font: 400 var(--fs-body) / 1.5 var(--font-zh-cn) !important;
+  color: var(--ink) !important;
+}
+::slotted([data-hit]) {
+  font-weight: 700 !important;
+  color: var(--label) !important;
+  text-decoration-line: underline !important;
+  text-decoration-color: var(--bronze-lo) !important;
+  text-underline-offset: 3px !important;
+}
+::slotted([slot="candidate-en"]) {
+  all: unset !important;
+  display: block !important;
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  text-align: left !important;
+  font: var(--fs-small) / 1.5 var(--font-zh-cn) !important;
+  color: var(--ink-2) !important;
+}
+::slotted([slot="candidate-kind"]) {
+  all: unset !important;
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  padding: 0 var(--sp-1) !important;
+  border: 1px solid var(--line-2) !important;
+  white-space: nowrap !important;
+  font: var(--fs-micro) / 1.5 var(--font-zh-cn) !important;
+  color: var(--ink-2) !important;
 }
 /* 署名固定在列表底部一行（spec §6.9）：sticky 的约束矩形是滚动容器的内容框（已扣 --sp-2 内边距），
    bottom 取负的 --sp-2 才贴住边框内侧；署名用 padding-bottom --sp-2 + margin-bottom 负 --sp-2 吃掉宿主底部内边距，
@@ -392,11 +579,12 @@ textarea:focus-visible {
   padding: var(--sp-2) var(--sp-3) var(--sp-3) var(--sp-4);
   background: var(--l1-panel);
   border: 1px solid var(--l1-edge);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: var(--l1-shadow);
 }
 .notice header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
 }
@@ -413,7 +601,10 @@ textarea:focus-visible {
 
 @media (hover: hover) and (pointer: fine) {
   button:hover:not(:disabled) {
-    border-color: var(--l1-primary-edge);
+    background: var(--raised-2);
+  }
+  button[data-primary]:hover:not(:disabled) {
+    background: var(--steel-hi);
   }
   button[data-tertiary]:hover:not(:disabled) {
     border-color: transparent;
@@ -421,6 +612,13 @@ textarea:focus-visible {
   }
   ::slotted(button:hover) {
     border-color: var(--control-edge) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  button,
+  .check li button {
+    min-height: 44px;
   }
 }
 
@@ -434,7 +632,17 @@ textarea:focus-visible {
     border-color: ButtonText;
   }
   button:focus-visible,
-  textarea:focus-visible {
+  .lines:focus-visible {
+    outline-color: Highlight;
+  }
+  /* 浅底在强制色彩下消失：透明边条会被强制成文字色，普通行改为底色，只留待核对行的系统色边条与定位描边 */
+  .lines li {
+    border-left-color: Canvas;
+  }
+  .lines li[data-issue] {
+    border-left-color: Highlight;
+  }
+  .lines li[data-focus] {
     outline-color: Highlight;
   }
   ::slotted(button[aria-selected="true"]) {
@@ -444,7 +652,20 @@ textarea:focus-visible {
   ::slotted(button:focus-visible) {
     outline-color: Highlight !important;
   }
+  /* 渐变在强制色彩下消失：当前步骤改用系统色内描边标出，不改盒尺寸（B3-10） */
+  .steps [aria-current="step"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
   .gem {
     display: none;
+  }
+}
+/* gem 隐藏后窄面板署名不再按 gem 缩进，与标题左对齐（B3-10） */
+@media (forced-colors: active) {
+  @container import-panel (width < 480px) {
+    .head .by {
+      margin-left: 0;
+    }
   }
 }

@@ -22,12 +22,12 @@ const BUILD_PAGE_STYLES = [
 ]
 
 describe('SiteHeader（spec §5.2、§6.1）', () => {
-  it('品牌链接回首页，可访问名是产品名；logo 是 aria-hidden 的母题', () => {
+  it('品牌链接回首页，可访问名是产品名；宝石图标不重复朗读', () => {
     render(<SiteHeader active="home" />)
     const brand = screen.getByRole('link', { name: 'PoE2 Tools 首页' })
     expect(brand.getAttribute('href')).toBe('/')
     expect(brand.getAttribute('class')).toBe('pt-brand')
-    expect(brand.querySelector('.pt-motif--logo')?.getAttribute('aria-hidden')).toBe('true')
+    expect(brand.querySelector('.pt-motif--gem')?.getAttribute('aria-hidden')).toBe('true')
   })
 
   it.each([

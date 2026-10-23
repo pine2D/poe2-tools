@@ -8,6 +8,8 @@ import {
   checkLicenseFile,
   cssUrlTargets,
   FULL_DISCLAIMER,
+  GUIDE_FONT_BUDGET,
+  GUIDE_FONT_FILE,
   L1_FONT_BUDGET,
   L1_FONT_FILE,
   LICENSE_REQUIRED_LINES,
@@ -330,12 +332,13 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   new vm.Script(await readFile(path.join(dist, 'background.js'), 'utf8'))
   const guide = await readFile(path.join(dist, 'guide.html'), 'utf8')
   const guideResources = popupReferences(guide)
+  const guideFonts = []
   for (const file of guideResources) {
     if (!file.endsWith('.css')) continue
     const css = await readFile(path.join(dist, file), 'utf8')
     const external = popupStyleExternal(css)
     if (external.length > 0) throw new Error(`侧边栏样式含外部引用：${external.join(' ')}`)
-    if (popupFontReferences(css, file).length) throw new Error('侧边栏不加载字体文件')
+    guideFonts.push(...popupFontReferences(css, file))
   }
   if (
     guideResources.length !== 2 ||
@@ -355,10 +358,11 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     !siteResources.some((f) => /^assets\/sites-[\w-]+\.css$/.test(f))
   )
     throw new Error('划词设置资源集合不符合约定')
+  const siteFonts = []
   for (const f of siteResources.filter((f) => f.endsWith('.css'))) {
     const css = await readFile(path.join(dist, f), 'utf8')
-    if (popupStyleExternal(css).length || popupFontReferences(css, f).length)
-      throw new Error('划词设置含外部资源或字体')
+    if (popupStyleExternal(css).length) throw new Error('划词设置含外部资源')
+    siteFonts.push(...popupFontReferences(css, f))
   }
   const iconLicense = await readFile(path.join(dist, 'Lucide-LICENSE.txt'), 'utf8')
   if (!iconLicense.includes('ISC License') || !iconLicense.includes('Cole Bemis'))
@@ -412,6 +416,8 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
     'sites.html',
     'Lucide-LICENSE.txt',
     ...siteResources,
+    ...siteFonts,
+    ...guideFonts,
     'assets/guide-dictionary.json',
     'assets/guide-stats.json',
     ...guideResources,
@@ -436,6 +442,18 @@ export async function check(root = fileURLToPath(new URL('../', import.meta.url)
   await checkLicenseFile(path.join(dist, 'NOTICE.txt'), EXTENSION_NOTICE_REQUIRED_LINES)
   // 弹窗只加载自己的独立字体子集（扩展 0.3.2 起与网站 shard0 解耦）：恰好一个 woff2，内容即 coverage.json 登记的弹窗子集
   const whitelist = await loadWhitelist()
+  for (const fonts of [guideFonts, siteFonts]) {
+    const files = [...new Set(fonts)]
+    if (files.length !== 1) throw new Error(`固定标签字体必须恰好是 ${GUIDE_FONT_FILE}`)
+    const data = await readFile(path.join(dist, files[0]))
+    if (
+      data.length > GUIDE_FONT_BUDGET ||
+      sha256(data) !== whitelist.fontShards.get(GUIDE_FONT_FILE)
+    )
+      throw new Error(
+        `固定标签字体必须恰好是 ${GUIDE_FONT_FILE}，且不超过 ${GUIDE_FONT_BUDGET} 字节`,
+      )
+  }
   const popupFontFiles = [...new Set(popupFonts)]
   const popupFontSha = whitelist.fontShards.get(POPUP_FONT_FILE)
   if (

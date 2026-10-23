@@ -234,13 +234,15 @@ export function inspectModPool(
   if (!Number.isInteger(itemLevel) || itemLevel < 1 || itemLevel > 100)
     throw new Error('物品等级必须是 1–100 的整数')
   const groups = new Set(occupiedGroups)
-  return modifiers.flatMap((mod) => {
-    if (source === 'ordinary' && mod.desecratedOnly) return []
+  const pool: PoolEntry[] = []
+  modifiers.forEach((mod) => {
+    if (source === 'ordinary' && mod.desecratedOnly) return
     // 顺序属于源规则：default 也可出现在中间，不能排序或把拒绝项提前。
-    if (!hasCraftModEligibility(base, mod, addedTags)) return []
+    if (!hasCraftModEligibility(base, mod, addedTags)) return
     const reasons: PoolEntry['reasons'] = []
     if (mod.level > itemLevel) reasons.push('level')
     if (groups.has(mod.group)) reasons.push('conflict')
-    return [{ mod, reasons }]
+    pool.push({ mod, reasons })
   })
+  return pool
 }

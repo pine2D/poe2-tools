@@ -5,18 +5,51 @@ import { contextualText, textContext, translatable } from '../adapters/coe-beta/
 /** 停止函数，附带“当前页面上正显示中文的处数”（弹窗“已翻译 N 处”，第三期裁定 5） */
 export type CountedStop = (() => void) & { count(): number }
 const active = new WeakMap<Document, () => void>()
+// 基底搜索结果卡片标题栏定高 31px、nowrap；中英对照名称在此单行省略，完整名称放进 title。
+const fitLabel = '.itemSearchResults > .item .header > .center > .label'
+const fitAttribute = 'data-poe2-l10n-fit'
 
 export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = false): CountedStop {
   active.get(doc)?.()
   const style = doc.createElement('style')
   style.dataset.poe2L10nStyle = 'bilingual-headers'
   // 数值列仍用原站 nowrap；只让双语表头换行，避免挤占词缀列。
-  style.textContent =
-    '.modInfluenceGroup > .header > :is(.tiers, .weight-col) { white-space: pre; }'
+  // 结果卡片：只对本层写过对照名称的标题省略；按钮区换行，不缩小按钮与文字。
+  // 名称区仍按原站先压窄两侧（各留 5px 内边距），装不下时才省略：上限进入 flex 自动最小宽度。
+  style.textContent = `
+    .modInfluenceGroup > .header > :is(.tiers, .weight-col) { white-space: pre; }
+    .itemSearchResults > .item .header > .center:has(> .label[${fitAttribute}]) { max-width: calc(100% - 20px); }
+    .itemSearchResults > .item .header .label[${fitAttribute}] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .itemSearchResults > .item .editButtonZone { flex-wrap: wrap; }
+  `
   if (bilingual) doc.head.append(style)
   const state = new WeakMap<Text, { original: string; written: string; context: string }>()
   const owned = new Set<Text>()
   const cache = new Map<string, string | null>()
+  // 本层标记过的卡片标题 → 写入的文字节点与 title（原站自带 title 时为 null，不覆盖）
+  const fitted = new Map<Element, { node: Text; title: string | null }>()
+  function release(label: Element) {
+    const entry = fitted.get(label)
+    if (!entry) return
+    if (entry.title !== null && label.getAttribute('title') === entry.title)
+      label.removeAttribute('title')
+    label.removeAttribute(fitAttribute)
+    fitted.delete(label)
+  }
+  function fit(node: Text) {
+    const label = node.parentElement
+    if (!bilingual || !label?.matches(fitLabel)) return
+    const previous = fitted.get(label)
+    const current = label.getAttribute('title')
+    const ours = previous?.title ?? null
+    const title =
+      current === null || (ours !== null && current === ours)
+        ? (label.textContent ?? '').trim()
+        : null
+    if (title !== null && current !== title) label.setAttribute('title', title)
+    label.setAttribute(fitAttribute, '')
+    fitted.set(label, { node, title })
+  }
   function selectedOriginal(node: Text): string | null {
     // 原站把选项标签复制到 .current；只借用同一下拉框已选节点的已知原文，
     // 不对任意中文反向猜译，也不修改选项的 value/search。
@@ -51,6 +84,8 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
       if (node.data !== original) node.data = original
       state.delete(node)
       owned.delete(node)
+      if (node.parentElement && fitted.get(node.parentElement)?.node === node)
+        release(node.parentElement)
       return
     }
     const separator = context === 'modifier-table-header' ? '\n' : ' · '
@@ -63,6 +98,7 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
     state.set(node, { original, written, context })
     owned.add(node)
     node.data = written
+    fit(node)
   }
   function scan(root: Node) {
     if (root.nodeType === 3) {
@@ -91,6 +127,8 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
       state.delete(node)
       owned.delete(node)
     }
+    for (const [label, entry] of fitted)
+      if (!owned.has(entry.node) || entry.node.parentElement !== label) release(label)
   })
   const onRoute = () => scan(doc.body)
   doc.defaultView?.addEventListener('popstate', onRoute)
@@ -115,6 +153,7 @@ export function attachTextLayer(doc: Document, lexicon: Lexicon, bilingual = fal
         if (entry && node.data === entry.written) node.data = entry.original
       }
       owned.clear()
+      for (const label of [...fitted.keys()]) release(label)
       cache.clear()
       style.remove()
       active.delete(doc)

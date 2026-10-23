@@ -68,24 +68,24 @@ const px = (value: string): number => {
 
 describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
   const rules = buildCss()
-  it('--main-pad-top 三档取间距令牌：桌面与 ≤1099px --sp-5、≤600px --sp-4，都不小于角饰外伸 12px', () => {
+  it('--main-pad-top 三档取间距令牌，阅读面板保持留白', () => {
     expect(finalValue(rules, '.app__main', '--main-pad-top')).toBe('var(--sp-5)')
-    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 1099px')).toBe(
-      'var(--sp-5)',
+    expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 1199px')).toBe(
+      'var(--sp-4)',
     )
     expect(finalValue(rules, '.app__main', '--main-pad-top', 'max-width: 600px')).toBe(
       'var(--sp-4)',
     )
-    for (const media of [undefined, 'max-width: 1099px', 'max-width: 600px']) {
+    for (const media of [undefined, 'max-width: 1199px', 'max-width: 600px']) {
       expect(px(finalValue(rules, '.app__main', '--main-pad-top', media))).toBeGreaterThanOrEqual(
         12,
       )
     }
   })
-  it('主区上内边距就是 --main-pad-top，左右内边距不小于角饰外伸（桌面 12px，≤620px 9px）', () => {
+  it('主区上内边距就是 --main-pad-top，左右保留阅读与焦点留白', () => {
     for (const [media, least] of [
       [undefined, 12],
-      ['max-width: 1099px', 12],
+      ['max-width: 1199px', 12],
       ['max-width: 600px', 9],
     ] as const) {
       const [top, right, , left] = box(finalValue(rules, '.app__main', 'padding', media))
@@ -95,15 +95,18 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
     }
   })
   // 2026-10-03 起侧栏是 L0 面板、没有角饰，外距改用间距令牌（方案 §3.3）
-  it('侧栏内边距取间距令牌 --sp-5 / --sp-3 / --sp-5 / --sp-5', () => {
+  it('侧栏内边距使用间距令牌', () => {
     const sides = box(finalValue(rules, '.app__side', 'padding'))
-    expect(sides).toEqual(['var(--sp-5)', 'var(--sp-3)', 'var(--sp-5)', 'var(--sp-5)'])
+    expect(sides).toEqual(['var(--sp-4)', 'var(--sp-4)', 'var(--sp-4)', 'var(--sp-4)'])
   })
   it('词典失败且没有文件：ErrorCard 与下方“导入 .build”框同宽 820px 居中，左缘对齐', () => {
     expect(finalValue(rules, '.app__import', 'max-width')).toBe('820px')
     expect(finalValue(rules, '.app__main:only-child > .app__error', 'max-width')).toBe('820px')
     expect(finalValue(rules, '.app__main:only-child > .app__error', 'margin-inline')).toBe('auto')
     expect(finalValue(rules, '.app__error', 'max-width')).toBe('640px')
+  })
+  it('词典失败且已有文件：ErrorCard 占满阅读区，与导出栏之间不留大块空白（B4-14）', () => {
+    expect(finalValue(rules, '.app__side ~ .app__main > .app__error', 'max-width')).toBe('none')
   })
   it('ErrorCard 的两条宽度规则按特异性升序：(0,3,0) 的限定写法排在 (0,1,0) 的 .app__error 之后', () => {
     // biome lint/style/noDescendingSpecificity 只报警告、不让 verify 失败，这里钉住顺序
@@ -336,9 +339,54 @@ describe('阶段看板与紧凑文件行的几何（阶段看板验收修正第 
   it('文件列表是可收窄的单列：长名称按省略号截断，不把行撑出卡片', () => {
     expect(finalValue(side, '.app__files', 'grid-template-columns')).toBe('minmax(0, 1fr)')
   })
-  it('紧凑文件行右内边距让出移除按钮（right 6px + 28px）再留 --sp-1', () => {
-    expect(finalValue(side, '.app__files--stages .pt-file', 'padding')).toBe(
-      'var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-1)',
+  // B4-01：≤1199 系列条里文件项是 flex 项，min-width:auto 会按单行长名撑宽，省略号失效、移除按钮被推远
+  it('≤1199px 系列条的文件项可收窄到 220px，长名按省略号截断', () => {
+    const rules = buildCss()
+    expect(finalValue(rules, '.app__files > li', 'flex', 'max-width: 1199px')).toBe('0 0 220px')
+    expect(finalValue(rules, '.app__files > li', 'min-width', 'max-width: 1199px')).toBe('0')
+  })
+  // B4-04：选择按钮只包住名称（约 178×21）；用铺满整项的伪元素扩大点击区，移除按钮在其上方
+  it('文件项整条可点：选择按钮的 ::after 铺满文件项，移除按钮叠在上方', () => {
+    const rules = buildCss()
+    expect(finalValue(rules, '.pt-file__pick::after', 'position')).toBe('absolute')
+    expect(finalValue(rules, '.pt-file__pick::after', 'inset')).toBe('0')
+    expect(finalValue(rules, '.pt-file__pick::after', 'content')).toBe('""')
+    expect(finalValue(rules, '.pt-file__remove', 'z-index')).toBe('1')
+  })
+  // B4-15 起分组列表取代看板模式的紧凑行：组内文件行同样让出移除按钮
+  it('组内文件行右内边距让出移除按钮（right 6px + 28px）再留 --sp-1', () => {
+    expect(finalValue(side, '.app__files--group .pt-file', 'padding')).toBe(
+      'var(--sp-2) calc(6px + 28px + var(--sp-1)) var(--sp-2) var(--sp-3)',
+    )
+  })
+  it('组标题单行省略，不把侧栏或系列条撑宽', () => {
+    const rules = buildCss()
+    expect(finalValue(rules, '.app__group-h', 'min-width')).toBe('0')
+    expect(finalValue(rules, '.app__group-h', 'flex-wrap')).toBe('wrap')
+    expect(finalValue(rules, '.app__group-title', 'min-width')).toBe('min(100%, max-content)')
+    expect(finalValue(rules, '.app__group-title', 'text-overflow')).toBe('ellipsis')
+    expect(finalValue(rules, '.app__group-title', 'white-space')).toBe('nowrap')
+    expect(finalValue(rules, '.app__group-title', 'overflow')).toBe('hidden')
+  })
+  // ≤1199 系列条：整条只有外层一个横向滚动容器，组标题跨在本组文件上方，组宽由文件决定
+  it('≤1199px 系列条按组横排、只在外层横向滚动，组标题不按长名撑宽', () => {
+    const rules = buildCss()
+    const m = 'max-width: 1199px'
+    expect(finalValue(rules, '.app__groups', 'display', m)).toBe('flex')
+    expect(finalValue(rules, '.app__groups', 'overflow-x', m)).toBe('auto')
+    expect(finalValue(rules, '.app__group', 'flex', m)).toBe('0 0 auto')
+    expect(finalValue(rules, '.app__files--group', 'overflow', m)).toBe('visible')
+    expect(finalValue(rules, '.app__group-h', 'width', m)).toBe('0')
+    expect(finalValue(rules, '.app__group-h', 'min-width', m)).toBe('100%')
+  })
+  it('≤600px 组内文件的选择与移除点击区不小于 44px', () => {
+    const rules = buildCss()
+    const m = 'max-width: 600px'
+    expect(finalValue(rules, '.app__files--group .pt-file__pick', 'min-height', m)).toBe('44px')
+    expect(finalValue(rules, '.app__files--group .pt-file__remove', 'width', m)).toBe('44px')
+    expect(finalValue(rules, '.app__files--group .pt-file__remove', 'height', m)).toBe('44px')
+    expect(finalValue(rules, '.app__files--group .pt-file', 'padding-inline-end', m)).toBe(
+      'var(--sp-7)',
     )
   })
   it('吸附栏位列与角格有最小宽度 --slot-w，不被长名称的阶段列挤窄', () => {
@@ -354,5 +402,15 @@ describe('阶段看板与紧凑文件行的几何（阶段看板验收修正第 
     expect(finalValue(board, '.stageboard__ghost-corner', 'inline-size')).toBe(
       'var(--ghost-corner, var(--slot-w))',
     )
+  })
+})
+
+describe('看板“切换构筑”长名（复盘 B4-15）', () => {
+  it('单项限宽并单行省略，不再整段铺开', () => {
+    const css = readFileSync(new URL('../shared/styles/stageboard.css', import.meta.url), 'utf8')
+    expect(css).toMatch(
+      /\.stageboard__switch \.pt-seg__item > span \{[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;/,
+    )
+    expect(css).toMatch(/\.stageboard__switch \.pt-seg__item \{[^}]*max-width: min\(100%, 20em\);/)
   })
 })

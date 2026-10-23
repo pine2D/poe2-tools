@@ -68,7 +68,7 @@ describe('resolveRgbTag', () => {
     expect(resolveRgbTag('rgb(255, 255, 255)')).toBe('#ffffff')
   })
 
-  it('结果对对照行与译文提示框最亮的底 --raised #211c16 ≥4.5:1（含近黑输入）', () => {
+  it('结果对对照行与译文提示框最亮的底 --raised #1e2124 ≥4.5:1（含近黑输入）', () => {
     for (const raw of [
       'rgb(120, 0, 0)',
       'rgb(255, 255, 255)',
@@ -77,7 +77,7 @@ describe('resolveRgbTag', () => {
     ]) {
       const color = resolveRgbTag(raw)
       expect(color).not.toBeNull()
-      expect(contrastRatio(color ?? '', '#211c16'), raw).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(color ?? '', '#1e2124'), raw).toBeGreaterThanOrEqual(4.5)
     }
   })
 

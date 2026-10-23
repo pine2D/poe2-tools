@@ -13,7 +13,7 @@ export function SiteHeader({ active, children }: SiteHeaderProps): ReactElement 
     <header className="pt-header">
       <div className="pt-header__inner">
         <a className="pt-brand" href="/" aria-label="PoE2 Tools 首页">
-          <Motif symbol="logo" />
+          <Motif symbol="gem" className="pt-attr-ext" />
           <span>
             <b>PoE2</b> Tools
           </span>

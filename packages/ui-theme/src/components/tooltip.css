@@ -8,7 +8,7 @@
 .pt-tooltip-note {
   margin: 0;
   color: var(--ink-3);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   text-align: right;
 }
 .pt-tooltip-note__tail {
@@ -41,7 +41,7 @@
 .pt-tooltip__prop {
   margin: 0;
   color: var(--prop);
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 .pt-tooltip__prop .pt-num {
   color: var(--val);
@@ -70,7 +70,7 @@
   margin: 0;
   padding: 3px 0;
   color: var(--mod-hi);
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }

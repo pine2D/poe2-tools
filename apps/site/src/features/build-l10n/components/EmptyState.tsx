@@ -28,7 +28,8 @@ export function EmptyState({ onFiles, onPaste, onExample }: EmptyStateProps) {
         as: 'p',
       }}
     >
-      <h2 className="pt-hero-title pt-hero-title--build" id="empty-hero">
+      {/* tabIndex -1：重试加载词典成功后的焦点落点，不进 Tab 序列 */}
+      <h2 className="pt-hero-title pt-hero-title--build" id="empty-hero" tabIndex={-1}>
         英文构筑，
         <br className="mobile-break" />
         <span className="pt-hero-title__gold">中文读懂。</span>

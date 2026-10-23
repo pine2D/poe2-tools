@@ -27,7 +27,12 @@ export {
 } from './route'
 export { createTagSplitter, type TagSplitter } from './tags'
 export { normalizeName, sentenceInitial, type Word, words } from './text'
-export { type TranslatedTerm, translatedTerms } from './translated-terms'
+export {
+  type TranslatedStat,
+  type TranslatedTerm,
+  type TranslatedTermKind,
+  translatedTerms,
+} from './translated-terms'
 export type * from './types'
 export {
   findVerbatim,
