@@ -2,13 +2,13 @@
 
 普通用户请阅读[扩展介绍](README.md)与[安装和使用](install.md)。仓库环境和通用命令见[项目开发指南](../development.md)。
 
-## 当前基线（2026-10-22）
+## 当前基线（2026-10-23）
 
-扩展、CoE 修复及攻略阅读代码已通过 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main（`4608705`）。[0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 已通过网站与 GitHub Release 公开分发，定位为开发预览，未上架 Chrome 应用商店。后续使用主工作区；已合并的旧开发分支与三个 worktree 已清理。
+v4 界面迁移已通过 [PR #2](https://github.com/pine2D/poe2-tools/pull/2) 以合并提交 `93763c5` 合入 main；main CI 的 verify、deploy / pages、release-extension 全部成功。[0.11.0](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0) 已通过网站与 GitHub Release 公开分发，定位为开发预览，未上架 Chrome 应用商店；网站同步部署 0.10.0。前一公开版本为 [0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1)（扩展、CoE 修复及攻略阅读代码经 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main，`4608705`）。`feat/v4-ui-migration` 已合并并删除，后续统一使用主工作区 main。
 
 `apps/poe2-extension/release.json` 是产物核对依据。已发布的同版本 ZIP 不得替换内容；后续改变扩展包须升版本并更新发布记录。
 
-2026-10-23：开发分支的 0.11.0 为本地候选，当前包含 v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层；网站已迁移至 0.10.0 本地候选，四批界面复盘后的修正见[v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md)。该分支的 `release.json` 核对候选包，公开版本仍为 0.10.1。证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)、[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)和[CoE 浮层验收](validation-2026-10-23-v4-coe-overlays.md)，中间提交不直接合入 main 或公开发布。
+0.11.0 包含 v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层；四批界面复盘及第二轮用户裁定后的修正见[v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md)。证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)、[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)和[CoE 浮层验收](validation-2026-10-23-v4-coe-overlays.md)。完整 `pnpm verify` 以 CI 为准；本地完整门禁超时经诊断为宿主 CPU 吞吐波动，本地结果不作放行依据，见[完整门禁记录](../validation-2026-10-23-v4-integration.md)。
 
 工程与阅读交互已通过对应门禁，旧整段语义质量失败结论保持。0.5.0 与 0.6.0 的付费质量周期已结束，封存、重复和最终付费浏览器未因后续 UI 改进而自动重启；不可复用旧剩余额度。具体证据见[发布与验收状态](release-readiness.md)和[兼容性记录](compatibility.md)。
 
@@ -84,11 +84,11 @@ pnpm extension:check
 
 | 记录 | 内容 |
 | --- | --- |
-| [发布与验收状态](release-readiness.md) | 0.10.1 的工程基线、公开发行与未完成事项 |
-| [v4 弹窗与共享样式](validation-2026-10-23-v4-popup.md) | 0.11.0 本地候选第一批的实际弹窗、跨界面冒烟与工程门禁 |
+| [发布与验收状态](release-readiness.md) | 0.11.0 与 0.10.1 的工程基线、公开发行与未完成事项 |
+| [v4 弹窗与共享样式](validation-2026-10-23-v4-popup.md) | 0.11.0 第一批（记录时为本地候选）的实际弹窗、跨界面冒烟与工程门禁 |
 | [v4 CoE 自有浮层](validation-2026-10-23-v4-coe-overlays.md) | 第三批双语候选、装备步骤、语言提示、字体后备与原站实际导入 |
 | [v4 阅读侧栏、设置与站点](validation-2026-10-23-v4-reading-sites.md) | 第二批字体隔离、真实侧栏、合成阅读流程和站点授权／删除验收 |
-| [v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md) | 四批真实界面复盘、问题清单、修正与复验，含待裁定项 |
+| [v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md) | 四批真实界面复盘、问题清单、修正与复验，含第二轮用户裁定与实施 |
 | [侧栏紧凑布局](validation-2026-10-22-sidebar-compact.md) | 阅读密度、键盘与窄窗口 |
 | [范围与空态](validation-2026-10-22-scope-selection.md) | 保存服务后的章节子集、零选择与重名章节 |
 | [阅读重构与自动划词](validation-2026-10-21-reading-010.md) | 0.10.0 对应的授权、侧栏与气泡流程 |
@@ -118,4 +118,4 @@ pnpm extension:check
 
 ## 商店草稿历史
 
-2026-10-19 曾创建 0.5.0 的 Chrome 商店未发布草稿并取得固定扩展身份。该草稿不等于 0.10.1 已送审或上架。草稿材料见[商店草稿记录](store-draft.md)，真实商店安装仍须在可分发后单独验收。
+2026-10-19 曾创建 0.5.0 的 Chrome 商店未发布草稿并取得固定扩展身份。该草稿不等于 0.11.0 或此前版本已送审或上架。草稿材料见[商店草稿记录](store-draft.md)，真实商店安装仍须在可分发后单独验收。

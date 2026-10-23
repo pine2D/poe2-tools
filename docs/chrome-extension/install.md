@@ -2,11 +2,11 @@
 
 [下载 Chrome 中文助手](https://poe2-tools.pine2d.com/extension/) · [扩展介绍](README.md) · [隐私与权限](privacy.md)
 
-当前公开下载版为 **0.10.1 开发预览**，尚未上架 Chrome 应用商店。攻略译文仍可能出现语义错误，请保留原文对照。具体支持范围见[兼容性记录](compatibility.md)。
+当前公开下载版为 **0.11.0 开发预览**，尚未上架 Chrome 应用商店。攻略译文仍可能出现语义错误，请保留原文对照。具体支持范围见[兼容性记录](compatibility.md)。
 
 ## 普通用户安装
 
-1. 从[网站下载页](https://poe2-tools.pine2d.com/extension/)取得 ZIP，也可从 [GitHub Release](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 下载同一个安装包。
+1. 从[网站下载页](https://poe2-tools.pine2d.com/extension/)取得 ZIP，也可从 [GitHub Release](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0) 下载同一个安装包。
 2. 解压到固定文件夹，确认其中有 `manifest.json`。安装后请保留这个文件夹。
 3. 在桌面 Chrome 地址栏输入 `chrome://extensions/`，开启右上角“开发者模式”。
 4. 点击“加载已解压的扩展程序”，选择上一步的文件夹。

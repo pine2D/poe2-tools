@@ -1,8 +1,24 @@
 # 核心覆盖与发布验收
 
+## 0.11.0 开发预览版（2026-10-23）
+
+0.11.0 源码已通过 [PR #2](https://github.com/pine2D/poe2-tools/pull/2) 以合并提交 `93763c5` 合入 main。main CI 运行 [39960241092](https://github.com/pine2D/poe2-tools/actions/runs/39960241092) 的 verify、deploy / pages、release-extension 全部成功：网站 0.10.0 已部署到 <https://poe2-tools.pine2d.com>（Cloudflare Pages，`poe2-tools.pages.dev` 同步），扩展安装包通过网站 `/downloads/poe2-extension-0.11.0.zip` 与 [GitHub Release ext-v0.11.0](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0)（发布于 2026-10-23T13:37:57Z，非草稿）公开分发。
+
+| 项目 | 记录 |
+| --- | --- |
+| 文件 | `poe2-extension-0.11.0.zip` |
+| 字节数 | 7,371,771 |
+| SHA-256 | `343a74227b653159234cba733bf7063793e302a92ff3065ddeabd4152b5ad482` |
+
+网站下载与 GitHub Release 附件的字节数和 SHA-256 均已核对一致。已发布版本不能替换 ZIP，后续改变扩展包须升版本。
+
+完整门禁以 CI 为准：PR CI 与 main CI 的完整 `pnpm verify` 均通过。本地完整门禁的超时经诊断为宿主 CPU 吞吐波动，本地结果不作放行依据，见[完整门禁记录](../validation-2026-10-23-v4-integration.md)。v4 各批证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)、[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)、[CoE 浮层验收](validation-2026-10-23-v4-coe-overlays.md)与[网站验收](../validation-2026-10-23-v4-site.md)；复盘及第二轮用户裁定（字号 rem、弹窗压缩、侧栏术语着色、CoE 候选与导入增补、构筑分组、稀有度令牌、卡片叠字与对照省略）见 [v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md)。
+
+本版定位为开发预览，未上架 Chrome 应用商店。工程与交互通过不能替代译文质量验收，此前整段翻译未达标的结论保留。Windows 日常 Chrome 完整流程、真实中文输入法、读屏、游戏内 `.build` 加载与任意真实装备导入（只验证自造样本）仍未验收。
+
 ## 0.10.1 开发预览版（2026-10-22）
 
-0.10.1 源码已通过 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main（`4608705`），网站和 [GitHub Release ext-v0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 已公开分发同一安装包。版本、字节数与摘要见[该版本固定发布记录](https://github.com/pine2D/poe2-tools/blob/ext-v0.10.1/apps/poe2-extension/release.json)；后续改变已发布 ZIP 内容必须升版本。当前开发分支的 `release.json` 已记录未公开的 0.11.0 候选，不能用它核对 0.10.1；本批范围见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)。
+0.10.1 源码已通过 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main（`4608705`），网站和 [GitHub Release ext-v0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 已公开分发同一安装包。版本、字节数与摘要见[该版本固定发布记录](https://github.com/pine2D/poe2-tools/blob/ext-v0.10.1/apps/poe2-extension/release.json)；后续改变已发布 ZIP 内容必须升版本。main 的 `release.json` 现记录 0.11.0，不能用它核对 0.10.1。
 
 本版整合 CoE 兼容修复与攻略对照阅读、自动划词和紧凑侧栏。2026-10-22 的完整 `pnpm verify`（代码提交 `09d8660`）退出 0：699 个测试文件、6278 项通过，1 项因缺少本地真实 `.build` 样本跳过；扩展打包、发布记录、网站构建及数据门禁通过。保留 11 条既有样式告警与历史工坊构建体积提示。交互证据见[0.10.1 侧栏验收](validation-2026-10-22-sidebar-compact.md)及其关联记录。
 

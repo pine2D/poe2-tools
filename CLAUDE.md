@@ -2,11 +2,11 @@
 
 ## 项目定位
 
-### 当前优先级（2026-10-22）
+### 当前优先级（2026-10-23）
 
 当前主线为 Chrome 扩展：在 `beta.craftofexile.com` 新版 PoE2 英文界面映射国服简体术语，支持中文搜索与高级装备文本转换；另提供攻略范围预览、原文旁／侧栏对照及主动划词翻译。整段翻译由用户自备 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key。
 
-0.10.1 已作为开发预览通过网站与 GitHub Release（`ext-v0.10.1`）公开分发，未上架 Chrome 应用商店。公开发行、工程验收与语义质量分别说明；既有整段语义质量未通过结论保持，不能将工程门禁通过写成译文准确性达标。
+扩展 0.11.0 已作为开发预览通过网站与 GitHub Release（`ext-v0.11.0`）公开分发，未上架 Chrome 应用商店；前一公开版本为 0.10.1（`ext-v0.10.1`）。网站 0.10.0 已部署到 `poe2-tools.pine2d.com`（前一公开版本 0.9.1）。公开发行、工程验收与语义质量分别说明；既有整段语义质量未通过结论保持，不能将工程门禁通过写成译文准确性达标。
 
 独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现、回归与历史材料，不自动推进权重、品质、特殊制作或路线研究。此决定不等于原目标完成。Build Planner 汉化继续保留。
 
@@ -24,25 +24,27 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.10.0 本地候选；公开版 0.9.1）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（0.10.0 已部署；前一公开版本 0.9.1）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
-## 当前工作区与验收（2026-10-22）
+## 当前工作区与验收（2026-10-23）
 
+- v4 界面迁移已于 2026-10-23 通过 PR #2 以合并提交 `93763c5` 合入 main；main CI 运行 39960241092 的 verify、deploy / pages、release-extension 全部成功。`feat/v4-ui-migration` 已合并并删除（本地与远端），当前统一使用主工作区 main。
 - `feat/translation-bridge` 的 CoE 修复、攻略提取／对照、阅读工作区、自动划词与 0.10.1 UI 整改已通过 PR #1 合入 main（`4608705`）。后续统一使用主工作区，三个旧 worktree 与对应已合并分支已清理；未入库资料已归档在忽略目录 `docs/superpowers/worktree-archive/2026-10-22-merge-main/`。
-- 0.10.1 已发布，`apps/poe2-extension/release.json` 是产物记录；已发布版本不能替换 ZIP 内容，后续改包须升版本。发布与工程证据见 `docs/chrome-extension/release-readiness.md`，当前交互记录见 `validation-2026-10-22-sidebar-compact.md` 与 `validation-2026-10-22-scope-selection.md`（均在同目录）。
+- 扩展 0.11.0 已发布，`apps/poe2-extension/release.json` 是产物记录；已发布版本（含 0.10.1）不能替换 ZIP 内容，后续改包须升版本。发布与工程证据见 `docs/chrome-extension/release-readiness.md`；v4 各批验收见 `docs/chrome-extension/validation-2026-10-23-v4-*.md` 与 `docs/validation-2026-10-23-v4-site.md`，复盘与第二轮用户裁定见 `docs/validation-2026-10-23-v4-ui-retrospective.md`；0.10.1 的交互记录见 `docs/chrome-extension/validation-2026-10-22-sidebar-compact.md` 与 `validation-2026-10-22-scope-selection.md`。
+- 完整 `pnpm verify` 以 CI 为准：PR CI 与 main CI 均通过。本地完整门禁的超时经诊断为宿主 CPU 吞吐波动（`docs/validation-2026-10-23-v4-integration.md`），本地结果不作放行依据。
 - 0.5.0、0.6.0 真实服务质量周期已因语义错误停止；封存、重复和最终付费浏览器未执行。后续阅读与 UI 验收使用本机合成响应，不能替代语义验收；不自动重开旧周期或复用剩余额度。失败证据见 `docs/chrome-extension/validation-2026-10-20-bridge.md`。
-- 0.7.0 范围与原位对照、0.8.0 阅读工作区等历史契约及验收保留在 `docs/chrome-extension/`，当时“本地候选”“未发布”只描述对应时间点。Windows 日常 Chrome 完整流程、真实中文输入法及读屏仍有未验收项。
+- 0.7.0 范围与原位对照、0.8.0 阅读工作区等历史契约及验收保留在 `docs/chrome-extension/`，当时“本地候选”“未发布”只描述对应时间点。Windows 日常 Chrome 完整流程、真实中文输入法及读屏仍有未验收项；任意真实装备导入未验收（只验证自造样本）。
 - 根目录 `HANDOFF.md` 是本地会话交接底稿，不入库；以文件内日期核对时效，不把历史方案当成当前实现或授权。
 
 ## v4 设计与工具边界（2026-10-23）
 
-- v4 设计已由用户确认；共享颜色、通用按钮、方形开关、真实弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层已进入 0.11.0 本地候选；网站首页、构筑工作区与扩展介绍页已进入 0.10.0 本地候选，完整集成门禁的历史超时仍待解决。根 `PRODUCT.md` 维护产品事实，`DESIGN.md` 维护已确认目标并单列现有生产基线，`docs/ui-copy.md` 维护文案规则；旧视觉规范保留在 `docs/design-system-pre-v4.md`，不再作为新设计依据。
+- v4 设计已由用户确认；共享颜色、通用按钮、方形开关、真实弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层已随扩展 0.11.0 发布；网站首页、构筑工作区与扩展介绍页已随网站 0.10.0 部署。根 `PRODUCT.md` 维护产品事实，`DESIGN.md` 维护已确认目标并单列现有生产基线，`docs/ui-copy.md` 维护文案规则；旧视觉规范保留在 `docs/design-system-pre-v4.md`，不再作为新设计依据。
 - 设计主工作目录为 `docs/superpowers/design/poe2-tools-v4/`，已原地导入 OpenDesign；它与代理直接编辑的是同一份文件，不是备份。该目录与根 `HANDOFF.md` 只在本地保留，不入库；不自动删除，也不另起活动副本。
 - OpenDesign 负责原型与预览；impeccable 用于按已确认规范检查和精修。两者的文件优先级、技能安装层级与同步规则见 `docs/design-skills.md`。不并发修改同一设计，不因工具的通用偏好推翻已确认方向，不自动重建已删除的 impeccable 侧车。
 - 原型 token 只作目标参考，生产令牌仍统一在 `packages/ui-theme`；不直接把原型 `:root` 样式注入产品或 CoE。原型测试与真实产品验收分别记录。
-- 用户已授权继续生产迁移并在关键节点本地提交；当前在 `feat/v4-ui-migration`，不推送或发布半成品。0.11.0 是未公开候选，现有公开版本仍为 0.10.1。
+- v4 生产迁移已随 PR #2 合入 main 并发布（扩展 0.11.0、网站 0.10.0）；开发分支 `feat/v4-ui-migration` 已删除，后续在主工作区进行。
 
 ## 扩展工程收敛（2026-09-26）
 
