@@ -28,7 +28,7 @@ Key 指翻译服务的 API 密钥，由你在对应服务商的控制台创建�
 
 ## 当前版本与使用边界
 
-**0.10.1 开发预览已于 2026-10-22 公开发布**，网站与 [GitHub Release](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 提供相同安装包；尚未上架 Chrome 应用商店。
+**0.11.0 开发预览已于 2026-10-23 公开发布**，网站与 [GitHub Release](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0) 提供相同安装包；尚未上架 Chrome 应用商店。
 
 - CoE 适配限新版 Beta 的 PoE2、English 模式。未命中或有歧义的内容保留原文；装备是否合法、能否导入由 CoE 判断。
 - 攻略阅读支持 Mobalytics PoE2 构筑页、poe2.com 与通用正文提取，只处理当前已加载且可访问的内容；不能保证所有网站完整提取。自动划词预设不代表该站全部内容均已适配。
