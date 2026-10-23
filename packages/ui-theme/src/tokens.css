@@ -29,6 +29,8 @@
   --steel: #0f304d;
   --steel-hi: #164a75;
   --steel-edge: #4c4c7d;
+  --tab-start: #5c3d16;
+  --tab-end: #3a2810;
 
   /* 文字与青铜边（--bronze 系列不作正文色） */
   --ink: #f2ead8;

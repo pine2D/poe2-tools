@@ -76,7 +76,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
     extraSummary,
     field('额外请求参数（JSON 对象）', extra),
   )
-  const confirm = el(doc, 'input', { type: 'checkbox', name: 'confirmOrigin' })
+  const confirm = el(doc, 'input', { type: 'checkbox', name: 'confirmOrigin', class: 'pt-switch' })
   const confirmText = el(doc, 'span')
   const updateConfirm = () => {
     const origin = originOf(baseUrl.value.trim())

@@ -21,9 +21,9 @@ import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 
 ## 迁移状态
 
-2026-10-23：共享颜色、通用按钮、分隔线与弹窗方形开关已迁移到 [v4 规范](../../DESIGN.md)。`pt-btn` 默认深灰，显式 `pt-btn--primary` 为钢蓝；边界统一使用可辨识的 `--control-edge`，钢蓝内边只作装饰。弹窗衬线字单独维护在 `scripts/popup-text.txt`，生成后覆盖静态标签及动态按钮文字。
+2026-10-23：共享样式、弹窗、阅读侧栏、翻译设置与站点管理已迁移到 [v4 规范](../../DESIGN.md)。`pt-btn` 默认深灰，显式 `pt-btn--primary` 为钢蓝；边界统一使用可辨识的 `--control-edge`，钢蓝内边只作装饰。弹窗衬线字单独维护在 `scripts/popup-text.txt`，生成后覆盖静态标签及动态按钮文字。
 
-网站与阅读侧栏、站点设置的布局仍待后续迁移；下面的旧层级摘要只用于核对尚未迁移的组件，不指导新设计。
+网站与 CoE 自有浮层的布局仍待后续迁移；下面的旧层级摘要只用于核对尚未迁移的组件，不指导新设计。
 
 ## 未迁移组件的层级规则摘要
 
@@ -50,3 +50,5 @@ import '@poe2-tools/ui-theme/fonts.css' // 字体分片的 @font-face
 ## 字体许可
 
 `fonts/` 下的分片是 Noto Serif SC、Noto Serif TC、Cinzel 的子集，以 SIL Open Font License 1.1 授权，项目的 MIT 许可不覆盖该目录。每个家族的许可全文在 `fonts/LICENSES/`，网站发布为 `/fonts/<Family>-OFL.txt`；来源、固定提交与哈希登记在 `docs/data-sources.md` 的“界面字体与素材”一节。
+
+侧栏、翻译设置和站点管理通过 `guide-fonts.css` 只加载 `serif-sc-guide.woff2`，固定标签收字维护在 `scripts/guide-text.txt`。运行 `pnpm ui-theme:fonts --offline` 生成；预算 98,304 字节，超限退出码 5。任意攻略标题、章节、正文和站点名用无衬线，网站与弹窗不下载该子集。新增分段控件色 `--tab-start`／`--tab-end` 来自 v4 已确认目标。

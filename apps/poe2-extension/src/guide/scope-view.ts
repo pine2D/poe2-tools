@@ -55,7 +55,7 @@ export function chapterPicker(
     )
       depth++
     const title = path.slice(-depth).join(' › ')
-    const input = el(doc, 'input', { type: 'checkbox', class: 'chapter-check' })
+    const input = el(doc, 'input', { type: 'checkbox', class: 'chapter-check pt-switch' })
     input.checked = group.ids.every((id) => chosen.has(id))
     input.indeterminate = !input.checked && group.ids.some((id) => chosen.has(id))
     input.addEventListener('change', emit)

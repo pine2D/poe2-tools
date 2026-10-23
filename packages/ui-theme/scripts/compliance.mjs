@@ -62,7 +62,9 @@ export const L1_FONT_FAMILY = 'PoE2 Serif SC L1'
 /** L1 子集体积上限（字节）：build-fonts.mjs 超出即以退出码 4 终止，扩展 check.mjs 在 dist 上再查一次 */
 export const L1_FONT_BUDGET = 131_072
 /** 只属于扩展的字体分片：assertFontSetEquals 不要求网站产物含它们，出现即拒绝 */
-export const EXTENSION_FONT_FILES = [POPUP_FONT_FILE, L1_FONT_FILE]
+export const GUIDE_FONT_FILE = 'serif-sc-guide.woff2'
+export const GUIDE_FONT_BUDGET = 98_304
+export const EXTENSION_FONT_FILES = [POPUP_FONT_FILE, L1_FONT_FILE, GUIDE_FONT_FILE]
 
 /** spec §8.5 的检测正则 */
 export const EXTERNAL_URL_RE = /url\(\s*['"]?\s*(?:https?:)?\/\//i

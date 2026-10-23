@@ -31,7 +31,13 @@ export declare const L1_FONT_FAMILY: 'PoE2 Serif SC L1'
 /** L1 子集体积上限（字节）：build-fonts.mjs 退出码 4，扩展 check.mjs 复查 */
 export declare const L1_FONT_BUDGET: 131072
 /** 只属于扩展的字体分片 */
-export declare const EXTENSION_FONT_FILES: readonly ['serif-sc-popup.woff2', 'serif-sc-l1.woff2']
+export declare const GUIDE_FONT_FILE: 'serif-sc-guide.woff2'
+export declare const GUIDE_FONT_BUDGET: 98304
+export declare const EXTENSION_FONT_FILES: readonly [
+  'serif-sc-popup.woff2',
+  'serif-sc-l1.woff2',
+  'serif-sc-guide.woff2',
+]
 /** spec §8.5 的检测正则 /url\(\s*['"]?\s*(?:https?:)?\/\//i */
 export declare const EXTERNAL_URL_RE: RegExp
 export declare function sha256(data: Uint8Array | string): string

@@ -9,12 +9,14 @@ import { FORGE_COLORS, NAMEPLATE_VARIANTS, TAB_COLORS } from './testing/gate'
 const css = readFileSync(fileURLToPath(new URL('./tokens.css', import.meta.url)), 'utf8')
 const { count, tokens } = rootTokens(css)
 
-// v4 兼容接口的 75 个令牌
+// v4 兼容接口及分段控件令牌
 const EXPECTED: Record<string, string> = {
   '--label': '#fff8e1',
   '--steel': '#0f304d',
   '--steel-hi': '#164a75',
   '--steel-edge': '#4c4c7d',
+  '--tab-start': '#5c3d16',
+  '--tab-end': '#3a2810',
   '--page': '#0e1115',
   '--bg': '#000000',
   '--bg-2': '#121922',
@@ -144,10 +146,10 @@ describe('令牌结构（spec §4.3）', () => {
     expect(root?.declarations.get('color-scheme')).toBe('dark')
   })
 
-  it('令牌集合与取值等于v4 兼容接口的 75 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
+  it('令牌集合与取值等于v4 兼容接口的 77 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
     const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
     expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(contract).toHaveLength(75)
+    expect(contract).toHaveLength(77)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }

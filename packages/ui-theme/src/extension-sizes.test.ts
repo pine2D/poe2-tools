@@ -13,6 +13,7 @@ const FILES: Readonly<Record<string, string>> = {
   'l1.css': read('./l1.css'),
   'popup.css': read('../../../apps/poe2-extension/src/popup/popup.css'),
   'guide.css': read('../../../apps/poe2-extension/src/guide/guide.css'),
+  'sites.css': read('../../../apps/poe2-extension/src/sites/sites.css'),
 }
 
 const ALLOW: SizeAllow = {

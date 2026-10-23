@@ -32,7 +32,7 @@ async function fixture(terms) {
     'dist/content.js': 'void 0;',
     'dist/sites.html':
       '<link rel="stylesheet" href="./assets/sites-test.css"><script src="./assets/sites-test.js"></script>',
-    'dist/assets/sites-test.css': '',
+    'dist/assets/sites-test.css': '@font-face{src:url(./serif-sc-guide-test.woff2)}',
     'dist/assets/sites-test.js': '',
     'dist/Lucide-LICENSE.txt': 'ISC License Cole Bemis',
     'dist/selection.js': 'void 0;',
@@ -45,7 +45,7 @@ async function fixture(terms) {
     'dist/guide.html':
       '<!doctype html><html><head><link rel="stylesheet" href="./assets/guide-test.css"></head><body><script type="module" src="./assets/guide-test.js"></script></body></html>',
     'dist/assets/guide-test.js': 'console.log(1)',
-    'dist/assets/guide-test.css': 'body{margin:0}',
+    'dist/assets/guide-test.css': 'body{margin:0}@font-face{src:url(./serif-sc-guide-test.woff2)}',
     'dist/extract.js': '(function(){globalThis.__poe2GuideExtract=function(){return null}})();',
     'dist/assets/guide-stats.json': JSON.stringify(guideStatsFixture()),
     'dist/assets/guide-dictionary.json':
@@ -75,6 +75,10 @@ async function fixture(terms) {
   await copyFile(
     path.resolve(import.meta.dirname, '../../../packages/ui-theme/fonts/serif-sc-l1.woff2'),
     path.join(root, 'dist/assets/serif-sc-l1.woff2'),
+  )
+  await copyFile(
+    path.resolve(import.meta.dirname, '../../../packages/ui-theme/fonts/serif-sc-guide.woff2'),
+    path.join(root, 'dist/assets/serif-sc-guide-test.woff2'),
   )
   vi.spyOn(console, 'log').mockImplementation(() => {})
   return root

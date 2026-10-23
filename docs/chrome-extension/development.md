@@ -8,7 +8,7 @@
 
 `apps/poe2-extension/release.json` 是产物核对依据。已发布的同版本 ZIP 不得替换内容；后续改变扩展包须升版本并更新发布记录。
 
-2026-10-23：开发分支的 0.11.0 为本地候选，当前包含 v4 共享样式与真实弹窗；其余界面布局继续分批迁移。该分支的 `release.json` 核对候选包，公开版本仍为 0.10.1。第一批证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)，中间提交不直接合入 main 或公开发布。
+2026-10-23：开发分支的 0.11.0 为本地候选，当前包含 v4 共享样式、弹窗、阅读侧栏、翻译设置与站点管理；CoE 浮层和网站布局继续分批迁移。该分支的 `release.json` 核对候选包，公开版本仍为 0.10.1。证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)和[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)，中间提交不直接合入 main 或公开发布。
 
 工程与阅读交互已通过对应门禁，旧整段语义质量失败结论保持。0.5.0 与 0.6.0 的付费质量周期已结束，封存、重复和最终付费浏览器未因后续 UI 改进而自动重启；不可复用旧剩余额度。具体证据见[发布与验收状态](release-readiness.md)和[兼容性记录](compatibility.md)。
 
@@ -29,7 +29,7 @@ pnpm extension:package
 
 - 扩展源码与构建脚本（`apps/poe2-extension/`）、`packages/l10n-core`、`packages/guide-core`；
 - `packages/item-core`：网站工坊与扩展共用，只为网站改它也会改变扩展 zip；
-- `packages/ui-theme` 中扩展用到的部分：令牌（含尺寸阶梯）、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、注入衬线字体子集 `serif-sc-l1` 及其收字来源（`data/l10n/coe-beta/ui.zh-CN.json` 全部译文、`apps/poe2-extension/src/content/*.ts` 与 `src/provenance.ts` 的中文文案）、完整声明，只为网站改它也会改变扩展 zip。收字来源出现新字时 `packages/ui-theme` 的 coverage.test 会失败：运行 `pnpm ui-theme:fonts --offline` 重新生成（`serif-sc-l1` 超过 131,072 字节时脚本以退出码 4 终止），与扩展版本放进同一提交；
+- `packages/ui-theme` 中扩展用到的部分：令牌（含尺寸阶梯）、母题、弹窗组件、L1 样式、弹窗字体子集与弹窗衬线文案 `scripts/popup-text.txt`、侧栏固定标签子集 `serif-sc-guide` 与 `scripts/guide-text.txt`、注入衬线字体子集 `serif-sc-l1` 及其收字来源（`data/l10n/coe-beta/ui.zh-CN.json` 全部译文、`apps/poe2-extension/src/content/*.ts` 与 `src/provenance.ts` 的中文文案）、完整声明，只为网站改它也会改变扩展 zip。收字来源出现新字时 `packages/ui-theme` 的 coverage.test 会失败：运行 `pnpm ui-theme:fonts --offline` 重新生成（`serif-sc-l1` 超过 131,072 字节时脚本以退出码 4 终止），与扩展版本放进同一提交；
 - 数据：`data/dict/zh-CN/` 的 items/gems/passives、`data/dict/zh-TW/items.json`、`data/l10n/stats/` 两服原始词缀、`data/dict/_overrides/` 职业/升华、`data/l10n/`（含攻略术语、CoE 界面和裁决）、`data/craft/catalog.json`，以及根目录 `LICENSE`；
 - 依赖与 `pnpm-lock.yaml` 升级：Vite、Rolldown 等构建链版本变化会改变 `content.js` 与弹窗资源。
 
@@ -86,6 +86,7 @@ pnpm extension:check
 | --- | --- |
 | [发布与验收状态](release-readiness.md) | 0.10.1 的工程基线、公开发行与未完成事项 |
 | [v4 弹窗与共享样式](validation-2026-10-23-v4-popup.md) | 0.11.0 本地候选第一批的实际弹窗、跨界面冒烟与工程门禁 |
+| [v4 阅读侧栏、设置与站点](validation-2026-10-23-v4-reading-sites.md) | 第二批字体隔离、真实侧栏、合成阅读流程和站点授权／删除验收 |
 | [侧栏紧凑布局](validation-2026-10-22-sidebar-compact.md) | 阅读密度、键盘与窄窗口 |
 | [范围与空态](validation-2026-10-22-scope-selection.md) | 保存服务后的章节子集、零选择与重名章节 |
 | [阅读重构与自动划词](validation-2026-10-21-reading-010.md) | 0.10.0 对应的授权、侧栏与气泡流程 |

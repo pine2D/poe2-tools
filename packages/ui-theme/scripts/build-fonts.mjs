@@ -7,10 +7,11 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import subsetFont from 'subset-font'
-import { l1Shard, planShards, popupShard, unicodeRange } from '../src/charsets.ts'
+import { guideShard, l1Shard, planShards, popupShard, unicodeRange } from '../src/charsets.ts'
 import { readNameRecords, readSfntTables } from '../src/font-tables.ts'
 import {
   assertLicenseText,
+  GUIDE_FONT_BUDGET,
   L1_FONT_BUDGET,
   LICENSE_REQUIRED_LINES,
   parseFontSources,
@@ -267,6 +268,12 @@ async function main() {
     popupShard(await readFile(resolve(PKG_DIR, 'scripts/popup-text.txt'), 'utf8')),
     sources,
   )
+  const guide = await subset(
+    guideShard(await readFile(resolve(PKG_DIR, 'scripts/guide-text.txt'), 'utf8')),
+    sources,
+  )
+  if (guide.data.length > GUIDE_FONT_BUDGET)
+    throw new ExitError(5, `侧栏标签字体超出 ${GUIDE_FONT_BUDGET} 字节：精简 guide-text.txt`)
 
   // CoE 注入衬线子集（扩展 0.4.0）：内容脚本以 FontFace 注册，不写 CSS，登记在 coverage.json 末尾；
   // 超出预算时在写盘前终止，现有产物一律不动
@@ -283,10 +290,14 @@ async function main() {
   const tmp = await mkdtemp(resolve(REPO_ROOT, 'data/cache/ui-fonts-out-'))
   try {
     await mkdir(join(tmp, 'LICENSES'))
-    for (const { spec, data } of [...outputs, popup, l1])
+    for (const { spec, data } of [...outputs, popup, l1, guide])
       await writeFile(join(tmp, spec.file), data)
     await writeFile(join(tmp, 'fonts.css'), fontsCss(outputs))
     await writeFile(join(tmp, 'popup.css'), popupFontsCss(popup))
+    await writeFile(
+      join(tmp, 'guide.css'),
+      `/* 由 build-fonts.mjs 生成，勿手改。仅供扩展固定标签，不进网站 fonts.css。 */\n${fontFace(guide.spec)}\n`,
+    )
     for (const [alias, family] of Object.entries(FAMILIES)) {
       const text = licenseText(family, names[family.name], sources[alias].ofl, commit)
       await writeFile(join(tmp, 'LICENSES', family.license), text)
@@ -296,7 +307,7 @@ async function main() {
       sourceCommit: commit,
       sources: sourceHashes,
       sourceNames: names,
-      shards: [...outputs, popup, l1].map(({ spec, data }) => ({
+      shards: [...outputs, popup, l1, guide].map(({ spec, data }) => ({
         file: spec.file,
         family: spec.family,
         group: spec.group,
@@ -313,7 +324,7 @@ async function main() {
     await rm(tmp, { recursive: true, force: true })
   }
   console.log(
-    `已写入 ${relative(REPO_ROOT, FONTS_DIR)}：${outputs.length} 个网站分片，1 个弹窗分片，1 个注入分片`,
+    `已写入 ${relative(REPO_ROOT, FONTS_DIR)}：${outputs.length} 个网站分片，1 个弹窗分片，1 个侧栏标签分片，1 个注入分片`,
   )
   // 契约 §3.6：标准输出末行为 shard0+cinzel=<字节数>/122880
   console.log(`shard0+cinzel=${budget}/${BUDGET}`)

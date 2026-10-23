@@ -1,5 +1,7 @@
 @import "@poe2-tools/ui-theme/tokens.css";
 @import "@poe2-tools/ui-theme/components/btn.css";
+@import "@poe2-tools/ui-theme/guide-fonts.css";
+@import "@poe2-tools/ui-theme/components/switch.css";
 
 :root {
   color-scheme: dark;
@@ -12,7 +14,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: var(--fs-data) / 1.65 var(--font-zh-cn);
+  font-size: var(--fs-data);
+  font-family: var(--font-zh-cn);
+  line-height: 1.65;
   overflow-anchor: none;
 }
 .guide {
@@ -78,13 +82,14 @@ body {
 }
 .guide button,
 .guide-settings button {
-  font: 500 var(--fs-body) / 1.4 var(--font-zh-cn);
+  font: 700 var(--fs-body) / 1.4 var(--pt-serif);
   min-height: 44px;
   height: auto;
   padding: var(--sp-2) var(--sp-3);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: none;
   letter-spacing: 0;
+  white-space: normal;
 }
 .guide button::before,
 .guide button::after {
@@ -92,9 +97,10 @@ body {
 }
 .guide .guide-begin {
   flex: 1;
-  color: var(--bg);
-  border: 1px solid var(--gold);
-  background: var(--gold);
+  color: var(--label);
+  border: 1px solid var(--control-edge);
+  box-shadow: inset 0 0 0 1px var(--steel-edge);
+  background: var(--steel);
   font-weight: 600;
 }
 .guide button:disabled {
@@ -103,7 +109,7 @@ body {
 }
 .guide .guide-begin:disabled,
 .guide .guide-begin:disabled:hover {
-  background: var(--gold);
+  background: var(--steel);
   opacity: 0.7;
 }
 .guide .icon-button:not([hidden]) {
@@ -127,8 +133,8 @@ body {
   color: var(--ink);
 }
 .guide .guide-begin:hover:not(:disabled) {
-  background: var(--title-gold);
-  color: var(--bg);
+  background: var(--steel-hi);
+  color: var(--label);
 }
 .guide :is(button, summary, input, a, [tabindex]):focus-visible,
 .guide-settings :is(button, a, summary, [tabindex]):focus-visible {
@@ -149,7 +155,7 @@ body {
   background: var(--line);
 }
 .guide-meter::-webkit-progress-value {
-  background: var(--gold);
+  background: var(--control-edge);
 }
 .guide-progress-row {
   display: flex;
@@ -166,7 +172,7 @@ body {
 .reading-mode {
   display: flex;
   padding: 0;
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--surface);
   gap: var(--sp-1);
 }
@@ -179,8 +185,8 @@ body {
 }
 .reading-mode button[aria-pressed="true"],
 .scope-choices button[aria-pressed="true"] {
-  background: var(--raised-2);
-  color: var(--title-gold);
+  color: var(--label);
+  background: linear-gradient(180deg, var(--tab-start), var(--tab-end));
   box-shadow: inset 0 0 0 1px var(--control-edge);
 }
 .guide details {
@@ -315,7 +321,7 @@ body {
   color: var(--ink-2);
   font-size: var(--fs-body);
   padding: var(--sp-2);
-  border-radius: 4px;
+  border-radius: 0;
 }
 .guide .guide-directory-link[aria-current="true"] {
   background: var(--surface);
@@ -502,7 +508,7 @@ body {
 .guide-exceptions {
   padding: 0 var(--sp-3);
   background: var(--surface);
-  border-radius: 6px;
+  border-radius: 0;
 }
 .guide-exception-items {
   max-height: 260px;
@@ -544,7 +550,7 @@ body {
 .guide-ask {
   padding: var(--sp-3);
   background: var(--surface);
-  border-radius: 6px;
+  border-radius: 0;
   font-size: var(--fs-body);
 }
 .guide-intro p + p {
@@ -646,15 +652,23 @@ abbr:focus-visible::after {
   display: none;
 }
 .guide-settings h1 {
+  font-family: var(--pt-serif);
+  font-weight: 700;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--metal-line);
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-title);
   line-height: 1.3;
   color: var(--title-gold);
 }
 .guide-settings h2 {
+  font-family: var(--pt-serif);
+  font-weight: 700;
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--metal-line);
   margin: var(--sp-3) 0 0;
   padding-top: var(--sp-3);
-  border-top: 1px solid var(--line);
+  border-top: 0;
   font-size: var(--fs-lead);
   line-height: 1.3;
   color: var(--ink);
@@ -675,6 +689,8 @@ abbr:focus-visible::after {
   border: 1px solid var(--line);
 }
 .guide-settings legend {
+  font-family: var(--pt-serif);
+  font-weight: 700;
   padding: 0 var(--sp-1);
   font-size: var(--fs-small);
   color: var(--ink-2);
@@ -693,15 +709,18 @@ abbr:focus-visible::after {
   gap: var(--sp-1);
 }
 .guide-settings .field > span {
-  font-size: var(--fs-small);
-  color: var(--ink-2);
+  font: 700 var(--fs-body) / 1.5 var(--pt-serif);
+  color: var(--label);
+  padding: var(--sp-2);
+  background: var(--raised);
+  border-left: 1px solid var(--bronze);
 }
 .guide-settings input:not([type="radio"]):not([type="checkbox"]),
 .guide-settings textarea {
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  border-radius: 6px;
+  border-radius: 0;
   caret-color: var(--gold);
   box-sizing: border-box;
   padding: var(--sp-1) var(--sp-2);
@@ -786,7 +805,7 @@ abbr:focus-visible::after {
 .leave-confirmation {
   padding: var(--sp-3);
   border: 1px solid var(--danger);
-  border-radius: 6px;
+  border-radius: 0;
 }
 .leave-confirmation {
   border-color: var(--control-edge);
@@ -820,4 +839,70 @@ abbr:focus-visible::after {
 }
 .intro-actions details[open] {
   margin-bottom: var(--sp-2);
+}
+
+/* 固定标签有独立字体；来源标题、章节和正文可含任意字符，保持无衬线。 */
+.guide-current-title {
+  font-family: var(--pt-serif);
+  font-weight: 700;
+  color: var(--label);
+}
+.guide :is(.guide-directory-link, .guide-exception, .stage),
+.guide-settings .note,
+.guide-chapter {
+  font-family: var(--font-zh-cn);
+}
+.guide-document-header {
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--metal-line);
+}
+.guide-options,
+.guide-directory {
+  border-color: var(--metal-line);
+}
+.guide .guide-banner > button,
+.guide-settings .save {
+  color: var(--label);
+  background: var(--steel);
+  box-shadow: inset 0 0 0 1px var(--steel-edge);
+}
+.guide .guide-banner > button:hover:not(:disabled),
+.guide-settings .save:hover:not(:disabled) {
+  background: var(--steel-hi);
+}
+.guide .guide-banner > button:disabled:hover,
+.guide-settings .save:disabled:hover {
+  background: var(--steel);
+}
+.guide-chapter input.pt-switch,
+.guide-settings .field-check input.pt-switch {
+  margin-block: var(--sp-1);
+}
+.guide .pt-switch:indeterminate::before {
+  height: 2px;
+  top: var(--sp-2);
+  opacity: 1;
+}
+.guide-settings .provider {
+  padding: var(--sp-2);
+  background: var(--surface);
+  border-left: 1px solid var(--bronze);
+}
+.guide-settings .provider > span {
+  font-family: var(--pt-serif);
+  font-weight: 700;
+}
+.guide-settings .field {
+  gap: 0;
+}
+.guide-settings .field > :is(input, textarea) {
+  background: var(--surface);
+}
+.guide-settings .settings-actions .save {
+  flex: 1 1 100%;
+}
+@media (forced-colors: active) {
+  .guide .pt-switch:indeterminate::before {
+    background: ButtonText;
+  }
 }

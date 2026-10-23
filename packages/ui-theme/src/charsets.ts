@@ -1,7 +1,7 @@
 // 字体分片的收字规则（spec §7.3）：纯函数，文件访问由调用方注入。
 // build-fonts.mjs 与 coverage.test.ts 共用；相对导入写 .ts 扩展名，Node 直接加载。
 // 扩展两片（弹窗子集、注入衬线子集）的文件名只在 compliance.mjs 定义一处（扩展检查与网站检查也用它），这里导入后改名导出
-import { L1_FONT_FILE, POPUP_FONT_FILE } from '../scripts/compliance.mjs'
+import { GUIDE_FONT_FILE, L1_FONT_FILE, POPUP_FONT_FILE } from '../scripts/compliance.mjs'
 
 /** U+0020–U+007E，共 95 个字符 */
 export const ASCII_PRINTABLE = Array.from({ length: 95 }, (_, i) =>
@@ -192,6 +192,7 @@ export type ShardGroup =
   | 'tc-names'
   | 'cinzel'
   | 'sc-popup'
+  | 'sc-guide'
   | 'sc-l1'
 export type FontFamilyAlias = 'PoE2 Serif SC' | 'PoE2 Serif TC' | 'PoE2 Cinzel'
 export interface ShardSpec {
@@ -292,6 +293,17 @@ export function popupShard(popupText: string): ShardSpec {
     group: 'sc-popup',
     weight: 700,
     chars: sorted(shard0Chars(popupText)),
+  }
+}
+
+/** 侧栏、设置和站点管理的固定标签；任意攻略文字不使用此有限子集。 */
+export function guideShard(text: string): ShardSpec {
+  return {
+    file: GUIDE_FONT_FILE,
+    family: 'PoE2 Serif SC',
+    group: 'sc-guide',
+    weight: 700,
+    chars: sorted(shard0Chars(text)),
   }
 }
 
