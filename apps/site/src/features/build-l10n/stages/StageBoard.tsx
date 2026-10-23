@@ -94,7 +94,14 @@ export function StageBoard({
       ref={frame}
       className="app__build-frame app__build-frame--board"
       aria-labelledby="board-title"
-      titlebar={{ title: series.title, id: 'board-title', fullText: series.title, userText: true }}
+      // 程序化焦点落点（重试加载词典成功后），不进 Tab 序列
+      titlebar={{
+        title: series.title,
+        id: 'board-title',
+        fullText: series.title,
+        userText: true,
+        tabIndex: -1,
+      }}
     >
       <BoardFacts
         series={series}

@@ -15,6 +15,48 @@ import { L1_DEMO_CANDIDATES, L1_DEMO_CAPTION } from '../../shared/l1Demo'
 // 候选示意的数据与扩展介绍页共用（shared/l1Demo.ts）；第一项是选中项，放进框腰作为放大行
 const [SELECTED, ...REST] = L1_DEMO_CANDIDATES
 
+// 示例物品：名称与词缀逐字取自正式国服词典（items.json、stats.json），类别名取自 CoE 界面译名（HomePage.test 核对）
+const ITEM = {
+  'zh-CN': {
+    name: '蓝玉戒指',
+    cls: '戒指',
+    mods: ['+60 生命上限', '火焰抗性 +30%'],
+  },
+  en: {
+    name: 'Sapphire Ring',
+    cls: 'Rings',
+    mods: ['+60 to maximum Life', '+30% to Fire Resistance'],
+  },
+} as const
+
+function ItemTip({ lang, front }: { lang: 'zh-CN' | 'en'; front: boolean }) {
+  const item = ITEM[lang]
+  return (
+    <div
+      className={`home-tip ${front ? 'home-tip--front' : 'home-tip--back'}`}
+      lang={lang}
+      aria-hidden={front ? undefined : true}
+    >
+      <div className="home-tip__head">
+        <strong
+          className={
+            lang === 'en' ? 'pt-nameplate__en home-tip__name' : 'pt-subhead home-tip__name'
+          }
+        >
+          {item.name}
+        </strong>
+        <span className="home-tip__cls">{item.cls}</span>
+      </div>
+      <span className="home-tip__sep" aria-hidden="true" />
+      <span className="home-tip__body">
+        {item.mods.map((mod) => (
+          <span key={mod}>{mod}</span>
+        ))}
+      </span>
+    </div>
+  )
+}
+
 export function HomePage() {
   const [english, setEnglish] = useState(false)
   return (
@@ -45,30 +87,20 @@ export function HomePage() {
             </div>
             <p className="home-hero__note">构筑文件在本机处理 · 扩展整段翻译需自备 Key</p>
           </div>
+          {/* 物品提示框（DESIGN“物品提示框”）：英文原文与中文预览两张叠放，只在用户点击后翻面；
+              后面那张只露出名称栏，aria-hidden。整块可点由按钮的 ::after 铺满 .home-item__stack 实现 */}
           <figure className="home-item" aria-labelledby="hero-demo-caption">
-            <div className="home-item__back" aria-hidden="true">
-              <span className="home-item__lang">{english ? '中文预览' : '英文原文'}</span>
-              <b>{english ? '蓝玉戒指' : 'Sapphire Ring'}</b>
+            <div className="home-item__stack" data-front={english ? 'en' : 'zh'}>
+              <ItemTip lang="zh-CN" front={!english} />
+              <ItemTip lang="en" front={english} />
+              <button
+                className="home-item__flip"
+                type="button"
+                onClick={() => setEnglish((v) => !v)}
+              >
+                {english ? '翻面 · 查看中文' : '翻面 · 查看英文原文'}
+              </button>
             </div>
-            <button
-              className="home-item__front"
-              type="button"
-              aria-label="中英装备示例翻面"
-              aria-pressed={english}
-              onClick={() => setEnglish((value) => !value)}
-            >
-              <span className="home-item__lang">{english ? '英文原文' : '中文预览'}</span>
-              <strong className={english ? 'pt-nameplate__en' : 'pt-subhead'}>
-                {english ? 'Sapphire Ring' : '蓝玉戒指'}
-              </strong>
-              <span className="home-item__stats" lang={english ? 'en' : 'zh-CN'}>
-                <span>{english ? '+60 to maximum Life' : '+60 生命上限'}</span>
-                <span>{english ? '+30% to Fire Resistance' : '火焰抗性 +30%'}</span>
-              </span>
-              <span className="home-item__flip">
-                点击翻面 · {english ? '查看中文' : '查看英文'}
-              </span>
-            </button>
             <figcaption id="hero-demo-caption">装备文本示意 · 自造样本</figcaption>
           </figure>
         </section>

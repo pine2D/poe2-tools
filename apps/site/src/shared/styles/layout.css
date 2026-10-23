@@ -75,6 +75,10 @@
   max-width: 820px;
   margin-inline: auto;
 }
+/* 词典失败且已有文件（三栏）：ErrorCard 占满阅读区，不在卡片与导出栏之间留出大块空白（B4-14） */
+.app__side ~ .app__main > .app__error {
+  max-width: none;
+}
 .app__error-title {
   display: flex;
   align-items: center;
@@ -201,6 +205,28 @@
 .app__output p {
   overflow-wrap: anywhere;
   color: var(--ink-2);
+}
+/* 看板多阶段：共几份、当前第几份与切换（B4-02）；名称与 ZIP 条目同名 */
+.app__output-pick {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block: var(--sp-2);
+}
+.app__output-pick p {
+  margin: 0;
+}
+.app__output-pick select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--control-edge);
+  border-radius: 0;
+  background: var(--raised);
+  color: var(--val);
+  font: inherit;
+}
+.app__output-name {
+  margin: var(--sp-2) 0;
 }
 .app__output textarea {
   width: 100%;

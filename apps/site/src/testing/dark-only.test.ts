@@ -105,12 +105,15 @@ describe('主题移除（spec §7.2）', () => {
     expect(hits).toEqual([])
   })
 
-  it('三个页面入口只声明深色：color-scheme dark，唯一一条 theme-color #17130f', () => {
+  // v4 冷蓝黑页面：theme-color 与 tokens.css 的 --page 同值（旧暖棕 #17130f 已停用）
+  it('三个页面入口只声明深色：color-scheme dark，唯一一条 theme-color 取 --page', () => {
+    const page = rootTokens(read(`${THEME_SRC}/tokens.css`)).tokens.get('--page')
+    expect(page).toBe('#0e1115')
     for (const path of HTML_ENTRIES.slice(0, 3)) {
       const html = read(path)
       expect(html, path).toContain('<meta name="color-scheme" content="dark" />')
       expect(html.match(/name="theme-color"/g), path).toHaveLength(1)
-      expect(html, path).toContain('<meta name="theme-color" content="#17130f" />')
+      expect(html, path).toContain(`<meta name="theme-color" content="${page}" />`)
       expect(html, path).not.toContain('<script>')
     }
   })

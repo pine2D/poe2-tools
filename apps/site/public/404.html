@@ -7,17 +7,20 @@
 <title>页面未找到 · PoE2 Tools</title>
 <link rel="icon" href="/favicon.svg" />
 <style>
-/* 404（spec §6.5）：独立静态页，只用内联 CSS 与系统无衬线；不加载 Web 字体、不用衬线；没有框、角饰、标题栏和颗粒 */
+/* 404：独立静态页，只用内联 CSS，不加载脚本、构建产物与 Web 字体。v4 外观：冷蓝黑页面、纯黑直角面板、
+   板岩色细线；标题用本机已装的中文衬线（没有时退回系统字体），正文系统无衬线 */
 :root {
   color-scheme: dark;
   /* 最小令牌：与 packages/ui-theme/src/tokens.css 同名令牌取值一致（not-found-tokens.test.ts 断言） */
   --page: #0e1115;
   --bg: #000000;
-  --surface: #15181c;
+  --line-2: #2c333b;
+  --metal-line: #465260;
+  --label: #fff8e1;
   --ink: #f2ead8;
   --ink-2: #c9bba0;
+  --ink-3: #a38d6d;
   --gold: #e9cf9f;
-  --bronze: #b08850;
   --focus: #b8cfff;
 }
 body {
@@ -25,31 +28,30 @@ body {
   padding: 0 16px;
   background: var(--page);
   color: var(--ink);
-  font: 16px/1.8 system-ui, sans-serif;
+  font: 16px/1.8 system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
 }
-/* 卡片块水平居中；卡内文字一律左对齐（L0） */
+/* 面板水平居中；面板内文字左对齐 */
 main {
   max-width: 600px;
   margin: 15vh auto;
-  padding: 24px;
-  border: 1px solid var(--bronze);
-  border-radius: 4px;
-  background: var(--surface);
+  padding: 32px;
+  border: 1px solid var(--line-2);
+  border-radius: 0;
+  background: var(--bg);
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   margin: 0;
-}
-.brand svg {
-  flex: none;
-  width: 46px;
-  height: 24px;
+  color: var(--ink-3);
+  font-size: 13px;
+  letter-spacing: 0.04em;
 }
 h1 {
-  color: var(--ink);
-  font-size: 28px;
+  margin: 12px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--metal-line);
+  color: var(--label);
+  font: 700 28px/1.35 "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  letter-spacing: 0.04em;
 }
 p {
   color: var(--ink-2);
@@ -58,11 +60,12 @@ nav {
   display: flex;
   flex-wrap: wrap;
   column-gap: 24px;
-  margin: 8px 0;
+  margin: 8px 0 0;
 }
 a {
-  display: inline-block;
-  padding-block: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--gold);
   text-underline-offset: 4px;
 }
@@ -70,13 +73,27 @@ a:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
+@media (max-width: 600px) {
+  main {
+    padding: 24px 16px;
+  }
+  h1 {
+    font-size: 24px;
+  }
+}
+@media (forced-colors: active) {
+  main,
+  h1 {
+    border-color: CanvasText;
+  }
+}
 </style>
 </head>
 <body>
 <main>
-<p class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -12.5 48 25" width="46" height="24" aria-hidden="true" focusable="false"><path fill="#120a04" d="M9.5-2.8 23.6 0 9.5 2.8Z"/><path fill="#e6c083" d="M10.5-1.9 22.2 0H10.5Z"/><path fill="#7a5530" d="M10.5 1.9 22.2 0H10.5Z"/><g transform="scale(-1 1)"><path fill="#120a04" d="M9.5-2.8 23.6 0 9.5 2.8Z"/><path fill="#e6c083" d="M10.5-1.9 22.2 0H10.5Z"/><path fill="#7a5530" d="M10.5 1.9 22.2 0H10.5Z"/></g><path fill="#120a04" d="M0-12.4 12.4 0 0 12.4-12.4 0Z"/><path fill="#f3d8a2" d="M-11 0 0-11V-6.6L-6.6 0Z"/><path fill="#c89a5c" d="M0-11 11 0H6.6L0-6.6Z"/><path fill="#5e3c1b" d="M11 0 0 11V6.6L6.6 0Z"/><path fill="#94673a" d="M0 11-11 0H-6.6L0 6.6Z"/><path fill="#140b04" d="M0-6.6 6.6 0 0 6.6-6.6 0Z"/><path fill="#fff0c8" d="M0-4.9-4.9 0H0Z"/><path fill="#e3a24a" d="M0-4.9 4.9 0H0Z"/><path fill="#7a3d0c" d="M4.9 0 0 4.9V0Z"/><path fill="#b36a22" d="M-4.9 0 0 4.9V0Z"/></svg><span>PoE2 Tools · 404</span></p>
+<p class="brand">PoE2 Tools · 404</p>
 <h1>这里没有找到页面。</h1>
-<p>链接可能已经变化。构筑汉化现在有了独立的工作台地址。</p>
+<p>链接可能已经失效，或页面地址已经更改。</p>
 <nav aria-label="返回工具"><a href="/">返回首页</a><a href="/build/">打开构筑汉化</a><a href="/extension/">查看中文助手</a></nav>
 </main>
 </body>

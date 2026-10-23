@@ -16,8 +16,10 @@
     padding-block: var(--sp-2);
     gap: var(--sp-3);
   }
+  /* min-width 0：flex 项默认按单行长名的最小内容宽撑开，省略号失效、移除按钮被推远（B4-01） */
   .app__files > li {
     flex: 0 0 220px;
+    min-width: 0;
   }
   .app__side-note {
     margin: var(--sp-2) 0 0;

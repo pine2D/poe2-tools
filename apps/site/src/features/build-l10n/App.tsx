@@ -11,7 +11,7 @@ import { EmptyState } from './components/EmptyState'
 import { FileList } from './components/FileList'
 import { ExportOptions, LocalePicker, OptionsBar } from './components/OptionsBar'
 import { Toast } from './components/Toast'
-import { saveBlob, textBlob, zipBlob, zipName } from './download/download'
+import { saveBlob, textBlob, uniqueNames, zipBlob, zipName } from './download/download'
 import { EXAMPLE_SERIES } from './example'
 import { pastedSource, readFiles } from './files/readSources'
 import { buildFieldRows } from './preview/fields'
@@ -154,6 +154,14 @@ export function App({ fetchImpl }: AppProps) {
   const handoff = useRef<{ mode: 'board' | 'detail'; label?: string | undefined } | null>(null)
   // 看板按构筑 key 整块重挂：“切换构筑”单选组随之卸载，记下目标构筑，重挂后把焦点交给新的选中项
   const seriesHandoff = useRef<string | null>(null)
+  // 重试加载词典：按钮随加载态卸载，焦点会掉回 <body>；成功后交给主区标题
+  const retryHandoff = useRef(false)
+  const retryDict = () => {
+    retryHandoff.current = true
+    setReloadKey((n) => n + 1)
+  }
+  // 导出栏“查看实际导出内容”里用户选看的文件；不在当前导出范围内时退回第一份
+  const [outputId, setOutputId] = useState<string | null>(null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey 不出现在 effect 体里是故意的——它就是「重跑一次」的开关，删掉重试按钮会失效
   useEffect(() => {
@@ -171,6 +179,21 @@ export function App({ fetchImpl }: AppProps) {
       cancelled = true
     }
   }, [loader, locale, reloadKey])
+
+  useEffect(() => {
+    if (dictState.status === 'loading' || !retryHandoff.current) return
+    retryHandoff.current = false
+    if (dictState.status !== 'ready') return
+    // 用户已把焦点移到别处时不抢
+    const active = document.activeElement
+    if (active !== null && active !== document.body) return
+    for (const id of ['build-title', 'board-title', 'empty-hero', 'build-main']) {
+      const target = document.getElementById(id)
+      if (target === null) continue
+      target.focus()
+      return
+    }
+  }, [dictState])
 
   // 输入方式只影响反馈动效，不进入翻译或预览状态。
   useEffect(() => {
@@ -345,6 +368,12 @@ export function App({ fetchImpl }: AppProps) {
     saveBlob(textBlob(result.file.output), result.file.name)
     notifyDownload(`已开始下载 ${result.file.name}`)
   }
+  // 批量下载按看板的阶段顺序（含手动调序）排列，与“下载当前构筑”一致；不在任何构筑里的（理论上没有）排在最后
+  const ordered = useMemo(() => {
+    const files = seriesList.flatMap((series) => series.stages.map((stage) => stage.file))
+    const seen = new Set(files.map((file) => file.id))
+    return [...files, ...translated.filter((file) => !seen.has(file.id))]
+  }, [seriesList, translated])
   const downloadAll = () => {
     if (translated.length === 1) {
       const only = translated[0]
@@ -355,7 +384,7 @@ export function App({ fetchImpl }: AppProps) {
       )
     } else if (translated.length > 1) {
       const name = zipName(locale)
-      saveBlob(zipBlob(translated), name)
+      saveBlob(zipBlob(ordered), name)
       notifyDownload(
         `已开始下载 ${name}，共 ${translated.length} 份${sources.length > translated.length ? `；另有 ${sources.length - translated.length} 份失败未导出` : ''}`,
       )
@@ -383,6 +412,30 @@ export function App({ fetchImpl }: AppProps) {
 
   const empty = sources.length === 0
 
+  // 右栏导出范围：看板为当前构筑的全部阶段（与 ZIP 条目同序同名），逐项核对为当前文件
+  const boardScope = selected?.ok === true && mode === 'board' && currentSeries !== null
+  const exportFiles = boardScope
+    ? currentSeries.stages.map((stage) => ({ file: stage.file, label: stage.label }))
+    : selected?.ok === true
+      ? [{ file: selected.file, label: null }]
+      : []
+  const entryNames = uniqueNames(exportFiles.map((item) => item.file.name))
+  const shownIndex = Math.max(
+    0,
+    exportFiles.findIndex((item) => item.file.id === outputId),
+  )
+  const shown = exportFiles[shownIndex]
+  const exportScope =
+    dictState.status === 'error'
+      ? '词典未加载，暂时不能导出。文件已保留。'
+      : selected?.ok
+        ? boardScope
+          ? `当前构筑 · ${currentSeries.stages.length} 个阶段`
+          : `当前文件 · ${selected.name}`
+        : dictState.status === 'loading' && !empty
+          ? '词典加载中，文件已保留。'
+          : '请先选择可翻译的文件'
+
   // 主区（spec §6.4.1）：词典失败 → 空态引导 → 解析失败 → 预览 → 等词典。
   // 写成带早返回的函数而不是多层嵌套三元：嵌套三元既难读，也可能撞上 lint 规则。
   const renderMain = () => {
@@ -395,12 +448,12 @@ export function App({ fetchImpl }: AppProps) {
             title="词典没能加载"
             hint={
               <>
-                没有词典就没法翻译。多半是网络或缓存出了<span className="nw">问题</span>
-                ，重试一次通常就好。
+                没有词典无法翻译，可能是网络或缓存出了问题。请重新加载；仍然失败时检查
+                <span className="nw">网络连接</span>。
               </>
             }
             detail={dictState.error}
-            action={{ label: '重新加载词典', onClick: () => setReloadKey((n) => n + 1) }}
+            action={{ label: '重新加载词典', onClick: retryDict }}
           />
           {empty && (
             <PtFrame
@@ -538,7 +591,7 @@ export function App({ fetchImpl }: AppProps) {
           <LocalePicker locale={locale} onLocale={setLocale} />
         )}
       </SiteHeader>
-      <DictBadge state={dictState} onRetry={() => setReloadKey((n) => n + 1)} />
+      <DictBadge state={dictState} onRetry={retryDict} />
       <div className="app__body">
         {!empty && (
           <aside id="app-side" className="app__side" aria-label="导入文件">
@@ -553,27 +606,39 @@ export function App({ fetchImpl }: AppProps) {
         {!empty && (
           <aside className="app__export" aria-label="导出构筑">
             <h2 className="pt-subhead">导出构筑</h2>
-            <p className="app__export-scope">
-              {selected?.ok
-                ? mode === 'board' && currentSeries !== null
-                  ? `当前构筑 · ${currentSeries.stages.length} 个阶段`
-                  : `当前文件 · ${selected.name}`
-                : '请先选择可翻译的文件'}
-            </p>
+            <p className="app__export-scope">{exportScope}</p>
             <ExportOptions options={options} onOptions={setOptions} />
             <p className="app__export-note">预览中的“对照 / 译文”只改变阅读方式。</p>
             {selected?.ok && (
               <>
-                <details className="app__output">
-                  <summary>查看实际导出内容</summary>
-                  <p>{selected.file.name}</p>
-                  <textarea
-                    readOnly
-                    rows={12}
-                    aria-label="下载文件内容"
-                    value={selected.file.output}
-                  />
-                </details>
+                {shown !== undefined && (
+                  <details className="app__output">
+                    <summary>查看实际导出内容</summary>
+                    {exportFiles.length > 1 && (
+                      <div className="app__output-pick">
+                        <p>{`共 ${exportFiles.length} 份，当前显示第 ${shownIndex + 1} 份`}</p>
+                        <select
+                          aria-label="选择要查看的导出文件"
+                          value={shown.file.id}
+                          onChange={(event) => setOutputId(event.target.value)}
+                        >
+                          {exportFiles.map((item, index) => (
+                            <option key={item.file.id} value={item.file.id}>
+                              {`${item.label} · ${entryNames[index]}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <p className="app__output-name">{entryNames[shownIndex]}</p>
+                    <textarea
+                      readOnly
+                      rows={12}
+                      aria-label="下载文件内容"
+                      value={shown.file.output}
+                    />
+                  </details>
+                )}
                 <PtForgeButton
                   aria-label={
                     mode === 'board' && currentSeries !== null && currentSeries.stages.length > 1

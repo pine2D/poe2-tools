@@ -12,20 +12,21 @@ export function PopupIllustration({ version }: { version: string }) {
         </div>
         <div className="ext-popup__status">
           <b>beta.craftofexile.com</b>
-          <span>CoE 汉化 · 生效中</span>
+          <span>CoE 中文显示 · 生效中</span>
           <p>未收录的术语保持英文；导入以原站结果为准。</p>
         </div>
+        {/* 开关名、说明与状态字逐字取自真实弹窗（popup.html、popup/index.ts），ExtensionPage.test 核对 */}
         <dl className="ext-popup__rows">
           <div>
             <dt>启用简体中文</dt>
             <dd>
-              已开启<span>国服术语、中文搜索与装备文本转换</span>
+              开启<span>国服术语显示与中文搜索</span>
             </dd>
           </div>
           <div>
-            <dt>中英对照</dt>
+            <dt>显示中英对照</dt>
             <dd>
-              可选<span>术语旁显示英文原名</span>
+              关闭<span>保留英文，方便核对术语</span>
             </dd>
           </div>
         </dl>

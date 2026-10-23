@@ -21,6 +21,9 @@ const shard0 = new Set(
 )
 const rich = readFileSync(resolve(here, '../../../../data/fixtures/synthetic/rich.build'), 'utf8')
 
+// 文件项选择按钮的可访问名称是“构筑名，文件名”（B4-05）；按文件名找时匹配整名或“，文件名”结尾
+const pickName = (file: string) => (name: string) => name === file || name.endsWith(`，${file}`)
+
 // 本里程碑页面上必须至少命中一次的衬线选择器
 const MUST_HIT = ['.pt-nav a', '.pt-titlebar__title', '.pt-forge-btn', '.pt-hero-title']
 
@@ -65,7 +68,7 @@ describe('衬线文字只用 shard0 的字（spec §7.3、§8.5）', () => {
     fireEvent.change(screen.getByLabelText('选择 .build 文件'), {
       target: { files: [new File([rich], 'rich.build', { type: 'application/json' })] },
     })
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     text += collect(hits)
 
     const missing = [...new Set(text)].filter((ch) => !/\s/.test(ch) && !shard0.has(ch))

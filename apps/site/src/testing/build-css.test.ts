@@ -105,6 +105,9 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
     expect(finalValue(rules, '.app__main:only-child > .app__error', 'margin-inline')).toBe('auto')
     expect(finalValue(rules, '.app__error', 'max-width')).toBe('640px')
   })
+  it('词典失败且已有文件：ErrorCard 占满阅读区，与导出栏之间不留大块空白（B4-14）', () => {
+    expect(finalValue(rules, '.app__side ~ .app__main > .app__error', 'max-width')).toBe('none')
+  })
   it('ErrorCard 的两条宽度规则按特异性升序：(0,3,0) 的限定写法排在 (0,1,0) 的 .app__error 之后', () => {
     // biome lint/style/noDescendingSpecificity 只报警告、不让 verify 失败，这里钉住顺序
     const layout = parseRules(read('apps/site/src/shared/styles/layout.css')).filter(
@@ -335,6 +338,20 @@ describe('阶段看板与紧凑文件行的几何（阶段看板验收修正第 
   const board = parseRules(read('apps/site/src/shared/styles/stageboard.css'))
   it('文件列表是可收窄的单列：长名称按省略号截断，不把行撑出卡片', () => {
     expect(finalValue(side, '.app__files', 'grid-template-columns')).toBe('minmax(0, 1fr)')
+  })
+  // B4-01：≤1199 系列条里文件项是 flex 项，min-width:auto 会按单行长名撑宽，省略号失效、移除按钮被推远
+  it('≤1199px 系列条的文件项可收窄到 220px，长名按省略号截断', () => {
+    const rules = buildCss()
+    expect(finalValue(rules, '.app__files > li', 'flex', 'max-width: 1199px')).toBe('0 0 220px')
+    expect(finalValue(rules, '.app__files > li', 'min-width', 'max-width: 1199px')).toBe('0')
+  })
+  // B4-04：选择按钮只包住名称（约 178×21）；用铺满整项的伪元素扩大点击区，移除按钮在其上方
+  it('文件项整条可点：选择按钮的 ::after 铺满文件项，移除按钮叠在上方', () => {
+    const rules = buildCss()
+    expect(finalValue(rules, '.pt-file__pick::after', 'position')).toBe('absolute')
+    expect(finalValue(rules, '.pt-file__pick::after', 'inset')).toBe('0')
+    expect(finalValue(rules, '.pt-file__pick::after', 'content')).toBe('""')
+    expect(finalValue(rules, '.pt-file__remove', 'z-index')).toBe('1')
   })
   it('紧凑文件行右内边距让出移除按钮（right 6px + 28px）再留 --sp-1', () => {
     expect(finalValue(side, '.app__files--stages .pt-file', 'padding')).toBe(

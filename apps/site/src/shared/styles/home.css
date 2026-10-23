@@ -36,76 +36,123 @@
   color: var(--ink-3);
   font-size: var(--fs-small);
 }
+/* 物品提示框（DESIGN“物品提示框”，对照原型 home.html .stack/.tip）：黑底、稀有度顶栏、两端渐隐分隔线；
+   中文名衬线（.pt-subhead）、英文名 Cinzel（.pt-nameplate__en），名称与词缀居中。两张叠在同一格：
+   后面那张上移左偏，只露出完整的名称栏，词缀被前卡整片挡住，不出现被裁掉一半的字。 */
 .home-item {
-  position: relative;
   min-width: 0;
   margin: 0;
-  padding: var(--sp-7) 0 var(--sp-5) var(--sp-5);
 }
-.home-item__back {
-  position: absolute;
-  inset: 0 var(--sp-6) auto 0;
-  min-height: 220px;
-  padding: var(--sp-5);
-  border: 1px solid var(--line-2);
-  background: var(--bg);
-  color: var(--ink-2);
-  transform: rotate(-5deg);
-}
-.home-item__back b {
-  display: block;
-  font-size: var(--fs-title);
-  font-weight: 400;
-}
-.home-item__front {
+.home-item__stack {
   position: relative;
   display: grid;
-  gap: var(--sp-4);
-  width: 100%;
-  min-height: 300px;
-  padding: var(--sp-5);
-  border: 1px solid var(--bronze-lo);
-  border-radius: 0;
+  justify-items: center;
+  isolation: isolate;
+  /* 与后卡上移量相同，后卡露出的名称栏不越出本区 */
+  padding-block-start: calc(var(--sp-8) + var(--sp-5));
+}
+.home-tip {
+  grid-area: 1 / 1;
+  /* 让出两张卡左右错位的量，窄屏也不越出页面左右外距 */
+  width: min(100% - var(--sp-5), 340px);
   background: var(--bg);
+  box-shadow:
+    0 0 0 1px var(--line-2),
+    0 var(--sp-5) var(--sp-8) color-mix(in srgb, var(--well) 70%, transparent);
+  text-align: center;
+  transition:
+    translate 420ms var(--ease-out),
+    rotate 420ms var(--ease-out);
+}
+/* 后卡：上移一个名称栏高度（88px ≥ 名称栏 84px）、略向左，转 -2°；前卡略向右，转 1° */
+.home-tip--back {
+  z-index: 1;
+  translate: calc(-1 * var(--sp-4)) calc(-1 * (var(--sp-8) + var(--sp-5)));
+  rotate: -2deg;
+}
+.home-tip--front {
+  z-index: 2;
+  translate: var(--sp-3) 0;
+  rotate: 1deg;
+}
+/* 稀有度顶栏：普通物品的灰阶渐变，上缘一条亮线 */
+.home-tip__head {
+  display: grid;
+  align-content: center;
+  gap: var(--sp-1);
+  /* 中英两面名称栏同高，后卡上移量才能恰好露出整栏 */
+  min-height: 84px;
+  padding: var(--sp-3) var(--sp-4);
+  background: linear-gradient(180deg, var(--raised-2), var(--surface));
+  box-shadow:
+    inset 0 1px 0 var(--prop),
+    inset 0 -1px 0 var(--line-2);
+}
+.home-tip .home-tip__name {
+  display: block;
   color: var(--ink);
-  text-align: left;
+  font-size: var(--fs-display-s);
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+}
+.home-tip[lang="en"] .home-tip__name {
+  font-size: var(--fs-title);
+  letter-spacing: 0.06em;
+}
+.home-tip__cls {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+/* 两端渐隐的分隔线 */
+.home-tip__sep {
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--prop) 50%, transparent);
+}
+.home-tip__body {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  color: var(--mod-hi);
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+}
+.home-tip[lang="en"] .home-tip__body {
+  font-size: var(--fs-data);
+}
+/* 翻面按钮：可见文字说明动作；::after 铺满整组卡片，点卡片任意处都能翻面 */
+.home-item__flip {
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-small);
   cursor: pointer;
 }
-.home-item__front:hover {
-  border-color: var(--control-edge);
+.home-item__flip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* 与前卡同层、在 DOM 中排在其后，盖住两张卡（本区 isolation 隔离层叠） */
+  z-index: 2;
 }
-.home-item__front:focus-visible {
+.home-item__flip:hover {
+  color: var(--ink);
+}
+.home-item__flip:focus-visible {
+  outline: none;
+}
+.home-item__flip:focus-visible::after {
   outline: var(--focus-ring);
   outline-offset: 4px;
 }
-.home-item__front .pt-subhead,
-.home-item__front .pt-nameplate__en {
-  display: block;
-  padding-bottom: var(--sp-4);
-  border-bottom: 2px solid var(--metal-line);
-}
-.home-item__lang {
-  display: block;
-  color: var(--ink-3);
-  font-size: var(--fs-small);
-}
-.home-item__stats {
-  display: grid;
-  gap: var(--sp-3);
-  color: var(--mod-hi);
-  font-size: var(--fs-lead);
-  line-height: 1.7;
-}
-.home-item__flip {
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--line-2);
-  color: var(--ink-2);
-  font-size: var(--fs-small);
-}
 .home-item figcaption {
-  margin-top: var(--sp-4);
+  margin-top: var(--sp-2);
   color: var(--ink-3);
   font-size: var(--fs-micro);
+  text-align: center;
 }
 .entry {
   display: grid;
@@ -276,10 +323,27 @@
   .home-actions {
     flex-direction: column;
   }
-  .home-item {
-    padding-inline-start: var(--sp-3);
+  .home-item__stack {
+    padding-block-start: calc(var(--sp-7) + var(--sp-5));
   }
-  .home-item__front,
+  .home-tip__head {
+    min-height: 68px;
+  }
+  .home-tip--back {
+    translate: calc(-1 * var(--sp-2)) calc(-1 * (var(--sp-7) + var(--sp-5)));
+  }
+  .home-tip--front {
+    translate: var(--sp-2) 0;
+  }
+  .home-tip .home-tip__name {
+    font-size: var(--fs-title);
+  }
+  .home-item__flip {
+    min-height: 44px;
+  }
+  .home-tip__body {
+    font-size: var(--fs-data);
+  }
   .strip__side {
     padding: var(--sp-4);
   }
@@ -293,19 +357,20 @@
     font-size: var(--fs-data);
   }
 }
+/* 减少动效：翻面不做过渡、不旋转，两张卡只按静态错位叠放 */
 @media (prefers-reduced-motion: reduce) {
-  .home-item__back {
-    transform: none;
+  .home-tip {
+    transition: none;
+  }
+  .home-tip--back,
+  .home-tip--front {
+    rotate: none;
   }
 }
 @media (forced-colors: active) {
-  .home-item__front,
+  .home-tip,
   .mini-cell--added,
   .mini-cell--changed {
     border-color: CanvasText;
   }
-}
-
-.home-item__front .pt-nameplate__en {
-  font-size: var(--fs-title);
 }

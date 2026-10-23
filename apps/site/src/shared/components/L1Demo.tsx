@@ -39,7 +39,7 @@ export function L1DemoHelp(): ReactElement {
   )
 }
 
-/** 一条候选；selected 只表示外观（类名），className 供页面挂放大行等页面类 */
+/** 一条候选：中文、英文上下两行（同扩展候选的双行标签）；selected 只表示外观（类名），className 供页面挂放大行等页面类 */
 export function L1DemoOption({
   zh,
   en,
@@ -54,7 +54,6 @@ export function L1DemoOption({
   return (
     <div className={cx('l1demo__opt', selected && 'l1demo__opt--selected', className)}>
       <span>{zh}</span>
-      <span aria-hidden="true">→</span>
       <span lang="en">{en}</span>
     </div>
   )

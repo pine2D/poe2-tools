@@ -114,8 +114,11 @@
   border-radius: 0;
   color: var(--ink);
 }
+/* 中英两行：英文是第二行的小字 */
 .l1demo__opt [lang="en"] {
   color: var(--ink-2);
+  font-size: var(--fs-small);
+  line-height: 1.4;
 }
 /* 选中项（示意）：外观同扩展里键盘选中的候选；字号放大由页面样式决定 */
 .l1demo__opt--selected {

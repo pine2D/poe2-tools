@@ -69,6 +69,8 @@ export function FileList({
         const duplicate = sources.filter((item) => item.name === source.name).length > 1
         const label = duplicate ? `${source.name}（第 ${index + 1} 份）` : source.name
         const title = result?.ok ? result.file.input.name : source.name
+        // 可访问名称以可见文字开头（WCAG 2.5.3）：有构筑名时写“构筑名，文件名”，否则只写文件名
+        const name = title !== '' && title !== source.name ? `${title}，${label}` : label
         return (
           <li key={source.id} className="pt-file">
             <button
@@ -76,7 +78,7 @@ export function FileList({
               className="pt-file__pick"
               // 紧凑行点击进入该阶段的逐项核对（App.selectFile），提示写进说明
               title={stages ? `逐项核对 ${title} · ${label}` : `${title} · ${label}`}
-              aria-label={label}
+              aria-label={name}
               aria-current={!stages && source.id === selectedId ? 'true' : undefined}
               onClick={() => onSelect(source.id)}
             >

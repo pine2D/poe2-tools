@@ -52,16 +52,34 @@ describe('FileList（spec §5.12 文件项）', () => {
     render(
       <FileList sources={sources} results={results} misses={misses} selectedId="a" {...noop} />,
     )
-    const pick = screen.getByRole('button', { name: 'a.build' })
+    const pick = screen.getByRole('button', { name: '开荒构筑，a.build' })
     expect(pick.className).toBe('pt-file__pick')
     expect(pick.getAttribute('aria-current')).toBe('true')
     expect(pick.closest('li')?.className).toBe('pt-file')
     expect(pick.closest('li')?.hasAttribute('aria-current')).toBe(false)
-    expect(screen.getByRole('button', { name: 'c.build' }).hasAttribute('aria-current')).toBe(false)
+    expect(
+      screen.getByRole('button', { name: '终局构筑，c.build' }).hasAttribute('aria-current'),
+    ).toBe(false)
     const remove = screen.getByRole('button', { name: '移除 a.build' })
     expect(remove.className).toBe('pt-file__remove')
     // 图标与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
     expect(remove.querySelector('svg')?.getAttribute('width')).toBe('18')
+  })
+
+  // WCAG 2.5.3：可见文字是“构筑名 + 文件名”，可访问名称须包含并以构筑名开头；没有构筑名时只有文件名
+  it('选择按钮的可访问名称包含可见的构筑名与文件名（B4-05）', () => {
+    render(
+      <FileList sources={sources} results={results} misses={misses} selectedId="a" {...noop} />,
+    )
+    const names = screen
+      .getAllByRole('button')
+      .filter((button) => button.className === 'pt-file__pick')
+      .map((button) => button.getAttribute('aria-label'))
+    expect(names).toEqual(['开荒构筑，a.build', 'b.build', '终局构筑，c.build'])
+    for (const pick of document.querySelectorAll('.pt-file__pick')) {
+      const visible = [...pick.querySelectorAll('span')].map((span) => span.textContent ?? '')
+      for (const text of new Set(visible)) expect(pick.getAttribute('aria-label')).toContain(text)
+    }
   })
 
   it('等待词典时文件仍可选和移除', () => {

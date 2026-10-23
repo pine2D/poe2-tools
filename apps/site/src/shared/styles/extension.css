@@ -138,6 +138,8 @@
 .ext-route a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 44px;
   min-height: 44px;
   color: var(--ink-2);
   text-decoration: none;
@@ -221,15 +223,15 @@
   scroll-margin-top: var(--sp-5);
 }
 .ext-guide__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-1) var(--sp-5);
+  display: grid;
+  gap: var(--sp-3);
 }
+/* 章节标题（B4-07）：衬线与金字来自 .pt-subhead，这里只放大字号并画一条板岩色章节线（DESIGN“已确认的方向”） */
 .ext-guide h2,
 .ext-verify h2 {
   margin: 0;
-  color: var(--ink);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--metal-line);
   font-size: var(--fs-section);
   line-height: 1.3;
 }
@@ -454,9 +456,9 @@
   scroll-margin-top: var(--sp-5);
 }
 .ext-details h2 {
-  margin: 0 0 var(--sp-2);
-  color: var(--ink);
-  font-size: var(--fs-title);
+  margin: 0 0 var(--sp-3);
+  padding-block-end: var(--sp-2);
+  border-block-end: 1px solid var(--metal-line);
   line-height: 1.4;
 }
 .ext-details section p {

@@ -6,6 +6,7 @@ import { miniBundle } from '../../../../../packages/build-core/src/testing/miniD
 import { fakeDictFetch } from '../../shared/testing/fakeDictFetch'
 import { fsPathFromMetaUrl } from '../../shared/testing/fsPath'
 import { App } from './App'
+import { EXAMPLE_SERIES } from './example'
 import { mockMatchMedia } from './testing/mockMatchMedia'
 
 const fixtures = `${resolve(dirname(fsPathFromMetaUrl(import.meta.url)), '../../../../../data/fixtures/synthetic')}/`
@@ -51,6 +52,9 @@ function upload(name: string, text: string) {
 // 不能用 within(getByRole('listitem'))：主区还有 .misslist / .supports / .passives 的 <li>。
 const inFileList = () => within(screen.getByRole('list', { name: '已导入文件' }))
 
+// 文件项选择按钮的可访问名称是“构筑名，文件名”（B4-05）；按文件名找时匹配整名或“，文件名”结尾
+const pickName = (file: string) => (name: string) => name === file || name.endsWith(`，${file}`)
+
 // 第一期起导入后默认进入阶段看板；需要单文件预览（页签、待核对清单、N/F）时先进入逐项核对
 function enterReview() {
   fireEvent.click(screen.getByRole('button', { name: /^逐项核对 / }))
@@ -64,7 +68,7 @@ describe('App', () => {
     await renderReady()
     const blobs = interceptDownloads()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const panel = within(screen.getByRole('complementary', { name: '导出构筑' }))
     fireEvent.click(panel.getByText('查看实际导出内容'))
     expect(
@@ -87,7 +91,7 @@ describe('App', () => {
     await renderReady()
     const blobs = interceptDownloads()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const panel = within(screen.getByRole('complementary', { name: '导出构筑' }))
     fireEvent.click(panel.getByLabelText('导出时保留英文原行'))
     vi.mocked(URL.createObjectURL).mockImplementationOnce(() => {
@@ -96,7 +100,7 @@ describe('App', () => {
     fireEvent.click(panel.getByRole('button', { name: '下载 rich.build' }))
     expect(panel.getByRole('alert').textContent).toContain('下载未能开始')
     expect((panel.getByLabelText('导出时保留英文原行') as HTMLInputElement).checked).toBe(true)
-    expect(inFileList().getByRole('button', { name: 'rich.build' })).toBeDefined()
+    expect(inFileList().getByRole('button', { name: pickName('rich.build') })).toBeDefined()
     fireEvent.click(panel.getByRole('button', { name: '下载 rich.build' }))
     expect(panel.queryByRole('alert')).toBeNull()
     expect(await blobs[0]?.text()).toContain('149% increased Spell Damage')
@@ -111,7 +115,7 @@ describe('App', () => {
     expect(toastLive?.textContent).toBe('')
     upload('rich.build', rich)
     // 文件名在列表按钮与（Task 5 起）概览里都会出现：按角色找列表按钮
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const exportPanel = screen.getByRole('complementary', { name: '导出构筑' })
     const loadingLimit = within(exportPanel).getByText('尚未在游戏里实测加载。请保留原文件备份。')
     expect(loadingLimit.closest('details')).toBeNull()
@@ -132,12 +136,12 @@ describe('App', () => {
     await renderReady()
     const blobs = interceptDownloads()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     fireEvent.click(screen.getByLabelText('导出时保留英文原行'))
     fireEvent.click(screen.getByRole('button', { name: '下载 rich.build' }))
     expect(await blobs[0]?.text()).toContain('149% increased Spell Damage')
     upload('rich2.build', rich)
-    await screen.findByRole('button', { name: 'rich2.build' })
+    await screen.findByRole('button', { name: pickName('rich2.build') })
     fireEvent.click(screen.getByRole('button', { name: '下载全部 2 份' }))
     expect(blobs[1]?.type).toBe('application/zip')
   })
@@ -148,12 +152,12 @@ describe('App', () => {
       target: { value: '{"name":"x","inventory_slots":[]}' },
     })
     fireEvent.click(screen.getByText('添加粘贴内容'))
-    await screen.findByRole('button', { name: 'pasted-1.build' })
+    await screen.findByRole('button', { name: pickName('pasted-1.build') })
     // 覆盖率破折号只看列表项（概览里无升华也显示破折号）
     expect(inFileList().getByText('词缀 0/0')).toBeDefined()
     fireEvent.change(screen.getByLabelText('粘贴 .build 内容'), { target: { value: 'not json' } })
     fireEvent.click(screen.getByText('添加粘贴内容'))
-    await screen.findByRole('button', { name: 'pasted-2.build' })
+    await screen.findByRole('button', { name: pickName('pasted-2.build') })
     expect(screen.getByText('解析失败')).toBeDefined()
     fireEvent.click(screen.getByLabelText('移除 pasted-2.build'))
     await waitFor(() => expect(screen.queryByText('pasted-2.build')).toBeNull())
@@ -202,7 +206,7 @@ describe('App', () => {
   it('词典加载期间文件列表不消失，覆盖率位置显示"待词典就绪"且下载禁用', async () => {
     render(<App fetchImpl={() => new Promise(() => {})} />)
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(screen.getByText('待词典就绪')).toBeDefined()
     const download = screen.getByRole('button', { name: '下载全部 0 份' }) as HTMLButtonElement
     expect(download.disabled).toBe(true)
@@ -223,7 +227,7 @@ describe('App', () => {
     // 全站只有一个拖放区，所以「选择 .build 文件」不会一名两指
     expect(screen.getAllByLabelText('选择 .build 文件')).toHaveLength(1)
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     // 有文件之后引导区让位给预览，侧栏出现
     expect(screen.queryByRole('heading', { level: 2, name: HERO })).toBeNull()
   })
@@ -231,9 +235,9 @@ describe('App', () => {
   it('窄屏文件清单持续可用，切换文件不依赖隐藏抽屉', async () => {
     await renderReady()
     upload('a.build', rich)
-    await screen.findByRole('button', { name: 'a.build' })
+    await screen.findByRole('button', { name: pickName('a.build') })
     upload('b.build', JSON.stringify({ name: '另一个构筑' }))
-    const pick = await screen.findByRole('button', { name: 'b.build' })
+    const pick = await screen.findByRole('button', { name: pickName('b.build') })
     pick.focus()
     fireEvent.click(pick)
     expect(screen.getByRole('heading', { name: '另一个构筑' })).toBeDefined()
@@ -253,16 +257,16 @@ describe('App', () => {
     await renderReady()
     expect(screen.queryByRole('button', { name: /下载全部/ })).toBeNull()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(screen.getByRole('button', { name: '下载全部 1 份' }).closest('aside')).not.toBeNull()
   })
 
   it('移除当前文件选中相邻文件，最后一份移除回到导入页', async () => {
     await renderReady()
     upload('a.build', rich)
-    await screen.findByRole('button', { name: 'a.build' })
+    await screen.findByRole('button', { name: pickName('a.build') })
     upload('b.build', JSON.stringify({ name: 'Next Build' }))
-    await screen.findByRole('button', { name: 'b.build' })
+    await screen.findByRole('button', { name: pickName('b.build') })
     fireEvent.click(screen.getByRole('button', { name: '移除 a.build' }))
     expect(screen.getByRole('heading', { name: 'Next Build' })).toBeDefined()
     expect(screen.getByRole('button', { name: '下载 b.build' })).toBeDefined()
@@ -274,13 +278,13 @@ describe('App', () => {
     await renderReady()
     const blobs = interceptDownloads()
     upload('a.build', rich)
-    await screen.findByRole('button', { name: 'a.build' })
+    await screen.findByRole('button', { name: pickName('a.build') })
     enterReview()
     fireEvent.click(screen.getByRole('radio', { name: '译文' }))
     fireEvent.click(screen.getByRole('button', { name: '下载 a.build' }))
     expect(await blobs[0]?.text()).toBe(expected)
     upload('b.build', rich)
-    fireEvent.click(await screen.findByRole('button', { name: 'b.build' }))
+    fireEvent.click(await screen.findByRole('button', { name: pickName('b.build') }))
     // 两份同 link，归为同一构筑的两个阶段；第二列是 b.build
     const reviews = screen.getAllByRole('button', { name: /^逐项核对 / })
     expect(reviews).toHaveLength(2)
@@ -293,9 +297,9 @@ describe('App', () => {
     await renderReady()
     const blobs = interceptDownloads()
     upload('good.build', rich)
-    await screen.findByRole('button', { name: 'good.build' })
+    await screen.findByRole('button', { name: pickName('good.build') })
     upload('bad.build', 'not json')
-    await screen.findByRole('button', { name: 'bad.build' })
+    await screen.findByRole('button', { name: pickName('bad.build') })
     fireEvent.click(screen.getByRole('button', { name: '下载成功的 1 份' }))
     expect(blobs).toHaveLength(1)
     expect(await blobs[0]?.text()).toBe(expected)
@@ -309,7 +313,7 @@ it('无文件时可加载自造示例、核对并下载，导航不再推荐工�
   expect(screen.getByRole('link', { name: 'PoE2 Tools 首页' }).getAttribute('href')).toBe('/')
   const blobs = interceptDownloads()
   fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
-  await screen.findByRole('button', { name: 'example-1.build' })
+  await screen.findByRole('button', { name: pickName('example-1.build') })
   fireEvent.click(screen.getByRole('button', { name: '打包下载 3 个阶段' }))
   expect(blobs).toHaveLength(1)
   expect(blobs[0]?.type).toBe('application/zip')
@@ -336,7 +340,7 @@ describe('构筑页骨架（M2）', () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const side = document.querySelector('#app-side .app__side-inner') as HTMLElement
     expect(side.closest('aside')?.id).toBe('app-side')
     expect(within(side).getByText('本次文件')).toBeDefined()
@@ -353,7 +357,7 @@ describe('构筑页骨架（M2）', () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(frames()).toHaveLength(1)
     // 导入后默认是阶段看板：主区框带看板修饰类（平涂标题栏只用于看板）
     expect(screen.getByRole('main').querySelector('.pt-frame')?.className).toBe(
@@ -367,7 +371,7 @@ describe('构筑页骨架（M2）', () => {
     mockMatchMedia(true)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(frames()).toHaveLength(1)
     expect(forges()).toHaveLength(1)
   })
@@ -376,7 +380,7 @@ describe('构筑页骨架（M2）', () => {
     mockMatchMedia(true)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(document.querySelector('.pt-frame--side')).toBeNull()
     expect(document.querySelector('#app-side > .app__side-inner')).not.toBeNull()
     expect(screen.getByRole('complementary', { name: '导入文件' })).toBeDefined()
@@ -386,19 +390,19 @@ describe('构筑页骨架（M2）', () => {
     const media = mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(document.querySelector('.pt-frame--side')).toBeNull()
     act(() => media.set(true))
     expect(document.querySelector('.pt-frame--side')).toBeNull()
     expect(document.querySelector('#app-side > .app__side-inner')).not.toBeNull()
-    expect(inFileList().getByRole('button', { name: 'rich.build' })).toBeDefined()
+    expect(inFileList().getByRole('button', { name: pickName('rich.build') })).toBeDefined()
   })
 
   it('侧栏脚注在框外，只写未命中说明，不写词典版本（B14）', async () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const note = screen.getByText('未命中的行保留原文，不做猜测替换')
     expect(note.className).toBe('app__side-note')
     expect(note.closest('.pt-frame')).toBeNull()
@@ -437,12 +441,12 @@ describe('构筑页骨架（M2）', () => {
     expect(card.className).toBe('pt-panel pt-panel--card app__error')
     expect(card.closest('.pt-frame')).toBeNull()
     expect(within(card).getByRole('button', { name: '重新加载词典' }).className).toBe('pt-btn')
-    // 390 宽不把“问题”拆开（spec §6.7 R15，M2 Ruling 13）
+    // 390 宽不把句末“网络连接”拆开（spec §6.7 R15）；不写“重试一次通常就好”这类安慰句（ui-copy 4，B4-11）
     const hint = card.querySelector('.app__error-hint') as HTMLElement
     expect(hint.textContent).toBe(
-      '没有词典就没法翻译。多半是网络或缓存出了问题，重试一次通常就好。',
+      '没有词典无法翻译，可能是网络或缓存出了问题。请重新加载；仍然失败时检查网络连接。',
     )
-    expect([...hint.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual(['问题'])
+    expect([...hint.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual(['网络连接'])
     expect(frames()).toHaveLength(1)
     const frame = frames()[0] as HTMLElement
     expect(frame.className).toBe('pt-frame pt-frame--hero app__import')
@@ -463,7 +467,7 @@ describe('构筑页骨架（M2）', () => {
     render(<App fetchImpl={failingDict()} />)
     await screen.findByText('词典加载失败')
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const main = screen.getByRole('main')
     expect(main.querySelector('.pt-frame')).toBeNull()
     expect(within(main).getByRole('heading', { name: '词典没能加载' })).toBeDefined()
@@ -474,7 +478,7 @@ describe('构筑页骨架（M2）', () => {
   it('解析失败：主区框的标题栏是文件名，框里只有 ErrorCard，动作是默认 pt-btn', async () => {
     await renderReady()
     upload('bad.build', 'not json')
-    await screen.findByRole('button', { name: 'bad.build' })
+    await screen.findByRole('button', { name: pickName('bad.build') })
     const frame = screen.getByRole('main').querySelector('.pt-frame') as HTMLElement
     const title = frame.querySelector('.pt-titlebar__title') as HTMLElement
     expect(title.textContent).toBe('bad.build')
@@ -490,7 +494,7 @@ describe('构筑页骨架（M2）', () => {
   it('有文件在等词典：主区框的标题栏是文件名，框里是提示文字', async () => {
     render(<App fetchImpl={() => new Promise(() => {})} />)
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     const main = screen.getByRole('main')
     expect(within(main).getByRole('heading', { name: 'rich.build' }).className).toBe(
       'pt-titlebar__title',
@@ -516,7 +520,7 @@ it('构筑页各状态都不再使用改版前的类名', async () => {
   await renderReady()
   expect(oldClasses()).toEqual([])
   upload('rich.build', rich)
-  await screen.findByRole('button', { name: 'rich.build' })
+  await screen.findByRole('button', { name: pickName('rich.build') })
   expect(oldClasses()).toEqual([])
   enterReview()
   expect(oldClasses()).toEqual([])
@@ -527,7 +531,7 @@ it('构筑页各状态都不再使用改版前的类名', async () => {
     expect(oldClasses()).toEqual([])
   }
   upload('bad.build', 'not json')
-  fireEvent.click(await screen.findByRole('button', { name: 'bad.build' }))
+  fireEvent.click(await screen.findByRole('button', { name: pickName('bad.build') }))
   expect(oldClasses()).toEqual([])
   cleanup()
   render(<App fetchImpl={failingDict()} />)
@@ -581,7 +585,7 @@ describe('阶段看板（第一期）', () => {
   it('逐项核对进入单阶段预览，返回阶段对照回到看板', async () => {
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(screen.queryByRole('tab', { name: /^装备/ })).toBeNull()
     enterReview()
     expect(screen.getByRole('tab', { name: /^装备/ })).toBeDefined()
@@ -605,7 +609,7 @@ describe('阶段看板（第一期）', () => {
     upload('a.build', JSON.stringify({ name: 'Act 1 - Alpha', link: 'https://example.invalid/a' }))
     await screen.findByRole('heading', { name: 'Act 1 - Alpha' })
     upload('b.build', JSON.stringify({ name: 'Act 1 - Beta', link: 'https://example.invalid/b' }))
-    await screen.findByRole('button', { name: 'b.build' })
+    await screen.findByRole('button', { name: pickName('b.build') })
     const group = screen.getByRole('radiogroup', { name: '切换构筑' })
     fireEvent.click(within(group).getByLabelText('Act 1 - Beta'))
     expect(screen.getByRole('heading', { name: 'Act 1 - Beta' })).toBeDefined()
@@ -617,7 +621,7 @@ describe('阶段看板（第一期）', () => {
     upload('a.build', JSON.stringify({ name: 'Act 1 - Alpha', link: 'https://example.invalid/a' }))
     await screen.findByRole('heading', { name: 'Act 1 - Alpha' })
     upload('b.build', JSON.stringify({ name: 'Act 1 - Beta', link: 'https://example.invalid/b' }))
-    await screen.findByRole('button', { name: 'b.build' })
+    await screen.findByRole('button', { name: pickName('b.build') })
     const before = within(screen.getByRole('radiogroup', { name: '切换构筑' })).getByLabelText(
       'Act 1 - Alpha',
     )
@@ -640,8 +644,8 @@ describe('阶段看板（第一期）', () => {
     upload('ok.build', JSON.stringify({ name: 'Act 1 - G', link: 'https://example.invalid/g' }))
     await screen.findByRole('heading', { name: 'Act 1 - G' })
     upload('bad.build', '{ not json')
-    await screen.findByRole('button', { name: 'bad.build' })
-    fireEvent.click(screen.getByRole('button', { name: 'ok.build' }))
+    await screen.findByRole('button', { name: pickName('bad.build') })
+    fireEvent.click(screen.getByRole('button', { name: pickName('ok.build') }))
     expect(screen.getAllByRole('columnheader')).toHaveLength(1)
     expect(screen.getByText('解析失败的文件不会导出。')).toBeDefined()
   })
@@ -650,7 +654,7 @@ describe('阶段看板（第一期）', () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
-    await screen.findByRole('button', { name: 'rich.build' })
+    await screen.findByRole('button', { name: pickName('rich.build') })
     expect(frames()).toHaveLength(1)
     expect(document.querySelector('.pt-frame--side')).toBeNull()
     expect(document.querySelector('#app-side .app__side-inner')).not.toBeNull()
@@ -669,7 +673,9 @@ describe('阶段看板（第一期）', () => {
     fireEvent.click(screen.getByRole('button', { name: '逐项核对 1–30 级' }))
     expect(list.className).toBe('app__files')
     expect(
-      within(list).getByRole('button', { name: 'example-1.build' }).getAttribute('aria-current'),
+      within(list)
+        .getByRole('button', { name: pickName('example-1.build') })
+        .getAttribute('aria-current'),
     ).toBe('true')
   })
 
@@ -678,13 +684,15 @@ describe('阶段看板（第一期）', () => {
     await renderReady()
     fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))
     await screen.findByRole('heading', { name: '示例构筑（自造）' })
-    const pick = inFileList().getByRole('button', { name: 'example-3.build' })
+    const pick = inFileList().getByRole('button', { name: pickName('example-3.build') })
     expect(pick.getAttribute('title')).toMatch(/^逐项核对 /)
     fireEvent.click(pick)
     expect(screen.getByRole('button', { name: '返回阶段对照' })).toBeDefined()
     expect(document.activeElement).toBe(document.getElementById('build-title'))
     expect(
-      inFileList().getByRole('button', { name: 'example-3.build' }).getAttribute('aria-current'),
+      inFileList()
+        .getByRole('button', { name: pickName('example-3.build') })
+        .getAttribute('aria-current'),
     ).toBe('true')
     // 返回看板落回终局一列的“逐项核对”
     fireEvent.click(screen.getByRole('button', { name: '返回阶段对照' }))
@@ -706,5 +714,120 @@ describe('阶段看板（第一期）', () => {
     expect(screen.getByRole('list', { name: '已导入文件' }).className).toBe(
       'app__files app__files--stages',
     )
+  })
+})
+
+// 第四批复盘修复：看板右栏的“查看实际导出内容”与 ZIP 一一对应，“下载全部”按阶段顺序，重试后焦点有落点
+describe('导出栏反映全部导出（B4-02、B4-03、B4-06、B4-14）', () => {
+  // 乱序导入：终局、1–30 级、31–60 级；看板按天赋点数排回 1–30、31–60、终局
+  function uploadExampleShuffled() {
+    const [a, b, c] = EXAMPLE_SERIES as [
+      { name: string; text: string },
+      { name: string; text: string },
+      { name: string; text: string },
+    ]
+    fireEvent.change(screen.getByLabelText('选择 .build 文件'), {
+      target: {
+        files: [c, a, b].map(
+          (item) => new File([item.text], item.name, { type: 'application/json' }),
+        ),
+      },
+    })
+  }
+  const exportPanel = () => within(screen.getByRole('complementary', { name: '导出构筑' }))
+  const outputText = () =>
+    (exportPanel().getByRole('textbox', { name: '下载文件内容' }) as HTMLTextAreaElement).value
+
+  it('看板多阶段：写明共几份、当前第几份，默认第一阶段，可切换，内容与 ZIP 同名条目逐字节一致', async () => {
+    await renderReady()
+    const blobs = interceptDownloads()
+    uploadExampleShuffled()
+    await screen.findByRole('button', { name: '逐项核对 终局' })
+    const panel = exportPanel()
+    fireEvent.click(panel.getByText('查看实际导出内容'))
+    expect(panel.getByText('共 3 份，当前显示第 1 份')).toBeDefined()
+    const picker = panel.getByRole('combobox', {
+      name: '选择要查看的导出文件',
+    }) as HTMLSelectElement
+    expect([...picker.options].map((option) => option.textContent)).toEqual([
+      '1–30 级 · example-1.build',
+      '31–60 级 · example-2.build',
+      '终局 · example-3.build',
+    ])
+    fireEvent.click(panel.getByRole('button', { name: '打包下载 3 个阶段' }))
+    const { unzipSync, strFromU8 } = await import('fflate')
+    const zip = unzipSync(new Uint8Array(await (blobs[0] as Blob).arrayBuffer()))
+    expect(Object.keys(zip)).toEqual(['example-1.build', 'example-2.build', 'example-3.build'])
+    for (const [index, name] of Object.keys(zip).entries()) {
+      fireEvent.change(picker, { target: { value: picker.options[index]?.value } })
+      expect(panel.getByText(`共 3 份，当前显示第 ${index + 1} 份`)).toBeDefined()
+      expect(panel.getByText(name, { selector: '.app__output-name' })).toBeDefined()
+      expect(outputText()).toBe(strFromU8(zip[name] as Uint8Array))
+    }
+  })
+
+  it('从逐项核对返回看板后，右栏仍显示第一阶段，不跟着刚核对的那份变', async () => {
+    await renderReady()
+    uploadExampleShuffled()
+    await screen.findByRole('button', { name: '逐项核对 终局' })
+    fireEvent.click(screen.getByRole('button', { name: '逐项核对 终局' }))
+    fireEvent.click(screen.getByRole('button', { name: '返回阶段对照' }))
+    const panel = exportPanel()
+    fireEvent.click(panel.getByText('查看实际导出内容'))
+    expect(panel.getByText('共 3 份，当前显示第 1 份')).toBeDefined()
+    expect(panel.getByText('example-1.build', { selector: '.app__output-name' })).toBeDefined()
+  })
+
+  it('“下载全部”ZIP 按阶段顺序排列，与“下载当前构筑”一致', async () => {
+    await renderReady()
+    const blobs = interceptDownloads()
+    uploadExampleShuffled()
+    await screen.findByRole('button', { name: '逐项核对 终局' })
+    fireEvent.click(screen.getByRole('button', { name: '下载全部 3 份' }))
+    const { unzipSync } = await import('fflate')
+    const zip = unzipSync(new Uint8Array(await (blobs[0] as Blob).arrayBuffer()))
+    expect(Object.keys(zip)).toEqual(['example-1.build', 'example-2.build', 'example-3.build'])
+  })
+
+  it('词典失败时已有文件：导出栏说明词典未就绪；重试成功后焦点交给主区标题', async () => {
+    let attempt = 0
+    const good = fakeDictFetch(miniBundle)
+    render(
+      <App
+        fetchImpl={async (url) => {
+          attempt += 1
+          if (attempt <= 7 && url.includes('/stats.json'))
+            return { ok: false, status: 404, json: async () => null }
+          return good(url)
+        }}
+      />,
+    )
+    await screen.findByText('词典加载失败')
+    upload('rich.build', rich)
+    await screen.findByRole('button', { name: pickName('rich.build') })
+    expect(exportPanel().queryByText('请先选择可翻译的文件')).toBeNull()
+    expect(exportPanel().getByText('词典未加载，暂时不能导出。文件已保留。')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '重新加载词典' }))
+    await screen.findByText('词典就绪')
+    await waitFor(() => expect(document.activeElement?.id).toBe('board-title'))
+  })
+
+  it('词典失败且没有文件：重试成功后焦点交给空态标题', async () => {
+    let attempt = 0
+    const good = fakeDictFetch(miniBundle)
+    render(
+      <App
+        fetchImpl={async (url) => {
+          attempt += 1
+          if (attempt <= 7 && url.includes('/stats.json'))
+            return { ok: false, status: 404, json: async () => null }
+          return good(url)
+        }}
+      />,
+    )
+    await screen.findByText('词典加载失败')
+    fireEvent.click(screen.getByRole('button', { name: '重试加载词典' }))
+    await screen.findByText('词典就绪')
+    await waitFor(() => expect(document.activeElement?.id).toBe('empty-hero'))
   })
 })
