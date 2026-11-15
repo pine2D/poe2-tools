@@ -146,6 +146,12 @@ describe('pt-header（spec §5.2）', () => {
   })
 })
 
+it('游戏物品面板与名称牌共用独立黑底，输入井不跟随物品底色', () => {
+  expect(declared('panel.css', '.pt-panel--item', 'background')).toBe('var(--item-bg)')
+  expect(declared('nameplate.css', '.pt-nameplate', 'background')).toBe('var(--item-bg)')
+  expect(declared('panel.css', '.pt-panel--inset', 'background')).toBe('var(--well)')
+})
+
 describe('母题 span（spec §4.5）', () => {
   it('四个尺寸与所用符号', () => {
     const size = (variant: string) => [
@@ -253,7 +259,12 @@ describe('pt-btn（spec §5.6）', () => {
       'var(--steel-hi)',
     )
     expect(declared('btn.css', '.pt-btn--primary', 'color')).toBe('var(--label)')
-    expect(declared('btn.css', '.pt-btn--quiet', 'border-color')).toBe('var(--control-edge)')
+    expect(declared('btn.css', '.pt-btn--quiet', 'border-color')).toBe('transparent')
+    expect(declared('btn.css', '.pt-btn--quiet', 'background-color')).toBe('transparent')
+    expect(declared('btn.css', '.pt-btn--quiet:hover', 'border-color')).toBe('transparent')
+    expect(declared('btn.css', '.pt-btn--quiet:hover', 'background-color')).toBe('var(--raised-2)')
+    expect(declared('btn.css', '.pt-btn', 'border-color', FORCED)).toBe('ButtonText')
+    expect(declared('btn.css', '.pt-btn:hover', 'border-color', FORCED)).toBe('ButtonText')
     expect(declared('btn.css', '.pt-btn--sm', 'height')).toBe('38px')
     expect(declared('btn.css', '.pt-btn--xs', 'height')).toBe('28px')
     for (const variant of ['.pt-btn--sm', '.pt-btn--xs']) {
@@ -262,14 +273,16 @@ describe('pt-btn（spec §5.6）', () => {
     expect(declared('btn.css', '.pt-wide-only', 'display', /max-width:\s*600px/)).toBe('none')
   })
 
-  it('禁用的 --sm 悬停仍保持 --bar，且排在 --quiet 禁用悬停之后（spec §5.6、§5.12）', () => {
-    // 两条同为 (0,3,0)，靠源码顺序决胜；“仅看待核对”是 --quiet --sm，禁用时悬停不能变成 --raised
-    expect(declared('btn.css', '.pt-btn--sm:disabled:hover', 'background-color')).toBe('var(--bar)')
-    const top = rulesOf('btn.css').filter((rule) => rule.atRules.length === 0)
-    const indexOf = (selector: string) => top.findIndex((rule) => rule.selectors.includes(selector))
-    expect(indexOf('.pt-btn--sm:disabled:hover')).toBeGreaterThan(
-      indexOf('.pt-btn--quiet:disabled:hover'),
+  it('尺寸不覆盖操作角色；禁用文字操作不出现底色或边框反馈', () => {
+    for (const size of ['.pt-btn--sm', '.pt-btn--xs']) {
+      expect(declared('btn.css', size, 'background-color')).toBeUndefined()
+      expect(declared('btn.css', `${size}:hover`, 'background-color')).toBeUndefined()
+      expect(declared('btn.css', `${size}:disabled:hover`, 'background-color')).toBeUndefined()
+    }
+    expect(declared('btn.css', '.pt-btn--quiet:disabled:hover', 'background-color')).toBe(
+      'transparent',
     )
+    expect(declared('btn.css', '.pt-btn--quiet:disabled:hover', 'border-color')).toBe('transparent')
   })
 
   // M2 移交 F4：强制色彩下按下态的 Highlight 内框与焦点环同为 outline，按下态规则写在后、特异性相同，
@@ -590,9 +603,9 @@ describe('tabs.css（spec §5.7、§6.4.2；M0 Ruling 11-1）', () => {
     expect(m2Value(rules, '.pt-tab__count', 'color')).toBe('var(--ink-2)')
     expect(m2Value(rules, '.pt-tab[aria-selected="true"] .pt-tab__count', 'color')).toBe('inherit')
   })
-  it('页签字形：衬线 700 15px、字距 .06em；计数无衬线 500 13px、字距 0', () => {
-    expect(m2Px(rules, '.pt-tab', 'font')).toBe(m2Norm('700 15px/1.6 var(--pt-serif)'))
-    expect(m2Value(rules, '.pt-tab', 'letter-spacing')).toBe('0.06em')
+  it('操作页签无衬线 600 15px；计数无衬线 500 13px，字距均为 0', () => {
+    expect(m2Px(rules, '.pt-tab', 'font')).toBe(m2Norm('600 15px/1.6 var(--font-zh-cn)'))
+    expect(m2Value(rules, '.pt-tab', 'letter-spacing')).toBe('0')
     expect(m2Px(rules, '.pt-tab__count', 'font')).toBe(m2Norm('500 13px/1 var(--font-zh-cn)'))
     expect(m2Value(rules, '.pt-tab__count', 'letter-spacing')).toBe('0')
   })

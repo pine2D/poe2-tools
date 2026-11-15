@@ -241,7 +241,7 @@ it('HOST_SERIF_SELECTORS 只命中原站 Fontin 位置；后备栈不含 Fontin 
   expect(HOST_SERIF_FALLBACK).not.toMatch(/fontin|poe2/i)
 })
 
-// 面板契约（Task 4）：标题与预览、填入、恢复按钮用衬线，“第 N 行”定位按钮不用（裁定 19）
+// 面板契约：衬线用于标题与步骤；预览、填入、恢复及行定位等操作统一无衬线。
 const PANEL_SOURCE = `物品类别: 法器
 稀有度: 魔法
 测试的 符文法器
@@ -250,7 +250,7 @@ const PANEL_SOURCE = `物品类别: 法器
 --------
 { 前缀属性 "测试的" (等阶：6) — 能量护盾 }
 +42(36-41) 能量护盾上限`
-it('导入面板：L1_SERIF_SELECTORS 命中标题与全部非定位按钮，不命中“第 N 行”定位按钮', () => {
+it('导入面板：L1_SERIF_SELECTORS 命中标题与步骤，不命中普通操作或行定位按钮', () => {
   document.body.innerHTML = '<dialog open><textarea id="importerInput"></textarea></dialog>'
   const input = document.querySelector('#importerInput') as HTMLTextAreaElement
   input.value = PANEL_SOURCE
@@ -285,11 +285,13 @@ it('导入面板：L1_SERIF_SELECTORS 命中标题与全部非定位按钮，不
   const buttons = [...root.querySelectorAll('button')]
   const locate = buttons.filter((b) => b.getAttribute('aria-label')?.startsWith('定位第'))
   expect(locate.length).toBeGreaterThan(0)
-  for (const button of buttons)
-    expect(serifOf(button), button.textContent ?? '').toBe(!locate.includes(button))
-  expect(buttons.filter(serifOf).map((b) => b.textContent)).toEqual(
+  for (const button of buttons) expect(serifOf(button), button.textContent ?? '').toBe(false)
+  expect(buttons.map((b) => b.textContent)).toEqual(
     expect.arrayContaining(['预览中文转换', '填入英文到原站导入框']),
   )
+  const steps = [...root.querySelectorAll('.steps b')]
+  expect(steps).toHaveLength(3)
+  for (const step of steps) expect(serifOf(step), step.textContent ?? '').toBe(true)
 })
 
 it('B3-07：语言提示另持一份字体引用；原站衬线层停用时字体保留，最后一个释放才删除，释放幂等', async () => {

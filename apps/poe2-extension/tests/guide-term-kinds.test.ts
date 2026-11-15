@@ -141,7 +141,9 @@ describe('侧栏译文术语着色', () => {
       const body = getComputedStyle(document.querySelector('[data-id="p"] .dst') as Element).color
       expect(color('生命上限')).toBe(body)
       for (const zh of ['瘟疫', '冈姆的壮志', '枯灰长杖', '异能魔力'])
-        expect(contrastRatio(color(zh), '#000000')).toBeGreaterThanOrEqual(4.5)
+        expect(
+          contrastRatio(color(zh), getComputedStyle(document.body).backgroundColor),
+        ).toBeGreaterThanOrEqual(4.5)
     })
   })
   it('旧数据缺少类型时不报错，只显示下划线', () => {
@@ -184,7 +186,9 @@ describe('侧栏译文术语着色', () => {
         '#8f8fff',
       )
       expect(getComputedStyle(stat as Element).color).toBe('#8f8fff')
-      expect(contrastRatio('#8f8fff', '#000000')).toBeGreaterThanOrEqual(4.5)
+      expect(
+        contrastRatio('#8f8fff', getComputedStyle(document.body).backgroundColor),
+      ).toBeGreaterThanOrEqual(4.5)
     })
   })
 })
@@ -211,7 +215,9 @@ describe('术语图例', () => {
     withCss(() => {
       for (const s of legend()?.querySelectorAll<HTMLElement>('[data-kind]') ?? []) {
         const color = getComputedStyle(s).color
-        expect(contrastRatio(color, '#000000')).toBeGreaterThanOrEqual(4.5)
+        expect(
+          contrastRatio(color, getComputedStyle(document.body).backgroundColor),
+        ).toBeGreaterThanOrEqual(4.5)
       }
       expect(getComputedStyle(legend() as Element).fontFamily).not.toContain('Serif')
     })

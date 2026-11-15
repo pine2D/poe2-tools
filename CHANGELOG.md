@@ -3,6 +3,12 @@
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` / `l10n-core` 是私有内部包，不单独计版本；扩展 `apps/poe2-extension` 独立计版本，更新日志见 `apps/poe2-extension/CHANGELOG.md`。
 
+## [0.12.0] - 2026-11-15
+
+### Changed
+- 网站与扩展统一暗色层次：普通面板、输入区域和游戏物品底分别呈现，主操作、次操作与文字操作有明确区别。
+- 操作按钮、页签和表单标签使用无衬线；标题、游戏名称及宣传铭牌保留衬线。小号按钮只改变尺寸，保持原操作角色与键盘焦点。
+
 ## [0.11.0] - 2026-11-15
 
 构筑汉化以处理结果与下载为默认入口，详细核对和阶段比较按需进入。两服词典和文件保护规则保持；下载的 `.build` 在游戏内的加载效果仍待实测。

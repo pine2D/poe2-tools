@@ -6,12 +6,12 @@
   gap: var(--sp-2);
   min-height: 46px;
   padding: var(--sp-3) var(--sp-5);
-  border: 1px solid var(--control-edge);
+  border: 1px solid var(--action-edge);
   border-radius: 0;
   background: var(--steel);
   box-shadow: inset 0 0 0 2px var(--steel-edge);
   color: var(--label);
-  font: 700 var(--fs-data) / 1.5 var(--pt-serif);
+  font: 600 var(--fs-data) / 1.5 var(--font-zh-cn);
   text-align: center;
   text-decoration: none;
   cursor: pointer;

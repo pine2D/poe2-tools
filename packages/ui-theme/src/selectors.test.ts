@@ -31,13 +31,10 @@ it('L1_SERIF_SELECTORS 等于 l1.css 中 font / font-family 使用 var(--l1-seri
   expect([...found].sort()).toEqual([...L1_SERIF_SELECTORS].sort())
   expect(L1_SERIF_SELECTORS).toEqual([
     '.title',
-    '.body > button',
-    '.result > button',
     '.steps b',
     '.column-label',
     '.group h3',
     '.notice strong',
-    '.notice header button',
   ])
   for (const selector of L1_SERIF_SELECTORS) expect(SERIF_SELECTORS).not.toContain(selector)
 })

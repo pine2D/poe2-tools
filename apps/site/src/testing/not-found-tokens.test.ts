@@ -29,7 +29,7 @@ it('内联令牌与 tokens.css 同值，只声明深色', () => {
   expect(root?.declarations.get('color-scheme')).toBe('dark')
 })
 
-// B4-13、B1-08：直角、纯黑面板、板岩色章节线、衬线标题；链接 --gold，焦点环 --focus
+// B4-13、B1-08：直角、冷暗面板、板岩色章节线、衬线标题；链接 --gold，焦点环 --focus
 it('body 底为 --page；面板 --bg 底、直角、1px --line-2 边；标题下一条 --metal-line 细线', () => {
   const rules = parseRules(style)
   const get = (selector: string, property: string) =>

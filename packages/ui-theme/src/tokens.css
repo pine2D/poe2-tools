@@ -5,39 +5,41 @@
 
   /* v4 表面；保留生产接口，目标见根 DESIGN.md */
   --page: #0e1115;
-  --bg: #000000;
+  --bg: #11161d;
   --bg-2: #121922;
-  --surface: #15181c;
+  --surface: #171e27;
   --raised: #1e2124;
   --raised-2: #262a2e;
-  --frame-bg: #000000;
-  --well: #000000;
-  --card: #000000;
+  --frame-bg: #11161d;
+  --well: #080c11;
+  --card: #171e27;
+  --item-bg: #000000;
   --bar: #0e1115;
   --miss-bg: rgba(239, 144, 184, 0.07);
 
-  /* 线条：只有 --control-edge 承担交互控件边界，其余都是装饰 */
+  /* 输入／次操作与钢蓝主操作分别核对边界；其余线条用于分隔与装饰。 */
   --line: #1f2429;
   --line-2: #2c333b;
-  --control-edge: #94a1ae;
+  --control-edge: #7e8fa3;
+  --action-edge: #8fa5bc;
   --metal-line: #465260;
   --metal-edge: #2c333b;
   --metal-bright: #b08850;
 
-  /* 标签与主操作：钢蓝内边只作装饰，外边沿用 --control-edge */
+  /* 钢蓝内边只作装饰，主操作外边使用 --action-edge。 */
   --label: #fff8e1;
   --plaque-bg: #07080a;
   --plaque-ink: #f5e8b3;
   --steel: #0f304d;
   --steel-hi: #164a75;
   --steel-edge: #4c4c7d;
-  --tab-start: #5c3d16;
-  --tab-end: #3a2810;
+  --tab-start: #262a2e;
+  --tab-end: #262a2e;
 
   /* 文字与青铜边（--bronze 系列不作正文色） */
   --ink: #f2ead8;
-  --ink-2: #c9bba0;
-  --ink-3: #a38d6d;
+  --ink-2: #c5c8cf;
+  --ink-3: #b0a797;
   --bronze-lo: #8a6a3e;
   --bronze: #b08850;
   --bronze-hi: #b08850;
@@ -48,7 +50,7 @@
   --mod: #8f8fff;
   --mod-hi: #9a9aff;
   --mod-num-zh: #dcdcff;
-  --prop: #9d9282;
+  --prop: #b0a797;
   --val: #e2e2e2;
   --unique: #e28a47;
   /* 普通物品与天赋／升华名称色（DESIGN 游戏色） */
@@ -69,7 +71,7 @@
   --danger: #f3806f;
   /* 危险确认按钮（DESIGN 色彩表“危险确认”）：底／边／字 */
   --danger-bg: #5a1d17;
-  --danger-edge: #9b3a2e;
+  --danger-edge: #c06052;
   --danger-ink: #ffd9d2;
   --focus: #b8cfff;
   --focus-ring: 2px solid var(--focus);

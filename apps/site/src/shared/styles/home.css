@@ -55,7 +55,7 @@
   grid-area: 1 / 1;
   /* 让出两张卡左右错位的量，窄屏也不越出页面左右外距 */
   width: min(100% - var(--sp-5), 340px);
-  background: var(--bg);
+  background: var(--item-bg);
   box-shadow:
     0 0 0 1px var(--line-2),
     0 var(--sp-5) var(--sp-8) color-mix(in srgb, var(--well) 70%, transparent);

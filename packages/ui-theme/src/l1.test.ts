@@ -30,7 +30,7 @@ const COE_BACKGROUNDS = [
   '#101010',
   '#2d2d2d',
 ]
-const PANEL = '#000000'
+const PANEL = '#11161d'
 const L1_ONLY = [
   '--ext-ink',
   '--l1-panel',
@@ -68,6 +68,11 @@ describe('l1.css 令牌（spec §6.9 样式注入）', () => {
 })
 
 describe('L1 禁用项（spec §4.2）', () => {
+  it('当前步骤有独立青铜指示，与底色同亮的悬停不混淆', () => {
+    const current = rules.find((r) => r.selectors.includes('.steps [aria-current="step"]'))
+    expect(current?.declarations.get('box-shadow')).toBe('inset 0 -2px 0 var(--bronze)')
+    expect(contrastRatio(token('--bronze'), token('--tab-start'))).toBeGreaterThanOrEqual(3)
+  })
   it('渐变只用于当前候选或步骤，不加载网站字体栈或外部资源', () => {
     for (const rule of rules.filter((r) =>
       [...r.declarations.values()].some((v) => /gradient\(/.test(v)),
@@ -113,10 +118,9 @@ describe('L1 衬线（扩展 0.4.0，DESIGN.md L1 白名单）', () => {
         expect(selector).not.toMatch(
           /data-tertiary|::slotted|textarea|\.disclaimer|\.notice p|\.check|\.by/,
         )
-      // 语言提示只有标题与“关闭”用固定子集，正文保持无衬线（B3-07）
+      // 语言提示只有标题用固定子集，正文保持无衬线（B3-07）
       expect(rule.selectors.filter((selector) => selector.startsWith('.notice'))).toEqual([
         '.notice strong',
-        '.notice header button',
       ])
     }
   })

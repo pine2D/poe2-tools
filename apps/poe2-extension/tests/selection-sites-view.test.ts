@@ -261,7 +261,7 @@ it('B2-21 添加覆盖已有子目录的父目录时提示范围重叠', async (
   )
   expect(view.root.querySelector('[role="status"]')?.textContent).toContain('已有的 1 条规则')
 })
-it('B2-11 站点页页面底用 --page，内容面板保持纯黑', async () => {
+it('B2-11 站点页画布与内容外框采用各自的冷暗层级', async () => {
   const { readFileSync } = await import('node:fs')
   const style = document.createElement('style')
   style.textContent = [
@@ -275,7 +275,7 @@ it('B2-11 站点页页面底用 --page，内容面板保持纯黑', async () => 
   try {
     const { view } = setup()
     expect(getComputedStyle(document.body).backgroundColor).toBe('#0e1115')
-    expect(getComputedStyle(view.root).backgroundColor).toBe('#000000')
+    expect(getComputedStyle(view.root).backgroundColor).toBe('#11161d')
   } finally {
     style.remove()
   }

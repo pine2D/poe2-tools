@@ -8,7 +8,7 @@
 }
 .pt-panel--item {
   --edge: var(--line-2);
-  background: var(--well);
+  background: var(--item-bg);
   border: 1px solid var(--edge);
 }
 .pt-panel--item.pt-panel--unique {

@@ -1,5 +1,4 @@
-/* v4 通用按钮：直角、清晰边界；默认深灰，主操作显式使用 --primary。
-   默认无衬线，已覆盖字体的界面可按规范覆盖。 */
+/* 通用按钮：操作角色决定颜色，尺寸变体只决定大小；普通操作统一使用无衬线。 */
 .pt-btn {
   display: inline-flex;
   align-items: center;
@@ -27,17 +26,19 @@
   outline: var(--focus-ring);
   outline-offset: 3px;
 }
-/* --quiet：保留现有调用入口，与次操作一致。 */
+/* 文字操作保留点击区与焦点环，不与主次按钮争夺边框权重。 */
 .pt-btn--quiet {
-  border-color: var(--control-edge);
-  background-color: var(--raised);
-  color: var(--ink);
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--ink-2);
 }
 .pt-btn--quiet:hover {
-  border-color: var(--control-edge);
+  border-color: transparent;
   background-color: var(--raised-2);
+  color: var(--ink);
 }
 .pt-btn--primary {
+  border-color: var(--action-edge);
   background-color: var(--steel);
   box-shadow: inset 0 0 0 1px var(--steel-edge);
   color: var(--label);
@@ -55,15 +56,11 @@
   border-color: var(--danger-ink);
   background-color: var(--danger-bg);
 }
-/* --sm：工具栏“下一项”“仅看待核对”，底改为 --bar（悬停也保持 --bar，只换边色） */
+/* 尺寸不覆盖操作角色：小号主操作仍为钢蓝，文字操作仍为透明底。 */
 .pt-btn--sm {
   height: 38px;
   padding: 0 12px;
-  background-color: var(--bar);
   font-size: 0.84375rem;
-}
-.pt-btn--sm:hover {
-  background-color: var(--bar);
 }
 /* --xs：只用于 34px 高的词典状态条里的“重试” */
 .pt-btn--xs {
@@ -94,15 +91,18 @@
 }
 /* 禁用态沿用改版前（controls.css:22） */
 .pt-btn:disabled {
+  border-color: var(--line-2);
   color: var(--ink-2);
   cursor: not-allowed;
 }
 .pt-btn:disabled:hover {
   background-color: var(--raised);
 }
+.pt-btn--quiet:disabled,
 .pt-btn--quiet:disabled:hover {
-  border-color: var(--control-edge);
-  background-color: var(--raised);
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--ink-3);
 }
 /* 主操作禁用：去掉钢蓝底与内边，改为中性底，避免与可用态混淆 */
 .pt-btn--primary:disabled,
@@ -110,10 +110,6 @@
   background-color: var(--raised);
   box-shadow: none;
   color: var(--ink-2);
-}
-/* 与上一条同为 (0,3,0)，必须排在其后：--quiet --sm 禁用时悬停仍是 --bar，不出现悬停反馈 */
-.pt-btn--sm:disabled:hover {
-  background-color: var(--bar);
 }
 
 /* ≤600px：只在宽屏显示的文字片段隐藏；所有按钮最小高 44px（默认高 46，只需抬高 --sm、--xs） */
@@ -136,8 +132,15 @@
 
 /* 强制色彩：按下态的内边（box-shadow）会被去掉，改用 Highlight 外框 */
 @media (forced-colors: active) {
-  .pt-btn {
+  .pt-btn,
+  .pt-btn:hover {
     border-color: ButtonText;
+  }
+  .pt-btn:disabled,
+  .pt-btn--quiet:disabled,
+  .pt-btn--quiet:disabled:hover {
+    border-color: GrayText;
+    color: GrayText;
   }
   .pt-btn[aria-pressed="true"] {
     outline: 2px solid Highlight;

@@ -20,35 +20,17 @@ it('署名常量与网站完整声明一字不差', () => {
   expect(provenance.SHORT_PROVENANCE).toBe('PoE2 中文助手 · 非官方')
 })
 
-it('标题、标签、按钮的静态与动态文案均由独立 popup 字体覆盖', async () => {
+it('实际使用衬线的标题与分组由独立 popup 字体覆盖', async () => {
   const shard = coverage.shards.find((s) => s.file === 'serif-sc-popup.woff2')
   expect(shard?.group).toBe('sc-popup')
   const chars = new Set(shard?.chars ?? '')
   const serif = [
     ...html.matchAll(
-      /<(?:h1|h2|span|button)\b[^>]*class="(?:titlebar__title|popup-heading|setting__label|pt-btn[^"<>]*)"[^>]*>([^<]*)<\/(?:h1|h2|span|button)>/g,
+      /<(?:h1|h2)\b[^>]*class="(?:titlebar__title|popup-heading)"[^>]*>([^<]*)<\/(?:h1|h2)>/g,
     ),
   ].map((m) => m[1])
-  expect(serif).toEqual([
-    'PoE2 中文助手',
-    'CoE 中文显示',
-    '刷新页面',
-    '启用简体中文',
-    '显示中英对照',
-    '重试读取',
-    '网页翻译',
-    '翻译此页',
-    '启用本页划词',
-  ])
-  const dynamic = ['关闭本页划词', '无法打开侧边栏，请更新 Chrome']
-  const controls = await Promise.all(
-    ['selection-button.ts', 'guide-button.ts'].map((file) =>
-      readFile(new URL(`../src/popup/${file}`, import.meta.url), 'utf8'),
-    ),
-  )
-  for (const text of dynamic) expect(controls.join('\n')).toContain(text)
-  const text = [...serif, ...dynamic]
-  for (const value of text)
+  expect(serif).toEqual(['PoE2 中文助手', 'CoE 中文显示', '网页翻译'])
+  for (const value of serif)
     for (const ch of value.replace(/\s/g, '')) expect(chars.has(ch), ch).toBe(true)
   const popupText = await readFile(
     new URL('../../../packages/ui-theme/scripts/popup-text.txt', import.meta.url),
@@ -57,21 +39,17 @@ it('标题、标签、按钮的静态与动态文案均由独立 popup 字体覆
   const entries = popupText
     .split(/\r?\n/)
     .filter((line) => line.trim() !== '' && !line.startsWith('#'))
-  expect(entries).toEqual(text)
+  // 旧操作字符可以继续留在字体子集中；改 CSS 不等于减少字体文件体积。
+  for (const value of serif) expect(entries).toContain(value)
 })
 
-it('衬线限标题、分组、设置标签与按钮；长说明保留无衬线', () => {
+it('衬线限标题与分组；设置标签、按钮和长说明使用无衬线', () => {
   const serifSelectors = parseRules(css)
     .filter((r) =>
       /var\(--pt-serif/.test(r.declarations.get('font') ?? r.declarations.get('font-family') ?? ''),
     )
     .flatMap((r) => r.selectors)
-  expect(serifSelectors).toEqual([
-    '.titlebar__title',
-    '.popup-heading',
-    '.setting__label',
-    '.pt-btn',
-  ])
+  expect(serifSelectors).toEqual(['.titlebar__title', '.popup-heading'])
 })
 
 it('去掉副标题、“使用前”框、左侧色条与 ✓ 字形（第三期 A）', () => {

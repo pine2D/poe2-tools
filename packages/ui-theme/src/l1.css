@@ -7,14 +7,15 @@
 :host {
   --ext-ink: #9fe3dc;
   --ink: #f2ead8;
-  --ink-2: #c9bba0;
-  --ink-3: #a38d6d;
+  --ink-2: #c5c8cf;
+  --ink-3: #b0a797;
   --line: #1f2429;
   --line-2: #2c333b;
-  --control-edge: #94a1ae;
-  --bg: #000000;
+  --control-edge: #7e8fa3;
+  --bg: #11161d;
   --bg-2: #121922;
-  --surface: #15181c;
+  --surface: #171e27;
+  --well: #080c11;
   --raised: #1e2124;
   --raised-2: #262a2e;
   --metal-line: #465260;
@@ -22,15 +23,16 @@
   --steel-hi: #164a75;
   --steel-edge: #4c4c7d;
   --bronze-lo: #8a6a3e;
-  --tab-start: #5c3d16;
-  --tab-end: #3a2810;
+  --bronze: #b08850;
+  --tab-start: #262a2e;
+  --tab-end: #262a2e;
   --mod: #8f8fff;
   --ok: #82cf90;
   --miss: #ef90b8;
   --focus: #b8cfff;
   --font-zh-cn: system-ui, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  /* 面板标题与主次按钮的中文衬线（扩展 0.4.0）：family 由内容脚本注册到文档，Shadow DOM 只引用名字 */
+  /* 标题与步骤的中文衬线：family 由内容脚本注册到文档，普通操作使用系统无衬线。 */
   --l1-serif: "PoE2 Serif SC L1", var(--font-zh-cn);
   /* 尺寸阶梯子集（方案 §3.3）：不往原站文档写令牌；只声明本文件用到的档。字号保持 px：Shadow DOM 里 rem 取原站根字号，不可控；
      数值等于 tokens.css 的 rem × 16 */
@@ -43,11 +45,11 @@
   --sp-3: 12px;
   --sp-4: 16px;
   /* L1 专用（spec §6.9 视觉） */
-  --l1-panel: #000000;
+  --l1-panel: #11161d;
   --l1-edge: #465260;
   --l1-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   --l1-primary-bg: #0f304d;
-  --l1-primary-edge: #94a1ae;
+  --l1-primary-edge: #8fa5bc;
   --l1-primary-ink: #fff8e1;
 }
 
@@ -138,6 +140,7 @@
 }
 .steps [aria-current="step"] {
   background: linear-gradient(90deg, var(--tab-start), var(--tab-end));
+  box-shadow: inset 0 -2px 0 var(--bronze);
 }
 .body {
   padding: var(--sp-3) var(--sp-4) var(--sp-1);
@@ -182,10 +185,10 @@
   list-style: none;
   border: 1px solid var(--control-edge);
   border-radius: 0;
-  background: var(--bg);
+  background: var(--well);
   color: var(--ink);
   font: var(--fs-micro) / 1.5 var(--font-code);
-  scrollbar-color: var(--control-edge) var(--bg);
+  scrollbar-color: var(--control-edge) var(--well);
 }
 .lines[data-preview] {
   color: var(--mod);
@@ -411,17 +414,12 @@ button:disabled {
 button[data-tertiary]:disabled {
   border-color: transparent;
 }
-/* 面板标题与主次按钮用中文衬线（DESIGN.md L1 白名单）。只换字族，字重沿用各自规则：字体只有 700 一档，
-   400 的按钮汉字也显示为粗体（用户确认“只做粗体一档”）；“第 N 行”定位按钮在清单里，不受影响。
-   语言提示的标题与“关闭”同属自有浮层固定标签（B3-07）；提示正文保持无衬线 */
+/* 衬线保留在标题与分组，不将固定子集的粗字形施加给操作按钮。 */
 .title,
-.body > button,
-.result > button,
 .steps b,
 .column-label,
 .group h3,
-.notice strong,
-.notice header button {
+.notice strong {
   font-family: var(--l1-serif);
 }
 button:focus-visible,

@@ -71,12 +71,11 @@ main > section {
 }
 .setting__label {
   color: var(--label);
-  font: 700 var(--fs-body) / 1.5 var(--pt-serif);
-  letter-spacing: 0.04em;
+  font: 500 var(--fs-body) / 1.5 var(--font-zh-cn);
 }
 .pt-btn {
-  font: 700 var(--fs-body) / 1.5 var(--pt-serif);
-  letter-spacing: 0.08em;
+  font: 600 var(--fs-body) / 1.5 var(--font-zh-cn);
+  letter-spacing: 0;
 }
 /* 状态由实际页面快照决定；文字与图标同时说明结果。 */
 .page {

@@ -29,8 +29,8 @@ export const NAMEPLATE_VARIANTS = {
 } as const
 
 export const TAB_COLORS = {
-  idleStops: ['#15181c'],
-  selectedStops: ['#5c3d16', '#3a2810'],
+  idleStops: ['#171e27'],
+  selectedStops: ['#262a2e'],
   selectedText: '#fff8e1',
 } as const
 

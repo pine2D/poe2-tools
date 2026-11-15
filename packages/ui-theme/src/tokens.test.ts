@@ -17,28 +17,30 @@ const EXPECTED: Record<string, string> = {
   '--steel': '#0f304d',
   '--steel-hi': '#164a75',
   '--steel-edge': '#4c4c7d',
-  '--tab-start': '#5c3d16',
-  '--tab-end': '#3a2810',
+  '--tab-start': '#262a2e',
+  '--tab-end': '#262a2e',
   '--page': '#0e1115',
-  '--bg': '#000000',
+  '--bg': '#11161d',
   '--bg-2': '#121922',
-  '--surface': '#15181c',
+  '--surface': '#171e27',
   '--raised': '#1e2124',
   '--raised-2': '#262a2e',
-  '--frame-bg': '#000000',
-  '--well': '#000000',
-  '--card': '#000000',
+  '--frame-bg': '#11161d',
+  '--well': '#080c11',
+  '--card': '#171e27',
+  '--item-bg': '#000000',
   '--bar': '#0e1115',
   '--miss-bg': 'rgba(239,144,184,.07)',
   '--line': '#1f2429',
   '--line-2': '#2c333b',
-  '--control-edge': '#94a1ae',
+  '--control-edge': '#7e8fa3',
+  '--action-edge': '#8fa5bc',
   '--metal-line': '#465260',
   '--metal-edge': '#2c333b',
   '--metal-bright': '#b08850',
   '--ink': '#f2ead8',
-  '--ink-2': '#c9bba0',
-  '--ink-3': '#a38d6d',
+  '--ink-2': '#c5c8cf',
+  '--ink-3': '#b0a797',
   '--bronze-lo': '#8a6a3e',
   '--bronze': '#b08850',
   '--bronze-hi': '#b08850',
@@ -47,7 +49,7 @@ const EXPECTED: Record<string, string> = {
   '--mod': '#8f8fff',
   '--mod-hi': '#9a9aff',
   '--mod-num-zh': '#dcdcff',
-  '--prop': '#9d9282',
+  '--prop': '#b0a797',
   '--val': '#e2e2e2',
   '--unique': '#e28a47',
   '--normal-item': '#e8e3d8',
@@ -63,7 +65,7 @@ const EXPECTED: Record<string, string> = {
   '--miss': '#ef90b8',
   '--danger': '#f3806f',
   '--danger-bg': '#5a1d17',
-  '--danger-edge': '#9b3a2e',
+  '--danger-edge': '#c06052',
   '--danger-ink': '#ffd9d2',
   '--focus': '#b8cfff',
   '--focus-ring': '2px solid var(--focus)',
@@ -126,6 +128,7 @@ const SURFACES = [
   '--frame-bg',
   '--well',
   '--card',
+  '--item-bg',
   '--bar',
 ]
 const TEXT = [
@@ -155,10 +158,10 @@ describe('令牌结构（spec §4.3）', () => {
     expect(root?.declarations.get('color-scheme')).toBe('dark')
   })
 
-  it('令牌集合与取值等于v4 兼容接口的 79 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
+  it('令牌集合与取值等于系统设计兼容接口的 88 项（尺寸阶梯 --fs-* / --sp-* 由 scale.test.ts 核对）', () => {
     const contract = [...tokens.keys()].filter((name) => !/^--(fs|sp)-/.test(name))
     expect([...contract].sort()).toEqual(Object.keys(EXPECTED).sort())
-    expect(contract).toHaveLength(86)
+    expect(contract).toHaveLength(88)
     for (const [name, value] of Object.entries(EXPECTED)) {
       expect(norm(token(name)), name).toBe(norm(value))
     }
@@ -205,7 +208,7 @@ describe('对比度门禁（DESIGN.md v4）', () => {
   it('主按钮文字对普通与悬停底 ≥4.5:1；外边对两侧背景 ≥3:1', () => {
     for (const surface of ['--steel', '--steel-hi']) {
       expect(contrastRatio(token('--label'), token(surface))).toBeGreaterThanOrEqual(4.5)
-      expect(contrastRatio(token('--control-edge'), token(surface))).toBeGreaterThanOrEqual(3)
+      expect(contrastRatio(token('--action-edge'), token(surface))).toBeGreaterThanOrEqual(3)
     }
     // --steel-edge 只作内侧装饰；方形开关的青铜边面对面板，不用于正文。
     expect(contrastRatio(token('--bronze-lo'), token('--bg'))).toBeGreaterThanOrEqual(3)
@@ -220,9 +223,10 @@ describe('对比度门禁（DESIGN.md v4）', () => {
         ).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('危险确认按钮文字对底 ≥4.5:1；边框对所在面板 ≥3:1', () => {
+  it('危险确认按钮文字对底 ≥4.5:1；边框对按钮内外底均 ≥3:1', () => {
     expect(contrastRatio(token('--danger-ink'), token('--danger-bg'))).toBeGreaterThanOrEqual(4.5)
     expect(contrastRatio(token('--danger-edge'), token('--bg'))).toBeGreaterThanOrEqual(3)
+    expect(contrastRatio(token('--danger-edge'), token('--danger-bg'))).toBeGreaterThanOrEqual(3)
   })
 
   it('文字令牌对全部表面 ≥4.5:1', () => {
@@ -237,7 +241,13 @@ describe('对比度门禁（DESIGN.md v4）', () => {
   })
 
   it('控件边界、焦点与亮铜边对全部表面 ≥3:1', () => {
-    for (const edge of ['--control-edge', '--focus', '--metal-bright', '--bronze']) {
+    for (const edge of [
+      '--control-edge',
+      '--action-edge',
+      '--focus',
+      '--metal-bright',
+      '--bronze',
+    ]) {
       for (const surface of SURFACES) {
         expect(
           contrastRatio(token(edge), token(surface)),

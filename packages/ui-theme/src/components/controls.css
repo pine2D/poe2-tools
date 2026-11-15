@@ -122,7 +122,7 @@
   font-size: var(--fs-small);
 }
 
-/* 文本框（粘贴）：底 --bg，1px --control-edge，直角 */
+/* 输入井与外层面板分离，保留可辨识的边界。 */
 .pt-textarea {
   display: block;
   width: 100%;
@@ -130,7 +130,7 @@
   padding: 10px 12px;
   border: 1px solid var(--control-edge);
   border-radius: 0;
-  background: var(--bg);
+  background: var(--well);
   color: var(--ink);
   caret-color: var(--gold);
   font: var(--fs-small) / 1.6 var(--font-code);
@@ -167,7 +167,7 @@
   padding: 12px 38px 12px 13px;
   border: 1px solid var(--control-edge);
   border-radius: 0;
-  background: #0e0b09;
+  background: var(--surface);
 }
 .pt-file:has(> [aria-current="true"]) {
   border-color: var(--bronze);
