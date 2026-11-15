@@ -2,7 +2,11 @@
 
 <!-- impeccable:product-schema 1 -->
 
-> 状态核对：2026-10-23。公开版为网站 0.10.0、扩展 0.11.0（前一公开版本为网站 0.9.1、扩展 0.10.1）；v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层随扩展 0.11.0 发布，网站首页、构筑工作区与扩展介绍页随网站 0.10.0 部署。完整门禁以 CI 为准，PR 与 main 的 CI 均通过。产品事实由本文维护，视觉目标见 [DESIGN.md](DESIGN.md)，工具分工见[设计工作约定](docs/design-skills.md)。
+> 代码状态：2026-11-15，网站 0.11.0、扩展 0.11.1。本次变化与工程门禁见[统一验收记录](docs/validation-2026-11-15-release-closeout.md)，公开发行状态以对应提交 CI、[网站](https://poe2-tools.pine2d.com)及 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases) 为准。产品事实由本文维护，视觉目标见 [DESIGN.md](DESIGN.md)，工具分工见[设计工作约定](docs/design-skills.md)。
+
+> 构筑 A 单页交付：导入后先显示可下载文件与待核对数量；按需展开核对或进入阶段比较，显式选择当前文件、当前构筑或全部构筑下载。两服词典、文件保护规则、游戏内加载待验收的边界保持。验证见 [A 实施记录](docs/validation-2026-11-15-build-delivery-a.md)。
+
+> 扩展 0.11.1：CoE 装备转换点击行号后，选中的原文会滚入输入框视野，覆盖连续空行和窄窗折行；保留原文、待核对阻断和原站最终确认。验证见 [行定位修复记录](docs/chrome-extension/validation-2026-11-15-line-location.md)。
 
 ## Platform
 
@@ -38,11 +42,11 @@ PoE2 Tools 由两件工具组成，网站保留两个清楚的入口；当前开
 - `.build` 攻略有两种常见形态：一套攻略按阶段拆成多个文件（如 Act 1–2、Act 3、Act 4 到终局），玩家一起导入；或只有单个文件，阶段信息靠装备等级段（`level_interval`）和作者备注表达。两种都要支持。
 - 文件只在用户浏览器里解析，不上传；纯静态站，没有服务端和账号。
 - 扩展运行在第三方网站 CoE 里，原站界面与样式不受我们控制；扩展只负责词典与文本转换，不代替 CoE 判定游戏规则，最终导入由用户在原站确认。
-- 扩展 0.11.0 已作为开发预览通过网站与 GitHub Release 公开分发，未上架 Chrome 应用商店；用户下载 ZIP 后以开发者模式加载。已发布包不可原版本替换。
+- 扩展通过网站与 GitHub Release 分发开发预览，未上架 Chrome 应用商店；用户下载 ZIP 后以开发者模式加载。已发布包不可原版本替换。
 
 ## Capabilities and Constraints
 
-- 构筑汉化：拖入、选择或粘贴一个或多个 `.build` 文件，提供中英对照与纯译文两种预览，标出待核对项，可单份下载或全部下载；支持简体（zh-CN）、繁体（zh-TW）两套词典。
+- 构筑汉化：拖入、选择或粘贴一个或多个 `.build` 文件，默认交付处理结果与下载，按需展开中英对照或纯译文预览，标出待核对项；可下载当前文件、当前构筑或全部构筑；支持简体（zh-CN）、繁体（zh-TW）两套词典。
 - 输出必须仍能被游戏加载：只改写 `additional_text` 与 `description`，其余字段与标记语法原样保留。游戏内加载效果尚未真机验收，不得宣称已验证。
 - CoE 专用功能只支持 `beta.craftofexile.com` 的 PoE2 模式与英文界面；目前只有国服简体术语，没有繁体。攻略翻译按需读取当前页，用户自配服务和 Key；权限为 `storage`、`activeTab`、`scripting`、`sidePanel`，无强制全站权限；0.10.0 增加按用户所选站点授予的可选 host 权限，常用预设或自定义网址可自动启用划词，点击翻译才发送文字。
 - 原文旁／仅侧栏对照、范围选择、独立划词气泡与自动划词站点设置已随 0.10.1 发布。工程、交互与语义质量分别记录；旧的整段语义质量失败结论保持，Windows 日常 Chrome 完整流程、真实中文输入法与读屏仍有未验收项。见[兼容性](docs/chrome-extension/compatibility.md)和[发布记录](docs/chrome-extension/release-readiness.md)。

@@ -1,5 +1,13 @@
 # 核心覆盖与发布验收
 
+## 0.11.1 工程与产物验收（2026-11-15）
+
+修复 CoE 装备转换点击诊断行号后，原文选区未滚入输入框视野的问题。真实 CoE 页面上，1440 与 390 宽度的空行、折行、首行、中间行、超长行和键盘定位共 12 组回归通过；工程结果、已测与未测范围见 [行定位修复记录](validation-2026-11-15-line-location.md)。
+
+本地完整 `pnpm verify` 未通过：6434 项通过、3 项旧工坊测试超时、2 项既有跳过。三个失败文件按原阈值单独复跑 29 项全部通过，未改测试配置；后续打包、发布记录核对、全仓构建及词典／制作数据检查分别补跑通过。单独复跑不能替代新提交的完整 CI。
+
+本地 `release.json` 记录 `poe2-extension-0.11.1.zip`：7,372,966 字节，SHA-256 `c89e26cb79f5b2dc9d9533ff2b384242ab7b761c6c938172807956e952626041`。ZIP 的 28 个文件与真实浏览器加载目录逐字节一致；公开 0.11.0 包未改动。与网站 0.11.0 一起交付；统一收口的 `pnpm verify:active` 通过（2098 项通过、2 项既有跳过），流程与验证边界见[统一验收记录](../validation-2026-11-15-release-closeout.md)。发行状态以对应提交的 CI、[下载页](https://poe2-tools.pine2d.com/extension/)与 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases) 为准；历史语义质量失败与平台验收边界保持。
+
 ## 0.11.0 开发预览版（2026-10-23）
 
 0.11.0 源码已通过 [PR #2](https://github.com/pine2D/poe2-tools/pull/2) 以合并提交 `93763c5` 合入 main。main CI 运行 [39960241092](https://github.com/pine2D/poe2-tools/actions/runs/39960241092) 的 verify、deploy / pages、release-extension 全部成功：网站 0.10.0 已部署到 <https://poe2-tools.pine2d.com>（Cloudflare Pages，`poe2-tools.pages.dev` 同步），扩展安装包通过网站 `/downloads/poe2-extension-0.11.0.zip` 与 [GitHub Release ext-v0.11.0](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0)（发布于 2026-10-23T13:37:57Z，非草稿）公开分发。
@@ -18,7 +26,7 @@
 
 ## 0.10.1 开发预览版（2026-10-22）
 
-0.10.1 源码已通过 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main（`4608705`），网站和 [GitHub Release ext-v0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 已公开分发同一安装包。版本、字节数与摘要见[该版本固定发布记录](https://github.com/pine2D/poe2-tools/blob/ext-v0.10.1/apps/poe2-extension/release.json)；后续改变已发布 ZIP 内容必须升版本。main 的 `release.json` 现记录 0.11.0，不能用它核对 0.10.1。
+0.10.1 源码已通过 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main（`4608705`），网站和 [GitHub Release ext-v0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1) 已公开分发同一安装包。版本、字节数与摘要见[该版本固定发布记录](https://github.com/pine2D/poe2-tools/blob/ext-v0.10.1/apps/poe2-extension/release.json)；后续改变已发布 ZIP 内容必须升版本。`release.json` 会随新候选更新，核对旧版本须使用对应 tag 的固定记录。
 
 本版整合 CoE 兼容修复与攻略对照阅读、自动划词和紧凑侧栏。2026-10-22 的完整 `pnpm verify`（代码提交 `09d8660`）退出 0：699 个测试文件、6278 项通过，1 项因缺少本地真实 `.build` 样本跳过；扩展打包、发布记录、网站构建及数据门禁通过。保留 11 条既有样式告警与历史工坊构建体积提示。交互证据见[0.10.1 侧栏验收](validation-2026-10-22-sidebar-compact.md)及其关联记录。
 
