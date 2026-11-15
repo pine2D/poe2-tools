@@ -31,7 +31,7 @@ export async function setupGuideButton(
     const tab = await api.activeTab()
     const checkUrl = tab !== null && api.activeUrl !== undefined
     const url = checkUrl ? await api.activeUrl?.() : undefined
-    // 首次说明展开或点“翻译此页”之后才算看过，只写一次
+    // 首次说明展开或点“预览此页翻译范围”之后才算看过，只写一次
     let markSeen = async () => {}
     if (notice) {
       const prefs = await api.readGuidePrefs()

@@ -3,7 +3,7 @@ import { DEFAULT_PREFS } from '../src/guide/prefs'
 import { setupGuideButton } from '../src/popup/guide-button'
 
 const html =
-  '<button id="translate" hidden>翻译此页</button><p id="translate-error" role="status" hidden></p><details id="guide-notice" hidden><summary>首次使用说明</summary>新功能</details>'
+  '<button id="translate" hidden>预览此页翻译范围</button><p id="translate-error" role="status" hidden></p><details id="guide-notice" hidden><summary>首次使用说明</summary>新功能</details>'
 const api = (over = {}) => ({
   activeTab: vi.fn(async () => ({ id: 7 })),
   openGuide: vi.fn(async () => true),
@@ -37,7 +37,7 @@ describe('setupGuideButton', () => {
     button?.click()
     const error = document.querySelector<HTMLElement>('#translate-error')
     await vi.waitFor(() => expect(error?.hidden).toBe(false))
-    expect(button?.textContent).toBe('翻译此页')
+    expect(button?.textContent).toBe('预览此页翻译范围')
     expect(error?.textContent).toBe('这次没能打开侧边栏，可以再试一次。')
     expect(button?.hasAttribute('aria-disabled')).toBe(false)
     expect(close).not.toHaveBeenCalled()
@@ -68,7 +68,7 @@ describe('setupGuideButton', () => {
     expect(button?.getAttribute('aria-disabled')).toBe('true')
     expect(document.activeElement).toBe(button)
   })
-  it('about:blank、chrome:// 等非 http(s) 页面不显示“翻译此页”', async () => {
+  it('about:blank、chrome:// 等非 http(s) 页面不显示“预览此页翻译范围”', async () => {
     for (const url of [
       undefined,
       'about:blank',
@@ -115,7 +115,7 @@ describe('setupGuideButton', () => {
     await setupGuideButton(document, seen, vi.fn())
     expect(document.querySelector<HTMLElement>('#guide-notice')?.hidden).toBe(true)
   })
-  it('点击“翻译此页”也算看过说明', async () => {
+  it('点击“预览此页翻译范围”也算看过说明', async () => {
     document.body.innerHTML = html
     const a = api()
     await setupGuideButton(document, a, vi.fn())

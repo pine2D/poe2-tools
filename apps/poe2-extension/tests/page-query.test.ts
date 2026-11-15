@@ -46,6 +46,77 @@ async function open() {
 }
 const statuses = () => seen.map((probe) => probe.status)
 
+it('明确的普通网页立即给出适用范围，不询问 CoE 内容脚本', async () => {
+  mocks.activeTab.mockResolvedValue({ id: 7, loading: false, url: 'https://example.com/guide' })
+  await open()
+  expect(seen.at(-1)).toEqual({ status: 'none', scope: 'elsewhere' })
+  expect(mocks.ask).not.toHaveBeenCalled()
+})
+
+it('CoE 无应答仍可刷新当前已确认的 CoE 标签页', async () => {
+  mocks.activeTab.mockResolvedValue({
+    id: 7,
+    loading: false,
+    url: 'https://beta.craftofexile.com/?game=poe2',
+  })
+  mocks.ask.mockResolvedValue(null)
+  await open()
+  await vi.advanceTimersByTimeAsync(IDLE_RETRY_MS)
+  expect(seen.at(-1)).toEqual({ status: 'none', scope: 'coe' })
+  await watcher?.reload()
+  expect(mocks.reload).toHaveBeenCalledExactlyOnceWith(7)
+})
+
+it('地址不可读且无应答时保持未知，不误判普通网页', async () => {
+  mocks.ask.mockResolvedValue(null)
+  await open()
+  await vi.advanceTimersByTimeAsync(IDLE_RETRY_MS)
+  expect(seen.at(-1)).toEqual({ status: 'none', scope: 'unknown' })
+})
+
+it.each(['', 'not a URL'])('地址无效（%s）时按未知处理', async (url) => {
+  mocks.activeTab.mockResolvedValue({ id: 7, loading: false, url })
+  mocks.ask.mockResolvedValue(null)
+  await open()
+  await vi.advanceTimersByTimeAsync(IDLE_RETRY_MS)
+  expect(seen.at(-1)).toEqual({ status: 'none', scope: 'unknown' })
+})
+
+it.each(['https://beta.craftofexile.com.example.com/', 'http://beta.craftofexile.com/'])(
+  'CoE 只匹配真实 HTTPS 来源（%s）',
+  async (url) => {
+    mocks.activeTab.mockResolvedValue({ id: 7, loading: false, url })
+    await open()
+    expect(seen.at(-1)).toEqual({ status: 'none', scope: 'elsewhere' })
+    expect(mocks.ask).not.toHaveBeenCalled()
+  },
+)
+
+it('从 CoE 切到普通页或地址不可读后，不能刷新之前的标签页', async () => {
+  mocks.ask.mockResolvedValue(reply())
+  await open()
+  for (const url of ['https://example.com/', undefined]) {
+    mocks.activeTab.mockResolvedValue({ id: 8, loading: false, url })
+    mocks.ask.mockResolvedValue(null)
+    watcher?.refresh()
+    await vi.advanceTimersByTimeAsync(IDLE_RETRY_MS)
+    await watcher?.reload()
+    expect(mocks.reload).not.toHaveBeenCalled()
+  }
+})
+
+it('启动重查期间换到新标签页，不把上一页的应答当成新页状态', async () => {
+  mocks.ask.mockResolvedValue(reply({ phase: 'starting' }))
+  await open()
+  mocks.activeTab.mockResolvedValue({ id: 8, loading: false })
+  mocks.ask.mockResolvedValue(null)
+  await vi.advanceTimersByTimeAsync(SETTLE_RETRY_MS + IDLE_RETRY_MS)
+  expect(seen.at(-1)).toEqual({ status: 'none', scope: 'unknown' })
+  expect(seen.some((probe) => probe.status === 'reply' && probe.tabId === 8)).toBe(false)
+  await watcher?.reload()
+  expect(mocks.reload).not.toHaveBeenCalled()
+})
+
 it('parseReply：字段齐全且取值合法才接受；多余字段丢弃', () => {
   expect(parseReply({ ...reply(), url: 'https://beta.craftofexile.com/' })).toEqual(reply())
   expect(parseReply(reply({ phase: 'failed', error: 'dictionary' }))).toEqual(
@@ -250,7 +321,7 @@ it('刷新模式中标签页消失（activeTab 为 null）：退出刷新模式�
   mocks.activeTab.mockResolvedValue(null)
   await page.reload()
   await vi.advanceTimersByTimeAsync(0)
-  expect(seen.at(-1)).toEqual({ status: 'none' })
+  expect(seen.at(-1)).toEqual({ status: 'none', scope: 'unknown' })
   mocks.activeTab.mockResolvedValue({ id: 7, loading: true })
   page.refresh()
   await vi.advanceTimersByTimeAsync(0)

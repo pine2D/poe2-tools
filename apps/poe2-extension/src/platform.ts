@@ -8,6 +8,7 @@ export const defaults: Settings = { enabled: true, bilingual: false }
 interface ChromeTab {
   id?: number
   status?: string
+  url?: string
 }
 interface ChromeApi {
   runtime: {
@@ -34,7 +35,7 @@ interface ChromeApi {
       ): void
     }
   }
-  // 只在扩展页面（弹窗）存在，内容脚本里没有。只读 id 与 status，不需要 tabs 权限（第三期裁定 2）。
+  // 只在扩展页面存在；地址仅在浏览器已有授权时可读，不为探测新增 tabs 权限。
   tabs?: {
     query(query: { active: boolean; currentWindow: boolean }): Promise<ChromeTab[]>
     sendMessage(tabId: number, message: unknown, options: { frameId: number }): Promise<unknown>
@@ -60,10 +61,14 @@ export const platform = {
       if (area === 'local' && changes.settings) callback(settingsFrom(changes.settings.newValue))
     }),
   /** 弹窗：当前窗口的活动标签页；拿不到或 id 无效时为 null */
-  activeTab: async (): Promise<{ id: number; loading: boolean } | null> => {
+  activeTab: async (): Promise<{ id: number; loading: boolean; url?: string } | null> => {
     const [tab] = (await chrome.tabs?.query({ active: true, currentWindow: true })) ?? []
     if (typeof tab?.id !== 'number' || tab.id < 0) return null
-    return { id: tab.id, loading: tab.status === 'loading' }
+    return {
+      id: tab.id,
+      loading: tab.status === 'loading',
+      ...(typeof tab.url === 'string' ? { url: tab.url } : {}),
+    }
   },
   /** 弹窗：问顶层框架的内容脚本；reject、同步抛错、超时与 undefined 一律为 null，永不 reject */
   ask: (tabId: number, message: PageStateRequest, timeoutMs: number) =>

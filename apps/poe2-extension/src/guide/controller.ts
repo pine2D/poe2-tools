@@ -295,7 +295,7 @@ export function createController(deps: ControllerDeps): Controller {
     active = run
     const { signal } = run.controller
     const live = () => !signal.aborted
-    view.setBusy(true)
+    view.setBusy(true, 'preparing')
     if (!previewOnly) view.setBanner('none', '')
     try {
       if (!targets.length) {
@@ -404,6 +404,7 @@ export function createController(deps: ControllerDeps): Controller {
           },
         )
         try {
+          view.setBusy(true, 'translating')
           const result = await engine.runner.run(
             messages,
             (d) => {
@@ -510,7 +511,7 @@ export function createController(deps: ControllerDeps): Controller {
     revision++
     dropQueued()
     cancelRun()
-    view.setBusy(true)
+    view.setBusy(true, 'preparing')
     view.setReady(false)
     view.setBanner('none', '')
     const current = guide
@@ -568,7 +569,7 @@ export function createController(deps: ControllerDeps): Controller {
       const gen = ++generation
       dropQueued()
       cancelRun()
-      view.setBusy(true)
+      view.setBusy(true, 'preparing')
       view.setReady(false)
       guide = null
       view.setBanner('none', '')

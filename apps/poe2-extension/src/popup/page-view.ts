@@ -3,22 +3,23 @@
 // 这里只描述 CoE 中文显示；无应答不代表网页翻译或划词不可用。
 import type { Settings } from '../platform'
 import type { PageStateReply } from '../protocol'
-import type { PageProbe } from './page-query'
+import type { PageProbe, PageScope } from './page-query'
 
 export type PageKind = 'ok' | 'part' | 'off' | 'mute' | 'reading'
 export interface PageView {
+  scope: PageScope
   kind: PageKind
-  word: '生效中' | '部分生效' | '未生效' | '未连接' | null
+  word: '生效中' | '部分生效' | '未生效' | '未连接' | '仅 CoE 页面生效' | '未读取到 CoE 状态' | null
   reason: string | null
   hint: string
   action: 'reload' | null
 }
 
-function reading(): PageView {
-  return { kind: 'reading', word: null, reason: null, hint: '正在读取当前页…', action: null }
+function reading(scope: PageScope = 'unknown'): PageView {
+  return { scope, kind: 'reading', word: null, reason: null, hint: '正在读取当前页…', action: null }
 }
 function blocked(reason: string, hint: string, action: 'reload' | null = null): PageView {
-  return { kind: 'off', word: '未生效', reason, hint, action }
+  return { scope: 'coe', kind: 'off', word: '未生效', reason, hint, action }
 }
 /** 部分生效时点名没接上的搜索框（裁定 6）：含基底写“基底搜索框”，只缺词缀写“词缀搜索框”，其余写“搜索框” */
 function searchName(missing: PageStateReply['searchMissing']): string {
@@ -31,16 +32,31 @@ function searchName(missing: PageStateReply['searchMissing']): string {
  *  “已关闭”只看弹窗已保存的设置 saved，不看应答里的 enabled：保存后内容脚本稍晚才收到变化，用应答会闪旧状态 */
 export function pageView(probe: PageProbe, saved: Settings): PageView {
   if (probe.status === 'reading') return reading()
-  if (probe.status === 'none')
+  if (probe.status === 'none') {
+    const scope = probe.scope ?? 'unknown'
+    if (scope === 'coe')
+      return {
+        scope,
+        kind: 'off',
+        word: '未连接',
+        reason: null,
+        hint: '本页的 CoE 中文助手没有应答。可刷新页面后重试。',
+        action: 'reload',
+      }
     return {
+      scope,
       kind: 'mute',
-      word: '未连接',
+      word: scope === 'elsewhere' ? '仅 CoE 页面生效' : '未读取到 CoE 状态',
       reason: null,
-      hint: '仅在 beta.craftofexile.com 的 PoE2 英文界面生效；若你已在该页面，请刷新后重试。',
+      hint:
+        scope === 'elsewhere'
+          ? 'CoE 中文显示仅在 beta.craftofexile.com 的 PoE2 英文界面生效。'
+          : '未能确认当前页是否为 CoE。网页翻译和划词的可用性见下方入口。',
       action: null,
     }
+  }
   const { reply, settled } = probe
-  if (!settled && (reply.phase === 'starting' || reply.page === 'unknown')) return reading()
+  if (!settled && (reply.phase === 'starting' || reply.page === 'unknown')) return reading('coe')
   // 到重查上限内容脚本仍在启动：启动挂起，刷新是唯一可做的事；极慢的词典加载也会误报于此，刷新即恢复（R-T3d）
   if (reply.phase === 'failed' || reply.phase === 'starting')
     return blocked(
@@ -52,6 +68,7 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
     )
   if (!saved.enabled)
     return {
+      scope: 'coe',
       kind: 'mute',
       word: '未生效',
       reason: '简体中文已关闭',
@@ -74,6 +91,7 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
   const reason = reply.translated > 0 ? `已翻译 ${reply.translated} 处` : null
   if (reply.search === 'missing')
     return {
+      scope: 'coe',
       kind: 'part',
       word: '部分生效',
       reason,
@@ -81,6 +99,7 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
       action: 'reload',
     }
   return {
+    scope: 'coe',
     kind: 'ok',
     word: '生效中',
     reason,

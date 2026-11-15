@@ -194,6 +194,25 @@ describe('createController', () => {
     await stageAndBegin(c, 's2')
     expect(calls.some((x) => x.startsWith('T b engine'))).toBe(true)
   })
+  it('读取只处于准备阶段，只有真正调用 runner 才进入生成阶段', async () => {
+    const { run, handle } = fakeEngine()
+    const { d, view } = deps({ engine: async () => handle })
+    const c = createController(d)
+    await c.start()
+    expect(run).not.toHaveBeenCalled()
+    expect(view.setBusy).toHaveBeenCalledWith(true, 'preparing')
+    expect(view.setBusy).not.toHaveBeenCalledWith(true, 'translating')
+    view.setBusy.mockClear()
+    await c.begin()
+    expect(run).toHaveBeenCalledTimes(1)
+    const generating = view.setBusy.mock.calls.findIndex(
+      ([busy, phase]) => busy && phase === 'translating',
+    )
+    expect(generating).toBeGreaterThanOrEqual(0)
+    expect(view.setBusy.mock.invocationCallOrder[generating]).toBeLessThan(
+      run.mock.invocationCallOrder[0] as number,
+    )
+  })
   it('第二次打开命中缓存，不再请求', async () => {
     const { run, handle } = fakeEngine()
     const first = deps({ engine: async () => handle })
@@ -202,6 +221,8 @@ describe('createController', () => {
     await readAndBegin(createController(second.d))
     expect(run).toHaveBeenCalledTimes(1)
     expect(second.calls.some((x) => x.startsWith('T a cache'))).toBe(true)
+    expect(second.view.setBusy).toHaveBeenCalledWith(true, 'preparing')
+    expect(second.view.setBusy).not.toHaveBeenCalledWith(true, 'translating')
   })
   it('词典版本变化后不命中旧缓存', async () => {
     const { run, handle } = fakeEngine()
@@ -247,6 +268,8 @@ describe('createController', () => {
     await readAndBegin(createController({ ...d, extract: async () => big }))
     expect(view.ask).toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
+    expect(view.setBusy).toHaveBeenCalledWith(true, 'preparing')
+    expect(view.setBusy).not.toHaveBeenCalledWith(true, 'translating')
   })
   it('取消超限发送后重新开始，完成时不残留上一次的取消横幅', async () => {
     const { run, handle } = fakeEngine()
@@ -335,7 +358,7 @@ describe('createController', () => {
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(2))
     engineCalls[0]?.release()
     await first
-    expect(view.setBusy.mock.calls.at(-1)).toEqual([true])
+    expect(view.setBusy.mock.calls.at(-1)).toEqual([true, 'translating'])
     engineCalls[1]?.release()
     await second
     expect(view.setBusy.mock.calls.at(-1)).toEqual([false])

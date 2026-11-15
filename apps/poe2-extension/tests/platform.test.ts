@@ -28,6 +28,19 @@ it('activeTab：只取当前窗口活动标签页的 id 与是否加载中；没
   }
 })
 
+it('activeTab：浏览器已提供地址时传给适用性判定，不假定地址总是可读', async () => {
+  fakeChrome.tabs.query.mockResolvedValueOnce([
+    { id: 7, status: 'complete', url: 'https://example.com/guide' },
+  ])
+  await expect(platform.activeTab()).resolves.toEqual({
+    id: 7,
+    loading: false,
+    url: 'https://example.com/guide',
+  })
+  fakeChrome.tabs.query.mockResolvedValueOnce([{ id: 7, url: null }])
+  await expect(platform.activeTab()).resolves.toEqual({ id: 7, loading: false })
+})
+
 it('ask：只发给顶层框架；应答原样返回，undefined 记为无应答', async () => {
   fakeChrome.tabs.sendMessage.mockResolvedValueOnce({ v: 1 })
   await expect(platform.ask(7, request, 1000)).resolves.toEqual({ v: 1 })

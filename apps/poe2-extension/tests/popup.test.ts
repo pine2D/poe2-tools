@@ -449,13 +449,13 @@ it.each<
     },
   ],
   [
-    'CoE 未连接不代表网页翻译失败',
-    { status: 'none' },
+    '普通网页显示 CoE 的适用范围',
+    { status: 'none', scope: 'elsewhere' },
     true,
     {
       kind: 'mute',
-      head: '未连接',
-      hint: '仅在 beta.craftofexile.com 的 PoE2 英文界面生效；若你已在该页面，请刷新后重试。',
+      head: '仅 CoE 页面生效',
+      hint: 'CoE 中文显示仅在 beta.craftofexile.com 的 PoE2 英文界面生效。',
       reload: false,
     },
   ],
@@ -504,8 +504,10 @@ it.each<
 it('不在 CoE 的页面把 CoE 区标为 elsewhere（压缩显示）；在 CoE 页面为 coe', async () => {
   await setup(undefined, POPUP)
   const block = document.querySelector('#page') as HTMLElement
-  emit({ status: 'none' })
+  emit({ status: 'none', scope: 'elsewhere' })
   expect(block.dataset.scope).toBe('elsewhere')
+  emit({ status: 'none', scope: 'unknown' })
+  expect(block.dataset.scope).toBe('unknown')
   emit(answered())
   expect(block.dataset.scope).toBe('coe')
 })

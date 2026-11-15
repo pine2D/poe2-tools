@@ -27,19 +27,51 @@ function answered(over: Partial<PageStateReply> = {}, settled = true): PageProbe
   return { status: 'reply', tabId: 7, reply: reply(over), settled }
 }
 
+describe('当前页适用性与无应答分开表达', () => {
+  it('明确在普通网页时只说明 CoE 的适用范围，不显示连接故障', () => {
+    const view = pageView({ status: 'none', scope: 'elsewhere' }, ON)
+    expect(view).toMatchObject({
+      scope: 'elsewhere',
+      kind: 'mute',
+      word: '仅 CoE 页面生效',
+      action: null,
+    })
+    expect(view.hint).not.toContain('刷新')
+  })
+
+  it('明确在 CoE 但没有应答时保留故障提示和刷新动作', () => {
+    expect(pageView({ status: 'none', scope: 'coe' }, ON)).toMatchObject({
+      scope: 'coe',
+      kind: 'off',
+      word: '未连接',
+      action: 'reload',
+    })
+  })
+
+  it('拿不到地址且没有应答时诚实说明未读到状态，不推断为普通网页', () => {
+    expect(pageView({ status: 'none' }, ON)).toMatchObject({
+      scope: 'unknown',
+      kind: 'mute',
+      word: '未读取到 CoE 状态',
+      action: null,
+    })
+  })
+})
+
 const HINT = {
   ok: '未收录的术语保持英文。转换装备文本后，仍以原站的导入结果为准。',
   part: (where: string) =>
     `界面已翻译，但${where}没接上，暂时不能用中文搜索。先刷新页面；仍不行请反馈。`,
   lang: '中文助手只在 English 界面上工作。请在原站右上角切到 English，再刷新页面。',
   poe1: '中文助手只支持 PoE2。在原站把游戏切到 PoE2。',
-  none: '仅在 beta.craftofexile.com 的 PoE2 英文界面生效；若你已在该页面，请刷新后重试。',
+  none: '未能确认当前页是否为 CoE。网页翻译和划词的可用性见下方入口。',
   mute: '本页显示原站英文。在下方打开“启用简体中文”即可，不用刷新。',
   dictionary: '词典没能加载，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。',
   failed: '中文助手没能启动，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。',
   unknown: '原站页面可能还没加载完，或已经改版。刷新页面后再打开弹窗；仍不行请检查更新。',
 }
 const READING: PageView = {
+  scope: 'unknown',
   kind: 'reading',
   word: null,
   reason: null,
@@ -47,7 +79,7 @@ const READING: PageView = {
   action: null,
 }
 function off(reason: string, hint: string, action: 'reload' | null = null): PageView {
-  return { kind: 'off', word: '未生效', reason, hint, action }
+  return { scope: 'coe', kind: 'off', word: '未生效', reason, hint, action }
 }
 
 describe('pageView：8 种原因与读取中，文案逐字', () => {
@@ -56,19 +88,27 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       '1 生效中',
       answered(),
       ON,
-      { kind: 'ok', word: '生效中', reason: '已翻译 128 处', hint: HINT.ok, action: null },
+      {
+        scope: 'coe',
+        kind: 'ok',
+        word: '生效中',
+        reason: '已翻译 128 处',
+        hint: HINT.ok,
+        action: null,
+      },
     ],
     [
       '1 生效中，N=0 时不写原因',
       answered({ translated: 0 }),
       ON,
-      { kind: 'ok', word: '生效中', reason: null, hint: HINT.ok, action: null },
+      { scope: 'coe', kind: 'ok', word: '生效中', reason: null, hint: HINT.ok, action: null },
     ],
     [
       '2 部分生效：缺基底搜索框',
       answered({ translated: 96, search: 'missing', searchMissing: ['base', 'stat'] }),
       ON,
       {
+        scope: 'coe',
         kind: 'part',
         word: '部分生效',
         reason: '已翻译 96 处',
@@ -81,6 +121,7 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       answered({ translated: 96, search: 'missing', searchMissing: ['stat'] }),
       ON,
       {
+        scope: 'coe',
         kind: 'part',
         word: '部分生效',
         reason: '已翻译 96 处',
@@ -93,6 +134,7 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       answered({ translated: 96, search: 'missing', searchMissing: ['item'] }),
       ON,
       {
+        scope: 'coe',
         kind: 'part',
         word: '部分生效',
         reason: '已翻译 96 处',
@@ -104,7 +146,14 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       '2 部分生效：词缀与物品都缺，N=0 不写原因',
       answered({ translated: 0, search: 'missing', searchMissing: ['stat', 'item'] }),
       ON,
-      { kind: 'part', word: '部分生效', reason: null, hint: HINT.part('搜索框'), action: 'reload' },
+      {
+        scope: 'coe',
+        kind: 'part',
+        word: '部分生效',
+        reason: null,
+        hint: HINT.part('搜索框'),
+        action: 'reload',
+      },
     ],
     [
       '3 原站语言不是 English',
@@ -117,13 +166,27 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       '5 无应答',
       { status: 'none' },
       ON,
-      { kind: 'mute', word: '未连接', reason: null, hint: HINT.none, action: null },
+      {
+        scope: 'unknown',
+        kind: 'mute',
+        word: '未读取到 CoE 状态',
+        reason: null,
+        hint: HINT.none,
+        action: null,
+      },
     ],
     [
       '6 简体中文已关闭',
       answered({ enabled: false }),
       OFF,
-      { kind: 'mute', word: '未生效', reason: '简体中文已关闭', hint: HINT.mute, action: null },
+      {
+        scope: 'coe',
+        kind: 'mute',
+        word: '未生效',
+        reason: '简体中文已关闭',
+        hint: HINT.mute,
+        action: null,
+      },
     ],
     [
       '7 初始化失败：词典',
@@ -150,8 +213,18 @@ describe('pageView：8 种原因与读取中，文案逐字', () => {
       off('认不出原站的游戏和语言', HINT.unknown),
     ],
     ['读取中：还没有结果', { status: 'reading' }, ON, READING],
-    ['读取中：内容脚本仍在启动', answered({ phase: 'starting' }, false), ON, READING],
-    ['读取中：5 s 内认不出原站', answered({ page: 'unknown' }, false), ON, READING],
+    [
+      '读取中：内容脚本仍在启动',
+      answered({ phase: 'starting' }, false),
+      ON,
+      { ...READING, scope: 'coe' },
+    ],
+    [
+      '读取中：5 s 内认不出原站',
+      answered({ page: 'unknown' }, false),
+      ON,
+      { ...READING, scope: 'coe' },
+    ],
   ])('%s', (_name, probe, saved, expected) => {
     expect(pageView(probe, saved)).toEqual(expected)
   })
@@ -180,7 +253,10 @@ describe('pageView：优先级（计划裁定 7）', () => {
   })
 
   it('内容脚本启动期间显示读取中；到重查上限仍在启动才报初始化失败（R-T3d）', () => {
-    expect(pageView(answered({ phase: 'starting', page: 'unknown' }, false), ON)).toEqual(READING)
+    expect(pageView(answered({ phase: 'starting', page: 'unknown' }, false), ON)).toEqual({
+      ...READING,
+      scope: 'coe',
+    })
     expect(pageView(answered({ phase: 'starting', page: 'unknown' }, true), ON)).toEqual(
       off('初始化失败', HINT.failed, 'reload'),
     )
@@ -195,23 +271,34 @@ describe('pageView：优先级（计划裁定 7）', () => {
     expect(pageView(answered({ ...missing, page: 'unsupported' }), ON).kind).toBe('off')
   })
 
-  it('CoE 无应答为中性未连接，“刷新页面”只在部分生效与初始化失败出现', () => {
+  it('普通网页与未知地址不提供刷新，CoE 无应答、部分生效与初始化失败可刷新', () => {
     const views = [
       pageView(answered(), ON),
       pageView(answered({ search: 'missing', searchMissing: ['base'] }), ON),
       pageView(answered({ page: 'english-required' }), ON),
       pageView(answered({ page: 'unsupported' }), ON),
       pageView({ status: 'none' }, ON),
+      pageView({ status: 'none', scope: 'elsewhere' }, ON),
+      pageView({ status: 'none', scope: 'coe' }, ON),
       pageView(answered({ enabled: false }), OFF),
       pageView(answered({ phase: 'failed', error: 'other' }), ON),
       pageView(answered({ page: 'unknown' }), ON),
       pageView({ status: 'reading' }, ON),
     ]
     expect(new Set(views.map((view) => view.word))).toEqual(
-      new Set(['生效中', '部分生效', '未生效', '未连接', null]),
+      new Set([
+        '生效中',
+        '部分生效',
+        '未生效',
+        '未连接',
+        '仅 CoE 页面生效',
+        '未读取到 CoE 状态',
+        null,
+      ]),
     )
     expect(views.filter((view) => view.action === 'reload').map((view) => view.kind)).toEqual([
       'part',
+      'off',
       'off',
     ])
   })

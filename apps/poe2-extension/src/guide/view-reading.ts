@@ -72,7 +72,7 @@ export interface ReadingView {
   setUsage(text: string): void
   /** null 表示当前没有要发送的段落或尚未配置服务 */
   setSendSummary?(summary: SendSummary | null): void
-  setBusy(busy: boolean): void
+  setBusy(busy: boolean, phase?: 'preparing' | 'translating'): void
   setReady(ready: boolean): void
   setProgress(progress: ReadingProgress): void
   setPageState(id: string, result: PageResult): void
@@ -196,6 +196,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     busy = false,
     awaitingConfirmation = false,
     sendSummary: SendSummary | null = null
+  let busyPhase: 'preparing' | 'translating' = 'preparing'
   const summary = el(doc, 'p', { class: 'guide-send-summary', hidden: true })
   const updateBegin = () => {
     const left = lastProgress
@@ -206,7 +207,9 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     begin.textContent = awaitingConfirmation
       ? '等待确认…'
       : busy
-        ? '正在翻译…'
+        ? busyPhase === 'translating'
+          ? '正在生成…'
+          : '正在准备…'
         : lastProgress?.selected === 0
           ? '先选择章节'
           : left === 0
@@ -219,8 +222,9 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
                   ? `继续翻译（${left}）`
                   : '开始翻译'
     summary.hidden = !sendSummary || begin.disabled || begin.hidden
-    if (sendSummary)
-      summary.textContent = `点击后发送 ${sendSummary.blocks} 段到 ${sendSummary.host}，正文和原文语境约 ${sendSummary.chars} 字符。${sendSummary.preserved ? `另有 ${sendSummary.preserved} 段原样保留，不发送。` : ''}`
+    summary.textContent = sendSummary
+      ? `点击后发送 ${sendSummary.blocks} 段到 ${sendSummary.host}，正文和原文语境约 ${sendSummary.chars} 字符。${sendSummary.preserved ? `另有 ${sendSummary.preserved} 段原样保留，不发送。` : ''}`
+      : ''
   }
   updateBegin()
   const progress = el(doc, 'p', { class: 'guide-progress', role: 'status' })
@@ -539,7 +543,29 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         ),
     )
   }
+  function refreshProgress() {
+    const value = lastProgress
+    // inline 只挂载当前段；摘要仍按整个当前范围的已完成段计数，不按问题条目计数。
+    const warnings = [...items.values()].filter(
+      (item) => item.node.dataset.state === 'complete' && item.warning,
+    ).length
+    progressMeter.max = Math.max(1, value?.selected ?? 0)
+    progressMeter.value = value ? value.completed + value.preserved : 0
+    progress.title = value ? `已选 ${value.selected} 段 / ${value.characters} 字` : ''
+    progress.textContent = !value
+      ? ''
+      : value.selected === 0
+        ? '尚未选择正文'
+        : `完成 ${value.completed} / ${value.selected} 段${value.failed ? ` · ${value.failed} 段失败` : ''}${value.preserved ? ` · ${value.preserved} 段保留原文` : ''}${warnings ? ` · 待核对 ${warnings} 段` : ''}`
+    updateBegin()
+  }
+  function resetProgress() {
+    lastProgress = null
+    sendSummary = null
+    refreshProgress()
+  }
   function refreshSummary() {
+    refreshProgress()
     let inline = 0,
       fallback = 0,
       stale = 0
@@ -642,6 +668,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       }
     },
     showDocument(guide, blocks, stageId, selectedIds = blocks.map((b) => b.id)) {
+      resetProgress()
       sourceUrl = guide.source.url
       title.textContent = guide.source.title
       // 标题最多显示两行，完整标题放在悬停提示里。
@@ -876,10 +903,8 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       scopeText.textContent = ''
       chapters.replaceChildren()
       picker = null
-      progress.textContent = ''
       ready = false
-      lastProgress = null
-      updateBegin()
+      resetProgress()
       stagesBar.replaceChildren()
       stageButtons.clear()
       stagesBar.hidden = true
@@ -1021,14 +1046,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     },
     setProgress(value) {
       lastProgress = value
-      progressMeter.max = Math.max(1, value.selected)
-      progressMeter.value = value.completed + value.preserved
-      updateBegin()
-      progress.textContent =
-        value.selected === 0
-          ? '尚未选择正文'
-          : `完成 ${value.completed} / ${value.selected} 段${value.failed ? ` · ${value.failed} 段失败` : ''}${value.preserved ? ` · ${value.preserved} 段保留原文` : ''}`
-      progress.title = `已选 ${value.selected} 段 / ${value.characters} 字`
+      refreshProgress()
     },
     setPageState(id, result) {
       const item = items.get(id)
@@ -1043,12 +1061,13 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
         refreshSummary()
       }
     },
-    setBusy(value) {
+    setBusy(value, phase = 'preparing') {
       // 忙碌时开始按钮禁用；焦点原在开始或停止上时交给停止，结束后交回开始。
       const active = doc.activeElement
       const fromBegin = active === begin
       const fromStop = active === stop
       busy = value
+      busyPhase = phase
       updateBegin()
       stop.hidden = !busy
       root.setAttribute('aria-busy', String(busy))

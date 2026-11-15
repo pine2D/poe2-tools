@@ -1,9 +1,10 @@
 import { platform } from '../platform'
 import { PAGE_STATE_TYPE, type PageStateReply, parseReply } from '../protocol'
 
+export type PageScope = 'coe' | 'elsewhere' | 'unknown'
 export type PageProbe =
   | { status: 'reading' }
-  | { status: 'none' }
+  | { status: 'none'; scope?: PageScope }
   | { status: 'reply'; tabId: number; reply: PageStateReply; settled: boolean }
 
 // 常量由第三期 Task 1 实测确认（.superpowers/sdd/2026-10-04-phase3/probe/probe.md）；改值只改这里，测试按常量推算。
@@ -23,9 +24,18 @@ export const IDLE_RETRY_MS = 300
 
 const REQUEST = { type: PAGE_STATE_TYPE, v: 1 } as const
 
+function scopeOf(url: string | undefined): PageScope {
+  if (!url) return 'unknown'
+  try {
+    return new URL(url).origin === 'https://beta.craftofexile.com' ? 'coe' : 'elsewhere'
+  } catch {
+    return 'unknown'
+  }
+}
+
 /**
  * 弹窗读取当前标签页状态（第三期裁定 2、4）。只把事实交给 onChange，状态由 pageView 推导。
- * 相同结果不重复发出；refresh() 重查且不先显示“读取中”；reload() 刷新最近一次拿到应答的标签页，
+ * 相同结果不重复发出；refresh() 重查且不先显示“读取中”；reload() 只刷新已确认属于 CoE 的标签页，
  * 刷新后在标签页仍加载中、且尚未出现过无应答之前收到的应答当作旧页面卸载前的回声忽略。
  * 刷新模式从 reload() 开始，到采纳新页应答或判定无应答为止；其间 refresh() 不退出刷新模式（R-T3b）。
  */
@@ -54,13 +64,14 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
     const began = Date.now()
     let firstReply: number | null = null
     let lastReply: PageStateReply | null = null
+    let observedTab: number | null = null
     let idleRetried = false
     const current = () => !disposed && id === generation
     const later = (ms: number) => {
       timer = setTimeout(() => void attempt(), ms)
     }
     async function attempt() {
-      let tab: { id: number; loading: boolean } | null
+      let tab: { id: number; loading: boolean; url?: string } | null
       try {
         tab = await platform.activeTab()
       } catch {
@@ -68,8 +79,22 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
       }
       if (!current()) return
       if (!tab) {
+        tabId = null
         if (reloading) reloadMode = 'off'
-        emit({ status: 'none' })
+        emit({ status: 'none', scope: 'unknown' })
+        return
+      }
+      if (observedTab !== tab.id) {
+        observedTab = tab.id
+        firstReply = null
+        lastReply = null
+        idleRetried = false
+      }
+      const scope = scopeOf(tab.url)
+      tabId = scope === 'coe' ? tab.id : null
+      if (scope === 'elsewhere') {
+        reloadMode = 'off'
+        emit({ status: 'none', scope })
         return
       }
       const reply = parseReply(await platform.ask(tab.id, REQUEST, ASK_TIMEOUT_MS))
@@ -80,6 +105,7 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
       // 本轮已拿到过应答，证明是 beta 页：之后的无应答（挂层期间询问超时等）按“读取中”重查到 SETTLE_LIMIT_MS，
       // 到点以最后一次应答 settled 发出，不报“本页没有中文助手”（R-T3a）
       if (reply === null && lastReply !== null && firstReply !== null) {
+        tabId = tab.id
         if (now - firstReply < SETTLE_LIMIT_MS) {
           emit({ status: 'reading' })
           later(SETTLE_RETRY_MS)
@@ -102,7 +128,7 @@ export function watchPage(onChange: (probe: PageProbe) => void): {
             return
           }
           if (reloading) reloadMode = 'off'
-          emit({ status: 'none' })
+          emit({ status: 'none', scope })
           return
         }
       }

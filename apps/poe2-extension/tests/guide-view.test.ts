@@ -56,6 +56,56 @@ afterEach(() => {
 })
 
 describe('createReadingView', () => {
+  it('准备与生成分别表达，同为忙碌的阶段变化不移动外部焦点', () => {
+    const { v } = mount()
+    v.setReady(true)
+    v.setBusy(true, 'preparing')
+    expect(document.querySelector('.guide-begin')?.textContent).toBe('正在准备…')
+    const outside = document.createElement('button')
+    document.body.append(outside)
+    outside.focus()
+    v.setBusy(true, 'translating')
+    expect(document.querySelector('.guide-begin')?.textContent).toBe('正在生成…')
+    expect(document.activeElement).toBe(outside)
+  })
+  it('摘要按全部已完成段计待核对，不按问题条数或当前挂载段计数', () => {
+    const { v } = mount()
+    v.showDocument(doc, prepared, null)
+    v.setProgress({ selected: 2, completed: 2, preserved: 0, failed: 0, characters: 80 })
+    v.setTranslation('b0', '瘟疫', 'engine', [
+      { kind: 'number-mismatch', detail: '数字一' },
+      { kind: 'number-mismatch', detail: '数字二' },
+    ])
+    v.setTranslation('b1', '另一段', 'cache', [{ kind: 'number-mismatch', detail: '数字三' }])
+    expect(document.querySelector('.guide-progress')?.textContent).toContain('待核对 2 段')
+    v.setBlockState('b1', 'pending')
+    expect(document.querySelector('.guide-progress')?.textContent).toContain('待核对 1 段')
+    v.setTranslation('b0', '瘟疫', 'engine', [])
+    expect(document.querySelector('.guide-progress')?.textContent).not.toContain('待核对')
+  })
+  it('清空与重建文档都清掉旧发送摘要、进度和提示', () => {
+    const { v } = mount()
+    const seed = () => {
+      v.setReady(true)
+      v.setProgress({ selected: 2, completed: 1, preserved: 0, failed: 0, characters: 80 })
+      v.setSendSummary?.({ blocks: 1, chars: 80, host: 'api.example.com', preserved: 0 })
+    }
+    const cleared = () => {
+      expect(document.querySelector('.guide-progress')?.textContent).toBe('')
+      expect(document.querySelector('.guide-progress')?.getAttribute('title')).toBe('')
+      expect(document.querySelector<HTMLProgressElement>('.guide-meter')?.value).toBe(0)
+      expect(document.querySelector('.guide-send-summary')?.textContent).toBe('')
+    }
+    seed()
+    v.clearDocument()
+    cleared()
+    v.setTranslation('b0', '旧更新', 'engine', [{ kind: 'number-mismatch', detail: '旧提示' }])
+    cleared()
+    v.showDocument(doc, prepared, 's1')
+    seed()
+    v.showDocument(doc, prepared, 's2')
+    cleared()
+  })
   it('主操作采用钢蓝且直角，译文保持可读字号与无衬线', () => {
     const style = document.createElement('style')
     style.textContent = [
@@ -82,7 +132,7 @@ describe('createReadingView', () => {
       style.remove()
     }
   })
-  it('确认限额期间显示等待确认，确认后才显示翻译中', async () => {
+  it('确认限额期间显示等待确认，确认后仍准备，实际生成才切换状态', async () => {
     const { v } = mount()
     v.setReady(true)
     v.setBusy(true)
@@ -90,7 +140,9 @@ describe('createReadingView', () => {
     expect(document.querySelector('.guide-begin')?.textContent).toBe('等待确认…')
     document.querySelector<HTMLButtonElement>('.ask-ok')?.click()
     await expect(response).resolves.toBe(true)
-    expect(document.querySelector('.guide-begin')?.textContent).toBe('正在翻译…')
+    expect(document.querySelector('.guide-begin')?.textContent).toBe('正在准备…')
+    v.setBusy(true, 'translating')
+    expect(document.querySelector('.guide-begin')?.textContent).toBe('正在生成…')
   })
   it.each(['waiting', 'complete'])('主按钮 %s 禁用状态悬停时仍保留可读实色背景', (state) => {
     const style = document.createElement('style')
