@@ -67,7 +67,7 @@ describe('扩展介绍页：面向普通用户', () => {
 
   it('阅读顺序：下载紧接能力说明，环境清单与安装指引紧随其后', () => {
     const { container } = setup()
-    const order = ['.pt-plaque', '#env', '#install', '#verify', '#update'].map(
+    const order = ['.ext-download__btn', '#env', '#install', '#verify', '#update'].map(
       (selector) => container.querySelector(selector) as Element,
     )
     for (const node of order) expect(node).not.toBeNull()
@@ -77,11 +77,11 @@ describe('扩展介绍页：面向普通用户', () => {
       expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     }
     const env = container.querySelector('#env') as HTMLElement
-    expect(env.contains(container.querySelector('.pt-plaque'))).toBe(false)
+    expect(env.contains(container.querySelector('.ext-download__btn'))).toBe(false)
   })
 })
 
-describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
+describe('下载区：标准主操作与真实下载信息', () => {
   it('主视觉提供唯一下载入口，示意不冒充当前浏览器状态', () => {
     const { container } = setup()
     const gate = container.querySelector('.ext-gate') as HTMLElement
@@ -95,11 +95,11 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     expect(title.textContent).toBe('熟悉的术语，就在原来的工具里。')
     expect(title.querySelector('br')?.className).toBe('mobile-break')
     expect(title.querySelector('.pt-hero-title__gold')?.textContent).toBe('就在原来的工具里。')
-    const forge = container.querySelectorAll('.pt-plaque')
+    const forge = container.querySelectorAll('.ext-download__btn')
     expect(forge).toHaveLength(1)
     const download = screen.getByRole('link', { name: isDownloadName })
     expect(download).toBe(forge[0])
-    expect(download.className).toBe('pt-plaque ext-download__btn')
+    expect(download.className).toBe('pt-btn pt-btn--primary ext-download__btn')
     expect(download.querySelector('.ext-download__meta')?.textContent).toBe(META)
     expect(container.querySelector('#download')?.contains(download)).toBe(true)
     expect(gate.contains(download)).toBe(true)
@@ -132,27 +132,26 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
       '部分装备的国服文本',
       '可转成英文导入。',
     ])
-    const nav = screen.getByRole('navigation', { name: '安装路线' })
+    const nav = screen.getByRole('navigation', { name: '安装与使用' })
     expect(container.querySelector('.ext-gate')?.contains(nav)).toBe(true)
     const links = within(nav).getAllByRole('link')
-    expect(texts(links)).toEqual(['确认环境', '下载', '安装（四步）', '确认生效'])
+    expect(texts(links)).toEqual(['下载', '安装（四步）', 'CoE 中文显示', '网页翻译与划词'])
     const targets = links.map((link) => link.getAttribute('href') ?? '')
-    expect(targets).toEqual(['#env', '#download', '#install', '#verify'])
+    expect(targets).toEqual(['#download', '#install', '#verify', '#guide'])
     for (const target of targets) expect(container.querySelector(target), target).not.toBeNull()
   })
 
-  it('左栏“先确认环境”：四项环境、不支持范围与 CoE Beta 链接', () => {
+  it('左栏“CoE 中文显示环境”：三项专用条件、不支持范围与 CoE Beta 链接', () => {
     const { container } = setup()
     const env = container.querySelector('section#env') as HTMLElement
-    expect(labelOf(container, env)).toBe('先确认环境')
+    expect(labelOf(container, env)).toBe('CoE 中文显示环境')
     const heading = within(env).getByRole('heading', { level: 2 })
     expect(heading.className).toBe('pt-subhead')
-    expect(heading.textContent).toBe('先确认环境')
+    expect(heading.textContent).toBe('CoE 中文显示环境')
     // ui-copy 7：不写“以下几项”铺垫，标题已说明这一栏做什么
     expect(env.querySelector('.ext-gate__note')).toBeNull()
-    expect(texts(env.querySelectorAll('dt'))).toEqual(['浏览器', '站点', '原站设置', '术语'])
+    expect(texts(env.querySelectorAll('dt'))).toEqual(['站点', '原站设置', '术语'])
     expect(texts(env.querySelectorAll('dd'))).toEqual([
-      '电脑上的 Chrome',
       'beta.craftofexile.com 新版 Beta',
       'PoE2 → English',
       '国服简体中文 暂无台服繁体',
@@ -178,7 +177,7 @@ describe('下载区：本页唯一的金属重点（方案 §3.3）', () => {
     expect(heading.className).toBe('visually-hidden')
     expect(heading.textContent).toBe('下载扩展')
     expect(download.querySelector('.ext-gate__note')?.textContent).toBe(
-      '扩展尚未上架 Chrome 应用商店，从本站下载 zip，按下面四步安装。',
+      '适用于电脑上的 Chrome。扩展尚未上架 Chrome 应用商店，从本站下载 zip，按下面四步安装。',
     )
     expect(texts(download.querySelectorAll('.ext-facts > li'))).toEqual([
       `发布于 ${EXTENSION_RELEASE.date}`,
@@ -224,15 +223,15 @@ describe('安装与确认生效（L0）', () => {
       '解压到固定文件夹',
       '打开开发者模式',
       '加载扩展',
-      '在 CoE Beta 中启用',
+      '打开中文助手',
     ])
     expect(steps.map((li) => texts(li.querySelectorAll('p')))).toEqual([
       ['把下载的 zip 解压到一个固定的文件夹，之后不要删除或移动它。'],
       ['在 Chrome 地址栏打开 chrome://extensions，打开右上角“开发者模式”。'],
       ['点“加载已解压的扩展程序”，选刚才解压的文件夹。'],
       [
-        '打开 CoE Beta，选 PoE2 → English 并刷新页面。',
-        '点工具栏的拼图图标，在展开的列表里点“PoE2 中文助手”打开弹窗，再打开“启用简体中文”。',
+        '点工具栏的拼图图标，在展开的列表里点“PoE2 中文助手”打开弹窗。',
+        '在 CoE Beta 选 PoE2 → English 并刷新，再打开“启用简体中文”；读攻略时点“预览此页翻译范围”。',
       ],
     ])
     expect(install.querySelector('.ext-guide__note')?.textContent).toBe(
@@ -244,7 +243,7 @@ describe('安装与确认生效（L0）', () => {
   it('确认生效：两处检查项，搜索候选示意取自正式词典、用共用的 l1demo__ 类并标明是自绘示意', () => {
     const { container } = setup()
     const verify = container.querySelector('section#verify') as HTMLElement
-    expect(labelOf(container, verify)).toBe('确认生效')
+    expect(labelOf(container, verify)).toBe('确认 CoE 中文显示')
     expect(verify.closest('.pt-frame')).toBeNull()
     expect(verify.querySelector('.ext-verify__mark')?.getAttribute('aria-hidden')).toBe('true')
     expect(verify.querySelector('.ext-verify__intro')?.textContent).toBe(
@@ -439,7 +438,7 @@ describe('参考信息与删除项', () => {
       '关闭汉化可恢复原文。禁用或卸载扩展后，也请刷新原站页面。',
     ])
     expect(texts(container.querySelectorAll('#privacy p'))).toEqual([
-      '术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。',
+      '术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把所选段落、必要原文语境和术语发给你自己选择的服务商。',
       '划词翻译在你点“翻译”后，由扩展后台发送选中的文字和相关术语，不附带页面地址。设置里的“测试连接”只发送一句简短的测试消息，不含攻略文字。',
       '扩展不内置任何 Key，Key 与译文缓存只保存在本机，Key 未加密保存；可在侧边栏设置里一键清除。扩展不需要游戏账号登录，也不代替你执行原站导入。',
     ])
@@ -471,7 +470,7 @@ describe('参考信息与删除项', () => {
     ).toBe('https://github.com/pine2D/poe2-tools/issues')
     for (const name of [
       '安装',
-      '确认生效',
+      '确认 CoE 中文显示',
       '更新与恢复',
       '文本处理与隐私',
       '攻略翻译',
@@ -482,7 +481,9 @@ describe('参考信息与删除项', () => {
     ]) {
       // B4-07：章节标题用衬线（ui-theme 的 .pt-subhead），安装与确认生效用宣传面大号
       expect(screen.getByRole('heading', { name }).className, name).toBe(
-        name === '安装' || name === '确认生效' ? 'pt-subhead pt-subhead--lg' : 'pt-subhead',
+        name === '安装' || name === '确认 CoE 中文显示'
+          ? 'pt-subhead pt-subhead--lg'
+          : 'pt-subhead',
       )
     }
   })

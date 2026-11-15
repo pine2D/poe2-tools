@@ -30,9 +30,12 @@ export function PopupIllustration({ version }: { version: string }) {
             </dd>
           </div>
         </dl>
+        <p className="ext-popup__reading">
+          网页翻译入口：<strong>预览此页翻译范围</strong>
+        </p>
         <p className="ext-popup__foot">整段翻译需在设置中配置服务</p>
       </div>
-      <figcaption id="popup-caption">扩展弹窗示意 · 非当前页检测结果</figcaption>
+      <figcaption id="popup-caption">扩展弹窗示意 · CoE 场景 · 非当前页检测结果</figcaption>
     </figure>
   )
 }

@@ -70,6 +70,9 @@ export function ExtensionPage(): ReactElement {
                 <span className="nw">部分装备的国服文本</span>
                 <span className="nw">可转成英文导入。</span>
               </p>
+              <p className="ext-gate__reading">
+                也能预览攻略范围，在原文旁或侧栏读译文；整段翻译需自备服务 Key。
+              </p>
             </header>
             <div className="ext-gate__split">
               <section className="ext-gate__col" id="download" aria-labelledby="download-title">
@@ -77,11 +80,16 @@ export function ExtensionPage(): ReactElement {
                   下载扩展
                 </h2>
                 <p className="ext-gate__note">
-                  扩展尚未上架 Chrome 应用商店，从本站下载 zip，按下面四步安装。
+                  适用于电脑上的 Chrome。扩展尚未上架 Chrome 应用商店，从本站下载
+                  zip，按下面四步安装。
                 </p>
                 <div className="ext-download">
                   {/* ≤620px 时版本与大小换到第二行（extension.css），可访问名称仍是整句 */}
-                  <a href={downloadHref} download className="pt-plaque ext-download__btn">
+                  <a
+                    href={downloadHref}
+                    download
+                    className="pt-btn pt-btn--primary ext-download__btn"
+                  >
                     下载扩展
                     <span className="ext-download__meta">{`（v${version}，zip，${formatSize(bytes)}）`}</span>
                   </a>
@@ -109,11 +117,9 @@ export function ExtensionPage(): ReactElement {
               </section>
               <section className="ext-gate__col" id="env" aria-labelledby="env-title">
                 <h2 className="pt-subhead" id="env-title">
-                  先确认环境
+                  CoE 中文显示环境
                 </h2>
                 <dl className="ext-env">
-                  <dt>浏览器</dt>
-                  <dd>电脑上的 Chrome</dd>
                   <dt>站点</dt>
                   <dd>
                     beta.craftofexile.com <small>新版 Beta</small>
@@ -135,11 +141,8 @@ export function ExtensionPage(): ReactElement {
             </div>
           </div>
           <PopupIllustration version={version} />
-          <nav className="ext-route" aria-label="安装路线">
+          <nav className="ext-route" aria-label="安装与使用">
             <ol>
-              <li>
-                <a href="#env">确认环境</a>
-              </li>
               <li>
                 <a href="#download">下载</a>
               </li>
@@ -147,7 +150,10 @@ export function ExtensionPage(): ReactElement {
                 <a href="#install">安装（四步）</a>
               </li>
               <li>
-                <a href="#verify">确认生效</a>
+                <a href="#verify">CoE 中文显示</a>
+              </li>
+              <li>
+                <a href="#guide">网页翻译与划词</a>
               </li>
             </ol>
           </nav>
@@ -179,14 +185,12 @@ export function ExtensionPage(): ReactElement {
               </p>
             </li>
             <li className="ext-step">
-              <h3>在 CoE Beta 中启用</h3>
-              <p>
-                打开 CoE Beta，选 <strong>PoE2 → English</strong> 并刷新页面。
-              </p>
+              <h3>打开中文助手</h3>
               {/* Chrome 的拼图图标先展开扩展列表，要再点一次扩展名才打开弹窗（样稿把两次点击写成了一次） */}
+              <p>点工具栏的拼图图标，在展开的列表里点“PoE2 中文助手”打开弹窗。</p>
               <p>
-                点工具栏的拼图图标，在展开的列表里点“PoE2 中文助手”打开弹窗，再打开“
-                <strong>启用简体中文</strong>”。
+                在 CoE Beta 选 <strong>PoE2 → English</strong> 并刷新，再打开“
+                <strong>启用简体中文</strong>”；读攻略时点“预览此页翻译范围”。
               </p>
             </li>
           </ol>
@@ -201,7 +205,7 @@ export function ExtensionPage(): ReactElement {
             <Icon name="check" />
           </span>
           <h2 className="pt-subhead pt-subhead--lg" id="verify-title">
-            确认生效
+            确认 CoE 中文显示
           </h2>
           <p className="ext-verify__intro">装好后回到 CoE Beta 刷新页面，看下面两处。</p>
           <div className="ext-verify__grid">
@@ -319,7 +323,7 @@ export function ExtensionPage(): ReactElement {
               文本处理与隐私
             </h2>
             <p>
-              术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把选中的段落和术语发给你自己选择的服务商。
+              术语显示和装备文本转换都在你的浏览器里完成，设置也保存在本机。攻略翻译只在你点击后读取当前页；只有配置了翻译服务并开始翻译，侧边栏才把所选段落、必要原文语境和术语发给你自己选择的服务商。
             </p>
             <p>
               划词翻译在你点“翻译”后，由扩展后台发送选中的文字和相关术语，不附带页面地址。设置里的“测试连接”只发送一句简短的测试消息，不含攻略文字。
@@ -341,7 +345,7 @@ export function ExtensionPage(): ReactElement {
               攻略翻译
             </h2>
             <p>
-              在攻略页点扩展图标，再点“翻译此页”，先预览正文、选区或点选区域，核对章节和用量后点“开始翻译”。译文默认放在原文旁，也可仅在侧栏阅读、定位原文或恢复页面。
+              在攻略页点扩展图标，再点“预览此页翻译范围”，先核对正文、选区或点选区域。预览不发送正文；核对章节和用量后点“开始翻译”才发送。译文默认放在原文旁，也可仅在侧栏阅读、定位原文或恢复页面。
             </p>
             <p>
               整段翻译需要你自备翻译服务的 Key：默认 DeepSeek，也可以填写 OpenAI

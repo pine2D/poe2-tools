@@ -2,7 +2,7 @@
 
 <!-- impeccable:product-schema 1 -->
 
-> 代码状态：2026-11-15，网站 0.11.0、扩展 0.11.1。本次变化与工程门禁见[统一验收记录](docs/validation-2026-11-15-release-closeout.md)，公开发行状态以对应提交 CI、[网站](https://poe2-tools.pine2d.com)及 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases) 为准。产品事实由本文维护，视觉目标见 [DESIGN.md](DESIGN.md)，工具分工见[设计工作约定](docs/design-skills.md)。
+> 代码状态：2026-11-16，网站与扩展均为未公开的 0.12.0 本地候选，系统设计升级见[本轮验收记录](docs/validation-2026-11-15-system-design.md)。最近公开基线仍为网站 0.11.0、扩展 0.11.1。该公开基线的变化与工程门禁见[统一验收记录](docs/validation-2026-11-15-release-closeout.md)，公开发行状态以对应提交 CI、[网站](https://poe2-tools.pine2d.com)及 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases) 为准。产品事实由本文维护，视觉目标见 [DESIGN.md](DESIGN.md)，工具分工见[设计工作约定](docs/design-skills.md)。
 
 > 构筑 A 单页交付：导入后先显示可下载文件与待核对数量；按需展开核对或进入阶段比较，显式选择当前文件、当前构筑或全部构筑下载。两服词典、文件保护规则、游戏内加载待验收的边界保持。验证见 [A 实施记录](docs/validation-2026-11-15-build-delivery-a.md)。
 
@@ -33,9 +33,11 @@ web
 PoE2 Tools 由两件工具组成，网站保留两个清楚的入口；当前开发主线为 Chrome 扩展，构筑汉化继续维护：
 
 - **构筑汉化**（网页工具）：按本服词典翻译 `.build` 的备注与描述，提供装备、技能与天赋的中文预览；只改约定文本字段，下载文件的游戏内加载效果待真机验收；
-- **PoE2 中文助手**（Chrome 扩展）：在 CoE 英文界面上原地显示国服简体术语，支持中文搜索和国服装备文本转换；另提供用户主动触发的攻略阅读与翻译。
+- **PoE2 中文助手**（Chrome 扩展）：在 CoE 英文界面上原地显示国服简体术语，支持中文搜索和国服装备文本转换；网页阅读可独立预览攻略范围，配置自备服务后主动翻译，也可按需划词。CoE 的站点与语言前提只适用于其专用功能。
 
 词典按服独立维护，不做繁简机器互转；来源分为 primary、gray、manual，包含官方数据、poe2db 等已登记来源与手工对照，不能统称为全量官方数据。确定性词典匹配未命中时保留原文；用户自选模型的整段翻译另行核对，不能以术语命中证明整句正确。来源与边界见[数据源登记表](docs/data-sources.md)。
+
+> 0.12.0 候选明确区分普通页、CoE 无应答和地址未知；阅读预览与准备不显示为实际生成，完成摘要同时列待核对段数。阶段检查与公开发行分别记录。
 
 ## Operating Context
 

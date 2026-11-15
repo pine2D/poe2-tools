@@ -78,11 +78,11 @@ export function HomePage() {
             </h1>
             <p className="home-lead">英文社区的攻略和做装工具，直接用本服中文术语来看。</p>
             <div className="home-actions">
-              <a className="pt-plaque" href="/build/">
+              <a className="pt-btn" href="/build/">
                 打开构筑汉化
                 <Icon name="arrow-right" />
               </a>
-              <a className="pt-plaque" href="/extension/">
+              <a className="pt-btn" href="/extension/">
                 安装中文助手
                 <Icon name="arrow-right" />
               </a>
@@ -112,10 +112,7 @@ export function HomePage() {
               <span className="hero-clause">我拿到了一份英文</span>{' '}
               <span className="pt-ext">.build</span>
             </h2>
-            <p>
-              导入攻略文件，按阶段看装备、词缀和技能的本服中文，
-              <span className="nw">核对后下载中文版。</span>
-            </p>
+            <p>导入攻略文件，先看处理结果并下载中文版； 按需核对装备、词缀和技能，或比较阶段。</p>
           </header>
           <div className="entry__act">
             <a className="pt-btn" href="/build/" aria-describedby="facts-build">
@@ -131,7 +128,9 @@ export function HomePage() {
             <p className="entry__facts">尚未在游戏里实测加载。</p>
           </div>
           <figure className="strip__side strip__side--build" aria-labelledby="demo-build-cap">
-            <L1DemoCaption id="demo-build-cap">构筑汉化的阶段看板 · 示例构筑（自造）</L1DemoCaption>
+            <L1DemoCaption id="demo-build-cap">
+              构筑汉化的阶段比较 · 按需进入 · 示例构筑（自造）
+            </L1DemoCaption>
             <div className="strip__above">
               <table className="mini-board">
                 <caption className="visually-hidden">
