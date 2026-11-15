@@ -28,6 +28,9 @@ export interface PreviewProps {
   onDownload?: (() => void) | undefined
   /** 从阶段看板进入时提供：回到看板 */
   onBack?: (() => void) | undefined
+  backLabel?: string | undefined
+  /** 由交付列表的待核对入口进入时，直接显示问题清单。 */
+  initialReviewOpen?: boolean | undefined
 }
 
 const SECTIONS: readonly PreviewSection[] = ['gear', 'skills', 'passives']
@@ -49,7 +52,16 @@ function openByDefault(entry: FieldWithRows): boolean {
   return entry.rows.some((row) => isMissedRow(row, entry.entry.baseName))
 }
 
-export function Preview({ file, fields, locale, bilingual, onDownload, onBack }: PreviewProps) {
+export function Preview({
+  file,
+  fields,
+  locale,
+  bilingual,
+  onDownload,
+  onBack,
+  backLabel = '返回阶段对照',
+  initialReviewOpen = false,
+}: PreviewProps) {
   const byPath = useMemo(() => new Map(fields.map((item) => [item.entry.path, item])), [fields])
   const misses = useMemo(() => collectMisses(fields, file.preview), [fields, file.preview])
   const { preview, report, input } = file
@@ -64,7 +76,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload, onBack }:
   )
   const [view, setView] = useState<PreviewView>('compare')
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(initialReviewOpen)
   const [pending, setPending] = useState<{ domId: string } | null>(null)
   // collapsed 装备的手动展开/收起；没有记录时按“有未命中行即默认展开”
   const [opened, setOpened] = useState<ReadonlyMap<number, boolean>>(() => new Map())
@@ -157,7 +169,7 @@ export function Preview({ file, fields, locale, bilingual, onDownload, onBack }:
               onClick={onBack}
             >
               <Icon name="chevron-down" size={14} className="whead-back__icon" />
-              返回阶段对照
+              {backLabel}
             </button>
           )}
           <span className="whead-file">{file.name}</span>

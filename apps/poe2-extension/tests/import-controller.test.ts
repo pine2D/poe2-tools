@@ -154,6 +154,23 @@ it('点击诊断定位原输入行，不修改文本，过期诊断不能继续�
   expect(input.selectionStart).toBe(0)
 })
 
+it.each(['\n', '\r\n'])('长文本含空行时按原始行号定位，保留文本及阻断状态（%j）', (newline) => {
+  const { input, preview } = readyPreview()
+  input.value = `${source}${'\n'.repeat(40)}需要核对的自造条目 9`.replaceAll('\n', newline)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  preview.click()
+  const original = input.value
+  const locate = ui().querySelector<HTMLButtonElement>('button[aria-label="定位第 48 行"]')
+  expect(locate).not.toBeNull()
+  locate?.click()
+  expect(input.value).toBe(original)
+  expect(input.value.slice(0, input.selectionStart).split('\n')).toHaveLength(48)
+  expect(input.value.slice(input.selectionStart, input.selectionEnd)).toBe('需要核对的自造条目 9')
+  expect(document.activeElement).toBe(input)
+  expect(document.querySelectorAll('textarea')).toHaveLength(1)
+  expect(ui().querySelector<HTMLButtonElement>('.body > div > button')?.disabled).toBe(true)
+})
+
 it('导入状态区在预览前挂载，跨重试保留，仅播报摘要且不抢焦点', () => {
   const { input, preview, fill } = readyPreview()
   const status = ui().querySelector('[role="status"]')

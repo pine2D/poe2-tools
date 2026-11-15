@@ -2,11 +2,13 @@
 
 普通用户请阅读[扩展介绍](README.md)与[安装和使用](install.md)。仓库环境和通用命令见[项目开发指南](../development.md)。
 
-## 当前基线（2026-10-23）
+## 代码版本与既有发布基线（2026-11-15）
 
-v4 界面迁移已通过 [PR #2](https://github.com/pine2D/poe2-tools/pull/2) 以合并提交 `93763c5` 合入 main；main CI 的 verify、deploy / pages、release-extension 全部成功。[0.11.0](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0) 已通过网站与 GitHub Release 公开分发，定位为开发预览，未上架 Chrome 应用商店；网站同步部署 0.10.0。前一公开版本为 [0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1)（扩展、CoE 修复及攻略阅读代码经 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main，`4608705`）。`feat/v4-ui-migration` 已合并并删除，后续统一使用主工作区 main。
+v4 界面迁移已通过 [PR #2](https://github.com/pine2D/poe2-tools/pull/2) 以合并提交 `93763c5` 合入 main；main CI 的 verify、deploy / pages、release-extension 全部成功。[0.11.0](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.11.0) 已通过网站与 GitHub Release 公开分发，定位为开发预览，未上架 Chrome 应用商店；网站同步部署 0.10.0。前一公开版本为 [0.10.1](https://github.com/pine2D/poe2-tools/releases/tag/ext-v0.10.1)（扩展、CoE 修复及攻略阅读代码经 [PR #1](https://github.com/pine2D/poe2-tools/pull/1) 合入 main，`4608705`）。`feat/v4-ui-migration` 已合并并删除，后续工作沿主工作区开展。
 
 `apps/poe2-extension/release.json` 是产物核对依据。已发布的同版本 ZIP 不得替换内容；后续改变扩展包须升版本并更新发布记录。
+
+当前代码版本为 0.11.1，修复长装备文本的原文行定位可见性，与网站 0.11.0 一起交付。真实 CoE 验证见[行定位修复记录](validation-2026-11-15-line-location.md)，版本、门禁与发行依据见[统一验收记录](../validation-2026-11-15-release-closeout.md)。0.11.0 的固定产物记录保留在 `ext-v0.11.0` tag。
 
 0.11.0 包含 v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层；四批界面复盘及第二轮用户裁定后的修正见[v4 界面复盘](../validation-2026-10-23-v4-ui-retrospective.md)。证据见 [v4 弹窗验收](validation-2026-10-23-v4-popup.md)、[阅读侧栏与站点验收](validation-2026-10-23-v4-reading-sites.md)和[CoE 浮层验收](validation-2026-10-23-v4-coe-overlays.md)。完整 `pnpm verify` 以 CI 为准；本地完整门禁超时经诊断为宿主 CPU 吞吐波动，本地结果不作放行依据，见[完整门禁记录](../validation-2026-10-23-v4-integration.md)。
 
@@ -84,7 +86,8 @@ pnpm extension:check
 
 | 记录 | 内容 |
 | --- | --- |
-| [发布与验收状态](release-readiness.md) | 0.11.0 与 0.10.1 的工程基线、公开发行与未完成事项 |
+| [发布与验收状态](release-readiness.md) | 0.11.1 产物验收、0.11.0 与 0.10.1 发行历史及未完成事项 |
+| [CoE 行定位修复](validation-2026-11-15-line-location.md) | 真实发布版复现、长文本与折行定位、0.11.1 修复及未测范围 |
 | [v4 弹窗与共享样式](validation-2026-10-23-v4-popup.md) | 0.11.0 第一批（记录时为本地候选）的实际弹窗、跨界面冒烟与工程门禁 |
 | [v4 CoE 自有浮层](validation-2026-10-23-v4-coe-overlays.md) | 第三批双语候选、装备步骤、语言提示、字体后备与原站实际导入 |
 | [v4 阅读侧栏、设置与站点](validation-2026-10-23-v4-reading-sites.md) | 第二批字体隔离、真实侧栏、合成阅读流程和站点授权／删除验收 |
