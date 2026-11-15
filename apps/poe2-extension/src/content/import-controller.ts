@@ -2,6 +2,7 @@ import type { Term } from '@poe2-tools/l10n-core'
 import { type PreparedImport, prepareImport } from '../adapters/coe-beta/import'
 import { FULL_DISCLAIMER, SHORT_PROVENANCE } from '../provenance'
 import { adoptL1, createGem } from './l1'
+import { revealTextareaSelection } from './textarea-selection'
 
 // 原站对话框的布局放宽（spec §6.9 宿主全局样式例外 3）：只改布局，不改颜色与字体；第一条规则是 0.2.0 原文加 overflow-y: auto（spec B.12 第 11 条），另两条逐字沿用 0.2.0
 const DIALOG_CSS = `
@@ -296,6 +297,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             const length = (rows[line - 1] ?? '').replace(/\r$/, '').length
             input.focus()
             input.setSelectionRange(start, start + length)
+            revealTextareaSelection(input)
             showLine(line)
           })
           row.insertBefore(locate, row.lastChild)
