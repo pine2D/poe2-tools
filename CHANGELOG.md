@@ -3,7 +3,17 @@
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` / `l10n-core` 是私有内部包，不单独计版本；扩展 `apps/poe2-extension` 独立计版本，更新日志见 `apps/poe2-extension/CHANGELOG.md`。
 
-## [Unreleased]
+## [0.11.0] - 2026-11-15
+
+构筑汉化以处理结果与下载为默认入口，详细核对和阶段比较按需进入。两服词典和文件保护规则保持；下载的 `.build` 在游戏内的加载效果仍待实测。
+
+### Changed
+- 构筑汉化导入后先显示处理结果、待核对数量和下载；详细核对就地展开，阶段比较按需进入。宽窄屏都优先呈现文件交付。
+- 下载范围可明确选择当前文件、当前构筑或全部构筑，与阅读模式独立；导出选项和实际输出默认折叠，保留阶段排序、同名文件处理与简繁独立词典。
+- 补齐构筑结果标题的网站字体字符，扩展使用的字体保持不变。
+
+### Fixed
+- 词典或部分文件失败时保留输入和可用操作；移除失败文件后焦点落到相邻文件，核对收起后返回原入口。
 
 ## [0.10.0] - 2026-10-23
 

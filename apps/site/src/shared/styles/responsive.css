@@ -4,6 +4,9 @@
   .app__body {
     grid-template-columns: minmax(0, 1fr);
   }
+  .app__workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .app__side {
     padding: var(--sp-4);
   }
@@ -66,7 +69,7 @@
     padding: var(--sp-5);
   }
   .app__export {
-    margin: var(--sp-4);
+    margin: 0 0 var(--sp-5);
   }
 }
 /* ≤620px：页面左右外距 16px（spec §6.7） */
@@ -80,6 +83,25 @@
 }
 /* ≤600px（构筑页）：主区外距与上内边距都取 --sp-4；可点目标 ≥44px */
 @media (max-width: 600px) {
+  .delivery__row,
+  .delivery__file-info:has(.delivery__stage) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .delivery__stage {
+    grid-row: auto;
+  }
+  .delivery__review {
+    padding: var(--sp-2);
+  }
+  .delivery__actions .pt-btn {
+    min-height: 44px;
+  }
+  .delivery__remove {
+    min-width: 44px;
+  }
+  .app__export {
+    padding: var(--sp-4);
+  }
   .app__main {
     --main-pad-top: var(--sp-4);
     padding: var(--main-pad-top) var(--sp-4) var(--sp-6);

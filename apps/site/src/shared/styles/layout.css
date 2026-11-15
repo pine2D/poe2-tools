@@ -1,6 +1,4 @@
-/* 构筑页骨架：整页滚动、双栏网格、词典状态条、ErrorCard、Toast 的位置；组件外观来自 @poe2-tools/ui-theme（spec §6.4、§6.7） */
-/* 构筑页骨架（spec §6.4.2）：整页滚动（与 M0 mockup 一致，不再用内部滚动容器），
-   主体网格 276px + 1fr，内容最大宽 1280px 居中（§6.1） */
+/* 构筑页 A：单页交付，核对就地展开；主动进入阶段比较时保留文件清单。 */
 .app {
   display: flex;
   flex-direction: column;
@@ -15,10 +13,10 @@
 }
 .app__body {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   width: 100%;
-  max-width: 1680px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 /* ≤1099px 才出现的抽屉开关；桌面不占网格单元 */
@@ -48,6 +46,18 @@
 .app__main:focus {
   outline: none;
 }
+.app__workspace {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-4);
+}
+.app__workspace[data-view="delivery"] {
+  display: block;
+}
+.app__content {
+  min-width: 0;
+}
 /* 没有文件时主区独占整行（空态、词典失败且无文件）：框最大宽 820px 居中，左右内边距只在窄视口里看得出 */
 .app__main:only-child {
   grid-column: 1 / -1;
@@ -71,12 +81,12 @@
 }
 /* 词典失败且没有文件时，框外的 ErrorCard 与下方“导入 .build”框同宽居中，两块左缘对齐（M0 未画此状态，
    按 .app__import 取值）。写在 .app__error 之后，特异性按升序排列 */
-.app__main:only-child > .app__error {
+.app__workspace[data-empty="true"] .app__content > .app__error {
   max-width: 820px;
   margin-inline: auto;
 }
-/* 词典失败且已有文件（三栏）：ErrorCard 占满阅读区，不在卡片与导出栏之间留出大块空白（B4-14） */
-.app__side ~ .app__main > .app__error {
+/* 词典失败且已有文件：ErrorCard 占满结果区，与保留的文件列表对齐 */
+.app__workspace[data-empty="false"] .app__content > .app__error {
   max-width: none;
 }
 .app__error-title {
@@ -162,20 +172,61 @@
   pointer-events: auto;
 }
 
-/* 导出与阅读分开；窄屏沿 DOM 顺序排在主区之后。 */
+/* 下载先于内容列表；显示范围与实际打包范围一致，不依赖阅读视图。 */
 .app__export {
   display: grid;
   gap: var(--sp-4);
   min-width: 0;
-  margin: var(--sp-5) var(--sp-4) var(--sp-5) 0;
+  margin: 0 0 var(--sp-6);
   padding: var(--sp-5);
   border: 1px solid var(--line-2);
   background: var(--bg);
 }
-.app__export h2 {
-  margin: 0;
-  padding-bottom: var(--sp-3);
-  border-bottom: 2px solid var(--metal-line);
+.app__export-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-6);
+}
+.app__export-main > div {
+  min-width: 0;
+}
+.app__export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--sp-3);
+}
+.app__scope-picker {
+  display: grid;
+  gap: var(--sp-1);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.app__scope-picker select {
+  min-height: 44px;
+  padding-inline: var(--sp-3);
+  border: 1px solid var(--control-edge);
+  border-radius: 0;
+  background: var(--raised);
+  color: var(--val);
+  font: inherit;
+}
+.app__export-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+}
+.app__export-options > summary {
+  display: list-item;
+  min-height: 44px;
+  padding-block: var(--sp-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.app__export-options[open] {
+  flex-basis: 100%;
 }
 .app__export-scope,
 .app__export-note {
@@ -185,7 +236,7 @@
   overflow-wrap: anywhere;
 }
 .app__export .pt-check {
-  margin: 0;
+  margin: 0 0 var(--sp-3);
 }
 .app__export .pt-check__hint {
   margin-bottom: 0;
@@ -193,6 +244,9 @@
 .app__output {
   min-width: 0;
   font-size: var(--fs-small);
+}
+.app__output[open] {
+  flex-basis: 100%;
 }
 .app__output summary {
   display: flex;
@@ -244,4 +298,130 @@
 .app__export-error {
   margin: 0;
   color: var(--danger);
+}
+
+.delivery__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--sp-4) var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+.delivery__head h2 {
+  margin: 0 0 var(--sp-2);
+  color: var(--label);
+  line-height: 1.5;
+}
+.delivery__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.delivery__head-actions,
+.delivery__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.delivery__add {
+  max-width: 100%;
+}
+.delivery__add > summary {
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--control-edge);
+  color: var(--val);
+  background: var(--raised);
+  cursor: pointer;
+}
+.delivery__add[open] {
+  flex: 1 1 100%;
+}
+.delivery__add .app__rail {
+  margin-top: var(--sp-3);
+}
+.delivery__groups,
+.delivery__files {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.delivery__group + .delivery__group {
+  margin-top: var(--sp-6);
+}
+.delivery__group-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.delivery__group-title {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-lead);
+}
+.delivery__file {
+  min-width: 0;
+  background: var(--surface);
+  border-bottom: 2px solid var(--bg);
+}
+.delivery__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-5);
+  padding: var(--sp-4);
+}
+.delivery__file-info {
+  display: grid;
+  gap: var(--sp-2) var(--sp-4);
+  min-width: 0;
+}
+.delivery__file-info:has(.delivery__stage) {
+  grid-template-columns: minmax(120px, 0.5fr) minmax(0, 1fr);
+}
+.delivery__stage {
+  grid-row: 1 / 3;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+}
+.delivery__filename {
+  overflow-wrap: anywhere;
+  font: var(--fs-small) / 1.7 var(--font-code);
+}
+.delivery__status {
+  display: flex;
+  align-items: start;
+  gap: var(--sp-1);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.delivery__status .icon {
+  flex: none;
+  margin-top: var(--sp-1);
+}
+.delivery__status--pending {
+  color: var(--miss);
+}
+.delivery__review {
+  padding: var(--sp-4);
+}
+.delivery__error {
+  padding: 0 var(--sp-4) var(--sp-3);
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+.delivery__error > summary {
+  min-height: 44px;
+  padding-block: var(--sp-2);
+  cursor: pointer;
 }

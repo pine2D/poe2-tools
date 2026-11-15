@@ -101,12 +101,30 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
   })
   it('词典失败且没有文件：ErrorCard 与下方“导入 .build”框同宽 820px 居中，左缘对齐', () => {
     expect(finalValue(rules, '.app__import', 'max-width')).toBe('820px')
-    expect(finalValue(rules, '.app__main:only-child > .app__error', 'max-width')).toBe('820px')
-    expect(finalValue(rules, '.app__main:only-child > .app__error', 'margin-inline')).toBe('auto')
+    expect(
+      finalValue(
+        rules,
+        '.app__workspace[data-empty="true"] .app__content > .app__error',
+        'max-width',
+      ),
+    ).toBe('820px')
+    expect(
+      finalValue(
+        rules,
+        '.app__workspace[data-empty="true"] .app__content > .app__error',
+        'margin-inline',
+      ),
+    ).toBe('auto')
     expect(finalValue(rules, '.app__error', 'max-width')).toBe('640px')
   })
   it('词典失败且已有文件：ErrorCard 占满阅读区，与导出栏之间不留大块空白（B4-14）', () => {
-    expect(finalValue(rules, '.app__side ~ .app__main > .app__error', 'max-width')).toBe('none')
+    expect(
+      finalValue(
+        rules,
+        '.app__workspace[data-empty="false"] .app__content > .app__error',
+        'max-width',
+      ),
+    ).toBe('none')
   })
   it('ErrorCard 的两条宽度规则按特异性升序：(0,3,0) 的限定写法排在 (0,1,0) 的 .app__error 之后', () => {
     // biome lint/style/noDescendingSpecificity 只报警告、不让 verify 失败，这里钉住顺序
@@ -116,7 +134,9 @@ describe('构筑页主区与侧栏留白（spec §4.5、§6.4.2）', () => {
     const at = (selector: string): number =>
       layout.findIndex((rule) => rule.selectors.some((item) => flat(item) === flat(selector)))
     expect(at('.app__error')).toBeGreaterThanOrEqual(0)
-    expect(at('.app__main:only-child > .app__error')).toBeGreaterThan(at('.app__error'))
+    expect(at('.app__workspace[data-empty="true"] .app__content > .app__error')).toBeGreaterThan(
+      at('.app__error'),
+    )
   })
 })
 
@@ -282,7 +302,7 @@ describe('改版前构筑页样式已清理（契约 §2.4、§4.2）', () => {
   })
   // 契约 §2.4、§7.3（v2）：构筑页整页滚动，与 M0 mockup 一致；宽屏导入后页头随页面滚出视口，用户已在 M2 开工时确认
   // 匹配不锚定开头、允许修饰类：≤1099px 抽屉 .app__side--open 与带祖先或属性限定的写法都算；
-  // .app__side-note 等子元素不算。偶尔误报（如 .app__main:only-child > .app__error）只会让用例失败，不会放过问题
+  // .app__side-note 等子元素不算。偶尔误报（如 .app__workspace[data-empty="true"] .app__content > .app__error）只会让用例失败，不会放过问题
   it('整页滚动：.app__main 与 .app__side（含修饰类与限定写法）在任何断点都不是滚动容器', () => {
     for (const rule of rules) {
       const target = rule.selectors.some((item) =>
