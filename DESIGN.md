@@ -1,6 +1,6 @@
 ---
 name: PoE2 Tools v4
-description: v4 系统设计升级本地候选：冷暗层级、独立游戏黑底、直角控件与钢蓝主操作
+description: v4 系统设计升级（0.12.0）：冷暗层级、独立游戏黑底、直角控件与钢蓝主操作
 colors:
   page: "#0e1115"
   page-top: "#121922"

@@ -6,7 +6,7 @@
 
 当前主线为 Chrome 扩展：在 `beta.craftofexile.com` 新版 PoE2 英文界面映射国服简体术语，支持中文搜索与高级装备文本转换；另提供攻略范围预览、原文旁／侧栏对照及主动划词翻译。整段翻译由用户自备 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key。
 
-当前代码为网站与扩展 0.12.0 本地候选，尚未公开；系统设计升级的阶段检查见 `docs/validation-2026-11-15-system-design.md`。最近公开基线为网站 0.11.0、扩展 0.11.1；扩展通过网站与 GitHub Release 分发开发预览，未上架 Chrome 应用商店。构筑 A 与 CoE 行定位修复的统一验收见 `docs/validation-2026-11-15-release-closeout.md`；实际发行状态以对应提交 CI、网站下载和 GitHub Release 为准。公开发行、工程验收与语义质量分别说明；既有整段语义质量未通过结论保持，不能将工程门禁通过写成译文准确性达标。
+当前代码版本为网站 0.12.0、扩展 0.12.0（前一公开基线为网站 0.11.0、扩展 0.11.1）；扩展通过网站与 GitHub Release 分发开发预览，未上架 Chrome 应用商店。系统设计升级与全产品文案收口见 `docs/validation-2026-11-15-system-design.md` 与 `docs/chrome-extension/release-readiness.md`，构筑 A 与 CoE 行定位修复见 `docs/validation-2026-11-15-release-closeout.md`；实际发行状态以对应提交 CI、网站下载和 GitHub Release 为准。公开发行、工程验收与语义质量分别说明；既有整段语义质量未通过结论保持，不能将工程门禁通过写成译文准确性达标。
 
 独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现、回归与历史材料，不自动推进权重、品质、特殊制作或路线研究。此决定不等于原目标完成。Build Planner 汉化继续保留。
 
@@ -24,13 +24,13 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（本地候选代码版本 0.12.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（代码版本 0.12.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
 ## 当前代码与验收（2026-11-16）
 
-- 本地 0.12.0 候选统一共同暗色层次、控件角色、扩展适用范围和阅读处理状态，网站入口与构筑 A 的真实流程衔接；没有改变产品权限、请求边界、游戏规则或构筑导出。`pnpm verify:active` 2119 项通过／2 项既有跳过，完整 `pnpm verify` 6458 项通过／2 项既有跳过；真实界面与三阶段 AGY 裁定见系统设计验收记录。不能将候选写成已发布。
+- 网站 0.12.0 与扩展 0.12.0 统一共同暗色层次、控件角色、扩展适用范围和阅读处理状态，网站入口与构筑 A 的真实流程衔接，并精简全产品用户可见文案、修正过期入口提示；没有改变产品权限、请求边界、游戏规则或构筑导出。`pnpm verify:active` 2119 项通过／2 项既有跳过；本地完整 `pnpm verify` 6455 项通过、3 项冻结工坊高并发超时（原阈值单独复跑 13 项通过）、2 项既有跳过。真实界面与三阶段 AGY 裁定见 `docs/validation-2026-11-15-system-design.md`，最终产物摘要见 `docs/chrome-extension/release-readiness.md`。实际发行状态以对应提交 CI、网站下载和 GitHub Release 为准。
 - 已发布网站 0.11.0 实现已选定的构筑 A 单页交付：默认处理结果与下载，按需核对、主动进入阶段比较；实现与 40 项真实浏览器检查见 `docs/validation-2026-11-15-build-delivery-a.md`。
 - 已发布扩展 0.11.1 修复 CoE 长装备文本点击行号后选区未滚入输入框视野的问题；真实 CoE 的 12 组宽窄窗、空行、折行和键盘证据见 `docs/chrome-extension/validation-2026-11-15-line-location.md`。`release.json` 核对当前产物，旧版本必须使用对应 tag 的固定记录。
 - 0.11.0／0.11.1 公开基线统一收口的 `pnpm verify:active` 通过（2098 项通过、2 项既有跳过）。此前本地完整 `pnpm verify` 仍记失败：6434 项通过、3 项旧工坊测试超时、2 项既有跳过；三个失败文件单独复跑 29 项通过。单独复跑与历史 CI 均不能代替本次合并／发布提交的完整 CI，入口与边界见 `docs/validation-2026-11-15-release-closeout.md`。

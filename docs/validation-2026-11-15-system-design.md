@@ -220,3 +220,7 @@ Chrome for Testing 156 实装检查共 10 项通过：原生工具栏弹窗在�
 正式执行了 `pnpm verify:active` 与 `pnpm verify`，不是以单独复跑代替完整门禁。实际浏览器检查涵盖共同主题、真实 CoE 自有层、扩展预览／生成／缓存和设置往返、网站入口与实际 ZIP、构筑 A 下载全流程。截图与结构化结果保留于本地 `docs/superpowers/validation/2026-11-16-system-design/`，图册为 `overview.html`。
 
 此交付没有远端推送、PR、合并、tag 或公开发行；原有六份文档改动未混入本任务。既有真实整段翻译语义质量未通过结论保持，Windows 日常 Chrome 的真实中文输入法、读屏和游戏内加载仍待验收。
+
+### 2026-11-16 文案收口与发版准备
+
+在 `a16286b` 基础上完成全产品用户可见文案精修与过期入口提示修正（提交 `c91a717`），更新最终候选 `poe2-extension-0.12.0.zip`（`7,372,681` 字节，SHA-256 `c7a117fa1f90e01810ad307f6ed102c38d36fd57b093cfc1d8d4a5f8864d32f9`），随后按实际推送日 `2026-11-16` 更新 `CHANGELOG.md`、`apps/poe2-extension/CHANGELOG.md` 与 `apps/poe2-extension/release.json`（ZIP 字节与 SHA-256 不变）。公开发行状态以对应提交的 CI、网站下载与 GitHub Release `ext-v0.12.0` 为准。
