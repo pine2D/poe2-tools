@@ -181,7 +181,7 @@ describe('下载区：标准主操作与真实下载信息', () => {
     )
     expect(texts(download.querySelectorAll('.ext-facts > li'))).toEqual([
       `发布于 ${EXTENSION_RELEASE.date}`,
-      '固定权限：存储、当前页、页面脚本与侧边栏（storage、activeTab、scripting、sidePanel）',
+      '固定权限：本机存储、当前页读取与侧边栏（storage、activeTab、scripting、sidePanel）',
       '自动划词只在你授权的站点申请访问，安装时不取得全站权限',
       '已装旧版？看更新方法',
     ])
@@ -256,7 +256,7 @@ describe('安装与确认生效（L0）', () => {
     expect(see).toEqual([
       [
         '导航、按钮等已收录的界面文字显示为中文',
-        '装备属性保留英文对照；词典没收录的内容保持英文，不猜译。在弹窗里打开“显示中英对照”可同时看到英文。',
+        '未收录词条保持英文；可在弹窗打开“显示中英对照”。',
       ],
       [
         '首页的基底搜索框输入“水晶”，出现中英对照的候选',
@@ -307,7 +307,7 @@ describe('安装与确认生效（L0）', () => {
     expect(by.getAttribute('aria-hidden')).toBe('true')
     expect(by.querySelector('.pt-motif.pt-motif--gem.pt-attr-ext')).not.toBeNull()
     expect(demo.querySelector('.l1demo__foot')?.textContent).toBe(
-      '候选框底部有“PoE2 中文助手 · 非官方”署名，用来区分扩展和原站的内容。',
+      '候选框底部带有“PoE2 中文助手 · 非官方”署名。',
     )
     expect(demo.querySelectorAll(FOCUSABLE)).toHaveLength(0)
     // 示意不能和扩展实际行为脱节：候选名在正式词典里，搜索框标签是扩展对原站标签的译名，
@@ -337,7 +337,7 @@ describe('安装与确认生效（L0）', () => {
     ])
     expect(rows).toEqual([
       ['启用简体中文', '开启', '国服术语显示与中文搜索'],
-      ['显示中英对照', '关闭', '保留英文，方便核对术语'],
+      ['显示中英对照', '关闭', '同时显示英文原名'],
     ])
     const popup = readFileSync(resolve(here, '../../../../poe2-extension/popup.html'), 'utf8')
     const script = readFileSync(
@@ -378,7 +378,7 @@ describe('安装与确认生效（L0）', () => {
     const offDd = off.querySelector('dd') as HTMLElement
     // 不再用“页面有没有中文”判断：语言不是 English 时扩展会显示中文提示，原站自带中文界面时页面本来就是中文
     expect(offDd.firstChild?.textContent).toBe(
-      '扩展弹窗顶部显示“未生效”；或者在搜索框输入“水晶”，没有出现带“PoE2 中文助手 · 非官方”署名的候选。原站自带的中文界面不算生效。通常是下面三个原因之一：',
+      '扩展弹窗顶部显示“未生效”；或者在搜索框输入“水晶”，没有出现带“PoE2 中文助手 · 非官方”署名的候选。原站自带的中文界面不算生效。',
     )
     const causes = [...offDd.querySelectorAll('.ext-causes > li.ext-cause')].map((cause) => [
       cause.querySelector('.ext-cause__why')?.textContent,
@@ -387,16 +387,10 @@ describe('安装与确认生效（L0）', () => {
     expect(causes).toEqual([
       [
         '不是 CoE Beta 页面',
-        '地址要是 beta.craftofexile.com；旧版 www 站不支持。地址没错时，可能是页面在安装或更新扩展之前就打开了，刷新即可。',
+        '地址请用 beta.craftofexile.com（不支持旧版 www 站），安装或切换后请刷新页面。',
       ],
-      [
-        '没切到 PoE2 + English',
-        '在原站选 PoE2，右上角语言选 English，再刷新页面。语言不是 English 时，页面左下角会出现扩展的提示，弹窗里也会写明原因。',
-      ],
-      [
-        '扩展未启用',
-        '在 chrome://extensions 确认开发者模式和这个扩展都开着，刚在扩展页打开扩展时要刷新页面；在弹窗里打开“启用简体中文”不用刷新。',
-      ],
+      ['没切到 PoE2 + English', '在原站选 PoE2，右上角语言选 English，再刷新页面。'],
+      ['扩展未启用', '在 chrome://extensions 确认开发者模式和这个扩展都开着，开启后刷新页面。'],
     ])
     // 不为“初始化失败”单列第四条：弹窗状态 7 自带做法句与“刷新页面”按钮
     expect(offDd.querySelectorAll('.ext-causes > li')).toHaveLength(3)
@@ -433,7 +427,6 @@ describe('参考信息与删除项', () => {
       '',
     ])
     expect(texts(container.querySelectorAll('#update p'))).toEqual([
-      '0.5.0 起扩展身份固定。从 0.4.x 升级时，请先在扩展管理页移除旧版，再加载新版；CoE 里的开关会恢复默认，需要重新设置一次。同时启用旧版和新版可能重复显示中文。',
       '下载新版 zip，解压覆盖原文件夹里的文件，在扩展页点该扩展的“重新加载”（圆形箭头），再刷新 CoE 页面；弹窗里的“检查更新”会打开本页对比版本。',
       '关闭汉化可恢复原文。禁用或卸载扩展后，也请刷新原站页面。',
     ])
@@ -458,7 +451,7 @@ describe('参考信息与删除项', () => {
       'https://github.com/pine2D/poe2-tools/blob/main/docs/chrome-extension/privacy.md',
     )
     expect((details[5] as Element).querySelector('p')?.textContent).toBe(
-      '当前版本不保证支持所有页面和装备格式。遇到未收录的内容、有歧义的译文或损坏的数值时，会提示你检查，不会猜译。Windows 自带的中文输入法尚未完成验证，遇到输入问题请反馈。',
+      '未收录、有歧义或损坏的数值会保留原文并提示核对。Windows 自带的中文输入法尚未完成验证，遇到输入问题请反馈。',
     )
     expect((details[6] as Element).querySelector('p')?.textContent).toBe(
       '可以先关闭扩展，看看原站是否也有同样的问题。反馈时请说明页面、操作步骤和扩展版本；如果附上装备样本，请先删去私人信息。',
@@ -504,8 +497,8 @@ describe('参考信息与删除项', () => {
     expect(steps).toEqual([
       '在 CoE Beta 点原站的“导入装备”，粘贴在游戏里按 Ctrl+Alt+C 复制的国服装备文本。',
       '点“预览中文转换”，对照原文与英文两栏核对。',
-      '预览后显示“可以填入”（机制内容已转换）时，核对两栏后点“填入英文到原站导入框”；显示“需先核对 N 行”时这个按钮不能用，点问题前面的“第 N 行”会选中原文里的这一行，核对后重新预览。',
-      '最后由你自己点原站的“继续”（Proceed）完成导入。扩展不会替你提交，导入结果以原站为准。',
+      '显示“可以填入”时，点“填入英文到原站导入框”；显示“需先核对 N 行”时，点“第 N 行”定位核对后再预览。',
+      '在原站点“继续”（Proceed）完成导入，结果以原站为准。',
     ])
     expect(texts(section.querySelectorAll('ol > li:nth-child(3) strong'))).toEqual([
       '填入英文到原站导入框',

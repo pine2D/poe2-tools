@@ -77,7 +77,6 @@ describe('Preview 主区框与信息行', () => {
     expect(hit.textContent).toBe('词缀命中 7/8')
     // 计数与 M0 同为 <b class="pt-num">（字重 600、--ink，M2 Ruling 13）
     expect(hit.querySelector('b.pt-num')?.textContent).toBe('7/8')
-    expect(screen.getByText('自由备注保留原文')).toBeDefined()
     const download = screen.getByRole('button', { name: '下载 rich.build' })
     expect(download.className).toBe('pt-forge-btn')
     // 图标与 M0 的 .pt-icon 同为 18px（M2 Ruling 13）
@@ -183,7 +182,7 @@ describe('Preview 装备名称牌（spec §6.4.3）', () => {
     expect(name.className).toBe('pt-nameplate__name')
     expect(name.textContent).toBe('炎种长杖')
     expect(name.getAttribute('lang')).toBe('zh-CN')
-    expect(name.getAttribute('title')).toBe('基底名：写入译文首行')
+    expect(name.getAttribute('title')).toBe('基底名')
     expect(name.getAttribute('tabindex')).toBe('-1')
     const card = cardOf('炎种长杖')
     expect(card.className).toBe('pt-panel pt-panel--item')
@@ -195,7 +194,7 @@ describe('Preview 装备名称牌（spec §6.4.3）', () => {
     expect(card.querySelectorAll('.pt-pair')).toHaveLength(3)
   })
 
-  it('unique：传奇名作名称并挂 unique_name 锚点；第二行“传奇”标签与“✓ 传奇名已写入”，注入行不进对照行', () => {
+  it('unique：传奇名作名称并挂 unique_name 锚点；第二行“传奇”标签，注入行不进对照行', () => {
     show()
     const name = document.getElementById('line-inventory-slots-1-unique-name') as HTMLElement
     expect(name.textContent).toBe('稳步印记')
@@ -206,10 +205,7 @@ describe('Preview 装备名称牌（spec §6.4.3）', () => {
       'pt-nameplate pt-nameplate--unique pt-nameplate--shut',
     )
     expect(within(card).getByText('Surefooted Sigil').className).toBe('pt-nameplate__en')
-    expect(within(card).getByText('传奇').getAttribute('title')).toBe(
-      '传奇名：来自构筑的传奇字段，写入译文首行',
-    )
-    expect(within(card).getByText('传奇名已写入')).toBeDefined()
+    expect(within(card).getByText('传奇').getAttribute('title')).toBe('传奇装备')
     expect(card.querySelector('.pt-pairs')).toBeNull()
     expect(screen.queryByText('传奇名注入')).toBeNull()
   })
@@ -316,8 +312,10 @@ describe('Preview 定位、快捷键与译文视图', () => {
     expect(container.querySelectorAll('.pt-tooltips .pt-panel--item')).toHaveLength(4)
     expect(container.querySelectorAll('.pt-nameplate--tooltip')).toHaveLength(4)
     const note = container.querySelector('.pt-tooltip-note') as HTMLElement
-    expect(note.textContent).toBe('只读预览：中文词缀用提亮的词缀蓝；核对请切回“中英对照”')
-    expect(note.querySelector('.pt-tooltip-note__tail')?.textContent).toBe('核对请切回“中英对照”')
+    expect(note.textContent).toBe('物品框预览；逐行核对请切回“中英对照”')
+    expect(note.querySelector('.pt-tooltip-note__tail')?.textContent).toBe(
+      '逐行核对请切回“中英对照”',
+    )
     expect(screen.getByText('仅显示译文（简体中文）').className).toBe('visually-hidden')
     const ring = cardOf('红宝石戒指')
     expect(ring.querySelector('.pt-tooltip__prop')?.textContent).toBe('戒指 2')

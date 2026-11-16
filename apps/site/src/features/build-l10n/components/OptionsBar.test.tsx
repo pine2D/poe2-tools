@@ -66,11 +66,11 @@ describe('OptionsBar', () => {
     const hintId = bilingual.getAttribute('aria-describedby')
     expect(hintId).not.toBeNull()
     expect(document.getElementById(hintId ?? '')?.textContent).toContain(
-      '译文下面再保留一行英文原文',
+      '每行译文下附英文原文，文件会变长。',
     )
     expect(
       document.getElementById(uniques.getAttribute('aria-describedby') ?? '')?.textContent,
-    ).toContain('补一行中文名')
+    ).toContain('在传奇装备备注首行附中文名')
   })
 
   it('设置说明直接可见，Escape 关闭并把焦点交还触发器', () => {

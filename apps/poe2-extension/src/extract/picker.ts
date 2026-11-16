@@ -32,7 +32,7 @@ export function startPicker(doc: Document): { result: Promise<Element | null>; c
   const move = (event: Event) => {
     const target = targetOf(event)
     overlay?.remove()
-    if (target) overlay = outline(doc, target, '点击选择高亮区域 · Esc 取消 · 30 秒后自动取消')
+    if (target) overlay = outline(doc, target, '点击选择高亮区域 · 按 Esc 取消')
   }
   const block = (event: Event) => {
     event.preventDefault()
@@ -54,6 +54,6 @@ export function startPicker(doc: Document): { result: Promise<Element | null>; c
   doc.addEventListener('pointerdown', block, true)
   doc.addEventListener('click', click, true)
   doc.addEventListener('keydown', key, true)
-  overlay = outline(doc, doc.body, '点击选择正文区域 · Esc 取消 · 30 秒后自动取消')
+  overlay = outline(doc, doc.body, '点击选择正文区域 · 按 Esc 取消')
   return { result, cancel: () => cleanup(null) }
 }

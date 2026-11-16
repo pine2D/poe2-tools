@@ -144,7 +144,7 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
     add(
       item.rarity === 'unique'
         ? 'CoE 当前不支持传奇稀有度导入（Unsupported rarity），此预览仅供对照。'
-        : (inspection.comparisonReason ?? '此装备仅供对照。'),
+        : 'CoE 暂不支持导入此类装备，此预览仅供对照。',
       null,
       'policy',
     )
@@ -202,19 +202,13 @@ export function prepareImport(original: string, terms: readonly Term[]): Prepare
         resolution.english &&
         resolution.candidates.some((candidate) => candidate.id === 'implicit.stat_1416292992')
       )
-        warnings.push(
-          '原站兼容性：环锁腰带的咒符位曾被 CoE 拒绝或丢失。英文仍保留原值，请勿删行绕过；导入后核对结果。',
-        )
+        warnings.push('原站兼容性：环锁腰带的咒符位可能被原站拒绝或丢失，导入后请核对。')
     }
   }
   if (item.mods.some((mod) => mod.magnitude !== undefined))
-    warnings.push(
-      '原站兼容性：CoE 可能按品质再次计算增效，已见召唤技能等级 +3 显示为 +4。转换保留原文数值与增效，请核对导入后的显示及复制结果。',
-    )
+    warnings.push('原站兼容性：原站可能按品质重算词缀增效，导入后请核对数值。')
   if (inspection.skills.length)
-    warnings.push(
-      '原站兼容性：授予技能的等级或列表可能被 CoE 重算。已见权杖技能等级变化、项链出现额外技能；转换保留原文，请核对导入结果。',
-    )
+    warnings.push('原站兼容性：原站可能重算授予技能的等级或列表，导入后请核对。')
   for (const block of item.blocks) {
     if (['note', 'description', 'modifiers'].includes(block.kind)) continue
     for (const line of block.lines)

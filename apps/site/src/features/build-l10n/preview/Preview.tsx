@@ -212,7 +212,6 @@ export function Preview({
                 <span>暂无待核对项</span>
               )}
             </li>
-            <li className="stats__note">自由备注保留原文</li>
           </ul>
         </div>
         <div className="whead-r">
@@ -386,8 +385,8 @@ export function Preview({
         {section === 'gear' && view === 'translated' && slotEntries.length > 0 && (
           <div className="pt-tooltip-wrap">
             <p className="pt-tooltip-note">
-              只读预览：中文词缀用提亮的词缀蓝；
-              <span className="pt-tooltip-note__tail">核对请切回“中英对照”</span>
+              物品框预览；
+              <span className="pt-tooltip-note__tail">逐行核对请切回“中英对照”</span>
             </p>
             <div className="pt-tooltips">
               {slotEntries.map(({ slot, entry }) => (

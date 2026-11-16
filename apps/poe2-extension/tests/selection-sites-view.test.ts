@@ -257,9 +257,11 @@ it('B2-21 添加覆盖已有子目录的父目录时提示范围重叠', async (
   required(view.root.querySelector('input')).value = 'https://example.com/poe2'
   required(view.root.querySelector('form')).dispatchEvent(new Event('submit', { cancelable: true }))
   await vi.waitFor(() =>
-    expect(view.root.querySelector('[role="status"]')?.textContent).toContain('范围重叠'),
+    expect(view.root.querySelector('[role="status"]')?.textContent).toContain('路径重叠'),
   )
-  expect(view.root.querySelector('[role="status"]')?.textContent).toContain('已有的 1 条规则')
+  expect(view.root.querySelector('[role="status"]')?.textContent).toContain(
+    '删除单条规则不影响其余规则',
+  )
 })
 it('B2-11 站点页画布与内容外框采用各自的冷暗层级', async () => {
   const { readFileSync } = await import('node:fs')

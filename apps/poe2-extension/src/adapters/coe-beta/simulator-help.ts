@@ -160,7 +160,7 @@ export const simulatorHelpText = new Map<string, string>([
     'where it will be evaluated for success against the requirement setup.',
     '，按配置的条件判断是否通过。',
   ],
-  ['Conditions configuration', '条件配置（原站下文重复了无有效路线的处理说明，请以编辑器为准）'],
+  ['Conditions configuration', '条件配置'],
   ["to go back to the simulation's start point or", '以返回流程起点，或选择'],
   ['where is will attempt the same action again.', '以再次执行同一动作。'],
   ['the link or', '连线，或在此界面'],

@@ -402,7 +402,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       cache.input.value = draftLimits[1]
       updateDirty()
       hideConfirmation()
-      return '已清除 Key、译文缓存、自定义接口的地址、模型与额外参数，以及已确认的发送地址。'
+      return '已清除 Key 与翻译数据。'
     })
   })
   const confirmation = el(
@@ -416,12 +416,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       hidden: true,
     },
     el(doc, 'strong', { id: 'clear-heading' }, '清除后需要重新配置翻译服务'),
-    el(
-      doc,
-      'p',
-      {},
-      '将删除本机 Key、译文缓存、自定义接口地址、模型、额外参数及已确认的发送地址。此操作无法撤销。',
-    ),
+    el(doc, 'p', {}, '将删除本机保存的 Key、自定义接口配置与译文缓存，无法撤销。'),
     el(doc, 'p', { class: 'note' }, '站点授权、CoE 开关与限额保留。'),
     el(doc, 'div', { class: 'settings-actions' }, cancelClear, confirmClear),
   )
@@ -458,7 +453,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       doc,
       'p',
       { class: 'note key-note' },
-      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。建议为本扩展单独创建 Key 并设置额度上限。',
+      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。',
     ),
     el(
       doc,
@@ -466,12 +461,7 @@ export function createSettingsView(doc: Document, h: SettingsHandlers): Settings
       { class: 'settings-details' },
       disclosure(doc, 'Key 从哪里来？'),
       keyHelp,
-      el(
-        doc,
-        'p',
-        { class: 'note' },
-        '在所选服务商的控制台创建 API Key，粘贴到上方。自定义接口还需填写服务商提供的地址和模型名；然后测试连接，再保存。',
-      ),
+      el(doc, 'p', { class: 'note' }, '在所选服务商控制台创建 API Key。'),
     ),
     serviceDirty,
     el(doc, 'p', { class: 'note test-note' }, '测试连接只发送一条简短测试消息。'),

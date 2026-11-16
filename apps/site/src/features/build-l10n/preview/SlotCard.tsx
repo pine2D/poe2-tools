@@ -197,14 +197,6 @@ export function SlotCard({ slot, entry, level, locale, bilingual, open, onToggle
   const tail: ReactNode[] = []
   if (level !== null) tail.push(<LevelItem key="level" range={level} />)
   if (status.kind !== 'none') tail.push(<StatusItem key="status" status={status} />)
-  if (variant === 'unique' && entry.injected !== null) {
-    tail.push(
-      <span key="injected" className="pt-nameplate__ok">
-        <Icon name="check" size={16} />
-        传奇名已写入
-      </span>,
-    )
-  }
   if (bilingual) {
     tail.push(
       <span key="bilingual" className="pt-nameplate__tag">

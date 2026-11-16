@@ -54,7 +54,7 @@ export async function translateSelection(
       setBanner: (kind, message) => {
         if (kind === 'setup') {
           setup = true
-          error = '请先在扩展的“翻译此页 → 设置”中配置翻译服务。'
+          error = '请先在攻略侧边栏的“设置”中配置翻译服务。'
         } else if (kind === 'error' || kind === 'info') error = message
       },
       setUsage: (text) => {

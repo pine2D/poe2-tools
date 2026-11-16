@@ -469,7 +469,7 @@ export function App({ fetchImpl }: AppProps) {
     dictState.status === 'error'
       ? '词典未加载，暂时不能导出。文件已保留。'
       : dictState.status === 'loading'
-        ? '词典加载中，文件已保留。'
+        ? '词典加载中…'
         : effectiveScope === 'all'
           ? `全部构筑 · ${exportFiles.length} 份`
           : effectiveScope === 'series' && currentSeries !== null
@@ -555,8 +555,7 @@ export function App({ fetchImpl }: AppProps) {
             title="词典没能加载"
             hint={
               <>
-                没有词典无法翻译，可能是网络或缓存出了问题。请重新加载；仍然失败时检查
-                <span className="nw">网络连接</span>。
+                无法加载词典，请重试或检查<span className="nw">网络连接</span>。
               </>
             }
             detail={dictState.error}
@@ -597,7 +596,7 @@ export function App({ fetchImpl }: AppProps) {
           <ErrorCard
             headingAs="h3"
             title="这个文件没法解析"
-            hint="它不是合法的 JSON，常见原因是复制内容时被截断了，或者拖错了文件。换一份文件再试。"
+            hint="文件内容不是有效的 .build（JSON），可能未复制完整或选错了文件。"
             detail={selected.error}
             action={{ label: `移除 ${selected.name}`, onClick: () => remove(selected.id) }}
           />
@@ -657,7 +656,7 @@ export function App({ fetchImpl }: AppProps) {
     return (
       <PtFrame titlebar={{ title: waiting, fullText: waiting, userText: true }}>
         <p className="app__hint" role="status">
-          正在准备{locale === 'zh-CN' ? '简体' : '繁体'}中文词典，文件已保留…
+          正在准备{locale === 'zh-CN' ? '简体' : '繁体'}中文词典…
         </p>
       </PtFrame>
     )
@@ -723,7 +722,7 @@ export function App({ fetchImpl }: AppProps) {
                         </span>
                       </>
                     ) : (
-                      '文件已保留，等待词典就绪。'
+                      '等待词典就绪…'
                     )}
                   </p>
                   {dictState.status === 'ready' && sources.length > translated.length && (
@@ -808,10 +807,9 @@ export function App({ fetchImpl }: AppProps) {
                   <details className="app__download-help">
                     <summary className="pt-textbtn pt-textbtn--underline">下载后怎么使用？</summary>
                     <p>
-                      将 .build 文件放进文档目录下的 My Games / Path of Exile 2 /
-                      BuildPlanner。同名替换前请保留原文件备份。
+                      将 .build 文件放入文档目录下的 My Games / Path of Exile 2 /
+                      BuildPlanner；多文件 ZIP 包请先解压。
                     </p>
-                    <p>多文件包先解压。同名文件会加序号区分，按需要选用。</p>
                   </details>
                   {shown !== undefined && (
                     <details className="app__output">
@@ -851,7 +849,6 @@ export function App({ fetchImpl }: AppProps) {
             {!empty && mode !== 'delivery' && (
               <aside id="app-side" className="app__side" aria-label="导入文件">
                 <div className="app__side-inner">{side}</div>
-                <p className="app__side-note">未命中的行保留原文，不做猜测替换</p>
               </aside>
             )}
             <div className="app__content">{renderMain()}</div>

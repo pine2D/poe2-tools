@@ -122,8 +122,6 @@ export function HomePage() {
               <span className="nw">网页工具</span>
               {' · '}
               <span className="nw">国服简体／台服繁体</span>
-              {' · '}
-              <span className="nw">文件只在本机处理</span>
             </p>
             <p className="entry__facts">尚未在游戏里实测加载。</p>
           </div>
@@ -254,7 +252,7 @@ export function HomePage() {
                 </tbody>
               </table>
             </div>
-            <p className="l1demo__foot">词典里没有的行保留英文原文并标出，不猜测替换。</p>
+            <p className="l1demo__foot">未收录词条保留英文原文并标出。</p>
           </figure>
         </section>
         <section className="entry entry--coe" aria-labelledby="entry-coe">
@@ -264,8 +262,7 @@ export function HomePage() {
             </h2>
             <p>
               在 CoE 英文界面上直接看国服术语，用中文搜基底和词缀；
-              <span className="nw">部分装备的国服文本可转成英文导入</span>
-              <span className="nw">（支持范围见介绍页）。</span>
+              <span className="nw">部分装备的国服文本可转成英文导入。</span>
             </p>
           </header>
           <div className="entry__act">
@@ -311,7 +308,7 @@ export function HomePage() {
             </div>
           </figure>
         </section>
-        <p className="home-common">简体与繁体译名按国服、台服分别整理，不做繁简互转。</p>
+        <p className="home-common">国服简体与台服繁体词典分别整理。</p>
       </main>
       <SiteFooter />
     </div>

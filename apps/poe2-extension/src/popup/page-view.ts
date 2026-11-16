@@ -62,8 +62,8 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
     return blocked(
       '初始化失败',
       reply.phase === 'failed' && reply.error === 'dictionary'
-        ? '词典没能加载，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。'
-        : '中文助手没能启动，本页仍是原站英文。刷新页面通常能恢复；仍失败请检查更新。',
+        ? '词典加载失败，本页保持英文。请刷新页面或检查更新。'
+        : '中文助手未能启动，本页保持英文。请刷新页面或检查更新。',
       'reload',
     )
   if (!saved.enabled)
@@ -72,7 +72,7 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
       kind: 'mute',
       word: '未生效',
       reason: '简体中文已关闭',
-      hint: '本页显示原站英文。在下方打开“启用简体中文”即可，不用刷新。',
+      hint: '在下方打开“启用简体中文”即可生效。',
       action: null,
     }
   if (reply.page === 'unsupported')
@@ -83,10 +83,7 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
       '中文助手只在 English 界面上工作。请在原站右上角切到 English，再刷新页面。',
     )
   if (reply.page === 'unknown')
-    return blocked(
-      '认不出原站的游戏和语言',
-      '原站页面可能还没加载完，或已经改版。刷新页面后再打开弹窗；仍不行请检查更新。',
-    )
+    return blocked('认不出原站的游戏和语言', '未识别到原站游戏和语言，请刷新页面重试或检查更新。')
   // 空白页、刚加载的首页翻译 0 处是正常情况：不写“已翻译 0 处”
   const reason = reply.translated > 0 ? `已翻译 ${reply.translated} 处` : null
   if (reply.search === 'missing')
@@ -95,7 +92,7 @@ export function pageView(probe: PageProbe, saved: Settings): PageView {
       kind: 'part',
       word: '部分生效',
       reason,
-      hint: `界面已翻译，但${searchName(reply.searchMissing)}没接上，暂时不能用中文搜索。先刷新页面；仍不行请反馈。`,
+      hint: `界面已显示中文，${searchName(reply.searchMissing)}暂不支持中文搜索。请刷新页面或反馈。`,
       action: 'reload',
     }
   return {

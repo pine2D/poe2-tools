@@ -17,7 +17,7 @@ describe('EmptyState（spec §6.4.1）', () => {
     const { container } = show()
     expect(screen.getByRole('heading', { level: 2, name: HERO })).toBeDefined()
     expect(screen.getByText(/攻略网站或作者提供/)).toBeDefined()
-    expect(screen.getByText(/自由备注和未收录的内容保留原文/)).toBeDefined()
+    expect(screen.getByText(/自由备注与未收录词条保留原文/)).toBeDefined()
     expect(screen.queryByText(/在游戏.*导出/)).toBeNull()
     const trust = container.querySelector('.app__empty-trust') as HTMLElement
     expect(trust.textContent).toBe('文件只在你的浏览器里解析，不会上传到任何服务器')
@@ -62,10 +62,10 @@ describe('EmptyState（spec §6.4.1）', () => {
     expect(example.querySelector('.pt-divider.app__ex-divider')).not.toBeNull()
     const drop = container.querySelector('.app__drop') as HTMLElement
     expect(drop.textContent).not.toContain('不会上传到任何服务器')
-    const nw = [...container.querySelectorAll('.app__empty-foot .nw')].map(
+    const foot = [...container.querySelectorAll('.app__empty-foot > span')].map(
       (node) => node.textContent,
     )
-    expect(nw).toEqual(['单独标出', '游戏中'])
+    expect(foot).toEqual(['自由备注与未收录词条保留原文。', '尚未在游戏里实测加载。'])
   })
 
   it('内嵌的是大号拖放区，粘贴入口照常工作', () => {

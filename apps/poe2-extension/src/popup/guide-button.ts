@@ -70,7 +70,7 @@ export async function setupGuideButton(
               failure.textContent = ''
               failure.textContent =
                 (api.hasSidePanel?.() ?? true)
-                  ? '这次没能打开侧边栏，可以再试一次。'
+                  ? '未能打开侧边栏，请重试。'
                   : '无法打开侧边栏，请更新 Chrome'
             }
           }

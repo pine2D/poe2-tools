@@ -299,7 +299,7 @@ export function createController(deps: ControllerDeps): Controller {
     if (!previewOnly) view.setBanner('none', '')
     try {
       if (!targets.length) {
-        view.setUsage('所选范围无需新增模型请求。')
+        view.setUsage('所选内容无需重新翻译。')
         return
       }
       let engine: EngineHandle | null
@@ -379,7 +379,7 @@ export function createController(deps: ControllerDeps): Controller {
         )
         if (!live()) return
         if (!ok) {
-          view.setBanner('info', '已取消发送。可以切换阶段、选中部分文字，或在设置里调高上限。')
+          view.setBanner('info', '已取消发送。可缩小翻译范围或在设置中调高上限。')
           return
         }
       }
@@ -400,7 +400,7 @@ export function createController(deps: ControllerDeps): Controller {
             received.set(id, raw)
             const accepted = acceptTranslation(b, raw, null)
             if (!accepted.accepted) markFailed(run, id, 'failed', accepted.reason)
-            else view.setBlockState(id, 'pending', '译文已收到，等待请求结束')
+            else view.setBlockState(id, 'pending')
           },
         )
         try {
@@ -483,7 +483,7 @@ export function createController(deps: ControllerDeps): Controller {
               .notice(snapshot, {
                 id,
                 revision: String(revision),
-                message: `翻译失败：${failure.message ?? '模型未返回此段'}。可在侧栏的异常列表中重试。`,
+                message: `翻译失败：${failure.message ?? '未返回译文'}。可在侧栏重试。`,
               })
               .catch(() => {})
           }

@@ -132,12 +132,10 @@ describe('v4 首页', () => {
       [...zh.querySelectorAll('.home-tip__body > span')].map((span) => span.textContent),
     ).toEqual(['+60 生命上限', '火焰抗性 +30%'])
     expect(zh.querySelector('.home-tip__cls')?.textContent).toBe('戒指')
-    expect(document.body.textContent).toContain('词典里没有的行保留英文原文并标出，不猜测替换。')
-    expect(document.body.textContent).toContain(
-      '简体与繁体译名按国服、台服分别整理，不做繁简互转。',
-    )
+    expect(document.body.textContent).toContain('未收录词条保留英文原文并标出。')
+    expect(document.body.textContent).toContain('国服简体与台服繁体词典分别整理。')
     expect(screen.getByRole('region', { name: COE_SCENE }).textContent).toContain(
-      '部分装备的国服文本可转成英文导入（支持范围见介绍页）。',
+      '部分装备的国服文本可转成英文导入。',
     )
   })
 })

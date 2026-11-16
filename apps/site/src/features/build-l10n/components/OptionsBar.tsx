@@ -73,14 +73,14 @@ export function ExportOptions({
       <Toggle
         id="opt-bilingual"
         label="导出时保留英文原行"
-        hint="译文下面再保留一行英文原文，方便对着攻略核对。文件会变长。"
+        hint="每行译文下附英文原文，文件会变长。"
         checked={options.bilingual}
         onChange={(checked) => onOptions({ ...options, bilingual: checked })}
       />
       <Toggle
         id="opt-uniques"
         label="补充传奇装备中文名"
-        hint="在传奇装备的备注里补一行中文名，游戏读取用的原始名称保持不变。"
+        hint="在传奇装备备注首行附中文名，保留原英文装备名。"
         checked={options.annotateUniques}
         onChange={(checked) => onOptions({ ...options, annotateUniques: checked })}
       />

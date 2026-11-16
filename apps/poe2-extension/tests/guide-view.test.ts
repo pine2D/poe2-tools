@@ -324,7 +324,7 @@ describe('createReadingView', () => {
     const fallback = { ...doc, stages: [], source: { ...doc.source, fallback: true as const } }
     v.showDocument(fallback, prepared, null)
     expect(site()).toBe(
-      'mobalytics.gg · 通用提取，仅支持 PoE2 术语 · 页面数据与地址不一致（站内跳转后常见），已改用通用读取；刷新页面可恢复完整阶段',
+      'mobalytics.gg · 通用提取，仅支持 PoE2 术语 · 页面数据与地址不一致，已改用通用读取；刷新页面可恢复完整阶段',
     )
     const other = {
       ...doc,
@@ -434,7 +434,9 @@ it('范围和阅读位置独立操作，开始按钮受预览和忙碌状态控�
   v.setProgress({ selected: 2, completed: 1, failed: 0, preserved: 1, characters: 80 })
   expect(document.querySelector('.guide-progress')?.textContent).toContain('完成 1 / 2 段')
   expect(document.querySelector('.guide-progress')?.getAttribute('title')).toBe('已选 2 段 / 80 字')
-  expect(document.querySelector('.guide-scope')?.textContent).toContain('不含隐藏/折叠内容和子页')
+  expect(document.querySelector('.guide-scope')?.textContent).toContain(
+    '仅包含当前已加载的可见正文',
+  )
 })
 
 it('章节取消只返回所选章节块，不扩大到其他阶段', () => {

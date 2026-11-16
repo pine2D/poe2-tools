@@ -43,7 +43,7 @@ export function EmptyState({ onFiles, onPaste, onExample }: EmptyStateProps) {
         <button className="pt-btn" type="button" onClick={onExample}>
           试用示例构筑
         </button>
-        <span>自制演示文件，不是配装建议</span>
+        <span>自造演示样本</span>
       </div>
       <PtPanel
         as="section"
@@ -73,13 +73,8 @@ export function EmptyState({ onFiles, onPaste, onExample }: EmptyStateProps) {
         </span>
       </p>
       <p className="app__empty-foot">
-        <span>
-          自由备注和未收录的内容保留原文，需要核对的地方会<span className="nw">单独标出</span>。
-        </span>
-        <span>
-          下载后可放入游戏的 BuildPlanner 目录；目前还未在<span className="nw">游戏中</span>
-          验证加载效果。
-        </span>
+        <span>自由备注与未收录词条保留原文。</span>
+        <span>尚未在游戏里实测加载。</span>
       </p>
     </PtFrame>
   )

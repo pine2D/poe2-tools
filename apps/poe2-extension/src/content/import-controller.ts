@@ -502,7 +502,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
         try {
           if (!doc.defaultView?.navigator.clipboard) throw new Error('clipboard unavailable')
           await doc.defaultView.navigator.clipboard.writeText(converted.english)
-          text = '已复制英文装备文本；名称与标签可能保留原文，交易备注和描述不包含在内。'
+          text = '已复制英文装备文本。'
         } catch {
           text = '复制失败，请从英文预览框手动复制。'
         }
@@ -544,9 +544,7 @@ export function attachImport(doc: Document, terms: readonly Term[]) {
             ? warningRows()
             : [entry(icon(doc, 'done', 'ok'), '没有待核对项', 'clear')]),
         )
-        next.list.replaceChildren(
-          entry(actor('原站'), '点原站的“继续”（Proceed）后由原站完成导入；扩展不会替你提交'),
-        )
+        next.list.replaceChildren(entry(actor('原站'), '点原站的“继续”（Proceed）完成导入'))
         setPrimary(null)
         const filledRevision = revision
         const restore = doc.createElement('button')

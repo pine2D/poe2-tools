@@ -38,7 +38,7 @@ describe('setupGuideButton', () => {
     const error = document.querySelector<HTMLElement>('#translate-error')
     await vi.waitFor(() => expect(error?.hidden).toBe(false))
     expect(button?.textContent).toBe('预览此页翻译范围')
-    expect(error?.textContent).toBe('这次没能打开侧边栏，可以再试一次。')
+    expect(error?.textContent).toBe('未能打开侧边栏，请重试。')
     expect(button?.hasAttribute('aria-disabled')).toBe(false)
     expect(close).not.toHaveBeenCalled()
     button?.click()

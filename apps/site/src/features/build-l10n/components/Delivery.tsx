@@ -121,8 +121,8 @@ export function Delivery({
                           : !result.ok
                             ? '解析失败'
                             : count > 0
-                              ? `待核对 ${count} · 保留原文，可下载`
-                              : '可下载 · 暂无待核对项'}
+                              ? `待核对 ${count}`
+                              : '无待核对'}
                       </span>
                     </div>
                     <div className="delivery__actions">
@@ -145,7 +145,7 @@ export function Delivery({
                             aria-label={`下载 ${label}`}
                             onClick={() => onDownload(source.id)}
                           >
-                            单份下载
+                            下载
                           </button>
                         </>
                       )}

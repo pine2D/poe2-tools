@@ -30,7 +30,7 @@ const protocol = (text: string) =>
   /<\/?(?:s|t|m|context|quoted-stat)(?=[\s/>]|$)/i.test(inspectText(text))
 const rejected = (detail: string): TranslationAcceptance => ({
   accepted: false,
-  reason: `译文格式异常：${detail}。可单独重新翻译。`,
+  reason: `译文格式异常：${detail}`,
 })
 
 /** 原始单段的协议边界：源文同形文字必须经本次占位恢复，不能被模型伪造。 */

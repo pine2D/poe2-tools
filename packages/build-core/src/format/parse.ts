@@ -12,7 +12,7 @@ export function parseBuildFile(text: string): ParseResult {
     return { ok: false, error: `不是合法 JSON：${message}` }
   }
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    return { ok: false, error: '根必须是 JSON 对象' }
+    return { ok: false, error: '文件内容不是有效的构筑对象' }
   }
   return { ok: true, build: data as BuildFile }
 }

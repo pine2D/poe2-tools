@@ -26,7 +26,7 @@ export function PopupIllustration({ version }: { version: string }) {
           <div>
             <dt>显示中英对照</dt>
             <dd>
-              关闭<span>保留英文，方便核对术语</span>
+              关闭<span>同时显示英文原名</span>
             </dd>
           </div>
         </dl>

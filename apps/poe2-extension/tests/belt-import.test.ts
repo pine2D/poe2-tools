@@ -31,12 +31,12 @@ it('国服腰带保留双固有属性与特殊词缀，明确提示原站咒符�
   expect(result.english).toContain('14(15-10)% reduced Flask Charges used')
   expect(result.english).toContain('Minions deal 49(45-52)% increased Damage with Command Skills')
   expect(result.english).toContain('Minions have 20(17-20)% increased Area of Effect')
-  expect(result.warnings.join(' ')).toContain('咒符位曾被 CoE 拒绝或丢失')
+  expect(result.warnings.join(' ')).toContain('咒符位可能被原站拒绝或丢失')
 })
 it('咒符位提示跟随已识别属性身份，不凭模糊中文触发', () => {
   expect(
     prepareImport(sample.replace('具有 2(1-3) 个咒符位', '未知咒符位 2'), terms).warnings.some(
-      (i) => i.includes('咒符位曾被'),
+      (i) => i.includes('咒符位可能被原站'),
     ),
   ).toBe(false)
   expect(

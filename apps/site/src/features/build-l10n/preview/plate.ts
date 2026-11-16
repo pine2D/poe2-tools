@@ -4,11 +4,11 @@ import type { FieldWithRows } from './fields'
 import { isMissedRow, type PairRow } from './rows'
 
 /** base 名称元素的说明：“基底”类型标签已取消，说明改写在 title 上（B8） */
-export const BASE_TITLE = '基底名：写入译文首行'
+export const BASE_TITLE = '基底名'
 /** “传奇”类型标签的说明（沿用 mockup 文案） */
-export const UNIQUE_TITLE = '传奇名：来自构筑的传奇字段，写入译文首行'
+export const UNIQUE_TITLE = '传奇装备'
 /** 适用等级的说明（B9；国服叫法待真机验收） */
-export const LEVEL_TITLE = '构筑规划里该条目适用的角色等级区间'
+export const LEVEL_TITLE = '适用角色等级'
 
 export type SlotVariant = 'unique' | 'base' | 'collapsed'
 

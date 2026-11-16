@@ -23,7 +23,7 @@
   <label class="setting">
     <!-- biome-ignore lint/a11y/useAriaPropsForRole: 原生 checkbox 自带勾选状态，ARIA in HTML 禁止再写 aria-checked -->
     <input type="checkbox" role="switch" class="pt-switch" id="bilingual" aria-labelledby="bilingual-label" aria-describedby="bilingual-desc" disabled>
-    <span class="setting__text"><span class="setting__label" id="bilingual-label">显示中英对照</span><small id="bilingual-desc">保留英文，方便核对术语</small></span>
+    <span class="setting__text"><span class="setting__label" id="bilingual-label">显示中英对照</span><small id="bilingual-desc">同时显示英文原名</small></span>
     <span class="pt-switch__state" id="bilingual-state" aria-hidden="true">未读取</span>
   </label>
   <p id="status" role="status" aria-live="polite" data-tone="idle"></p>
@@ -38,7 +38,7 @@
   <p id="selection-notice" class="guide-notice" role="status" hidden></p>
   <div class="popup-links">
   <a class="site-settings-link" href="sites.html" target="_blank">管理自动划词站点</a>
-  <details id="guide-notice" class="guide-notice" hidden><summary>首次使用说明</summary><p>攻略阅读：点“预览此页翻译范围”先预览范围，点击“开始翻译”后才发送所选正文。默认原文旁对照，可切到侧栏或恢复原文；划词可独立使用，选中后点击才发送；整段翻译需要你自备服务 Key。</p></details>
+  <details id="guide-notice" class="guide-notice" hidden><summary>首次使用说明</summary><p>预览范围不发送内容；整段与划词翻译需自备服务 Key，点击翻译后才发送。</p></details>
   </div>
   </section>
 </main>

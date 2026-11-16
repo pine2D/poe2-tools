@@ -363,7 +363,9 @@ it('原站兼容性警告与翻译失败分开显示，不自动点击原站提�
     submitted = true
   })
   ui().querySelector<HTMLButtonElement>('.body > button')?.click()
-  expect(ui().querySelector('li[data-kind="warning"]')?.textContent).toContain('咒符位曾被')
+  expect(ui().querySelector('li[data-kind="warning"]')?.textContent).toContain(
+    '咒符位可能被原站拒绝或丢失',
+  )
   expect(ui().querySelectorAll('li[data-kind="issue"]')).toHaveLength(0)
   expect(ui().querySelector('p.verdict')?.textContent).toBe(
     '可以填入1 条原站兼容性提示需在导入后核对',
@@ -550,7 +552,11 @@ it.each([
     source.replace('稀有度: 魔法', '稀有度: 传奇'),
     'CoE 当前不支持传奇稀有度导入（Unsupported rarity），此预览仅供对照。',
   ],
-  ['咒符', source.replace('类别: 法器', '类别: 咒符'), '咒符仅供解析与中英对照，不开放制作。'],
+  [
+    '咒符',
+    source.replace('类别: 法器', '类别: 咒符'),
+    'CoE 暂不支持导入此类装备，此预览仅供对照。',
+  ],
 ])(
   '②b %s仅供对照：副句为对照原因且不在待核对里重复，不写“改正这”，没有主按钮',
   (_, text, reason) => {
@@ -613,7 +619,7 @@ it('③ 已填入：下一步交给原站“继续”，没有主按钮；无兼
   expect(groups()).toEqual({
     已完成: ['英文已写入原站导入框（6 行）'],
     待核对: ['没有待核对项'],
-    下一步: ['原站点原站的“继续”（Proceed）后由原站完成导入；扩展不会替你提交'],
+    下一步: ['原站点原站的“继续”（Proceed）完成导入'],
   })
   expect(primary()).toEqual([])
 })

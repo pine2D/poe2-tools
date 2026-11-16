@@ -23,7 +23,7 @@ const randomHex = () =>
 async function boot(root: Element) {
   const tabId = guideChrome.tabId()
   if (tabId === null) {
-    root.textContent = '请在攻略页点击扩展图标，再点“翻译此页”。'
+    root.textContent = '请在攻略页点击扩展图标，再点“预览此页翻译范围”。'
     return
   }
   let prefs = await guideChrome.readPrefs()

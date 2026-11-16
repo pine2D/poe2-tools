@@ -474,7 +474,7 @@ export function installSelection(doc: Document, win: Window, translate: Selectio
   win.addEventListener('hashchange', dismiss)
   win.addEventListener('resize', resize)
   const toast = shell()
-  toast.notify('本页划词已启用。选中文字后，点击“翻译选中文字”；译文可置顶、拖动并同时保留。')
+  toast.notify('本页划词已启用，选中文字即可翻译。')
   const toastTimer = setTimeout(toast.close, 4500)
   toast.cleanup = () => clearTimeout(toastTimer)
   function destroy() {

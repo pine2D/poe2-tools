@@ -332,7 +332,7 @@ export function createSitesView(doc: Document, api: SitesApi) {
               (siteMatches(a, siteKey(s)) || siteMatches(s, siteKey(a))),
           ),
         ).length
-        state.textContent = `已启用。以后访问这些网址即可划词；点击翻译后才会发送文字。${overlaps ? `${added.length > 1 ? '新增规则中有的' : '这条规则'}与已有的 ${overlaps} 条规则范围重叠，删除其中一条时，另一条覆盖的网址仍会自动划词。` : ''}`
+        state.textContent = `已启用。选中文字并点“翻译”后才会发送。${overlaps ? '与已有规则存在路径重叠，删除单条规则不影响其余规则。' : ''}`
         await refresh()
       })
       .catch(async () => {
@@ -384,7 +384,6 @@ export function createSitesView(doc: Document, api: SitesApi) {
     'main',
     { class: 'guide-settings sites-settings' },
     el(doc, 'h1', {}, '自动划词站点'),
-    el(doc, 'p', { class: 'sites-lead' }, '常用攻略，选中就能翻译。'),
     el(
       doc,
       'p',
@@ -410,7 +409,7 @@ export function createSitesView(doc: Document, api: SitesApi) {
         'details',
         { class: 'site-batch' },
         el(doc, 'summary', {}, '批量启用'),
-        el(doc, 'p', { class: 'note' }, '同时申请上方四个常用站点的访问权限。'),
+        el(doc, 'p', { class: 'note' }, '同时申请全部常用站点的访问权限。'),
         batch,
       ),
     ),

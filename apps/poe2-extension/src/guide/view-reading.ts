@@ -87,7 +87,7 @@ const STATE: Record<BlockState, string> = {
   idle: '',
   pending: '翻译中…',
   failed: '翻译失败',
-  missing: '模型没有返回这一段',
+  missing: '未返回译文',
   skipped: '原样保留',
 }
 // 图例只列会着色的类型；关键词、行话与职业只保留下划线。
@@ -112,7 +112,7 @@ const UPDATE_URL = 'https://poe2-tools.pine2d.com/extension/'
 // Mobalytics 站内跳转后内嵌数据仍是上一个构筑，回退通用读取是预期情况，刷新即可恢复
 const fallbackNote = (siteId: GuideDocument['source']['siteId']) =>
   siteId === 'mobalytics'
-    ? '页面数据与地址不一致（站内跳转后常见），已改用通用读取；刷新页面可恢复完整阶段'
+    ? '页面数据与地址不一致，已改用通用读取；刷新页面可恢复完整阶段'
     : '站点可能改版，可检查扩展更新'
 
 export function createReadingView(doc: Document, h: ReadingHandlers, version: string): ReadingView {
@@ -288,7 +288,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
     doc,
     'section',
     { class: 'guide-intro', hidden: true },
-    el(doc, 'p', {}, '点“开始翻译”后才发送所选正文。'),
+    el(doc, 'p', {}, '预览不发送正文；点击“开始翻译”或单段重试后才发送所选内容。'),
     el(
       doc,
       'div',
@@ -302,13 +302,13 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
           doc,
           'p',
           {},
-          '先预览范围，再开始翻译；只有点击开始翻译或单段重试后，所选正文、本段术语和选定范围内的少量原文语境才会发给你选择的服务商。',
+          '发送内容包含所选正文、本段术语及选定范围内的少量原文语境，发往你所选的服务商。',
         ),
         el(
           doc,
           'p',
           {},
-          '扩展不内置任何 Key。Key 与译文缓存只存在本机扩展存储里，未加密，网页读不到；可在“设置”里清除。译文默认显示在原文旁，可切到侧栏阅读，也可随时恢复原文。',
+          '扩展不内置任何 Key。Key 与译文缓存只存在本机扩展存储里，未加密，网页读不到；可在“设置”里清除。',
         ),
       ),
       introOk,
@@ -684,7 +684,7 @@ export function createReadingView(doc: Document, h: ReadingHandlers, version: st
       site.textContent = [new URL(guide.source.url).hostname, ...notes].join(' · ')
       for (const button of scopeChoice.querySelectorAll('button'))
         button.setAttribute('aria-pressed', String(button.dataset.scope === guide.source.scope))
-      scopeText.textContent = `${{ full: '当前页正文', selection: '仅选中文字', region: '仅点选区域' }[guide.source.scope]} · 仅已加载的可访问正文，不含隐藏/折叠内容和子页`
+      scopeText.textContent = `${{ full: '当前页正文', selection: '仅选中文字', region: '仅点选区域' }[guide.source.scope]} · 仅包含当前已加载的可见正文`
       // 同一文档同一阶段只改勾选状态；换文档或阶段才重建，并按章节编号找回焦点。
       if (picker && picker.guide === guide && picker.stage === stageId) picker.update(selectedIds)
       else {

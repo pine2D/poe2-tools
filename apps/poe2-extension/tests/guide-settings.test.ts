@@ -120,7 +120,7 @@ describe('设置页文案（M2）', () => {
   it('Key 说明与服务商数据用途说明', () => {
     mountSettings(handlers())
     expect(text('.key-note')).toBe(
-      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。建议为本扩展单独创建 Key 并设置额度上限。',
+      '扩展不内置任何 Key。Key 只保存在本机扩展存储，未加密；网页和本扩展注入网页的脚本都读不到。',
     )
     expect(text('.provider-note')).toBe(
       'DeepSeek 的服务条款没有承诺不使用你提交的内容训练模型，请自行评估。',
@@ -142,11 +142,7 @@ describe('设置页按钮（S2、S3）', () => {
     click('.clear-all')
     expect(h.onClearAll).not.toHaveBeenCalled()
     click('.confirm-clear')
-    await vi.waitFor(() =>
-      expect(message()).toBe(
-        '已清除 Key、译文缓存、自定义接口的地址、模型与额外参数，以及已确认的发送地址。',
-      ),
-    )
+    await vi.waitFor(() => expect(message()).toBe('已清除 Key 与翻译数据。'))
     expect(h.onClearAll).toHaveBeenCalledTimes(1)
     expect(h.onRefresh).toHaveBeenCalledTimes(1)
   })

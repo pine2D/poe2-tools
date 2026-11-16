@@ -429,18 +429,15 @@ describe('构筑页骨架（M2）', () => {
     expect(inFileList().getByRole('button', { name: pickName('rich.build') })).toBeDefined()
   })
 
-  it('侧栏脚注在框外，只写未命中说明，不写词典版本（B14）', async () => {
+  it('侧栏不写词典版本与重复未命中说明（B14）', async () => {
     mockMatchMedia(false)
     await renderReady()
     upload('rich.build', rich)
     await openComparison()
     await screen.findByRole('button', { name: pickName('rich.build') })
-    const note = screen.getByText('未命中的行保留原文，不做猜测替换')
-    expect(note.className).toBe('app__side-note')
-    expect(note.closest('.pt-frame')).toBeNull()
-    expect(
-      within(screen.getByRole('complementary', { name: '导入文件' })).queryByText(/^词典 /),
-    ).toBeNull()
+    const side = screen.getByRole('complementary', { name: '导入文件' })
+    expect(side.querySelector('.app__side-note')).toBeNull()
+    expect(within(side).queryByText(/^词典 /)).toBeNull()
   })
 
   it('词典状态条：pt-dictbar 常驻 role=status，就绪时圆点、“词典就绪”与版本号', async () => {
@@ -475,9 +472,7 @@ describe('构筑页骨架（M2）', () => {
     expect(within(card).getByRole('button', { name: '重新加载词典' }).className).toBe('pt-btn')
     // 390 宽不把句末“网络连接”拆开（spec §6.7 R15）；不写“重试一次通常就好”这类安慰句（ui-copy 4，B4-11）
     const hint = card.querySelector('.app__error-hint') as HTMLElement
-    expect(hint.textContent).toBe(
-      '没有词典无法翻译，可能是网络或缓存出了问题。请重新加载；仍然失败时检查网络连接。',
-    )
+    expect(hint.textContent).toBe('无法加载词典，请重试或检查网络连接。')
     expect([...hint.querySelectorAll('.nw')].map((node) => node.textContent)).toEqual(['网络连接'])
     expect(frames()).toHaveLength(1)
     const frame = frames()[0] as HTMLElement
@@ -525,7 +520,7 @@ describe('构筑页骨架（M2）', () => {
     render(<App fetchImpl={() => new Promise(() => {})} />)
     upload('rich.build', rich)
     await screen.findByText('rich.build', { selector: '.delivery__filename' })
-    expect(screen.getByText('文件已保留，等待词典就绪。')).toBeDefined()
+    expect(screen.getByText('等待词典就绪…')).toBeDefined()
     expect(screen.queryByRole('button', { name: /^查看待核对 / })).toBeNull()
     expect(frames()).toHaveLength(0)
   })

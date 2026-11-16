@@ -133,7 +133,7 @@ it.each([
     text.replace('稀有度: 稀有', '稀有度: 传奇'),
     'CoE 当前不支持传奇稀有度导入（Unsupported rarity），此预览仅供对照。',
   ],
-  ['咒符', text.replace('类别: 法器', '类别: 咒符'), '咒符仅供解析与中英对照，不开放制作。'],
+  ['咒符', text.replace('类别: 法器', '类别: 咒符'), 'CoE 暂不支持导入此类装备，此预览仅供对照。'],
 ])('%s仅供对照：comparisonOnly 为真，对照原因是第一条无行号问题', (_, source, reason) => {
   const result = prepareImport(source, terms)
   expect(result.comparisonOnly).toBe(true)
