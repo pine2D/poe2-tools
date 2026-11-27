@@ -465,6 +465,12 @@ export {
   preparePerfectFluxCraft,
   readCraftGrantedSkillLevel,
 } from './perfectFlux'
+export {
+  type ComparedProject,
+  type CraftProjectComparison,
+  compareCraftProjects,
+} from './projectComparison'
+export type { ComparisonLine } from './projectEquipment'
 export { reuseCraftPlan, reuseIdentityCraftPlan } from './projectPlan'
 export { PUTREFACTION_OMEN_NAME, preparePutrefaction } from './putrefaction'
 export {

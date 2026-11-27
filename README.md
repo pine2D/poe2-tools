@@ -1,6 +1,6 @@
 # PoE2 Tools
 
-面向《流放之路 2》玩家的中文辅助工具：用国服术语浏览 Craft of Exile、对照阅读英文攻略，或汉化官方 Build Planner 的构筑文件。
+面向《流放之路 2》玩家的中文辅助工具：用国服术语浏览 Craft of Exile、对照阅读英文攻略，汉化官方 Build Planner 的构筑文件，或在装备工坊比较本地演练。
 
 [打开工具网站](https://poe2-tools.pine2d.com/) · [下载 Chrome 中文助手](https://poe2-tools.pine2d.com/extension/) · [反馈问题](https://github.com/pine2D/poe2-tools/issues)
 
@@ -11,6 +11,7 @@
 | 在 Craft of Exile 看中文词缀、用中文搜索、导入中文装备文本 | [Chrome 中文助手](docs/chrome-extension/README.md) |
 | 阅读英文 PoE2 攻略，查看中英对照或划词翻译 | [Chrome 中文助手](docs/chrome-extension/README.md)（整段翻译需自备 API Key） |
 | 汉化攻略作者提供的 `.build` 构筑文件 | [构筑汉化网页](https://poe2-tools.pine2d.com/build/)，直接在浏览器使用 |
+| 比较同一件装备的两次制作演练和材料用量 | [装备工坊](https://poe2-tools.pine2d.com/craft/) |
 
 ## 开始使用
 
@@ -31,6 +32,10 @@
 打开[构筑汉化](https://poe2-tools.pine2d.com/build/)，拖入或粘贴 `.build` 文件 → 选择简体或繁体中文 → 查看处理结果并下载中文文件。需要时展开待核对内容或进入阶段比较；多个阶段可以一起导入，下载范围可选择当前文件、当前构筑或全部构筑。
 
 文件在浏览器本地处理，不上传，也不需要 Key。具体操作见[构筑汉化使用说明](docs/build-l10n.md)。
+
+### 装备工坊
+
+在工坊展开「搜索基底、词缀与通货演练」。打开「演练收藏」，点击「比较收藏」，选择两份从同一起始装备开始的演练，查看各自保存步骤的装备、制作目标和材料。两份收藏可以有不同的目标。详见[工坊使用说明](docs/crafting-workbench-legacy.md#比较两份演练)。
 
 ## 使用前需要知道
 

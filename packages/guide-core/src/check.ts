@@ -1,5 +1,7 @@
+// acceptCachedTranslation 会用当前规则重新核对旧缓存中的译文。
 export const CHECK_VERSION = 'guide-check-v3'
 
+import { unexpectedPercentCounts } from './percent-count'
 import type { PreparedBlock } from './prepare'
 import type { Issue } from './types'
 import type { Restored } from './verbatim'
@@ -51,6 +53,11 @@ export function checkTranslation(
   if (!lost.length && repeated.length) {
     // 只提示原有数字的重复，避免把英文数词改写成阿拉伯数字一概当作新增。
     issues.push({ kind: 'number-mismatch', detail: `译文重复了原文数字：${repeated.join('、')}` })
+  }
+
+  const counted = unexpectedPercentCounts(block.source, output)
+  if (counted.length) {
+    issues.push({ kind: 'number-unit', detail: `请核对 ${counted.join('、')} 是否被译成了次数。` })
   }
 
   const need = new Map<string, number>()

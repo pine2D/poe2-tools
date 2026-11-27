@@ -4,6 +4,7 @@ import type { DictBundle, Locale, NamedEntry, StatEntry } from './types'
 export interface DictIndex {
   locale: Locale
   statsByKey: Map<string, StatEntry>
+  ambiguousStatKeys: Set<string>
   bases: Map<string, string>
   uniques: Map<string, string>
   gems: Map<string, NamedEntry>
@@ -19,13 +20,16 @@ function toMap<T>(record: Record<string, T> | undefined): Map<string, T> {
 
 export function buildDictIndex(bundle: DictBundle): DictIndex {
   const statsByKey = new Map<string, StatEntry>()
+  const ambiguousStatKeys = new Set<string>()
   for (const entry of bundle.stats?.entries ?? []) {
     const key = templateKey(entry.en)
-    if (!statsByKey.has(key)) statsByKey.set(key, entry)
+    if (statsByKey.has(key)) ambiguousStatKeys.add(key)
+    else statsByKey.set(key, entry)
   }
   return {
     locale: bundle.locale,
     statsByKey,
+    ambiguousStatKeys,
     bases: toMap(bundle.items?.bases),
     uniques: toMap(bundle.items?.uniques),
     gems: toMap(bundle.gems?.entries),

@@ -1,4 +1,6 @@
+import type { CraftCatalog, ItemDictionary } from '@poe2-tools/item-core'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ProjectComparison } from './ProjectComparison'
 import {
   addLibraryEntry,
   LIBRARY_PREFIX,
@@ -9,13 +11,24 @@ import {
 import './project-library.css'
 
 interface Props {
+  catalog: CraftCatalog
+  dictionary: ItemDictionary | undefined
   canSave: boolean
   getText: () => { ok: true; value: string } | { ok: false; error: string }
   onRestoreText: (text: string) => void
   onReuseText?: (text: string, name: string) => void
   onMessage: (message: string) => void
 }
-export function ProjectLibrary({ canSave, getText, onRestoreText, onReuseText, onMessage }: Props) {
+export function ProjectLibrary({
+  catalog,
+  dictionary,
+  canSave,
+  getText,
+  onRestoreText,
+  onReuseText,
+  onMessage,
+}: Props) {
+  const [comparisonKey, setComparisonKey] = useState(0)
   const [entries, setEntries] = useState<LibraryEntry[]>([])
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
@@ -90,6 +103,7 @@ export function ProjectLibrary({ canSave, getText, onRestoreText, onReuseText, o
       className="project-library"
       onToggle={(event) => {
         if (event.currentTarget.open) refresh()
+        else setComparisonKey((previous) => previous + 1)
       }}
     >
       <summary ref={summary}>演练收藏</summary>
@@ -117,6 +131,12 @@ export function ProjectLibrary({ canSave, getText, onRestoreText, onReuseText, o
       <button type="button" onClick={refresh}>
         刷新收藏
       </button>
+      <ProjectComparison
+        key={comparisonKey}
+        entries={entries}
+        catalog={catalog}
+        dictionary={dictionary}
+      />
       <p>已收藏 {entries.length} 份</p>
       <ul>
         {entries.map((entry) => (

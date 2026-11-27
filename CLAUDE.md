@@ -2,13 +2,13 @@
 
 ## 项目定位
 
-### 当前优先级（2026-11-16）
+### 当前优先级（2026-11-27）
 
 当前主线为 Chrome 扩展：在 `beta.craftofexile.com` 新版 PoE2 英文界面映射国服简体术语，支持中文搜索与高级装备文本转换；另提供攻略范围预览、原文旁／侧栏对照及主动划词翻译。整段翻译由用户自备 Key（默认 DeepSeek，支持 OpenAI 兼容接口），扩展不内置 Key。
 
-当前代码版本为网站 0.12.0、扩展 0.12.0（前一公开基线为网站 0.11.0、扩展 0.11.1）；扩展通过网站与 GitHub Release 分发开发预览，未上架 Chrome 应用商店。系统设计升级与全产品文案收口见 `docs/validation-2026-11-15-system-design.md` 与 `docs/chrome-extension/release-readiness.md`，构筑 A 与 CoE 行定位修复见 `docs/validation-2026-11-15-release-closeout.md`；实际发行状态以对应提交 CI、网站下载和 GitHub Release 为准。公开发行、工程验收与语义质量分别说明；既有整段语义质量未通过结论保持，不能将工程门禁通过写成译文准确性达标。
+当前网站代码版本为 0.13.0，扩展本地候选为 0.12.1。上次已核实公开的网站与扩展均为 0.12.0。扩展通过网站与 GitHub Release 分发开发预览，未上架 Chrome 应用商店。候选支持 CoE 双语名称搜索，并在攻略译文为百分比附加次数时提示核对。实际发行以对应提交 CI、网站下载和 GitHub Release 为准，见 `docs/chrome-extension/release-readiness.md`。整段语义质量仍未通过，离线预案见 `docs/chrome-extension/quality-reassessment-2026-11-14.md`。
 
-独立简体中文做装网站／自研完整制作模拟器计划无限期搁置；保留现有实现、回归与历史材料，不自动推进权重、品质、特殊制作或路线研究。此决定不等于原目标完成。Build Planner 汉化继续保留。
+网站 0.13.0 已恢复装备工坊入口和同一起始装备的收藏比较，构筑汉化可按两服各自的词典导出完整括号范围。独立简体中文做装网站／自研完整制作模拟器计划仍然搁置；保留现有实现、回归与历史材料，不自动推进权重、品质、特殊制作或路线研究。此决定不等于原目标完成。
 
 面向用户的入口为根 `README.md`、`docs/chrome-extension/README.md` 与 `docs/chrome-extension/install.md`；构建、发版和验收索引放在 `docs/development.md`、`docs/chrome-extension/development.md`。不要把新用户 README 写成施工日志。具体已测／未测范围见 `docs/chrome-extension/compatibility.md`，未经实际浏览器验收不得扩大兼容性声明。
 
@@ -24,11 +24,13 @@ poe2-tools 是《流放之路 2》（Path of Exile 2，PoE2）辅助工具集：
 Path of Building（PoB）的 XML / 分享码不是首版输入；相关调研结论保留在本地
 `docs/superpowers/research/`，日后作为扩展再立项。
 
-当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（代码版本 0.12.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
+当前状态：`packages/build-core`、`packages/dict-builder` 与 `apps/site`（代码版本 0.13.0）已实现；`data/dict/` 已有 zh-CN / zh-TW 的
 词缀、天赋、宝石、物品基底与传奇、升华、职业、槽位词典（宝石与物品名来自 poe2db 列表页，gray）。游戏内加载输出文件的真机验收待做。
 更新本段时只写事实，不把"计划"写成"已完成"。
 
-## 当前代码与验收（2026-11-16）
+## 当前代码与验收
+
+- 网站 0.13.0 的收藏比较按两份完整存档独立核对，使用保存时的步骤评估目标和材料。领域与交互回归已列入 `pnpm test:active`。
 
 - 网站 0.12.0 与扩展 0.12.0 统一共同暗色层次、控件角色、扩展适用范围和阅读处理状态，网站入口与构筑 A 的真实流程衔接，并精简全产品用户可见文案、修正过期入口提示；没有改变产品权限、请求边界、游戏规则或构筑导出。`pnpm verify:active` 2119 项通过／2 项既有跳过；本地完整 `pnpm verify` 6455 项通过、3 项冻结工坊高并发超时（原阈值单独复跑 13 项通过）、2 项既有跳过。真实界面与三阶段 AGY 裁定见 `docs/validation-2026-11-15-system-design.md`，最终产物摘要见 `docs/chrome-extension/release-readiness.md`。实际发行状态以对应提交 CI、网站下载和 GitHub Release 为准。
 - 已发布网站 0.11.0 实现已选定的构筑 A 单页交付：默认处理结果与下载，按需核对、主动进入阶段比较；实现与 40 项真实浏览器检查见 `docs/validation-2026-11-15-build-delivery-a.md`。

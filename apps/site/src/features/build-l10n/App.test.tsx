@@ -338,9 +338,9 @@ describe('App', () => {
   })
 })
 
-it('无文件时可加载自造示例、核对并下载，导航不再推荐工坊', async () => {
+it('无文件时可加载自造示例、核对并下载，可通过导航进入装备工坊', async () => {
   await renderReady()
-  expect(document.querySelector('a[href="/craft/"]')).toBeNull()
+  expect(screen.getByRole('link', { name: '装备工坊' }).getAttribute('href')).toBe('/craft/')
   expect(screen.getByRole('link', { name: 'PoE2 Tools 首页' }).getAttribute('href')).toBe('/')
   const blobs = interceptDownloads()
   fireEvent.click(screen.getByRole('button', { name: '试用示例构筑' }))

@@ -1,4 +1,4 @@
-// 工坊虽暂停开发，旧地址仍需完整的制作数据。
+// 工坊随静态站分发已登记的制作目录。
 import { copyFile, mkdir, rm } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'

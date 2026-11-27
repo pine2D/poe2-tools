@@ -37,14 +37,18 @@ const plan = (): CyclePlan => ({
       Array.from({ length: Math.ceil(count / 10) }, (_, i) => ({
         key: `${stage}-${i}`,
         stage: stage as RequestSpec['stage'],
-        ids: Array.from({ length: Math.min(10, count - i * 10) }, (_, j) => `b${i * 10 + j}`),
+        ids: Array.from({ length: Math.min(10, count - i * 10) }, (_, j) =>
+          stage === 'baseline' || stage === 'candidate'
+            ? `demo-dev-${i * 10 + j}`
+            : `demo-blind-${i * 10 + j}`,
+        ),
         upperTokens: 1000,
       })),
     ),
     ...Array.from({ length: 8 }, (_, i) => ({
       key: `browser-${i}`,
       stage: 'browser' as const,
-      ids: ['b0'],
+      ids: [`demo-blind-${i}`],
       upperTokens: 1000,
     })),
   ],
@@ -62,45 +66,102 @@ const gate = {
   sealed: { passed: true, candidateHash: 'candidate', manifestHash: 'manifest' },
 }
 
-describe('固定衔接质量周期', () => {
+describe('仅 ID 的未来周期演算', () => {
   it('完整计划校验样本覆盖和次数，各阶段完整预留必须能单独容纳，不能删样本凑预算', () => {
-    expect(checkPlan(plan()).requests).toBeLessThanOrEqual(72)
+    expect(checkPlan(plan())).toMatchObject({
+      requests: 38,
+      counts: {
+        baseline: 9,
+        candidate: 9,
+        sealed: 8,
+        'stability-1': 2,
+        'stability-2': 2,
+        browser: 8,
+      },
+    })
     const missing = plan()
     missing.requests = missing.requests.filter((j) => j.key !== 'candidate-0')
     expect(() => checkPlan(missing)).toThrow(/覆盖/)
     const many = plan()
     many.requests.push(
-      ...Array.from({ length: 21 }, (_, i) => ({
+      ...Array.from({ length: 12 }, (_, i) => ({
         key: `extra-${i}`,
         stage: 'baseline' as const,
-        ids: [],
+        ids: [`demo-extra-${i}`],
         upperTokens: 1,
       })),
     )
-    expect(() => checkPlan(many)).toThrow(/次数|请求/)
+    expect(() => checkPlan(many)).toThrow(/次数/)
     const huge = plan()
     huge.requests = huge.requests.map((j) => ({ ...j, upperTokens: 30000 }))
     expect(() => checkPlan(huge)).toThrow(/token/)
   })
-  it('全周期最坏超过总额仍可登记；每阶段完整预检，不能只算当前一个请求', async () => {
+  it('缺 usage 保留整笔预留，剩余额度不足以覆盖完整盲测时零新增请求', async () => {
     const p = plan()
     p.requests = p.requests.map((j) => ({
       ...j,
-      upperTokens: j.stage === 'baseline' || j.stage === 'candidate' ? 20000 : 13000,
+      upperTokens: j.stage === 'baseline' || j.stage === 'candidate' ? 20000 : 7500,
     }))
-    expect(checkPlan(p).tokens).toBeGreaterThan(400000)
+    expect(checkPlan(p).tokens).toBe(510000)
     const { file } = await make(p)
-    for (const job of p.requests.filter((j) => j.stage === 'baseline' || j.stage === 'candidate')) {
+    const development = p.requests.filter((j) => j.stage === 'baseline' || j.stage === 'candidate')
+    for (const [i, job] of development.entries()) {
       await reserve(file, job)
-      await settle(file, job.key, { prompt: 17000, completion: 1000 }, 'complete')
+      await settle(file, job.key, i === 0 ? null : { prompt: 18000, completion: 1000 }, 'complete')
     }
+    const budget: ReturnType<typeof newBudget> = await read(file)
+    expect(budget.entries[0]).toMatchObject({ usage: null, chargedTokens: 20000 })
+    expect(budget.entries.reduce((n, e) => n + e.chargedTokens, 0)).toBe(343000)
     const sealed = p.requests.find((j) => j.stage === 'sealed')
     if (!sealed) throw Error('missing fixture')
     const execute = vi.fn(async () => ({ usage: null, structuralPass: true }))
     await expect(runJobs(file, [sealed], execute, gate)).rejects.toThrow(/阶段.*token/)
     expect(execute).not.toHaveBeenCalled()
-    expect((await read(file)).entries).toHaveLength(18)
+    expect(await read(file)).toEqual(budget)
   })
+
+  it('开发中已发现重大错误时停止，下一批也不能预留', async () => {
+    const { file, p } = await make()
+    const [first, next] = p.requests.filter((j) => j.stage === 'candidate')
+    if (!first || !next) throw Error('缺少合成批次')
+    await reserve(file, first)
+    await settle(file, first.key, null, 'complete', true)
+    const execute = vi.fn()
+    await expect(runJobs(file, [next], execute)).rejects.toThrow(/已停止/)
+    expect(execute).not.toHaveBeenCalled()
+    expect(await read(file)).toMatchObject({
+      halted: true,
+      entries: [{ key: first.key, chargedTokens: first.upperTokens, status: 'complete' }],
+    })
+  })
+
+  it('格式合格、额度充足，开发复核有一条 major 仍停止所有后续阶段', async () => {
+    const { file, p } = await make()
+    const development = p.requests.filter((j) => j.stage === 'baseline' || j.stage === 'candidate')
+    const results = await runJobs(file, development, async () => ({
+      structuralPass: true,
+      usage: { prompt: 30, completion: 20 },
+    }))
+    expect(results).toHaveLength(18)
+    const budget = await read(file)
+    expect(budget.halted).toBe(false)
+    // 模拟独立复核晚于用量回报。后续阶段还要读语义裁定，即使账本有余额。
+    const majorIds = ['demo-dev-7']
+    const developmentGate = { ...gate.development, passed: majorIds.length === 0 }
+    const execute = vi.fn()
+    for (const stage of ['sealed', 'stability-1', 'stability-2', 'browser']) {
+      const job = p.requests.find((j) => j.stage === stage)
+      if (!job) throw Error('缺少合成阶段')
+      await expect(runJobs(file, [job], execute, { development: developmentGate })).rejects.toThrow(
+        /开发门槛/,
+      )
+    }
+    expect(execute).not.toHaveBeenCalled()
+    expect(await read(file)).toEqual(budget)
+  })
+})
+
+describe('固定衔接质量周期', () => {
   it('阶段按完整实耗结算后继续；缺用量仍保留上界', async () => {
     const p = plan()
     p.requests = p.requests.map((j) => ({ ...j, upperTokens: 13000 }))

@@ -14,7 +14,7 @@ export interface PairRow {
   index: number
   /** 编号行的标号（"3"），非编号行为 null */
   marker: string | null
-  kind: 'mod' | 'name' | null
+  kind: LineReport['kind'] | null
   status: RowStatus
   /** 首行的名称行 = 基底名 / 传奇名，跨列渲染并压一条淡出线 */
   base: boolean

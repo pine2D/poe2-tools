@@ -12,6 +12,16 @@ const BUILD_SCENE = '我拿到了一份英文 .build'
 const COE_SCENE = '我在 Craft of Exile 做装'
 
 describe('v4 首页', () => {
+  it('静态首页的页面简介与备用导航也有装备工坊入口', () => {
+    const html = readFileSync(
+      resolve(dirname(fsPathFromMetaUrl(import.meta.url)), '../../../index.html'),
+      'utf8',
+    )
+    expect(html.match(/<meta name="description"[^>]*>/)?.[0]).toContain('装备工坊')
+    expect(html.match(/<noscript>[\s\S]*?<\/noscript>/)?.[0]).toContain(
+      '<a href="/craft/">装备工坊</a>',
+    )
+  })
   // B4-09、B4-17：物品提示框两面叠放，只在主动点击后翻面；按钮名是可见的动作文字，不用 aria-label 盖住物品内容
   it('装备示例默认中文在前，只在用户主动翻面后英文在前；后卡对读屏隐藏', () => {
     render(<HomePage />)
@@ -49,7 +59,7 @@ describe('v4 首页', () => {
     expect(front().getAttribute('lang')).toBe('zh-CN')
   })
 
-  it('主视觉和工具区入口去往正确页面，工具区附适用范围，不推荐冻结工坊', () => {
+  it('主视觉和工具区入口去往正确页面，工具区附适用范围，可进入装备工坊比较演练', () => {
     render(<HomePage />)
     for (const [name, href] of [
       ['打开构筑汉化', '/build/'],
@@ -65,7 +75,11 @@ describe('v4 首页', () => {
         document.getElementById(link.getAttribute('aria-describedby') ?? '')?.textContent,
       ).toMatch(/国服/)
     }
-    expect(document.querySelector('a[href="/craft/"]')).toBeNull()
+    expect(
+      within(screen.getByRole('main'))
+        .getByRole('link', { name: '打开装备工坊' })
+        .getAttribute('href'),
+    ).toBe('/craft/')
     expect(
       within(screen.getByRole('region', { name: BUILD_SCENE })).getByText('尚未在游戏里实测加载。'),
     ).toBeDefined()

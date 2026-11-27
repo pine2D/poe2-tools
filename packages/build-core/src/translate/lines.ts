@@ -50,10 +50,39 @@ function swapReduced(template: string, index: DictIndex): StatEntry | null {
   return { ...entry, text: entry.text.replace(increased, reduced) }
 }
 
+// Has 开头的词条在两服快照中的前缀不同，不能与无 Has 的词条合并。
+function pluralCharmId(key: string, locale: Locale): string | undefined {
+  if (key === '# charm slots') return 'explicit.stat_2582079000'
+  if (key === 'has # charm slots')
+    return locale === 'zh-CN' ? 'implicit.stat_1416292992' : 'explicit.stat_1416292992'
+  return undefined
+}
+
+function findStat(template: string, hasRange: boolean, index: DictIndex): StatEntry | null {
+  const key = templateKey(template)
+  const charmId = pluralCharmId(key, index.locale)
+  if (!hasRange && charmId === undefined) {
+    return index.statsByKey.get(key) ?? swapReduced(template, index)
+  }
+  // 新写法只接受唯一的完整模板，行首符号必须直接修饰数值。
+  if (leadingSign(template) !== '' && !/^[+-]#/.test(template.trimStart())) return null
+  if (index.ambiguousStatKeys.has(key)) return null
+  const exact = index.statsByKey.get(key)
+  if (exact !== undefined) return exact
+  if (charmId === undefined) return null
+  const singular = key.slice(0, -1)
+  const entry = index.statsByKey.get(singular)
+  return entry?.id === charmId && !index.ambiguousStatKeys.has(singular) ? entry : null
+}
+
 export function translateModLine(body: string, index: DictIndex): ModTranslation | null {
   const { template, numbers } = normalizeNumbers(body)
-  const entry = index.statsByKey.get(templateKey(template)) ?? swapReduced(template, index)
-  if (entry === null || entry === undefined) return null
+  const entry = findStat(
+    template,
+    numbers.some((value) => value.startsWith('(')),
+    index,
+  )
+  if (entry === null) return null
   const ordered = orderNumbers(numbers, entry.order)
   if (ordered === null) return null
   // 前导符号跟着源行第一个数字：找出译文里接收该数字的占位符序号（order 未声明时即第一个）。

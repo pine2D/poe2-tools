@@ -3,6 +3,18 @@
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 版本号对应仓库整体（根 `package.json`），`apps/site` 与之同步；`build-core` / `dict-builder` / `ui-theme` / `l10n-core` 是私有内部包，不单独计版本；扩展 `apps/poe2-extension` 独立计版本，更新日志见 `apps/poe2-extension/CHANGELOG.md`。
 
+## [0.13.0] - 2026-11-27
+
+### Added
+
+- 装备工坊重新出现在首页和工具导航。在「演练收藏」中选择同一起始装备的两个存档，可对照保存时的词缀、技能、孔位、品质、目标达成情况及已用材料。撤销后的步骤可供重做，材料只计至收藏时的位置。
+- 比较支持通过现有规则核验的旧项目。起点不同、目录来源缺失或无法核对的收藏会显示具体原因。
+- 构筑汉化导出简体或繁体 `.build` 时，编号词缀可保留 `(14-28)` 这样的完整范围。装备备注中的独立 `Stat Priority` 标题也会随下方可识别的词缀清单翻译。
+
+### Changed
+
+- 本地网站的中文助手下载页 `/extension/` 已接入扩展候选 0.12.1，包含 CoE 双语名称搜索修复和攻略百分比的次数核对提示。[扩展更新日志](apps/poe2-extension/CHANGELOG.md)
+
 ## [0.12.0] - 2026-11-16
 
 网站与扩展统一暗色层次、控件角色与文案表达；两服词典和构筑字段保护规则保持，下载的 `.build` 在游戏内的加载效果仍待实测。

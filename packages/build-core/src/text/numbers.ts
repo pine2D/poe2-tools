@@ -1,4 +1,4 @@
-// 词缀行的数字归一化：数字（含小数）→ '#'。符号留在模板里，由 leadingSign 单独处理。
+// 将单值和完整的括号掷值范围各归一化为一个 '#'，前导符号仍由 leadingSign 处理。
 
 export interface Normalized {
   template: string
@@ -7,11 +7,22 @@ export interface Normalized {
 
 export type Sign = '+' | '-' | ''
 
-const NUMBER = /\d+(?:\.\d+)?/g
+const NUMBER = /\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\)|\d+(?:\.\d+)?/g
+
+// 按十进制文本比较，避免浮点舍入让倒置的端点看起来相等。回填仍使用原串。
+function orderedRange(low: string, high: string): boolean {
+  const [lowInteger = '', lowFraction = ''] = low.replace(/^0+/, '').split('.')
+  const [highInteger = '', highFraction = ''] = high.replace(/^0+/, '').split('.')
+  if (lowInteger.length !== highInteger.length) return lowInteger.length < highInteger.length
+  if (lowInteger !== highInteger) return lowInteger < highInteger
+  return lowFraction.replace(/0+$/, '') <= highFraction.replace(/0+$/, '')
+}
 
 export function normalizeNumbers(text: string): Normalized {
   const numbers: string[] = []
-  const template = text.replace(NUMBER, (match) => {
+  const template = text.replace(NUMBER, (match, low?: string, high?: string) => {
+    // 倒置范围留在模板中，不能按一个数值占位符查词典。
+    if (low !== undefined && high !== undefined && !orderedRange(low, high)) return match
     numbers.push(match)
     return '#'
   })

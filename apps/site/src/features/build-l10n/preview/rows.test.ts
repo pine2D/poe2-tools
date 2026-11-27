@@ -89,25 +89,28 @@ describe('buildRows', () => {
     expect(spanText(miss[0]?.zh ?? [])).toBe('3% increased Attack Speed per 25 Dexterity')
   })
 
-  it('跨行标记与空行：空行不占一行，标记跨行不破坏对齐', () => {
-    const file = translate(false)
+  it.each([false, true])('跨行标记内的装备标题、分隔线和词缀逐行对齐（双语 %s）', (bilingual) => {
+    const file = translate(bilingual)
     const { rows } = buildRows({
       original: slotText(file.input, 2),
       translated: slotText(file.build, 2),
       field: fieldReport(file.report, 'inventory_slots[2].additional_text'),
-      bilingual: false,
+      bilingual,
       uniqueText: null,
     })
     // 源行 1 是空行，被滤掉；其余五行保留原始行号
     expect(rows.map((row) => row.index)).toEqual([0, 2, 3, 4, 5])
     expect(rows.map((row) => row.status)).toEqual([
       'translated',
-      'kept',
+      'translated',
       'kept',
       'translated',
       'translated',
     ])
     expect(spanText(rows[0]?.zh ?? [])).toBe('任意魔符')
+    expect(rows[1]).toMatchObject({ kind: 'heading', base: false })
+    expect(spanText(rows[1]?.zh ?? [])).toBe('词缀优先级')
+    expect(rows[1]?.kept.map(spanText)).toEqual(bilingual ? ['Stat Priority'] : [])
     expect(spanText(rows[3]?.en ?? [])).toBe('+10 to maximum Life')
     expect(spanText(rows[3]?.zh ?? [])).toBe('+10 最大生命')
     // <grey> 横跨第 2–5 行，每一行都还带着这个标记
