@@ -88,8 +88,8 @@
 
 | 字段 | 处理 |
 |---|---|
-| `inventory_slots[].additional_text` | **翻译**：首行按基底名 / 传奇名词典精确匹配；编号行走词缀模板匹配并回填数值；其余行保留 |
-| `description`、`skills[].additional_text`、`passives[].additional_text` | **翻译**其中能识别的术语行（同上规则），自由文本保留 |
+| `inventory_slots[].additional_text` | 基底名和传奇名按词典精确匹配。编号词缀回填单值或完整的括号范围。独立的 `Stat Priority` 标题后紧跟连字符分隔线和可识别的编号词缀时也翻译。 |
+| `description`、`skills[].additional_text`、`passives[].additional_text` | 翻译可识别的名称行与编号词缀，自由文本及同名标题保留原文。 |
 | `inventory_slots[].unique_name` | 不改；可选在 `additional_text` 前置一行中文传奇名 |
 | `name`、`author`、`link` | 不改 |
 | 所有 `id`、`inventory_id`、`level_interval`、`slot_x`、`slot_y`、`weapon_set` | 不改 |

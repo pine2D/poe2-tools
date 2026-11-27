@@ -53,7 +53,7 @@
       "additional_text": "<unique>{稳步印记}"
     },
     {
-      "additional_text": "<silver>{任意魔符}\n\n<grey>{Stat Priority\n-------------------\n1. +10 最大生命\n2. 移动速度提高 20%}",
+      "additional_text": "<silver>{任意魔符}\n\n<grey>{词缀优先级\n-------------------\n1. +10 最大生命\n2. 移动速度提高 20%}",
       "inventory_id": "Charm1",
       "slot_x": 2,
       "slot_y": 0,

@@ -45,12 +45,15 @@ export function translateBuild(
 ): BuildTranslation {
   const build = clone(input)
   const fields: FieldReport[] = []
-  const textOptions = { bilingual: options.bilingual }
-
-  const translateField = (holder: Holder, key: string, path: string): void => {
+  const translateField = (
+    holder: Holder,
+    key: string,
+    path: string,
+    equipmentNote = false,
+  ): void => {
     const value = holder[key]
     if (typeof value !== 'string' || value === '') return
-    const result = translateText(value, index, textOptions)
+    const result = translateText(value, index, { bilingual: options.bilingual, equipmentNote })
     holder[key] = result.text
     fields.push({ path, lines: result.lines })
   }
@@ -60,7 +63,7 @@ export function translateBuild(
   if (Array.isArray(build.inventory_slots)) {
     for (const [i, slot] of build.inventory_slots.entries()) {
       if (!isHolder(slot)) continue
-      translateField(slot, 'additional_text', `inventory_slots[${i}].additional_text`)
+      translateField(slot, 'additional_text', `inventory_slots[${i}].additional_text`, true)
       if (options.annotateUniques) {
         const uniqueName = slot.unique_name
         const hitName = annotateUnique(slot, index)
@@ -113,7 +116,8 @@ export function translateBuild(
   let modTranslated = 0
   for (const field of fields) {
     for (const line of field.lines) {
-      if (line.status === 'kept') continue
+      // 结构标题有译文行供双语预览对齐，但不属于词典名称或词缀命中。
+      if (line.status === 'kept' || line.kind === 'heading') continue
       const hit = line.status === 'translated'
       candidates += 1
       if (hit) translated += 1

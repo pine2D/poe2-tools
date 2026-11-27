@@ -853,3 +853,5 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 | [PoE Buildwright 格式说明](https://github.com/damdor/poe-buildwright/blob/main/docs/build_planner_format.md) | [PolyForm Noncommercial 1.0.0](https://github.com/damdor/poe-buildwright/blob/main/LICENSE.md)。仅核对维护者记录的历史字段及兼容行为。 | 只记录可独立验证的字段事实与出处，不引入源码、数据包或玩家文件。游戏格式仍以 [GGG 文档](https://www.pathofexile.com/developer/docs/game#buildplanner)为准。 |
 
 两项均为人工查证（manual），没有抓取适配器或定时请求。引用新的实际输入形态时记录所查提交，并用本项目样例重现。
+
+DotBuildExporter 的固定提交给出装备备注的标题、分隔线和编号方式。该版本的 CLI 自测记录了带 `Has` 的咒符栏范围，词缀过滤器会保留这行。两服回归中的无 `Has` 写法、生命范围和完整构筑均为本项目自造。既有 13 份私有样本由宿主单独匿名核验，本轮尚无可归属玩家的公开原件。[导出格式](https://github.com/NickWeder99/DotBuildExporter/blob/4117e78e151616b65dfcf3c5b0a6b2925f2c0e54/src/PobToDotBuild/Converter/Converter.cs#L303-L325) · [CLI 自测](https://github.com/NickWeder99/DotBuildExporter/blob/4117e78e151616b65dfcf3c5b0a6b2925f2c0e54/src/PobToDotBuild/Cli.cs#L879-L894) · [过滤器](https://github.com/NickWeder99/DotBuildExporter/blob/4117e78e151616b65dfcf3c5b0a6b2925f2c0e54/src/PobToDotBuild/Pob2/ItemsSection.cs#L62-L85) · [两服验证](validation-week-build-input.md)
