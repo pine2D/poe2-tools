@@ -10,14 +10,19 @@ export function searchTerms(
   const query = normalize(text)
   if (!query) return []
   const words = query.split(' ')
+  const hasLabelSeparator = query.includes('，')
   const domains = typeof domain === 'string' ? [domain] : domain
   return terms
     .filter((term) => domains.includes(term.domain))
     .flatMap((term) => {
       const names = [term.en, term.zh].map(normalize)
+      // 候选按钮用全角逗号连接两端原名。整条比对可保留名称自身的逗号和数值符号。
+      const exact =
+        names.includes(query) ||
+        (hasLabelSeparator && query === normalize(`${term.zh}，${term.en}`))
       const searchable = [...names, ...(term.aliases ?? []).map(normalize)]
       const haystack = searchable.join(' ')
-      if (!words.every((word) => haystack.includes(word))) return []
+      if (!exact && !words.every((word) => haystack.includes(word))) return []
       // 控件限定必须在排序和截断之前应用，避免有效选项被无关词条挤掉。
       if (accept && !accept(term)) return []
       // 优先完整名称，再按能够覆盖查询的最短名称／别名排序。
@@ -26,7 +31,7 @@ export function searchTerms(
       const length = Math.min(
         ...(matching.length ? matching : [haystack]).map((name) => name.length),
       )
-      return [{ term, exact: names.includes(query), length }]
+      return [{ term, exact, length }]
     })
     .sort(
       (a, b) =>
