@@ -844,3 +844,12 @@ v126 同样沿用该固定 MIT 来源，接入8个 staff 特殊符文分支；st
 ### CoE 人工展示词缀（2026-10-21）
 
 `data/l10n/coe-beta/display-stats.zh-CN.json`：manual，本项目对公开 CoE 菜单短语独立翻译，来源页面 https://beta.craftofexile.com/?game=poe2 。初始四条持续伤害加成没有当前国服交易 API 对应身份，保留该不确定性；只参与展示和中文检索，标记 `displayOnly`，不参与反向导入或攻略词缀事实表，不宣称当前游戏可生成。原站 undefined 分类不据此猜测。
+
+### 第三方构筑导出格式观察（2026-11-27）
+
+| 来源 | 用途与许可 | 采集范围 |
+| --- | --- | --- |
+| [DotBuildExporter](https://github.com/NickWeder99/DotBuildExporter) | 该工具的代码采用 [MIT](https://github.com/NickWeder99/DotBuildExporter/blob/main/LICENSE)。人工核对导出器如何排列装备名称、备注和词缀。 | 只查维护者的文档和格式逻辑。用自行编写的输入验证，样本中的玩家作品和游戏资料不随软件许可再分发。 |
+| [PoE Buildwright 格式说明](https://github.com/damdor/poe-buildwright/blob/main/docs/build_planner_format.md) | [PolyForm Noncommercial 1.0.0](https://github.com/damdor/poe-buildwright/blob/main/LICENSE.md)。仅核对维护者记录的历史字段及兼容行为。 | 只记录可独立验证的字段事实与出处，不引入源码、数据包或玩家文件。游戏格式仍以 [GGG 文档](https://www.pathofexile.com/developer/docs/game#buildplanner)为准。 |
+
+两项均为人工查证（manual），没有抓取适配器或定时请求。引用新的实际输入形态时记录所查提交，并用本项目样例重现。
