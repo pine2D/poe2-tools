@@ -2,7 +2,9 @@
 
 <!-- impeccable:product-schema 1 -->
 
-> 代码状态：2026-11-27，当前代码版本为网站 0.13.0、扩展 0.12.0（前一公开基线为网站 0.11.0、扩展 0.11.1）。系统设计升级与文案收口见[系统设计升级验收](docs/validation-2026-11-15-system-design.md)与[发布与验收状态](docs/chrome-extension/release-readiness.md)，构筑 A 与行定位修复见[统一验收记录](docs/validation-2026-11-15-release-closeout.md)；公开发行状态以对应提交 CI、[网站](https://poe2-tools.pine2d.com)及 [GitHub Releases](https://github.com/pine2D/poe2-tools/releases) 为准。产品事实由本文维护，视觉目标见 [DESIGN.md](DESIGN.md)，工具分工见[设计工作约定](docs/design-skills.md)。
+> 截至 2026-11-27，网站代码版本为 0.13.0，扩展本地候选为 0.12.1。上次已核实公开的网站与扩展均为 0.12.0。网站可导出含完整括号范围的构筑词缀。扩展候选支持粘贴完整双语候选名称搜索，阅读攻略时也会提示核对被译成次数的百分比。当前候选的公开发行仍待核实。[发布与验收状态](docs/chrome-extension/release-readiness.md)
+
+> 此前的界面、构筑交付与行定位验收见[系统设计升级验收](docs/validation-2026-11-15-system-design.md)和[统一验收记录](docs/validation-2026-11-15-release-closeout.md)。产品事实由本文维护，视觉目标见 [DESIGN.md](DESIGN.md)，工具分工见[设计工作约定](docs/design-skills.md)。
 
 > 构筑 A 单页交付：导入后先显示可下载文件与待核对数量；按需展开核对或进入阶段比较，显式选择当前文件、当前构筑或全部构筑下载。两服词典、文件保护规则、游戏内加载待验收的边界保持。验证见 [A 实施记录](docs/validation-2026-11-15-build-delivery-a.md)。
 

@@ -224,6 +224,20 @@ describe('createController', () => {
     expect(second.view.setBusy).toHaveBeenCalledWith(true, 'preparing')
     expect(second.view.setBusy).not.toHaveBeenCalledWith(true, 'translating')
   })
+  it('预览旧缓存时重新核对百分比，保留译文并直接显示提示', async () => {
+    const engine = fakeEngine()
+    const { d, store, view } = deps({
+      raw: doc([{ id: 'dial', kind: 'paragraph', text: 'The dial bonus caps at 37%.' }]),
+      engine: async () => engine.handle,
+    })
+    const text = '刻度加成上限为 37% 次。'
+    vi.spyOn(store, 'getCached').mockImplementation(async (hash) => ({ hash, text, issues: [] }))
+    await createController(d).start()
+    expect(view.setTranslation).toHaveBeenCalledWith('dial', text, 'cache', [
+      { kind: 'number-unit', detail: expect.stringMatching(/37%.*(?:计数|次数)/) },
+    ])
+    expect(engine.run).not.toHaveBeenCalled()
+  })
   it('词典版本变化后不命中旧缓存', async () => {
     const { run, handle } = fakeEngine()
     const first = deps({ engine: async () => handle })
