@@ -222,6 +222,8 @@ export function ProjectControls({ catalog, dictionary, project, onRestore }: Pro
         }}
       />
       <ProjectLibrary
+        catalog={catalog}
+        dictionary={dictionary}
         canSave={Boolean(project)}
         getText={validatedText}
         onRestoreText={(text) => restoreText(text, ++requestRef.current)}

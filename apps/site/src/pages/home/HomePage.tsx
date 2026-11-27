@@ -76,7 +76,9 @@ export function HomePage() {
               <br />
               多研究构筑。
             </h1>
-            <p className="home-lead">英文社区的攻略和做装工具，直接用本服中文术语来看。</p>
+            <p className="home-lead">
+              用本服术语阅读英文构筑和做装工具，也可以在工坊演练制作、比较装备。
+            </p>
             <div className="home-actions">
               <a className="pt-btn" href="/build/">
                 打开构筑汉化
@@ -84,6 +86,10 @@ export function HomePage() {
               </a>
               <a className="pt-btn" href="/extension/">
                 安装中文助手
+                <Icon name="arrow-right" />
+              </a>
+              <a className="pt-btn" href="/craft/">
+                打开装备工坊
                 <Icon name="arrow-right" />
               </a>
             </div>

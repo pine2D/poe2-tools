@@ -70,6 +70,7 @@ describe('衬线文字只用 shard0 的字（spec §7.3、§8.5）', () => {
     fireEvent.click(screen.getByRole('button', { name: /^阶段比较 / }))
     text += collect(hits)
 
+    expect(text).toContain('装备工坊')
     const missing = [...new Set(text)].filter((ch) => !/\s/.test(ch) && !shard0.has(ch))
     expect(
       missing.join(''),

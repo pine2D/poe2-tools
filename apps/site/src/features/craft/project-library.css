@@ -63,3 +63,50 @@
 .project-plan-preview p + p {
   margin-top: 0.75rem;
 }
+
+.project-comparison {
+  min-inline-size: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+.project-comparison-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  margin-block: 0.75rem;
+}
+.project-comparison-side,
+.project-comparison-pair label {
+  min-inline-size: 0;
+}
+.project-comparison-pair select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-block-start: 0.25rem;
+}
+.project-comparison-side {
+  border-inline-start: 2px solid var(--line);
+  padding-inline-start: 0.75rem;
+}
+.project-comparison-side h5 {
+  margin-block: 1rem 0.25rem;
+}
+.project-comparison-side dd {
+  margin: 0 0 0.4rem;
+}
+.project-comparison-side dt {
+  color: var(--text-muted);
+}
+.project-comparison li {
+  display: block;
+  padding-block: 0.35rem;
+}
+.project-comparison li strong {
+  display: block;
+}
+.project-comparison button {
+  margin-inline-end: 0.5rem;
+}

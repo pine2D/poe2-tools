@@ -92,7 +92,7 @@ const VERIFIED_STATS = new Set([
   'explicit.stat_2923486259',
 ])
 
-function translateMetadata(raw: string): string | null {
+export function translateMetadata(raw: string): string | null {
   const text = raw.trim()
   const sockets = /^(?:插槽|插槽連線|Sockets)\s*[:：]\s*(.*)$/i.exec(text)
   if (sockets)

@@ -17,6 +17,7 @@ import { createDictLoader, type FetchJson, type LoadedDict } from '../../shared/
 import { CatalogPanel } from './CatalogPanel'
 import { ImportReadinessPanel } from './ImportReadinessPanel'
 import { ModStateBadges } from './ModStateBadges'
+import { ComparisonDictionaryLoader } from './ProjectComparison'
 import { RuneSourcePanel, SkillSourcePanel } from './RuneSourcePanel'
 
 export const PROJECT_KEY = 'poe2-tools.craft.project'
@@ -303,18 +304,18 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
         </a>
         <nav aria-label="工具导航">
           <a href="/build/">构筑汉化</a>
-          <strong>装备工坊</strong>
+          <a href="/extension/">中文助手</a>
+          <strong aria-current="page">装备工坊</strong>
         </nav>
       </header>
 
-      <p className="craft-paused">
-        装备工坊已无限期暂停开发。本页保留历史功能，规则与数据可能过时。<a href="/">返回工具首页</a>
-      </p>
       <main className="craft-shell">
         <section className="craft-intro">
           <div>
             <h1>装备导入与对照</h1>
-            <p>解析高级装备文本，对照可确认的英文词条。所有内容只在浏览器本机处理。</p>
+            <p>
+              粘贴高级装备文本核对词条，或展开通货演练，在「演练收藏」中比较从同一件装备出发的两次演练。
+            </p>
           </div>
           <div className="dict-state" role="status" aria-live="polite">
             {dictState.kind === 'loading' && '正在加载英文词典'}
@@ -339,39 +340,43 @@ export function CraftApp({ fetchImpl }: CraftAppProps) {
         >
           <summary>搜索基底、词缀与通货演练</summary>
           {catalogOpen && (
-            <CatalogPanel
-              onCatalogReady={setCatalog}
-              locale={dictState.locale}
-              {...(dictState.kind === 'ready' ? { dictionary: dictState.dict.bundle } : {})}
-              translations={
-                dictState.kind === 'ready' ? (dictState.dict.bundle.items?.bases ?? {}) : {}
-              }
-              translateLine={catalogTranslator}
-              {...(inspection?.base.english ? { initialBaseId: inspection.base.english } : {})}
-              {...(item?.itemLevel ? { initialItemLevel: item.itemLevel } : {})}
-              {...(!dirty && item && inspection?.base.english
-                ? {
-                    imported: {
-                      baseId: inspection.base.english,
-                      mods: inspection.mods,
-                      runes: inspection.runes,
-                      skills: inspection.skills,
-                      item,
-                      comparisonOnly: inspection.comparisonOnly,
-                      implicitLines: [
-                        ...inspection.mods
-                          .filter(({ mod }) => mod.kind === 'implicit')
-                          .flatMap(({ stats }) =>
-                            stats.map(({ source, resolution }) => resolution.english ?? source.raw),
+            <ComparisonDictionaryLoader.Provider value={loader}>
+              <CatalogPanel
+                onCatalogReady={setCatalog}
+                locale={dictState.locale}
+                {...(dictState.kind === 'ready' ? { dictionary: dictState.dict.bundle } : {})}
+                translations={
+                  dictState.kind === 'ready' ? (dictState.dict.bundle.items?.bases ?? {}) : {}
+                }
+                translateLine={catalogTranslator}
+                {...(inspection?.base.english ? { initialBaseId: inspection.base.english } : {})}
+                {...(item?.itemLevel ? { initialItemLevel: item.itemLevel } : {})}
+                {...(!dirty && item && inspection?.base.english
+                  ? {
+                      imported: {
+                        baseId: inspection.base.english,
+                        mods: inspection.mods,
+                        runes: inspection.runes,
+                        skills: inspection.skills,
+                        item,
+                        comparisonOnly: inspection.comparisonOnly,
+                        implicitLines: [
+                          ...inspection.mods
+                            .filter(({ mod }) => mod.kind === 'implicit')
+                            .flatMap(({ stats }) =>
+                              stats.map(
+                                ({ source, resolution }) => resolution.english ?? source.raw,
+                              ),
+                            ),
+                          ...inspection.skills.map(
+                            ({ source, resolution }) => resolution.english ?? source.raw,
                           ),
-                        ...inspection.skills.map(
-                          ({ source, resolution }) => resolution.english ?? source.raw,
-                        ),
-                      ],
-                    },
-                  }
-                : {})}
-            />
+                        ],
+                      },
+                    }
+                  : {})}
+              />
+            </ComparisonDictionaryLoader.Provider>
           )}
         </details>
 

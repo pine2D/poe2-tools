@@ -25,6 +25,7 @@ export function SiteHeader({ active, children }: SiteHeaderProps): ReactElement 
           <a href="/extension/" aria-current={active === 'extension' ? 'page' : undefined}>
             中文助手
           </a>
+          <a href="/craft/">装备工坊</a>
         </nav>
         <div className="pt-header__end">
           {children}

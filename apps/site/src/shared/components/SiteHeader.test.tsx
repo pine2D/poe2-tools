@@ -41,6 +41,7 @@ describe('SiteHeader（spec §5.2、§6.1）', () => {
     expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['构筑汉化', '/build/'],
       ['中文助手', '/extension/'],
+      ['装备工坊', '/craft/'],
     ])
     expect(
       links

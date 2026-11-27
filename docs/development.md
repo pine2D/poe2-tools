@@ -4,7 +4,7 @@
 
 ## 项目与当前状态
 
-项目使用 pnpm monorepo、TypeScript 和静态前端，不部署翻译服务端。Chrome 扩展是当前主线，构筑汉化继续可用；独立制作模拟器维持搁置，现有实现和回归保留。
+项目使用 pnpm monorepo、TypeScript 和静态前端，不部署翻译服务端。Chrome 扩展是当前主线，构筑汉化继续可用；网站 0.13.0 恢复装备工坊入口，支持同起点收藏比较。完整模拟器路线仍保留为历史资料。
 
 2026-10-22，扩展与攻略阅读代码已通过 PR #1 合入 main（`4608705`），0.10.1 已作为开发预览发布。正文语义质量仍未通过既定门槛；工程、交互与语义结果分别记录。项目约束与工作区状态以 [CLAUDE.md](../CLAUDE.md) 为准。
 
@@ -44,9 +44,16 @@ pnpm verify
 
 | 命令 | 用途 |
 | --- | --- |
-| `pnpm test:active` | 当前产品测试：构筑、扩展、共享界面与装备文本 |
+| `pnpm test:active` | 构筑、扩展、共享界面、装备文本及工坊收藏比较的领域与交互回归 |
 | `pnpm verify:active` | 当前产品测试，加全仓类型、格式、打包发布闸门、构建与数据检查 |
-| `pnpm verify` | 集成前完整门禁，与 CI 同构，包含冻结工坊与制作算法测试 |
+| `pnpm verify` | 集成前完整门禁，与 CI 同构，包含完整工坊与制作算法测试 |
+
+工坊收藏比较的两项回归可分别运行。第一条核对存档、装备、目标与材料，第二条验证收藏界面的只读操作、键盘回焦和窄屏排列。
+
+```sh
+pnpm exec vitest run packages/item-core/src/savedRouteComparison.test.ts
+pnpm exec vitest run apps/site/src/features/craft/SavedRouteComparison.test.tsx
+```
 
 日常门禁不运行 `packages/dict-builder` 的全部测试，也不覆盖 `packages/item-core` 的全部制作算法；修改这些包时先运行对应测试。集成或发布前运行完整 `pnpm verify`。真实网页、游戏内渲染和 Windows 输入法的结论须有对应环境的实际证据。
 
@@ -56,7 +63,7 @@ pnpm verify
 
 | 路径 | 职责 |
 | --- | --- |
-| `apps/site/` | 工具网站：构筑汉化、扩展介绍与下载、保留的历史工坊 |
+| `apps/site/` | 工具网站：构筑汉化、扩展介绍与下载、装备工坊 |
 | `apps/poe2-extension/` | Chrome 扩展：CoE 中文显示、搜索与装备文本转换、攻略阅读与划词 |
 | `packages/build-core/` | 无 DOM 的 `.build` 解析、词典匹配与翻译管线 |
 | `packages/item-core/` | 装备高级文本解析、逆向词典、CoE 转接与历史制作逻辑 |
@@ -67,13 +74,13 @@ pnpm verify
 | `data/dict/`、`data/l10n/` | 独立国服／台服词典与扩展专用译文数据 |
 | `data/fixtures/` | 测试样本；自造样本入库，第三方本地样本不入库 |
 
-网站中 `src/pages/` 放首页与扩展介绍，`src/features/` 放构筑与历史工坊，`src/shared/` 放共用控件和样式。更细的边界见 [CLAUDE.md](../CLAUDE.md#仓库地图)。
+网站中 `src/pages/` 放首页与扩展介绍，`src/features/` 放构筑与装备工坊，`src/shared/` 放共用控件和样式。更细的边界见 [CLAUDE.md](../CLAUDE.md#仓库地图)。
 
 ## 数据与样式维护
 
 设计与实现分开核对：[PRODUCT.md](../PRODUCT.md) 记录能力事实，[DESIGN.md](../DESIGN.md) 记录已确认的 v4 目标及迁移前生产基线，[文案规则](ui-copy.md)约束用户可见文字。v4 共享样式、弹窗、阅读侧栏、翻译设置、站点管理与 CoE 自有浮层已随扩展 0.11.0 发布，网站首页、构筑工作区与扩展介绍页已随网站 0.10.0 部署；不能把原型验证当成产品验收。
 
-OpenDesign 的原地项目、impeccable 的读取范围、技能安装层级和 Git 归属见[设计工具与工作约定](design-skills.md)。本地原型与 HANDOFF 被忽略，正式规范保留入库；历史工坊保持冻结。
+OpenDesign 的原地项目、impeccable 的读取范围、技能安装层级和 Git 归属见[设计工具与工作约定](design-skills.md)。本地原型与 HANDOFF 被忽略，正式规范保留入库；工坊继续使用原有独立样式。
 
 网站与扩展各界面的整体优化遵循[迭代方法及推荐路线](design-iteration.md)，先验证共同规则与任务差异，再按完整流程迁移；其中推荐方案不替代已确认的 DESIGN 规则。
 
@@ -108,4 +115,4 @@ pnpm --filter @poe2-tools/site scan-css
 - [扩展开发与验收入口](chrome-extension/development.md)。
 - [网站阶段分组与排序验收](website/validation-2026-10-06.md)、[门户改版](website/redesign.md)与[设计语言记录](website/redesign-2026-09-design-language.md)。
 - [游戏内真机走查清单](manual-qa-checklist.md)。
-- [历史工坊能力记录](crafting-workbench-legacy.md)与[已搁置的制作路线](crafting-roadmap.md)。
+- [装备工坊使用说明与历史能力记录](crafting-workbench-legacy.md)与[已搁置的制作路线](crafting-roadmap.md)。

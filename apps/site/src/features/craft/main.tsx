@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-// 工坊冻结（spec §6.6）：只引入冻结的 legacy 样式与工坊自有样式，不引入 shared/styles 与 ui-theme
+// 工坊沿用独立样式，保留原有深色外观。
 import './legacy-tokens.css'
 import './legacy-base.css'
 import './craft.css'
